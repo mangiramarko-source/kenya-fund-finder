@@ -42,7 +42,7 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
-      <div className="container flex h-16 items-center justify-between">
+      <div className="container flex h-16 items-center justify-between relative">
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 font-heading text-lg font-bold text-primary shrink-0">
           <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
@@ -104,9 +104,8 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile: icon links + hamburger */}
-        <div className="flex md:hidden items-center gap-1">
-          {/* Show Compare, Calculator, News as icon buttons */}
+        {/* Mobile: centered icon links */}
+        <div className="absolute left-1/2 -translate-x-1/2 flex md:hidden items-center gap-1">
           {navLinks.filter(l => ["/compare", "/calculator", "/news"].includes(l.to)).map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
@@ -138,6 +137,10 @@ const Navbar = () => {
               <Shield className="h-4 w-4" />
             </Link>
           )}
+        </div>
+
+        {/* Mobile: hamburger on right */}
+        <div className="flex md:hidden items-center">
           <Button
             variant="ghost"
             size="icon"
