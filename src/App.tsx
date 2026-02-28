@@ -11,6 +11,8 @@ import FundDetailPage from "./pages/FundDetailPage";
 import CalculatorPage from "./pages/CalculatorPage";
 import NewsPage from "./pages/NewsPage";
 import LearnPage from "./pages/LearnPage";
+import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
+import TermsOfUsePage from "./pages/TermsOfUsePage";
 import AuthPage from "./pages/AuthPage";
 import AdminLoginPage from "./pages/AdminLoginPage";
 import AdminPage from "./pages/AdminPage";
@@ -33,6 +35,8 @@ const App = () => (
               <Route path="/calculator" element={<CalculatorPage />} />
               <Route path="/news" element={<NewsPage />} />
               <Route path="/learn" element={<LearnPage />} />
+              <Route path="/privacy" element={<PrivacyPolicyPage />} />
+              <Route path="/terms" element={<TermsOfUsePage />} />
               <Route path="/auth" element={<AuthPage />} />
               <Route path="/admin/login" element={<AdminLoginPage />} />
               <Route path="/admin" element={<AdminPage />} />
