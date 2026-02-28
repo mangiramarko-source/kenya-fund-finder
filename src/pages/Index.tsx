@@ -1,10 +1,11 @@
 import { Link } from "react-router-dom";
-import { ArrowRight, BarChart3, Calculator, BookOpen, TrendingUp, Shield } from "lucide-react";
+import { ArrowRight, BarChart3, Calculator, Newspaper, BookOpen, TrendingUp, Shield, Zap, PiggyBank, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { funds } from "@/data/funds";
+import { funds, newsArticles } from "@/data/funds";
 
 const Index = () => {
   const topFunds = [...funds].sort((a, b) => b.annualYield - a.annualYield).slice(0, 5);
+  const latestNews = newsArticles.slice(0, 3);
 
   return (
     <div>
@@ -22,25 +23,60 @@ const Index = () => {
             See returns. Calculate earnings. Stay updated.
           </p>
           <div className="flex flex-col sm:flex-row gap-3 justify-center">
-            <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold">
-              <Link to="/compare">Compare Funds <ArrowRight className="ml-2 h-4 w-4" /></Link>
+            <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold rounded-full px-8">
+              <Link to="/compare"><BarChart3 className="mr-2 h-4 w-4" /> Compare Funds</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 font-semibold">
-              <Link to="/calculator">Calculate Returns</Link>
+            <Button asChild size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 font-semibold rounded-full px-8">
+              <Link to="/calculator"><Calculator className="mr-2 h-4 w-4" /> Calculate Returns</Link>
             </Button>
           </div>
         </div>
       </section>
 
-      {/* Top Funds Preview */}
-      <section className="container py-16">
-        <div className="text-center mb-10">
-          <h2 className="text-2xl md:text-3xl font-bold mb-2">Top Performing Funds</h2>
-          <p className="text-muted-foreground">Ranked by current annual effective yield</p>
+      {/* Quick action cards */}
+      <section className="container -mt-10 relative z-10 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-3xl mx-auto">
+          {[
+            { icon: BarChart3, title: "Compare Funds", desc: "Side-by-side fund analysis", to: "/compare", color: "text-accent" },
+            { icon: Calculator, title: "Calculator", desc: "Estimate your returns", to: "/calculator", color: "text-info" },
+            { icon: Newspaper, title: "Latest News", desc: "Market updates & insights", to: "/news", color: "text-warning" },
+          ].map(({ icon: Icon, title, desc, to, color }) => (
+            <Link
+              key={to}
+              to={to}
+              className="group flex items-center gap-4 rounded-2xl bg-card border border-border p-5 shadow-sm hover:shadow-md hover:border-accent/30 transition-all"
+            >
+              <div className={`flex items-center justify-center h-12 w-12 rounded-xl bg-muted group-hover:bg-accent/10 transition-colors shrink-0`}>
+                <Icon className={`h-6 w-6 ${color} group-hover:text-accent transition-colors`} />
+              </div>
+              <div>
+                <h3 className="font-heading font-semibold text-sm">{title}</h3>
+                <p className="text-xs text-muted-foreground">{desc}</p>
+              </div>
+            </Link>
+          ))}
+        </div>
+      </section>
+
+      {/* Top Funds */}
+      <section className="container py-12">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-3">
+            <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-accent/10">
+              <TrendingUp className="h-5 w-5 text-accent" />
+            </div>
+            <div>
+              <h2 className="text-xl md:text-2xl font-bold">Top Performing Funds</h2>
+              <p className="text-xs text-muted-foreground">Ranked by annual effective yield</p>
+            </div>
+          </div>
+          <Button asChild variant="outline" size="sm" className="rounded-full hidden sm:inline-flex">
+            <Link to="/compare">View All <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
+          </Button>
         </div>
 
         {/* Desktop table */}
-        <div className="hidden md:block rounded-lg border border-border overflow-hidden">
+        <div className="hidden md:block rounded-xl border border-border overflow-hidden">
           <table className="w-full text-sm">
             <thead>
               <tr className="bg-muted">
@@ -59,9 +95,9 @@ const Index = () => {
                   <td className="px-4 py-3 text-right font-semibold text-accent">{fund.annualYield}%</td>
                   <td className="px-4 py-3 text-right">KES {fund.minimumInvestment.toLocaleString()}</td>
                   <td className="px-4 py-3 text-right">
-                    <Link to={`/compare/${fund.id}`} className="text-accent hover:underline text-xs font-medium">
-                      View Details →
-                    </Link>
+                    <Button asChild variant="ghost" size="sm" className="text-accent h-8 text-xs">
+                      <Link to={`/compare/${fund.id}`}>Details <ArrowRight className="ml-1 h-3 w-3" /></Link>
+                    </Button>
                   </td>
                 </tr>
               ))}
@@ -75,51 +111,95 @@ const Index = () => {
             <Link
               key={fund.id}
               to={`/compare/${fund.id}`}
-              className="block rounded-lg border border-border bg-card p-4 hover:shadow-md transition-shadow"
+              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 hover:shadow-md hover:border-accent/30 transition-all"
             >
-              <div className="flex justify-between items-start mb-1">
-                <h3 className="font-semibold text-sm">{fund.name}</h3>
-                <span className="text-accent font-bold">{fund.annualYield}%</span>
+              <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-accent/10 shrink-0">
+                <PiggyBank className="h-5 w-5 text-accent" />
               </div>
-              <p className="text-xs text-muted-foreground">{fund.manager}</p>
-              <p className="text-xs text-muted-foreground mt-1">Min: KES {fund.minimumInvestment.toLocaleString()}</p>
+              <div className="flex-1 min-w-0">
+                <h3 className="font-semibold text-sm truncate">{fund.name}</h3>
+                <p className="text-xs text-muted-foreground">{fund.manager}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-accent font-bold text-sm">{fund.annualYield}%</span>
+                <p className="text-[10px] text-muted-foreground">annual</p>
+              </div>
             </Link>
           ))}
         </div>
 
-        <div className="text-center mt-6">
-          <Button asChild variant="outline">
-            <Link to="/compare">View All Funds <ArrowRight className="ml-2 h-4 w-4" /></Link>
+        <div className="text-center mt-4 sm:hidden">
+          <Button asChild variant="outline" className="rounded-full">
+            <Link to="/compare">View All Funds <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
           </Button>
         </div>
       </section>
 
-      {/* 3 Steps */}
-      <section className="bg-muted/50 py-16">
+      {/* Latest News preview */}
+      <section className="bg-muted/40 py-12">
         <div className="container">
-          <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">How It Works</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
-            {[
-              { icon: BarChart3, title: "Compare", desc: "Browse and filter all CMA-regulated Money Market Funds side by side." },
-              { icon: Calculator, title: "Calculate", desc: "Use our calculator to estimate your potential returns over any period." },
-              { icon: TrendingUp, title: "Invest Smarter", desc: "Make informed decisions backed by real data and market insights." },
-            ].map(({ icon: Icon, title, desc }) => (
-              <div key={title} className="text-center">
-                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-accent/10">
-                  <Icon className="h-7 w-7 text-accent" />
-                </div>
-                <h3 className="font-heading font-semibold text-lg mb-2">{title}</h3>
-                <p className="text-sm text-muted-foreground">{desc}</p>
+          <div className="flex items-center justify-between mb-6">
+            <div className="flex items-center gap-3">
+              <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-warning/10">
+                <Newspaper className="h-5 w-5 text-warning" />
               </div>
+              <h2 className="text-xl md:text-2xl font-bold">Latest News</h2>
+            </div>
+            <Button asChild variant="ghost" size="sm" className="text-accent rounded-full">
+              <Link to="/news">See All <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
+            </Button>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {latestNews.map((article) => (
+              <article key={article.id} className="group rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-accent/30 transition-all">
+                <div className="flex items-center gap-2 mb-3">
+                  <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent/10 text-accent">
+                    {article.category}
+                  </span>
+                  <span className="text-[10px] text-muted-foreground">{article.readTime}</span>
+                </div>
+                <h3 className="font-heading font-semibold text-sm mb-2 group-hover:text-accent transition-colors line-clamp-2">
+                  {article.title}
+                </h3>
+                <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{article.summary}</p>
+                <Button variant="ghost" size="sm" className="text-accent text-xs h-7 px-0 hover:bg-transparent hover:underline">
+                  Read More <ArrowRight className="ml-1 h-3 w-3" />
+                </Button>
+              </article>
             ))}
           </div>
         </div>
       </section>
 
-      {/* What is an MMF? */}
+      {/* 3 Steps */}
       <section className="container py-16">
-        <div className="max-w-2xl mx-auto text-center">
-          <BookOpen className="h-10 w-10 text-accent mx-auto mb-4" />
+        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">How It Works</h2>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-3xl mx-auto">
+          {[
+            { icon: BarChart3, title: "Compare", desc: "Browse and filter all CMA-regulated Money Market Funds side by side.", step: "1" },
+            { icon: Calculator, title: "Calculate", desc: "Use our calculator to estimate your potential returns over any period.", step: "2" },
+            { icon: Zap, title: "Invest Smarter", desc: "Make informed decisions backed by real data and market insights.", step: "3" },
+          ].map(({ icon: Icon, title, desc, step }) => (
+            <div key={title} className="text-center">
+              <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
+                <Icon className="h-7 w-7 text-accent" />
+                <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">
+                  {step}
+                </span>
+              </div>
+              <h3 className="font-heading font-semibold text-lg mb-2">{title}</h3>
+              <p className="text-sm text-muted-foreground">{desc}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* What is an MMF? */}
+      <section className="bg-muted/40 py-16">
+        <div className="container max-w-2xl text-center">
+          <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent/10">
+            <BookOpen className="h-7 w-7 text-accent" />
+          </div>
           <h2 className="text-2xl md:text-3xl font-bold mb-4">What is a Money Market Fund?</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
             A Money Market Fund is a collective investment scheme that pools money from investors to invest in short-term, low-risk instruments like Treasury bills, commercial paper, and fixed deposits. In Kenya, MMFs are regulated by the <strong className="text-foreground">Capital Markets Authority (CMA)</strong> and offer higher returns than traditional savings accounts — often between 14% to 17% annually — while keeping your money accessible.
@@ -127,8 +207,8 @@ const Index = () => {
           <p className="text-muted-foreground leading-relaxed">
             They're ideal for investors seeking a safe, liquid alternative to bank savings with significantly better returns.
           </p>
-          <Button asChild variant="outline" className="mt-6">
-            <Link to="/learn">Learn More <ArrowRight className="ml-2 h-4 w-4" /></Link>
+          <Button asChild variant="outline" className="mt-6 rounded-full">
+            <Link to="/learn"><GraduationCap className="mr-2 h-4 w-4" /> Learn More</Link>
           </Button>
         </div>
       </section>
