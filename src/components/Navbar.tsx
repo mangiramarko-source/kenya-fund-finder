@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, TrendingUp, BarChart3, Calculator, Newspaper, GraduationCap, Home, Moon, Sun, User, LogOut } from "lucide-react";
+import { Menu, X, TrendingUp, BarChart3, Calculator, Newspaper, GraduationCap, Home, Moon, Sun, User, LogOut, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 
@@ -17,7 +17,7 @@ const Navbar = () => {
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
   const location = useLocation();
   const navigate = useNavigate();
-  const { user, signOut } = useAuth();
+  const { user, isAdmin, signOut } = useAuth();
 
   useEffect(() => {
     if (dark) {
@@ -87,6 +87,11 @@ const Navbar = () => {
 
           {user ? (
             <div className="flex items-center gap-2">
+              {isAdmin && (
+                <Link to="/admin" className="text-xs font-semibold text-accent hover:underline flex items-center gap-1">
+                  <Shield className="h-3.5 w-3.5" /> Admin
+                </Link>
+              )}
               <span className="text-xs text-muted-foreground truncate max-w-[120px]">{user.email}</span>
               <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full" aria-label="Sign out">
                 <LogOut className="h-4 w-4" />
@@ -145,11 +150,22 @@ const Navbar = () => {
           })}
           <div className="mt-3 px-1">
             {user ? (
-              <div className="flex items-center justify-between px-3 py-2">
-                <span className="text-sm text-muted-foreground truncate">{user.email}</span>
-                <Button variant="ghost" size="sm" onClick={async () => { await signOut(); setOpen(false); navigate("/"); }}>
-                  <LogOut className="mr-1.5 h-3.5 w-3.5" /> Sign Out
-                </Button>
+              <div className="space-y-2">
+                {isAdmin && (
+                  <Link
+                    to="/admin"
+                    onClick={() => setOpen(false)}
+                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-accent hover:bg-muted transition-colors"
+                  >
+                    <Shield className="h-5 w-5" /> Admin Panel
+                  </Link>
+                )}
+                <div className="flex items-center justify-between px-3 py-2">
+                  <span className="text-sm text-muted-foreground truncate">{user.email}</span>
+                  <Button variant="ghost" size="sm" onClick={async () => { await signOut(); setOpen(false); navigate("/"); }}>
+                    <LogOut className="mr-1.5 h-3.5 w-3.5" /> Sign Out
+                  </Button>
+                </div>
               </div>
             ) : (
               <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl font-semibold">
