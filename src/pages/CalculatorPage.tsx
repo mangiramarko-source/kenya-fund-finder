@@ -6,7 +6,7 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 
 const CalculatorPage = () => {
   const [amount, setAmount] = useState(100000);
-  const [yield_, setYield] = useState(16);
+  const [yield_, setYield] = useState(10);
   const [months, setMonths] = useState(12);
   const [monthly, setMonthly] = useState(0);
   const [compound, setCompound] = useState(true);
