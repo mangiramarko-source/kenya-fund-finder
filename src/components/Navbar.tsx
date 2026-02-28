@@ -104,9 +104,10 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile: center icon nav */}
-        <nav className="flex md:hidden items-center gap-1">
-          {navLinks.map((link) => {
+        {/* Mobile: icon links + hamburger */}
+        <div className="flex md:hidden items-center gap-1">
+          {/* Show Compare, Calculator, News as icon buttons */}
+          {navLinks.filter(l => ["/compare", "/calculator", "/news"].includes(l.to)).map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
             return (
@@ -140,27 +141,46 @@ const Navbar = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setDark(!dark)}
+            onClick={() => setOpen(!open)}
             className="rounded-full h-9 w-9"
-            aria-label="Toggle dark mode"
+            aria-label="Toggle menu"
           >
-            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
+        </div>
+      </div>
+
+      {/* Mobile hamburger dropdown */}
+      {open && (
+        <nav className="md:hidden border-t border-border bg-card px-4 pb-4 pt-2 space-y-1">
+          <button
+            onClick={() => { setDark(!dark); setOpen(false); }}
+            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+          >
+            {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+            {dark ? "Light Mode" : "Dark Mode"}
+          </button>
           {user ? (
-            <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full h-9 w-9" aria-label="Sign out">
-              <LogOut className="h-4 w-4" />
-            </Button>
+            <>
+              <div className="px-4 py-2 text-xs text-muted-foreground truncate">{user.email}</div>
+              <button
+                onClick={async () => { await signOut(); setOpen(false); navigate("/"); }}
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
+                <LogOut className="h-5 w-5" /> Sign Out
+              </button>
+            </>
           ) : (
             <Link
               to="/auth"
-              className="flex items-center justify-center h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
-              aria-label="Sign In"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
             >
-              <User className="h-4 w-4" />
+              <User className="h-5 w-5" /> Sign In
             </Link>
           )}
         </nav>
-      </div>
+      )}
     </header>
   );
 };
