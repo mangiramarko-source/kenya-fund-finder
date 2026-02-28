@@ -14,16 +14,224 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      change_log: {
+        Row: {
+          action: string
+          changed_at: string
+          changed_by: string | null
+          entity_id: string
+          entity_type: string
+          id: string
+          new_values: Json | null
+          old_values: Json | null
+        }
+        Insert: {
+          action: string
+          changed_at?: string
+          changed_by?: string | null
+          entity_id: string
+          entity_type: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Update: {
+          action?: string
+          changed_at?: string
+          changed_by?: string | null
+          entity_id?: string
+          entity_type?: string
+          id?: string
+          new_values?: Json | null
+          old_values?: Json | null
+        }
+        Relationships: []
+      }
+      fund_historical_yields: {
+        Row: {
+          fund_id: string
+          id: string
+          month: string
+          yield: number
+        }
+        Insert: {
+          fund_id: string
+          id?: string
+          month: string
+          yield: number
+        }
+        Update: {
+          fund_id?: string
+          id?: string
+          month?: string
+          yield?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fund_historical_yields_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      funds: {
+        Row: {
+          annual_yield: number
+          cma_licensed: boolean
+          created_at: string
+          created_by: string | null
+          description: string
+          fact_sheet_date: string | null
+          id: string
+          is_published: boolean
+          management_fee: number
+          manager: string
+          minimum_investment: number
+          name: string
+          seven_day_yield: number
+          slug: string
+          source_url: string | null
+          thirty_day_yield: number
+          updated_at: string
+          updated_by: string | null
+          website: string
+          withdrawal_time: string
+        }
+        Insert: {
+          annual_yield: number
+          cma_licensed?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          fact_sheet_date?: string | null
+          id?: string
+          is_published?: boolean
+          management_fee: number
+          manager: string
+          minimum_investment: number
+          name: string
+          seven_day_yield: number
+          slug: string
+          source_url?: string | null
+          thirty_day_yield: number
+          updated_at?: string
+          updated_by?: string | null
+          website?: string
+          withdrawal_time: string
+        }
+        Update: {
+          annual_yield?: number
+          cma_licensed?: boolean
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          fact_sheet_date?: string | null
+          id?: string
+          is_published?: boolean
+          management_fee?: number
+          manager?: string
+          minimum_investment?: number
+          name?: string
+          seven_day_yield?: number
+          slug?: string
+          source_url?: string | null
+          thirty_day_yield?: number
+          updated_at?: string
+          updated_by?: string | null
+          website?: string
+          withdrawal_time?: string
+        }
+        Relationships: []
+      }
+      news_articles: {
+        Row: {
+          category: string
+          created_at: string
+          created_by: string | null
+          date_published: string
+          id: string
+          is_featured: boolean
+          read_time: string
+          source: string
+          status: string
+          summary: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          url: string | null
+        }
+        Insert: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          date_published?: string
+          id?: string
+          is_featured?: boolean
+          read_time?: string
+          source?: string
+          status?: string
+          summary: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+        }
+        Update: {
+          category?: string
+          created_at?: string
+          created_by?: string | null
+          date_published?: string
+          id?: string
+          is_featured?: boolean
+          read_time?: string
+          source?: string
+          status?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "editor" | "reviewer"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +358,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "editor", "reviewer"],
+    },
   },
 } as const
