@@ -1,25 +1,17 @@
 import { useState } from "react";
 import { newsArticles } from "@/data/funds";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ArrowRight } from "lucide-react";
-
-import newsYields from "@/assets/news-yields.jpg";
-import newsTreasury from "@/assets/news-treasury.jpg";
-import newsRegulation from "@/assets/news-regulation.jpg";
-import newsDigital from "@/assets/news-digital.jpg";
-import newsSavings from "@/assets/news-savings.jpg";
-import newsFund from "@/assets/news-fund.jpg";
-
-const imageMap: Record<string, string> = {
-  yields: newsYields,
-  treasury: newsTreasury,
-  regulation: newsRegulation,
-  digital: newsDigital,
-  savings: newsSavings,
-  fund: newsFund,
-};
+import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 const categories = ["All", "Yield Updates", "Market News", "Regulatory Updates"] as const;
+
+const categoryIcons: Record<string, typeof TrendingUp> = {
+  "Yield Updates": TrendingUp,
+  "Market News": Landmark,
+  "Regulatory Updates": Shield,
+  "Fund Announcements": Megaphone,
+};
 
 const categoryColors: Record<string, string> = {
   "Yield Updates": "bg-accent/10 text-accent hover:bg-accent/20",
@@ -35,121 +27,82 @@ const NewsPage = () => {
     ? newsArticles
     : newsArticles.filter((a) => a.category === activeCategory);
 
-  const featured = filtered.filter((a) => a.featured);
-  const regular = filtered.filter((a) => !a.featured);
-
   return (
     <div className="container py-10">
-      <h1 className="text-2xl md:text-3xl font-bold mb-2">News & Updates</h1>
-      <p className="text-muted-foreground mb-6">Stay informed about Money Market Funds in Kenya.</p>
+      <div className="flex items-center gap-3 mb-2">
+        <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-accent/10">
+          <Megaphone className="h-5 w-5 text-accent" />
+        </div>
+        <h1 className="text-2xl md:text-3xl font-bold">News & Updates</h1>
+      </div>
+      <p className="text-muted-foreground mb-6 ml-[52px]">Stay informed about Money Market Funds in Kenya.</p>
 
-      {/* Category filters */}
+      {/* Category filter pills */}
       <div className="flex flex-wrap gap-2 mb-8">
-        {categories.map((cat) => (
-          <button
-            key={cat}
-            onClick={() => setActiveCategory(cat)}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition-colors ${
-              activeCategory === cat
-                ? "bg-primary text-primary-foreground"
-                : "bg-muted text-muted-foreground hover:bg-muted/80"
-            }`}
-          >
-            {cat}
-          </button>
-        ))}
+        {categories.map((cat) => {
+          const Icon = categoryIcons[cat];
+          return (
+            <button
+              key={cat}
+              onClick={() => setActiveCategory(cat)}
+              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                activeCategory === cat
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted text-muted-foreground hover:bg-muted/80"
+              }`}
+            >
+              {Icon && <Icon className="h-3.5 w-3.5" />}
+              {cat}
+            </button>
+          );
+        })}
       </div>
 
-      {/* Featured articles - large hero cards */}
-      {featured.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-          {featured.map((article) => (
+      {/* Articles list */}
+      <div className="space-y-3">
+        {filtered.map((article) => {
+          const CatIcon = categoryIcons[article.category] || Megaphone;
+          return (
             <article
               key={article.id}
-              className="group rounded-xl border border-border bg-card overflow-hidden hover:shadow-lg transition-all duration-300"
+              className="group rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-accent/30 transition-all duration-200"
             >
-              <div className="aspect-[16/9] overflow-hidden">
-                <img
-                  src={imageMap[article.imageKey]}
-                  alt={article.title}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                  loading="lazy"
-                />
-              </div>
-              <div className="p-5">
-                <div className="flex items-center gap-2 mb-3">
-                  <Badge variant="secondary" className={categoryColors[article.category] || ""}>
-                    {article.category}
-                  </Badge>
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {article.readTime}
-                  </span>
+              <div className="flex items-start gap-4">
+                <div className="hidden sm:flex items-center justify-center h-12 w-12 rounded-xl bg-muted shrink-0 group-hover:bg-accent/10 transition-colors">
+                  <CatIcon className="h-6 w-6 text-muted-foreground group-hover:text-accent transition-colors" />
                 </div>
-                <h2 className="font-heading font-bold text-xl mb-2 group-hover:text-accent transition-colors">
-                  {article.title}
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4 line-clamp-3">
-                  {article.summary}
-                </p>
-                <div className="flex items-center justify-between">
-                  <span className="text-xs text-muted-foreground">
-                    {new Date(article.date).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
-                  </span>
-                  <button className="flex items-center gap-1 text-accent text-sm font-medium hover:underline">
-                    Read More <ArrowRight className="h-3.5 w-3.5" />
-                  </button>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <Badge variant="secondary" className={categoryColors[article.category] || ""}>
+                      {article.category}
+                    </Badge>
+                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      {article.readTime}
+                    </span>
+                    {article.featured && (
+                      <Badge className="bg-accent/15 text-accent border-0 text-[10px]">Featured</Badge>
+                    )}
+                  </div>
+                  <h2 className="font-heading font-semibold text-base md:text-lg mb-1.5 group-hover:text-accent transition-colors">
+                    {article.title}
+                  </h2>
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
+                    {article.summary}
+                  </p>
+                  <div className="flex items-center justify-between mt-3">
+                    <span className="text-xs text-muted-foreground">
+                      {new Date(article.date).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
+                    </span>
+                    <Button variant="ghost" size="sm" className="text-accent hover:text-accent gap-1 -mr-2 text-xs h-8">
+                      Read More <ArrowRight className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
                 </div>
               </div>
             </article>
-          ))}
-        </div>
-      )}
-
-      {/* Regular articles - image + text side by side */}
-      <div className="space-y-4">
-        {regular.map((article) => (
-          <article
-            key={article.id}
-            className="group rounded-xl border border-border bg-card overflow-hidden hover:shadow-md transition-all duration-300 flex flex-col sm:flex-row"
-          >
-            <div className="sm:w-56 md:w-72 shrink-0 aspect-[16/9] sm:aspect-auto overflow-hidden">
-              <img
-                src={imageMap[article.imageKey]}
-                alt={article.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                loading="lazy"
-              />
-            </div>
-            <div className="flex-1 p-5 flex flex-col justify-between">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <Badge variant="secondary" className={categoryColors[article.category] || ""}>
-                    {article.category}
-                  </Badge>
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
-                    {article.readTime}
-                  </span>
-                </div>
-                <h2 className="font-heading font-semibold text-lg mb-2 group-hover:text-accent transition-colors">
-                  {article.title}
-                </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                  {article.summary}
-                </p>
-              </div>
-              <div className="flex items-center justify-between mt-3">
-                <span className="text-xs text-muted-foreground">
-                  {new Date(article.date).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
-                </span>
-                <button className="flex items-center gap-1 text-accent text-sm font-medium hover:underline">
-                  Read More <ArrowRight className="h-3.5 w-3.5" />
-                </button>
-              </div>
-            </div>
-          </article>
-        ))}
+          );
+        })}
       </div>
 
       {/* Disclaimer */}
