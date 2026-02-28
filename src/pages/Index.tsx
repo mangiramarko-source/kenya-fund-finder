@@ -1,11 +1,20 @@
+import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { ArrowRight, BarChart3, Calculator, Newspaper, BookOpen, TrendingUp, Shield, Zap, PiggyBank, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { funds, newsArticles } from "@/data/funds";
+import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 
 const Index = () => {
-  const topFunds = [...funds].sort((a, b) => b.annualYield - a.annualYield).slice(0, 5);
-  const latestNews = newsArticles.slice(0, 3);
+  const [funds, setFunds] = useState<FundFromDB[]>([]);
+  const [news, setNews] = useState<NewsFromDB[]>([]);
+
+  useEffect(() => {
+    fetchFunds().then((data) => setFunds(data)).catch(() => {});
+    fetchPublishedNews().then((data) => setNews(data)).catch(() => {});
+  }, []);
+
+  const topFunds = funds.slice(0, 5);
+  const latestNews = news.slice(0, 3);
 
   return (
     <div>
@@ -41,12 +50,8 @@ const Index = () => {
             { icon: Calculator, title: "Calculator", desc: "Estimate your returns", to: "/calculator", color: "text-info" },
             { icon: Newspaper, title: "Latest News", desc: "Market updates & insights", to: "/news", color: "text-warning" },
           ].map(({ icon: Icon, title, desc, to, color }) => (
-            <Link
-              key={to}
-              to={to}
-              className="group flex items-center gap-4 rounded-2xl bg-card border border-border p-5 shadow-sm hover:shadow-md hover:border-accent/30 transition-all"
-            >
-              <div className={`flex items-center justify-center h-12 w-12 rounded-xl bg-muted group-hover:bg-accent/10 transition-colors shrink-0`}>
+            <Link key={to} to={to} className="group flex items-center gap-4 rounded-2xl bg-card border border-border p-5 shadow-sm hover:shadow-md hover:border-accent/30 transition-all">
+              <div className="flex items-center justify-center h-12 w-12 rounded-xl bg-muted group-hover:bg-accent/10 transition-colors shrink-0">
                 <Icon className={`h-6 w-6 ${color} group-hover:text-accent transition-colors`} />
               </div>
               <div>
@@ -92,11 +97,11 @@ const Index = () => {
                 <tr key={fund.id} className={`border-t border-border ${i % 2 === 0 ? "bg-card" : "bg-muted/30"}`}>
                   <td className="px-4 py-3 font-medium">{fund.name}</td>
                   <td className="px-4 py-3 text-muted-foreground">{fund.manager}</td>
-                  <td className="px-4 py-3 text-right font-semibold text-accent">{fund.annualYield}%</td>
-                  <td className="px-4 py-3 text-right">KES {fund.minimumInvestment.toLocaleString()}</td>
+                  <td className="px-4 py-3 text-right font-semibold text-accent">{fund.annual_yield}%</td>
+                  <td className="px-4 py-3 text-right">KES {fund.minimum_investment.toLocaleString()}</td>
                   <td className="px-4 py-3 text-right">
                     <Button asChild variant="ghost" size="sm" className="text-accent h-8 text-xs">
-                      <Link to={`/compare/${fund.id}`}>Details <ArrowRight className="ml-1 h-3 w-3" /></Link>
+                      <Link to={`/compare/${fund.slug}`}>Details <ArrowRight className="ml-1 h-3 w-3" /></Link>
                     </Button>
                   </td>
                 </tr>
@@ -108,11 +113,7 @@ const Index = () => {
         {/* Mobile cards */}
         <div className="md:hidden space-y-3">
           {topFunds.map((fund) => (
-            <Link
-              key={fund.id}
-              to={`/compare/${fund.id}`}
-              className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 hover:shadow-md hover:border-accent/30 transition-all"
-            >
+            <Link key={fund.id} to={`/compare/${fund.slug}`} className="flex items-center gap-4 rounded-xl border border-border bg-card p-4 hover:shadow-md hover:border-accent/30 transition-all">
               <div className="flex items-center justify-center h-10 w-10 rounded-lg bg-accent/10 shrink-0">
                 <PiggyBank className="h-5 w-5 text-accent" />
               </div>
@@ -121,7 +122,7 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">{fund.manager}</p>
               </div>
               <div className="text-right shrink-0">
-                <span className="text-accent font-bold text-sm">{fund.annualYield}%</span>
+                <span className="text-accent font-bold text-sm">{fund.annual_yield}%</span>
                 <p className="text-[10px] text-muted-foreground">annual</p>
               </div>
             </Link>
@@ -156,15 +157,16 @@ const Index = () => {
                   <span className="inline-flex items-center gap-1 text-[10px] font-semibold px-2 py-0.5 rounded-full bg-accent/10 text-accent">
                     {article.category}
                   </span>
-                  <span className="text-[10px] text-muted-foreground">{article.readTime}</span>
+                  <span className="text-[10px] text-muted-foreground">{article.read_time}</span>
                 </div>
                 <h3 className="font-heading font-semibold text-sm mb-2 group-hover:text-accent transition-colors line-clamp-2">
                   {article.title}
                 </h3>
                 <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{article.summary}</p>
-                <Button variant="ghost" size="sm" className="text-accent text-xs h-7 px-0 hover:bg-transparent hover:underline">
-                  Read More <ArrowRight className="ml-1 h-3 w-3" />
-                </Button>
+                <span className="text-xs text-muted-foreground">
+                  {article.source && `${article.source} · `}
+                  {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
+                </span>
               </article>
             ))}
           </div>
@@ -183,9 +185,7 @@ const Index = () => {
             <div key={title} className="text-center">
               <div className="relative mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
                 <Icon className="h-7 w-7 text-accent" />
-                <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">
-                  {step}
-                </span>
+                <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">{step}</span>
               </div>
               <h3 className="font-heading font-semibold text-lg mb-2">{title}</h3>
               <p className="text-sm text-muted-foreground">{desc}</p>

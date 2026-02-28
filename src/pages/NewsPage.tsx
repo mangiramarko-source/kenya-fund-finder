@@ -1,5 +1,5 @@
-import { useState } from "react";
-import { newsArticles } from "@/data/funds";
+import { useState, useEffect } from "react";
+import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
 import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,10 +22,18 @@ const categoryColors: Record<string, string> = {
 
 const NewsPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [articles, setArticles] = useState<NewsFromDB[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchPublishedNews().then((data) => { setArticles(data); setLoading(false); }).catch(() => setLoading(false));
+  }, []);
 
   const filtered = activeCategory === "All"
-    ? newsArticles
-    : newsArticles.filter((a) => a.category === activeCategory);
+    ? articles
+    : articles.filter((a) => a.category === activeCategory);
+
+  if (loading) return <div className="container py-20 text-center text-muted-foreground">Loading news...</div>;
 
   return (
     <div className="container py-10">
@@ -37,7 +45,6 @@ const NewsPage = () => {
       </div>
       <p className="text-muted-foreground mb-6 ml-[52px]">Stay informed about Money Market Funds in Kenya.</p>
 
-      {/* Category filter pills */}
       <div className="flex flex-wrap gap-2 mb-8">
         {categories.map((cat) => {
           const Icon = categoryIcons[cat];
@@ -58,15 +65,11 @@ const NewsPage = () => {
         })}
       </div>
 
-      {/* Articles list */}
       <div className="space-y-3">
         {filtered.map((article) => {
           const CatIcon = categoryIcons[article.category] || Megaphone;
           return (
-            <article
-              key={article.id}
-              className="group rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-accent/30 transition-all duration-200"
-            >
+            <article key={article.id} className="group rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-accent/30 transition-all duration-200">
               <div className="flex items-start gap-4">
                 <div className="hidden sm:flex items-center justify-center h-12 w-12 rounded-xl bg-muted shrink-0 group-hover:bg-accent/10 transition-colors">
                   <CatIcon className="h-6 w-6 text-muted-foreground group-hover:text-accent transition-colors" />
@@ -78,25 +81,26 @@ const NewsPage = () => {
                     </Badge>
                     <span className="flex items-center gap-1 text-xs text-muted-foreground">
                       <Clock className="h-3 w-3" />
-                      {article.readTime}
+                      {article.read_time}
                     </span>
-                    {article.featured && (
+                    {article.is_featured && (
                       <Badge className="bg-accent/15 text-accent border-0 text-[10px]">Featured</Badge>
                     )}
                   </div>
                   <h2 className="font-heading font-semibold text-base md:text-lg mb-1.5 group-hover:text-accent transition-colors">
                     {article.title}
                   </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">
-                    {article.summary}
-                  </p>
+                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{article.summary}</p>
                   <div className="flex items-center justify-between mt-3">
                     <span className="text-xs text-muted-foreground">
-                      {new Date(article.date).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
+                      {article.source && `${article.source} · `}
+                      {new Date(article.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
                     </span>
-                    <Button variant="ghost" size="sm" className="text-accent hover:text-accent gap-1 -mr-2 text-xs h-8">
-                      Read More <ArrowRight className="h-3.5 w-3.5" />
-                    </Button>
+                    {article.url && (
+                      <Button asChild variant="ghost" size="sm" className="text-accent hover:text-accent gap-1 -mr-2 text-xs h-8">
+                        <a href={article.url} target="_blank" rel="noopener noreferrer">Read More <ArrowRight className="h-3.5 w-3.5" /></a>
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
@@ -105,7 +109,6 @@ const NewsPage = () => {
         })}
       </div>
 
-      {/* Disclaimer */}
       <p className="text-xs text-muted-foreground text-center mt-10">
         All information is sourced from publicly available data. Fund yields and regulatory details are based on CMA-regulated disclosures.
       </p>
