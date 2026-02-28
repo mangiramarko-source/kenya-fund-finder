@@ -104,31 +104,8 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile right side */}
-        <div className="flex md:hidden items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setDark(!dark)}
-            className="rounded-full"
-            aria-label="Toggle dark mode"
-          >
-            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpen(!open)}
-            aria-label="Toggle menu"
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
-        </div>
-      </div>
-
-      {/* Mobile nav */}
-      {open && (
-        <nav className="md:hidden border-t border-border bg-card px-4 pb-4 pt-2">
+        {/* Mobile: center icon nav */}
+        <nav className="flex md:hidden items-center gap-1">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
@@ -136,47 +113,54 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                onClick={() => setOpen(false)}
-                className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium transition-colors ${
+                className={`flex items-center justify-center h-9 w-9 rounded-full transition-all ${
                   isActive
-                    ? "bg-primary text-primary-foreground"
-                    : "text-foreground/70 hover:bg-muted"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
+                aria-label={link.label}
               >
-                <Icon className="h-5 w-5" />
-                {link.label}
+                <Icon className="h-4 w-4" />
               </Link>
             );
           })}
-          <div className="mt-3 px-1">
-            {user ? (
-              <div className="space-y-2">
-                {isAdmin && (
-                  <Link
-                    to="/admin"
-                    onClick={() => setOpen(false)}
-                    className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-accent hover:bg-muted transition-colors"
-                  >
-                    <Shield className="h-5 w-5" /> Admin Panel
-                  </Link>
-                )}
-                <div className="flex items-center justify-between px-3 py-2">
-                  <span className="text-sm text-muted-foreground truncate">{user.email}</span>
-                  <Button variant="ghost" size="sm" onClick={async () => { await signOut(); setOpen(false); navigate("/"); }}>
-                    <LogOut className="mr-1.5 h-3.5 w-3.5" /> Sign Out
-                  </Button>
-                </div>
-              </div>
-            ) : (
-              <Button asChild className="w-full bg-accent text-accent-foreground hover:bg-accent/90 rounded-xl font-semibold">
-                <Link to="/auth" onClick={() => setOpen(false)}>
-                  <User className="mr-1.5 h-4 w-4" /> Sign In
-                </Link>
-              </Button>
-            )}
-          </div>
+          {isAdmin && (
+            <Link
+              to="/admin"
+              className={`flex items-center justify-center h-9 w-9 rounded-full transition-all ${
+                location.pathname === "/admin"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-accent hover:bg-muted"
+              }`}
+              aria-label="Admin"
+            >
+              <Shield className="h-4 w-4" />
+            </Link>
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDark(!dark)}
+            className="rounded-full h-9 w-9"
+            aria-label="Toggle dark mode"
+          >
+            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
+          {user ? (
+            <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full h-9 w-9" aria-label="Sign out">
+              <LogOut className="h-4 w-4" />
+            </Button>
+          ) : (
+            <Link
+              to="/auth"
+              className="flex items-center justify-center h-9 w-9 rounded-full text-muted-foreground hover:text-foreground hover:bg-muted transition-all"
+              aria-label="Sign In"
+            >
+              <User className="h-4 w-4" />
+            </Link>
+          )}
         </nav>
-      )}
+      </div>
     </header>
   );
 };
