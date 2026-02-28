@@ -28,6 +28,15 @@ const ComparePage = () => {
     });
   }, [funds, sortKey, sortDir, managerFilter]);
 
+  const lastUpdated = useMemo(() => {
+    if (funds.length === 0) return null;
+    const latest = funds.reduce((max, f) => {
+      const d = new Date(f.updated_at);
+      return d > max ? d : max;
+    }, new Date(0));
+    return latest.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
+  }, [funds]);
+
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "desc" ? "asc" : "desc"));
     else { setSortKey(key); setSortDir("desc"); }
@@ -40,11 +49,13 @@ const ComparePage = () => {
   );
 
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Loading funds...</div>;
-
   return (
     <div className="container py-10">
-      <h1 className="text-2xl md:text-3xl font-bold mb-2">Compare Money Market Funds</h1>
-      <p className="text-muted-foreground mb-6">All funds listed are regulated by the Capital Markets Authority of Kenya.</p>
+      <h1 className="text-2xl md:text-3xl font-bold mb-1">Compare Money Market Funds</h1>
+      <p className="text-muted-foreground mb-1">All funds listed are regulated by the Capital Markets Authority of Kenya.</p>
+      {lastUpdated && (
+        <p className="text-xs text-muted-foreground mb-6">Data last updated: <strong>{lastUpdated}</strong> · Yields are gross annual effective rates before 15% withholding tax.</p>
+      )}
 
       <div className="flex flex-col sm:flex-row gap-3 mb-6">
         <div className="flex items-center gap-2">
@@ -111,6 +122,12 @@ const ComparePage = () => {
             </div>
           </Link>
         ))}
+      </div>
+
+      <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          <strong>Disclaimer:</strong> Yields shown are gross annual effective rates before the 15% withholding tax. Past performance is not indicative of future results. Data is sourced from publicly available fund fact sheets and may not reflect real-time values. This platform does not offer investment advice. Please consult a licensed financial advisor before making investment decisions.
+        </p>
       </div>
     </div>
   );

@@ -202,7 +202,7 @@ const Index = () => {
           </div>
           <h2 className="text-2xl md:text-3xl font-bold mb-4">What is a Money Market Fund?</h2>
           <p className="text-muted-foreground leading-relaxed mb-4">
-            A Money Market Fund is a collective investment scheme that pools money from investors to invest in short-term, low-risk instruments like Treasury bills, commercial paper, and fixed deposits. In Kenya, MMFs are regulated by the <strong className="text-foreground">Capital Markets Authority (CMA)</strong> and offer higher returns than traditional savings accounts — often between 14% to 17% annually — while keeping your money accessible.
+            A Money Market Fund is a collective investment scheme that pools money from investors to invest in short-term, low-risk instruments like Treasury bills, commercial paper, and fixed deposits. In Kenya, MMFs are regulated by the <strong className="text-foreground">Capital Markets Authority (CMA)</strong> and offer higher returns than traditional savings accounts while keeping your money accessible.
           </p>
           <p className="text-muted-foreground leading-relaxed">
             They're ideal for investors seeking a safe, liquid alternative to bank savings with significantly better returns.

@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { TrendingUp } from "lucide-react";
+import { TrendingUp, AlertTriangle } from "lucide-react";
 
 const Footer = () => (
   <footer className="border-t border-border bg-card mt-16">
@@ -29,13 +29,25 @@ const Footer = () => (
             <li><span className="cursor-pointer hover:text-foreground transition-colors">About</span></li>
             <li><span className="cursor-pointer hover:text-foreground transition-colors">Contact</span></li>
             <li><span className="cursor-pointer hover:text-foreground transition-colors">Privacy Policy</span></li>
-            <li><span className="cursor-pointer hover:text-foreground transition-colors">Terms</span></li>
+            <li><span className="cursor-pointer hover:text-foreground transition-colors">Terms of Use</span></li>
           </ul>
         </div>
       </div>
-      <div className="mt-8 pt-6 border-t border-border text-xs text-muted-foreground text-center">
-        <p>This platform provides information only and does not offer investment advice. All funds are regulated by the Capital Markets Authority of Kenya.</p>
-        <p className="mt-2">© {new Date().getFullYear()} MMF Compare Kenya. All rights reserved.</p>
+
+      {/* Disclaimer */}
+      <div className="mt-8 pt-6 border-t border-border">
+        <div className="flex items-start gap-2 mb-4">
+          <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            <strong>Important Disclaimer:</strong> This platform provides information only and does not constitute investment advice, financial advice, trading advice, or any other sort of advice. You should not treat any of the platform's content as such. MMF Compare Kenya does not recommend that any financial product is suitable for you. The content on this platform is provided for general informational purposes only. Past performance is not indicative of future results. All investments carry risk, including the potential loss of principal. Please consult with a qualified financial advisor before making any investment decisions.
+          </p>
+        </div>
+        <p className="text-xs text-muted-foreground mb-2">
+          All funds listed on this platform are regulated by the <strong>Capital Markets Authority (CMA) of Kenya</strong>. Fund data is sourced from publicly available fact sheets and regulatory filings. Yields shown are gross annual effective yields before the 15% withholding tax unless otherwise stated. Data may not reflect real-time values.
+        </p>
+        <p className="text-xs text-muted-foreground text-center mt-4">
+          © {new Date().getFullYear()} MMF Compare Kenya. All rights reserved. This platform is not affiliated with, endorsed by, or connected to any fund manager or the CMA.
+        </p>
       </div>
     </div>
   </footer>
