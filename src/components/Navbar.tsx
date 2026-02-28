@@ -105,7 +105,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile: centered icon links */}
-        <div className="absolute left-1/2 -translate-x-1/2 flex md:hidden items-center gap-1">
+        <nav className="absolute left-1/2 -translate-x-1/2 flex md:hidden items-center gap-1 bg-muted/60 rounded-full px-1.5 py-1">
           {navLinks.filter(l => ["/compare", "/calculator", "/news"].includes(l.to)).map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
@@ -137,7 +137,7 @@ const Navbar = () => {
               <Shield className="h-4 w-4" />
             </Link>
           )}
-        </div>
+        </nav>
 
         {/* Mobile: hamburger on right */}
         <div className="flex md:hidden items-center">
