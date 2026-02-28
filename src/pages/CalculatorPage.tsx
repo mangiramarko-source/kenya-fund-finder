@@ -94,6 +94,12 @@ const CalculatorPage = () => {
           </LineChart>
         </ResponsiveContainer>
       </div>
+
+      <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          <strong>Disclaimer:</strong> This calculator provides estimates for illustrative purposes only and does not guarantee actual returns. Calculations assume constant yield rates and do not account for the 15% withholding tax, fund management fees, or market fluctuations. Actual returns may vary. This is not investment advice — consult a licensed financial advisor before making investment decisions.
+        </p>
+      </div>
     </div>
   );
 };

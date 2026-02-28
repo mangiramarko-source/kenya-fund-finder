@@ -41,7 +41,11 @@ const FundDetailPage = () => {
       </Link>
 
       <h1 className="text-2xl md:text-3xl font-bold mb-1">{fund.name}</h1>
-      <p className="text-muted-foreground mb-6">{fund.manager}</p>
+      <p className="text-muted-foreground mb-1">{fund.manager}</p>
+      <p className="text-xs text-muted-foreground mb-6">
+        Last updated: {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+        {fund.fact_sheet_date && ` · Fact sheet: ${new Date(fund.fact_sheet_date).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}`}
+      </p>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         {[
@@ -86,6 +90,12 @@ const FundDetailPage = () => {
           Visit Official Website <ExternalLink className="ml-2 h-4 w-4" />
         </a>
       </Button>
+
+      <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
+        <p className="text-xs text-muted-foreground leading-relaxed">
+          <strong>Disclaimer:</strong> Yields shown are gross annual effective rates before the 15% withholding tax unless otherwise stated. Past performance is not indicative of future results. This platform does not offer investment advice. Please consult a licensed financial advisor before making investment decisions.
+        </p>
+      </div>
     </div>
   );
 };

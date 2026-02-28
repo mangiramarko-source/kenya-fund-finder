@@ -1,6 +1,6 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BookOpen } from "lucide-react";
-import { faqItems } from "@/data/funds";
+import { faqItems } from "@/data/faq";
 
 const LearnPage = () => (
   <div className="container py-10 max-w-2xl">
@@ -22,6 +22,12 @@ const LearnPage = () => (
         </AccordionItem>
       ))}
     </Accordion>
+
+    <div className="mt-10 p-4 rounded-lg bg-muted/50 border border-border">
+      <p className="text-xs text-muted-foreground leading-relaxed">
+        <strong>Disclaimer:</strong> The information provided on this platform is for educational and informational purposes only and does not constitute investment advice, financial advice, or a recommendation to buy or sell any financial product. Past performance is not indicative of future results. All investments carry risk, including the potential loss of principal. Consult a licensed financial advisor before making any investment decisions. All funds listed are regulated by the Capital Markets Authority (CMA) of Kenya.
+      </p>
+    </div>
   </div>
 );
 
