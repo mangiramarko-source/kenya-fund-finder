@@ -152,8 +152,23 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile: centered nav links with labels */}
-        <nav className="absolute left-1/2 -translate-x-1/2 flex md:hidden items-center gap-0.5 bg-muted/60 rounded-full px-1 py-1">
+        {/* Mobile: hamburger on right */}
+        <div className="flex md:hidden items-center gap-1">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setOpen(!open)}
+            className="rounded-full h-9 w-9"
+            aria-label="Toggle menu"
+          >
+            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+          </Button>
+        </div>
+      </div>
+
+      {/* Mobile: nav pills row */}
+      <div className="md:hidden flex justify-center px-4 pb-1.5 pt-1 bg-card/95">
+        <nav className="flex items-center gap-0.5 bg-muted/60 rounded-full px-1 py-1">
           {navLinks.filter(l => ["/compare", "/calculator", "/news"].includes(l.to)).map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
@@ -172,42 +187,26 @@ const Navbar = () => {
               </Link>
             );
           })}
-          {isAdmin && (
-            <Link
-              to="/admin"
-              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
-                location.pathname === "/admin"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-accent hover:bg-muted"
-              }`}
-            >
-              <Shield className="h-3.5 w-3.5" />
-            </Link>
-          )}
         </nav>
-
-        {/* Mobile: hamburger on right */}
-        <div className="flex md:hidden items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpen(!open)}
-            className="rounded-full h-9 w-9"
-            aria-label="Toggle menu"
-          >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
-          </Button>
-        </div>
       </div>
 
-      {/* Mobile search bar below nav */}
-      <div className="md:hidden px-4 pb-2 pt-1 border-b border-border bg-card/95">
+      {/* Mobile: search bar row */}
+      <div className="md:hidden px-4 pb-2 pt-0.5 border-b border-border bg-card/95">
         <SearchDialog />
       </div>
 
       {/* Mobile hamburger dropdown */}
       {open && (
         <nav className="md:hidden border-t border-border bg-card px-4 pb-4 pt-2 space-y-1">
+          {isAdmin && (
+            <Link
+              to="/admin"
+              onClick={() => setOpen(false)}
+              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-accent hover:bg-muted transition-colors"
+            >
+              <Shield className="h-5 w-5" /> Admin Panel
+            </Link>
+          )}
           <button
             onClick={() => { setDark(!dark); setOpen(false); }}
             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
