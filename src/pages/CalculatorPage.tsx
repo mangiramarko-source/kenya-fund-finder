@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -10,8 +11,9 @@ import { AlertTriangle, Info } from "lucide-react";
 const WITHHOLDING_TAX_RATE = 0.15;
 
 const CalculatorPage = () => {
+  const [searchParams] = useSearchParams();
   const [funds, setFunds] = useState<FundFromDB[]>([]);
-  const [selectedFundSlug, setSelectedFundSlug] = useState<string>("custom");
+  const [selectedFundSlug, setSelectedFundSlug] = useState<string>(searchParams.get("fund") || "custom");
   const [amount, setAmount] = useState(100000);
   const [yield_, setYield] = useState(10);
   const [months, setMonths] = useState(12);
