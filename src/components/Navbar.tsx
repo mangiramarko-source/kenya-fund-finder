@@ -71,7 +71,8 @@ const Navbar = () => {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 font-heading text-lg font-bold text-primary shrink-0">
           <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
-            <TrendingUp className="h-5 w-5" />
+            <span className="hidden sm:block"><TrendingUp className="h-5 w-5" /></span>
+            <span className="block sm:hidden"><Home className="h-5 w-5" /></span>
           </div>
           <span className="hidden sm:inline">MMF Compare</span>
         </Link>
