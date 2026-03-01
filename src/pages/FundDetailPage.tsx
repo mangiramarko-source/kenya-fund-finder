@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ExternalLink } from "lucide-react";
+import { ArrowLeft, ExternalLink, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchFundBySlug, fetchHistoricalYields, type FundFromDB, type HistoricalYield } from "@/lib/api";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
@@ -85,11 +85,18 @@ const FundDetailPage = () => {
         </div>
       )}
 
-      <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-        <a href={fund.website} target="_blank" rel="noopener noreferrer">
-          Visit Official Website <ExternalLink className="ml-2 h-4 w-4" />
-        </a>
-      </Button>
+      <div className="flex flex-wrap gap-3">
+        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+          <a href={fund.website} target="_blank" rel="noopener noreferrer">
+            Visit Official Website <ExternalLink className="ml-2 h-4 w-4" />
+          </a>
+        </Button>
+        <Button asChild variant="outline">
+          <Link to={`/calculator?fund=${fund.slug}`}>
+            <Calculator className="mr-2 h-4 w-4" /> Use in Calculator
+          </Link>
+        </Button>
+      </div>
 
       <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
         <p className="text-xs text-muted-foreground leading-relaxed">
