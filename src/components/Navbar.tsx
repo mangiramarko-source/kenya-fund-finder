@@ -152,6 +152,9 @@ const Navbar = () => {
           )}
         </div>
 
+        {/* Mobile: brand name centered */}
+        <span className="md:hidden font-heading text-sm font-bold text-primary">MMF Compare</span>
+
         {/* Mobile: hamburger on right */}
         <div className="flex md:hidden items-center gap-1">
           <Button
