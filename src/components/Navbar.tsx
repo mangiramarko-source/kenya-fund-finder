@@ -13,7 +13,6 @@ const navLinks = [
   { to: "/compare", label: "Compare", icon: BarChart3 },
   { to: "/calculator", label: "Calculator", icon: Calculator },
   { to: "/news", label: "News", icon: Newspaper },
-  { to: "/learn", label: "Learn", icon: GraduationCap },
 ];
 
 const Navbar = () => {
