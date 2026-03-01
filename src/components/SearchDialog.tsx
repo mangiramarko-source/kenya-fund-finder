@@ -45,11 +45,11 @@ const SearchDialog = () => {
     <>
       <button
         onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-sm hover:bg-muted/80 transition-colors"
+        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-sm hover:bg-muted/80 transition-colors w-full md:w-auto"
       >
         <Search className="h-3.5 w-3.5" />
-        <span className="hidden sm:inline">Search…</span>
-        <kbd className="hidden sm:inline-flex h-5 items-center gap-0.5 rounded border border-border bg-background px-1.5 text-[10px] font-mono text-muted-foreground">
+        <span className="flex-1 text-left md:flex-none md:flex">Search…</span>
+        <kbd className="hidden md:inline-flex h-5 items-center gap-0.5 rounded border border-border bg-background px-1.5 text-[10px] font-mono text-muted-foreground">
           ⌘K
         </kbd>
       </button>
