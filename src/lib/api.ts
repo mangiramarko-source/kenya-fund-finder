@@ -24,6 +24,7 @@ export interface NewsFromDB {
   id: string;
   title: string;
   summary: string;
+  content: string | null;
   source: string;
   date_published: string;
   url: string | null;
@@ -87,7 +88,7 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
 export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles")
-    .select("id, title, summary, source, date_published, url, category, read_time, is_featured, status")
+    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status")
     .eq("status", "published")
     .order("date_published", { ascending: false });
   if (error) throw error;
