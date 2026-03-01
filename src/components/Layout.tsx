@@ -1,5 +1,6 @@
 import Navbar from "./Navbar";
 import Footer from "./Footer";
+import CookieConsent from "./CookieConsent";
 import { usePageView } from "@/hooks/usePageView";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -9,6 +10,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <Navbar />
       <main className="flex-1">{children}</main>
       <Footer />
+      <CookieConsent />
     </div>
   );
 };

@@ -23,8 +23,23 @@ const PrivacyPolicyPage = () => (
           <li><strong>Account Information:</strong> If you create an account, we collect your email address and authentication credentials.</li>
           <li><strong>Usage Data:</strong> We collect anonymised page view data, including pages visited and session identifiers, to improve our services.</li>
           <li><strong>Device Information:</strong> Browser type, operating system, and screen resolution may be collected automatically.</li>
-          <li><strong>Cookies:</strong> We use essential cookies for authentication and session management. We do not use third-party advertising or tracking cookies.</li>
+          <li><strong>Cookies:</strong> We use essential cookies for authentication and session management. We also use cookies set by Google AdSense to serve personalised advertisements and measure ad performance.</li>
+          <li><strong>Advertising Data:</strong> Google AdSense may collect information about your browsing behaviour to serve relevant ads. This includes your IP address, browser type, pages visited, and interaction with ads.</li>
         </ul>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-2">Cookies & Advertising</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed mb-2">This Platform uses the following types of cookies:</p>
+        <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1">
+          <li><strong>Essential Cookies:</strong> Required for core functionality such as authentication and session management.</li>
+          <li><strong>Analytics Cookies:</strong> Help us understand how visitors use the Platform to improve our services.</li>
+          <li><strong>Advertising Cookies:</strong> Set by Google AdSense and its partners to display personalised advertisements based on your browsing activity across websites.</li>
+        </ul>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+          You can manage your cookie preferences through your browser settings. Disabling cookies may affect the functionality of this Platform. For more information on how Google uses data from partner sites, visit{" "}
+          <a href="https://policies.google.com/technologies/partner-sites" target="_blank" rel="noopener noreferrer" className="text-accent hover:underline">Google's Privacy & Terms</a>.
+        </p>
       </section>
 
       <section>
