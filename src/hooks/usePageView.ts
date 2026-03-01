@@ -13,12 +13,20 @@ export const usePageView = () => {
 
   useEffect(() => {
     const track = async () => {
-      const { data: { user } } = await supabase.auth.getUser();
-      await supabase.from("page_views").insert({
-        page_path: location.pathname,
-        user_id: user?.id ?? null,
-        session_id: sessionId,
-      });
+      try {
+        // Use getSession instead of getUser to avoid unnecessary network call
+        // and to work reliably for both authenticated and anonymous users
+        const { data: { session } } = await supabase.auth.getSession();
+        const userId = session?.user?.id ?? null;
+
+        await supabase.from("page_views").insert({
+          page_path: location.pathname,
+          user_id: userId,
+          session_id: sessionId,
+        });
+      } catch {
+        // Silently fail - don't break the app for analytics
+      }
     };
     track();
   }, [location.pathname]);

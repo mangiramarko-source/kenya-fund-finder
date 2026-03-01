@@ -6,6 +6,12 @@ import { BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users, Trendin
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
+interface FundEngagement {
+  fundName: string;
+  slug: string;
+  views: number;
+}
+
 interface Stats {
   fundCount: number;
   newsCount: number;
@@ -16,6 +22,7 @@ interface Stats {
   todayPageViews: number;
   uniqueVisitors: number;
   topPages: { page: string; views: number }[];
+  fundEngagement: FundEngagement[];
   recentChanges: number;
   avgYield: number;
 }
@@ -26,7 +33,7 @@ const AdminDashboard = () => {
   const [stats, setStats] = useState<Stats>({
     fundCount: 0, newsCount: 0, pendingNews: 0, outdatedFunds: 0,
     lastUpdate: "", totalPageViews: 0, todayPageViews: 0,
-    uniqueVisitors: 0, topPages: [], recentChanges: 0, avgYield: 0,
+    uniqueVisitors: 0, topPages: [], fundEngagement: [], recentChanges: 0, avgYield: 0,
   });
 
   useEffect(() => {
@@ -39,7 +46,7 @@ const AdminDashboard = () => {
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
       const [fundsRes, newsRes, pendingRes, allViewsRes, todayViewsRes, changeLogRes] = await Promise.all([
-        supabase.from("funds").select("id, updated_at, annual_yield"),
+        supabase.from("funds").select("id, slug, name, updated_at, annual_yield"),
         supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "published"),
         supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "pending_review"),
         supabase.from("page_views").select("id, page_path, session_id, created_at"),
@@ -60,15 +67,34 @@ const AdminDashboard = () => {
       const views = allViewsRes.data || [];
       const uniqueSessions = new Set(views.map((v) => v.session_id)).size;
 
-      // Top pages
+      // Top pages (exclude fund detail pages from general top pages)
       const pageCounts: Record<string, number> = {};
+      const fundViewCounts: Record<string, number> = {};
+
       views.forEach((v) => {
         pageCounts[v.page_path] = (pageCounts[v.page_path] || 0) + 1;
+
+        // Track fund-specific views (paths like /fund/slug-name)
+        const fundMatch = v.page_path.match(/^\/fund\/(.+)$/);
+        if (fundMatch) {
+          const slug = fundMatch[1];
+          fundViewCounts[slug] = (fundViewCounts[slug] || 0) + 1;
+        }
       });
+
       const topPages = Object.entries(pageCounts)
         .sort((a, b) => b[1] - a[1])
         .slice(0, 5)
         .map(([page, count]) => ({ page, views: count }));
+
+      // Map fund slugs to names and build engagement list
+      const fundEngagement: FundEngagement[] = funds
+        .map((f) => ({
+          fundName: f.name,
+          slug: f.slug,
+          views: fundViewCounts[f.slug] || 0,
+        }))
+        .sort((a, b) => b.views - a.views);
 
       setStats({
         fundCount: funds.length,
@@ -80,6 +106,7 @@ const AdminDashboard = () => {
         todayPageViews: todayViewsRes.count || 0,
         uniqueVisitors: uniqueSessions,
         topPages,
+        fundEngagement,
         recentChanges: changeLogRes.count || 0,
         avgYield: Math.round(avgYield * 100) / 100,
       });
@@ -158,6 +185,28 @@ const AdminDashboard = () => {
           ))}
         </div>
       </div>
+
+      {/* Fund Engagement */}
+      {stats.fundEngagement.length > 0 && (
+        <div>
+          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Fund Engagement</h2>
+          <Card>
+            <CardContent className="pt-4">
+              <div className="space-y-2">
+                {stats.fundEngagement.map((f, i) => (
+                  <div key={f.slug} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}.</span>
+                      <span className="text-sm font-medium">{f.fundName}</span>
+                    </div>
+                    <span className="text-sm font-semibold text-accent">{f.views} views</span>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      )}
 
       {/* Top Pages */}
       {stats.topPages.length > 0 && (
