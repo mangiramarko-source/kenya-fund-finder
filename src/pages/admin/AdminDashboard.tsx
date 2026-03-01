@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users, TrendingUp, Activity } from "lucide-react";
+import { BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users, TrendingUp, Activity, MousePointerClick } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -25,6 +25,8 @@ interface Stats {
   fundEngagement: FundEngagement[];
   recentChanges: number;
   avgYield: number;
+  gateClicks: { source: string; count: number }[];
+  totalGateClicks: number;
 }
 
 const AdminDashboard = () => {
@@ -34,6 +36,7 @@ const AdminDashboard = () => {
     fundCount: 0, newsCount: 0, pendingNews: 0, outdatedFunds: 0,
     lastUpdate: "", totalPageViews: 0, todayPageViews: 0,
     uniqueVisitors: 0, topPages: [], fundEngagement: [], recentChanges: 0, avgYield: 0,
+    gateClicks: [], totalGateClicks: 0,
   });
 
   useEffect(() => {
@@ -45,13 +48,14 @@ const AdminDashboard = () => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const [fundsRes, newsRes, pendingRes, allViewsRes, todayViewsRes, changeLogRes] = await Promise.all([
+      const [fundsRes, newsRes, pendingRes, allViewsRes, todayViewsRes, changeLogRes, gateClicksRes] = await Promise.all([
         supabase.from("funds").select("id, slug, name, updated_at, annual_yield"),
         supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "published"),
         supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "pending_review"),
         supabase.from("page_views").select("id, page_path, session_id, created_at"),
         supabase.from("page_views").select("id", { count: "exact" }).gte("created_at", todayStr),
         supabase.from("change_log").select("id", { count: "exact" }).gte("changed_at", sevenDaysAgo.toISOString()),
+        supabase.from("auth_gate_clicks").select("source, action, created_at"),
       ]);
 
       const funds = fundsRes.data || [];
@@ -96,6 +100,16 @@ const AdminDashboard = () => {
         }))
         .sort((a, b) => b.views - a.views);
 
+      // Auth gate click analytics
+      const clicks = gateClicksRes.data || [];
+      const sourceCounts: Record<string, number> = {};
+      clicks.forEach((c) => {
+        sourceCounts[c.source] = (sourceCounts[c.source] || 0) + 1;
+      });
+      const gateClicks = Object.entries(sourceCounts)
+        .sort((a, b) => b[1] - a[1])
+        .map(([source, count]) => ({ source, count }));
+
       setStats({
         fundCount: funds.length,
         newsCount: newsRes.count || 0,
@@ -109,6 +123,8 @@ const AdminDashboard = () => {
         fundEngagement,
         recentChanges: changeLogRes.count || 0,
         avgYield: Math.round(avgYield * 100) / 100,
+        gateClicks,
+        totalGateClicks: clicks.length,
       });
     };
     load();
@@ -183,6 +199,44 @@ const AdminDashboard = () => {
               </CardContent>
             </Card>
           ))}
+        </div>
+      </div>
+
+      {/* Sign-up Conversion */}
+      <div>
+        <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Sign-up Conversion</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Card>
+            <CardHeader className="pb-1 pt-4 px-4">
+              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                <MousePointerClick className="h-3.5 w-3.5 text-accent" />
+                Total Gate Clicks
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <p className="text-2xl font-bold text-accent">{stats.totalGateClicks}</p>
+            </CardContent>
+          </Card>
+          {stats.gateClicks.map((g) => {
+            const labels: Record<string, string> = {
+              fund_detail: "Fund Details",
+              calculator: "Calculator",
+              news_article: "News Articles",
+            };
+            return (
+              <Card key={g.source}>
+                <CardHeader className="pb-1 pt-4 px-4">
+                  <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+                    <MousePointerClick className="h-3.5 w-3.5 text-blue-500" />
+                    {labels[g.source] || g.source}
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="px-4 pb-4">
+                  <p className="text-2xl font-bold text-blue-500">{g.count}</p>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       </div>
 

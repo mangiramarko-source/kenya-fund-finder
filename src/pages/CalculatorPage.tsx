@@ -117,6 +117,7 @@ const CalculatorPage = () => {
           <p className="text-muted-foreground text-sm">Estimate your potential returns from Money Market Fund investments.</p>
         </div>
         <AuthGate
+          source="calculator"
           title="Sign up to use the calculator"
           description="Create a free account to calculate your potential returns, compare funds side by side, and see tax-adjusted projections."
         />

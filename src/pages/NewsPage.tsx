@@ -225,6 +225,7 @@ const NewsPage = () => {
                     </div>
                   )}
                   <AuthGate
+                    source="news_article"
                     title="Sign up to read full articles"
                     description="Create a free account to access complete news articles, market analysis, and regulatory updates."
                   />

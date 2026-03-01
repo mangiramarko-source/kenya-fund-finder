@@ -124,6 +124,7 @@ const FundDetailPage = () => {
         </>
       ) : (
         <AuthGate
+          source="fund_detail"
           title="Sign up to see full fund details"
           description="Get access to all yield metrics, fund descriptions, historical performance charts, and investment tools — completely free."
         />
