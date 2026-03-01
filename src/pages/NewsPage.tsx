@@ -1,7 +1,7 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone, X } from "lucide-react";
+import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone, SortAsc } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -11,6 +11,7 @@ import {
   DialogDescription,
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 
 const categories = ["All", "Yield Updates", "Market News", "Regulatory Updates", "Fund Announcements"] as const;
 
@@ -28,20 +29,34 @@ const categoryColors: Record<string, string> = {
   "Fund Announcements": "bg-primary/10 text-primary hover:bg-primary/20",
 };
 
+type SortOption = "latest" | "oldest" | "featured";
+
 const NewsPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedArticle, setSelectedArticle] = useState<NewsFromDB | null>(null);
+  const [sortBy, setSortBy] = useState<SortOption>("latest");
 
   useEffect(() => {
     fetchPublishedNews().then((data) => { setArticles(data); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
-  const filtered = activeCategory === "All"
-    ? articles
-    : articles.filter((a) => a.category === activeCategory);
+  const filtered = useMemo(() => {
+    let list = activeCategory === "All"
+      ? articles
+      : articles.filter((a) => a.category === activeCategory);
 
+    if (sortBy === "featured") {
+      list = [...list].sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0));
+    } else {
+      list = [...list].sort((a, b) => {
+        const diff = new Date(b.date_published).getTime() - new Date(a.date_published).getTime();
+        return sortBy === "oldest" ? -diff : diff;
+      });
+    }
+    return list;
+  }, [articles, activeCategory, sortBy]);
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Loading news...</div>;
 
   return (
@@ -54,24 +69,39 @@ const NewsPage = () => {
       </div>
       <p className="text-muted-foreground mb-6 ml-[52px]">Stay informed about Money Market Funds in Kenya.</p>
 
-      <div className="flex flex-wrap gap-2 mb-8">
-        {categories.map((cat) => {
-          const Icon = categoryIcons[cat];
-          return (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
-                activeCategory === cat
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-muted text-muted-foreground hover:bg-muted/80"
-              }`}
-            >
-              {Icon && <Icon className="h-3.5 w-3.5" />}
-              {cat}
-            </button>
-          );
-        })}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-8">
+        <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+          {categories.map((cat) => {
+            const Icon = categoryIcons[cat];
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
+                  activeCategory === cat
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                }`}
+              >
+                {Icon && <Icon className="h-3.5 w-3.5" />}
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto shrink-0">
+          <SortAsc className="h-4 w-4 text-muted-foreground" />
+          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+            <SelectTrigger className="w-[140px] h-9 text-sm">
+              <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="latest">Latest First</SelectItem>
+              <SelectItem value="oldest">Oldest First</SelectItem>
+              <SelectItem value="featured">Featured First</SelectItem>
+            </SelectContent>
+          </Select>
+        </div>
       </div>
 
       <div className="space-y-3">
