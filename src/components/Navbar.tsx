@@ -186,8 +186,9 @@ const Navbar = () => {
           )}
         </nav>
 
-        {/* Mobile: hamburger on right */}
+        {/* Mobile: search + hamburger on right */}
         <div className="flex md:hidden items-center gap-1">
+          <SearchDialog />
           <Button
             variant="ghost"
             size="icon"
@@ -203,9 +204,6 @@ const Navbar = () => {
       {/* Mobile hamburger dropdown */}
       {open && (
         <nav className="md:hidden border-t border-border bg-card px-4 pb-4 pt-2 space-y-1">
-          <div className="px-1 pb-2">
-            <SearchDialog />
-          </div>
           <button
             onClick={() => { setDark(!dark); setOpen(false); }}
             className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
