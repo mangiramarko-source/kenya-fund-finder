@@ -38,6 +38,9 @@ const Index = () => {
             <Button asChild size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 font-semibold rounded-full px-8">
               <Link to="/calculator"><Calculator className="mr-2 h-4 w-4" /> Calculate Returns</Link>
             </Button>
+            <Button asChild size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 font-semibold rounded-full px-8 hidden sm:inline-flex">
+              <Link to="/learn"><BookOpen className="mr-2 h-4 w-4" /> Learn</Link>
+            </Button>
           </div>
         </div>
       </section>
