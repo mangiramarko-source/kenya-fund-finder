@@ -1,11 +1,12 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminFunds from "./admin/AdminFunds";
 import AdminNews from "./admin/AdminNews";
 import AdminChangeLog from "./admin/AdminChangeLog";
+import AdminPages from "./admin/AdminPages";
 
 const AdminPage = () => {
   const { isAdmin, loading, user } = useAuth();
@@ -30,7 +31,7 @@ const AdminPage = () => {
   return (
     <div className="container py-6">
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-4 max-w-lg">
+        <TabsList className="grid w-full grid-cols-5 max-w-xl">
           <TabsTrigger value="dashboard" className="gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -43,6 +44,10 @@ const AdminPage = () => {
             <Newspaper className="h-4 w-4" />
             <span className="hidden sm:inline">News</span>
           </TabsTrigger>
+          <TabsTrigger value="pages" className="gap-1.5">
+            <FileText className="h-4 w-4" />
+            <span className="hidden sm:inline">Pages</span>
+          </TabsTrigger>
           <TabsTrigger value="log" className="gap-1.5">
             <ClipboardList className="h-4 w-4" />
             <span className="hidden sm:inline">Log</span>
@@ -52,6 +57,7 @@ const AdminPage = () => {
         <TabsContent value="dashboard"><AdminDashboard /></TabsContent>
         <TabsContent value="funds"><AdminFunds /></TabsContent>
         <TabsContent value="news"><AdminNews /></TabsContent>
+        <TabsContent value="pages"><AdminPages /></TabsContent>
         <TabsContent value="log"><AdminChangeLog /></TabsContent>
       </Tabs>
     </div>
