@@ -186,9 +186,8 @@ const Navbar = () => {
           )}
         </nav>
 
-        {/* Mobile: search + hamburger on right */}
+        {/* Mobile: hamburger on right */}
         <div className="flex md:hidden items-center gap-1">
-          <SearchDialog />
           <Button
             variant="ghost"
             size="icon"
@@ -199,6 +198,11 @@ const Navbar = () => {
             {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
           </Button>
         </div>
+      </div>
+
+      {/* Mobile search bar below nav */}
+      <div className="md:hidden px-4 pb-2 pt-1 border-b border-border bg-card/95">
+        <SearchDialog />
       </div>
 
       {/* Mobile hamburger dropdown */}
