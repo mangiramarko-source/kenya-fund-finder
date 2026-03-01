@@ -152,8 +152,8 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile: centered icon links */}
-        <nav className="absolute left-1/2 -translate-x-1/2 flex md:hidden items-center gap-1 bg-muted/60 rounded-full px-1.5 py-1">
+        {/* Mobile: centered nav links with labels */}
+        <nav className="absolute left-1/2 -translate-x-1/2 flex md:hidden items-center gap-0.5 bg-muted/60 rounded-full px-1 py-1">
           {navLinks.filter(l => ["/compare", "/calculator", "/news"].includes(l.to)).map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
@@ -161,28 +161,27 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`flex items-center justify-center h-9 w-9 rounded-full transition-all ${
+                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
-                aria-label={link.label}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-3.5 w-3.5" />
+                <span>{link.label}</span>
               </Link>
             );
           })}
           {isAdmin && (
             <Link
               to="/admin"
-              className={`flex items-center justify-center h-9 w-9 rounded-full transition-all ${
+              className={`flex items-center gap-1 px-2.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                 location.pathname === "/admin"
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "text-accent hover:bg-muted"
               }`}
-              aria-label="Admin"
             >
-              <Shield className="h-4 w-4" />
+              <Shield className="h-3.5 w-3.5" />
             </Link>
           )}
         </nav>
