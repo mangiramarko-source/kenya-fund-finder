@@ -43,12 +43,24 @@ const AdminFunds = () => {
   const [search, setSearch] = useState("");
   const [editingFund, setEditingFund] = useState<typeof emptyFund & { id?: string }>(emptyFund);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [fundViews, setFundViews] = useState<Record<string, number>>({});
   const { user } = useAuth();
   const { toast } = useToast();
 
   const load = async () => {
-    const { data } = await supabase.from("funds").select("*").order("name");
-    if (data) setFunds(data as FundRow[]);
+    const [fundsRes, viewsRes] = await Promise.all([
+      supabase.from("funds").select("*").order("name"),
+      supabase.from("page_views").select("page_path").like("page_path", "/fund/%"),
+    ]);
+    if (fundsRes.data) setFunds(fundsRes.data as FundRow[]);
+
+    // Count views per fund slug
+    const counts: Record<string, number> = {};
+    (viewsRes.data || []).forEach((v) => {
+      const match = v.page_path.match(/^\/fund\/(.+)$/);
+      if (match) counts[match[1]] = (counts[match[1]] || 0) + 1;
+    });
+    setFundViews(counts);
   };
 
   useEffect(() => { load(); }, []);
@@ -262,6 +274,7 @@ const AdminFunds = () => {
                 <th className="text-left px-3 py-2 font-semibold hidden md:table-cell">Manager</th>
                 <th className="text-right px-3 py-2 font-semibold">Yield</th>
                 <th className="text-right px-3 py-2 font-semibold hidden md:table-cell">Fee</th>
+                <th className="text-right px-3 py-2 font-semibold hidden md:table-cell">Views</th>
                 <th className="text-center px-3 py-2 font-semibold hidden md:table-cell">Status</th>
                 <th className="text-center px-3 py-2 font-semibold">Updated</th>
                 <th className="px-3 py-2"></th>
@@ -279,6 +292,7 @@ const AdminFunds = () => {
                   <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">{fund.manager}</td>
                   <td className="px-3 py-2 text-right font-semibold text-accent">{Number(fund.annual_yield)}%</td>
                   <td className="px-3 py-2 text-right hidden md:table-cell">{Number(fund.management_fee)}%</td>
+                  <td className="px-3 py-2 text-right hidden md:table-cell text-muted-foreground">{fundViews[fund.slug] || 0}</td>
                   <td className="px-3 py-2 text-center hidden md:table-cell">
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${fund.is_published ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}`}>
                       {fund.is_published ? "Published" : "Draft"}
@@ -300,7 +314,7 @@ const AdminFunds = () => {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={7} className="text-center py-8 text-muted-foreground">No funds found. Add your first fund above.</td></tr>
+                <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">No funds found. Add your first fund above.</td></tr>
               )}
             </tbody>
           </table>
