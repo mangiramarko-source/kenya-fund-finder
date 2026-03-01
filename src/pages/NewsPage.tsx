@@ -12,6 +12,8 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { useAuth } from "@/hooks/useAuth";
+import AuthGate from "@/components/AuthGate";
 
 const categories = ["All", "Yield Updates", "Market News", "Regulatory Updates", "Fund Announcements"] as const;
 
@@ -32,6 +34,7 @@ const categoryColors: Record<string, string> = {
 type SortOption = "latest" | "oldest" | "featured";
 
 const NewsPage = () => {
+  const { user } = useAuth();
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [loading, setLoading] = useState(true);
@@ -57,6 +60,13 @@ const NewsPage = () => {
     }
     return list;
   }, [articles, activeCategory, sortBy]);
+
+  const isAuthenticated = !!user;
+
+  const handleArticleClick = (article: NewsFromDB) => {
+    setSelectedArticle(article);
+  };
+
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Loading news...</div>;
 
   return (
@@ -111,7 +121,7 @@ const NewsPage = () => {
             <article
               key={article.id}
               className="group rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-accent/30 transition-all duration-200 cursor-pointer"
-              onClick={() => setSelectedArticle(article)}
+              onClick={() => handleArticleClick(article)}
             >
               <div className="flex items-start gap-4">
                 <div className="hidden sm:flex items-center justify-center h-12 w-12 rounded-xl bg-muted shrink-0 group-hover:bg-accent/10 transition-colors">
@@ -181,23 +191,43 @@ const NewsPage = () => {
                 </DialogDescription>
               </DialogHeader>
 
-              <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
-                {selectedArticle?.content ? (
-                  selectedArticle.content.split("\n").filter(Boolean).map((paragraph, i) => (
-                    <p key={i} className="text-sm text-muted-foreground leading-relaxed">{paragraph}</p>
-                  ))
-                ) : (
-                  <p className="text-sm text-muted-foreground leading-relaxed">{selectedArticle?.summary}</p>
-                )}
-              </div>
+              {isAuthenticated ? (
+                <>
+                  <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
+                    {selectedArticle?.content ? (
+                      selectedArticle.content.split("\n").filter(Boolean).map((paragraph, i) => (
+                        <p key={i} className="text-sm text-muted-foreground leading-relaxed">{paragraph}</p>
+                      ))
+                    ) : (
+                      <p className="text-sm text-muted-foreground leading-relaxed">{selectedArticle?.summary}</p>
+                    )}
+                  </div>
 
-              {selectedArticle?.url && (
-                <div className="mt-6 pt-4 border-t border-border">
-                  <Button asChild variant="outline" size="sm" className="gap-1.5">
-                    <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer">
-                      Read Original Source <ArrowRight className="h-3.5 w-3.5" />
-                    </a>
-                  </Button>
+                  {selectedArticle?.url && (
+                    <div className="mt-6 pt-4 border-t border-border">
+                      <Button asChild variant="outline" size="sm" className="gap-1.5">
+                        <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer">
+                          Read Original Source <ArrowRight className="h-3.5 w-3.5" />
+                        </a>
+                      </Button>
+                    </div>
+                  )}
+                </>
+              ) : (
+                <div className="mt-2">
+                  {/* Show first paragraph as teaser */}
+                  {selectedArticle?.content && (
+                    <div className="relative mb-6">
+                      <p className="text-sm text-muted-foreground leading-relaxed">
+                        {selectedArticle.content.split("\n").filter(Boolean)[0]}
+                      </p>
+                      <div className="mt-2 h-16 bg-gradient-to-b from-transparent to-background" />
+                    </div>
+                  )}
+                  <AuthGate
+                    title="Sign up to read full articles"
+                    description="Create a free account to access complete news articles, market analysis, and regulatory updates."
+                  />
                 </div>
               )}
             </div>
