@@ -14,6 +14,33 @@ export type Database = {
   }
   public: {
     Tables: {
+      auth_gate_clicks: {
+        Row: {
+          action: string
+          created_at: string
+          id: string
+          page_path: string
+          session_id: string | null
+          source: string
+        }
+        Insert: {
+          action?: string
+          created_at?: string
+          id?: string
+          page_path: string
+          session_id?: string | null
+          source: string
+        }
+        Update: {
+          action?: string
+          created_at?: string
+          id?: string
+          page_path?: string
+          session_id?: string | null
+          source?: string
+        }
+        Relationships: []
+      }
       change_log: {
         Row: {
           action: string
