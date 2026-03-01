@@ -4,9 +4,12 @@ import { ArrowLeft, ExternalLink, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchFundBySlug, fetchHistoricalYields, type FundFromDB, type HistoricalYield } from "@/lib/api";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
+import { useAuth } from "@/hooks/useAuth";
+import AuthGate from "@/components/AuthGate";
 
 const FundDetailPage = () => {
   const { id } = useParams();
+  const { user, loading: authLoading } = useAuth();
   const [fund, setFund] = useState<FundFromDB | null>(null);
   const [yields, setYields] = useState<HistoricalYield[]>([]);
   const [loading, setLoading] = useState(true);
@@ -23,7 +26,7 @@ const FundDetailPage = () => {
     }).catch(() => setLoading(false));
   }, [id]);
 
-  if (loading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
+  if (loading || authLoading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
 
   if (!fund) {
     return (
@@ -33,6 +36,8 @@ const FundDetailPage = () => {
       </div>
     );
   }
+
+  const isAuthenticated = !!user;
 
   return (
     <div className="container py-10 max-w-3xl">
@@ -47,56 +52,82 @@ const FundDetailPage = () => {
         {fund.fact_sheet_date && ` · Fact sheet: ${new Date(fund.fact_sheet_date).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}`}
       </p>
 
+      {/* Always show annual yield as a teaser */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        {[
-          { label: "Annual Yield", value: `${fund.annual_yield}%`, accent: true },
-          { label: "7-Day Yield", value: `${fund.seven_day_yield}%` },
-          { label: "30-Day Yield", value: `${fund.thirty_day_yield}%` },
-          { label: "Management Fee", value: `${fund.management_fee}%` },
-          { label: "Min. Investment", value: `KES ${fund.minimum_investment.toLocaleString()}` },
-          { label: "Withdrawal", value: fund.withdrawal_time },
-        ].map((item) => (
-          <div key={item.label} className="rounded-lg border border-border bg-card p-4">
-            <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
-            <p className={`font-bold text-lg ${item.accent ? "text-accent" : ""}`}>{item.value}</p>
-          </div>
-        ))}
-      </div>
-
-      <div className="mb-8">
-        <h2 className="text-lg font-semibold mb-2">About This Fund</h2>
-        <p className="text-muted-foreground text-sm leading-relaxed">{fund.description}</p>
-      </div>
-
-      {yields.length > 0 && (
-        <div className="mb-8">
-          <h2 className="text-lg font-semibold mb-4">Historical Performance</h2>
-          <div className="rounded-lg border border-border bg-card p-4 h-64">
-            <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={yields}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
-                <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" domain={["dataMin - 0.5", "dataMax + 0.5"]} />
-                <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }} />
-                <Line type="monotone" dataKey="yield" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ fill: "hsl(var(--accent))" }} name="Yield (%)" />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">Annual Yield</p>
+          <p className="font-bold text-lg text-accent">{fund.annual_yield}%</p>
         </div>
-      )}
-
-      <div className="flex flex-wrap gap-3">
-        <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-          <a href={fund.website} target="_blank" rel="noopener noreferrer">
-            Visit Official Website <ExternalLink className="ml-2 h-4 w-4" />
-          </a>
-        </Button>
-        <Button asChild variant="outline">
-          <Link to={`/calculator?fund=${fund.slug}`}>
-            <Calculator className="mr-2 h-4 w-4" /> Use in Calculator
-          </Link>
-        </Button>
+        {isAuthenticated ? (
+          <>
+            {[
+              { label: "7-Day Yield", value: `${fund.seven_day_yield}%` },
+              { label: "30-Day Yield", value: `${fund.thirty_day_yield}%` },
+              { label: "Management Fee", value: `${fund.management_fee}%` },
+              { label: "Min. Investment", value: `KES ${fund.minimum_investment.toLocaleString()}` },
+              { label: "Withdrawal", value: fund.withdrawal_time },
+            ].map((item) => (
+              <div key={item.label} className="rounded-lg border border-border bg-card p-4">
+                <p className="text-xs text-muted-foreground mb-1">{item.label}</p>
+                <p className="font-bold text-lg">{item.value}</p>
+              </div>
+            ))}
+          </>
+        ) : (
+          <>
+            {["7-Day Yield", "30-Day Yield", "Management Fee"].map((label) => (
+              <div key={label} className="rounded-lg border border-border bg-card p-4 relative overflow-hidden">
+                <p className="text-xs text-muted-foreground mb-1">{label}</p>
+                <p className="font-bold text-lg text-muted-foreground/30 blur-sm select-none">10.0%</p>
+              </div>
+            ))}
+          </>
+        )}
       </div>
+
+      {isAuthenticated ? (
+        <>
+          <div className="mb-8">
+            <h2 className="text-lg font-semibold mb-2">About This Fund</h2>
+            <p className="text-muted-foreground text-sm leading-relaxed">{fund.description}</p>
+          </div>
+
+          {yields.length > 0 && (
+            <div className="mb-8">
+              <h2 className="text-lg font-semibold mb-4">Historical Performance</h2>
+              <div className="rounded-lg border border-border bg-card p-4 h-64">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={yields}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" domain={["dataMin - 0.5", "dataMax + 0.5"]} />
+                    <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }} />
+                    <Line type="monotone" dataKey="yield" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ fill: "hsl(var(--accent))" }} name="Yield (%)" />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+          )}
+
+          <div className="flex flex-wrap gap-3">
+            <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <a href={fund.website} target="_blank" rel="noopener noreferrer">
+                Visit Official Website <ExternalLink className="ml-2 h-4 w-4" />
+              </a>
+            </Button>
+            <Button asChild variant="outline">
+              <Link to={`/calculator?fund=${fund.slug}`}>
+                <Calculator className="mr-2 h-4 w-4" /> Use in Calculator
+              </Link>
+            </Button>
+          </div>
+        </>
+      ) : (
+        <AuthGate
+          title="Sign up to see full fund details"
+          description="Get access to all yield metrics, fund descriptions, historical performance charts, and investment tools — completely free."
+        />
+      )}
 
       <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
         <p className="text-xs text-muted-foreground leading-relaxed">
