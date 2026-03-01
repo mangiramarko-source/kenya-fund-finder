@@ -16,6 +16,7 @@ interface NewsRow {
   id: string;
   title: string;
   summary: string;
+  content: string | null;
   source: string;
   date_published: string;
   url: string | null;
@@ -29,7 +30,7 @@ interface NewsRow {
 const categories = ["Yield Updates", "Market News", "Regulatory Updates", "Fund Announcements", "Market Insight"];
 
 const emptyNews = {
-  title: "", summary: "", source: "", date_published: new Date().toISOString().split("T")[0],
+  title: "", summary: "", content: "", source: "", date_published: new Date().toISOString().split("T")[0],
   url: "", category: "Market News", read_time: "3 min read", is_featured: false, status: "draft",
 };
 
@@ -52,7 +53,7 @@ const AdminNews = () => {
       .from("news_articles")
       .select("*")
       .order("date_published", { ascending: false });
-    if (data) setArticles(data as NewsRow[]);
+    if (data) setArticles(data.map((d: any) => ({ ...d, content: d.content || null })) as NewsRow[]);
   };
 
   useEffect(() => { load(); }, []);
@@ -78,9 +79,10 @@ const AdminNews = () => {
       return;
     }
 
-    const payload = {
+    const payload: any = {
       title: editing.title,
       summary: editing.summary,
+      content: editing.content || null,
       source: editing.source,
       date_published: editing.date_published,
       url: editing.url || null,
@@ -119,7 +121,7 @@ const AdminNews = () => {
 
   const openEdit = (a: NewsRow) => {
     setEditing({
-      id: a.id, title: a.title, summary: a.summary, source: a.source,
+      id: a.id, title: a.title, summary: a.summary, content: a.content || "", source: a.source,
       date_published: a.date_published, url: a.url || "", category: a.category,
       read_time: a.read_time, is_featured: a.is_featured, status: a.status,
     });
@@ -147,7 +149,17 @@ const AdminNews = () => {
               </div>
               <div>
                 <Label>Summary</Label>
-                <Textarea value={editing.summary} onChange={(e) => setEditing({ ...editing, summary: e.target.value })} className="mt-1" rows={4} />
+                <Textarea value={editing.summary} onChange={(e) => setEditing({ ...editing, summary: e.target.value })} className="mt-1" rows={3} />
+              </div>
+              <div>
+                <Label>Full Content</Label>
+                <Textarea
+                  value={editing.content}
+                  onChange={(e) => setEditing({ ...editing, content: e.target.value })}
+                  className="mt-1"
+                  rows={8}
+                  placeholder="Full article content. Each paragraph on a new line..."
+                />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
