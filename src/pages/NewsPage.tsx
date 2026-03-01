@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone } from "lucide-react";
+import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const categories = ["All", "Yield Updates", "Market News", "Regulatory Updates"] as const;
 
@@ -24,6 +32,7 @@ const NewsPage = () => {
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedArticle, setSelectedArticle] = useState<NewsFromDB | null>(null);
 
   useEffect(() => {
     fetchPublishedNews().then((data) => { setArticles(data); setLoading(false); }).catch(() => setLoading(false));
@@ -69,7 +78,11 @@ const NewsPage = () => {
         {filtered.map((article) => {
           const CatIcon = categoryIcons[article.category] || Megaphone;
           return (
-            <article key={article.id} className="group rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-accent/30 transition-all duration-200">
+            <article
+              key={article.id}
+              className="group rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-accent/30 transition-all duration-200 cursor-pointer"
+              onClick={() => setSelectedArticle(article)}
+            >
               <div className="flex items-start gap-4">
                 <div className="hidden sm:flex items-center justify-center h-12 w-12 rounded-xl bg-muted shrink-0 group-hover:bg-accent/10 transition-colors">
                   <CatIcon className="h-6 w-6 text-muted-foreground group-hover:text-accent transition-colors" />
@@ -96,11 +109,9 @@ const NewsPage = () => {
                       {article.source && `${article.source} · `}
                       {new Date(article.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
                     </span>
-                    {article.url && (
-                      <Button asChild variant="ghost" size="sm" className="text-accent hover:text-accent gap-1 -mr-2 text-xs h-8">
-                        <a href={article.url} target="_blank" rel="noopener noreferrer">Read More <ArrowRight className="h-3.5 w-3.5" /></a>
-                      </Button>
-                    )}
+                    <span className="text-xs text-accent font-medium flex items-center gap-1">
+                      Read Full Article <ArrowRight className="h-3.5 w-3.5" />
+                    </span>
                   </div>
                 </div>
               </div>
@@ -108,6 +119,61 @@ const NewsPage = () => {
           );
         })}
       </div>
+
+      {/* Full article dialog */}
+      <Dialog open={!!selectedArticle} onOpenChange={(open) => !open && setSelectedArticle(null)}>
+        <DialogContent className="max-w-2xl max-h-[85vh] p-0 overflow-hidden">
+          <ScrollArea className="max-h-[85vh]">
+            <div className="p-6 sm:p-8">
+              <DialogHeader className="mb-4">
+                <div className="flex items-center gap-2 mb-3 flex-wrap">
+                  {selectedArticle && (
+                    <>
+                      <Badge variant="secondary" className={categoryColors[selectedArticle.category] || ""}>
+                        {selectedArticle.category}
+                      </Badge>
+                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                        <Clock className="h-3 w-3" />
+                        {selectedArticle.read_time}
+                      </span>
+                      {selectedArticle.is_featured && (
+                        <Badge className="bg-accent/15 text-accent border-0 text-[10px]">Featured</Badge>
+                      )}
+                    </>
+                  )}
+                </div>
+                <DialogTitle className="text-xl md:text-2xl font-heading leading-tight">
+                  {selectedArticle?.title}
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-2">
+                  {selectedArticle?.source && `${selectedArticle.source} · `}
+                  {selectedArticle && new Date(selectedArticle.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
+                </DialogDescription>
+              </DialogHeader>
+
+              <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
+                {selectedArticle?.content ? (
+                  selectedArticle.content.split("\n").filter(Boolean).map((paragraph, i) => (
+                    <p key={i} className="text-sm text-muted-foreground leading-relaxed">{paragraph}</p>
+                  ))
+                ) : (
+                  <p className="text-sm text-muted-foreground leading-relaxed">{selectedArticle?.summary}</p>
+                )}
+              </div>
+
+              {selectedArticle?.url && (
+                <div className="mt-6 pt-4 border-t border-border">
+                  <Button asChild variant="outline" size="sm" className="gap-1.5">
+                    <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer">
+                      Read Original Source <ArrowRight className="h-3.5 w-3.5" />
+                    </a>
+                  </Button>
+                </div>
+              )}
+            </div>
+          </ScrollArea>
+        </DialogContent>
+      </Dialog>
 
       <p className="text-xs text-muted-foreground text-center mt-10">
         All information is sourced from publicly available data. Fund yields and regulatory details are based on CMA-regulated disclosures.

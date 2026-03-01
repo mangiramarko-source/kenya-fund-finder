@@ -148,6 +148,7 @@ export type Database = {
       news_articles: {
         Row: {
           category: string
+          content: string | null
           created_at: string
           created_by: string | null
           date_published: string
@@ -164,6 +165,7 @@ export type Database = {
         }
         Insert: {
           category?: string
+          content?: string | null
           created_at?: string
           created_by?: string | null
           date_published?: string
@@ -180,6 +182,7 @@ export type Database = {
         }
         Update: {
           category?: string
+          content?: string | null
           created_at?: string
           created_by?: string | null
           date_published?: string
