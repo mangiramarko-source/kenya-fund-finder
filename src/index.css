@@ -102,8 +102,15 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased;
+    @apply bg-background text-foreground antialiased text-base md:text-base;
     font-feature-settings: "rlig" 1, "calt" 1;
+    font-size: 17px;
+  }
+
+  @media (min-width: 768px) {
+    body {
+      font-size: 16px;
+    }
   }
 
   h1, h2, h3, h4, h5, h6 {
