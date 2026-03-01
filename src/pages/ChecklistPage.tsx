@@ -1,5 +1,5 @@
 import { useState, useEffect, useMemo } from "react";
-import { CheckCircle2, Circle, ChevronDown, ChevronRight, Globe, FileText, Type, Shield, DollarSign, Lock, Award, Rocket } from "lucide-react";
+import { CheckCircle2, Circle, ChevronDown, ChevronRight, Globe, FileText, Type, Shield, DollarSign, Lock, Award, Rocket, Activity, Database, Eye } from "lucide-react";
 import { Progress } from "@/components/ui/progress";
 
 interface ChecklistItem {
@@ -91,6 +91,49 @@ const sections: ChecklistSection[] = [
       { id: "sec-backups", label: "Regular backups configured" },
       { id: "sec-api", label: "No exposed API keys in client code" },
       { id: "sec-admin-pages", label: "Admin pages are not publicly accessible" },
+      { id: "sec-waf", label: "Web application firewall (WAF) is active" },
+      { id: "sec-ddos", label: "DDoS protection enabled" },
+      { id: "sec-malware", label: "Malware scanning enabled regularly" },
+      { id: "sec-rate-limit", label: "Rate limiting on forms to prevent abuse" },
+      { id: "sec-outdated", label: "No outdated libraries or scripts" },
+      { id: "sec-test-files", label: "Default test/admin files removed" },
+      { id: "sec-permissions", label: "File and folder permissions verified (no 777)" },
+      { id: "sec-cookies", label: "Session cookies set to HttpOnly and Secure" },
+      { id: "sec-csp", label: "Content Security Policy (CSP) headers set" },
+      { id: "sec-headers", label: "Security headers: X-Frame-Options, X-XSS-Protection, HSTS" },
+    ],
+  },
+  {
+    title: "Core Pages / Content (Extra)",
+    icon: <Eye className="h-5 w-5" />,
+    items: [
+      { id: "extra-no-secrets", label: "No API keys or passwords exposed in code or UI" },
+      { id: "extra-no-debug", label: "All debug/test content removed from public pages" },
+    ],
+  },
+  {
+    title: "Privacy & Legal (Extra)",
+    icon: <Shield className="h-5 w-5" />,
+    items: [
+      { id: "extra-gdpr", label: "GDPR/CCPA compliance if collecting emails or user data" },
+      { id: "extra-cookie-notice", label: "Cookie notice present if using analytics or tracking" },
+    ],
+  },
+  {
+    title: "Monitoring & Logs",
+    icon: <Activity className="h-5 w-5" />,
+    items: [
+      { id: "mon-access-logs", label: "Access logs enabled" },
+      { id: "mon-error-logs", label: "Error logs monitored" },
+      { id: "mon-alerts", label: "Alerts for suspicious activity or failed logins" },
+    ],
+  },
+  {
+    title: "Backups",
+    icon: <Database className="h-5 w-5" />,
+    items: [
+      { id: "backup-offsite", label: "Offsite backup tested for restore" },
+      { id: "backup-encrypted", label: "Backup files encrypted" },
     ],
   },
   {
