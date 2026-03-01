@@ -1,8 +1,11 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, TrendingUp, BarChart3, Calculator, Newspaper, GraduationCap, Home, Moon, Sun, User, LogOut, Shield } from "lucide-react";
+import { Menu, X, TrendingUp, BarChart3, Calculator, Newspaper, GraduationCap, Home, Moon, Sun, User, LogOut, Shield, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
+import { supabase } from "@/integrations/supabase/client";
 
 const navLinks = [
   { to: "/", label: "Home", icon: Home },
@@ -15,9 +18,30 @@ const navLinks = [
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  const [avatarUrl, setAvatarUrl] = useState("");
+  const [displayName, setDisplayName] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from("profiles")
+        .select("avatar_url, display_name")
+        .eq("user_id", user.id)
+        .maybeSingle()
+        .then(({ data }) => {
+          if (data) {
+            setAvatarUrl(data.avatar_url || "");
+            setDisplayName(data.display_name || "");
+          }
+        });
+    } else {
+      setAvatarUrl("");
+      setDisplayName("");
+    }
+  }, [user]);
 
   useEffect(() => {
     if (dark) {
@@ -92,10 +116,32 @@ const Navbar = () => {
                   <Shield className="h-3.5 w-3.5" /> Admin
                 </Link>
               )}
-              <span className="text-xs text-muted-foreground truncate max-w-[120px]">{user.email}</span>
-              <Button variant="ghost" size="icon" onClick={handleSignOut} className="rounded-full" aria-label="Sign out">
-                <LogOut className="h-4 w-4" />
-              </Button>
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild>
+                  <button className="rounded-full ring-2 ring-border hover:ring-accent transition-all">
+                    <Avatar className="h-8 w-8">
+                      <AvatarImage src={avatarUrl} alt={displayName || user.email || ""} />
+                      <AvatarFallback className="bg-accent text-accent-foreground text-xs">
+                        {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
+                      </AvatarFallback>
+                    </Avatar>
+                  </button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end" className="w-48">
+                  <div className="px-2 py-1.5">
+                    <p className="text-sm font-medium truncate">{displayName || "User"}</p>
+                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2 cursor-pointer">
+                    <Settings className="h-4 w-4" /> Profile Settings
+                  </DropdownMenuItem>
+                  <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
+                    <LogOut className="h-4 w-4" /> Sign Out
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           ) : (
             <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full font-semibold">
@@ -165,10 +211,28 @@ const Navbar = () => {
           </button>
           {user ? (
             <>
-              <div className="px-4 py-2 text-xs text-muted-foreground truncate">{user.email}</div>
+              <div className="flex items-center gap-3 px-4 py-2">
+                <Avatar className="h-8 w-8">
+                  <AvatarImage src={avatarUrl} alt={displayName} />
+                  <AvatarFallback className="bg-accent text-accent-foreground text-xs">
+                    {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="text-sm font-medium truncate">{displayName || "User"}</p>
+                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                </div>
+              </div>
+              <Link
+                to="/profile"
+                onClick={() => setOpen(false)}
+                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
+                <Settings className="h-5 w-5" /> Profile Settings
+              </Link>
               <button
                 onClick={async () => { await signOut(); setOpen(false); navigate("/"); }}
-                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
               >
                 <LogOut className="h-5 w-5" /> Sign Out
               </button>

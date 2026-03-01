@@ -12,7 +12,7 @@ import {
 } from "@/components/ui/dialog";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
-const categories = ["All", "Yield Updates", "Market News", "Regulatory Updates"] as const;
+const categories = ["All", "Yield Updates", "Market News", "Regulatory Updates", "Fund Announcements"] as const;
 
 const categoryIcons: Record<string, typeof TrendingUp> = {
   "Yield Updates": TrendingUp,
