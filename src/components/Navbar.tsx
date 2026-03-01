@@ -6,6 +6,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import SearchDialog from "@/components/SearchDialog";
 
 const navLinks = [
   { to: "/", label: "Home", icon: Home },
@@ -99,6 +100,7 @@ const Navbar = () => {
 
         {/* Desktop right side */}
         <div className="hidden md:flex items-center gap-2">
+          <SearchDialog />
           <Button
             variant="ghost"
             size="icon"
@@ -185,8 +187,9 @@ const Navbar = () => {
           )}
         </nav>
 
-        {/* Mobile: hamburger on right */}
-        <div className="flex md:hidden items-center">
+        {/* Mobile: search + hamburger on right */}
+        <div className="flex md:hidden items-center gap-1">
+          <SearchDialog />
           <Button
             variant="ghost"
             size="icon"
