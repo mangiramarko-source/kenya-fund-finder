@@ -73,7 +73,7 @@ const Navbar = () => {
             <span className="hidden sm:block"><TrendingUp className="h-5 w-5" /></span>
             <span className="block sm:hidden"><Home className="h-5 w-5" /></span>
           </div>
-          <span className="hidden sm:inline">MMF Compare</span>
+          <span className="hidden sm:inline">Fund Finder</span>
         </Link>
 
         {/* Desktop nav */}
@@ -153,7 +153,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile: brand name centered */}
-        <span className="md:hidden font-heading text-lg font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>MMF Compare</span>
+        <span className="md:hidden font-heading text-lg font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>Fund Finder</span>
 
         {/* Mobile: hamburger on right */}
         <div className="flex md:hidden items-center gap-1">

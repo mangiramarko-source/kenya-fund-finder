@@ -78,7 +78,7 @@ const AuthPage = () => {
           </div>
           <CardTitle className="text-xl">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
           <CardDescription>
-            {isSignUp ? "Sign up to track your favorite funds" : "Sign in to your MMF Compare account"}
+            {isSignUp ? "Sign up to track your favorite funds" : "Sign in to your Fund Finder account"}
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">

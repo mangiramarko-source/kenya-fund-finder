@@ -76,10 +76,10 @@ const NewsPage = () => {
     headline: selectedArticle.title,
     description: selectedArticle.summary,
     datePublished: selectedArticle.date_published,
-    author: { "@type": "Organization", name: selectedArticle.source || "MMF Compare Kenya" },
+    author: { "@type": "Organization", name: selectedArticle.source || "Fund Finder Kenya" },
     publisher: {
       "@type": "Organization",
-      name: "MMF Compare Kenya",
+      name: "Fund Finder Kenya",
       url: "https://kenyafundfinder.com",
     },
     mainEntityOfPage: {
