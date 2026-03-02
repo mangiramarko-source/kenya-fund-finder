@@ -48,7 +48,7 @@ const Index = () => {
                 CMA Regulated Funds
               </div>
               <h1 className="text-3xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-bold leading-[1.1] tracking-tight mb-5">
-                Compare Money Market Funds in Kenya
+                Compare Unit Trusts in Kenya
               </h1>
               <p className="text-lg md:text-xl text-primary-foreground/70 max-w-lg mx-auto lg:mx-0 mb-10">
                 See returns. Calculate earnings. Stay updated.
@@ -68,10 +68,10 @@ const Index = () => {
             {/* Hero stats — visible on lg+ */}
             <div className="hidden lg:grid grid-cols-2 gap-3">
               {[
-                { label: "Funds Tracked", value: funds.length || "—", sub: "CMA regulated", highlight: false },
+                { label: "Unit Trusts Tracked", value: funds.length || "—", sub: "CMA regulated", highlight: false },
                 { label: "Top Yield", value: bestYield ? `${bestYield}%` : "—", sub: "annual rate", highlight: true },
                 { label: "Latest Update", value: funds[0] ? new Date(funds[0].updated_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" }) : "—", sub: "data refresh", highlight: false },
-                { label: "News Articles", value: news.length || "—", sub: "market insights", highlight: false },
+                { label: "Market News", value: news.length || "—", sub: "latest insights", highlight: false },
               ].map(({ label, value, sub, highlight }) => (
                 <div key={label} className={`rounded-2xl backdrop-blur-md border p-6 text-center transition-all hover:scale-[1.02] ${highlight ? "bg-accent/15 border-accent/30" : "bg-primary-foreground/[0.07] border-primary-foreground/10"}`}>
                   <p className="text-3xl xl:text-4xl font-bold text-accent mb-2 tabular-nums">{value}</p>
