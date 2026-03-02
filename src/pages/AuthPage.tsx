@@ -7,12 +7,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
-import { TrendingUp, Mail, Lock, ArrowLeft } from "lucide-react";
+import { TrendingUp, Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
@@ -23,6 +25,12 @@ const AuthPage = () => {
     e.preventDefault();
     setError("");
     setMessage("");
+
+    if (isSignUp && password !== confirmPassword) {
+      setError("Passwords do not match");
+      return;
+    }
+
     setLoading(true);
 
     if (isSignUp) {
@@ -120,9 +128,21 @@ const AuthPage = () => {
               <Label htmlFor="password">Password</Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-9" placeholder="••••••••" minLength={6} maxLength={128} autoComplete={isSignUp ? "new-password" : "current-password"} />
+                <Input id="password" type={showPassword ? "text" : "password"} value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-9 pr-10" placeholder="••••••••" minLength={6} maxLength={128} autoComplete={isSignUp ? "new-password" : "current-password"} />
+                <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground" tabIndex={-1}>
+                  {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                </button>
               </div>
             </div>
+            {isSignUp && (
+              <div>
+                <Label htmlFor="confirmPassword">Confirm Password</Label>
+                <div className="relative mt-1">
+                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input id="confirmPassword" type={showPassword ? "text" : "password"} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} required className="pl-9 pr-10" placeholder="••••••••" minLength={6} maxLength={128} autoComplete="new-password" />
+                </div>
+              </div>
+            )}
             {!isSignUp && (
               <div className="flex justify-end">
                 <Link to="/reset-password" className="text-xs text-muted-foreground hover:text-accent hover:underline">
@@ -139,7 +159,7 @@ const AuthPage = () => {
 
           <p className="text-center text-sm text-muted-foreground">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-            <button onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); }} className="text-accent hover:underline font-medium">
+            <button onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); setConfirmPassword(""); setShowPassword(false); }} className="text-accent hover:underline font-medium">
               {isSignUp ? "Sign In" : "Sign Up"}
             </button>
           </p>
