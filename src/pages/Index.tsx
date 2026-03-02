@@ -55,7 +55,7 @@ const Index = () => {
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                 <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold rounded-full px-8">
-                  <Link to="/compare"><BarChart3 className="mr-2 h-4 w-4" /> Compare Funds</Link>
+                  <Link to="/compare"><BarChart3 className="mr-2 h-4 w-4" /> Show Funds</Link>
                 </Button>
                 <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground bg-primary-foreground/5 hover:bg-primary-foreground/15 font-semibold rounded-full px-8">
                   <Link to="/calculator"><Calculator className="mr-2 h-4 w-4" /> Calculate Returns</Link>
