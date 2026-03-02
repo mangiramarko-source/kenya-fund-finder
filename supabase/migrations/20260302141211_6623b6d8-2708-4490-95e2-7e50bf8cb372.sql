@@ -1,0 +1,1 @@
+ALTER TABLE public.funds ADD COLUMN fund_type text NOT NULL DEFAULT 'money_market';

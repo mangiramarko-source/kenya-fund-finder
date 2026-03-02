@@ -112,6 +112,7 @@ export type Database = {
           daily_yield: number
           description: string
           fact_sheet_date: string | null
+          fund_type: string
           id: string
           is_published: boolean
           management_fee: number
@@ -135,6 +136,7 @@ export type Database = {
           daily_yield?: number
           description?: string
           fact_sheet_date?: string | null
+          fund_type?: string
           id?: string
           is_published?: boolean
           management_fee: number
@@ -158,6 +160,7 @@ export type Database = {
           daily_yield?: number
           description?: string
           fact_sheet_date?: string | null
+          fund_type?: string
           id?: string
           is_published?: boolean
           management_fee?: number
