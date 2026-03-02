@@ -6,11 +6,11 @@ import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 
 const Index = () => {
-  useDocumentTitle("MMF Compare Kenya – Compare Money Market Funds", "Compare CMA-regulated Money Market Funds in Kenya. See yields, fees, and calculate returns.");
+  useDocumentTitle("Fund Finder Kenya – Compare Money Market Funds", "Compare CMA-regulated Money Market Funds in Kenya. See yields, fees, and calculate returns.");
   useJsonLd({
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "MMF Compare Kenya",
+    name: "Fund Finder Kenya",
     url: "https://kenyafundfinder.com",
     description: "Compare CMA-regulated Money Market Funds in Kenya. See yields, fees, and calculate returns.",
     potentialAction: {
