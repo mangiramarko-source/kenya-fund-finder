@@ -1,10 +1,13 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users, TrendingUp, Activity, MousePointerClick, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+
+type TimeRange = "24h" | "7d" | "30d";
 
 interface FundEngagement {
   fundName: string;
@@ -19,7 +22,6 @@ interface Stats {
   outdatedFunds: number;
   lastUpdate: string;
   totalPageViews: number;
-  todayPageViews: number;
   uniqueVisitors: number;
   topPages: { page: string; views: number }[];
   fundEngagement: FundEngagement[];
@@ -31,112 +33,99 @@ interface Stats {
   rateLimitHits: number;
 }
 
+function getWindowStart(range: TimeRange): string {
+  const now = new Date();
+  if (range === "24h") now.setHours(now.getHours() - 24);
+  else if (range === "7d") now.setDate(now.getDate() - 7);
+  else now.setDate(now.getDate() - 30);
+  return now.toISOString();
+}
+
+const RANGE_LABELS: Record<TimeRange, string> = { "24h": "Last 24 hours", "7d": "Last 7 days", "30d": "Last 30 days" };
+
 const AdminDashboard = () => {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
+  const [range, setRange] = useState<TimeRange>("7d");
   const [stats, setStats] = useState<Stats>({
     fundCount: 0, newsCount: 0, pendingNews: 0, outdatedFunds: 0,
-    lastUpdate: "", totalPageViews: 0, todayPageViews: 0,
+    lastUpdate: "", totalPageViews: 0,
     uniqueVisitors: 0, topPages: [], fundEngagement: [], recentChanges: 0, avgYield: 0,
     gateClicks: [], totalGateClicks: 0, rateLimitedIPs: 0, rateLimitHits: 0,
   });
 
-  useEffect(() => {
-    const load = async () => {
-      const today = new Date();
-      const todayStr = today.toISOString().split("T")[0];
-      const thirtyDaysAgo = new Date();
-      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-      const sevenDaysAgo = new Date();
-      sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
+  const load = useCallback(async () => {
+    const windowStart = getWindowStart(range);
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-      const [fundsRes, newsRes, pendingRes, allViewsRes, todayViewsRes, changeLogRes, gateClicksRes, rateLimitRes] = await Promise.all([
-        supabase.from("funds").select("id, slug, name, updated_at, annual_yield"),
-        supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "published"),
-        supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "pending_review"),
-        supabase.from("page_views").select("id, page_path, session_id, created_at"),
-        supabase.from("page_views").select("id", { count: "exact" }).gte("created_at", todayStr),
-        supabase.from("change_log").select("id", { count: "exact" }).gte("changed_at", sevenDaysAgo.toISOString()),
-        supabase.from("auth_gate_clicks").select("source, action, created_at"),
-        supabase.from("rate_limit_hits").select("ip_hash, created_at"),
-      ]);
+    const [fundsRes, newsRes, pendingRes, viewsRes, changeLogRes, gateClicksRes, rateLimitRes] = await Promise.all([
+      supabase.from("funds").select("id, slug, name, updated_at, annual_yield"),
+      supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "published"),
+      supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "pending_review"),
+      supabase.from("page_views").select("id, page_path, session_id, created_at").gte("created_at", windowStart),
+      supabase.from("change_log").select("id", { count: "exact" }).gte("changed_at", windowStart),
+      supabase.from("auth_gate_clicks").select("source, action, created_at").gte("created_at", windowStart),
+      supabase.from("rate_limit_hits").select("ip_hash, created_at").gte("created_at", windowStart),
+    ]);
 
-      const funds = fundsRes.data || [];
-      const outdated = funds.filter((f) => new Date(f.updated_at) < thirtyDaysAgo).length;
-      const lastUpdate = funds.reduce((latest, f) => {
-        return new Date(f.updated_at) > new Date(latest) ? f.updated_at : latest;
-      }, "1970-01-01");
-      const avgYield = funds.length > 0 
-        ? funds.reduce((sum, f) => sum + Number(f.annual_yield), 0) / funds.length 
-        : 0;
+    const funds = fundsRes.data || [];
+    const outdated = funds.filter((f) => new Date(f.updated_at) < thirtyDaysAgo).length;
+    const lastUpdate = funds.reduce((latest, f) =>
+      new Date(f.updated_at) > new Date(latest) ? f.updated_at : latest, "1970-01-01");
+    const avgYield = funds.length > 0
+      ? funds.reduce((sum, f) => sum + Number(f.annual_yield), 0) / funds.length
+      : 0;
 
-      // Page view analytics
-      const views = allViewsRes.data || [];
-      const uniqueSessions = new Set(views.map((v) => v.session_id)).size;
+    const views = viewsRes.data || [];
+    const uniqueSessions = new Set(views.map((v) => v.session_id)).size;
 
-      // Top pages (exclude fund detail pages from general top pages)
-      const pageCounts: Record<string, number> = {};
-      const fundViewCounts: Record<string, number> = {};
+    const pageCounts: Record<string, number> = {};
+    const fundViewCounts: Record<string, number> = {};
+    views.forEach((v) => {
+      pageCounts[v.page_path] = (pageCounts[v.page_path] || 0) + 1;
+      const fundMatch = v.page_path.match(/^\/fund\/(.+)$/);
+      if (fundMatch) fundViewCounts[fundMatch[1]] = (fundViewCounts[fundMatch[1]] || 0) + 1;
+    });
 
-      views.forEach((v) => {
-        pageCounts[v.page_path] = (pageCounts[v.page_path] || 0) + 1;
+    const topPages = Object.entries(pageCounts)
+      .sort((a, b) => b[1] - a[1]).slice(0, 5)
+      .map(([page, count]) => ({ page, views: count }));
 
-        // Track fund-specific views (paths like /fund/slug-name)
-        const fundMatch = v.page_path.match(/^\/fund\/(.+)$/);
-        if (fundMatch) {
-          const slug = fundMatch[1];
-          fundViewCounts[slug] = (fundViewCounts[slug] || 0) + 1;
-        }
-      });
+    const fundEngagement: FundEngagement[] = funds
+      .map((f) => ({ fundName: f.name, slug: f.slug, views: fundViewCounts[f.slug] || 0 }))
+      .sort((a, b) => b.views - a.views);
 
-      const topPages = Object.entries(pageCounts)
-        .sort((a, b) => b[1] - a[1])
-        .slice(0, 5)
-        .map(([page, count]) => ({ page, views: count }));
+    const clicks = gateClicksRes.data || [];
+    const sourceCounts: Record<string, number> = {};
+    clicks.forEach((c) => { sourceCounts[c.source] = (sourceCounts[c.source] || 0) + 1; });
+    const gateClicks = Object.entries(sourceCounts)
+      .sort((a, b) => b[1] - a[1])
+      .map(([source, count]) => ({ source, count }));
 
-      // Map fund slugs to names and build engagement list
-      const fundEngagement: FundEngagement[] = funds
-        .map((f) => ({
-          fundName: f.name,
-          slug: f.slug,
-          views: fundViewCounts[f.slug] || 0,
-        }))
-        .sort((a, b) => b.views - a.views);
+    const rlHits = rateLimitRes.data || [];
+    const uniqueRLIPs = new Set(rlHits.map((r) => r.ip_hash)).size;
 
-      // Auth gate click analytics
-      const clicks = gateClicksRes.data || [];
-      const sourceCounts: Record<string, number> = {};
-      clicks.forEach((c) => {
-        sourceCounts[c.source] = (sourceCounts[c.source] || 0) + 1;
-      });
-      const gateClicks = Object.entries(sourceCounts)
-        .sort((a, b) => b[1] - a[1])
-        .map(([source, count]) => ({ source, count }));
-      // Rate limit analytics
-      const rlHits = rateLimitRes.data || [];
-      const uniqueRLIPs = new Set(rlHits.map((r) => r.ip_hash)).size;
+    setStats({
+      fundCount: funds.length,
+      newsCount: newsRes.count || 0,
+      pendingNews: pendingRes.count || 0,
+      outdatedFunds: outdated,
+      lastUpdate: lastUpdate !== "1970-01-01" ? new Date(lastUpdate).toLocaleDateString("en-KE") : "Never",
+      totalPageViews: views.length,
+      uniqueVisitors: uniqueSessions,
+      topPages,
+      fundEngagement,
+      recentChanges: changeLogRes.count || 0,
+      avgYield: Math.round(avgYield * 100) / 100,
+      gateClicks,
+      totalGateClicks: clicks.length,
+      rateLimitHits: rlHits.length,
+      rateLimitedIPs: uniqueRLIPs,
+    });
+  }, [range]);
 
-      setStats({
-        fundCount: funds.length,
-        newsCount: newsRes.count || 0,
-        pendingNews: pendingRes.count || 0,
-        outdatedFunds: outdated,
-        lastUpdate: lastUpdate !== "1970-01-01" ? new Date(lastUpdate).toLocaleDateString("en-KE") : "Never",
-        totalPageViews: views.length,
-        todayPageViews: todayViewsRes.count || 0,
-        uniqueVisitors: uniqueSessions,
-        topPages,
-        fundEngagement,
-        recentChanges: changeLogRes.count || 0,
-        avgYield: Math.round(avgYield * 100) / 100,
-        gateClicks,
-        totalGateClicks: clicks.length,
-        rateLimitHits: rlHits.length,
-        rateLimitedIPs: uniqueRLIPs,
-      });
-    };
-    load();
-  }, []);
+  useEffect(() => { load(); }, [load]);
 
   const handleLogout = async () => {
     await signOut();
@@ -149,66 +138,71 @@ const AdminDashboard = () => {
     { icon: Newspaper, label: "Published News", value: stats.newsCount, color: "text-blue-500" },
     { icon: Clock, label: "Pending Review", value: stats.pendingNews, color: "text-yellow-500" },
     { icon: AlertTriangle, label: "Outdated (>30d)", value: stats.outdatedFunds, color: "text-destructive" },
-    { icon: Activity, label: "Changes (7d)", value: stats.recentChanges, color: "text-purple-500" },
+    { icon: Activity, label: "Changes", value: stats.recentChanges, color: "text-purple-500" },
   ];
 
   const engagementCards = [
-    { icon: Eye, label: "Total Page Views", value: stats.totalPageViews, color: "text-accent" },
-    { icon: Eye, label: "Today's Views", value: stats.todayPageViews, color: "text-blue-500" },
+    { icon: Eye, label: "Page Views", value: stats.totalPageViews, color: "text-accent" },
     { icon: Users, label: "Unique Visitors", value: stats.uniqueVisitors, color: "text-green-500" },
     { icon: ShieldAlert, label: "Rate Limit Hits", value: stats.rateLimitHits, color: "text-destructive" },
     { icon: ShieldAlert, label: "Rate-Limited IPs", value: stats.rateLimitedIPs, color: "text-yellow-500" },
   ];
 
+  const StatCard = ({ icon: Icon, label, value, color }: { icon: React.ElementType; label: string; value: string | number; color: string }) => (
+    <Card>
+      <CardHeader className="pb-1 pt-4 px-4">
+        <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
+          <Icon className={`h-3.5 w-3.5 ${color}`} />
+          {label}
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="px-4 pb-4">
+        <p className={`text-2xl font-bold ${color}`}>{value}</p>
+      </CardContent>
+    </Card>
+  );
+
+  const gateLabels: Record<string, string> = {
+    fund_detail: "Fund Details",
+    calculator: "Calculator",
+    news_article: "News Articles",
+  };
+
   return (
     <div className="space-y-6">
-      <div className="flex items-center justify-between">
+      {/* Header */}
+      <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <p className="text-sm text-muted-foreground">Welcome, {user?.email} · Last update: {stats.lastUpdate}</p>
         </div>
-        <Button variant="outline" size="sm" onClick={handleLogout}>
-          <LogOut className="mr-2 h-4 w-4" /> Sign Out
-        </Button>
+        <div className="flex items-center gap-3">
+          <ToggleGroup type="single" value={range} onValueChange={(v) => v && setRange(v as TimeRange)} className="border rounded-md">
+            <ToggleGroupItem value="24h" size="sm" className="text-xs px-3">24h</ToggleGroupItem>
+            <ToggleGroupItem value="7d" size="sm" className="text-xs px-3">7d</ToggleGroupItem>
+            <ToggleGroupItem value="30d" size="sm" className="text-xs px-3">30d</ToggleGroupItem>
+          </ToggleGroup>
+          <Button variant="outline" size="sm" onClick={handleLogout}>
+            <LogOut className="mr-2 h-4 w-4" /> Sign Out
+          </Button>
+        </div>
       </div>
+
+      <p className="text-xs text-muted-foreground -mt-3">Showing data for: {RANGE_LABELS[range]}</p>
 
       {/* Content Stats */}
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Content Overview</h2>
         <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-          {summaryCards.map((c) => (
-            <Card key={c.label}>
-              <CardHeader className="pb-1 pt-4 px-4">
-                <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <c.icon className={`h-3.5 w-3.5 ${c.color}`} />
-                  {c.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
-              </CardContent>
-            </Card>
-          ))}
+          {summaryCards.map((c) => <StatCard key={c.label} {...c} />)}
         </div>
       </div>
 
       {/* Engagement Stats */}
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">User Engagement</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
-          {engagementCards.map((c) => (
-            <Card key={c.label}>
-              <CardHeader className="pb-1 pt-4 px-4">
-                <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                  <c.icon className={`h-3.5 w-3.5 ${c.color}`} />
-                  {c.label}
-                </CardTitle>
-              </CardHeader>
-              <CardContent className="px-4 pb-4">
-                <p className={`text-2xl font-bold ${c.color}`}>{c.value}</p>
-              </CardContent>
-            </Card>
-          ))}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          {engagementCards.map((c) => <StatCard key={c.label} {...c} />)}
         </div>
       </div>
 
@@ -216,37 +210,10 @@ const AdminDashboard = () => {
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Sign-up Conversion</h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Card>
-            <CardHeader className="pb-1 pt-4 px-4">
-              <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                <MousePointerClick className="h-3.5 w-3.5 text-accent" />
-                Total Gate Clicks
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="px-4 pb-4">
-              <p className="text-2xl font-bold text-accent">{stats.totalGateClicks}</p>
-            </CardContent>
-          </Card>
-          {stats.gateClicks.map((g) => {
-            const labels: Record<string, string> = {
-              fund_detail: "Fund Details",
-              calculator: "Calculator",
-              news_article: "News Articles",
-            };
-            return (
-              <Card key={g.source}>
-                <CardHeader className="pb-1 pt-4 px-4">
-                  <CardTitle className="text-xs font-medium text-muted-foreground flex items-center gap-1.5">
-                    <MousePointerClick className="h-3.5 w-3.5 text-blue-500" />
-                    {labels[g.source] || g.source}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="px-4 pb-4">
-                  <p className="text-2xl font-bold text-blue-500">{g.count}</p>
-                </CardContent>
-              </Card>
-            );
-          })}
+          <StatCard icon={MousePointerClick} label="Total Gate Clicks" value={stats.totalGateClicks} color="text-accent" />
+          {stats.gateClicks.map((g) => (
+            <StatCard key={g.source} icon={MousePointerClick} label={gateLabels[g.source] || g.source} value={g.count} color="text-blue-500" />
+          ))}
         </div>
       </div>
 
