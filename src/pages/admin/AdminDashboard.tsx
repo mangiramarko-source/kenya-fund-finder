@@ -84,7 +84,7 @@ const AdminDashboard = () => {
     const fundViewCounts: Record<string, number> = {};
     views.forEach((v) => {
       pageCounts[v.page_path] = (pageCounts[v.page_path] || 0) + 1;
-      const fundMatch = v.page_path.match(/^\/fund\/(.+)$/);
+      const fundMatch = v.page_path.match(/^\/compare\/(.+)$/);
       if (fundMatch) fundViewCounts[fundMatch[1]] = (fundViewCounts[fundMatch[1]] || 0) + 1;
     });
 

@@ -54,14 +54,14 @@ const AdminFunds = () => {
   const load = async () => {
     const [fundsRes, viewsRes] = await Promise.all([
       supabase.from("funds").select("*").order("name"),
-      supabase.from("page_views").select("page_path").like("page_path", "/fund/%"),
+      supabase.from("page_views").select("page_path").like("page_path", "/compare/%"),
     ]);
     if (fundsRes.data) setFunds(fundsRes.data as FundRow[]);
 
     // Count views per fund slug
     const counts: Record<string, number> = {};
     (viewsRes.data || []).forEach((v) => {
-      const match = v.page_path.match(/^\/fund\/(.+)$/);
+      const match = v.page_path.match(/^\/compare\/(.+)$/);
       if (match) counts[match[1]] = (counts[match[1]] || 0) + 1;
     });
     setFundViews(counts);
