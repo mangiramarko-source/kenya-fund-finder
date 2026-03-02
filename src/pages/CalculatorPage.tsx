@@ -8,6 +8,8 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { fetchFunds, type FundFromDB } from "@/lib/api";
 import { AlertTriangle, GitCompareArrows } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useAuth } from "@/hooks/useAuth";
+import AuthGate from "@/components/AuthGate";
 
 const WITHHOLDING_TAX_RATE = 0.15;
 
@@ -54,6 +56,7 @@ function calculate(amount: number, yield_: number, months: number, monthly: numb
 const formatKES = (n: number) => `KES ${n.toLocaleString()}`;
 
 const CalculatorPage = () => {
+  const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [selectedFundSlug, setSelectedFundSlug] = useState<string>(searchParams.get("fund") || "custom");
@@ -65,6 +68,7 @@ const CalculatorPage = () => {
 
   // Comparison mode
   const [compareMode, setCompareMode] = useState(false);
+  const [showCompareGate, setShowCompareGate] = useState(false);
   const [compareFundSlug, setCompareFundSlug] = useState<string>("custom");
   const [compareYield, setCompareYield] = useState(8);
 
@@ -142,13 +146,30 @@ const CalculatorPage = () => {
         <Button
           variant={compareMode ? "default" : "outline"}
           size="sm"
-          onClick={() => setCompareMode(!compareMode)}
+          onClick={() => {
+            if (!user && !compareMode) {
+              setShowCompareGate(true);
+              return;
+            }
+            setCompareMode(!compareMode);
+            setShowCompareGate(false);
+          }}
           className="gap-2 shrink-0 self-start"
         >
           <GitCompareArrows className="h-4 w-4" />
           {compareMode ? "Exit Compare" : "Compare Funds"}
         </Button>
       </div>
+
+      {showCompareGate && !user && (
+        <div className="mb-8">
+          <AuthGate
+            source="calculator_compare"
+            title="Sign up to compare funds"
+            description="Create a free account to compare funds side by side and see which one earns you more."
+          />
+        </div>
+      )}
 
       {/* Shared inputs */}
       <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-8">
