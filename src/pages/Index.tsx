@@ -39,44 +39,44 @@ const Index = () => {
   return (
     <div>
       {/* Hero */}
-      <section className="hero-gradient text-primary-foreground py-20 md:py-28 lg:py-32">
+      <section className="hero-gradient text-primary-foreground py-20 md:py-28 lg:py-36">
         <div className="container max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-10 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-[1.1fr_0.9fr] gap-12 lg:gap-16 items-center">
             <div className="text-center lg:text-left">
-              <div className="inline-flex items-center gap-2 rounded-full bg-accent/20 px-4 py-1.5 text-sm font-medium text-accent-foreground/90 mb-6">
+              <div className="inline-flex items-center gap-2 rounded-full bg-accent/15 border border-accent/20 px-4 py-1.5 text-sm font-medium text-accent mb-8">
                 <Shield className="h-4 w-4" />
                 CMA Regulated Funds
               </div>
-              <h1 className="text-3xl md:text-5xl lg:text-6xl font-bold leading-tight mb-4">
+              <h1 className="text-3xl md:text-5xl lg:text-[3.5rem] xl:text-6xl font-bold leading-[1.1] tracking-tight mb-5">
                 Compare Money Market Funds in Kenya
               </h1>
-              <p className="text-lg md:text-xl text-primary-foreground/80 max-w-xl mx-auto lg:mx-0 mb-8">
+              <p className="text-lg md:text-xl text-primary-foreground/70 max-w-lg mx-auto lg:mx-0 mb-10">
                 See returns. Calculate earnings. Stay updated.
               </p>
               <div className="flex flex-col sm:flex-row gap-3 justify-center lg:justify-start">
                 <Button asChild size="lg" className="bg-accent text-accent-foreground hover:bg-accent/90 font-semibold rounded-full px-8">
                   <Link to="/compare"><BarChart3 className="mr-2 h-4 w-4" /> Compare Funds</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 font-semibold rounded-full px-8">
+                <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground bg-primary-foreground/5 hover:bg-primary-foreground/15 font-semibold rounded-full px-8">
                   <Link to="/calculator"><Calculator className="mr-2 h-4 w-4" /> Calculate Returns</Link>
                 </Button>
-                <Button asChild size="lg" variant="outline" className="border-primary-foreground/50 text-primary-foreground bg-primary-foreground/10 hover:bg-primary-foreground/20 font-semibold rounded-full px-8 hidden sm:inline-flex">
+                <Button asChild size="lg" variant="outline" className="border-primary-foreground/30 text-primary-foreground bg-primary-foreground/5 hover:bg-primary-foreground/15 font-semibold rounded-full px-8 hidden sm:inline-flex">
                   <Link to="/learn"><BookOpen className="mr-2 h-4 w-4" /> Learn</Link>
                 </Button>
               </div>
             </div>
             {/* Hero stats — visible on lg+ */}
-            <div className="hidden lg:grid grid-cols-2 gap-4">
+            <div className="hidden lg:grid grid-cols-2 gap-3">
               {[
-                { label: "Funds Tracked", value: funds.length || "—", sub: "CMA regulated" },
-                { label: "Top Yield", value: bestYield ? `${bestYield}%` : "—", sub: "annual rate" },
-                { label: "Latest Update", value: funds[0] ? new Date(funds[0].updated_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" }) : "—", sub: "data refresh" },
-                { label: "News Articles", value: news.length || "—", sub: "market insights" },
-              ].map(({ label, value, sub }) => (
-                <div key={label} className="rounded-2xl bg-primary-foreground/10 backdrop-blur-sm border border-primary-foreground/10 p-5 text-center">
-                  <p className="text-3xl font-bold text-accent mb-1">{value}</p>
-                  <p className="text-sm font-medium text-primary-foreground">{label}</p>
-                  <p className="text-xs text-primary-foreground/60">{sub}</p>
+                { label: "Funds Tracked", value: funds.length || "—", sub: "CMA regulated", highlight: false },
+                { label: "Top Yield", value: bestYield ? `${bestYield}%` : "—", sub: "annual rate", highlight: true },
+                { label: "Latest Update", value: funds[0] ? new Date(funds[0].updated_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" }) : "—", sub: "data refresh", highlight: false },
+                { label: "News Articles", value: news.length || "—", sub: "market insights", highlight: false },
+              ].map(({ label, value, sub, highlight }) => (
+                <div key={label} className={`rounded-2xl backdrop-blur-md border p-6 text-center transition-all hover:scale-[1.02] ${highlight ? "bg-accent/15 border-accent/30" : "bg-primary-foreground/[0.07] border-primary-foreground/10"}`}>
+                  <p className="text-3xl xl:text-4xl font-bold text-accent mb-2 tabular-nums">{value}</p>
+                  <p className="text-sm font-semibold text-primary-foreground/90">{label}</p>
+                  <p className="text-xs text-primary-foreground/50 mt-0.5">{sub}</p>
                 </div>
               ))}
             </div>
