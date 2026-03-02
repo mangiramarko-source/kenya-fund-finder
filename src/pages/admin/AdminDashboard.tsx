@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users, TrendingUp, Activity, MousePointerClick } from "lucide-react";
+import { BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users, TrendingUp, Activity, MousePointerClick, ShieldAlert } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 
@@ -27,6 +27,8 @@ interface Stats {
   avgYield: number;
   gateClicks: { source: string; count: number }[];
   totalGateClicks: number;
+  rateLimitedIPs: number;
+  rateLimitHits: number;
 }
 
 const AdminDashboard = () => {
@@ -36,7 +38,7 @@ const AdminDashboard = () => {
     fundCount: 0, newsCount: 0, pendingNews: 0, outdatedFunds: 0,
     lastUpdate: "", totalPageViews: 0, todayPageViews: 0,
     uniqueVisitors: 0, topPages: [], fundEngagement: [], recentChanges: 0, avgYield: 0,
-    gateClicks: [], totalGateClicks: 0,
+    gateClicks: [], totalGateClicks: 0, rateLimitedIPs: 0, rateLimitHits: 0,
   });
 
   useEffect(() => {
@@ -48,7 +50,7 @@ const AdminDashboard = () => {
       const sevenDaysAgo = new Date();
       sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
-      const [fundsRes, newsRes, pendingRes, allViewsRes, todayViewsRes, changeLogRes, gateClicksRes] = await Promise.all([
+      const [fundsRes, newsRes, pendingRes, allViewsRes, todayViewsRes, changeLogRes, gateClicksRes, rateLimitRes] = await Promise.all([
         supabase.from("funds").select("id, slug, name, updated_at, annual_yield"),
         supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "published"),
         supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "pending_review"),
@@ -56,6 +58,7 @@ const AdminDashboard = () => {
         supabase.from("page_views").select("id", { count: "exact" }).gte("created_at", todayStr),
         supabase.from("change_log").select("id", { count: "exact" }).gte("changed_at", sevenDaysAgo.toISOString()),
         supabase.from("auth_gate_clicks").select("source, action, created_at"),
+        supabase.from("rate_limit_hits").select("ip_hash, created_at"),
       ]);
 
       const funds = fundsRes.data || [];
@@ -109,6 +112,9 @@ const AdminDashboard = () => {
       const gateClicks = Object.entries(sourceCounts)
         .sort((a, b) => b[1] - a[1])
         .map(([source, count]) => ({ source, count }));
+      // Rate limit analytics
+      const rlHits = rateLimitRes.data || [];
+      const uniqueRLIPs = new Set(rlHits.map((r) => r.ip_hash)).size;
 
       setStats({
         fundCount: funds.length,
@@ -125,6 +131,8 @@ const AdminDashboard = () => {
         avgYield: Math.round(avgYield * 100) / 100,
         gateClicks,
         totalGateClicks: clicks.length,
+        rateLimitHits: rlHits.length,
+        rateLimitedIPs: uniqueRLIPs,
       });
     };
     load();
@@ -148,6 +156,8 @@ const AdminDashboard = () => {
     { icon: Eye, label: "Total Page Views", value: stats.totalPageViews, color: "text-accent" },
     { icon: Eye, label: "Today's Views", value: stats.todayPageViews, color: "text-blue-500" },
     { icon: Users, label: "Unique Visitors", value: stats.uniqueVisitors, color: "text-green-500" },
+    { icon: ShieldAlert, label: "Rate Limit Hits", value: stats.rateLimitHits, color: "text-destructive" },
+    { icon: ShieldAlert, label: "Rate-Limited IPs", value: stats.rateLimitedIPs, color: "text-yellow-500" },
   ];
 
   return (
@@ -185,7 +195,7 @@ const AdminDashboard = () => {
       {/* Engagement Stats */}
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">User Engagement</h2>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
           {engagementCards.map((c) => (
             <Card key={c.label}>
               <CardHeader className="pb-1 pt-4 px-4">
