@@ -73,32 +73,32 @@ const ComparePage = () => {
       </div>
 
       {/* Desktop table */}
-      <div className="hidden md:block rounded-lg border border-border overflow-hidden">
-        <table className="w-full text-sm">
+      <div className="hidden md:block rounded-lg border border-border overflow-hidden overflow-x-auto">
+        <table className="w-full text-sm table-fixed min-w-[800px]">
           <thead>
             <tr className="bg-muted">
-              <th className="text-left px-4 py-3 font-semibold">Fund Name</th>
-              <th className="text-left px-4 py-3 font-semibold">Manager</th>
-              <th className="text-right px-4 py-3 font-semibold">Daily Yield</th>
-              <th className="text-right px-4 py-3"><SortBtn label="Annual Rate" field="annual_yield" /></th>
-              <th className="text-right px-4 py-3"><SortBtn label="Min. Investment" field="minimum_investment" /></th>
-              <th className="text-right px-4 py-3"><SortBtn label="Mgmt Fee" field="management_fee" /></th>
-              <th className="text-left px-4 py-3 font-semibold">Withdrawal</th>
-              <th className="px-4 py-3"></th>
+              <th className="text-left px-4 py-3 font-semibold w-[20%]">Fund Name</th>
+              <th className="text-left px-4 py-3 font-semibold w-[15%]">Manager</th>
+              <th className="text-right px-4 py-3 font-semibold w-[10%]">Daily Yield</th>
+              <th className="text-right px-4 py-3 w-[12%]"><SortBtn label="Annual Rate" field="annual_yield" /></th>
+              <th className="text-right px-4 py-3 w-[14%]"><SortBtn label="Min. Investment" field="minimum_investment" /></th>
+              <th className="text-right px-4 py-3 w-[10%]"><SortBtn label="Mgmt Fee" field="management_fee" /></th>
+              <th className="text-left px-4 py-3 font-semibold w-[11%]">Withdrawal</th>
+              <th className="px-4 py-3 w-[8%]"></th>
             </tr>
           </thead>
           <tbody>
             {sorted.map((fund, i) => (
               <tr key={fund.id} className={`border-t border-border ${i % 2 === 0 ? "bg-card" : "bg-muted/30"} hover:bg-muted/50 transition-colors`}>
-                <td className="px-4 py-3 font-medium">{fund.name}</td>
-                <td className="px-4 py-3 text-muted-foreground">{fund.manager}</td>
-                <td className="px-4 py-3 text-right text-muted-foreground">{fund.daily_yield}%</td>
-                <td className="px-4 py-3 text-right font-semibold text-accent">{fund.annual_yield}%</td>
-                <td className="px-4 py-3 text-right">KES {fund.minimum_investment.toLocaleString()}</td>
-                <td className="px-4 py-3 text-right">{fund.management_fee}%</td>
+                <td className="px-4 py-3 font-medium truncate">{fund.name}</td>
+                <td className="px-4 py-3 text-muted-foreground truncate">{fund.manager}</td>
+                <td className="px-4 py-3 text-right text-muted-foreground tabular-nums">{fund.daily_yield}%</td>
+                <td className="px-4 py-3 text-right font-semibold text-accent tabular-nums">{fund.annual_yield}%</td>
+                <td className="px-4 py-3 text-right tabular-nums">KES {fund.minimum_investment.toLocaleString()}</td>
+                <td className="px-4 py-3 text-right tabular-nums">{fund.management_fee}%</td>
                 <td className="px-4 py-3 text-muted-foreground">{fund.withdrawal_time}</td>
                 <td className="px-4 py-3 text-right">
-                  <Link to={`/compare/${fund.slug}`} className="text-accent hover:underline text-xs font-medium">Details →</Link>
+                  <Link to={`/compare/${fund.slug}`} className="text-accent hover:underline text-xs font-medium whitespace-nowrap">Details →</Link>
                 </td>
               </tr>
             ))}
