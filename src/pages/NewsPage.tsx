@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
 import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone, SortAsc } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -68,6 +68,26 @@ const NewsPage = () => {
   const handleArticleClick = (article: NewsFromDB) => {
     setSelectedArticle(article);
   };
+
+  // Article JSON-LD for the selected article
+  useJsonLd(selectedArticle ? {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    headline: selectedArticle.title,
+    description: selectedArticle.summary,
+    datePublished: selectedArticle.date_published,
+    author: { "@type": "Organization", name: selectedArticle.source || "MMF Compare Kenya" },
+    publisher: {
+      "@type": "Organization",
+      name: "MMF Compare Kenya",
+      url: "https://kenyafundfinder.com",
+    },
+    mainEntityOfPage: {
+      "@type": "WebPage",
+      "@id": `https://kenyafundfinder.com/news#${selectedArticle.id}`,
+    },
+    articleSection: selectedArticle.category,
+  } : null);
 
   if (loading) return <div className="container py-20 text-center text-muted-foreground">Loading news...</div>;
 
