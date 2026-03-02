@@ -8,6 +8,7 @@ import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { fetchFunds, type FundFromDB, FUND_TYPE_LABELS, type FundType } from "@/lib/api";
+import { getDisclaimer } from "@/lib/disclaimers";
 import { AlertTriangle, GitCompareArrows, TrendingUp, Wallet, PiggyBank, CalendarDays } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -447,6 +448,11 @@ const CalculatorPage = () => {
                 <li>Yield data for <strong>{compareFund.name}</strong> was last updated on {new Date(compareFund.updated_at).toLocaleDateString("en-KE")}.</li>
               )}
             </ul>
+            {selectedFund && (
+              <p className="text-xs text-muted-foreground leading-relaxed mt-2 pt-2 border-t border-border">
+                <strong>{FUND_TYPE_LABELS[selectedFund.fund_type]}:</strong> {getDisclaimer(selectedFund.fund_type)}
+              </p>
+            )}
           </div>
         </div>
       </div>
