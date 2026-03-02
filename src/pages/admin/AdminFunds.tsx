@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, AlertTriangle } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type FundType, FUND_TYPE_LABELS } from "@/lib/api";
 
@@ -43,6 +43,8 @@ const emptyFund = {
 const AdminFunds = () => {
   const [funds, setFunds] = useState<FundRow[]>([]);
   const [search, setSearch] = useState("");
+  const [filterType, setFilterType] = useState<string>("all");
+  const [sortByViews, setSortByViews] = useState<"none" | "asc" | "desc">("none");
   const [editingFund, setEditingFund] = useState<typeof emptyFund & { id?: string }>(emptyFund);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [fundViews, setFundViews] = useState<Record<string, number>>({});
@@ -67,10 +69,17 @@ const AdminFunds = () => {
 
   useEffect(() => { load(); }, []);
 
-  const filtered = funds.filter((f) =>
-    f.name.toLowerCase().includes(search.toLowerCase()) ||
-    f.manager.toLowerCase().includes(search.toLowerCase())
-  );
+  const filtered = funds
+    .filter((f) =>
+      (filterType === "all" || f.fund_type === filterType) &&
+      (f.name.toLowerCase().includes(search.toLowerCase()) ||
+       f.manager.toLowerCase().includes(search.toLowerCase()))
+    )
+    .sort((a, b) => {
+      if (sortByViews === "desc") return (fundViews[b.slug] || 0) - (fundViews[a.slug] || 0);
+      if (sortByViews === "asc") return (fundViews[a.slug] || 0) - (fundViews[b.slug] || 0);
+      return 0;
+    });
 
   const isOutdated = (date: string) => {
     const d = new Date(date);
@@ -274,9 +283,22 @@ const AdminFunds = () => {
         </Dialog>
       </div>
 
-      <div className="relative mb-4">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input placeholder="Search funds..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+      <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input placeholder="Search funds..." value={search} onChange={(e) => setSearch(e.target.value)} className="pl-9" />
+        </div>
+        <Select value={filterType} onValueChange={setFilterType}>
+          <SelectTrigger className="w-[160px]">
+            <SelectValue placeholder="Fund Type" />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All Types</SelectItem>
+            {Object.entries(FUND_TYPE_LABELS).map(([val, label]) => (
+              <SelectItem key={val} value={val}>{label}</SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="rounded-lg border border-border overflow-hidden">
@@ -289,7 +311,9 @@ const AdminFunds = () => {
                 <th className="text-left px-3 py-2 font-semibold hidden md:table-cell">Manager</th>
                 <th className="text-right px-3 py-2 font-semibold">Rate</th>
                 <th className="text-right px-3 py-2 font-semibold hidden md:table-cell">Fee</th>
-                <th className="text-right px-3 py-2 font-semibold hidden md:table-cell">Views</th>
+                <th className="text-right px-3 py-2 font-semibold hidden md:table-cell cursor-pointer select-none" onClick={() => setSortByViews(s => s === "none" ? "desc" : s === "desc" ? "asc" : "none")}>
+                    <span className="inline-flex items-center gap-1">Views <ArrowUpDown className="h-3 w-3" /></span>
+                  </th>
                 <th className="text-center px-3 py-2 font-semibold hidden md:table-cell">Status</th>
                 <th className="text-center px-3 py-2 font-semibold">Updated</th>
                 <th className="px-3 py-2"></th>
