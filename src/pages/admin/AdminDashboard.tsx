@@ -134,7 +134,7 @@ const AdminDashboard = () => {
 
   const summaryCards = [
     { icon: BarChart3, label: "Funds Listed", value: stats.fundCount, color: "text-accent" },
-    { icon: TrendingUp, label: "Avg Yield", value: `${stats.avgYield}%`, color: "text-accent" },
+    { icon: TrendingUp, label: "Avg Rate", value: `${stats.avgYield}%`, color: "text-accent" },
     { icon: Newspaper, label: "Published News", value: stats.newsCount, color: "text-blue-500" },
     { icon: Clock, label: "Pending Review", value: stats.pendingNews, color: "text-yellow-500" },
     { icon: AlertTriangle, label: "Outdated (>30d)", value: stats.outdatedFunds, color: "text-destructive" },

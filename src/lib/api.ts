@@ -7,6 +7,7 @@ export interface FundFromDB {
   manager: string;
   cma_licensed: boolean;
   annual_yield: number;
+  daily_yield: number;
   minimum_investment: number;
   management_fee: number;
   withdrawal_time: string;
@@ -40,13 +41,14 @@ export interface HistoricalYield {
 export async function fetchFunds(): Promise<FundFromDB[]> {
   const { data, error } = await supabase
     .from("funds")
-    .select("id, slug, name, manager, cma_licensed, annual_yield, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, source_url, is_published, updated_at")
+    .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, source_url, is_published, updated_at")
     .eq("is_published", true)
     .order("annual_yield", { ascending: false });
   if (error) throw error;
   return (data || []).map((f) => ({
     ...f,
     annual_yield: Number(f.annual_yield),
+    daily_yield: Number(f.daily_yield),
     minimum_investment: Number(f.minimum_investment),
     management_fee: Number(f.management_fee),
   }));
@@ -55,7 +57,7 @@ export async function fetchFunds(): Promise<FundFromDB[]> {
 export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> {
   const { data, error } = await supabase
     .from("funds")
-    .select("id, slug, name, manager, cma_licensed, annual_yield, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, source_url, is_published, updated_at")
+    .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, source_url, is_published, updated_at")
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
@@ -64,6 +66,7 @@ export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> 
   return {
     ...data,
     annual_yield: Number(data.annual_yield),
+    daily_yield: Number(data.daily_yield),
     minimum_investment: Number(data.minimum_investment),
     management_fee: Number(data.management_fee),
   };
