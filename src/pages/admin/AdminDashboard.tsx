@@ -15,6 +15,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, LineChart, Line, PieChart as RechartsPie, Pie, Legend,
+  AreaChart, Area,
 } from "recharts";
 
 type TimeRange = "24h" | "7d" | "30d";
@@ -57,6 +58,12 @@ interface Stats {
   fundTypeBreakdown: { type: string; label: string; count: number }[];
   dailyTraffic: DailyTraffic[];
   calculatorUsage: number;
+  sparklines: {
+    views: { value: number }[];
+    visitors: { value: number }[];
+    calculator: { value: number }[];
+    gateClicks: { value: number }[];
+  };
 }
 
 function getWindowStart(range: TimeRange): string {
@@ -90,15 +97,27 @@ const AdminDashboard = () => {
     highestYield: null, lowestYield: null,
     gateClicks: [], totalGateClicks: 0, conversionRate: 0, rateLimitedIPs: 0, rateLimitHits: 0,
     fundTypeBreakdown: [], dailyTraffic: [], calculatorUsage: 0,
+    sparklines: { views: [], visitors: [], calculator: [], gateClicks: [] },
   });
 
   const load = useCallback(async () => {
     setLoading(true);
     const windowStart = getWindowStart(range);
+    const sparklineStart = new Date();
+    sparklineStart.setDate(sparklineStart.getDate() - 7);
+    const sparklineStartISO = sparklineStart.toISOString();
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
-    const [fundsRes, newsRes, pendingRes, viewsRes, changeLogRes, gateClicksRes, rateLimitRes] = await Promise.all([
+    // Always fetch 7-day data for sparklines in addition to the range data
+    const fetchSparklineViews = range !== "7d"
+      ? supabase.from("page_views").select("page_path, session_id, created_at").gte("created_at", sparklineStartISO)
+      : null;
+    const fetchSparklineGate = range !== "7d"
+      ? supabase.from("auth_gate_clicks").select("created_at").gte("created_at", sparklineStartISO)
+      : null;
+
+    const [fundsRes, newsRes, pendingRes, viewsRes, changeLogRes, gateClicksRes, rateLimitRes, sparkViewsRes, sparkGateRes] = await Promise.all([
       supabase.from("funds").select("id, slug, name, updated_at, annual_yield, fund_type, is_published"),
       supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "published"),
       supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "pending_review"),
@@ -106,6 +125,8 @@ const AdminDashboard = () => {
       supabase.from("change_log").select("id", { count: "exact" }).gte("changed_at", windowStart),
       supabase.from("auth_gate_clicks").select("source, action, created_at").gte("created_at", windowStart),
       supabase.from("rate_limit_hits").select("ip_hash, created_at").gte("created_at", windowStart),
+      fetchSparklineViews,
+      fetchSparklineGate,
     ]);
 
     const funds = fundsRes.data || [];
@@ -189,6 +210,36 @@ const AdminDashboard = () => {
     const rlHits = rateLimitRes.data || [];
     const uniqueRLIPs = new Set(rlHits.map((r) => r.ip_hash)).size;
 
+    // Build 7-day sparkline data
+    const sparkSource = sparkViewsRes?.data || (range === "7d" ? views : []);
+    const sparkGateSource = sparkGateRes?.data || (range === "7d" ? clicks : []);
+    const last7Days: string[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      last7Days.push(d.toISOString().slice(0, 10));
+    }
+    const sparkDays: Record<string, { views: number; visitors: Set<string>; calc: number; gate: number }> = {};
+    last7Days.forEach((d) => { sparkDays[d] = { views: 0, visitors: new Set(), calc: 0, gate: 0 }; });
+    sparkSource.forEach((v: any) => {
+      const day = v.created_at.slice(0, 10);
+      if (sparkDays[day]) {
+        sparkDays[day].views++;
+        if (v.session_id) sparkDays[day].visitors.add(v.session_id);
+        if (v.page_path === "/calculator") sparkDays[day].calc++;
+      }
+    });
+    sparkGateSource.forEach((c: any) => {
+      const day = c.created_at.slice(0, 10);
+      if (sparkDays[day]) sparkDays[day].gate++;
+    });
+    const sparklines = {
+      views: last7Days.map((d) => ({ value: sparkDays[d].views })),
+      visitors: last7Days.map((d) => ({ value: sparkDays[d].visitors.size })),
+      calculator: last7Days.map((d) => ({ value: sparkDays[d].calc })),
+      gateClicks: last7Days.map((d) => ({ value: sparkDays[d].gate })),
+    };
+
     setStats({
       fundCount: funds.length,
       publishedFunds,
@@ -214,6 +265,7 @@ const AdminDashboard = () => {
       fundTypeBreakdown,
       dailyTraffic,
       calculatorUsage,
+      sparklines,
     });
     setLoading(false);
   }, [range]);
@@ -232,18 +284,40 @@ const AdminDashboard = () => {
     news_article: "News Articles",
   };
 
-  const StatCard = ({ icon: Icon, label, value, color, subtitle }: {
-    icon: React.ElementType; label: string; value: string | number; color: string; subtitle?: string;
+  const Sparkline = ({ data, color }: { data: { value: number }[]; color: string }) => {
+    if (!data || data.length < 2 || data.every((d) => d.value === 0)) return null;
+    return (
+      <div className="h-8 w-20">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 2, right: 0, left: 0, bottom: 2 }}>
+            <defs>
+              <linearGradient id={`spark-${color}`} x1="0" y1="0" x2="0" y2="1">
+                <stop offset="0%" stopColor={color} stopOpacity={0.3} />
+                <stop offset="100%" stopColor={color} stopOpacity={0.05} />
+              </linearGradient>
+            </defs>
+            <Area type="monotone" dataKey="value" stroke={color} strokeWidth={1.5} fill={`url(#spark-${color})`} dot={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    );
+  };
+
+  const StatCard = ({ icon: Icon, label, value, color, subtitle, sparkData }: {
+    icon: React.ElementType; label: string; value: string | number; color: string; subtitle?: string; sparkData?: { value: number }[];
   }) => (
     <Card className="relative overflow-hidden">
       <CardContent className="p-4">
         <div className="flex items-start justify-between">
-          <div>
+          <div className="flex-1 min-w-0">
             <p className="text-xs font-medium text-muted-foreground mb-1">{label}</p>
-            <p className={`text-2xl font-bold ${color}`}>{value}</p>
+            <div className="flex items-end gap-3">
+              <p className={`text-2xl font-bold ${color}`}>{value}</p>
+              {sparkData && <Sparkline data={sparkData} color={`hsl(var(--accent))`} />}
+            </div>
             {subtitle && <p className="text-[10px] text-muted-foreground mt-0.5">{subtitle}</p>}
           </div>
-          <div className={`p-2 rounded-lg bg-muted/50`}>
+          <div className="p-2 rounded-lg bg-muted/50 shrink-0">
             <Icon className={`h-4 w-4 ${color}`} />
           </div>
         </div>
@@ -282,10 +356,10 @@ const AdminDashboard = () => {
           Traffic Overview · {RANGE_LABELS[range]}
         </h2>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <StatCard icon={Eye} label="Page Views" value={stats.totalPageViews.toLocaleString()} color="text-accent" />
-          <StatCard icon={Users} label="Unique Visitors" value={stats.uniqueVisitors.toLocaleString()} color="text-primary" />
+          <StatCard icon={Eye} label="Page Views" value={stats.totalPageViews.toLocaleString()} color="text-accent" sparkData={stats.sparklines.views} />
+          <StatCard icon={Users} label="Unique Visitors" value={stats.uniqueVisitors.toLocaleString()} color="text-primary" sparkData={stats.sparklines.visitors} />
           <StatCard icon={Globe} label="Pages / Visitor" value={stats.avgPagesPerVisitor} color="text-accent" />
-          <StatCard icon={BarChart3} label="Calculator Usage" value={stats.calculatorUsage} color="text-primary" subtitle="visits to /calculator" />
+          <StatCard icon={BarChart3} label="Calculator Usage" value={stats.calculatorUsage} color="text-primary" subtitle="visits to /calculator" sparkData={stats.sparklines.calculator} />
         </div>
       </div>
 
@@ -404,7 +478,7 @@ const AdminDashboard = () => {
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Sign-up Conversion</h2>
         <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
-          <StatCard icon={MousePointerClick} label="Total Gate Clicks" value={stats.totalGateClicks} color="text-accent" subtitle={`${stats.conversionRate}% of visitors`} />
+          <StatCard icon={MousePointerClick} label="Total Gate Clicks" value={stats.totalGateClicks} color="text-accent" subtitle={`${stats.conversionRate}% of visitors`} sparkData={stats.sparklines.gateClicks} />
           {stats.gateClicks.map((g) => (
             <StatCard key={g.source} icon={MousePointerClick} label={gateLabels[g.source] || g.source} value={g.count} color="text-primary" />
           ))}
