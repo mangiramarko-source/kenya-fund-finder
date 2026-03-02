@@ -1,5 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
@@ -56,6 +57,7 @@ function calculate(amount: number, yield_: number, months: number, monthly: numb
 const formatKES = (n: number) => `KES ${n.toLocaleString()}`;
 
 const CalculatorPage = () => {
+  useDocumentTitle("MMF Returns Calculator – Kenya Money Market Fund", "Calculate your potential money market fund returns with our free calculator. Compare gross vs net yields.");
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [funds, setFunds] = useState<FundFromDB[]>([]);
