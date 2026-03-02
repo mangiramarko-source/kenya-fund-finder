@@ -36,6 +36,16 @@ const FundDetailPage = () => {
     feesAndCommissionsSpecification: `Management fee: ${fund.management_fee}%`,
   } : null);
 
+  useJsonLd(fund ? {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://kenyafundfinder.com/" },
+      { "@type": "ListItem", position: 2, name: "Compare Funds", item: "https://kenyafundfinder.com/compare" },
+      { "@type": "ListItem", position: 3, name: fund.name, item: `https://kenyafundfinder.com/compare/${fund.slug}` },
+    ],
+  } : null);
+
   useEffect(() => {
     if (!id) return;
     fetchFundBySlug(id).then(async (f) => {
