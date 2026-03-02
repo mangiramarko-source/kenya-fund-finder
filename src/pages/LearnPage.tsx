@@ -1,10 +1,24 @@
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BookOpen } from "lucide-react";
 import { faqItems } from "@/data/faq";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 
 const LearnPage = () => {
   useDocumentTitle("Learn About Money Market Funds in Kenya", "Everything you need to know about MMFs in Kenya – how they work, risks, returns, and CMA regulation explained simply.");
+
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: faqItems.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: {
+        "@type": "Answer",
+        text: item.answer,
+      },
+    })),
+  });
+
   return (
   <div className="container py-10 max-w-2xl">
     <div className="text-center mb-10">
