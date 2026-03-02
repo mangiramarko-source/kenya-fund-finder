@@ -3,11 +3,11 @@ import { supabase } from "@/integrations/supabase/client";
 export type FundType = "money_market" | "fixed_income" | "balanced" | "equity" | "bond";
 
 export const FUND_TYPE_LABELS: Record<FundType, string> = {
-  money_market: "Money Market",
-  fixed_income: "Fixed Income",
-  balanced: "Balanced",
-  equity: "Equity",
-  bond: "Bond",
+  money_market: "Money Market Fund",
+  fixed_income: "Fixed Income Fund",
+  balanced: "Balanced Fund",
+  equity: "Equity Fund",
+  bond: "Bond Fund",
 };
 
 export interface FundFromDB {
