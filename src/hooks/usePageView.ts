@@ -14,14 +14,12 @@ export const usePageView = () => {
   useEffect(() => {
     const track = async () => {
       try {
-        // Use getSession instead of getUser to avoid unnecessary network call
-        // and to work reliably for both authenticated and anonymous users
         const { data: { session } } = await supabase.auth.getSession();
-        const userId = session?.user?.id ?? null;
+        if (!session?.user?.id) return; // Only track authenticated users
 
         await supabase.from("page_views").insert({
           page_path: location.pathname,
-          user_id: userId,
+          user_id: session.user.id,
           session_id: sessionId,
         });
       } catch {
