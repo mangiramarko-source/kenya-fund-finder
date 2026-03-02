@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, BarChart3, Calculator, Newspaper, BookOpen, TrendingUp, Shield, Zap, PiggyBank, GraduationCap, ChevronRight } from "lucide-react";
+import { ArrowRight, BarChart3, Calculator, Newspaper, BookOpen, TrendingUp, Shield, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
@@ -84,30 +84,8 @@ const Index = () => {
         </div>
       </section>
 
-      {/* Quick action cards */}
-      <section className="container max-w-6xl -mt-10 relative z-10 mb-12">
-        <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-          {[
-            { icon: BarChart3, title: "Compare Funds", desc: "Side-by-side fund analysis with yields, fees & minimums", to: "/compare", color: "text-accent" },
-            { icon: Calculator, title: "Calculator", desc: "Estimate gross & net returns with tax & fee breakdown", to: "/calculator", color: "text-info" },
-            { icon: Newspaper, title: "Latest News", desc: "Market updates, regulation changes & insights", to: "/news", color: "text-warning" },
-          ].map(({ icon: Icon, title, desc, to, color }) => (
-            <Link key={to} to={to} className="group flex items-center gap-4 rounded-2xl bg-card border border-border p-5 md:p-6 shadow-sm hover:shadow-md hover:border-accent/30 transition-all">
-              <div className="flex items-center justify-center h-12 w-12 md:h-14 md:w-14 rounded-xl bg-muted group-hover:bg-accent/10 transition-colors shrink-0">
-                <Icon className={`h-6 w-6 md:h-7 md:w-7 ${color} group-hover:text-accent transition-colors`} />
-              </div>
-              <div className="min-w-0 flex-1">
-                <h3 className="font-heading font-semibold text-sm md:text-base">{title}</h3>
-                <p className="text-xs md:text-sm text-muted-foreground line-clamp-2">{desc}</p>
-              </div>
-              <ChevronRight className="h-4 w-4 text-muted-foreground group-hover:text-accent transition-colors shrink-0 hidden md:block" />
-            </Link>
-          ))}
-        </div>
-      </section>
-
       {/* Top Funds */}
-      <section className="container max-w-6xl py-12">
+      <section className="container max-w-6xl -mt-10 relative z-10 pt-16 pb-12">
         <div className="flex items-center justify-between mb-6">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-accent/10">
@@ -239,28 +217,7 @@ const Index = () => {
         </div>
       </section>
 
-      {/* 3 Steps */}
-      <section className="container max-w-6xl py-16">
-        <h2 className="text-2xl md:text-3xl font-bold text-center mb-10">How It Works</h2>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-4xl mx-auto">
-          {[
-            { icon: BarChart3, title: "Compare", desc: "Browse and filter all CMA-regulated Money Market Funds side by side.", step: "1" },
-            { icon: Calculator, title: "Calculate", desc: "Use our calculator to estimate your potential returns over any period.", step: "2" },
-            { icon: Zap, title: "Invest Smarter", desc: "Make informed decisions backed by real data and market insights.", step: "3" },
-          ].map(({ icon: Icon, title, desc, step }, i) => (
-            <div key={title} className="relative text-center md:text-left">
-              {/* Connector line on desktop */}
-              {i < 2 && <div className="hidden md:block absolute top-8 left-[calc(50%+2rem)] w-[calc(100%-4rem)] h-px border-t-2 border-dashed border-border" />}
-              <div className="relative mx-auto md:mx-0 mb-4 flex h-16 w-16 items-center justify-center rounded-2xl bg-accent/10">
-                <Icon className="h-7 w-7 text-accent" />
-                <span className="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-accent text-accent-foreground text-xs font-bold">{step}</span>
-              </div>
-              <h3 className="font-heading font-semibold text-lg mb-2">{title}</h3>
-              <p className="text-sm text-muted-foreground max-w-xs mx-auto md:mx-0">{desc}</p>
-            </div>
-          ))}
-        </div>
-      </section>
+
 
       {/* What is an MMF? */}
       <section className="bg-muted/40 py-16">
