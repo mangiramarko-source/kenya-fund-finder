@@ -6,9 +6,6 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const WINDOW_SECONDS = 60;
-const MAX_REQUESTS = 30;
-
 async function hashIp(ip: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(ip + (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "salt"));
@@ -28,44 +25,34 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // --- Database-backed rate limiting ---
+  // --- Database-backed rate limiting via RPC ---
   const clientIp =
     req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     req.headers.get("cf-connecting-ip") ||
     "unknown";
 
   const ipHash = await hashIp(clientIp);
-  const windowStart = new Date(Date.now() - WINDOW_SECONDS * 1000).toISOString();
 
-  // Count recent hits and purge old ones in parallel
-  const [countResult] = await Promise.all([
-    supabaseAdmin
-      .from("rate_limit_hits")
-      .select("id", { count: "exact", head: true })
-      .eq("ip_hash", ipHash)
-      .gte("created_at", windowStart),
-    supabaseAdmin
-      .from("rate_limit_hits")
-      .delete()
-      .lt("created_at", windowStart),
-  ]);
+  const { data: allowed, error: rlError } = await supabaseAdmin.rpc("check_rate_limit", {
+    p_ip_hash: ipHash,
+    p_window_seconds: 60,
+    p_max_requests: 30,
+  });
 
-  const hitCount = countResult.count ?? 0;
+  if (rlError) {
+    console.error("rate_limit rpc error:", rlError);
+  }
 
-  if (hitCount >= MAX_REQUESTS) {
+  if (allowed === false) {
     return new Response(JSON.stringify({ error: "Too many requests" }), {
       status: 429,
       headers: {
         ...corsHeaders,
         "Content-Type": "application/json",
-        "Retry-After": String(WINDOW_SECONDS),
+        "Retry-After": "60",
       },
     });
   }
-
-  // Record this hit
-  const { error: hitError } = await supabaseAdmin.from("rate_limit_hits").insert({ ip_hash: ipHash });
-  if (hitError) console.error("rate_limit insert error:", hitError);
 
   // --- Request handling ---
   try {
