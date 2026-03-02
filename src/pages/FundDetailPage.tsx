@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ExternalLink, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchFundBySlug, fetchHistoricalYields, type FundFromDB, type HistoricalYield } from "@/lib/api";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
@@ -13,6 +14,22 @@ const FundDetailPage = () => {
   const [fund, setFund] = useState<FundFromDB | null>(null);
   const [yields, setYields] = useState<HistoricalYield[]>([]);
   const [loading, setLoading] = useState(true);
+
+  useDocumentTitle(
+    fund ? `${fund.name} – Money Market Fund Details` : "Fund Details",
+    fund ? `${fund.name} by ${fund.manager}. Annual yield: ${fund.annual_yield}%. Compare MMFs in Kenya.` : undefined
+  );
+
+  useJsonLd(fund ? {
+    "@context": "https://schema.org",
+    "@type": "FinancialProduct",
+    name: fund.name,
+    description: fund.description,
+    provider: { "@type": "Organization", name: fund.manager },
+    url: `https://kenyafundfinder.com/compare/${fund.slug}`,
+    interestRate: { "@type": "QuantitativeValue", value: fund.annual_yield, unitText: "percent per annum" },
+    feesAndCommissionsSpecification: `Management fee: ${fund.management_fee}%`,
+  } : null);
 
   useEffect(() => {
     if (!id) return;
