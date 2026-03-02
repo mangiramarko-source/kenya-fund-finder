@@ -8,7 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ArrowLeft, Lock, Mail } from "lucide-react";
 
 const ResetPasswordPage = () => {
-  const [mode, setMode] = useState<"request" | "update">("request");
+  const [mode, setMode] = useState<"request" | "update" | "loading">("loading");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -16,11 +16,22 @@ const ResetPasswordPage = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Check if this is a recovery redirect
+    // Check hash for recovery token
     const hash = window.location.hash;
     if (hash && hash.includes("type=recovery")) {
       setMode("update");
+      return;
     }
+
+    // Check if user arrived via recovery (session already established)
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      // If there's an active session on this page, assume recovery flow
+      if (session) {
+        setMode("update");
+      } else {
+        setMode("request");
+      }
+    });
 
     // Also listen for PASSWORD_RECOVERY event
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
@@ -61,6 +72,14 @@ const ResetPasswordPage = () => {
       setMode("request");
     }
   };
+
+  if (mode === "loading") {
+    return (
+      <div className="min-h-[80vh] flex items-center justify-center">
+        <p className="text-muted-foreground">Loading...</p>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
