@@ -109,6 +109,7 @@ export type Database = {
           cma_licensed: boolean
           created_at: string
           created_by: string | null
+          daily_yield: number
           description: string
           fact_sheet_date: string | null
           id: string
@@ -131,6 +132,7 @@ export type Database = {
           cma_licensed?: boolean
           created_at?: string
           created_by?: string | null
+          daily_yield?: number
           description?: string
           fact_sheet_date?: string | null
           id?: string
@@ -153,6 +155,7 @@ export type Database = {
           cma_licensed?: boolean
           created_at?: string
           created_by?: string | null
+          daily_yield?: number
           description?: string
           fact_sheet_date?: string | null
           id?: string

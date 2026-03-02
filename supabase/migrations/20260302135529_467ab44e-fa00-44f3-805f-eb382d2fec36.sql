@@ -1,0 +1,1 @@
+ALTER TABLE public.funds ADD COLUMN daily_yield numeric NOT NULL DEFAULT 0;

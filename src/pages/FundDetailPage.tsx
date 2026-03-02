@@ -17,10 +17,10 @@ const FundDetailPage = () => {
 
   useDocumentTitle(
     fund ? `${fund.name} – Money Market Fund Details` : "Fund Details",
-    fund ? `${fund.name} by ${fund.manager}. Annual yield: ${fund.annual_yield}%. Compare MMFs in Kenya.` : undefined,
+    fund ? `${fund.name} by ${fund.manager}. Annual rate: ${fund.annual_yield}%. Compare MMFs in Kenya.` : undefined,
     fund ? {
-      title: `${fund.name} – ${fund.annual_yield}% Annual Yield`,
-      description: `${fund.name} by ${fund.manager}. Annual yield: ${fund.annual_yield}%. Min investment: KES ${fund.minimum_investment.toLocaleString()}.`,
+      title: `${fund.name} – ${fund.annual_yield}% Annual Rate`,
+      description: `${fund.name} by ${fund.manager}. Annual rate: ${fund.annual_yield}%. Min investment: KES ${fund.minimum_investment.toLocaleString()}.`,
       type: "article",
     } : undefined
   );
@@ -87,8 +87,12 @@ const FundDetailPage = () => {
       {/* Always show annual yield as a teaser */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="rounded-lg border border-border bg-card p-4">
-          <p className="text-xs text-muted-foreground mb-1">Annual Yield</p>
+          <p className="text-xs text-muted-foreground mb-1">Annual Rate</p>
           <p className="font-bold text-lg text-accent">{fund.annual_yield}%</p>
+        </div>
+        <div className="rounded-lg border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground mb-1">Daily Yield</p>
+          <p className="font-bold text-lg text-accent">{fund.daily_yield}%</p>
         </div>
         {isAuthenticated ? (
           <>

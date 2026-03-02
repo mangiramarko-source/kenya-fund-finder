@@ -18,6 +18,7 @@ interface FundRow {
   manager: string;
   cma_licensed: boolean;
   annual_yield: number;
+  daily_yield: number;
   minimum_investment: number;
   management_fee: number;
   withdrawal_time: string;
@@ -31,7 +32,7 @@ interface FundRow {
 
 const emptyFund = {
   slug: "", name: "", manager: "", cma_licensed: true,
-  annual_yield: 0,
+  annual_yield: 0, daily_yield: 0,
   minimum_investment: 0, management_fee: 0, withdrawal_time: "",
   description: "", website: "", fact_sheet_date: "", source_url: "", is_published: true,
 };
@@ -77,7 +78,8 @@ const AdminFunds = () => {
 
   const validate = () => {
     if (!editingFund.name || !editingFund.slug || !editingFund.manager) return "Name, slug, and manager are required.";
-    if (editingFund.annual_yield < 0 || editingFund.annual_yield > 100) return "Annual yield must be 0-100%.";
+    if (editingFund.annual_yield < 0 || editingFund.annual_yield > 100) return "Annual rate must be 0-100%.";
+    if (editingFund.daily_yield < 0) return "Daily yield must be non-negative.";
     if (editingFund.management_fee < 0 || editingFund.management_fee > 100) return "Fee must be 0-100%.";
     if (editingFund.website && !/^https?:\/\//.test(editingFund.website)) return "Website must be a valid URL.";
     return null;
@@ -104,6 +106,7 @@ const AdminFunds = () => {
       manager: editingFund.manager,
       cma_licensed: editingFund.cma_licensed,
       annual_yield: editingFund.annual_yield,
+      daily_yield: editingFund.daily_yield,
       seven_day_yield: 0,
       thirty_day_yield: 0,
       minimum_investment: editingFund.minimum_investment,
@@ -151,6 +154,7 @@ const AdminFunds = () => {
       manager: fund.manager,
       cma_licensed: fund.cma_licensed,
       annual_yield: Number(fund.annual_yield),
+      daily_yield: Number(fund.daily_yield),
       minimum_investment: Number(fund.minimum_investment),
       management_fee: Number(fund.management_fee),
       withdrawal_time: fund.withdrawal_time,
@@ -192,9 +196,15 @@ const AdminFunds = () => {
                 <Label>Fund Manager</Label>
                 <Input value={editingFund.manager} onChange={(e) => setEditingFund({ ...editingFund, manager: e.target.value })} className="mt-1" />
               </div>
-              <div>
-                <Label>Annual Yield (%)</Label>
-                <Input type="number" step="0.1" value={editingFund.annual_yield} onChange={(e) => setEditingFund({ ...editingFund, annual_yield: Number(e.target.value) })} className="mt-1" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Annual Rate (%)</Label>
+                  <Input type="number" step="0.1" value={editingFund.annual_yield} onChange={(e) => setEditingFund({ ...editingFund, annual_yield: Number(e.target.value) })} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Daily Yield (%)</Label>
+                  <Input type="number" step="0.0001" value={editingFund.daily_yield} onChange={(e) => setEditingFund({ ...editingFund, daily_yield: Number(e.target.value) })} className="mt-1" />
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -258,7 +268,7 @@ const AdminFunds = () => {
               <tr className="bg-muted">
                 <th className="text-left px-3 py-2 font-semibold">Fund Name</th>
                 <th className="text-left px-3 py-2 font-semibold hidden md:table-cell">Manager</th>
-                <th className="text-right px-3 py-2 font-semibold">Yield</th>
+                <th className="text-right px-3 py-2 font-semibold">Rate</th>
                 <th className="text-right px-3 py-2 font-semibold hidden md:table-cell">Fee</th>
                 <th className="text-right px-3 py-2 font-semibold hidden md:table-cell">Views</th>
                 <th className="text-center px-3 py-2 font-semibold hidden md:table-cell">Status</th>

@@ -104,7 +104,7 @@ const Index = () => {
               <tr className="bg-muted">
                 <th className="text-left px-4 py-3 font-semibold">Fund Name</th>
                 <th className="text-left px-4 py-3 font-semibold">Manager</th>
-                <th className="text-right px-4 py-3 font-semibold">Annual Yield</th>
+                <th className="text-right px-4 py-3 font-semibold">Annual Rate</th>
                 <th className="text-right px-4 py-3 font-semibold">Min. Investment</th>
                 <th className="px-4 py-3"></th>
               </tr>
@@ -140,7 +140,7 @@ const Index = () => {
               </div>
               <div className="text-right shrink-0">
                 <span className="text-accent font-bold text-sm">{fund.annual_yield}%</span>
-                <p className="text-[10px] text-muted-foreground">annual</p>
+                <p className="text-[10px] text-muted-foreground">annual rate</p>
               </div>
             </Link>
           ))}
