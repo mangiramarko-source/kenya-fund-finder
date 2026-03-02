@@ -6,7 +6,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
-import { fetchFunds, type FundFromDB } from "@/lib/api";
+import { fetchFunds, type FundFromDB, FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import { AlertTriangle, GitCompareArrows } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
@@ -57,7 +57,7 @@ function calculate(amount: number, yield_: number, months: number, monthly: numb
 const formatKES = (n: number) => `KES ${n.toLocaleString()}`;
 
 const CalculatorPage = () => {
-  useDocumentTitle("MMF Returns Calculator – Kenya Money Market Fund", "Calculate your potential money market fund returns with our free calculator. Compare gross vs net yields.");
+  useDocumentTitle("Investment Returns Calculator – Kenya Unit Trust Funds", "Calculate your potential returns from Money Market, Fixed Income, Bond, Balanced, and Equity funds. Compare gross vs net yields.");
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [funds, setFunds] = useState<FundFromDB[]>([]);
@@ -112,6 +112,16 @@ const CalculatorPage = () => {
 
 
 
+  const fundsByType = useMemo(() => {
+    const grouped: Partial<Record<FundType, FundFromDB[]>> = {};
+    funds.forEach((f) => {
+      const type = f.fund_type || "money_market";
+      if (!grouped[type]) grouped[type] = [];
+      grouped[type]!.push(f);
+    });
+    return grouped;
+  }, [funds]);
+
   const FundSelector = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
     <div>
       <Label>{label}</Label>
@@ -121,11 +131,20 @@ const CalculatorPage = () => {
         </SelectTrigger>
         <SelectContent>
           <SelectItem value="custom">Custom Input</SelectItem>
-          {funds.map((f) => (
-            <SelectItem key={f.slug} value={f.slug}>
-              {f.name} — {f.annual_yield}% p.a.
-            </SelectItem>
-          ))}
+          {(Object.entries(FUND_TYPE_LABELS) as [FundType, string][]).map(([type, typeLabel]) => {
+            const typeFunds = fundsByType[type];
+            if (!typeFunds || typeFunds.length === 0) return null;
+            return (
+              <div key={type}>
+                <div className="px-2 py-1.5 text-xs font-semibold text-muted-foreground uppercase tracking-wider">{typeLabel}</div>
+                {typeFunds.map((f) => (
+                  <SelectItem key={f.slug} value={f.slug}>
+                    {f.name} — {f.annual_yield}% p.a.
+                  </SelectItem>
+                ))}
+              </div>
+            );
+          })}
         </SelectContent>
       </Select>
     </div>
@@ -143,7 +162,7 @@ const CalculatorPage = () => {
       <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
         <div>
           <h1 className="text-2xl md:text-3xl font-bold mb-1">Investment Calculator</h1>
-          <p className="text-muted-foreground text-sm">Estimate your potential returns from Money Market Fund investments.</p>
+          <p className="text-muted-foreground text-sm">Estimate your potential returns across all unit trust fund categories.</p>
         </div>
         <Button
           variant={compareMode ? "default" : "outline"}
