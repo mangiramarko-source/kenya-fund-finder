@@ -1,0 +1,1 @@
+CREATE POLICY "Admins can read rate limit hits" ON public.rate_limit_hits FOR SELECT USING (has_role(auth.uid(), 'admin'::app_role));
