@@ -15,13 +15,24 @@ export const usePageView = () => {
     const track = async () => {
       try {
         const { data: { session } } = await supabase.auth.getSession();
-        if (!session?.user?.id) return; // Only track authenticated users
 
-        await supabase.from("page_views").insert({
-          page_path: location.pathname,
-          user_id: session.user.id,
-          session_id: sessionId,
-        });
+        if (session?.user?.id) {
+          // Authenticated: insert directly (RLS allows it)
+          await supabase.from("page_views").insert({
+            page_path: location.pathname,
+            user_id: session.user.id,
+            session_id: sessionId,
+          });
+        } else {
+          // Anonymous: use backend function (bypasses RLS with service role)
+          await supabase.functions.invoke("track-anonymous", {
+            body: {
+              type: "page_view",
+              page_path: location.pathname,
+              session_id: sessionId,
+            },
+          });
+        }
       } catch {
         // Silently fail - don't break the app for analytics
       }

@@ -25,13 +25,32 @@ const AuthGate = ({
 }: AuthGateProps) => {
   const location = useLocation();
 
-  const trackClick = (action: string) => {
-    supabase.from("auth_gate_clicks").insert({
-      source,
-      action,
-      session_id: getSessionId(),
-      page_path: location.pathname,
-    }).then(() => {});
+  const trackClick = async (action: string) => {
+    try {
+      const { data: { session } } = await supabase.auth.getSession();
+      if (session?.user?.id) {
+        // Authenticated: insert directly
+        await supabase.from("auth_gate_clicks").insert({
+          source,
+          action,
+          session_id: getSessionId(),
+          page_path: location.pathname,
+        });
+      } else {
+        // Anonymous: use backend function
+        await supabase.functions.invoke("track-anonymous", {
+          body: {
+            type: "auth_gate_click",
+            page_path: location.pathname,
+            session_id: getSessionId(),
+            source,
+            action,
+          },
+        });
+      }
+    } catch {
+      // Silently fail
+    }
   };
 
   return (

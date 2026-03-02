@@ -1,1 +1,4 @@
 project_id = "qrmthciurngpzpjhevdj"
+
+[functions.track-anonymous]
+verify_jwt = false
