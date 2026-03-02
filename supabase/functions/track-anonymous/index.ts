@@ -6,9 +6,53 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// --- In-memory sliding-window rate limiter (per IP) ---
+const WINDOW_MS = 60_000; // 1 minute
+const MAX_REQUESTS = 30; // max 30 requests per window per IP
+const ipHits = new Map<string, number[]>();
+
+// Cleanup stale entries every 5 minutes to prevent memory leaks
+setInterval(() => {
+  const now = Date.now();
+  for (const [ip, timestamps] of ipHits) {
+    const valid = timestamps.filter((t) => now - t < WINDOW_MS);
+    if (valid.length === 0) ipHits.delete(ip);
+    else ipHits.set(ip, valid);
+  }
+}, 300_000);
+
+function isRateLimited(ip: string): boolean {
+  const now = Date.now();
+  const hits = (ipHits.get(ip) || []).filter((t) => now - t < WINDOW_MS);
+  if (hits.length >= MAX_REQUESTS) {
+    ipHits.set(ip, hits);
+    return true;
+  }
+  hits.push(now);
+  ipHits.set(ip, hits);
+  return false;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Rate limit by IP
+  const clientIp =
+    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
+    req.headers.get("cf-connecting-ip") ||
+    "unknown";
+
+  if (isRateLimited(clientIp)) {
+    return new Response(JSON.stringify({ error: "Too many requests" }), {
+      status: 429,
+      headers: {
+        ...corsHeaders,
+        "Content-Type": "application/json",
+        "Retry-After": "60",
+      },
+    });
   }
 
   try {
