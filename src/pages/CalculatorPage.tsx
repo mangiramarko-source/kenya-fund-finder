@@ -307,36 +307,7 @@ const CalculatorPage = () => {
             <StatCard icon={CalendarDays} label="Monthly Return" value={formatKES(results.monthlyReturn)} />
           </div>
 
-          {/* Chart */}
-          <div className="rounded-xl border border-border bg-card p-4 md:p-5">
-            <h3 className="text-sm font-semibold mb-4">Projected Growth</h3>
-            <div className="h-64 md:h-80">
-              <ResponsiveContainer width="100%" height="100%">
-                {compareMode ? (
-                  <LineChart data={chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" label={{ value: "Month", position: "insideBottom", offset: -5, fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(v: number, name: string) => [formatKES(v), name === "netA" ? fundALabel : fundBLabel]} contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }} />
-                    <Legend formatter={(v) => v === "netA" ? fundALabel : fundBLabel} />
-                    <Line type="monotone" dataKey="netA" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} name="netA" />
-                    <Line type="monotone" dataKey="netB" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="netB" />
-                  </LineChart>
-                ) : (
-                  <LineChart data={results.chartData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" label={{ value: "Month", position: "insideBottom", offset: -5, fontSize: 11 }} />
-                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} />
-                    <Tooltip formatter={(v: number, name: string) => [formatKES(v), name === "gross" ? "Before Tax" : "After Tax"]} contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }} />
-                    <Line type="monotone" dataKey="gross" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="gross" />
-                    <Line type="monotone" dataKey="net" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} name="net" />
-                  </LineChart>
-                )}
-              </ResponsiveContainer>
-            </div>
-          </div>
-
-          {/* Breakdown tables */}
+          {/* Breakdown tables (moved above chart) */}
           <div className={`grid gap-4 ${compareMode ? "grid-cols-1 md:grid-cols-2" : "grid-cols-1 md:grid-cols-2"}`}>
             <div className="rounded-xl border border-border bg-card p-4">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-2">
@@ -401,6 +372,35 @@ const CalculatorPage = () => {
                 </div>
               </div>
             )}
+          </div>
+
+          {/* Chart (moved below breakdown) */}
+          <div className="rounded-xl border border-border bg-card p-4 md:p-5">
+            <h3 className="text-sm font-semibold mb-4">Projected Growth</h3>
+            <div className="h-64 md:h-80">
+              <ResponsiveContainer width="100%" height="100%">
+                {compareMode ? (
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" label={{ value: "Month", position: "insideBottom", offset: -5, fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} domain={['dataMin', 'dataMax']} />
+                    <Tooltip formatter={(v: number, name: string) => [formatKES(v), name === "netA" ? fundALabel : fundBLabel]} contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }} />
+                    <Legend formatter={(v) => v === "netA" ? fundALabel : fundBLabel} />
+                    <Line type="monotone" dataKey="netA" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} name="netA" />
+                    <Line type="monotone" dataKey="netB" stroke="hsl(var(--primary))" strokeWidth={2} dot={false} name="netB" />
+                  </LineChart>
+                ) : (
+                  <LineChart data={results.chartData}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                    <XAxis dataKey="month" tick={{ fontSize: 12 }} stroke="hsl(var(--muted-foreground))" label={{ value: "Month", position: "insideBottom", offset: -5, fontSize: 11 }} />
+                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" tickFormatter={(v) => `${(v / 1000).toFixed(0)}k`} domain={['dataMin', 'dataMax']} />
+                    <Tooltip formatter={(v: number, name: string) => [formatKES(v), name === "gross" ? "Before Tax" : "After Tax"]} contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))" }} />
+                    <Line type="monotone" dataKey="gross" stroke="hsl(var(--muted-foreground))" strokeWidth={1.5} strokeDasharray="4 4" dot={false} name="gross" />
+                    <Line type="monotone" dataKey="net" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} name="net" />
+                  </LineChart>
+                )}
+              </ResponsiveContainer>
+            </div>
           </div>
 
           {/* Comparison summary */}
