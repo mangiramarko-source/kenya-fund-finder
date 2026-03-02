@@ -123,6 +123,13 @@ const AuthPage = () => {
                 <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-9" placeholder="••••••••" minLength={6} />
               </div>
             </div>
+            {!isSignUp && (
+              <div className="flex justify-end">
+                <Link to="/reset-password" className="text-xs text-muted-foreground hover:text-accent hover:underline">
+                  Forgot password?
+                </Link>
+              </div>
+            )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             {message && <p className="text-sm text-accent">{message}</p>}
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
