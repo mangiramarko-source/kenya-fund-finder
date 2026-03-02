@@ -3,6 +3,7 @@ import { useEffect, useState } from "react";
 import { ArrowLeft, ExternalLink, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchFundBySlug, fetchHistoricalYields, type FundFromDB, type HistoricalYield } from "@/lib/api";
+import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
@@ -166,7 +167,7 @@ const FundDetailPage = () => {
 
       <div className="mt-8 p-4 rounded-lg bg-muted/50 border border-border">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          <strong>Disclaimer:</strong> Yields shown are gross annual effective rates before the 15% withholding tax unless otherwise stated. Past performance is not indicative of future results. This platform does not offer investment advice. Please consult a licensed financial advisor before making investment decisions.
+          <strong>Disclaimer:</strong> {getDisclaimer(fund?.fund_type)}
         </p>
       </div>
     </div>

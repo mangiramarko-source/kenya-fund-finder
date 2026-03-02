@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchFunds, type FundFromDB, type FundType, FUND_TYPE_LABELS } from "@/lib/api";
+import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -352,7 +353,7 @@ const ComparePage = () => {
       {/* Disclaimer */}
       <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">
         <p className="text-xs text-muted-foreground leading-relaxed">
-          <strong>Disclaimer:</strong> Yields shown are gross annual effective rates before the 15% withholding tax. Past performance is not indicative of future results. Data is sourced from publicly available fund fact sheets and may not reflect real-time values. This platform does not offer investment advice. Please consult a licensed financial advisor before making investment decisions.
+          <strong>Disclaimer:</strong> {getDisclaimer(activeType)}
         </p>
       </div>
     </div>
