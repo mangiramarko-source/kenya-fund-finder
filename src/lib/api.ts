@@ -1,5 +1,15 @@
 import { supabase } from "@/integrations/supabase/client";
 
+export type FundType = "money_market" | "fixed_income" | "balanced" | "equity" | "bond";
+
+export const FUND_TYPE_LABELS: Record<FundType, string> = {
+  money_market: "Money Market",
+  fixed_income: "Fixed Income",
+  balanced: "Balanced",
+  equity: "Equity",
+  bond: "Bond",
+};
+
 export interface FundFromDB {
   id: string;
   slug: string;
@@ -8,6 +18,7 @@ export interface FundFromDB {
   cma_licensed: boolean;
   annual_yield: number;
   daily_yield: number;
+  fund_type: FundType;
   minimum_investment: number;
   management_fee: number;
   withdrawal_time: string;
@@ -41,12 +52,13 @@ export interface HistoricalYield {
 export async function fetchFunds(): Promise<FundFromDB[]> {
   const { data, error } = await supabase
     .from("funds")
-    .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, source_url, is_published, updated_at")
+    .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, fund_type, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, source_url, is_published, updated_at")
     .eq("is_published", true)
     .order("annual_yield", { ascending: false });
   if (error) throw error;
   return (data || []).map((f) => ({
     ...f,
+    fund_type: (f.fund_type || "money_market") as FundType,
     annual_yield: Number(f.annual_yield),
     daily_yield: Number(f.daily_yield),
     minimum_investment: Number(f.minimum_investment),
@@ -57,7 +69,7 @@ export async function fetchFunds(): Promise<FundFromDB[]> {
 export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> {
   const { data, error } = await supabase
     .from("funds")
-    .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, source_url, is_published, updated_at")
+    .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, fund_type, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, source_url, is_published, updated_at")
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
@@ -65,6 +77,7 @@ export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> 
   if (!data) return null;
   return {
     ...data,
+    fund_type: (data.fund_type || "money_market") as FundType,
     annual_yield: Number(data.annual_yield),
     daily_yield: Number(data.daily_yield),
     minimum_investment: Number(data.minimum_investment),

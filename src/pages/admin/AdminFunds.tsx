@@ -8,8 +8,10 @@ import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Search, AlertTriangle } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { type FundType, FUND_TYPE_LABELS } from "@/lib/api";
 
 interface FundRow {
   id: string;
@@ -19,6 +21,7 @@ interface FundRow {
   cma_licensed: boolean;
   annual_yield: number;
   daily_yield: number;
+  fund_type: FundType;
   minimum_investment: number;
   management_fee: number;
   withdrawal_time: string;
@@ -32,7 +35,7 @@ interface FundRow {
 
 const emptyFund = {
   slug: "", name: "", manager: "", cma_licensed: true,
-  annual_yield: 0, daily_yield: 0,
+  annual_yield: 0, daily_yield: 0, fund_type: "money_market" as FundType,
   minimum_investment: 0, management_fee: 0, withdrawal_time: "",
   description: "", website: "", fact_sheet_date: "", source_url: "", is_published: true,
 };
@@ -105,6 +108,7 @@ const AdminFunds = () => {
       name: editingFund.name,
       manager: editingFund.manager,
       cma_licensed: editingFund.cma_licensed,
+      fund_type: editingFund.fund_type,
       annual_yield: editingFund.annual_yield,
       daily_yield: editingFund.daily_yield,
       seven_day_yield: 0,
@@ -155,6 +159,7 @@ const AdminFunds = () => {
       cma_licensed: fund.cma_licensed,
       annual_yield: Number(fund.annual_yield),
       daily_yield: Number(fund.daily_yield),
+      fund_type: fund.fund_type || "money_market",
       minimum_investment: Number(fund.minimum_investment),
       management_fee: Number(fund.management_fee),
       withdrawal_time: fund.withdrawal_time,
@@ -192,9 +197,22 @@ const AdminFunds = () => {
                   <Input value={editingFund.name} onChange={(e) => setEditingFund({ ...editingFund, name: e.target.value })} className="mt-1" />
                 </div>
               </div>
-              <div>
-                <Label>Fund Manager</Label>
-                <Input value={editingFund.manager} onChange={(e) => setEditingFund({ ...editingFund, manager: e.target.value })} className="mt-1" />
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <Label>Fund Manager</Label>
+                  <Input value={editingFund.manager} onChange={(e) => setEditingFund({ ...editingFund, manager: e.target.value })} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Fund Type</Label>
+                  <Select value={editingFund.fund_type} onValueChange={(v) => setEditingFund({ ...editingFund, fund_type: v as FundType })}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {Object.entries(FUND_TYPE_LABELS).map(([val, label]) => (
+                        <SelectItem key={val} value={val}>{label}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
@@ -267,6 +285,7 @@ const AdminFunds = () => {
             <thead>
               <tr className="bg-muted">
                 <th className="text-left px-3 py-2 font-semibold">Fund Name</th>
+                <th className="text-left px-3 py-2 font-semibold hidden md:table-cell">Type</th>
                 <th className="text-left px-3 py-2 font-semibold hidden md:table-cell">Manager</th>
                 <th className="text-right px-3 py-2 font-semibold">Rate</th>
                 <th className="text-right px-3 py-2 font-semibold hidden md:table-cell">Fee</th>
@@ -285,6 +304,7 @@ const AdminFunds = () => {
                       {fund.name}
                     </div>
                   </td>
+                  <td className="px-3 py-2 text-xs text-muted-foreground hidden md:table-cell">{FUND_TYPE_LABELS[fund.fund_type] || "Money Market"}</td>
                   <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">{fund.manager}</td>
                   <td className="px-3 py-2 text-right font-semibold text-accent">{Number(fund.annual_yield)}%</td>
                   <td className="px-3 py-2 text-right hidden md:table-cell">{Number(fund.management_fee)}%</td>
