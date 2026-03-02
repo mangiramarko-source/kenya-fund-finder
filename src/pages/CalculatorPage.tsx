@@ -202,27 +202,9 @@ const CalculatorPage = () => {
   return (
     <div className="container py-8 md:py-10 max-w-6xl">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-8">
-        <div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-1">Investment Calculator</h1>
-          <p className="text-muted-foreground text-sm">Estimate your potential returns across all unit trust fund categories.</p>
-        </div>
-        <Button
-          variant={compareMode ? "default" : "outline"}
-          size="sm"
-          onClick={() => {
-            if (!user && !compareMode) {
-              setShowCompareGate(true);
-              return;
-            }
-            setCompareMode(!compareMode);
-            setShowCompareGate(false);
-          }}
-          className="gap-2 shrink-0 self-start"
-        >
-          <GitCompareArrows className="h-4 w-4" />
-          {compareMode ? "Exit Compare" : "Compare Funds"}
-        </Button>
+      <div className="mb-8">
+        <h1 className="text-2xl md:text-3xl font-bold mb-1">Investment Calculator</h1>
+        <p className="text-muted-foreground text-sm">Estimate your potential returns across all unit trust fund categories.</p>
       </div>
 
       {showCompareGate && !user && (
@@ -239,22 +221,6 @@ const CalculatorPage = () => {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
         {/* Left: Inputs panel */}
         <div className="lg:col-span-4 xl:col-span-3 space-y-5">
-          <div className="rounded-xl border border-border bg-card p-4 space-y-5">
-            <h2 className="text-sm font-semibold text-foreground">Parameters</h2>
-
-            <InputWithSlider id="amount" label="Initial Investment" value={amount} onChange={setAmount} min={1000} max={10000000} step={1000} prefix="KES " />
-            <InputWithSlider id="months" label="Period" value={months} onChange={setMonths} min={1} max={120} suffix=" months" />
-            <InputWithSlider id="monthly" label="Monthly Top-up" value={monthly} onChange={setMonthly} min={0} max={1000000} step={500} prefix="KES " />
-
-            <div className="flex items-center justify-between pt-1">
-              <Label htmlFor="compound" className="text-xs font-medium">Interest Mode</Label>
-              <div className="flex items-center gap-2">
-                <span className="text-xs text-muted-foreground">{compound ? "Compound" : "Simple"}</span>
-                <Switch id="compound" checked={compound} onCheckedChange={setCompound} />
-              </div>
-            </div>
-          </div>
-
           {/* Fund A selector */}
           <div className={`rounded-xl border-2 p-4 space-y-4 ${compareMode ? "border-accent/40" : "border-border"}`}>
             {compareMode && <p className="text-xs font-semibold text-accent uppercase tracking-wider">Fund A</p>}
@@ -294,6 +260,41 @@ const CalculatorPage = () => {
               </div>
             </div>
           )}
+
+          {/* Compare button */}
+          <Button
+            variant={compareMode ? "default" : "outline"}
+            size="sm"
+            onClick={() => {
+              if (!user && !compareMode) {
+                setShowCompareGate(true);
+                return;
+              }
+              setCompareMode(!compareMode);
+              setShowCompareGate(false);
+            }}
+            className="gap-2 w-full"
+          >
+            <GitCompareArrows className="h-4 w-4" />
+            {compareMode ? "Exit Compare" : "Compare Funds"}
+          </Button>
+
+          {/* Parameters */}
+          <div className="rounded-xl border border-border bg-card p-4 space-y-5">
+            <h2 className="text-sm font-semibold text-foreground">Parameters</h2>
+
+            <InputWithSlider id="amount" label="Initial Investment" value={amount} onChange={setAmount} min={1000} max={10000000} step={1000} prefix="KES " />
+            <InputWithSlider id="months" label="Period" value={months} onChange={setMonths} min={1} max={120} suffix=" months" />
+            <InputWithSlider id="monthly" label="Monthly Top-up" value={monthly} onChange={setMonthly} min={0} max={1000000} step={500} prefix="KES " />
+
+            <div className="flex items-center justify-between pt-1">
+              <Label htmlFor="compound" className="text-xs font-medium">Interest Mode</Label>
+              <div className="flex items-center gap-2">
+                <span className="text-xs text-muted-foreground">{compound ? "Compound" : "Simple"}</span>
+                <Switch id="compound" checked={compound} onCheckedChange={setCompound} />
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Right: Results */}
