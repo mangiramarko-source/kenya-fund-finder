@@ -1,5 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { type FundType, FUND_TYPE_LABELS } from "@/lib/api";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users, TrendingUp, Activity, MousePointerClick, ShieldAlert } from "lucide-react";
@@ -13,6 +15,7 @@ interface FundEngagement {
   fundName: string;
   slug: string;
   views: number;
+  fundType: string;
 }
 
 interface Stats {
@@ -47,6 +50,7 @@ const AdminDashboard = () => {
   const { signOut, user } = useAuth();
   const navigate = useNavigate();
   const [range, setRange] = useState<TimeRange>("7d");
+  const [engagementFilter, setEngagementFilter] = useState<string>("all");
   const [stats, setStats] = useState<Stats>({
     fundCount: 0, newsCount: 0, pendingNews: 0, outdatedFunds: 0,
     lastUpdate: "", totalPageViews: 0,
@@ -60,7 +64,7 @@ const AdminDashboard = () => {
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
 
     const [fundsRes, newsRes, pendingRes, viewsRes, changeLogRes, gateClicksRes, rateLimitRes] = await Promise.all([
-      supabase.from("funds").select("id, slug, name, updated_at, annual_yield"),
+      supabase.from("funds").select("id, slug, name, updated_at, annual_yield, fund_type"),
       supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "published"),
       supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "pending_review"),
       supabase.from("page_views").select("id, page_path, session_id, created_at").gte("created_at", windowStart),
@@ -93,7 +97,7 @@ const AdminDashboard = () => {
       .map(([page, count]) => ({ page, views: count }));
 
     const fundEngagement: FundEngagement[] = funds
-      .map((f) => ({ fundName: f.name, slug: f.slug, views: fundViewCounts[f.slug] || 0 }))
+      .map((f) => ({ fundName: f.name, slug: f.slug, views: fundViewCounts[f.slug] || 0, fundType: f.fund_type || "money_market" }))
       .sort((a, b) => b.views - a.views);
 
     const clicks = gateClicksRes.data || [];
@@ -220,19 +224,38 @@ const AdminDashboard = () => {
       {/* Fund Engagement */}
       {stats.fundEngagement.length > 0 && (
         <div>
-          <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">Fund Engagement</h2>
+          <div className="flex items-center justify-between mb-3">
+            <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Fund Engagement</h2>
+            <Select value={engagementFilter} onValueChange={setEngagementFilter}>
+              <SelectTrigger className="w-[160px] h-8 text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Types</SelectItem>
+                {Object.entries(FUND_TYPE_LABELS).map(([val, label]) => (
+                  <SelectItem key={val} value={val}>{label}</SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
           <Card>
             <CardContent className="pt-4">
               <div className="space-y-2">
-                {stats.fundEngagement.map((f, i) => (
-                  <div key={f.slug} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                    <div className="flex items-center gap-2">
-                      <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}.</span>
-                      <span className="text-sm font-medium">{f.fundName}</span>
+                {stats.fundEngagement
+                  .filter((f) => engagementFilter === "all" || f.fundType === engagementFilter)
+                  .map((f, i) => (
+                    <div key={f.slug} className="flex items-center justify-between py-2 border-b border-border last:border-0">
+                      <div className="flex items-center gap-2">
+                        <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}.</span>
+                        <span className="text-sm font-medium">{f.fundName}</span>
+                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{FUND_TYPE_LABELS[f.fundType as FundType] || f.fundType}</span>
+                      </div>
+                      <span className="text-sm font-semibold text-accent">{f.views} views</span>
                     </div>
-                    <span className="text-sm font-semibold text-accent">{f.views} views</span>
-                  </div>
-                ))}
+                  ))}
+                {stats.fundEngagement.filter((f) => engagementFilter === "all" || f.fundType === engagementFilter).length === 0 && (
+                  <p className="text-sm text-muted-foreground text-center py-4">No funds in this category.</p>
+                )}
               </div>
             </CardContent>
           </Card>
