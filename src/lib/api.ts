@@ -82,7 +82,7 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
 export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles")
-    .select("*")
+    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status")
     .eq("status", "published")
     .order("date_published", { ascending: false });
   if (error) throw error;
