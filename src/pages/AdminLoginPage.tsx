@@ -48,7 +48,9 @@ const AdminLoginPage = () => {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
+                maxLength={255}
                 className="mt-1"
+                autoComplete="email"
               />
             </div>
             <div>
@@ -59,7 +61,10 @@ const AdminLoginPage = () => {
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
                 required
+                minLength={6}
+                maxLength={128}
                 className="mt-1"
+                autoComplete="current-password"
               />
             </div>
             {error && (

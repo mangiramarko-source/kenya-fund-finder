@@ -113,14 +113,14 @@ const AuthPage = () => {
               <Label htmlFor="email">Email</Label>
               <div className="relative mt-1">
                 <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required className="pl-9" placeholder="you@example.com" />
+                <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required maxLength={255} className="pl-9" placeholder="you@example.com" autoComplete="email" />
               </div>
             </div>
             <div>
               <Label htmlFor="password">Password</Label>
               <div className="relative mt-1">
                 <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-9" placeholder="••••••••" minLength={6} />
+                <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required className="pl-9" placeholder="••••••••" minLength={6} maxLength={128} autoComplete={isSignUp ? "new-password" : "current-password"} />
               </div>
             </div>
             {!isSignUp && (
