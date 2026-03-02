@@ -10,7 +10,7 @@ import SearchDialog from "@/components/SearchDialog";
 
 const navLinks = [
   { to: "/", label: "Home", icon: Home },
-  { to: "/compare", label: "Compare", icon: BarChart3 },
+  { to: "/compare", label: "Funds", icon: BarChart3 },
   { to: "/calculator", label: "Calculator", icon: Calculator },
   { to: "/news", label: "News", icon: Newspaper },
 ];
