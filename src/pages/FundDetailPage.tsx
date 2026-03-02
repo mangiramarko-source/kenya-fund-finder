@@ -61,8 +61,6 @@ const FundDetailPage = () => {
         {isAuthenticated ? (
           <>
             {[
-              { label: "7-Day Yield", value: `${fund.seven_day_yield}%` },
-              { label: "30-Day Yield", value: `${fund.thirty_day_yield}%` },
               { label: "Management Fee", value: `${fund.management_fee}%` },
               { label: "Min. Investment", value: `KES ${fund.minimum_investment.toLocaleString()}` },
               { label: "Withdrawal", value: fund.withdrawal_time },
@@ -75,7 +73,7 @@ const FundDetailPage = () => {
           </>
         ) : (
           <>
-            {["7-Day Yield", "30-Day Yield", "Management Fee"].map((label) => (
+            {["Management Fee"].map((label) => (
               <div key={label} className="rounded-lg border border-border bg-card p-4 relative overflow-hidden">
                 <p className="text-xs text-muted-foreground mb-1">{label}</p>
                 <p className="font-bold text-lg text-muted-foreground/30 blur-sm select-none">10.0%</p>
