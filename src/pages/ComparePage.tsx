@@ -78,7 +78,6 @@ const ComparePage = () => {
               <th className="text-left px-4 py-3 font-semibold">Fund Name</th>
               <th className="text-left px-4 py-3 font-semibold">Manager</th>
               <th className="text-right px-4 py-3"><SortBtn label="Annual Yield" field="annual_yield" /></th>
-              <th className="text-right px-4 py-3 font-semibold">7-Day Yield</th>
               <th className="text-right px-4 py-3"><SortBtn label="Min. Investment" field="minimum_investment" /></th>
               <th className="text-right px-4 py-3"><SortBtn label="Mgmt Fee" field="management_fee" /></th>
               <th className="text-left px-4 py-3 font-semibold">Withdrawal</th>
@@ -91,7 +90,6 @@ const ComparePage = () => {
                 <td className="px-4 py-3 font-medium">{fund.name}</td>
                 <td className="px-4 py-3 text-muted-foreground">{fund.manager}</td>
                 <td className="px-4 py-3 text-right font-semibold text-accent">{fund.annual_yield}%</td>
-                <td className="px-4 py-3 text-right">{fund.seven_day_yield}%</td>
                 <td className="px-4 py-3 text-right">KES {fund.minimum_investment.toLocaleString()}</td>
                 <td className="px-4 py-3 text-right">{fund.management_fee}%</td>
                 <td className="px-4 py-3 text-muted-foreground">{fund.withdrawal_time}</td>

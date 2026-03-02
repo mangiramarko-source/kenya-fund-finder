@@ -18,8 +18,6 @@ interface FundRow {
   manager: string;
   cma_licensed: boolean;
   annual_yield: number;
-  seven_day_yield: number;
-  thirty_day_yield: number;
   minimum_investment: number;
   management_fee: number;
   withdrawal_time: string;
@@ -33,7 +31,7 @@ interface FundRow {
 
 const emptyFund = {
   slug: "", name: "", manager: "", cma_licensed: true,
-  annual_yield: 0, seven_day_yield: 0, thirty_day_yield: 0,
+  annual_yield: 0,
   minimum_investment: 0, management_fee: 0, withdrawal_time: "",
   description: "", website: "", fact_sheet_date: "", source_url: "", is_published: true,
 };
@@ -106,8 +104,8 @@ const AdminFunds = () => {
       manager: editingFund.manager,
       cma_licensed: editingFund.cma_licensed,
       annual_yield: editingFund.annual_yield,
-      seven_day_yield: editingFund.seven_day_yield,
-      thirty_day_yield: editingFund.thirty_day_yield,
+      seven_day_yield: 0,
+      thirty_day_yield: 0,
       minimum_investment: editingFund.minimum_investment,
       management_fee: editingFund.management_fee,
       withdrawal_time: editingFund.withdrawal_time,
@@ -153,8 +151,6 @@ const AdminFunds = () => {
       manager: fund.manager,
       cma_licensed: fund.cma_licensed,
       annual_yield: Number(fund.annual_yield),
-      seven_day_yield: Number(fund.seven_day_yield),
-      thirty_day_yield: Number(fund.thirty_day_yield),
       minimum_investment: Number(fund.minimum_investment),
       management_fee: Number(fund.management_fee),
       withdrawal_time: fund.withdrawal_time,
@@ -196,19 +192,9 @@ const AdminFunds = () => {
                 <Label>Fund Manager</Label>
                 <Input value={editingFund.manager} onChange={(e) => setEditingFund({ ...editingFund, manager: e.target.value })} className="mt-1" />
               </div>
-              <div className="grid grid-cols-3 gap-3">
-                <div>
-                  <Label>Annual Yield (%)</Label>
-                  <Input type="number" step="0.1" value={editingFund.annual_yield} onChange={(e) => setEditingFund({ ...editingFund, annual_yield: Number(e.target.value) })} className="mt-1" />
-                </div>
-                <div>
-                  <Label>7-Day Yield (%)</Label>
-                  <Input type="number" step="0.1" value={editingFund.seven_day_yield} onChange={(e) => setEditingFund({ ...editingFund, seven_day_yield: Number(e.target.value) })} className="mt-1" />
-                </div>
-                <div>
-                  <Label>30-Day Yield (%)</Label>
-                  <Input type="number" step="0.1" value={editingFund.thirty_day_yield} onChange={(e) => setEditingFund({ ...editingFund, thirty_day_yield: Number(e.target.value) })} className="mt-1" />
-                </div>
+              <div>
+                <Label>Annual Yield (%)</Label>
+                <Input type="number" step="0.1" value={editingFund.annual_yield} onChange={(e) => setEditingFund({ ...editingFund, annual_yield: Number(e.target.value) })} className="mt-1" />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
