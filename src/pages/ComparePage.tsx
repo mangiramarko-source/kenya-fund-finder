@@ -115,7 +115,8 @@ const ComparePage = () => {
               </div>
               <span className="text-accent font-bold text-lg">{fund.annual_yield}%</span>
             </div>
-            <div className="grid grid-cols-3 gap-2 text-xs text-muted-foreground">
+            <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
+              <div><span className="block font-medium text-foreground">Daily Yield</span>{fund.daily_yield}%</div>
               <div><span className="block font-medium text-foreground">Min. Invest</span>KES {fund.minimum_investment.toLocaleString()}</div>
               <div><span className="block font-medium text-foreground">Fee</span>{fund.management_fee}%</div>
               <div><span className="block font-medium text-foreground">Withdrawal</span>{fund.withdrawal_time}</div>
