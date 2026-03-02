@@ -8,8 +8,6 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContai
 import { fetchFunds, type FundFromDB } from "@/lib/api";
 import { AlertTriangle, GitCompareArrows } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/useAuth";
-import AuthGate from "@/components/AuthGate";
 
 const WITHHOLDING_TAX_RATE = 0.15;
 
@@ -56,7 +54,6 @@ function calculate(amount: number, yield_: number, months: number, monthly: numb
 const formatKES = (n: number) => `KES ${n.toLocaleString()}`;
 
 const CalculatorPage = () => {
-  const { user, loading: authLoading } = useAuth();
   const [searchParams] = useSearchParams();
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [selectedFundSlug, setSelectedFundSlug] = useState<string>(searchParams.get("fund") || "custom");
@@ -107,23 +104,7 @@ const CalculatorPage = () => {
   const fundALabel = selectedFund?.name || "Fund A";
   const fundBLabel = compareFund?.name || "Fund B";
 
-  if (authLoading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
 
-  if (!user) {
-    return (
-      <div className="container py-10 max-w-4xl">
-        <div className="mb-8">
-          <h1 className="text-2xl md:text-3xl font-bold mb-1">Investment Calculator</h1>
-          <p className="text-muted-foreground text-sm">Estimate your potential returns from Money Market Fund investments.</p>
-        </div>
-        <AuthGate
-          source="calculator"
-          title="Sign up to use the calculator"
-          description="Create a free account to calculate your potential returns, compare funds side by side, and see tax-adjusted projections."
-        />
-      </div>
-    );
-  }
 
   const FundSelector = ({ value, onChange, label }: { value: string; onChange: (v: string) => void; label: string }) => (
     <div>
