@@ -3,8 +3,10 @@ import { Link } from "react-router-dom";
 import { ArrowRight, BarChart3, Calculator, Newspaper, BookOpen, TrendingUp, Shield, Zap, PiggyBank, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const Index = () => {
+  useDocumentTitle("MMF Compare Kenya – Compare Money Market Funds", "Compare CMA-regulated Money Market Funds in Kenya. See yields, fees, and calculate returns.");
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [news, setNews] = useState<NewsFromDB[]>([]);
 

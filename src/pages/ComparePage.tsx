@@ -4,10 +4,12 @@ import { ArrowUpDown, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchFunds, type FundFromDB } from "@/lib/api";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 type SortKey = "annual_yield" | "minimum_investment" | "management_fee";
 
 const ComparePage = () => {
+  useDocumentTitle("Compare Money Market Funds – Kenya MMF Comparison", "Side-by-side comparison of Kenya's top money market funds by yield, fees, and minimum investment.");
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
