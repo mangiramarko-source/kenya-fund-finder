@@ -1,4 +1,4 @@
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useMemo } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { type FundType, FUND_TYPE_LABELS } from "@/lib/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -8,6 +8,7 @@ import { BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users, Trendin
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell } from "recharts";
 
 type TimeRange = "24h" | "7d" | "30d";
 
@@ -238,27 +239,50 @@ const AdminDashboard = () => {
               </SelectContent>
             </Select>
           </div>
-          <Card>
-            <CardContent className="pt-4">
-              <div className="space-y-2">
-                {stats.fundEngagement
-                  .filter((f) => engagementFilter === "all" || f.fundType === engagementFilter)
-                  .map((f, i) => (
-                    <div key={f.slug} className="flex items-center justify-between py-2 border-b border-border last:border-0">
-                      <div className="flex items-center gap-2">
-                        <span className="text-xs font-bold text-muted-foreground w-5">{i + 1}.</span>
-                        <span className="text-sm font-medium">{f.fundName}</span>
-                        <span className="text-[10px] px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{FUND_TYPE_LABELS[f.fundType as FundType] || f.fundType}</span>
+          {(() => {
+            const filteredEngagement = stats.fundEngagement.filter((f) => engagementFilter === "all" || f.fundType === engagementFilter);
+            const chartData = filteredEngagement.map((f) => ({
+              name: f.fundName.length > 20 ? f.fundName.slice(0, 18) + "…" : f.fundName,
+              fullName: f.fundName,
+              views: f.views,
+              type: FUND_TYPE_LABELS[f.fundType as FundType] || f.fundType,
+            }));
+            return (
+              <>
+                {chartData.length > 0 ? (
+                  <Card>
+                    <CardContent className="pt-4">
+                      <div className="h-64">
+                        <ResponsiveContainer width="100%" height="100%">
+                          <BarChart data={chartData} layout="vertical" margin={{ left: 10, right: 20, top: 5, bottom: 5 }}>
+                            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" horizontal={false} />
+                            <XAxis type="number" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                            <YAxis type="category" dataKey="name" width={150} tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                            <Tooltip
+                              formatter={(value: number, _: string, props: any) => [`${value} views`, props.payload.fullName]}
+                              contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", fontSize: 12 }}
+                              labelFormatter={() => ""}
+                            />
+                            <Bar dataKey="views" radius={[0, 4, 4, 0]} maxBarSize={28}>
+                              {chartData.map((_, idx) => (
+                                <Cell key={idx} fill={idx === 0 ? "hsl(var(--accent))" : "hsl(var(--accent) / 0.6)"} />
+                              ))}
+                            </Bar>
+                          </BarChart>
+                        </ResponsiveContainer>
                       </div>
-                      <span className="text-sm font-semibold text-accent">{f.views} views</span>
-                    </div>
-                  ))}
-                {stats.fundEngagement.filter((f) => engagementFilter === "all" || f.fundType === engagementFilter).length === 0 && (
-                  <p className="text-sm text-muted-foreground text-center py-4">No funds in this category.</p>
+                    </CardContent>
+                  </Card>
+                ) : (
+                  <Card>
+                    <CardContent className="pt-4">
+                      <p className="text-sm text-muted-foreground text-center py-4">No funds in this category.</p>
+                    </CardContent>
+                  </Card>
                 )}
-              </div>
-            </CardContent>
-          </Card>
+              </>
+            );
+          })()}
         </div>
       )}
 
