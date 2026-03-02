@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowUpDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type FundType, FUND_TYPE_LABELS } from "@/lib/api";
 
@@ -311,9 +311,17 @@ const AdminFunds = () => {
                 <th className="text-left px-3 py-2 font-semibold hidden md:table-cell">Manager</th>
                 <th className="text-right px-3 py-2 font-semibold">Rate</th>
                 <th className="text-right px-3 py-2 font-semibold hidden md:table-cell">Fee</th>
-                <th className="text-right px-3 py-2 font-semibold hidden md:table-cell cursor-pointer select-none" onClick={() => setSortByViews(s => s === "none" ? "desc" : s === "desc" ? "asc" : "none")}>
-                    <span className="inline-flex items-center gap-1">Views <ArrowUpDown className="h-3 w-3" /></span>
-                  </th>
+                <th
+                  className="text-right px-3 py-2 font-semibold hidden md:table-cell cursor-pointer select-none hover:bg-muted/80 transition-colors"
+                  onClick={() => setSortByViews(s => s === "none" ? "desc" : s === "desc" ? "asc" : "none")}
+                >
+                  <span className="inline-flex items-center gap-1 justify-end">
+                    Views
+                    {sortByViews === "none" && <ArrowUpDown className="h-3 w-3 text-muted-foreground" />}
+                    {sortByViews === "desc" && <ArrowDown className="h-3 w-3 text-accent" />}
+                    {sortByViews === "asc" && <ArrowUp className="h-3 w-3 text-accent" />}
+                  </span>
+                </th>
                 <th className="text-center px-3 py-2 font-semibold hidden md:table-cell">Status</th>
                 <th className="text-center px-3 py-2 font-semibold">Updated</th>
                 <th className="px-3 py-2"></th>
@@ -354,7 +362,7 @@ const AdminFunds = () => {
                 </tr>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">No funds found. Add your first fund above.</td></tr>
+                <tr><td colSpan={9} className="text-center py-8 text-muted-foreground">No funds found. Try adjusting your filters.</td></tr>
               )}
             </tbody>
           </table>
