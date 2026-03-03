@@ -22,19 +22,38 @@ const Index = () => {
   });
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [news, setNews] = useState<NewsFromDB[]>([]);
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   useEffect(() => {
     fetchFunds().then((data) => setFunds(data)).catch(() => {});
     fetchPublishedNews().then((data) => setNews(data)).catch(() => {});
   }, []);
 
-  const topFunds = funds.slice(0, 5);
+  const categories = useMemo(() => {
+    const types = [...new Set(funds.map((f) => f.fund_type))];
+    return types.sort();
+  }, [funds]);
+
+  const categoryLabels: Record<string, string> = {
+    money_market: "Money Market",
+    fixed_income: "Fixed Income",
+    balanced: "Balanced",
+    equity: "Equity",
+    bond: "Bond",
+  };
+
+  const filteredFunds = useMemo(() => {
+    if (selectedCategory === "all") return funds;
+    return funds.filter((f) => f.fund_type === selectedCategory);
+  }, [funds, selectedCategory]);
+
+  const topFunds = filteredFunds.slice(0, 5);
   const latestNews = news.slice(0, 3);
 
   const bestYield = useMemo(() => {
-    if (topFunds.length === 0) return 0;
-    return Math.max(...topFunds.map((f) => f.annual_yield));
-  }, [topFunds]);
+    if (filteredFunds.length === 0) return 0;
+    return Math.max(...filteredFunds.map((f) => f.annual_yield));
+  }, [filteredFunds]);
 
   return (
     <div>
@@ -86,7 +105,7 @@ const Index = () => {
 
       {/* Top Funds */}
       <section className="container max-w-6xl -mt-10 relative z-10 pt-16 pb-12">
-        <div className="flex items-center justify-between mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
           <div className="flex items-center gap-3">
             <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-accent/10">
               <TrendingUp className="h-5 w-5 text-accent" />
@@ -96,9 +115,26 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">Ranked by annual effective yield</p>
             </div>
           </div>
-          <Button asChild variant="outline" size="sm" className="rounded-full hidden sm:inline-flex">
-            <Link to="/compare">View All <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
-          </Button>
+          <div className="flex items-center gap-2 flex-wrap">
+            <button
+              onClick={() => setSelectedCategory("all")}
+              className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${selectedCategory === "all" ? "bg-accent text-accent-foreground border-accent" : "bg-card border-border text-muted-foreground hover:border-accent/50"}`}
+            >
+              All
+            </button>
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => setSelectedCategory(cat)}
+                className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${selectedCategory === cat ? "bg-accent text-accent-foreground border-accent" : "bg-card border-border text-muted-foreground hover:border-accent/50"}`}
+              >
+                {categoryLabels[cat] || cat}
+              </button>
+            ))}
+            <Button asChild variant="outline" size="sm" className="rounded-full hidden sm:inline-flex ml-1">
+              <Link to="/compare">View All <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
+            </Button>
+          </div>
         </div>
 
         {/* Desktop/Tablet table */}

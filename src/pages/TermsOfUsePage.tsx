@@ -19,7 +19,7 @@ const TermsOfUsePage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">2. Nature of the Platform</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Fund Finder Kenya is an <strong>informational platform only</strong>. It provides data about Money Market Funds (MMFs) regulated by the Capital Markets Authority (CMA) of Kenya for comparison and educational purposes. The Platform:
+          Fund Finder Kenya is an <strong>informational platform only</strong>. It provides data about unit trust funds — including Money Market Funds, Fixed Income Funds, Balanced Funds, Equity Funds, Bond Funds, and other collective investment schemes — regulated by the Capital Markets Authority (CMA) of Kenya for comparison and educational purposes. The Platform:
         </p>
         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mt-2">
           <li>Does <strong>not</strong> provide investment advice, financial advice, or any recommendation to buy or sell any financial product.</li>
@@ -53,14 +53,14 @@ const TermsOfUsePage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">5. Investment Risks</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          All investments carry risk, including the potential loss of principal. Money Market Funds, while generally considered lower-risk, are <strong>not guaranteed</strong> and are <strong>not deposits</strong> with any bank or financial institution. Fund values can fluctuate, and past returns do not guarantee future performance.
+          All investments carry risk, including the potential loss of principal. Unit trust funds — including Money Market, Fixed Income, Balanced, Equity, and Bond Funds — carry varying levels of risk. Money Market Funds, while generally considered lower-risk, are <strong>not guaranteed</strong> and are <strong>not deposits</strong> with any bank or financial institution. Other fund categories such as Equity and Balanced Funds may experience greater volatility. Fund values can fluctuate, and past returns do not guarantee future performance.
         </p>
       </section>
 
       <section>
         <h2 className="text-lg font-semibold mb-2">6. Calculator Disclaimer</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          The investment calculator provided on this Platform is for <strong>illustrative purposes only</strong>. Projections assume constant yield rates and do not account for withholding taxes, management fees, market fluctuations, or other variables that affect actual returns. Results are estimates and should not be relied upon for investment decisions.
+          The investment calculator provided on this Platform is for <strong>illustrative purposes only</strong>. Projections assume constant yield rates and do not account for withholding taxes, management fees, market fluctuations, or other variables that affect actual returns across any fund category. Results are estimates and should not be relied upon for investment decisions.
         </p>
       </section>
 
