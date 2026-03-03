@@ -8,7 +8,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
-import YieldChange from "@/components/YieldChange";
+import YieldChange, { formatYield } from "@/components/YieldChange";
 
 const FundDetailPage = () => {
   const { id } = useParams();
@@ -98,15 +98,15 @@ const FundDetailPage = () => {
         <div className="rounded-lg border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground mb-1">Annual Rate</p>
           <p className="font-bold text-lg text-accent">
-            {fund.annual_yield}%
-            {prevSnapshot && <YieldChange current={fund.annual_yield} previous={prevSnapshot.annual_yield} className="text-xs ml-1.5" />}
+            {formatYield(fund.annual_yield, fund.yield_unit)}
+            {prevSnapshot && <YieldChange current={fund.annual_yield} previous={prevSnapshot.annual_yield} unit={fund.yield_unit} className="text-xs ml-1.5" />}
           </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground mb-1">Daily Yield</p>
           <p className="font-bold text-lg text-accent">
-            {fund.daily_yield}%
-            {prevSnapshot && <YieldChange current={fund.daily_yield} previous={prevSnapshot.daily_yield} className="text-xs ml-1.5" />}
+            {formatYield(fund.daily_yield, fund.yield_unit)}
+            {prevSnapshot && <YieldChange current={fund.daily_yield} previous={prevSnapshot.daily_yield} unit={fund.yield_unit} className="text-xs ml-1.5" />}
           </p>
         </div>
         {isAuthenticated ? (

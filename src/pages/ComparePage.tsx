@@ -10,7 +10,7 @@ import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import YieldChange from "@/components/YieldChange";
+import YieldChange, { formatYield } from "@/components/YieldChange";
 
 type SortKey = "annual_yield" | "minimum_investment" | "management_fee";
 
@@ -253,9 +253,9 @@ const ComparePage = () => {
                         </td>
                         <td className="px-4 py-3.5 text-muted-foreground hidden lg:table-cell">{fund.manager}</td>
                         <td className="px-4 py-3.5 text-right text-muted-foreground tabular-nums hidden lg:table-cell">
-                          {fund.daily_yield}%
+                          {formatYield(fund.daily_yield, fund.yield_unit)}
                           {snapshots[fund.id] && (
-                            <YieldChange current={fund.daily_yield} previous={snapshots[fund.id]?.daily_yield} className="text-[10px] ml-1" />
+                            <YieldChange current={fund.daily_yield} previous={snapshots[fund.id]?.daily_yield} unit={fund.yield_unit} className="text-[10px] ml-1" />
                           )}
                         </td>
                         <td className="px-4 py-3.5 text-right">
@@ -267,10 +267,10 @@ const ComparePage = () => {
                               />
                             </div>
                             <span className={`font-bold tabular-nums ${isBest ? "text-accent" : "text-accent/80"}`}>
-                              {fund.annual_yield}%
+                              {formatYield(fund.annual_yield, fund.yield_unit)}
                             </span>
                             {snapshots[fund.id] && (
-                              <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} className="text-[10px] ml-1" />
+                              <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] ml-1" />
                             )}
                           </div>
                         </td>
@@ -328,9 +328,9 @@ const ComparePage = () => {
                       <p className="text-xs text-muted-foreground">{fund.manager}</p>
                     </div>
                     <div className="text-right shrink-0">
-                      <span className="text-accent font-bold text-xl">{fund.annual_yield}%</span>
+                      <span className="text-accent font-bold text-xl">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
                       {snapshots[fund.id] && (
-                        <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} className="text-[10px]" />
+                        <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px]" />
                       )}
                       <p className="text-[10px] text-muted-foreground">annual</p>
                     </div>
@@ -342,10 +342,10 @@ const ComparePage = () => {
                       style={{ width: `${yieldBarWidth(fund.annual_yield)}%` }}
                     />
                   </div>
-                  <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
+                    <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
                     <div>
                       <span className="block font-medium text-foreground text-[11px]">Daily Yield</span>
-                      {fund.daily_yield}%
+                      {formatYield(fund.daily_yield, fund.yield_unit)}
                     </div>
                     <div>
                       <span className="block font-medium text-foreground text-[11px]">Min. Invest</span>

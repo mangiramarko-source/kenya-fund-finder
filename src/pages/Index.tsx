@@ -6,7 +6,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchFunds, fetchLatestSnapshots, fetchPublishedNews, type FundFromDB, type NewsFromDB, type YieldSnapshot } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import YieldChange from "@/components/YieldChange";
+import YieldChange, { formatYield } from "@/components/YieldChange";
 
 const Index = () => {
   useDocumentTitle("Fund Finder Kenya – Compare Money Market Funds", "Compare CMA-regulated Money Market Funds in Kenya. See yields, fees, and calculate returns.");
@@ -173,9 +173,9 @@ const Index = () => {
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{fund.manager}</td>
                   <td className="px-4 py-3 text-right">
-                    <span className="font-bold text-accent">{fund.annual_yield}%</span>
+                    <span className="font-bold text-accent">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
                     {snapshots[fund.id] && (
-                      <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} className="text-[10px] ml-1" />
+                      <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] ml-1" />
                     )}
                   </td>
                   <td className="px-4 py-3 hidden xl:table-cell">
@@ -213,9 +213,9 @@ const Index = () => {
                 <p className="text-xs text-muted-foreground">{fund.manager}</p>
               </div>
               <div className="text-right shrink-0">
-                <span className="text-accent font-bold text-sm">{fund.annual_yield}%</span>
+                <span className="text-accent font-bold text-sm">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
                 {snapshots[fund.id] && (
-                  <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} className="text-[10px]" />
+                  <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px]" />
                 )}
                 <p className="text-[10px] text-muted-foreground">annual rate</p>
               </div>

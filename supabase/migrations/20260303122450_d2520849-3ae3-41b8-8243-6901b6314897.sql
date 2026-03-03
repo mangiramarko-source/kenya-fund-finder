@@ -1,0 +1,1 @@
+ALTER TABLE public.funds ADD COLUMN yield_unit text NOT NULL DEFAULT '%';
