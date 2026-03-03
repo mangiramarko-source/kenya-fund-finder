@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { ArrowRight, BarChart3, Calculator, Newspaper, BookOpen, TrendingUp, Shield, GraduationCap } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 
@@ -115,23 +116,21 @@ const Index = () => {
               <p className="text-xs text-muted-foreground">Ranked by annual effective yield</p>
             </div>
           </div>
-          <div className="flex items-center gap-2 flex-wrap">
-            <button
-              onClick={() => setSelectedCategory("all")}
-              className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${selectedCategory === "all" ? "bg-accent text-accent-foreground border-accent" : "bg-card border-border text-muted-foreground hover:border-accent/50"}`}
-            >
-              All
-            </button>
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => setSelectedCategory(cat)}
-                className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${selectedCategory === cat ? "bg-accent text-accent-foreground border-accent" : "bg-card border-border text-muted-foreground hover:border-accent/50"}`}
-              >
-                {categoryLabels[cat] || cat}
-              </button>
-            ))}
-            <Button asChild variant="outline" size="sm" className="rounded-full hidden sm:inline-flex ml-1">
+          <div className="flex items-center gap-2">
+            <Select value={selectedCategory} onValueChange={setSelectedCategory}>
+              <SelectTrigger className="w-[160px] rounded-full text-xs h-9">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">All Categories</SelectItem>
+                {categories.map((cat) => (
+                  <SelectItem key={cat} value={cat}>
+                    {categoryLabels[cat] || cat}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button asChild variant="outline" size="sm" className="rounded-full hidden sm:inline-flex">
               <Link to="/compare">View All <ArrowRight className="ml-1 h-3.5 w-3.5" /></Link>
             </Button>
           </div>
