@@ -2,18 +2,20 @@ import { useParams, Link } from "react-router-dom";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ExternalLink, Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { fetchFundBySlug, fetchHistoricalYields, type FundFromDB, type HistoricalYield } from "@/lib/api";
+import { fetchFundBySlug, fetchHistoricalYields, fetchFundSnapshots, type FundFromDB, type HistoricalYield, type YieldSnapshot } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
+import YieldChange from "@/components/YieldChange";
 
 const FundDetailPage = () => {
   const { id } = useParams();
   const { user, loading: authLoading } = useAuth();
   const [fund, setFund] = useState<FundFromDB | null>(null);
   const [yields, setYields] = useState<HistoricalYield[]>([]);
+  const [snapshots, setSnapshots] = useState<YieldSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
 
   useDocumentTitle(
@@ -52,8 +54,12 @@ const FundDetailPage = () => {
     fetchFundBySlug(id).then(async (f) => {
       setFund(f);
       if (f) {
-        const y = await fetchHistoricalYields(f.id);
+        const [y, s] = await Promise.all([
+          fetchHistoricalYields(f.id),
+          fetchFundSnapshots(f.id),
+        ]);
         setYields(y);
+        setSnapshots(s);
       }
       setLoading(false);
     }).catch(() => setLoading(false));
@@ -72,6 +78,8 @@ const FundDetailPage = () => {
 
   const isAuthenticated = !!user;
 
+  const prevSnapshot = snapshots.length > 0 ? snapshots[0] : undefined;
+
   return (
     <div className="container py-10 max-w-3xl">
       <Link to="/compare" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
@@ -89,11 +97,17 @@ const FundDetailPage = () => {
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
         <div className="rounded-lg border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground mb-1">Annual Rate</p>
-          <p className="font-bold text-lg text-accent">{fund.annual_yield}%</p>
+          <p className="font-bold text-lg text-accent">
+            {fund.annual_yield}%
+            {prevSnapshot && <YieldChange current={fund.annual_yield} previous={prevSnapshot.annual_yield} className="text-xs ml-1.5" />}
+          </p>
         </div>
         <div className="rounded-lg border border-border bg-card p-4">
           <p className="text-xs text-muted-foreground mb-1">Daily Yield</p>
-          <p className="font-bold text-lg text-accent">{fund.daily_yield}%</p>
+          <p className="font-bold text-lg text-accent">
+            {fund.daily_yield}%
+            {prevSnapshot && <YieldChange current={fund.daily_yield} previous={prevSnapshot.daily_yield} className="text-xs ml-1.5" />}
+          </p>
         </div>
         {isAuthenticated ? (
           <>

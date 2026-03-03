@@ -49,6 +49,13 @@ export interface HistoricalYield {
   yield: number;
 }
 
+export interface YieldSnapshot {
+  fund_id: string;
+  annual_yield: number;
+  daily_yield: number;
+  snapshot_date: string;
+}
+
 export async function fetchFunds(): Promise<FundFromDB[]> {
   const { data, error } = await supabase
     .from("funds")
@@ -114,5 +121,45 @@ export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
     read_time: d.read_time,
     is_featured: d.is_featured,
     status: d.status,
+  }));
+}
+
+/** Fetch the most recent yield snapshot for each fund (previous values before last update) */
+export async function fetchLatestSnapshots(): Promise<YieldSnapshot[]> {
+  const { data, error } = await supabase
+    .from("fund_yield_snapshots")
+    .select("fund_id, annual_yield, daily_yield, snapshot_date")
+    .order("snapshot_date", { ascending: false });
+  if (error) throw error;
+  // Deduplicate: keep only the latest snapshot per fund
+  const seen = new Set<string>();
+  const result: YieldSnapshot[] = [];
+  for (const row of data || []) {
+    if (!seen.has(row.fund_id)) {
+      seen.add(row.fund_id);
+      result.push({
+        fund_id: row.fund_id,
+        annual_yield: Number(row.annual_yield),
+        daily_yield: Number(row.daily_yield),
+        snapshot_date: row.snapshot_date,
+      });
+    }
+  }
+  return result;
+}
+
+/** Fetch all yield snapshots for a specific fund */
+export async function fetchFundSnapshots(fundId: string): Promise<YieldSnapshot[]> {
+  const { data, error } = await supabase
+    .from("fund_yield_snapshots")
+    .select("fund_id, annual_yield, daily_yield, snapshot_date")
+    .eq("fund_id", fundId)
+    .order("snapshot_date", { ascending: false });
+  if (error) throw error;
+  return (data || []).map((row) => ({
+    fund_id: row.fund_id,
+    annual_yield: Number(row.annual_yield),
+    daily_yield: Number(row.daily_yield),
+    snapshot_date: row.snapshot_date,
   }));
 }

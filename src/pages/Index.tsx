@@ -4,8 +4,9 @@ import { ArrowRight, BarChart3, Calculator, Newspaper, BookOpen, TrendingUp, Shi
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
+import { fetchFunds, fetchLatestSnapshots, fetchPublishedNews, type FundFromDB, type NewsFromDB, type YieldSnapshot } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
+import YieldChange from "@/components/YieldChange";
 
 const Index = () => {
   useDocumentTitle("Fund Finder Kenya – Compare Money Market Funds", "Compare CMA-regulated Money Market Funds in Kenya. See yields, fees, and calculate returns.");
@@ -23,11 +24,17 @@ const Index = () => {
   });
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [news, setNews] = useState<NewsFromDB[]>([]);
+  const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   useEffect(() => {
     fetchFunds().then((data) => setFunds(data)).catch(() => {});
     fetchPublishedNews().then((data) => setNews(data)).catch(() => {});
+    fetchLatestSnapshots().then((data) => {
+      const map: Record<string, YieldSnapshot> = {};
+      data.forEach((s) => { map[s.fund_id] = s; });
+      setSnapshots(map);
+    }).catch(() => {});
   }, []);
 
   const categories = useMemo(() => {
@@ -165,7 +172,12 @@ const Index = () => {
                     <p className="text-xs text-muted-foreground lg:hidden">{fund.manager}</p>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{fund.manager}</td>
-                  <td className="px-4 py-3 text-right font-bold text-accent">{fund.annual_yield}%</td>
+                  <td className="px-4 py-3 text-right">
+                    <span className="font-bold text-accent">{fund.annual_yield}%</span>
+                    {snapshots[fund.id] && (
+                      <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} className="text-[10px] ml-1" />
+                    )}
+                  </td>
                   <td className="px-4 py-3 hidden xl:table-cell">
                     <div className="flex items-center gap-2">
                       <div className="flex-1 h-2 rounded-full bg-muted overflow-hidden">
@@ -202,6 +214,9 @@ const Index = () => {
               </div>
               <div className="text-right shrink-0">
                 <span className="text-accent font-bold text-sm">{fund.annual_yield}%</span>
+                {snapshots[fund.id] && (
+                  <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} className="text-[10px]" />
+                )}
                 <p className="text-[10px] text-muted-foreground">annual rate</p>
               </div>
             </Link>

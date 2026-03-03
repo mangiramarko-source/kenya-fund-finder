@@ -9,9 +9,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type FundType, FUND_TYPE_LABELS } from "@/lib/api";
+import AdminYieldHistory from "./AdminYieldHistory";
 
 interface FundRow {
   id: string;
@@ -48,6 +49,7 @@ const AdminFunds = () => {
   const [editingFund, setEditingFund] = useState<typeof emptyFund & { id?: string }>(emptyFund);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [fundViews, setFundViews] = useState<Record<string, number>>({});
+  const [historyFund, setHistoryFund] = useState<{ id: string; name: string } | null>(null);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -351,6 +353,9 @@ const AdminFunds = () => {
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1 justify-end">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setHistoryFund({ id: fund.id, name: fund.name })} title="Yield History">
+                        <History className="h-3.5 w-3.5" />
+                      </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(fund)}>
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>
@@ -368,6 +373,14 @@ const AdminFunds = () => {
           </table>
         </div>
       </div>
+      {historyFund && (
+        <AdminYieldHistory
+          fundId={historyFund.id}
+          fundName={historyFund.name}
+          open={!!historyFund}
+          onOpenChange={(open) => { if (!open) setHistoryFund(null); }}
+        />
+      )}
     </div>
   );
 };
