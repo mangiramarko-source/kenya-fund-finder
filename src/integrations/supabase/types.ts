@@ -162,6 +162,7 @@ export type Database = {
           updated_by: string | null
           website: string
           withdrawal_time: string
+          yield_unit: string
         }
         Insert: {
           annual_yield: number
@@ -186,6 +187,7 @@ export type Database = {
           updated_by?: string | null
           website?: string
           withdrawal_time: string
+          yield_unit?: string
         }
         Update: {
           annual_yield?: number
@@ -210,6 +212,7 @@ export type Database = {
           updated_by?: string | null
           website?: string
           withdrawal_time?: string
+          yield_unit?: string
         }
         Relationships: []
       }

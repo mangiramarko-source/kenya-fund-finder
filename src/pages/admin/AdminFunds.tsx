@@ -11,7 +11,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, History } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { type FundType, FUND_TYPE_LABELS } from "@/lib/api";
+import { type FundType, FUND_TYPE_LABELS, YIELD_UNITS } from "@/lib/api";
 import AdminYieldHistory from "./AdminYieldHistory";
 
 interface FundRow {
@@ -30,6 +30,7 @@ interface FundRow {
   website: string;
   fact_sheet_date: string | null;
   source_url: string | null;
+  yield_unit: string;
   is_published: boolean;
   updated_at: string;
 }
@@ -38,7 +39,7 @@ const emptyFund = {
   slug: "", name: "", manager: "", cma_licensed: true,
   annual_yield: 0, daily_yield: 0, fund_type: "money_market" as FundType,
   minimum_investment: 0, management_fee: 0, withdrawal_time: "",
-  description: "", website: "", fact_sheet_date: "", source_url: "", is_published: true,
+  description: "", website: "", fact_sheet_date: "", source_url: "", yield_unit: "%", is_published: true,
 };
 
 const AdminFunds = () => {
@@ -132,6 +133,7 @@ const AdminFunds = () => {
       fact_sheet_date: editingFund.fact_sheet_date || null,
       source_url: editingFund.source_url || null,
       is_published: editingFund.is_published,
+      yield_unit: editingFund.yield_unit,
       updated_by: user?.id,
     };
 
@@ -178,6 +180,7 @@ const AdminFunds = () => {
       website: fund.website,
       fact_sheet_date: fund.fact_sheet_date || "",
       source_url: fund.source_url || "",
+      yield_unit: fund.yield_unit || "%",
       is_published: fund.is_published,
     });
     setDialogOpen(true);
@@ -225,14 +228,25 @@ const AdminFunds = () => {
                   </Select>
                 </div>
               </div>
-              <div className="grid grid-cols-2 gap-3">
+              <div className="grid grid-cols-3 gap-3">
                 <div>
-                  <Label>Annual Rate (%)</Label>
+                  <Label>Annual Rate</Label>
                   <Input type="number" step="0.1" value={editingFund.annual_yield} onChange={(e) => setEditingFund({ ...editingFund, annual_yield: Number(e.target.value) })} className="mt-1" />
                 </div>
                 <div>
-                  <Label>Daily Yield (%)</Label>
+                  <Label>Daily Yield</Label>
                   <Input type="number" step="0.0001" value={editingFund.daily_yield} onChange={(e) => setEditingFund({ ...editingFund, daily_yield: Number(e.target.value) })} className="mt-1" />
+                </div>
+                <div>
+                  <Label>Yield Unit</Label>
+                  <Select value={editingFund.yield_unit} onValueChange={(v) => setEditingFund({ ...editingFund, yield_unit: v })}>
+                    <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                    <SelectContent>
+                      {YIELD_UNITS.map((u) => (
+                        <SelectItem key={u} value={u}>{u}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
