@@ -215,8 +215,10 @@ const ComparePage = () => {
                     <th className="text-left px-4 py-3.5 font-semibold">Fund Name</th>
                     <th className="text-left px-4 py-3.5 font-semibold hidden lg:table-cell">Manager</th>
                     <th className="text-right px-4 py-3.5 font-semibold hidden lg:table-cell">Daily Yield</th>
-                    <th className="text-right px-4 py-3.5 min-w-[180px]">
-                      <SortBtn label="Annual Rate" field="annual_yield" />
+                    <th className="px-4 py-3.5 min-w-[180px]">
+                      <div className="flex justify-end">
+                        <SortBtn label="Annual Rate" field="annual_yield" />
+                      </div>
                     </th>
                     <th className="text-right px-4 py-3.5">
                       <SortBtn label="Min. Investment" field="minimum_investment" />
@@ -258,7 +260,7 @@ const ComparePage = () => {
                             <YieldChange current={fund.daily_yield} previous={snapshots[fund.id]?.daily_yield} unit={fund.yield_unit} className="text-[10px] ml-1" />
                           )}
                         </td>
-                        <td className="px-4 py-3.5 text-right">
+                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
                           <div className="flex items-center justify-end gap-3">
                             <div className="hidden xl:block w-20 h-2 bg-muted rounded-full overflow-hidden">
                               <div
@@ -270,7 +272,7 @@ const ComparePage = () => {
                               {formatYield(fund.annual_yield, fund.yield_unit)}
                             </span>
                             {snapshots[fund.id] && (
-                              <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] ml-1" />
+                              <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] inline-block" />
                             )}
                           </div>
                         </td>
