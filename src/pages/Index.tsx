@@ -58,10 +58,12 @@ const Index = () => {
   const topFunds = filteredFunds.slice(0, 5);
   const latestNews = news.slice(0, 3);
 
-  const bestYield = useMemo(() => {
-    if (filteredFunds.length === 0) return 0;
-    return Math.max(...filteredFunds.map((f) => f.annual_yield));
+  const bestFund = useMemo(() => {
+    if (filteredFunds.length === 0) return null;
+    return filteredFunds.reduce((best, f) => f.annual_yield > best.annual_yield ? f : best, filteredFunds[0]);
   }, [filteredFunds]);
+
+  const bestYield = bestFund?.annual_yield ?? 0;
 
   return (
     <div>
@@ -96,7 +98,7 @@ const Index = () => {
             <div className="hidden lg:grid grid-cols-2 gap-3">
               {[
                 { label: "Unit Trusts Tracked", value: funds.length || "—", sub: "CMA regulated", highlight: false },
-                { label: "Top Yield", value: bestYield ? `${bestYield}%` : "—", sub: "annual rate", highlight: true },
+                { label: "Top Yield", value: bestFund ? formatYield(bestFund.annual_yield, bestFund.yield_unit) : "—", sub: "annual rate", highlight: true },
                 { label: "Latest Update", value: funds[0] ? new Date(funds[0].updated_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" }) : "—", sub: "data refresh", highlight: false },
                 { label: "Market News", value: news.length || "—", sub: "latest insights", highlight: false },
               ].map(({ label, value, sub, highlight }) => (
