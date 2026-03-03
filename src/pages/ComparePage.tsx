@@ -5,11 +5,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { fetchFunds, type FundFromDB, type FundType, FUND_TYPE_LABELS } from "@/lib/api";
+import { fetchFunds, fetchLatestSnapshots, type FundFromDB, type FundType, type YieldSnapshot, FUND_TYPE_LABELS } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import YieldChange from "@/components/YieldChange";
 
 type SortKey = "annual_yield" | "minimum_investment" | "management_fee";
 
@@ -18,6 +19,7 @@ const fundTypes: FundType[] = ["money_market", "fixed_income", "balanced", "equi
 const ComparePage = () => {
   useDocumentTitle("Compare Unit Trust Funds – Kenya Fund Comparison", "Side-by-side comparison of Kenya's top unit trust funds by yield, fees, and minimum investment.");
   const [funds, setFunds] = useState<FundFromDB[]>([]);
+  const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
   const [loading, setLoading] = useState(true);
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
@@ -26,7 +28,13 @@ const ComparePage = () => {
   const [activeType, setActiveType] = useState<FundType>("money_market");
 
   useEffect(() => {
-    fetchFunds().then((data) => { setFunds(data); setLoading(false); }).catch(() => setLoading(false));
+    Promise.all([fetchFunds(), fetchLatestSnapshots()]).then(([fundsData, snapshotsData]) => {
+      setFunds(fundsData);
+      const map: Record<string, YieldSnapshot> = {};
+      snapshotsData.forEach((s) => { map[s.fund_id] = s; });
+      setSnapshots(map);
+      setLoading(false);
+    }).catch(() => setLoading(false));
   }, []);
 
   const filteredByType = useMemo(() => funds.filter((f) => f.fund_type === activeType), [funds, activeType]);
@@ -246,6 +254,9 @@ const ComparePage = () => {
                         <td className="px-4 py-3.5 text-muted-foreground hidden lg:table-cell">{fund.manager}</td>
                         <td className="px-4 py-3.5 text-right text-muted-foreground tabular-nums hidden lg:table-cell">
                           {fund.daily_yield}%
+                          {snapshots[fund.id] && (
+                            <YieldChange current={fund.daily_yield} previous={snapshots[fund.id]?.daily_yield} className="text-[10px] ml-1" />
+                          )}
                         </td>
                         <td className="px-4 py-3.5 text-right">
                           <div className="flex items-center justify-end gap-3">
@@ -258,6 +269,9 @@ const ComparePage = () => {
                             <span className={`font-bold tabular-nums ${isBest ? "text-accent" : "text-accent/80"}`}>
                               {fund.annual_yield}%
                             </span>
+                            {snapshots[fund.id] && (
+                              <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} className="text-[10px] ml-1" />
+                            )}
                           </div>
                         </td>
                         <td className="px-4 py-3.5 text-right tabular-nums">
@@ -315,6 +329,9 @@ const ComparePage = () => {
                     </div>
                     <div className="text-right shrink-0">
                       <span className="text-accent font-bold text-xl">{fund.annual_yield}%</span>
+                      {snapshots[fund.id] && (
+                        <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} className="text-[10px]" />
+                      )}
                       <p className="text-[10px] text-muted-foreground">annual</p>
                     </div>
                   </div>

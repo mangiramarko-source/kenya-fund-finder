@@ -103,6 +103,41 @@ export type Database = {
           },
         ]
       }
+      fund_yield_snapshots: {
+        Row: {
+          annual_yield: number
+          created_at: string
+          daily_yield: number
+          fund_id: string
+          id: string
+          snapshot_date: string
+        }
+        Insert: {
+          annual_yield: number
+          created_at?: string
+          daily_yield: number
+          fund_id: string
+          id?: string
+          snapshot_date?: string
+        }
+        Update: {
+          annual_yield?: number
+          created_at?: string
+          daily_yield?: number
+          fund_id?: string
+          id?: string
+          snapshot_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "fund_yield_snapshots_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       funds: {
         Row: {
           annual_yield: number
