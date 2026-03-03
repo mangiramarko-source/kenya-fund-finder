@@ -174,10 +174,10 @@ const Index = () => {
                     <p className="text-xs text-muted-foreground lg:hidden">{fund.manager}</p>
                   </td>
                   <td className="px-4 py-3 text-muted-foreground hidden lg:table-cell">{fund.manager}</td>
-                  <td className="px-4 py-3 text-right">
+                  <td className="px-4 py-3 text-right whitespace-nowrap">
                     <span className="font-bold text-accent">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
                     {snapshots[fund.id] && (
-                      <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] ml-1" />
+                      <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] ml-1 inline-block" />
                     )}
                   </td>
                   <td className="px-4 py-3 hidden xl:table-cell">
