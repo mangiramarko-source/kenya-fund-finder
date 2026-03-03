@@ -141,26 +141,42 @@ const FundDetailPage = () => {
             <p className="text-muted-foreground text-sm leading-relaxed">{fund.description}</p>
           </div>
 
-          {snapshots.length > 1 && (
-            <div className="mb-8">
-              <h2 className="text-lg font-semibold mb-4">Rate History</h2>
-              <div className="rounded-lg border border-border bg-card p-4 h-64">
-                <ResponsiveContainer width="100%" height="100%">
-                  <LineChart data={[...snapshots].reverse().map((s) => ({
-                    date: new Date(s.snapshot_date).toLocaleDateString("en-KE", { day: "numeric", month: "short" }),
-                    "Annual Rate": s.annual_yield,
-                    "Daily Yield": s.daily_yield,
-                  }))}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" domain={["dataMin - 0.2", "dataMax + 0.2"]} />
-                    <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }} />
-                    <Line type="monotone" dataKey="Annual Rate" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ fill: "hsl(var(--accent))", r: 3 }} />
-                  </LineChart>
-                </ResponsiveContainer>
+          {snapshots.length >= 1 && (() => {
+            // Build chart data: snapshots + current fund values as "Today"
+            const chartData = [...snapshots].reverse().map((s) => ({
+              date: new Date(s.snapshot_date).toLocaleDateString("en-KE", { day: "numeric", month: "short" }),
+              "Annual Rate": Number(s.annual_yield),
+            }));
+            // Add current values as the latest point if different from last snapshot
+            const lastSnap = snapshots[0];
+            if (lastSnap && (Number(lastSnap.annual_yield) !== fund.annual_yield)) {
+              chartData.push({ date: "Today", "Annual Rate": fund.annual_yield });
+            }
+            return chartData.length > 1 ? (
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4">Rate History</h2>
+                <div className="rounded-lg border border-border bg-card p-4 h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={chartData}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
+                      <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" domain={["dataMin - 0.2", "dataMax + 0.2"]} />
+                      <Tooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "12px" }} />
+                      <Line type="monotone" dataKey="Annual Rate" stroke="hsl(var(--accent))" strokeWidth={2} dot={{ fill: "hsl(var(--accent))", r: 3 }} />
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
               </div>
-            </div>
-          )}
+            ) : (
+              <div className="mb-8">
+                <h2 className="text-lg font-semibold mb-4">Rate History</h2>
+                <div className="rounded-lg border border-border bg-card p-4 text-center">
+                  <p className="text-sm text-muted-foreground">Current annual rate: <span className="font-semibold text-accent">{fund.annual_yield}%</span></p>
+                  <p className="text-xs text-muted-foreground mt-1">Chart will appear once rate changes are recorded over time.</p>
+                </div>
+              </div>
+            );
+          })()}
 
           {yields.length > 0 && (
             <div className="mb-8">

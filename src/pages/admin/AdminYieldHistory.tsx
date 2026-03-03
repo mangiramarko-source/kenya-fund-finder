@@ -1,7 +1,11 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { TrendingUp, TrendingDown, Minus, Plus, Trash2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 interface YieldSnapshot {
   id: string;
@@ -22,9 +26,14 @@ interface AdminYieldHistoryProps {
 const AdminYieldHistory = ({ fundId, fundName, open, onOpenChange }: AdminYieldHistoryProps) => {
   const [snapshots, setSnapshots] = useState<YieldSnapshot[]>([]);
   const [loading, setLoading] = useState(false);
+  const [showAdd, setShowAdd] = useState(false);
+  const [newDate, setNewDate] = useState("");
+  const [newAnnual, setNewAnnual] = useState("");
+  const [newDaily, setNewDaily] = useState("");
+  const { toast } = useToast();
 
-  useEffect(() => {
-    if (!open || !fundId) return;
+  const load = () => {
+    if (!fundId) return;
     setLoading(true);
     supabase
       .from("fund_yield_snapshots")
@@ -35,7 +44,50 @@ const AdminYieldHistory = ({ fundId, fundName, open, onOpenChange }: AdminYieldH
         setSnapshots((data as YieldSnapshot[]) || []);
         setLoading(false);
       });
+  };
+
+  useEffect(() => {
+    if (open) load();
   }, [open, fundId]);
+
+  const handleAdd = async () => {
+    if (!newDate || !newAnnual) {
+      toast({ title: "Missing fields", description: "Date and Annual Rate are required.", variant: "destructive" });
+      return;
+    }
+    const annual = parseFloat(newAnnual);
+    const daily = newDaily ? parseFloat(newDaily) : parseFloat((annual / 365).toFixed(4));
+    if (isNaN(annual) || annual < 0 || annual > 100) {
+      toast({ title: "Invalid rate", description: "Annual rate must be 0–100%.", variant: "destructive" });
+      return;
+    }
+
+    const { error } = await supabase.from("fund_yield_snapshots").upsert(
+      { fund_id: fundId, snapshot_date: newDate, annual_yield: annual, daily_yield: daily },
+      { onConflict: "fund_id,snapshot_date" }
+    );
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Snapshot added" });
+    setShowAdd(false);
+    setNewDate("");
+    setNewAnnual("");
+    setNewDaily("");
+    load();
+  };
+
+  const handleDelete = async (id: string, date: string) => {
+    if (!confirm(`Delete snapshot for ${date}?`)) return;
+    const { error } = await supabase.from("fund_yield_snapshots").delete().eq("id", id);
+    if (error) {
+      toast({ title: "Error", description: error.message, variant: "destructive" });
+      return;
+    }
+    toast({ title: "Deleted" });
+    load();
+  };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -43,11 +95,42 @@ const AdminYieldHistory = ({ fundId, fundName, open, onOpenChange }: AdminYieldH
         <DialogHeader>
           <DialogTitle>Yield History — {fundName}</DialogTitle>
         </DialogHeader>
+
+        {/* Add snapshot form */}
+        {showAdd ? (
+          <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3 mb-2">
+            <p className="text-sm font-medium">Add Historical Snapshot</p>
+            <div className="grid grid-cols-3 gap-2">
+              <div>
+                <Label className="text-xs">Date</Label>
+                <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs">Annual Rate (%)</Label>
+                <Input type="number" step="0.01" placeholder="e.g. 12.5" value={newAnnual} onChange={(e) => setNewAnnual(e.target.value)} className="mt-1" />
+              </div>
+              <div>
+                <Label className="text-xs">Daily Yield (%)</Label>
+                <Input type="number" step="0.0001" placeholder="auto" value={newDaily} onChange={(e) => setNewDaily(e.target.value)} className="mt-1" />
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground">Leave daily yield empty to auto-calculate from annual rate.</p>
+            <div className="flex gap-2">
+              <Button size="sm" onClick={handleAdd} className="bg-accent text-accent-foreground hover:bg-accent/90">Save</Button>
+              <Button size="sm" variant="outline" onClick={() => setShowAdd(false)}>Cancel</Button>
+            </div>
+          </div>
+        ) : (
+          <Button size="sm" variant="outline" onClick={() => setShowAdd(true)} className="mb-2">
+            <Plus className="mr-1 h-3.5 w-3.5" /> Add Past Snapshot
+          </Button>
+        )}
+
         {loading ? (
           <p className="text-sm text-muted-foreground py-4 text-center">Loading...</p>
         ) : snapshots.length === 0 ? (
           <p className="text-sm text-muted-foreground py-4 text-center">
-            No yield history yet. History is recorded automatically when you update annual rates or daily yields.
+            No yield history yet. Add snapshots above or update the fund's rates to start tracking.
           </p>
         ) : (
           <div className="rounded-lg border border-border overflow-hidden">
@@ -58,6 +141,7 @@ const AdminYieldHistory = ({ fundId, fundName, open, onOpenChange }: AdminYieldH
                   <th className="text-right px-3 py-2 font-semibold">Annual Rate</th>
                   <th className="text-right px-3 py-2 font-semibold">Daily Yield</th>
                   <th className="text-center px-3 py-2 font-semibold">Change</th>
+                  <th className="px-2 py-2"></th>
                 </tr>
               </thead>
               <tbody>
@@ -82,6 +166,11 @@ const AdminYieldHistory = ({ fundId, fundName, open, onOpenChange }: AdminYieldH
                         ) : (
                           <span className="text-xs text-muted-foreground">—</span>
                         )}
+                      </td>
+                      <td className="px-2 py-2">
+                        <Button variant="ghost" size="icon" className="h-7 w-7 text-destructive" onClick={() => handleDelete(snap.id, snap.snapshot_date)}>
+                          <Trash2 className="h-3 w-3" />
+                        </Button>
                       </td>
                     </tr>
                   );
