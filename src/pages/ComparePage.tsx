@@ -260,20 +260,22 @@ const ComparePage = () => {
                             <YieldChange current={fund.daily_yield} previous={snapshots[fund.id]?.daily_yield} unit={fund.yield_unit} className="text-[10px] ml-1" />
                           )}
                         </td>
-                        <td className="px-4 py-3.5 text-right whitespace-nowrap">
-                          <div className="flex items-center justify-end gap-3">
-                            <div className="hidden xl:block w-20 h-2 bg-muted rounded-full overflow-hidden">
+                        <td className="px-4 py-3.5 whitespace-nowrap">
+                          <div className="grid grid-cols-[1fr_auto_auto] items-center gap-2" style={{ gridTemplateColumns: 'minmax(0, 80px) auto auto' }}>
+                            <div className="hidden xl:block h-2 bg-muted rounded-full overflow-hidden">
                               <div
                                 className="h-full rounded-full bg-accent/60 transition-all"
                                 style={{ width: `${yieldBarWidth(fund.annual_yield)}%` }}
                               />
                             </div>
-                            <span className={`font-bold tabular-nums ${isBest ? "text-accent" : "text-accent/80"}`}>
+                            <span className={`font-bold tabular-nums text-right min-w-[70px] ${isBest ? "text-accent" : "text-accent/80"}`}>
                               {formatYield(fund.annual_yield, fund.yield_unit)}
                             </span>
-                            {snapshots[fund.id] && (
-                              <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] inline-block" />
-                            )}
+                            <span className="min-w-[65px] text-right">
+                              {snapshots[fund.id] ? (
+                                <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px]" />
+                              ) : <span className="text-[10px] text-muted-foreground">—</span>}
+                            </span>
                           </div>
                         </td>
                         <td className="px-4 py-3.5 text-right tabular-nums">
