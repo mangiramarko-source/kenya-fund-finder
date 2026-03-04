@@ -93,8 +93,9 @@ const AdminFunds = () => {
 
   const validate = () => {
     if (!editingFund.name || !editingFund.slug || !editingFund.manager) return "Name, slug, and manager are required.";
-    if (editingFund.yield_unit === "%" && (editingFund.annual_yield < 0 || editingFund.annual_yield > 100)) return "Annual rate must be 0-100%.";
-    if (editingFund.yield_unit !== "%" && editingFund.annual_yield < 0) return "Annual rate must be non-negative.";
+    const isPercentUnit = editingFund.yield_unit === "%";
+    if (isPercentUnit && (editingFund.annual_yield < 0 || editingFund.annual_yield > 100)) return "Annual rate must be 0-100% for percentage unit.";
+    if (!isPercentUnit && editingFund.annual_yield < 0) return "Annual rate must be non-negative.";
     if (editingFund.daily_yield < 0) return "Daily yield must be non-negative.";
     if (editingFund.management_fee < 0 || editingFund.management_fee > 100) return "Fee must be 0-100%.";
     if (editingFund.website && !/^https?:\/\//.test(editingFund.website)) return "Website must be a valid URL.";
