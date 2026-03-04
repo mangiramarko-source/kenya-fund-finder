@@ -1,6 +1,6 @@
 import { useState, useMemo, useEffect } from "react";
 import { Link } from "react-router-dom";
-import { ArrowUpDown, ArrowUp, ArrowDown, Filter, Trophy, TrendingUp, Search } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Filter, Trophy, TrendingUp, Search, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,7 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import YieldChange, { formatYield } from "@/components/YieldChange";
+import { useLiveStatus } from "@/hooks/useLiveStatus";
 
 type SortKey = "annual_yield" | "minimum_investment" | "management_fee";
 
@@ -26,6 +27,7 @@ const ComparePage = () => {
   const [managerFilter, setManagerFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeType, setActiveType] = useState<FundType>("money_market");
+  const { isLive } = useLiveStatus();
 
   useEffect(() => {
     Promise.all([fetchFunds(), fetchLatestSnapshots()]).then(([fundsData, snapshotsData]) => {
@@ -131,7 +133,15 @@ const ComparePage = () => {
     <div className="container py-10 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
-        <h1 className="text-2xl md:text-3xl font-bold mb-1">Compare Unit Trust Funds</h1>
+        <div className="flex items-center gap-3 mb-1 flex-wrap">
+          <h1 className="text-2xl md:text-3xl font-bold">Compare Unit Trust Funds</h1>
+          {isLive && (
+            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-semibold">
+              <Radio className="h-3 w-3 animate-pulse" />
+              Live · Updated Today
+            </span>
+          )}
+        </div>
         <p className="text-muted-foreground text-sm md:text-base">
           All funds listed are regulated by the Capital Markets Authority of Kenya.
         </p>
