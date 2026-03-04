@@ -7,11 +7,14 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users,
   TrendingUp, Activity, MousePointerClick, ShieldAlert, ArrowUpRight,
-  ArrowDownRight, Globe, PieChart, RefreshCw,
+  ArrowDownRight, Globe, PieChart, RefreshCw, Radio,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
+import { useLiveStatus } from "@/hooks/useLiveStatus";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, LineChart, Line, PieChart as RechartsPie, Pie, Legend,
@@ -90,6 +93,7 @@ const AdminDashboard = () => {
   const [range, setRange] = useState<TimeRange>("7d");
   const [engagementFilter, setEngagementFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
+  const { isLive, toggleLive } = useLiveStatus();
   const [stats, setStats] = useState<Stats>({
     fundCount: 0, publishedFunds: 0, draftFunds: 0, newsCount: 0, pendingNews: 0, outdatedFunds: 0,
     lastUpdate: "", totalPageViews: 0, uniqueVisitors: 0, avgPagesPerVisitor: 0,
@@ -335,7 +339,19 @@ const AdminDashboard = () => {
             Welcome, {user?.email} · Data last updated: {stats.lastUpdate}
           </p>
         </div>
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-3 flex-wrap">
+          <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-card">
+            <Radio className={`h-3.5 w-3.5 ${isLive ? "text-emerald-500 animate-pulse" : "text-muted-foreground"}`} />
+            <Label htmlFor="live-toggle" className="text-xs font-medium cursor-pointer select-none">
+              {isLive ? "Live" : "Offline"}
+            </Label>
+            <Switch
+              id="live-toggle"
+              checked={isLive ?? false}
+              onCheckedChange={toggleLive}
+              className="scale-90"
+            />
+          </div>
           <Button variant="ghost" size="icon" onClick={load} disabled={loading} className="h-8 w-8">
             <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
           </Button>
