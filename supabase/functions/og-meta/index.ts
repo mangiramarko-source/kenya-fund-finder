@@ -1,7 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const SITE_URL = "https://kenyafundfinder.com";
-const OG_IMAGE = "https://lovable.dev/opengraph-image-p98pqg.png";
+const OG_IMAGE = "https://kenyafundfinder.com/og-image.png";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
