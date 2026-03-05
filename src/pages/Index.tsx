@@ -271,17 +271,17 @@ const Index = () => {
 
 
 
-      {/* What is an MMF? */}
+      {/* What is a Unit Trust? */}
       <section className="bg-muted/40 py-16">
         <div className="container max-w-6xl">
           <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 items-center">
             <div className="lg:col-span-3 text-center lg:text-left">
-              <h2 className="text-2xl md:text-3xl font-bold mb-4">What is a Money Market Fund?</h2>
+              <h2 className="text-2xl md:text-3xl font-bold mb-4">What is a Unit Trust?</h2>
               <p className="text-muted-foreground leading-relaxed mb-4">
-                A Money Market Fund is a collective investment scheme that pools money from investors to invest in short-term, low-risk instruments like Treasury bills, commercial paper, and fixed deposits. In Kenya, MMFs are regulated by the <strong className="text-foreground">Capital Markets Authority (CMA)</strong> and offer higher returns than traditional savings accounts while keeping your money accessible.
+                A Unit Trust is a collective investment scheme that pools money from multiple investors to invest in a professionally managed portfolio of assets. Each investor owns "units" proportional to their contribution. In Kenya, Unit Trusts are regulated by the <strong className="text-foreground">Capital Markets Authority (CMA)</strong> and come in various types — Money Market, Fixed Income, Balanced, Equity, and Bond Funds — each with a different risk-return profile.
               </p>
               <p className="text-muted-foreground leading-relaxed mb-6">
-                They're ideal for investors seeking a safe, liquid alternative to bank savings with significantly better returns.
+                They offer an accessible, affordable way to invest in diversified portfolios without needing large capital or deep market expertise.
               </p>
               <Button asChild variant="outline" className="rounded-full">
                 <Link to="/learn"><GraduationCap className="mr-2 h-4 w-4" /> Learn More</Link>
@@ -289,9 +289,9 @@ const Index = () => {
             </div>
             <div className="lg:col-span-2 hidden lg:grid grid-cols-2 gap-3">
               {[
-                { label: "Low Risk", desc: "Government-backed instruments" },
-                { label: "High Liquidity", desc: "Access funds within days" },
-                { label: "Better Returns", desc: "Outperform savings accounts" },
+                { label: "Diversified", desc: "Spread across multiple assets" },
+                { label: "Professionally Managed", desc: "Expert fund managers" },
+                { label: "Accessible", desc: "Start with as little as KES 100" },
                 { label: "CMA Regulated", desc: "Investor protection" },
               ].map(({ label, desc }) => (
                 <div key={label} className="rounded-xl border border-border bg-card p-4 text-center">
