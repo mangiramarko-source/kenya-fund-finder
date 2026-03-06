@@ -2,6 +2,9 @@ import { useState, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Upload, FileText, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
@@ -159,6 +162,8 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [step, setStep] = useState<"input" | "preview" | "done">("input");
+  const [saveSnapshot, setSaveSnapshot] = useState(false);
+  const [snapshotDate, setSnapshotDate] = useState(() => new Date().toISOString().split("T")[0]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -168,6 +173,8 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
     setParsedFunds([]);
     setResult(null);
     setStep("input");
+    setSaveSnapshot(false);
+    setSnapshotDate(new Date().toISOString().split("T")[0]);
   };
 
   const handleParse = () => {
@@ -233,10 +240,18 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
             importResult.errors.push(`${fund.name}: ${error.message}`);
           } else {
             importResult.updated.push(fund.name);
+            if (saveSnapshot) {
+              await supabase.from("fund_yield_snapshots").upsert({
+                fund_id: existing.id,
+                annual_yield: fund.annual_yield,
+                daily_yield: fund.daily_yield,
+                snapshot_date: snapshotDate,
+              }, { onConflict: "fund_id,snapshot_date" });
+            }
           }
         } else {
           const slug = generateSlug(fund.name, fund.currency);
-          const { error } = await supabase.from("funds").insert({
+          const { data: newFund, error } = await supabase.from("funds").insert({
             ...payload,
             name: fund.name,
             slug,
@@ -248,11 +263,19 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
             withdrawal_time: "T+1",
             is_published: true,
             created_by: user?.id,
-          });
+          }).select("id").single();
           if (error) {
             importResult.errors.push(`${fund.name}: ${error.message}`);
           } else {
             importResult.created.push(fund.name);
+            if (saveSnapshot && newFund) {
+              await supabase.from("fund_yield_snapshots").upsert({
+                fund_id: newFund.id,
+                annual_yield: fund.annual_yield,
+                daily_yield: fund.daily_yield,
+                snapshot_date: snapshotDate,
+              }, { onConflict: "fund_id,snapshot_date" });
+            }
           }
         }
       }
@@ -382,6 +405,27 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
               ))}
             </div>
 
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">Save Yield Snapshot</Label>
+                  <p className="text-xs text-muted-foreground">Record these yields as a historical data point</p>
+                </div>
+                <Switch checked={saveSnapshot} onCheckedChange={setSaveSnapshot} />
+              </div>
+              {saveSnapshot && (
+                <div>
+                  <Label className="text-xs">Snapshot Date</Label>
+                  <Input
+                    type="date"
+                    value={snapshotDate}
+                    onChange={(e) => setSnapshotDate(e.target.value)}
+                    className="mt-1 w-48"
+                  />
+                </div>
+              )}
+            </div>
+
             <Button
               onClick={handleImport}
               className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
@@ -390,7 +434,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
               {importing ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...</>
               ) : (
-                <>Import {parsedFunds.length} Funds</>
+                <>Import {parsedFunds.length} Funds{saveSnapshot ? ` + Save Snapshot (${snapshotDate})` : ""}</>
               )}
             </Button>
           </div>
