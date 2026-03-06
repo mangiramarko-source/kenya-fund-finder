@@ -9,10 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, History } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, History, Upload } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type FundType, FUND_TYPE_LABELS, YIELD_UNITS } from "@/lib/api";
 import AdminYieldHistory from "./AdminYieldHistory";
+import BulkFundImport from "@/components/admin/BulkFundImport";
 
 interface FundRow {
   id: string;
