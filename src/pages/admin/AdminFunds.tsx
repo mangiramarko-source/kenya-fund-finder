@@ -304,8 +304,10 @@ const AdminFunds = () => {
               </Button>
             </div>
           </DialogContent>
-        </Dialog>
+          </Dialog>
+        </div>
       </div>
+      <BulkFundImport open={bulkImportOpen} onOpenChange={setBulkImportOpen} onComplete={load} />
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1">
