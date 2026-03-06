@@ -405,6 +405,27 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
               ))}
             </div>
 
+            <div className="rounded-lg border border-border p-3 space-y-3">
+              <div className="flex items-center justify-between">
+                <div className="space-y-0.5">
+                  <Label className="text-sm font-medium">Save Yield Snapshot</Label>
+                  <p className="text-xs text-muted-foreground">Record these yields as a historical data point</p>
+                </div>
+                <Switch checked={saveSnapshot} onCheckedChange={setSaveSnapshot} />
+              </div>
+              {saveSnapshot && (
+                <div>
+                  <Label className="text-xs">Snapshot Date</Label>
+                  <Input
+                    type="date"
+                    value={snapshotDate}
+                    onChange={(e) => setSnapshotDate(e.target.value)}
+                    className="mt-1 w-48"
+                  />
+                </div>
+              )}
+            </div>
+
             <Button
               onClick={handleImport}
               className="w-full bg-accent text-accent-foreground hover:bg-accent/90"
@@ -413,7 +434,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
               {importing ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...</>
               ) : (
-                <>Import {parsedFunds.length} Funds</>
+                <>Import {parsedFunds.length} Funds{saveSnapshot ? ` + Save Snapshot (${snapshotDate})` : ""}</>
               )}
             </Button>
           </div>
