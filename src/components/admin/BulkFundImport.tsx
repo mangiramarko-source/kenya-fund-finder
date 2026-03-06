@@ -240,10 +240,18 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
             importResult.errors.push(`${fund.name}: ${error.message}`);
           } else {
             importResult.updated.push(fund.name);
+            if (saveSnapshot) {
+              await supabase.from("fund_yield_snapshots").upsert({
+                fund_id: existing.id,
+                annual_yield: fund.annual_yield,
+                daily_yield: fund.daily_yield,
+                snapshot_date: snapshotDate,
+              }, { onConflict: "fund_id,snapshot_date" });
+            }
           }
         } else {
           const slug = generateSlug(fund.name, fund.currency);
-          const { error } = await supabase.from("funds").insert({
+          const { data: newFund, error } = await supabase.from("funds").insert({
             ...payload,
             name: fund.name,
             slug,
@@ -255,11 +263,19 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
             withdrawal_time: "T+1",
             is_published: true,
             created_by: user?.id,
-          });
+          }).select("id").single();
           if (error) {
             importResult.errors.push(`${fund.name}: ${error.message}`);
           } else {
             importResult.created.push(fund.name);
+            if (saveSnapshot && newFund) {
+              await supabase.from("fund_yield_snapshots").upsert({
+                fund_id: newFund.id,
+                annual_yield: fund.annual_yield,
+                daily_yield: fund.daily_yield,
+                snapshot_date: snapshotDate,
+              }, { onConflict: "fund_id,snapshot_date" });
+            }
           }
         }
       }
