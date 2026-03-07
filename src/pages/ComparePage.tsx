@@ -56,13 +56,16 @@ const ComparePage = () => {
   }, [filteredByType, sortKey, sortDir, managerFilter, searchQuery]);
 
   const lastUpdated = useMemo(() => {
+    if (lastUpdateDate) {
+      return new Date(lastUpdateDate + "T00:00:00").toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
+    }
     if (filteredByType.length === 0) return null;
     const latest = filteredByType.reduce((max, f) => {
       const d = new Date(f.updated_at);
       return d > max ? d : max;
     }, new Date(0));
     return latest.toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
-  }, [filteredByType]);
+  }, [filteredByType, lastUpdateDate]);
 
   const typeCounts = useMemo(() => {
     const counts: Record<string, number> = {};
