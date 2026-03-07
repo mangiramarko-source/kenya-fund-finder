@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone, SortAsc } from "lucide-react";
+import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone, SortAsc, Share2, Link2, Twitter, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
