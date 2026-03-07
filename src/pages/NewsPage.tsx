@@ -72,6 +72,38 @@ const NewsPage = () => {
     setSelectedArticle(article);
   };
 
+  const getShareUrl = (article: NewsFromDB) => `https://kenyafundfinder.com/news#${article.id}`;
+
+  const handleShare = async (article: NewsFromDB, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = getShareUrl(article);
+    const text = `${article.title} — ${article.summary}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: article.title, text, url }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!" });
+    }
+  };
+
+  const shareToTwitter = (article: NewsFromDB, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = getShareUrl(article);
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(url)}`, "_blank", "noopener");
+  };
+
+  const shareToFacebook = (article: NewsFromDB, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = getShareUrl(article);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank", "noopener");
+  };
+
+  const copyLink = async (article: NewsFromDB, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await navigator.clipboard.writeText(getShareUrl(article));
+    toast({ title: "Link copied to clipboard" });
+  };
+
   // Article JSON-LD for the selected article
   useJsonLd(selectedArticle ? {
     "@context": "https://schema.org",
