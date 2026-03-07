@@ -27,6 +27,7 @@ const Index = () => {
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const { lastUpdateDate } = useLiveStatus();
 
   useEffect(() => {
     fetchFunds().then((data) => setFunds(data)).catch(() => {});
