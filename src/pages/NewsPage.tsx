@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone, SortAsc } from "lucide-react";
+import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone, SortAsc, Share2, Link2, Twitter, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -15,6 +15,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
+import { useToast } from "@/hooks/use-toast";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 
 const categories = ["All", "Yield Updates", "Market News", "Regulatory Updates", "Fund Announcements"] as const;
 
@@ -37,6 +39,7 @@ type SortOption = "latest" | "oldest" | "featured";
 const NewsPage = () => {
   useDocumentTitle("MMF News & Updates – Kenya Money Market Funds", "Stay informed about Money Market Funds in Kenya with the latest yield updates, market news, and regulatory changes.");
   const { user } = useAuth();
+  const { toast } = useToast();
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [loading, setLoading] = useState(true);
@@ -67,6 +70,38 @@ const NewsPage = () => {
 
   const handleArticleClick = (article: NewsFromDB) => {
     setSelectedArticle(article);
+  };
+
+  const getShareUrl = (article: NewsFromDB) => `https://kenyafundfinder.com/news#${article.id}`;
+
+  const handleShare = async (article: NewsFromDB, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = getShareUrl(article);
+    const text = `${article.title} — ${article.summary}`;
+    if (navigator.share) {
+      try { await navigator.share({ title: article.title, text, url }); } catch {}
+    } else {
+      await navigator.clipboard.writeText(url);
+      toast({ title: "Link copied!" });
+    }
+  };
+
+  const shareToTwitter = (article: NewsFromDB, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = getShareUrl(article);
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(url)}`, "_blank", "noopener");
+  };
+
+  const shareToFacebook = (article: NewsFromDB, e: React.MouseEvent) => {
+    e.stopPropagation();
+    const url = getShareUrl(article);
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank", "noopener");
+  };
+
+  const copyLink = async (article: NewsFromDB, e: React.MouseEvent) => {
+    e.stopPropagation();
+    await navigator.clipboard.writeText(getShareUrl(article));
+    toast({ title: "Link copied to clipboard" });
   };
 
   // Article JSON-LD for the selected article
@@ -171,9 +206,23 @@ const NewsPage = () => {
                       {article.source && `${article.source} · `}
                       {new Date(article.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
                     </span>
-                    <span className="text-xs text-accent font-medium flex items-center gap-1">
-                      Read Full Article <ArrowRight className="h-3.5 w-3.5" />
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-accent">
+                            <Share2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={(e) => copyLink(article, e)}><Link2 className="mr-2 h-3.5 w-3.5" /> Copy Link</DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => shareToTwitter(article, e)}><Twitter className="mr-2 h-3.5 w-3.5" /> Share on X</DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => shareToFacebook(article, e)}><Facebook className="mr-2 h-3.5 w-3.5" /> Share on Facebook</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <span className="text-xs text-accent font-medium flex items-center gap-1">
+                        Read Full Article <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

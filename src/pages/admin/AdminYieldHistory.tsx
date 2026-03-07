@@ -4,8 +4,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { TrendingUp, TrendingDown, Minus, Plus, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { YIELD_UNITS } from "@/lib/api";
 
 interface YieldSnapshot {
   id: string;
@@ -19,17 +21,19 @@ interface YieldSnapshot {
 interface AdminYieldHistoryProps {
   fundId: string;
   fundName: string;
+  yieldUnit: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
 
-const AdminYieldHistory = ({ fundId, fundName, open, onOpenChange }: AdminYieldHistoryProps) => {
+const AdminYieldHistory = ({ fundId, fundName, yieldUnit, open, onOpenChange }: AdminYieldHistoryProps) => {
   const [snapshots, setSnapshots] = useState<YieldSnapshot[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [newDate, setNewDate] = useState("");
   const [newAnnual, setNewAnnual] = useState("");
   const [newDaily, setNewDaily] = useState("");
+  const [newUnit, setNewUnit] = useState(yieldUnit || "%");
   const { toast } = useToast();
 
   const load = () => {
@@ -57,8 +61,9 @@ const AdminYieldHistory = ({ fundId, fundName, open, onOpenChange }: AdminYieldH
     }
     const annual = parseFloat(newAnnual);
     const daily = newDaily ? parseFloat(newDaily) : parseFloat((annual / 365).toFixed(4));
-    if (isNaN(annual) || annual < 0 || annual > 100) {
-      toast({ title: "Invalid rate", description: "Annual rate must be 0–100%.", variant: "destructive" });
+    const maxVal = newUnit === "%" ? 100 : 1000000;
+    if (isNaN(annual) || annual < 0 || annual > maxVal) {
+      toast({ title: "Invalid rate", description: newUnit === "%" ? "Annual rate must be 0–100%." : `Value must be 0–${maxVal.toLocaleString()}.`, variant: "destructive" });
       return;
     }
 
@@ -100,17 +105,26 @@ const AdminYieldHistory = ({ fundId, fundName, open, onOpenChange }: AdminYieldH
         {showAdd ? (
           <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3 mb-2">
             <p className="text-sm font-medium">Add Historical Snapshot</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div>
                 <Label className="text-xs">Date</Label>
                 <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs">Annual Rate (%)</Label>
+                <Label className="text-xs">Unit</Label>
+                <Select value={newUnit} onValueChange={setNewUnit}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {YIELD_UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Annual Rate ({newUnit})</Label>
                 <Input type="number" step="0.01" placeholder="e.g. 12.5" value={newAnnual} onChange={(e) => setNewAnnual(e.target.value)} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs">Daily Yield (%)</Label>
+                <Label className="text-xs">Daily Yield ({newUnit})</Label>
                 <Input type="number" step="0.0001" placeholder="auto" value={newDaily} onChange={(e) => setNewDaily(e.target.value)} className="mt-1" />
               </div>
             </div>

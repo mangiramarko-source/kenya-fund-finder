@@ -51,7 +51,7 @@ const AdminFunds = () => {
   const [editingFund, setEditingFund] = useState<typeof emptyFund & { id?: string }>(emptyFund);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [fundViews, setFundViews] = useState<Record<string, number>>({});
-  const [historyFund, setHistoryFund] = useState<{ id: string; name: string } | null>(null);
+  const [historyFund, setHistoryFund] = useState<{ id: string; name: string; yield_unit: string } | null>(null);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -377,7 +377,7 @@ const AdminFunds = () => {
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1 justify-end">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setHistoryFund({ id: fund.id, name: fund.name })} title="Yield History">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setHistoryFund({ id: fund.id, name: fund.name, yield_unit: fund.yield_unit })} title="Yield History">
                         <History className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(fund)}>
@@ -401,6 +401,7 @@ const AdminFunds = () => {
         <AdminYieldHistory
           fundId={historyFund.id}
           fundName={historyFund.name}
+          yieldUnit={historyFund.yield_unit}
           open={!!historyFund}
           onOpenChange={(open) => { if (!open) setHistoryFund(null); }}
         />
