@@ -51,7 +51,7 @@ const AdminFunds = () => {
   const [editingFund, setEditingFund] = useState<typeof emptyFund & { id?: string }>(emptyFund);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [fundViews, setFundViews] = useState<Record<string, number>>({});
-  const [historyFund, setHistoryFund] = useState<{ id: string; name: string } | null>(null);
+  const [historyFund, setHistoryFund] = useState<{ id: string; name: string; yield_unit: string } | null>(null);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
