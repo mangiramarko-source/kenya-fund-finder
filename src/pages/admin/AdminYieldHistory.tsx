@@ -26,13 +26,14 @@ interface AdminYieldHistoryProps {
   onOpenChange: (open: boolean) => void;
 }
 
-const AdminYieldHistory = ({ fundId, fundName, open, onOpenChange }: AdminYieldHistoryProps) => {
+const AdminYieldHistory = ({ fundId, fundName, yieldUnit, open, onOpenChange }: AdminYieldHistoryProps) => {
   const [snapshots, setSnapshots] = useState<YieldSnapshot[]>([]);
   const [loading, setLoading] = useState(false);
   const [showAdd, setShowAdd] = useState(false);
   const [newDate, setNewDate] = useState("");
   const [newAnnual, setNewAnnual] = useState("");
   const [newDaily, setNewDaily] = useState("");
+  const [newUnit, setNewUnit] = useState(yieldUnit || "%");
   const { toast } = useToast();
 
   const load = () => {
