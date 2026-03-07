@@ -105,17 +105,26 @@ const AdminYieldHistory = ({ fundId, fundName, yieldUnit, open, onOpenChange }: 
         {showAdd ? (
           <div className="rounded-lg border border-border bg-muted/30 p-3 space-y-3 mb-2">
             <p className="text-sm font-medium">Add Historical Snapshot</p>
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
               <div>
                 <Label className="text-xs">Date</Label>
                 <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs">Annual Rate (%)</Label>
+                <Label className="text-xs">Unit</Label>
+                <Select value={newUnit} onValueChange={setNewUnit}>
+                  <SelectTrigger className="mt-1"><SelectValue /></SelectTrigger>
+                  <SelectContent>
+                    {YIELD_UNITS.map((u) => <SelectItem key={u} value={u}>{u}</SelectItem>)}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div>
+                <Label className="text-xs">Annual Rate ({newUnit})</Label>
                 <Input type="number" step="0.01" placeholder="e.g. 12.5" value={newAnnual} onChange={(e) => setNewAnnual(e.target.value)} className="mt-1" />
               </div>
               <div>
-                <Label className="text-xs">Daily Yield (%)</Label>
+                <Label className="text-xs">Daily Yield ({newUnit})</Label>
                 <Input type="number" step="0.0001" placeholder="auto" value={newDaily} onChange={(e) => setNewDaily(e.target.value)} className="mt-1" />
               </div>
             </div>

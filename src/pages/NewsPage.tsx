@@ -206,9 +206,23 @@ const NewsPage = () => {
                       {article.source && `${article.source} · `}
                       {new Date(article.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
                     </span>
-                    <span className="text-xs text-accent font-medium flex items-center gap-1">
-                      Read Full Article <ArrowRight className="h-3.5 w-3.5" />
-                    </span>
+                    <div className="flex items-center gap-2">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-accent">
+                            <Share2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+                          <DropdownMenuItem onClick={(e) => copyLink(article, e)}><Link2 className="mr-2 h-3.5 w-3.5" /> Copy Link</DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => shareToTwitter(article, e)}><Twitter className="mr-2 h-3.5 w-3.5" /> Share on X</DropdownMenuItem>
+                          <DropdownMenuItem onClick={(e) => shareToFacebook(article, e)}><Facebook className="mr-2 h-3.5 w-3.5" /> Share on Facebook</DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                      <span className="text-xs text-accent font-medium flex items-center gap-1">
+                        Read Full Article <ArrowRight className="h-3.5 w-3.5" />
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -101,7 +101,7 @@ const Index = () => {
               {[
                 { label: "Unit Trusts Tracked", value: funds.length || "—", sub: "CMA regulated", highlight: false },
                 { label: "Top Yield", value: bestFund ? formatYield(bestFund.annual_yield, bestFund.yield_unit) : "—", sub: "annual rate", highlight: true },
-                { label: "Latest Update", value: funds[0] ? new Date(funds[0].updated_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" }) : "—", sub: "data refresh", highlight: false },
+                { label: "Latest Update", value: (() => { const d = lastUpdateDate ? new Date(lastUpdateDate) : funds[0] ? new Date(funds[0].updated_at) : null; return d ? d.toLocaleDateString("en-KE", { month: "short", day: "numeric" }) : "—"; })(), sub: "data refresh", highlight: false },
                 { label: "Market News", value: news.length || "—", sub: "latest insights", highlight: false },
               ].map(({ label, value, sub, highlight }) => (
                 <div key={label} className={`rounded-2xl backdrop-blur-md border p-6 text-center transition-all hover:scale-[1.02] ${highlight ? "bg-accent/15 border-accent/30" : "bg-primary-foreground/[0.07] border-primary-foreground/10"}`}>
