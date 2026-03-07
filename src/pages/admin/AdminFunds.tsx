@@ -377,7 +377,7 @@ const AdminFunds = () => {
                   </td>
                   <td className="px-3 py-2">
                     <div className="flex items-center gap-1 justify-end">
-                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setHistoryFund({ id: fund.id, name: fund.name })} title="Yield History">
+                      <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => setHistoryFund({ id: fund.id, name: fund.name, yield_unit: fund.yield_unit })} title="Yield History">
                         <History className="h-3.5 w-3.5" />
                       </Button>
                       <Button variant="ghost" size="icon" className="h-8 w-8" onClick={() => openEdit(fund)}>
