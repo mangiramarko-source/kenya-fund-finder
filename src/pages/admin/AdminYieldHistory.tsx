@@ -61,8 +61,9 @@ const AdminYieldHistory = ({ fundId, fundName, yieldUnit, open, onOpenChange }: 
     }
     const annual = parseFloat(newAnnual);
     const daily = newDaily ? parseFloat(newDaily) : parseFloat((annual / 365).toFixed(4));
-    if (isNaN(annual) || annual < 0 || annual > 100) {
-      toast({ title: "Invalid rate", description: "Annual rate must be 0–100%.", variant: "destructive" });
+    const maxVal = newUnit === "%" ? 100 : 1000000;
+    if (isNaN(annual) || annual < 0 || annual > maxVal) {
+      toast({ title: "Invalid rate", description: newUnit === "%" ? "Annual rate must be 0–100%." : `Value must be 0–${maxVal.toLocaleString()}.`, variant: "destructive" });
       return;
     }
 
