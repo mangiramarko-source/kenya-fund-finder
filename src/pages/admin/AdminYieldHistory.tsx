@@ -21,6 +21,7 @@ interface YieldSnapshot {
 interface AdminYieldHistoryProps {
   fundId: string;
   fundName: string;
+  yieldUnit: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
 }
