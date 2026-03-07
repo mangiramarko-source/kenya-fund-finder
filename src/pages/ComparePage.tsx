@@ -26,7 +26,7 @@ const ComparePage = () => {
   const [managerFilter, setManagerFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [activeType, setActiveType] = useState<FundType>("money_market");
-  const { isLive } = useLiveStatus();
+  const { isLive, lastUpdateDate } = useLiveStatus();
 
   useEffect(() => {
     Promise.all([fetchFunds(), fetchLatestSnapshots()]).then(([fundsData, snapshotsData]) => {
