@@ -64,6 +64,12 @@ const ProfilePage = () => {
     const file = e.target.files?.[0];
     if (!file || !user) return;
 
+    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+    if (!ALLOWED_TYPES.includes(file.type)) {
+      toast({ title: "Invalid file type", description: "Only JPEG, PNG, GIF and WebP are allowed.", variant: "destructive" });
+      return;
+    }
+
     if (file.size > 2 * 1024 * 1024) {
       toast({ title: "File too large", description: "Max 2MB allowed", variant: "destructive" });
       return;
