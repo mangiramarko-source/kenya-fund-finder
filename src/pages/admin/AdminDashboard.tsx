@@ -93,7 +93,7 @@ const AdminDashboard = () => {
   const [range, setRange] = useState<TimeRange>("7d");
   const [engagementFilter, setEngagementFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
-  const { isLive, toggleLive } = useLiveStatus();
+  const { isLive, toggleLive, lastUpdateDate, setLastUpdate } = useLiveStatus();
   const [stats, setStats] = useState<Stats>({
     fundCount: 0, publishedFunds: 0, draftFunds: 0, newsCount: 0, pendingNews: 0, outdatedFunds: 0,
     lastUpdate: "", totalPageViews: 0, uniqueVisitors: 0, avgPagesPerVisitor: 0,
@@ -336,10 +336,24 @@ const AdminDashboard = () => {
         <div>
           <h1 className="text-2xl font-bold">Admin Dashboard</h1>
           <p className="text-sm text-muted-foreground">
-            Welcome, {user?.email} · Data last updated: {stats.lastUpdate}
+            Welcome, {user?.email} · Data last updated: {lastUpdateDate ? new Date(lastUpdateDate + "T00:00:00").toLocaleDateString("en-KE") : stats.lastUpdate}
           </p>
         </div>
         <div className="flex items-center gap-3 flex-wrap">
+          {/* Last Update Date */}
+          <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-card">
+            <Label htmlFor="last-update-date" className="text-xs font-medium cursor-pointer select-none whitespace-nowrap">
+              Last Updated
+            </Label>
+            <input
+              id="last-update-date"
+              type="date"
+              value={lastUpdateDate ?? ""}
+              onChange={(e) => setLastUpdate(e.target.value || null)}
+              className="text-xs bg-transparent border-none outline-none w-[120px] text-foreground"
+            />
+          </div>
+          {/* Live Toggle */}
           <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-card">
             <Radio className={`h-3.5 w-3.5 ${isLive ? "text-emerald-500 animate-pulse" : "text-muted-foreground"}`} />
             <Label htmlFor="live-toggle" className="text-xs font-medium cursor-pointer select-none">
