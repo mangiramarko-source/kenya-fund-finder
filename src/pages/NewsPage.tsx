@@ -39,6 +39,7 @@ type SortOption = "latest" | "oldest" | "featured";
 const NewsPage = () => {
   useDocumentTitle("MMF News & Updates – Kenya Money Market Funds", "Stay informed about Money Market Funds in Kenya with the latest yield updates, market news, and regulatory changes.");
   const { user } = useAuth();
+  const { toast } = useToast();
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [loading, setLoading] = useState(true);
