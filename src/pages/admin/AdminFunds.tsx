@@ -401,6 +401,7 @@ const AdminFunds = () => {
         <AdminYieldHistory
           fundId={historyFund.id}
           fundName={historyFund.name}
+          yieldUnit={historyFund.yield_unit}
           open={!!historyFund}
           onOpenChange={(open) => { if (!open) setHistoryFund(null); }}
         />
