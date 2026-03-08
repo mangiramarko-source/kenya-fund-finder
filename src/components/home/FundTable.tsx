@@ -72,6 +72,7 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
 );
 
 const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort, loading, onClearSearch, hasSearch }: FundTableProps) => {
+  const navigate = useNavigate();
   if (loading) return <TableSkeleton />;
 
   return (
