@@ -27,11 +27,11 @@ const categoryLabels: Record<string, string> = {
 };
 
 const Index = () => {
-  useDocumentTitle("Fund Finder Kenya – Compare Investment Funds in Kenya", "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.");
+  useDocumentTitle("Kenya Fund Finder – Compare Investment Funds in Kenya", "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.");
   useJsonLd({
     "@context": "https://schema.org",
     "@type": "WebSite",
-    name: "Fund Finder Kenya",
+    name: "Kenya Fund Finder",
     url: "https://kenyafundfinder.com",
     description: "Compare CMA-regulated Money Market Funds in Kenya. See yields, fees, and calculate returns.",
     potentialAction: {
