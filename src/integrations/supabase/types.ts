@@ -101,6 +101,13 @@ export type Database = {
             referencedRelation: "funds"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "fund_historical_yields_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       fund_yield_snapshots: {
@@ -134,6 +141,13 @@ export type Database = {
             columns: ["fund_id"]
             isOneToOne: false
             referencedRelation: "funds"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "fund_yield_snapshots_fund_id_fkey"
+            columns: ["fund_id"]
+            isOneToOne: false
+            referencedRelation: "funds_public"
             referencedColumns: ["id"]
           },
         ]
@@ -392,7 +406,78 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      funds_public: {
+        Row: {
+          annual_yield: number | null
+          cma_licensed: boolean | null
+          created_at: string | null
+          daily_yield: number | null
+          description: string | null
+          fact_sheet_date: string | null
+          fund_type: string | null
+          id: string | null
+          is_published: boolean | null
+          management_fee: number | null
+          manager: string | null
+          minimum_investment: number | null
+          name: string | null
+          seven_day_yield: number | null
+          slug: string | null
+          source_url: string | null
+          thirty_day_yield: number | null
+          updated_at: string | null
+          website: string | null
+          withdrawal_time: string | null
+          yield_unit: string | null
+        }
+        Insert: {
+          annual_yield?: number | null
+          cma_licensed?: boolean | null
+          created_at?: string | null
+          daily_yield?: number | null
+          description?: string | null
+          fact_sheet_date?: string | null
+          fund_type?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          management_fee?: number | null
+          manager?: string | null
+          minimum_investment?: number | null
+          name?: string | null
+          seven_day_yield?: number | null
+          slug?: string | null
+          source_url?: string | null
+          thirty_day_yield?: number | null
+          updated_at?: string | null
+          website?: string | null
+          withdrawal_time?: string | null
+          yield_unit?: string | null
+        }
+        Update: {
+          annual_yield?: number | null
+          cma_licensed?: boolean | null
+          created_at?: string | null
+          daily_yield?: number | null
+          description?: string | null
+          fact_sheet_date?: string | null
+          fund_type?: string | null
+          id?: string | null
+          is_published?: boolean | null
+          management_fee?: number | null
+          manager?: string | null
+          minimum_investment?: number | null
+          name?: string | null
+          seven_day_yield?: number | null
+          slug?: string | null
+          source_url?: string | null
+          thirty_day_yield?: number | null
+          updated_at?: string | null
+          website?: string | null
+          withdrawal_time?: string | null
+          yield_unit?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_rate_limit: {
