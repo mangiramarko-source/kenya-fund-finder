@@ -261,14 +261,19 @@ const Index = () => {
             <div className="md:hidden space-y-2.5">
               {processedFunds.map((fund, i) => (
                 <Link key={fund.id} to={`/compare/${fund.slug}`} className="block rounded-xl border border-border bg-card p-3.5 hover:border-accent/30 transition-all active:scale-[0.99]">
-                  <div className="flex items-center gap-2.5 mb-2.5">
-                    <span className="text-xs font-bold text-muted-foreground tabular-nums shrink-0 w-5 text-center">{i + 1}</span>
-                    <h3 className="font-semibold text-[15px] truncate flex-1">{fund.name}</h3>
-                    {fund.annual_yield === bestYield && bestYield > 0 && (
-                      <Badge variant="default" className="text-[9px] px-1 py-0 h-3.5 bg-accent text-accent-foreground shrink-0">TOP</Badge>
-                    )}
+                  <div className="flex items-start gap-2.5 mb-2.5">
+                    <span className="text-xs font-bold text-muted-foreground tabular-nums shrink-0 w-5 text-center mt-0.5">{i + 1}</span>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <h3 className="font-semibold text-[15px] truncate">{fund.name}</h3>
+                        {fund.annual_yield === bestYield && bestYield > 0 && (
+                          <Badge variant="default" className="text-[9px] px-1 py-0 h-3.5 bg-accent text-accent-foreground shrink-0">TOP</Badge>
+                        )}
+                      </div>
+                      <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{fund.manager}</p>
+                    </div>
                     {snapshots[fund.id] && (
-                      <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[11px] shrink-0" />
+                      <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[11px] shrink-0 mt-0.5" />
                     )}
                   </div>
                   <div className="grid grid-cols-3 gap-2">
