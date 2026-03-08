@@ -23,7 +23,7 @@ const staticPages: Record<string, { title: string; description: string }> = {
       "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.",
   },
   "/calculator": {
-    title: "Investment Returns Calculator – Fund Finder Kenya",
+    title: "Investment Returns Calculator – Kenya Fund Finder",
     description:
       "Calculate your potential investment fund returns with our free calculator.",
   },
