@@ -82,6 +82,7 @@ const AdminFunds = () => {
   useEffect(() => {
     if (!snapshotDate) {
       setSnapshotYields({});
+      setEditedYields({});
       return;
     }
     supabase
@@ -90,12 +91,57 @@ const AdminFunds = () => {
       .eq("snapshot_date", snapshotDate)
       .then(({ data }) => {
         const map: Record<string, { annual_yield: number; daily_yield: number }> = {};
+        const edits: Record<string, { annual_yield: string; daily_yield: string }> = {};
         (data || []).forEach((s) => {
           map[s.fund_id] = { annual_yield: Number(s.annual_yield), daily_yield: Number(s.daily_yield) };
+          edits[s.fund_id] = { annual_yield: String(Number(s.annual_yield)), daily_yield: String(Number(s.daily_yield)) };
         });
         setSnapshotYields(map);
+        setEditedYields(edits);
       });
   }, [snapshotDate]);
+
+  const updateEditedYield = (fundId: string, field: "annual_yield" | "daily_yield", value: string) => {
+    setEditedYields((prev) => ({
+      ...prev,
+      [fundId]: { annual_yield: "", daily_yield: "", ...prev[fundId], [field]: value },
+    }));
+  };
+
+  const hasEdits = () => {
+    for (const [fundId, edited] of Object.entries(editedYields)) {
+      const original = snapshotYields[fundId];
+      if (!original) {
+        if (edited.annual_yield || edited.daily_yield) return true;
+        continue;
+      }
+      if (String(original.annual_yield) !== edited.annual_yield || String(original.daily_yield) !== edited.daily_yield) return true;
+    }
+    return false;
+  };
+
+  const handleSaveSnapshots = async () => {
+    if (!snapshotDate) return;
+    setSavingSnapshot(true);
+    let saved = 0;
+    let errors = 0;
+    for (const [fundId, edited] of Object.entries(editedYields)) {
+      const annual = parseFloat(edited.annual_yield);
+      const daily = parseFloat(edited.daily_yield);
+      if (isNaN(annual)) continue;
+      const dailyVal = isNaN(daily) ? parseFloat((annual / 365).toFixed(4)) : daily;
+      const { error } = await supabase.from("fund_yield_snapshots").upsert(
+        { fund_id: fundId, snapshot_date: snapshotDate, annual_yield: annual, daily_yield: dailyVal },
+        { onConflict: "fund_id,snapshot_date" }
+      );
+      if (error) errors++;
+      else saved++;
+    }
+    setSavingSnapshot(false);
+    toast({ title: "Snapshots saved", description: `${saved} updated${errors ? `, ${errors} errors` : ""}.` });
+    // Reload snapshot data
+    setSnapshotDate((d) => { const v = d; setSnapshotDate(""); setTimeout(() => setSnapshotDate(v), 50); return d; });
+  };
 
   const filtered = funds
     .filter((f) =>
