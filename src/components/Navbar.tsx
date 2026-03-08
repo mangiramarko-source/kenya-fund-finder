@@ -16,7 +16,11 @@ const navLinks = [
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
-  const [dark, setDark] = useState(() => document.documentElement.classList.contains("dark"));
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light") return false;
+    return true; // default to dark
+  });
   const [avatarUrl, setAvatarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
   const location = useLocation();
@@ -53,9 +57,8 @@ const Navbar = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
-    if (saved === "dark") setDark(true);
-    else if (saved === "light") setDark(false);
-    else if (window.matchMedia("(prefers-color-scheme: dark)").matches) setDark(true);
+    if (saved === "light") setDark(false);
+    // default is already dark, no action needed
   }, []);
 
   const handleSignOut = async () => {
