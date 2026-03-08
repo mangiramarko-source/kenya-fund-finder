@@ -21,7 +21,7 @@ const SitePage = () => {
     if (!slug) return;
     supabase
       .from("site_pages")
-      .select("*")
+      .select("id, slug, title, content, meta, updated_at")
       .eq("slug", slug)
       .maybeSingle()
       .then(({ data }) => {
