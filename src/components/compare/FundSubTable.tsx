@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowUpDown, ArrowUp, ArrowDown, Trophy, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import YieldChange, { formatYield } from "@/components/YieldChange";
