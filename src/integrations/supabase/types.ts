@@ -423,7 +423,6 @@ export type Database = {
           name: string | null
           seven_day_yield: number | null
           slug: string | null
-          source_url: string | null
           thirty_day_yield: number | null
           updated_at: string | null
           website: string | null
@@ -446,7 +445,6 @@ export type Database = {
           name?: string | null
           seven_day_yield?: number | null
           slug?: string | null
-          source_url?: string | null
           thirty_day_yield?: number | null
           updated_at?: string | null
           website?: string | null
@@ -469,7 +467,6 @@ export type Database = {
           name?: string | null
           seven_day_yield?: number | null
           slug?: string | null
-          source_url?: string | null
           thirty_day_yield?: number | null
           updated_at?: string | null
           website?: string | null
