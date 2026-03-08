@@ -59,7 +59,12 @@ const Index = () => {
   const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
   const categories = useMemo(() => {
     const present = [...new Set(funds.map((f) => f.fund_type))];
-    return categoryOrder.filter((c) => present.includes(c)).concat(present.filter((c) => !categoryOrder.includes(c)));
+    return [...present].sort((a, b) => {
+      const ai = categoryOrder.indexOf(a);
+      const bi = categoryOrder.indexOf(b);
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    });
+  }, [funds]);
   }, [funds]);
   const categoryCount = useMemo(() => {
     const counts: Record<string, number> = {};
