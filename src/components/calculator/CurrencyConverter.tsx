@@ -28,7 +28,7 @@ const CurrencyConverter = () => {
       .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
       .order("sort_order")
       .then(({ data }) => {
-        setRates((data as Rate[]) || []);
+        setRates((data as unknown as Rate[]) || []);
         setLoading(false);
       });
   }, []);
