@@ -234,7 +234,7 @@ const Index = () => {
                     </tr>
                   ))}
                   {processedFunds.length === 0 && (
-                    <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">No funds match your filters.</td></tr>
+                    <tr><td colSpan={7} className="text-center py-10 text-muted-foreground">No funds match your filters.</td></tr>
                   )}
                 </tbody>
               </table>
