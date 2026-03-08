@@ -346,7 +346,36 @@ const AdminFunds = () => {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="date"
+              value={snapshotDate}
+              onChange={(e) => setSnapshotDate(e.target.value)}
+              className="pl-9 w-[180px]"
+              placeholder="Filter by date"
+            />
+          </div>
+          {snapshotDate && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setSnapshotDate("")} title="Clear date filter">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
+
+      {snapshotDate && (
+        <div className="mb-3 rounded-lg bg-muted/50 border border-border px-3 py-2 text-sm flex items-center gap-2">
+          <CalendarDays className="h-4 w-4 text-accent shrink-0" />
+          <span>
+            Showing yields for <strong>{new Date(snapshotDate + "T00:00:00").toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</strong>.
+            {Object.keys(snapshotYields).length === 0
+              ? " No snapshots found for this date."
+              : ` ${Object.keys(snapshotYields).length} fund snapshots found.`}
+          </span>
+        </div>
+      )}
 
       <div className="rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
