@@ -39,7 +39,7 @@ const Index = () => {
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("money_market");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
@@ -56,16 +56,24 @@ const Index = () => {
     }).catch(() => {});
   }, []);
 
-  const categories = useMemo(() => [...new Set(funds.map((f) => f.fund_type))].sort(), [funds]);
+  const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
+  const categories = useMemo(() => {
+    const present = [...new Set(funds.map((f) => f.fund_type))];
+    return [...present].sort((a, b) => {
+      const ai = categoryOrder.indexOf(a);
+      const bi = categoryOrder.indexOf(b);
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    });
+  }, [funds]);
   const categoryCount = useMemo(() => {
-    const counts: Record<string, number> = { all: funds.length };
+    const counts: Record<string, number> = {};
     funds.forEach((f) => { counts[f.fund_type] = (counts[f.fund_type] || 0) + 1; });
     return counts;
   }, [funds]);
 
   const processedFunds = useMemo(() => {
     let result = funds;
-    if (selectedCategory !== "all") result = result.filter((f) => f.fund_type === selectedCategory);
+    result = result.filter((f) => f.fund_type === selectedCategory);
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((f) => f.name.toLowerCase().includes(q) || f.manager.toLowerCase().includes(q));
@@ -103,7 +111,7 @@ const Index = () => {
 
   const lastUpdate = lastUpdateDate ? new Date(lastUpdateDate) : funds[0] ? new Date(funds[0].updated_at) : null;
   const latestNews = news.slice(0, 4);
-  const allTabs = [{ key: "all", label: "All Funds" }, ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c }))];
+  const allTabs = categories.map((c) => ({ key: c, label: categoryLabels[c] || c }));
 
   return (
     <div className="min-h-screen">
