@@ -97,6 +97,12 @@ const Index = () => {
 
   const percentFunds = useMemo(() => processedFunds.filter((f) => f.yield_unit === "%"), [processedFunds]);
   const currencyFunds = useMemo(() => processedFunds.filter((f) => f.yield_unit !== "%"), [processedFunds]);
+  const displayFunds = useMemo(() => {
+    if (yieldFilter === "percent") return percentFunds;
+    if (yieldFilter === "currency") return currencyFunds;
+    return processedFunds;
+  }, [yieldFilter, percentFunds, currencyFunds, processedFunds]);
+  const hasBothTypes = percentFunds.length > 0 && currencyFunds.length > 0;
 
   const bestYield = useMemo(() => {
     const filtered = funds.filter((f) => f.fund_type === selectedCategory);
