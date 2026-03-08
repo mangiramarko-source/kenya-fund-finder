@@ -76,6 +76,25 @@ const AdminFunds = () => {
 
   useEffect(() => { load(); }, []);
 
+  // Load snapshot yields when date filter changes
+  useEffect(() => {
+    if (!snapshotDate) {
+      setSnapshotYields({});
+      return;
+    }
+    supabase
+      .from("fund_yield_snapshots")
+      .select("fund_id, annual_yield, daily_yield")
+      .eq("snapshot_date", snapshotDate)
+      .then(({ data }) => {
+        const map: Record<string, { annual_yield: number; daily_yield: number }> = {};
+        (data || []).forEach((s) => {
+          map[s.fund_id] = { annual_yield: Number(s.annual_yield), daily_yield: Number(s.daily_yield) };
+        });
+        setSnapshotYields(map);
+      });
+  }, [snapshotDate]);
+
   const filtered = funds
     .filter((f) =>
       (filterType === "all" || f.fund_type === filterType) &&
