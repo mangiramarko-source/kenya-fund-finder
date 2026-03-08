@@ -33,10 +33,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Get initial session first
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdmin(session.user.id).finally(() => setLoading(false));
+      if (session) {
+        // Validate the session is still usable
+        supabase.auth.getUser().then(({ error }) => {
+          if (error) {
+            // Session is stale/broken — clear it
+            supabase.auth.signOut().then(() => {
+              setUser(null);
+              setSession(null);
+              setIsAdmin(false);
+              setLoading(false);
+            });
+          } else {
+            setSession(session);
+            setUser(session.user);
+            checkAdmin(session.user.id).finally(() => setLoading(false));
+          }
+        });
       } else {
         setLoading(false);
       }
@@ -44,7 +57,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Listen for auth changes - DO NOT await inside callback (causes deadlocks)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
+        // Auto-recover from broken refresh tokens
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          supabase.auth.signOut().then(() => {
+            setUser(null);
+            setSession(null);
+            setIsAdmin(false);
+            window.location.href = '/admin/login';
+          });
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -56,7 +80,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     );
 
-    return () => subscription.unsubscribe();
+    // Also listen for auth errors via the session refresh
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'sb-' + import.meta.env.VITE_SUPABASE_PROJECT_ID + '-auth-token' && e.newValue === null) {
+        setUser(null);
+        setSession(null);
+        setIsAdmin(false);
+      }
+    };
+    window.addEventListener('storage', handleStorageEvent);
+
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageEvent);
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
