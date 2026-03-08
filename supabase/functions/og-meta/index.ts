@@ -12,29 +12,24 @@ const corsHeaders = {
 // Static page meta
 const staticPages: Record<string, { title: string; description: string }> = {
   "/": {
-    title: "MMF Compare Kenya – Compare Money Market Funds",
+    title: "Fund Finder Kenya – Compare Investment Funds in Kenya",
     description:
-      "Compare CMA-regulated Money Market Funds in Kenya. See yields, fees, and calculate returns.",
-  },
-  "/compare": {
-    title: "Compare Money Market Funds – Kenya MMF Comparison",
-    description:
-      "Side-by-side comparison of Kenya's top money market funds by yield, fees, and minimum investment.",
+      "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.",
   },
   "/calculator": {
-    title: "MMF Returns Calculator – Kenya Money Market Fund",
+    title: "Investment Returns Calculator – Fund Finder Kenya",
     description:
-      "Calculate your potential money market fund returns with our free calculator.",
+      "Calculate your potential investment fund returns with our free calculator.",
   },
   "/news": {
-    title: "MMF News & Updates – Kenya Money Market Funds",
+    title: "Investment Fund News & Updates – Fund Finder Kenya",
     description:
-      "Stay informed about Money Market Funds in Kenya with the latest yield updates and market news.",
+      "Stay informed about investment funds in Kenya with the latest yield updates and market news.",
   },
   "/learn": {
-    title: "Learn About Money Market Funds in Kenya",
+    title: "Learn About Investment Funds in Kenya – Fund Finder Kenya",
     description:
-      "Everything you need to know about MMFs in Kenya – how they work, risks, returns, and CMA regulation.",
+      "Everything you need to know about unit trusts in Kenya – how they work, risks, returns, and CMA regulation.",
   },
 };
 
