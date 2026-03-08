@@ -94,6 +94,9 @@ const Index = () => {
     return result;
   }, [funds, selectedCategory, debouncedSearch, sortKey, sortDir]);
 
+  const percentFunds = useMemo(() => processedFunds.filter((f) => f.yield_unit === "%"), [processedFunds]);
+  const currencyFunds = useMemo(() => processedFunds.filter((f) => f.yield_unit !== "%"), [processedFunds]);
+
   const bestYield = useMemo(() => {
     const filtered = funds.filter((f) => f.fund_type === selectedCategory);
     if (filtered.length === 0) return 0;
