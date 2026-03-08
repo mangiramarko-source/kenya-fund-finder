@@ -67,7 +67,7 @@ const TermsOfUsePage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">7. Intellectual Property</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          All content, design, and code on this Platform are the property of Fund Finder Kenya or their respective owners. You may not reproduce, distribute, or create derivative works without prior written consent. Fund names, logos, and trademarks belong to their respective fund managers.
+          All content, design, and code on this Platform are the property of Kenya Fund Finder or their respective owners. You may not reproduce, distribute, or create derivative works without prior written consent. Fund names, logos, and trademarks belong to their respective fund managers.
         </p>
       </section>
 
