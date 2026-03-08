@@ -15,6 +15,7 @@ import FundTable from "@/components/home/FundTable";
 import FundMobileCards from "@/components/home/FundMobileCards";
 import NewsSidebar from "@/components/home/NewsSidebar";
 import AdBanner from "@/components/AdBanner";
+import MarketTicker from "@/components/home/MarketTicker";
 
 type SortKey = "annual_yield" | "daily_yield" | "management_fee" | "minimum_investment" | "name";
 type SortDir = "asc" | "desc";
@@ -239,6 +240,7 @@ const Index = () => {
             {/* Mobile news + ads section */}
             <div className="xl:hidden mt-6 space-y-4">
               <AdBanner placement="sidebar" />
+              <MarketTicker />
               <AdBanner placement="in-feed" />
               <NewsSidebar news={latestNews} loading={loading} />
             </div>
@@ -247,6 +249,7 @@ const Index = () => {
           {/* Desktop sidebar */}
           <aside className="hidden xl:block space-y-4">
             <AdBanner placement="sidebar" />
+            <MarketTicker />
             <NewsSidebar news={latestNews} loading={loading} />
             <AdBanner placement="banner" />
           </aside>

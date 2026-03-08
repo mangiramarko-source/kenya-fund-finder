@@ -1,13 +1,14 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminFunds from "./admin/AdminFunds";
 import AdminNews from "./admin/AdminNews";
 import AdminChangeLog from "./admin/AdminChangeLog";
 import AdminPages from "./admin/AdminPages";
 import AdminAds from "./admin/AdminAds";
+import AdminMarkets from "./admin/AdminMarkets";
 
 const AdminPage = () => {
   const { isAdmin, loading, user } = useAuth();
@@ -32,7 +33,7 @@ const AdminPage = () => {
   return (
     <div className="container py-6">
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 max-w-2xl">
+        <TabsList className="grid w-full grid-cols-7 max-w-3xl">
           <TabsTrigger value="dashboard" className="gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -53,6 +54,10 @@ const AdminPage = () => {
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Pages</span>
           </TabsTrigger>
+          <TabsTrigger value="markets" className="gap-1.5">
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">Markets</span>
+          </TabsTrigger>
           <TabsTrigger value="log" className="gap-1.5">
             <ClipboardList className="h-4 w-4" />
             <span className="hidden sm:inline">Log</span>
@@ -64,6 +69,7 @@ const AdminPage = () => {
         <TabsContent value="news"><AdminNews /></TabsContent>
         <TabsContent value="ads"><AdminAds /></TabsContent>
         <TabsContent value="pages"><AdminPages /></TabsContent>
+        <TabsContent value="markets"><AdminMarkets /></TabsContent>
         <TabsContent value="log"><AdminChangeLog /></TabsContent>
       </Tabs>
     </div>
