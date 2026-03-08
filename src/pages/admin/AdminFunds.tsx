@@ -433,7 +433,8 @@ const AdminFunds = () => {
                 <th className="text-left px-3 py-2 font-semibold">Fund Name</th>
                 <th className="text-left px-3 py-2 font-semibold hidden md:table-cell">Type</th>
                 <th className="text-left px-3 py-2 font-semibold hidden md:table-cell">Manager</th>
-                <th className="text-right px-3 py-2 font-semibold">Rate</th>
+                <th className={`text-right px-3 py-2 font-semibold ${snapshotDate ? "min-w-[120px]" : ""}`}>{snapshotDate ? "Annual" : "Rate"}</th>
+                {snapshotDate && <th className="text-right px-3 py-2 font-semibold min-w-[100px]">Daily</th>}
                 <th className="text-right px-3 py-2 font-semibold hidden md:table-cell">Fee</th>
                 <th
                   className="text-right px-3 py-2 font-semibold hidden md:table-cell cursor-pointer select-none hover:bg-muted/80 transition-colors"
