@@ -69,8 +69,7 @@ const Navbar = () => {
         {/* Logo */}
         <Link to="/" className="flex items-center gap-2 font-heading text-lg font-bold text-primary shrink-0">
           <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
-            <span className="hidden sm:block"><TrendingUp className="h-5 w-5" /></span>
-            <span className="block sm:hidden"><Home className="h-5 w-5" /></span>
+            <TrendingUp className="h-5 w-5" />
           </div>
           <span className="hidden sm:inline">Fund Finder</span>
         </Link>
@@ -171,14 +170,14 @@ const Navbar = () => {
       {/* Mobile: nav pills row */}
       <div className="md:hidden flex justify-center px-4 pb-1.5 pt-1 bg-card/95">
         <nav className="flex items-center gap-0.5 bg-muted/60 rounded-full px-1 py-1">
-          {navLinks.map((link) => {
+          {navLinks.filter(l => l.to !== "/").map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
             return (
               <Link
                 key={link.to}
                 to={link.to}
-                className={`flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                className={`flex items-center gap-1 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all ${
                   isActive
                     ? "bg-primary text-primary-foreground shadow-sm"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
