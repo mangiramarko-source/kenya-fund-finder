@@ -153,8 +153,17 @@ const Navbar = () => {
         {/* Mobile: brand name centered */}
         <span className="md:hidden font-heading text-lg font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>Fund Finder</span>
 
-        {/* Mobile: hamburger on right */}
-        <div className="flex md:hidden items-center gap-1">
+        {/* Mobile: dark mode + hamburger on right */}
+        <div className="flex md:hidden items-center gap-0.5">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDark(!dark)}
+            className="rounded-full h-9 w-9"
+            aria-label="Toggle dark mode"
+          >
+            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+          </Button>
           <Button
             variant="ghost"
             size="icon"
