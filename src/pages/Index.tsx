@@ -184,7 +184,7 @@ const Index = () => {
                   <col className="w-10" />
                   <col />
                   <col className="w-44" />
-                  <col className="w-32" />
+                  <col className="w-36" />
                   <col className="w-20" />
                   <col className="w-12" />
                 </colgroup>
@@ -192,8 +192,8 @@ const Index = () => {
                   <tr className="bg-muted/70 text-xs">
                     <th className="text-left px-4 py-3 font-semibold text-muted-foreground">#</th>
                     <th className="text-left px-4 py-3"><SortHeader label="Fund" field="name" /></th>
-                    <th className="text-right px-4 py-3"><SortHeader label="Yield" field="annual_yield" className="justify-end" /></th>
-                    <th className="text-right px-4 py-3"><SortHeader label="Min. Invest" field="minimum_investment" className="justify-end" /></th>
+                    <th className="text-right px-4 py-3"><SortHeader label="Annual Rate" field="annual_yield" className="justify-end" /></th>
+                    <th className="text-right px-4 py-3"><SortHeader label="Daily Yield" field="daily_yield" className="justify-end" /></th>
                     <th className="text-right px-4 py-3"><SortHeader label="Fee" field="management_fee" className="justify-end" /></th>
                     <th className="px-4 py-3"></th>
                   </tr>
@@ -218,7 +218,7 @@ const Index = () => {
                         )}
                       </td>
                       <td className="px-4 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                        KES {fund.minimum_investment.toLocaleString()}
+                        {formatYield(fund.daily_yield, fund.yield_unit)}
                       </td>
                       <td className="px-4 py-3.5 text-right tabular-nums text-muted-foreground">{fund.management_fee}%</td>
                       <td className="px-4 py-3.5 text-right">
