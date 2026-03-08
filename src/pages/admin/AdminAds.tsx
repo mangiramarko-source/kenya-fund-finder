@@ -130,49 +130,58 @@ const AdminAds = () => {
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    if (!file) {
+      toast.error("No file selected");
+      return;
+    }
 
-    // Storage default limit is usually 6MB for free tier
-    const maxSize = 6 * 1024 * 1024;
-    if (file.size > maxSize) {
-      toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max 6MB.`);
+    toast.info(`Selected: ${file.name} (${(file.size / 1024).toFixed(0)}KB, ${file.type})`);
+
+    if (file.size > 10 * 1024 * 1024) {
+      toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max 10MB.`);
       return;
     }
 
     setUploading(true);
-    toast.info("Uploading " + file.name + "...");
 
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-      const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+      const fileName = `${Date.now()}.${ext}`;
 
-      // Read file as ArrayBuffer for more reliable upload
-      const arrayBuffer = await file.arrayBuffer();
-      const blob = new Blob([arrayBuffer], { type: file.type });
-
-      const { data, error } = await supabase.storage.from("ads").upload(path, blob, {
-        cacheControl: "3600",
-        upsert: false,
-        contentType: file.type,
-      });
-
-      if (error) {
-        console.error("Storage upload error:", JSON.stringify(error));
-        toast.error("Upload failed: " + error.message);
+      // Get current session to verify auth
+      const { data: sessionData } = await supabase.auth.getSession();
+      if (!sessionData?.session) {
+        toast.error("Not authenticated. Please log in again.");
+        setUploading(false);
         return;
       }
 
-      const { data: urlData } = supabase.storage.from("ads").getPublicUrl(path);
+      toast.info("Uploading to storage...");
+
+      const { data, error } = await supabase.storage
+        .from("ads")
+        .upload(fileName, file);
+
+      if (error) {
+        toast.error("Upload failed: " + error.message);
+        console.error("Upload error details:", error);
+        setUploading(false);
+        return;
+      }
+
+      toast.success("Upload complete! Getting URL...");
+
+      const { data: urlData } = supabase.storage.from("ads").getPublicUrl(fileName);
       const isVideo = file.type.startsWith("video/");
       setForm((f) => ({
         ...f,
         media_url: urlData.publicUrl,
         media_type: isVideo ? "video" as const : "image" as const,
       }));
-      toast.success("File uploaded successfully!");
+      toast.success("Media ready!");
     } catch (err: any) {
-      console.error("Upload exception:", err);
-      toast.error("Upload error: " + (err?.message || String(err)));
+      console.error("Upload catch:", err);
+      toast.error("Error: " + (err?.message || String(err)));
     } finally {
       setUploading(false);
     }
