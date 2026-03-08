@@ -6,13 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { fetchFunds, type FundFromDB, FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
-import { AlertTriangle, GitCompareArrows, TrendingUp, Wallet, PiggyBank, CalendarDays } from "lucide-react";
+import { AlertTriangle, GitCompareArrows, TrendingUp, Wallet, PiggyBank, CalendarDays, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
+import CurrencyConverter from "@/components/calculator/CurrencyConverter";
 
 const StatCard = ({ icon: Icon, label, value, accent }: { icon: React.ElementType; label: string; value: string; accent?: boolean }) => (
   <div className={`rounded-xl border p-4 flex items-start gap-3 ${accent ? "border-accent/40 bg-accent/5" : "border-border bg-card"}`}>
