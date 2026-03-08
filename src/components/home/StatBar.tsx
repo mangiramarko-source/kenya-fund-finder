@@ -1,3 +1,4 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,7 @@ interface StatBarProps {
   hideYields?: boolean;
 }
 
-const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading, hideYields }: StatBarProps) => {
+const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading, hideYields }, ref) => {
   const stats = hideYields
     ? [{ label: "Items", value: String(fundCount) }]
     : [
@@ -24,7 +25,7 @@ const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading, 
       ];
 
   return (
-    <div className="border-b border-border bg-card">
+    <div ref={ref} className="border-b border-border bg-card">
       <div className="container max-w-7xl">
 
         {/* ── Mobile: just Live + date ── */}
@@ -105,6 +106,8 @@ const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading, 
       </div>
     </div>
   );
-};
+});
+
+StatBar.displayName = "StatBar";
 
 export default StatBar;
