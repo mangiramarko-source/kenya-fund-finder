@@ -57,9 +57,8 @@ const Navbar = () => {
 
   useEffect(() => {
     const saved = localStorage.getItem("theme");
-    if (saved === "dark") setDark(true);
-    else if (saved === "light") setDark(false);
-    else if (window.matchMedia("(prefers-color-scheme: dark)").matches) setDark(true);
+    if (saved === "light") setDark(false);
+    // default is already dark, no action needed
   }, []);
 
   const handleSignOut = async () => {
