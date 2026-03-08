@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Eye, EyeOff, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Ad {
