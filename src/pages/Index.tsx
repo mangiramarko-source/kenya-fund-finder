@@ -242,9 +242,11 @@ const Index = () => {
             </div>
           </div>
 
-          {/* Desktop news sidebar */}
-          <aside className="hidden xl:block">
+          {/* Desktop sidebar */}
+          <aside className="hidden xl:block space-y-4">
+            <AdBanner placement="sidebar" />
             <NewsSidebar news={latestNews} loading={loading} />
+            <AdBanner placement="banner" />
           </aside>
         </div>
       </div>
