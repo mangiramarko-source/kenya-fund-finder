@@ -1,9 +1,10 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, X, TrendingUp, BarChart3, Calculator, Newspaper, GraduationCap, Home, Moon, Sun, User, LogOut, Shield, Settings } from "lucide-react";
+import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
@@ -19,7 +20,7 @@ const Navbar = () => {
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light") return false;
-    return true; // default to dark
+    return true;
   });
   const [avatarUrl, setAvatarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
@@ -58,13 +59,14 @@ const Navbar = () => {
   useEffect(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light") setDark(false);
-    // default is already dark, no action needed
   }, []);
 
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
   };
+
+  const closeMobile = () => setOpen(false);
 
   return (
     <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
@@ -170,11 +172,11 @@ const Navbar = () => {
           <Button
             variant="ghost"
             size="icon"
-            onClick={() => setOpen(!open)}
+            onClick={() => setOpen(true)}
             className="rounded-full h-9 w-9"
-            aria-label="Toggle menu"
+            aria-label="Open menu"
           >
-            {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            <Menu className="h-5 w-5" />
           </Button>
         </div>
       </div>
@@ -208,29 +210,23 @@ const Navbar = () => {
         <SearchDialog />
       </div>
 
-      {/* Mobile hamburger dropdown */}
-      {open && (
-        <nav className="md:hidden border-t border-border bg-card px-4 pb-4 pt-2 space-y-1">
-          {isAdmin && (
-            <Link
-              to="/admin"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-accent hover:bg-muted transition-colors"
-            >
-              <Shield className="h-5 w-5" /> Admin Panel
-            </Link>
-          )}
-          <button
-            onClick={() => { setDark(!dark); setOpen(false); }}
-            className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-          >
-            {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-            {dark ? "Light Mode" : "Dark Mode"}
-          </button>
-          {user ? (
-            <>
-              <div className="flex items-center gap-3 px-4 py-2">
-                <Avatar className="h-8 w-8">
+      {/* Mobile slide-in sheet from right */}
+      <Sheet open={open} onOpenChange={setOpen}>
+        <SheetContent side="right" className="w-[280px] p-0 flex flex-col">
+          <SheetHeader className="p-5 pb-3 border-b border-border">
+            <SheetTitle className="flex items-center gap-2 text-base">
+              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent text-accent-foreground">
+                <TrendingUp className="h-4 w-4" />
+              </div>
+              Menu
+            </SheetTitle>
+          </SheetHeader>
+
+          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+            {/* User info */}
+            {user && (
+              <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl bg-muted/50">
+                <Avatar className="h-9 w-9">
                   <AvatarImage src={avatarUrl} alt={displayName} />
                   <AvatarFallback className="bg-accent text-accent-foreground text-xs">
                     {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
@@ -238,34 +234,80 @@ const Navbar = () => {
                 </Avatar>
                 <div className="min-w-0">
                   <p className="text-sm font-medium truncate">{displayName || "User"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
+                  <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
                 </div>
               </div>
+            )}
+
+            {/* Nav links */}
+            {navLinks.map((link) => {
+              const Icon = link.icon;
+              const isActive = location.pathname === link.to;
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={closeMobile}
+                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${
+                    isActive
+                      ? "bg-accent/10 text-accent"
+                      : "text-foreground/70 hover:bg-muted"
+                  }`}
+                >
+                  <Icon className="h-5 w-5" />
+                  {link.label}
+                </Link>
+              );
+            })}
+
+            {isAdmin && (
               <Link
-                to="/profile"
-                onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+                to="/admin"
+                onClick={closeMobile}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
               >
-                <Settings className="h-5 w-5" /> Profile Settings
+                <Shield className="h-5 w-5" /> Admin Panel
               </Link>
-              <button
-                onClick={async () => { await signOut(); setOpen(false); navigate("/"); }}
-                className="flex items-center gap-3 w-full px-4 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
-              >
-                <LogOut className="h-5 w-5" /> Sign Out
-              </button>
-            </>
-          ) : (
-            <Link
-              to="/auth"
-              onClick={() => setOpen(false)}
-              className="flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+            )}
+
+            <div className="h-px bg-border my-2" />
+
+            <button
+              onClick={() => { setDark(!dark); }}
+              className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
             >
-              <User className="h-5 w-5" /> Sign In
-            </Link>
-          )}
-        </nav>
-      )}
+              {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+              {dark ? "Light Mode" : "Dark Mode"}
+            </button>
+
+            {user ? (
+              <>
+                <Link
+                  to="/profile"
+                  onClick={closeMobile}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+                >
+                  <Settings className="h-5 w-5" /> Profile Settings
+                </Link>
+                <button
+                  onClick={async () => { await signOut(); closeMobile(); navigate("/"); }}
+                  className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                >
+                  <LogOut className="h-5 w-5" /> Sign Out
+                </button>
+              </>
+            ) : (
+              <Link
+                to="/auth"
+                onClick={closeMobile}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
+                <User className="h-5 w-5" /> Sign In
+              </Link>
+            )}
+          </nav>
+        </SheetContent>
+      </Sheet>
     </header>
   );
 };
