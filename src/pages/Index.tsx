@@ -261,36 +261,29 @@ const Index = () => {
             <div className="md:hidden space-y-2.5">
               {processedFunds.map((fund, i) => (
                 <Link key={fund.id} to={`/compare/${fund.slug}`} className="block rounded-xl border border-border bg-card p-3.5 hover:border-accent/30 transition-all active:scale-[0.99]">
-                  <div className="flex items-start justify-between gap-3">
-                    <div className="flex items-start gap-2.5 min-w-0">
-                      <span className="text-xs font-bold text-muted-foreground tabular-nums mt-0.5 shrink-0 w-5 text-center">{i + 1}</span>
-                      <div className="min-w-0">
-                        <div className="flex items-center gap-1.5">
-                          <h3 className="font-semibold text-[15px] truncate">{fund.name}</h3>
-                          {fund.annual_yield === bestYield && bestYield > 0 && (
-                            <Badge variant="default" className="text-[9px] px-1 py-0 h-3.5 bg-accent text-accent-foreground shrink-0">TOP</Badge>
-                          )}
-                        </div>
-                        <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{fund.manager}</p>
-                      </div>
-                    </div>
-                    <div className="text-right shrink-0">
-                      <span className="text-accent font-bold text-base tabular-nums">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
-                      {snapshots[fund.id] && (
-                        <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[11px] justify-end" />
-                      )}
-                    </div>
+                  <div className="flex items-center gap-2.5 mb-2.5">
+                    <span className="text-xs font-bold text-muted-foreground tabular-nums shrink-0 w-5 text-center">{i + 1}</span>
+                    <h3 className="font-semibold text-[15px] truncate flex-1">{fund.name}</h3>
+                    {fund.annual_yield === bestYield && bestYield > 0 && (
+                      <Badge variant="default" className="text-[9px] px-1 py-0 h-3.5 bg-accent text-accent-foreground shrink-0">TOP</Badge>
+                    )}
+                    {snapshots[fund.id] && (
+                      <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[11px] shrink-0" />
+                    )}
                   </div>
-                  <div className="flex items-center gap-4 mt-2 pt-2 border-t border-border/50">
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Daily</span>
-                      <span className="text-xs font-medium tabular-nums text-foreground">{formatYield(fund.daily_yield, fund.yield_unit)}</span>
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="rounded-lg bg-muted/50 px-2.5 py-2 text-center">
+                      <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Annual</span>
+                      <span className="block text-sm font-bold tabular-nums text-accent mt-0.5">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
                     </div>
-                    <div className="flex items-center gap-1">
-                      <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Fee</span>
-                      <span className="text-xs font-medium tabular-nums text-foreground">{fund.management_fee}%</span>
+                    <div className="rounded-lg bg-muted/50 px-2.5 py-2 text-center">
+                      <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Daily</span>
+                      <span className="block text-sm font-bold tabular-nums text-foreground mt-0.5">{formatYield(fund.daily_yield, fund.yield_unit)}</span>
                     </div>
-                    <ArrowRight className="h-3.5 w-3.5 text-accent ml-auto" />
+                    <div className="rounded-lg bg-muted/50 px-2.5 py-2 text-center">
+                      <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Fee</span>
+                      <span className="block text-sm font-bold tabular-nums text-foreground mt-0.5">{fund.management_fee}%</span>
+                    </div>
                   </div>
                 </Link>
               ))}
