@@ -1,4 +1,3 @@
-import { forwardRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -30,8 +29,7 @@ import CompareModal from "./components/compare/CompareModal";
 
 const queryClient = new QueryClient();
 
-const App = forwardRef<HTMLDivElement>((_, ref) => (
-  <div ref={ref}>
+const App = () => (
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
@@ -69,9 +67,6 @@ const App = forwardRef<HTMLDivElement>((_, ref) => (
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>
-  </div>
-));
-
-App.displayName = "App";
+);
 
 export default App;
