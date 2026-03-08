@@ -477,9 +477,65 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
                 </div>
               )}
             </div>
-            <Button onClick={() => { reset(); onOpenChange(false); }} className="w-full">
-              Done
-            </Button>
+
+            <div className="flex gap-2">
+              {createdIds.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="flex-1 gap-2" disabled={deleting}>
+                      {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      Delete {createdIds.length} Created Funds
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete imported funds?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete the {createdIds.length} newly created fund(s) and their yield snapshots. Updated funds will not be affected.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={async () => {
+                          setDeleting(true);
+                          try {
+                            // Delete snapshots first (FK), then funds
+                            await supabase.from("fund_yield_snapshots").delete().in("fund_id", createdIds);
+                            await supabase.from("fund_historical_yields").delete().in("fund_id", createdIds);
+                            const { error } = await supabase.from("funds").delete().in("id", createdIds);
+                            if (error) throw error;
+
+                            await supabase.from("change_log").insert({
+                              entity_type: "fund",
+                              entity_id: "bulk-delete",
+                              action: "bulk_delete",
+                              old_values: { fund_ids: createdIds },
+                              new_values: null,
+                              changed_by: user?.id,
+                            });
+
+                            toast({ title: "Deleted", description: `${createdIds.length} imported fund(s) removed.` });
+                            setCreatedIds([]);
+                            onComplete();
+                          } catch (err: any) {
+                            toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+                          } finally {
+                            setDeleting(false);
+                          }
+                        }}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              <Button onClick={() => { reset(); onOpenChange(false); }} className="flex-1">
+                Done
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
