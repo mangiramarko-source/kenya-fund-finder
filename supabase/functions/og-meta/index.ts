@@ -41,8 +41,8 @@ Deno.serve(async (req) => {
   const url = new URL(req.url);
   const path = url.searchParams.get("path") || "/";
 
-  let title = "MMF Compare Kenya";
-  let description = "Compare Money Market Funds in Kenya.";
+  let title = "Fund Finder Kenya – Compare Investment Funds";
+  let description = "Daily-updated data on all Kenyan unit trusts. Compare yields, fees, and calculate returns.";
   let pageUrl = `${SITE_URL}${path}`;
   let image = OG_IMAGE;
 
