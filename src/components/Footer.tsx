@@ -46,7 +46,7 @@ const Footer = () => (
           All funds listed on this platform are regulated by the <strong>Capital Markets Authority (CMA) of Kenya</strong>. Fund data is sourced from publicly available fact sheets and regulatory filings. Yields shown are gross annual effective yields before the 15% withholding tax unless otherwise stated. Data may not reflect real-time values.
         </p>
         <p className="text-xs text-muted-foreground text-center mt-4">
-          © {new Date().getFullYear()} Fund Finder Kenya. All rights reserved. This platform is not affiliated with, endorsed by, or connected to any fund manager or the CMA.
+          © {new Date().getFullYear()} Kenya Fund Finder. All rights reserved. This platform is not affiliated with, endorsed by, or connected to any fund manager or the CMA.
         </p>
       </div>
     </div>
