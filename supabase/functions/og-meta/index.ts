@@ -28,7 +28,7 @@ const staticPages: Record<string, { title: string; description: string }> = {
       "Calculate your potential investment fund returns with our free calculator.",
   },
   "/news": {
-    title: "Investment Fund News & Updates – Fund Finder Kenya",
+    title: "Investment Fund News & Updates – Kenya Fund Finder",
     description:
       "Stay informed about investment funds in Kenya with the latest yield updates and market news.",
   },
