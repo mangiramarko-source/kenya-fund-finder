@@ -1,6 +1,7 @@
 import { useEffect, useState, useRef } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 interface TickerItem {
   id: string;
@@ -13,6 +14,7 @@ interface TickerItem {
 const CurrencyTicker = () => {
   const [items, setItems] = useState<TickerItem[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
@@ -63,7 +65,7 @@ const CurrencyTicker = () => {
         ref={scrollRef}
         className="flex whitespace-nowrap"
         style={{
-          animation: `ticker-scroll ${items.length * 2}s linear infinite`,
+          animation: `ticker-scroll ${items.length * (isMobile ? 1.2 : 2)}s linear infinite`,
           animationPlayState: paused ? "paused" : "running",
         }}
       >
