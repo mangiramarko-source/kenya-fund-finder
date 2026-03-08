@@ -15,7 +15,7 @@ interface StatBarProps {
   hideYields?: boolean;
 }
 
-const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading, hideYields }: StatBarProps) => {
+const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading, hideYields }, ref) => {
   const stats = hideYields
     ? [{ label: "Items", value: String(fundCount) }]
     : [
