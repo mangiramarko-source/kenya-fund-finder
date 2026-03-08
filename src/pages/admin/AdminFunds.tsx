@@ -414,14 +414,25 @@ const AdminFunds = () => {
       </div>
 
       {snapshotDate && (
-        <div className="mb-3 rounded-lg bg-muted/50 border border-border px-3 py-2 text-sm flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-accent shrink-0" />
-          <span>
-            Showing yields for <strong>{new Date(snapshotDate + "T00:00:00").toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</strong>.
-            {Object.keys(snapshotYields).length === 0
-              ? " No snapshots found for this date."
-              : ` ${Object.keys(snapshotYields).length} fund snapshots found.`}
-          </span>
+        <div className="mb-3 rounded-lg bg-muted/50 border border-border px-3 py-2 text-sm flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-accent shrink-0" />
+            <span>
+              Editing yields for <strong>{new Date(snapshotDate + "T00:00:00").toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</strong>.
+              {Object.keys(snapshotYields).length === 0
+                ? " No snapshots yet — enter values below."
+                : ` ${Object.keys(snapshotYields).length} snapshots loaded.`}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1.5 shrink-0"
+            disabled={savingSnapshot || !hasEdits()}
+            onClick={handleSaveSnapshots}
+          >
+            {savingSnapshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            Save Snapshots
+          </Button>
         </div>
       )}
 
