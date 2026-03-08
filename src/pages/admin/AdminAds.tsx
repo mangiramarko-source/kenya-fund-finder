@@ -95,6 +95,10 @@ const AdminAds = () => {
 
   const saveMutation = useMutation({
     mutationFn: async (adData: typeof form) => {
+      // Validate click_url scheme
+      if (adData.click_url && !/^https?:\/\//i.test(adData.click_url)) {
+        throw new Error("Click URL must start with http:// or https://");
+      }
       const payload = {
         title: adData.title,
         description: adData.description,
