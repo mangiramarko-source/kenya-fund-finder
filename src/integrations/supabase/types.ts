@@ -475,6 +475,81 @@ export type Database = {
         }
         Relationships: []
       }
+      news_articles_public: {
+        Row: {
+          category: string | null
+          content: string | null
+          created_at: string | null
+          date_published: string | null
+          id: string | null
+          is_featured: boolean | null
+          read_time: string | null
+          source: string | null
+          status: string | null
+          summary: string | null
+          title: string | null
+          updated_at: string | null
+          url: string | null
+        }
+        Insert: {
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          date_published?: string | null
+          id?: string | null
+          is_featured?: boolean | null
+          read_time?: string | null
+          source?: string | null
+          status?: string | null
+          summary?: string | null
+          title?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Update: {
+          category?: string | null
+          content?: string | null
+          created_at?: string | null
+          date_published?: string | null
+          id?: string | null
+          is_featured?: boolean | null
+          read_time?: string | null
+          source?: string | null
+          status?: string | null
+          summary?: string | null
+          title?: string | null
+          updated_at?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      site_pages_public: {
+        Row: {
+          content: string | null
+          id: string | null
+          meta: Json | null
+          slug: string | null
+          title: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          content?: string | null
+          id?: string | null
+          meta?: Json | null
+          slug?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          content?: string | null
+          id?: string | null
+          meta?: Json | null
+          slug?: string | null
+          title?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       check_rate_limit: {
