@@ -28,13 +28,25 @@ interface Ad {
   created_at: string;
 }
 
-const emptyAd = {
+type AdForm = {
+  title: string;
+  description: string;
+  media_type: "image" | "video";
+  media_url: string;
+  click_url: string;
+  placement: "sidebar" | "banner" | "in-feed";
+  is_active: boolean;
+  start_date: string;
+  end_date: string;
+};
+
+const emptyAd: AdForm = {
   title: "",
   description: "",
-  media_type: "image" as const,
+  media_type: "image",
   media_url: "",
   click_url: "",
-  placement: "sidebar" as const,
+  placement: "sidebar",
   is_active: true,
   start_date: "",
   end_date: "",
