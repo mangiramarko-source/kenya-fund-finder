@@ -424,7 +424,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
               {importing ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...</>
               ) : (
-                <>Import {parsedFunds.length} Funds{saveSnapshot ? ` + Save Snapshot (${snapshotDate})` : ""}</>
+                <>Import {parsedFunds.length} Funds — {snapshotDate}</>
               )}
             </Button>
           </div>
