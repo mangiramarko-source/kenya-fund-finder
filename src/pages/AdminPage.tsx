@@ -7,7 +7,7 @@ import AdminFunds from "./admin/AdminFunds";
 import AdminNews from "./admin/AdminNews";
 import AdminChangeLog from "./admin/AdminChangeLog";
 import AdminPages from "./admin/AdminPages";
-import AdminAds from "./admin/AdminAds";
+
 import AdminMarkets from "./admin/AdminMarkets";
 
 const AdminPage = () => {
