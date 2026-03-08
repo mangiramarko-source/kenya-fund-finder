@@ -54,6 +54,10 @@ const AdminPage = () => {
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Pages</span>
           </TabsTrigger>
+          <TabsTrigger value="markets" className="gap-1.5">
+            <Globe className="h-4 w-4" />
+            <span className="hidden sm:inline">Markets</span>
+          </TabsTrigger>
           <TabsTrigger value="log" className="gap-1.5">
             <ClipboardList className="h-4 w-4" />
             <span className="hidden sm:inline">Log</span>
