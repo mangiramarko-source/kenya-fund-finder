@@ -168,7 +168,8 @@ const NewsPage = () => {
                     : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
                 }`}
               >
-                {Icon && <Icon className="h-3.5 w-3.5" />}
+                {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
+                {!Icon && <span className="w-3.5" />}
                 {cat}
               </button>
             );
