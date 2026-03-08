@@ -30,7 +30,8 @@ import CompareModal from "./components/compare/CompareModal";
 
 const queryClient = new QueryClient();
 
-const App = () => (
+const App = forwardRef<HTMLDivElement>((_, ref) => (
+  <div ref={ref}>
   <ErrorBoundary>
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
