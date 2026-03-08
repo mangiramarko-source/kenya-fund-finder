@@ -160,6 +160,81 @@ export type Database = {
         }
         Relationships: []
       }
+      commodities: {
+        Row: {
+          id: string
+          is_active: boolean
+          name: string
+          previous_price: number | null
+          price: number
+          sort_order: number
+          symbol: string
+          unit: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          name: string
+          previous_price?: number | null
+          price: number
+          sort_order?: number
+          symbol: string
+          unit?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          name?: string
+          previous_price?: number | null
+          price?: number
+          sort_order?: number
+          symbol?: string
+          unit?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
+      exchange_rates: {
+        Row: {
+          currency_code: string
+          currency_name: string
+          id: string
+          is_active: boolean
+          previous_rate: number | null
+          rate: number
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          currency_code: string
+          currency_name: string
+          id?: string
+          is_active?: boolean
+          previous_rate?: number | null
+          rate: number
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          currency_code?: string
+          currency_name?: string
+          id?: string
+          is_active?: boolean
+          previous_rate?: number | null
+          rate?: number
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       fund_historical_yields: {
         Row: {
           fund_id: string
