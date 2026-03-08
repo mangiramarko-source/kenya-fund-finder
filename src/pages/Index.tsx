@@ -43,7 +43,7 @@ const Index = () => {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const { lastUpdateDate } = useLiveStatus();
+  const { lastUpdateDate, isLive } = useLiveStatus();
   const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -119,9 +119,17 @@ const Index = () => {
       <div className="border-b border-border bg-card">
         <div className="container max-w-7xl py-4">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-            <div>
-              <h1 className="text-xl md:text-2xl font-bold tracking-tight">Fund Dashboard</h1>
-              <p className="text-xs text-muted-foreground mt-0.5">
+            <div className="flex items-center gap-3">
+              {isLive && (
+                <div className="flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/20 px-2.5 py-1">
+                  <span className="relative flex h-2 w-2">
+                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                    <span className="relative inline-flex rounded-full h-2 w-2 bg-accent"></span>
+                  </span>
+                  <span className="text-[11px] font-semibold text-accent uppercase tracking-wider">Live</span>
+                </div>
+              )}
+              <p className="text-xs text-muted-foreground">
                 {lastUpdate ? `Updated ${lastUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}` : "CMA-regulated unit trusts"}
               </p>
             </div>
