@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Upload, FileText, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Upload, FileText, AlertTriangle, CheckCircle2, Loader2, Trash2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type FundType } from "@/lib/api";
 
@@ -160,9 +161,11 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
   const [pastedData, setPastedData] = useState("");
   const [parsedFunds, setParsedFunds] = useState<ParsedFund[]>([]);
   const [importing, setImporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [step, setStep] = useState<"input" | "preview" | "done">("input");
-   const [snapshotDate, setSnapshotDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [createdIds, setCreatedIds] = useState<string[]>([]);
+  const [snapshotDate, setSnapshotDate] = useState(() => new Date().toISOString().split("T")[0]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -172,6 +175,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
     setParsedFunds([]);
     setResult(null);
     setStep("input");
+    setCreatedIds([]);
     setSnapshotDate(new Date().toISOString().split("T")[0]);
   };
 
@@ -269,6 +273,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
           } else {
             importResult.created.push(fund.name);
             if (newFund) {
+              createdIds.push(newFund.id);
               await supabase.from("fund_yield_snapshots").upsert({
                 fund_id: newFund.id,
                 annual_yield: fund.annual_yield,
@@ -472,9 +477,65 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
                 </div>
               )}
             </div>
-            <Button onClick={() => { reset(); onOpenChange(false); }} className="w-full">
-              Done
-            </Button>
+
+            <div className="flex gap-2">
+              {createdIds.length > 0 && (
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="destructive" className="flex-1 gap-2" disabled={deleting}>
+                      {deleting ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
+                      Delete {createdIds.length} Created Funds
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Delete imported funds?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This will permanently delete the {createdIds.length} newly created fund(s) and their yield snapshots. Updated funds will not be affected.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction
+                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                        onClick={async () => {
+                          setDeleting(true);
+                          try {
+                            // Delete snapshots first (FK), then funds
+                            await supabase.from("fund_yield_snapshots").delete().in("fund_id", createdIds);
+                            await supabase.from("fund_historical_yields").delete().in("fund_id", createdIds);
+                            const { error } = await supabase.from("funds").delete().in("id", createdIds);
+                            if (error) throw error;
+
+                            await supabase.from("change_log").insert({
+                              entity_type: "fund",
+                              entity_id: "bulk-delete",
+                              action: "bulk_delete",
+                              old_values: { fund_ids: createdIds },
+                              new_values: null,
+                              changed_by: user?.id,
+                            });
+
+                            toast({ title: "Deleted", description: `${createdIds.length} imported fund(s) removed.` });
+                            setCreatedIds([]);
+                            onComplete();
+                          } catch (err: any) {
+                            toast({ title: "Delete failed", description: err.message, variant: "destructive" });
+                          } finally {
+                            setDeleting(false);
+                          }
+                        }}
+                      >
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              )}
+              <Button onClick={() => { reset(); onOpenChange(false); }} className="flex-1">
+                Done
+              </Button>
+            </div>
           </div>
         )}
       </DialogContent>
