@@ -75,6 +75,24 @@ const AdminAds = () => {
     },
   });
 
+  // Fetch ad event stats
+  const { data: adStats = {} } = useQuery({
+    queryKey: ["admin-ad-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ad_events")
+        .select("ad_id, event_type");
+      if (error) throw error;
+      const stats: Record<string, { impressions: number; clicks: number }> = {};
+      (data || []).forEach((e: any) => {
+        if (!stats[e.ad_id]) stats[e.ad_id] = { impressions: 0, clicks: 0 };
+        if (e.event_type === "impression") stats[e.ad_id].impressions++;
+        else if (e.event_type === "click") stats[e.ad_id].clicks++;
+      });
+      return stats;
+    },
+  });
+
   const saveMutation = useMutation({
     mutationFn: async (adData: typeof form) => {
       const payload = {
