@@ -28,7 +28,7 @@ const categoryLabels: Record<string, string> = {
   balanced: "Balanced",
   equity: "Equity",
   bond: "Bond",
-  fx_rates: "FX Rates",
+  fx_rates: "Currency",
   commodities: "Commodities",
 };
 
