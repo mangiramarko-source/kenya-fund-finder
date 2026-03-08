@@ -1,8 +1,9 @@
+import { forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { TrendingUp, AlertTriangle } from "lucide-react";
 
-const Footer = () => (
-  <footer className="border-t border-border bg-card mt-16">
+const Footer = forwardRef<HTMLElement>((_, ref) => (
+  <footer ref={ref} className="border-t border-border bg-card mt-16">
     <div className="container py-10">
       <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
         <div className="md:col-span-2">
@@ -51,6 +52,8 @@ const Footer = () => (
       </div>
     </div>
   </footer>
-);
+));
+
+Footer.displayName = "Footer";
 
 export default Footer;
