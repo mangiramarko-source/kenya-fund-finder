@@ -214,14 +214,18 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
     const importResult: ImportResult = { updated: [], created: [], errors: [] };
 
     try {
-      // Fetch existing funds for matching
-      const { data: existingFunds } = await supabase.from("funds").select("id, name, slug");
+      // Fetch existing funds for matching by name + yield_unit (currency)
+      const { data: existingFunds } = await supabase.from("funds").select("id, name, slug, yield_unit");
       const existingMap = new Map(
-        (existingFunds || []).map((f) => [f.name.toLowerCase(), f])
+        (existingFunds || []).map((f) => [
+          `${f.name.toLowerCase()}|${(f.yield_unit || "%").toLowerCase()}`,
+          f,
+        ])
       );
 
       for (const fund of parsedFunds) {
-        const existing = existingMap.get(fund.name.toLowerCase());
+        const compositeKey = `${fund.name.toLowerCase()}|${fund.yield_unit.toLowerCase()}`;
+        const existing = existingMap.get(compositeKey);
 
         const payload = {
           annual_yield: fund.annual_yield,
