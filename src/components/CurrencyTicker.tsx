@@ -17,36 +17,45 @@ const CurrencyTicker = () => {
   const isMobile = useIsMobile();
   const [paused, setPaused] = useState(false);
 
-  useEffect(() => {
-    Promise.all([
+  const fetchItems = async () => {
+    const [ratesRes, commoditiesRes] = await Promise.all([
       supabase
         .from("exchange_rates")
         .select("id, currency_code, rate, previous_rate")
         .eq("is_active", true)
-        .order("sort_order")
-        .then(({ data }) =>
-          (data || []).map((r: any) => ({
-            id: `fx-${r.id}`,
-            label: `${r.currency_code}/KES`,
-            value: r.rate,
-            previousValue: r.previous_rate,
-          }))
-        ),
+        .order("sort_order"),
       supabase
         .from("commodities")
         .select("id, name, symbol, price, previous_price, unit")
         .eq("is_active", true)
-        .order("sort_order")
-        .then(({ data }) =>
-          (data || []).map((c: any) => ({
-            id: `cmd-${c.id}`,
-            label: c.symbol || c.name,
-            value: c.price,
-            previousValue: c.previous_price,
-            unit: c.unit,
-          }))
-        ),
-    ]).then(([rates, commodities]) => setItems([...rates, ...commodities]));
+        .order("sort_order"),
+    ]);
+    const rates = (ratesRes.data || []).map((r: any) => ({
+      id: `fx-${r.id}`,
+      label: `${r.currency_code}/KES`,
+      value: r.rate,
+      previousValue: r.previous_rate,
+    }));
+    const commodities = (commoditiesRes.data || []).map((c: any) => ({
+      id: `cmd-${c.id}`,
+      label: c.symbol || c.name,
+      value: c.price,
+      previousValue: c.previous_price,
+      unit: c.unit,
+    }));
+    setItems([...rates, ...commodities]);
+  };
+
+  useEffect(() => {
+    fetchItems();
+
+    const channel = supabase
+      .channel("ticker-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "exchange_rates" }, () => fetchItems())
+      .on("postgres_changes", { event: "*", schema: "public", table: "commodities" }, () => fetchItems())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   if (items.length === 0) return null;
