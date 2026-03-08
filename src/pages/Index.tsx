@@ -188,9 +188,6 @@ const Index = () => {
                   className="pl-9 h-9 rounded-lg text-sm"
                 />
               </div>
-              <Button asChild variant="outline" size="sm" className="h-9 rounded-lg text-xs shrink-0">
-                <Link to="/compare">Full View <ArrowRight className="ml-1 h-3 w-3" /></Link>
-              </Button>
             </div>
 
             {/* Desktop table */}
