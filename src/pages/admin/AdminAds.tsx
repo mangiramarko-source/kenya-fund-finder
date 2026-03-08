@@ -169,13 +169,6 @@ const AdminAds = () => {
     } finally {
       setUploading(false);
     }
-    setForm((f) => ({
-      ...f,
-      media_url: urlData.publicUrl,
-      media_type: file.type.startsWith("video/") ? "video" : "image",
-    }));
-    setUploading(false);
-    toast.success("File uploaded");
   };
 
   const openCreate = () => {
