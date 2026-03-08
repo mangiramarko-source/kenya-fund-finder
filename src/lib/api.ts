@@ -81,7 +81,7 @@ export async function fetchFunds(): Promise<FundFromDB[]> {
 export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> {
   const { data, error } = await supabase
     .from("funds")
-    .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, fund_type, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, source_url, yield_unit, is_published, updated_at")
+    .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, fund_type, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, yield_unit, is_published, updated_at")
     .eq("slug", slug)
     .eq("is_published", true)
     .maybeSingle();
