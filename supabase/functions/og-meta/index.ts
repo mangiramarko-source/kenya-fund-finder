@@ -66,7 +66,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (fund) {
-      title = `${fund.name} – ${fund.annual_yield}% Annual Yield | MMF Compare Kenya`;
+      title = `${fund.name} – ${fund.annual_yield}% Annual Yield | Fund Finder Kenya`;
       description = `${fund.name} by ${fund.manager}. Annual yield: ${fund.annual_yield}%. Min investment: KES ${fund.minimum_investment.toLocaleString()}.`;
     }
   }

@@ -120,6 +120,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      <h1 className="sr-only">Fund Finder Kenya – Compare Investment Funds</h1>
       {/* Compact stat bar */}
       <div className="border-b border-border bg-card">
         <div className="container max-w-7xl py-4">
