@@ -61,7 +61,7 @@ const CurrencyTicker = () => {
         ref={scrollRef}
         className="flex whitespace-nowrap"
         style={{
-          animation: `ticker-scroll ${items.length * 3.5}s linear infinite`,
+          animation: `ticker-scroll ${items.length * 2}s linear infinite`,
           animationPlayState: paused ? "paused" : "running",
         }}
       >
