@@ -4,7 +4,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
+
 import { Textarea } from "@/components/ui/textarea";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Upload, FileText, AlertTriangle, CheckCircle2, Loader2 } from "lucide-react";
@@ -162,8 +162,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [step, setStep] = useState<"input" | "preview" | "done">("input");
-  const [saveSnapshot, setSaveSnapshot] = useState(false);
-  const [snapshotDate, setSnapshotDate] = useState(() => new Date().toISOString().split("T")[0]);
+   const [snapshotDate, setSnapshotDate] = useState(() => new Date().toISOString().split("T")[0]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
@@ -173,7 +172,6 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
     setParsedFunds([]);
     setResult(null);
     setStep("input");
-    setSaveSnapshot(false);
     setSnapshotDate(new Date().toISOString().split("T")[0]);
   };
 
@@ -244,14 +242,12 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
             importResult.errors.push(`${fund.name}: ${error.message}`);
           } else {
             importResult.updated.push(fund.name);
-            if (saveSnapshot) {
               await supabase.from("fund_yield_snapshots").upsert({
                 fund_id: existing.id,
                 annual_yield: fund.annual_yield,
                 daily_yield: fund.daily_yield,
                 snapshot_date: snapshotDate,
               }, { onConflict: "fund_id,snapshot_date" });
-            }
           }
         } else {
           const slug = generateSlug(fund.name, fund.currency);
@@ -272,7 +268,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
             importResult.errors.push(`${fund.name}: ${error.message}`);
           } else {
             importResult.created.push(fund.name);
-            if (saveSnapshot && newFund) {
+            if (newFund) {
               await supabase.from("fund_yield_snapshots").upsert({
                 fund_id: newFund.id,
                 annual_yield: fund.annual_yield,
@@ -336,6 +332,17 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
             <p className="text-sm text-muted-foreground">
               Paste Markdown tables, CSV data, or upload a .csv/.txt/.md file. The system will detect fund categories and update existing records or create new ones.
             </p>
+
+            <div className="rounded-lg border border-border p-3 space-y-1">
+              <Label className="text-sm font-medium">Effective Date</Label>
+              <p className="text-xs text-muted-foreground">The date these yields are effective — used for yield history.</p>
+              <Input
+                type="date"
+                value={snapshotDate}
+                onChange={(e) => setSnapshotDate(e.target.value)}
+                className="mt-1 w-48"
+              />
+            </div>
 
             <div className="flex gap-2">
               <input
@@ -409,25 +416,15 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
               ))}
             </div>
 
-            <div className="rounded-lg border border-border p-3 space-y-3">
-              <div className="flex items-center justify-between">
-                <div className="space-y-0.5">
-                  <Label className="text-sm font-medium">Save Yield Snapshot</Label>
-                  <p className="text-xs text-muted-foreground">Record these yields as a historical data point</p>
-                </div>
-                <Switch checked={saveSnapshot} onCheckedChange={setSaveSnapshot} />
-              </div>
-              {saveSnapshot && (
-                <div>
-                  <Label className="text-xs">Snapshot Date</Label>
-                  <Input
-                    type="date"
-                    value={snapshotDate}
-                    onChange={(e) => setSnapshotDate(e.target.value)}
-                    className="mt-1 w-48"
-                  />
-                </div>
-              )}
+            <div className="rounded-lg border border-border p-3 space-y-1">
+              <Label className="text-sm font-medium">Yield Date</Label>
+              <p className="text-xs text-muted-foreground">The effective date for these yields — saved as a snapshot for yield history tracking.</p>
+              <Input
+                type="date"
+                value={snapshotDate}
+                onChange={(e) => setSnapshotDate(e.target.value)}
+                className="mt-1 w-48"
+              />
             </div>
 
             <Button
@@ -438,7 +435,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
               {importing ? (
                 <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Importing...</>
               ) : (
-                <>Import {parsedFunds.length} Funds{saveSnapshot ? ` + Save Snapshot (${snapshotDate})` : ""}</>
+                <>Import {parsedFunds.length} Funds — {snapshotDate}</>
               )}
             </Button>
           </div>
