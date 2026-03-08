@@ -299,7 +299,13 @@ const Index = () => {
               )}
             </div>
 
-            {/* Quick actions */}
+            {/* Mobile disclaimer */}
+            <div className="md:hidden mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
+              <p className="text-[10px] leading-relaxed text-muted-foreground">
+                {getDisclaimer(selectedCategory as any)}
+              </p>
+            </div>
+
             <div className="flex items-center gap-2 mt-4 flex-wrap">
               <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
                 <Link to="/calculator"><Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculate Returns</Link>
