@@ -4,6 +4,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
+import { CompareProvider } from "@/hooks/useCompare";
 import Layout from "@/components/Layout";
 import Index from "./pages/Index";
 import { Navigate } from "react-router-dom";
@@ -22,6 +23,8 @@ import ChecklistPage from "./pages/ChecklistPage";
 import SitePage from "./pages/SitePage";
 import NotFound from "./pages/NotFound";
 import { ScrollToTop } from "./components/ScrollToTop";
+import CompareBar from "./components/compare/CompareBar";
+import CompareModal from "./components/compare/CompareModal";
 
 const queryClient = new QueryClient();
 
@@ -29,31 +32,35 @@ const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
       <AuthProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <ScrollToTop />
-          <Layout>
-            <Routes>
-              <Route path="/" element={<Index />} />
-              <Route path="/compare" element={<Navigate to="/" replace />} />
-              <Route path="/compare/:id" element={<FundDetailPage />} />
-              <Route path="/calculator" element={<CalculatorPage />} />
-              <Route path="/news" element={<NewsPage />} />
-              <Route path="/learn" element={<LearnPage />} />
-              <Route path="/privacy" element={<PrivacyPolicyPage />} />
-              <Route path="/terms" element={<TermsOfUsePage />} />
-              <Route path="/auth" element={<AuthPage />} />
-              <Route path="/reset-password" element={<ResetPasswordPage />} />
-              <Route path="/profile" element={<ProfilePage />} />
-              <Route path="/checklist" element={<ChecklistPage />} />
-              <Route path="/page/:slug" element={<SitePage />} />
-              <Route path="/admin/login" element={<AdminLoginPage />} />
-              <Route path="/admin" element={<AdminPage />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
-          </Layout>
-        </BrowserRouter>
+        <CompareProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <ScrollToTop />
+            <Layout>
+              <Routes>
+                <Route path="/" element={<Index />} />
+                <Route path="/compare" element={<Navigate to="/" replace />} />
+                <Route path="/compare/:id" element={<FundDetailPage />} />
+                <Route path="/calculator" element={<CalculatorPage />} />
+                <Route path="/news" element={<NewsPage />} />
+                <Route path="/learn" element={<LearnPage />} />
+                <Route path="/privacy" element={<PrivacyPolicyPage />} />
+                <Route path="/terms" element={<TermsOfUsePage />} />
+                <Route path="/auth" element={<AuthPage />} />
+                <Route path="/reset-password" element={<ResetPasswordPage />} />
+                <Route path="/profile" element={<ProfilePage />} />
+                <Route path="/checklist" element={<ChecklistPage />} />
+                <Route path="/page/:slug" element={<SitePage />} />
+                <Route path="/admin/login" element={<AdminLoginPage />} />
+                <Route path="/admin" element={<AdminPage />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </Layout>
+            <CompareBar />
+            <CompareModal />
+          </BrowserRouter>
+        </CompareProvider>
       </AuthProvider>
     </TooltipProvider>
   </QueryClientProvider>
