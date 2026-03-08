@@ -139,8 +139,16 @@ const AdminFunds = () => {
     }
     setSavingSnapshot(false);
     toast({ title: "Snapshots saved", description: `${saved} updated${errors ? `, ${errors} errors` : ""}.` });
-    // Reload snapshot data
-    setSnapshotDate((d) => { const v = d; setSnapshotDate(""); setTimeout(() => setSnapshotDate(v), 50); return d; });
+    // Reload snapshot data by re-fetching
+    const { data } = await supabase.from("fund_yield_snapshots").select("fund_id, annual_yield, daily_yield").eq("snapshot_date", snapshotDate);
+    const map: Record<string, { annual_yield: number; daily_yield: number }> = {};
+    const edits: Record<string, { annual_yield: string; daily_yield: string }> = {};
+    (data || []).forEach((s) => {
+      map[s.fund_id] = { annual_yield: Number(s.annual_yield), daily_yield: Number(s.daily_yield) };
+      edits[s.fund_id] = { annual_yield: String(Number(s.annual_yield)), daily_yield: String(Number(s.daily_yield)) };
+    });
+    setSnapshotYields(map);
+    setEditedYields(edits);
   };
 
   const filtered = funds
