@@ -49,7 +49,7 @@ const AdBanner = ({ placement, className = "" }: AdBannerProps) => {
         .from("ads_public" as any)
         .select("id, title, description, media_type, media_url, click_url, placement, start_date, end_date")
         .eq("placement", placement)
-        .limit(5);
+        .limit(5) as { data: any[] | null; error: any };
 
       if (error) throw error;
 
