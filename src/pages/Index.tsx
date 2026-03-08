@@ -159,55 +159,62 @@ const Index = () => {
 
             {/* Desktop table */}
             <div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card">
-              <table className="w-full text-sm">
+              <table className="w-full text-sm table-fixed">
+                <colgroup>
+                  <col className="w-10" />
+                  <col />
+                  <col className="w-28" />
+                  <col className="w-44" />
+                  <col className="w-32" />
+                  <col className="w-20" />
+                  <col className="w-16" />
+                </colgroup>
                 <thead>
                   <tr className="bg-muted/70 text-xs">
-                    <th className="text-left px-3 py-2.5 w-8 font-semibold text-muted-foreground">#</th>
-                    <th className="text-left px-3 py-2.5"><SortHeader label="Fund" field="name" /></th>
-                    <th className="text-left px-3 py-2.5 hidden lg:table-cell font-semibold text-muted-foreground">Manager</th>
-                    <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Type</th>
-                    <th className="text-right px-3 py-2.5"><SortHeader label="Yield" field="annual_yield" className="justify-end" /></th>
-                    <th className="text-right px-3 py-2.5 hidden lg:table-cell"><SortHeader label="Min. Invest" field="minimum_investment" className="justify-end" /></th>
-                    <th className="text-right px-3 py-2.5"><SortHeader label="Fee" field="management_fee" className="justify-end" /></th>
-                    <th className="px-3 py-2.5 w-20"></th>
+                    <th className="text-left px-4 py-3 font-semibold text-muted-foreground">#</th>
+                    <th className="text-left px-4 py-3"><SortHeader label="Fund" field="name" /></th>
+                    <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Type</th>
+                    <th className="text-right px-4 py-3"><SortHeader label="Yield" field="annual_yield" className="justify-end" /></th>
+                    <th className="text-right px-4 py-3"><SortHeader label="Min. Invest" field="minimum_investment" className="justify-end" /></th>
+                    <th className="text-right px-4 py-3"><SortHeader label="Fee" field="management_fee" className="justify-end" /></th>
+                    <th className="px-4 py-3"></th>
                   </tr>
                 </thead>
                 <tbody>
                   {processedFunds.map((fund, i) => (
                     <tr key={fund.id} className="border-t border-border hover:bg-muted/30 transition-colors">
-                      <td className="px-3 py-2.5 text-muted-foreground text-xs tabular-nums">{i + 1}</td>
-                      <td className="px-3 py-2.5">
-                        <Link to={`/compare/${fund.slug}`} className="font-medium hover:text-accent transition-colors">
+                      <td className="px-4 py-3.5 text-muted-foreground text-xs tabular-nums">{i + 1}</td>
+                      <td className="px-4 py-3.5">
+                        <Link to={`/compare/${fund.slug}`} className="font-semibold hover:text-accent transition-colors">
                           {fund.name}
                         </Link>
                         {fund.annual_yield === bestYield && bestYield > 0 && (
-                          <Badge variant="default" className="ml-1.5 text-[9px] px-1 py-0 h-3.5 bg-accent text-accent-foreground">TOP</Badge>
+                          <Badge variant="default" className="ml-2 text-[9px] px-1.5 py-0 h-4 bg-accent text-accent-foreground align-middle">TOP</Badge>
                         )}
-                        <span className="block text-xs text-muted-foreground lg:hidden">{fund.manager}</span>
+                        <span className="block text-xs text-muted-foreground mt-0.5">{fund.manager}</span>
                       </td>
-                      <td className="px-3 py-2.5 text-muted-foreground text-xs hidden lg:table-cell">{fund.manager}</td>
-                      <td className="px-3 py-2.5">
-                        <span className="text-[10px] font-medium px-1.5 py-0.5 rounded bg-muted text-muted-foreground">{categoryLabels[fund.fund_type] || fund.fund_type}</span>
+                      <td className="px-4 py-3.5">
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground">{categoryLabels[fund.fund_type] || fund.fund_type}</span>
                       </td>
-                      <td className="px-3 py-2.5 text-right whitespace-nowrap tabular-nums">
-                        <span className="font-bold text-accent">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap tabular-nums">
+                        <span className="font-bold text-accent text-base">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
                         {snapshots[fund.id] && (
-                          <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] ml-1 inline-block" />
+                          <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] ml-1.5 inline-block" />
                         )}
                       </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums whitespace-nowrap hidden lg:table-cell text-muted-foreground">
+                      <td className="px-4 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground">
                         KES {fund.minimum_investment.toLocaleString()}
                       </td>
-                      <td className="px-3 py-2.5 text-right tabular-nums text-muted-foreground">{fund.management_fee}%</td>
-                      <td className="px-3 py-2.5 text-right">
-                        <Button asChild variant="ghost" size="sm" className="text-accent h-7 text-[11px] px-2">
-                          <Link to={`/compare/${fund.slug}`}>View <ArrowRight className="ml-0.5 h-3 w-3" /></Link>
-                        </Button>
+                      <td className="px-4 py-3.5 text-right tabular-nums text-muted-foreground">{fund.management_fee}%</td>
+                      <td className="px-4 py-3.5 text-right">
+                        <Link to={`/compare/${fund.slug}`} className="text-accent hover:text-accent/80 transition-colors">
+                          <ArrowRight className="h-4 w-4 inline-block" />
+                        </Link>
                       </td>
                     </tr>
                   ))}
                   {processedFunds.length === 0 && (
-                    <tr><td colSpan={8} className="text-center py-8 text-muted-foreground">No funds match your filters.</td></tr>
+                    <tr><td colSpan={7} className="text-center py-10 text-muted-foreground">No funds match your filters.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -216,11 +223,9 @@ const Index = () => {
             {/* Mobile cards */}
             <div className="md:hidden space-y-2">
               {processedFunds.map((fund, i) => (
-                <Link key={fund.id} to={`/compare/${fund.slug}`} className="flex items-center gap-3 rounded-lg border border-border bg-card p-3 hover:border-accent/30 transition-all active:scale-[0.99]">
-                  <div className="flex items-center justify-center h-8 w-8 rounded-md bg-muted shrink-0">
-                    <span className="text-xs font-bold text-muted-foreground tabular-nums">{i + 1}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
+                <Link key={fund.id} to={`/compare/${fund.slug}`} className="grid grid-cols-[2rem_1fr_auto] items-center gap-3 rounded-lg border border-border bg-card p-3 hover:border-accent/30 transition-all active:scale-[0.99]">
+                  <span className="text-xs font-bold text-muted-foreground tabular-nums text-center">{i + 1}</span>
+                  <div className="min-w-0">
                     <div className="flex items-center gap-1.5">
                       <h3 className="font-semibold text-sm truncate">{fund.name}</h3>
                       {fund.annual_yield === bestYield && bestYield > 0 && (
@@ -228,16 +233,15 @@ const Index = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] text-muted-foreground truncate">{fund.manager}</span>
                       <span className="text-[10px] font-medium px-1 py-0 rounded bg-muted text-muted-foreground">{categoryLabels[fund.fund_type] || fund.fund_type}</span>
+                      <span className="text-[10px] text-muted-foreground">Fee {fund.management_fee}%</span>
                     </div>
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-accent font-bold text-sm tabular-nums">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
                     {snapshots[fund.id] && (
-                      <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px]" />
+                      <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] justify-end" />
                     )}
-                    <p className="text-[10px] text-muted-foreground tabular-nums">{fund.management_fee}% fee</p>
                   </div>
                 </Link>
               ))}
