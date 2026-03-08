@@ -333,6 +333,17 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
               Paste Markdown tables, CSV data, or upload a .csv/.txt/.md file. The system will detect fund categories and update existing records or create new ones.
             </p>
 
+            <div className="rounded-lg border border-border p-3 space-y-1">
+              <Label className="text-sm font-medium">Effective Date</Label>
+              <p className="text-xs text-muted-foreground">The date these yields are effective — used for yield history.</p>
+              <Input
+                type="date"
+                value={snapshotDate}
+                onChange={(e) => setSnapshotDate(e.target.value)}
+                className="mt-1 w-48"
+              />
+            </div>
+
             <div className="flex gap-2">
               <input
                 ref={fileInputRef}
