@@ -122,7 +122,6 @@ const AdminAds = () => {
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => {
-      await supabase.from("ad_events").delete().eq("ad_id", id);
       const { error } = await supabase.from("ads").delete().eq("id", id);
       if (error) throw error;
     },
