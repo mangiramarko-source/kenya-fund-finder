@@ -288,10 +288,8 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
               </Button>
             </div>
 
-            {/* Mobile news + ads section */}
+            {/* Mobile news section */}
             <div className="xl:hidden mt-6 space-y-4">
-              <AdBanner placement="sidebar" />
-              <AdBanner placement="in-feed" />
               <NewsSidebar news={latestNews} loading={loading} />
             </div>
           </div>
