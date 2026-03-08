@@ -19,7 +19,7 @@ const TermsOfUsePage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">2. Nature of the Platform</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Fund Finder Kenya is an <strong>informational platform only</strong>. It provides data about unit trust funds — including Money Market Funds, Fixed Income Funds, Balanced Funds, Equity Funds, Bond Funds, and other collective investment schemes — regulated by the Capital Markets Authority (CMA) of Kenya for comparison and educational purposes. The Platform:
+          Kenya Fund Finder is an <strong>informational platform only</strong>. It provides data about unit trust funds — including Money Market Funds, Fixed Income Funds, Balanced Funds, Equity Funds, Bond Funds, and other collective investment schemes — regulated by the Capital Markets Authority (CMA) of Kenya for comparison and educational purposes. The Platform:
         </p>
         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mt-2">
           <li>Does <strong>not</strong> provide investment advice, financial advice, or any recommendation to buy or sell any financial product.</li>
