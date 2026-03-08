@@ -47,6 +47,13 @@ export type Database = {
             referencedRelation: "ads"
             referencedColumns: ["id"]
           },
+          {
+            foreignKeyName: "ad_events_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads_public"
+            referencedColumns: ["id"]
+          },
         ]
       }
       ads: {
@@ -567,6 +574,42 @@ export type Database = {
       }
     }
     Views: {
+      ads_public: {
+        Row: {
+          click_url: string | null
+          description: string | null
+          end_date: string | null
+          id: string | null
+          media_type: string | null
+          media_url: string | null
+          placement: string | null
+          start_date: string | null
+          title: string | null
+        }
+        Insert: {
+          click_url?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string | null
+          media_type?: string | null
+          media_url?: string | null
+          placement?: string | null
+          start_date?: string | null
+          title?: string | null
+        }
+        Update: {
+          click_url?: string | null
+          description?: string | null
+          end_date?: string | null
+          id?: string | null
+          media_type?: string | null
+          media_url?: string | null
+          placement?: string | null
+          start_date?: string | null
+          title?: string | null
+        }
+        Relationships: []
+      }
       funds_public: {
         Row: {
           annual_yield: number | null
