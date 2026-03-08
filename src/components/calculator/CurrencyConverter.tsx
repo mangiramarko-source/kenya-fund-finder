@@ -4,6 +4,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
 
 interface Rate {
@@ -15,12 +16,29 @@ interface Rate {
   updated_at: string;
 }
 
+interface HistoryPoint {
+  currency_code: string;
+  rate: number;
+  snapshot_date: string;
+}
+
+const PERIOD_OPTIONS = [
+  { label: "7D", days: 7 },
+  { label: "30D", days: 30 },
+  { label: "90D", days: 90 },
+  { label: "All", days: 365 },
+] as const;
+
 const CurrencyConverter = () => {
   const [rates, setRates] = useState<Rate[]>([]);
   const [loading, setLoading] = useState(true);
   const [amount, setAmount] = useState(1000);
   const [fromCurrency, setFromCurrency] = useState("KES");
   const [toCurrency, setToCurrency] = useState("USD");
+  const [history, setHistory] = useState<HistoryPoint[]>([]);
+  const [historyLoading, setHistoryLoading] = useState(false);
+  const [chartCurrency, setChartCurrency] = useState("USD");
+  const [period, setPeriod] = useState(30);
 
   useEffect(() => {
     supabase
@@ -28,10 +46,49 @@ const CurrencyConverter = () => {
       .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
       .order("sort_order")
       .then(({ data }) => {
-        setRates((data as unknown as Rate[]) || []);
+        const parsed = (data as unknown as Rate[]) || [];
+        setRates(parsed);
+        if (parsed.length > 0 && !parsed.find((r) => r.currency_code === chartCurrency)) {
+          setChartCurrency(parsed[0].currency_code);
+        }
         setLoading(false);
       });
   }, []);
+
+  // Fetch history when chartCurrency or period changes
+  useEffect(() => {
+    if (chartCurrency === "KES" || rates.length === 0) return;
+    setHistoryLoading(true);
+    const since = new Date();
+    since.setDate(since.getDate() - period);
+
+    supabase
+      .from("exchange_rate_history_public" as any)
+      .select("currency_code, rate, snapshot_date")
+      .eq("currency_code", chartCurrency)
+      .gte("snapshot_date", since.toISOString().split("T")[0])
+      .order("snapshot_date")
+      .then(({ data }) => {
+        setHistory((data as unknown as HistoryPoint[]) || []);
+        setHistoryLoading(false);
+      });
+  }, [chartCurrency, period, rates]);
+
+  // Build chart data — append current rate as today if not already in history
+  const chartData = useMemo(() => {
+    const currentRate = rates.find((r) => r.currency_code === chartCurrency);
+    const points = history.map((h) => ({
+      date: h.snapshot_date,
+      rate: Number(h.rate),
+    }));
+
+    const today = new Date().toISOString().split("T")[0];
+    if (currentRate && (points.length === 0 || points[points.length - 1].date !== today)) {
+      points.push({ date: today, rate: Number(currentRate.rate) });
+    }
+
+    return points;
+  }, [history, rates, chartCurrency]);
 
   const currencyOptions = useMemo(() => {
     const options = [{ code: "KES", name: "Kenyan Shilling", rate: 1 }];
@@ -48,8 +105,6 @@ const CurrencyConverter = () => {
   const convertedAmount = useMemo(() => {
     const fromRate = getKesRate(fromCurrency);
     const toRate = getKesRate(toCurrency);
-    // rates are KES per 1 unit of foreign currency
-    // e.g. USD rate = 129 means 1 USD = 129 KES
     const amountInKes = fromCurrency === "KES" ? amount : amount * fromRate;
     const result = toCurrency === "KES" ? amountInKes : amountInKes / toRate;
     return result;
@@ -73,6 +128,11 @@ const CurrencyConverter = () => {
   const formatNum = (n: number) =>
     n >= 1 ? n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
            : n.toLocaleString("en-KE", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+
+  const formatDate = (d: string) => {
+    const date = new Date(d + "T00:00:00");
+    return date.toLocaleDateString("en-KE", { day: "numeric", month: "short" });
+  };
 
   if (loading) {
     return (
@@ -158,6 +218,89 @@ const CurrencyConverter = () => {
             <p className="text-xs text-muted-foreground">Updated: {lastUpdated}</p>
           )}
         </div>
+      </div>
+
+      {/* Rate History Chart */}
+      <div className="rounded-xl border border-border bg-card p-4 md:p-5">
+        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
+          <div className="flex items-center gap-3">
+            <h3 className="text-sm font-semibold">Rate History</h3>
+            <Select value={chartCurrency} onValueChange={setChartCurrency}>
+              <SelectTrigger className="h-8 w-[140px] text-xs">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {rates.map((r) => (
+                  <SelectItem key={r.currency_code} value={r.currency_code}>
+                    {r.currency_code}/{" "}KES
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="flex items-center gap-1">
+            {PERIOD_OPTIONS.map((opt) => (
+              <button
+                key={opt.days}
+                onClick={() => setPeriod(opt.days)}
+                className={`text-xs font-medium px-2.5 py-1 rounded-md transition-all ${
+                  period === opt.days
+                    ? "bg-accent text-accent-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {historyLoading ? (
+          <div className="flex items-center justify-center h-48">
+            <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+          </div>
+        ) : chartData.length < 2 ? (
+          <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
+            Not enough data yet — rates will be tracked as they change.
+          </div>
+        ) : (
+          <div className="h-56 md:h-64">
+            <ResponsiveContainer width="100%" height="100%">
+              <LineChart data={chartData}>
+                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                <XAxis
+                  dataKey="date"
+                  tick={{ fontSize: 11 }}
+                  stroke="hsl(var(--muted-foreground))"
+                  tickFormatter={formatDate}
+                />
+                <YAxis
+                  tick={{ fontSize: 11 }}
+                  stroke="hsl(var(--muted-foreground))"
+                  domain={["dataMin", "dataMax"]}
+                  tickFormatter={(v) => v.toFixed(2)}
+                />
+                <Tooltip
+                  formatter={(v: number) => [`KES ${v.toFixed(2)}`, `1 ${chartCurrency}`]}
+                  labelFormatter={formatDate}
+                  contentStyle={{
+                    borderRadius: "8px",
+                    border: "1px solid hsl(var(--border))",
+                    fontSize: "12px",
+                  }}
+                />
+                <Line
+                  type="monotone"
+                  dataKey="rate"
+                  stroke="hsl(var(--accent))"
+                  strokeWidth={2}
+                  dot={chartData.length <= 30}
+                  activeDot={{ r: 4, strokeWidth: 2 }}
+                />
+              </LineChart>
+            </ResponsiveContainer>
+          </div>
+        )}
       </div>
 
       {/* Quick reference table */}

@@ -206,6 +206,45 @@ export type Database = {
         }
         Relationships: []
       }
+      exchange_rate_history: {
+        Row: {
+          created_at: string
+          exchange_rate_id: string
+          id: string
+          rate: number
+          snapshot_date: string
+        }
+        Insert: {
+          created_at?: string
+          exchange_rate_id: string
+          id?: string
+          rate: number
+          snapshot_date?: string
+        }
+        Update: {
+          created_at?: string
+          exchange_rate_id?: string
+          id?: string
+          rate?: number
+          snapshot_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_rate_history_exchange_rate_id_fkey"
+            columns: ["exchange_rate_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_rates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exchange_rate_history_exchange_rate_id_fkey"
+            columns: ["exchange_rate_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_rates_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exchange_rates: {
         Row: {
           currency_code: string
@@ -642,6 +681,31 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      exchange_rate_history_public: {
+        Row: {
+          currency_code: string | null
+          exchange_rate_id: string | null
+          id: string | null
+          rate: number | null
+          snapshot_date: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "exchange_rate_history_exchange_rate_id_fkey"
+            columns: ["exchange_rate_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_rates"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "exchange_rate_history_exchange_rate_id_fkey"
+            columns: ["exchange_rate_id"]
+            isOneToOne: false
+            referencedRelation: "exchange_rates_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exchange_rates_public: {
         Row: {
