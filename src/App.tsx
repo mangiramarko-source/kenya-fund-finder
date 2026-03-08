@@ -69,6 +69,9 @@ const App = forwardRef<HTMLDivElement>((_, ref) => (
       </TooltipProvider>
     </QueryClientProvider>
   </ErrorBoundary>
-);
+  </div>
+));
+
+App.displayName = "App";
 
 export default App;
