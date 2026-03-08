@@ -33,10 +33,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   useEffect(() => {
     // Get initial session first
     supabase.auth.getSession().then(({ data: { session } }) => {
-      setSession(session);
-      setUser(session?.user ?? null);
-      if (session?.user) {
-        checkAdmin(session.user.id).finally(() => setLoading(false));
+      if (session) {
+        // Validate the session is still usable
+        supabase.auth.getUser().then(({ error }) => {
+          if (error) {
+            // Session is stale/broken — clear it
+            supabase.auth.signOut().then(() => {
+              setUser(null);
+              setSession(null);
+              setIsAdmin(false);
+              setLoading(false);
+            });
+          } else {
+            setSession(session);
+            setUser(session.user);
+            checkAdmin(session.user.id).finally(() => setLoading(false));
+          }
+        });
       } else {
         setLoading(false);
       }
