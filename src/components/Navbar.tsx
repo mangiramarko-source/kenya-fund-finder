@@ -302,6 +302,7 @@ const Navbar = () => {
               );
             })}
 
+            {user ? (
               <>
                 <Link
                   to="/profile"
