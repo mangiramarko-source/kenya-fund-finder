@@ -60,6 +60,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [yieldFilter, setYieldFilter] = useState<"all" | "percent" | "currency">("all");
   const { lastUpdateDate, isLive } = useLiveStatus();
+  const { user } = useAuth();
 
   const { rates, commodities, loading: marketLoading } = useMarketData();
 
