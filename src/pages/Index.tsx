@@ -43,7 +43,7 @@ const Index = () => {
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const { lastUpdateDate } = useLiveStatus();
+  const { lastUpdateDate, isLive } = useLiveStatus();
   const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
