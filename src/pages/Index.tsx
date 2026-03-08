@@ -178,7 +178,7 @@ const Index = () => {
                 bestYield={bestYield}
                 loading={loading}
                 onClearSearch={clearSearch}
-                hasSearch={!!search.trim()}
+                hasSearch={!!debouncedSearch.trim()}
               />
             </div>
 
