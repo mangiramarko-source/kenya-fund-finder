@@ -304,6 +304,19 @@ const AdminAds = () => {
               </CardHeader>
 
               <CardContent className="p-3 pt-1 space-y-2">
+                {/* Ad Stats */}
+                <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                  <span className="flex items-center gap-0.5">
+                    <BarChart3 className="h-3 w-3" />
+                    {adStats[ad.id]?.impressions || 0} views
+                  </span>
+                  <span>{adStats[ad.id]?.clicks || 0} clicks</span>
+                  <span>
+                    {adStats[ad.id]?.impressions
+                      ? ((adStats[ad.id].clicks / adStats[ad.id].impressions) * 100).toFixed(1) + "% CTR"
+                      : "—"}
+                  </span>
+                </div>
                 {ad.description && (
                   <p className="text-xs text-muted-foreground line-clamp-2">{ad.description}</p>
                 )}
