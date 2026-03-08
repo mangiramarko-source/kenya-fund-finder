@@ -103,7 +103,7 @@ Deno.serve(async (req) => {
 
   return new Response(html, {
     headers: {
-      ...corsHeaders,
+      ...cors,
       "Content-Type": "text/html; charset=utf-8",
       "Cache-Control": "public, max-age=3600",
     },
