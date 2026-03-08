@@ -414,7 +414,14 @@ const AdminFunds = () => {
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground hidden md:table-cell">{FUND_TYPE_LABELS[fund.fund_type] || "Money Market"}</td>
                   <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">{fund.manager}</td>
-                  <td className="px-3 py-2 text-right font-semibold text-accent">{Number(fund.annual_yield)}%</td>
+                  <td className="px-3 py-2 text-right font-semibold text-accent">
+                    {snapshotDate && snapshotYields[fund.id]
+                      ? <span title={`Snapshot: ${snapshotDate}`}>{Number(snapshotYields[fund.id].annual_yield).toFixed(2)}{fund.yield_unit === "%" ? "%" : ` ${fund.yield_unit}`}</span>
+                      : snapshotDate
+                        ? <span className="text-muted-foreground text-xs">—</span>
+                        : <span>{Number(fund.annual_yield)}{fund.yield_unit === "%" ? "%" : ` ${fund.yield_unit}`}</span>
+                    }
+                  </td>
                   <td className="px-3 py-2 text-right hidden md:table-cell">{Number(fund.management_fee)}%</td>
                   <td className="px-3 py-2 text-right hidden md:table-cell text-muted-foreground">{fundViews[fund.slug] || 0}</td>
                   <td className="px-3 py-2 text-center hidden md:table-cell">
