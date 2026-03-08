@@ -239,26 +239,16 @@ const Navbar = () => {
               </div>
             )}
 
-            {/* Nav links */}
-            {navLinks.map((link) => {
-              const Icon = link.icon;
-              const isActive = location.pathname === link.to;
-              return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={closeMobile}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium transition-colors ${
-                    isActive
-                      ? "bg-accent/10 text-accent"
-                      : "text-foreground/70 hover:bg-muted"
-                  }`}
-                >
-                  <Icon className="h-5 w-5" />
-                  {link.label}
-                </Link>
-              );
-            })}
+            {/* Sign In CTA — priority for non-authenticated */}
+            {!user && (
+              <Link
+                to="/auth"
+                onClick={closeMobile}
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-colors mb-2"
+              >
+                <User className="h-5 w-5" /> Sign In / Sign Up
+              </Link>
+            )}
 
             {isAdmin && (
               <Link
