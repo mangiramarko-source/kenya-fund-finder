@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
-import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone, SortAsc, Share2, Link2, Twitter, Facebook } from "lucide-react";
+import { Clock, ArrowRight, TrendingUp, Landmark, Shield, Megaphone, SortAsc, Share2, Link2, Twitter, Facebook, Sparkles, Calendar, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,6 +17,7 @@ import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { Skeleton } from "@/components/ui/skeleton";
 
 const categories = ["All", "Yield Updates", "Market News", "Regulatory Updates", "Fund Announcements"] as const;
 
@@ -28,10 +29,10 @@ const categoryIcons: Record<string, typeof TrendingUp> = {
 };
 
 const categoryColors: Record<string, string> = {
-  "Yield Updates": "bg-accent/10 text-accent hover:bg-accent/20",
-  "Market News": "bg-info/10 text-info hover:bg-info/20",
-  "Regulatory Updates": "bg-warning/10 text-warning hover:bg-warning/20",
-  "Fund Announcements": "bg-primary/10 text-primary hover:bg-primary/20",
+  "Yield Updates": "bg-accent/10 text-accent border-accent/20",
+  "Market News": "bg-info/10 text-info border-info/20",
+  "Regulatory Updates": "bg-warning/10 text-warning border-warning/20",
+  "Fund Announcements": "bg-primary/10 text-primary border-primary/20",
 };
 
 type SortOption = "latest" | "oldest" | "featured";
@@ -66,11 +67,15 @@ const NewsPage = () => {
     return list;
   }, [articles, activeCategory, sortBy]);
 
+  const featuredArticle = useMemo(() => filtered.find((a) => a.is_featured) || null, [filtered]);
+  const remainingArticles = useMemo(() => {
+    if (!featuredArticle) return filtered;
+    return filtered.filter((a) => a.id !== featuredArticle.id);
+  }, [filtered, featuredArticle]);
+
   const isAuthenticated = !!user;
 
-  const handleArticleClick = (article: NewsFromDB) => {
-    setSelectedArticle(article);
-  };
+  const handleArticleClick = (article: NewsFromDB) => setSelectedArticle(article);
 
   const getShareUrl = (article: NewsFromDB) => `https://kenyafundfinder.com/news#${article.id}`;
 
@@ -88,14 +93,12 @@ const NewsPage = () => {
 
   const shareToTwitter = (article: NewsFromDB, e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = getShareUrl(article);
-    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(url)}`, "_blank", "noopener");
+    window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(getShareUrl(article))}`, "_blank", "noopener");
   };
 
   const shareToFacebook = (article: NewsFromDB, e: React.MouseEvent) => {
     e.stopPropagation();
-    const url = getShareUrl(article);
-    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`, "_blank", "noopener");
+    window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(getShareUrl(article))}`, "_blank", "noopener");
   };
 
   const copyLink = async (article: NewsFromDB, e: React.MouseEvent) => {
@@ -104,7 +107,6 @@ const NewsPage = () => {
     toast({ title: "Link copied to clipboard" });
   };
 
-  // Article JSON-LD for the selected article
   useJsonLd(selectedArticle ? {
     "@context": "https://schema.org",
     "@type": "NewsArticle",
@@ -124,30 +126,46 @@ const NewsPage = () => {
     articleSection: selectedArticle.category,
   } : null);
 
-  if (loading) return <div className="container py-20 text-center text-muted-foreground">Loading news...</div>;
+  if (loading) return (
+    <div className="container py-10 max-w-5xl">
+      <Skeleton className="h-10 w-64 mb-2" />
+      <Skeleton className="h-5 w-96 mb-8" />
+      <Skeleton className="h-64 w-full rounded-2xl mb-6" />
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
+      </div>
+    </div>
+  );
 
   return (
-    <div className="container py-10">
-      <div className="flex items-center gap-3 mb-2">
-        <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-accent/10">
-          <Megaphone className="h-5 w-5 text-accent" />
+    <div className="container py-8 sm:py-10 max-w-5xl">
+      {/* Header */}
+      <div className="mb-8">
+        <div className="flex items-center gap-3 mb-2">
+          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-accent/10">
+            <Megaphone className="h-5 w-5 text-accent" />
+          </div>
+          <div>
+            <h1 className="text-2xl md:text-3xl font-bold">News & Updates</h1>
+            <p className="text-sm text-muted-foreground">Stay informed about investment funds in Kenya</p>
+          </div>
         </div>
-        <h1 className="text-2xl md:text-3xl font-bold">News & Updates</h1>
       </div>
-      <p className="text-muted-foreground mb-6 ml-[52px]">Stay informed about Money Market Funds in Kenya.</p>
 
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-8">
-        <div className="flex gap-2 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+      {/* Filters */}
+      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
+        <div className="flex gap-1.5 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
           {categories.map((cat) => {
             const Icon = categoryIcons[cat];
+            const isActive = activeCategory === cat;
             return (
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all whitespace-nowrap shrink-0 ${
-                  activeCategory === cat
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted text-muted-foreground hover:bg-muted/80"
+                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 border ${
+                  isActive
+                    ? "bg-primary text-primary-foreground border-primary shadow-sm"
+                    : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
                 }`}
               >
                 {Icon && <Icon className="h-3.5 w-3.5" />}
@@ -157,9 +175,9 @@ const NewsPage = () => {
           })}
         </div>
         <div className="flex items-center gap-2 sm:ml-auto shrink-0">
-          <SortAsc className="h-4 w-4 text-muted-foreground" />
+          <SortAsc className="h-3.5 w-3.5 text-muted-foreground" />
           <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-            <SelectTrigger className="w-[140px] h-9 text-sm">
+            <SelectTrigger className="w-[130px] h-8 text-xs">
               <SelectValue />
             </SelectTrigger>
             <SelectContent>
@@ -171,64 +189,114 @@ const NewsPage = () => {
         </div>
       </div>
 
-      <div className="space-y-3">
-        {filtered.map((article) => {
-          const CatIcon = categoryIcons[article.category] || Megaphone;
-          return (
-            <article
-              key={article.id}
-              className="group rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-accent/30 transition-all duration-200 cursor-pointer"
-              onClick={() => handleArticleClick(article)}
+      {filtered.length === 0 ? (
+        <div className="text-center py-20 text-muted-foreground border border-dashed border-border rounded-2xl">
+          <Megaphone className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
+          <p className="text-lg font-medium mb-1">No articles found</p>
+          <p className="text-sm">Try selecting a different category.</p>
+        </div>
+      ) : (
+        <>
+          {/* Featured hero card */}
+          {featuredArticle && (
+            <div
+              className="group rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 cursor-pointer hover:border-accent/30 hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+              onClick={() => handleArticleClick(featuredArticle)}
             >
-              <div className="flex items-start gap-4">
-                <div className="hidden sm:flex items-center justify-center h-12 w-12 rounded-xl bg-muted shrink-0 group-hover:bg-accent/10 transition-colors">
-                  <CatIcon className="h-6 w-6 text-muted-foreground group-hover:text-accent transition-colors" />
+              <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+              <div className="relative">
+                <div className="flex items-center gap-2 mb-4 flex-wrap">
+                  <Badge className="bg-accent/15 text-accent border-accent/20 gap-1">
+                    <Sparkles className="h-3 w-3" /> Featured
+                  </Badge>
+                  <Badge variant="secondary" className={categoryColors[featuredArticle.category] || ""}>
+                    {featuredArticle.category}
+                  </Badge>
+                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
+                    <Clock className="h-3 w-3" />
+                    {featuredArticle.read_time}
+                  </span>
                 </div>
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    <Badge variant="secondary" className={categoryColors[article.category] || ""}>
-                      {article.category}
-                    </Badge>
-                    <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                      <Clock className="h-3 w-3" />
-                      {article.read_time}
+                <h2 className="font-heading font-bold text-xl sm:text-2xl mb-3 group-hover:text-accent transition-colors leading-tight max-w-2xl">
+                  {featuredArticle.title}
+                </h2>
+                <p className="text-sm text-muted-foreground leading-relaxed mb-4 max-w-2xl line-clamp-3">
+                  {featuredArticle.summary}
+                </p>
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-3">
+                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                      <Calendar className="h-3 w-3" />
+                      {featuredArticle.source && `${featuredArticle.source} · `}
+                      {new Date(featuredArticle.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
                     </span>
-                    {article.is_featured && (
-                      <Badge className="bg-accent/15 text-accent border-0 text-[10px]">Featured</Badge>
-                    )}
                   </div>
-                  <h2 className="font-heading font-semibold text-base md:text-lg mb-1.5 group-hover:text-accent transition-colors">
-                    {article.title}
-                  </h2>
-                  <p className="text-sm text-muted-foreground leading-relaxed line-clamp-2">{article.summary}</p>
-                  <div className="flex items-center justify-between mt-3">
-                    <span className="text-xs text-muted-foreground">
-                      {article.source && `${article.source} · `}
-                      {new Date(article.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
+                  <div className="flex items-center gap-2">
+                    <ShareButton article={featuredArticle} copyLink={copyLink} shareToTwitter={shareToTwitter} shareToFacebook={shareToFacebook} />
+                    <span className="text-sm text-accent font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+                      Read Article <ChevronRight className="h-4 w-4" />
                     </span>
-                    <div className="flex items-center gap-2">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
-                          <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-accent">
-                            <Share2 className="h-3.5 w-3.5" />
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
-                          <DropdownMenuItem onClick={(e) => copyLink(article, e)}><Link2 className="mr-2 h-3.5 w-3.5" /> Copy Link</DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => shareToTwitter(article, e)}><Twitter className="mr-2 h-3.5 w-3.5" /> Share on X</DropdownMenuItem>
-                          <DropdownMenuItem onClick={(e) => shareToFacebook(article, e)}><Facebook className="mr-2 h-3.5 w-3.5" /> Share on Facebook</DropdownMenuItem>
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                      <span className="text-xs text-accent font-medium flex items-center gap-1">
-                        Read Full Article <ArrowRight className="h-3.5 w-3.5" />
-                      </span>
-                    </div>
                   </div>
                 </div>
               </div>
-            </article>
-          );
-        })}
+            </div>
+          )}
+
+          {/* Article grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {remainingArticles.map((article) => {
+              const CatIcon = categoryIcons[article.category] || Megaphone;
+              return (
+                <article
+                  key={article.id}
+                  className="group rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-accent/30 transition-all duration-200 cursor-pointer flex flex-col"
+                  onClick={() => handleArticleClick(article)}
+                >
+                  <div className="flex items-center gap-2 mb-3 flex-wrap">
+                    <div className={`flex items-center justify-center h-6 w-6 rounded-md ${categoryColors[article.category]?.split(" ")[0] || "bg-muted"}`}>
+                      <CatIcon className={`h-3 w-3 ${categoryColors[article.category]?.split(" ")[1] || "text-muted-foreground"}`} />
+                    </div>
+                    <Badge variant="outline" className={`text-[10px] ${categoryColors[article.category] || ""}`}>
+                      {article.category}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-1 ml-auto">
+                      <Clock className="h-2.5 w-2.5" />
+                      {article.read_time}
+                    </span>
+                  </div>
+
+                  <h2 className="font-heading font-semibold text-sm sm:text-base mb-2 group-hover:text-accent transition-colors leading-snug line-clamp-2">
+                    {article.title}
+                  </h2>
+
+                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-4 flex-1">
+                    {article.summary}
+                  </p>
+
+                  <div className="flex items-center justify-between pt-3 border-t border-border/50">
+                    <span className="text-[11px] text-muted-foreground">
+                      {article.source && `${article.source} · `}
+                      {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
+                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <ShareButton article={article} copyLink={copyLink} shareToTwitter={shareToTwitter} shareToFacebook={shareToFacebook} />
+                      <span className="text-[11px] text-accent font-medium flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                        Read <ArrowRight className="h-3 w-3" />
+                      </span>
+                    </div>
+                  </div>
+                </article>
+              );
+            })}
+          </div>
+        </>
+      )}
+
+      {/* Article stats */}
+      <div className="flex items-center justify-center gap-4 mt-8 text-xs text-muted-foreground">
+        <span>{filtered.length} article{filtered.length !== 1 ? "s" : ""}</span>
+        <span className="w-px h-3 bg-border" />
+        <span>{activeCategory === "All" ? "All categories" : activeCategory}</span>
       </div>
 
       {/* Full article dialog */}
@@ -286,7 +354,6 @@ const NewsPage = () => {
                 </>
               ) : (
                 <div className="mt-2">
-                  {/* Show first paragraph as teaser */}
                   {selectedArticle?.content && (
                     <div className="relative mb-6">
                       <p className="text-sm text-muted-foreground leading-relaxed">
@@ -307,11 +374,32 @@ const NewsPage = () => {
         </DialogContent>
       </Dialog>
 
-      <p className="text-xs text-muted-foreground text-center mt-10">
+      <p className="text-[10px] text-muted-foreground text-center mt-6">
         All information is sourced from publicly available data. Fund yields and regulatory details are based on CMA-regulated disclosures.
       </p>
     </div>
   );
 };
+
+/* Share button sub-component */
+const ShareButton = ({ article, copyLink, shareToTwitter, shareToFacebook }: {
+  article: NewsFromDB;
+  copyLink: (a: NewsFromDB, e: React.MouseEvent) => void;
+  shareToTwitter: (a: NewsFromDB, e: React.MouseEvent) => void;
+  shareToFacebook: (a: NewsFromDB, e: React.MouseEvent) => void;
+}) => (
+  <DropdownMenu>
+    <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+      <Button variant="ghost" size="icon" className="h-7 w-7 text-muted-foreground hover:text-accent">
+        <Share2 className="h-3.5 w-3.5" />
+      </Button>
+    </DropdownMenuTrigger>
+    <DropdownMenuContent align="end" onClick={(e) => e.stopPropagation()}>
+      <DropdownMenuItem onClick={(e) => copyLink(article, e)}><Link2 className="mr-2 h-3.5 w-3.5" /> Copy Link</DropdownMenuItem>
+      <DropdownMenuItem onClick={(e) => shareToTwitter(article, e)}><Twitter className="mr-2 h-3.5 w-3.5" /> Share on X</DropdownMenuItem>
+      <DropdownMenuItem onClick={(e) => shareToFacebook(article, e)}><Facebook className="mr-2 h-3.5 w-3.5" /> Share on Facebook</DropdownMenuItem>
+    </DropdownMenuContent>
+  </DropdownMenu>
+);
 
 export default NewsPage;
