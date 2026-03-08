@@ -107,7 +107,7 @@ const Index = () => {
 
   const lastUpdate = lastUpdateDate ? new Date(lastUpdateDate) : funds[0] ? new Date(funds[0].updated_at) : null;
   const latestNews = news.slice(0, 4);
-  const allTabs = [{ key: "all", label: "All Funds" }, ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c }))];
+  const allTabs = categories.map((c) => ({ key: c, label: categoryLabels[c] || c }));
 
   return (
     <div className="min-h-screen">
