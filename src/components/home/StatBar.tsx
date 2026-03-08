@@ -106,6 +106,8 @@ const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, 
       </div>
     </div>
   );
-};
+});
+
+StatBar.displayName = "StatBar";
 
 export default StatBar;
