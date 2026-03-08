@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { Calculator, Search } from "lucide-react";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
@@ -8,6 +8,7 @@ import { fetchFunds, fetchLatestSnapshots, fetchPublishedNews, type FundFromDB, 
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { formatYield } from "@/components/YieldChange";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import StatBar from "@/components/home/StatBar";
 import CategoryTabs from "@/components/home/CategoryTabs";
 import FundTable from "@/components/home/FundTable";
@@ -46,6 +47,7 @@ const Index = () => {
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("money_market");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 250);
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const { lastUpdateDate, isLive } = useLiveStatus();
@@ -80,8 +82,8 @@ const Index = () => {
 
   const processedFunds = useMemo(() => {
     let result = funds.filter((f) => f.fund_type === selectedCategory);
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       result = result.filter((f) => f.name.toLowerCase().includes(q) || f.manager.toLowerCase().includes(q));
     }
     result = [...result].sort((a, b) => {
@@ -90,7 +92,7 @@ const Index = () => {
       return mul * ((a[sortKey] as number) - (b[sortKey] as number));
     });
     return result;
-  }, [funds, selectedCategory, search, sortKey, sortDir]);
+  }, [funds, selectedCategory, debouncedSearch, sortKey, sortDir]);
 
   const bestYield = useMemo(() => {
     const filtered = funds.filter((f) => f.fund_type === selectedCategory);
@@ -164,7 +166,7 @@ const Index = () => {
                 onToggleSort={toggleSort}
                 loading={loading}
                 onClearSearch={clearSearch}
-                hasSearch={!!search.trim()}
+                hasSearch={!!debouncedSearch.trim()}
               />
             </div>
 
@@ -176,7 +178,7 @@ const Index = () => {
                 bestYield={bestYield}
                 loading={loading}
                 onClearSearch={clearSearch}
-                hasSearch={!!search.trim()}
+                hasSearch={!!debouncedSearch.trim()}
               />
             </div>
 
