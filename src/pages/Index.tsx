@@ -94,6 +94,9 @@ const Index = () => {
     return result;
   }, [funds, selectedCategory, debouncedSearch, sortKey, sortDir]);
 
+  const percentFunds = useMemo(() => processedFunds.filter((f) => f.yield_unit === "%"), [processedFunds]);
+  const currencyFunds = useMemo(() => processedFunds.filter((f) => f.yield_unit !== "%"), [processedFunds]);
+
   const bestYield = useMemo(() => {
     const filtered = funds.filter((f) => f.fund_type === selectedCategory);
     if (filtered.length === 0) return 0;
@@ -155,10 +158,10 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Desktop table */}
+            {/* Desktop table — Percentage funds */}
             <div className="hidden md:block">
               <FundTable
-                funds={processedFunds}
+                funds={percentFunds}
                 snapshots={snapshots}
                 bestYield={bestYield}
                 sortKey={sortKey}
@@ -170,10 +173,10 @@ const Index = () => {
               />
             </div>
 
-            {/* Mobile cards */}
+            {/* Mobile cards — Percentage funds */}
             <div className="md:hidden">
               <FundMobileCards
-                funds={processedFunds}
+                funds={percentFunds}
                 snapshots={snapshots}
                 bestYield={bestYield}
                 loading={loading}
@@ -181,6 +184,42 @@ const Index = () => {
                 hasSearch={!!debouncedSearch.trim()}
               />
             </div>
+
+            {/* Currency-unit funds section */}
+            {currencyFunds.length > 0 && (
+              <>
+                <div className="mt-6 mb-3 flex items-center gap-2">
+                  <div className="h-px flex-1 bg-border" />
+                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2">Currency-Denominated Yields</span>
+                  <div className="h-px flex-1 bg-border" />
+                </div>
+
+                <div className="hidden md:block">
+                  <FundTable
+                    funds={currencyFunds}
+                    snapshots={snapshots}
+                    bestYield={bestYield}
+                    sortKey={sortKey}
+                    sortDir={sortDir}
+                    onToggleSort={toggleSort}
+                    loading={loading}
+                    onClearSearch={clearSearch}
+                    hasSearch={!!debouncedSearch.trim()}
+                  />
+                </div>
+
+                <div className="md:hidden">
+                  <FundMobileCards
+                    funds={currencyFunds}
+                    snapshots={snapshots}
+                    bestYield={bestYield}
+                    loading={loading}
+                    onClearSearch={clearSearch}
+                    hasSearch={!!debouncedSearch.trim()}
+                  />
+                </div>
+              </>
+            )}
 
             {/* Mobile disclaimer */}
             <div className="md:hidden mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
