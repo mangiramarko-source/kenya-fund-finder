@@ -125,7 +125,7 @@ const Index = () => {
                 {lastUpdate ? `Updated ${lastUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}` : "CMA-regulated unit trusts"}
               </p>
             </div>
-            <div className="flex items-center gap-3 flex-wrap">
+            <div className="hidden sm:flex items-center gap-3 flex-wrap">
               {[
                 { label: "Funds", value: String(processedFunds.length) },
                 { label: "Top Yield", value: bestYield ? formatYield(bestYield, "%") : "—", accent: true },
