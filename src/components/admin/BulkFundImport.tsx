@@ -242,14 +242,12 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
             importResult.errors.push(`${fund.name}: ${error.message}`);
           } else {
             importResult.updated.push(fund.name);
-            if (saveSnapshot) {
               await supabase.from("fund_yield_snapshots").upsert({
                 fund_id: existing.id,
                 annual_yield: fund.annual_yield,
                 daily_yield: fund.daily_yield,
                 snapshot_date: snapshotDate,
               }, { onConflict: "fund_id,snapshot_date" });
-            }
           }
         } else {
           const slug = generateSlug(fund.name, fund.currency);
