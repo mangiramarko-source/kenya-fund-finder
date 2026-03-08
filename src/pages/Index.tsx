@@ -82,8 +82,8 @@ const Index = () => {
 
   const processedFunds = useMemo(() => {
     let result = funds.filter((f) => f.fund_type === selectedCategory);
-    if (search.trim()) {
-      const q = search.toLowerCase();
+    if (debouncedSearch.trim()) {
+      const q = debouncedSearch.toLowerCase();
       result = result.filter((f) => f.name.toLowerCase().includes(q) || f.manager.toLowerCase().includes(q));
     }
     result = [...result].sort((a, b) => {
