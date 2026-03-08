@@ -71,7 +71,7 @@ const FundDetailPage = () => {
     return (
       <div className="container py-20 text-center">
         <h1 className="text-2xl font-bold mb-4">Fund Not Found</h1>
-        <Button asChild variant="outline"><Link to="/compare"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Compare</Link></Button>
+        <Button asChild variant="outline"><Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Funds</Link></Button>
       </div>
     );
   }
