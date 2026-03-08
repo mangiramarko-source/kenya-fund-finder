@@ -477,6 +477,9 @@ const CalculatorPage = () => {
           </div>
         </div>
       </div>
+
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
