@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings } from "lucide-react";
+import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -279,6 +279,28 @@ const Navbar = () => {
               {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
               {dark ? "Light Mode" : "Dark Mode"}
             </button>
+
+            <div className="h-px bg-border my-2" />
+            <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Info</p>
+            {[
+              { to: "/page/about", label: "About", icon: Info },
+              { to: "/page/contact", label: "Contact", icon: Mail },
+              { to: "/page/legal", label: "Legal", icon: Scale },
+              { to: "/privacy", label: "Privacy Policy", icon: FileText },
+              { to: "/terms", label: "Terms of Use", icon: FileText },
+            ].map((link) => {
+              const Icon = link.icon;
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={closeMobile}
+                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-foreground/60 hover:bg-muted transition-colors"
+                >
+                  <Icon className="h-4 w-4" /> {link.label}
+                </Link>
+              );
+            })}
 
             {user ? (
               <>
