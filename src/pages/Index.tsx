@@ -188,9 +188,6 @@ const Index = () => {
                   className="pl-9 h-9 rounded-lg text-sm"
                 />
               </div>
-              <Button asChild variant="outline" size="sm" className="h-9 rounded-lg text-xs shrink-0">
-                <Link to="/compare">Full View <ArrowRight className="ml-1 h-3 w-3" /></Link>
-              </Button>
             </div>
 
             {/* Desktop table */}
@@ -305,9 +302,6 @@ const Index = () => {
             <div className="flex items-center gap-2 mt-4 flex-wrap">
               <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
                 <Link to="/calculator"><Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculate Returns</Link>
-              </Button>
-              <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
-                <Link to="/compare"><TrendingUp className="mr-1.5 h-3.5 w-3.5" /> Compare All</Link>
               </Button>
               <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
                 <Link to="/learn">Learn About Funds</Link>

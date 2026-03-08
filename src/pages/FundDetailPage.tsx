@@ -71,7 +71,7 @@ const FundDetailPage = () => {
     return (
       <div className="container py-20 text-center">
         <h1 className="text-2xl font-bold mb-4">Fund Not Found</h1>
-        <Button asChild variant="outline"><Link to="/compare"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Compare</Link></Button>
+        <Button asChild variant="outline"><Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Back to Funds</Link></Button>
       </div>
     );
   }
@@ -82,8 +82,8 @@ const FundDetailPage = () => {
 
   return (
     <div className="container py-10 max-w-3xl">
-      <Link to="/compare" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
-        <ArrowLeft className="mr-1 h-4 w-4" /> Back to Compare
+      <Link to="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+        <ArrowLeft className="mr-1 h-4 w-4" /> Back to Funds
       </Link>
 
       <h1 className="text-2xl md:text-3xl font-bold mb-1">{fund.name}</h1>
