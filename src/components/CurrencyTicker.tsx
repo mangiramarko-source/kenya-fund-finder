@@ -53,7 +53,7 @@ const CurrencyTicker = () => {
 
   return (
     <div
-      className="w-full bg-primary/95 backdrop-blur-sm overflow-hidden border-b border-border/30"
+      className="w-full bg-[hsl(220,60%,12%)] overflow-hidden border-b border-border/30"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -74,7 +74,6 @@ const CurrencyTicker = () => {
           const isUp = diff != null && diff > 0;
           const isDown = diff != null && diff < 0;
 
-          // Show separator between FX and commodity sections
           const prevItem = i > 0 ? doubled[i - 1] : null;
           const showSep = prevItem && prevItem.id.startsWith("fx-") !== item.id.startsWith("fx-");
 
@@ -84,18 +83,18 @@ const CurrencyTicker = () => {
               className="inline-flex items-center gap-2 px-5 py-1.5 text-xs"
             >
               {showSep && (
-                <span className="text-primary-foreground/25 mr-1 text-sm select-none">│</span>
+                <span className="text-white/20 mr-1 text-sm select-none">│</span>
               )}
-              <span className="font-semibold text-primary-foreground/90">
+              <span className="font-semibold text-white/70">
                 {item.label}
               </span>
-              <span className="font-bold text-primary-foreground tabular-nums">
+              <span className="font-bold text-white tabular-nums">
                 {item.value.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
                 {item.unit && (
-                  <span className="text-primary-foreground/50 font-normal ml-0.5 text-[10px]">
+                  <span className="text-white/40 font-normal ml-0.5 text-[10px]">
                     {item.unit}
                   </span>
                 )}
@@ -104,10 +103,10 @@ const CurrencyTicker = () => {
                 <span
                   className={`inline-flex items-center gap-0.5 font-semibold tabular-nums ${
                     isUp
-                      ? "text-accent"
+                      ? "text-[hsl(152,70%,55%)]"
                       : isDown
-                      ? "text-destructive"
-                      : "text-primary-foreground/50"
+                      ? "text-[hsl(0,85%,65%)]"
+                      : "text-white/40"
                   }`}
                 >
                   {isUp ? (
