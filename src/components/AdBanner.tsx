@@ -27,11 +27,14 @@ const getSessionId = () => {
 
 const trackEvent = async (adId: string, type: "impression" | "click") => {
   try {
-    await supabase.from("ad_events").insert({
-      ad_id: adId,
-      event_type: type,
-      session_id: getSessionId(),
-      page_path: window.location.pathname,
+    await supabase.functions.invoke("content-feed", {
+      body: {
+        action: "track",
+        ad_id: adId,
+        event_type: type,
+        session_id: getSessionId(),
+        page_path: window.location.pathname,
+      },
     });
   } catch {
     // silent
@@ -44,21 +47,14 @@ const AdBanner = ({ placement, className = "" }: AdBannerProps) => {
   const { data: ad } = useQuery({
     queryKey: ["public-ads", placement],
     queryFn: async () => {
-      const { data, error } = await supabase
-        .from("ads_public" as any)
-        .select("id, title, description, media_type, media_url, click_url, start_date, end_date")
-        .eq("placement", placement)
-        .limit(5) as { data: any[] | null; error: any };
-      if (error) throw error;
-
-      const today = new Date().toISOString().split("T")[0];
-      const active = (data || []).filter((a: any) => {
-        if (a.start_date && a.start_date > today) return false;
-        if (a.end_date && a.end_date < today) return false;
-        return true;
+      const { data, error } = await supabase.functions.invoke("content-feed", {
+        body: { action: "fetch", placement },
       });
-
-      return (active[0] as Ad) || null;
+      if (error) throw error;
+      const parsed = typeof data === "string" ? JSON.parse(data) : data;
+      if (parsed.error) throw new Error(parsed.error);
+      const ads = parsed.data as Ad[];
+      return ads?.[0] || null;
     },
     staleTime: 5 * 60 * 1000,
   });
