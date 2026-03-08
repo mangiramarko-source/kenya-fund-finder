@@ -190,7 +190,7 @@ const FundDetailPage = () => {
         </div>
       </div>
 
-      {/* Hero metrics */}
+      {/* Hero metrics — always visible */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
         <MetricCard
           label="Annual Rate"
@@ -205,81 +205,66 @@ const FundDetailPage = () => {
           change={prevSnapshot ? <YieldChange current={fund.daily_yield} previous={prevSnapshot.daily_yield} unit={fund.yield_unit} className="text-xs" /> : undefined}
           accent
         />
-        {isAuthenticated ? (
-          <>
-            <MetricCard
-              label="Management Fee"
-              value={`${fund.management_fee}%`}
-              subtext={peerStats ? `Avg: ${peerStats.avgFee.toFixed(2)}%` : undefined}
-              icon={<Wallet className="h-4 w-4" />}
-            />
-            <MetricCard
-              label="Min. Investment"
-              value={`KES ${fund.minimum_investment.toLocaleString()}`}
-              icon={<TrendingUp className="h-4 w-4" />}
-            />
-          </>
-        ) : (
-          <>
-            <div className="rounded-xl border border-border bg-card p-4 relative overflow-hidden">
-              <p className="text-[11px] text-muted-foreground mb-1.5 font-medium uppercase tracking-wider">Management Fee</p>
-              <p className="font-bold text-lg text-muted-foreground/20 blur-sm select-none">10.0%</p>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-4 relative overflow-hidden">
-              <p className="text-[11px] text-muted-foreground mb-1.5 font-medium uppercase tracking-wider">Min. Investment</p>
-              <p className="font-bold text-lg text-muted-foreground/20 blur-sm select-none">KES 5,000</p>
-            </div>
-          </>
-        )}
+        <MetricCard
+          label="Management Fee"
+          value={`${fund.management_fee}%`}
+          subtext={peerStats ? `Avg: ${peerStats.avgFee.toFixed(2)}%` : undefined}
+          icon={<Wallet className="h-4 w-4" />}
+        />
+        <MetricCard
+          label="Min. Investment"
+          value={`KES ${fund.minimum_investment.toLocaleString()}`}
+          icon={<TrendingUp className="h-4 w-4" />}
+        />
       </div>
-
-      {/* Performance context bar */}
-      {isAuthenticated && peerStats && (
-        <div className="rounded-xl border border-border bg-muted/30 p-4 mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <BarChart3 className="h-4 w-4 text-accent" />
-            <h3 className="text-sm font-semibold">Performance Context</h3>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
-              </TooltipTrigger>
-              <TooltipContent>
-                <p className="text-xs max-w-[200px]">Compared against all {peerStats.total} {FUND_TYPE_LABELS[fund.fund_type]} funds</p>
-              </TooltipContent>
-            </Tooltip>
-          </div>
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
-            <ContextStat label="Category Rank" value={`#${peerStats.rank}`} sub={`of ${peerStats.total} funds`} />
-            <ContextStat label="Percentile" value={`${peerStats.percentile}th`} sub="among peers" />
-            <ContextStat label="Category Avg" value={`${peerStats.avgYield.toFixed(2)}%`} sub={fund.annual_yield > peerStats.avgYield ? "You're above avg" : "Below average"} highlight={fund.annual_yield > peerStats.avgYield} />
-            <ContextStat label="Category Best" value={`${peerStats.maxYield}%`} sub={fund.annual_yield === peerStats.maxYield ? "This is the top fund!" : `Gap: ${(peerStats.maxYield - fund.annual_yield).toFixed(2)}%`} highlight={fund.annual_yield === peerStats.maxYield} />
-          </div>
-
-          {/* Yield position bar */}
-          <div className="mt-4">
-            <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
-              <span>{peerStats.minYield}%</span>
-              <span>{peerStats.maxYield}%</span>
-            </div>
-            <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-              <div className="absolute inset-y-0 left-0 bg-accent/20 rounded-full" style={{ width: "100%" }} />
-              <div
-                className="absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full bg-accent border-2 border-card shadow-md"
-                style={{
-                  left: `${peerStats.maxYield === peerStats.minYield ? 50 : ((fund.annual_yield - peerStats.minYield) / (peerStats.maxYield - peerStats.minYield)) * 100}%`,
-                  transform: "translate(-50%, -50%)",
-                }}
-              />
-            </div>
-            <p className="text-[10px] text-center text-muted-foreground mt-1">
-              This fund's position among {FUND_TYPE_LABELS[fund.fund_type]} funds
-            </p>
-          </div>
-        </div>
-      )}
 
       {isAuthenticated ? (
         <>
+          {/* Performance context bar */}
+          {peerStats && (
+            <div className="rounded-xl border border-border bg-muted/30 p-4 mb-6">
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 className="h-4 w-4 text-accent" />
+                <h3 className="text-sm font-semibold">Performance Context</h3>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p className="text-xs max-w-[200px]">Compared against all {peerStats.total} {FUND_TYPE_LABELS[fund.fund_type]} funds</p>
+                  </TooltipContent>
+                </Tooltip>
+              </div>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+                <ContextStat label="Category Rank" value={`#${peerStats.rank}`} sub={`of ${peerStats.total} funds`} />
+                <ContextStat label="Percentile" value={`${peerStats.percentile}th`} sub="among peers" />
+                <ContextStat label="Category Avg" value={`${peerStats.avgYield.toFixed(2)}%`} sub={fund.annual_yield > peerStats.avgYield ? "You're above avg" : "Below average"} highlight={fund.annual_yield > peerStats.avgYield} />
+                <ContextStat label="Category Best" value={`${peerStats.maxYield}%`} sub={fund.annual_yield === peerStats.maxYield ? "This is the top fund!" : `Gap: ${(peerStats.maxYield - fund.annual_yield).toFixed(2)}%`} highlight={fund.annual_yield === peerStats.maxYield} />
+              </div>
+
+              {/* Yield position bar */}
+              <div className="mt-4">
+                <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                  <span>{peerStats.minYield}%</span>
+                  <span>{peerStats.maxYield}%</span>
+                </div>
+                <div className="relative h-2 bg-muted rounded-full overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 bg-accent/20 rounded-full" style={{ width: "100%" }} />
+                  <div
+                    className="absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full bg-accent border-2 border-card shadow-md"
+                    style={{
+                      left: `${peerStats.maxYield === peerStats.minYield ? 50 : ((fund.annual_yield - peerStats.minYield) / (peerStats.maxYield - peerStats.minYield)) * 100}%`,
+                      transform: "translate(-50%, -50%)",
+                    }}
+                  />
+                </div>
+                <p className="text-[10px] text-center text-muted-foreground mt-1">
+                  This fund's position among {FUND_TYPE_LABELS[fund.fund_type]} funds
+                </p>
+              </div>
+            </div>
+          )}
+
           {/* Additional metrics */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
             <div className="rounded-xl border border-border bg-card p-4 flex items-start gap-3">
@@ -304,7 +289,6 @@ const FundDetailPage = () => {
               </div>
             </div>
           </div>
-
 
           {/* Rate History Chart */}
           {chartData && (
@@ -425,7 +409,7 @@ const FundDetailPage = () => {
         <AuthGate
           source="fund_detail"
           title="Sign up to see full fund details"
-          description="Get access to all yield metrics, fund descriptions, historical performance charts, and investment tools — completely free."
+          description="Get access to performance context, historical charts, similar funds, and investment tools — completely free."
         />
       )}
 
