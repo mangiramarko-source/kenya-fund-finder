@@ -175,6 +175,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
     setParsedFunds([]);
     setResult(null);
     setStep("input");
+    setCreatedIds([]);
     setSnapshotDate(new Date().toISOString().split("T")[0]);
   };
 
