@@ -271,23 +271,23 @@ const Index = () => {
                       <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[11px] shrink-0" />
                     )}
                   </div>
-                  <div className="grid grid-cols-4 gap-2">
-                    <div className="rounded-lg bg-muted/50 px-2 py-2 text-center">
-                      <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Annual</span>
-                      <span className="block text-sm font-bold tabular-nums text-accent mt-0.5">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
-                    </div>
-                    <div className="rounded-lg bg-muted/50 px-2 py-2 text-center">
+                  <div className="grid grid-cols-3 gap-2">
+                    <div className="rounded-lg bg-muted/50 px-2.5 py-2 text-center">
                       <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Daily</span>
                       <span className="block text-sm font-bold tabular-nums text-foreground mt-0.5">{formatYield(fund.daily_yield, fund.yield_unit)}</span>
                     </div>
-                    <div className="rounded-lg bg-muted/50 px-2 py-2 text-center">
+                    <div className="rounded-lg bg-muted/50 px-2.5 py-2 text-center">
+                      <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Annual</span>
+                      <span className="block text-sm font-bold tabular-nums text-accent mt-0.5">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
+                    </div>
+                    <div className="rounded-lg bg-muted/50 px-2.5 py-2 text-center">
                       <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Fee</span>
                       <span className="block text-sm font-bold tabular-nums text-foreground mt-0.5">{fund.management_fee}%</span>
                     </div>
-                    <div className="rounded-lg bg-muted/50 px-2 py-2 text-center">
-                      <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Withdraw</span>
-                      <span className="block text-[11px] font-medium text-foreground mt-0.5 leading-tight">{fund.withdrawal_time}</span>
-                    </div>
+                  </div>
+                  <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-border/40 px-0.5">
+                    <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Withdrawal</span>
+                    <span className="text-[11px] font-medium text-foreground">{fund.withdrawal_time}</span>
                   </div>
                 </Link>
               ))}
