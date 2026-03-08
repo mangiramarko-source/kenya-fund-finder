@@ -399,6 +399,14 @@ const FundDetailPage = () => {
             </div>
           )}
 
+          {/* About */}
+          {fund.description && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2">About This Fund</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">{fund.description}</p>
+            </div>
+          )}
+
           {/* Actions */}
           <div className="flex flex-wrap gap-3">
             <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
