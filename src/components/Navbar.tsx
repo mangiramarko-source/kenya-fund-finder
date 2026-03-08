@@ -72,11 +72,11 @@ const Navbar = () => {
     <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
       <div className="container flex h-16 items-center justify-between relative">
         {/* Logo */}
-        <Link to="/" className="flex items-center gap-2 font-heading text-lg font-bold text-primary shrink-0">
+        <Link to="/" className="hidden md:flex items-center gap-2 font-heading text-lg font-bold text-primary shrink-0">
           <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
             <TrendingUp className="h-5 w-5" />
           </div>
-          <span className="hidden sm:inline">Kenya Fund Finder</span>
+          <span>Kenya Fund Finder</span>
         </Link>
 
         {/* Desktop nav */}
@@ -168,8 +168,10 @@ const Navbar = () => {
           </Button>
         </div>
 
-        {/* Mobile: brand name centered */}
-        <span className="md:hidden absolute left-1/2 -translate-x-1/2 font-heading text-lg font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>Kenya Fund Finder</span>
+        {/* Mobile: logo centered */}
+        <Link to="/" className="md:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
+          <TrendingUp className="h-5 w-5" />
+        </Link>
 
         {/* Mobile: hamburger on right */}
         <div className="flex md:hidden items-center">
