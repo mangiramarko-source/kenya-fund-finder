@@ -432,15 +432,32 @@ const AdminFunds = () => {
                 : ` ${Object.keys(snapshotYields).length} snapshots loaded.`}
             </span>
           </div>
-          <Button
-            size="sm"
-            className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1.5 shrink-0"
-            disabled={savingSnapshot || !hasEdits()}
-            onClick={handleSaveSnapshots}
-          >
-            {savingSnapshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            Save Snapshots
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              size="sm"
+              variant="outline"
+              className="gap-1.5"
+              onClick={() => {
+                const edits: Record<string, { annual_yield: string; daily_yield: string }> = {};
+                funds.forEach((f) => {
+                  edits[f.id] = { annual_yield: String(Number(f.annual_yield)), daily_yield: String(Number(f.daily_yield)) };
+                });
+                setEditedYields(edits);
+                toast({ title: "Copied", description: "Current live yields copied to all fields." });
+              }}
+            >
+              <Copy className="h-3.5 w-3.5" /> Copy Current Yields
+            </Button>
+            <Button
+              size="sm"
+              className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1.5"
+              disabled={savingSnapshot || !hasEdits()}
+              onClick={handleSaveSnapshots}
+            >
+              {savingSnapshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+              Save Snapshots
+            </Button>
+          </div>
         </div>
       )}
 
