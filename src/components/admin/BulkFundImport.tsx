@@ -161,9 +161,11 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
   const [pastedData, setPastedData] = useState("");
   const [parsedFunds, setParsedFunds] = useState<ParsedFund[]>([]);
   const [importing, setImporting] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [step, setStep] = useState<"input" | "preview" | "done">("input");
-   const [snapshotDate, setSnapshotDate] = useState(() => new Date().toISOString().split("T")[0]);
+  const [createdIds, setCreatedIds] = useState<string[]>([]);
+  const [snapshotDate, setSnapshotDate] = useState(() => new Date().toISOString().split("T")[0]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
