@@ -135,8 +135,12 @@ const AdminAds = () => {
     const ext = file.name.split(".").pop();
     const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-    const { error } = await supabase.storage.from("ads").upload(path, file);
+    const { error } = await supabase.storage.from("ads").upload(path, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
     if (error) {
+      console.error("Upload error:", error);
       toast.error("Upload failed: " + error.message);
       setUploading(false);
       return;
