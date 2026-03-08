@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, History, Upload, CalendarDays, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, History, Upload, CalendarDays, X, Save, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type FundType, FUND_TYPE_LABELS, YIELD_UNITS } from "@/lib/api";
 import AdminYieldHistory from "./AdminYieldHistory";
@@ -55,6 +55,8 @@ const AdminFunds = () => {
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
   const [snapshotDate, setSnapshotDate] = useState<string>("");
   const [snapshotYields, setSnapshotYields] = useState<Record<string, { annual_yield: number; daily_yield: number }>>({});
+  const [editedYields, setEditedYields] = useState<Record<string, { annual_yield: string; daily_yield: string }>>({});
+  const [savingSnapshot, setSavingSnapshot] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -80,6 +82,7 @@ const AdminFunds = () => {
   useEffect(() => {
     if (!snapshotDate) {
       setSnapshotYields({});
+      setEditedYields({});
       return;
     }
     supabase
@@ -88,12 +91,65 @@ const AdminFunds = () => {
       .eq("snapshot_date", snapshotDate)
       .then(({ data }) => {
         const map: Record<string, { annual_yield: number; daily_yield: number }> = {};
+        const edits: Record<string, { annual_yield: string; daily_yield: string }> = {};
         (data || []).forEach((s) => {
           map[s.fund_id] = { annual_yield: Number(s.annual_yield), daily_yield: Number(s.daily_yield) };
+          edits[s.fund_id] = { annual_yield: String(Number(s.annual_yield)), daily_yield: String(Number(s.daily_yield)) };
         });
         setSnapshotYields(map);
+        setEditedYields(edits);
       });
   }, [snapshotDate]);
+
+  const updateEditedYield = (fundId: string, field: "annual_yield" | "daily_yield", value: string) => {
+    setEditedYields((prev) => ({
+      ...prev,
+      [fundId]: { annual_yield: "", daily_yield: "", ...prev[fundId], [field]: value },
+    }));
+  };
+
+  const hasEdits = () => {
+    for (const [fundId, edited] of Object.entries(editedYields)) {
+      const original = snapshotYields[fundId];
+      if (!original) {
+        if (edited.annual_yield || edited.daily_yield) return true;
+        continue;
+      }
+      if (String(original.annual_yield) !== edited.annual_yield || String(original.daily_yield) !== edited.daily_yield) return true;
+    }
+    return false;
+  };
+
+  const handleSaveSnapshots = async () => {
+    if (!snapshotDate) return;
+    setSavingSnapshot(true);
+    let saved = 0;
+    let errors = 0;
+    for (const [fundId, edited] of Object.entries(editedYields)) {
+      const annual = parseFloat(edited.annual_yield);
+      const daily = parseFloat(edited.daily_yield);
+      if (isNaN(annual)) continue;
+      const dailyVal = isNaN(daily) ? parseFloat((annual / 365).toFixed(4)) : daily;
+      const { error } = await supabase.from("fund_yield_snapshots").upsert(
+        { fund_id: fundId, snapshot_date: snapshotDate, annual_yield: annual, daily_yield: dailyVal },
+        { onConflict: "fund_id,snapshot_date" }
+      );
+      if (error) errors++;
+      else saved++;
+    }
+    setSavingSnapshot(false);
+    toast({ title: "Snapshots saved", description: `${saved} updated${errors ? `, ${errors} errors` : ""}.` });
+    // Reload snapshot data by re-fetching
+    const { data } = await supabase.from("fund_yield_snapshots").select("fund_id, annual_yield, daily_yield").eq("snapshot_date", snapshotDate);
+    const map: Record<string, { annual_yield: number; daily_yield: number }> = {};
+    const edits: Record<string, { annual_yield: string; daily_yield: string }> = {};
+    (data || []).forEach((s) => {
+      map[s.fund_id] = { annual_yield: Number(s.annual_yield), daily_yield: Number(s.daily_yield) };
+      edits[s.fund_id] = { annual_yield: String(Number(s.annual_yield)), daily_yield: String(Number(s.daily_yield)) };
+    });
+    setSnapshotYields(map);
+    setEditedYields(edits);
+  };
 
   const filtered = funds
     .filter((f) =>
@@ -366,14 +422,25 @@ const AdminFunds = () => {
       </div>
 
       {snapshotDate && (
-        <div className="mb-3 rounded-lg bg-muted/50 border border-border px-3 py-2 text-sm flex items-center gap-2">
-          <CalendarDays className="h-4 w-4 text-accent shrink-0" />
-          <span>
-            Showing yields for <strong>{new Date(snapshotDate + "T00:00:00").toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</strong>.
-            {Object.keys(snapshotYields).length === 0
-              ? " No snapshots found for this date."
-              : ` ${Object.keys(snapshotYields).length} fund snapshots found.`}
-          </span>
+        <div className="mb-3 rounded-lg bg-muted/50 border border-border px-3 py-2 text-sm flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <CalendarDays className="h-4 w-4 text-accent shrink-0" />
+            <span>
+              Editing yields for <strong>{new Date(snapshotDate + "T00:00:00").toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</strong>.
+              {Object.keys(snapshotYields).length === 0
+                ? " No snapshots yet — enter values below."
+                : ` ${Object.keys(snapshotYields).length} snapshots loaded.`}
+            </span>
+          </div>
+          <Button
+            size="sm"
+            className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1.5 shrink-0"
+            disabled={savingSnapshot || !hasEdits()}
+            onClick={handleSaveSnapshots}
+          >
+            {savingSnapshot ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            Save Snapshots
+          </Button>
         </div>
       )}
 
@@ -385,7 +452,8 @@ const AdminFunds = () => {
                 <th className="text-left px-3 py-2 font-semibold">Fund Name</th>
                 <th className="text-left px-3 py-2 font-semibold hidden md:table-cell">Type</th>
                 <th className="text-left px-3 py-2 font-semibold hidden md:table-cell">Manager</th>
-                <th className="text-right px-3 py-2 font-semibold">Rate</th>
+                <th className={`text-right px-3 py-2 font-semibold ${snapshotDate ? "min-w-[120px]" : ""}`}>{snapshotDate ? "Annual" : "Rate"}</th>
+                {snapshotDate && <th className="text-right px-3 py-2 font-semibold min-w-[100px]">Daily</th>}
                 <th className="text-right px-3 py-2 font-semibold hidden md:table-cell">Fee</th>
                 <th
                   className="text-right px-3 py-2 font-semibold hidden md:table-cell cursor-pointer select-none hover:bg-muted/80 transition-colors"
@@ -414,14 +482,34 @@ const AdminFunds = () => {
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground hidden md:table-cell">{FUND_TYPE_LABELS[fund.fund_type] || "Money Market"}</td>
                   <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">{fund.manager}</td>
-                  <td className="px-3 py-2 text-right font-semibold text-accent">
-                    {snapshotDate && snapshotYields[fund.id]
-                      ? <span title={`Snapshot: ${snapshotDate}`}>{Number(snapshotYields[fund.id].annual_yield).toFixed(2)}{fund.yield_unit === "%" ? "%" : ` ${fund.yield_unit}`}</span>
-                      : snapshotDate
-                        ? <span className="text-muted-foreground text-xs">—</span>
-                        : <span>{Number(fund.annual_yield)}{fund.yield_unit === "%" ? "%" : ` ${fund.yield_unit}`}</span>
-                    }
-                  </td>
+                  {snapshotDate ? (
+                    <>
+                      <td className="px-1 py-1">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="h-7 text-xs text-right w-[100px] ml-auto"
+                          value={editedYields[fund.id]?.annual_yield ?? ""}
+                          onChange={(e) => updateEditedYield(fund.id, "annual_yield", e.target.value)}
+                          placeholder="Annual"
+                        />
+                      </td>
+                      <td className="px-1 py-1">
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          className="h-7 text-xs text-right w-[90px] ml-auto"
+                          value={editedYields[fund.id]?.daily_yield ?? ""}
+                          onChange={(e) => updateEditedYield(fund.id, "daily_yield", e.target.value)}
+                          placeholder="Daily"
+                        />
+                      </td>
+                    </>
+                  ) : (
+                    <td className="px-3 py-2 text-right font-semibold text-accent">
+                      {Number(fund.annual_yield)}{fund.yield_unit === "%" ? "%" : ` ${fund.yield_unit}`}
+                    </td>
+                  )}
                   <td className="px-3 py-2 text-right hidden md:table-cell">{Number(fund.management_fee)}%</td>
                   <td className="px-3 py-2 text-right hidden md:table-cell text-muted-foreground">{fundViews[fund.slug] || 0}</td>
                   <td className="px-3 py-2 text-center hidden md:table-cell">
