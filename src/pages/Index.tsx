@@ -10,7 +10,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import YieldChange, { formatYield } from "@/components/YieldChange";
 import { cn } from "@/lib/utils";
 
-type SortKey = "annual_yield" | "management_fee" | "minimum_investment" | "name";
+type SortKey = "annual_yield" | "daily_yield" | "management_fee" | "minimum_investment" | "name";
 type SortDir = "asc" | "desc";
 
 const categoryLabels: Record<string, string> = {
