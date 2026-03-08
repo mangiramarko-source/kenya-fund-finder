@@ -610,6 +610,69 @@ export type Database = {
         }
         Relationships: []
       }
+      commodities_public: {
+        Row: {
+          id: string | null
+          name: string | null
+          previous_price: number | null
+          price: number | null
+          sort_order: number | null
+          symbol: string | null
+          unit: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          id?: string | null
+          name?: string | null
+          previous_price?: number | null
+          price?: number | null
+          sort_order?: number | null
+          symbol?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          id?: string | null
+          name?: string | null
+          previous_price?: number | null
+          price?: number | null
+          sort_order?: number | null
+          symbol?: string | null
+          unit?: string | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
+      exchange_rates_public: {
+        Row: {
+          currency_code: string | null
+          currency_name: string | null
+          id: string | null
+          previous_rate: number | null
+          rate: number | null
+          sort_order: number | null
+          updated_at: string | null
+        }
+        Insert: {
+          currency_code?: string | null
+          currency_name?: string | null
+          id?: string | null
+          previous_rate?: number | null
+          rate?: number | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Update: {
+          currency_code?: string | null
+          currency_name?: string | null
+          id?: string | null
+          previous_rate?: number | null
+          rate?: number | null
+          sort_order?: number | null
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       funds_public: {
         Row: {
           annual_yield: number | null
