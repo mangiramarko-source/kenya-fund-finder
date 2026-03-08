@@ -490,7 +490,7 @@ const AdminAds = () => {
                 <p className="font-medium text-sm">{previewAd.title}</p>
                 {previewAd.description && <p className="text-xs text-muted-foreground">{previewAd.description}</p>}
               </div>
-              {previewAd.click_url && (
+              {previewAd.click_url && /^https?:\/\//i.test(previewAd.click_url) && (
                 <a href={previewAd.click_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary flex items-center gap-1 hover:underline">
                   <ExternalLink className="h-3 w-3" /> {previewAd.click_url}
                 </a>
