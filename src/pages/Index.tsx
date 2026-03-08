@@ -183,9 +183,10 @@ const Index = () => {
                 <colgroup>
                   <col className="w-10" />
                   <col />
-                  <col className="w-44" />
-                  <col className="w-36" />
-                  <col className="w-20" />
+                  <col className="w-40" />
+                  <col className="w-28" />
+                  <col className="w-28" />
+                  <col className="w-16" />
                   <col className="w-12" />
                 </colgroup>
                 <thead>
@@ -194,6 +195,7 @@ const Index = () => {
                     <th className="text-left px-4 py-3"><SortHeader label="Fund" field="name" /></th>
                     <th className="text-right px-4 py-3"><SortHeader label="Annual Rate" field="annual_yield" className="justify-end" /></th>
                     <th className="text-right px-4 py-3"><SortHeader label="Daily Yield" field="daily_yield" className="justify-end" /></th>
+                    <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Change</th>
                     <th className="text-right px-4 py-3"><SortHeader label="Fee" field="management_fee" className="justify-end" /></th>
                     <th className="px-4 py-3"></th>
                   </tr>
@@ -213,14 +215,17 @@ const Index = () => {
                       </td>
                       <td className="px-4 py-3.5 text-right whitespace-nowrap tabular-nums">
                         <span className="font-bold text-accent text-base">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
-                        {snapshots[fund.id] && (
-                          <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] ml-1.5 inline-block" />
-                        )}
                       </td>
                       <td className="px-4 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground">
                         {formatYield(fund.daily_yield, fund.yield_unit)}
                       </td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-muted-foreground">{fund.management_fee}%</td>
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        {snapshots[fund.id] ? (
+                          <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-xs justify-end" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3.5 text-right">
                         <Link to={`/compare/${fund.slug}`} className="text-accent hover:text-accent/80 transition-colors">
                           <ArrowRight className="h-4 w-4 inline-block" />
@@ -229,7 +234,7 @@ const Index = () => {
                     </tr>
                   ))}
                   {processedFunds.length === 0 && (
-                    <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">No funds match your filters.</td></tr>
+                    <tr><td colSpan={7} className="text-center py-10 text-muted-foreground">No funds match your filters.</td></tr>
                   )}
                 </tbody>
               </table>
