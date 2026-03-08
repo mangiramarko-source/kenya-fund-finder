@@ -95,7 +95,8 @@ const FundSubTable = ({
                 return (
                   <tr
                     key={fund.id}
-                    className={`border-t border-border transition-colors hover:bg-accent/5 ${
+                    onClick={() => navigate(`/compare/${fund.slug}`)}
+                    className={`border-t border-border transition-colors hover:bg-accent/5 cursor-pointer ${
                       isBest ? "bg-accent/[0.03]" : i % 2 === 0 ? "bg-card" : "bg-muted/20"
                     }`}
                   >
