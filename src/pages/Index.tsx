@@ -2,6 +2,8 @@ import { useEffect, useState, useMemo, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Calculator, Search } from "lucide-react";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
+import { useAuth } from "@/hooks/useAuth";
+import AuthGate from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchFunds, fetchLatestSnapshots, fetchPublishedNews, type FundFromDB, type NewsFromDB, type YieldSnapshot } from "@/lib/api";
@@ -26,7 +28,7 @@ const categoryLabels: Record<string, string> = {
   balanced: "Balanced",
   equity: "Equity",
   bond: "Bond",
-  fx_rates: "FX Rates",
+  fx_rates: "Currency",
   commodities: "Commodities",
 };
 
@@ -58,6 +60,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [yieldFilter, setYieldFilter] = useState<"all" | "percent" | "currency">("all");
   const { lastUpdateDate, isLive } = useLiveStatus();
+  const { user } = useAuth();
 
   const { rates, commodities, loading: marketLoading } = useMarketData();
 
@@ -252,16 +255,26 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
               </>
             )}
 
-            {/* FX Rates content */}
+            {/* Currency content */}
             {selectedCategory === "fx_rates" && (
               <>
                 <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Exchange rates are indicative and updated manually by administrators.</p>
-                <div className="hidden md:block">
-                  <RatesTable rates={rates} loading={marketLoading} />
-                </div>
-                <div className="md:hidden">
-                  <RatesMobileCards rates={rates} loading={marketLoading} />
-                </div>
+                {user ? (
+                  <>
+                    <div className="hidden md:block">
+                      <RatesTable rates={rates} loading={marketLoading} />
+                    </div>
+                    <div className="md:hidden">
+                      <RatesMobileCards rates={rates} loading={marketLoading} />
+                    </div>
+                  </>
+                ) : (
+                  <AuthGate
+                    source="currency_tab"
+                    title="Sign up to view exchange rates"
+                    description="Create a free account to access live currency exchange rates, trends, and our currency converter tool."
+                  />
+                )}
               </>
             )}
 
