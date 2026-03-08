@@ -171,7 +171,7 @@ const Navbar = () => {
       {/* Mobile: nav pills row */}
       <div className="md:hidden flex justify-center px-4 pb-1.5 pt-1 bg-card/95">
         <nav className="flex items-center gap-0.5 bg-muted/60 rounded-full px-1 py-1">
-          {navLinks.filter(l => ["/compare", "/calculator", "/news"].includes(l.to)).map((link) => {
+          {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
             return (

@@ -34,7 +34,8 @@ const App = () => (
           <Layout>
             <Routes>
               <Route path="/" element={<Index />} />
-              <Route path="/compare" element={<ComparePage />} />
+              <Route path="/compare" element={<Navigate to="/" replace />} />
+              <Route path="/compare/:id" element={<FundDetailPage />} />
               <Route path="/compare/:id" element={<FundDetailPage />} />
               <Route path="/calculator" element={<CalculatorPage />} />
               <Route path="/news" element={<NewsPage />} />

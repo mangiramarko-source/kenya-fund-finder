@@ -82,8 +82,8 @@ const FundDetailPage = () => {
 
   return (
     <div className="container py-10 max-w-3xl">
-      <Link to="/compare" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
-        <ArrowLeft className="mr-1 h-4 w-4" /> Back to Compare
+      <Link to="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
+        <ArrowLeft className="mr-1 h-4 w-4" /> Back to Funds
       </Link>
 
       <h1 className="text-2xl md:text-3xl font-bold mb-1">{fund.name}</h1>
