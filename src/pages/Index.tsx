@@ -39,7 +39,7 @@ const Index = () => {
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
-  const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [selectedCategory, setSelectedCategory] = useState<string>("money_market");
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
