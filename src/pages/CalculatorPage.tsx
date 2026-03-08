@@ -6,13 +6,15 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { fetchFunds, type FundFromDB, FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
-import { AlertTriangle, GitCompareArrows, TrendingUp, Wallet, PiggyBank, CalendarDays } from "lucide-react";
+import { AlertTriangle, GitCompareArrows, TrendingUp, Wallet, PiggyBank, CalendarDays, ArrowRightLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
+import CurrencyConverter from "@/components/calculator/CurrencyConverter";
 
 const StatCard = ({ icon: Icon, label, value, accent }: { icon: React.ElementType; label: string; value: string; accent?: boolean }) => (
   <div className={`rounded-xl border p-4 flex items-start gap-3 ${accent ? "border-accent/40 bg-accent/5" : "border-border bg-card"}`}>
@@ -204,10 +206,26 @@ const CalculatorPage = () => {
   return (
     <div className="container py-8 md:py-10 max-w-6xl">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-2xl md:text-3xl font-bold mb-1">Investment Calculator</h1>
-        <p className="text-muted-foreground text-sm">Estimate your potential returns across all unit trust fund categories.</p>
+      <div className="mb-6">
+        <h1 className="text-2xl md:text-3xl font-bold mb-1">Calculator</h1>
+        <p className="text-muted-foreground text-sm">Investment returns & currency conversion tools.</p>
       </div>
+
+      <Tabs defaultValue="investment" className="space-y-6">
+        <TabsList className="h-10">
+          <TabsTrigger value="investment" className="gap-1.5 text-sm">
+            <TrendingUp className="h-3.5 w-3.5" /> Investment
+          </TabsTrigger>
+          <TabsTrigger value="currency" className="gap-1.5 text-sm">
+            <ArrowRightLeft className="h-3.5 w-3.5" /> Currency
+          </TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="currency">
+          <CurrencyConverter />
+        </TabsContent>
+
+        <TabsContent value="investment">
 
       {showCompareGate && !user && (
         <div className="mb-8">
@@ -459,6 +477,9 @@ const CalculatorPage = () => {
           </div>
         </div>
       </div>
+
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };
