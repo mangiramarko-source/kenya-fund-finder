@@ -40,8 +40,9 @@ const staticPages: Record<string, { title: string; description: string }> = {
 };
 
 Deno.serve(async (req) => {
+  const cors = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
-    return new Response(null, { headers: corsHeaders });
+    return new Response(null, { headers: cors });
   }
 
   const url = new URL(req.url);
