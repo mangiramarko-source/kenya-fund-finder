@@ -22,8 +22,45 @@ const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading }
 
   return (
     <div className="border-b border-border bg-card">
-      <div className="container max-w-7xl py-4">
-        <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="container max-w-7xl py-3 sm:py-4">
+        {/* Mobile: single compact row */}
+        <div className="flex items-center justify-between gap-2 sm:hidden">
+          <div className="flex items-center gap-2 min-w-0">
+            {isLive && (
+              <div className="flex items-center gap-1 shrink-0">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent"></span>
+                </span>
+                <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">Live</span>
+              </div>
+            )}
+            <p className="text-[10px] text-muted-foreground truncate">
+              {lastUpdate ? `${lastUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric" })}` : "CMA-regulated"}
+            </p>
+          </div>
+
+          {/* Inline stats as a compact row */}
+          {loading ? (
+            <div className="flex items-center gap-2">
+              <Skeleton className="h-6 w-12 rounded" />
+              <Skeleton className="h-6 w-16 rounded" />
+              <Skeleton className="h-6 w-16 rounded" />
+            </div>
+          ) : (
+            <div className="flex items-center divide-x divide-border">
+              {stats.map(({ label, value, accent }) => (
+                <div key={label} className="flex items-center gap-1 px-2 first:pl-0 last:pr-0">
+                  <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-medium">{label}</span>
+                  <span className={`text-xs font-bold tabular-nums whitespace-nowrap ${accent ? "text-accent" : "text-foreground"}`}>{value}</span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Desktop/tablet: full layout */}
+        <div className="hidden sm:flex flex-row items-center justify-between gap-4">
           <div className="flex items-center gap-3">
             {isLive && (
               <div className="flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/20 px-2.5 py-1">
@@ -39,7 +76,7 @@ const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading }
             </p>
           </div>
 
-          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+          <div className="flex items-center gap-3 flex-wrap">
             {loading ? (
               <>
                 <Skeleton className="h-8 w-20 rounded-lg" />
@@ -55,8 +92,7 @@ const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading }
               ))
             )}
 
-            {/* Quick actions integrated into stat bar */}
-            <div className="hidden sm:flex items-center gap-1.5 ml-1">
+            <div className="flex items-center gap-1.5 ml-1">
               <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
                 <Link to="/calculator"><Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculator</Link>
               </Button>
