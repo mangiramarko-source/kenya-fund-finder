@@ -87,7 +87,7 @@ const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading }
                 </div>
               ))
             )}
-            <div className="flex items-center gap-1.5 ml-1">
+            <div className="hidden lg:flex items-center gap-1.5 ml-1">
               <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
                 <Link to="/calculator">
                   <Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculator
