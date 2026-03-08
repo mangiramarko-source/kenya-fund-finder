@@ -23,7 +23,7 @@ const categoryLabels: Record<string, string> = {
 };
 
 const Index = () => {
-  useDocumentTitle("Fund Finder Kenya – Compare Money Market Funds", "Compare CMA-regulated Money Market Funds in Kenya. See yields, fees, and calculate returns.");
+  useDocumentTitle("Fund Finder Kenya – Compare Investment Funds in Kenya", "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.");
   useJsonLd({
     "@context": "https://schema.org",
     "@type": "WebSite",
@@ -37,6 +37,8 @@ const Index = () => {
     },
   });
 
+  const [loading, setLoading] = useState(true);
+
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
@@ -48,13 +50,15 @@ const Index = () => {
   const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchFunds().then(setFunds).catch(() => {});
-    fetchPublishedNews().then(setNews).catch(() => {});
-    fetchLatestSnapshots().then((data) => {
-      const map: Record<string, YieldSnapshot> = {};
-      data.forEach((s) => { map[s.fund_id] = s; });
-      setSnapshots(map);
-    }).catch(() => {});
+    Promise.all([
+      fetchFunds().then(setFunds).catch(() => {}),
+      fetchPublishedNews().then(setNews).catch(() => {}),
+      fetchLatestSnapshots().then((data) => {
+        const map: Record<string, YieldSnapshot> = {};
+        data.forEach((s) => { map[s.fund_id] = s; });
+        setSnapshots(map);
+      }).catch(() => {}),
+    ]).finally(() => setLoading(false));
   }, []);
 
   const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
@@ -116,6 +120,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
+      <h1 className="sr-only">Fund Finder Kenya – Compare Investment Funds</h1>
       {/* Compact stat bar */}
       <div className="border-b border-border bg-card">
         <div className="container max-w-7xl py-4">

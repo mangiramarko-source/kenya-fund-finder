@@ -135,7 +135,8 @@ export async function fetchLatestSnapshots(): Promise<YieldSnapshot[]> {
   const { data, error } = await supabase
     .from("fund_yield_snapshots")
     .select("fund_id, annual_yield, daily_yield, snapshot_date")
-    .order("snapshot_date", { ascending: false });
+    .order("snapshot_date", { ascending: false })
+    .limit(500);
   if (error) throw error;
   // Deduplicate: keep only the latest snapshot per fund
   const seen = new Set<string>();
