@@ -48,18 +48,16 @@ export function useMarketData() {
     setLoading(true);
     const [ratesRes, commoditiesRes] = await Promise.all([
       supabase
-        .from("exchange_rates")
+        .from("exchange_rates_public" as any)
         .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
-        .eq("is_active", true)
         .order("sort_order"),
       supabase
-        .from("commodities")
+        .from("commodities_public" as any)
         .select("id, name, symbol, price, previous_price, unit, updated_at")
-        .eq("is_active", true)
         .order("sort_order"),
     ]);
-    setRates((ratesRes.data as ExchangeRate[]) || []);
-    setCommodities((commoditiesRes.data as Commodity[]) || []);
+    setRates((ratesRes.data as any as ExchangeRate[]) || []);
+    setCommodities((commoditiesRes.data as any as Commodity[]) || []);
     setLoading(false);
   };
 

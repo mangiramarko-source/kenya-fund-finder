@@ -20,14 +20,12 @@ const CurrencyTicker = () => {
   const fetchItems = async () => {
     const [ratesRes, commoditiesRes] = await Promise.all([
       supabase
-        .from("exchange_rates")
+        .from("exchange_rates_public" as any)
         .select("id, currency_code, rate, previous_rate")
-        .eq("is_active", true)
         .order("sort_order"),
       supabase
-        .from("commodities")
+        .from("commodities_public" as any)
         .select("id, name, symbol, price, previous_price, unit")
-        .eq("is_active", true)
         .order("sort_order"),
     ]);
     const rates = (ratesRes.data || []).map((r: any) => ({
