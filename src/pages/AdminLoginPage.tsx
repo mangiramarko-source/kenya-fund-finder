@@ -36,7 +36,7 @@ const AdminLoginPage = () => {
             <TrendingUp className="h-7 w-7" />
           </div>
           <CardTitle className="text-xl">Admin Login</CardTitle>
-          <CardDescription>Sign in to manage Fund Finder Kenya</CardDescription>
+          <CardDescription>Sign in to manage Kenya Fund Finder</CardDescription>
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">

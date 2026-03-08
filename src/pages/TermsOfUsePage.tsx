@@ -12,14 +12,14 @@ const TermsOfUsePage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">1. Acceptance of Terms</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          By accessing or using Fund Finder Kenya ("the Platform"), you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use the Platform.
+          By accessing or using Kenya Fund Finder ("the Platform"), you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use the Platform.
         </p>
       </section>
 
       <section>
         <h2 className="text-lg font-semibold mb-2">2. Nature of the Platform</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Fund Finder Kenya is an <strong>informational platform only</strong>. It provides data about unit trust funds — including Money Market Funds, Fixed Income Funds, Balanced Funds, Equity Funds, Bond Funds, and other collective investment schemes — regulated by the Capital Markets Authority (CMA) of Kenya for comparison and educational purposes. The Platform:
+          Kenya Fund Finder is an <strong>informational platform only</strong>. It provides data about unit trust funds — including Money Market Funds, Fixed Income Funds, Balanced Funds, Equity Funds, Bond Funds, and other collective investment schemes — regulated by the Capital Markets Authority (CMA) of Kenya for comparison and educational purposes. The Platform:
         </p>
         <ul className="list-disc pl-5 text-sm text-muted-foreground space-y-1 mt-2">
           <li>Does <strong>not</strong> provide investment advice, financial advice, or any recommendation to buy or sell any financial product.</li>
@@ -67,7 +67,7 @@ const TermsOfUsePage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">7. Intellectual Property</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          All content, design, and code on this Platform are the property of Fund Finder Kenya or their respective owners. You may not reproduce, distribute, or create derivative works without prior written consent. Fund names, logos, and trademarks belong to their respective fund managers.
+          All content, design, and code on this Platform are the property of Kenya Fund Finder or their respective owners. You may not reproduce, distribute, or create derivative works without prior written consent. Fund names, logos, and trademarks belong to their respective fund managers.
         </p>
       </section>
 
@@ -93,7 +93,7 @@ const TermsOfUsePage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">10. Limitation of Liability</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          To the fullest extent permitted by Kenyan law, Fund Finder Kenya, its owners, operators, and contributors shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of or inability to use the Platform, reliance on any information provided, or any investment decisions made based on information found on the Platform.
+          To the fullest extent permitted by Kenyan law, Kenya Fund Finder, its owners, operators, and contributors shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of or inability to use the Platform, reliance on any information provided, or any investment decisions made based on information found on the Platform.
         </p>
       </section>
 

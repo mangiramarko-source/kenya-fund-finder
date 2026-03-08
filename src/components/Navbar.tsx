@@ -74,7 +74,7 @@ const Navbar = () => {
           <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
             <TrendingUp className="h-5 w-5" />
           </div>
-          <span className="hidden sm:inline">Fund Finder</span>
+          <span className="hidden sm:inline">Kenya Fund Finder</span>
         </Link>
 
         {/* Desktop nav */}
@@ -154,7 +154,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile: brand name centered */}
-        <span className="md:hidden font-heading text-lg font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>Fund Finder</span>
+        <span className="md:hidden font-heading text-lg font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>Kenya Fund Finder</span>
 
         {/* Mobile: dark mode + hamburger on right */}
         <div className="flex md:hidden items-center gap-0.5">
