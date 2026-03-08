@@ -252,7 +252,16 @@ const AdminAds = () => {
                   ad.media_type === "video" ? (
                     <video src={ad.media_url} className="w-full h-full object-cover" muted />
                   ) : (
-                    <img src={ad.media_url} alt={ad.title} className="w-full h-full object-cover" />
+                    <img
+                      src={ad.media_url}
+                      alt={ad.title}
+                      className="w-full h-full object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.style.display = "none";
+                        target.parentElement!.insertAdjacentHTML("beforeend", `<div class="text-destructive text-xs p-2 text-center">Image failed to load<br/><span class="text-[10px] text-muted-foreground break-all">${ad.media_url}</span></div>`);
+                      }}
+                    />
                   )
                 ) : (
                   <div className="text-muted-foreground text-sm">No media</div>
