@@ -61,9 +61,8 @@ export interface YieldSnapshot {
 
 export async function fetchFunds(): Promise<FundFromDB[]> {
   const { data, error } = await supabase
-    .from("funds")
+    .from("funds_public")
     .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, fund_type, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, yield_unit, is_published, updated_at")
-    .eq("is_published", true)
     .order("annual_yield", { ascending: false });
   if (error) throw error;
   return (data || []).map((f) => ({
@@ -79,10 +78,9 @@ export async function fetchFunds(): Promise<FundFromDB[]> {
 
 export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> {
   const { data, error } = await supabase
-    .from("funds")
+    .from("funds_public")
     .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, fund_type, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, yield_unit, is_published, updated_at")
     .eq("slug", slug)
-    .eq("is_published", true)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
@@ -109,9 +107,8 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
 
 export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
-    .from("news_articles")
+    .from("news_articles_public")
     .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status")
-    .eq("status", "published")
     .order("date_published", { ascending: false });
   if (error) throw error;
   return (data || []).map((d: any) => ({

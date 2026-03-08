@@ -20,7 +20,7 @@ const SitePage = () => {
   useEffect(() => {
     if (!slug) return;
     supabase
-      .from("site_pages")
+      .from("site_pages_public")
       .select("id, slug, title, content, meta, updated_at")
       .eq("slug", slug)
       .maybeSingle()

@@ -347,7 +347,7 @@ const NewsPage = () => {
                     )}
                   </div>
 
-                  {selectedArticle?.url && (
+                  {selectedArticle?.url && /^https?:\/\//i.test(selectedArticle.url) && (
                     <div className="mt-5 sm:mt-6 pt-3 sm:pt-4 border-t border-border">
                       <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs w-full sm:w-auto">
                         <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer">

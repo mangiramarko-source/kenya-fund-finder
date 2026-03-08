@@ -397,11 +397,13 @@ const FundDetailPage = () => {
 
           {/* Actions */}
           <div className="flex flex-wrap gap-3">
-            <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
-              <a href={fund.website} target="_blank" rel="noopener noreferrer">
-                Visit Official Website <ExternalLink className="ml-2 h-4 w-4" />
-              </a>
-            </Button>
+            {fund.website && /^https?:\/\//i.test(fund.website) && (
+              <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+                <a href={fund.website} target="_blank" rel="noopener noreferrer">
+                  Visit Official Website <ExternalLink className="ml-2 h-4 w-4" />
+                </a>
+              </Button>
+            )}
             <Button asChild variant="outline">
               <Link to={`/calculator?fund=${fund.slug}`}>
                 <Calculator className="mr-2 h-4 w-4" /> Use in Calculator

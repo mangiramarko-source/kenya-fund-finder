@@ -78,6 +78,10 @@ const AdminNews = () => {
       toast({ title: "Validation Error", description: "Title and summary are required.", variant: "destructive" });
       return;
     }
+    if (editing.url && !/^https?:\/\//.test(editing.url)) {
+      toast({ title: "Invalid URL", description: "Source URL must start with https://", variant: "destructive" });
+      return;
+    }
 
     const payload: any = {
       title: editing.title,
