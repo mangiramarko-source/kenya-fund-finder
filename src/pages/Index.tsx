@@ -148,7 +148,7 @@ const Index = () => {
             </div>
           </div>
         </div>
-        <p className="text-[10px] text-muted-foreground text-center py-1.5 border-t border-border/40 mt-2">Yields are gross annual effective rates before 15% withholding tax.</p>
+        
       </div>
 
       <div className="container max-w-7xl py-6">
