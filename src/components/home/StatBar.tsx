@@ -24,55 +24,7 @@ const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading }
     <div className="border-b border-border bg-card">
       <div className="container max-w-7xl">
 
-        {/* ── Mobile ── */}
-        <div className="sm:hidden py-3 space-y-2.5">
-          {/* Row 1: Live + date */}
-          <div className="flex items-center gap-2">
-            {isLive && (
-              <div className="flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/20 px-2 py-0.5">
-                <span className="relative flex h-1.5 w-1.5">
-                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
-                  <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent" />
-                </span>
-                <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">Live</span>
-              </div>
-            )}
-            <p className="text-[11px] text-muted-foreground">
-              {lastUpdate
-                ? `Updated ${lastUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}`
-                : "CMA-regulated unit trusts"}
-            </p>
-          </div>
-
-          {/* Row 2: Three equal stat cells */}
-          {loading ? (
-            <div className="grid grid-cols-3 gap-2">
-              <Skeleton className="h-12 rounded-lg" />
-              <Skeleton className="h-12 rounded-lg" />
-              <Skeleton className="h-12 rounded-lg" />
-            </div>
-          ) : (
-            <div className="grid grid-cols-3 gap-2">
-              {stats.map(({ label, value, accent }) => (
-                <div
-                  key={label}
-                  className="flex flex-col items-center justify-center rounded-lg border border-border bg-muted/40 py-2"
-                >
-                  <span className="text-[9px] text-muted-foreground uppercase tracking-wider font-medium">
-                    {label}
-                  </span>
-                  <span
-                    className={`text-base font-bold tabular-nums mt-0.5 ${
-                      accent ? "text-accent" : "text-foreground"
-                    }`}
-                  >
-                    {value}
-                  </span>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+        {/* Mobile: hidden entirely */}
 
         {/* ── Desktop / Tablet ── */}
         <div className="hidden sm:flex items-center justify-between gap-4 py-4">
