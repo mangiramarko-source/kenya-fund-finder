@@ -302,32 +302,32 @@ const NewsPage = () => {
         <span>{activeCategory === "All" ? "All categories" : activeCategory}</span>
       </div>
 
-      {/* Full article dialog */}
+      {/* Full article dialog — full-screen on mobile */}
       <Dialog open={!!selectedArticle} onOpenChange={(open) => !open && setSelectedArticle(null)}>
-        <DialogContent className="max-w-2xl max-h-[85vh] p-0 overflow-hidden">
-          <ScrollArea className="max-h-[85vh]">
-            <div className="p-6 sm:p-8">
-              <DialogHeader className="mb-4">
-                <div className="flex items-center gap-2 mb-3 flex-wrap">
+        <DialogContent className="max-w-2xl max-h-[90vh] sm:max-h-[85vh] p-0 overflow-hidden w-[calc(100%-1rem)] sm:w-full rounded-xl sm:rounded-2xl">
+          <ScrollArea className="max-h-[90vh] sm:max-h-[85vh]">
+            <div className="p-4 sm:p-6 md:p-8">
+              <DialogHeader className="mb-3 sm:mb-4">
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-2 sm:mb-3 flex-wrap">
                   {selectedArticle && (
                     <>
-                      <Badge variant="secondary" className={categoryColors[selectedArticle.category] || ""}>
+                      <Badge variant="secondary" className={`text-[10px] sm:text-xs ${categoryColors[selectedArticle.category] || ""}`}>
                         {selectedArticle.category}
                       </Badge>
-                      <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                        <Clock className="h-3 w-3" />
+                      <span className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground">
+                        <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                         {selectedArticle.read_time}
                       </span>
                       {selectedArticle.is_featured && (
-                        <Badge className="bg-accent/15 text-accent border-0 text-[10px]">Featured</Badge>
+                        <Badge className="bg-accent/15 text-accent border-0 text-[9px] sm:text-[10px]">Featured</Badge>
                       )}
                     </>
                   )}
                 </div>
-                <DialogTitle className="text-xl md:text-2xl font-heading leading-tight">
+                <DialogTitle className="text-lg sm:text-xl md:text-2xl font-heading leading-snug sm:leading-tight">
                   {selectedArticle?.title}
                 </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground mt-2">
+                <DialogDescription className="text-[10px] sm:text-xs text-muted-foreground mt-1.5 sm:mt-2">
                   {selectedArticle?.source && `${selectedArticle.source} · `}
                   {selectedArticle && new Date(selectedArticle.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
                 </DialogDescription>
@@ -335,19 +335,19 @@ const NewsPage = () => {
 
               {isAuthenticated ? (
                 <>
-                  <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
+                  <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-3 sm:space-y-4">
                     {selectedArticle?.content ? (
                       selectedArticle.content.split("\n").filter(Boolean).map((paragraph, i) => (
-                        <p key={i} className="text-sm text-muted-foreground leading-relaxed">{paragraph}</p>
+                        <p key={i} className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{paragraph}</p>
                       ))
                     ) : (
-                      <p className="text-sm text-muted-foreground leading-relaxed">{selectedArticle?.summary}</p>
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{selectedArticle?.summary}</p>
                     )}
                   </div>
 
                   {selectedArticle?.url && (
-                    <div className="mt-6 pt-4 border-t border-border">
-                      <Button asChild variant="outline" size="sm" className="gap-1.5">
+                    <div className="mt-5 sm:mt-6 pt-3 sm:pt-4 border-t border-border">
+                      <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs w-full sm:w-auto">
                         <a href={selectedArticle.url} target="_blank" rel="noopener noreferrer">
                           Read Original Source <ArrowRight className="h-3.5 w-3.5" />
                         </a>
@@ -358,11 +358,11 @@ const NewsPage = () => {
               ) : (
                 <div className="mt-2">
                   {selectedArticle?.content && (
-                    <div className="relative mb-6">
-                      <p className="text-sm text-muted-foreground leading-relaxed">
+                    <div className="relative mb-4 sm:mb-6">
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
                         {selectedArticle.content.split("\n").filter(Boolean)[0]}
                       </p>
-                      <div className="mt-2 h-16 bg-gradient-to-b from-transparent to-background" />
+                      <div className="mt-2 h-12 sm:h-16 bg-gradient-to-b from-transparent to-background" />
                     </div>
                   )}
                   <AuthGate
