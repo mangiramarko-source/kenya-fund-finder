@@ -44,7 +44,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Listen for auth changes - DO NOT await inside callback (causes deadlocks)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      (_event, session) => {
+      (event, session) => {
+        // Auto-recover from broken refresh tokens
+        if (event === 'TOKEN_REFRESHED' && !session) {
+          supabase.auth.signOut().then(() => {
+            setUser(null);
+            setSession(null);
+            setIsAdmin(false);
+            window.location.href = '/admin/login';
+          });
+          return;
+        }
+
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
@@ -55,6 +66,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         }
       }
     );
+
+    // Also listen for auth errors via the session refresh
+    const handleStorageEvent = (e: StorageEvent) => {
+      if (e.key === 'sb-' + import.meta.env.VITE_SUPABASE_PROJECT_ID + '-auth-token' && e.newValue === null) {
+        setUser(null);
+        setSession(null);
+        setIsAdmin(false);
+      }
+    };
+    window.addEventListener('storage', handleStorageEvent);
 
     return () => subscription.unsubscribe();
   }, []);
