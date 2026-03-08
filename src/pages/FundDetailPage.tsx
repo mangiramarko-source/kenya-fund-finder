@@ -305,13 +305,6 @@ const FundDetailPage = () => {
             </div>
           </div>
 
-          {/* About */}
-          {fund.description && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2">About This Fund</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">{fund.description}</p>
-            </div>
-          )}
 
           {/* Rate History Chart */}
           {chartData && (
@@ -403,6 +396,14 @@ const FundDetailPage = () => {
                   })}
                 </div>
               </div>
+            </div>
+          )}
+
+          {/* About */}
+          {fund.description && (
+            <div className="mb-6">
+              <h2 className="text-lg font-semibold mb-2">About This Fund</h2>
+              <p className="text-muted-foreground text-sm leading-relaxed">{fund.description}</p>
             </div>
           )}
 
