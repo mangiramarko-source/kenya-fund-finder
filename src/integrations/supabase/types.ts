@@ -14,6 +14,57 @@ export type Database = {
   }
   public: {
     Tables: {
+      ads: {
+        Row: {
+          click_url: string
+          created_at: string
+          created_by: string | null
+          description: string
+          end_date: string | null
+          id: string
+          is_active: boolean
+          media_type: string
+          media_url: string
+          placement: string
+          start_date: string | null
+          title: string
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          click_url?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          media_type?: string
+          media_url?: string
+          placement?: string
+          start_date?: string | null
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          click_url?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          end_date?: string | null
+          id?: string
+          is_active?: boolean
+          media_type?: string
+          media_url?: string
+          placement?: string
+          start_date?: string | null
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       auth_gate_clicks: {
         Row: {
           action: string
