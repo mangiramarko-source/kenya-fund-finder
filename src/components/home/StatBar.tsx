@@ -65,33 +65,7 @@ const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, 
             </p>
           </div>
 
-          <div className="flex items-center gap-3 flex-wrap">
-            {loading ? (
-              <>
-                <Skeleton className="h-8 w-20 rounded-lg" />
-                <Skeleton className="h-8 w-24 rounded-lg" />
-                <Skeleton className="h-8 w-24 rounded-lg" />
-              </>
-            ) : (
-              stats.map(({ label, value, accent }) => (
-                <div
-                  key={label}
-                  className="flex items-center gap-2 rounded-lg border border-border bg-muted/50 px-3 py-1.5"
-                >
-                  <span className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">
-                    {label}
-                  </span>
-                  <span
-                    className={`text-sm font-bold tabular-nums ${
-                      accent ? "text-accent" : "text-foreground"
-                    }`}
-                  >
-                    {value}
-                  </span>
-                </div>
-              ))
-            )}
-            <div className="hidden lg:flex items-center gap-1.5 ml-1">
+          <div className="flex items-center gap-1.5 ml-1">
               <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
                 <Link to="/calculator">
                   <Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculator
@@ -101,7 +75,6 @@ const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, 
                 <Link to="/learn">Learn</Link>
               </Button>
             </div>
-          </div>
         </div>
       </div>
     </div>
