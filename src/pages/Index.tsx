@@ -247,7 +247,7 @@ const Index = () => {
                         <Badge variant="default" className="text-[9px] px-1 py-0 h-3.5 bg-accent text-accent-foreground shrink-0">TOP</Badge>
                       )}
                     </div>
-                    <span className="text-[10px] text-muted-foreground">Fee {fund.management_fee}%</span>
+                    <span className="text-[10px] text-muted-foreground">Daily: {formatYield(fund.daily_yield, fund.yield_unit)} · Fee {fund.management_fee}%</span>
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-accent font-bold text-sm tabular-nums">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
