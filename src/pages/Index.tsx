@@ -147,7 +147,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const isFundTab = !isMarketTab;
 
   return (
-    <div className="min-h-screen">
+    <div ref={ref} className="min-h-screen">
       <h1 className="sr-only">Kenya Fund Finder – Compare Investment Funds</h1>
 
       <StatBar
