@@ -155,11 +155,8 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile: brand name centered */}
-        <span className="md:hidden font-heading text-lg font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>Kenya Fund Finder</span>
-
-        {/* Mobile: dark mode + hamburger on right */}
-        <div className="flex md:hidden items-center gap-0.5">
+        {/* Mobile: dark mode on left */}
+        <div className="flex md:hidden items-center">
           <Button
             variant="ghost"
             size="icon"
@@ -169,6 +166,13 @@ const Navbar = () => {
           >
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+        </div>
+
+        {/* Mobile: brand name centered */}
+        <span className="md:hidden absolute left-1/2 -translate-x-1/2 font-heading text-lg font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>Kenya Fund Finder</span>
+
+        {/* Mobile: hamburger on right */}
+        <div className="flex md:hidden items-center">
           <Button
             variant="ghost"
             size="icon"
