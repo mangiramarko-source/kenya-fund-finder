@@ -53,6 +53,8 @@ const AdminFunds = () => {
   const [fundViews, setFundViews] = useState<Record<string, number>>({});
   const [historyFund, setHistoryFund] = useState<{ id: string; name: string; yield_unit: string } | null>(null);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [snapshotDate, setSnapshotDate] = useState<string>("");
+  const [snapshotYields, setSnapshotYields] = useState<Record<string, { annual_yield: number; daily_yield: number }>>({});
   const { user } = useAuth();
   const { toast } = useToast();
 
