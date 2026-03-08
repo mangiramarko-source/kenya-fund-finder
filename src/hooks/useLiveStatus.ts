@@ -8,7 +8,7 @@ export function useLiveStatus() {
 
   const fetchStatus = async () => {
     const { data } = await supabase
-      .from("site_pages")
+      .from("site_pages_public")
       .select("meta")
       .eq("slug", "live-status")
       .single();
