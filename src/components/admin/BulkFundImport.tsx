@@ -268,7 +268,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
             importResult.errors.push(`${fund.name}: ${error.message}`);
           } else {
             importResult.created.push(fund.name);
-            if (saveSnapshot && newFund) {
+            if (newFund) {
               await supabase.from("fund_yield_snapshots").upsert({
                 fund_id: newFund.id,
                 annual_yield: fund.annual_yield,
