@@ -25,7 +25,7 @@ const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, 
       ];
 
   return (
-    <div className="border-b border-border bg-card">
+    <div ref={ref} className="border-b border-border bg-card">
       <div className="container max-w-7xl">
 
         {/* ── Mobile: just Live + date ── */}
