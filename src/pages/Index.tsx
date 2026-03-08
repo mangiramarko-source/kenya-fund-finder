@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Calculator, Search } from "lucide-react";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
@@ -32,7 +32,7 @@ const categoryLabels: Record<string, string> = {
 
 const MARKET_TABS = ["fx_rates", "commodities"] as const;
 
-const Index = () => {
+const Index = forwardRef<HTMLDivElement>((_, ref) => {
   useDocumentTitle("Kenya Fund Finder – Compare Investment Funds in Kenya", "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.");
   useJsonLd({
     "@context": "https://schema.org",
@@ -147,7 +147,7 @@ const Index = () => {
   const isFundTab = !isMarketTab;
 
   return (
-    <div className="min-h-screen">
+    <div ref={ref} className="min-h-screen">
       <h1 className="sr-only">Kenya Fund Finder – Compare Investment Funds</h1>
 
       <StatBar
@@ -306,6 +306,8 @@ const Index = () => {
       </div>
     </div>
   );
-};
+});
+
+Index.displayName = "Index";
 
 export default Index;
