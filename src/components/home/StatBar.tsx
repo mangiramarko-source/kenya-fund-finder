@@ -24,7 +24,23 @@ const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading }
     <div className="border-b border-border bg-card">
       <div className="container max-w-7xl">
 
-        {/* Mobile: hidden entirely */}
+        {/* ── Mobile: just Live + date ── */}
+        <div className="sm:hidden py-2.5 flex items-center gap-2">
+          {isLive && (
+            <div className="flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/20 px-2 py-0.5">
+              <span className="relative flex h-1.5 w-1.5">
+                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
+                <span className="relative inline-flex rounded-full h-1.5 w-1.5 bg-accent" />
+              </span>
+              <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">Live</span>
+            </div>
+          )}
+          <p className="text-[11px] text-muted-foreground">
+            {lastUpdate
+              ? `Updated ${lastUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}`
+              : "CMA-regulated unit trusts"}
+          </p>
+        </div>
 
         {/* ── Desktop / Tablet ── */}
         <div className="hidden sm:flex items-center justify-between gap-4 py-4">
