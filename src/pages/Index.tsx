@@ -249,6 +249,7 @@ const Index = () => {
           {/* Desktop sidebar */}
           <aside className="hidden xl:block space-y-4">
             <AdBanner placement="sidebar" />
+            <MarketTicker />
             <NewsSidebar news={latestNews} loading={loading} />
             <AdBanner placement="banner" />
           </aside>
