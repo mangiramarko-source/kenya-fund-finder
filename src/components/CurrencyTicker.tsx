@@ -74,11 +74,18 @@ const CurrencyTicker = () => {
           const isUp = diff != null && diff > 0;
           const isDown = diff != null && diff < 0;
 
+          // Show separator between FX and commodity sections
+          const prevItem = i > 0 ? doubled[i - 1] : null;
+          const showSep = prevItem && prevItem.id.startsWith("fx-") !== item.id.startsWith("fx-");
+
           return (
             <div
               key={`${item.id}-${i}`}
               className="inline-flex items-center gap-2 px-5 py-1.5 text-xs"
             >
+              {showSep && (
+                <span className="text-primary-foreground/25 mr-1 text-sm select-none">│</span>
+              )}
               <span className="font-semibold text-primary-foreground/90">
                 {item.label}
               </span>
