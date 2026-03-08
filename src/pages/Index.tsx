@@ -50,6 +50,7 @@ const Index = () => {
   const debouncedSearch = useDebouncedValue(search, 250);
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [yieldFilter, setYieldFilter] = useState<"all" | "percent" | "currency">("all");
   const { lastUpdateDate, isLive } = useLiveStatus();
 
   useEffect(() => {
@@ -96,6 +97,12 @@ const Index = () => {
 
   const percentFunds = useMemo(() => processedFunds.filter((f) => f.yield_unit === "%"), [processedFunds]);
   const currencyFunds = useMemo(() => processedFunds.filter((f) => f.yield_unit !== "%"), [processedFunds]);
+  const displayFunds = useMemo(() => {
+    if (yieldFilter === "percent") return percentFunds;
+    if (yieldFilter === "currency") return currencyFunds;
+    return processedFunds;
+  }, [yieldFilter, percentFunds, currencyFunds, processedFunds]);
+  const hasBothTypes = percentFunds.length > 0 && currencyFunds.length > 0;
 
   const bestYield = useMemo(() => {
     const filtered = funds.filter((f) => f.fund_type === selectedCategory);
@@ -158,10 +165,36 @@ const Index = () => {
               </div>
             </div>
 
-            {/* Desktop table — Percentage funds */}
+            {/* Yield unit toggle */}
+            {hasBothTypes && (
+              <div className="flex items-center gap-1.5 mb-4">
+                {(["all", "percent", "currency"] as const).map((opt) => {
+                  const labels = { all: "All", percent: "% Yields", currency: "Currency" };
+                  const counts = { all: processedFunds.length, percent: percentFunds.length, currency: currencyFunds.length };
+                  return (
+                    <button
+                      key={opt}
+                      onClick={() => setYieldFilter(opt)}
+                      className={`inline-flex items-center gap-1.5 rounded-lg text-xs font-medium px-3 h-8 border transition-all ${
+                        yieldFilter === opt
+                          ? "bg-accent text-accent-foreground border-accent shadow-sm"
+                          : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
+                      }`}
+                    >
+                      {labels[opt]}
+                      <span className={`text-[10px] tabular-nums ${yieldFilter === opt ? "text-accent-foreground/70" : "text-muted-foreground/60"}`}>
+                        {counts[opt]}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+
+            {/* Desktop table */}
             <div className="hidden md:block">
               <FundTable
-                funds={percentFunds}
+                funds={displayFunds}
                 snapshots={snapshots}
                 bestYield={bestYield}
                 sortKey={sortKey}
@@ -173,10 +206,10 @@ const Index = () => {
               />
             </div>
 
-            {/* Mobile cards — Percentage funds */}
+            {/* Mobile cards */}
             <div className="md:hidden">
               <FundMobileCards
-                funds={percentFunds}
+                funds={displayFunds}
                 snapshots={snapshots}
                 bestYield={bestYield}
                 loading={loading}
@@ -184,42 +217,6 @@ const Index = () => {
                 hasSearch={!!debouncedSearch.trim()}
               />
             </div>
-
-            {/* Currency-unit funds section */}
-            {currencyFunds.length > 0 && (
-              <>
-                <div className="mt-6 mb-3 flex items-center gap-2">
-                  <div className="h-px flex-1 bg-border" />
-                  <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider px-2">Currency-Denominated Yields</span>
-                  <div className="h-px flex-1 bg-border" />
-                </div>
-
-                <div className="hidden md:block">
-                  <FundTable
-                    funds={currencyFunds}
-                    snapshots={snapshots}
-                    bestYield={bestYield}
-                    sortKey={sortKey}
-                    sortDir={sortDir}
-                    onToggleSort={toggleSort}
-                    loading={loading}
-                    onClearSearch={clearSearch}
-                    hasSearch={!!debouncedSearch.trim()}
-                  />
-                </div>
-
-                <div className="md:hidden">
-                  <FundMobileCards
-                    funds={currencyFunds}
-                    snapshots={snapshots}
-                    bestYield={bestYield}
-                    loading={loading}
-                    onClearSearch={clearSearch}
-                    hasSearch={!!debouncedSearch.trim()}
-                  />
-                </div>
-              </>
-            )}
 
             {/* Mobile disclaimer */}
             <div className="md:hidden mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
