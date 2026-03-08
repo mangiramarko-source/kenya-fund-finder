@@ -132,18 +132,25 @@ const AdminAds = () => {
     const file = e.target.files?.[0];
     if (!file) return;
 
-    const maxSize = 50 * 1024 * 1024; // 50MB
+    // Storage default limit is usually 6MB for free tier
+    const maxSize = 6 * 1024 * 1024;
     if (file.size > maxSize) {
-      toast.error("File too large. Max 50MB.");
+      toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max 6MB.`);
       return;
     }
 
     setUploading(true);
+    toast.info("Uploading " + file.name + "...");
+
     try {
       const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
       const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
-      const { data, error } = await supabase.storage.from("ads").upload(path, file, {
+      // Read file as ArrayBuffer for more reliable upload
+      const arrayBuffer = await file.arrayBuffer();
+      const blob = new Blob([arrayBuffer], { type: file.type });
+
+      const { data, error } = await supabase.storage.from("ads").upload(path, blob, {
         cacheControl: "3600",
         upsert: false,
         contentType: file.type,
@@ -152,7 +159,6 @@ const AdminAds = () => {
       if (error) {
         console.error("Storage upload error:", JSON.stringify(error));
         toast.error("Upload failed: " + error.message);
-        setUploading(false);
         return;
       }
 
@@ -163,10 +169,10 @@ const AdminAds = () => {
         media_url: urlData.publicUrl,
         media_type: isVideo ? "video" as const : "image" as const,
       }));
-      toast.success("File uploaded successfully");
+      toast.success("File uploaded successfully!");
     } catch (err: any) {
       console.error("Upload exception:", err);
-      toast.error("Upload error: " + (err?.message || "Unknown error"));
+      toast.error("Upload error: " + (err?.message || String(err)));
     } finally {
       setUploading(false);
     }
