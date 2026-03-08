@@ -154,7 +154,7 @@ const NewsPage = () => {
 
       {/* Filters — horizontal scroll on mobile, sort inline */}
       <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3 mb-5 sm:mb-6">
-        <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap snap-x snap-mandatory">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide sm:flex-wrap snap-x snap-mandatory">
           {categories.map((cat) => {
             const Icon = categoryIcons[cat];
             const isActive = activeCategory === cat;
