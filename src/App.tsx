@@ -6,7 +6,7 @@ import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import Layout from "@/components/Layout";
 import Index from "./pages/Index";
-import ComparePage from "./pages/ComparePage";
+import { Navigate } from "react-router-dom";
 import FundDetailPage from "./pages/FundDetailPage";
 import CalculatorPage from "./pages/CalculatorPage";
 import NewsPage from "./pages/NewsPage";
