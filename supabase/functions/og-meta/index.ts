@@ -18,7 +18,7 @@ function getCorsHeaders(req: Request) {
 // Static page meta
 const staticPages: Record<string, { title: string; description: string }> = {
   "/": {
-    title: "Fund Finder Kenya – Compare Investment Funds in Kenya",
+    title: "Kenya Fund Finder – Compare Investment Funds in Kenya",
     description:
       "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.",
   },
