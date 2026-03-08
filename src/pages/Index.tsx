@@ -65,7 +65,6 @@ const Index = () => {
       return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
     });
   }, [funds]);
-  }, [funds]);
   const categoryCount = useMemo(() => {
     const counts: Record<string, number> = {};
     funds.forEach((f) => { counts[f.fund_type] = (counts[f.fund_type] || 0) + 1; });
