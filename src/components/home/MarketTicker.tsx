@@ -56,8 +56,8 @@ export function useMarketData() {
         .select("id, name, symbol, price, previous_price, unit, updated_at")
         .order("sort_order"),
     ]);
-    setRates((ratesRes.data as ExchangeRate[]) || []);
-    setCommodities((commoditiesRes.data as Commodity[]) || []);
+    setRates((ratesRes.data as any as ExchangeRate[]) || []);
+    setCommodities((commoditiesRes.data as any as Commodity[]) || []);
     setLoading(false);
   };
 
