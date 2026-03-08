@@ -215,14 +215,17 @@ const Index = () => {
                       </td>
                       <td className="px-4 py-3.5 text-right whitespace-nowrap tabular-nums">
                         <span className="font-bold text-accent text-base">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
-                        {snapshots[fund.id] && (
-                          <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[10px] ml-1.5 inline-block" />
-                        )}
                       </td>
                       <td className="px-4 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground">
                         {formatYield(fund.daily_yield, fund.yield_unit)}
                       </td>
-                      <td className="px-4 py-3.5 text-right tabular-nums text-muted-foreground">{fund.management_fee}%</td>
+                      <td className="px-4 py-3.5 text-right whitespace-nowrap">
+                        {snapshots[fund.id] ? (
+                          <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-xs justify-end" />
+                        ) : (
+                          <span className="text-xs text-muted-foreground">—</span>
+                        )}
+                      </td>
                       <td className="px-4 py-3.5 text-right">
                         <Link to={`/compare/${fund.slug}`} className="text-accent hover:text-accent/80 transition-colors">
                           <ArrowRight className="h-4 w-4 inline-block" />
