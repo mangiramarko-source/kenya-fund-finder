@@ -17,20 +17,31 @@ interface Ad {
 }
 
 const AdBanner = ({ placement, className = "" }: AdBannerProps) => {
-  const { data: ads = [] } = useQuery({
+  const { data: ads = [], error } = useQuery({
     queryKey: ["ads", placement],
     queryFn: async () => {
-      const today = new Date().toISOString().split("T")[0];
+      // Simple query - date filtering done client-side to avoid .or() chaining issues
       const { data, error } = await supabase
         .from("ads")
-        .select("id, title, description, media_type, media_url, click_url, placement")
+        .select("id, title, description, media_type, media_url, click_url, placement, start_date, end_date")
         .eq("is_active", true)
         .eq("placement", placement)
-        .or(`start_date.is.null,start_date.lte.${today}`)
-        .or(`end_date.is.null,end_date.gte.${today}`)
-        .limit(1);
-      if (error) throw error;
-      return data as Ad[];
+        .limit(5);
+
+      if (error) {
+        console.error("AdBanner query error:", error);
+        throw error;
+      }
+
+      // Client-side date filtering
+      const today = new Date().toISOString().split("T")[0];
+      const filtered = (data || []).filter((ad: any) => {
+        if (ad.start_date && ad.start_date > today) return false;
+        if (ad.end_date && ad.end_date < today) return false;
+        return true;
+      });
+
+      return filtered as Ad[];
     },
     staleTime: 5 * 60 * 1000,
   });
