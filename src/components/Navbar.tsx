@@ -74,7 +74,7 @@ const Navbar = () => {
           <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
             <TrendingUp className="h-5 w-5" />
           </div>
-          <span className="hidden sm:inline">Fund Finder</span>
+          <span className="hidden sm:inline">Kenya Fund Finder</span>
         </Link>
 
         {/* Desktop nav */}
