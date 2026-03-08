@@ -77,7 +77,7 @@ const Navbar = () => {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 bg-muted/60 rounded-full px-1.5 py-1">
-          {navLinks.filter(l => l.to !== "/").map((link) => {
+          {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
             return (
