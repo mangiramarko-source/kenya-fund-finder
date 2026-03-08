@@ -25,7 +25,6 @@ export interface FundFromDB {
   description: string;
   website: string;
   fact_sheet_date: string | null;
-  source_url: string | null;
   yield_unit: string;
   is_published: boolean;
   updated_at: string;
