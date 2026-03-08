@@ -60,6 +60,7 @@ const AdminAds = () => {
   const [form, setForm] = useState(emptyAd);
   const [uploading, setUploading] = useState(false);
   const [previewAd, setPreviewAd] = useState<Ad | null>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { data: ads = [], isLoading } = useQuery({
     queryKey: ["admin-ads"],
