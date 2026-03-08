@@ -195,6 +195,7 @@ const Index = () => {
                     <th className="text-left px-4 py-3"><SortHeader label="Fund" field="name" /></th>
                     <th className="text-right px-4 py-3"><SortHeader label="Annual Rate" field="annual_yield" className="justify-end" /></th>
                     <th className="text-right px-4 py-3"><SortHeader label="Daily Yield" field="daily_yield" className="justify-end" /></th>
+                    <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Change</th>
                     <th className="text-right px-4 py-3"><SortHeader label="Fee" field="management_fee" className="justify-end" /></th>
                     <th className="px-4 py-3"></th>
                   </tr>
