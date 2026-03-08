@@ -190,8 +190,8 @@ const FundDetailPage = () => {
         </div>
       </div>
 
-      {/* Hero metrics — always visible */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
+      {/* Hero metrics — yields always visible, fee & min gated */}
+      <div className={`grid grid-cols-2 ${isAuthenticated ? "md:grid-cols-4" : ""} gap-3 mb-6`}>
         <MetricCard
           label="Annual Rate"
           value={formatYield(fund.annual_yield, fund.yield_unit)}
@@ -205,17 +205,21 @@ const FundDetailPage = () => {
           change={prevSnapshot ? <YieldChange current={fund.daily_yield} previous={prevSnapshot.daily_yield} unit={fund.yield_unit} className="text-xs" /> : undefined}
           accent
         />
-        <MetricCard
-          label="Management Fee"
-          value={`${fund.management_fee}%`}
-          subtext={peerStats ? `Avg: ${peerStats.avgFee.toFixed(2)}%` : undefined}
-          icon={<Wallet className="h-4 w-4" />}
-        />
-        <MetricCard
-          label="Min. Investment"
-          value={`KES ${fund.minimum_investment.toLocaleString()}`}
-          icon={<TrendingUp className="h-4 w-4" />}
-        />
+        {isAuthenticated && (
+          <>
+            <MetricCard
+              label="Management Fee"
+              value={`${fund.management_fee}%`}
+              subtext={peerStats ? `Avg: ${peerStats.avgFee.toFixed(2)}%` : undefined}
+              icon={<Wallet className="h-4 w-4" />}
+            />
+            <MetricCard
+              label="Min. Investment"
+              value={`KES ${fund.minimum_investment.toLocaleString()}`}
+              icon={<TrendingUp className="h-4 w-4" />}
+            />
+          </>
+        )}
       </div>
 
       {isAuthenticated ? (
