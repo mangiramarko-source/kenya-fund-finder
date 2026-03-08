@@ -1,13 +1,13 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Globe } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminFunds from "./admin/AdminFunds";
 import AdminNews from "./admin/AdminNews";
 import AdminChangeLog from "./admin/AdminChangeLog";
 import AdminPages from "./admin/AdminPages";
-
+import AdminAds from "./admin/AdminAds";
 import AdminMarkets from "./admin/AdminMarkets";
 
 const AdminPage = () => {
@@ -33,7 +33,7 @@ const AdminPage = () => {
   return (
     <div className="container py-6">
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-6 max-w-3xl">
+        <TabsList className="grid w-full grid-cols-7 max-w-3xl">
           <TabsTrigger value="dashboard" className="gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -45,6 +45,10 @@ const AdminPage = () => {
           <TabsTrigger value="news" className="gap-1.5">
             <Newspaper className="h-4 w-4" />
             <span className="hidden sm:inline">News</span>
+          </TabsTrigger>
+          <TabsTrigger value="ads" className="gap-1.5">
+            <Megaphone className="h-4 w-4" />
+            <span className="hidden sm:inline">Ads</span>
           </TabsTrigger>
           <TabsTrigger value="pages" className="gap-1.5">
             <FileText className="h-4 w-4" />
@@ -63,7 +67,7 @@ const AdminPage = () => {
         <TabsContent value="dashboard"><AdminDashboard /></TabsContent>
         <TabsContent value="funds"><AdminFunds /></TabsContent>
         <TabsContent value="news"><AdminNews /></TabsContent>
-        
+        <TabsContent value="ads"><AdminAds /></TabsContent>
         <TabsContent value="pages"><AdminPages /></TabsContent>
         <TabsContent value="markets"><AdminMarkets /></TabsContent>
         <TabsContent value="log"><AdminChangeLog /></TabsContent>

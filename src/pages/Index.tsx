@@ -297,7 +297,9 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
 
           {/* Desktop sidebar */}
           <aside className="hidden xl:block space-y-4">
+            <AdBanner placement="sidebar" />
             <NewsSidebar news={latestNews} loading={loading} />
+            <AdBanner placement="banner" />
           </aside>
         </div>
       </div>
