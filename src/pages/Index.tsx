@@ -178,6 +178,7 @@ const Index = () => {
                 </button>
               ))}
             </div>
+            <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
 
             {/* Search + actions */}
             <div className="flex gap-2 mb-4">
