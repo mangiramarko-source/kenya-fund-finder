@@ -410,11 +410,41 @@ const FundDetailPage = () => {
           </div>
         </>
       ) : (
-        <AuthGate
-          source="fund_detail"
-          title="Sign up to see full fund details"
-          description="Get access to performance context, historical charts, similar funds, and investment tools — completely free."
-        />
+        <>
+          {/* Blurred chart teaser */}
+          <div className="relative rounded-xl border border-border bg-card p-4 mb-6 overflow-hidden">
+            <h2 className="text-lg font-semibold mb-3 text-muted-foreground/60">Rate History</h2>
+            <div className="h-56 blur-md pointer-events-none select-none opacity-60" aria-hidden="true">
+              <svg viewBox="0 0 400 150" className="w-full h-full" preserveAspectRatio="none">
+                <defs>
+                  <linearGradient id="blurGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity="0.3" />
+                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0" />
+                  </linearGradient>
+                </defs>
+                <path d="M0,120 Q50,100 100,90 T200,70 T300,50 T400,60" fill="none" stroke="hsl(var(--accent))" strokeWidth="2" />
+                <path d="M0,120 Q50,100 100,90 T200,70 T300,50 T400,60 L400,150 L0,150 Z" fill="url(#blurGrad)" />
+                {/* Fake grid lines */}
+                {[30, 60, 90, 120].map((y) => (
+                  <line key={y} x1="0" y1={y} x2="400" y2={y} stroke="hsl(var(--border))" strokeWidth="0.5" strokeDasharray="4 4" />
+                ))}
+              </svg>
+            </div>
+            <div className="absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-[1px]">
+              <div className="text-center">
+                <BarChart3 className="h-8 w-8 text-accent mx-auto mb-2" />
+                <p className="text-sm font-semibold mb-1">Unlock Performance Charts</p>
+                <p className="text-xs text-muted-foreground">Sign up to view rate history & trends</p>
+              </div>
+            </div>
+          </div>
+
+          <AuthGate
+            source="fund_detail"
+            title="Sign up to see full fund details"
+            description="Get access to performance context, historical charts, similar funds, and investment tools — completely free."
+          />
+        </>
       )}
 
       <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">
