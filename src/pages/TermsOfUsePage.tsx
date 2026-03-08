@@ -12,7 +12,7 @@ const TermsOfUsePage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">1. Acceptance of Terms</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          By accessing or using Fund Finder Kenya ("the Platform"), you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use the Platform.
+          By accessing or using Kenya Fund Finder ("the Platform"), you agree to be bound by these Terms of Use. If you do not agree to these terms, please do not use the Platform.
         </p>
       </section>
 
