@@ -162,7 +162,7 @@ const CalculatorPage = () => {
     </div>
   );
 
-  /* StatCard moved outside component to avoid forwardRef warnings */
+  
 
   const BreakdownRow = ({ label, value, destructive }: { label: string; value: string; destructive?: boolean }) => (
     <div className="flex items-center justify-between py-2 border-b border-border/50 last:border-0">
