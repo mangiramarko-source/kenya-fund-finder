@@ -92,7 +92,7 @@ const Index = () => {
       return mul * ((a[sortKey] as number) - (b[sortKey] as number));
     });
     return result;
-  }, [funds, selectedCategory, search, sortKey, sortDir]);
+  }, [funds, selectedCategory, debouncedSearch, sortKey, sortDir]);
 
   const bestYield = useMemo(() => {
     const filtered = funds.filter((f) => f.fund_type === selectedCategory);
