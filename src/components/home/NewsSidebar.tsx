@@ -26,18 +26,20 @@ const NewsSkeleton = () => (
 );
 
 const NewsCard = ({ article }: { article: NewsFromDB }) => (
-  <article className="rounded-lg border border-border bg-card p-3 hover:border-accent/20 transition-all">
-    <div className="flex items-center gap-1.5 mb-1.5">
-      <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-accent/10 text-accent uppercase tracking-wider">{article.category}</span>
-      <span className="text-[10px] text-muted-foreground">{article.read_time}</span>
-    </div>
-    <h3 className="font-medium text-xs leading-snug line-clamp-2 mb-1">{article.title}</h3>
-    <p className="text-[11px] text-muted-foreground line-clamp-2">{article.summary}</p>
-    <p className="text-[10px] text-muted-foreground mt-1.5">
-      {article.source && `${article.source} · `}
-      {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
-    </p>
-  </article>
+  <Link to="/news" className="block">
+    <article className="rounded-lg border border-border bg-card p-3 hover:border-accent/20 transition-all cursor-pointer">
+      <div className="flex items-center gap-1.5 mb-1.5">
+        <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-accent/10 text-accent uppercase tracking-wider">{article.category}</span>
+        <span className="text-[10px] text-muted-foreground">{article.read_time}</span>
+      </div>
+      <h3 className="font-medium text-xs leading-snug line-clamp-2 mb-1">{article.title}</h3>
+      <p className="text-[11px] text-muted-foreground line-clamp-2">{article.summary}</p>
+      <p className="text-[10px] text-muted-foreground mt-1.5">
+        {article.source && `${article.source} · `}
+        {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+      </p>
+    </article>
+  </Link>
 );
 
 const NewsSidebar = ({ news, loading }: NewsSidebarProps) => {
