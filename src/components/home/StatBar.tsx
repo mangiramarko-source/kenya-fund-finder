@@ -11,9 +11,10 @@ interface StatBarProps {
   bestYield: number;
   avgYield: number;
   loading: boolean;
+  hideYields?: boolean;
 }
 
-const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading }: StatBarProps) => {
+const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading, hideYields }: StatBarProps) => {
   const stats = [
     { label: "Funds", value: String(fundCount) },
     { label: "Top Yield", value: bestYield ? formatYield(bestYield, "%") : "—", accent: true },
