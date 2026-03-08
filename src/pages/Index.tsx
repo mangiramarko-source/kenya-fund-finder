@@ -50,13 +50,15 @@ const Index = () => {
   const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
-    fetchFunds().then(setFunds).catch(() => {});
-    fetchPublishedNews().then(setNews).catch(() => {});
-    fetchLatestSnapshots().then((data) => {
-      const map: Record<string, YieldSnapshot> = {};
-      data.forEach((s) => { map[s.fund_id] = s; });
-      setSnapshots(map);
-    }).catch(() => {});
+    Promise.all([
+      fetchFunds().then(setFunds).catch(() => {}),
+      fetchPublishedNews().then(setNews).catch(() => {}),
+      fetchLatestSnapshots().then((data) => {
+        const map: Record<string, YieldSnapshot> = {};
+        data.forEach((s) => { map[s.fund_id] = s; });
+        setSnapshots(map);
+      }).catch(() => {}),
+    ]).finally(() => setLoading(false));
   }, []);
 
   const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
