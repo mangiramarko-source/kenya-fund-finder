@@ -166,7 +166,7 @@ const Index = () => {
                 onToggleSort={toggleSort}
                 loading={loading}
                 onClearSearch={clearSearch}
-                hasSearch={!!search.trim()}
+                hasSearch={!!debouncedSearch.trim()}
               />
             </div>
 
