@@ -44,21 +44,35 @@ export function useMarketData() {
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    Promise.all([
+  const fetchData = async () => {
+    setLoading(true);
+    const [ratesRes, commoditiesRes] = await Promise.all([
       supabase
         .from("exchange_rates")
         .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
         .eq("is_active", true)
-        .order("sort_order")
-        .then(({ data }) => setRates((data as ExchangeRate[]) || [])),
+        .order("sort_order"),
       supabase
         .from("commodities")
         .select("id, name, symbol, price, previous_price, unit, updated_at")
         .eq("is_active", true)
-        .order("sort_order")
-        .then(({ data }) => setCommodities((data as Commodity[]) || [])),
-    ]).finally(() => setLoading(false));
+        .order("sort_order"),
+    ]);
+    setRates((ratesRes.data as ExchangeRate[]) || []);
+    setCommodities((commoditiesRes.data as Commodity[]) || []);
+    setLoading(false);
+  };
+
+  useEffect(() => {
+    fetchData();
+
+    const channel = supabase
+      .channel("market-realtime")
+      .on("postgres_changes", { event: "*", schema: "public", table: "exchange_rates" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "commodities" }, () => fetchData())
+      .subscribe();
+
+    return () => { supabase.removeChannel(channel); };
   }, []);
 
   return { rates, commodities, loading };
