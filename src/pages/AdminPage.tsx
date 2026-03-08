@@ -46,10 +46,6 @@ const AdminPage = () => {
             <Newspaper className="h-4 w-4" />
             <span className="hidden sm:inline">News</span>
           </TabsTrigger>
-          <TabsTrigger value="ads" className="gap-1.5">
-            <Megaphone className="h-4 w-4" />
-            <span className="hidden sm:inline">Ads</span>
-          </TabsTrigger>
           <TabsTrigger value="pages" className="gap-1.5">
             <FileText className="h-4 w-4" />
             <span className="hidden sm:inline">Pages</span>
