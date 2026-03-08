@@ -11,14 +11,17 @@ interface StatBarProps {
   bestYield: number;
   avgYield: number;
   loading: boolean;
+  hideYields?: boolean;
 }
 
-const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading }: StatBarProps) => {
-  const stats = [
-    { label: "Funds", value: String(fundCount) },
-    { label: "Top Yield", value: bestYield ? formatYield(bestYield, "%") : "—", accent: true },
-    { label: "Avg Yield", value: avgYield ? `${avgYield.toFixed(2)}%` : "—" },
-  ];
+const StatBar = ({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading, hideYields }: StatBarProps) => {
+  const stats = hideYields
+    ? [{ label: "Items", value: String(fundCount) }]
+    : [
+        { label: "Funds", value: String(fundCount) },
+        { label: "Top Yield", value: bestYield ? formatYield(bestYield, "%") : "—", accent: true },
+        { label: "Avg Yield", value: avgYield ? `${avgYield.toFixed(2)}%` : "—" },
+      ];
 
   return (
     <div className="border-b border-border bg-card">
