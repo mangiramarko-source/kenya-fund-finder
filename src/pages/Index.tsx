@@ -14,6 +14,7 @@ import CategoryTabs from "@/components/home/CategoryTabs";
 import FundTable from "@/components/home/FundTable";
 import FundMobileCards from "@/components/home/FundMobileCards";
 import NewsSidebar from "@/components/home/NewsSidebar";
+import AdBanner from "@/components/AdBanner";
 
 type SortKey = "annual_yield" | "daily_yield" | "management_fee" | "minimum_investment" | "name";
 type SortDir = "asc" | "desc";
