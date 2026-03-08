@@ -162,14 +162,15 @@ const NewsPage = () => {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:px-3.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 border snap-start min-h-[36px] ${
+                className={`inline-flex items-center justify-center gap-1.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 border snap-start h-9 ${
+                  Icon ? "px-3 sm:px-3.5" : "px-4 sm:px-5"
+                } ${
                   isActive
                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
                     : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
                 }`}
               >
-                {Icon ? <Icon className="h-3.5 w-3.5" /> : null}
-                {!Icon && <span className="w-3.5" />}
+                {Icon && <Icon className="h-3.5 w-3.5" />}
                 {cat}
               </button>
             );
