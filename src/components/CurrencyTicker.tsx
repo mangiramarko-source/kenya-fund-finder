@@ -53,9 +53,11 @@ const CurrencyTicker = () => {
 
   return (
     <div
-      className="w-full bg-[hsl(220,60%,12%)] overflow-hidden border-b border-border/30"
+      className="w-full bg-[hsl(220,60%,12%)] overflow-x-auto scrollbar-hide border-b border-border/30 cursor-grab active:cursor-grabbing"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
+      onTouchStart={() => setPaused(true)}
+      onTouchEnd={() => setPaused(false)}
     >
       <div
         ref={scrollRef}
