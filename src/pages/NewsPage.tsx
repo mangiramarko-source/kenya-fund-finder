@@ -162,7 +162,7 @@ const NewsPage = () => {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`inline-flex items-center gap-1.5 px-3 py-2 sm:px-3.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 border snap-start ${
+                className={`inline-flex items-center justify-center gap-1.5 px-3 py-2 sm:px-3.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 border snap-start min-h-[36px] ${
                   isActive
                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
                     : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
