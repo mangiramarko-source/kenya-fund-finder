@@ -37,6 +37,8 @@ const Index = () => {
     },
   });
 
+  const [loading, setLoading] = useState(true);
+
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
