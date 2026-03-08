@@ -9,7 +9,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, History, Upload } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, History, Upload, CalendarDays, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type FundType, FUND_TYPE_LABELS, YIELD_UNITS } from "@/lib/api";
 import AdminYieldHistory from "./AdminYieldHistory";
@@ -53,6 +53,8 @@ const AdminFunds = () => {
   const [fundViews, setFundViews] = useState<Record<string, number>>({});
   const [historyFund, setHistoryFund] = useState<{ id: string; name: string; yield_unit: string } | null>(null);
   const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  const [snapshotDate, setSnapshotDate] = useState<string>("");
+  const [snapshotYields, setSnapshotYields] = useState<Record<string, { annual_yield: number; daily_yield: number }>>({});
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -73,6 +75,25 @@ const AdminFunds = () => {
   };
 
   useEffect(() => { load(); }, []);
+
+  // Load snapshot yields when date filter changes
+  useEffect(() => {
+    if (!snapshotDate) {
+      setSnapshotYields({});
+      return;
+    }
+    supabase
+      .from("fund_yield_snapshots")
+      .select("fund_id, annual_yield, daily_yield")
+      .eq("snapshot_date", snapshotDate)
+      .then(({ data }) => {
+        const map: Record<string, { annual_yield: number; daily_yield: number }> = {};
+        (data || []).forEach((s) => {
+          map[s.fund_id] = { annual_yield: Number(s.annual_yield), daily_yield: Number(s.daily_yield) };
+        });
+        setSnapshotYields(map);
+      });
+  }, [snapshotDate]);
 
   const filtered = funds
     .filter((f) =>
@@ -325,7 +346,36 @@ const AdminFunds = () => {
             ))}
           </SelectContent>
         </Select>
+        <div className="flex items-center gap-2">
+          <div className="relative">
+            <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
+            <Input
+              type="date"
+              value={snapshotDate}
+              onChange={(e) => setSnapshotDate(e.target.value)}
+              className="pl-9 w-[180px]"
+              placeholder="Filter by date"
+            />
+          </div>
+          {snapshotDate && (
+            <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0" onClick={() => setSnapshotDate("")} title="Clear date filter">
+              <X className="h-4 w-4" />
+            </Button>
+          )}
+        </div>
       </div>
+
+      {snapshotDate && (
+        <div className="mb-3 rounded-lg bg-muted/50 border border-border px-3 py-2 text-sm flex items-center gap-2">
+          <CalendarDays className="h-4 w-4 text-accent shrink-0" />
+          <span>
+            Showing yields for <strong>{new Date(snapshotDate + "T00:00:00").toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</strong>.
+            {Object.keys(snapshotYields).length === 0
+              ? " No snapshots found for this date."
+              : ` ${Object.keys(snapshotYields).length} fund snapshots found.`}
+          </span>
+        </div>
+      )}
 
       <div className="rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
@@ -364,7 +414,14 @@ const AdminFunds = () => {
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground hidden md:table-cell">{FUND_TYPE_LABELS[fund.fund_type] || "Money Market"}</td>
                   <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">{fund.manager}</td>
-                  <td className="px-3 py-2 text-right font-semibold text-accent">{Number(fund.annual_yield)}%</td>
+                  <td className="px-3 py-2 text-right font-semibold text-accent">
+                    {snapshotDate && snapshotYields[fund.id]
+                      ? <span title={`Snapshot: ${snapshotDate}`}>{Number(snapshotYields[fund.id].annual_yield).toFixed(2)}{fund.yield_unit === "%" ? "%" : ` ${fund.yield_unit}`}</span>
+                      : snapshotDate
+                        ? <span className="text-muted-foreground text-xs">—</span>
+                        : <span>{Number(fund.annual_yield)}{fund.yield_unit === "%" ? "%" : ` ${fund.yield_unit}`}</span>
+                    }
+                  </td>
                   <td className="px-3 py-2 text-right hidden md:table-cell">{Number(fund.management_fee)}%</td>
                   <td className="px-3 py-2 text-right hidden md:table-cell text-muted-foreground">{fundViews[fund.slug] || 0}</td>
                   <td className="px-3 py-2 text-center hidden md:table-cell">
