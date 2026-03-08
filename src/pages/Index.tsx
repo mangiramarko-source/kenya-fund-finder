@@ -47,6 +47,7 @@ const Index = () => {
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("money_market");
   const [search, setSearch] = useState("");
+  const debouncedSearch = useDebouncedValue(search, 250);
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const { lastUpdateDate, isLive } = useLiveStatus();
