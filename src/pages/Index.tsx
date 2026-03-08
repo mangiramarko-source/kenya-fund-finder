@@ -56,9 +56,13 @@ const Index = () => {
     }).catch(() => {});
   }, []);
 
-  const categories = useMemo(() => [...new Set(funds.map((f) => f.fund_type))].sort(), [funds]);
+  const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
+  const categories = useMemo(() => {
+    const present = [...new Set(funds.map((f) => f.fund_type))];
+    return categoryOrder.filter((c) => present.includes(c)).concat(present.filter((c) => !categoryOrder.includes(c)));
+  }, [funds]);
   const categoryCount = useMemo(() => {
-    const counts: Record<string, number> = { all: funds.length };
+    const counts: Record<string, number> = {};
     funds.forEach((f) => { counts[f.fund_type] = (counts[f.fund_type] || 0) + 1; });
     return counts;
   }, [funds]);
