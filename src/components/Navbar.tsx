@@ -291,9 +291,9 @@ const Navbar = () => {
                 </Link>
               );
             })}
-
-            {user ? (
+            {user && (
               <>
+                <div className="h-px bg-border my-2" />
                 <Link
                   to="/profile"
                   onClick={closeMobile}
@@ -308,14 +308,6 @@ const Navbar = () => {
                   <LogOut className="h-5 w-5" /> Sign Out
                 </button>
               </>
-            ) : (
-              <Link
-                to="/auth"
-                onClick={closeMobile}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-              >
-                <User className="h-5 w-5" /> Sign In
-              </Link>
             )}
           </nav>
         </SheetContent>
