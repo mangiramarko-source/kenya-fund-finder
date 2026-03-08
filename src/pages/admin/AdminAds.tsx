@@ -7,29 +7,63 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Switch } from "@/components/ui/switch";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Eye, EyeOff, BarChart3 } from "lucide-react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
+import {
+  Plus,
+  Pencil,
+  Trash2,
+  Image,
+  Video,
+  ExternalLink,
+  Eye,
+  EyeOff,
+  BarChart3,
+  Upload,
+  Loader2,
+} from "lucide-react";
 import { toast } from "sonner";
 
+/* ─── Types ─── */
 interface Ad {
   id: string;
   title: string;
   description: string;
-  media_type: "image" | "video";
+  media_type: string;
   media_url: string;
   click_url: string;
-  placement: "sidebar" | "banner" | "in-feed";
+  placement: string;
   is_active: boolean;
   start_date: string | null;
   end_date: string | null;
   created_at: string;
 }
 
-type AdForm = {
+interface AdForm {
   title: string;
   description: string;
   media_type: "image" | "video";
@@ -39,9 +73,9 @@ type AdForm = {
   is_active: boolean;
   start_date: string;
   end_date: string;
-};
+}
 
-const emptyAd: AdForm = {
+const blank: AdForm = {
   title: "",
   description: "",
   media_type: "image",
@@ -53,16 +87,17 @@ const emptyAd: AdForm = {
   end_date: "",
 };
 
+/* ─── Component ─── */
 const AdminAds = () => {
   const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingAd, setEditingAd] = useState<Ad | null>(null);
-  const [form, setForm] = useState(emptyAd);
+  const qc = useQueryClient();
+  const [open, setOpen] = useState(false);
+  const [editing, setEditing] = useState<Ad | null>(null);
+  const [form, setForm] = useState<AdForm>(blank);
   const [uploading, setUploading] = useState(false);
-  const [previewAd, setPreviewAd] = useState<Ad | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
+  const fileRef = useRef<HTMLInputElement>(null);
 
+  /* ── Queries ── */
   const { data: ads = [], isLoading } = useQuery({
     queryKey: ["admin-ads"],
     queryFn: async () => {
@@ -75,351 +110,408 @@ const AdminAds = () => {
     },
   });
 
-  // Fetch ad event stats
-  const { data: adStats = {} } = useQuery({
+  const { data: stats = {} } = useQuery({
     queryKey: ["admin-ad-stats"],
     queryFn: async () => {
       const { data, error } = await supabase
         .from("ad_events")
         .select("ad_id, event_type");
       if (error) throw error;
-      const stats: Record<string, { impressions: number; clicks: number }> = {};
+      const map: Record<string, { impressions: number; clicks: number }> = {};
       (data || []).forEach((e: any) => {
-        if (!stats[e.ad_id]) stats[e.ad_id] = { impressions: 0, clicks: 0 };
-        if (e.event_type === "impression") stats[e.ad_id].impressions++;
-        else if (e.event_type === "click") stats[e.ad_id].clicks++;
+        if (!map[e.ad_id]) map[e.ad_id] = { impressions: 0, clicks: 0 };
+        if (e.event_type === "impression") map[e.ad_id].impressions++;
+        else if (e.event_type === "click") map[e.ad_id].clicks++;
       });
-      return stats;
+      return map;
     },
   });
 
-  const saveMutation = useMutation({
-    mutationFn: async (adData: typeof form) => {
-      // Validate click_url scheme
-      if (adData.click_url && !/^https?:\/\//i.test(adData.click_url)) {
+  /* ── Mutations ── */
+  const invalidate = () => qc.invalidateQueries({ queryKey: ["admin-ads"] });
+
+  const saveMut = useMutation({
+    mutationFn: async (f: AdForm) => {
+      if (!f.title.trim()) throw new Error("Title is required");
+      if (!f.media_url.trim()) throw new Error("Media URL is required");
+      if (f.click_url && !/^https?:\/\//i.test(f.click_url)) {
         throw new Error("Click URL must start with http:// or https://");
       }
+
       const payload = {
-        title: adData.title,
-        description: adData.description,
-        media_type: adData.media_type,
-        media_url: adData.media_url,
-        click_url: adData.click_url,
-        placement: adData.placement,
-        is_active: adData.is_active,
-        start_date: adData.start_date || null,
-        end_date: adData.end_date || null,
-        updated_by: user?.id,
+        title: f.title.trim(),
+        description: f.description.trim(),
+        media_type: f.media_type,
+        media_url: f.media_url.trim(),
+        click_url: f.click_url.trim(),
+        placement: f.placement,
+        is_active: f.is_active,
+        start_date: f.start_date || null,
+        end_date: f.end_date || null,
+        updated_by: user?.id ?? null,
       };
 
-      if (editingAd) {
-        const { error } = await supabase.from("ads").update(payload).eq("id", editingAd.id);
+      if (editing) {
+        const { error } = await supabase.from("ads").update(payload).eq("id", editing.id);
         if (error) throw error;
       } else {
-        const { error } = await supabase.from("ads").insert({ ...payload, created_by: user?.id });
+        const { error } = await supabase.from("ads").insert({ ...payload, created_by: user?.id ?? null });
         if (error) throw error;
       }
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-ads"] });
-      toast.success(editingAd ? "Ad updated" : "Ad created");
-      closeDialog();
+      invalidate();
+      toast.success(editing ? "Ad updated" : "Ad created");
+      close();
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e: any) => toast.error(e.message),
   });
 
-  const deleteMutation = useMutation({
+  const deleteMut = useMutation({
     mutationFn: async (id: string) => {
+      // Delete related events first
+      await supabase.from("ad_events").delete().eq("ad_id", id);
       const { error } = await supabase.from("ads").delete().eq("id", id);
       if (error) throw error;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-ads"] });
+      invalidate();
+      qc.invalidateQueries({ queryKey: ["admin-ad-stats"] });
       toast.success("Ad deleted");
     },
-    onError: (e) => toast.error(e.message),
+    onError: (e: any) => toast.error(e.message),
   });
 
-  const toggleMutation = useMutation({
-    mutationFn: async ({ id, is_active }: { id: string; is_active: boolean }) => {
-      const { error } = await supabase.from("ads").update({ is_active }).eq("id", id);
+  const toggleMut = useMutation({
+    mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
+      const { error } = await supabase.from("ads").update({ is_active: active }).eq("id", id);
       if (error) throw error;
     },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["admin-ads"] });
-    },
-    onError: (e) => toast.error(e.message),
+    onSuccess: invalidate,
+    onError: (e: any) => toast.error(e.message),
   });
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  /* ── File upload ── */
+  const handleUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (!file) {
-      toast.error("No file selected");
-      return;
-    }
-
-    toast.info(`Selected: ${file.name} (${(file.size / 1024).toFixed(0)}KB, ${file.type})`);
-
+    if (!file) return;
     if (file.size > 10 * 1024 * 1024) {
-      toast.error(`File too large (${(file.size / 1024 / 1024).toFixed(1)}MB). Max 10MB.`);
+      toast.error("File too large. Max 10 MB.");
       return;
     }
 
     setUploading(true);
-
     try {
+      const { data: session } = await supabase.auth.getSession();
+      if (!session?.session) throw new Error("Not authenticated");
+
       const ext = file.name.split(".").pop()?.toLowerCase() || "bin";
-      const fileName = `${Date.now()}.${ext}`;
+      const path = `${Date.now()}-${Math.random().toString(36).slice(2, 8)}.${ext}`;
 
-      // Get current session to verify auth
-      const { data: sessionData } = await supabase.auth.getSession();
-      if (!sessionData?.session) {
-        toast.error("Not authenticated. Please log in again.");
-        setUploading(false);
-        return;
-      }
+      const { error: upErr } = await supabase.storage.from("ads").upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+      });
+      if (upErr) throw upErr;
 
-      toast.info("Uploading to storage...");
-
-      const { data, error } = await supabase.storage
-        .from("ads")
-        .upload(fileName, file);
-
-      if (error) {
-        toast.error("Upload failed: " + error.message);
-        console.error("Upload error details:", error);
-        setUploading(false);
-        return;
-      }
-
-      toast.success("Upload complete! Getting URL...");
-
-      const { data: urlData } = supabase.storage.from("ads").getPublicUrl(fileName);
+      const { data: urlData } = supabase.storage.from("ads").getPublicUrl(path);
       const isVideo = file.type.startsWith("video/");
-      setForm((f) => ({
-        ...f,
+
+      setForm((prev) => ({
+        ...prev,
         media_url: urlData.publicUrl,
-        media_type: isVideo ? "video" as const : "image" as const,
+        media_type: isVideo ? "video" : "image",
       }));
-      toast.success("Media ready!");
+      toast.success("Upload complete");
     } catch (err: any) {
-      console.error("Upload catch:", err);
-      toast.error("Error: " + (err?.message || String(err)));
+      console.error("Upload error:", err);
+      toast.error("Upload failed: " + (err?.message || String(err)));
     } finally {
       setUploading(false);
+      // Reset file input so same file can be re-selected
+      if (fileRef.current) fileRef.current.value = "";
     }
   };
 
+  /* ── Dialog helpers ── */
   const openCreate = () => {
-    setEditingAd(null);
-    setForm(emptyAd);
-    setDialogOpen(true);
+    setEditing(null);
+    setForm(blank);
+    setOpen(true);
   };
 
   const openEdit = (ad: Ad) => {
-    setEditingAd(ad);
+    setEditing(ad);
     setForm({
       title: ad.title,
       description: ad.description,
-      media_type: ad.media_type,
+      media_type: ad.media_type as "image" | "video",
       media_url: ad.media_url,
       click_url: ad.click_url,
-      placement: ad.placement,
+      placement: ad.placement as "sidebar" | "banner" | "in-feed",
       is_active: ad.is_active,
       start_date: ad.start_date || "",
       end_date: ad.end_date || "",
     });
-    setDialogOpen(true);
+    setOpen(true);
   };
 
-  const closeDialog = () => {
-    setDialogOpen(false);
-    setEditingAd(null);
-    setForm(emptyAd);
+  const close = () => {
+    setOpen(false);
+    setEditing(null);
+    setForm(blank);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const submit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!form.title.trim()) return toast.error("Title is required");
-    if (!form.media_url.trim()) return toast.error("Media is required");
-    saveMutation.mutate(form);
+    saveMut.mutate(form);
   };
 
+  const set = <K extends keyof AdForm>(key: K, val: AdForm[K]) =>
+    setForm((p) => ({ ...p, [key]: val }));
+
+  /* ─── Render ─── */
   return (
     <div className="space-y-6">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-xl font-bold">Ads Manager</h2>
-          <p className="text-sm text-muted-foreground">{ads.length} ad{ads.length !== 1 ? "s" : ""} total</p>
+          <h2 className="text-xl font-bold text-foreground">Ads Manager</h2>
+          <p className="text-sm text-muted-foreground">
+            {ads.length} ad{ads.length !== 1 ? "s" : ""}
+          </p>
         </div>
         <Button onClick={openCreate} className="gap-1.5">
           <Plus className="h-4 w-4" /> New Ad
         </Button>
       </div>
 
+      {/* List */}
       {isLoading ? (
-        <p className="text-muted-foreground text-sm">Loading ads…</p>
+        <div className="flex items-center gap-2 text-sm text-muted-foreground py-8 justify-center">
+          <Loader2 className="h-4 w-4 animate-spin" /> Loading ads…
+        </div>
       ) : ads.length === 0 ? (
         <Card>
-          <CardContent className="py-12 text-center text-muted-foreground">
-            No ads yet. Click "New Ad" to create one.
+          <CardContent className="py-14 text-center text-muted-foreground">
+            No ads yet. Click <strong>New Ad</strong> to get started.
           </CardContent>
         </Card>
       ) : (
         <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-          {ads.map((ad) => (
-            <Card key={ad.id} className="overflow-hidden">
-              {/* Media preview */}
-              <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
-                {ad.media_url ? (
-                  ad.media_type === "video" ? (
-                    <video src={ad.media_url} className="w-full h-full object-cover" muted />
+          {ads.map((ad) => {
+            const s = stats[ad.id];
+            const impressions = s?.impressions ?? 0;
+            const clicks = s?.clicks ?? 0;
+            const ctr = impressions ? ((clicks / impressions) * 100).toFixed(1) : "—";
+
+            return (
+              <Card key={ad.id} className="overflow-hidden">
+                {/* Media */}
+                <div className="relative aspect-video bg-muted flex items-center justify-center overflow-hidden">
+                  {ad.media_url ? (
+                    ad.media_type === "video" ? (
+                      <video src={ad.media_url} className="w-full h-full object-cover" muted playsInline />
+                    ) : (
+                      <img
+                        src={ad.media_url}
+                        alt={ad.title}
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).src = "/placeholder.svg";
+                        }}
+                      />
+                    )
                   ) : (
-                    <img
-                      src={ad.media_url}
-                      alt={ad.title}
-                      className="w-full h-full object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.style.display = "none";
-                        target.parentElement!.insertAdjacentHTML("beforeend", `<div class="text-destructive text-xs p-2 text-center">Image failed to load<br/><span class="text-[10px] text-muted-foreground break-all">${ad.media_url}</span></div>`);
-                      }}
-                    />
-                  )
-                ) : (
-                  <div className="text-muted-foreground text-sm">No media</div>
-                )}
-                <div className="absolute top-2 left-2 flex gap-1">
-                  <Badge variant={ad.is_active ? "default" : "secondary"} className="text-[10px]">
-                    {ad.is_active ? "Active" : "Inactive"}
-                  </Badge>
-                  <Badge variant="outline" className="text-[10px] bg-background/80">
-                    {ad.media_type === "video" ? <Video className="h-3 w-3 mr-0.5" /> : <Image className="h-3 w-3 mr-0.5" />}
-                    {ad.media_type}
+                    <span className="text-muted-foreground text-sm">No media</span>
+                  )}
+                  <div className="absolute top-2 left-2 flex gap-1">
+                    <Badge variant={ad.is_active ? "default" : "secondary"} className="text-[10px]">
+                      {ad.is_active ? "Active" : "Inactive"}
+                    </Badge>
+                    <Badge variant="outline" className="text-[10px] bg-background/80">
+                      {ad.media_type === "video" ? <Video className="h-3 w-3 mr-0.5" /> : <Image className="h-3 w-3 mr-0.5" />}
+                      {ad.media_type}
+                    </Badge>
+                  </div>
+                  <Badge variant="outline" className="absolute top-2 right-2 text-[10px] bg-background/80">
+                    {ad.placement}
                   </Badge>
                 </div>
-              </div>
 
-              <CardHeader className="p-3 pb-1">
-                <CardTitle className="text-sm flex items-center justify-between">
-                  <span className="truncate">{ad.title}</span>
-                  <Badge variant="outline" className="text-[10px] shrink-0 ml-2">{ad.placement}</Badge>
-                </CardTitle>
-              </CardHeader>
+                {/* Info */}
+                <CardContent className="p-3 space-y-2">
+                  <p className="font-semibold text-sm text-foreground truncate">{ad.title}</p>
 
-              <CardContent className="p-3 pt-1 space-y-2">
-                {/* Ad Stats */}
-                <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
-                  <span className="flex items-center gap-0.5">
-                    <BarChart3 className="h-3 w-3" />
-                    {adStats[ad.id]?.impressions || 0} views
-                  </span>
-                  <span>{adStats[ad.id]?.clicks || 0} clicks</span>
-                  <span>
-                    {adStats[ad.id]?.impressions
-                      ? ((adStats[ad.id].clicks / adStats[ad.id].impressions) * 100).toFixed(1) + "% CTR"
-                      : "—"}
-                  </span>
-                </div>
-                {ad.description && (
-                  <p className="text-xs text-muted-foreground line-clamp-2">{ad.description}</p>
-                )}
-                <div className="flex items-center gap-1.5">
-                  <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => setPreviewAd(ad)}>
-                    <Eye className="h-3 w-3" /> Preview
-                  </Button>
-                  <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => openEdit(ad)}>
-                    <Pencil className="h-3 w-3" /> Edit
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="h-7 text-xs gap-1"
-                    onClick={() => toggleMutation.mutate({ id: ad.id, is_active: !ad.is_active })}
-                  >
-                    {ad.is_active ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
-                    {ad.is_active ? "Deactivate" : "Activate"}
-                  </Button>
-                  <AlertDialog>
-                    <AlertDialogTrigger asChild>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-7 text-xs gap-1 text-destructive hover:text-destructive"
-                      >
-                        <Trash2 className="h-3 w-3" />
+                  {ad.description && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">{ad.description}</p>
+                  )}
+
+                  {/* Stats */}
+                  <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                    <span className="inline-flex items-center gap-0.5">
+                      <BarChart3 className="h-3 w-3" /> {impressions} views
+                    </span>
+                    <span>{clicks} clicks</span>
+                    <span>{ctr}% CTR</span>
+                  </div>
+
+                  {/* Dates */}
+                  {(ad.start_date || ad.end_date) && (
+                    <p className="text-[10px] text-muted-foreground">
+                      {ad.start_date && `From ${ad.start_date}`}
+                      {ad.start_date && ad.end_date && " — "}
+                      {ad.end_date && `Until ${ad.end_date}`}
+                    </p>
+                  )}
+
+                  {/* Actions */}
+                  <div className="flex items-center gap-1 pt-1 border-t border-border">
+                    <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" onClick={() => openEdit(ad)}>
+                      <Pencil className="h-3 w-3" /> Edit
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="h-7 text-xs gap-1"
+                      onClick={() => toggleMut.mutate({ id: ad.id, active: !ad.is_active })}
+                    >
+                      {ad.is_active ? <EyeOff className="h-3 w-3" /> : <Eye className="h-3 w-3" />}
+                      {ad.is_active ? "Off" : "On"}
+                    </Button>
+                    {ad.click_url && /^https?:\/\//i.test(ad.click_url) && (
+                      <Button size="sm" variant="ghost" className="h-7 text-xs gap-1" asChild>
+                        <a href={ad.click_url} target="_blank" rel="noopener noreferrer">
+                          <ExternalLink className="h-3 w-3" /> Link
+                        </a>
                       </Button>
-                    </AlertDialogTrigger>
-                    <AlertDialogContent>
-                      <AlertDialogHeader>
-                        <AlertDialogTitle>Delete this ad?</AlertDialogTitle>
-                        <AlertDialogDescription>
-                          This action cannot be undone. The ad "{ad.title}" will be permanently deleted.
-                        </AlertDialogDescription>
-                      </AlertDialogHeader>
-                      <AlertDialogFooter>
-                        <AlertDialogCancel>Cancel</AlertDialogCancel>
-                        <AlertDialogAction
-                          onClick={() => deleteMutation.mutate(ad.id)}
-                          className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                        >
-                          Delete
-                        </AlertDialogAction>
-                      </AlertDialogFooter>
-                    </AlertDialogContent>
-                  </AlertDialog>
-                </div>
-              </CardContent>
-            </Card>
-          ))}
+                    )}
+                    <div className="ml-auto">
+                      <AlertDialog>
+                        <AlertDialogTrigger asChild>
+                          <Button size="sm" variant="ghost" className="h-7 text-xs text-destructive hover:text-destructive">
+                            <Trash2 className="h-3 w-3" />
+                          </Button>
+                        </AlertDialogTrigger>
+                        <AlertDialogContent>
+                          <AlertDialogHeader>
+                            <AlertDialogTitle>Delete "{ad.title}"?</AlertDialogTitle>
+                            <AlertDialogDescription>
+                              This will permanently delete this ad and all its analytics events.
+                            </AlertDialogDescription>
+                          </AlertDialogHeader>
+                          <AlertDialogFooter>
+                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                            <AlertDialogAction
+                              onClick={() => deleteMut.mutate(ad.id)}
+                              className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                            >
+                              Delete
+                            </AlertDialogAction>
+                          </AlertDialogFooter>
+                        </AlertDialogContent>
+                      </AlertDialog>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            );
+          })}
         </div>
       )}
 
       {/* Create / Edit Dialog */}
-      <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+      <Dialog open={open} onOpenChange={(v) => !v && close()}>
         <DialogContent className="max-w-lg max-h-[90vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>{editingAd ? "Edit Ad" : "Create New Ad"}</DialogTitle>
+            <DialogTitle>{editing ? "Edit Ad" : "Create New Ad"}</DialogTitle>
           </DialogHeader>
-          <form onSubmit={handleSubmit} className="space-y-4">
-            <div className="space-y-2">
-              <Label>Title *</Label>
-              <Input value={form.title} onChange={(e) => setForm((f) => ({ ...f, title: e.target.value }))} placeholder="Ad title" />
-            </div>
 
-            <div className="space-y-2">
-              <Label>Description</Label>
-              <Textarea value={form.description} onChange={(e) => setForm((f) => ({ ...f, description: e.target.value }))} placeholder="Short description" rows={2} />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Media Upload (Image or Video) *</Label>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*,video/*"
-                onChange={handleFileUpload}
-                disabled={uploading}
-                className="block w-full text-sm text-foreground file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent file:text-accent-foreground hover:file:bg-accent/90 file:cursor-pointer cursor-pointer disabled:opacity-50"
+          <form onSubmit={submit} className="space-y-4">
+            {/* Title */}
+            <div className="space-y-1.5">
+              <Label htmlFor="ad-title">Title *</Label>
+              <Input
+                id="ad-title"
+                value={form.title}
+                onChange={(e) => set("title", e.target.value)}
+                placeholder="Ad title"
               />
-              {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
+            </div>
+
+            {/* Description */}
+            <div className="space-y-1.5">
+              <Label htmlFor="ad-desc">Description</Label>
+              <Textarea
+                id="ad-desc"
+                value={form.description}
+                onChange={(e) => set("description", e.target.value)}
+                placeholder="Short description"
+                rows={2}
+              />
+            </div>
+
+            {/* Media upload */}
+            <div className="space-y-2">
+              <Label>Media *</Label>
+              <div
+                className="border-2 border-dashed border-border rounded-lg p-4 text-center cursor-pointer hover:border-primary/50 transition-colors"
+                onClick={() => fileRef.current?.click()}
+              >
+                <input
+                  ref={fileRef}
+                  type="file"
+                  accept="image/*,video/*"
+                  onChange={handleUpload}
+                  className="hidden"
+                />
+                {uploading ? (
+                  <div className="flex items-center justify-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" /> Uploading…
+                  </div>
+                ) : (
+                  <div className="flex flex-col items-center gap-1 text-muted-foreground">
+                    <Upload className="h-6 w-6" />
+                    <span className="text-sm">Click to upload image or video</span>
+                    <span className="text-[10px]">Max 10 MB</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Or paste URL */}
+              <div className="space-y-1">
+                <p className="text-xs text-muted-foreground">Or paste a URL:</p>
+                <Input
+                  value={form.media_url}
+                  onChange={(e) => set("media_url", e.target.value)}
+                  placeholder="https://..."
+                />
+              </div>
+
+              {/* Preview */}
               {form.media_url && (
-                <div className="mt-2 rounded-lg overflow-hidden border border-border aspect-video bg-muted">
+                <div className="rounded-lg overflow-hidden border border-border aspect-video bg-muted">
                   {form.media_type === "video" ? (
                     <video src={form.media_url} controls className="w-full h-full object-contain" />
                   ) : (
-                    <img src={form.media_url} alt="Preview" className="w-full h-full object-contain" />
+                    <img
+                      src={form.media_url}
+                      alt="Preview"
+                      className="w-full h-full object-contain"
+                      onError={(e) => {
+                        (e.target as HTMLImageElement).src = "/placeholder.svg";
+                      }}
+                    />
                   )}
                 </div>
               )}
-              <p className="text-xs text-muted-foreground">Or paste a URL directly:</p>
-              <Input value={form.media_url} onChange={(e) => setForm((f) => ({ ...f, media_url: e.target.value }))} placeholder="https://..." />
             </div>
 
+            {/* Type & Placement */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Media Type</Label>
-                <Select value={form.media_type} onValueChange={(v) => setForm((f) => ({ ...f, media_type: v as "image" | "video" }))}>
+                <Select value={form.media_type} onValueChange={(v) => set("media_type", v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="image">Image</SelectItem>
@@ -427,9 +519,9 @@ const AdminAds = () => {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Placement</Label>
-                <Select value={form.placement} onValueChange={(v) => setForm((f) => ({ ...f, placement: v as "sidebar" | "banner" | "in-feed" }))}>
+                <Select value={form.placement} onValueChange={(v) => set("placement", v as any)}>
                   <SelectTrigger><SelectValue /></SelectTrigger>
                   <SelectContent>
                     <SelectItem value="sidebar">Sidebar</SelectItem>
@@ -440,63 +532,61 @@ const AdminAds = () => {
               </div>
             </div>
 
-            <div className="space-y-2">
+            {/* Click URL */}
+            <div className="space-y-1.5">
               <Label>Click URL</Label>
-              <Input value={form.click_url} onChange={(e) => setForm((f) => ({ ...f, click_url: e.target.value }))} placeholder="https://advertiser.com" />
+              <Input
+                value={form.click_url}
+                onChange={(e) => set("click_url", e.target.value)}
+                placeholder="https://advertiser.com"
+              />
             </div>
 
+            {/* Dates */}
             <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>Start Date</Label>
-                <Input type="date" value={form.start_date} onChange={(e) => setForm((f) => ({ ...f, start_date: e.target.value }))} />
+                <Input
+                  type="date"
+                  value={form.start_date}
+                  onChange={(e) => set("start_date", e.target.value)}
+                />
               </div>
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 <Label>End Date</Label>
-                <Input type="date" value={form.end_date} onChange={(e) => setForm((f) => ({ ...f, end_date: e.target.value }))} />
+                <Input
+                  type="date"
+                  value={form.end_date}
+                  onChange={(e) => set("end_date", e.target.value)}
+                />
               </div>
             </div>
 
+            {/* Active toggle */}
             <div className="flex items-center gap-2">
-              <Switch checked={form.is_active} onCheckedChange={(v) => setForm((f) => ({ ...f, is_active: v }))} />
+              <Switch
+                checked={form.is_active}
+                onCheckedChange={(v) => set("is_active", v)}
+              />
               <Label>Active</Label>
             </div>
 
-            <div className="flex gap-2 justify-end">
-              <Button type="button" variant="outline" onClick={closeDialog}>Cancel</Button>
-              <Button type="submit" disabled={saveMutation.isPending}>
-                {saveMutation.isPending ? "Saving…" : editingAd ? "Update" : "Create"}
+            {/* Submit */}
+            <div className="flex gap-2 justify-end pt-2">
+              <Button type="button" variant="outline" onClick={close}>
+                Cancel
+              </Button>
+              <Button type="submit" disabled={saveMut.isPending}>
+                {saveMut.isPending ? (
+                  <><Loader2 className="h-4 w-4 animate-spin mr-1" /> Saving…</>
+                ) : editing ? (
+                  "Update"
+                ) : (
+                  "Create"
+                )}
               </Button>
             </div>
           </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* Preview Dialog */}
-      <Dialog open={!!previewAd} onOpenChange={() => setPreviewAd(null)}>
-        <DialogContent className="max-w-md">
-          <DialogHeader>
-            <DialogTitle>Ad Preview — {previewAd?.placement}</DialogTitle>
-          </DialogHeader>
-          {previewAd && (
-            <div className="space-y-3">
-              <div className="rounded-lg overflow-hidden border border-border bg-muted">
-                {previewAd.media_type === "video" ? (
-                  <video src={previewAd.media_url} controls autoPlay muted className="w-full" />
-                ) : (
-                  <img src={previewAd.media_url} alt={previewAd.title} className="w-full" />
-                )}
-              </div>
-              <div>
-                <p className="font-medium text-sm">{previewAd.title}</p>
-                {previewAd.description && <p className="text-xs text-muted-foreground">{previewAd.description}</p>}
-              </div>
-              {previewAd.click_url && /^https?:\/\//i.test(previewAd.click_url) && (
-                <a href={previewAd.click_url} target="_blank" rel="noopener noreferrer" className="text-xs text-primary flex items-center gap-1 hover:underline">
-                  <ExternalLink className="h-3 w-3" /> {previewAd.click_url}
-                </a>
-              )}
-            </div>
-          )}
         </DialogContent>
       </Dialog>
     </div>
