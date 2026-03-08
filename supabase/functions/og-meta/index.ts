@@ -33,7 +33,7 @@ const staticPages: Record<string, { title: string; description: string }> = {
       "Stay informed about investment funds in Kenya with the latest yield updates and market news.",
   },
   "/learn": {
-    title: "Learn About Investment Funds in Kenya – Fund Finder Kenya",
+    title: "Learn About Investment Funds in Kenya – Kenya Fund Finder",
     description:
       "Everything you need to know about unit trusts in Kenya – how they work, risks, returns, and CMA regulation.",
   },
