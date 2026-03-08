@@ -137,11 +137,13 @@ const CompareModal = () => {
                           View Details
                         </Link>
                       </Button>
-                      <Button asChild size="sm" variant="ghost" className="text-xs h-7 w-fit">
-                        <a href={fund.website} target="_blank" rel="noopener noreferrer">
-                          Website <ExternalLink className="ml-1 h-3 w-3" />
-                        </a>
-                      </Button>
+                      {fund.website && /^https?:\/\//i.test(fund.website) && (
+                        <Button asChild size="sm" variant="ghost" className="text-xs h-7 w-fit">
+                          <a href={fund.website} target="_blank" rel="noopener noreferrer">
+                            Website <ExternalLink className="ml-1 h-3 w-3" />
+                          </a>
+                        </Button>
+                      )}
                     </div>
                   </td>
                 ))}

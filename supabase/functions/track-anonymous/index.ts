@@ -55,6 +55,19 @@ Deno.serve(async (req) => {
     });
   }
 
+  // --- Origin check ---
+  const allowedOrigins = [
+    "https://kenya-fund-finder.lovable.app",
+    "https://id-preview--e72d5937-d879-434f-ab8d-95e8c43f9adf.lovable.app",
+  ];
+  const origin = req.headers.get("origin") || "";
+  if (origin && !allowedOrigins.some((o) => origin.startsWith(o))) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   // --- Request handling ---
   try {
     const { type, page_path, session_id, source, action } = await req.json();
