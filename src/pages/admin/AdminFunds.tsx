@@ -463,14 +463,34 @@ const AdminFunds = () => {
                   </td>
                   <td className="px-3 py-2 text-xs text-muted-foreground hidden md:table-cell">{FUND_TYPE_LABELS[fund.fund_type] || "Money Market"}</td>
                   <td className="px-3 py-2 text-muted-foreground hidden md:table-cell">{fund.manager}</td>
-                  <td className="px-3 py-2 text-right font-semibold text-accent">
-                    {snapshotDate && snapshotYields[fund.id]
-                      ? <span title={`Snapshot: ${snapshotDate}`}>{Number(snapshotYields[fund.id].annual_yield).toFixed(2)}{fund.yield_unit === "%" ? "%" : ` ${fund.yield_unit}`}</span>
-                      : snapshotDate
-                        ? <span className="text-muted-foreground text-xs">—</span>
-                        : <span>{Number(fund.annual_yield)}{fund.yield_unit === "%" ? "%" : ` ${fund.yield_unit}`}</span>
-                    }
-                  </td>
+                  {snapshotDate ? (
+                    <>
+                      <td className="px-1 py-1">
+                        <Input
+                          type="number"
+                          step="0.01"
+                          className="h-7 text-xs text-right w-[100px] ml-auto"
+                          value={editedYields[fund.id]?.annual_yield ?? ""}
+                          onChange={(e) => updateEditedYield(fund.id, "annual_yield", e.target.value)}
+                          placeholder="Annual"
+                        />
+                      </td>
+                      <td className="px-1 py-1">
+                        <Input
+                          type="number"
+                          step="0.0001"
+                          className="h-7 text-xs text-right w-[90px] ml-auto"
+                          value={editedYields[fund.id]?.daily_yield ?? ""}
+                          onChange={(e) => updateEditedYield(fund.id, "daily_yield", e.target.value)}
+                          placeholder="Daily"
+                        />
+                      </td>
+                    </>
+                  ) : (
+                    <td className="px-3 py-2 text-right font-semibold text-accent">
+                      {Number(fund.annual_yield)}{fund.yield_unit === "%" ? "%" : ` ${fund.yield_unit}`}
+                    </td>
+                  )}
                   <td className="px-3 py-2 text-right hidden md:table-cell">{Number(fund.management_fee)}%</td>
                   <td className="px-3 py-2 text-right hidden md:table-cell text-muted-foreground">{fundViews[fund.slug] || 0}</td>
                   <td className="px-3 py-2 text-center hidden md:table-cell">
