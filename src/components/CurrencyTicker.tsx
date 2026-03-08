@@ -2,33 +2,54 @@ import { useEffect, useState, useRef } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
-interface TickerRate {
+interface TickerItem {
   id: string;
-  currency_code: string;
-  rate: number;
-  previous_rate: number | null;
+  label: string;
+  value: number;
+  previousValue: number | null;
+  unit?: string;
 }
 
 const CurrencyTicker = () => {
-  const [rates, setRates] = useState<TickerRate[]>([]);
+  const [items, setItems] = useState<TickerItem[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    supabase
-      .from("exchange_rates")
-      .select("id, currency_code, rate, previous_rate")
-      .eq("is_active", true)
-      .order("sort_order")
-      .then(({ data }) => setRates((data as TickerRate[]) || []));
-  }, []);
-
-  // Pause on hover
   const [paused, setPaused] = useState(false);
 
-  if (rates.length === 0) return null;
+  useEffect(() => {
+    Promise.all([
+      supabase
+        .from("exchange_rates")
+        .select("id, currency_code, rate, previous_rate")
+        .eq("is_active", true)
+        .order("sort_order")
+        .then(({ data }) =>
+          (data || []).map((r: any) => ({
+            id: `fx-${r.id}`,
+            label: `${r.currency_code}/KES`,
+            value: r.rate,
+            previousValue: r.previous_rate,
+          }))
+        ),
+      supabase
+        .from("commodities")
+        .select("id, name, symbol, price, previous_price, unit")
+        .eq("is_active", true)
+        .order("sort_order")
+        .then(({ data }) =>
+          (data || []).map((c: any) => ({
+            id: `cmd-${c.id}`,
+            label: c.symbol || c.name,
+            value: c.price,
+            previousValue: c.previous_price,
+            unit: c.unit,
+          }))
+        ),
+    ]).then(([rates, commodities]) => setItems([...rates, ...commodities]));
+  }, []);
 
-  // Duplicate items for seamless loop
-  const items = [...rates, ...rates];
+  if (items.length === 0) return null;
+
+  const doubled = [...items, ...items];
 
   return (
     <div
@@ -40,28 +61,37 @@ const CurrencyTicker = () => {
         ref={scrollRef}
         className="flex whitespace-nowrap"
         style={{
-          animation: `ticker-scroll ${rates.length * 4}s linear infinite`,
+          animation: `ticker-scroll ${items.length * 3.5}s linear infinite`,
           animationPlayState: paused ? "paused" : "running",
         }}
       >
-        {items.map((r, i) => {
-          const diff = r.previous_rate != null ? r.rate - r.previous_rate : null;
-          const pct = diff != null && r.previous_rate !== 0
-            ? ((diff / r.previous_rate!) * 100).toFixed(2)
-            : null;
+        {doubled.map((item, i) => {
+          const diff = item.previousValue != null ? item.value - item.previousValue : null;
+          const pct =
+            diff != null && item.previousValue !== 0
+              ? ((diff / item.previousValue!) * 100).toFixed(2)
+              : null;
           const isUp = diff != null && diff > 0;
           const isDown = diff != null && diff < 0;
 
           return (
             <div
-              key={`${r.id}-${i}`}
+              key={`${item.id}-${i}`}
               className="inline-flex items-center gap-2 px-5 py-1.5 text-xs"
             >
               <span className="font-semibold text-primary-foreground/90">
-                {r.currency_code}/KES
+                {item.label}
               </span>
               <span className="font-bold text-primary-foreground tabular-nums">
-                {r.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                {item.value.toLocaleString("en-US", {
+                  minimumFractionDigits: 2,
+                  maximumFractionDigits: 2,
+                })}
+                {item.unit && (
+                  <span className="text-primary-foreground/50 font-normal ml-0.5 text-[10px]">
+                    {item.unit}
+                  </span>
+                )}
               </span>
               {pct != null && (
                 <span
