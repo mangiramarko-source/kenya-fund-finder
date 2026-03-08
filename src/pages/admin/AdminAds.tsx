@@ -316,7 +316,14 @@ const AdminAds = () => {
 
             <div className="space-y-2">
               <Label>Media Upload (Image or Video) *</Label>
-              <Input type="file" accept="image/*,video/*" onChange={handleFileUpload} disabled={uploading} />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*,video/*"
+                onChange={handleFileUpload}
+                disabled={uploading}
+                className="block w-full text-sm text-foreground file:mr-3 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-medium file:bg-accent file:text-accent-foreground hover:file:bg-accent/90 file:cursor-pointer cursor-pointer disabled:opacity-50"
+              />
               {uploading && <p className="text-xs text-muted-foreground">Uploading…</p>}
               {form.media_url && (
                 <div className="mt-2 rounded-lg overflow-hidden border border-border aspect-video bg-muted">
