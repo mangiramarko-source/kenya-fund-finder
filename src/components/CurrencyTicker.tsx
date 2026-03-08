@@ -14,6 +14,7 @@ interface TickerItem {
 const CurrencyTicker = () => {
   const [items, setItems] = useState<TickerItem[]>([]);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const isMobile = useIsMobile();
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
