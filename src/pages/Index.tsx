@@ -8,6 +8,7 @@ import { fetchFunds, fetchLatestSnapshots, fetchPublishedNews, type FundFromDB, 
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { formatYield } from "@/components/YieldChange";
+import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import StatBar from "@/components/home/StatBar";
 import CategoryTabs from "@/components/home/CategoryTabs";
 import FundTable from "@/components/home/FundTable";
