@@ -77,7 +77,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     };
     window.addEventListener('storage', handleStorageEvent);
 
-    return () => subscription.unsubscribe();
+    return () => {
+      subscription.unsubscribe();
+      window.removeEventListener('storage', handleStorageEvent);
+    };
   }, []);
 
   const signIn = async (email: string, password: string) => {
