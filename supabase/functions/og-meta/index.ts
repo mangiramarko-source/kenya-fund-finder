@@ -73,7 +73,7 @@ Deno.serve(async (req) => {
       .single();
 
     if (fund) {
-      title = `${fund.name} – ${fund.annual_yield}% Annual Yield | Fund Finder Kenya`;
+      title = `${fund.name} – ${fund.annual_yield}% Annual Yield | Kenya Fund Finder`;
       description = `${fund.name} by ${fund.manager}. Annual yield: ${fund.annual_yield}%. Min investment: KES ${fund.minimum_investment.toLocaleString()}.`;
     }
   }
