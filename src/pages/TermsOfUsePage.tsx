@@ -93,7 +93,7 @@ const TermsOfUsePage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">10. Limitation of Liability</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          To the fullest extent permitted by Kenyan law, Fund Finder Kenya, its owners, operators, and contributors shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of or inability to use the Platform, reliance on any information provided, or any investment decisions made based on information found on the Platform.
+          To the fullest extent permitted by Kenyan law, Kenya Fund Finder, its owners, operators, and contributors shall not be liable for any direct, indirect, incidental, consequential, or punitive damages arising from your use of or inability to use the Platform, reliance on any information provided, or any investment decisions made based on information found on the Platform.
         </p>
       </section>
 
