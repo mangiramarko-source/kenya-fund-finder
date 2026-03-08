@@ -162,8 +162,7 @@ const BulkFundImport = ({ open, onOpenChange, onComplete }: BulkFundImportProps)
   const [importing, setImporting] = useState(false);
   const [result, setResult] = useState<ImportResult | null>(null);
   const [step, setStep] = useState<"input" | "preview" | "done">("input");
-  const [saveSnapshot, setSaveSnapshot] = useState(false);
-  const [snapshotDate, setSnapshotDate] = useState(() => new Date().toISOString().split("T")[0]);
+   const [snapshotDate, setSnapshotDate] = useState(() => new Date().toISOString().split("T")[0]);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { user } = useAuth();
   const { toast } = useToast();
