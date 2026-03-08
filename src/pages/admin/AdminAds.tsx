@@ -12,7 +12,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Image, Video, ExternalLink, Eye, EyeOff, BarChart3 } from "lucide-react";
 import { toast } from "sonner";
 
 interface Ad {
@@ -72,6 +72,24 @@ const AdminAds = () => {
         .order("created_at", { ascending: false });
       if (error) throw error;
       return data as Ad[];
+    },
+  });
+
+  // Fetch ad event stats
+  const { data: adStats = {} } = useQuery({
+    queryKey: ["admin-ad-stats"],
+    queryFn: async () => {
+      const { data, error } = await supabase
+        .from("ad_events")
+        .select("ad_id, event_type");
+      if (error) throw error;
+      const stats: Record<string, { impressions: number; clicks: number }> = {};
+      (data || []).forEach((e: any) => {
+        if (!stats[e.ad_id]) stats[e.ad_id] = { impressions: 0, clicks: 0 };
+        if (e.event_type === "impression") stats[e.ad_id].impressions++;
+        else if (e.event_type === "click") stats[e.ad_id].clicks++;
+      });
+      return stats;
     },
   });
 
@@ -286,6 +304,19 @@ const AdminAds = () => {
               </CardHeader>
 
               <CardContent className="p-3 pt-1 space-y-2">
+                {/* Ad Stats */}
+                <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                  <span className="flex items-center gap-0.5">
+                    <BarChart3 className="h-3 w-3" />
+                    {adStats[ad.id]?.impressions || 0} views
+                  </span>
+                  <span>{adStats[ad.id]?.clicks || 0} clicks</span>
+                  <span>
+                    {adStats[ad.id]?.impressions
+                      ? ((adStats[ad.id].clicks / adStats[ad.id].impressions) * 100).toFixed(1) + "% CTR"
+                      : "—"}
+                  </span>
+                </div>
                 {ad.description && (
                   <p className="text-xs text-muted-foreground line-clamp-2">{ad.description}</p>
                 )}

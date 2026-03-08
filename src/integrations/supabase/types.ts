@@ -14,6 +14,41 @@ export type Database = {
   }
   public: {
     Tables: {
+      ad_events: {
+        Row: {
+          ad_id: string
+          created_at: string
+          event_type: string
+          id: string
+          page_path: string | null
+          session_id: string | null
+        }
+        Insert: {
+          ad_id: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          page_path?: string | null
+          session_id?: string | null
+        }
+        Update: {
+          ad_id?: string
+          created_at?: string
+          event_type?: string
+          id?: string
+          page_path?: string | null
+          session_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "ad_events_ad_id_fkey"
+            columns: ["ad_id"]
+            isOneToOne: false
+            referencedRelation: "ads"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ads: {
         Row: {
           click_url: string
