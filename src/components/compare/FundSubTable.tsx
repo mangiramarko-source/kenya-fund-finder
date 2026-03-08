@@ -32,6 +32,7 @@ const FundSubTable = ({
   bestYield,
   totalInCategory,
 }: FundSubTableProps) => {
+  const navigate = useNavigate();
   const yieldRange = (() => {
     if (funds.length === 0) return { min: 0, max: 1 };
     const yields = funds.map((f) => f.annual_yield);
