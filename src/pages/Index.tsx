@@ -1,14 +1,14 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
-import { ArrowRight, ArrowUpDown, Calculator, TrendingUp, Newspaper, Search, SlidersHorizontal } from "lucide-react";
+import { ArrowRight, ArrowUpDown, Calculator, TrendingUp, Newspaper, Search } from "lucide-react";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchFunds, fetchLatestSnapshots, fetchPublishedNews, type FundFromDB, type NewsFromDB, type YieldSnapshot } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import YieldChange, { formatYield } from "@/components/YieldChange";
+import { cn } from "@/lib/utils";
 
 type SortKey = "annual_yield" | "management_fee" | "minimum_investment" | "name";
 type SortDir = "asc" | "desc";
@@ -44,6 +44,7 @@ const Index = () => {
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const { lastUpdateDate } = useLiveStatus();
+  const tabsRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetchFunds().then(setFunds).catch(() => {});
@@ -56,6 +57,11 @@ const Index = () => {
   }, []);
 
   const categories = useMemo(() => [...new Set(funds.map((f) => f.fund_type))].sort(), [funds]);
+  const categoryCount = useMemo(() => {
+    const counts: Record<string, number> = { all: funds.length };
+    funds.forEach((f) => { counts[f.fund_type] = (counts[f.fund_type] || 0) + 1; });
+    return counts;
+  }, [funds]);
 
   const processedFunds = useMemo(() => {
     let result = funds;
@@ -73,9 +79,10 @@ const Index = () => {
   }, [funds, selectedCategory, search, sortKey, sortDir]);
 
   const bestYield = useMemo(() => {
-    if (funds.length === 0) return 0;
-    return Math.max(...funds.map((f) => f.annual_yield));
-  }, [funds]);
+    const filtered = selectedCategory === "all" ? funds : funds.filter((f) => f.fund_type === selectedCategory);
+    if (filtered.length === 0) return 0;
+    return Math.max(...filtered.map((f) => f.annual_yield));
+  }, [funds, selectedCategory]);
 
   const avgYield = useMemo(() => {
     if (processedFunds.length === 0) return 0;
@@ -96,6 +103,7 @@ const Index = () => {
 
   const lastUpdate = lastUpdateDate ? new Date(lastUpdateDate) : funds[0] ? new Date(funds[0].updated_at) : null;
   const latestNews = news.slice(0, 4);
+  const allTabs = [{ key: "all", label: "All Funds" }, ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c }))];
 
   return (
     <div className="min-h-screen">
@@ -129,8 +137,32 @@ const Index = () => {
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
           {/* Main table area */}
           <div>
-            {/* Filters */}
-            <div className="flex flex-col sm:flex-row gap-2 mb-4">
+            {/* Category tabs - horizontally scrollable */}
+            <div ref={tabsRef} className="flex items-center gap-1.5 overflow-x-auto pb-3 mb-3 scrollbar-none -mx-1 px-1">
+              {allTabs.map(({ key, label }) => (
+                <button
+                  key={key}
+                  onClick={() => setSelectedCategory(key)}
+                  className={cn(
+                    "shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap",
+                    selectedCategory === key
+                      ? "bg-accent text-accent-foreground shadow-sm"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  )}
+                >
+                  {label}
+                  <span className={cn(
+                    "ml-1.5 tabular-nums",
+                    selectedCategory === key ? "text-accent-foreground/70" : "text-muted-foreground/60"
+                  )}>
+                    {categoryCount[key] || 0}
+                  </span>
+                </button>
+              ))}
+            </div>
+
+            {/* Search + actions */}
+            <div className="flex gap-2 mb-4">
               <div className="relative flex-1">
                 <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -140,18 +172,6 @@ const Index = () => {
                   className="pl-9 h-9 rounded-lg text-sm"
                 />
               </div>
-              <Select value={selectedCategory} onValueChange={setSelectedCategory}>
-                <SelectTrigger className="w-full sm:w-[150px] h-9 rounded-lg text-xs">
-                  <SlidersHorizontal className="h-3.5 w-3.5 mr-1.5 text-muted-foreground" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {categories.map((cat) => (
-                    <SelectItem key={cat} value={cat}>{categoryLabels[cat] || cat}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
               <Button asChild variant="outline" size="sm" className="h-9 rounded-lg text-xs shrink-0">
                 <Link to="/compare">Full View <ArrowRight className="ml-1 h-3 w-3" /></Link>
               </Button>
@@ -163,17 +183,15 @@ const Index = () => {
                 <colgroup>
                   <col className="w-10" />
                   <col />
-                  <col className="w-28" />
                   <col className="w-44" />
                   <col className="w-32" />
                   <col className="w-20" />
-                  <col className="w-16" />
+                  <col className="w-12" />
                 </colgroup>
                 <thead>
                   <tr className="bg-muted/70 text-xs">
                     <th className="text-left px-4 py-3 font-semibold text-muted-foreground">#</th>
                     <th className="text-left px-4 py-3"><SortHeader label="Fund" field="name" /></th>
-                    <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Type</th>
                     <th className="text-right px-4 py-3"><SortHeader label="Yield" field="annual_yield" className="justify-end" /></th>
                     <th className="text-right px-4 py-3"><SortHeader label="Min. Invest" field="minimum_investment" className="justify-end" /></th>
                     <th className="text-right px-4 py-3"><SortHeader label="Fee" field="management_fee" className="justify-end" /></th>
@@ -193,9 +211,6 @@ const Index = () => {
                         )}
                         <span className="block text-xs text-muted-foreground mt-0.5">{fund.manager}</span>
                       </td>
-                      <td className="px-4 py-3.5">
-                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground">{categoryLabels[fund.fund_type] || fund.fund_type}</span>
-                      </td>
                       <td className="px-4 py-3.5 text-right whitespace-nowrap tabular-nums">
                         <span className="font-bold text-accent text-base">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
                         {snapshots[fund.id] && (
@@ -214,7 +229,7 @@ const Index = () => {
                     </tr>
                   ))}
                   {processedFunds.length === 0 && (
-                    <tr><td colSpan={7} className="text-center py-10 text-muted-foreground">No funds match your filters.</td></tr>
+                    <tr><td colSpan={6} className="text-center py-10 text-muted-foreground">No funds match your filters.</td></tr>
                   )}
                 </tbody>
               </table>
@@ -232,10 +247,7 @@ const Index = () => {
                         <Badge variant="default" className="text-[9px] px-1 py-0 h-3.5 bg-accent text-accent-foreground shrink-0">TOP</Badge>
                       )}
                     </div>
-                    <div className="flex items-center gap-2 mt-0.5">
-                      <span className="text-[10px] font-medium px-1 py-0 rounded bg-muted text-muted-foreground">{categoryLabels[fund.fund_type] || fund.fund_type}</span>
-                      <span className="text-[10px] text-muted-foreground">Fee {fund.management_fee}%</span>
-                    </div>
+                    <span className="text-[10px] text-muted-foreground">Fee {fund.management_fee}%</span>
                   </div>
                   <div className="text-right shrink-0">
                     <span className="text-accent font-bold text-sm tabular-nums">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
