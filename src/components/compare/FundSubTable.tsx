@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowUpDown, ArrowUp, ArrowDown, Trophy, TrendingUp } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import YieldChange, { formatYield } from "@/components/YieldChange";
@@ -32,6 +32,7 @@ const FundSubTable = ({
   bestYield,
   totalInCategory,
 }: FundSubTableProps) => {
+  const navigate = useNavigate();
   const yieldRange = (() => {
     if (funds.length === 0) return { min: 0, max: 1 };
     const yields = funds.map((f) => f.annual_yield);
@@ -94,7 +95,8 @@ const FundSubTable = ({
                 return (
                   <tr
                     key={fund.id}
-                    className={`border-t border-border transition-colors hover:bg-accent/5 ${
+                    onClick={() => navigate(`/compare/${fund.slug}`)}
+                    className={`border-t border-border transition-colors hover:bg-accent/5 cursor-pointer ${
                       isBest ? "bg-accent/[0.03]" : i % 2 === 0 ? "bg-card" : "bg-muted/20"
                     }`}
                   >

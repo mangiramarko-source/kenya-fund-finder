@@ -1,4 +1,4 @@
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -72,6 +72,7 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
 );
 
 const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort, loading, onClearSearch, hasSearch }: FundTableProps) => {
+  const navigate = useNavigate();
   if (loading) return <TableSkeleton />;
 
   return (
@@ -99,7 +100,7 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
         </thead>
         <tbody>
           {funds.map((fund, i) => (
-            <tr key={fund.id} className="border-t border-border hover:bg-muted/30 transition-colors">
+            <tr key={fund.id} onClick={() => navigate(`/compare/${fund.slug}`)} className="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer">
               <td className="px-4 py-3.5 text-muted-foreground text-xs tabular-nums">{i + 1}</td>
               <td className="px-4 py-3.5">
                 <Link to={`/compare/${fund.slug}`} className="font-semibold hover:text-accent transition-colors">
