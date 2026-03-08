@@ -2,3 +2,6 @@ project_id = "qrmthciurngpzpjhevdj"
 
 [functions.track-anonymous]
 verify_jwt = false
+
+[functions.content-feed]
+verify_jwt = false
