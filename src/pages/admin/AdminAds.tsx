@@ -57,6 +57,20 @@ const blank: AdForm = {
   click_url: "", placement: "sidebar", is_active: true, start_date: "", end_date: "",
 };
 
+/** Call the manage-ads edge function to bypass ad blockers */
+const callProxy = async (body: Record<string, unknown>) => {
+  const { data: { session } } = await supabase.auth.getSession();
+  if (!session) throw new Error("Not authenticated");
+  const res = await supabase.functions.invoke("manage-ads", {
+    body,
+    headers: { Authorization: `Bearer ${session.access_token}` },
+  });
+  if (res.error) throw new Error(res.error.message ?? "Request failed");
+  const json = typeof res.data === "string" ? JSON.parse(res.data) : res.data;
+  if (json.error) throw new Error(json.error);
+  return json.data;
+};
+
 const AdminAds = () => {
   const { user } = useAuth();
   const qc = useQueryClient();
@@ -68,18 +82,13 @@ const AdminAds = () => {
 
   const { data: ads = [], isLoading } = useQuery({
     queryKey: ["admin-ads"],
-    queryFn: async () => {
-      const { data, error } = await supabase.from("ads").select("*").order("created_at", { ascending: false });
-      if (error) throw error;
-      return data as Ad[];
-    },
+    queryFn: () => callProxy({ action: "list" }) as Promise<Ad[]>,
   });
 
   const { data: stats = {} } = useQuery({
     queryKey: ["admin-ad-stats"],
     queryFn: async () => {
-      const { data, error } = await supabase.from("ad_events").select("ad_id, event_type");
-      if (error) throw error;
+      const data = await callProxy({ action: "stats" });
       const m: Record<string, { impressions: number; clicks: number }> = {};
       (data || []).forEach((e: any) => {
         if (!m[e.ad_id]) m[e.ad_id] = { impressions: 0, clicks: 0 };
@@ -109,11 +118,9 @@ const AdminAds = () => {
         updated_by: user?.id ?? null,
       };
       if (editing) {
-        const { error } = await supabase.from("ads").update(payload).eq("id", editing.id);
-        if (error) throw error;
+        await callProxy({ action: "update", id: editing.id, payload });
       } else {
-        const { error } = await supabase.from("ads").insert({ ...payload, created_by: user?.id ?? null });
-        if (error) throw error;
+        await callProxy({ action: "create", payload: { ...payload, created_by: user?.id ?? null } });
       }
     },
     onSuccess: () => { invalidate(); toast.success(editing ? "Ad updated" : "Ad created"); closeDialog(); },
@@ -122,8 +129,7 @@ const AdminAds = () => {
 
   const deleteMut = useMutation({
     mutationFn: async (id: string) => {
-      const { error } = await supabase.from("ads").delete().eq("id", id);
-      if (error) throw error;
+      await callProxy({ action: "delete", id });
     },
     onSuccess: () => { invalidate(); toast.success("Ad deleted"); },
     onError: (e: any) => toast.error(e.message),
@@ -131,8 +137,7 @@ const AdminAds = () => {
 
   const toggleMut = useMutation({
     mutationFn: async ({ id, active }: { id: string; active: boolean }) => {
-      const { error } = await supabase.from("ads").update({ is_active: active }).eq("id", id);
-      if (error) throw error;
+      await callProxy({ action: "update", id, payload: { is_active: active } });
     },
     onSuccess: invalidate,
     onError: (e: any) => toast.error(e.message),
