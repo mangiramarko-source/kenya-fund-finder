@@ -236,8 +236,9 @@ const Index = () => {
               </Button>
             </div>
 
-            {/* Mobile news section */}
-            <div className="xl:hidden mt-6">
+            {/* Mobile news + ads section */}
+            <div className="xl:hidden mt-6 space-y-4">
+              <AdBanner placement="in-feed" />
               <NewsSidebar news={latestNews} loading={loading} />
             </div>
           </div>
