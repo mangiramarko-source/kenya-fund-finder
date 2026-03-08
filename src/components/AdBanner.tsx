@@ -95,10 +95,12 @@ const AdBanner = ({ placement, className = "" }: AdBannerProps) => {
     </div>
   );
 
-  if (ad.click_url) {
+  const safeClickUrl = ad.click_url && /^https?:\/\//i.test(ad.click_url) ? ad.click_url : "";
+
+  if (safeClickUrl) {
     return (
       <a
-        href={ad.click_url}
+        href={safeClickUrl}
         target="_blank"
         rel="noopener noreferrer sponsored"
         className="block hover:opacity-90 transition-opacity"
