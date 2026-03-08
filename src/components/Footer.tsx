@@ -8,7 +8,7 @@ const Footer = () => (
         <div className="md:col-span-2">
           <Link to="/" className="flex items-center gap-2 font-heading text-lg font-bold text-primary mb-3">
             <TrendingUp className="h-5 w-5 text-accent" />
-            Fund Finder Kenya
+            Kenya Fund Finder
           </Link>
           <p className="text-sm text-muted-foreground max-w-sm">
             Your trusted platform for comparing Money Market Funds in Kenya. All funds listed are regulated by the Capital Markets Authority.

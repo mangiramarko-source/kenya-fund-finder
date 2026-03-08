@@ -154,7 +154,7 @@ const Navbar = () => {
         </div>
 
         {/* Mobile: brand name centered */}
-        <span className="md:hidden font-heading text-lg font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>Fund Finder</span>
+        <span className="md:hidden font-heading text-lg font-extrabold tracking-tight bg-gradient-to-r from-primary via-accent to-primary bg-clip-text text-transparent" style={{ fontFamily: "'DM Sans', sans-serif", letterSpacing: "-0.02em" }}>Kenya Fund Finder</span>
 
         {/* Mobile: dark mode + hamburger on right */}
         <div className="flex md:hidden items-center gap-0.5">

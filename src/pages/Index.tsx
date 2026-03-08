@@ -118,7 +118,7 @@ const Index = () => {
 
   return (
     <div className="min-h-screen">
-      <h1 className="sr-only">Fund Finder Kenya – Compare Investment Funds</h1>
+      <h1 className="sr-only">Kenya Fund Finder – Compare Investment Funds</h1>
 
       <StatBar
         isLive={isLive}
