@@ -127,34 +127,34 @@ const NewsPage = () => {
   } : null);
 
   if (loading) return (
-    <div className="container py-10 max-w-5xl">
-      <Skeleton className="h-10 w-64 mb-2" />
-      <Skeleton className="h-5 w-96 mb-8" />
-      <Skeleton className="h-64 w-full rounded-2xl mb-6" />
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-40 rounded-xl" />)}
+    <div className="container py-6 sm:py-10 max-w-5xl px-4 sm:px-6">
+      <Skeleton className="h-8 w-48 sm:h-10 sm:w-64 mb-2" />
+      <Skeleton className="h-4 w-64 sm:h-5 sm:w-96 mb-6 sm:mb-8" />
+      <Skeleton className="h-48 sm:h-64 w-full rounded-2xl mb-4 sm:mb-6" />
+      <div className="space-y-3 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4">
+        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-32 sm:h-40 rounded-xl" />)}
       </div>
     </div>
   );
 
   return (
-    <div className="container py-8 sm:py-10 max-w-5xl">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-3 mb-2">
-          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-accent/10">
-            <Megaphone className="h-5 w-5 text-accent" />
+    <div className="container py-5 sm:py-8 md:py-10 max-w-5xl px-4 sm:px-6">
+      {/* Header — compact on mobile */}
+      <div className="mb-5 sm:mb-8">
+        <div className="flex items-center gap-2.5 sm:gap-3 mb-1 sm:mb-2">
+          <div className="flex items-center justify-center h-9 w-9 sm:h-10 sm:w-10 rounded-xl bg-accent/10">
+            <Megaphone className="h-4 w-4 sm:h-5 sm:w-5 text-accent" />
           </div>
           <div>
-            <h1 className="text-2xl md:text-3xl font-bold">News & Updates</h1>
-            <p className="text-sm text-muted-foreground">Stay informed about investment funds in Kenya</p>
+            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight">News & Updates</h1>
+            <p className="text-xs sm:text-sm text-muted-foreground">Stay informed about investment funds in Kenya</p>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="flex flex-col sm:flex-row sm:items-center gap-3 mb-6">
-        <div className="flex gap-1.5 overflow-x-auto pb-2 sm:pb-0 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap">
+      {/* Filters — horizontal scroll on mobile, sort inline */}
+      <div className="flex flex-col gap-2.5 sm:flex-row sm:items-center sm:gap-3 mb-5 sm:mb-6">
+        <div className="flex gap-1.5 overflow-x-auto pb-1 sm:pb-0 scrollbar-hide -mx-4 px-4 sm:mx-0 sm:px-0 sm:flex-wrap snap-x snap-mandatory">
           {categories.map((cat) => {
             const Icon = categoryIcons[cat];
             const isActive = activeCategory === cat;
@@ -162,7 +162,7 @@ const NewsPage = () => {
               <button
                 key={cat}
                 onClick={() => setActiveCategory(cat)}
-                className={`inline-flex items-center gap-1.5 px-3.5 py-2 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 border ${
+                className={`inline-flex items-center gap-1.5 px-3 py-2 sm:px-3.5 rounded-lg text-xs font-medium transition-all whitespace-nowrap shrink-0 border snap-start ${
                   isActive
                     ? "bg-primary text-primary-foreground border-primary shadow-sm"
                     : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
@@ -190,51 +190,49 @@ const NewsPage = () => {
       </div>
 
       {filtered.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground border border-dashed border-border rounded-2xl">
-          <Megaphone className="h-10 w-10 mx-auto mb-3 text-muted-foreground/40" />
-          <p className="text-lg font-medium mb-1">No articles found</p>
-          <p className="text-sm">Try selecting a different category.</p>
+        <div className="text-center py-16 sm:py-20 text-muted-foreground border border-dashed border-border rounded-2xl">
+          <Megaphone className="h-8 w-8 sm:h-10 sm:w-10 mx-auto mb-3 text-muted-foreground/40" />
+          <p className="text-base sm:text-lg font-medium mb-1">No articles found</p>
+          <p className="text-xs sm:text-sm">Try selecting a different category.</p>
         </div>
       ) : (
         <>
-          {/* Featured hero card */}
+          {/* Featured hero card — stacked on mobile */}
           {featuredArticle && (
             <div
-              className="group rounded-2xl border border-border bg-card p-6 sm:p-8 mb-6 cursor-pointer hover:border-accent/30 hover:shadow-lg transition-all duration-300 relative overflow-hidden"
+              className="group rounded-2xl border border-border bg-card p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 cursor-pointer hover:border-accent/30 hover:shadow-lg transition-all duration-300 relative overflow-hidden active:scale-[0.99]"
               onClick={() => handleArticleClick(featuredArticle)}
             >
-              <div className="absolute top-0 right-0 w-64 h-64 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
+              <div className="absolute top-0 right-0 w-40 h-40 sm:w-64 sm:h-64 bg-accent/5 rounded-full -translate-y-1/2 translate-x-1/2 pointer-events-none" />
               <div className="relative">
-                <div className="flex items-center gap-2 mb-4 flex-wrap">
-                  <Badge className="bg-accent/15 text-accent border-accent/20 gap-1">
-                    <Sparkles className="h-3 w-3" /> Featured
+                <div className="flex items-center gap-1.5 sm:gap-2 mb-3 sm:mb-4 flex-wrap">
+                  <Badge className="bg-accent/15 text-accent border-accent/20 gap-1 text-[10px] sm:text-xs">
+                    <Sparkles className="h-2.5 w-2.5 sm:h-3 sm:w-3" /> Featured
                   </Badge>
-                  <Badge variant="secondary" className={categoryColors[featuredArticle.category] || ""}>
+                  <Badge variant="secondary" className={`text-[10px] sm:text-xs ${categoryColors[featuredArticle.category] || ""}`}>
                     {featuredArticle.category}
                   </Badge>
-                  <span className="flex items-center gap-1 text-xs text-muted-foreground">
-                    <Clock className="h-3 w-3" />
+                  <span className="flex items-center gap-1 text-[10px] sm:text-xs text-muted-foreground ml-auto sm:ml-0">
+                    <Clock className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                     {featuredArticle.read_time}
                   </span>
                 </div>
-                <h2 className="font-heading font-bold text-xl sm:text-2xl mb-3 group-hover:text-accent transition-colors leading-tight max-w-2xl">
+                <h2 className="font-heading font-bold text-base sm:text-xl md:text-2xl mb-2 sm:mb-3 group-hover:text-accent transition-colors leading-snug sm:leading-tight max-w-2xl line-clamp-3 sm:line-clamp-none">
                   {featuredArticle.title}
                 </h2>
-                <p className="text-sm text-muted-foreground leading-relaxed mb-4 max-w-2xl line-clamp-3">
+                <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-3 sm:mb-4 max-w-2xl line-clamp-2 sm:line-clamp-3">
                   {featuredArticle.summary}
                 </p>
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <span className="flex items-center gap-1.5 text-xs text-muted-foreground">
-                      <Calendar className="h-3 w-3" />
-                      {featuredArticle.source && `${featuredArticle.source} · `}
-                      {new Date(featuredArticle.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-2">
+                  <span className="flex items-center gap-1 sm:gap-1.5 text-[10px] sm:text-xs text-muted-foreground">
+                    <Calendar className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
+                    {featuredArticle.source && <span className="hidden sm:inline">{featuredArticle.source} · </span>}
+                    {new Date(featuredArticle.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
+                  </span>
+                  <div className="flex items-center gap-1.5 sm:gap-2">
                     <ShareButton article={featuredArticle} copyLink={copyLink} shareToTwitter={shareToTwitter} shareToFacebook={shareToFacebook} />
-                    <span className="text-sm text-accent font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
-                      Read Article <ChevronRight className="h-4 w-4" />
+                    <span className="text-xs sm:text-sm text-accent font-semibold flex items-center gap-1 group-hover:gap-2 transition-all">
+                      Read <ChevronRight className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                     </span>
                   </div>
                 </div>
@@ -242,46 +240,51 @@ const NewsPage = () => {
             </div>
           )}
 
-          {/* Article grid */}
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          {/* Article list — single column cards on mobile, grid on desktop */}
+          <div className="space-y-2.5 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4">
             {remainingArticles.map((article) => {
               const CatIcon = categoryIcons[article.category] || Megaphone;
               return (
                 <article
                   key={article.id}
-                  className="group rounded-xl border border-border bg-card p-5 hover:shadow-md hover:border-accent/30 transition-all duration-200 cursor-pointer flex flex-col"
+                  className="group rounded-xl border border-border bg-card p-3.5 sm:p-5 hover:shadow-md hover:border-accent/30 transition-all duration-200 cursor-pointer flex flex-col active:scale-[0.99]"
                   onClick={() => handleArticleClick(article)}
                 >
-                  <div className="flex items-center gap-2 mb-3 flex-wrap">
-                    <div className={`flex items-center justify-center h-6 w-6 rounded-md ${categoryColors[article.category]?.split(" ")[0] || "bg-muted"}`}>
-                      <CatIcon className={`h-3 w-3 ${categoryColors[article.category]?.split(" ")[1] || "text-muted-foreground"}`} />
+                  {/* Mobile: compact horizontal layout */}
+                  <div className="flex gap-3 sm:block">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-1.5 sm:gap-2 mb-1.5 sm:mb-3 flex-wrap">
+                        <div className={`flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 rounded-md ${categoryColors[article.category]?.split(" ")[0] || "bg-muted"}`}>
+                          <CatIcon className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${categoryColors[article.category]?.split(" ")[1] || "text-muted-foreground"}`} />
+                        </div>
+                        <Badge variant="outline" className={`text-[9px] sm:text-[10px] px-1.5 py-0 ${categoryColors[article.category] || ""}`}>
+                          {article.category}
+                        </Badge>
+                        <span className="text-[9px] sm:text-[10px] text-muted-foreground flex items-center gap-0.5 ml-auto">
+                          <Clock className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+                          {article.read_time}
+                        </span>
+                      </div>
+
+                      <h2 className="font-heading font-semibold text-[13px] sm:text-sm md:text-base mb-1 sm:mb-2 group-hover:text-accent transition-colors leading-snug line-clamp-2">
+                        {article.title}
+                      </h2>
+
+                      <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2 sm:mb-4">
+                        {article.summary}
+                      </p>
                     </div>
-                    <Badge variant="outline" className={`text-[10px] ${categoryColors[article.category] || ""}`}>
-                      {article.category}
-                    </Badge>
-                    <span className="text-[10px] text-muted-foreground flex items-center gap-1 ml-auto">
-                      <Clock className="h-2.5 w-2.5" />
-                      {article.read_time}
-                    </span>
                   </div>
 
-                  <h2 className="font-heading font-semibold text-sm sm:text-base mb-2 group-hover:text-accent transition-colors leading-snug line-clamp-2">
-                    {article.title}
-                  </h2>
-
-                  <p className="text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-4 flex-1">
-                    {article.summary}
-                  </p>
-
-                  <div className="flex items-center justify-between pt-3 border-t border-border/50">
-                    <span className="text-[11px] text-muted-foreground">
-                      {article.source && `${article.source} · `}
-                      {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
+                  <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-border/50 mt-auto">
+                    <span className="text-[10px] sm:text-[11px] text-muted-foreground">
+                      {article.source && <span className="hidden sm:inline">{article.source} · </span>}
+                      {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
                     </span>
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1">
                       <ShareButton article={article} copyLink={copyLink} shareToTwitter={shareToTwitter} shareToFacebook={shareToFacebook} />
-                      <span className="text-[11px] text-accent font-medium flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                        Read <ArrowRight className="h-3 w-3" />
+                      <span className="text-[10px] sm:text-[11px] text-accent font-medium flex items-center gap-0.5">
+                        Read <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                       </span>
                     </div>
                   </div>
@@ -293,7 +296,7 @@ const NewsPage = () => {
       )}
 
       {/* Article stats */}
-      <div className="flex items-center justify-center gap-4 mt-8 text-xs text-muted-foreground">
+      <div className="flex items-center justify-center gap-3 sm:gap-4 mt-6 sm:mt-8 text-[10px] sm:text-xs text-muted-foreground">
         <span>{filtered.length} article{filtered.length !== 1 ? "s" : ""}</span>
         <span className="w-px h-3 bg-border" />
         <span>{activeCategory === "All" ? "All categories" : activeCategory}</span>
