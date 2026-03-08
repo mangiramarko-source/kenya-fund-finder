@@ -14,6 +14,18 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
 
+const StatCard = ({ icon: Icon, label, value, accent }: { icon: React.ElementType; label: string; value: string; accent?: boolean }) => (
+  <div className={`rounded-xl border p-4 flex items-start gap-3 ${accent ? "border-accent/40 bg-accent/5" : "border-border bg-card"}`}>
+    <div className={`rounded-lg p-2 ${accent ? "bg-accent/10 text-accent" : "bg-muted text-muted-foreground"}`}>
+      <Icon className="h-4 w-4" />
+    </div>
+    <div className="min-w-0">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className={`font-bold text-sm md:text-base truncate ${accent ? "text-accent" : "text-foreground"}`}>{value}</p>
+    </div>
+  </div>
+);
+
 const WITHHOLDING_TAX_RATE = 0.15;
 
 function calculate(amount: number, yield_: number, months: number, monthly: number, compound: boolean, fund: FundFromDB | null) {
