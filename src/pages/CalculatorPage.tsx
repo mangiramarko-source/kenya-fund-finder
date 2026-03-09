@@ -15,6 +15,7 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
 import CurrencyConverter from "@/components/calculator/CurrencyConverter";
+import PayeCalculator from "@/components/calculator/PayeCalculator";
 
 const StatCard = ({ icon: Icon, label, value, accent }: { icon: React.ElementType; label: string; value: string; accent?: boolean }) => (
   <div className={`rounded-xl border p-4 flex items-start gap-3 ${accent ? "border-accent/40 bg-accent/5" : "border-border bg-card"}`}>
