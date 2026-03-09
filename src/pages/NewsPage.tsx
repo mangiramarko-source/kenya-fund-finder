@@ -219,7 +219,7 @@ const NewsPage = () => {
                     {featuredArticle.read_time}
                   </span>
                 </div>
-                <h2 className="font-heading font-bold text-base sm:text-xl md:text-2xl mb-2 sm:mb-3 group-hover:text-accent transition-colors leading-snug sm:leading-tight max-w-2xl line-clamp-3 sm:line-clamp-none">
+                <h2 className="font-heading font-bold text-sm sm:text-xl md:text-2xl mb-2 sm:mb-3 group-hover:text-accent transition-colors leading-snug sm:leading-tight max-w-2xl line-clamp-3 sm:line-clamp-none">
                   {featuredArticle.title}
                 </h2>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-3 sm:mb-4 max-w-2xl line-clamp-2 sm:line-clamp-3">
@@ -259,33 +259,33 @@ const NewsPage = () => {
                         <div className={`flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 rounded-md ${categoryColors[article.category]?.split(" ")[0] || "bg-muted"}`}>
                           <CatIcon className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${categoryColors[article.category]?.split(" ")[1] || "text-muted-foreground"}`} />
                         </div>
-                        <Badge variant="outline" className={`text-[9px] sm:text-[10px] px-1.5 py-0 ${categoryColors[article.category] || ""}`}>
+                        <Badge variant="outline" className={`text-[10px] sm:text-[10px] px-1.5 py-0 ${categoryColors[article.category] || ""}`}>
                           {article.category}
                         </Badge>
-                        <span className="text-[9px] sm:text-[10px] text-muted-foreground flex items-center gap-0.5 ml-auto">
-                          <Clock className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+                        <span className="text-[10px] sm:text-[10px] text-muted-foreground flex items-center gap-0.5 ml-auto">
+                          <Clock className="h-2.5 w-2.5 sm:h-2.5 sm:w-2.5" />
                           {article.read_time}
                         </span>
                       </div>
 
-                      <h2 className="font-heading font-semibold text-[13px] sm:text-sm md:text-base mb-1 sm:mb-2 group-hover:text-accent transition-colors leading-snug line-clamp-2">
+                      <h2 className="font-heading font-semibold text-sm sm:text-sm md:text-base mb-1 sm:mb-2 group-hover:text-accent transition-colors leading-snug line-clamp-2">
                         {article.title}
                       </h2>
 
-                      <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2 sm:mb-4">
+                      <p className="text-xs sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2 sm:mb-4">
                         {article.summary}
                       </p>
                     </div>
                   </div>
 
                   <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-border/50 mt-auto">
-                    <span className="text-[10px] sm:text-[11px] text-muted-foreground">
+                    <span className="text-[11px] sm:text-[11px] text-muted-foreground">
                       {article.source && <span className="hidden sm:inline">{article.source} · </span>}
                       {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
                     </span>
                     <div className="flex items-center gap-1">
                       <ShareButton article={article} copyLink={copyLink} shareToTwitter={shareToTwitter} shareToFacebook={shareToFacebook} />
-                      <span className="text-[10px] sm:text-[11px] text-accent font-medium flex items-center gap-0.5">
+                      <span className="text-[11px] sm:text-[11px] text-accent font-medium flex items-center gap-0.5">
                         Read <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                       </span>
                     </div>
