@@ -219,7 +219,7 @@ const NewsPage = () => {
                     {featuredArticle.read_time}
                   </span>
                 </div>
-                <h2 className="font-heading font-bold text-base sm:text-xl md:text-2xl mb-2 sm:mb-3 group-hover:text-accent transition-colors leading-snug sm:leading-tight max-w-2xl line-clamp-3 sm:line-clamp-none">
+                <h2 className="font-heading font-bold text-sm sm:text-xl md:text-2xl mb-2 sm:mb-3 group-hover:text-accent transition-colors leading-snug sm:leading-tight max-w-2xl line-clamp-3 sm:line-clamp-none">
                   {featuredArticle.title}
                 </h2>
                 <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed mb-3 sm:mb-4 max-w-2xl line-clamp-2 sm:line-clamp-3">
