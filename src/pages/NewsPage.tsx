@@ -268,11 +268,11 @@ const NewsPage = () => {
                         </span>
                       </div>
 
-                      <h2 className="font-heading font-semibold text-[13px] sm:text-sm md:text-base mb-1 sm:mb-2 group-hover:text-accent transition-colors leading-snug line-clamp-2">
+                      <h2 className="font-heading font-semibold text-sm sm:text-sm md:text-base mb-1 sm:mb-2 group-hover:text-accent transition-colors leading-snug line-clamp-2">
                         {article.title}
                       </h2>
 
-                      <p className="text-[11px] sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2 sm:mb-4">
+                      <p className="text-xs sm:text-xs text-muted-foreground leading-relaxed line-clamp-2 mb-2 sm:mb-4">
                         {article.summary}
                       </p>
                     </div>
