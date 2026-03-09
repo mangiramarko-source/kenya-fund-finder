@@ -279,13 +279,13 @@ const NewsPage = () => {
                   </div>
 
                   <div className="flex items-center justify-between pt-2 sm:pt-3 border-t border-border/50 mt-auto">
-                    <span className="text-[10px] sm:text-[11px] text-muted-foreground">
+                    <span className="text-[11px] sm:text-[11px] text-muted-foreground">
                       {article.source && <span className="hidden sm:inline">{article.source} · </span>}
                       {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
                     </span>
                     <div className="flex items-center gap-1">
                       <ShareButton article={article} copyLink={copyLink} shareToTwitter={shareToTwitter} shareToFacebook={shareToFacebook} />
-                      <span className="text-[10px] sm:text-[11px] text-accent font-medium flex items-center gap-0.5">
+                      <span className="text-[11px] sm:text-[11px] text-accent font-medium flex items-center gap-0.5">
                         Read <ArrowRight className="h-2.5 w-2.5 sm:h-3 sm:w-3" />
                       </span>
                     </div>
