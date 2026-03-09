@@ -259,11 +259,11 @@ const NewsPage = () => {
                         <div className={`flex items-center justify-center h-5 w-5 sm:h-6 sm:w-6 rounded-md ${categoryColors[article.category]?.split(" ")[0] || "bg-muted"}`}>
                           <CatIcon className={`h-2.5 w-2.5 sm:h-3 sm:w-3 ${categoryColors[article.category]?.split(" ")[1] || "text-muted-foreground"}`} />
                         </div>
-                        <Badge variant="outline" className={`text-[9px] sm:text-[10px] px-1.5 py-0 ${categoryColors[article.category] || ""}`}>
+                        <Badge variant="outline" className={`text-[10px] sm:text-[10px] px-1.5 py-0 ${categoryColors[article.category] || ""}`}>
                           {article.category}
                         </Badge>
-                        <span className="text-[9px] sm:text-[10px] text-muted-foreground flex items-center gap-0.5 ml-auto">
-                          <Clock className="h-2 w-2 sm:h-2.5 sm:w-2.5" />
+                        <span className="text-[10px] sm:text-[10px] text-muted-foreground flex items-center gap-0.5 ml-auto">
+                          <Clock className="h-2.5 w-2.5 sm:h-2.5 sm:w-2.5" />
                           {article.read_time}
                         </span>
                       </div>
