@@ -10,7 +10,7 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { fetchFunds, type FundFromDB, FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
-import { AlertTriangle, GitCompareArrows, TrendingUp, Wallet, PiggyBank, CalendarDays, ArrowRightLeft } from "lucide-react";
+import { AlertTriangle, GitCompareArrows, TrendingUp, Wallet, PiggyBank, CalendarDays, ArrowRightLeft, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
