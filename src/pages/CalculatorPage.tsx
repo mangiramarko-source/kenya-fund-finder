@@ -213,14 +213,21 @@ const CalculatorPage = () => {
       </div>
 
       <Tabs defaultValue="investment" className="space-y-6">
-        <TabsList className="h-10">
+        <TabsList className="h-10 flex-wrap">
           <TabsTrigger value="investment" className="gap-1.5 text-sm">
             <TrendingUp className="h-3.5 w-3.5" /> Investment
+          </TabsTrigger>
+          <TabsTrigger value="paye" className="gap-1.5 text-sm">
+            <Receipt className="h-3.5 w-3.5" /> PAYE
           </TabsTrigger>
           <TabsTrigger value="currency" className="gap-1.5 text-sm">
             <ArrowRightLeft className="h-3.5 w-3.5" /> Currency
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="paye">
+          <PayeCalculator />
+        </TabsContent>
 
         <TabsContent value="currency">
           <CurrencyConverter />
