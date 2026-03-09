@@ -74,7 +74,7 @@ function calculate(amount: number, yield_: number, months: number, monthly: numb
 const formatKES = (n: number) => `KES ${n.toLocaleString()}`;
 
 const CalculatorPage = () => {
-  useDocumentTitle("Investment Returns Calculator – Kenya Unit Trust Funds", "Calculate your potential returns from Money Market, Fixed Income, Bond, Balanced, and Equity funds. Compare gross vs net yields.");
+  useDocumentTitle("Kenya PAYE, Investment & Currency Calculator", "Free Kenya PAYE payslip calculator — compute NSSF, SHIF, Housing Levy, tax bands & net salary. Plus investment returns and currency conversion tools.");
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [funds, setFunds] = useState<FundFromDB[]>([]);
