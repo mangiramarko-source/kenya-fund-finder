@@ -231,8 +231,30 @@ const PayeCalculator = () => {
         </div>
       </div>
 
+      {/* Kenya-specific notes */}
+      <div className="rounded-xl border border-border bg-muted/50 p-4 space-y-3">
+        <h3 className="text-sm font-semibold">How Kenya Payroll Deductions Work</h3>
+        <div className="space-y-2 text-xs text-muted-foreground leading-relaxed">
+          <p>
+            <strong className="text-foreground">NSSF (National Social Security Fund):</strong> Employee contributes 6% of gross salary capped at a pensionable limit of KES 36,000 — meaning the maximum monthly NSSF deduction is <strong>KES 2,160</strong>. Matched by the employer.
+          </p>
+          <p>
+            <strong className="text-foreground">SHIF (Social Health Insurance Fund):</strong> Replaced NHIF effective October 2024. Calculated at <strong>2.75% of gross salary</strong> with no cap. Covers the employee and dependants under the Social Health Authority (SHA).
+          </p>
+          <p>
+            <strong className="text-foreground">Housing Levy (Affordable Housing Act):</strong> Both employer and employee contribute <strong>1.5% of gross salary</strong> each. The employee portion is deducted from salary; the employer matches it separately.
+          </p>
+          <p>
+            <strong className="text-foreground">PAYE (Pay As You Earn):</strong> Progressive income tax administered by the Kenya Revenue Authority (KRA). Applied on taxable income (gross minus NSSF and pension). A monthly <strong>personal relief of KES 2,400</strong> is deducted from the computed tax.
+          </p>
+          <p>
+            <strong className="text-foreground">Pension:</strong> Voluntary contributions to a registered pension scheme are tax-deductible up to KES 30,000 per month, reducing your taxable income before PAYE is calculated.
+          </p>
+        </div>
+      </div>
+
       <p className="text-[10px] text-muted-foreground text-center">
-        Based on Kenya Revenue Authority (KRA) PAYE rates effective 2024. This is for informational purposes only and does not constitute tax advice.
+        Based on Kenya Revenue Authority (KRA) PAYE rates and statutory deductions effective 2024/2025. This calculator is for informational purposes only and does not constitute tax or financial advice. Consult a licensed tax advisor for your specific situation.
       </p>
     </div>
   );
