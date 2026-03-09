@@ -10,11 +10,12 @@ import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
 import { fetchFunds, type FundFromDB, FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
-import { AlertTriangle, GitCompareArrows, TrendingUp, Wallet, PiggyBank, CalendarDays, ArrowRightLeft } from "lucide-react";
+import { AlertTriangle, GitCompareArrows, TrendingUp, Wallet, PiggyBank, CalendarDays, ArrowRightLeft, Receipt } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
 import CurrencyConverter from "@/components/calculator/CurrencyConverter";
+import PayeCalculator from "@/components/calculator/PayeCalculator";
 
 const StatCard = ({ icon: Icon, label, value, accent }: { icon: React.ElementType; label: string; value: string; accent?: boolean }) => (
   <div className={`rounded-xl border p-4 flex items-start gap-3 ${accent ? "border-accent/40 bg-accent/5" : "border-border bg-card"}`}>
@@ -212,14 +213,21 @@ const CalculatorPage = () => {
       </div>
 
       <Tabs defaultValue="investment" className="space-y-6">
-        <TabsList className="h-10">
+        <TabsList className="h-10 flex-wrap">
           <TabsTrigger value="investment" className="gap-1.5 text-sm">
             <TrendingUp className="h-3.5 w-3.5" /> Investment
+          </TabsTrigger>
+          <TabsTrigger value="paye" className="gap-1.5 text-sm">
+            <Receipt className="h-3.5 w-3.5" /> PAYE
           </TabsTrigger>
           <TabsTrigger value="currency" className="gap-1.5 text-sm">
             <ArrowRightLeft className="h-3.5 w-3.5" /> Currency
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="paye">
+          <PayeCalculator />
+        </TabsContent>
 
         <TabsContent value="currency">
           <CurrencyConverter />
