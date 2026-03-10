@@ -203,7 +203,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
                 {/* Mobile cards */}
                 <div className="md:hidden">
                   <FundMobileCards
-                    funds={displayFunds}
+                    funds={processedFunds}
                     snapshots={snapshots}
                     bestYield={bestYield}
                     loading={loading}
