@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowUpDown } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import YieldChange, { formatYield } from "@/components/YieldChange";
+import YieldChange from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
 type SortKey = "annual_yield" | "daily_yield" | "management_fee" | "minimum_investment" | "name";
@@ -19,6 +19,12 @@ interface FundTableProps {
   hasSearch: boolean;
 }
 
+/** Map yield_unit to short currency label */
+const currencyLabel = (unit: string) => {
+  if (unit === "%" || unit === "KES") return "Sh";
+  return unit;
+};
+
 const SortHeader = ({ label, field, sortKey, onToggleSort, className = "" }: { label: string; field: SortKey; sortKey: SortKey; onToggleSort: (key: SortKey) => void; className?: string }) => (
   <button onClick={() => onToggleSort(field)} className={`inline-flex items-center gap-1 font-semibold hover:text-accent transition-colors ${className}`}>
     {label}
@@ -32,9 +38,11 @@ const TableSkeleton = () => (
       <div className="flex gap-4">
         <Skeleton className="h-4 w-8" />
         <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-4 w-14" />
         <Skeleton className="h-4 w-24 ml-auto" />
         <Skeleton className="h-4 w-20" />
         <Skeleton className="h-4 w-16" />
+        <Skeleton className="h-4 w-12" />
       </div>
     </div>
     {Array.from({ length: 6 }).map((_, i) => (
@@ -44,6 +52,7 @@ const TableSkeleton = () => (
           <Skeleton className="h-4 w-40 mb-1.5" />
           <Skeleton className="h-3 w-24" />
         </div>
+        <Skeleton className="h-4 w-10" />
         <Skeleton className="h-5 w-16" />
         <Skeleton className="h-4 w-14" />
         <Skeleton className="h-4 w-14" />
@@ -55,7 +64,7 @@ const TableSkeleton = () => (
 
 const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearSearch: () => void }) => (
   <tr>
-    <td colSpan={7} className="text-center py-14">
+    <td colSpan={8} className="text-center py-14">
       <div className="flex flex-col items-center gap-3">
         <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
           <span className="text-2xl">📊</span>
@@ -71,6 +80,9 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
   </tr>
 );
 
+/** Format yield as percentage string (without unit prefix) */
+const fmtYield = (value: number) => `${value}%`;
+
 const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort, loading, onClearSearch, hasSearch }: FundTableProps) => {
   const navigate = useNavigate();
   if (loading) return <TableSkeleton />;
@@ -81,7 +93,8 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
         <colgroup>
           <col className="w-10" />
           <col />
-          <col className="w-40" />
+          <col className="w-16" />
+          <col className="w-28" />
           <col className="w-28" />
           <col className="w-28" />
           <col className="w-16" />
@@ -90,9 +103,10 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
         <thead>
           <tr className="bg-muted/70 text-xs">
             <th className="text-left px-4 py-3 font-semibold text-muted-foreground">#</th>
-            <th className="text-left px-4 py-3"><SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={onToggleSort} /></th>
-            <th className="text-right px-4 py-3"><SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
+            <th className="text-left px-4 py-3"><SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={onToggleSort} /></th>
+            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Currency</th>
             <th className="text-right px-4 py-3"><SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
+            <th className="text-right px-4 py-3"><SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
             <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Change</th>
             <th className="text-right px-4 py-3"><SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
             <th className="px-4 py-3"></th>
@@ -111,11 +125,12 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
                 )}
                 <span className="block text-xs text-muted-foreground mt-0.5">{fund.manager}</span>
               </td>
-              <td className="px-4 py-3.5 text-right whitespace-nowrap tabular-nums">
-                <span className="font-bold text-accent text-base">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
-              </td>
+              <td className="px-4 py-3.5 text-xs font-medium text-muted-foreground">{currencyLabel(fund.yield_unit)}</td>
               <td className="px-4 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                {formatYield(fund.daily_yield, fund.yield_unit)}
+                {fmtYield(fund.daily_yield)}
+              </td>
+              <td className="px-4 py-3.5 text-right whitespace-nowrap tabular-nums">
+                <span className="font-bold text-accent text-base">{fmtYield(fund.annual_yield)}</span>
               </td>
               <td className="px-4 py-3.5 text-right whitespace-nowrap">
                 {snapshots[fund.id] ? (
