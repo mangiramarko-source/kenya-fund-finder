@@ -89,32 +89,32 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
 
   return (
     <div className="rounded-xl border border-border overflow-hidden bg-card">
-      <table className="w-full text-sm table-fixed">
+      <table className="w-full text-sm">
         <colgroup>
-          <col className="w-10" />
-          <col />
-          <col className="w-16" />
-          <col className="w-28" />
-          <col className="w-28" />
-          <col className="w-28" />
-          <col className="w-12" />
+          <col style={{ width: "3%" }} />
+          <col style={{ width: "37%" }} />
+          <col style={{ width: "10%" }} />
+          <col style={{ width: "16%" }} />
+          <col style={{ width: "16%" }} />
+          <col style={{ width: "14%" }} />
+          <col style={{ width: "4%" }} />
         </colgroup>
         <thead>
           <tr className="bg-muted/70 text-xs">
-            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">#</th>
-            <th className="text-left px-4 py-3"><SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={onToggleSort} /></th>
-            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Currency</th>
-            <th className="text-right px-4 py-3"><SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
-            <th className="text-right px-4 py-3"><SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
-            <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Change</th>
-            <th className="px-4 py-3"></th>
+            <th className="text-left pl-5 pr-2 py-3 font-semibold text-muted-foreground">#</th>
+            <th className="text-left px-3 py-3"><SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={onToggleSort} /></th>
+            <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Currency</th>
+            <th className="text-right px-3 py-3"><SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
+            <th className="text-right px-3 py-3"><SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
+            <th className="text-right px-3 py-3 font-semibold text-muted-foreground">Change</th>
+            <th className="pr-5 pl-2 py-3"></th>
           </tr>
         </thead>
         <tbody>
           {funds.map((fund, i) => (
             <tr key={fund.id} onClick={() => navigate(`/compare/${fund.slug}`)} className="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer">
-              <td className="px-4 py-3.5 text-muted-foreground text-xs tabular-nums">{i + 1}</td>
-              <td className="px-4 py-3.5">
+              <td className="pl-5 pr-2 py-3 text-muted-foreground text-xs tabular-nums">{i + 1}</td>
+              <td className="px-3 py-3">
                 <Link to={`/compare/${fund.slug}`} className="font-semibold hover:text-accent transition-colors">
                   {fund.name}
                 </Link>
@@ -123,22 +123,21 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
                 )}
                 <span className="block text-xs text-muted-foreground mt-0.5">{fund.manager}</span>
               </td>
-              <td className="px-4 py-3.5 text-xs font-medium text-muted-foreground">{currencyLabel(fund.yield_unit)}</td>
-              <td className="px-4 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground">
+              <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{currencyLabel(fund.yield_unit)}</td>
+              <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap text-muted-foreground">
                 {fmtYield(fund.daily_yield)}
               </td>
-              <td className="px-4 py-3.5 text-right whitespace-nowrap tabular-nums">
+              <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
                 <span className="font-bold text-accent text-base">{fmtYield(fund.annual_yield)}</span>
               </td>
-              <td className="px-4 py-3.5 text-right whitespace-nowrap">
+              <td className="px-3 py-3 text-right whitespace-nowrap">
                 {snapshots[fund.id] ? (
                   <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-xs justify-end" />
                 ) : (
                   <span className="text-xs text-muted-foreground">—</span>
                 )}
               </td>
-              
-              <td className="px-4 py-3.5 text-right">
+              <td className="pr-5 pl-2 py-3 text-right">
                 <Link to={`/compare/${fund.slug}`} className="text-accent hover:text-accent/80 transition-colors">
                   <ArrowRight className="h-4 w-4 inline-block" />
                 </Link>
