@@ -58,7 +58,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const debouncedSearch = useDebouncedValue(search, 250);
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [yieldFilter, setYieldFilter] = useState<"all" | "percent" | "currency">("all");
+  
   const { lastUpdateDate, isLive } = useLiveStatus();
   const { user } = useAuth();
 
