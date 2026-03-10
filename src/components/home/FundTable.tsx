@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import YieldChange from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
-type SortKey = "annual_yield" | "daily_yield" | "management_fee" | "minimum_investment" | "name";
+type SortKey = "annual_yield" | "daily_yield" | "name";
 
 interface FundTableProps {
   funds: FundFromDB[];
