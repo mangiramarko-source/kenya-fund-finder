@@ -97,7 +97,6 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
           <col className="w-28" />
           <col className="w-28" />
           <col className="w-28" />
-          <col className="w-16" />
           <col className="w-12" />
         </colgroup>
         <thead>
@@ -108,7 +107,6 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
             <th className="text-right px-4 py-3"><SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
             <th className="text-right px-4 py-3"><SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
             <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Change</th>
-            <th className="text-right px-4 py-3"><SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
