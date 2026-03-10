@@ -64,7 +64,7 @@ const TableSkeleton = () => (
 
 const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearSearch: () => void }) => (
   <tr>
-    <td colSpan={8} className="text-center py-14">
+    <td colSpan={7} className="text-center py-14">
       <div className="flex flex-col items-center gap-3">
         <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
           <span className="text-2xl">📊</span>
