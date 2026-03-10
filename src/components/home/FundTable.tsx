@@ -5,7 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import YieldChange from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
-type SortKey = "annual_yield" | "daily_yield" | "management_fee" | "minimum_investment" | "name";
+type SortKey = "annual_yield" | "daily_yield" | "name";
 
 interface FundTableProps {
   funds: FundFromDB[];
@@ -64,7 +64,7 @@ const TableSkeleton = () => (
 
 const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearSearch: () => void }) => (
   <tr>
-    <td colSpan={8} className="text-center py-14">
+    <td colSpan={7} className="text-center py-14">
       <div className="flex flex-col items-center gap-3">
         <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
           <span className="text-2xl">📊</span>
@@ -97,7 +97,6 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
           <col className="w-28" />
           <col className="w-28" />
           <col className="w-28" />
-          <col className="w-16" />
           <col className="w-12" />
         </colgroup>
         <thead>
@@ -108,7 +107,6 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
             <th className="text-right px-4 py-3"><SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
             <th className="text-right px-4 py-3"><SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
             <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Change</th>
-            <th className="text-right px-4 py-3"><SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
             <th className="px-4 py-3"></th>
           </tr>
         </thead>
@@ -139,7 +137,7 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
                   <span className="text-xs text-muted-foreground">—</span>
                 )}
               </td>
-              <td className="px-4 py-3.5 text-right tabular-nums text-muted-foreground">{fund.management_fee}%</td>
+              
               <td className="px-4 py-3.5 text-right">
                 <Link to={`/compare/${fund.slug}`} className="text-accent hover:text-accent/80 transition-colors">
                   <ArrowRight className="h-4 w-4 inline-block" />
