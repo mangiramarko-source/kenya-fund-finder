@@ -184,31 +184,6 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
                   </div>
                 </div>
 
-                {/* Yield unit toggle */}
-                {hasBothTypes && (
-                  <div className="flex items-center gap-1.5 mb-4">
-                    {(["all", "percent", "currency"] as const).map((opt) => {
-                      const labels = { all: "All", percent: "% Yields", currency: "Currency" };
-                      const counts = { all: processedFunds.length, percent: percentFunds.length, currency: currencyFunds.length };
-                      return (
-                        <button
-                          key={opt}
-                          onClick={() => setYieldFilter(opt)}
-                          className={`inline-flex items-center gap-1.5 rounded-lg text-xs font-medium px-3 h-8 border transition-all ${
-                            yieldFilter === opt
-                              ? "bg-accent text-accent-foreground border-accent shadow-sm"
-                              : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
-                          }`}
-                        >
-                          {labels[opt]}
-                          <span className={`text-[10px] tabular-nums ${yieldFilter === opt ? "text-accent-foreground/70" : "text-muted-foreground/60"}`}>
-                            {counts[opt]}
-                          </span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
 
                 {/* Desktop table */}
                 <div className="hidden md:block">
