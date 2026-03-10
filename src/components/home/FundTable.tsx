@@ -137,7 +137,7 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
                   <span className="text-xs text-muted-foreground">—</span>
                 )}
               </td>
-              <td className="px-4 py-3.5 text-right tabular-nums text-muted-foreground">{fund.management_fee}%</td>
+              
               <td className="px-4 py-3.5 text-right">
                 <Link to={`/compare/${fund.slug}`} className="text-accent hover:text-accent/80 transition-colors">
                   <ArrowRight className="h-4 w-4 inline-block" />
