@@ -188,7 +188,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
                 {/* Desktop table */}
                 <div className="hidden md:block">
                   <FundTable
-                    funds={displayFunds}
+                    funds={processedFunds}
                     snapshots={snapshots}
                     bestYield={bestYield}
                     sortKey={sortKey}
