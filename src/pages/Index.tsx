@@ -19,7 +19,7 @@ import NewsSidebar from "@/components/home/NewsSidebar";
 import AdBanner from "@/components/AdBanner";
 import { useMarketData, RatesTable, CommoditiesTable, RatesMobileCards, CommoditiesMobileCards } from "@/components/home/MarketTicker";
 
-type SortKey = "annual_yield" | "daily_yield" | "management_fee" | "minimum_investment" | "name";
+type SortKey = "annual_yield" | "daily_yield" | "name";
 type SortDir = "asc" | "desc";
 
 const categoryLabels: Record<string, string> = {
