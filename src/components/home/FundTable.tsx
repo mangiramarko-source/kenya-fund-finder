@@ -89,25 +89,25 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
 
   return (
     <div className="rounded-xl border border-border overflow-hidden bg-card">
-      <table className="w-full text-sm table-fixed">
+      <table className="w-full text-sm">
         <colgroup>
-          <col className="w-10" />
-          <col />
-          <col className="w-16" />
-          <col className="w-28" />
-          <col className="w-28" />
-          <col className="w-28" />
-          <col className="w-12" />
+          <col style={{ width: "3%" }} />
+          <col style={{ width: "37%" }} />
+          <col style={{ width: "10%" }} />
+          <col style={{ width: "16%" }} />
+          <col style={{ width: "16%" }} />
+          <col style={{ width: "14%" }} />
+          <col style={{ width: "4%" }} />
         </colgroup>
         <thead>
           <tr className="bg-muted/70 text-xs">
-            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">#</th>
-            <th className="text-left px-4 py-3"><SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={onToggleSort} /></th>
-            <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Currency</th>
-            <th className="text-right px-4 py-3"><SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
-            <th className="text-right px-4 py-3"><SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
-            <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Change</th>
-            <th className="px-4 py-3"></th>
+            <th className="text-left pl-5 pr-2 py-3 font-semibold text-muted-foreground">#</th>
+            <th className="text-left px-3 py-3"><SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={onToggleSort} /></th>
+            <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Currency</th>
+            <th className="text-right px-3 py-3"><SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
+            <th className="text-right px-3 py-3"><SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={onToggleSort} className="justify-end" /></th>
+            <th className="text-right px-3 py-3 font-semibold text-muted-foreground">Change</th>
+            <th className="pr-5 pl-2 py-3"></th>
           </tr>
         </thead>
         <tbody>
