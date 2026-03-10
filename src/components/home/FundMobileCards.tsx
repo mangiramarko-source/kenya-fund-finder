@@ -90,10 +90,6 @@ const FundMobileCards = ({ funds, snapshots, bestYield, loading, onClearSearch, 
               <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Annual</span>
               <span className="block text-sm font-bold tabular-nums text-accent mt-0.5">{fund.annual_yield}%</span>
             </div>
-            <div className="rounded-lg bg-muted/50 px-2 py-2 text-center">
-              <span className="block text-[9px] text-muted-foreground uppercase tracking-wider font-medium">Fee</span>
-              <span className="block text-sm font-bold tabular-nums text-foreground mt-0.5">{fund.management_fee}%</span>
-            </div>
           </div>
         </Link>
       ))}
