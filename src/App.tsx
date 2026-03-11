@@ -9,6 +9,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Layout from "@/components/Layout";
 import Index from "./pages/Index";
 import { Navigate } from "react-router-dom";
+import ComparePage from "./pages/ComparePage";
 import FundDetailPage from "./pages/FundDetailPage";
 import CalculatorPage from "./pages/CalculatorPage";
 import NewsPage from "./pages/NewsPage";
@@ -42,7 +43,7 @@ const App = () => (
               <Layout>
                 <Routes>
                   <Route path="/" element={<Index />} />
-                  <Route path="/compare" element={<Navigate to="/" replace />} />
+                  <Route path="/compare" element={<ComparePage />} />
                   <Route path="/compare/:id" element={<FundDetailPage />} />
                   <Route path="/calculator" element={<CalculatorPage />} />
                   <Route path="/news" element={<NewsPage />} />

@@ -1,4 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Filter, TrendingUp, Search, Radio } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,7 +26,9 @@ const ComparePage = () => {
   const [sortDir, setSortDir] = useState<"asc" | "desc">("desc");
   const [managerFilter, setManagerFilter] = useState<string>("all");
   const [searchQuery, setSearchQuery] = useState("");
-  const [activeType, setActiveType] = useState<FundType>("money_market");
+  const [searchParams] = useSearchParams();
+  const initialType = (searchParams.get("type") as FundType) || "money_market";
+  const [activeType, setActiveType] = useState<FundType>(initialType);
   const { isLive, lastUpdateDate } = useLiveStatus();
 
   useEffect(() => {
