@@ -168,50 +168,51 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
           {/* Main area */}
           <div>
-            <CategoryTabs
-              tabs={allTabs}
-              selectedCategory={selectedCategory}
-              categoryCount={categoryCount}
-              onSelect={setSelectedCategory}
-              loading={loading}
-            />
+            {/* Desktop: show all fund categories as grid (no tabs needed) */}
+            <div className="hidden md:block">
+              {/* Desktop market tabs only */}
+              <CategoryTabs
+                tabs={marketTabs}
+                selectedCategory={isMarketTab ? selectedCategory : ""}
+                categoryCount={categoryCount}
+                onSelect={setSelectedCategory}
+                loading={loading}
+              />
 
-            {/* Fund content */}
-            {isFundTab && (
-              <>
-                <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
+              {!isMarketTab && (
+                <>
+                  <p className="text-[10px] text-muted-foreground mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
+                  <FundGrid funds={funds} snapshots={snapshots} loading={loading} />
+                </>
+              )}
+            </div>
 
-                {/* Search */}
-                <div className="flex gap-2 mb-4">
-                  <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <Input
-                      placeholder="Search funds or managers…"
-                      value={search}
-                      onChange={(e) => setSearch(e.target.value)}
-                      className="pl-9 h-9 rounded-lg text-sm"
-                    />
+            {/* Mobile: tabbed view with cards */}
+            <div className="md:hidden">
+              <CategoryTabs
+                tabs={allTabs}
+                selectedCategory={selectedCategory}
+                categoryCount={categoryCount}
+                onSelect={setSelectedCategory}
+                loading={loading}
+              />
+
+              {isFundTab && (
+                <>
+                  <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
+
+                  <div className="flex gap-2 mb-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                      <Input
+                        placeholder="Search funds or managers…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 h-9 rounded-lg text-sm"
+                      />
+                    </div>
                   </div>
-                </div>
 
-
-                {/* Desktop table */}
-                <div className="hidden md:block">
-                  <FundTable
-                    funds={processedFunds}
-                    snapshots={snapshots}
-                    bestYield={bestYield}
-                    sortKey={sortKey}
-                    sortDir={sortDir}
-                    onToggleSort={toggleSort}
-                    loading={loading}
-                    onClearSearch={clearSearch}
-                    hasSearch={!!debouncedSearch.trim()}
-                  />
-                </div>
-
-                {/* Mobile cards */}
-                <div className="md:hidden">
                   <FundMobileCards
                     funds={processedFunds}
                     snapshots={snapshots}
@@ -220,21 +221,20 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
                     onClearSearch={clearSearch}
                     hasSearch={!!debouncedSearch.trim()}
                   />
-                </div>
 
-                {/* Mobile disclaimer */}
-                <div className="md:hidden mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
-                  <p className="text-[10px] leading-relaxed text-muted-foreground">
-                    {getDisclaimer(selectedCategory as any)}
-                  </p>
-                </div>
-              </>
-            )}
+                  <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
+                    <p className="text-[10px] leading-relaxed text-muted-foreground">
+                      {getDisclaimer(selectedCategory as any)}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
 
             {/* Currency content */}
             {selectedCategory === "fx_rates" && (
               <>
-                <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Exchange rates are indicative and updated manually by administrators.</p>
+                <p className="text-[10px] text-muted-foreground -mt-1 mb-3 md:mt-0">Exchange rates are indicative and updated manually by administrators.</p>
                 {user ? (
                   <>
                     <div className="hidden md:block">
