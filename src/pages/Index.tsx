@@ -142,11 +142,11 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
     { key: "commodities", label: "Commodities" },
   ], []);
 
-  // Mobile uses all tabs, desktop only market tabs
   const allTabs = useMemo(() => [
     ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c })),
-    ...marketTabs,
-  ], [categories, marketTabs]);
+    { key: "fx_rates", label: "FX Rates" },
+    { key: "commodities", label: "Commodities" },
+  ], [categories]);
 
   const isMarketTab = MARKET_TABS.includes(selectedCategory as any);
   const isFundTab = !isMarketTab;
