@@ -136,7 +136,8 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
     ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c })),
   ], [categories]);
 
-  const marketTabs = useMemo(() => [
+  const desktopTabs = useMemo(() => [
+    { key: "all_funds", label: "All Funds" },
     { key: "fx_rates", label: "FX Rates" },
     { key: "commodities", label: "Commodities" },
   ], []);
