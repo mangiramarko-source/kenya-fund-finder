@@ -173,10 +173,10 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
             <div className="hidden md:block">
               {/* Desktop market tabs only */}
               <CategoryTabs
-                tabs={marketTabs}
-                selectedCategory={isMarketTab ? selectedCategory : ""}
-                categoryCount={categoryCount}
-                onSelect={setSelectedCategory}
+                tabs={desktopTabs}
+                selectedCategory={isMarketTab ? selectedCategory : "all_funds"}
+                categoryCount={{ ...categoryCount, all_funds: funds.length }}
+                onSelect={(key) => setSelectedCategory(key === "all_funds" ? "money_market" : key)}
                 loading={loading}
               />
 
