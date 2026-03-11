@@ -131,12 +131,21 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const lastUpdate = lastUpdateDate ? new Date(lastUpdateDate) : funds[0] ? new Date(funds[0].updated_at) : null;
   const latestNews = news.slice(0, 4);
 
-  // Build tabs: fund categories + market tabs
-  const allTabs = useMemo(() => [
+  // Build tabs for mobile fund categories + market tabs (desktop shows grid for funds)
+  const mobileFundTabs = useMemo(() => [
     ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c })),
+  ], [categories]);
+
+  const marketTabs = useMemo(() => [
     { key: "fx_rates", label: "FX Rates" },
     { key: "commodities", label: "Commodities" },
-  ], [categories]);
+  ], []);
+
+  // Mobile uses all tabs, desktop only market tabs
+  const allTabs = useMemo(() => [
+    ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c })),
+    ...marketTabs,
+  ], [categories, marketTabs]);
 
   const isMarketTab = MARKET_TABS.includes(selectedCategory as any);
   const isFundTab = !isMarketTab;
