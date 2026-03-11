@@ -21,9 +21,12 @@ interface FundTableProps {
 
 /** Map yield_unit to short currency label */
 const currencyLabel = (unit: string) => {
-  if (unit === "%" || unit === "KES") return "Sh";
+  if (unit === "%") return "%";
+  if (unit === "KES") return "KSh";
   return unit;
 };
+
+const isPercentUnit = (unit: string) => unit === "%";
 
 const SortHeader = ({ label, field, sortKey, onToggleSort, className = "" }: { label: string; field: SortKey; sortKey: SortKey; onToggleSort: (key: SortKey) => void; className?: string }) => (
   <button onClick={() => onToggleSort(field)} className={`inline-flex items-center gap-1 font-semibold hover:text-accent transition-colors ${className}`}>
