@@ -1,10 +1,19 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const allowedOrigins = [
+  "https://kenya-fund-finder.lovable.app",
+  "https://id-preview--e72d5937-d879-434f-ab8d-95e8c43f9adf.lovable.app",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const matched = allowedOrigins.find((o) => origin.startsWith(o));
+  return {
+    "Access-Control-Allow-Origin": matched || "",
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 async function hashIp(ip: string): Promise<string> {
   const encoder = new TextEncoder();
@@ -16,8 +25,19 @@ async function hashIp(ip: string): Promise<string> {
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Reject requests without a valid origin (blocks non-browser callers)
+  const origin = req.headers.get("origin") || "";
+  if (!origin || !allowedOrigins.some((o) => origin.startsWith(o))) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   const supabaseAdmin = createClient(
@@ -25,11 +45,10 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // --- Database-backed rate limiting via RPC ---
+  // Use only non-spoofable IP source (Cloudflare), fall back to "unknown"
   const clientIp =
     req.headers.get("cf-connecting-ip") ||
     req.headers.get("x-real-ip") ||
-    req.headers.get("x-forwarded-for")?.split(",")[0]?.trim() ||
     "unknown";
 
   const ipHash = await hashIp(clientIp);
@@ -55,20 +74,6 @@ Deno.serve(async (req) => {
     });
   }
 
-  // --- Origin check ---
-  const allowedOrigins = [
-    "https://kenya-fund-finder.lovable.app",
-    "https://id-preview--e72d5937-d879-434f-ab8d-95e8c43f9adf.lovable.app",
-  ];
-  const origin = req.headers.get("origin") || "";
-  if (origin && !allowedOrigins.some((o) => origin.startsWith(o))) {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
-  }
-
-  // --- Request handling ---
   try {
     const { type, page_path, session_id, source, action } = await req.json();
 
