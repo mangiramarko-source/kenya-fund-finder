@@ -14,8 +14,16 @@ interface FundMobileCardsProps {
 }
 
 const currencyLabel = (unit: string) => {
-  if (unit === "%" || unit === "KES") return "Sh";
+  if (unit === "%") return "%";
+  if (unit === "KES") return "KSh";
   return unit;
+};
+
+const isPercentUnit = (unit: string) => unit === "%";
+
+const fmtYield = (value: number, unit: string) => {
+  if (isPercentUnit(unit)) return `${value}%`;
+  return value.toFixed(2);
 };
 
 const CardSkeleton = () => (
