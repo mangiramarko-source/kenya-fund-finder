@@ -19,7 +19,6 @@ Deno.serve(async (req) => {
     const { action, placement, ad_id, event_type, session_id, page_path } = await req.json();
 
     if (action === "fetch") {
-      // Fetch active ads for a placement
       const { data, error } = await client
         .from("ads")
         .select("id, title, description, media_type, media_url, click_url, start_date, end_date, placement")
@@ -29,13 +28,13 @@ Deno.serve(async (req) => {
         .limit(5);
 
       if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 400,
+        console.error("content-feed fetch error:", error);
+        return new Response(JSON.stringify({ error: "Failed to fetch content" }), {
+          status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
 
-      // Filter by date
       const today = new Date().toISOString().split("T")[0];
       const active = (data || []).filter((a: any) => {
         if (a.start_date && a.start_date > today) return false;
@@ -49,7 +48,6 @@ Deno.serve(async (req) => {
     }
 
     if (action === "track") {
-      // Track impression or click
       if (!ad_id || !event_type || !["impression", "click"].includes(event_type)) {
         return new Response(JSON.stringify({ error: "Invalid tracking params" }), {
           status: 400,
@@ -65,8 +63,9 @@ Deno.serve(async (req) => {
       });
 
       if (error) {
-        return new Response(JSON.stringify({ error: error.message }), {
-          status: 400,
+        console.error("content-feed track error:", error);
+        return new Response(JSON.stringify({ error: "Failed to track event" }), {
+          status: 500,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
@@ -81,7 +80,8 @@ Deno.serve(async (req) => {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
-    return new Response(JSON.stringify({ error: e.message }), {
+    console.error("content-feed error:", e);
+    return new Response(JSON.stringify({ error: "Internal error" }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
