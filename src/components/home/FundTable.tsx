@@ -83,8 +83,11 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
   </tr>
 );
 
-/** Format yield as percentage string (without unit prefix) */
-const fmtYield = (value: number) => `${value}%`;
+/** Format yield value: show % for percent units, plain number for currency */
+const fmtYield = (value: number, unit: string) => {
+  if (isPercentUnit(unit)) return `${value}%`;
+  return value.toFixed(2);
+};
 
 const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort, loading, onClearSearch, hasSearch }: FundTableProps) => {
   const navigate = useNavigate();
