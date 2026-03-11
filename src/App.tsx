@@ -9,6 +9,7 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Layout from "@/components/Layout";
 import Index from "./pages/Index";
 import { Navigate } from "react-router-dom";
+import ComparePage from "./pages/ComparePage";
 import FundDetailPage from "./pages/FundDetailPage";
 import CalculatorPage from "./pages/CalculatorPage";
 import NewsPage from "./pages/NewsPage";
