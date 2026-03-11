@@ -21,9 +21,12 @@ interface FundTableProps {
 
 /** Map yield_unit to short currency label */
 const currencyLabel = (unit: string) => {
-  if (unit === "%" || unit === "KES") return "Sh";
+  if (unit === "%") return "%";
+  if (unit === "KES") return "KSh";
   return unit;
 };
+
+const isPercentUnit = (unit: string) => unit === "%";
 
 const SortHeader = ({ label, field, sortKey, onToggleSort, className = "" }: { label: string; field: SortKey; sortKey: SortKey; onToggleSort: (key: SortKey) => void; className?: string }) => (
   <button onClick={() => onToggleSort(field)} className={`inline-flex items-center gap-1 font-semibold hover:text-accent transition-colors ${className}`}>
@@ -80,8 +83,11 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
   </tr>
 );
 
-/** Format yield as percentage string (without unit prefix) */
-const fmtYield = (value: number) => `${value}%`;
+/** Format yield value: show % for percent units, plain number for currency */
+const fmtYield = (value: number, unit: string) => {
+  if (isPercentUnit(unit)) return `${value}%`;
+  return value.toFixed(2);
+};
 
 const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort, loading, onClearSearch, hasSearch }: FundTableProps) => {
   const navigate = useNavigate();
@@ -125,10 +131,10 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
               </td>
               <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{currencyLabel(fund.yield_unit)}</td>
               <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                {fmtYield(fund.daily_yield)}
+                {fmtYield(fund.daily_yield, fund.yield_unit)}
               </td>
               <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
-                <span className="font-bold text-accent text-base">{fmtYield(fund.annual_yield)}</span>
+                <span className="font-bold text-accent text-base">{fmtYield(fund.annual_yield, fund.yield_unit)}</span>
               </td>
               <td className="px-3 py-3 text-right whitespace-nowrap">
                 {snapshots[fund.id] ? (
