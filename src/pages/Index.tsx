@@ -15,6 +15,7 @@ import StatBar from "@/components/home/StatBar";
 import CategoryTabs from "@/components/home/CategoryTabs";
 import FundTable from "@/components/home/FundTable";
 import FundMobileCards from "@/components/home/FundMobileCards";
+import FundGrid from "@/components/home/FundGrid";
 import NewsSidebar from "@/components/home/NewsSidebar";
 import AdBanner from "@/components/AdBanner";
 import { useMarketData, RatesTable, CommoditiesTable, RatesMobileCards, CommoditiesMobileCards } from "@/components/home/MarketTicker";
