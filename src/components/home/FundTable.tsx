@@ -131,10 +131,10 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
               </td>
               <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{currencyLabel(fund.yield_unit)}</td>
               <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                {fmtYield(fund.daily_yield)}
+                {fmtYield(fund.daily_yield, fund.yield_unit)}
               </td>
               <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
-                <span className="font-bold text-accent text-base">{fmtYield(fund.annual_yield)}</span>
+                <span className="font-bold text-accent text-base">{fmtYield(fund.annual_yield, fund.yield_unit)}</span>
               </td>
               <td className="px-3 py-3 text-right whitespace-nowrap">
                 {snapshots[fund.id] ? (
