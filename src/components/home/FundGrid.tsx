@@ -39,6 +39,8 @@ interface FundGridProps {
 const ROW_HEIGHT = 30;
 const HEADER_HEIGHT = 34;
 const SUBHEADER_HEIGHT = 28;
+const MAX_VISIBLE = 8;
+const FOOTER_HEIGHT = 32;
 
 /* ─── Fund Category Card ─── */
 const FundCategoryCard = ({
