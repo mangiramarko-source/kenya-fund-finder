@@ -277,7 +277,7 @@ const FundGrid = ({ funds, snapshots, rates, commodities, loading, marketLoading
   return (
     <div className="space-y-4">
       {rows.map((row, ri) => {
-        const maxInRow = Math.max(...row.map((c) => c.count));
+        // All cards use MAX_VISIBLE rows for uniform height
 
         return (
           <div key={ri} className="grid grid-cols-3 gap-4" style={{ alignItems: "stretch" }}>
