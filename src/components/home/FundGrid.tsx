@@ -279,14 +279,14 @@ const FundGrid = ({ funds, snapshots, rates, commodities, loading, marketLoading
 
         return (
           <div key={ri} className="grid grid-cols-3 gap-4" style={{ alignItems: "stretch" }}>
-            {row.map((card, ci) => {
+            {row.map((card) => {
               if (card.type === "fund") {
-                return <FundCategoryCard key={card.category} category={card.category} funds={grouped[card.category]} maxRows={maxInRow} />;
+                return <FundCategoryCard key={card.category} category={card.category} funds={grouped[card.category]} />;
               }
               if (card.type === "rates") {
-                return <RatesCard key="rates" rates={rates} maxRows={maxInRow} />;
+                return <RatesCard key="rates" rates={rates} />;
               }
-              return <CommoditiesCard key="commodities" commodities={commodities} maxRows={maxInRow} />;
+              return <CommoditiesCard key="commodities" commodities={commodities} />;
             })}
             {row.length < 3 && Array.from({ length: 3 - row.length }).map((_, i) => <div key={`empty-${i}`} />)}
           </div>
