@@ -136,7 +136,7 @@ const FundCategoryCard = ({
 };
 
 /* ─── FX Rates Card ─── */
-const RatesCard = ({ rates, maxRows }: { rates: ExchangeRate[]; maxRows: number }) => (
+const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => (
   <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
     <div className="bg-muted/70 px-3 py-2 flex items-center justify-between" style={{ minHeight: HEADER_HEIGHT }}>
       <h3 className="text-xs font-bold text-foreground tracking-wide">FX Rates</h3>
