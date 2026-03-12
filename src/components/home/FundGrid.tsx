@@ -221,6 +221,11 @@ const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => (
         <div key={`pad-${i}`} style={{ height: ROW_HEIGHT }} />
       ))}
     </div>
+    <div className="border-t border-border" style={{ minHeight: FOOTER_HEIGHT }}>
+      <div className="px-3 py-1.5 text-[11px] text-muted-foreground text-center">
+        {commodities.length} item{commodities.length !== 1 ? "s" : ""}
+      </div>
+    </div>
   </div>
 );
 
