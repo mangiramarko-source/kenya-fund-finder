@@ -55,6 +55,8 @@ const FundCategoryCard = ({
   const navigate = useNavigate();
   const bestYield = funds.length > 0 ? Math.max(...funds.map((f) => f.annual_yield)) : 0;
   const sorted = [...funds].sort((a, b) => b.annual_yield - a.annual_yield);
+  const visible = sorted.slice(0, MAX_VISIBLE);
+  const hasMore = sorted.length > MAX_VISIBLE;
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
@@ -75,7 +77,7 @@ const FundCategoryCard = ({
       </div>
 
       <div className="flex-1 divide-y divide-border/50">
-        {sorted.map((fund) => (
+        {visible.map((fund) => (
           <div
             key={fund.id}
             onClick={() => navigate(`/compare/${fund.slug}`)}
@@ -107,12 +109,28 @@ const FundCategoryCard = ({
           </div>
         ))}
 
-        {sorted.length < maxRows && Array.from({ length: maxRows - sorted.length }).map((_, i) => (
+        {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
           <div key={`pad-${i}`} style={{ height: ROW_HEIGHT }} />
         ))}
 
         {funds.length === 0 && (
           <div className="px-3 py-6 text-center text-xs text-muted-foreground">No funds</div>
+        )}
+      </div>
+
+      {/* Footer */}
+      <div className="border-t border-border" style={{ minHeight: FOOTER_HEIGHT }}>
+        {hasMore ? (
+          <Link
+            to={`/compare?type=${category}`}
+            className="flex items-center justify-center gap-1 px-3 py-1.5 text-[11px] font-medium text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
+          >
+            See all {funds.length} funds →
+          </Link>
+        ) : (
+          <div className="px-3 py-1.5 text-[11px] text-muted-foreground text-center">
+            {funds.length} fund{funds.length !== 1 ? "s" : ""}
+          </div>
         )}
       </div>
     </div>
