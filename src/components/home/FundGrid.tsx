@@ -178,7 +178,7 @@ const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => (
 );
 
 /* ─── Commodities Card ─── */
-const CommoditiesCard = ({ commodities, maxRows }: { commodities: Commodity[]; maxRows: number }) => (
+const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => (
   <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
     <div className="bg-muted/70 px-3 py-2 flex items-center justify-between" style={{ minHeight: HEADER_HEIGHT }}>
       <h3 className="text-xs font-bold text-foreground tracking-wide">Commodities</h3>
