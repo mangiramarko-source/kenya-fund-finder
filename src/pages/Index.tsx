@@ -13,12 +13,11 @@ import { formatYield } from "@/components/YieldChange";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
 import StatBar from "@/components/home/StatBar";
 import CategoryTabs from "@/components/home/CategoryTabs";
-import FundTable from "@/components/home/FundTable";
 import FundMobileCards from "@/components/home/FundMobileCards";
 import FundGrid from "@/components/home/FundGrid";
 import NewsSidebar from "@/components/home/NewsSidebar";
 import AdBanner from "@/components/AdBanner";
-import { useMarketData, RatesTable, CommoditiesTable, RatesMobileCards, CommoditiesMobileCards } from "@/components/home/MarketTicker";
+import { useMarketData, RatesMobileCards, CommoditiesMobileCards } from "@/components/home/MarketTicker";
 
 type SortKey = "annual_yield" | "daily_yield" | "name";
 type SortDir = "asc" | "desc";
@@ -90,7 +89,6 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const categoryCount = useMemo(() => {
     const counts: Record<string, number> = {};
     funds.forEach((f) => { counts[f.fund_type] = (counts[f.fund_type] || 0) + 1; });
-    // Add market tab counts
     counts["fx_rates"] = rates.length;
     counts["commodities"] = commodities.length;
     return counts;
@@ -131,25 +129,15 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const lastUpdate = lastUpdateDate ? new Date(lastUpdateDate) : funds[0] ? new Date(funds[0].updated_at) : null;
   const latestNews = news.slice(0, 4);
 
-  // Build tabs for mobile fund categories + market tabs (desktop shows grid for funds)
-  const mobileFundTabs = useMemo(() => [
-    ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c })),
-  ], [categories]);
+  const isMarketTab = MARKET_TABS.includes(selectedCategory as any);
+  const isFundTab = !isMarketTab;
 
-  const desktopTabs = useMemo(() => [
-    { key: "all_funds", label: "All Funds" },
-    { key: "fx_rates", label: "FX Rates" },
-    { key: "commodities", label: "Commodities" },
-  ], []);
-
+  // Mobile tabs: fund categories + market
   const allTabs = useMemo(() => [
     ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c })),
     { key: "fx_rates", label: "FX Rates" },
     { key: "commodities", label: "Commodities" },
   ], [categories]);
-
-  const isMarketTab = MARKET_TABS.includes(selectedCategory as any);
-  const isFundTab = !isMarketTab;
 
   return (
     <div ref={ref} className="min-h-screen">
@@ -169,23 +157,17 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
           {/* Main area */}
           <div>
-            {/* Desktop: show all fund categories as grid (no tabs needed) */}
+            {/* Desktop: unified grid with all fund categories + market data */}
             <div className="hidden md:block">
-              {/* Desktop market tabs only */}
-              <CategoryTabs
-                tabs={desktopTabs}
-                selectedCategory={isMarketTab ? selectedCategory : "all_funds"}
-                categoryCount={{ ...categoryCount, all_funds: funds.length }}
-                onSelect={(key) => setSelectedCategory(key === "all_funds" ? "money_market" : key)}
+              <p className="text-[10px] text-muted-foreground mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
+              <FundGrid
+                funds={funds}
+                snapshots={snapshots}
+                rates={rates}
+                commodities={commodities}
                 loading={loading}
+                marketLoading={marketLoading}
               />
-
-              {!isMarketTab && (
-                <>
-                  <p className="text-[10px] text-muted-foreground mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
-                  <FundGrid funds={funds} snapshots={snapshots} loading={loading} />
-                </>
-              )}
             </div>
 
             {/* Mobile: tabbed view with cards */}
@@ -232,19 +214,12 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
               )}
             </div>
 
-            {/* Currency content */}
+            {/* Currency content - mobile only */}
             {selectedCategory === "fx_rates" && (
-              <>
-                <p className="text-[10px] text-muted-foreground -mt-1 mb-3 md:mt-0">Exchange rates are indicative and updated manually by administrators.</p>
+              <div className="md:hidden">
+                <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Exchange rates are indicative and updated manually by administrators.</p>
                 {user ? (
-                  <>
-                    <div className="hidden md:block">
-                      <RatesTable rates={rates} loading={marketLoading} />
-                    </div>
-                    <div className="md:hidden">
-                      <RatesMobileCards rates={rates} loading={marketLoading} />
-                    </div>
-                  </>
+                  <RatesMobileCards rates={rates} loading={marketLoading} />
                 ) : (
                   <AuthGate
                     source="currency_tab"
@@ -252,20 +227,15 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
                     description="Create a free account to access live currency exchange rates, trends, and our currency converter tool."
                   />
                 )}
-              </>
+              </div>
             )}
 
-            {/* Commodities content */}
+            {/* Commodities content - mobile only */}
             {selectedCategory === "commodities" && (
-              <>
+              <div className="md:hidden">
                 <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Commodity prices are indicative and updated manually by administrators.</p>
-                <div className="hidden md:block">
-                  <CommoditiesTable commodities={commodities} loading={marketLoading} />
-                </div>
-                <div className="md:hidden">
-                  <CommoditiesMobileCards commodities={commodities} loading={marketLoading} />
-                </div>
-              </>
+                <CommoditiesMobileCards commodities={commodities} loading={marketLoading} />
+              </div>
             )}
 
             {/* Mobile quick actions */}
