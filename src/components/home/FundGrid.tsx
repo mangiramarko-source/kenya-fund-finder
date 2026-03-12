@@ -170,7 +170,7 @@ const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => (
         </div>
       ))}
 
-      {rates.length < maxRows && Array.from({ length: maxRows - rates.length }).map((_, i) => (
+      {rates.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - rates.length }).map((_, i) => (
         <div key={`pad-${i}`} style={{ height: ROW_HEIGHT }} />
       ))}
     </div>
