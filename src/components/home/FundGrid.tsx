@@ -212,7 +212,7 @@ const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => (
         </div>
       ))}
 
-      {commodities.length < maxRows && Array.from({ length: maxRows - commodities.length }).map((_, i) => (
+      {commodities.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - commodities.length }).map((_, i) => (
         <div key={`pad-${i}`} style={{ height: ROW_HEIGHT }} />
       ))}
     </div>
