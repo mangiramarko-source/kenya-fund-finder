@@ -13,6 +13,13 @@
 }
 
 @layer base {
+  /* Prevent iOS auto-zoom on tap for interactive elements */
+  button, a, input, select, textarea, [role="button"] {
+    touch-action: manipulation;
+  }
+}
+
+@layer base {
   :root {
     --background: 210 20% 98%;
     --foreground: 220 30% 15%;
