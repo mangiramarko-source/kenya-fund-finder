@@ -46,11 +46,9 @@ const FOOTER_HEIGHT = 32;
 const FundCategoryCard = ({
   category,
   funds,
-  maxRows,
 }: {
   category: string;
   funds: FundFromDB[];
-  maxRows: number;
 }) => {
   const navigate = useNavigate();
   const bestYield = funds.length > 0 ? Math.max(...funds.map((f) => f.annual_yield)) : 0;
