@@ -39,20 +39,22 @@ interface FundGridProps {
 const ROW_HEIGHT = 30;
 const HEADER_HEIGHT = 34;
 const SUBHEADER_HEIGHT = 28;
+const MAX_VISIBLE = 8;
+const FOOTER_HEIGHT = 32;
 
 /* ─── Fund Category Card ─── */
 const FundCategoryCard = ({
   category,
   funds,
-  maxRows,
 }: {
   category: string;
   funds: FundFromDB[];
-  maxRows: number;
 }) => {
   const navigate = useNavigate();
   const bestYield = funds.length > 0 ? Math.max(...funds.map((f) => f.annual_yield)) : 0;
   const sorted = [...funds].sort((a, b) => b.annual_yield - a.annual_yield);
+  const visible = sorted.slice(0, MAX_VISIBLE);
+  const hasMore = sorted.length > MAX_VISIBLE;
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
@@ -73,7 +75,7 @@ const FundCategoryCard = ({
       </div>
 
       <div className="flex-1 divide-y divide-border/50">
-        {sorted.map((fund) => (
+        {visible.map((fund) => (
           <div
             key={fund.id}
             onClick={() => navigate(`/compare/${fund.slug}`)}
@@ -105,7 +107,7 @@ const FundCategoryCard = ({
           </div>
         ))}
 
-        {sorted.length < maxRows && Array.from({ length: maxRows - sorted.length }).map((_, i) => (
+        {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
           <div key={`pad-${i}`} style={{ height: ROW_HEIGHT }} />
         ))}
 
@@ -113,12 +115,28 @@ const FundCategoryCard = ({
           <div className="px-3 py-6 text-center text-xs text-muted-foreground">No funds</div>
         )}
       </div>
+
+      {/* Footer */}
+      <div className="border-t border-border" style={{ minHeight: FOOTER_HEIGHT }}>
+        {hasMore ? (
+          <Link
+            to={`/compare?type=${category}`}
+            className="flex items-center justify-center gap-1 px-3 py-1.5 text-[11px] font-medium text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
+          >
+            See all {funds.length} funds →
+          </Link>
+        ) : (
+          <div className="px-3 py-1.5 text-[11px] text-muted-foreground text-center">
+            {funds.length} fund{funds.length !== 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
     </div>
   );
 };
 
 /* ─── FX Rates Card ─── */
-const RatesCard = ({ rates, maxRows }: { rates: ExchangeRate[]; maxRows: number }) => (
+const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => (
   <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
     <div className="bg-muted/70 px-3 py-2 flex items-center justify-between" style={{ minHeight: HEADER_HEIGHT }}>
       <h3 className="text-xs font-bold text-foreground tracking-wide">FX Rates</h3>
@@ -152,15 +170,20 @@ const RatesCard = ({ rates, maxRows }: { rates: ExchangeRate[]; maxRows: number 
         </div>
       ))}
 
-      {rates.length < maxRows && Array.from({ length: maxRows - rates.length }).map((_, i) => (
+      {rates.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - rates.length }).map((_, i) => (
         <div key={`pad-${i}`} style={{ height: ROW_HEIGHT }} />
       ))}
+    </div>
+    <div className="border-t border-border" style={{ minHeight: FOOTER_HEIGHT }}>
+      <div className="px-3 py-1.5 text-[11px] text-muted-foreground text-center">
+        {rates.length} rate{rates.length !== 1 ? "s" : ""}
+      </div>
     </div>
   </div>
 );
 
 /* ─── Commodities Card ─── */
-const CommoditiesCard = ({ commodities, maxRows }: { commodities: Commodity[]; maxRows: number }) => (
+const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => (
   <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
     <div className="bg-muted/70 px-3 py-2 flex items-center justify-between" style={{ minHeight: HEADER_HEIGHT }}>
       <h3 className="text-xs font-bold text-foreground tracking-wide">Commodities</h3>
@@ -194,9 +217,14 @@ const CommoditiesCard = ({ commodities, maxRows }: { commodities: Commodity[]; m
         </div>
       ))}
 
-      {commodities.length < maxRows && Array.from({ length: maxRows - commodities.length }).map((_, i) => (
+      {commodities.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - commodities.length }).map((_, i) => (
         <div key={`pad-${i}`} style={{ height: ROW_HEIGHT }} />
       ))}
+    </div>
+    <div className="border-t border-border" style={{ minHeight: FOOTER_HEIGHT }}>
+      <div className="px-3 py-1.5 text-[11px] text-muted-foreground text-center">
+        {commodities.length} item{commodities.length !== 1 ? "s" : ""}
+      </div>
     </div>
   </div>
 );
@@ -257,18 +285,18 @@ const FundGrid = ({ funds, snapshots, rates, commodities, loading, marketLoading
   return (
     <div className="space-y-4">
       {rows.map((row, ri) => {
-        const maxInRow = Math.max(...row.map((c) => c.count));
+        // All cards use MAX_VISIBLE rows for uniform height
 
         return (
           <div key={ri} className="grid grid-cols-3 gap-4" style={{ alignItems: "stretch" }}>
-            {row.map((card, ci) => {
+            {row.map((card) => {
               if (card.type === "fund") {
-                return <FundCategoryCard key={card.category} category={card.category} funds={grouped[card.category]} maxRows={maxInRow} />;
+                return <FundCategoryCard key={card.category} category={card.category} funds={grouped[card.category]} />;
               }
               if (card.type === "rates") {
-                return <RatesCard key="rates" rates={rates} maxRows={maxInRow} />;
+                return <RatesCard key="rates" rates={rates} />;
               }
-              return <CommoditiesCard key="commodities" commodities={commodities} maxRows={maxInRow} />;
+              return <CommoditiesCard key="commodities" commodities={commodities} />;
             })}
             {row.length < 3 && Array.from({ length: 3 - row.length }).map((_, i) => <div key={`empty-${i}`} />)}
           </div>
