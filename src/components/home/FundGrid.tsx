@@ -52,23 +52,21 @@ const FundCategoryCard = ({
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      {/* Header */}
-      <div className="bg-muted/60 px-4 py-2.5 flex items-center justify-between border-b border-border">
-        <h3 className="text-xs font-bold text-foreground tracking-wide uppercase">
+      <div className="bg-muted/60 px-5 py-3 flex items-center justify-between border-b border-border">
+        <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">
           {categoryLabels[category] || category}
         </h3>
-        <span className="text-[10px] text-muted-foreground font-medium">{funds.length} funds</span>
+        <span className="text-xs text-muted-foreground font-medium">{funds.length} funds</span>
       </div>
 
-      {/* Table */}
-      <table className="w-full text-[11px]">
+      <table className="w-full text-sm">
         <thead>
-          <tr className="text-[10px] text-muted-foreground">
-            <th className="text-left pl-4 pr-1 py-2 font-medium w-7">#</th>
-            <th className="text-left px-1 py-2 font-medium">Fund</th>
-            <th className="text-center px-1 py-2 font-medium w-10">Unit</th>
-            <th className="text-right px-1 py-2 font-medium w-14">Daily</th>
-            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Annual</th>
+          <tr className="text-xs text-muted-foreground">
+            <th className="text-left pl-5 pr-2 py-2.5 font-medium w-8">#</th>
+            <th className="text-left px-2 py-2.5 font-medium">Fund</th>
+            <th className="text-center px-2 py-2.5 font-medium w-12">Unit</th>
+            <th className="text-right px-2 py-2.5 font-medium w-16">Daily</th>
+            <th className="text-right pl-2 pr-5 py-2.5 font-medium w-20">Annual</th>
           </tr>
         </thead>
         <tbody>
@@ -78,60 +76,58 @@ const FundCategoryCard = ({
               onClick={() => navigate(`/compare/${fund.slug}`)}
               className="border-t border-border/40 hover:bg-muted/30 cursor-pointer transition-colors"
             >
-              <td className="pl-4 pr-1 py-2 text-muted-foreground tabular-nums">{i + 1}</td>
-              <td className="px-1 py-2">
-                <div className="flex items-center gap-1 min-w-0">
+              <td className="pl-5 pr-2 py-2.5 text-muted-foreground tabular-nums text-xs">{i + 1}</td>
+              <td className="px-2 py-2.5">
+                <div className="flex items-center gap-1.5 min-w-0">
                   <Link
                     to={`/compare/${fund.slug}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="font-medium text-foreground hover:text-accent transition-colors truncate block max-w-[140px]"
+                    className="font-medium text-foreground hover:text-accent transition-colors truncate block"
                     title={fund.name}
                   >
                     {fund.name}
                   </Link>
                   {fund.annual_yield === bestYield && bestYield > 0 && (
-                    <Badge variant="default" className="text-[7px] px-1 py-0 h-3 bg-accent text-accent-foreground shrink-0 leading-none">
+                    <Badge variant="default" className="text-[8px] px-1.5 py-0 h-3.5 bg-accent text-accent-foreground shrink-0 leading-none">
                       TOP
                     </Badge>
                   )}
                 </div>
               </td>
-              <td className="text-center px-1 py-2 text-muted-foreground">{currencyLabel(fund.yield_unit)}</td>
-              <td className="text-right px-1 py-2 text-muted-foreground tabular-nums">{fmtYield(fund.daily_yield, fund.yield_unit)}</td>
-              <td className="text-right pl-1 pr-4 py-2 font-bold text-accent tabular-nums">{fmtYield(fund.annual_yield, fund.yield_unit)}</td>
+              <td className="text-center px-2 py-2.5 text-muted-foreground text-xs">{currencyLabel(fund.yield_unit)}</td>
+              <td className="text-right px-2 py-2.5 text-muted-foreground tabular-nums">{fmtYield(fund.daily_yield, fund.yield_unit)}</td>
+              <td className="text-right pl-2 pr-5 py-2.5 font-bold text-accent tabular-nums">{fmtYield(fund.annual_yield, fund.yield_unit)}</td>
             </tr>
           ))}
 
-          {/* Padding rows */}
           {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
             <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-4 pr-1 py-2 text-muted-foreground/30 tabular-nums">{visible.length + i + 1}</td>
-              <td className="px-1 py-2"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-1 py-2" />
-              <td className="px-1 py-2" />
-              <td className="pl-1 pr-4 py-2" />
+              <td className="pl-5 pr-2 py-2.5 text-muted-foreground/30 tabular-nums text-xs">{visible.length + i + 1}</td>
+              <td className="px-2 py-2.5"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-2 py-2.5" />
+              <td className="px-2 py-2.5" />
+              <td className="pl-2 pr-5 py-2.5" />
             </tr>
           ))}
 
           {funds.length === 0 && (
             <tr>
-              <td colSpan={5} className="px-4 py-8 text-center text-xs text-muted-foreground">No funds</td>
+              <td colSpan={5} className="px-5 py-8 text-center text-sm text-muted-foreground">No funds</td>
             </tr>
           )}
         </tbody>
       </table>
 
-      {/* Footer */}
       <div className="border-t border-border mt-auto">
         {hasMore ? (
           <Link
             to={`/compare?type=${category}`}
-            className="flex items-center justify-center gap-1 px-4 py-2 text-[11px] font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
+            className="flex items-center justify-center gap-1 px-5 py-2.5 text-xs font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
           >
             See all {funds.length} funds →
           </Link>
         ) : (
-          <div className="px-4 py-2 text-[11px] text-muted-foreground text-center">
+          <div className="px-5 py-2.5 text-xs text-muted-foreground text-center">
             {funds.length} fund{funds.length !== 1 ? "s" : ""}
           </div>
         )}
@@ -147,35 +143,35 @@ const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => {
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      <div className="bg-muted/60 px-4 py-2.5 flex items-center justify-between border-b border-border">
-        <h3 className="text-xs font-bold text-foreground tracking-wide uppercase">FX Rates</h3>
-        <span className="text-[10px] text-muted-foreground font-medium">{rates.length} rates</span>
+      <div className="bg-muted/60 px-5 py-3 flex items-center justify-between border-b border-border">
+        <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">FX Rates</h3>
+        <span className="text-xs text-muted-foreground font-medium">{rates.length} rates</span>
       </div>
 
-      <table className="w-full text-[11px]">
+      <table className="w-full text-sm">
         <thead>
-          <tr className="text-[10px] text-muted-foreground">
-            <th className="text-left pl-4 pr-1 py-2 font-medium w-7">#</th>
-            <th className="text-left px-1 py-2 font-medium">Currency</th>
-            <th className="text-center px-1 py-2 font-medium w-10">Code</th>
-            <th className="text-right px-1 py-2 font-medium w-14">Prev</th>
-            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Rate</th>
+          <tr className="text-xs text-muted-foreground">
+            <th className="text-left pl-5 pr-2 py-2.5 font-medium w-8">#</th>
+            <th className="text-left px-2 py-2.5 font-medium">Currency</th>
+            <th className="text-center px-2 py-2.5 font-medium w-12">Code</th>
+            <th className="text-right px-2 py-2.5 font-medium w-16">Prev</th>
+            <th className="text-right pl-2 pr-5 py-2.5 font-medium w-20">Rate</th>
           </tr>
         </thead>
         <tbody>
           {visible.map((r, i) => (
             <tr key={r.id} className="border-t border-border/40 hover:bg-muted/30 transition-colors">
-              <td className="pl-4 pr-1 py-2 text-muted-foreground tabular-nums">{i + 1}</td>
-              <td className="px-1 py-2">
-                <span className="font-medium text-foreground truncate block max-w-[140px]" title={r.currency_name}>
+              <td className="pl-5 pr-2 py-2.5 text-muted-foreground tabular-nums text-xs">{i + 1}</td>
+              <td className="px-2 py-2.5">
+                <span className="font-medium text-foreground truncate block" title={r.currency_name}>
                   {r.currency_name}
                 </span>
               </td>
-              <td className="text-center px-1 py-2 text-muted-foreground">{r.currency_code}</td>
-              <td className="text-right px-1 py-2 text-muted-foreground tabular-nums">
+              <td className="text-center px-2 py-2.5 text-muted-foreground text-xs">{r.currency_code}</td>
+              <td className="text-right px-2 py-2.5 text-muted-foreground tabular-nums">
                 {r.previous_rate != null ? r.previous_rate.toFixed(2) : "—"}
               </td>
-              <td className="text-right pl-1 pr-4 py-2 font-bold text-accent tabular-nums">
+              <td className="text-right pl-2 pr-5 py-2.5 font-bold text-accent tabular-nums">
                 {r.rate.toFixed(2)}
               </td>
             </tr>
@@ -183,11 +179,11 @@ const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => {
 
           {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
             <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-4 pr-1 py-2 text-muted-foreground/30 tabular-nums">{visible.length + i + 1}</td>
-              <td className="px-1 py-2"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-1 py-2" />
-              <td className="px-1 py-2" />
-              <td className="pl-1 pr-4 py-2" />
+              <td className="pl-5 pr-2 py-2.5 text-muted-foreground/30 tabular-nums text-xs">{visible.length + i + 1}</td>
+              <td className="px-2 py-2.5"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-2 py-2.5" />
+              <td className="px-2 py-2.5" />
+              <td className="pl-2 pr-5 py-2.5" />
             </tr>
           ))}
         </tbody>
@@ -197,12 +193,12 @@ const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => {
         {hasMore ? (
           <Link
             to="/rates"
-            className="flex items-center justify-center gap-1 px-4 py-2 text-[11px] font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
+            className="flex items-center justify-center gap-1 px-5 py-2.5 text-xs font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
           >
             See all {rates.length} rates →
           </Link>
         ) : (
-          <div className="px-4 py-2 text-[11px] text-muted-foreground text-center">
+          <div className="px-5 py-2.5 text-xs text-muted-foreground text-center">
             {rates.length} rate{rates.length !== 1 ? "s" : ""}
           </div>
         )}
@@ -218,35 +214,35 @@ const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => {
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      <div className="bg-muted/60 px-4 py-2.5 flex items-center justify-between border-b border-border">
-        <h3 className="text-xs font-bold text-foreground tracking-wide uppercase">Commodities</h3>
-        <span className="text-[10px] text-muted-foreground font-medium">{commodities.length} items</span>
+      <div className="bg-muted/60 px-5 py-3 flex items-center justify-between border-b border-border">
+        <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">Commodities</h3>
+        <span className="text-xs text-muted-foreground font-medium">{commodities.length} items</span>
       </div>
 
-      <table className="w-full text-[11px]">
+      <table className="w-full text-sm">
         <thead>
-          <tr className="text-[10px] text-muted-foreground">
-            <th className="text-left pl-4 pr-1 py-2 font-medium w-7">#</th>
-            <th className="text-left px-1 py-2 font-medium">Item</th>
-            <th className="text-center px-1 py-2 font-medium w-10">Unit</th>
-            <th className="text-right px-1 py-2 font-medium w-14">Prev</th>
-            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Price</th>
+          <tr className="text-xs text-muted-foreground">
+            <th className="text-left pl-5 pr-2 py-2.5 font-medium w-8">#</th>
+            <th className="text-left px-2 py-2.5 font-medium">Item</th>
+            <th className="text-center px-2 py-2.5 font-medium w-12">Unit</th>
+            <th className="text-right px-2 py-2.5 font-medium w-16">Prev</th>
+            <th className="text-right pl-2 pr-5 py-2.5 font-medium w-20">Price</th>
           </tr>
         </thead>
         <tbody>
           {visible.map((c, i) => (
             <tr key={c.id} className="border-t border-border/40 hover:bg-muted/30 transition-colors">
-              <td className="pl-4 pr-1 py-2 text-muted-foreground tabular-nums">{i + 1}</td>
-              <td className="px-1 py-2">
-                <span className="font-medium text-foreground truncate block max-w-[140px]" title={c.name}>
+              <td className="pl-5 pr-2 py-2.5 text-muted-foreground tabular-nums text-xs">{i + 1}</td>
+              <td className="px-2 py-2.5">
+                <span className="font-medium text-foreground truncate block" title={c.name}>
                   {c.name}
                 </span>
               </td>
-              <td className="text-center px-1 py-2 text-muted-foreground">{c.unit}</td>
-              <td className="text-right px-1 py-2 text-muted-foreground tabular-nums">
+              <td className="text-center px-2 py-2.5 text-muted-foreground text-xs">{c.unit}</td>
+              <td className="text-right px-2 py-2.5 text-muted-foreground tabular-nums">
                 {c.previous_price != null ? c.previous_price.toFixed(2) : "—"}
               </td>
-              <td className="text-right pl-1 pr-4 py-2 font-bold text-accent tabular-nums">
+              <td className="text-right pl-2 pr-5 py-2.5 font-bold text-accent tabular-nums">
                 {c.price.toFixed(2)}
               </td>
             </tr>
@@ -254,11 +250,11 @@ const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => {
 
           {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
             <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-4 pr-1 py-2 text-muted-foreground/30 tabular-nums">{visible.length + i + 1}</td>
-              <td className="px-1 py-2"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-1 py-2" />
-              <td className="px-1 py-2" />
-              <td className="pl-1 pr-4 py-2" />
+              <td className="pl-5 pr-2 py-2.5 text-muted-foreground/30 tabular-nums text-xs">{visible.length + i + 1}</td>
+              <td className="px-2 py-2.5"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-2 py-2.5" />
+              <td className="px-2 py-2.5" />
+              <td className="pl-2 pr-5 py-2.5" />
             </tr>
           ))}
         </tbody>
@@ -268,12 +264,12 @@ const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => {
         {hasMore ? (
           <Link
             to="/commodities"
-            className="flex items-center justify-center gap-1 px-4 py-2 text-[11px] font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
+            className="flex items-center justify-center gap-1 px-5 py-2.5 text-xs font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
           >
             See all {commodities.length} items →
           </Link>
         ) : (
-          <div className="px-4 py-2 text-[11px] text-muted-foreground text-center">
+          <div className="px-5 py-2.5 text-xs text-muted-foreground text-center">
             {commodities.length} item{commodities.length !== 1 ? "s" : ""}
           </div>
         )}
@@ -284,18 +280,18 @@ const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => {
 
 /* ─── Grid Skeleton ─── */
 const GridSkeleton = () => (
-  <div className="grid grid-cols-3 gap-4">
+  <div className="grid grid-cols-3 gap-5">
     {Array.from({ length: 3 }).map((_, i) => (
       <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="bg-muted/60 px-4 py-2.5 border-b border-border"><Skeleton className="h-4 w-24" /></div>
+        <div className="bg-muted/60 px-5 py-3 border-b border-border"><Skeleton className="h-4 w-28" /></div>
         <table className="w-full">
           <tbody>
             {Array.from({ length: 8 }).map((_, j) => (
               <tr key={j} className="border-t border-border/40">
-                <td className="px-4 py-2"><Skeleton className="h-3 w-4" /></td>
-                <td className="px-1 py-2"><Skeleton className="h-3 w-24" /></td>
-                <td className="px-1 py-2"><Skeleton className="h-3 w-8" /></td>
-                <td className="px-1 py-2"><Skeleton className="h-3 w-10" /></td>
+                <td className="px-5 py-2.5"><Skeleton className="h-3.5 w-5" /></td>
+                <td className="px-2 py-2.5"><Skeleton className="h-3.5 w-28" /></td>
+                <td className="px-2 py-2.5"><Skeleton className="h-3.5 w-10" /></td>
+                <td className="px-2 py-2.5"><Skeleton className="h-3.5 w-12" /></td>
               </tr>
             ))}
           </tbody>
@@ -309,7 +305,6 @@ const GridSkeleton = () => (
 const FundGrid = ({ funds, snapshots, rates, commodities, loading, marketLoading }: FundGridProps) => {
   if (loading) return <GridSkeleton />;
 
-  // Group funds by category
   const grouped: Record<string, FundFromDB[]> = {};
   funds.forEach((f) => {
     if (!grouped[f.fund_type]) grouped[f.fund_type] = [];
@@ -333,16 +328,15 @@ const FundGrid = ({ funds, snapshots, rates, commodities, loading, marketLoading
     ...(commodities.length > 0 ? [{ type: "commodities" as const }] : []),
   ];
 
-  // Split into rows of 3
   const rows: CardDef[][] = [];
   for (let i = 0; i < cards.length; i += 3) {
     rows.push(cards.slice(i, i + 3));
   }
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       {rows.map((row, ri) => (
-        <div key={ri} className="grid grid-cols-3 gap-4" style={{ alignItems: "stretch" }}>
+        <div key={ri} className="grid grid-cols-3 gap-5" style={{ alignItems: "stretch" }}>
           {row.map((card) => {
             if (card.type === "fund") {
               return <FundCategoryCard key={card.category} category={card.category} funds={grouped[card.category]} />;

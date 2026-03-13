@@ -153,7 +153,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
         hideYields={isMarketTab}
       />
 
-      <div className="container max-w-7xl py-6">
+      <div className="container py-6">
         <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
           {/* Main area */}
           <div>
