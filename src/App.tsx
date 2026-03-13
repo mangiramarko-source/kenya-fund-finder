@@ -23,6 +23,8 @@ import AdminPage from "./pages/AdminPage";
 import ProfilePage from "./pages/ProfilePage";
 import ChecklistPage from "./pages/ChecklistPage";
 import SitePage from "./pages/SitePage";
+import RatesPage from "./pages/RatesPage";
+import CommoditiesPage from "./pages/CommoditiesPage";
 import NotFound from "./pages/NotFound";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
@@ -55,6 +57,8 @@ const App = () => (
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/checklist" element={<ChecklistPage />} />
                   <Route path="/page/:slug" element={<SitePage />} />
+                  <Route path="/rates" element={<RatesPage />} />
+                  <Route path="/commodities" element={<CommoditiesPage />} />
                   <Route path="/admin/login" element={<AdminLoginPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="*" element={<NotFound />} />
