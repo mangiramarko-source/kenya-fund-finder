@@ -10,11 +10,9 @@ const categoryLabels: Record<string, string> = {
   balanced: "Balanced",
   equity: "Equity",
   bond: "Bond",
-  fx_rates: "FX Rates",
-  commodities: "Commodities",
 };
 
-const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity", "fx_rates", "commodities"];
+const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
 
 const fmtYield = (value: number, unit: string) => {
   if (unit === "%") return `${value}%`;
@@ -36,11 +34,7 @@ interface FundGridProps {
   marketLoading: boolean;
 }
 
-const ROW_HEIGHT = 30;
-const HEADER_HEIGHT = 34;
-const SUBHEADER_HEIGHT = 28;
 const MAX_VISIBLE = 8;
-const FOOTER_HEIGHT = 32;
 
 /* ─── Fund Category Card ─── */
 const FundCategoryCard = ({
@@ -58,75 +52,86 @@ const FundCategoryCard = ({
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      <div className="bg-muted/70 px-3 py-2 flex items-center justify-between" style={{ minHeight: HEADER_HEIGHT }}>
-        <h3 className="text-xs font-bold text-foreground tracking-wide">
+      {/* Header */}
+      <div className="bg-muted/60 px-4 py-2.5 flex items-center justify-between border-b border-border">
+        <h3 className="text-xs font-bold text-foreground tracking-wide uppercase">
           {categoryLabels[category] || category}
         </h3>
-        <span className="text-[10px] text-muted-foreground tabular-nums">{funds.length}</span>
+        <span className="text-[10px] text-muted-foreground font-medium">{funds.length} funds</span>
       </div>
 
-      <div className="px-3" style={{ minHeight: SUBHEADER_HEIGHT }}>
-        <div className="flex items-center text-[10px] text-muted-foreground font-medium py-1.5">
-          <span className="flex-1 min-w-0">Fund</span>
-          <span className="w-9 text-center shrink-0">Unit</span>
-          <span className="w-[52px] text-right shrink-0">Daily</span>
-          <span className="w-[56px] text-right shrink-0">Annual</span>
-        </div>
-      </div>
+      {/* Table */}
+      <table className="w-full text-[11px]">
+        <thead>
+          <tr className="text-[10px] text-muted-foreground">
+            <th className="text-left pl-4 pr-1 py-2 font-medium w-7">#</th>
+            <th className="text-left px-1 py-2 font-medium">Fund</th>
+            <th className="text-center px-1 py-2 font-medium w-10">Unit</th>
+            <th className="text-right px-1 py-2 font-medium w-14">Daily</th>
+            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Annual</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visible.map((fund, i) => (
+            <tr
+              key={fund.id}
+              onClick={() => navigate(`/compare/${fund.slug}`)}
+              className="border-t border-border/40 hover:bg-muted/30 cursor-pointer transition-colors"
+            >
+              <td className="pl-4 pr-1 py-2 text-muted-foreground tabular-nums">{i + 1}</td>
+              <td className="px-1 py-2">
+                <div className="flex items-center gap-1 min-w-0">
+                  <Link
+                    to={`/compare/${fund.slug}`}
+                    onClick={(e) => e.stopPropagation()}
+                    className="font-medium text-foreground hover:text-accent transition-colors truncate block max-w-[140px]"
+                    title={fund.name}
+                  >
+                    {fund.name}
+                  </Link>
+                  {fund.annual_yield === bestYield && bestYield > 0 && (
+                    <Badge variant="default" className="text-[7px] px-1 py-0 h-3 bg-accent text-accent-foreground shrink-0 leading-none">
+                      TOP
+                    </Badge>
+                  )}
+                </div>
+              </td>
+              <td className="text-center px-1 py-2 text-muted-foreground">{currencyLabel(fund.yield_unit)}</td>
+              <td className="text-right px-1 py-2 text-muted-foreground tabular-nums">{fmtYield(fund.daily_yield, fund.yield_unit)}</td>
+              <td className="text-right pl-1 pr-4 py-2 font-bold text-accent tabular-nums">{fmtYield(fund.annual_yield, fund.yield_unit)}</td>
+            </tr>
+          ))}
 
-      <div className="flex-1 divide-y divide-border/50">
-        {visible.map((fund) => (
-          <div
-            key={fund.id}
-            onClick={() => navigate(`/compare/${fund.slug}`)}
-            className="flex items-center px-3 hover:bg-muted/30 cursor-pointer transition-colors"
-            style={{ height: ROW_HEIGHT }}
-          >
-            <div className="flex-1 min-w-0 pr-1 flex items-center gap-1">
-              <Link
-                to={`/compare/${fund.slug}`}
-                onClick={(e) => e.stopPropagation()}
-                className="text-[11px] font-medium text-foreground hover:text-accent transition-colors truncate leading-tight"
-                title={fund.name}
-              >
-                {fund.name}
-              </Link>
-              {fund.annual_yield === bestYield && bestYield > 0 && (
-                <Badge variant="default" className="text-[8px] px-1 py-0 h-3 bg-accent text-accent-foreground shrink-0">TOP</Badge>
-              )}
-            </div>
-            <span className="w-9 text-center text-[10px] text-muted-foreground shrink-0">
-              {currencyLabel(fund.yield_unit)}
-            </span>
-            <span className="w-[52px] text-right text-[10px] text-muted-foreground tabular-nums shrink-0">
-              {fmtYield(fund.daily_yield, fund.yield_unit)}
-            </span>
-            <span className="w-[56px] text-right text-[11px] font-bold text-accent tabular-nums shrink-0">
-              {fmtYield(fund.annual_yield, fund.yield_unit)}
-            </span>
-          </div>
-        ))}
+          {/* Padding rows */}
+          {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
+            <tr key={`pad-${i}`} className="border-t border-border/40">
+              <td className="pl-4 pr-1 py-2 text-muted-foreground/30 tabular-nums">{visible.length + i + 1}</td>
+              <td className="px-1 py-2"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-1 py-2" />
+              <td className="px-1 py-2" />
+              <td className="pl-1 pr-4 py-2" />
+            </tr>
+          ))}
 
-        {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
-          <div key={`pad-${i}`} style={{ height: ROW_HEIGHT }} />
-        ))}
-
-        {funds.length === 0 && (
-          <div className="px-3 py-6 text-center text-xs text-muted-foreground">No funds</div>
-        )}
-      </div>
+          {funds.length === 0 && (
+            <tr>
+              <td colSpan={5} className="px-4 py-8 text-center text-xs text-muted-foreground">No funds</td>
+            </tr>
+          )}
+        </tbody>
+      </table>
 
       {/* Footer */}
-      <div className="border-t border-border" style={{ minHeight: FOOTER_HEIGHT }}>
+      <div className="border-t border-border mt-auto">
         {hasMore ? (
           <Link
             to={`/compare?type=${category}`}
-            className="flex items-center justify-center gap-1 px-3 py-1.5 text-[11px] font-medium text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
+            className="flex items-center justify-center gap-1 px-4 py-2 text-[11px] font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
           >
             See all {funds.length} funds →
           </Link>
         ) : (
-          <div className="px-3 py-1.5 text-[11px] text-muted-foreground text-center">
+          <div className="px-4 py-2 text-[11px] text-muted-foreground text-center">
             {funds.length} fund{funds.length !== 1 ? "s" : ""}
           </div>
         )}
@@ -136,112 +141,165 @@ const FundCategoryCard = ({
 };
 
 /* ─── FX Rates Card ─── */
-const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => (
-  <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-    <div className="bg-muted/70 px-3 py-2 flex items-center justify-between" style={{ minHeight: HEADER_HEIGHT }}>
-      <h3 className="text-xs font-bold text-foreground tracking-wide">FX Rates</h3>
-      <span className="text-[10px] text-muted-foreground tabular-nums">{rates.length}</span>
-    </div>
+const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => {
+  const visible = rates.slice(0, MAX_VISIBLE);
+  const hasMore = rates.length > MAX_VISIBLE;
 
-    <div className="px-3" style={{ minHeight: SUBHEADER_HEIGHT }}>
-      <div className="flex items-center text-[10px] text-muted-foreground font-medium py-1.5">
-        <span className="flex-1 min-w-0">Currency</span>
-        <span className="w-9 text-center shrink-0">Code</span>
-        <span className="w-[52px] text-right shrink-0">Prev</span>
-        <span className="w-[56px] text-right shrink-0">Rate</span>
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+      <div className="bg-muted/60 px-4 py-2.5 flex items-center justify-between border-b border-border">
+        <h3 className="text-xs font-bold text-foreground tracking-wide uppercase">FX Rates</h3>
+        <span className="text-[10px] text-muted-foreground font-medium">{rates.length} rates</span>
       </div>
-    </div>
 
-    <div className="flex-1 divide-y divide-border/50">
-      {rates.map((r) => (
-        <div key={r.id} className="flex items-center px-3" style={{ height: ROW_HEIGHT }}>
-          <div className="flex-1 min-w-0 pr-1">
-            <span className="text-[11px] font-medium text-foreground truncate block leading-tight" title={r.currency_name}>
-              {r.currency_name}
-            </span>
+      <table className="w-full text-[11px]">
+        <thead>
+          <tr className="text-[10px] text-muted-foreground">
+            <th className="text-left pl-4 pr-1 py-2 font-medium w-7">#</th>
+            <th className="text-left px-1 py-2 font-medium">Currency</th>
+            <th className="text-center px-1 py-2 font-medium w-10">Code</th>
+            <th className="text-right px-1 py-2 font-medium w-14">Prev</th>
+            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Rate</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visible.map((r, i) => (
+            <tr key={r.id} className="border-t border-border/40 hover:bg-muted/30 transition-colors">
+              <td className="pl-4 pr-1 py-2 text-muted-foreground tabular-nums">{i + 1}</td>
+              <td className="px-1 py-2">
+                <span className="font-medium text-foreground truncate block max-w-[140px]" title={r.currency_name}>
+                  {r.currency_name}
+                </span>
+              </td>
+              <td className="text-center px-1 py-2 text-muted-foreground">{r.currency_code}</td>
+              <td className="text-right px-1 py-2 text-muted-foreground tabular-nums">
+                {r.previous_rate != null ? r.previous_rate.toFixed(2) : "—"}
+              </td>
+              <td className="text-right pl-1 pr-4 py-2 font-bold text-accent tabular-nums">
+                {r.rate.toFixed(2)}
+              </td>
+            </tr>
+          ))}
+
+          {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
+            <tr key={`pad-${i}`} className="border-t border-border/40">
+              <td className="pl-4 pr-1 py-2 text-muted-foreground/30 tabular-nums">{visible.length + i + 1}</td>
+              <td className="px-1 py-2"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-1 py-2" />
+              <td className="px-1 py-2" />
+              <td className="pl-1 pr-4 py-2" />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="border-t border-border mt-auto">
+        {hasMore ? (
+          <Link
+            to="/rates"
+            className="flex items-center justify-center gap-1 px-4 py-2 text-[11px] font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
+          >
+            See all {rates.length} rates →
+          </Link>
+        ) : (
+          <div className="px-4 py-2 text-[11px] text-muted-foreground text-center">
+            {rates.length} rate{rates.length !== 1 ? "s" : ""}
           </div>
-          <span className="w-9 text-center text-[10px] text-muted-foreground shrink-0">{r.currency_code}</span>
-          <span className="w-[52px] text-right text-[10px] text-muted-foreground tabular-nums shrink-0">
-            {r.previous_rate != null ? r.previous_rate.toFixed(2) : "—"}
-          </span>
-          <span className="w-[56px] text-right text-[11px] font-bold text-accent tabular-nums shrink-0">
-            {r.rate.toFixed(2)}
-          </span>
-        </div>
-      ))}
-
-      {rates.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - rates.length }).map((_, i) => (
-        <div key={`pad-${i}`} style={{ height: ROW_HEIGHT }} />
-      ))}
-    </div>
-    <div className="border-t border-border" style={{ minHeight: FOOTER_HEIGHT }}>
-      <div className="px-3 py-1.5 text-[11px] text-muted-foreground text-center">
-        {rates.length} rate{rates.length !== 1 ? "s" : ""}
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ─── Commodities Card ─── */
-const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => (
-  <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-    <div className="bg-muted/70 px-3 py-2 flex items-center justify-between" style={{ minHeight: HEADER_HEIGHT }}>
-      <h3 className="text-xs font-bold text-foreground tracking-wide">Commodities</h3>
-      <span className="text-[10px] text-muted-foreground tabular-nums">{commodities.length}</span>
-    </div>
+const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => {
+  const visible = commodities.slice(0, MAX_VISIBLE);
+  const hasMore = commodities.length > MAX_VISIBLE;
 
-    <div className="px-3" style={{ minHeight: SUBHEADER_HEIGHT }}>
-      <div className="flex items-center text-[10px] text-muted-foreground font-medium py-1.5">
-        <span className="flex-1 min-w-0">Item</span>
-        <span className="w-9 text-center shrink-0">Unit</span>
-        <span className="w-[52px] text-right shrink-0">Prev</span>
-        <span className="w-[56px] text-right shrink-0">Price</span>
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+      <div className="bg-muted/60 px-4 py-2.5 flex items-center justify-between border-b border-border">
+        <h3 className="text-xs font-bold text-foreground tracking-wide uppercase">Commodities</h3>
+        <span className="text-[10px] text-muted-foreground font-medium">{commodities.length} items</span>
       </div>
-    </div>
 
-    <div className="flex-1 divide-y divide-border/50">
-      {commodities.map((c) => (
-        <div key={c.id} className="flex items-center px-3" style={{ height: ROW_HEIGHT }}>
-          <div className="flex-1 min-w-0 pr-1">
-            <span className="text-[11px] font-medium text-foreground truncate block leading-tight" title={c.name}>
-              {c.name}
-            </span>
+      <table className="w-full text-[11px]">
+        <thead>
+          <tr className="text-[10px] text-muted-foreground">
+            <th className="text-left pl-4 pr-1 py-2 font-medium w-7">#</th>
+            <th className="text-left px-1 py-2 font-medium">Item</th>
+            <th className="text-center px-1 py-2 font-medium w-10">Unit</th>
+            <th className="text-right px-1 py-2 font-medium w-14">Prev</th>
+            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visible.map((c, i) => (
+            <tr key={c.id} className="border-t border-border/40 hover:bg-muted/30 transition-colors">
+              <td className="pl-4 pr-1 py-2 text-muted-foreground tabular-nums">{i + 1}</td>
+              <td className="px-1 py-2">
+                <span className="font-medium text-foreground truncate block max-w-[140px]" title={c.name}>
+                  {c.name}
+                </span>
+              </td>
+              <td className="text-center px-1 py-2 text-muted-foreground">{c.unit}</td>
+              <td className="text-right px-1 py-2 text-muted-foreground tabular-nums">
+                {c.previous_price != null ? c.previous_price.toFixed(2) : "—"}
+              </td>
+              <td className="text-right pl-1 pr-4 py-2 font-bold text-accent tabular-nums">
+                {c.price.toFixed(2)}
+              </td>
+            </tr>
+          ))}
+
+          {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
+            <tr key={`pad-${i}`} className="border-t border-border/40">
+              <td className="pl-4 pr-1 py-2 text-muted-foreground/30 tabular-nums">{visible.length + i + 1}</td>
+              <td className="px-1 py-2"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-1 py-2" />
+              <td className="px-1 py-2" />
+              <td className="pl-1 pr-4 py-2" />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="border-t border-border mt-auto">
+        {hasMore ? (
+          <Link
+            to="/commodities"
+            className="flex items-center justify-center gap-1 px-4 py-2 text-[11px] font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
+          >
+            See all {commodities.length} items →
+          </Link>
+        ) : (
+          <div className="px-4 py-2 text-[11px] text-muted-foreground text-center">
+            {commodities.length} item{commodities.length !== 1 ? "s" : ""}
           </div>
-          <span className="w-9 text-center text-[10px] text-muted-foreground shrink-0">{c.unit}</span>
-          <span className="w-[52px] text-right text-[10px] text-muted-foreground tabular-nums shrink-0">
-            {c.previous_price != null ? c.previous_price.toFixed(2) : "—"}
-          </span>
-          <span className="w-[56px] text-right text-[11px] font-bold text-accent tabular-nums shrink-0">
-            {c.price.toFixed(2)}
-          </span>
-        </div>
-      ))}
-
-      {commodities.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - commodities.length }).map((_, i) => (
-        <div key={`pad-${i}`} style={{ height: ROW_HEIGHT }} />
-      ))}
-    </div>
-    <div className="border-t border-border" style={{ minHeight: FOOTER_HEIGHT }}>
-      <div className="px-3 py-1.5 text-[11px] text-muted-foreground text-center">
-        {commodities.length} item{commodities.length !== 1 ? "s" : ""}
+        )}
       </div>
     </div>
-  </div>
-);
+  );
+};
 
 /* ─── Grid Skeleton ─── */
 const GridSkeleton = () => (
   <div className="grid grid-cols-3 gap-4">
     {Array.from({ length: 3 }).map((_, i) => (
       <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="bg-muted/70 px-3 py-2.5"><Skeleton className="h-4 w-24" /></div>
-        {Array.from({ length: 6 }).map((_, j) => (
-          <div key={j} className="flex items-center gap-2 px-3 py-2 border-t border-border">
-            <Skeleton className="h-3 w-32 flex-1" />
-            <Skeleton className="h-3 w-12" />
-            <Skeleton className="h-3 w-10" />
-          </div>
-        ))}
+        <div className="bg-muted/60 px-4 py-2.5 border-b border-border"><Skeleton className="h-4 w-24" /></div>
+        <table className="w-full">
+          <tbody>
+            {Array.from({ length: 8 }).map((_, j) => (
+              <tr key={j} className="border-t border-border/40">
+                <td className="px-4 py-2"><Skeleton className="h-3 w-4" /></td>
+                <td className="px-1 py-2"><Skeleton className="h-3 w-24" /></td>
+                <td className="px-1 py-2"><Skeleton className="h-3 w-8" /></td>
+                <td className="px-1 py-2"><Skeleton className="h-3 w-10" /></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     ))}
   </div>
@@ -264,16 +322,15 @@ const FundGrid = ({ funds, snapshots, rates, commodities, loading, marketLoading
     return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
   });
 
-  // Build a unified list of cards: fund categories + market cards
   type CardDef =
-    | { type: "fund"; category: string; count: number }
-    | { type: "rates"; count: number }
-    | { type: "commodities"; count: number };
+    | { type: "fund"; category: string }
+    | { type: "rates" }
+    | { type: "commodities" };
 
   const cards: CardDef[] = [
-    ...fundCategories.map((c) => ({ type: "fund" as const, category: c, count: grouped[c].length })),
-    ...(rates.length > 0 ? [{ type: "rates" as const, count: rates.length }] : []),
-    ...(commodities.length > 0 ? [{ type: "commodities" as const, count: commodities.length }] : []),
+    ...fundCategories.map((c) => ({ type: "fund" as const, category: c })),
+    ...(rates.length > 0 ? [{ type: "rates" as const }] : []),
+    ...(commodities.length > 0 ? [{ type: "commodities" as const }] : []),
   ];
 
   // Split into rows of 3
@@ -284,24 +341,20 @@ const FundGrid = ({ funds, snapshots, rates, commodities, loading, marketLoading
 
   return (
     <div className="space-y-4">
-      {rows.map((row, ri) => {
-        // All cards use MAX_VISIBLE rows for uniform height
-
-        return (
-          <div key={ri} className="grid grid-cols-3 gap-4" style={{ alignItems: "stretch" }}>
-            {row.map((card) => {
-              if (card.type === "fund") {
-                return <FundCategoryCard key={card.category} category={card.category} funds={grouped[card.category]} />;
-              }
-              if (card.type === "rates") {
-                return <RatesCard key="rates" rates={rates} />;
-              }
-              return <CommoditiesCard key="commodities" commodities={commodities} />;
-            })}
-            {row.length < 3 && Array.from({ length: 3 - row.length }).map((_, i) => <div key={`empty-${i}`} />)}
-          </div>
-        );
-      })}
+      {rows.map((row, ri) => (
+        <div key={ri} className="grid grid-cols-3 gap-4" style={{ alignItems: "stretch" }}>
+          {row.map((card) => {
+            if (card.type === "fund") {
+              return <FundCategoryCard key={card.category} category={card.category} funds={grouped[card.category]} />;
+            }
+            if (card.type === "rates") {
+              return <RatesCard key="rates" rates={rates} />;
+            }
+            return <CommoditiesCard key="commodities" commodities={commodities} />;
+          })}
+          {row.length < 3 && Array.from({ length: 3 - row.length }).map((_, i) => <div key={`empty-${i}`} />)}
+        </div>
+      ))}
     </div>
   );
 };

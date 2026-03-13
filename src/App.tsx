@@ -23,6 +23,8 @@ import AdminPage from "./pages/AdminPage";
 import ProfilePage from "./pages/ProfilePage";
 import ChecklistPage from "./pages/ChecklistPage";
 import SitePage from "./pages/SitePage";
+import RatesPage from "./pages/RatesPage";
+import CommoditiesPage from "./pages/CommoditiesPage";
 import NotFound from "./pages/NotFound";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
