@@ -57,6 +57,8 @@ const App = () => (
                   <Route path="/profile" element={<ProfilePage />} />
                   <Route path="/checklist" element={<ChecklistPage />} />
                   <Route path="/page/:slug" element={<SitePage />} />
+                  <Route path="/rates" element={<RatesPage />} />
+                  <Route path="/commodities" element={<CommoditiesPage />} />
                   <Route path="/admin/login" element={<AdminLoginPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="*" element={<NotFound />} />
