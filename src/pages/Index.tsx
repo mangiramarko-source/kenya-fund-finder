@@ -59,7 +59,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   
-  const { lastUpdateDate, isLive } = useLiveStatus();
+  const { lastUpdateDate, isLive, showDate } = useLiveStatus();
   const { user } = useAuth();
 
   const { rates, commodities, loading: marketLoading } = useMarketData();
