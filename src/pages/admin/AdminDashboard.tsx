@@ -93,7 +93,7 @@ const AdminDashboard = () => {
   const [range, setRange] = useState<TimeRange>("7d");
   const [engagementFilter, setEngagementFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
-  const { isLive, toggleLive, lastUpdateDate, setLastUpdate } = useLiveStatus();
+  const { isLive, toggleLive, lastUpdateDate, setLastUpdate, showDate, setShowDate } = useLiveStatus();
   const [stats, setStats] = useState<Stats>({
     fundCount: 0, publishedFunds: 0, draftFunds: 0, newsCount: 0, pendingNews: 0, outdatedFunds: 0,
     lastUpdate: "", totalPageViews: 0, uniqueVisitors: 0, avgPagesPerVisitor: 0,
