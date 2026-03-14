@@ -148,30 +148,30 @@ const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => {
         <span className="text-xs text-muted-foreground font-medium">{rates.length} rates</span>
       </div>
 
-      <table className="w-full text-xs">
+      <table className="w-full text-[11px] lg:text-xs">
         <thead>
-          <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
-            <th className="text-left pl-4 pr-1 py-2 font-medium w-6">#</th>
-            <th className="text-left px-1 py-2 font-medium">Currency</th>
-            <th className="text-center px-1 py-2 font-medium w-10">Code</th>
-            <th className="text-right px-1 py-2 font-medium w-14">Prev</th>
-            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Rate</th>
+          <tr className="text-[9px] lg:text-[10px] text-muted-foreground uppercase tracking-wider">
+            <th className="text-left pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 font-medium w-5 lg:w-6">#</th>
+            <th className="text-left px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium">Currency</th>
+            <th className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-8 lg:w-10">Code</th>
+            <th className="text-right px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-12 lg:w-14">Prev</th>
+            <th className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-medium w-14 lg:w-16">Rate</th>
           </tr>
         </thead>
         <tbody>
           {visible.map((r, i) => (
             <tr key={r.id} className="border-t border-border/40 hover:bg-muted/30 transition-colors">
-              <td className="pl-4 pr-1 py-2 text-muted-foreground tabular-nums text-[10px]">{i + 1}</td>
-              <td className="px-1 py-2">
-                <span className="font-medium text-foreground truncate block max-w-[140px]" title={r.currency_name}>
+              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground tabular-nums text-[9px] lg:text-[10px]">{i + 1}</td>
+              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2">
+                <span className="font-medium text-foreground truncate block max-w-[100px] lg:max-w-[140px]" title={r.currency_name}>
                   {r.currency_name}
                 </span>
               </td>
-              <td className="text-center px-1 py-2 text-muted-foreground text-[10px]">{r.currency_code}</td>
-              <td className="text-right px-1 py-2 text-muted-foreground tabular-nums">
+              <td className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 text-muted-foreground text-[9px] lg:text-[10px]">{r.currency_code}</td>
+              <td className="text-right px-0.5 lg:px-1 py-1.5 lg:py-2 text-muted-foreground tabular-nums">
                 {r.previous_rate != null ? r.previous_rate.toFixed(2) : "—"}
               </td>
-              <td className="text-right pl-1 pr-4 py-2 font-bold text-accent tabular-nums">
+              <td className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-bold text-accent tabular-nums">
                 {r.rate.toFixed(2)}
               </td>
             </tr>
