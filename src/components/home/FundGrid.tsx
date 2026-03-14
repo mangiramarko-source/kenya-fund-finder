@@ -59,14 +59,14 @@ const FundCategoryCard = ({
         <span className="text-xs text-muted-foreground font-medium">{funds.length} funds</span>
       </div>
 
-      <table className="w-full text-sm">
+      <table className="w-full text-xs">
         <thead>
-          <tr className="text-xs text-muted-foreground">
-            <th className="text-left pl-5 pr-2 py-2.5 font-medium w-8">#</th>
-            <th className="text-left px-2 py-2.5 font-medium">Fund</th>
-            <th className="text-center px-2 py-2.5 font-medium w-12">Unit</th>
-            <th className="text-right px-2 py-2.5 font-medium w-16">Daily</th>
-            <th className="text-right pl-2 pr-5 py-2.5 font-medium w-20">Annual</th>
+          <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <th className="text-left pl-4 pr-1 py-2 font-medium w-6">#</th>
+            <th className="text-left px-1 py-2 font-medium">Fund</th>
+            <th className="text-center px-1 py-2 font-medium w-10">Unit</th>
+            <th className="text-right px-1 py-2 font-medium w-14">Daily</th>
+            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Annual</th>
           </tr>
         </thead>
         <tbody>
@@ -76,37 +76,37 @@ const FundCategoryCard = ({
               onClick={() => navigate(`/compare/${fund.slug}`)}
               className="border-t border-border/40 hover:bg-muted/30 cursor-pointer transition-colors"
             >
-              <td className="pl-5 pr-2 py-2.5 text-muted-foreground tabular-nums text-xs">{i + 1}</td>
-              <td className="px-2 py-2.5">
-                <div className="flex items-center gap-1.5 min-w-0">
+              <td className="pl-4 pr-1 py-2 text-muted-foreground tabular-nums text-[10px]">{i + 1}</td>
+              <td className="px-1 py-2">
+                <div className="flex items-center gap-1 min-w-0">
                   <Link
                     to={`/compare/${fund.slug}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="font-medium text-foreground hover:text-accent transition-colors truncate block"
+                    className="font-medium text-foreground hover:text-accent transition-colors truncate block max-w-[140px]"
                     title={fund.name}
                   >
                     {fund.name}
                   </Link>
                   {fund.annual_yield === bestYield && bestYield > 0 && (
-                    <Badge variant="default" className="text-[8px] px-1.5 py-0 h-3.5 bg-accent text-accent-foreground shrink-0 leading-none">
+                    <Badge variant="default" className="text-[7px] px-1 py-0 h-3 bg-accent text-accent-foreground shrink-0 leading-none">
                       TOP
                     </Badge>
                   )}
                 </div>
               </td>
-              <td className="text-center px-2 py-2.5 text-muted-foreground text-xs">{currencyLabel(fund.yield_unit)}</td>
-              <td className="text-right px-2 py-2.5 text-muted-foreground tabular-nums">{fmtYield(fund.daily_yield, fund.yield_unit)}</td>
-              <td className="text-right pl-2 pr-5 py-2.5 font-bold text-accent tabular-nums">{fmtYield(fund.annual_yield, fund.yield_unit)}</td>
+              <td className="text-center px-1 py-2 text-muted-foreground text-[10px]">{currencyLabel(fund.yield_unit)}</td>
+              <td className="text-right px-1 py-2 text-muted-foreground tabular-nums">{fmtYield(fund.daily_yield, fund.yield_unit)}</td>
+              <td className="text-right pl-1 pr-4 py-2 font-bold text-accent tabular-nums">{fmtYield(fund.annual_yield, fund.yield_unit)}</td>
             </tr>
           ))}
 
           {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
             <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-5 pr-2 py-2.5 text-muted-foreground/30 tabular-nums text-xs">{visible.length + i + 1}</td>
-              <td className="px-2 py-2.5"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-2 py-2.5" />
-              <td className="px-2 py-2.5" />
-              <td className="pl-2 pr-5 py-2.5" />
+              <td className="pl-4 pr-1 py-2 text-muted-foreground/30 tabular-nums text-[10px]">{visible.length + i + 1}</td>
+              <td className="px-1 py-2"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-1 py-2" />
+              <td className="px-1 py-2" />
+              <td className="pl-1 pr-4 py-2" />
             </tr>
           ))}
 
