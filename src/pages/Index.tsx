@@ -126,7 +126,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
 
   const clearSearch = () => setSearch("");
 
-  const lastUpdate = lastUpdateDate ? new Date(lastUpdateDate) : funds[0] ? new Date(funds[0].updated_at) : null;
+  const lastUpdate = showDate && lastUpdateDate ? new Date(lastUpdateDate) : showDate && funds[0] ? new Date(funds[0].updated_at) : null;
   const latestNews = news.slice(0, 4);
 
   const isMarketTab = MARKET_TABS.includes(selectedCategory as any);

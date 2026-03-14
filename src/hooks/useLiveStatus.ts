@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 export function useLiveStatus() {
   const [isLive, setIsLive] = useState<boolean | null>(null);
   const [lastUpdateDate, setLastUpdateDate] = useState<string | null>(null);
+  const [showDate, setShowDateState] = useState<boolean>(true);
   const [loading, setLoading] = useState(true);
 
   const fetchStatus = async () => {
@@ -15,6 +16,7 @@ export function useLiveStatus() {
     const meta = data?.meta as Record<string, unknown> | null;
     setIsLive(meta?.is_live === true);
     setLastUpdateDate((meta?.last_update_date as string) ?? null);
+    setShowDateState(meta?.show_date !== false);
     setLoading(false);
   };
 
@@ -46,7 +48,21 @@ export function useLiveStatus() {
       .eq("slug", "live-status");
   };
 
+  const setShowDate = async (value: boolean) => {
+    setShowDateState(value);
+    const { data } = await supabase
+      .from("site_pages")
+      .select("meta")
+      .eq("slug", "live-status")
+      .single();
+    const existing = (data?.meta as Record<string, unknown>) ?? {};
+    await supabase
+      .from("site_pages")
+      .update({ meta: { ...existing, show_date: value } })
+      .eq("slug", "live-status");
+  };
+
   useEffect(() => { fetchStatus(); }, []);
 
-  return { isLive, loading, toggleLive, lastUpdateDate, setLastUpdate };
+  return { isLive, loading, toggleLive, lastUpdateDate, setLastUpdate, showDate, setShowDate };
 }
