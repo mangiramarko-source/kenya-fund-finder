@@ -246,11 +246,10 @@ const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => {
 
           {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
             <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-4 pr-1 py-2 text-muted-foreground/30 tabular-nums text-[10px]">{visible.length + i + 1}</td>
-              <td className="px-1 py-2"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-1 py-2" />
-              <td className="px-1 py-2" />
-              <td className="pl-1 pr-4 py-2" />
+              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground/30 tabular-nums text-[9px] lg:text-[10px]">{visible.length + i + 1}</td>
+              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2" />
+              <td className="pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2" />
             </tr>
           ))}
         </tbody>
