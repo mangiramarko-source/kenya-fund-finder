@@ -59,14 +59,14 @@ const FundCategoryCard = ({
         <span className="text-xs text-muted-foreground font-medium">{funds.length} funds</span>
       </div>
 
-      <table className="w-full text-xs">
+      <table className="w-full text-[11px] lg:text-xs">
         <thead>
-          <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
-            <th className="text-left pl-4 pr-1 py-2 font-medium w-6">#</th>
-            <th className="text-left px-1 py-2 font-medium">Fund</th>
-            <th className="text-center px-1 py-2 font-medium w-10">Unit</th>
-            <th className="text-right px-1 py-2 font-medium w-14">Daily</th>
-            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Annual</th>
+          <tr className="text-[9px] lg:text-[10px] text-muted-foreground uppercase tracking-wider">
+            <th className="text-left pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 font-medium w-5 lg:w-6">#</th>
+            <th className="text-left px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium">Fund</th>
+            <th className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-8 lg:w-10">Unit</th>
+            <th className="text-right px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-12 lg:w-14">Daily</th>
+            <th className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-medium w-14 lg:w-16">Annual</th>
           </tr>
         </thead>
         <tbody>
