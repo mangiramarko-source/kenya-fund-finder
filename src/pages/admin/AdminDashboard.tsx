@@ -93,7 +93,7 @@ const AdminDashboard = () => {
   const [range, setRange] = useState<TimeRange>("7d");
   const [engagementFilter, setEngagementFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
-  const { isLive, toggleLive, lastUpdateDate, setLastUpdate } = useLiveStatus();
+  const { isLive, toggleLive, lastUpdateDate, setLastUpdate, showDate, setShowDate } = useLiveStatus();
   const [stats, setStats] = useState<Stats>({
     fundCount: 0, publishedFunds: 0, draftFunds: 0, newsCount: 0, pendingNews: 0, outdatedFunds: 0,
     lastUpdate: "", totalPageViews: 0, uniqueVisitors: 0, avgPagesPerVisitor: 0,
@@ -351,6 +351,18 @@ const AdminDashboard = () => {
               value={lastUpdateDate ?? ""}
               onChange={(e) => setLastUpdate(e.target.value || null)}
               className="text-xs bg-transparent border-none outline-none w-[120px] text-foreground"
+            />
+          </div>
+          {/* Show Date Toggle */}
+          <div className="flex items-center gap-2 border rounded-lg px-3 py-1.5 bg-card">
+            <Label htmlFor="show-date-toggle" className="text-xs font-medium cursor-pointer select-none whitespace-nowrap">
+              Show Date
+            </Label>
+            <Switch
+              id="show-date-toggle"
+              checked={showDate}
+              onCheckedChange={setShowDate}
+              className="scale-90"
             />
           </div>
           {/* Live Toggle */}

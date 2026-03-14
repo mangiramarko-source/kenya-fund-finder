@@ -59,7 +59,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   
-  const { lastUpdateDate, isLive } = useLiveStatus();
+  const { lastUpdateDate, isLive, showDate } = useLiveStatus();
   const { user } = useAuth();
 
   const { rates, commodities, loading: marketLoading } = useMarketData();
@@ -126,7 +126,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
 
   const clearSearch = () => setSearch("");
 
-  const lastUpdate = lastUpdateDate ? new Date(lastUpdateDate) : funds[0] ? new Date(funds[0].updated_at) : null;
+  const lastUpdate = showDate && lastUpdateDate ? new Date(lastUpdateDate) : showDate && funds[0] ? new Date(funds[0].updated_at) : null;
   const latestNews = news.slice(0, 4);
 
   const isMarketTab = MARKET_TABS.includes(selectedCategory as any);
@@ -187,11 +187,11 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
                   <div className="flex gap-2 mb-4">
                     <div className="relative flex-1">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                      <Input
+                       <Input
                         placeholder="Search funds or managers…"
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="pl-9 h-9 rounded-lg text-sm"
+                        className="pl-9 h-9 rounded-lg text-[16px]"
                       />
                     </div>
                   </div>
