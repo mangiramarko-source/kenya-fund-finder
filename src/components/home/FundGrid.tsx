@@ -219,30 +219,30 @@ const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => {
         <span className="text-xs text-muted-foreground font-medium">{commodities.length} items</span>
       </div>
 
-      <table className="w-full text-sm">
+      <table className="w-full text-xs">
         <thead>
-          <tr className="text-xs text-muted-foreground">
-            <th className="text-left pl-5 pr-2 py-2.5 font-medium w-8">#</th>
-            <th className="text-left px-2 py-2.5 font-medium">Item</th>
-            <th className="text-center px-2 py-2.5 font-medium w-12">Unit</th>
-            <th className="text-right px-2 py-2.5 font-medium w-16">Prev</th>
-            <th className="text-right pl-2 pr-5 py-2.5 font-medium w-20">Price</th>
+          <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <th className="text-left pl-4 pr-1 py-2 font-medium w-6">#</th>
+            <th className="text-left px-1 py-2 font-medium">Item</th>
+            <th className="text-center px-1 py-2 font-medium w-10">Unit</th>
+            <th className="text-right px-1 py-2 font-medium w-14">Prev</th>
+            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Price</th>
           </tr>
         </thead>
         <tbody>
           {visible.map((c, i) => (
             <tr key={c.id} className="border-t border-border/40 hover:bg-muted/30 transition-colors">
-              <td className="pl-5 pr-2 py-2.5 text-muted-foreground tabular-nums text-xs">{i + 1}</td>
-              <td className="px-2 py-2.5">
-                <span className="font-medium text-foreground truncate block" title={c.name}>
+              <td className="pl-4 pr-1 py-2 text-muted-foreground tabular-nums text-[10px]">{i + 1}</td>
+              <td className="px-1 py-2">
+                <span className="font-medium text-foreground truncate block max-w-[140px]" title={c.name}>
                   {c.name}
                 </span>
               </td>
-              <td className="text-center px-2 py-2.5 text-muted-foreground text-xs">{c.unit}</td>
-              <td className="text-right px-2 py-2.5 text-muted-foreground tabular-nums">
+              <td className="text-center px-1 py-2 text-muted-foreground text-[10px]">{c.unit}</td>
+              <td className="text-right px-1 py-2 text-muted-foreground tabular-nums">
                 {c.previous_price != null ? c.previous_price.toFixed(2) : "—"}
               </td>
-              <td className="text-right pl-2 pr-5 py-2.5 font-bold text-accent tabular-nums">
+              <td className="text-right pl-1 pr-4 py-2 font-bold text-accent tabular-nums">
                 {c.price.toFixed(2)}
               </td>
             </tr>
@@ -250,11 +250,11 @@ const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => {
 
           {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
             <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-5 pr-2 py-2.5 text-muted-foreground/30 tabular-nums text-xs">{visible.length + i + 1}</td>
-              <td className="px-2 py-2.5"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-2 py-2.5" />
-              <td className="px-2 py-2.5" />
-              <td className="pl-2 pr-5 py-2.5" />
+              <td className="pl-4 pr-1 py-2 text-muted-foreground/30 tabular-nums text-[10px]">{visible.length + i + 1}</td>
+              <td className="px-1 py-2"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-1 py-2" />
+              <td className="px-1 py-2" />
+              <td className="pl-1 pr-4 py-2" />
             </tr>
           ))}
         </tbody>
