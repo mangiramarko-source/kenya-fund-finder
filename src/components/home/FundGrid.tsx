@@ -148,30 +148,30 @@ const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => {
         <span className="text-xs text-muted-foreground font-medium">{rates.length} rates</span>
       </div>
 
-      <table className="w-full text-sm">
+      <table className="w-full text-xs">
         <thead>
-          <tr className="text-xs text-muted-foreground">
-            <th className="text-left pl-5 pr-2 py-2.5 font-medium w-8">#</th>
-            <th className="text-left px-2 py-2.5 font-medium">Currency</th>
-            <th className="text-center px-2 py-2.5 font-medium w-12">Code</th>
-            <th className="text-right px-2 py-2.5 font-medium w-16">Prev</th>
-            <th className="text-right pl-2 pr-5 py-2.5 font-medium w-20">Rate</th>
+          <tr className="text-[10px] text-muted-foreground uppercase tracking-wider">
+            <th className="text-left pl-4 pr-1 py-2 font-medium w-6">#</th>
+            <th className="text-left px-1 py-2 font-medium">Currency</th>
+            <th className="text-center px-1 py-2 font-medium w-10">Code</th>
+            <th className="text-right px-1 py-2 font-medium w-14">Prev</th>
+            <th className="text-right pl-1 pr-4 py-2 font-medium w-16">Rate</th>
           </tr>
         </thead>
         <tbody>
           {visible.map((r, i) => (
             <tr key={r.id} className="border-t border-border/40 hover:bg-muted/30 transition-colors">
-              <td className="pl-5 pr-2 py-2.5 text-muted-foreground tabular-nums text-xs">{i + 1}</td>
-              <td className="px-2 py-2.5">
-                <span className="font-medium text-foreground truncate block" title={r.currency_name}>
+              <td className="pl-4 pr-1 py-2 text-muted-foreground tabular-nums text-[10px]">{i + 1}</td>
+              <td className="px-1 py-2">
+                <span className="font-medium text-foreground truncate block max-w-[140px]" title={r.currency_name}>
                   {r.currency_name}
                 </span>
               </td>
-              <td className="text-center px-2 py-2.5 text-muted-foreground text-xs">{r.currency_code}</td>
-              <td className="text-right px-2 py-2.5 text-muted-foreground tabular-nums">
+              <td className="text-center px-1 py-2 text-muted-foreground text-[10px]">{r.currency_code}</td>
+              <td className="text-right px-1 py-2 text-muted-foreground tabular-nums">
                 {r.previous_rate != null ? r.previous_rate.toFixed(2) : "—"}
               </td>
-              <td className="text-right pl-2 pr-5 py-2.5 font-bold text-accent tabular-nums">
+              <td className="text-right pl-1 pr-4 py-2 font-bold text-accent tabular-nums">
                 {r.rate.toFixed(2)}
               </td>
             </tr>
@@ -179,11 +179,11 @@ const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => {
 
           {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
             <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-5 pr-2 py-2.5 text-muted-foreground/30 tabular-nums text-xs">{visible.length + i + 1}</td>
-              <td className="px-2 py-2.5"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-2 py-2.5" />
-              <td className="px-2 py-2.5" />
-              <td className="pl-2 pr-5 py-2.5" />
+              <td className="pl-4 pr-1 py-2 text-muted-foreground/30 tabular-nums text-[10px]">{visible.length + i + 1}</td>
+              <td className="px-1 py-2"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-1 py-2" />
+              <td className="px-1 py-2" />
+              <td className="pl-1 pr-4 py-2" />
             </tr>
           ))}
         </tbody>
