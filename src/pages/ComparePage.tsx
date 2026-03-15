@@ -18,7 +18,14 @@ type SortKey = "annual_yield" | "minimum_investment" | "management_fee";
 const fundTypes: FundType[] = ["money_market", "fixed_income", "balanced", "equity", "bond"];
 
 const ComparePage = () => {
-  useDocumentTitle("Compare Unit Trust Funds – Kenya Fund Comparison", "Side-by-side comparison of Kenya's top unit trust funds by yield, fees, and minimum investment.");
+  useDocumentTitle(
+    "Compare Unit Trust Funds – Kenya Fund Comparison",
+    "Side-by-side comparison of Kenya's top unit trust funds by yield, fees, and minimum investment.",
+    {
+      title: "Compare Unit Trust Funds – Kenya Fund Comparison",
+      description: "Side-by-side comparison of Kenya's top unit trust funds by yield, fees, and minimum investment.",
+    }
+  );
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
   const [loading, setLoading] = useState(true);

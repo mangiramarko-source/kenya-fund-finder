@@ -8,7 +8,11 @@ import { Link } from "react-router-dom";
 const RatesPage = () => {
   useDocumentTitle(
     "FX Exchange Rates – Kenya Fund Finder",
-    "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more."
+    "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more.",
+    {
+      title: "FX Exchange Rates – Kenya Fund Finder",
+      description: "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more.",
+    }
   );
 
   const { rates, loading } = useMarketData();

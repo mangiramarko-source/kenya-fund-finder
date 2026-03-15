@@ -7,7 +7,11 @@ import { Link } from "react-router-dom";
 const CommoditiesPage = () => {
   useDocumentTitle(
     "Commodity Prices – Kenya Fund Finder",
-    "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly."
+    "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly.",
+    {
+      title: "Commodity Prices – Kenya Fund Finder",
+      description: "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly.",
+    }
   );
 
   const { commodities, loading } = useMarketData();

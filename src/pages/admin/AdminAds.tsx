@@ -210,7 +210,7 @@ const AdminAds = () => {
                     ad.media_type === "video" ? (
                       <video src={ad.media_url} className="w-full h-full object-cover" muted playsInline />
                     ) : (
-                      <img src={ad.media_url} alt={ad.title} className="w-full h-full object-cover"
+                      <img src={ad.media_url} alt={ad.title} className="w-full h-full object-cover" loading="lazy"
                         onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }} />
                     )
                   ) : <span className="text-muted-foreground text-sm">No media</span>}
