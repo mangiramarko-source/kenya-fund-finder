@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchFunds, fetchLatestSnapshots, type FundFromDB, type FundType, type YieldSnapshot, FUND_TYPE_LABELS } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
@@ -18,7 +18,21 @@ type SortKey = "annual_yield" | "minimum_investment" | "management_fee";
 const fundTypes: FundType[] = ["money_market", "fixed_income", "balanced", "equity", "bond"];
 
 const ComparePage = () => {
-  useDocumentTitle("Compare Unit Trust Funds – Kenya Fund Comparison", "Side-by-side comparison of Kenya's top unit trust funds by yield, fees, and minimum investment.");
+  useDocumentTitle(
+    "Compare Unit Trust Funds – Kenya Fund Comparison",
+    "Side-by-side comparison of Kenya's top unit trust funds by yield, fees, and minimum investment.",
+    {
+      title: "Compare Unit Trust Funds – Kenya Fund Comparison",
+      description: "Side-by-side comparison of Kenya's top unit trust funds by yield, fees, and minimum investment.",
+    }
+  );
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Compare Unit Trust Funds in Kenya",
+    description: "Side-by-side comparison of Kenya's top unit trust funds by yield, fees, and minimum investment.",
+    url: "https://kenyafundfinder.com/compare",
+  });
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
   const [loading, setLoading] = useState(true);

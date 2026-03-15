@@ -1,4 +1,4 @@
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useMarketData } from "@/components/home/MarketTicker";
 import { RatesTable } from "@/components/home/MarketTicker";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -8,8 +8,19 @@ import { Link } from "react-router-dom";
 const RatesPage = () => {
   useDocumentTitle(
     "FX Exchange Rates – Kenya Fund Finder",
-    "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more."
+    "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more.",
+    {
+      title: "FX Exchange Rates – Kenya Fund Finder",
+      description: "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more.",
+    }
   );
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "FX Exchange Rates – Kenya Fund Finder",
+    description: "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more.",
+    url: "https://kenyafundfinder.com/rates",
+  });
 
   const { rates, loading } = useMarketData();
 

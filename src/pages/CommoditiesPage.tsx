@@ -1,4 +1,4 @@
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useMarketData } from "@/components/home/MarketTicker";
 import { CommoditiesTable } from "@/components/home/MarketTicker";
 import { ArrowLeft } from "lucide-react";
@@ -7,8 +7,19 @@ import { Link } from "react-router-dom";
 const CommoditiesPage = () => {
   useDocumentTitle(
     "Commodity Prices – Kenya Fund Finder",
-    "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly."
+    "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly.",
+    {
+      title: "Commodity Prices – Kenya Fund Finder",
+      description: "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly.",
+    }
   );
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Commodity Prices – Kenya Fund Finder",
+    description: "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly.",
+    url: "https://kenyafundfinder.com/commodities",
+  });
 
   const { commodities, loading } = useMarketData();
 

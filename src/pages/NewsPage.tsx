@@ -38,7 +38,14 @@ const categoryColors: Record<string, string> = {
 type SortOption = "latest" | "oldest" | "featured";
 
 const NewsPage = () => {
-  useDocumentTitle("MMF News & Updates – Kenya Money Market Funds", "Stay informed about Money Market Funds in Kenya with the latest yield updates, market news, and regulatory changes.");
+  useDocumentTitle(
+    "MMF News & Updates – Kenya Money Market Funds",
+    "Stay informed about Money Market Funds in Kenya with the latest yield updates, market news, and regulatory changes.",
+    {
+      title: "MMF News & Updates – Kenya Money Market Funds",
+      description: "Stay informed about Money Market Funds in Kenya with the latest yield updates, market news, and regulatory changes.",
+    }
+  );
   const { user } = useAuth();
   const { toast } = useToast();
   const [activeCategory, setActiveCategory] = useState<string>("All");
