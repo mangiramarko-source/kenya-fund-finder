@@ -1,4 +1,4 @@
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useMarketData } from "@/components/home/MarketTicker";
 import { RatesTable } from "@/components/home/MarketTicker";
 import { Skeleton } from "@/components/ui/skeleton";

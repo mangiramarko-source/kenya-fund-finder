@@ -26,6 +26,13 @@ const ComparePage = () => {
       description: "Side-by-side comparison of Kenya's top unit trust funds by yield, fees, and minimum investment.",
     }
   );
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    name: "Compare Unit Trust Funds in Kenya",
+    description: "Side-by-side comparison of Kenya's top unit trust funds by yield, fees, and minimum investment.",
+    url: "https://kenyafundfinder.com/compare",
+  });
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
   const [loading, setLoading] = useState(true);
