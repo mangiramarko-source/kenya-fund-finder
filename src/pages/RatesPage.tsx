@@ -14,6 +14,13 @@ const RatesPage = () => {
       description: "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more.",
     }
   );
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "FX Exchange Rates – Kenya Fund Finder",
+    description: "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more.",
+    url: "https://kenyafundfinder.com/rates",
+  });
 
   const { rates, loading } = useMarketData();
 

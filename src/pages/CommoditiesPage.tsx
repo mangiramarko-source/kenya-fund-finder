@@ -13,6 +13,13 @@ const CommoditiesPage = () => {
       description: "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly.",
     }
   );
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    name: "Commodity Prices – Kenya Fund Finder",
+    description: "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly.",
+    url: "https://kenyafundfinder.com/commodities",
+  });
 
   const { commodities, loading } = useMarketData();
 

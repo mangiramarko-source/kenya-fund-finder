@@ -82,6 +82,15 @@ const CalculatorPage = () => {
       description: "Free Kenya PAYE payslip calculator — compute NSSF, SHIF, Housing Levy, tax bands & net salary.",
     }
   );
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Kenya PAYE, Investment & Currency Calculator",
+    description: "Free Kenya PAYE payslip calculator — compute NSSF, SHIF, Housing Levy, tax bands & net salary.",
+    url: "https://kenyafundfinder.com/calculator",
+    applicationCategory: "FinanceApplication",
+    operatingSystem: "Web",
+  });
   const { user } = useAuth();
   const [searchParams] = useSearchParams();
   const [funds, setFunds] = useState<FundFromDB[]>([]);
