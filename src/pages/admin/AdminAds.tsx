@@ -308,7 +308,7 @@ const AdminAds = () => {
                   {form.media_type === "video" ? (
                     <video src={form.media_url} controls className="w-full h-full object-contain" />
                   ) : (
-                    <img src={form.media_url} alt="Preview" className="w-full h-full object-contain"
+                    <img src={form.media_url} alt="Preview" className="w-full h-full object-contain" loading="lazy"
                       onError={(e) => { (e.target as HTMLImageElement).src = "/placeholder.svg"; }} />
                   )}
                 </div>
