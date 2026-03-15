@@ -7,7 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { fetchFunds, fetchLatestSnapshots, type FundFromDB, type FundType, type YieldSnapshot, FUND_TYPE_LABELS } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
