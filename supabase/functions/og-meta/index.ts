@@ -37,6 +37,16 @@ const staticPages: Record<string, { title: string; description: string }> = {
     description:
       "Everything you need to know about unit trusts in Kenya – how they work, risks, returns, and CMA regulation.",
   },
+  "/rates": {
+    title: "FX Exchange Rates – Kenya Fund Finder",
+    description:
+      "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more.",
+  },
+  "/commodities": {
+    title: "Commodity Prices – Kenya Fund Finder",
+    description:
+      "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly.",
+  },
 };
 
 Deno.serve(async (req) => {
