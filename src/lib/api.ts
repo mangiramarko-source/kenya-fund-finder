@@ -105,6 +105,29 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
   return (data || []).map((y) => ({ month: y.month, yield: Number(y.yield) }));
 }
 
+export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
+  const { data, error } = await supabase
+    .from("news_articles_public")
+    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status")
+    .eq("id", id)
+    .maybeSingle();
+  if (error) throw error;
+  if (!data) return null;
+  return {
+    id: data.id!,
+    title: data.title!,
+    summary: data.summary!,
+    content: data.content || null,
+    source: data.source!,
+    date_published: data.date_published!,
+    url: data.url || null,
+    category: data.category!,
+    read_time: data.read_time!,
+    is_featured: data.is_featured!,
+    status: data.status!,
+  };
+}
+
 export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")

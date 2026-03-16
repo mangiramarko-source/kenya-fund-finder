@@ -13,6 +13,7 @@ import ComparePage from "./pages/ComparePage";
 import FundDetailPage from "./pages/FundDetailPage";
 import CalculatorPage from "./pages/CalculatorPage";
 import NewsPage from "./pages/NewsPage";
+import NewsArticlePage from "./pages/NewsArticlePage";
 import LearnPage from "./pages/LearnPage";
 import PrivacyPolicyPage from "./pages/PrivacyPolicyPage";
 import TermsOfUsePage from "./pages/TermsOfUsePage";
@@ -49,6 +50,7 @@ const App = () => (
                   <Route path="/compare/:id" element={<FundDetailPage />} />
                   <Route path="/calculator" element={<CalculatorPage />} />
                   <Route path="/news" element={<NewsPage />} />
+                  <Route path="/news/:id" element={<NewsArticlePage />} />
                   <Route path="/learn" element={<LearnPage />} />
                   <Route path="/privacy" element={<PrivacyPolicyPage />} />
                   <Route path="/terms" element={<TermsOfUsePage />} />

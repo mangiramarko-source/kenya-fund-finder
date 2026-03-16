@@ -87,6 +87,25 @@ Deno.serve(async (req) => {
       description = `${fund.name} by ${fund.manager}. Annual yield: ${fund.annual_yield}%. Min investment: KES ${fund.minimum_investment.toLocaleString()}.`;
     }
   }
+  // Check news article pages
+  else if (path.startsWith("/news/") && path.split("/").length === 3) {
+    const articleId = path.split("/")[2];
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    const { data: article } = await supabase
+      .from("news_articles")
+      .select("title, summary, category, date_published, source")
+      .eq("id", articleId)
+      .eq("status", "published")
+      .single();
+
+    if (article) {
+      title = `${article.title} – Kenya Fund Finder`;
+      description = article.summary;
+    }
+  }
 
   const html = `<!DOCTYPE html>
 <html lang="en">

@@ -35,7 +35,7 @@ const NewsSkeleton = () => (
 const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean }) => {
   const CatIcon = categoryIcons[article.category] || Megaphone;
   return (
-    <Link to="/news" className="block group">
+    <Link to={`/news/${article.id}`} className="block group">
       <article className={`rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all cursor-pointer ${isFirst ? "p-4" : "p-3.5"}`}>
         <div className="flex items-center gap-1.5 mb-2">
           <div className="flex items-center justify-center h-5 w-5 rounded-md bg-accent/10">
