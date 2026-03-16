@@ -343,9 +343,12 @@ const AdminMarkets = () => {
           <Input placeholder="Symbol" value={newCommodity.symbol} onChange={(e) => setNewCommodity((p) => ({ ...p, symbol: e.target.value }))} className="h-8 w-16 text-xs" />
           <Input type="number" placeholder="Price" value={newCommodity.price} onChange={(e) => setNewCommodity((p) => ({ ...p, price: e.target.value }))} className="h-8 w-28 text-xs" />
           <Input placeholder="Unit" value={newCommodity.unit} onChange={(e) => setNewCommodity((p) => ({ ...p, unit: e.target.value }))} className="h-8 w-24 text-xs" />
-          <Button size="sm" variant="outline" onClick={addCommodity} className="h-8"><Plus className="h-3.5 w-3.5 mr-1" /> Add</Button>
+        <Button size="sm" variant="outline" onClick={addCommodity} className="h-8"><Plus className="h-3.5 w-3.5 mr-1" /> Add</Button>
         </div>
       </section>
+
+      {/* Social Links */}
+      <AdminSocialLinks />
     </div>
   );
 };
