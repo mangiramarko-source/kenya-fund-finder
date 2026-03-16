@@ -48,6 +48,24 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       "query-input": "required name=search_term_string",
     },
   });
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "Organization",
+    name: "Kenya Fund Finder",
+    url: "https://kenyafundfinder.com",
+    logo: "https://kenyafundfinder.com/og-image.png",
+    description: "Kenya's leading platform for comparing CMA-regulated unit trust funds. Daily-updated yields, fees, and investment calculators.",
+    sameAs: [
+      "https://twitter.com/kaborafundfind",
+      "https://www.facebook.com/kenyafundfinder",
+    ],
+    contactPoint: {
+      "@type": "ContactPoint",
+      contactType: "customer support",
+      url: "https://kenyafundfinder.com",
+      availableLanguage: "English",
+    },
+  });
 
   const [loading, setLoading] = useState(true);
   const [funds, setFunds] = useState<FundFromDB[]>([]);

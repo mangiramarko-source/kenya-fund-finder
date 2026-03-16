@@ -61,6 +61,19 @@ Deno.serve(async () => {
     }
   }
 
+  // News article pages
+  if (news) {
+    for (const article of news) {
+      xml += `  <url>
+    <loc>${SITE_URL}/news/${article.id}</loc>
+    <lastmod>${article.date_published?.split("T")[0] || today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+`;
+    }
+  }
+
   xml += `</urlset>`;
 
   return new Response(xml, {
