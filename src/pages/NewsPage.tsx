@@ -84,7 +84,7 @@ const NewsPage = () => {
 
   const handleArticleClick = (article: NewsFromDB) => setSelectedArticle(article);
 
-  const getShareUrl = (article: NewsFromDB) => `https://kenyafundfinder.com/news#${article.id}`;
+  const getShareUrl = (article: NewsFromDB) => `https://kenyafundfinder.com/news/${article.id}`;
 
   const handleShare = async (article: NewsFromDB, e: React.MouseEvent) => {
     e.stopPropagation();
