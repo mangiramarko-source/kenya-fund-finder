@@ -161,8 +161,41 @@ const AdminMarkets = () => {
 
   if (loading) return <div className="text-center py-10 text-muted-foreground">Loading…</div>;
 
+  const triggerAutoFetch = async () => {
+    setSaving(true);
+    try {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/fetch-market-data`,
+        { method: "POST", headers: { "Content-Type": "application/json" } }
+      );
+      const result = await res.json();
+      if (result.success) {
+        toast.success("Auto-fetch complete! Refreshing data...");
+        fetchData();
+      } else {
+        toast.error(result.error || "Auto-fetch failed");
+      }
+    } catch (e: any) {
+      toast.error(e.message);
+    }
+    setSaving(false);
+  };
+
   return (
     <div className="space-y-8">
+      {/* Auto-fetch trigger */}
+      <div className="flex items-center gap-3 p-4 rounded-xl border border-border bg-muted/30">
+        <RefreshCw className="h-5 w-5 text-accent" />
+        <div className="flex-1">
+          <p className="text-sm font-semibold">Automated Data Updates</p>
+          <p className="text-xs text-muted-foreground">FX rates update hourly from ExchangeRate-API. Crypto prices from CoinGecko.</p>
+        </div>
+        <Button size="sm" onClick={triggerAutoFetch} disabled={saving}>
+          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Fetch Now
+        </Button>
+      </div>
+
       {/* Exchange Rates */}
       <section>
         <div className="flex items-center justify-between mb-4">
