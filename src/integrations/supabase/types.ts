@@ -590,6 +590,42 @@ export type Database = {
         }
         Relationships: []
       }
+      social_links: {
+        Row: {
+          created_at: string
+          icon_name: string
+          id: string
+          is_active: boolean
+          platform: string
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+          url: string
+        }
+        Insert: {
+          created_at?: string
+          icon_name?: string
+          id?: string
+          is_active?: boolean
+          platform: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+          url?: string
+        }
+        Update: {
+          created_at?: string
+          icon_name?: string
+          id?: string
+          is_active?: boolean
+          platform?: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+          url?: string
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -878,6 +914,30 @@ export type Database = {
           slug?: string | null
           title?: string | null
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      social_links_public: {
+        Row: {
+          icon_name: string | null
+          id: string | null
+          platform: string | null
+          sort_order: number | null
+          url: string | null
+        }
+        Insert: {
+          icon_name?: string | null
+          id?: string | null
+          platform?: string | null
+          sort_order?: number | null
+          url?: string | null
+        }
+        Update: {
+          icon_name?: string | null
+          id?: string | null
+          platform?: string | null
+          sort_order?: number | null
+          url?: string | null
         }
         Relationships: []
       }
