@@ -6,6 +6,15 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+async function hashIp(ip: string): Promise<string> {
+  const encoder = new TextEncoder();
+  const data = encoder.encode(ip + (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "salt"));
+  const hash = await crypto.subtle.digest("SHA-256", data);
+  return Array.from(new Uint8Array(hash))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
@@ -55,11 +64,59 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Validate input lengths (match track-anonymous constraints)
+      if (page_path && (typeof page_path !== "string" || page_path.length > 500)) {
+        return new Response(JSON.stringify({ error: "Invalid page_path" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (session_id && (typeof session_id !== "string" || session_id.length > 100)) {
+        return new Response(JSON.stringify({ error: "Invalid session_id" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      if (typeof ad_id !== "string" || ad_id.length > 50) {
+        return new Response(JSON.stringify({ error: "Invalid ad_id" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Rate limiting via IP hash
+      const clientIp =
+        req.headers.get("cf-connecting-ip") ||
+        req.headers.get("x-real-ip") ||
+        "unknown";
+      const ipHash = await hashIp(clientIp);
+
+      const { data: allowed, error: rlError } = await client.rpc("check_rate_limit", {
+        p_ip_hash: ipHash,
+        p_window_seconds: 60,
+        p_max_requests: 30,
+      });
+
+      if (rlError) {
+        console.error("rate_limit rpc error:", rlError);
+      }
+
+      if (allowed === false) {
+        return new Response(JSON.stringify({ error: "Too many requests" }), {
+          status: 429,
+          headers: { ...corsHeaders, "Content-Type": "application/json", "Retry-After": "60" },
+        });
+      }
+
+      const sanitizedPath = page_path
+        ? page_path.replace(/[^a-zA-Z0-9\-_\/\.]/g, "").slice(0, 500)
+        : null;
+
       const { error } = await client.from("ad_events").insert({
         ad_id,
         event_type,
-        session_id: session_id || null,
-        page_path: page_path || null,
+        session_id: session_id ? session_id.slice(0, 100) : null,
+        page_path: sanitizedPath,
       });
 
       if (error) {
