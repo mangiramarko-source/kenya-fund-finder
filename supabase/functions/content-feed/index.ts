@@ -6,6 +6,17 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
+// In-memory dedup cache: key → timestamp (ms). Cleaned periodically.
+const recentEvents = new Map<string, number>();
+const DEDUP_WINDOW_MS = 15_000; // 15 seconds
+
+function cleanDedup() {
+  const cutoff = Date.now() - DEDUP_WINDOW_MS;
+  for (const [key, ts] of recentEvents) {
+    if (ts < cutoff) recentEvents.delete(key);
+  }
+}
+
 async function hashIp(ip: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(ip + (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "salt"));
@@ -25,8 +36,10 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const client = createClient(supabaseUrl, serviceKey);
 
-    const { action, placement, ad_id, event_type, session_id, page_path } = await req.json();
+    const body = await req.json();
+    const { action, placement, ad_id, event_type, session_id, page_path } = body;
 
+    /* ── FETCH ADS ── */
     if (action === "fetch") {
       const { data, error } = await client
         .from("ads")
@@ -56,7 +69,9 @@ Deno.serve(async (req) => {
       });
     }
 
+    /* ── TRACK EVENT ── */
     if (action === "track") {
+      // Validate event_type
       if (!ad_id || !event_type || !["impression", "click"].includes(event_type)) {
         return new Response(JSON.stringify({ error: "Invalid tracking params" }), {
           status: 400,
@@ -64,21 +79,25 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Validate input lengths (match track-anonymous constraints)
-      if (page_path && (typeof page_path !== "string" || page_path.length > 500)) {
+      // Validate ad_id (UUID format, max 50 chars)
+      if (typeof ad_id !== "string" || ad_id.length > 50) {
+        return new Response(JSON.stringify({ error: "Invalid ad_id" }), {
+          status: 400,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      // Validate page_path (max 200 chars)
+      if (page_path && (typeof page_path !== "string" || page_path.length > 200)) {
         return new Response(JSON.stringify({ error: "Invalid page_path" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      if (session_id && (typeof session_id !== "string" || session_id.length > 100)) {
+
+      // Validate session_id (max 64 chars)
+      if (session_id && (typeof session_id !== "string" || session_id.length > 64)) {
         return new Response(JSON.stringify({ error: "Invalid session_id" }), {
-          status: 400,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (typeof ad_id !== "string" || ad_id.length > 50) {
-        return new Response(JSON.stringify({ error: "Invalid ad_id" }), {
           status: 400,
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
@@ -97,9 +116,7 @@ Deno.serve(async (req) => {
         p_max_requests: 30,
       });
 
-      if (rlError) {
-        console.error("rate_limit rpc error:", rlError);
-      }
+      if (rlError) console.error("rate_limit rpc error:", rlError);
 
       if (allowed === false) {
         return new Response(JSON.stringify({ error: "Too many requests" }), {
@@ -108,14 +125,25 @@ Deno.serve(async (req) => {
         });
       }
 
+      // Deduplication: reject rapid duplicate events (same session + ad + event + page within 15s)
+      const dedupKey = `${session_id || ipHash}:${ad_id}:${event_type}:${page_path || ""}`;
+      cleanDedup();
+      if (recentEvents.has(dedupKey)) {
+        // Silently accept but don't insert
+        return new Response(JSON.stringify({ ok: true, deduped: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      recentEvents.set(dedupKey, Date.now());
+
       const sanitizedPath = page_path
-        ? page_path.replace(/[^a-zA-Z0-9\-_\/\.]/g, "").slice(0, 500)
+        ? page_path.replace(/[^a-zA-Z0-9\-_\/\.]/g, "").slice(0, 200)
         : null;
 
       const { error } = await client.from("ad_events").insert({
         ad_id,
         event_type,
-        session_id: session_id ? session_id.slice(0, 100) : null,
+        session_id: session_id ? session_id.slice(0, 64) : null,
         page_path: sanitizedPath,
       });
 
