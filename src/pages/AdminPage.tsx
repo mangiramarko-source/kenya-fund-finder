@@ -71,6 +71,7 @@ const AdminPage = () => {
 
         <TabsContent value="dashboard"><AdminDashboard /></TabsContent>
         <TabsContent value="funds"><AdminFunds /></TabsContent>
+        <TabsContent value="stocks"><AdminStocks /></TabsContent>
         <TabsContent value="news"><AdminNews /></TabsContent>
         <TabsContent value="ads"><AdminAds /></TabsContent>
         <TabsContent value="pages"><AdminPages /></TabsContent>
