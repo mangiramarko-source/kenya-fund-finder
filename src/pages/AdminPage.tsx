@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, LineChart } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminFunds from "./admin/AdminFunds";
 import AdminNews from "./admin/AdminNews";
@@ -9,6 +9,7 @@ import AdminChangeLog from "./admin/AdminChangeLog";
 import AdminPages from "./admin/AdminPages";
 import AdminAds from "./admin/AdminAds";
 import AdminMarkets from "./admin/AdminMarkets";
+import AdminStocks from "./admin/AdminStocks";
 
 const AdminPage = () => {
   const { isAdmin, loading, user } = useAuth();
@@ -33,7 +34,7 @@ const AdminPage = () => {
   return (
     <div className="container py-6">
       <Tabs defaultValue="dashboard" className="space-y-6">
-        <TabsList className="grid w-full grid-cols-7 max-w-3xl">
+        <TabsList className="grid w-full grid-cols-8 max-w-4xl">
           <TabsTrigger value="dashboard" className="gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -41,6 +42,10 @@ const AdminPage = () => {
           <TabsTrigger value="funds" className="gap-1.5">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Funds</span>
+          </TabsTrigger>
+          <TabsTrigger value="stocks" className="gap-1.5">
+            <LineChart className="h-4 w-4" />
+            <span className="hidden sm:inline">Stocks</span>
           </TabsTrigger>
           <TabsTrigger value="news" className="gap-1.5">
             <Newspaper className="h-4 w-4" />
@@ -66,6 +71,7 @@ const AdminPage = () => {
 
         <TabsContent value="dashboard"><AdminDashboard /></TabsContent>
         <TabsContent value="funds"><AdminFunds /></TabsContent>
+        <TabsContent value="stocks"><AdminStocks /></TabsContent>
         <TabsContent value="news"><AdminNews /></TabsContent>
         <TabsContent value="ads"><AdminAds /></TabsContent>
         <TabsContent value="pages"><AdminPages /></TabsContent>

@@ -626,6 +626,75 @@ export type Database = {
         }
         Relationships: []
       }
+      stocks: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          day_change: number
+          day_change_percent: number
+          dividend_yield: number | null
+          id: string
+          is_active: boolean
+          market_cap: number | null
+          name: string
+          pe_ratio: number | null
+          previous_price: number | null
+          price: number
+          sector: string
+          sort_order: number
+          symbol: string
+          updated_at: string
+          updated_by: string | null
+          volume: number
+          year_high: number | null
+          year_low: number | null
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          day_change?: number
+          day_change_percent?: number
+          dividend_yield?: number | null
+          id?: string
+          is_active?: boolean
+          market_cap?: number | null
+          name: string
+          pe_ratio?: number | null
+          previous_price?: number | null
+          price?: number
+          sector?: string
+          sort_order?: number
+          symbol: string
+          updated_at?: string
+          updated_by?: string | null
+          volume?: number
+          year_high?: number | null
+          year_low?: number | null
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          day_change?: number
+          day_change_percent?: number
+          dividend_yield?: number | null
+          id?: string
+          is_active?: boolean
+          market_cap?: number | null
+          name?: string
+          pe_ratio?: number | null
+          previous_price?: number | null
+          price?: number
+          sector?: string
+          sort_order?: number
+          symbol?: string
+          updated_at?: string
+          updated_by?: string | null
+          volume?: number
+          year_high?: number | null
+          year_low?: number | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string
@@ -938,6 +1007,66 @@ export type Database = {
           platform?: string | null
           sort_order?: number | null
           url?: string | null
+        }
+        Relationships: []
+      }
+      stocks_public: {
+        Row: {
+          day_change: number | null
+          day_change_percent: number | null
+          dividend_yield: number | null
+          id: string | null
+          is_active: boolean | null
+          market_cap: number | null
+          name: string | null
+          pe_ratio: number | null
+          previous_price: number | null
+          price: number | null
+          sector: string | null
+          sort_order: number | null
+          symbol: string | null
+          updated_at: string | null
+          volume: number | null
+          year_high: number | null
+          year_low: number | null
+        }
+        Insert: {
+          day_change?: number | null
+          day_change_percent?: number | null
+          dividend_yield?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          market_cap?: number | null
+          name?: string | null
+          pe_ratio?: number | null
+          previous_price?: number | null
+          price?: number | null
+          sector?: string | null
+          sort_order?: number | null
+          symbol?: string | null
+          updated_at?: string | null
+          volume?: number | null
+          year_high?: number | null
+          year_low?: number | null
+        }
+        Update: {
+          day_change?: number | null
+          day_change_percent?: number | null
+          dividend_yield?: number | null
+          id?: string | null
+          is_active?: boolean | null
+          market_cap?: number | null
+          name?: string | null
+          pe_ratio?: number | null
+          previous_price?: number | null
+          price?: number | null
+          sector?: string | null
+          sort_order?: number | null
+          symbol?: string | null
+          updated_at?: string | null
+          volume?: number | null
+          year_high?: number | null
+          year_low?: number | null
         }
         Relationships: []
       }
