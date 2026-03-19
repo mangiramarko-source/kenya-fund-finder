@@ -26,8 +26,6 @@ import ChecklistPage from "./pages/ChecklistPage";
 import SitePage from "./pages/SitePage";
 import RatesPage from "./pages/RatesPage";
 import CommoditiesPage from "./pages/CommoditiesPage";
-import StocksPage from "./pages/StocksPage";
-import StockDetailPage from "./pages/StockDetailPage";
 import NotFound from "./pages/NotFound";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
