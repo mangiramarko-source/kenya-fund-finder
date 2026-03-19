@@ -9,9 +9,35 @@ const corsHeaders = {
 // ExchangeRate-API free endpoint (no key needed)
 const FX_API = "https://open.er-api.com/v6/latest/KES";
 
-// Free commodity price proxy (gold, oil via metals-api alternative)
-// We'll use frankfurter for FX and a simple gold/oil approach
-const GOLD_API = "https://api.metalpriceapi.com/v1/latest?api_key=demo&base=USD&currencies=XAU";
+// CoinGecko free API for crypto prices
+const COINGECKO_API = "https://api.coingecko.com/api/v3/simple/price";
+
+// Map of common commodity symbols to CoinGecko IDs
+const CRYPTO_MAP: Record<string, string> = {
+  BTC: "bitcoin",
+  ETH: "ethereum",
+  SOL: "solana",
+  BNB: "binancecoin",
+  XRP: "ripple",
+  ADA: "cardano",
+  DOGE: "dogecoin",
+  DOT: "polkadot",
+  MATIC: "matic-network",
+  AVAX: "avalanche-2",
+  LINK: "chainlink",
+  UNI: "uniswap",
+  USDT: "tether",
+  USDC: "usd-coin",
+};
+
+// Map commodity symbols to free data sources
+// For gold/silver/oil we use exchange rate trick: XAU, XAG are ISO currency codes
+const PRECIOUS_METALS: Record<string, string> = {
+  XAU: "gold",
+  GOLD: "gold",
+  XAG: "silver",
+  SILVER: "silver",
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -27,13 +53,11 @@ Deno.serve(async (req) => {
   try {
     // ── 1. Fetch FX rates ──
     const fxRes = await fetch(FX_API);
+    let kesRates: Record<string, number> = {};
     if (fxRes.ok) {
       const fxData = await fxRes.json();
-      // fxData.rates contains rates FROM KES, we need inverse for "how many KES per 1 unit"
-      // e.g. rates.USD = 0.0077 means 1 KES = 0.0077 USD, so 1 USD = 1/0.0077 KES
-      const kesRates = fxData.rates || {};
+      kesRates = fxData.rates || {};
 
-      // Get existing currencies from DB
       const { data: existing } = await supabase
         .from("exchange_rates")
         .select("id, currency_code, rate");
@@ -53,7 +77,7 @@ Deno.serve(async (req) => {
                   updated_at: new Date().toISOString(),
                 })
                 .eq("id", row.id);
-              results.push(`${code}: ${row.rate} → ${newRate}`);
+              results.push(`FX ${code}: ${row.rate} → ${newRate}`);
             }
           }
         }
@@ -63,38 +87,45 @@ Deno.serve(async (req) => {
       results.push(`FX API error: ${fxRes.status}`);
     }
 
-    // ── 2. Fetch commodity prices (gold, silver via free API) ──
-    // Use a simple free endpoint for gold price in USD
-    try {
-      const goldRes = await fetch(
-        "https://api.exchangerate-api.com/v4/latest/USD"
-      );
-      if (goldRes.ok) {
-        // For commodities, we update based on what's in the DB
-        // The admin defines commodities; we try to find price sources
-        const { data: commodityRows } = await supabase
-          .from("commodities")
-          .select("id, symbol, price");
+    // ── 2. Fetch commodity prices ──
+    const { data: commodityRows } = await supabase
+      .from("commodities")
+      .select("id, symbol, name, price, unit");
 
-        // Since free commodity APIs are limited, we'll try CoinGecko for crypto
-        const cryptoSymbols = ["BTC", "ETH"];
-        const hasCrypto = commodityRows?.some((c: any) =>
-          cryptoSymbols.includes(c.symbol)
-        );
+    if (commodityRows && commodityRows.length > 0) {
+      // Separate crypto vs precious metals vs other
+      const cryptoItems: typeof commodityRows = [];
+      const metalItems: typeof commodityRows = [];
+      const otherItems: typeof commodityRows = [];
 
-        if (hasCrypto) {
+      for (const c of commodityRows) {
+        const sym = (c.symbol || "").toUpperCase();
+        if (CRYPTO_MAP[sym]) {
+          cryptoItems.push(c);
+        } else if (PRECIOUS_METALS[sym]) {
+          metalItems.push(c);
+        } else {
+          otherItems.push(c);
+        }
+      }
+
+      // ── 2a. Crypto via CoinGecko ──
+      if (cryptoItems.length > 0) {
+        const geckoIds = cryptoItems
+          .map((c) => CRYPTO_MAP[(c.symbol || "").toUpperCase()])
+          .filter(Boolean);
+        const uniqueIds = [...new Set(geckoIds)].join(",");
+
+        try {
           const cgRes = await fetch(
-            "https://api.coingecko.com/api/v3/simple/price?ids=bitcoin,ethereum&vs_currencies=usd"
+            `${COINGECKO_API}?ids=${uniqueIds}&vs_currencies=usd`
           );
           if (cgRes.ok) {
             const cgData = await cgRes.json();
-            const priceMap: Record<string, number> = {
-              BTC: cgData.bitcoin?.usd || 0,
-              ETH: cgData.ethereum?.usd || 0,
-            };
 
-            for (const row of commodityRows || []) {
-              const newPrice = priceMap[row.symbol];
+            for (const row of cryptoItems) {
+              const geckoId = CRYPTO_MAP[(row.symbol || "").toUpperCase()];
+              const newPrice = cgData[geckoId]?.usd;
               if (newPrice && newPrice !== row.price) {
                 await supabase
                   .from("commodities")
@@ -104,15 +135,50 @@ Deno.serve(async (req) => {
                     updated_at: new Date().toISOString(),
                   })
                   .eq("id", row.id);
-                results.push(`${row.symbol}: ${row.price} → ${newPrice}`);
+                results.push(`Crypto ${row.symbol}: ${row.price} → ${newPrice}`);
               }
+            }
+          } else {
+            results.push(`CoinGecko error: ${cgRes.status}`);
+          }
+        } catch (e) {
+          results.push(`CoinGecko fetch error: ${(e as Error).message}`);
+        }
+      }
+
+      // ── 2b. Precious metals via FX rates (XAU, XAG are ISO currency codes) ──
+      // open.er-api returns rates FROM KES, so XAU rate = how many XAU per 1 KES
+      // Price of gold in USD = (USD per KES) / (XAU per KES)
+      if (metalItems.length > 0 && Object.keys(kesRates).length > 0) {
+        const usdPerKes = kesRates["USD"] || 0;
+        const metalFxMap: Record<string, string> = {
+          XAU: "XAU", GOLD: "XAU",
+          XAG: "XAG", SILVER: "XAG",
+        };
+
+        for (const row of metalItems) {
+          const sym = (row.symbol || "").toUpperCase();
+          const fxCode = metalFxMap[sym];
+          const metalRate = fxCode ? kesRates[fxCode] : undefined;
+
+          if (metalRate && metalRate > 0 && usdPerKes > 0) {
+            const priceUsd = parseFloat((usdPerKes / metalRate).toFixed(2));
+            if (priceUsd !== row.price) {
+              await supabase
+                .from("commodities")
+                .update({
+                  previous_price: row.price,
+                  price: priceUsd,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", row.id);
+              results.push(`Metal ${row.symbol}: ${row.price} → ${priceUsd}`);
             }
           }
         }
-        results.push("Commodities: processed");
       }
-    } catch (e) {
-      results.push(`Commodities error: ${e.message}`);
+
+      results.push(`Commodities: processed ${commodityRows.length} items`);
     }
 
     return new Response(JSON.stringify({ success: true, results }), {
@@ -121,7 +187,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("fetch-market-data error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: error.message }),
+      JSON.stringify({ success: false, error: (error as Error).message }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
