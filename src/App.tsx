@@ -26,8 +26,6 @@ import ChecklistPage from "./pages/ChecklistPage";
 import SitePage from "./pages/SitePage";
 import RatesPage from "./pages/RatesPage";
 import CommoditiesPage from "./pages/CommoditiesPage";
-import StocksPage from "./pages/StocksPage";
-import StockDetailPage from "./pages/StockDetailPage";
 import NotFound from "./pages/NotFound";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
@@ -63,8 +61,6 @@ const App = () => (
                   <Route path="/page/:slug" element={<SitePage />} />
                   <Route path="/rates" element={<RatesPage />} />
                   <Route path="/commodities" element={<CommoditiesPage />} />
-                  <Route path="/stocks" element={<StocksPage />} />
-                  <Route path="/stocks/:symbol" element={<StockDetailPage />} />
                   <Route path="/admin/login" element={<AdminLoginPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="*" element={<NotFound />} />

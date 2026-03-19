@@ -11,7 +11,6 @@ import SearchDialog from "@/components/SearchDialog";
 
 const navLinks = [
   { to: "/", label: "Funds", icon: BarChart3 },
-  { to: "/stocks", label: "Stocks", icon: LineChart },
   { to: "/calculator", label: "Calculator", icon: Calculator },
   { to: "/news", label: "News", icon: Newspaper },
 ];
