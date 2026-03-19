@@ -146,112 +146,35 @@ Deno.serve(async (req) => {
         }
       }
 
-      // ── 2b. Precious metals via free FX rates (XAU, XAG are ISO codes) ──
-      if (metalItems.length > 0) {
-        try {
-          // Use Frankfurter API which supports XAU/XAG
-          const metalRes = await fetch(
-            "https://api.frankfurter.dev/v1/latest?base=USD&symbols=XAU,XAG"
-          );
-          if (metalRes.ok) {
-            const metalData = await metalRes.json();
-            const metalRates = metalData.rates || {};
+      // ── 2b. Precious metals via FX rates (XAU, XAG are ISO currency codes) ──
+      // open.er-api returns rates FROM KES, so XAU rate = how many XAU per 1 KES
+      // Price of gold in USD = (USD per KES) / (XAU per KES)
+      if (metalItems.length > 0 && Object.keys(kesRates).length > 0) {
+        const usdPerKes = kesRates["USD"] || 0;
+        const metalFxMap: Record<string, string> = {
+          XAU: "XAU", GOLD: "XAU",
+          XAG: "XAG", SILVER: "XAG",
+        };
 
-            for (const row of metalItems) {
-              const sym = (row.symbol || "").toUpperCase();
-              const metalCode = sym === "GOLD" ? "XAU" : sym === "SILVER" ? "XAG" : sym;
-              const fxRate = metalRates[metalCode];
-              // XAU rate = how many troy oz per 1 USD, so price per oz = 1/rate
-              if (fxRate && fxRate > 0) {
-                const pricePerOz = parseFloat((1 / fxRate).toFixed(2));
-                if (pricePerOz !== row.price) {
-                  await supabase
-                    .from("commodities")
-                    .update({
-                      previous_price: row.price,
-                      price: pricePerOz,
-                      updated_at: new Date().toISOString(),
-                    })
-                    .eq("id", row.id);
-                  results.push(`Metal ${row.symbol}: ${row.price} → ${pricePerOz}`);
-                }
-              }
+        for (const row of metalItems) {
+          const sym = (row.symbol || "").toUpperCase();
+          const fxCode = metalFxMap[sym];
+          const metalRate = fxCode ? kesRates[fxCode] : undefined;
+
+          if (metalRate && metalRate > 0 && usdPerKes > 0) {
+            const priceUsd = parseFloat((usdPerKes / metalRate).toFixed(2));
+            if (priceUsd !== row.price) {
+              await supabase
+                .from("commodities")
+                .update({
+                  previous_price: row.price,
+                  price: priceUsd,
+                  updated_at: new Date().toISOString(),
+                })
+                .eq("id", row.id);
+              results.push(`Metal ${row.symbol}: ${row.price} → ${priceUsd}`);
             }
-          } else {
-            // Fallback: try open.er-api which may have XAU
-            if (kesRates["XAU"] && kesRates["USD"]) {
-              const usdPerKes = kesRates["USD"]; // 1 KES = X USD
-              const xauPerKes = kesRates["XAU"]; // 1 KES = X XAU
-              if (xauPerKes > 0) {
-                const goldPriceUsd = parseFloat((usdPerKes / xauPerKes).toFixed(2));
-                for (const row of metalItems) {
-                  const sym = (row.symbol || "").toUpperCase();
-                  if (sym === "XAU" || sym === "GOLD") {
-                    if (goldPriceUsd !== row.price) {
-                      await supabase
-                        .from("commodities")
-                        .update({
-                          previous_price: row.price,
-                          price: goldPriceUsd,
-                          updated_at: new Date().toISOString(),
-                        })
-                        .eq("id", row.id);
-                      results.push(`Metal ${row.symbol} (fallback): ${row.price} → ${goldPriceUsd}`);
-                    }
-                  }
-                }
-              }
-            }
-            results.push(`Frankfurter metals error: ${metalRes.status}, tried fallback`);
           }
-        } catch (e) {
-          results.push(`Metals fetch error: ${(e as Error).message}`);
-        }
-      }
-
-      // ── 2c. Oil via free API ──
-      // Check if any commodity looks like oil
-      const oilItems = otherItems.filter((c) => {
-        const sym = (c.symbol || "").toUpperCase();
-        const name = (c.name || "").toLowerCase();
-        return sym === "OIL" || sym === "BRENT" || sym === "WTI" || sym === "CL"
-          || name.includes("oil") || name.includes("brent") || name.includes("crude");
-      });
-
-      if (oilItems.length > 0) {
-        try {
-          // Use a free commodity endpoint
-          const oilRes = await fetch(
-            "https://api.commodities-api.com/api/latest?access_key=demo&base=USD&symbols=BRENTOIL,WTIOIL"
-          );
-          if (oilRes.ok) {
-            const oilData = await oilRes.json();
-            if (oilData.data?.rates) {
-              const oilRates = oilData.data.rates;
-              for (const row of oilItems) {
-                // Try BRENTOIL first, then WTIOIL
-                const rate = oilRates["BRENTOIL"] || oilRates["WTIOIL"];
-                if (rate && rate > 0) {
-                  const oilPrice = parseFloat((1 / rate).toFixed(2));
-                  if (oilPrice !== row.price) {
-                    await supabase
-                      .from("commodities")
-                      .update({
-                        previous_price: row.price,
-                        price: oilPrice,
-                        updated_at: new Date().toISOString(),
-                      })
-                      .eq("id", row.id);
-                    results.push(`Oil ${row.symbol}: ${row.price} → ${oilPrice}`);
-                  }
-                }
-              }
-            }
-          } else {
-            results.push(`Oil API returned ${oilRes.status} — oil prices unchanged`);
-          }
-        } catch (e) {
-          results.push(`Oil fetch error: ${(e as Error).message}`);
         }
       }
 
