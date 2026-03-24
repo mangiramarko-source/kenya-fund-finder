@@ -307,16 +307,10 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
       </div>
 
       {/* Summary footer */}
-      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+      <div className="flex items-center text-xs text-muted-foreground px-1">
         <span>
           Showing {filtered.length} of {categoryCount[activeTab] || 0} {categoryLabels[activeTab] || activeTab} funds
         </span>
-        <Link
-          to={`/compare?type=${activeTab}`}
-          className="text-accent hover:text-accent/80 font-medium transition-colors"
-        >
-          View all & compare →
-        </Link>
       </div>
     </div>
   );

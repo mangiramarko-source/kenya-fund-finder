@@ -581,7 +581,7 @@ const OverviewPage = () => {
 
       {/* ─── Section: Money Market ─── */}
       {enabledSections.includes("money_market") && (
-        <SectionPanel title="Money Market Funds" icon={BarChart3} link="/" linkLabel="All funds" count={mmFunds.length} sub={`Best: ${bestMMYield.toFixed(2)}%`}>
+        <SectionPanel title="Money Market Funds" icon={BarChart3} link="/funds" linkLabel="All funds" count={mmFunds.length} sub={`Best: ${bestMMYield.toFixed(2)}%`}>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-sm">
               <thead><tr className="bg-muted/70 text-xs">
@@ -609,7 +609,7 @@ const OverviewPage = () => {
 
       {/* ─── Section: Fixed Income ─── */}
       {enabledSections.includes("fixed_income") && (
-        <SectionPanel title="Fixed Income Funds" icon={Landmark} link="/" linkLabel="All funds" count={fiFunds.length}>
+        <SectionPanel title="Fixed Income Funds" icon={Landmark} link="/funds" linkLabel="All funds" count={fiFunds.length}>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-sm">
               <thead><tr className="bg-muted/70 text-xs">

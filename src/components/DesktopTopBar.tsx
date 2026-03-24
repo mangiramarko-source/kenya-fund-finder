@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Moon, Sun, User, LogOut, Shield, Settings, Bell, Search } from "lucide-react";
+import { Moon, Sun, User, LogOut, Shield, Settings, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -8,22 +8,6 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
 import NotificationBell from "@/components/alerts/NotificationBell";
-
-const pageTitles: Record<string, string> = {
-  "/": "Unit Trusts",
-  "/overview": "Overview",
-  "/stocks": "Stocks",
-  "/markets": "Markets",
-  "/calculator": "Calculator",
-  "/news": "News",
-  "/learn": "Learn",
-  "/alerts": "Alerts",
-  "/profile": "Profile",
-  "/admin": "Admin",
-  "/compare": "Compare",
-  "/rates": "FX Rates",
-  "/commodities": "Commodities",
-};
 
 const DesktopTopBar = () => {
   const [avatarUrl, setAvatarUrl] = useState("");
@@ -53,25 +37,14 @@ const DesktopTopBar = () => {
 
   const handleSignOut = async () => { await signOut(); navigate("/"); };
 
-  // Resolve page title
-  const getTitle = () => {
-    for (const [path, title] of Object.entries(pageTitles)) {
-      if (path === "/" && location.pathname === "/") return title;
-      if (path !== "/" && location.pathname.startsWith(path)) return title;
-    }
-    return "";
-  };
-
   return (
-    <header className="hidden md:flex items-center justify-between h-12 px-5 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30">
-      {/* Left: Page title */}
-      <div className="flex items-center gap-3">
-        <h2 className="text-sm font-semibold text-foreground">{getTitle()}</h2>
-      </div>
+    <header className="hidden md:flex items-center gap-4 h-12 px-5 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30">
+      {/* Left spacer */}
+      <div className="w-4" />
 
-      {/* Center: Search */}
-      <div className="flex-1 max-w-md mx-6">
-        <SearchDialog />
+      {/* Center: Large search bar */}
+      <div className="flex-1 max-w-xl mx-auto">
+        <SearchDialog variant="topbar" />
       </div>
 
       {/* Right: Actions */}
