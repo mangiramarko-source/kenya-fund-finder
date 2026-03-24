@@ -61,7 +61,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
       ) : (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-sm hover:bg-muted/80 transition-colors w-full md:w-9 md:h-9 md:p-0 md:items-center md:justify-center md:rounded-full"
+          className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-muted text-muted-foreground text-sm hover:bg-muted/80 transition-colors w-full md:w-8 md:h-8 md:p-0 md:items-center md:justify-center md:rounded-lg"
         >
           <Search className="h-3.5 w-3.5 md:h-4 md:w-4" />
           <span className="flex-1 text-left md:hidden">Search…</span>

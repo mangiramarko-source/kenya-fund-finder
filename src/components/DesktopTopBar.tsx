@@ -99,7 +99,7 @@ const DesktopTopBar = () => {
             </DropdownMenu>
           </div>
         ) : (
-          <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full font-semibold h-8 text-xs px-3">
+          <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg font-semibold h-7 text-xs px-3">
             <Link to="/auth"><User className="mr-1 h-3 w-3" /> Sign In</Link>
           </Button>
         )}
