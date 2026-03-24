@@ -262,7 +262,14 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
               </div>
             )}
 
-            {/* Mobile quick actions */}
+            {/* Stocks content - mobile only */}
+            {selectedCategory === "stocks" && (
+              <div className="md:hidden">
+                <p className="text-[10px] text-muted-foreground -mt-1 mb-3">NSE stock prices are indicative and may be delayed.</p>
+                <StocksMobileCards stocks={stocks} loading={stocksLoading} />
+              </div>
+            )}
+
             <div className="flex items-center gap-2 mt-4 flex-wrap sm:hidden">
               <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
                 <Link to="/calculator"><Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculate Returns</Link>
