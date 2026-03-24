@@ -172,12 +172,15 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       />
 
       <div className="container py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
           {/* Main area */}
           <div>
             {/* Desktop: unified grid with all fund categories + market data */}
             <div className="hidden md:block">
-              <p className="text-[10px] text-muted-foreground mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
+              <p className="text-[10px] text-muted-foreground mb-4 flex items-center gap-1.5">
+                <span className="inline-block h-1 w-1 rounded-full bg-accent/60" />
+                Yields are gross annual effective rates before 15% withholding tax.
+              </p>
               <FundGrid
                 funds={funds}
                 snapshots={snapshots}
