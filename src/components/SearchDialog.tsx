@@ -11,7 +11,11 @@ import {
 } from "@/components/ui/command";
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 
-const SearchDialog = () => {
+interface SearchDialogProps {
+  variant?: "default" | "topbar";
+}
+
+const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
   const [open, setOpen] = useState(false);
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [news, setNews] = useState<NewsFromDB[]>([]);
@@ -43,16 +47,26 @@ const SearchDialog = () => {
 
   return (
     <>
-      <button
-        onClick={() => setOpen(true)}
-        className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-sm hover:bg-muted/80 transition-colors w-full md:w-9 md:h-9 md:p-0 md:items-center md:justify-center"
-      >
-        <Search className="h-3.5 w-3.5 md:h-4 md:w-4" />
-        <span className="flex-1 text-left md:hidden">Search…</span>
-        <kbd className="hidden md:sr-only">
-          ⌘K
-        </kbd>
-      </button>
+      {variant === "topbar" ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-3 w-full px-4 py-2 rounded-full bg-muted/60 border border-border text-muted-foreground text-sm hover:bg-muted/80 hover:border-accent/30 transition-all"
+        >
+          <Search className="h-4 w-4 shrink-0" />
+          <span className="flex-1 text-left text-xs">Search funds, stocks, news…</span>
+          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+            ⌘K
+          </kbd>
+        </button>
+      ) : (
+        <button
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-muted text-muted-foreground text-sm hover:bg-muted/80 transition-colors w-full md:w-9 md:h-9 md:p-0 md:items-center md:justify-center md:rounded-full"
+        >
+          <Search className="h-3.5 w-3.5 md:h-4 md:w-4" />
+          <span className="flex-1 text-left md:hidden">Search…</span>
+        </button>
+      )}
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput placeholder="Search funds, news, pages…" />

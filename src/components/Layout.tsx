@@ -11,7 +11,7 @@ import { usePageView } from "@/hooks/usePageView";
 const Layout = ({ children }: { children: React.ReactNode }) => {
   usePageView();
   const { pathname } = useLocation();
-  const showTicker = pathname === "/";
+  const showTicker = pathname === "/" || pathname === "/funds";
 
   return (
     <div className="flex min-h-screen font-body">

@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   BarChart3, LineChart, Calculator, Newspaper, GraduationCap, Bell,
   TrendingUp, User, Shield, LogOut, ChevronLeft, ChevronRight, LayoutDashboard,
+  FileText, Scale,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -10,9 +11,9 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const mainNavItems = [
-  { to: "/overview", label: "Overview", icon: LayoutDashboard },
+  { to: "/", label: "Overview", icon: LayoutDashboard },
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
-  { to: "/", label: "Unit Trusts", icon: BarChart3 },
+  { to: "/funds", label: "Unit Trusts", icon: BarChart3 },
   { to: "/markets", label: "Markets", icon: LineChart },
 ];
 
@@ -21,6 +22,11 @@ const utilityNavItems = [
   { to: "/news", label: "News", icon: Newspaper },
   { to: "/learn", label: "Learn", icon: GraduationCap },
   { to: "/alerts", label: "Alerts", icon: Bell },
+];
+
+const legalNavItems = [
+  { to: "/privacy", label: "Privacy Policy", icon: FileText },
+  { to: "/terms", label: "Terms of Use", icon: Scale },
 ];
 
 const DesktopSidebar = () => {
@@ -44,6 +50,24 @@ const DesktopSidebar = () => {
     return location.pathname.startsWith(path);
   };
 
+  const renderNavItem = (item: { to: string; label: string; icon: any }, size: "normal" | "small" = "normal") => {
+    const Icon = item.icon;
+    const active = isActive(item.to);
+    const py = size === "small" ? "py-1.5" : "py-2";
+    const textSize = size === "small" ? "text-[12px]" : "text-[13px]";
+    const iconSize = size === "small" ? "h-3.5 w-3.5" : "h-4 w-4";
+
+    const linkContent = (
+      <Link to={item.to} className={`flex items-center gap-2.5 px-2.5 ${py} rounded-lg ${textSize} font-medium transition-all group ${active ? "bg-accent/15 text-accent" : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
+        <Icon className={`${iconSize} shrink-0 ${active ? "text-accent" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70"}`} />
+        {!collapsed && <span className="truncate">{item.label}</span>}
+        {active && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />}
+      </Link>
+    );
+    if (collapsed) return <Tooltip key={item.to} delayDuration={0}><TooltipTrigger asChild>{linkContent}</TooltipTrigger><TooltipContent side="right" className="text-xs">{item.label}</TooltipContent></Tooltip>;
+    return <div key={item.to}>{linkContent}</div>;
+  };
+
   return (
     <aside
       className={`hidden md:flex flex-col h-screen sticky top-0 border-r border-border bg-sidebar transition-all duration-200 z-40 ${
@@ -64,36 +88,17 @@ const DesktopSidebar = () => {
 
       {/* Nav links */}
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
-        {mainNavItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.to);
-          const linkContent = (
-            <Link to={item.to} className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all group ${active ? "bg-accent/15 text-accent" : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
-              <Icon className={`h-4 w-4 shrink-0 ${active ? "text-accent" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70"}`} />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-              {active && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />}
-            </Link>
-          );
-          if (collapsed) return <Tooltip key={item.to} delayDuration={0}><TooltipTrigger asChild>{linkContent}</TooltipTrigger><TooltipContent side="right" className="text-xs">{item.label}</TooltipContent></Tooltip>;
-          return <div key={item.to}>{linkContent}</div>;
-        })}
+        {mainNavItems.map((item) => renderNavItem(item))}
 
         <div className="!my-2 mx-2 h-px bg-sidebar-border" />
         {!collapsed && <p className="px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">Tools</p>}
 
-        {utilityNavItems.map((item) => {
-          const Icon = item.icon;
-          const active = isActive(item.to);
-          const linkContent = (
-            <Link to={item.to} className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all group ${active ? "bg-accent/15 text-accent" : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
-              <Icon className={`h-4 w-4 shrink-0 ${active ? "text-accent" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70"}`} />
-              {!collapsed && <span className="truncate">{item.label}</span>}
-              {active && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />}
-            </Link>
-          );
-          if (collapsed) return <Tooltip key={item.to} delayDuration={0}><TooltipTrigger asChild>{linkContent}</TooltipTrigger><TooltipContent side="right" className="text-xs">{item.label}</TooltipContent></Tooltip>;
-          return <div key={item.to}>{linkContent}</div>;
-        })}
+        {utilityNavItems.map((item) => renderNavItem(item))}
+
+        <div className="!my-2 mx-2 h-px bg-sidebar-border" />
+        {!collapsed && <p className="px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">Legal</p>}
+
+        {legalNavItems.map((item) => renderNavItem(item, "small"))}
       </nav>
 
       {/* Admin link */}
