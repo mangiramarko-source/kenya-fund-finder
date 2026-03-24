@@ -106,31 +106,31 @@ const Navbar = () => {
         </nav>
 
         {/* Desktop right side */}
-        <div className="hidden md:flex items-center gap-2">
+        <div className="hidden md:flex items-center gap-1.5">
           <SearchDialog />
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setDark(!dark)}
-            className="rounded-full"
+            className="rounded-lg h-8 w-8"
             aria-label="Toggle dark mode"
           >
-            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+            {dark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
           </Button>
 
           {user ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5">
               {isAdmin && (
-                <Link to="/admin" className="text-xs font-semibold text-accent hover:underline flex items-center gap-1">
-                  <Shield className="h-3.5 w-3.5" /> Admin
+                <Link to="/admin" className="text-[10px] font-bold text-accent hover:underline flex items-center gap-1 px-2 py-1 rounded-md bg-accent/8 hover:bg-accent/15 transition-colors">
+                  <Shield className="h-3 w-3" /> Admin
                 </Link>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="rounded-full ring-2 ring-border hover:ring-accent transition-all">
-                    <Avatar className="h-8 w-8">
+                  <button className="rounded-lg ring-1 ring-border hover:ring-accent/50 transition-all p-0.5">
+                    <Avatar className="h-7 w-7">
                       <AvatarImage src={avatarUrl} alt={displayName || user.email || ""} />
-                      <AvatarFallback className="bg-accent text-accent-foreground text-xs">
+                      <AvatarFallback className="bg-accent text-accent-foreground text-[10px]">
                         {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -153,8 +153,8 @@ const Navbar = () => {
               </DropdownMenu>
             </div>
           ) : (
-            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full font-semibold">
-              <Link to="/auth"><User className="mr-1.5 h-3.5 w-3.5" /> Sign In</Link>
+            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg text-xs font-semibold h-8 px-3">
+              <Link to="/auth"><User className="mr-1 h-3 w-3" /> Sign In</Link>
             </Button>
           )}
         </div>
