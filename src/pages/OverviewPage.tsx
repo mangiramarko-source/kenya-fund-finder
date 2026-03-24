@@ -370,7 +370,7 @@ const OverviewPage = () => {
             </>
           )}
           {!user && (
-            <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => navigate("/auth")}>
+            <Button size="sm" className="text-xs h-8 gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
               <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
             </Button>
           )}
