@@ -241,21 +241,21 @@ const MarketDashboardPage = () => {
                   <tbody>
                     {filteredRates.map((r, i) => (
                       <tr key={r.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
-                        <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
-                        <td className="px-3 py-3">
+                        <td className="pl-4 pr-2 py-4 text-muted-foreground/50 text-xs tabular-nums">{i + 1}</td>
+                        <td className="px-3 py-4">
                           <span className="font-bold text-foreground text-xs tracking-wide">{r.currency_code}</span>
                         </td>
-                        <td className="px-3 py-3 text-sm text-muted-foreground">{r.currency_name}</td>
-                        <td className="px-3 py-3 text-right">
+                        <td className="px-3 py-4 text-sm text-muted-foreground">{r.currency_name}</td>
+                        <td className="px-3 py-4 text-right">
                           <span className="font-bold text-accent text-[15px] tabular-nums">{Number(r.rate).toFixed(2)}</span>
                         </td>
-                        <td className="px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
+                        <td className="px-3 py-4 text-right text-xs tabular-nums text-muted-foreground">
                           {r.previous_rate != null ? Number(r.previous_rate).toFixed(2) : "—"}
                         </td>
-                        <td className="px-3 py-3 text-right">
+                        <td className="px-3 py-4 text-right">
                           <ChangeIndicator current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />
                         </td>
-                        <td className="pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
+                        <td className="pr-4 px-3 py-4 text-right text-[10px] text-muted-foreground/60">
                           {r.updated_at ? new Date(r.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}
                         </td>
                       </tr>
@@ -297,22 +297,22 @@ const MarketDashboardPage = () => {
                   <tbody>
                     {filteredCommodities.map((c, i) => (
                       <tr key={c.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
-                        <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
-                        <td className="px-3 py-3">
+                        <td className="pl-4 pr-2 py-4 text-muted-foreground/50 text-xs tabular-nums">{i + 1}</td>
+                        <td className="px-3 py-4">
                           <span className="font-bold text-foreground text-xs tracking-wide">{c.symbol}</span>
                         </td>
-                        <td className="px-3 py-3 text-sm text-muted-foreground">{c.name}</td>
-                        <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{c.unit}</td>
-                        <td className="px-3 py-3 text-right">
+                        <td className="px-3 py-4 text-sm text-muted-foreground">{c.name}</td>
+                        <td className="px-2 py-4 text-center text-xs font-medium text-muted-foreground">{c.unit}</td>
+                        <td className="px-3 py-4 text-right">
                           <span className="font-bold text-accent text-[15px] tabular-nums">{Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                         </td>
-                        <td className="px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
+                        <td className="px-3 py-4 text-right text-xs tabular-nums text-muted-foreground">
                           {c.previous_price != null ? Number(c.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
                         </td>
-                        <td className="px-3 py-3 text-right">
+                        <td className="px-3 py-4 text-right">
                           <ChangeIndicator current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />
                         </td>
-                        <td className="pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
+                        <td className="pr-4 px-3 py-4 text-right text-[10px] text-muted-foreground/60">
                           {c.updated_at ? new Date(c.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}
                         </td>
                       </tr>
@@ -339,29 +339,29 @@ const MarketDashboardPage = () => {
                 <thead>
                   <tr className="bg-muted/70 text-xs">
                     <th className="text-left pl-5 pr-2 py-3 font-semibold text-muted-foreground">#</th>
-                    <th className="text-left px-3 py-3"><SortHeader label="Stock" field="name" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} /></th>
-                    <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Sector</th>
-                    <th className="text-right px-3 py-3"><SortHeader label="Price (KES)" field="price" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
-                    <th className="text-right px-3 py-3"><SortHeader label="Change" field="change" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
-                    <th className="text-right pr-5 px-3 py-3"><SortHeader label="Volume" field="volume" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
+                    <th className="text-left px-3 py-4"><SortHeader label="Stock" field="name" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} /></th>
+                    <th className="text-center px-2 py-4 font-semibold text-muted-foreground">Sector</th>
+                    <th className="text-right px-3 py-4"><SortHeader label="Price (KES)" field="price" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
+                    <th className="text-right px-3 py-4"><SortHeader label="Change" field="change" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
+                    <th className="text-right pr-5 px-3 py-4"><SortHeader label="Volume" field="volume" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
                   </tr>
                 </thead>
                 <tbody>
                   {filteredStocks.map((s, i) => (
                     <tr key={s.id} className="border-t border-border hover:bg-muted/30 transition-colors">
                       <td className="pl-5 pr-2 py-3 text-muted-foreground text-xs tabular-nums">{i + 1}</td>
-                      <td className="px-3 py-3">
+                      <td className="px-3 py-4">
                         <span className="font-semibold text-foreground">{s.symbol}</span>
                         <span className="block text-[10px] text-muted-foreground truncate" title={s.name}>{s.name}</span>
                       </td>
-                      <td className="px-2 py-3 text-center text-[10px] text-muted-foreground">{s.sector}</td>
-                      <td className="px-3 py-3 text-right">
+                      <td className="px-2 py-4 text-center text-[10px] text-muted-foreground">{s.sector}</td>
+                      <td className="px-3 py-4 text-right">
                         <span className="font-bold text-accent text-base tabular-nums">{s.price.toFixed(2)}</span>
                       </td>
-                      <td className="px-3 py-3 text-right">
+                      <td className="px-3 py-4 text-right">
                         <ChangeIndicator current={s.price} previous={s.previous_price} />
                       </td>
-                      <td className="pr-5 px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
+                      <td className="pr-5 px-3 py-4 text-right text-xs tabular-nums text-muted-foreground">
                         {s.volume.toLocaleString()}
                       </td>
                     </tr>
