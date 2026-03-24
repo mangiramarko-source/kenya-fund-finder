@@ -437,7 +437,7 @@ const StockRow = ({
       <td className="px-3 py-3 font-bold text-foreground tabular-nums">{s.symbol}</td>
       <td className="px-3 py-3 text-foreground text-xs max-w-[180px] truncate">{s.name}</td>
       <td className="px-3 py-3">
-        <Badge variant="secondary" className="text-[10px] font-medium">{s.sector}</Badge>
+        <span className="inline-block text-[10px] font-medium text-muted-foreground bg-muted/60 rounded-md px-1.5 py-0.5 whitespace-nowrap">{s.sector}</span>
       </td>
       <td className="px-3 py-3 text-right font-semibold text-foreground tabular-nums">{formatNumber(s.price)}</td>
       <td className="px-3 py-3 text-right"><ChangeCell change={s.day_change} pct={s.day_change_percent} /></td>

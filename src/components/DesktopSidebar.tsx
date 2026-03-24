@@ -114,9 +114,9 @@ const DesktopSidebar = () => {
         </div>
       )}
 
-      {/* User section */}
-      <div className="px-2 py-3 border-t border-sidebar-border">
-        {user ? (
+      {/* User section — only show when logged in (Sign In is in the top bar) */}
+      {user && (
+        <div className="px-2 py-3 border-t border-sidebar-border">
           <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center" : "px-2.5"}`}>
             <Link to="/profile">
               <Avatar className="h-7 w-7 shrink-0">
@@ -138,16 +138,8 @@ const DesktopSidebar = () => {
               </button>
             )}
           </div>
-        ) : (
-          <Link
-            to="/auth"
-            className={`flex items-center gap-2 px-2.5 py-2 rounded-lg text-[13px] font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-colors ${collapsed ? "justify-center" : ""}`}
-          >
-            <User className="h-4 w-4 shrink-0" />
-            {!collapsed && <span>Sign In</span>}
-          </Link>
-        )}
-      </div>
+        </div>
+      )}
 
       {/* Collapse toggle */}
       <button
