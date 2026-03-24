@@ -255,6 +255,7 @@ const OverviewPage = () => {
 
   useEffect(() => {
     fetchFunds().then(setFunds).catch(() => {}).finally(() => setFundsLoading(false));
+    fetchPublishedNews().then(n => setNews(n.slice(0, 4))).catch(() => {});
     supabase.from("exchange_rate_history_public" as any)
       .select("snapshot_date, rate, currency_code")
       .order("snapshot_date", { ascending: true }).limit(500)
