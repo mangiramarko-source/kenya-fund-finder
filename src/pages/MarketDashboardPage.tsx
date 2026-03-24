@@ -3,7 +3,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useMarketData, type ExchangeRate, type Commodity, type Stock } from "@/components/home/MarketTicker";
-import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search, DollarSign, Gem } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ArrowUpDown, ArrowDown, ArrowUp, Search, DollarSign, Gem } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
