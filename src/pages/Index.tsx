@@ -158,6 +158,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
     ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c })),
     { key: "fx_rates", label: "FX Rates" },
     { key: "commodities", label: "Commodities" },
+    { key: "stocks", label: "NSE Stocks" },
   ], [categories]);
 
   return (
