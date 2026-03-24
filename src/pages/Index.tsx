@@ -31,6 +31,7 @@ const categoryLabels: Record<string, string> = {
   bond: "Bond",
   fx_rates: "Currency",
   commodities: "Commodities",
+  stocks: "NSE Stocks",
 };
 
 const MARKET_TABS = ["fx_rates", "commodities", "stocks"] as const;
