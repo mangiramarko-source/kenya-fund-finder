@@ -1,8 +1,14 @@
+import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
+import { ArrowUpDown, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import YieldChange from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
-import type { ExchangeRate, Commodity, Stock } from "@/components/home/MarketTicker";
+
+type SortKey = "annual_yield" | "daily_yield" | "name";
+type SortDir = "asc" | "desc";
 
 const categoryLabels: Record<string, string> = {
   money_market: "Money Market",
@@ -12,7 +18,7 @@ const categoryLabels: Record<string, string> = {
   bond: "Bond",
 };
 
-const categoryOrder = ["stocks", "fx_rates", "money_market", "fixed_income", "bond", "balanced", "equity", "commodities"];
+const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
 
 const fmtYield = (value: number, unit: string) => {
   if (unit === "%") return `${value}%`;
@@ -28,399 +34,286 @@ const currencyLabel = (unit: string) => {
 interface FundGridProps {
   funds: FundFromDB[];
   snapshots: Record<string, YieldSnapshot>;
-  rates: ExchangeRate[];
-  commodities: Commodity[];
-  stocks: Stock[];
   loading: boolean;
-  marketLoading: boolean;
 }
 
-const MAX_VISIBLE = 5;
-
-/* ─── Fund Category Card ─── */
-const FundCategoryCard = ({
-  category,
-  funds,
+const SortHeader = ({
+  label,
+  field,
+  sortKey,
+  onToggleSort,
+  className = "",
 }: {
-  category: string;
-  funds: FundFromDB[];
-}) => {
-  const navigate = useNavigate();
-  const bestYield = funds.length > 0 ? Math.max(...funds.map((f) => f.annual_yield)) : 0;
-  const sorted = [...funds].sort((a, b) => b.annual_yield - a.annual_yield);
-  const visible = sorted.slice(0, MAX_VISIBLE);
-  const hasMore = sorted.length > MAX_VISIBLE;
+  label: string;
+  field: SortKey;
+  sortKey: SortKey;
+  onToggleSort: (key: SortKey) => void;
+  className?: string;
+}) => (
+  <button
+    onClick={() => onToggleSort(field)}
+    className={`inline-flex items-center gap-1 font-semibold hover:text-accent transition-colors ${className}`}
+  >
+    {label}
+    <ArrowUpDown className={`h-3 w-3 ${sortKey === field ? "text-accent" : "text-muted-foreground/50"}`} />
+  </button>
+);
 
-  return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      <div className="bg-muted/60 px-5 py-3 flex items-center justify-between border-b border-border">
-        <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">
-          {categoryLabels[category] || category}
-        </h3>
-        <span className="text-xs text-muted-foreground font-medium">{funds.length} funds</span>
-      </div>
-
-      <table className="w-full text-[11px] lg:text-xs">
-        <thead>
-          <tr className="text-[9px] lg:text-[10px] text-muted-foreground uppercase tracking-wider">
-            <th className="text-left pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 font-medium w-5 lg:w-6">#</th>
-            <th className="text-left px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium">Fund</th>
-            <th className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-8 lg:w-10">Unit</th>
-            <th className="text-right px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-12 lg:w-14">Daily</th>
-            <th className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-medium w-14 lg:w-16">Annual</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visible.map((fund, i) => (
-            <tr
-              key={fund.id}
-              onClick={() => navigate(`/compare/${fund.slug}`)}
-              className="border-t border-border/40 hover:bg-muted/30 cursor-pointer transition-colors"
-            >
-              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground tabular-nums text-[9px] lg:text-[10px]">{i + 1}</td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2">
-                <div className="flex items-center gap-0.5 lg:gap-1 min-w-0">
-                  <Link
-                    to={`/compare/${fund.slug}`}
-                    onClick={(e) => e.stopPropagation()}
-                    className="font-medium text-foreground hover:text-accent transition-colors truncate block max-w-[100px] lg:max-w-[140px]"
-                    title={fund.name}
-                  >
-                    {fund.name}
-                  </Link>
-                  {fund.annual_yield === bestYield && bestYield > 0 && (
-                    <Badge variant="default" className="text-[6px] lg:text-[7px] px-0.5 lg:px-1 py-0 h-3 bg-accent text-accent-foreground shrink-0 leading-none">
-                      TOP
-                    </Badge>
-                  )}
-                </div>
-              </td>
-              <td className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 text-muted-foreground text-[9px] lg:text-[10px]">{currencyLabel(fund.yield_unit)}</td>
-              <td className="text-right px-0.5 lg:px-1 py-1.5 lg:py-2 text-muted-foreground tabular-nums">{fmtYield(fund.daily_yield, fund.yield_unit)}</td>
-              <td className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-bold text-accent tabular-nums">{fmtYield(fund.annual_yield, fund.yield_unit)}</td>
-            </tr>
-          ))}
-
-          {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
-            <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground/30 tabular-nums text-[9px] lg:text-[10px]">{visible.length + i + 1}</td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2" />
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2" />
-              <td className="pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2" />
-            </tr>
-          ))}
-
-          {funds.length === 0 && (
-            <tr>
-              <td colSpan={5} className="px-5 py-8 text-center text-sm text-muted-foreground">No funds</td>
-            </tr>
-          )}
-        </tbody>
-      </table>
-
-      <div className="border-t border-border mt-auto">
-        {hasMore ? (
-          <Link
-            to={`/compare?type=${category}`}
-            className="flex items-center justify-center gap-1 px-5 py-2.5 text-xs font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
-          >
-            See all {funds.length} funds →
-          </Link>
-        ) : (
-          <div className="px-5 py-2.5 text-xs text-muted-foreground text-center">
-            {funds.length} fund{funds.length !== 1 ? "s" : ""}
-          </div>
-        )}
-      </div>
+/* ─── Skeleton ─── */
+const TableSkeleton = () => (
+  <div className="space-y-6">
+    {/* Tab skeleton */}
+    <div className="flex gap-1 border-b border-border pb-0">
+      {Array.from({ length: 5 }).map((_, i) => (
+        <Skeleton key={i} className="h-9 w-28 rounded-t-lg" />
+      ))}
     </div>
-  );
-};
-
-/* ─── FX Rates Card ─── */
-const RatesCard = ({ rates }: { rates: ExchangeRate[] }) => {
-  const visible = rates.slice(0, MAX_VISIBLE);
-  const hasMore = rates.length > MAX_VISIBLE;
-
-  return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      <div className="bg-muted/60 px-5 py-3 flex items-center justify-between border-b border-border">
-        <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">FX Rates</h3>
-        <span className="text-xs text-muted-foreground font-medium">{rates.length} rates</span>
+    {/* Table skeleton */}
+    <div className="rounded-xl border border-border overflow-hidden bg-card">
+      <div className="bg-muted/70 px-5 py-3">
+        <div className="flex gap-6">
+          <Skeleton className="h-4 w-8" />
+          <Skeleton className="h-4 w-40" />
+          <Skeleton className="h-4 w-14" />
+          <Skeleton className="h-4 w-20 ml-auto" />
+          <Skeleton className="h-4 w-20" />
+          <Skeleton className="h-4 w-16" />
+        </div>
       </div>
-
-      <table className="w-full text-[11px] lg:text-xs">
-        <thead>
-          <tr className="text-[9px] lg:text-[10px] text-muted-foreground uppercase tracking-wider">
-            <th className="text-left pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 font-medium w-5 lg:w-6">#</th>
-            <th className="text-left px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium">Currency</th>
-            <th className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-8 lg:w-10">Code</th>
-            <th className="text-right px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-12 lg:w-14">Prev</th>
-            <th className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-medium w-14 lg:w-16">Rate</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visible.map((r, i) => (
-            <tr key={r.id} className="border-t border-border/40 hover:bg-muted/30 transition-colors">
-              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground tabular-nums text-[9px] lg:text-[10px]">{i + 1}</td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2">
-                <span className="font-medium text-foreground truncate block max-w-[100px] lg:max-w-[140px]" title={r.currency_name}>
-                  {r.currency_name}
-                </span>
-              </td>
-              <td className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 text-muted-foreground text-[9px] lg:text-[10px]">{r.currency_code}</td>
-              <td className="text-right px-0.5 lg:px-1 py-1.5 lg:py-2 text-muted-foreground tabular-nums">
-                {r.previous_rate != null ? r.previous_rate.toFixed(2) : "—"}
-              </td>
-              <td className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-bold text-accent tabular-nums">
-                {r.rate.toFixed(2)}
-              </td>
-            </tr>
-          ))}
-
-          {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
-            <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground/30 tabular-nums text-[9px] lg:text-[10px]">{visible.length + i + 1}</td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2" />
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2" />
-              <td className="pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2" />
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="border-t border-border mt-auto">
-        {hasMore ? (
-          <Link
-            to="/rates"
-            className="flex items-center justify-center gap-1 px-5 py-2.5 text-xs font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
-          >
-            See all {rates.length} rates →
-          </Link>
-        ) : (
-          <div className="px-5 py-2.5 text-xs text-muted-foreground text-center">
-            {rates.length} rate{rates.length !== 1 ? "s" : ""}
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className="flex items-center gap-6 px-5 py-3.5 border-t border-border">
+          <Skeleton className="h-4 w-5" />
+          <div className="flex-1">
+            <Skeleton className="h-4 w-44 mb-1" />
+            <Skeleton className="h-3 w-28" />
           </div>
-        )}
-      </div>
+          <Skeleton className="h-4 w-10" />
+          <Skeleton className="h-5 w-16" />
+          <Skeleton className="h-4 w-14" />
+          <Skeleton className="h-4 w-14" />
+        </div>
+      ))}
     </div>
-  );
-};
-
-/* ─── Commodities Card ─── */
-const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => {
-  const visible = commodities.slice(0, MAX_VISIBLE);
-  const hasMore = commodities.length > MAX_VISIBLE;
-
-  return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      <div className="bg-muted/60 px-5 py-3 flex items-center justify-between border-b border-border">
-        <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">Commodities</h3>
-        <span className="text-xs text-muted-foreground font-medium">{commodities.length} items</span>
-      </div>
-
-      <table className="w-full text-[11px] lg:text-xs">
-        <thead>
-          <tr className="text-[9px] lg:text-[10px] text-muted-foreground uppercase tracking-wider">
-            <th className="text-left pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 font-medium w-5 lg:w-6">#</th>
-            <th className="text-left px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium">Item</th>
-            <th className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-8 lg:w-10">Unit</th>
-            <th className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-medium w-14 lg:w-16">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visible.map((c, i) => (
-            <tr key={c.id} className="border-t border-border/40 hover:bg-muted/30 transition-colors">
-              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground tabular-nums text-[9px] lg:text-[10px]">{i + 1}</td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2">
-                <span className="font-medium text-foreground truncate block max-w-[100px] lg:max-w-[140px]" title={c.name}>
-                  {c.name}
-                </span>
-              </td>
-              <td className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 text-muted-foreground text-[9px] lg:text-[10px]">{c.unit}</td>
-              <td className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-bold text-accent tabular-nums">
-                {c.price.toFixed(2)}
-              </td>
-            </tr>
-          ))}
-
-          {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
-            <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground/30 tabular-nums text-[9px] lg:text-[10px]">{visible.length + i + 1}</td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2" />
-              <td className="pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2" />
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="border-t border-border mt-auto">
-        {hasMore ? (
-          <Link
-            to="/commodities"
-            className="flex items-center justify-center gap-1 px-5 py-2.5 text-xs font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
-          >
-            See all {commodities.length} items →
-          </Link>
-        ) : (
-          <div className="px-5 py-2.5 text-xs text-muted-foreground text-center">
-            {commodities.length} item{commodities.length !== 1 ? "s" : ""}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-/* ─── Stocks Card ─── */
-const StocksCard = ({ stocks }: { stocks: Stock[] }) => {
-  const visible = stocks.slice(0, MAX_VISIBLE);
-  const hasMore = stocks.length > MAX_VISIBLE;
-
-  return (
-    <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
-      <div className="bg-muted/60 px-5 py-3 flex items-center justify-between border-b border-border">
-        <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">NSE Stocks</h3>
-        <span className="text-xs text-muted-foreground font-medium">{stocks.length} stocks</span>
-      </div>
-
-      <table className="w-full text-[11px] lg:text-xs">
-        <thead>
-          <tr className="text-[9px] lg:text-[10px] text-muted-foreground uppercase tracking-wider">
-            <th className="text-left pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 font-medium w-5 lg:w-6">#</th>
-            <th className="text-left px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium">Stock</th>
-            <th className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-10 lg:w-12">Symbol</th>
-            <th className="text-right px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-12 lg:w-14">Chg%</th>
-            <th className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-medium w-14 lg:w-16">Price</th>
-          </tr>
-        </thead>
-        <tbody>
-          {visible.map((s, i) => (
-            <tr key={s.id} className="border-t border-border/40 hover:bg-muted/30 cursor-pointer transition-colors" onClick={() => window.location.href = '/stocks'}>
-              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground tabular-nums text-[9px] lg:text-[10px]">{i + 1}</td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2">
-                <span className="font-medium text-foreground truncate block max-w-[100px] lg:max-w-[140px]" title={s.name}>
-                  {s.name}
-                </span>
-              </td>
-              <td className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 text-muted-foreground text-[9px] lg:text-[10px]">{s.symbol}</td>
-              <td className={`text-right px-0.5 lg:px-1 py-1.5 lg:py-2 tabular-nums font-medium ${s.day_change_percent > 0 ? 'text-accent' : s.day_change_percent < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
-                {s.day_change_percent > 0 ? '+' : ''}{s.day_change_percent.toFixed(2)}%
-              </td>
-              <td className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-bold text-accent tabular-nums">
-                {s.price.toFixed(2)}
-              </td>
-            </tr>
-          ))}
-
-          {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
-            <tr key={`pad-${i}`} className="border-t border-border/40">
-              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground/30 tabular-nums text-[9px] lg:text-[10px]">{visible.length + i + 1}</td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2"><span className="text-muted-foreground/20">—</span></td>
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2" />
-              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2" />
-              <td className="pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2" />
-            </tr>
-          ))}
-        </tbody>
-      </table>
-
-      <div className="border-t border-border mt-auto">
-        {hasMore ? (
-          <Link
-            to="/stocks"
-            className="flex items-center justify-center gap-1 px-5 py-2.5 text-xs font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
-          >
-            See all {stocks.length} stocks →
-          </Link>
-        ) : (
-          <div className="px-5 py-2.5 text-xs text-muted-foreground text-center">
-            {stocks.length} stock{stocks.length !== 1 ? "s" : ""}
-          </div>
-        )}
-      </div>
-    </div>
-  );
-};
-
-/* ─── Grid Skeleton ─── */
-const GridSkeleton = () => (
-  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
-    {Array.from({ length: 3 }).map((_, i) => (
-      <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="bg-muted/60 px-5 py-3 border-b border-border"><Skeleton className="h-4 w-28" /></div>
-        <table className="w-full">
-          <tbody>
-            {Array.from({ length: 8 }).map((_, j) => (
-              <tr key={j} className="border-t border-border/40">
-                <td className="px-5 py-2.5"><Skeleton className="h-3.5 w-5" /></td>
-                <td className="px-2 py-2.5"><Skeleton className="h-3.5 w-28" /></td>
-                <td className="px-2 py-2.5"><Skeleton className="h-3.5 w-10" /></td>
-                <td className="px-2 py-2.5"><Skeleton className="h-3.5 w-12" /></td>
-              </tr>
-            ))}
-          </tbody>
-        </table>
-      </div>
-    ))}
   </div>
 );
 
-/* ─── Main Grid ─── */
-const FundGrid = ({ funds, snapshots, rates, commodities, stocks, loading, marketLoading }: FundGridProps) => {
-  if (loading) return <GridSkeleton />;
+const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
+  const navigate = useNavigate();
+  const [activeTab, setActiveTab] = useState<string>("money_market");
+  const [search, setSearch] = useState("");
+  const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
+  const [sortDir, setSortDir] = useState<SortDir>("desc");
 
-  const grouped: Record<string, FundFromDB[]> = {};
-  funds.forEach((f) => {
-    if (!grouped[f.fund_type]) grouped[f.fund_type] = [];
-    grouped[f.fund_type].push(f);
-  });
+  const categories = useMemo(() => {
+    const present = [...new Set(funds.map((f) => f.fund_type))];
+    return present.sort((a, b) => {
+      const ai = categoryOrder.indexOf(a);
+      const bi = categoryOrder.indexOf(b);
+      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
+    });
+  }, [funds]);
 
-  const fundCategories = Object.keys(grouped).sort((a, b) => {
-    const ai = categoryOrder.indexOf(a);
-    const bi = categoryOrder.indexOf(b);
-    return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-  });
+  const categoryCount = useMemo(() => {
+    const counts: Record<string, number> = {};
+    funds.forEach((f) => {
+      counts[f.fund_type] = (counts[f.fund_type] || 0) + 1;
+    });
+    return counts;
+  }, [funds]);
 
-  type CardDef =
-    | { type: "fund"; category: string }
-    | { type: "rates" }
-    | { type: "commodities" }
-    | { type: "stocks" };
+  const filtered = useMemo(() => {
+    let result = funds.filter((f) => f.fund_type === activeTab);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(
+        (f) => f.name.toLowerCase().includes(q) || f.manager.toLowerCase().includes(q)
+      );
+    }
+    result = [...result].sort((a, b) => {
+      const mul = sortDir === "asc" ? 1 : -1;
+      if (sortKey === "name") return mul * a.name.localeCompare(b.name);
+      return mul * ((a[sortKey] as number) - (b[sortKey] as number));
+    });
+    return result;
+  }, [funds, activeTab, search, sortKey, sortDir]);
 
-  const cards: CardDef[] = [
-    ...(stocks.length > 0 ? [{ type: "stocks" as const }] : []),
-    ...(rates.length > 0 ? [{ type: "rates" as const }] : []),
-    ...fundCategories.map((c) => ({ type: "fund" as const, category: c })),
-    ...(commodities.length > 0 ? [{ type: "commodities" as const }] : []),
-  ];
+  const bestYield = useMemo(() => {
+    const catFunds = funds.filter((f) => f.fund_type === activeTab);
+    if (catFunds.length === 0) return 0;
+    return Math.max(...catFunds.map((f) => f.annual_yield));
+  }, [funds, activeTab]);
 
-  const rows: CardDef[][] = [];
-  for (let i = 0; i < cards.length; i += 3) {
-    rows.push(cards.slice(i, i + 3));
-  }
+  const toggleSort = (key: SortKey) => {
+    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
+    else {
+      setSortKey(key);
+      setSortDir(key === "name" ? "asc" : "desc");
+    }
+  };
+
+  if (loading) return <TableSkeleton />;
 
   return (
     <div className="space-y-4">
-      {rows.map((row, ri) => (
-        <div key={ri} className="grid grid-cols-2 lg:grid-cols-3 gap-4" style={{ alignItems: "stretch" }}>
-          {row.map((card) => {
-            if (card.type === "stocks") {
-              return <StocksCard key="stocks" stocks={stocks} />;
-            }
-            if (card.type === "fund") {
-              return <FundCategoryCard key={card.category} category={card.category} funds={grouped[card.category]} />;
-            }
-            if (card.type === "rates") {
-              return <RatesCard key="rates" rates={rates} />;
-            }
-            return <CommoditiesCard key="commodities" commodities={commodities} />;
-          })}
-          {row.length < 3 && Array.from({ length: 3 - row.length }).map((_, i) => <div key={`empty-${i}`} />)}
+      {/* Category tabs + search */}
+      <div className="flex items-end justify-between gap-4">
+        <div className="flex gap-0.5 overflow-x-auto no-scrollbar">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => {
+                setActiveTab(cat);
+                setSearch("");
+                setSortKey("annual_yield");
+                setSortDir("desc");
+              }}
+              className={`px-4 py-2 text-xs font-semibold rounded-t-lg border border-b-0 transition-colors whitespace-nowrap ${
+                activeTab === cat
+                  ? "bg-card text-foreground border-border"
+                  : "bg-transparent text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/30"
+              }`}
+            >
+              {categoryLabels[cat] || cat}
+              <span className="ml-1.5 text-[10px] text-muted-foreground">
+                {categoryCount[cat] || 0}
+              </span>
+            </button>
+          ))}
         </div>
-      ))}
+
+        <div className="relative w-64 shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search funds or managers…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-8 text-xs rounded-lg bg-muted/30 border-border"
+          />
+        </div>
+      </div>
+
+      {/* Fund table */}
+      <div className="rounded-xl border border-border overflow-hidden bg-card">
+        <table className="w-full text-sm">
+          <colgroup>
+            <col style={{ width: "3%" }} />
+            <col style={{ width: "38%" }} />
+            <col style={{ width: "8%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "14%" }} />
+            <col style={{ width: "9%" }} />
+          </colgroup>
+          <thead>
+            <tr className="bg-muted/70 text-xs">
+              <th className="text-left pl-5 pr-2 py-3 font-semibold text-muted-foreground">#</th>
+              <th className="text-left px-3 py-3">
+                <SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
+              </th>
+              <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Unit</th>
+              <th className="text-right px-3 py-3">
+                <SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+              </th>
+              <th className="text-right px-3 py-3">
+                <SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+              </th>
+              <th className="text-right px-3 py-3 font-semibold text-muted-foreground">Change</th>
+              <th className="text-right pr-5 pl-2 py-3 font-semibold text-muted-foreground">Manager</th>
+            </tr>
+          </thead>
+          <tbody>
+            {filtered.map((fund, i) => (
+              <tr
+                key={fund.id}
+                onClick={() => navigate(`/compare/${fund.slug}`)}
+                className="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer"
+              >
+                <td className="pl-5 pr-2 py-3 text-muted-foreground text-xs tabular-nums">{i + 1}</td>
+                <td className="px-3 py-3">
+                  <div className="flex items-center gap-1.5 min-w-0">
+                    <Link
+                      to={`/compare/${fund.slug}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="font-semibold text-foreground hover:text-accent transition-colors truncate"
+                      title={fund.name}
+                    >
+                      {fund.name}
+                    </Link>
+                    {fund.annual_yield === bestYield && bestYield > 0 && (
+                      <Badge
+                        variant="default"
+                        className="text-[8px] px-1.5 py-0 h-4 bg-accent text-accent-foreground shrink-0"
+                      >
+                        TOP
+                      </Badge>
+                    )}
+                  </div>
+                </td>
+                <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">
+                  {currencyLabel(fund.yield_unit)}
+                </td>
+                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap text-muted-foreground">
+                  {fmtYield(fund.daily_yield, fund.yield_unit)}
+                </td>
+                <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
+                  <span className="font-bold text-accent text-base">
+                    {fmtYield(fund.annual_yield, fund.yield_unit)}
+                  </span>
+                </td>
+                <td className="px-3 py-3 text-right whitespace-nowrap">
+                  {snapshots[fund.id] ? (
+                    <YieldChange
+                      current={fund.annual_yield}
+                      previous={snapshots[fund.id]?.annual_yield}
+                      unit={fund.yield_unit}
+                      className="text-xs justify-end"
+                    />
+                  ) : (
+                    <span className="text-xs text-muted-foreground">—</span>
+                  )}
+                </td>
+                <td className="pr-5 pl-2 py-3 text-right text-xs text-muted-foreground truncate max-w-[120px]" title={fund.manager}>
+                  {fund.manager}
+                </td>
+              </tr>
+            ))}
+
+            {filtered.length === 0 && (
+              <tr>
+                <td colSpan={7} className="text-center py-14">
+                  <div className="flex flex-col items-center gap-3">
+                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                      <span className="text-2xl">📊</span>
+                    </div>
+                    <p className="text-sm text-muted-foreground font-medium">No funds match your filters</p>
+                    {search.trim() && (
+                      <button
+                        onClick={() => setSearch("")}
+                        className="text-xs text-accent hover:text-accent/80 font-medium transition-colors"
+                      >
+                        Clear search
+                      </button>
+                    )}
+                  </div>
+                </td>
+              </tr>
+            )}
+          </tbody>
+        </table>
+      </div>
+
+      {/* Summary footer */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
+        <span>
+          Showing {filtered.length} of {categoryCount[activeTab] || 0} {categoryLabels[activeTab] || activeTab} funds
+        </span>
+        <Link
+          to={`/compare?type=${activeTab}`}
+          className="text-accent hover:text-accent/80 font-medium transition-colors"
+        >
+          View all & compare →
+        </Link>
+      </div>
     </div>
   );
 };
