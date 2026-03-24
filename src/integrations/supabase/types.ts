@@ -491,6 +491,39 @@ export type Database = {
         }
         Relationships: []
       }
+      notifications: {
+        Row: {
+          created_at: string
+          id: string
+          is_read: boolean
+          message: string
+          metadata: Json | null
+          title: string
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message: string
+          metadata?: Json | null
+          title: string
+          type?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          is_read?: boolean
+          message?: string
+          metadata?: Json | null
+          title?: string
+          type?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       page_views: {
         Row: {
           created_at: string
@@ -512,6 +545,54 @@ export type Database = {
           page_path?: string
           session_id?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      price_alerts: {
+        Row: {
+          asset_id: string
+          asset_name: string
+          asset_type: string
+          condition: string
+          created_at: string
+          id: string
+          is_active: boolean
+          is_triggered: boolean
+          target_price: number
+          triggered_at: string | null
+          triggered_price: number | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_id: string
+          asset_name: string
+          asset_type: string
+          condition: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_triggered?: boolean
+          target_price: number
+          triggered_at?: string | null
+          triggered_price?: number | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_id?: string
+          asset_name?: string
+          asset_type?: string
+          condition?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          is_triggered?: boolean
+          target_price?: number
+          triggered_at?: string | null
+          triggered_price?: number | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
