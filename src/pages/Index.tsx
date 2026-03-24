@@ -82,6 +82,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const { user } = useAuth();
 
   const { rates, commodities, loading: marketLoading } = useMarketData();
+  const { stocks, loading: stocksLoading } = useStocksData();
 
   useEffect(() => {
     Promise.all([
