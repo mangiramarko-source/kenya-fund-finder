@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   BarChart3, LineChart, Calculator, Newspaper, GraduationCap, Bell,
-  TrendingUp, Search, User, Settings, Shield, LogOut, ChevronLeft, ChevronRight, LayoutDashboard,
+  TrendingUp, Search, User, Settings, Shield, LogOut, ChevronLeft, ChevronRight, LayoutDashboard, Moon, Sun,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -28,8 +28,22 @@ const DesktopSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [dark, setDark] = useState(() => {
+    const saved = localStorage.getItem("theme");
+    if (saved === "light") return false;
+    return true;
+  });
   const location = useLocation();
   const { user, isAdmin, signOut } = useAuth();
+
+  useEffect(() => {
+    if (dark) {
+      document.documentElement.classList.add("dark");
+    } else {
+      document.documentElement.classList.remove("dark");
+    }
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  }, [dark]);
 
   useEffect(() => {
     if (user) {
@@ -118,8 +132,34 @@ const DesktopSidebar = () => {
         })}
       </nav>
 
+      {/* Dark mode toggle */}
+      <div className="px-2 py-1">
+        {collapsed ? (
+          <Tooltip delayDuration={0}>
+            <TooltipTrigger asChild>
+              <button
+                onClick={() => setDark(!dark)}
+                className="flex items-center justify-center w-full px-2.5 py-2 rounded-lg text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+                aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+              >
+                {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+              </button>
+            </TooltipTrigger>
+            <TooltipContent side="right" className="text-xs">{dark ? "Light Mode" : "Dark Mode"}</TooltipContent>
+          </Tooltip>
+        ) : (
+          <button
+            onClick={() => setDark(!dark)}
+            className="flex items-center gap-2.5 w-full px-2.5 py-2 rounded-lg text-[13px] font-medium text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent transition-colors"
+          >
+            {dark ? <Sun className="h-4 w-4 shrink-0" /> : <Moon className="h-4 w-4 shrink-0" />}
+            <span>{dark ? "Light Mode" : "Dark Mode"}</span>
+          </button>
+        )}
+      </div>
+
       {/* Notification bell */}
-      <div className="px-2 py-1 border-t border-sidebar-border">
+      <div className="px-2 py-1">
         <div className={`flex items-center ${collapsed ? "justify-center" : "px-2.5"}`}>
           <NotificationBell />
         </div>
