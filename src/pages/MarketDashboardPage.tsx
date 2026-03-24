@@ -21,6 +21,11 @@ const categoryLabels: Record<MarketCategory, string> = {
   commodities: "Commodities",
   stocks: "NSE Stocks",
 };
+const categoryIcons: Record<MarketCategory, typeof DollarSign> = {
+  fx_rates: DollarSign,
+  commodities: Gem,
+  stocks: TrendingUp,
+};
 const categoryOrder: MarketCategory[] = ["fx_rates", "commodities"];
 
 /* ─── Change Indicator ─── */
