@@ -15,10 +15,9 @@ import StatBar from "@/components/home/StatBar";
 import CategoryTabs from "@/components/home/CategoryTabs";
 import FundMobileCards from "@/components/home/FundMobileCards";
 import FundGrid from "@/components/home/FundGrid";
-import TrendingSidebar from "@/components/home/TrendingSidebar";
+import NewsSidebar from "@/components/home/NewsSidebar";
 import AdBanner from "@/components/AdBanner";
 import { useMarketData, RatesMobileCards, CommoditiesMobileCards } from "@/components/home/MarketTicker";
-import { useStocksData, StocksMobileCards } from "@/components/home/FundGrid";
 
 type SortKey = "annual_yield" | "daily_yield" | "name";
 type SortDir = "asc" | "desc";
@@ -31,10 +30,9 @@ const categoryLabels: Record<string, string> = {
   bond: "Bond",
   fx_rates: "Currency",
   commodities: "Commodities",
-  stocks: "NSE Stocks",
 };
 
-const MARKET_TABS = ["fx_rates", "commodities", "stocks"] as const;
+const MARKET_TABS = ["fx_rates", "commodities"] as const;
 
 const Index = forwardRef<HTMLDivElement>((_, ref) => {
   useDocumentTitle("Kenya Fund Finder – Compare Investment Funds in Kenya", "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.");
@@ -83,7 +81,6 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const { user } = useAuth();
 
   const { rates, commodities, loading: marketLoading } = useMarketData();
-  const { stocks, loading: stocksLoading } = useStocksData();
 
   useEffect(() => {
     Promise.all([
@@ -112,9 +109,8 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
     funds.forEach((f) => { counts[f.fund_type] = (counts[f.fund_type] || 0) + 1; });
     counts["fx_rates"] = rates.length;
     counts["commodities"] = commodities.length;
-    counts["stocks"] = stocks.length;
     return counts;
-  }, [funds, rates, commodities, stocks]);
+  }, [funds, rates, commodities]);
 
   const processedFunds = useMemo(() => {
     let result = funds.filter((f) => f.fund_type === selectedCategory);
@@ -149,16 +145,16 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const clearSearch = () => setSearch("");
 
   const lastUpdate = showDate && lastUpdateDate ? new Date(lastUpdateDate) : showDate && funds[0] ? new Date(funds[0].updated_at) : null;
-  const latestNews = news.slice(0, 5);
+  const latestNews = news.slice(0, 4);
 
   const isMarketTab = MARKET_TABS.includes(selectedCategory as any);
   const isFundTab = !isMarketTab;
 
+  // Mobile tabs: fund categories + market
   const allTabs = useMemo(() => [
     ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c })),
     { key: "fx_rates", label: "FX Rates" },
     { key: "commodities", label: "Commodities" },
-    { key: "stocks", label: "NSE Stocks" },
   ], [categories]);
 
   return (
@@ -168,7 +164,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       <StatBar
         isLive={isLive}
         lastUpdate={lastUpdate}
-        fundCount={isFundTab ? processedFunds.length : (selectedCategory === "fx_rates" ? rates.length : selectedCategory === "stocks" ? stocks.length : commodities.length)}
+        fundCount={isFundTab ? processedFunds.length : (selectedCategory === "fx_rates" ? rates.length : commodities.length)}
         bestYield={isFundTab ? bestYield : 0}
         avgYield={isFundTab ? avgYield : 0}
         loading={loading}
@@ -176,121 +172,113 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       />
 
       <div className="container py-6">
-        {/* ── Desktop: Yahoo Finance-inspired layout ── */}
-        <div className="hidden md:grid md:grid-cols-[1fr_240px] xl:grid-cols-[1fr_280px] gap-5">
-          {/* Main content */}
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
+          {/* Main area */}
           <div>
-            <p className="text-[10px] text-muted-foreground mb-4">Yields are gross annual effective rates before 15% withholding tax.</p>
-            <FundGrid
-              funds={funds}
-              snapshots={snapshots}
-              rates={rates}
-              commodities={commodities}
-              stocks={stocks}
-              loading={loading}
-              marketLoading={marketLoading}
-              stocksLoading={stocksLoading}
-            />
-            <div className="mt-5">
-              <AdBanner placement="banner" />
-            </div>
-          </div>
-
-          {/* Right sidebar */}
-          <aside>
-            <TrendingSidebar funds={funds} news={latestNews} loading={loading} />
-            <div className="mt-4">
-              <AdBanner placement="in-feed" />
-            </div>
-          </aside>
-        </div>
-
-        {/* ── Mobile: tabbed view (unchanged) ── */}
-        <div className="md:hidden">
-          <CategoryTabs
-            tabs={allTabs}
-            selectedCategory={selectedCategory}
-            categoryCount={categoryCount}
-            onSelect={setSelectedCategory}
-            loading={loading}
-          />
-
-          {isFundTab && (
-            <>
-              <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
-              <div className="flex gap-2 mb-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search funds or managers…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 h-9 rounded-lg text-[16px]"
-                  />
-                </div>
-              </div>
-              <FundMobileCards
-                funds={processedFunds}
+            {/* Desktop: unified grid with all fund categories + market data */}
+            <div className="hidden md:block">
+              <p className="text-[10px] text-muted-foreground mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
+              <FundGrid
+                funds={funds}
                 snapshots={snapshots}
-                bestYield={bestYield}
+                rates={rates}
+                commodities={commodities}
                 loading={loading}
-                onClearSearch={clearSearch}
-                hasSearch={!!debouncedSearch.trim()}
+                marketLoading={marketLoading}
               />
-              <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
-                <p className="text-[10px] leading-relaxed text-muted-foreground">
-                  {getDisclaimer(selectedCategory as any)}
-                </p>
+            </div>
+
+            {/* Mobile: tabbed view with cards */}
+            <div className="md:hidden">
+              <CategoryTabs
+                tabs={allTabs}
+                selectedCategory={selectedCategory}
+                categoryCount={categoryCount}
+                onSelect={setSelectedCategory}
+                loading={loading}
+              />
+
+              {isFundTab && (
+                <>
+                  <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
+
+                  <div className="flex gap-2 mb-4">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                       <Input
+                        placeholder="Search funds or managers…"
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        className="pl-9 h-9 rounded-lg text-[16px]"
+                      />
+                    </div>
+                  </div>
+
+                  <FundMobileCards
+                    funds={processedFunds}
+                    snapshots={snapshots}
+                    bestYield={bestYield}
+                    loading={loading}
+                    onClearSearch={clearSearch}
+                    hasSearch={!!debouncedSearch.trim()}
+                  />
+
+                  <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
+                    <p className="text-[10px] leading-relaxed text-muted-foreground">
+                      {getDisclaimer(selectedCategory as any)}
+                    </p>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Currency content - mobile only */}
+            {selectedCategory === "fx_rates" && (
+              <div className="md:hidden">
+                <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Exchange rates are indicative and updated manually by administrators.</p>
+                {user ? (
+                  <RatesMobileCards rates={rates} loading={marketLoading} />
+                ) : (
+                  <AuthGate
+                    source="currency_tab"
+                    title="Sign up to view exchange rates"
+                    description="Create a free account to access live currency exchange rates, trends, and our currency converter tool."
+                  />
+                )}
               </div>
-            </>
-          )}
-        </div>
-
-        {/* Currency content - mobile only */}
-        {selectedCategory === "fx_rates" && (
-          <div className="md:hidden">
-            <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Exchange rates are indicative and updated manually by administrators.</p>
-            {user ? (
-              <RatesMobileCards rates={rates} loading={marketLoading} />
-            ) : (
-              <AuthGate
-                source="currency_tab"
-                title="Sign up to view exchange rates"
-                description="Create a free account to access live currency exchange rates, trends, and our currency converter tool."
-              />
             )}
+
+            {/* Commodities content - mobile only */}
+            {selectedCategory === "commodities" && (
+              <div className="md:hidden">
+                <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Commodity prices are indicative and updated manually by administrators.</p>
+                <CommoditiesMobileCards commodities={commodities} loading={marketLoading} />
+              </div>
+            )}
+
+            {/* Mobile quick actions */}
+            <div className="flex items-center gap-2 mt-4 flex-wrap sm:hidden">
+              <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
+                <Link to="/calculator"><Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculate Returns</Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
+                <Link to="/learn">Learn About Funds</Link>
+              </Button>
+            </div>
+
+            {/* Mobile news + ads */}
+            <div className="xl:hidden mt-6 space-y-4">
+              <AdBanner placement="in-feed" />
+              <NewsSidebar news={latestNews} loading={loading} />
+            </div>
           </div>
-        )}
 
-        {/* Commodities content - mobile only */}
-        {selectedCategory === "commodities" && (
-          <div className="md:hidden">
-            <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Commodity prices are indicative and updated manually by administrators.</p>
-            <CommoditiesMobileCards commodities={commodities} loading={marketLoading} />
-          </div>
-        )}
-
-        {/* Stocks content - mobile only */}
-        {selectedCategory === "stocks" && (
-          <div className="md:hidden">
-            <p className="text-[10px] text-muted-foreground -mt-1 mb-3">NSE stock prices are indicative and may be delayed.</p>
-            <StocksMobileCards stocks={stocks} loading={stocksLoading} />
-          </div>
-        )}
-
-        <div className="flex items-center gap-2 mt-4 flex-wrap sm:hidden">
-          <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
-            <Link to="/calculator"><Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculate Returns</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
-            <Link to="/learn">Learn About Funds</Link>
-          </Button>
-        </div>
-
-        {/* Mobile news + ads */}
-        <div className="mt-6 space-y-4 md:hidden">
-          <AdBanner placement="in-feed" />
-          <AdBanner placement="banner" />
+          {/* Desktop sidebar */}
+          <aside className="hidden xl:block space-y-4">
+            <AdBanner placement="sidebar" />
+            <NewsSidebar news={latestNews} loading={loading} />
+            <AdBanner placement="banner" />
+          </aside>
         </div>
       </div>
     </div>
