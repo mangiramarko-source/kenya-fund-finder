@@ -38,7 +38,7 @@ const DesktopTopBar = () => {
   const handleSignOut = async () => { await signOut(); navigate("/"); };
 
   return (
-    <header className="hidden md:flex items-center gap-4 h-12 px-5 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30">
+    <header className="hidden md:flex items-center gap-4 h-10 px-5 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30">
       {/* Left spacer */}
       <div className="w-4" />
 
