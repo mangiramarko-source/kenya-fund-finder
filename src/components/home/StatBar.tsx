@@ -1,6 +1,6 @@
 import { forwardRef } from "react";
 import { Link } from "react-router-dom";
-import { Calculator, BookOpen, Activity } from "lucide-react";
+import { Calculator } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { formatYield } from "@/components/YieldChange";
@@ -16,6 +16,14 @@ interface StatBarProps {
 }
 
 const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading, hideYields }, ref) => {
+  const stats = hideYields
+    ? [{ label: "Items", value: String(fundCount) }]
+    : [
+        { label: "Funds", value: String(fundCount) },
+        { label: "Top Yield", value: bestYield ? formatYield(bestYield, "%") : "—", accent: true },
+        { label: "Avg Yield", value: avgYield ? `${avgYield.toFixed(2)}%` : "—" },
+      ];
+
   return (
     <div ref={ref} className="border-b border-border bg-card">
       <div className="container">
@@ -39,61 +47,34 @@ const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, 
         </div>
 
         {/* ── Desktop / Tablet ── */}
-        <div className="hidden sm:flex items-center justify-between gap-4 py-3">
-          <div className="flex items-center gap-4">
-            {/* Live indicator */}
+        <div className="hidden sm:flex items-center justify-between gap-4 py-4">
+          <div className="flex items-center gap-3">
             {isLive && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/20 px-2.5 py-1">
                 <span className="relative flex h-2 w-2">
                   <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-accent opacity-75" />
                   <span className="relative inline-flex rounded-full h-2 w-2 bg-accent" />
                 </span>
-                <span className="text-[10px] font-bold text-accent uppercase tracking-widest">Live</span>
+                <span className="text-[11px] font-semibold text-accent uppercase tracking-wider">Live</span>
               </div>
             )}
-
-            {/* Divider */}
-            {isLive && <div className="h-4 w-px bg-border" />}
-
-            {/* Date */}
-            <p className="text-[11px] text-muted-foreground">
+            <p className="text-xs text-muted-foreground">
               {lastUpdate
-                ? `Updated ${lastUpdate.toLocaleDateString("en-KE", { weekday: "short", month: "short", day: "numeric", year: "numeric" })}`
+                ? `Updated ${lastUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}`
                 : "CMA-regulated unit trusts"}
             </p>
-
-            {/* Quick stats */}
-            {!hideYields && !loading && (
-              <>
-                <div className="h-4 w-px bg-border" />
-                <div className="flex items-center gap-3">
-                  <div className="flex items-center gap-1.5">
-                    <Activity className="h-3 w-3 text-accent" />
-                    <span className="text-[11px] text-muted-foreground">Top:</span>
-                    <span className="text-[11px] font-bold text-accent tabular-nums">{bestYield ? formatYield(bestYield, "%") : "—"}</span>
-                  </div>
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-[11px] text-muted-foreground">Avg:</span>
-                    <span className="text-[11px] font-semibold text-foreground tabular-nums">{avgYield ? `${avgYield.toFixed(2)}%` : "—"}</span>
-                  </div>
-                </div>
-              </>
-            )}
           </div>
 
-          {/* Actions */}
-          <div className="flex items-center gap-1.5">
-            <Button asChild variant="ghost" size="sm" className="rounded-lg text-[11px] h-7 px-3 text-muted-foreground hover:text-foreground">
-              <Link to="/calculator">
-                <Calculator className="mr-1 h-3 w-3" /> Calculator
-              </Link>
-            </Button>
-            <Button asChild variant="ghost" size="sm" className="rounded-lg text-[11px] h-7 px-3 text-muted-foreground hover:text-foreground">
-              <Link to="/learn">
-                <BookOpen className="mr-1 h-3 w-3" /> Learn
-              </Link>
-            </Button>
-          </div>
+          <div className="flex items-center gap-1.5 ml-1">
+              <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
+                <Link to="/calculator">
+                  <Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculator
+                </Link>
+              </Button>
+              <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
+                <Link to="/learn">Learn</Link>
+              </Button>
+            </div>
         </div>
       </div>
     </div>

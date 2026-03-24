@@ -70,16 +70,6 @@
 
     --gradient-hero: linear-gradient(135deg, hsl(220 60% 20%), hsl(220 50% 30%));
     --gradient-accent: linear-gradient(135deg, hsl(152 55% 42%), hsl(152 45% 52%));
-
-    /* Category accent colors */
-    --cat-stocks: 210 80% 52%;
-    --cat-fx: 38 92% 50%;
-    --cat-money-market: 152 55% 42%;
-    --cat-fixed-income: 260 55% 55%;
-    --cat-bond: 200 65% 50%;
-    --cat-balanced: 330 60% 55%;
-    --cat-equity: 15 80% 55%;
-    --cat-commodities: 45 85% 48%;
   }
 
   .dark {
@@ -144,14 +134,6 @@
   }
   .glass {
     @apply bg-card/80 backdrop-blur-sm border border-border/50;
-  }
-  /* Card hover lift */
-  .card-lift {
-    @apply transition-all duration-300 ease-out;
-  }
-  .card-lift:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 24px -8px hsl(var(--accent) / 0.12), 0 2px 8px -2px hsl(0 0% 0% / 0.08);
   }
 }
 

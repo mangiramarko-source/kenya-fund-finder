@@ -155,25 +155,20 @@ const StocksPage = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="container py-6">
-        <div className="mb-5">
+      <div className="container py-8">
+        <div className="mb-6">
           <Link
             to="/"
-            className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground transition-colors mb-3"
+            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
           >
-            <ArrowLeft className="h-3 w-3" /> Home
+            <ArrowLeft className="h-4 w-4" /> Back to Home
           </Link>
-          <div className="flex items-center gap-2.5 mb-1">
-            <div className="flex items-center justify-center h-8 w-8 rounded-lg" style={{ background: 'hsl(var(--cat-stocks) / 0.12)' }}>
-              <TrendingUp className="h-4 w-4" style={{ color: 'hsl(var(--cat-stocks))' }} />
-            </div>
-            <h1 className="text-xl font-bold text-foreground">Nairobi Securities Exchange</h1>
-          </div>
-          <p className="text-xs text-muted-foreground ml-10">
+          <h1 className="text-2xl font-bold text-foreground">Nairobi Securities Exchange</h1>
+          <p className="text-sm text-muted-foreground mt-1">
             Track NSE-listed stock prices, volumes, and daily performance.
             {latestUpdate && (
-              <span className="ml-1.5 text-[10px] text-muted-foreground/70">
-                · Updated {latestUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
+              <span className="ml-2 text-xs">
+                Updated {latestUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
               </span>
             )}
           </p>
@@ -181,18 +176,23 @@ const StocksPage = () => {
 
         {/* Summary stats */}
         {!loading && stocks.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 mb-5">
-            {[
-              { label: "Total Stocks", value: stocks.length, color: "--foreground" },
-              { label: "Gainers", value: gainers, color: "--accent" },
-              { label: "Losers", value: losers, color: "--destructive" },
-              { label: "Unchanged", value: unchanged, color: "--muted-foreground" },
-            ].map((stat) => (
-              <div key={stat.label} className="rounded-lg border border-border bg-card p-2.5">
-                <p className="text-[9px] uppercase tracking-wider font-semibold" style={{ color: `hsl(var(${stat.color}))` }}>{stat.label}</p>
-                <p className="text-lg font-bold tabular-nums" style={{ color: `hsl(var(${stat.color}))` }}>{stat.value}</p>
-              </div>
-            ))}
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+            <div className="rounded-xl border border-border bg-card p-3">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Stocks</p>
+              <p className="text-xl font-bold text-foreground tabular-nums">{stocks.length}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-3">
+              <p className="text-[10px] text-accent uppercase tracking-wider">Gainers</p>
+              <p className="text-xl font-bold text-accent tabular-nums">{gainers}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-3">
+              <p className="text-[10px] text-destructive uppercase tracking-wider">Losers</p>
+              <p className="text-xl font-bold text-destructive tabular-nums">{losers}</p>
+            </div>
+            <div className="rounded-xl border border-border bg-card p-3">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Unchanged</p>
+              <p className="text-xl font-bold text-muted-foreground tabular-nums">{unchanged}</p>
+            </div>
           </div>
         )}
 

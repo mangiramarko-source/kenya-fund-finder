@@ -71,20 +71,17 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
-      <div className="container flex h-14 items-center justify-between relative">
+      <div className="container flex h-16 items-center justify-between relative">
         {/* Logo */}
-        <Link to="/" className="hidden md:flex items-center gap-2.5 font-heading text-base font-bold text-foreground shrink-0 group">
-          <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent text-accent-foreground transition-transform group-hover:scale-105">
-            <TrendingUp className="h-4 w-4" />
+        <Link to="/" className="hidden md:flex items-center gap-2 font-heading text-lg font-bold text-primary shrink-0">
+          <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
+            <TrendingUp className="h-5 w-5" />
           </div>
-          <div className="flex flex-col leading-none">
-            <span className="tracking-tight">Kenya Fund Finder</span>
-            <span className="text-[9px] font-normal text-muted-foreground tracking-wider uppercase">Market Intelligence</span>
-          </div>
+          <span>Kenya Fund Finder</span>
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-0.5 bg-muted/50 rounded-lg px-1 py-0.5 border border-border/50">
+        <nav className="hidden md:flex items-center gap-1 bg-muted/60 rounded-full px-1.5 py-1">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
@@ -92,13 +89,13 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
                   isActive
-                    ? "bg-card text-foreground shadow-sm border border-border/50"
-                    : "text-muted-foreground hover:text-foreground hover:bg-card/50"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground hover:bg-background/80"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
+                <Icon className="h-4 w-4" />
                 {link.label}
               </Link>
             );
@@ -106,31 +103,31 @@ const Navbar = () => {
         </nav>
 
         {/* Desktop right side */}
-        <div className="hidden md:flex items-center gap-1.5">
+        <div className="hidden md:flex items-center gap-2">
           <SearchDialog />
           <Button
             variant="ghost"
             size="icon"
             onClick={() => setDark(!dark)}
-            className="rounded-lg h-8 w-8"
+            className="rounded-full"
             aria-label="Toggle dark mode"
           >
-            {dark ? <Sun className="h-3.5 w-3.5" /> : <Moon className="h-3.5 w-3.5" />}
+            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
 
           {user ? (
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               {isAdmin && (
-                <Link to="/admin" className="text-[10px] font-bold text-accent hover:underline flex items-center gap-1 px-2 py-1 rounded-md bg-accent/8 hover:bg-accent/15 transition-colors">
-                  <Shield className="h-3 w-3" /> Admin
+                <Link to="/admin" className="text-xs font-semibold text-accent hover:underline flex items-center gap-1">
+                  <Shield className="h-3.5 w-3.5" /> Admin
                 </Link>
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <button className="rounded-lg ring-1 ring-border hover:ring-accent/50 transition-all p-0.5">
-                    <Avatar className="h-7 w-7">
+                  <button className="rounded-full ring-2 ring-border hover:ring-accent transition-all">
+                    <Avatar className="h-8 w-8">
                       <AvatarImage src={avatarUrl} alt={displayName || user.email || ""} />
-                      <AvatarFallback className="bg-accent text-accent-foreground text-[10px]">
+                      <AvatarFallback className="bg-accent text-accent-foreground text-xs">
                         {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
@@ -153,8 +150,8 @@ const Navbar = () => {
               </DropdownMenu>
             </div>
           ) : (
-            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg text-xs font-semibold h-8 px-3">
-              <Link to="/auth"><User className="mr-1 h-3 w-3" /> Sign In</Link>
+            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full font-semibold">
+              <Link to="/auth"><User className="mr-1.5 h-3.5 w-3.5" /> Sign In</Link>
             </Button>
           )}
         </div>
