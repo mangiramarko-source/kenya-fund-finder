@@ -403,9 +403,9 @@ const FundGrid = ({ funds, snapshots, rates, commodities, stocks, loading, marke
   }
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {rows.map((row, ri) => (
-        <div key={ri} className="grid grid-cols-3 gap-5" style={{ alignItems: "stretch" }}>
+        <div key={ri} className="grid grid-cols-2 lg:grid-cols-3 gap-4" style={{ alignItems: "stretch" }}>
           {row.map((card) => {
             if (card.type === "stocks") {
               return <StocksCard key="stocks" stocks={stocks} />;
