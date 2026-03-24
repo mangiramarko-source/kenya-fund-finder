@@ -242,6 +242,7 @@ const OverviewPage = () => {
 
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [fundsLoading, setFundsLoading] = useState(true);
+  const [news, setNews] = useState<NewsFromDB[]>([]);
   const [rateHistory, setRateHistory] = useState<RateHistory[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(true);
