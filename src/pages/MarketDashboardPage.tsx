@@ -3,7 +3,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useMarketData, type ExchangeRate, type Commodity, type Stock } from "@/components/home/MarketTicker";
-import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search, DollarSign, Gem } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -20,6 +20,11 @@ const categoryLabels: Record<MarketCategory, string> = {
   fx_rates: "FX Rates",
   commodities: "Commodities",
   stocks: "NSE Stocks",
+};
+const categoryIcons: Record<MarketCategory, typeof DollarSign> = {
+  fx_rates: DollarSign,
+  commodities: Gem,
+  stocks: TrendingUp,
 };
 const categoryOrder: MarketCategory[] = ["fx_rates", "commodities"];
 
@@ -169,21 +174,25 @@ const MarketDashboardPage = () => {
         <div className="space-y-4">
           {/* Category tabs + search */}
           <div className="flex items-end justify-between gap-4">
-            <div className="flex gap-0.5 overflow-x-auto no-scrollbar">
-              {categoryOrder.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => { setActiveTab(cat); setSearch(""); setSortKey("sort"); setSortDir("asc"); }}
-                  className={`px-4 py-2 text-xs font-semibold rounded-t-lg border border-b-0 transition-colors whitespace-nowrap ${
-                    activeTab === cat
-                      ? "bg-card text-foreground border-border"
-                      : "bg-transparent text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/30"
-                  }`}
-                >
-                  {categoryLabels[cat]}
-                  <span className="ml-1.5 text-[10px] text-muted-foreground">{categoryCount[cat]}</span>
-                </button>
-              ))}
+            <div className="flex gap-1 overflow-x-auto no-scrollbar">
+              {categoryOrder.map(cat => {
+                const Icon = categoryIcons[cat];
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => { setActiveTab(cat); setSearch(""); setSortKey("sort"); setSortDir("asc"); }}
+                    className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold rounded-lg border transition-all whitespace-nowrap ${
+                      activeTab === cat
+                        ? "bg-accent text-accent-foreground border-accent shadow-sm"
+                        : "bg-muted/40 text-muted-foreground border-border hover:text-foreground hover:bg-muted/70"
+                    }`}
+                  >
+                    <Icon className="h-3.5 w-3.5" />
+                    {categoryLabels[cat]}
+                    <span className={`ml-0.5 text-[10px] ${activeTab === cat ? "text-accent-foreground/70" : "text-muted-foreground/60"}`}>{categoryCount[cat]}</span>
+                  </button>
+                );
+              })}
             </div>
 
             <div className="relative w-64 shrink-0">
