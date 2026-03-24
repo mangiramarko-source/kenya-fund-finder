@@ -101,36 +101,35 @@ const DesktopSidebar = () => {
 
       {/* Nav links */}
       <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
-        {navItems.map((item) => {
+        {mainNavItems.map((item) => {
           const Icon = item.icon;
           const active = isActive(item.to);
-
           const linkContent = (
-            <Link
-              to={item.to}
-              className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all group ${
-                active
-                  ? "bg-accent/15 text-accent"
-                  : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"
-              }`}
-            >
+            <Link to={item.to} className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all group ${active ? "bg-accent/15 text-accent" : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
               <Icon className={`h-4 w-4 shrink-0 ${active ? "text-accent" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70"}`} />
               {!collapsed && <span className="truncate">{item.label}</span>}
-              {active && !collapsed && (
-                <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />
-              )}
+              {active && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />}
             </Link>
           );
+          if (collapsed) return <Tooltip key={item.to} delayDuration={0}><TooltipTrigger asChild>{linkContent}</TooltipTrigger><TooltipContent side="right" className="text-xs">{item.label}</TooltipContent></Tooltip>;
+          return <div key={item.to}>{linkContent}</div>;
+        })}
 
-          if (collapsed) {
-            return (
-              <Tooltip key={item.to} delayDuration={0}>
-                <TooltipTrigger asChild>{linkContent}</TooltipTrigger>
-                <TooltipContent side="right" className="text-xs">{item.label}</TooltipContent>
-              </Tooltip>
-            );
-          }
+        {/* Divider */}
+        <div className="!my-2 mx-2 h-px bg-sidebar-border" />
+        {!collapsed && <p className="px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">Tools</p>}
 
+        {utilityNavItems.map((item) => {
+          const Icon = item.icon;
+          const active = isActive(item.to);
+          const linkContent = (
+            <Link to={item.to} className={`flex items-center gap-2.5 px-2.5 py-2 rounded-lg text-[13px] font-medium transition-all group ${active ? "bg-accent/15 text-accent" : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
+              <Icon className={`h-4 w-4 shrink-0 ${active ? "text-accent" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70"}`} />
+              {!collapsed && <span className="truncate">{item.label}</span>}
+              {active && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />}
+            </Link>
+          );
+          if (collapsed) return <Tooltip key={item.to} delayDuration={0}><TooltipTrigger asChild>{linkContent}</TooltipTrigger><TooltipContent side="right" className="text-xs">{item.label}</TooltipContent></Tooltip>;
           return <div key={item.to}>{linkContent}</div>;
         })}
       </nav>
