@@ -276,9 +276,18 @@ const CommodityRow = ({
               )}
             </div>
 
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Last updated: {new Date(c.updated_at).toLocaleString("en-KE")}
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-[10px] text-muted-foreground">
+                Last updated: {new Date(c.updated_at).toLocaleString("en-KE")}
+              </p>
+              <CreateAlertDialog
+                assetType="commodity"
+                assetId={c.id}
+                assetName={c.name}
+                currentPrice={c.price}
+                unit={c.unit}
+              />
+            </div>
           </td>
         </tr>
       )}
