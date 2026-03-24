@@ -13,10 +13,10 @@ import SearchDialog from "@/components/SearchDialog";
 import NotificationBell from "@/components/alerts/NotificationBell";
 
 const navItems = [
-  { to: "/", label: "Funds", icon: BarChart3 },
   { to: "/overview", label: "Overview", icon: LayoutDashboard },
-  { to: "/markets", label: "Markets", icon: LineChart },
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
+  { to: "/", label: "Unit Trusts", icon: BarChart3 },
+  { to: "/markets", label: "Markets", icon: LineChart },
   { to: "/rates", label: "FX Rates", icon: LineChart },
   { to: "/calculator", label: "Calculator", icon: Calculator },
   { to: "/news", label: "News", icon: Newspaper },
