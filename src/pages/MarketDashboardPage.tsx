@@ -39,14 +39,21 @@ const ChangeIndicator = ({ current, previous }: { current: number; previous: num
 };
 
 /* ─── Sort Header ─── */
-const SortHeader = ({ label, field, sortKey, onToggle, className = "" }: {
-  label: string; field: string; sortKey: string; onToggle: (key: string) => void; className?: string;
-}) => (
-  <button onClick={() => onToggle(field)} className={`inline-flex items-center gap-1 font-semibold hover:text-accent transition-colors ${className}`}>
-    {label}
-    <ArrowUpDown className={`h-3 w-3 ${sortKey === field ? "text-accent" : "text-muted-foreground/50"}`} />
-  </button>
-);
+const SortHeader = ({ label, field, sortKey, sortDir, onToggle, className = "" }: {
+  label: string; field: string; sortKey: string; sortDir: SortDir; onToggle: (key: string) => void; className?: string;
+}) => {
+  const isActive = sortKey === field;
+  return (
+    <button onClick={() => onToggle(field)} className={`inline-flex items-center gap-1 font-semibold hover:text-accent transition-colors ${className}`}>
+      {label}
+      {isActive ? (
+        sortDir === "desc" ? <ArrowDown className="h-3 w-3 text-accent" /> : <ArrowUp className="h-3 w-3 text-accent" />
+      ) : (
+        <ArrowUpDown className="h-3 w-3 text-muted-foreground/40" />
+      )}
+    </button>
+  );
+};
 
 /* ─── Table Skeleton ─── */
 const TableSkeleton = () => (
