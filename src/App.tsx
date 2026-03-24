@@ -29,6 +29,7 @@ import CommoditiesPage from "./pages/CommoditiesPage";
 import StocksPage from "./pages/StocksPage";
 import MarketDashboardPage from "./pages/MarketDashboardPage";
 import AlertsPage from "./pages/AlertsPage";
+import OverviewPage from "./pages/OverviewPage";
 import NotFound from "./pages/NotFound";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
