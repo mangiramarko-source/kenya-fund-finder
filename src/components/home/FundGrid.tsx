@@ -2,7 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
-import type { ExchangeRate, Commodity } from "@/components/home/MarketTicker";
+import type { ExchangeRate, Commodity, Stock } from "@/components/home/MarketTicker";
 
 const categoryLabels: Record<string, string> = {
   money_market: "Money Market",
