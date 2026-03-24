@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
