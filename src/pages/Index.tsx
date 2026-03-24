@@ -185,8 +185,10 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
                 snapshots={snapshots}
                 rates={rates}
                 commodities={commodities}
+                stocks={stocks}
                 loading={loading}
                 marketLoading={marketLoading}
+                stocksLoading={stocksLoading}
               />
             </div>
 
