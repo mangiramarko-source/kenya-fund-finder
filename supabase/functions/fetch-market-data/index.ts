@@ -31,7 +31,6 @@ const CRYPTO_MAP: Record<string, string> = {
 };
 
 // Map commodity symbols to free data sources
-// For gold/silver/oil we use exchange rate trick: XAU, XAG are ISO currency codes
 const PRECIOUS_METALS: Record<string, string> = {
   XAU: "gold",
   GOLD: "gold",
@@ -47,6 +46,43 @@ Deno.serve(async (req) => {
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
+
+  // Authentication: require either a valid admin user or the service role key (cron job)
+  const authHeader = req.headers.get("Authorization") || "";
+  const token = authHeader.replace("Bearer ", "");
+
+  // Allow cron jobs using the anon key (called via pg_net)
+  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+  const isCronCall = token === anonKey;
+
+  if (!isCronCall) {
+    // Verify the caller is an authenticated admin
+    const userClient = createClient(supabaseUrl, anonKey, {
+      global: { headers: { Authorization: authHeader } },
+    });
+    const { data: { user }, error: authError } = await userClient.auth.getUser();
+    if (authError || !user) {
+      return new Response(JSON.stringify({ error: "Unauthorized" }), {
+        status: 401,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+
+    // Check admin role
+    const { data: roleData } = await supabase
+      .from("user_roles")
+      .select("role")
+      .eq("user_id", user.id)
+      .eq("role", "admin")
+      .maybeSingle();
+
+    if (!roleData) {
+      return new Response(JSON.stringify({ error: "Forbidden" }), {
+        status: 403,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+  }
 
   const results: string[] = [];
 
@@ -84,7 +120,7 @@ Deno.serve(async (req) => {
       }
       results.push(`FX: processed ${existing?.length || 0} currencies`);
     } else {
-      results.push(`FX API error: ${fxRes.status}`);
+      results.push(`FX API returned non-OK status`);
     }
 
     // ── 2. Fetch commodity prices ──
@@ -93,7 +129,6 @@ Deno.serve(async (req) => {
       .select("id, symbol, name, price, unit");
 
     if (commodityRows && commodityRows.length > 0) {
-      // Separate crypto vs precious metals vs other
       const cryptoItems: typeof commodityRows = [];
       const metalItems: typeof commodityRows = [];
       const otherItems: typeof commodityRows = [];
@@ -139,16 +174,15 @@ Deno.serve(async (req) => {
               }
             }
           } else {
-            results.push(`CoinGecko error: ${cgRes.status}`);
+            results.push(`CoinGecko returned non-OK status`);
           }
         } catch (e) {
-          results.push(`CoinGecko fetch error: ${(e as Error).message}`);
+          console.error("CoinGecko fetch error:", e);
+          results.push(`CoinGecko fetch failed`);
         }
       }
 
-      // ── 2b. Precious metals via FX rates (XAU, XAG are ISO currency codes) ──
-      // open.er-api returns rates FROM KES, so XAU rate = how many XAU per 1 KES
-      // Price of gold in USD = (USD per KES) / (XAU per KES)
+      // ── 2b. Precious metals via FX rates ──
       if (metalItems.length > 0 && Object.keys(kesRates).length > 0) {
         const usdPerKes = kesRates["USD"] || 0;
         const metalFxMap: Record<string, string> = {
@@ -187,7 +221,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("fetch-market-data error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: (error as Error).message }),
+      JSON.stringify({ success: false, error: "Internal server error" }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
