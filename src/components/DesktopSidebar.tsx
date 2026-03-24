@@ -14,6 +14,7 @@ import NotificationBell from "@/components/alerts/NotificationBell";
 
 const navItems = [
   { to: "/", label: "Funds", icon: BarChart3 },
+  { to: "/overview", label: "Overview", icon: LayoutDashboard },
   { to: "/markets", label: "Markets", icon: LineChart },
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
   { to: "/rates", label: "FX Rates", icon: LineChart },
