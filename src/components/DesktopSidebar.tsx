@@ -12,12 +12,15 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import SearchDialog from "@/components/SearchDialog";
 import NotificationBell from "@/components/alerts/NotificationBell";
 
-const navItems = [
+const mainNavItems = [
   { to: "/overview", label: "Overview", icon: LayoutDashboard },
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
   { to: "/", label: "Unit Trusts", icon: BarChart3 },
   { to: "/markets", label: "Markets", icon: LineChart },
   { to: "/rates", label: "FX Rates", icon: LineChart },
+];
+
+const utilityNavItems = [
   { to: "/calculator", label: "Calculator", icon: Calculator },
   { to: "/news", label: "News", icon: Newspaper },
   { to: "/learn", label: "Learn", icon: GraduationCap },
