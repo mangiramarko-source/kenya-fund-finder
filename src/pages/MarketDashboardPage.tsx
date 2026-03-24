@@ -231,8 +231,8 @@ const MarketDashboardPage = () => {
                     <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
                       <th className="text-left pl-4 pr-2 py-2.5 font-semibold text-muted-foreground">#</th>
                       <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Code</th>
-                      <th className="text-left px-3 py-2.5"><SortHeader label="Currency" field="name" sortKey={sortKey} onToggle={toggleSort} /></th>
-                      <th className="text-right px-3 py-2.5"><SortHeader label="Buy (KES)" field="rate" sortKey={sortKey} onToggle={toggleSort} className="justify-end" /></th>
+                      <th className="text-left px-3 py-2.5"><SortHeader label="Currency" field="name" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} /></th>
+                      <th className="text-right px-3 py-2.5"><SortHeader label="Buy (KES)" field="rate" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
                       <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Previous</th>
                       <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Change</th>
                       <th className="text-right pr-4 px-3 py-2.5 font-semibold text-muted-foreground">Updated</th>
@@ -286,9 +286,9 @@ const MarketDashboardPage = () => {
                     <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
                       <th className="text-left pl-4 pr-2 py-2.5 font-semibold text-muted-foreground">#</th>
                       <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Symbol</th>
-                      <th className="text-left px-3 py-2.5"><SortHeader label="Commodity" field="name" sortKey={sortKey} onToggle={toggleSort} /></th>
+                      <th className="text-left px-3 py-2.5"><SortHeader label="Commodity" field="name" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} /></th>
                       <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Unit</th>
-                      <th className="text-right px-3 py-2.5"><SortHeader label="Price" field="price" sortKey={sortKey} onToggle={toggleSort} className="justify-end" /></th>
+                      <th className="text-right px-3 py-2.5"><SortHeader label="Price" field="price" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
                       <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Previous</th>
                       <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Change</th>
                       <th className="text-right pr-4 px-3 py-2.5 font-semibold text-muted-foreground">Updated</th>
@@ -339,11 +339,11 @@ const MarketDashboardPage = () => {
                 <thead>
                   <tr className="bg-muted/70 text-xs">
                     <th className="text-left pl-5 pr-2 py-3 font-semibold text-muted-foreground">#</th>
-                    <th className="text-left px-3 py-3"><SortHeader label="Stock" field="name" sortKey={sortKey} onToggle={toggleSort} /></th>
+                    <th className="text-left px-3 py-3"><SortHeader label="Stock" field="name" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} /></th>
                     <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Sector</th>
-                    <th className="text-right px-3 py-3"><SortHeader label="Price (KES)" field="price" sortKey={sortKey} onToggle={toggleSort} className="justify-end" /></th>
-                    <th className="text-right px-3 py-3"><SortHeader label="Change" field="change" sortKey={sortKey} onToggle={toggleSort} className="justify-end" /></th>
-                    <th className="text-right pr-5 px-3 py-3"><SortHeader label="Volume" field="volume" sortKey={sortKey} onToggle={toggleSort} className="justify-end" /></th>
+                    <th className="text-right px-3 py-3"><SortHeader label="Price (KES)" field="price" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
+                    <th className="text-right px-3 py-3"><SortHeader label="Change" field="change" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
+                    <th className="text-right pr-5 px-3 py-3"><SortHeader label="Volume" field="volume" sortKey={sortKey} sortDir={sortDir} onToggle={toggleSort} className="justify-end" /></th>
                   </tr>
                 </thead>
                 <tbody>
