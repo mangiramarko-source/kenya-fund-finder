@@ -157,28 +157,30 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
     <div className="space-y-4">
       {/* Category tabs + search */}
       <div className="flex items-end justify-between gap-4">
-        <div className="flex gap-0.5 overflow-x-auto no-scrollbar">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              onClick={() => {
-                setActiveTab(cat);
-                setSearch("");
-                setSortKey("annual_yield");
-                setSortDir("desc");
-              }}
-              className={`px-4 py-2 text-xs font-semibold rounded-t-lg border border-b-0 transition-colors whitespace-nowrap ${
-                activeTab === cat
-                  ? "bg-card text-foreground border-border"
-                  : "bg-transparent text-muted-foreground border-transparent hover:text-foreground hover:bg-muted/30"
-              }`}
-            >
-              {categoryLabels[cat] || cat}
-              <span className="ml-1.5 text-[10px] text-muted-foreground">
-                {categoryCount[cat] || 0}
-              </span>
-            </button>
-          ))}
+          <div className="flex gap-1.5 overflow-x-auto no-scrollbar flex-wrap">
+            {categories.map((cat) => (
+              <button
+                key={cat}
+                onClick={() => {
+                  setActiveTab(cat);
+                  setSearch("");
+                  setSortKey("annual_yield");
+                  setSortDir("desc");
+                }}
+                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                  activeTab === cat
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {categoryLabels[cat] || cat}
+                <span className={`ml-1.5 tabular-nums text-[10px] ${
+                  activeTab === cat ? "text-primary-foreground/70" : "text-muted-foreground/60"
+                }`}>
+                  {categoryCount[cat] || 0}
+                </span>
+              </button>
+            ))}
         </div>
 
         <div className="relative w-64 shrink-0">
