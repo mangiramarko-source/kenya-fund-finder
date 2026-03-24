@@ -16,7 +16,7 @@ import {
   TrendingUp, TrendingDown, Minus, Bell, BellPlus, Plus,
   Settings2, X, Star, Search, Activity, Eye, Check,
   BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
-  Landmark, ArrowRight,
+  Landmark, ArrowRight, Newspaper, Clock,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer,
