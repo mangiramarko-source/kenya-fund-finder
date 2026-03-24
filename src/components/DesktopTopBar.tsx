@@ -38,7 +38,7 @@ const DesktopTopBar = () => {
   const handleSignOut = async () => { await signOut(); navigate("/"); };
 
   return (
-    <header className="hidden md:flex items-center gap-4 h-12 px-5 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30">
+    <header className="hidden md:flex items-center gap-4 h-10 px-5 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30">
       {/* Left spacer */}
       <div className="w-4" />
 
@@ -64,7 +64,7 @@ const DesktopTopBar = () => {
         {user ? (
           <div className="flex items-center gap-1.5">
             {isAdmin && (
-              <Link to="/admin" className="text-[10px] font-semibold text-accent hover:underline flex items-center gap-1 mr-1">
+              <Link to="/admin" className="text-[10px] font-semibold text-accent hover:underline flex items-center gap-1 mr-1 px-2 py-1 rounded-lg bg-accent/10">
                 <Shield className="h-3 w-3" /> Admin
               </Link>
             )}
@@ -99,7 +99,7 @@ const DesktopTopBar = () => {
             </DropdownMenu>
           </div>
         ) : (
-          <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full font-semibold h-8 text-xs px-3">
+          <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg font-semibold h-7 text-xs px-3">
             <Link to="/auth"><User className="mr-1 h-3 w-3" /> Sign In</Link>
           </Button>
         )}

@@ -16,13 +16,13 @@ import {
   TrendingUp, TrendingDown, Minus, Bell, BellPlus, Plus,
   Settings2, X, Star, Search, Activity, Eye, Check,
   BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
-  Landmark, ArrowRight,
+  Landmark, ArrowRight, Newspaper, Clock,
 } from "lucide-react";
 import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer,
 } from "recharts";
 import { toast } from "sonner";
-import { fetchFunds, type FundFromDB } from "@/lib/api";
+import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
@@ -242,6 +242,7 @@ const OverviewPage = () => {
 
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [fundsLoading, setFundsLoading] = useState(true);
+  const [news, setNews] = useState<NewsFromDB[]>([]);
   const [rateHistory, setRateHistory] = useState<RateHistory[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(true);
@@ -254,6 +255,7 @@ const OverviewPage = () => {
 
   useEffect(() => {
     fetchFunds().then(setFunds).catch(() => {}).finally(() => setFundsLoading(false));
+    fetchPublishedNews().then(n => setNews(n.slice(0, 4))).catch(() => {});
     supabase.from("exchange_rate_history_public" as any)
       .select("snapshot_date, rate, currency_code")
       .order("snapshot_date", { ascending: true }).limit(500)
@@ -633,6 +635,42 @@ const OverviewPage = () => {
             </table>
           </div>
         </SectionPanel>
+      )}
+
+      {/* ─── Latest News ─── */}
+      {news.length > 0 && (
+        <div>
+          <div className="flex items-center justify-between mb-3">
+            <div className="flex items-center gap-2">
+              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-accent/10">
+                <Newspaper className="h-3.5 w-3.5 text-accent" />
+              </div>
+              <h2 className="text-sm font-semibold text-foreground">Latest News</h2>
+            </div>
+            <Link to="/news" className="text-[10px] text-accent hover:underline inline-flex items-center gap-1">All news <ArrowRight className="h-3 w-3" /></Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+            {news.map((article, i) => (
+              <Link key={article.id} to={`/news/${article.id}`} className="block group">
+                <article className="rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all p-3.5 h-full">
+                  <div className="flex items-center gap-1.5 mb-2">
+                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
+                    <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
+                      <Clock className="h-2.5 w-2.5" />
+                      {article.read_time}
+                    </span>
+                  </div>
+                  <h3 className="text-xs font-semibold leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">{article.title}</h3>
+                  <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{article.summary}</p>
+                  <p className="text-[10px] text-muted-foreground mt-2">
+                    {article.source && `${article.source} · `}
+                    {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                  </p>
+                </article>
+              </Link>
+            ))}
+          </div>
+        </div>
       )}
 
       {/* Disclaimer */}
