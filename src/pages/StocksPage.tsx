@@ -182,9 +182,6 @@ const StocksPage = () => {
     <div className="min-h-screen">
       <div className="container py-8">
         <div className="mb-6">
-          <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
-            <ArrowLeft className="h-4 w-4" /> Back to Home
-          </Link>
           <h1 className="text-2xl font-bold text-foreground">Nairobi Securities Exchange</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Track NSE-listed stock prices, volumes, and daily performance.
