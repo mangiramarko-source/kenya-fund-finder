@@ -50,7 +50,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
       {variant === "topbar" ? (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-3 w-full px-4 py-2 rounded-full bg-muted/60 border border-border text-muted-foreground text-sm hover:bg-muted/80 hover:border-accent/30 transition-all"
+          className="flex items-center gap-3 w-full px-4 py-1 rounded-lg bg-muted/60 border border-border text-muted-foreground text-sm hover:bg-muted/80 hover:border-accent/30 transition-all"
         >
           <Search className="h-4 w-4 shrink-0" />
           <span className="flex-1 text-left text-xs">Search funds, stocks, news…</span>
