@@ -249,9 +249,9 @@ const ComparePage = () => {
       )}
 
       {/* Disclaimer */}
-      <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          <strong>Disclaimer:</strong> {getDisclaimer(activeType)}
+      <div className="mt-8 p-3 rounded-lg bg-muted/30 border border-border/40">
+        <p className="text-[10px] text-muted-foreground leading-relaxed">
+          <strong className="text-foreground/70">Disclaimer:</strong> {getDisclaimer(activeType)}
         </p>
       </div>
     </div>
