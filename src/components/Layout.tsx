@@ -4,7 +4,6 @@ import Footer from "./Footer";
 import CookieConsent from "./CookieConsent";
 import SkipToContent from "./SkipToContent";
 import CurrencyTicker from "./CurrencyTicker";
-import DesktopSidebar from "./DesktopSidebar";
 import { usePageView } from "@/hooks/usePageView";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -13,18 +12,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const showTicker = pathname === "/";
 
   return (
-    <div className="flex min-h-screen font-body">
+    <div className="flex min-h-screen flex-col font-body">
       <SkipToContent />
-      {/* Desktop sidebar */}
-      <DesktopSidebar />
-      {/* Main column */}
-      <div className="flex flex-col flex-1 min-w-0">
-        <Navbar />
-        {showTicker && <CurrencyTicker />}
-        <main id="main-content" className="flex-1">{children}</main>
-        <Footer />
-        <CookieConsent />
-      </div>
+      <Navbar />
+      {showTicker && <CurrencyTicker />}
+      <main id="main-content" className="flex-1">{children}</main>
+      <Footer />
+      <CookieConsent />
     </div>
   );
 };
