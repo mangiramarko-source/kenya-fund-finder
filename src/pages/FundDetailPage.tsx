@@ -142,13 +142,13 @@ const FundDetailPage = () => {
     : null;
 
   return (
-    <div className="container py-6 sm:py-10 max-w-5xl">
+    <div className="container py-6 sm:py-8 max-w-5xl">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-6">
+      <nav className="flex items-center gap-1.5 text-[10px] text-muted-foreground mb-5">
         <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-        <span>/</span>
+        <span className="text-muted-foreground/40">/</span>
         <Link to="/" className="hover:text-foreground transition-colors">{FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type}</Link>
-        <span>/</span>
+        <span className="text-muted-foreground/40">/</span>
         <span className="text-foreground font-medium truncate max-w-[200px]">{fund.name}</span>
       </nav>
 
