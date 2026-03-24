@@ -15,10 +15,11 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import {
   TrendingUp, TrendingDown, Minus, Bell, BellPlus, Plus,
   Settings2, X, Star, Search, Activity, Eye, Check,
-  BarChart3, DollarSign, Gem, LineChart, LayoutDashboard,
+  BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
+  Landmark, ArrowRight,
 } from "lucide-react";
 import {
-  AreaChart, Area, XAxis, YAxis, Tooltip, ResponsiveContainer,
+  AreaChart, Area, XAxis, YAxis, ResponsiveContainer,
 } from "recharts";
 import { toast } from "sonner";
 import { fetchFunds, type FundFromDB } from "@/lib/api";
@@ -32,6 +33,7 @@ const SECTIONS = [
   { id: "fx", label: "FX Rates", icon: DollarSign, description: "Currency exchange rates" },
   { id: "commodities", label: "Commodities", icon: Gem, description: "Gold, oil, crypto & more" },
   { id: "money_market", label: "Money Market", icon: BarChart3, description: "Fund yields & rates" },
+  { id: "fixed_income", label: "Fixed Income", icon: Landmark, description: "Fixed income fund yields" },
 ] as const;
 
 /* ─── Change Indicator ─── */
@@ -109,7 +111,7 @@ const CustomizeDialog = ({
   const filteredStocks = allStocks.filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.symbol.toLowerCase().includes(search.toLowerCase()));
   const filteredRates = allRates.filter(r => !search || r.currency_code.toLowerCase().includes(search.toLowerCase()) || r.currency_name.toLowerCase().includes(search.toLowerCase()));
   const filteredCommodities = allCommodities.filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.symbol.toLowerCase().includes(search.toLowerCase()));
-  const filteredFunds = allFunds.filter(f => f.fund_type === "money_market").filter(f => !search || f.name.toLowerCase().includes(search.toLowerCase()));
+  const filteredFunds = allFunds.filter(f => !search || f.name.toLowerCase().includes(search.toLowerCase()));
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -148,21 +150,17 @@ const CustomizeDialog = ({
               <Input placeholder="Search stocks, currencies, commodities, funds…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
             </div>
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-              {/* Stocks */}
               {filteredStocks.length > 0 && (
                 <AssetGroup label="Stocks" items={filteredStocks.map(s => ({ id: s.id, name: s.name, sub: s.symbol, watched: isWatched("stock", s.id) }))} onToggle={(id, name) => onToggleAsset("stock", id, name)} />
               )}
-              {/* FX */}
               {filteredRates.length > 0 && (
                 <AssetGroup label="FX Rates" items={filteredRates.map(r => ({ id: r.id, name: `${r.currency_code}/KES`, sub: r.currency_name, watched: isWatched("currency", r.id) }))} onToggle={(id, name) => onToggleAsset("currency", id, name)} />
               )}
-              {/* Commodities */}
               {filteredCommodities.length > 0 && (
                 <AssetGroup label="Commodities" items={filteredCommodities.map(c => ({ id: c.id, name: c.name, sub: c.symbol, watched: isWatched("commodity", c.id) }))} onToggle={(id, name) => onToggleAsset("commodity", id, name)} />
               )}
-              {/* Funds */}
               {filteredFunds.length > 0 && (
-                <AssetGroup label="Money Market Funds" items={filteredFunds.map(f => ({ id: f.id, name: f.name, sub: f.manager, watched: isWatched("fund", f.id) }))} onToggle={(id, name) => onToggleAsset("fund", id, name)} />
+                <AssetGroup label="Funds" items={filteredFunds.map(f => ({ id: f.id, name: f.name, sub: `${f.manager} · ${f.fund_type.replace("_", " ")}`, watched: isWatched("fund", f.id) }))} onToggle={(id, name) => onToggleAsset("fund", id, name)} />
               )}
             </div>
           </div>
@@ -209,6 +207,31 @@ const MiniChart = ({ data, color = "hsl(var(--accent))" }: { data: { snapshot_da
   );
 };
 
+/* ─── Highlight Card ─── */
+const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color }: {
+  icon: any; label: string; name: string; value: string; sub?: string;
+  change?: React.ReactNode; linkTo?: string; color?: string;
+}) => (
+  <div className="rounded-xl border border-border bg-card p-4 hover:border-accent/30 transition-colors group">
+    <div className="flex items-center gap-2 mb-2">
+      <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${color || "bg-primary/10"}`}>
+        <Icon className="h-3.5 w-3.5 text-primary" />
+      </div>
+      <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+    </div>
+    <p className="text-sm font-bold text-foreground truncate" title={name}>{name}</p>
+    <p className="text-lg font-bold text-foreground tabular-nums mt-0.5">{value}</p>
+    <div className="flex items-center justify-between mt-1.5">
+      <div>{change || (sub && <span className="text-[10px] text-muted-foreground">{sub}</span>)}</div>
+      {linkTo && (
+        <Link to={linkTo} className="text-[10px] text-accent hover:underline inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          View <ArrowRight className="h-3 w-3" />
+        </Link>
+      )}
+    </div>
+  </div>
+);
+
 /* ─── Main Page ─── */
 const OverviewPage = () => {
   useDocumentTitle("My Overview | Kenya Fund Finder", "Your personalized market dashboard.");
@@ -224,7 +247,6 @@ const OverviewPage = () => {
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
 
-  // Alert dialog
   const [alertDialog, setAlertDialog] = useState<{
     open: boolean; assetType: "stock" | "currency" | "commodity";
     assetId: string; assetName: string; currentPrice: number; unit?: string;
@@ -238,7 +260,6 @@ const OverviewPage = () => {
       .then(({ data }) => setRateHistory(((data as any) || []).map((h: any) => ({ ...h, rate: Number(h.rate) }))));
   }, []);
 
-  // Fetch watchlist
   const fetchWatchlist = useCallback(async () => {
     if (!user) { setWatchlist([]); setWatchlistLoading(false); return; }
     const { data } = await supabase.from("user_watchlist" as any).select("*").eq("user_id", user.id).order("sort_order");
@@ -248,7 +269,6 @@ const OverviewPage = () => {
 
   useEffect(() => { fetchWatchlist(); }, [fetchWatchlist]);
 
-  // Toggle helpers
   const toggleSection = async (sectionId: string, label: string) => {
     if (!user) { navigate("/auth"); return; }
     const existing = watchlist.find(w => w.item_type === "section" && w.item_id === sectionId);
@@ -276,7 +296,7 @@ const OverviewPage = () => {
     setAlertDialog({ open: true, assetType, assetId, assetName, currentPrice, unit });
   };
 
-  // Derived: what to show
+  // Derived watchlist data
   const enabledSections = useMemo(() => watchlist.filter(w => w.item_type === "section").map(w => w.item_id), [watchlist]);
   const watchedStockIds = useMemo(() => watchlist.filter(w => w.item_type === "stock").map(w => w.item_id), [watchlist]);
   const watchedCurrencyIds = useMemo(() => watchlist.filter(w => w.item_type === "currency").map(w => w.item_id), [watchlist]);
@@ -288,36 +308,40 @@ const OverviewPage = () => {
   const watchedCommoditiesList = useMemo(() => commodities.filter(c => watchedCommodityIds.includes(c.id)), [commodities, watchedCommodityIds]);
   const watchedFunds = useMemo(() => funds.filter(f => watchedFundIds.includes(f.id)), [funds, watchedFundIds]);
 
-  const hasAnything = enabledSections.length > 0 || watchedStockIds.length > 0 || watchedCurrencyIds.length > 0 || watchedCommodityIds.length > 0 || watchedFundIds.length > 0;
+  const hasWatchlist = watchedStocks.length > 0 || watchedRates.length > 0 || watchedCommoditiesList.length > 0 || watchedFunds.length > 0;
+  const hasSections = enabledSections.length > 0;
 
   const loading = marketLoading || fundsLoading || watchlistLoading;
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
-  const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
+
+  // Best performers
+  const bestStock = useMemo(() => stocks.length ? [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [stocks]);
+  const bestMM = useMemo(() => {
+    const mm = funds.filter(f => f.fund_type === "money_market");
+    return mm.length ? [...mm].sort((a, b) => b.annual_yield - a.annual_yield)[0] : null;
+  }, [funds]);
+  const bestFI = useMemo(() => {
+    const fi = funds.filter(f => f.fund_type === "fixed_income");
+    return fi.length ? [...fi].sort((a, b) => b.annual_yield - a.annual_yield)[0] : null;
+  }, [funds]);
+  const bestFXRate = useMemo(() => rates.length ? rates[0] : null, [rates]);
+  const goldCommodity = useMemo(() => commodities.find(c => c.name.toLowerCase().includes("gold")) || null, [commodities]);
+  const silverCommodity = useMemo(() => commodities.find(c => c.name.toLowerCase().includes("silver")) || null, [commodities]);
 
   const mmFunds = useMemo(() => funds.filter(f => f.fund_type === "money_market"), [funds]);
+  const fiFunds = useMemo(() => funds.filter(f => f.fund_type === "fixed_income"), [funds]);
   const bestMMYield = useMemo(() => mmFunds.length ? Math.max(...mmFunds.map(f => f.annual_yield)) : 0, [mmFunds]);
 
-  // Rate history per currency
   const getHistory = (code: string) => rateHistory.filter(h => h.currency_code === code).slice(-30);
+
+  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
+  const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
 
   if (loading) {
     return (
       <div className="px-4 md:px-6 py-6 space-y-6">
         <Skeleton className="h-10 w-64" />
         <Skeleton className="h-6 w-96" />
-        <div className="space-y-4">{[1,2,3].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
-      </div>
-    );
-  }
-
-  // Not logged in
-  if (!user) {
-    return (
-      <div className="px-4 md:px-6 py-16 text-center max-w-lg mx-auto">
-        <LayoutDashboard className="h-16 w-16 mx-auto text-muted-foreground/40 mb-4" />
-        <h1 className="text-xl font-bold text-foreground mb-2">Your Personalized Overview</h1>
-        <p className="text-sm text-muted-foreground mb-6">Sign in to build your custom dashboard — choose which markets, stocks, currencies, and funds you want to track.</p>
-        <Button onClick={() => navigate("/auth")}>Sign In to Get Started</Button>
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">{[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-36 rounded-xl" />)}</div>
       </div>
     );
   }
@@ -327,38 +351,112 @@ const OverviewPage = () => {
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">{greeting}, {displayName}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">Your personalized market overview</p>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {user ? "Your personalized market overview" : "Best performers across Kenyan markets"}
+          </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setCustomizeOpen(true)}>
-            <Settings2 className="h-3.5 w-3.5" /> Customize
-          </Button>
-          <Button asChild variant="outline" size="sm" className="text-xs h-8 gap-1.5">
-            <Link to="/alerts"><Bell className="h-3.5 w-3.5" />{alerts.length}</Link>
-          </Button>
+          {user && (
+            <>
+              <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setCustomizeOpen(true)}>
+                <Settings2 className="h-3.5 w-3.5" /> Customize
+              </Button>
+              <Button asChild variant="outline" size="sm" className="text-xs h-8 gap-1.5">
+                <Link to="/alerts"><Bell className="h-3.5 w-3.5" />{alerts.length}</Link>
+              </Button>
+            </>
+          )}
+          {!user && (
+            <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => navigate("/auth")}>
+              <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
+            </Button>
+          )}
           <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
             <Activity className="h-3 w-3 text-accent animate-pulse" /><span>Live</span>
           </div>
         </div>
       </div>
 
-      {/* Empty state */}
-      {!hasAnything && (
-        <div className="rounded-xl border-2 border-dashed border-border bg-card/50 p-12 text-center">
-          <Star className="h-12 w-12 mx-auto text-muted-foreground/30 mb-3" />
-          <h2 className="text-lg font-semibold text-foreground mb-2">Your overview is empty</h2>
-          <p className="text-sm text-muted-foreground mb-5 max-w-md mx-auto">
-            Click <strong>Customize</strong> to choose which market sections and specific assets you want to see here.
-          </p>
-          <Button onClick={() => setCustomizeOpen(true)} className="gap-1.5">
-            <Settings2 className="h-4 w-4" /> Customize Dashboard
-          </Button>
+      {/* ─── Market Highlights (always shown) ─── */}
+      <div>
+        <div className="flex items-center gap-2 mb-3">
+          <Crown className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">Market Highlights</h2>
+          <span className="text-[10px] text-muted-foreground">Best performers at a glance</span>
         </div>
-      )}
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+          {bestStock && (
+            <HighlightCard
+              icon={TrendingUp}
+              label="Top Stock"
+              name={`${bestStock.symbol} · ${bestStock.name}`}
+              value={`KES ${bestStock.price.toFixed(2)}`}
+              change={<Change current={bestStock.price} previous={bestStock.previous_price} />}
+              linkTo="/stocks"
+              color="bg-accent/10"
+            />
+          )}
+          {bestMM && (
+            <HighlightCard
+              icon={BarChart3}
+              label="Money Market"
+              name={bestMM.name}
+              value={`${bestMM.annual_yield.toFixed(2)}%`}
+              sub={`Daily: ${bestMM.daily_yield.toFixed(4)}%`}
+              linkTo={`/compare/${bestMM.slug}`}
+              color="bg-primary/10"
+            />
+          )}
+          {bestFI && (
+            <HighlightCard
+              icon={Landmark}
+              label="Fixed Income"
+              name={bestFI.name}
+              value={`${bestFI.annual_yield.toFixed(2)}%`}
+              sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`}
+              linkTo={`/compare/${bestFI.slug}`}
+              color="bg-secondary/80"
+            />
+          )}
+          {bestFXRate && (
+            <HighlightCard
+              icon={DollarSign}
+              label="FX Rate"
+              name={`${bestFXRate.currency_code}/KES`}
+              value={`KES ${Number(bestFXRate.rate).toFixed(2)}`}
+              change={<Change current={Number(bestFXRate.rate)} previous={bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null} />}
+              linkTo="/rates"
+              color="bg-accent/10"
+            />
+          )}
+          {goldCommodity && (
+            <HighlightCard
+              icon={Gem}
+              label="Gold"
+              name={goldCommodity.name}
+              value={`${Number(goldCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${goldCommodity.unit}`}
+              change={<Change current={Number(goldCommodity.price)} previous={goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null} />}
+              linkTo="/commodities"
+              color="bg-[hsl(45,80%,50%)]/10"
+            />
+          )}
+          {silverCommodity && (
+            <HighlightCard
+              icon={Gem}
+              label="Silver"
+              name={silverCommodity.name}
+              value={`${Number(silverCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${silverCommodity.unit}`}
+              change={<Change current={Number(silverCommodity.price)} previous={silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null} />}
+              linkTo="/commodities"
+              color="bg-muted"
+            />
+          )}
+        </div>
+      </div>
 
       {/* ─── Watched Individual Assets ─── */}
-      {(watchedStocks.length > 0 || watchedRates.length > 0 || watchedCommoditiesList.length > 0 || watchedFunds.length > 0) && (
+      {hasWatchlist && (
         <div>
           <div className="flex items-center justify-between mb-3">
             <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Star className="h-4 w-4 text-warning" /> Your Watchlist</h2>
@@ -509,14 +607,40 @@ const OverviewPage = () => {
         </SectionPanel>
       )}
 
-      {/* Disclaimer */}
-      {hasAnything && (
-        <div className="rounded-lg bg-muted/40 border border-border/50 p-3">
-          <p className="text-[10px] leading-relaxed text-muted-foreground">
-            Market data is indicative and may be delayed. Click the bell icon to set price alerts on any asset.
-          </p>
-        </div>
+      {/* ─── Section: Fixed Income ─── */}
+      {enabledSections.includes("fixed_income") && (
+        <SectionPanel title="Fixed Income Funds" icon={Landmark} link="/" linkLabel="All funds" count={fiFunds.length}>
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <table className="w-full text-sm">
+              <thead><tr className="bg-muted/70 text-xs">
+                <th className="text-left px-4 py-2 font-semibold text-muted-foreground">#</th>
+                <th className="text-left px-4 py-2 font-semibold text-muted-foreground">Fund</th>
+                <th className="text-right px-4 py-2 font-semibold text-muted-foreground">Daily</th>
+                <th className="text-right px-4 py-2 font-semibold text-muted-foreground">Annual</th>
+                <th className="text-center px-4 py-2 font-semibold text-muted-foreground">Details</th>
+              </tr></thead>
+              <tbody className="divide-y divide-border">
+                {fiFunds.slice(0, 10).map((f, i) => (
+                  <tr key={f.id} className="hover:bg-muted/30 transition-colors">
+                    <td className="px-4 py-2 text-xs text-muted-foreground tabular-nums">{i + 1}</td>
+                    <td className="px-4 py-2"><span className="text-xs font-semibold text-foreground">{f.name}</span><span className="block text-[10px] text-muted-foreground">{f.manager}</span></td>
+                    <td className="px-4 py-2 text-right text-xs tabular-nums font-medium text-foreground">{f.daily_yield.toFixed(4)}%</td>
+                    <td className="px-4 py-2 text-right"><span className="text-xs tabular-nums font-bold text-foreground">{f.annual_yield.toFixed(2)}%</span></td>
+                    <td className="px-4 py-2 text-center"><Link to={`/compare/${f.slug}`} className="text-[10px] text-accent hover:underline inline-flex items-center gap-0.5"><Eye className="h-3 w-3" /> View</Link></td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </SectionPanel>
       )}
+
+      {/* Disclaimer */}
+      <div className="rounded-lg bg-muted/40 border border-border/50 p-3">
+        <p className="text-[10px] leading-relaxed text-muted-foreground">
+          Market data is indicative and may be delayed. {user ? "Click the bell icon to set price alerts on any asset." : "Sign in to set price alerts and customize your dashboard."}
+        </p>
+      </div>
 
       {/* Dialogs */}
       <QuickAlertDialog open={alertDialog.open} onClose={() => setAlertDialog(prev => ({ ...prev, open: false }))} assetType={alertDialog.assetType} assetId={alertDialog.assetId} assetName={alertDialog.assetName} currentPrice={alertDialog.currentPrice} unit={alertDialog.unit} />
@@ -565,7 +689,7 @@ const SectionPanel = ({ title, icon: Icon, link, linkLabel, count, sub, children
         <Badge variant="secondary" className="text-[10px] h-5">{count}</Badge>
         {sub && <span className="text-[10px] text-muted-foreground">{sub}</span>}
       </div>
-      <Link to={link} className="text-[10px] text-accent hover:underline inline-flex items-center gap-1">{linkLabel} <TrendingUp className="h-3 w-3" /></Link>
+      <Link to={link} className="text-[10px] text-accent hover:underline inline-flex items-center gap-1">{linkLabel} <ArrowRight className="h-3 w-3" /></Link>
     </div>
     {children}
   </div>
