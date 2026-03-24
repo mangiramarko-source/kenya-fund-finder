@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
+import NotificationBell from "@/components/alerts/NotificationBell";
 
 const navLinks = [
   { to: "/", label: "Funds", icon: BarChart3 },
