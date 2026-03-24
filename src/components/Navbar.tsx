@@ -141,6 +141,9 @@ const Navbar = () => {
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/alerts")} className="gap-2 cursor-pointer">
+                    <Bell className="h-4 w-4" /> My Alerts
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2 cursor-pointer">
                     <Settings className="h-4 w-4" /> Profile Settings
                   </DropdownMenuItem>
