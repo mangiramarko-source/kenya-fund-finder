@@ -1,11 +1,12 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, Search, ArrowUpDown } from "lucide-react";
+import { ArrowLeft, TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface Stock {
   id: string;
@@ -23,6 +24,11 @@ interface Stock {
   pe_ratio: number | null;
   dividend_yield: number | null;
   updated_at: string;
+}
+
+interface PriceHistory {
+  snapshot_date: string;
+  price: number;
 }
 
 type SortKey = "symbol" | "price" | "day_change_percent" | "volume" | "market_cap" | "dividend_yield";
@@ -59,22 +65,20 @@ const ChangeCell = ({ change, pct }: { change: number; pct: number }) => {
   return <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]"><Minus className="h-3 w-3" /> 0.00%</span>;
 };
 
-const SECTORS = ["All", "Banking", "Telecommunications", "Manufacturing", "Insurance", "Energy"] as const;
-
 const StocksPage = () => {
   useDocumentTitle(
     "NSE Stocks – Nairobi Securities Exchange | Kenya Fund Finder",
-    "Track Nairobi Securities Exchange (NSE) stock prices, market cap, volumes, and performance for top Kenyan listed companies.",
+    "Track Nairobi Securities Exchange (NSE) stock prices, market cap, volumes, and performance.",
     {
       title: "NSE Stocks – Nairobi Securities Exchange | Kenya Fund Finder",
-      description: "Track Nairobi Securities Exchange (NSE) stock prices, volumes, and daily performance.",
+      description: "Track NSE stock prices, volumes, and daily performance.",
     }
   );
   useJsonLd({
     "@context": "https://schema.org",
     "@type": "WebPage",
     name: "NSE Stocks – Kenya Fund Finder",
-    description: "Track Nairobi Securities Exchange (NSE) stock prices, market cap, and daily performance.",
+    description: "Track Nairobi Securities Exchange stock prices and performance.",
     url: "https://kenyafundfinder.com/stocks",
   });
 
@@ -84,9 +88,12 @@ const StocksPage = () => {
   const [sector, setSector] = useState("All");
   const [sortKey, setSortKey] = useState<SortKey>("market_cap");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [history, setHistory] = useState<Record<string, PriceHistory[]>>({});
+  const [historyLoading, setHistoryLoading] = useState<string | null>(null);
 
   useEffect(() => {
-    const fetch = async () => {
+    const fetchStocks = async () => {
       const { data } = await supabase
         .from("stocks_public")
         .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, updated_at")
@@ -108,15 +115,32 @@ const StocksPage = () => {
       );
       setLoading(false);
     };
-    fetch();
-
-    const channel = supabase
-      .channel("stocks-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => fetch())
+    fetchStocks();
+    const ch = supabase
+      .channel("stocks-page-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => fetchStocks())
       .subscribe();
-
-    return () => { supabase.removeChannel(channel); };
+    return () => { supabase.removeChannel(ch); };
   }, []);
+
+  const toggleExpand = async (stockId: string) => {
+    if (expanded === stockId) { setExpanded(null); return; }
+    setExpanded(stockId);
+    if (!history[stockId]) {
+      setHistoryLoading(stockId);
+      const { data } = await supabase
+        .from("stock_price_history" as any)
+        .select("price, snapshot_date")
+        .eq("stock_id", stockId)
+        .order("snapshot_date", { ascending: true })
+        .limit(90);
+      setHistory((prev) => ({
+        ...prev,
+        [stockId]: ((data as any) || []).map((d: any) => ({ snapshot_date: d.snapshot_date, price: Number(d.price) })),
+      }));
+      setHistoryLoading(null);
+    }
+  };
 
   const sectors = useMemo(() => {
     const s = new Set(stocks.map((st) => st.sector));
@@ -157,10 +181,7 @@ const StocksPage = () => {
     <div className="min-h-screen">
       <div className="container py-8">
         <div className="mb-6">
-          <Link
-            to="/"
-            className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4"
-          >
+          <Link to="/" className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors mb-4">
             <ArrowLeft className="h-4 w-4" /> Back to Home
           </Link>
           <h1 className="text-2xl font-bold text-foreground">Nairobi Securities Exchange</h1>
@@ -177,22 +198,10 @@ const StocksPage = () => {
         {/* Summary stats */}
         {!loading && stocks.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <div className="rounded-xl border border-border bg-card p-3">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Stocks</p>
-              <p className="text-xl font-bold text-foreground tabular-nums">{stocks.length}</p>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-3">
-              <p className="text-[10px] text-accent uppercase tracking-wider">Gainers</p>
-              <p className="text-xl font-bold text-accent tabular-nums">{gainers}</p>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-3">
-              <p className="text-[10px] text-destructive uppercase tracking-wider">Losers</p>
-              <p className="text-xl font-bold text-destructive tabular-nums">{losers}</p>
-            </div>
-            <div className="rounded-xl border border-border bg-card p-3">
-              <p className="text-[10px] text-muted-foreground uppercase tracking-wider">Unchanged</p>
-              <p className="text-xl font-bold text-muted-foreground tabular-nums">{unchanged}</p>
-            </div>
+            <StatCard label="Stocks" value={String(stocks.length)} />
+            <StatCard label="Gainers" value={String(gainers)} color="text-accent" />
+            <StatCard label="Losers" value={String(losers)} color="text-destructive" />
+            <StatCard label="Unchanged" value={String(unchanged)} />
           </div>
         )}
 
@@ -246,44 +255,20 @@ const StocksPage = () => {
                       <SortHeader label="Change" sortKey="day_change_percent" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
                       <SortHeader label="Volume" sortKey="volume" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
                       <SortHeader label="Mkt Cap" sortKey="market_cap" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
-                      <th className="text-right px-3 py-3 font-semibold text-muted-foreground">52W Range</th>
-                      <SortHeader label="Div Yield" sortKey="dividend_yield" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
+                      <th className="w-10"></th>
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map((s, i) => (
-                      <tr key={s.id} className="border-t border-border hover:bg-muted/30 transition-colors">
-                        <td className="px-3 py-3 text-muted-foreground text-xs tabular-nums">{i + 1}</td>
-                        <td className="px-3 py-3 font-bold text-foreground tabular-nums">{s.symbol}</td>
-                        <td className="px-3 py-3 text-foreground text-xs max-w-[180px] truncate">{s.name}</td>
-                        <td className="px-3 py-3">
-                          <Badge variant="secondary" className="text-[10px] font-medium">{s.sector}</Badge>
-                        </td>
-                        <td className="px-3 py-3 text-right font-semibold text-foreground tabular-nums">
-                          {formatNumber(s.price)}
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <ChangeCell change={s.day_change} pct={s.day_change_percent} />
-                        </td>
-                        <td className="px-3 py-3 text-right text-muted-foreground text-xs tabular-nums">
-                          {formatVolume(s.volume)}
-                        </td>
-                        <td className="px-3 py-3 text-right text-muted-foreground text-xs tabular-nums">
-                          {formatMarketCap(s.market_cap)}
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          {s.year_low != null && s.year_high != null ? (
-                            <span className="text-[10px] text-muted-foreground tabular-nums">
-                              {formatNumber(s.year_low)} – {formatNumber(s.year_high)}
-                            </span>
-                          ) : "—"}
-                        </td>
-                        <td className="px-3 py-3 text-right text-xs tabular-nums">
-                          {s.dividend_yield != null ? (
-                            <span className="text-accent font-semibold">{formatNumber(s.dividend_yield)}%</span>
-                          ) : "—"}
-                        </td>
-                      </tr>
+                      <StockRow
+                        key={s.id}
+                        stock={s}
+                        index={i}
+                        isExpanded={expanded === s.id}
+                        onToggle={() => toggleExpand(s.id)}
+                        history={history[s.id]}
+                        historyLoading={historyLoading === s.id}
+                      />
                     ))}
                   </tbody>
                 </table>
@@ -307,35 +292,15 @@ const StocksPage = () => {
               <p className="text-sm text-muted-foreground">No stocks found</p>
             </div>
           ) : (
-            filtered.map((s, i) => (
-              <div key={s.id} className="rounded-xl border border-border bg-card p-3.5">
-                <div className="flex items-start justify-between mb-2">
-                  <div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-foreground">{s.symbol}</span>
-                      <Badge variant="secondary" className="text-[9px]">{s.sector}</Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground mt-0.5">{s.name}</p>
-                  </div>
-                  <ChangeCell change={s.day_change} pct={s.day_change_percent} />
-                </div>
-                <div className="grid grid-cols-3 gap-2">
-                  <div className="bg-muted/40 rounded-lg px-2 py-2 text-center">
-                    <p className="text-[9px] text-muted-foreground">Price</p>
-                    <p className="font-bold text-foreground text-sm tabular-nums">KSh {formatNumber(s.price)}</p>
-                  </div>
-                  <div className="bg-muted/40 rounded-lg px-2 py-2 text-center">
-                    <p className="text-[9px] text-muted-foreground">Volume</p>
-                    <p className="font-semibold text-muted-foreground text-sm tabular-nums">{formatVolume(s.volume)}</p>
-                  </div>
-                  <div className="bg-muted/40 rounded-lg px-2 py-2 text-center">
-                    <p className="text-[9px] text-muted-foreground">Div Yield</p>
-                    <p className="font-semibold text-accent text-sm tabular-nums">
-                      {s.dividend_yield != null ? `${formatNumber(s.dividend_yield)}%` : "—"}
-                    </p>
-                  </div>
-                </div>
-              </div>
+            filtered.map((s) => (
+              <MobileStockCard
+                key={s.id}
+                stock={s}
+                isExpanded={expanded === s.id}
+                onToggle={() => toggleExpand(s.id)}
+                history={history[s.id]}
+                historyLoading={historyLoading === s.id}
+              />
             ))
           )}
         </div>
@@ -343,7 +308,7 @@ const StocksPage = () => {
         <div className="mt-6 rounded-lg bg-muted/40 border border-border/50 p-3">
           <p className="text-[10px] leading-relaxed text-muted-foreground">
             Stock prices shown are indicative and may be delayed. Data is sourced from the Nairobi Securities Exchange (NSE).
-            This information is for educational purposes only and does not constitute investment advice.
+            Click on any stock to view price history and detailed metrics. This information is for educational purposes only.
           </p>
         </div>
       </div>
@@ -351,7 +316,202 @@ const StocksPage = () => {
   );
 };
 
-/* ─── Sortable Header ─── */
+/* ─── Stock Detail Panel ─── */
+const StockDetailPanel = ({
+  stock: s, history, historyLoading,
+}: {
+  stock: Stock; history?: PriceHistory[]; historyLoading: boolean;
+}) => {
+  const yearRange = s.year_low != null && s.year_high != null;
+  const pricePosition = yearRange
+    ? ((s.price - s.year_low!) / (s.year_high! - s.year_low!)) * 100
+    : 0;
+
+  return (
+    <div className="p-4">
+      {/* Key Metrics */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <DetailBox label="Price" value={`KSh ${formatNumber(s.price)}`} />
+        <DetailBox label="Previous" value={s.previous_price != null ? `KSh ${formatNumber(s.previous_price)}` : "—"} />
+        <DetailBox label="Day Change" value={`${s.day_change > 0 ? "+" : ""}${formatNumber(s.day_change)}`} color={s.day_change > 0 ? "text-accent" : s.day_change < 0 ? "text-destructive" : undefined} />
+        <DetailBox label="Volume" value={formatVolume(s.volume)} />
+      </div>
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+        <DetailBox label="Market Cap" value={formatMarketCap(s.market_cap)} />
+        <DetailBox label="P/E Ratio" value={s.pe_ratio != null ? formatNumber(s.pe_ratio) : "—"} />
+        <DetailBox label="Div Yield" value={s.dividend_yield != null ? `${formatNumber(s.dividend_yield)}%` : "—"} color={s.dividend_yield != null ? "text-accent" : undefined} />
+        <DetailBox label="Sector" value={s.sector} />
+      </div>
+
+      {/* 52-Week Range Bar */}
+      {yearRange && (
+        <div className="rounded-lg border border-border bg-card p-3 mb-4">
+          <p className="text-xs font-semibold text-foreground mb-2">52-Week Range</p>
+          <div className="flex items-center gap-3">
+            <span className="text-[10px] text-muted-foreground tabular-nums w-16 text-right">{formatNumber(s.year_low!)}</span>
+            <div className="flex-1 relative h-2 bg-muted rounded-full">
+              <div
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive to-accent rounded-full"
+                style={{ width: "100%" }}
+              />
+              <div
+                className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-foreground rounded-full border-2 border-card shadow-sm"
+                style={{ left: `${Math.min(Math.max(pricePosition, 0), 100)}%`, transform: "translate(-50%, -50%)" }}
+              />
+            </div>
+            <span className="text-[10px] text-muted-foreground tabular-nums w-16">{formatNumber(s.year_high!)}</span>
+          </div>
+          <p className="text-center text-[10px] text-muted-foreground mt-1">Current: KSh {formatNumber(s.price)}</p>
+        </div>
+      )}
+
+      {/* Price History Chart */}
+      <div className="rounded-lg border border-border bg-card p-3">
+        <div className="flex items-center gap-2 mb-3">
+          <BarChart3 className="h-4 w-4 text-muted-foreground" />
+          <span className="text-xs font-semibold text-foreground">Price History (Last 90 Days)</span>
+        </div>
+        {historyLoading ? (
+          <div className="h-[200px] flex items-center justify-center">
+            <Skeleton className="h-full w-full rounded-lg" />
+          </div>
+        ) : !history || history.length === 0 ? (
+          <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+            No historical data available yet
+          </div>
+        ) : (
+          <ResponsiveContainer width="100%" height={200}>
+            <LineChart data={history}>
+              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <XAxis
+                dataKey="snapshot_date"
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                tickFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+              />
+              <YAxis
+                domain={["auto", "auto"]}
+                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                width={55}
+                tickFormatter={(v) => v.toFixed(1)}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "hsl(var(--card))",
+                  border: "1px solid hsl(var(--border))",
+                  borderRadius: "8px",
+                  fontSize: "12px",
+                }}
+                labelFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
+                formatter={(value: number) => [`KSh ${formatNumber(value)}`, "Price"]}
+              />
+              <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+            </LineChart>
+          </ResponsiveContainer>
+        )}
+      </div>
+
+      <p className="text-[10px] text-muted-foreground mt-2">
+        Last updated: {new Date(s.updated_at).toLocaleString("en-KE")}
+      </p>
+    </div>
+  );
+};
+
+/* ─── Desktop Row ─── */
+const StockRow = ({
+  stock: s, index, isExpanded, onToggle, history, historyLoading,
+}: {
+  stock: Stock; index: number; isExpanded: boolean; onToggle: () => void;
+  history?: PriceHistory[]; historyLoading: boolean;
+}) => (
+  <>
+    <tr className="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer" onClick={onToggle}>
+      <td className="px-3 py-3 text-muted-foreground text-xs tabular-nums">{index + 1}</td>
+      <td className="px-3 py-3 font-bold text-foreground tabular-nums">{s.symbol}</td>
+      <td className="px-3 py-3 text-foreground text-xs max-w-[180px] truncate">{s.name}</td>
+      <td className="px-3 py-3">
+        <Badge variant="secondary" className="text-[10px] font-medium">{s.sector}</Badge>
+      </td>
+      <td className="px-3 py-3 text-right font-semibold text-foreground tabular-nums">{formatNumber(s.price)}</td>
+      <td className="px-3 py-3 text-right"><ChangeCell change={s.day_change} pct={s.day_change_percent} /></td>
+      <td className="px-3 py-3 text-right text-muted-foreground text-xs tabular-nums">{formatVolume(s.volume)}</td>
+      <td className="px-3 py-3 text-right text-muted-foreground text-xs tabular-nums">{formatMarketCap(s.market_cap)}</td>
+      <td className="px-3 py-3 text-center">
+        {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+      </td>
+    </tr>
+    {isExpanded && (
+      <tr className="border-t border-border bg-muted/20">
+        <td colSpan={9}>
+          <StockDetailPanel stock={s} history={history} historyLoading={historyLoading} />
+        </td>
+      </tr>
+    )}
+  </>
+);
+
+/* ─── Mobile Card ─── */
+const MobileStockCard = ({
+  stock: s, isExpanded, onToggle, history, historyLoading,
+}: {
+  stock: Stock; isExpanded: boolean; onToggle: () => void;
+  history?: PriceHistory[]; historyLoading: boolean;
+}) => (
+  <div className="rounded-xl border border-border bg-card">
+    <div className="p-3.5 cursor-pointer" onClick={onToggle}>
+      <div className="flex items-start justify-between mb-2">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-foreground">{s.symbol}</span>
+            <Badge variant="secondary" className="text-[9px]">{s.sector}</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5">{s.name}</p>
+        </div>
+        <div className="flex items-center gap-2">
+          <ChangeCell change={s.day_change} pct={s.day_change_percent} />
+          {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+        </div>
+      </div>
+      <div className="grid grid-cols-3 gap-2">
+        <div className="bg-muted/40 rounded-lg px-2 py-2 text-center">
+          <p className="text-[9px] text-muted-foreground">Price</p>
+          <p className="font-bold text-foreground text-sm tabular-nums">KSh {formatNumber(s.price)}</p>
+        </div>
+        <div className="bg-muted/40 rounded-lg px-2 py-2 text-center">
+          <p className="text-[9px] text-muted-foreground">Volume</p>
+          <p className="font-semibold text-muted-foreground text-sm tabular-nums">{formatVolume(s.volume)}</p>
+        </div>
+        <div className="bg-muted/40 rounded-lg px-2 py-2 text-center">
+          <p className="text-[9px] text-muted-foreground">Div Yield</p>
+          <p className="font-semibold text-accent text-sm tabular-nums">
+            {s.dividend_yield != null ? `${formatNumber(s.dividend_yield)}%` : "—"}
+          </p>
+        </div>
+      </div>
+    </div>
+    {isExpanded && (
+      <div className="border-t border-border">
+        <StockDetailPanel stock={s} history={history} historyLoading={historyLoading} />
+      </div>
+    )}
+  </div>
+);
+
+/* ─── Shared components ─── */
+const StatCard = ({ label, value, color }: { label: string; value: string; color?: string }) => (
+  <div className="rounded-xl border border-border bg-card p-3">
+    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
+    <p className={`text-xl font-bold tabular-nums ${color || "text-foreground"}`}>{value}</p>
+  </div>
+);
+
+const DetailBox = ({ label, value, color }: { label: string; value: string; color?: string }) => (
+  <div className="bg-muted/40 rounded-lg px-3 py-2">
+    <p className="text-[10px] text-muted-foreground mb-0.5">{label}</p>
+    <p className={`font-semibold text-sm tabular-nums ${color || "text-foreground"}`}>{value}</p>
+  </div>
+);
+
 const SortHeader = ({
   label, sortKey, currentKey, dir, onClick, align = "left",
 }: {
@@ -366,9 +526,7 @@ const SortHeader = ({
   >
     <span className="inline-flex items-center gap-1">
       {label}
-      {currentKey === sortKey && (
-        <ArrowUpDown className="h-3 w-3 text-accent" />
-      )}
+      {currentKey === sortKey && <ArrowUpDown className="h-3 w-3 text-accent" />}
     </span>
   </th>
 );
@@ -387,11 +545,7 @@ const StockTableSkeleton = () => (
         <Skeleton className="h-4 w-5" />
         <Skeleton className="h-4 w-14" />
         <Skeleton className="h-4 w-32" />
-        <Skeleton className="h-4 w-20" />
         <Skeleton className="h-4 w-16 ml-auto" />
-        <Skeleton className="h-4 w-14" />
-        <Skeleton className="h-4 w-12" />
-        <Skeleton className="h-4 w-16" />
       </div>
     ))}
   </div>
