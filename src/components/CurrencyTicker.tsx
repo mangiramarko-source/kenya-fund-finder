@@ -97,9 +97,10 @@ const CurrencyTicker = () => {
           const isUp = diff != null && diff > 0;
           const isDown = diff != null && diff < 0;
 
-          const prevPrefix = prevItem ? prevItem.id.split("-")[0] : null;
+          const prev = i > 0 ? doubled[i - 1] : null;
+          const prevPrefix = prev ? prev.id.split("-")[0] : null;
           const curPrefix = item.id.split("-")[0];
-          const showSep = prevItem && prevPrefix !== curPrefix;
+          const showSep = prev && prevPrefix !== curPrefix;
 
           return (
             <div
