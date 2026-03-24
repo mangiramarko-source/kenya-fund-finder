@@ -21,7 +21,7 @@ const categoryLabels: Record<MarketCategory, string> = {
   commodities: "Commodities",
   stocks: "NSE Stocks",
 };
-const categoryOrder: MarketCategory[] = ["fx_rates", "commodities", "stocks"];
+const categoryOrder: MarketCategory[] = ["fx_rates", "commodities"];
 
 /* ─── Change Indicator ─── */
 const ChangeIndicator = ({ current, previous }: { current: number; previous: number | null }) => {
