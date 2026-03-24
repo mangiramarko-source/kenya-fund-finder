@@ -64,7 +64,7 @@ const DesktopTopBar = () => {
         {user ? (
           <div className="flex items-center gap-1.5">
             {isAdmin && (
-              <Link to="/admin" className="text-[10px] font-semibold text-accent hover:underline flex items-center gap-1 mr-1">
+              <Link to="/admin" className="text-[10px] font-semibold text-accent hover:underline flex items-center gap-1 mr-1 px-2 py-1 rounded-lg bg-accent/10">
                 <Shield className="h-3 w-3" /> Admin
               </Link>
             )}
