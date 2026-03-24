@@ -369,7 +369,7 @@ const GridSkeleton = () => (
 );
 
 /* ─── Main Grid ─── */
-const FundGrid = ({ funds, snapshots, rates, commodities, loading, marketLoading }: FundGridProps) => {
+const FundGrid = ({ funds, snapshots, rates, commodities, stocks, loading, marketLoading }: FundGridProps) => {
   if (loading) return <GridSkeleton />;
 
   const grouped: Record<string, FundFromDB[]> = {};
@@ -387,11 +387,13 @@ const FundGrid = ({ funds, snapshots, rates, commodities, loading, marketLoading
   type CardDef =
     | { type: "fund"; category: string }
     | { type: "rates" }
-    | { type: "commodities" };
+    | { type: "commodities" }
+    | { type: "stocks" };
 
   const cards: CardDef[] = [
-    ...fundCategories.map((c) => ({ type: "fund" as const, category: c })),
+    ...(stocks.length > 0 ? [{ type: "stocks" as const }] : []),
     ...(rates.length > 0 ? [{ type: "rates" as const }] : []),
+    ...fundCategories.map((c) => ({ type: "fund" as const, category: c })),
     ...(commodities.length > 0 ? [{ type: "commodities" as const }] : []),
   ];
 
@@ -405,6 +407,9 @@ const FundGrid = ({ funds, snapshots, rates, commodities, loading, marketLoading
       {rows.map((row, ri) => (
         <div key={ri} className="grid grid-cols-3 gap-5" style={{ alignItems: "stretch" }}>
           {row.map((card) => {
+            if (card.type === "stocks") {
+              return <StocksCard key="stocks" stocks={stocks} />;
+            }
             if (card.type === "fund") {
               return <FundCategoryCard key={card.category} category={card.category} funds={grouped[card.category]} />;
             }
