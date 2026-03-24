@@ -1,7 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   BarChart3, LineChart, Calculator, Newspaper, GraduationCap, Bell,
-  TrendingUp, Search, User, Settings, Shield, LogOut, ChevronLeft, ChevronRight,
+  TrendingUp, Search, User, Settings, Shield, LogOut, ChevronLeft, ChevronRight, LayoutDashboard,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
