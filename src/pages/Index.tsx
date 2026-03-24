@@ -111,8 +111,9 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
     funds.forEach((f) => { counts[f.fund_type] = (counts[f.fund_type] || 0) + 1; });
     counts["fx_rates"] = rates.length;
     counts["commodities"] = commodities.length;
+    counts["stocks"] = stocks.length;
     return counts;
-  }, [funds, rates, commodities]);
+  }, [funds, rates, commodities, stocks]);
 
   const processedFunds = useMemo(() => {
     let result = funds.filter((f) => f.fund_type === selectedCategory);
