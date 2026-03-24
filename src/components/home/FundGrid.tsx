@@ -12,7 +12,7 @@ const categoryLabels: Record<string, string> = {
   bond: "Bond",
 };
 
-const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
+const categoryOrder = ["stocks", "fx_rates", "money_market", "fixed_income", "bond", "balanced", "equity", "commodities"];
 
 const fmtYield = (value: number, unit: string) => {
   if (unit === "%") return `${value}%`;
