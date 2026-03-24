@@ -172,7 +172,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       />
 
       <div className="container py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
+        <div>
           {/* Main area */}
           <div>
             {/* Desktop: unified grid with all fund categories + market data */}
