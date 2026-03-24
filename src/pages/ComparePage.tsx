@@ -125,19 +125,22 @@ const ComparePage = () => {
   }
 
   return (
-    <div className="container py-10 max-w-7xl">
+    <div className="container py-8 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1 flex-wrap">
-          <h1 className="text-2xl md:text-3xl font-bold">Compare Unit Trust Funds</h1>
+          <div className="flex items-center justify-center h-8 w-8 rounded-lg" style={{ background: 'hsl(var(--cat-money-market) / 0.12)' }}>
+            <TrendingUp className="h-4 w-4" style={{ color: 'hsl(var(--cat-money-market))' }} />
+          </div>
+          <h1 className="text-xl md:text-2xl font-bold">Compare Unit Trust Funds</h1>
           {isLive && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-semibold">
-              <Radio className="h-3 w-3 animate-pulse" />
-              Live · Updated Today
+            <span className="inline-flex items-center gap-1.5 px-2 py-0.5 rounded-md bg-accent/10 border border-accent/20 text-accent text-[10px] font-bold uppercase tracking-wider">
+              <Radio className="h-2.5 w-2.5 animate-pulse" />
+              Live
             </span>
           )}
         </div>
-        <p className="text-muted-foreground text-sm md:text-base">
+        <p className="text-muted-foreground text-xs ml-10">
           All funds listed are regulated by the Capital Markets Authority of Kenya.
         </p>
       </div>
