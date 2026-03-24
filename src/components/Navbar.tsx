@@ -71,17 +71,20 @@ const Navbar = () => {
 
   return (
     <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
-      <div className="container flex h-16 items-center justify-between relative">
+      <div className="container flex h-14 items-center justify-between relative">
         {/* Logo */}
-        <Link to="/" className="hidden md:flex items-center gap-2 font-heading text-lg font-bold text-primary shrink-0">
-          <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
-            <TrendingUp className="h-5 w-5" />
+        <Link to="/" className="hidden md:flex items-center gap-2.5 font-heading text-base font-bold text-foreground shrink-0 group">
+          <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent text-accent-foreground transition-transform group-hover:scale-105">
+            <TrendingUp className="h-4 w-4" />
           </div>
-          <span>Kenya Fund Finder</span>
+          <div className="flex flex-col leading-none">
+            <span className="tracking-tight">Kenya Fund Finder</span>
+            <span className="text-[9px] font-normal text-muted-foreground tracking-wider uppercase">Market Intelligence</span>
+          </div>
         </Link>
 
         {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1 bg-muted/60 rounded-full px-1.5 py-1">
+        <nav className="hidden md:flex items-center gap-0.5 bg-muted/50 rounded-lg px-1 py-0.5 border border-border/50">
           {navLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
@@ -89,13 +92,13 @@ const Navbar = () => {
               <Link
                 key={link.to}
                 to={link.to}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-md text-xs font-medium transition-all ${
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/80"
+                    ? "bg-card text-foreground shadow-sm border border-border/50"
+                    : "text-muted-foreground hover:text-foreground hover:bg-card/50"
                 }`}
               >
-                <Icon className="h-4 w-4" />
+                <Icon className="h-3.5 w-3.5" />
                 {link.label}
               </Link>
             );
