@@ -402,4 +402,44 @@ const FundGrid = ({ funds, snapshots, rates, commodities, stocks, loading, marke
   );
 };
 
+/* ─── Mobile Cards: Stocks ─── */
+export const StocksMobileCards = ({ stocks, loading }: { stocks: Stock[]; loading: boolean }) => {
+  if (loading) return (
+    <div className="space-y-2.5">
+      {Array.from({ length: 4 }).map((_, i) => (
+        <div key={i} className="rounded-xl border border-border bg-card p-3.5">
+          <Skeleton className="h-5 w-20 mb-2" />
+          <Skeleton className="h-4 w-40 mb-3" />
+          <Skeleton className="h-12 rounded-lg" />
+        </div>
+      ))}
+    </div>
+  );
+  if (stocks.length === 0) return (
+    <div className="rounded-xl border border-border bg-card text-center py-14">
+      <p className="text-sm text-muted-foreground">No stocks available</p>
+    </div>
+  );
+
+  return (
+    <div className="space-y-2.5">
+      {stocks.map((s) => (
+        <Link key={s.id} to="/stocks" className="block rounded-xl border border-border bg-card p-3.5 hover:bg-muted/30 transition-colors">
+          <div className="flex items-start justify-between mb-2">
+            <div>
+              <span className="font-bold text-foreground">{s.symbol}</span>
+              <span className="block text-xs text-muted-foreground">{s.name}</span>
+            </div>
+            <ChangeIndicator change={s.day_change} pct={s.day_change_percent} />
+          </div>
+          <div className="bg-muted/40 rounded-lg px-3 py-2 text-center">
+            <p className="text-[10px] text-muted-foreground mb-0.5">Price (KSh)</p>
+            <p className="font-bold text-foreground text-lg tabular-nums">{s.price.toFixed(2)}</p>
+          </div>
+        </Link>
+      ))}
+    </div>
+  );
+};
+
 export default FundGrid;
