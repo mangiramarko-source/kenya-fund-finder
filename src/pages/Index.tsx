@@ -276,6 +276,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
               <NewsSidebar news={latestNews} loading={loading} />
               <AdBanner placement="banner" />
             </div>
+          </div>
         </div>
       </div>
     </div>
