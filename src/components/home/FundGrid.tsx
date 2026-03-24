@@ -347,7 +347,7 @@ const StocksCard = ({ stocks }: { stocks: Stock[] }) => {
 
 /* ─── Grid Skeleton ─── */
 const GridSkeleton = () => (
-  <div className="grid grid-cols-3 gap-5">
+  <div className="grid grid-cols-2 lg:grid-cols-3 gap-4">
     {Array.from({ length: 3 }).map((_, i) => (
       <div key={i} className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="bg-muted/60 px-5 py-3 border-b border-border"><Skeleton className="h-4 w-28" /></div>
