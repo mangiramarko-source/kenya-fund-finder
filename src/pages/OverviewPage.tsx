@@ -609,7 +609,7 @@ const OverviewPage = () => {
 
       {/* ─── Section: Fixed Income ─── */}
       {enabledSections.includes("fixed_income") && (
-        <SectionPanel title="Fixed Income Funds" icon={Landmark} link="/" linkLabel="All funds" count={fiFunds.length}>
+        <SectionPanel title="Fixed Income Funds" icon={Landmark} link="/funds" linkLabel="All funds" count={fiFunds.length}>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-sm">
               <thead><tr className="bg-muted/70 text-xs">
