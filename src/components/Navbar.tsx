@@ -106,6 +106,7 @@ const Navbar = () => {
         {/* Desktop right side */}
         <div className="hidden md:flex items-center gap-2">
           <SearchDialog />
+          <NotificationBell />
           <Button
             variant="ghost"
             size="icon"
