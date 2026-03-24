@@ -39,14 +39,29 @@ const ChangeIndicator = ({ current, previous }: { current: number; previous: num
   return <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]"><Minus className="h-3 w-3" /> 0.00%</span>;
 };
 
+export interface Stock {
+  id: string;
+  symbol: string;
+  name: string;
+  sector: string;
+  price: number;
+  previous_price: number | null;
+  day_change: number;
+  day_change_percent: number;
+  volume: number;
+  market_cap: number | null;
+  updated_at: string;
+}
+
 export function useMarketData() {
   const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [commodities, setCommodities] = useState<Commodity[]>([]);
+  const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
 
   const fetchData = async () => {
     setLoading(true);
-    const [ratesRes, commoditiesRes] = await Promise.all([
+    const [ratesRes, commoditiesRes, stocksRes] = await Promise.all([
       supabase
         .from("exchange_rates_public" as any)
         .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
@@ -55,9 +70,14 @@ export function useMarketData() {
         .from("commodities_public" as any)
         .select("id, name, symbol, price, previous_price, unit, updated_at")
         .order("sort_order"),
+      supabase
+        .from("stocks_public" as any)
+        .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, updated_at")
+        .order("sort_order"),
     ]);
     setRates((ratesRes.data as any as ExchangeRate[]) || []);
     setCommodities((commoditiesRes.data as any as Commodity[]) || []);
+    setStocks((stocksRes.data as any as Stock[]) || []);
     setLoading(false);
   };
 
@@ -68,12 +88,13 @@ export function useMarketData() {
       .channel("market-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "exchange_rates" }, () => fetchData())
       .on("postgres_changes", { event: "*", schema: "public", table: "commodities" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => fetchData())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
   }, []);
 
-  return { rates, commodities, loading };
+  return { rates, commodities, stocks, loading };
 }
 
 /* ─── Desktop Table: FX Rates ─── */
