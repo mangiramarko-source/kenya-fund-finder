@@ -174,22 +174,22 @@ const MarketDashboardPage = () => {
         <div className="space-y-4">
           {/* Category tabs + search */}
           <div className="flex items-end justify-between gap-4">
-            <div className="flex gap-1 overflow-x-auto no-scrollbar">
+            <div className="flex gap-1.5 overflow-x-auto no-scrollbar flex-wrap">
               {categoryOrder.map(cat => {
                 const Icon = categoryIcons[cat];
                 return (
                   <button
                     key={cat}
                     onClick={() => { setActiveTab(cat); setSearch(""); setSortKey("sort"); setSortDir("asc"); }}
-                    className={`flex items-center gap-1.5 px-4 py-2.5 text-xs font-semibold rounded-lg border transition-all whitespace-nowrap ${
+                    className={`flex items-center gap-1.5 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                       activeTab === cat
-                        ? "bg-accent text-accent-foreground border-accent shadow-sm"
-                        : "bg-muted/40 text-muted-foreground border-border hover:text-foreground hover:bg-muted/70"
+                        ? "bg-primary text-primary-foreground shadow-sm"
+                        : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                     }`}
                   >
                     <Icon className="h-3.5 w-3.5" />
                     {categoryLabels[cat]}
-                    <span className={`ml-0.5 text-[10px] ${activeTab === cat ? "text-accent-foreground/70" : "text-muted-foreground/60"}`}>{categoryCount[cat]}</span>
+                    <span className={`ml-0.5 tabular-nums text-[10px] ${activeTab === cat ? "text-primary-foreground/70" : "text-muted-foreground/60"}`}>{categoryCount[cat]}</span>
                   </button>
                 );
               })}
