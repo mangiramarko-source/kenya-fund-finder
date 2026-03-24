@@ -171,10 +171,10 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
         hideYields={isMarketTab}
       />
 
-      <div className="container py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
+      <div className="px-4 md:px-6 py-5">
+        <div className="grid grid-cols-1 xl:grid-cols-[1fr_280px] gap-6">
           {/* Main area */}
-          <div>
+          <div className="min-w-0">
             {/* Desktop: unified grid with all fund categories + market data */}
             <div className="hidden md:block">
               <p className="text-[10px] text-muted-foreground mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
@@ -274,7 +274,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
             </div>
           </div>
 
-          {/* Desktop sidebar */}
+          {/* Desktop right sidebar */}
           <aside className="hidden xl:block space-y-4">
             <AdBanner placement="sidebar" />
             <NewsSidebar news={latestNews} loading={loading} />
