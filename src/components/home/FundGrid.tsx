@@ -30,6 +30,7 @@ interface FundGridProps {
   snapshots: Record<string, YieldSnapshot>;
   rates: ExchangeRate[];
   commodities: Commodity[];
+  stocks: Stock[];
   loading: boolean;
   marketLoading: boolean;
 }
