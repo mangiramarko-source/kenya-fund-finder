@@ -70,16 +70,16 @@ const NewsSidebar = ({ news, loading }: NewsSidebarProps) => {
   if (news.length === 0) return null;
 
   return (
-    <div className="space-y-3">
+    <div className="space-y-2.5">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-accent/10">
-            <Newspaper className="h-3.5 w-3.5 text-accent" />
+          <div className="flex items-center justify-center h-6 w-6 rounded-md bg-accent/10">
+            <Newspaper className="h-3 w-3 text-accent" />
           </div>
-          <h2 className="text-sm font-bold">Latest News</h2>
+          <h2 className="text-xs font-bold uppercase tracking-wide">Latest News</h2>
         </div>
-        <Button asChild variant="ghost" size="sm" className="text-accent text-xs h-7 px-2 gap-1 hover:bg-accent/10">
-          <Link to="/news">View All <ArrowRight className="h-3 w-3" /></Link>
+        <Button asChild variant="ghost" size="sm" className="text-accent text-[10px] h-6 px-1.5 gap-1 hover:bg-accent/10">
+          <Link to="/news">All <ArrowRight className="h-2.5 w-2.5" /></Link>
         </Button>
       </div>
       {news.map((article, i) => (
