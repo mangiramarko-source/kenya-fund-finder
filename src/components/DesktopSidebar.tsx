@@ -17,7 +17,6 @@ const mainNavItems = [
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
   { to: "/", label: "Unit Trusts", icon: BarChart3 },
   { to: "/markets", label: "Markets", icon: LineChart },
-  { to: "/rates", label: "FX Rates", icon: LineChart },
 ];
 
 const utilityNavItems = [

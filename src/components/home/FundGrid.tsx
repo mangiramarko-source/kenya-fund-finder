@@ -196,112 +196,114 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
 
       {/* Fund table */}
       <div className="rounded-xl border border-border overflow-hidden bg-card">
-        <table className="w-full text-sm">
-          <colgroup>
-            <col style={{ width: "3%" }} />
-            <col style={{ width: "38%" }} />
-            <col style={{ width: "8%" }} />
-            <col style={{ width: "14%" }} />
-            <col style={{ width: "14%" }} />
-            <col style={{ width: "14%" }} />
-            <col style={{ width: "9%" }} />
-          </colgroup>
-          <thead>
-            <tr className="bg-muted/70 text-xs">
-              <th className="text-left pl-5 pr-2 py-3 font-semibold text-muted-foreground">#</th>
-              <th className="text-left px-3 py-3">
-                <SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
-              </th>
-              <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Unit</th>
-              <th className="text-right px-3 py-3">
-                <SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
-              </th>
-              <th className="text-right px-3 py-3">
-                <SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
-              </th>
-              <th className="text-right px-3 py-3 font-semibold text-muted-foreground">Change</th>
-              <th className="text-right pr-5 pl-2 py-3 font-semibold text-muted-foreground">Manager</th>
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((fund, i) => (
-              <tr
-                key={fund.id}
-                onClick={() => navigate(`/compare/${fund.slug}`)}
-                className="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer"
-              >
-                <td className="pl-5 pr-2 py-3 text-muted-foreground text-xs tabular-nums">{i + 1}</td>
-                <td className="px-3 py-3">
-                  <div className="flex items-center gap-1.5 min-w-0">
-                    <Link
-                      to={`/compare/${fund.slug}`}
-                      onClick={(e) => e.stopPropagation()}
-                      className="font-semibold text-foreground hover:text-accent transition-colors truncate"
-                      title={fund.name}
-                    >
-                      {fund.name}
-                    </Link>
-                    {fund.annual_yield === bestYield && bestYield > 0 && (
-                      <Badge
-                        variant="default"
-                        className="text-[8px] px-1.5 py-0 h-4 bg-accent text-accent-foreground shrink-0"
-                      >
-                        TOP
-                      </Badge>
-                    )}
-                  </div>
-                </td>
-                <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">
-                  {currencyLabel(fund.yield_unit)}
-                </td>
-                <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap text-muted-foreground">
-                  {fmtYield(fund.daily_yield, fund.yield_unit)}
-                </td>
-                <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
-                  <span className="font-bold text-accent text-base">
-                    {fmtYield(fund.annual_yield, fund.yield_unit)}
-                  </span>
-                </td>
-                <td className="px-3 py-3 text-right whitespace-nowrap">
-                  {snapshots[fund.id] ? (
-                    <YieldChange
-                      current={fund.annual_yield}
-                      previous={snapshots[fund.id]?.annual_yield}
-                      unit={fund.yield_unit}
-                      className="text-xs justify-end"
-                    />
-                  ) : (
-                    <span className="text-xs text-muted-foreground">—</span>
-                  )}
-                </td>
-                <td className="pr-5 pl-2 py-3 text-right text-xs text-muted-foreground truncate max-w-[120px]" title={fund.manager}>
-                  {fund.manager}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <colgroup>
+              <col className="w-[3%]" />
+              <col className="w-[28%]" />
+              <col className="w-[7%]" />
+              <col className="w-[12%]" />
+              <col className="w-[12%]" />
+              <col className="w-[12%]" />
+              <col className="w-[12%]" />
+              <col className="w-[14%]" />
+            </colgroup>
+            <thead>
+              <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
+                <th className="text-left pl-4 pr-2 py-2.5 font-semibold text-muted-foreground">#</th>
+                <th className="text-left px-3 py-2.5">
+                  <SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
+                </th>
+                <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Unit</th>
+                <th className="text-right px-3 py-2.5">
+                  <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                </th>
+                <th className="text-right px-3 py-2.5">
+                  <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                </th>
+                <th className="text-right px-3 py-2.5">
+                  <SortHeader label="Min. Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                </th>
+                <th className="text-right px-3 py-2.5">
+                  <SortHeader label="Mgmt Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                </th>
+                <th className="text-right pr-4 pl-2 py-2.5 font-semibold text-muted-foreground">Manager</th>
               </tr>
-            ))}
-
-            {filtered.length === 0 && (
-              <tr>
-                <td colSpan={7} className="text-center py-14">
-                  <div className="flex flex-col items-center gap-3">
-                    <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
-                      <span className="text-2xl">📊</span>
+            </thead>
+            <tbody>
+              {filtered.map((fund, i) => (
+                <tr
+                  key={fund.id}
+                  onClick={() => navigate(`/compare/${fund.slug}`)}
+                  className="border-t border-border/50 hover:bg-accent/5 transition-colors cursor-pointer group"
+                >
+                  <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
+                  <td className="px-3 py-3">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <Link
+                        to={`/compare/${fund.slug}`}
+                        onClick={(e) => e.stopPropagation()}
+                        className="font-semibold text-foreground group-hover:text-accent transition-colors truncate"
+                        title={fund.name}
+                      >
+                        {fund.name}
+                      </Link>
+                      {fund.annual_yield === bestYield && bestYield > 0 && (
+                        <Badge
+                          variant="default"
+                          className="text-[8px] px-1.5 py-0 h-4 bg-accent text-accent-foreground shrink-0"
+                        >
+                          TOP
+                        </Badge>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground font-medium">No funds match your filters</p>
-                    {search.trim() && (
-                      <button
-                        onClick={() => setSearch("")}
-                        className="text-xs text-accent hover:text-accent/80 font-medium transition-colors"
-                      >
-                        Clear search
-                      </button>
-                    )}
-                  </div>
-                </td>
-              </tr>
-            )}
-          </tbody>
-        </table>
+                  </td>
+                  <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">
+                    {currencyLabel(fund.yield_unit)}
+                  </td>
+                  <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap text-muted-foreground">
+                    {fmtYield(fund.daily_yield, fund.yield_unit)}
+                  </td>
+                  <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
+                    <span className="font-bold text-accent text-[15px]">
+                      {fmtYield(fund.annual_yield, fund.yield_unit)}
+                    </span>
+                  </td>
+                  <td className="px-3 py-3 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                    KSh {fund.minimum_investment.toLocaleString()}
+                  </td>
+                  <td className="px-3 py-3 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                    {fund.management_fee}%
+                  </td>
+                  <td className="pr-4 pl-2 py-3 text-right text-[11px] text-muted-foreground/70 truncate max-w-[140px]" title={fund.manager}>
+                    {fund.manager}
+                  </td>
+                </tr>
+              ))}
+
+              {filtered.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="text-center py-14">
+                    <div className="flex flex-col items-center gap-3">
+                      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+                        <span className="text-2xl">📊</span>
+                      </div>
+                      <p className="text-sm text-muted-foreground font-medium">No funds match your filters</p>
+                      {search.trim() && (
+                        <button
+                          onClick={() => setSearch("")}
+                          className="text-xs text-accent hover:text-accent/80 font-medium transition-colors"
+                        >
+                          Clear search
+                        </button>
+                      )}
+                    </div>
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
       {/* Summary footer */}
