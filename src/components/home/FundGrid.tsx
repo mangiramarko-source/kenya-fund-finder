@@ -35,7 +35,7 @@ interface FundGridProps {
   marketLoading: boolean;
 }
 
-const MAX_VISIBLE = 8;
+const MAX_VISIBLE = 5;
 
 /* ─── Fund Category Card ─── */
 const FundCategoryCard = ({
