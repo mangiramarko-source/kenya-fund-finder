@@ -5,6 +5,7 @@ import CookieConsent from "./CookieConsent";
 import SkipToContent from "./SkipToContent";
 import CurrencyTicker from "./CurrencyTicker";
 import DesktopSidebar from "./DesktopSidebar";
+import DesktopTopBar from "./DesktopTopBar";
 import { usePageView } from "@/hooks/usePageView";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -21,6 +22,9 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
       {/* Main column */}
       <div className="flex-1 flex flex-col min-w-0">
+        {/* Desktop top bar */}
+        <DesktopTopBar />
+
         {/* Mobile-only navbar */}
         <div className="md:hidden">
           <Navbar />
