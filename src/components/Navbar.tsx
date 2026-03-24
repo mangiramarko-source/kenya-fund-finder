@@ -308,6 +308,13 @@ const Navbar = () => {
               <>
                 <div className="h-px bg-border my-2" />
                 <Link
+                  to="/alerts"
+                  onClick={closeMobile}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+                >
+                  <Bell className="h-5 w-5" /> My Alerts
+                </Link>
+                <Link
                   to="/profile"
                   onClick={closeMobile}
                   className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
