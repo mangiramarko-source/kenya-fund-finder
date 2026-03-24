@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart } from "lucide-react";
+import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -141,6 +141,9 @@ const Navbar = () => {
                     <p className="text-xs text-muted-foreground truncate">{user.email}</p>
                   </div>
                   <DropdownMenuSeparator />
+                  <DropdownMenuItem onClick={() => navigate("/alerts")} className="gap-2 cursor-pointer">
+                    <Bell className="h-4 w-4" /> My Alerts
+                  </DropdownMenuItem>
                   <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2 cursor-pointer">
                     <Settings className="h-4 w-4" /> Profile Settings
                   </DropdownMenuItem>
@@ -304,6 +307,13 @@ const Navbar = () => {
             {user && (
               <>
                 <div className="h-px bg-border my-2" />
+                <Link
+                  to="/alerts"
+                  onClick={closeMobile}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+                >
+                  <Bell className="h-5 w-5" /> My Alerts
+                </Link>
                 <Link
                   to="/profile"
                   onClick={closeMobile}
