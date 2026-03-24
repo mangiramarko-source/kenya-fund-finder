@@ -58,18 +58,19 @@ const FundSubTable = ({
   if (funds.length === 0) return null;
 
   return (
-    <div className="mb-8">
-      <div className="flex items-center gap-2 mb-3">
-        <h2 className="text-base font-semibold">{title}</h2>
-        <Badge variant="secondary" className="text-[10px] h-5 px-1.5">{funds.length}</Badge>
+    <div className="mb-6">
+      <div className="flex items-center gap-2 mb-2.5">
+        <h2 className="text-xs font-bold uppercase tracking-wide text-foreground">{title}</h2>
+        <div className="h-px flex-1 bg-border" />
+        <Badge variant="secondary" className="text-[9px] h-4 px-1.5 font-semibold">{funds.length}</Badge>
       </div>
 
       {/* Desktop / Tablet table */}
-      <div className="hidden md:block rounded-xl border border-border overflow-hidden shadow-sm">
+      <div className="hidden md:block rounded-lg border border-border overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="bg-muted/70 border-b border-border">
+              <tr className="bg-muted/50 border-b border-border text-xs">
                 <th className="text-left px-5 py-3.5 font-semibold w-[3%]">#</th>
                 <th className="text-left px-4 py-3.5 font-semibold">Fund Name</th>
                 <th className="text-left px-4 py-3.5 font-semibold hidden lg:table-cell">Manager</th>
