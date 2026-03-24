@@ -18,6 +18,7 @@ import FundGrid from "@/components/home/FundGrid";
 import NewsSidebar from "@/components/home/NewsSidebar";
 import AdBanner from "@/components/AdBanner";
 import { useMarketData, RatesMobileCards, CommoditiesMobileCards } from "@/components/home/MarketTicker";
+import { useStocksData, StocksMobileCards } from "@/components/home/FundGrid";
 
 type SortKey = "annual_yield" | "daily_yield" | "name";
 type SortDir = "asc" | "desc";
@@ -30,9 +31,10 @@ const categoryLabels: Record<string, string> = {
   bond: "Bond",
   fx_rates: "Currency",
   commodities: "Commodities",
+  stocks: "NSE Stocks",
 };
 
-const MARKET_TABS = ["fx_rates", "commodities"] as const;
+const MARKET_TABS = ["fx_rates", "commodities", "stocks"] as const;
 
 const Index = forwardRef<HTMLDivElement>((_, ref) => {
   useDocumentTitle("Kenya Fund Finder – Compare Investment Funds in Kenya", "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.");
@@ -81,6 +83,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const { user } = useAuth();
 
   const { rates, commodities, loading: marketLoading } = useMarketData();
+  const { stocks, loading: stocksLoading } = useStocksData();
 
   useEffect(() => {
     Promise.all([
@@ -109,8 +112,9 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
     funds.forEach((f) => { counts[f.fund_type] = (counts[f.fund_type] || 0) + 1; });
     counts["fx_rates"] = rates.length;
     counts["commodities"] = commodities.length;
+    counts["stocks"] = stocks.length;
     return counts;
-  }, [funds, rates, commodities]);
+  }, [funds, rates, commodities, stocks]);
 
   const processedFunds = useMemo(() => {
     let result = funds.filter((f) => f.fund_type === selectedCategory);
@@ -155,6 +159,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
     ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c })),
     { key: "fx_rates", label: "FX Rates" },
     { key: "commodities", label: "Commodities" },
+    { key: "stocks", label: "NSE Stocks" },
   ], [categories]);
 
   return (
@@ -164,7 +169,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       <StatBar
         isLive={isLive}
         lastUpdate={lastUpdate}
-        fundCount={isFundTab ? processedFunds.length : (selectedCategory === "fx_rates" ? rates.length : commodities.length)}
+        fundCount={isFundTab ? processedFunds.length : (selectedCategory === "fx_rates" ? rates.length : selectedCategory === "stocks" ? stocks.length : commodities.length)}
         bestYield={isFundTab ? bestYield : 0}
         avgYield={isFundTab ? avgYield : 0}
         loading={loading}
@@ -172,7 +177,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       />
 
       <div className="container py-6">
-        <div className="grid grid-cols-1 xl:grid-cols-[1fr_300px] gap-6">
+        <div className="grid grid-cols-1 gap-6">
           {/* Main area */}
           <div>
             {/* Desktop: unified grid with all fund categories + market data */}
@@ -183,8 +188,10 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
                 snapshots={snapshots}
                 rates={rates}
                 commodities={commodities}
+                stocks={stocks}
                 loading={loading}
                 marketLoading={marketLoading}
+                stocksLoading={stocksLoading}
               />
             </div>
 
@@ -256,7 +263,14 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
               </div>
             )}
 
-            {/* Mobile quick actions */}
+            {/* Stocks content - mobile only */}
+            {selectedCategory === "stocks" && (
+              <div className="md:hidden">
+                <p className="text-[10px] text-muted-foreground -mt-1 mb-3">NSE stock prices are indicative and may be delayed.</p>
+                <StocksMobileCards stocks={stocks} loading={stocksLoading} />
+              </div>
+            )}
+
             <div className="flex items-center gap-2 mt-4 flex-wrap sm:hidden">
               <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
                 <Link to="/calculator"><Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculate Returns</Link>
@@ -266,19 +280,13 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
               </Button>
             </div>
 
-            {/* Mobile news + ads */}
-            <div className="xl:hidden mt-6 space-y-4">
+            {/* News + ads */}
+            <div className="mt-6 space-y-4">
               <AdBanner placement="in-feed" />
               <NewsSidebar news={latestNews} loading={loading} />
+              <AdBanner placement="banner" />
             </div>
           </div>
-
-          {/* Desktop sidebar */}
-          <aside className="hidden xl:block space-y-4">
-            <AdBanner placement="sidebar" />
-            <NewsSidebar news={latestNews} loading={loading} />
-            <AdBanner placement="banner" />
-          </aside>
         </div>
       </div>
     </div>
