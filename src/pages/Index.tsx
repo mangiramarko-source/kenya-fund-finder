@@ -33,7 +33,7 @@ const categoryLabels: Record<string, string> = {
   commodities: "Commodities",
 };
 
-const MARKET_TABS = ["fx_rates", "commodities"] as const;
+const MARKET_TABS = ["fx_rates", "commodities", "stocks"] as const;
 
 const Index = forwardRef<HTMLDivElement>((_, ref) => {
   useDocumentTitle("Kenya Fund Finder – Compare Investment Funds in Kenya", "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.");
