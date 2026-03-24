@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -410,9 +411,18 @@ const StockDetailPanel = ({
         )}
       </div>
 
-      <p className="text-[10px] text-muted-foreground mt-2">
-        Last updated: {new Date(s.updated_at).toLocaleString("en-KE")}
-      </p>
+      <div className="flex items-center justify-between mt-2">
+        <p className="text-[10px] text-muted-foreground">
+          Last updated: {new Date(s.updated_at).toLocaleString("en-KE")}
+        </p>
+        <CreateAlertDialog
+          assetType="stock"
+          assetId={s.id}
+          assetName={`${s.symbol} - ${s.name}`}
+          currentPrice={s.price}
+          unit="KSh"
+        />
+      </div>
     </div>
   );
 };

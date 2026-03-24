@@ -8,10 +8,11 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sh
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
+import NotificationBell from "@/components/alerts/NotificationBell";
 
 const navLinks = [
   { to: "/", label: "Funds", icon: BarChart3 },
-  { to: "/stocks", label: "Stocks", icon: LineChart },
+  { to: "/markets", label: "Markets", icon: LineChart },
   { to: "/calculator", label: "Calculator", icon: Calculator },
   { to: "/news", label: "News", icon: Newspaper },
 ];
@@ -105,6 +106,7 @@ const Navbar = () => {
         {/* Desktop right side */}
         <div className="hidden md:flex items-center gap-2">
           <SearchDialog />
+          <NotificationBell />
           <Button
             variant="ghost"
             size="icon"
@@ -156,8 +158,8 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile: dark mode on left */}
-        <div className="flex md:hidden items-center">
+        {/* Mobile: left side */}
+        <div className="flex md:hidden items-center gap-1">
           <Button
             variant="ghost"
             size="icon"
@@ -167,6 +169,7 @@ const Navbar = () => {
           >
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
+          <NotificationBell />
         </div>
 
         {/* Mobile: logo centered */}

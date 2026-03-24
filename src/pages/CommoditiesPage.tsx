@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
@@ -275,9 +276,18 @@ const CommodityRow = ({
               )}
             </div>
 
-            <p className="text-[10px] text-muted-foreground mt-2">
-              Last updated: {new Date(c.updated_at).toLocaleString("en-KE")}
-            </p>
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-[10px] text-muted-foreground">
+                Last updated: {new Date(c.updated_at).toLocaleString("en-KE")}
+              </p>
+              <CreateAlertDialog
+                assetType="commodity"
+                assetId={c.id}
+                assetName={c.name}
+                currentPrice={c.price}
+                unit={c.unit}
+              />
+            </div>
           </td>
         </tr>
       )}
