@@ -370,7 +370,7 @@ const OverviewPage = () => {
             </>
           )}
           {!user && (
-            <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => navigate("/auth")}>
+            <Button size="sm" className="text-xs h-8 gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
               <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
             </Button>
           )}
@@ -662,10 +662,13 @@ const OverviewPage = () => {
                   </div>
                   <h3 className="text-xs font-semibold leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">{article.title}</h3>
                   <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{article.summary}</p>
-                  <p className="text-[10px] text-muted-foreground mt-2">
-                    {article.source && `${article.source} · `}
-                    {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
-                  </p>
+                  <div className="flex items-center justify-between mt-2">
+                    <p className="text-[10px] text-muted-foreground">
+                      {article.source && `${article.source} · `}
+                      {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                    </p>
+                    <span className="text-[10px] text-accent font-medium group-hover:underline">Read more →</span>
+                  </div>
                 </article>
               </Link>
             ))}

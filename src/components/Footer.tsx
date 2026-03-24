@@ -36,8 +36,9 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
   return (
     <footer ref={ref} className="border-t border-border bg-card mt-16">
       <div className="container py-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-          <div className="md:col-span-2">
+        {/* Mobile: full footer with nav links. Desktop: compact disclaimer only */}
+        <div className="md:hidden grid grid-cols-1 gap-8 mb-8">
+          <div>
             <Link to="/" className="flex items-center gap-2 font-heading text-lg font-bold text-primary mb-3">
               <TrendingUp className="h-5 w-5 text-accent" />
               Kenya Fund Finder
@@ -51,14 +52,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
                 {socialLinks.map((link) => {
                   const IconComponent = ICON_MAP[link.icon_name.toLowerCase()] || Globe;
                   return (
-                    <a
-                      key={link.id}
-                      href={link.url}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="text-muted-foreground hover:text-primary transition-colors"
-                      aria-label={link.platform}
-                    >
+                    <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors" aria-label={link.platform}>
                       <IconComponent className="h-5 w-5" />
                     </a>
                   );
@@ -66,28 +60,30 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
               </div>
             )}
           </div>
-          <div>
-            <h4 className="font-heading font-semibold mb-3 text-sm">Quick Links</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/" className="hover:text-foreground transition-colors">Funds</Link></li>
-              <li><Link to="/calculator" className="hover:text-foreground transition-colors">Calculator</Link></li>
-              <li><Link to="/news" className="hover:text-foreground transition-colors">News</Link></li>
-              <li><Link to="/learn" className="hover:text-foreground transition-colors">Learn</Link></li>
-              <li><Link to="/page/about" className="hover:text-foreground transition-colors">About</Link></li>
-              <li><Link to="/page/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
-            </ul>
-          </div>
-          <div>
-            <h4 className="font-heading font-semibold mb-3 text-sm">Legal</h4>
-            <ul className="space-y-2 text-sm text-muted-foreground">
-              <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
-              <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms of Use</Link></li>
-            </ul>
+          <div className="grid grid-cols-2 gap-6">
+            <div>
+              <h4 className="font-heading font-semibold mb-3 text-sm">Quick Links</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link to="/" className="hover:text-foreground transition-colors">Funds</Link></li>
+                <li><Link to="/calculator" className="hover:text-foreground transition-colors">Calculator</Link></li>
+                <li><Link to="/news" className="hover:text-foreground transition-colors">News</Link></li>
+                <li><Link to="/learn" className="hover:text-foreground transition-colors">Learn</Link></li>
+                <li><Link to="/page/about" className="hover:text-foreground transition-colors">About</Link></li>
+                <li><Link to="/page/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
+              </ul>
+            </div>
+            <div>
+              <h4 className="font-heading font-semibold mb-3 text-sm">Legal</h4>
+              <ul className="space-y-2 text-sm text-muted-foreground">
+                <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+                <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms of Use</Link></li>
+              </ul>
+            </div>
           </div>
         </div>
 
-        {/* Disclaimer */}
-        <div className="mt-8 pt-6 border-t border-border">
+        {/* Disclaimer — shown on all viewports */}
+        <div className="md:pt-0 pt-6 border-t border-border md:border-t-0">
           <div className="flex items-start gap-2 mb-4">
             <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground leading-relaxed">
