@@ -274,6 +274,77 @@ const CommoditiesCard = ({ commodities }: { commodities: Commodity[] }) => {
   );
 };
 
+/* ─── Stocks Card ─── */
+const StocksCard = ({ stocks }: { stocks: Stock[] }) => {
+  const visible = stocks.slice(0, MAX_VISIBLE);
+  const hasMore = stocks.length > MAX_VISIBLE;
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden flex flex-col">
+      <div className="bg-muted/60 px-5 py-3 flex items-center justify-between border-b border-border">
+        <h3 className="text-sm font-bold text-foreground tracking-wide uppercase">NSE Stocks</h3>
+        <span className="text-xs text-muted-foreground font-medium">{stocks.length} stocks</span>
+      </div>
+
+      <table className="w-full text-[11px] lg:text-xs">
+        <thead>
+          <tr className="text-[9px] lg:text-[10px] text-muted-foreground uppercase tracking-wider">
+            <th className="text-left pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 font-medium w-5 lg:w-6">#</th>
+            <th className="text-left px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium">Stock</th>
+            <th className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-10 lg:w-12">Symbol</th>
+            <th className="text-right px-0.5 lg:px-1 py-1.5 lg:py-2 font-medium w-12 lg:w-14">Chg%</th>
+            <th className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-medium w-14 lg:w-16">Price</th>
+          </tr>
+        </thead>
+        <tbody>
+          {visible.map((s, i) => (
+            <tr key={s.id} className="border-t border-border/40 hover:bg-muted/30 cursor-pointer transition-colors" onClick={() => window.location.href = '/stocks'}>
+              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground tabular-nums text-[9px] lg:text-[10px]">{i + 1}</td>
+              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2">
+                <span className="font-medium text-foreground truncate block max-w-[100px] lg:max-w-[140px]" title={s.name}>
+                  {s.name}
+                </span>
+              </td>
+              <td className="text-center px-0.5 lg:px-1 py-1.5 lg:py-2 text-muted-foreground text-[9px] lg:text-[10px]">{s.symbol}</td>
+              <td className={`text-right px-0.5 lg:px-1 py-1.5 lg:py-2 tabular-nums font-medium ${s.day_change_percent > 0 ? 'text-accent' : s.day_change_percent < 0 ? 'text-destructive' : 'text-muted-foreground'}`}>
+                {s.day_change_percent > 0 ? '+' : ''}{s.day_change_percent.toFixed(2)}%
+              </td>
+              <td className="text-right pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2 font-bold text-accent tabular-nums">
+                {s.price.toFixed(2)}
+              </td>
+            </tr>
+          ))}
+
+          {visible.length < MAX_VISIBLE && Array.from({ length: MAX_VISIBLE - visible.length }).map((_, i) => (
+            <tr key={`pad-${i}`} className="border-t border-border/40">
+              <td className="pl-3 pr-0.5 py-1.5 lg:pl-4 lg:pr-1 lg:py-2 text-muted-foreground/30 tabular-nums text-[9px] lg:text-[10px]">{visible.length + i + 1}</td>
+              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2"><span className="text-muted-foreground/20">—</span></td>
+              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2" />
+              <td className="px-0.5 lg:px-1 py-1.5 lg:py-2" />
+              <td className="pl-0.5 pr-3 lg:pl-1 lg:pr-4 py-1.5 lg:py-2" />
+            </tr>
+          ))}
+        </tbody>
+      </table>
+
+      <div className="border-t border-border mt-auto">
+        {hasMore ? (
+          <Link
+            to="/stocks"
+            className="flex items-center justify-center gap-1 px-5 py-2.5 text-xs font-semibold text-accent hover:text-accent/80 hover:bg-muted/30 transition-colors"
+          >
+            See all {stocks.length} stocks →
+          </Link>
+        ) : (
+          <div className="px-5 py-2.5 text-xs text-muted-foreground text-center">
+            {stocks.length} stock{stocks.length !== 1 ? "s" : ""}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+};
+
 /* ─── Grid Skeleton ─── */
 const GridSkeleton = () => (
   <div className="grid grid-cols-3 gap-5">
