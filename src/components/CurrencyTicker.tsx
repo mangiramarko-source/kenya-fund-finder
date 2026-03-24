@@ -18,7 +18,7 @@ const CurrencyTicker = () => {
   const [paused, setPaused] = useState(false);
 
   const fetchItems = async () => {
-    const [ratesRes, commoditiesRes] = await Promise.all([
+    const [ratesRes, commoditiesRes, stocksRes] = await Promise.all([
       supabase
         .from("exchange_rates_public" as any)
         .select("id, currency_code, rate, previous_rate")
@@ -27,12 +27,23 @@ const CurrencyTicker = () => {
         .from("commodities_public" as any)
         .select("id, name, symbol, price, previous_price, unit")
         .order("sort_order"),
+      supabase
+        .from("stocks_public" as any)
+        .select("id, symbol, price, previous_price, day_change_percent")
+        .order("sort_order")
+        .limit(10),
     ]);
     const rates = (ratesRes.data || []).map((r: any) => ({
       id: `fx-${r.id}`,
       label: `${r.currency_code}/KES`,
       value: r.rate,
       previousValue: r.previous_rate,
+    }));
+    const stocks = (stocksRes.data || []).map((s: any) => ({
+      id: `stk-${s.id}`,
+      label: s.symbol,
+      value: s.price,
+      previousValue: s.previous_price,
     }));
     const commodities = (commoditiesRes.data || []).map((c: any) => ({
       id: `cmd-${c.id}`,
@@ -41,7 +52,7 @@ const CurrencyTicker = () => {
       previousValue: c.previous_price,
       unit: c.unit,
     }));
-    setItems([...rates, ...commodities]);
+    setItems([...stocks, ...rates, ...commodities]);
   };
 
   useEffect(() => {
@@ -51,6 +62,7 @@ const CurrencyTicker = () => {
       .channel("ticker-realtime")
       .on("postgres_changes", { event: "*", schema: "public", table: "exchange_rates" }, () => fetchItems())
       .on("postgres_changes", { event: "*", schema: "public", table: "commodities" }, () => fetchItems())
+      .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => fetchItems())
       .subscribe();
 
     return () => { supabase.removeChannel(channel); };
