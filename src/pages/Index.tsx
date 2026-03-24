@@ -169,7 +169,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       <StatBar
         isLive={isLive}
         lastUpdate={lastUpdate}
-        fundCount={isFundTab ? processedFunds.length : (selectedCategory === "fx_rates" ? rates.length : commodities.length)}
+        fundCount={isFundTab ? processedFunds.length : (selectedCategory === "fx_rates" ? rates.length : selectedCategory === "stocks" ? stocks.length : commodities.length)}
         bestYield={isFundTab ? bestYield : 0}
         avgYield={isFundTab ? avgYield : 0}
         loading={loading}
