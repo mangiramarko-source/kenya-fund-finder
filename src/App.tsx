@@ -29,6 +29,7 @@ import CommoditiesPage from "./pages/CommoditiesPage";
 import StocksPage from "./pages/StocksPage";
 import MarketDashboardPage from "./pages/MarketDashboardPage";
 import AlertsPage from "./pages/AlertsPage";
+import OverviewPage from "./pages/OverviewPage";
 import NotFound from "./pages/NotFound";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
@@ -66,6 +67,7 @@ const App = () => (
                   <Route path="/commodities" element={<CommoditiesPage />} />
                   <Route path="/stocks" element={<StocksPage />} />
                   <Route path="/markets" element={<MarketDashboardPage />} />
+                  <Route path="/overview" element={<OverviewPage />} />
                   <Route path="/alerts" element={<AlertsPage />} />
                   <Route path="/admin/login" element={<AdminLoginPage />} />
                   <Route path="/admin" element={<AdminPage />} />
