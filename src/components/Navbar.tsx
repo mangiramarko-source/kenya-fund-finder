@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell } from "lucide-react";
+import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -15,6 +15,13 @@ const navLinks = [
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
   { to: "/markets", label: "Market", icon: LineChart },
   { to: "/calculator", label: "Calculator", icon: Calculator },
+];
+
+const mobileNavLinks = [
+  { to: "/", label: "Home", icon: BarChart3 },
+  { to: "/stocks", label: "Stocks", icon: TrendingUp },
+  { to: "/funds", label: "Trusts", icon: Landmark },
+  { to: "/markets", label: "Market", icon: LineChart },
 ];
 
 const Navbar = () => {
@@ -172,7 +179,6 @@ const Navbar = () => {
           >
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-          <NotificationBell />
         </div>
 
         {/* Mobile: logo centered */}
@@ -197,7 +203,7 @@ const Navbar = () => {
       {/* Mobile: nav pills row */}
       <div className="md:hidden flex justify-center px-4 pb-1.5 pt-1 bg-card/95">
         <nav className="flex items-center gap-0.5 bg-muted/60 rounded-full px-1 py-1">
-          {navLinks.map((link) => {
+          {mobileNavLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
             return (
@@ -274,6 +280,23 @@ const Navbar = () => {
             )}
 
             <div className="h-px bg-border my-2" />
+            <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Tools</p>
+            <Link
+              to="/calculator"
+              onClick={closeMobile}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+            >
+              <Calculator className="h-5 w-5" /> Calculator
+            </Link>
+            {user && (
+              <Link
+                to="/alerts"
+                onClick={closeMobile}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
+                <Bell className="h-5 w-5" /> Notifications
+              </Link>
+            )}
 
             <button
               onClick={() => { setDark(!dark); }}
@@ -307,13 +330,6 @@ const Navbar = () => {
             {user && (
               <>
                 <div className="h-px bg-border my-2" />
-                <Link
-                  to="/alerts"
-                  onClick={closeMobile}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-                >
-                  <Bell className="h-5 w-5" /> My Alerts
-                </Link>
                 <Link
                   to="/profile"
                   onClick={closeMobile}
