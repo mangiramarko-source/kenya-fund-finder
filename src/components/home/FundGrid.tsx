@@ -61,32 +61,43 @@ const SortHeader = ({
 );
 
 /* ─── Sparkline ─── */
+const SPARK_W = 100;
+const SPARK_H = 32;
+
 const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
-  const points = useMemo(() => {
+  const { points, isUp } = useMemo(() => {
     const vals = [...data.map((d) => d.annual_yield), currentValue];
-    if (vals.length < 2) return null;
-    const last6 = vals.slice(-6);
-    const min = Math.min(...last6);
-    const max = Math.max(...last6);
+    if (vals.length < 2) return { points: null, isUp: true };
+    const last8 = vals.slice(-8);
+    const min = Math.min(...last8);
+    const max = Math.max(...last8);
     const range = max - min || 1;
-    const w = 60;
-    const h = 24;
     const pad = 2;
-    return last6.map((v, i) => ({
-      x: pad + (i / (last6.length - 1)) * (w - pad * 2),
-      y: pad + (1 - (v - min) / range) * (h - pad * 2),
+    const pts = last8.map((v, i) => ({
+      x: pad + (i / (last8.length - 1)) * (SPARK_W - pad * 2),
+      y: pad + (1 - (v - min) / range) * (SPARK_H - pad * 2),
     }));
+    return { points: pts, isUp: pts[pts.length - 1].y <= pts[0].y };
   }, [data, currentValue]);
 
   if (!points) return <span className="text-[10px] text-muted-foreground">—</span>;
 
-  const isUp = points[points.length - 1].y <= points[0].y;
+  const color = isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))";
   const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  const areaD = pathD + ` L${points[points.length - 1].x},${SPARK_H} L${points[0].x},${SPARK_H} Z`;
+  const gradId = isUp ? "sg-up" : "sg-dn";
 
   return (
-    <svg width="60" height="24" viewBox="0 0 60 24" className="inline-block">
-      <path d={pathD} fill="none" stroke={isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="2" fill={isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))"} />
+    <svg width={SPARK_W} height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} className="inline-block">
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.15" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill={`url(#${gradId})`} />
+      <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="2.5" fill={color} />
     </svg>
   );
 };
@@ -274,14 +285,14 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
           <table className="w-full text-sm">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "28%" }} />
-              <col style={{ width: "6%" }} />
+              <col style={{ width: "20%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "5%" }} />
               <col style={{ width: "11%" }} />
-              <col style={{ width: "12%" }} />
+              <col style={{ width: "13%" }} />
               <col style={{ width: "10%" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "12%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "18%" }} />
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
@@ -289,6 +300,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
+                <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Trend</th>
                 <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Unit</th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
@@ -302,7 +314,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Mgmt Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Trend</th>
                 <th className="text-right pr-4 pl-2 py-3 font-semibold text-muted-foreground">Manager</th>
               </tr>
             </thead>
@@ -336,6 +347,13 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
                       )}
                     </div>
                   </td>
+                  <td className="px-2 py-3.5 text-center">
+                    {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
+                      <Sparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground">—</span>
+                    )}
+                  </td>
                   <td className="px-2 py-3.5 text-center text-xs font-medium text-muted-foreground">
                     {currencyLabel(fund.yield_unit)}
                   </td>
@@ -352,13 +370,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
                   </td>
                   <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
                     {fund.management_fee}%
-                  </td>
-                  <td className="px-2 py-3.5 text-center">
-                    {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
-                      <Sparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground">—</span>
-                    )}
                   </td>
                   <td className="pr-4 pl-2 py-3.5 text-right text-[11px] text-muted-foreground/70 truncate max-w-[140px]" title={fund.manager}>
                     {fund.manager}
