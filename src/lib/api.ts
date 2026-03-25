@@ -45,6 +45,7 @@ export interface NewsFromDB {
   read_time: string;
   is_featured: boolean;
   status: string;
+  image_url: string | null;
 }
 
 export interface HistoricalYield {
@@ -108,7 +109,7 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
 export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status")
+    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status, image_url")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -125,13 +126,14 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
     read_time: data.read_time!,
     is_featured: data.is_featured!,
     status: data.status!,
+    image_url: (data as any).image_url || null,
   };
 }
 
 export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status")
+    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status, image_url")
     .order("date_published", { ascending: false });
   if (error) throw error;
   return (data || []).map((d: any) => ({
@@ -146,6 +148,7 @@ export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
     read_time: d.read_time,
     is_featured: d.is_featured,
     status: d.status,
+    image_url: d.image_url || null,
   }));
 }
 
