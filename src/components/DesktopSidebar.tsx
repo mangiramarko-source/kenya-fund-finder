@@ -110,12 +110,12 @@ const DesktopSidebar = () => {
         {mainNavItems.map((item) => renderNavItem(item))}
 
         {/* Tools section */}
-        {collapsed && <div className="my-2 mx-1 h-px bg-sidebar-border/60" />}
+        <div className="my-2 mx-1 h-px bg-sidebar-border" />
         <SectionLabel>Tools</SectionLabel>
         {utilityNavItems.map((item) => renderNavItem(item))}
 
         {/* Legal section */}
-        {collapsed && <div className="my-2 mx-1 h-px bg-sidebar-border/60" />}
+        <div className="my-2 mx-1 h-px bg-sidebar-border" />
         <SectionLabel>Legal</SectionLabel>
         {legalNavItems.map((item) => renderNavItem(item, "small"))}
       </nav>
