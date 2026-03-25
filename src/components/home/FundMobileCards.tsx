@@ -87,6 +87,15 @@ const FundMobileCards = ({ funds, snapshots, bestYield, loading, onClearSearch, 
             {snapshots[fund.id] && (
               <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[11px] shrink-0 mt-0.5" />
             )}
+            {onToggleFavourite && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(fund.id, fund.name); }}
+                className="p-1 rounded-md shrink-0"
+                aria-label={isFavourite?.(fund.id) ? "Remove from favourites" : "Add to favourites"}
+              >
+                <Star className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`} />
+              </button>
+            )}
           </div>
           <div className="grid grid-cols-3 gap-2">
             <div className="rounded-lg bg-muted/50 px-2 py-2 text-center">
