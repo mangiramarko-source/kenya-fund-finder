@@ -199,35 +199,35 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <colgroup>
-              <col className="w-[3%]" />
-              <col className="w-[28%]" />
-              <col className="w-[7%]" />
-              <col className="w-[12%]" />
-              <col className="w-[12%]" />
-              <col className="w-[12%]" />
-              <col className="w-[12%]" />
-              <col className="w-[14%]" />
+              <col style={{ width: "3%" }} />
+              <col style={{ width: "30%" }} />
+              <col style={{ width: "6%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "13%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "14%" }} />
             </colgroup>
             <thead>
               <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
-                <th className="text-left pl-4 pr-2 py-2.5 font-semibold text-muted-foreground">#</th>
-                <th className="text-left px-3 py-2.5">
+                <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
+                <th className="text-left px-3 py-3">
                   <SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Unit</th>
-                <th className="text-right px-3 py-2.5">
+                <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Unit</th>
+                <th className="text-right px-3 py-3">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-2.5">
-                  <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-right px-3 py-3">
+                  <SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-2.5">
+                <th className="text-right px-3 py-3">
                   <SortHeader label="Min. Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-2.5">
+                <th className="text-right px-3 py-3">
                   <SortHeader label="Mgmt Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right pr-4 pl-2 py-2.5 font-semibold text-muted-foreground">Manager</th>
+                <th className="text-right pr-4 pl-2 py-3 font-semibold text-muted-foreground">Manager</th>
               </tr>
             </thead>
             <tbody>
@@ -237,13 +237,13 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
                   onClick={() => navigate(`/compare/${fund.slug}`)}
                   className="border-t border-border/50 hover:bg-accent/5 transition-colors cursor-pointer group"
                 >
-                  <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
-                  <td className="px-3 py-3">
+                  <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
+                  <td className="px-3 py-3.5">
                     <div className="flex items-center gap-1.5 min-w-0">
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="font-semibold text-foreground group-hover:text-accent transition-colors truncate"
+                        className="font-semibold text-foreground group-hover:text-accent transition-colors truncate text-[13px]"
                         title={fund.name}
                       >
                         {fund.name}
@@ -258,24 +258,24 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
                       )}
                     </div>
                   </td>
-                  <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">
+                  <td className="px-2 py-3.5 text-center text-xs font-medium text-muted-foreground">
                     {currencyLabel(fund.yield_unit)}
                   </td>
-                  <td className="px-3 py-3 text-right tabular-nums whitespace-nowrap text-muted-foreground">
+                  <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground text-xs">
                     {fmtYield(fund.daily_yield, fund.yield_unit)}
                   </td>
-                  <td className="px-3 py-3 text-right whitespace-nowrap tabular-nums">
+                  <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums">
                     <span className="font-bold text-accent text-[15px]">
                       {fmtYield(fund.annual_yield, fund.yield_unit)}
                     </span>
                   </td>
-                  <td className="px-3 py-3 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                  <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
                     KSh {fund.minimum_investment.toLocaleString()}
                   </td>
-                  <td className="px-3 py-3 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                  <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
                     {fund.management_fee}%
                   </td>
-                  <td className="pr-4 pl-2 py-3 text-right text-[11px] text-muted-foreground/70 truncate max-w-[140px]" title={fund.manager}>
+                  <td className="pr-4 pl-2 py-3.5 text-right text-[11px] text-muted-foreground/70 truncate max-w-[140px]" title={fund.manager}>
                     {fund.manager}
                   </td>
                 </tr>
