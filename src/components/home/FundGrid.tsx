@@ -65,15 +65,15 @@ const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue
   const points = useMemo(() => {
     const vals = [...data.map((d) => d.annual_yield), currentValue];
     if (vals.length < 2) return null;
-    const last6 = vals.slice(-6);
-    const min = Math.min(...last6);
-    const max = Math.max(...last6);
+    const last8 = vals.slice(-8);
+    const min = Math.min(...last8);
+    const max = Math.max(...last8);
     const range = max - min || 1;
-    const w = 60;
-    const h = 24;
+    const w = 100;
+    const h = 32;
     const pad = 2;
-    return last6.map((v, i) => ({
-      x: pad + (i / (last6.length - 1)) * (w - pad * 2),
+    return last8.map((v, i) => ({
+      x: pad + (i / (last8.length - 1)) * (w - pad * 2),
       y: pad + (1 - (v - min) / range) * (h - pad * 2),
     }));
   }, [data, currentValue]);
@@ -81,12 +81,21 @@ const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue
   if (!points) return <span className="text-[10px] text-muted-foreground">—</span>;
 
   const isUp = points[points.length - 1].y <= points[0].y;
+  const color = isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))";
   const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+  const areaD = pathD + ` L${points[points.length - 1].x},${h} L${points[0].x},${h} Z`;
 
   return (
-    <svg width="60" height="24" viewBox="0 0 60 24" className="inline-block">
-      <path d={pathD} fill="none" stroke={isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="2" fill={isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))"} />
+    <svg width="100" height="32" viewBox="0 0 100 32" className="inline-block">
+      <defs>
+        <linearGradient id={`sg-${isUp ? "up" : "dn"}`} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.15" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill={`url(#sg-${isUp ? "up" : "dn"})`} />
+      <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="2.5" fill={color} />
     </svg>
   );
 };
