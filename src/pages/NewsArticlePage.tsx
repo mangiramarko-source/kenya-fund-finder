@@ -10,6 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
+import { getNewsImage } from "@/lib/news-images";
 
 const categoryIcons: Record<string, typeof TrendingUp> = {
   "Yield Updates": TrendingUp,
@@ -43,11 +44,7 @@ const NewsArticlePage = () => {
   useDocumentTitle(
     article ? `${article.title} – Kenya Fund Finder` : "News Article – Kenya Fund Finder",
     article?.summary,
-    article ? {
-      title: article.title,
-      description: article.summary,
-      type: "article",
-    } : undefined
+    article ? { title: article.title, description: article.summary, type: "article" } : undefined
   );
 
   useJsonLd(article ? {
@@ -56,6 +53,7 @@ const NewsArticlePage = () => {
     headline: article.title,
     description: article.summary,
     datePublished: article.date_published,
+    image: getNewsImage(article.image_url, article.category, article.id),
     author: { "@type": "Organization", name: article.source || "Kenya Fund Finder" },
     publisher: {
       "@type": "Organization",
@@ -63,10 +61,7 @@ const NewsArticlePage = () => {
       url: "https://kenyafundfinder.com",
       logo: { "@type": "ImageObject", url: "https://kenyafundfinder.com/og-image.png" },
     },
-    mainEntityOfPage: {
-      "@type": "WebPage",
-      "@id": `https://kenyafundfinder.com/news/${article.id}`,
-    },
+    mainEntityOfPage: { "@type": "WebPage", "@id": `https://kenyafundfinder.com/news/${article.id}` },
     articleSection: article.category,
   } : null);
 
@@ -81,18 +76,17 @@ const NewsArticlePage = () => {
   } : null);
 
   const shareUrl = article ? `https://kenyafundfinder.com/news/${article.id}` : "";
-
   const handleCopyLink = async () => {
     await navigator.clipboard.writeText(shareUrl);
     toast({ title: "Link copied to clipboard" });
   };
-
   const isAuthenticated = !!user;
 
   if (loading) {
     return (
-      <div className="container py-6 sm:py-10 max-w-3xl px-4 sm:px-6">
+      <div className="max-w-3xl mx-auto py-6 px-4 sm:px-6">
         <Skeleton className="h-4 w-32 mb-6" />
+        <Skeleton className="h-64 w-full rounded-2xl mb-4" />
         <Skeleton className="h-5 w-24 mb-3" />
         <Skeleton className="h-8 w-full mb-2" />
         <Skeleton className="h-8 w-3/4 mb-4" />
@@ -106,7 +100,7 @@ const NewsArticlePage = () => {
 
   if (!article) {
     return (
-      <div className="container py-20 text-center">
+      <div className="max-w-3xl mx-auto py-20 text-center px-4">
         <h1 className="text-2xl font-bold mb-4">Article Not Found</h1>
         <p className="text-muted-foreground mb-6">This article may have been removed or the link is incorrect.</p>
         <Button asChild variant="outline">
@@ -117,17 +111,28 @@ const NewsArticlePage = () => {
   }
 
   const CatIcon = categoryIcons[article.category] || Megaphone;
+  const heroImage = getNewsImage(article.image_url, article.category, article.id);
 
   return (
-    <div className="container py-5 sm:py-8 md:py-10 max-w-3xl px-4 sm:px-6">
+    <div className="max-w-3xl mx-auto py-5 sm:py-8 px-4 sm:px-6">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-6">
+      <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-5">
         <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
         <span>/</span>
         <Link to="/news" className="hover:text-foreground transition-colors">News</Link>
         <span>/</span>
         <span className="text-foreground font-medium truncate max-w-[200px]">{article.title}</span>
       </nav>
+
+      {/* Hero image */}
+      <div className="rounded-2xl overflow-hidden mb-5 border border-border">
+        <img
+          src={heroImage}
+          alt={article.title}
+          className="w-full aspect-[2/1] object-cover"
+          loading="eager"
+        />
+      </div>
 
       {/* Category & meta */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
@@ -138,15 +143,12 @@ const NewsArticlePage = () => {
           {article.category}
         </Badge>
         <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Clock className="h-3 w-3" />
-          {article.read_time}
+          <Clock className="h-3 w-3" /> {article.read_time}
         </span>
       </div>
 
       {/* Title */}
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight mb-3">
-        {article.title}
-      </h1>
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight mb-3">{article.title}</h1>
 
       {/* Date & source */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground mb-6">
@@ -174,7 +176,6 @@ const NewsArticlePage = () => {
               <p className="text-sm text-muted-foreground italic">Full article content is not yet available.</p>
             )}
           </div>
-
           {article.url && /^https?:\/\//i.test(article.url) && (
             <div className="mt-6 pt-4 border-t border-border">
               <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
