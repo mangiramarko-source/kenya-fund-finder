@@ -315,7 +315,15 @@ const MarketDashboardPage = () => {
                     </thead>
                     <tbody>
                       {filteredCommodities.map((c, i) => (
-                        <tr key={c.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
+                        <tr
+                          key={c.id}
+                          className="border-t border-border/50 hover:bg-accent/5 transition-colors group md:cursor-default cursor-pointer"
+                          onClick={() => {
+                            if (window.innerWidth < 768) {
+                              window.location.href = `/commodities?expand=${c.id}`;
+                            }
+                          }}
+                        >
                           <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
                           <td className="px-3 py-3">
                             <span className="font-bold text-foreground text-xs tracking-wide">{c.symbol}</span>
@@ -324,6 +332,9 @@ const MarketDashboardPage = () => {
                           <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{c.unit}</td>
                           <td className="px-3 py-3 text-right">
                             <span className="font-bold text-accent text-[15px] tabular-nums">{Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          </td>
+                          <td className="md:hidden px-1 py-3 text-right">
+                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-accent transition-colors" />
                           </td>
                           <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
                             {c.previous_price != null ? Number(c.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
