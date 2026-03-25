@@ -157,10 +157,15 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
 
   return (
     <div ref={ref} className="min-h-screen">
-      <h1 className="sr-only">Kenya Fund Finder – Compare Investment Funds</h1>
+      <div className="px-4 md:px-6 pt-5 pb-2">
+        <h1 className="text-xl md:text-2xl font-bold mb-1">Unit Trust Funds</h1>
+        <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
+          Unit trusts pool money from multiple investors to invest in diversified portfolios managed by professional fund managers. 
+          They offer an accessible way to grow your savings with regulated, transparent returns.
+        </p>
+      </div>
 
-
-      <div className="px-4 md:px-6 py-5">
+      <div className="px-4 md:px-6 py-3">
         {/* Desktop: full-width tabbed fund table */}
         <div className="hidden md:block">
           <p className="text-[10px] text-muted-foreground mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>

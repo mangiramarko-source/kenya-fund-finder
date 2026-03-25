@@ -210,14 +210,6 @@ const FundDetailPage = () => {
         <span className="text-sm text-foreground font-semibold truncate max-w-[200px]">{fund.name}</span>
       </nav>
 
-      {/* Intro text */}
-      <div className="mb-5">
-        <h1 className="text-xl md:text-2xl font-bold mb-1">Unit Trust Fund</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Unit trusts pool money from multiple investors to invest in diversified portfolios managed by professional fund managers. 
-          They offer an accessible way to grow your savings with regulated, transparent returns.
-        </p>
-      </div>
 
       {/* Fund header */}
       <div className="rounded-xl border border-border bg-card p-4 sm:p-5 mb-4">
