@@ -144,13 +144,18 @@ const FundDetailPage = () => {
   return (
     <div className="container py-6 sm:py-10 max-w-5xl">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-6">
-        <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-        <span>/</span>
-        <Link to="/" className="hover:text-foreground transition-colors">{FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type}</Link>
-        <span>/</span>
-        <span className="text-foreground font-medium truncate max-w-[200px]">{fund.name}</span>
-      </nav>
+      <div className="flex items-center gap-4 mb-6">
+        <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground hover:text-foreground" onClick={() => window.history.back()}>
+          <ArrowLeft className="h-4 w-4 mr-1" /> Back
+        </Button>
+        <nav className="flex items-center gap-2 text-xs text-muted-foreground">
+          <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
+          <span>/</span>
+          <Link to="/funds" className="hover:text-foreground transition-colors">{FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type}</Link>
+          <span>/</span>
+          <span className="text-foreground font-medium truncate max-w-[200px]">{fund.name}</span>
+        </nav>
+      </div>
 
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
