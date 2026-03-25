@@ -194,7 +194,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
 
           {isFundTab && (
             <>
-              <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
+              <p className="text-[10px] text-muted-foreground/70 -mt-1 mb-3">Gross annual effective rates before 15% withholding tax.</p>
 
               <div className="flex gap-2 mb-4">
                 <div className="relative flex-1">
