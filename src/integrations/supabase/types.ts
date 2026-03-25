@@ -445,6 +445,7 @@ export type Database = {
           created_by: string | null
           date_published: string
           id: string
+          image_url: string | null
           is_featured: boolean
           read_time: string
           source: string
@@ -462,6 +463,7 @@ export type Database = {
           created_by?: string | null
           date_published?: string
           id?: string
+          image_url?: string | null
           is_featured?: boolean
           read_time?: string
           source?: string
@@ -479,6 +481,7 @@ export type Database = {
           created_by?: string | null
           date_published?: string
           id?: string
+          image_url?: string | null
           is_featured?: boolean
           read_time?: string
           source?: string
@@ -1029,6 +1032,7 @@ export type Database = {
           created_at: string | null
           date_published: string | null
           id: string | null
+          image_url: string | null
           is_featured: boolean | null
           read_time: string | null
           source: string | null
@@ -1044,6 +1048,7 @@ export type Database = {
           created_at?: string | null
           date_published?: string | null
           id?: string | null
+          image_url?: string | null
           is_featured?: boolean | null
           read_time?: string | null
           source?: string | null
@@ -1059,6 +1064,7 @@ export type Database = {
           created_at?: string | null
           date_published?: string | null
           id?: string | null
+          image_url?: string | null
           is_featured?: boolean | null
           read_time?: string | null
           source?: string | null

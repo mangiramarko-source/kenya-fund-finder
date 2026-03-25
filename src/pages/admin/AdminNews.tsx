@@ -25,13 +25,14 @@ interface NewsRow {
   is_featured: boolean;
   status: string;
   updated_at: string;
+  image_url: string | null;
 }
 
 const categories = ["Yield Updates", "Market News", "Regulatory Updates", "Fund Announcements", "Market Insight"];
 
 const emptyNews = {
   title: "", summary: "", content: "", source: "", date_published: new Date().toISOString().split("T")[0],
-  url: "", category: "Market News", read_time: "3 min read", is_featured: false, status: "draft",
+  url: "", category: "Market News", read_time: "3 min read", is_featured: false, status: "draft", image_url: "",
 };
 
 const statusColors: Record<string, string> = {
@@ -94,6 +95,7 @@ const AdminNews = () => {
       read_time: editing.read_time,
       is_featured: editing.is_featured,
       status: editing.status,
+      image_url: editing.image_url || null,
       updated_by: user?.id,
     };
 
@@ -127,7 +129,7 @@ const AdminNews = () => {
     setEditing({
       id: a.id, title: a.title, summary: a.summary, content: a.content || "", source: a.source,
       date_published: a.date_published, url: a.url || "", category: a.category,
-      read_time: a.read_time, is_featured: a.is_featured, status: a.status,
+      read_time: a.read_time, is_featured: a.is_featured, status: a.status, image_url: a.image_url || "",
     });
     setDialogOpen(true);
   };
@@ -178,6 +180,10 @@ const AdminNews = () => {
               <div>
                 <Label>URL or PDF Link</Label>
                 <Input value={editing.url} onChange={(e) => setEditing({ ...editing, url: e.target.value })} className="mt-1" />
+              </div>
+              <div>
+                <Label>Image URL</Label>
+                <Input value={editing.image_url} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} className="mt-1" placeholder="https://images.unsplash.com/..." />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>

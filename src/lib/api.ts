@@ -45,6 +45,7 @@ export interface NewsFromDB {
   read_time: string;
   is_featured: boolean;
   status: string;
+  image_url: string | null;
 }
 
 export interface HistoricalYield {
@@ -125,6 +126,7 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
     read_time: data.read_time!,
     is_featured: data.is_featured!,
     status: data.status!,
+    image_url: (data as any).image_url || null,
   };
 }
 
@@ -146,6 +148,7 @@ export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
     read_time: d.read_time,
     is_featured: d.is_featured,
     status: d.status,
+    image_url: d.image_url || null,
   }));
 }
 
