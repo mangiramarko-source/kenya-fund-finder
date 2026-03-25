@@ -410,10 +410,10 @@ const MarketDashboardPage = () => {
               <Link to="/stocks" className="text-accent hover:text-accent/80 font-medium transition-colors">View stock details →</Link>
             )}
             {activeTab === "fx_rates" && (
-              <Link to="/rates" className="text-accent hover:text-accent/80 font-medium transition-colors">View all rates →</Link>
+              <Link to="/rates" className="hidden md:inline text-accent hover:text-accent/80 font-medium transition-colors">View all rates →</Link>
             )}
             {activeTab === "commodities" && (
-              <Link to="/commodities" className="text-accent hover:text-accent/80 font-medium transition-colors">View all commodities →</Link>
+              <Link to="/commodities" className="hidden md:inline text-accent hover:text-accent/80 font-medium transition-colors">View all commodities →</Link>
             )}
           </div>
         </div>
