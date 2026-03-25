@@ -354,6 +354,8 @@ const StocksPage = () => {
                 onToggle={() => toggleExpand(s.id)}
                 history={history[s.id]}
                 historyLoading={historyLoading === s.id}
+                isFavourite={user ? isFavourite(s.id) : undefined}
+                onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
               />
             ))
           )}
