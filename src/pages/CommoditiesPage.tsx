@@ -6,6 +6,7 @@ import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 
 interface Commodity {
   id: string;
