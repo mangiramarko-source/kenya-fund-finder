@@ -304,8 +304,9 @@ const OverviewPage = () => {
 
   const fetchWatchlist = useCallback(async () => {
     if (!user) { setWatchlist([]); setWatchlistLoading(false); return; }
-    const { data } = await supabase.from("user_watchlist" as any).select("*").eq("user_id", user.id).order("sort_order");
-    setWatchlist((data as any as WatchlistItem[]) || []);
+    const { data, error } = await supabase.from("user_watchlist").select("*").eq("user_id", user.id).order("sort_order");
+    if (error) { console.error("Failed to fetch watchlist:", error); }
+    setWatchlist((data as WatchlistItem[]) || []);
     setWatchlistLoading(false);
   }, [user]);
 
@@ -315,22 +316,38 @@ const OverviewPage = () => {
     if (!user) { navigate("/auth"); return; }
     const existing = watchlist.find(w => w.item_type === "section" && w.item_id === sectionId);
     if (existing) {
-      await supabase.from("user_watchlist" as any).delete().eq("id", existing.id);
+      // Optimistic remove
+      setWatchlist(prev => prev.filter(w => w.id !== existing.id));
+      const { error } = await supabase.from("user_watchlist").delete().eq("id", existing.id);
+      if (error) { toast.error("Failed to update"); fetchWatchlist(); return; }
+      toast.success(`Removed ${label}`);
     } else {
-      await supabase.from("user_watchlist" as any).insert({ user_id: user.id, item_type: "section", item_id: sectionId, item_name: label } as any);
+      // Optimistic add
+      const tempItem: WatchlistItem = { id: crypto.randomUUID(), user_id: user.id, item_type: "section", item_id: sectionId, item_name: label, sort_order: 0 };
+      setWatchlist(prev => [...prev, tempItem]);
+      const { error } = await supabase.from("user_watchlist").insert({ user_id: user.id, item_type: "section", item_id: sectionId, item_name: label });
+      if (error) { toast.error("Failed to update"); fetchWatchlist(); return; }
+      toast.success(`Added ${label}`);
+      fetchWatchlist(); // sync real ID
     }
-    fetchWatchlist();
   };
 
   const toggleAsset = async (type: string, id: string, name: string) => {
     if (!user) { navigate("/auth"); return; }
     const existing = watchlist.find(w => w.item_type === type && w.item_id === id);
     if (existing) {
-      await supabase.from("user_watchlist" as any).delete().eq("id", existing.id);
+      setWatchlist(prev => prev.filter(w => w.id !== existing.id));
+      const { error } = await supabase.from("user_watchlist").delete().eq("id", existing.id);
+      if (error) { toast.error("Failed to update"); fetchWatchlist(); return; }
+      toast.success(`Removed ${name}`);
     } else {
-      await supabase.from("user_watchlist" as any).insert({ user_id: user.id, item_type: type, item_id: id, item_name: name } as any);
+      const tempItem: WatchlistItem = { id: crypto.randomUUID(), user_id: user.id, item_type: type, item_id: id, item_name: name, sort_order: 0 };
+      setWatchlist(prev => [...prev, tempItem]);
+      const { error } = await supabase.from("user_watchlist").insert({ user_id: user.id, item_type: type, item_id: id, item_name: name });
+      if (error) { toast.error("Failed to update"); fetchWatchlist(); return; }
+      toast.success(`Added ${name}`);
+      fetchWatchlist();
     }
-    fetchWatchlist();
   };
 
   const openAlert = (assetType: "stock" | "currency" | "commodity", assetId: string, assetName: string, currentPrice: number, unit?: string) => {
