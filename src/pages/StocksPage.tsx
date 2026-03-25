@@ -68,18 +68,18 @@ const ChangeCell = ({ change, pct }: { change: number; pct: number }) => {
 
 const StocksPage = () => {
   useDocumentTitle(
-    "NSE Stocks – Nairobi Securities Exchange | Kenya Fund Finder",
-    "Track Nairobi Securities Exchange (NSE) stock prices, market cap, volumes, and performance.",
+    "Kenyan Stocks – Stock Market | Kenya Fund Finder",
+    "Track Kenyan stock market prices, market cap, volumes, and performance.",
     {
-      title: "NSE Stocks – Nairobi Securities Exchange | Kenya Fund Finder",
-      description: "Track NSE stock prices, volumes, and daily performance.",
+      title: "Kenyan Stocks – Stock Market | Kenya Fund Finder",
+      description: "Track Kenyan stock prices, volumes, and daily performance.",
     }
   );
   useJsonLd({
     "@context": "https://schema.org",
     "@type": "WebPage",
-    name: "NSE Stocks – Kenya Fund Finder",
-    description: "Track Nairobi Securities Exchange stock prices and performance.",
+    name: "Kenyan Stocks – Kenya Fund Finder",
+    description: "Track Kenyan stock market prices and performance.",
     url: "https://kenyafundfinder.com/stocks",
   });
 
@@ -180,13 +180,13 @@ const StocksPage = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="container py-8">
+      <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Nairobi Securities Exchange</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Kenyan Stock Market</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Track NSE-listed stock prices, volumes, and daily performance.
+            Track listed stock prices, volumes, and daily performance.
             {latestUpdate && (
-              <span className="ml-2 text-xs">
+              <span className="ml-2 text-xs text-muted-foreground/70">
                 Updated {latestUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
               </span>
             )}
@@ -196,10 +196,10 @@ const StocksPage = () => {
         {/* Summary stats */}
         {!loading && stocks.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <StatCard label="Stocks" value={String(stocks.length)} />
-            <StatCard label="Gainers" value={String(gainers)} color="text-accent" />
-            <StatCard label="Losers" value={String(losers)} color="text-destructive" />
-            <StatCard label="Unchanged" value={String(unchanged)} />
+            <StatCard label="Listed Stocks" value={String(stocks.length)} icon="📊" />
+            <StatCard label="Gainers" value={String(gainers)} color="text-accent" icon="📈" />
+            <StatCard label="Losers" value={String(losers)} color="text-destructive" icon="📉" />
+            <StatCard label="Unchanged" value={String(unchanged)} icon="➖" />
           </div>
         )}
 
@@ -243,9 +243,20 @@ const StocksPage = () => {
             <div className="rounded-xl border border-border overflow-hidden bg-card">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
+                  <colgroup>
+                    <col style={{ width: "3%" }} />
+                    <col style={{ width: "10%" }} />
+                    <col style={{ width: "22%" }} />
+                    <col style={{ width: "10%" }} />
+                    <col style={{ width: "14%" }} />
+                    <col style={{ width: "13%" }} />
+                    <col style={{ width: "13%" }} />
+                    <col style={{ width: "13%" }} />
+                    <col style={{ width: "2%" }} />
+                  </colgroup>
                   <thead>
-                    <tr className="bg-muted/70 text-xs">
-                      <th className="text-left px-3 py-3 font-semibold text-muted-foreground w-10">#</th>
+                    <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
+                      <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
                       <SortHeader label="Symbol" sortKey="symbol" currentKey={sortKey} dir={sortDir} onClick={toggleSort} />
                       <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Company</th>
                       <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Sector</th>
@@ -253,7 +264,7 @@ const StocksPage = () => {
                       <SortHeader label="Change" sortKey="day_change_percent" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
                       <SortHeader label="Volume" sortKey="volume" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
                       <SortHeader label="Mkt Cap" sortKey="market_cap" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
-                      <th className="w-10"></th>
+                      <th className="w-8"></th>
                     </tr>
                   </thead>
                   <tbody>
@@ -303,9 +314,14 @@ const StocksPage = () => {
           )}
         </div>
 
-        <div className="mt-6 rounded-lg bg-muted/40 border border-border/50 p-3">
+        {/* Summary footer */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
+          <span>Showing {filtered.length} of {stocks.length} stocks</span>
+        </div>
+
+        <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
           <p className="text-[10px] leading-relaxed text-muted-foreground">
-            Stock prices shown are indicative and may be delayed. Data is sourced from the Nairobi Securities Exchange (NSE).
+            Stock prices shown are indicative and may be delayed. Data is sourced from the Kenyan stock market.
             Click on any stock to view price history and detailed metrics. This information is for educational purposes only.
           </p>
         </div>
@@ -432,19 +448,23 @@ const StockRow = ({
   history?: PriceHistory[]; historyLoading: boolean;
 }) => (
   <>
-    <tr className="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer" onClick={onToggle}>
-      <td className="px-3 py-3 text-muted-foreground text-xs tabular-nums">{index + 1}</td>
-      <td className="px-3 py-3 font-bold text-foreground tabular-nums">{s.symbol}</td>
-      <td className="px-3 py-3 text-foreground text-xs max-w-[180px] truncate">{s.name}</td>
-      <td className="px-3 py-3">
+    <tr className="border-t border-border/50 hover:bg-accent/5 transition-colors cursor-pointer group" onClick={onToggle}>
+      <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
+      <td className="px-3 py-3.5">
+        <span className="font-bold text-foreground text-sm tracking-wide">{s.symbol}</span>
+      </td>
+      <td className="px-3 py-3.5 text-foreground text-xs max-w-[200px] truncate" title={s.name}>{s.name}</td>
+      <td className="px-3 py-3.5">
         <span className="inline-block text-[10px] font-medium text-muted-foreground bg-muted/60 rounded-md px-1.5 py-0.5 whitespace-nowrap">{s.sector}</span>
       </td>
-      <td className="px-3 py-3 text-right font-semibold text-foreground tabular-nums">{formatNumber(s.price)}</td>
-      <td className="px-3 py-3 text-right"><ChangeCell change={s.day_change} pct={s.day_change_percent} /></td>
-      <td className="px-3 py-3 text-right text-muted-foreground text-xs tabular-nums">{formatVolume(s.volume)}</td>
-      <td className="px-3 py-3 text-right text-muted-foreground text-xs tabular-nums">{formatMarketCap(s.market_cap)}</td>
-      <td className="px-3 py-3 text-center">
-        {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+      <td className="px-3 py-3.5 text-right">
+        <span className="font-bold text-accent text-[15px] tabular-nums">{formatNumber(s.price)}</span>
+      </td>
+      <td className="px-3 py-3.5 text-right"><ChangeCell change={s.day_change} pct={s.day_change_percent} /></td>
+      <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">{formatVolume(s.volume)}</td>
+      <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">{formatMarketCap(s.market_cap)}</td>
+      <td className="px-3 py-3.5 text-center">
+        {isExpanded ? <ChevronUp className="h-4 w-4 text-accent" /> : <ChevronDown className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground" />}
       </td>
     </tr>
     {isExpanded && (
@@ -505,10 +525,13 @@ const MobileStockCard = ({
 );
 
 /* ─── Shared components ─── */
-const StatCard = ({ label, value, color }: { label: string; value: string; color?: string }) => (
-  <div className="rounded-xl border border-border bg-card p-3">
-    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
-    <p className={`text-xl font-bold tabular-nums ${color || "text-foreground"}`}>{value}</p>
+const StatCard = ({ label, value, color, icon }: { label: string; value: string; color?: string; icon?: string }) => (
+  <div className="rounded-xl border border-border bg-card p-4">
+    <div className="flex items-center gap-2 mb-1">
+      {icon && <span className="text-sm">{icon}</span>}
+      <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{label}</p>
+    </div>
+    <p className={`text-2xl font-bold tabular-nums ${color || "text-foreground"}`}>{value}</p>
   </div>
 );
 

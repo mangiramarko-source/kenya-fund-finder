@@ -19,7 +19,7 @@ type SortDir = "asc" | "desc";
 const categoryLabels: Record<MarketCategory, string> = {
   fx_rates: "FX Rates",
   commodities: "Commodities",
-  stocks: "NSE Stocks",
+  stocks: "Kenyan Stocks",
 };
 const categoryIcons: Record<MarketCategory, typeof DollarSign> = {
   fx_rates: DollarSign,
@@ -69,7 +69,7 @@ const TableSkeleton = () => (
 const MarketDashboardPage = () => {
   useDocumentTitle(
     "Market Overview – Kenya Fund Finder",
-    "Combined view of NSE stocks, FX exchange rates, and commodity prices.",
+    "Combined view of Kenyan stocks, FX exchange rates, and commodity prices.",
     { title: "Market Overview – Kenya Fund Finder", description: "Combined market overview dashboard." }
   );
   useJsonLd({ "@context": "https://schema.org", "@type": "WebPage", name: "Market Overview – Kenya Fund Finder", url: "https://kenyafundfinder.com/markets" });

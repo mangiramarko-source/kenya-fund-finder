@@ -30,7 +30,7 @@ interface FundYieldSnapshot { snapshot_date: string; annual_yield: number; fund_
 interface RateHistory { snapshot_date: string; rate: number; currency_code: string; }
 
 const SECTIONS = [
-  { id: "stocks", label: "NSE Stocks", icon: TrendingUp, description: "Nairobi Securities Exchange" },
+  { id: "stocks", label: "Stocks", icon: TrendingUp, description: "Kenyan stock market" },
   { id: "fx", label: "FX Rates", icon: DollarSign, description: "Currency exchange rates" },
   { id: "commodities", label: "Commodities", icon: Gem, description: "Gold, oil, crypto & more" },
   { id: "money_market", label: "Money Market", icon: BarChart3, description: "Fund yields & rates" },
@@ -638,7 +638,7 @@ const OverviewPage = () => {
 
       {/* ─── Section: Stocks ─── */}
       {enabledSections.includes("stocks") && (
-        <SectionPanel title="NSE Stocks" icon={TrendingUp} link="/stocks" linkLabel="All stocks" count={stocks.length} sub={`${stocks.filter(s => s.day_change > 0).length}↑ ${stocks.filter(s => s.day_change < 0).length}↓`}>
+        <SectionPanel title="Kenyan Stocks" icon={TrendingUp} link="/stocks" linkLabel="All stocks" count={stocks.length} sub={`${stocks.filter(s => s.day_change > 0).length}↑ ${stocks.filter(s => s.day_change < 0).length}↓`}>
           <div className="rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-sm">
               <thead><tr className="bg-muted/70 text-xs">
