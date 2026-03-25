@@ -246,7 +246,7 @@ const MarketDashboardPage = () => {
                           className="border-t border-border/50 hover:bg-accent/5 transition-colors group md:cursor-default cursor-pointer"
                           onClick={() => {
                             if (window.innerWidth < 768) {
-                              window.location.href = `/rates?expand=${r.id}`;
+                              navigate(`/rates?expand=${r.id}`);
                             }
                           }}
                         >
@@ -321,7 +321,7 @@ const MarketDashboardPage = () => {
                           className="border-t border-border/50 hover:bg-accent/5 transition-colors group md:cursor-default cursor-pointer"
                           onClick={() => {
                             if (window.innerWidth < 768) {
-                              window.location.href = `/commodities?expand=${c.id}`;
+                              navigate(`/commodities?expand=${c.id}`);
                             }
                           }}
                         >
