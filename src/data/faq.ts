@@ -5,7 +5,7 @@ export interface FaqItem {
   answer: string;
 }
 
-export const faqByFundType: Record<FundType | "general", FaqItem[]> = {
+export const faqByFundType: Record<FundType | "general" | "stocks", FaqItem[]> = {
   general: [
     {
       question: "What is a Collective Investment Scheme (CIS)?",
@@ -26,6 +26,34 @@ export const faqByFundType: Record<FundType | "general", FaqItem[]> = {
       question: "Are investment funds in Kenya regulated?",
       answer:
         "Yes, all collective investment schemes in Kenya are regulated by the Capital Markets Authority (CMA). Fund managers must be licensed, and funds must comply with investment guidelines, reporting requirements, and investor protection rules. Always verify that a fund and its manager are CMA-licensed before investing.",
+    },
+  ],
+
+  stocks: [
+    {
+      question: "How does the Kenyan stock market work?",
+      answer:
+        "The Nairobi Securities Exchange (NSE) is the principal stock exchange in Kenya. Companies list their shares on the NSE, and investors can buy and sell them through licensed stockbrokers. The NSE is regulated by the Capital Markets Authority (CMA) and operates on a T+2 settlement cycle — meaning trades settle two business days after execution.",
+    },
+    {
+      question: "What are the costs of trading stocks in Kenya?",
+      answer:
+        "Trading costs include brokerage commissions (typically 1.5–2.1% of trade value), CMA levy (0.14%), NSE transaction levy (0.12%), CDSC fees (0.06%), and stamp duty on share transfers. Capital gains tax of 5% applies to net gains on share sales. These costs can add up, so consider them when planning trades.",
+    },
+    {
+      question: "What is a CDSC account?",
+      answer:
+        "The Central Depository & Settlement Corporation (CDSC) holds all shares in electronic form in Kenya. Every investor needs a CDS account to trade on the NSE. You can open one through any licensed stockbroker or investment bank. The account holds your shares digitally and tracks all your transactions.",
+    },
+    {
+      question: "How do dividends work for Kenyan stocks?",
+      answer:
+        "Companies may declare dividends from their profits, paid per share. Dividend income is subject to 15% withholding tax deducted at source. The ex-dividend date determines eligibility — you must own shares before this date to receive the dividend. Dividends are typically paid annually or semi-annually.",
+    },
+    {
+      question: "What are the risks of investing in Kenyan stocks?",
+      answer:
+        "Key risks include market risk (prices fluctuating with economic conditions), liquidity risk (some counters are thinly traded), currency risk (for foreign investors), and company-specific risk. Political events, regulatory changes, and global economic conditions can also impact the market. Diversification across sectors helps manage risk.",
     },
   ],
 
