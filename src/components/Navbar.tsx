@@ -179,7 +179,6 @@ const Navbar = () => {
           >
             {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
           </Button>
-          <NotificationBell />
         </div>
 
         {/* Mobile: logo centered */}
@@ -204,7 +203,7 @@ const Navbar = () => {
       {/* Mobile: nav pills row */}
       <div className="md:hidden flex justify-center px-4 pb-1.5 pt-1 bg-card/95">
         <nav className="flex items-center gap-0.5 bg-muted/60 rounded-full px-1 py-1">
-          {navLinks.map((link) => {
+          {mobileNavLinks.map((link) => {
             const Icon = link.icon;
             const isActive = location.pathname === link.to;
             return (
