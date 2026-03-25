@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers, Tag } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers, Tag, Star } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -36,6 +36,8 @@ interface FundGridProps {
   snapshots: Record<string, YieldSnapshot>;
   allSnapshots?: Record<string, YieldSnapshot[]>;
   loading: boolean;
+  isFavourite?: (id: string) => boolean;
+  onToggleFavourite?: (id: string, name: string) => void;
 }
 
 const SortHeader = ({
@@ -159,7 +161,7 @@ const FundStatCard = ({ label, value, icon, valueColor }: { label: string; value
   </div>
 );
 
-const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProps) => {
+const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, onToggleFavourite }: FundGridProps) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("money_market");
   const [search, setSearch] = useState("");
