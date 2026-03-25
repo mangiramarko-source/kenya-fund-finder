@@ -481,10 +481,11 @@ const StockDetailPanel = ({
 
 /* ─── Desktop Row ─── */
 const StockRow = ({
-  stock: s, index, isExpanded, onToggle, history, historyLoading,
+  stock: s, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
   stock: Stock; index: number; isExpanded: boolean; onToggle: () => void;
   history?: PriceHistory[]; historyLoading: boolean;
+  isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => (
   <>
     <tr
@@ -510,6 +511,17 @@ const StockRow = ({
       <td className="px-3 py-3.5 text-right"><ChangeCell change={s.day_change} pct={s.day_change_percent} /></td>
       <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">{formatVolume(s.volume)}</td>
       <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">{formatMarketCap(s.market_cap)}</td>
+      {onToggleFavourite !== undefined && (
+        <td className="px-2 py-3.5 text-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
+            className="p-1 rounded-md hover:bg-muted transition-colors"
+            aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+          >
+            <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+          </button>
+        </td>
+      )}
       <td className="px-3 py-3.5 text-center">
         {isExpanded ? <ChevronUp className="h-4 w-4 text-accent" /> : <ChevronDown className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground" />}
       </td>
