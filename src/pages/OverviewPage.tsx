@@ -570,8 +570,8 @@ const OverviewPage = () => {
           )}
         </div>
 
-        {/* Mobile: compact 2-col grid */}
-        <div className="grid grid-cols-2 gap-3 md:hidden">
+        {/* Mobile: compact single-column list */}
+        <div className="flex flex-col gap-2 md:hidden">
           {bestStock && (
             <HighlightCard icon={TrendingUp} label="Top Stock" name={`${bestStock.symbol} · ${bestStock.name}`} value={`KES ${bestStock.price.toFixed(2)}`} change={<Change current={bestStock.price} previous={bestStock.previous_price} />} linkTo="/stocks" color="bg-accent/10" />
           )}
