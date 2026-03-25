@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers, Tag } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -232,7 +232,7 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
         <FundStatCard
           label="Category"
           value={categoryLabels[activeTab] || activeTab}
-          icon={<Search className="h-4 w-4 text-muted-foreground" />}
+          icon={<Tag className="h-4 w-4 text-muted-foreground" />}
         />
       </div>
 
