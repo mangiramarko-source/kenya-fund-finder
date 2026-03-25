@@ -849,6 +849,9 @@ const WatchCard = ({ title, sub, value, change, chart, sparkData, onAlert, onRem
         </div>
         <p className="text-[10px] text-muted-foreground truncate">{sub}</p>
       </div>
+      {sparkData && sparkData.length >= 3 && (
+        <Sparkline data={sparkData} width={48} height={18} color="auto" className="shrink-0" />
+      )}
       <div className="text-right shrink-0">
         <p className="text-sm font-bold tabular-nums text-foreground">{value}</p>
         <div className="mt-0.5">{change}</div>
