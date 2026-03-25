@@ -1,6 +1,6 @@
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import { ArrowLeft, ExternalLink, Calculator, BarChart3, Plus, Check, Shield, Clock, Wallet, TrendingUp, Info } from "lucide-react";
+import { ArrowLeft, ExternalLink, Calculator, BarChart3, Plus, Check, Shield, Clock, Wallet, TrendingUp, Info, ChevronRight } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
