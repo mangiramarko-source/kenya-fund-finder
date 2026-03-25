@@ -43,18 +43,18 @@ const PRECIOUS_METALS: Record<string, string> = {
 
 // NSE stock symbols → Yahoo Finance tickers (.NR suffix for Nairobi)
 const NSE_YAHOO_MAP: Record<string, string> = {
-  SCOM: "SCOM.NR",
-  EQTY: "EQTY.NR",
-  KCB: "KCB.NR",
-  COOP: "COOP.NR",
-  ABSA: "ABSA.NR",
-  EABL: "EABL.NR",
-  BAT: "BAT.NR",
-  KNRE: "KNRE.NR",
-  KPLC: "KPLC.NR",
-  BAMB: "BAMB.NR",
-  SASN: "SASN.NR",
-  TOTL: "TOTL.NR",
+  SCOM: "SCOM.NR", EQTY: "EQTY.NR", KCB: "KCB.NR", COOP: "COOP.NR",
+  ABSA: "ABSA.NR", EABL: "EABL.NR", BAT: "BAT.NR", KNRE: "KNRE.NR",
+  KPLC: "KPLC.NR", BAMB: "BAMB.NR", SASN: "SASN.NR", TOTL: "TOTL.NR",
+  NCBA: "NCBA.NR", SCBK: "SCBK.NR", SBIC: "SBIC.NR", IMH: "IMH.NR",
+  KEGN: "KEGN.NR", BKG: "BKG.NR", DTK: "DTK.NR", BRIT: "BRIT.NR",
+  JUB: "JUB.NR", KQ: "KQ.NR", HFCK: "HFCK.NR", CIC: "CIC.NR",
+  CTUM: "CTUM.NR", KUKZ: "KUKZ.NR", CRWN: "CRWN.NR", PORT: "PORT.NR",
+  CARB: "CARB.NR", NSE20: "NSE.NR", CGEN: "CGEN.NR", LBTY: "LBTY.NR",
+  WTK: "WTK.NR", SMER: "SMER.NR", TPSE: "TPSE.NR", KAPC: "KAPC.NR",
+  NMG: "NMG.NR", BOC: "BOC.NR", UNGA: "UNGA.NR", SLAM: "SLAM.NR",
+  TCL: "TCL.NR", LKL: "LKL.NR", SGL: "SGL.NR", KPC: "KPC.NR",
+  UMME: "UMME.NR",
 };
 
 async function fetchYahooQuote(ticker: string): Promise<{
