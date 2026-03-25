@@ -540,10 +540,11 @@ const StockRow = ({
 
 /* ─── Mobile Card ─── */
 const MobileStockCard = ({
-  stock: s, isExpanded, onToggle, history, historyLoading,
+  stock: s, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
   stock: Stock; isExpanded: boolean; onToggle: () => void;
   history?: PriceHistory[]; historyLoading: boolean;
+  isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => (
   <div className="rounded-xl border border-border bg-card">
     <div className="p-3.5 cursor-pointer" onClick={onToggle}>
@@ -556,6 +557,15 @@ const MobileStockCard = ({
           <p className="text-xs text-muted-foreground mt-0.5">{s.name}</p>
         </div>
         <div className="flex items-center gap-2">
+          {onToggleFavourite !== undefined && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
+              className="p-1 rounded-md"
+              aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+            >
+              <Star className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`} />
+            </button>
+          )}
           <ChangeCell change={s.day_change} pct={s.day_change_percent} />
           {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         </div>
