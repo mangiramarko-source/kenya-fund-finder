@@ -19,7 +19,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   youtube: Youtube,
   github: Github,
   globe: Globe,
-  tiktok: Globe, // fallback
+  tiktok: Globe,
 };
 
 const Footer = forwardRef<HTMLElement>((_, ref) => {
@@ -36,15 +36,16 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
   return (
     <footer ref={ref} className="border-t border-border bg-card mt-16">
       <div className="container py-10">
-        {/* Mobile: full footer with nav links. Desktop: compact disclaimer only */}
-        <div className="md:hidden grid grid-cols-1 gap-8 mb-8">
-          <div>
+        {/* Main footer grid — all viewports */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-8 mb-8">
+          {/* Brand */}
+          <div className="col-span-2 md:col-span-1">
             <Link to="/" className="flex items-center gap-2 font-heading text-lg font-bold text-primary mb-3">
               <TrendingUp className="h-5 w-5 text-accent" />
               Kenya Fund Finder
             </Link>
-            <p className="text-sm text-muted-foreground max-w-sm">
-              Your trusted platform for comparing Money Market Funds in Kenya. All funds listed are regulated by the Capital Markets Authority.
+            <p className="text-sm text-muted-foreground max-w-xs leading-relaxed">
+              Your trusted platform for comparing CMA-regulated investment funds in Kenya.
             </p>
 
             {socialLinks.length > 0 && (
@@ -52,49 +53,63 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
                 {socialLinks.map((link) => {
                   const IconComponent = ICON_MAP[link.icon_name.toLowerCase()] || Globe;
                   return (
-                    <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-primary transition-colors" aria-label={link.platform}>
-                      <IconComponent className="h-5 w-5" />
+                    <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-accent transition-colors" aria-label={link.platform}>
+                      <IconComponent className="h-4 w-4" />
                     </a>
                   );
                 })}
               </div>
             )}
           </div>
-          <div className="grid grid-cols-2 gap-6">
-            <div>
-              <h4 className="font-heading font-semibold mb-3 text-sm">Quick Links</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/" className="hover:text-foreground transition-colors">Funds</Link></li>
-                <li><Link to="/calculator" className="hover:text-foreground transition-colors">Calculator</Link></li>
-                <li><Link to="/news" className="hover:text-foreground transition-colors">News</Link></li>
-                <li><Link to="/learn" className="hover:text-foreground transition-colors">Learn</Link></li>
-                <li><Link to="/page/about" className="hover:text-foreground transition-colors">About</Link></li>
-                <li><Link to="/page/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
-              </ul>
-            </div>
-            <div>
-              <h4 className="font-heading font-semibold mb-3 text-sm">Legal</h4>
-              <ul className="space-y-2 text-sm text-muted-foreground">
-                <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
-                <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms of Use</Link></li>
-              </ul>
-            </div>
+
+          {/* Markets */}
+          <div>
+            <h4 className="font-heading font-semibold mb-3 text-sm text-foreground">Markets</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/stocks" className="hover:text-foreground transition-colors">Stocks</Link></li>
+              <li><Link to="/funds" className="hover:text-foreground transition-colors">Unit Trusts</Link></li>
+              <li><Link to="/rates" className="hover:text-foreground transition-colors">FX Rates</Link></li>
+              <li><Link to="/commodities" className="hover:text-foreground transition-colors">Commodities</Link></li>
+              <li><Link to="/markets" className="hover:text-foreground transition-colors">Market Dashboard</Link></li>
+            </ul>
+          </div>
+
+          {/* Resources */}
+          <div>
+            <h4 className="font-heading font-semibold mb-3 text-sm text-foreground">Resources</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/calculator" className="hover:text-foreground transition-colors">Calculator</Link></li>
+              <li><Link to="/news" className="hover:text-foreground transition-colors">News</Link></li>
+              <li><Link to="/learn" className="hover:text-foreground transition-colors">Learn</Link></li>
+              <li><Link to="/compare" className="hover:text-foreground transition-colors">Compare Funds</Link></li>
+              <li><Link to="/page/about" className="hover:text-foreground transition-colors">About</Link></li>
+            </ul>
+          </div>
+
+          {/* Legal */}
+          <div>
+            <h4 className="font-heading font-semibold mb-3 text-sm text-foreground">Legal</h4>
+            <ul className="space-y-2 text-sm text-muted-foreground">
+              <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
+              <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms of Use</Link></li>
+              <li><Link to="/page/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
+            </ul>
           </div>
         </div>
 
-        {/* Disclaimer — shown on all viewports */}
-        <div className="md:pt-0 pt-6 border-t border-border md:border-t-0">
+        {/* Disclaimer */}
+        <div className="pt-6 border-t border-border">
           <div className="flex items-start gap-2 mb-4">
             <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
             <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong>Important Disclaimer:</strong> This platform provides information only and does not constitute investment advice, financial advice, trading advice, or any other sort of advice. You should not treat any of the platform's content as such. Kenya Fund Finder does not recommend that any financial product is suitable for you. The content on this platform is provided for general informational purposes only. Past performance is not indicative of future results. All investments carry risk, including the potential loss of principal. Please consult with a qualified financial advisor before making any investment decisions.
+              <strong>Important Disclaimer:</strong> This platform provides information only and does not constitute investment advice. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified financial advisor before making any investment decisions.
             </p>
           </div>
-          <p className="text-xs text-muted-foreground mb-2">
-            All funds listed on this platform are regulated by the <strong>Capital Markets Authority (CMA) of Kenya</strong>. Fund data is sourced from publicly available fact sheets and regulatory filings. Yields shown are gross annual effective yields before the 15% withholding tax unless otherwise stated. Data may not reflect real-time values.
+          <p className="text-xs text-muted-foreground leading-relaxed">
+            All funds listed are regulated by the <strong>Capital Markets Authority (CMA) of Kenya</strong>. Yields shown are gross annual effective yields before 15% withholding tax. Data may not reflect real-time values.
           </p>
-          <p className="text-xs text-muted-foreground text-center mt-4">
-            © {new Date().getFullYear()} Kenya Fund Finder. All rights reserved. This platform is not affiliated with, endorsed by, or connected to any fund manager or the CMA.
+          <p className="text-xs text-muted-foreground text-center mt-6">
+            © {new Date().getFullYear()} Kenya Fund Finder. All rights reserved. Not affiliated with any fund manager or the CMA.
           </p>
         </div>
       </div>
