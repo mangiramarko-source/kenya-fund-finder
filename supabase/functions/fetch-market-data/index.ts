@@ -127,8 +127,9 @@ Deno.serve(async (req) => {
     }
   } catch { /* not a valid JWT, will fall through to user auth */ }
 
-  if (!isCronCall && !isServiceCall) {
+  if (!isCronCall) {
     // Verify the caller is an authenticated admin
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
