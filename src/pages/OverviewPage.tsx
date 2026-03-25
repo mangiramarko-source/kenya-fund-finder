@@ -207,7 +207,41 @@ const MiniChart = ({ data, color = "hsl(var(--accent))" }: { data: { snapshot_da
   );
 };
 
-/* ─── Highlight Card ─── */
+/* ─── Detailed Highlight Card (desktop) ─── */
+const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color, chartData, chartColor }: {
+  icon: any; label: string; name: string; value: string; sub?: string;
+  change?: React.ReactNode; linkTo?: string; color?: string;
+  chartData?: { snapshot_date: string; rate: number }[]; chartColor?: string;
+}) => (
+  <div className="rounded-xl border border-border bg-card p-5 hover:border-accent/30 transition-colors group flex flex-col">
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2">
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${color || "bg-primary/10"}`}>
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+      </div>
+      {linkTo && (
+        <Link to={linkTo} className="text-[10px] text-accent hover:underline inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          View <ArrowRight className="h-3 w-3" />
+        </Link>
+      )}
+    </div>
+    <p className="text-sm font-bold text-foreground truncate" title={name}>{name}</p>
+    <p className="text-xl font-bold text-foreground tabular-nums mt-1">{value}</p>
+    <div className="flex items-center gap-3 mt-1">
+      {change}
+      {sub && <span className="text-[10px] text-muted-foreground">{sub}</span>}
+    </div>
+    {chartData && chartData.length > 2 && (
+      <div className="mt-3 -mx-1 flex-1 min-h-[70px]">
+        <MiniChart data={chartData} color={chartColor || "hsl(var(--accent))"} />
+      </div>
+    )}
+  </div>
+);
+
+/* ─── Compact Highlight Card (mobile) ─── */
 const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color }: {
   icon: any; label: string; name: string; value: string; sub?: string;
   change?: React.ReactNode; linkTo?: string; color?: string;
