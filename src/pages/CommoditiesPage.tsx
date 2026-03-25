@@ -3,7 +3,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
@@ -63,11 +63,20 @@ const CommoditiesPage = () => {
     url: "https://kenyafundfinder.com/commodities",
   });
 
+  const [searchParams] = useSearchParams();
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<string | null>(searchParams.get("expand"));
   const [history, setHistory] = useState<Record<string, PriceHistory[]>>({});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
+
+  // Auto-expand from query param
+  useEffect(() => {
+    const expandId = searchParams.get("expand");
+    if (expandId && !loading && commodities.length > 0 && !history[expandId]) {
+      toggleExpand(expandId);
+    }
+  }, [loading, commodities]);
 
   useEffect(() => {
     const fetchData = async () => {
