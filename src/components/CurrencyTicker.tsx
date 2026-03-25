@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { TrendingUp, TrendingDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { useIsMobile } from "@/hooks/use-mobile";
+import Sparkline from "./Sparkline";
 
 interface TickerItem {
   id: string;
@@ -9,6 +10,7 @@ interface TickerItem {
   value: number;
   previousValue: number | null;
   unit?: string;
+  sparkData?: number[];
 }
 
 const CurrencyTicker = () => {
@@ -18,7 +20,7 @@ const CurrencyTicker = () => {
   const [paused, setPaused] = useState(false);
 
   const fetchItems = async () => {
-    const [ratesRes, commoditiesRes, stocksRes] = await Promise.all([
+    const [ratesRes, commoditiesRes, stocksRes, rateHistRes] = await Promise.all([
       supabase
         .from("exchange_rates_public" as any)
         .select("id, currency_code, rate, previous_rate")
@@ -32,20 +34,39 @@ const CurrencyTicker = () => {
         .select("id, symbol, price, previous_price, day_change_percent")
         .order("sort_order")
         .limit(10),
+      supabase
+        .from("exchange_rate_history_public" as any)
+        .select("exchange_rate_id, rate, snapshot_date")
+        .order("snapshot_date", { ascending: true })
+        .limit(500),
     ]);
-    const rates = (ratesRes.data || []).map((r: any) => ({
+
+    // Build sparkline data map for FX rates
+    const historyMap: Record<string, number[]> = {};
+    ((rateHistRes.data as any) || []).forEach((h: any) => {
+      const id = h.exchange_rate_id;
+      if (!historyMap[id]) historyMap[id] = [];
+      historyMap[id].push(Number(h.rate));
+    });
+    // Keep only last 20 points per rate
+    Object.keys(historyMap).forEach(k => {
+      historyMap[k] = historyMap[k].slice(-20);
+    });
+
+    const rates: TickerItem[] = (ratesRes.data || []).map((r: any) => ({
       id: `fx-${r.id}`,
       label: `${r.currency_code}/KES`,
       value: r.rate,
       previousValue: r.previous_rate,
+      sparkData: historyMap[r.id],
     }));
-    const stocks = (stocksRes.data || []).map((s: any) => ({
+    const stocks: TickerItem[] = (stocksRes.data || []).map((s: any) => ({
       id: `stk-${s.id}`,
       label: s.symbol,
       value: s.price,
       previousValue: s.previous_price,
     }));
-    const commodities = (commoditiesRes.data || []).map((c: any) => ({
+    const commodities: TickerItem[] = (commoditiesRes.data || []).map((c: any) => ({
       id: `cmd-${c.id}`,
       label: c.symbol || c.name,
       value: c.price,
@@ -113,6 +134,15 @@ const CurrencyTicker = () => {
               <span className="font-semibold text-white/70">
                 {item.label}
               </span>
+              {item.sparkData && item.sparkData.length >= 3 && (
+                <Sparkline
+                  data={item.sparkData}
+                  width={40}
+                  height={14}
+                  color="auto"
+                  className="opacity-80"
+                />
+              )}
               <span className="font-bold text-white tabular-nums">
                 {item.value.toLocaleString("en-US", {
                   minimumFractionDigits: 2,

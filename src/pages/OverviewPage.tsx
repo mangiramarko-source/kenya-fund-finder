@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
+import Sparkline from "@/components/Sparkline";
 import { Link, useNavigate } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
@@ -464,6 +465,7 @@ const OverviewPage = () => {
                 <WatchCard key={r.id} title={`${r.currency_code}/KES`} sub={r.currency_name} value={`KES ${Number(r.rate).toFixed(2)}`}
                   change={<Change current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />}
                   chart={history.length > 2 ? <MiniChart data={history} /> : undefined}
+                  sparkData={history.length > 2 ? history.map(h => h.rate) : undefined}
                   onAlert={() => openAlert("currency", r.id, `${r.currency_code}/KES`, Number(r.rate), "KES")}
                   onRemove={() => toggleAsset("currency", r.id, `${r.currency_code}/KES`)} />
               );
@@ -474,12 +476,17 @@ const OverviewPage = () => {
                 onAlert={() => openAlert("commodity", c.id, c.name, Number(c.price), c.unit)}
                 onRemove={() => toggleAsset("commodity", c.id, c.name)} />
             ))}
-            {watchedFunds.map(f => (
-              <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${f.annual_yield.toFixed(2)}%`}
-                change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
-                linkTo={`/compare/${f.slug}`}
-                onRemove={() => toggleAsset("fund", f.id, f.name)} />
-            ))}
+            {watchedFunds.map(f => {
+              const fHistory = getFundHistory(f.id);
+              return (
+                <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${f.annual_yield.toFixed(2)}%`}
+                  change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
+                  chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
+                  sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}
+                  linkTo={`/compare/${f.slug}`}
+                  onRemove={() => toggleAsset("fund", f.id, f.name)} />
+              );
+            })}
           </div>
         </div>
       )}
@@ -613,6 +620,7 @@ const OverviewPage = () => {
                 <WatchCard key={r.id} title={`${r.currency_code}/KES`} sub={r.currency_name} value={`KES ${Number(r.rate).toFixed(2)}`}
                   change={<Change current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />}
                   chart={history.length > 2 ? <MiniChart data={history} /> : undefined}
+                  sparkData={history.length > 2 ? history.map(h => h.rate) : undefined}
                   onAlert={() => openAlert("currency", r.id, `${r.currency_code}/KES`, Number(r.rate), "KES")}
                   onRemove={() => toggleAsset("currency", r.id, `${r.currency_code}/KES`)} />
               );
@@ -623,12 +631,17 @@ const OverviewPage = () => {
                 onAlert={() => openAlert("commodity", c.id, c.name, Number(c.price), c.unit)}
                 onRemove={() => toggleAsset("commodity", c.id, c.name)} />
             ))}
-            {watchedFunds.map(f => (
-              <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${f.annual_yield.toFixed(2)}%`}
-                change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
-                linkTo={`/compare/${f.slug}`}
-                onRemove={() => toggleAsset("fund", f.id, f.name)} />
-            ))}
+            {watchedFunds.map(f => {
+              const fHistory = getFundHistory(f.id);
+              return (
+                <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${f.annual_yield.toFixed(2)}%`}
+                  change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
+                  chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
+                  sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}
+                  linkTo={`/compare/${f.slug}`}
+                  onRemove={() => toggleAsset("fund", f.id, f.name)} />
+              );
+            })}
           </div>
         </div>
       )}
@@ -827,9 +840,9 @@ const OverviewPage = () => {
 };
 
 /* ─── Reusable Components ─── */
-const WatchCard = ({ title, sub, value, change, chart, onAlert, onRemove, linkTo }: {
+const WatchCard = ({ title, sub, value, change, chart, sparkData, onAlert, onRemove, linkTo }: {
   title: string; sub: string; value: string; change: React.ReactNode;
-  chart?: React.ReactNode; onAlert?: () => void; onRemove: () => void; linkTo?: string;
+  chart?: React.ReactNode; sparkData?: number[]; onAlert?: () => void; onRemove: () => void; linkTo?: string;
 }) => (
   <div className="rounded-lg border border-border bg-card hover:border-accent/30 transition-colors group relative">
     {/* Mobile: compact horizontal row */}
@@ -843,6 +856,9 @@ const WatchCard = ({ title, sub, value, change, chart, onAlert, onRemove, linkTo
         </div>
         <p className="text-[10px] text-muted-foreground truncate">{sub}</p>
       </div>
+      {sparkData && sparkData.length >= 3 && (
+        <Sparkline data={sparkData} width={48} height={18} color="auto" className="shrink-0" />
+      )}
       <div className="text-right shrink-0">
         <p className="text-sm font-bold tabular-nums text-foreground">{value}</p>
         <div className="mt-0.5">{change}</div>
