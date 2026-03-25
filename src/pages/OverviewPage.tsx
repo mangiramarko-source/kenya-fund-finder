@@ -631,12 +631,17 @@ const OverviewPage = () => {
                 onAlert={() => openAlert("commodity", c.id, c.name, Number(c.price), c.unit)}
                 onRemove={() => toggleAsset("commodity", c.id, c.name)} />
             ))}
-            {watchedFunds.map(f => (
-              <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${f.annual_yield.toFixed(2)}%`}
-                change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
-                linkTo={`/compare/${f.slug}`}
-                onRemove={() => toggleAsset("fund", f.id, f.name)} />
-            ))}
+            {watchedFunds.map(f => {
+              const fHistory = getFundHistory(f.id);
+              return (
+                <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${f.annual_yield.toFixed(2)}%`}
+                  change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
+                  chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
+                  sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}
+                  linkTo={`/compare/${f.slug}`}
+                  onRemove={() => toggleAsset("fund", f.id, f.name)} />
+              );
+            })}
           </div>
         </div>
       )}
