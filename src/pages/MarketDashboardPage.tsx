@@ -1,9 +1,9 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Link, useNavigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useMarketData, type ExchangeRate, type Commodity, type Stock } from "@/components/home/MarketTicker";
-import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search, DollarSign, Gem, ChevronRight } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search, DollarSign, Gem } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -74,7 +74,6 @@ const MarketDashboardPage = () => {
   );
   useJsonLd({ "@context": "https://schema.org", "@type": "WebPage", name: "Market Overview – Kenya Fund Finder", url: "https://kenyafundfinder.com/markets" });
 
-  const navigate = useNavigate();
   const { rates, commodities, stocks, loading } = useMarketData();
   const { lastUpdateDate, isLive, showDate } = useLiveStatus();
 
@@ -241,15 +240,7 @@ const MarketDashboardPage = () => {
                     </thead>
                     <tbody>
                       {filteredRates.map((r, i) => (
-                        <tr
-                          key={r.id}
-                          className="border-t border-border/50 hover:bg-accent/5 transition-colors group md:cursor-default cursor-pointer"
-                          onClick={() => {
-                            if (window.innerWidth < 768) {
-                              navigate(`/rates?expand=${r.id}`);
-                            }
-                          }}
-                        >
+                        <tr key={r.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
                           <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
                           <td className="px-3 py-3">
                             <span className="font-bold text-foreground text-xs tracking-wide">{r.currency_code}</span>
@@ -257,9 +248,6 @@ const MarketDashboardPage = () => {
                           <td className="px-3 py-3 text-sm text-muted-foreground">{r.currency_name}</td>
                           <td className="px-3 py-3 text-right">
                             <span className="font-bold text-accent text-[15px] tabular-nums">{Number(r.rate).toFixed(2)}</span>
-                          </td>
-                          <td className="md:hidden px-1 py-3 text-right">
-                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-accent transition-colors" />
                           </td>
                           <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
                             {r.previous_rate != null ? Number(r.previous_rate).toFixed(2) : "—"}
@@ -316,15 +304,7 @@ const MarketDashboardPage = () => {
                     </thead>
                     <tbody>
                       {filteredCommodities.map((c, i) => (
-                        <tr
-                          key={c.id}
-                          className="border-t border-border/50 hover:bg-accent/5 transition-colors group md:cursor-default cursor-pointer"
-                          onClick={() => {
-                            if (window.innerWidth < 768) {
-                              navigate(`/commodities?expand=${c.id}`);
-                            }
-                          }}
-                        >
+                        <tr key={c.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
                           <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
                           <td className="px-3 py-3">
                             <span className="font-bold text-foreground text-xs tracking-wide">{c.symbol}</span>
@@ -333,9 +313,6 @@ const MarketDashboardPage = () => {
                           <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{c.unit}</td>
                           <td className="px-3 py-3 text-right">
                             <span className="font-bold text-accent text-[15px] tabular-nums">{Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                          </td>
-                          <td className="md:hidden px-1 py-3 text-right">
-                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-accent transition-colors" />
                           </td>
                           <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
                             {c.previous_price != null ? Number(c.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
@@ -411,10 +388,10 @@ const MarketDashboardPage = () => {
               <Link to="/stocks" className="text-accent hover:text-accent/80 font-medium transition-colors">View stock details →</Link>
             )}
             {activeTab === "fx_rates" && (
-              <Link to="/rates" className="hidden md:inline text-accent hover:text-accent/80 font-medium transition-colors">View all rates →</Link>
+              <Link to="/rates" className="text-accent hover:text-accent/80 font-medium transition-colors">View all rates →</Link>
             )}
             {activeTab === "commodities" && (
-              <Link to="/commodities" className="hidden md:inline text-accent hover:text-accent/80 font-medium transition-colors">View all commodities →</Link>
+              <Link to="/commodities" className="text-accent hover:text-accent/80 font-medium transition-colors">View all commodities →</Link>
             )}
           </div>
         </div>

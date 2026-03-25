@@ -1,6 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { useSearchParams } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { ArrowLeft, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
@@ -63,20 +62,11 @@ const RatesPage = () => {
     url: "https://kenyafundfinder.com/rates",
   });
 
-  const [searchParams] = useSearchParams();
   const [rates, setRates] = useState<Rate[]>([]);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState<string | null>(searchParams.get("expand"));
+  const [expanded, setExpanded] = useState<string | null>(null);
   const [history, setHistory] = useState<Record<string, RateHistory[]>>({});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
-
-  // Auto-expand from query param
-  useEffect(() => {
-    const expandId = searchParams.get("expand");
-    if (expandId && !loading && rates.length > 0 && !history[expandId]) {
-      toggleExpand(expandId);
-    }
-  }, [loading, rates]);
 
   useEffect(() => {
     const fetch = async () => {
