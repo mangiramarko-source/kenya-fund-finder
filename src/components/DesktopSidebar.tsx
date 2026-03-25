@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-  BarChart3, LineChart, Calculator, Newspaper, GraduationCap, Bell,
-  TrendingUp, User, Shield, LogOut, ChevronLeft, ChevronRight, LayoutDashboard,
-  FileText, Scale,
+  BarChart3, Calculator, Newspaper, GraduationCap, Bell,
+  TrendingUp, Shield, LogOut, ChevronLeft, ChevronRight, LayoutDashboard,
+  FileText, Scale, DollarSign, Gem,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,7 +14,8 @@ const mainNavItems = [
   { to: "/", label: "Overview", icon: LayoutDashboard },
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
   { to: "/funds", label: "Unit Trusts", icon: BarChart3 },
-  { to: "/markets", label: "Markets", icon: LineChart },
+  { to: "/rates", label: "FX Rates", icon: DollarSign },
+  { to: "/commodities", label: "Commodities", icon: Gem },
 ];
 
 const utilityNavItems = [
