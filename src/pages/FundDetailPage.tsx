@@ -67,7 +67,6 @@ const FundDetailPage = () => {
   const [fund, setFund] = useState<FundFromDB | null>(null);
   const [peers, setPeers] = useState<FundFromDB[]>([]);
   const [comparePeerId, setComparePeerId] = useState<string>("");
-  const [peers, setPeers] = useState<FundFromDB[]>([]);
   const [yields, setYields] = useState<HistoricalYield[]>([]);
   const [snapshots, setSnapshots] = useState<YieldSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
