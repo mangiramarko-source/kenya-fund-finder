@@ -144,24 +144,24 @@ const FundDetailPage = () => {
 
   return (
     <div className="container py-4 sm:py-8 max-w-5xl">
-      {/* Back nav bar — matches terminal top-bar style */}
-      <div className="flex items-center gap-1 mb-5 -mx-1">
+      {/* Breadcrumb navigation */}
+      <nav className="flex items-center gap-3 mb-6 py-2">
         <button
           onClick={() => navigate(-1)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+          className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors"
         >
-          <ArrowLeft className="h-3.5 w-3.5" />
+          <ArrowLeft className="h-4 w-4" />
           Back
         </button>
-        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-        <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1">Home</Link>
-        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-        <Link to="/funds" className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1">
+        <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+        <Link to="/" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Home</Link>
+        <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+        <Link to="/funds" className="text-sm text-muted-foreground hover:text-foreground transition-colors">
           {FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type}
         </Link>
-        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
-        <span className="text-xs text-foreground font-medium truncate max-w-[180px]">{fund.name}</span>
-      </div>
+        <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
+        <span className="text-sm text-foreground font-semibold truncate max-w-[200px]">{fund.name}</span>
+      </nav>
 
       {/* Header card */}
       <div className="rounded-xl border border-border bg-card p-4 sm:p-5 mb-4">
