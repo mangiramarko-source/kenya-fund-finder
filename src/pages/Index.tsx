@@ -17,6 +17,8 @@ import FundGrid from "@/components/home/FundGrid";
 import NewsSidebar from "@/components/home/NewsSidebar";
 import AdBanner from "@/components/AdBanner";
 import { useMarketData, RatesMobileCards, CommoditiesMobileCards } from "@/components/home/MarketTicker";
+import { useFundWatchlist } from "@/hooks/useFundWatchlist";
+import FundFavourites from "@/components/home/FundFavourites";
 
 type SortKey = "annual_yield" | "daily_yield" | "name";
 type SortDir = "asc" | "desc";
