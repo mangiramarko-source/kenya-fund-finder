@@ -76,7 +76,7 @@ const DesktopSidebar = () => {
       }`}
     >
       {/* Logo */}
-      <div className="flex items-center gap-2 px-3 h-12 border-b border-sidebar-border shrink-0">
+      <div className="flex items-center gap-2 px-3 h-14 border-b border-sidebar-border shrink-0">
         <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent text-accent-foreground shrink-0">
           <TrendingUp className="h-4 w-4" />
         </div>
@@ -115,32 +115,6 @@ const DesktopSidebar = () => {
         </div>
       )}
 
-      {/* User section — only show when logged in (Sign In is in the top bar) */}
-      {user && (
-        <div className="px-2 py-3 border-t border-sidebar-border">
-          <div className={`flex items-center gap-2.5 ${collapsed ? "justify-center" : "px-2.5"}`}>
-            <Link to="/profile">
-              <Avatar className="h-7 w-7 shrink-0">
-                <AvatarImage src={avatarUrl} alt={displayName} />
-                <AvatarFallback className="bg-accent text-accent-foreground text-[10px]">
-                  {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
-                </AvatarFallback>
-              </Avatar>
-            </Link>
-            {!collapsed && (
-              <div className="flex-1 min-w-0">
-                <p className="text-xs font-medium text-sidebar-foreground truncate">{displayName || "User"}</p>
-                <p className="text-[10px] text-sidebar-foreground/50 truncate">{user.email}</p>
-              </div>
-            )}
-            {!collapsed && (
-              <button onClick={() => signOut()} className="text-sidebar-foreground/40 hover:text-destructive transition-colors shrink-0" aria-label="Sign out">
-                <LogOut className="h-3.5 w-3.5" />
-              </button>
-            )}
-          </div>
-        </div>
-      )}
 
       {/* Collapse toggle */}
       <button
