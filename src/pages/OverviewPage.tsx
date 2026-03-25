@@ -374,6 +374,7 @@ const OverviewPage = () => {
   const bestMMYield = useMemo(() => mmFunds.length ? Math.max(...mmFunds.map(f => f.annual_yield)) : 0, [mmFunds]);
 
   const getHistory = (code: string) => rateHistory.filter(h => h.currency_code === code).slice(-30);
+  const getFundHistory = (fundId: string) => fundSnapshots.filter(s => s.fund_id === fundId).slice(-30).map(s => ({ snapshot_date: s.snapshot_date, rate: s.annual_yield }));
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
