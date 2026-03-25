@@ -112,14 +112,19 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // Authentication: require either a valid admin user or the service role key (cron job)
+  // Authentication: require either a valid admin user or the anon key (cron job / internal trigger)
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace("Bearer ", "");
+  const apikeyHeader = req.headers.get("apikey") || "";
 
-  // Allow cron jobs using the anon key (called via pg_net)
+  // Allow cron jobs — check both Authorization and apikey headers against anon key
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-  const isCronCall = token === anonKey;
-  console.log("Auth check:", { hasToken: !!token, isCronCall, tokenLen: token.length, anonKeyLen: anonKey.length });
+  const isCronCall = token === anonKey || apikeyHeader === anonKey;
+
+  // Also allow trigger via a special x-trigger header with service role key
+  const triggerHeader = req.headers.get("x-trigger-key") || "";
+  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  const isServiceCall = triggerHeader === serviceKey;
 
   if (!isCronCall) {
     // Verify the caller is an authenticated admin
