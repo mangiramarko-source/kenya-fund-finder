@@ -208,113 +208,129 @@ const MarketDashboardPage = () => {
 
           {/* ─── FX Rates Table ─── */}
           {activeTab === "fx_rates" && (
-            <div className="rounded-xl border border-border overflow-hidden bg-card">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <colgroup>
-                    <col className="w-[3%]" />
-                    <col className="w-[10%]" />
-                    <col className="w-[27%]" />
-                    <col className="w-[18%]" />
-                    <col className="w-[18%]" />
-                    <col className="w-[12%]" />
-                    <col className="w-[12%]" />
-                  </colgroup>
-                  <thead>
-                    <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
-                      <th className="text-left pl-4 pr-2 py-2.5 font-semibold text-muted-foreground">#</th>
-                      <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Code</th>
-                      <th className="text-left px-3 py-2.5"><SortHeader label="Currency" field="name" sortKey={sortKey} onToggle={toggleSort} /></th>
-                      <th className="text-right px-3 py-2.5"><SortHeader label="Buy (KES)" field="rate" sortKey={sortKey} onToggle={toggleSort} className="justify-end" /></th>
-                      <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Previous</th>
-                      <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Change</th>
-                      <th className="text-right pr-4 px-3 py-2.5 font-semibold text-muted-foreground">Updated</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredRates.map((r, i) => (
-                      <tr key={r.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
-                        <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
-                        <td className="px-3 py-3">
-                          <span className="font-bold text-foreground text-xs tracking-wide">{r.currency_code}</span>
-                        </td>
-                        <td className="px-3 py-3 text-sm text-muted-foreground">{r.currency_name}</td>
-                        <td className="px-3 py-3 text-right">
-                          <span className="font-bold text-accent text-[15px] tabular-nums">{Number(r.rate).toFixed(2)}</span>
-                        </td>
-                        <td className="px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
-                          {r.previous_rate != null ? Number(r.previous_rate).toFixed(2) : "—"}
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <ChangeIndicator current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />
-                        </td>
-                        <td className="pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
-                          {r.updated_at ? new Date(r.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}
-                        </td>
+            <>
+              {/* Last updated info - mobile */}
+              {filteredRates.length > 0 && filteredRates[0].updated_at && (
+                <p className="md:hidden text-[10px] text-muted-foreground/60 text-right -mt-2 mb-1">
+                  Last updated: {new Date(filteredRates[0].updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                </p>
+              )}
+              <div className="rounded-xl border border-border overflow-hidden bg-card">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <colgroup>
+                      <col className="w-[3%]" />
+                      <col className="w-[10%]" />
+                      <col className="w-[27%]" />
+                      <col className="w-[18%]" />
+                      <col className="hidden md:table-column w-[18%]" />
+                      <col className="hidden md:table-column w-[12%]" />
+                      <col className="hidden md:table-column w-[12%]" />
+                    </colgroup>
+                    <thead>
+                      <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
+                        <th className="text-left pl-4 pr-2 py-2.5 font-semibold text-muted-foreground">#</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Code</th>
+                        <th className="text-left px-3 py-2.5"><SortHeader label="Currency" field="name" sortKey={sortKey} onToggle={toggleSort} /></th>
+                        <th className="text-right px-3 py-2.5"><SortHeader label="Buy (KES)" field="rate" sortKey={sortKey} onToggle={toggleSort} className="justify-end" /></th>
+                        <th className="hidden md:table-cell text-right px-3 py-2.5 font-semibold text-muted-foreground">Previous</th>
+                        <th className="hidden md:table-cell text-right px-3 py-2.5 font-semibold text-muted-foreground">Change</th>
+                        <th className="hidden md:table-cell text-right pr-4 px-3 py-2.5 font-semibold text-muted-foreground">Updated</th>
                       </tr>
-                    ))}
-                    {filteredRates.length === 0 && <EmptyRow colSpan={7} search={search} onClear={() => setSearch("")} />}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredRates.map((r, i) => (
+                        <tr key={r.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
+                          <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
+                          <td className="px-3 py-3">
+                            <span className="font-bold text-foreground text-xs tracking-wide">{r.currency_code}</span>
+                          </td>
+                          <td className="px-3 py-3 text-sm text-muted-foreground">{r.currency_name}</td>
+                          <td className="px-3 py-3 text-right">
+                            <span className="font-bold text-accent text-[15px] tabular-nums">{Number(r.rate).toFixed(2)}</span>
+                          </td>
+                          <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
+                            {r.previous_rate != null ? Number(r.previous_rate).toFixed(2) : "—"}
+                          </td>
+                          <td className="hidden md:table-cell px-3 py-3 text-right">
+                            <ChangeIndicator current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />
+                          </td>
+                          <td className="hidden md:table-cell pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
+                            {r.updated_at ? new Date(r.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                      {filteredRates.length === 0 && <EmptyRow colSpan={7} search={search} onClear={() => setSearch("")} />}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            </>
           )}
 
           {/* ─── Commodities Table ─── */}
           {activeTab === "commodities" && (
-            <div className="rounded-xl border border-border overflow-hidden bg-card">
-              <div className="overflow-x-auto">
-                <table className="w-full text-sm">
-                  <colgroup>
-                    <col className="w-[3%]" />
-                    <col className="w-[10%]" />
-                    <col className="w-[25%]" />
-                    <col className="w-[10%]" />
-                    <col className="w-[16%]" />
-                    <col className="w-[16%]" />
-                    <col className="w-[10%]" />
-                    <col className="w-[10%]" />
-                  </colgroup>
-                  <thead>
-                    <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
-                      <th className="text-left pl-4 pr-2 py-2.5 font-semibold text-muted-foreground">#</th>
-                      <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Symbol</th>
-                      <th className="text-left px-3 py-2.5"><SortHeader label="Commodity" field="name" sortKey={sortKey} onToggle={toggleSort} /></th>
-                      <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Unit</th>
-                      <th className="text-right px-3 py-2.5"><SortHeader label="Price" field="price" sortKey={sortKey} onToggle={toggleSort} className="justify-end" /></th>
-                      <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Previous</th>
-                      <th className="text-right px-3 py-2.5 font-semibold text-muted-foreground">Change</th>
-                      <th className="text-right pr-4 px-3 py-2.5 font-semibold text-muted-foreground">Updated</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {filteredCommodities.map((c, i) => (
-                      <tr key={c.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
-                        <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
-                        <td className="px-3 py-3">
-                          <span className="font-bold text-foreground text-xs tracking-wide">{c.symbol}</span>
-                        </td>
-                        <td className="px-3 py-3 text-sm text-muted-foreground">{c.name}</td>
-                        <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{c.unit}</td>
-                        <td className="px-3 py-3 text-right">
-                          <span className="font-bold text-accent text-[15px] tabular-nums">{Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
-                        </td>
-                        <td className="px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
-                          {c.previous_price != null ? Number(c.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
-                        </td>
-                        <td className="px-3 py-3 text-right">
-                          <ChangeIndicator current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />
-                        </td>
-                        <td className="pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
-                          {c.updated_at ? new Date(c.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}
-                        </td>
+            <>
+              {/* Last updated info - mobile */}
+              {filteredCommodities.length > 0 && filteredCommodities[0].updated_at && (
+                <p className="md:hidden text-[10px] text-muted-foreground/60 text-right -mt-2 mb-1">
+                  Last updated: {new Date(filteredCommodities[0].updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                </p>
+              )}
+              <div className="rounded-xl border border-border overflow-hidden bg-card">
+                <div className="overflow-x-auto">
+                  <table className="w-full text-sm">
+                    <colgroup>
+                      <col className="w-[3%]" />
+                      <col className="w-[10%]" />
+                      <col className="w-[25%]" />
+                      <col className="w-[10%]" />
+                      <col className="w-[16%]" />
+                      <col className="hidden md:table-column w-[16%]" />
+                      <col className="hidden md:table-column w-[10%]" />
+                      <col className="hidden md:table-column w-[10%]" />
+                    </colgroup>
+                    <thead>
+                      <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
+                        <th className="text-left pl-4 pr-2 py-2.5 font-semibold text-muted-foreground">#</th>
+                        <th className="text-left px-3 py-2.5 font-semibold text-muted-foreground">Symbol</th>
+                        <th className="text-left px-3 py-2.5"><SortHeader label="Commodity" field="name" sortKey={sortKey} onToggle={toggleSort} /></th>
+                        <th className="text-center px-2 py-2.5 font-semibold text-muted-foreground">Unit</th>
+                        <th className="text-right px-3 py-2.5"><SortHeader label="Price" field="price" sortKey={sortKey} onToggle={toggleSort} className="justify-end" /></th>
+                        <th className="hidden md:table-cell text-right px-3 py-2.5 font-semibold text-muted-foreground">Previous</th>
+                        <th className="hidden md:table-cell text-right px-3 py-2.5 font-semibold text-muted-foreground">Change</th>
+                        <th className="hidden md:table-cell text-right pr-4 px-3 py-2.5 font-semibold text-muted-foreground">Updated</th>
                       </tr>
-                    ))}
-                    {filteredCommodities.length === 0 && <EmptyRow colSpan={8} search={search} onClear={() => setSearch("")} />}
-                  </tbody>
-                </table>
+                    </thead>
+                    <tbody>
+                      {filteredCommodities.map((c, i) => (
+                        <tr key={c.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
+                          <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
+                          <td className="px-3 py-3">
+                            <span className="font-bold text-foreground text-xs tracking-wide">{c.symbol}</span>
+                          </td>
+                          <td className="px-3 py-3 text-sm text-muted-foreground">{c.name}</td>
+                          <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{c.unit}</td>
+                          <td className="px-3 py-3 text-right">
+                            <span className="font-bold text-accent text-[15px] tabular-nums">{Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                          </td>
+                          <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
+                            {c.previous_price != null ? Number(c.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                          </td>
+                          <td className="hidden md:table-cell px-3 py-3 text-right">
+                            <ChangeIndicator current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />
+                          </td>
+                          <td className="hidden md:table-cell pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
+                            {c.updated_at ? new Date(c.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                      {filteredCommodities.length === 0 && <EmptyRow colSpan={8} search={search} onClear={() => setSearch("")} />}
+                    </tbody>
+                  </table>
+                </div>
               </div>
-            </div>
+            </>
           )}
 
           {/* ─── Stocks Table ─── */}
