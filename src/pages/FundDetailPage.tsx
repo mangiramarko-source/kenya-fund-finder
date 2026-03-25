@@ -143,61 +143,68 @@ const FundDetailPage = () => {
     : null;
 
   return (
-    <div className="container py-6 sm:py-10 max-w-5xl">
-      {/* Breadcrumb */}
-      <div className="flex items-center gap-4 mb-6">
-        <Button variant="ghost" size="sm" className="h-8 px-2 text-muted-foreground hover:text-foreground" onClick={() => window.history.back()}>
-          <ArrowLeft className="h-4 w-4 mr-1" /> Back
-        </Button>
-        <nav className="flex items-center gap-2 text-xs text-muted-foreground">
-          <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
-          <span>/</span>
-          <Link to="/funds" className="hover:text-foreground transition-colors">{FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type}</Link>
-          <span>/</span>
-          <span className="text-foreground font-medium truncate max-w-[200px]">{fund.name}</span>
-        </nav>
+    <div className="container py-4 sm:py-8 max-w-5xl">
+      {/* Back nav bar — matches terminal top-bar style */}
+      <div className="flex items-center gap-1 mb-5 -mx-1">
+        <button
+          onClick={() => navigate(-1)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors"
+        >
+          <ArrowLeft className="h-3.5 w-3.5" />
+          Back
+        </button>
+        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+        <Link to="/" className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1">Home</Link>
+        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+        <Link to="/funds" className="text-xs text-muted-foreground hover:text-foreground transition-colors px-1">
+          {FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type}
+        </Link>
+        <ChevronRight className="h-3 w-3 text-muted-foreground/50" />
+        <span className="text-xs text-foreground font-medium truncate max-w-[180px]">{fund.name}</span>
       </div>
 
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 mb-2 flex-wrap">
-            <Badge variant="secondary" className="text-[10px] uppercase tracking-wider">
-              {FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type}
-            </Badge>
-            {fund.cma_licensed && (
-              <Badge variant="outline" className="text-[10px] gap-1">
-                <Shield className="h-3 w-3" /> CMA Regulated
+      {/* Header card */}
+      <div className="rounded-xl border border-border bg-card p-4 sm:p-5 mb-4">
+        <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3">
+          <div className="flex-1 min-w-0">
+            <div className="flex items-center gap-2 mb-2 flex-wrap">
+              <Badge variant="secondary" className="text-[10px] uppercase tracking-wider rounded-lg">
+                {FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type}
               </Badge>
-            )}
+              {fund.cma_licensed && (
+                <Badge variant="outline" className="text-[10px] gap-1 rounded-lg border-accent/30 text-accent">
+                  <Shield className="h-3 w-3" /> CMA Regulated
+                </Badge>
+              )}
+            </div>
+            <h1 className="text-xl md:text-2xl font-bold mb-0.5 leading-tight">{fund.name}</h1>
+            <p className="text-muted-foreground text-sm">{fund.manager}</p>
+            <p className="text-[11px] text-muted-foreground/70 mt-1 tabular-nums">
+              Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+              {fund.fact_sheet_date && ` · Fact sheet: ${new Date(fund.fact_sheet_date).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}`}
+            </p>
           </div>
-          <h1 className="text-2xl md:text-3xl font-bold mb-1 leading-tight">{fund.name}</h1>
-          <p className="text-muted-foreground text-sm">{fund.manager}</p>
-          <p className="text-[11px] text-muted-foreground mt-1.5">
-            Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
-            {fund.fact_sheet_date && ` · Fact sheet: ${new Date(fund.fact_sheet_date).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}`}
-          </p>
-        </div>
-        <div className="flex items-center gap-2 shrink-0">
-          <Button
-            variant={inCompare ? "default" : "outline"}
-            size="sm"
-            onClick={() => inCompare ? remove(fund.id) : add(fund)}
-            className={`text-xs h-9 ${inCompare ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`}
-          >
-            {inCompare ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Plus className="mr-1.5 h-3.5 w-3.5" />}
-            {inCompare ? "Added" : "Compare"}
-          </Button>
-          <Button asChild variant="outline" size="sm" className="text-xs h-9">
-            <Link to={`/calculator?fund=${fund.slug}`}>
-              <Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculate
-            </Link>
-          </Button>
+          <div className="flex items-center gap-2 shrink-0">
+            <Button
+              variant={inCompare ? "default" : "outline"}
+              size="sm"
+              onClick={() => inCompare ? remove(fund.id) : add(fund)}
+              className={`text-xs h-8 rounded-lg ${inCompare ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`}
+            >
+              {inCompare ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Plus className="mr-1.5 h-3.5 w-3.5" />}
+              {inCompare ? "Added" : "Compare"}
+            </Button>
+            <Button asChild variant="outline" size="sm" className="text-xs h-8 rounded-lg">
+              <Link to={`/calculator?fund=${fund.slug}`}>
+                <Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculate
+              </Link>
+            </Button>
+          </div>
         </div>
       </div>
 
-      {/* Hero metrics — yields always visible, fee & min gated */}
-      <div className={`grid grid-cols-2 ${isAuthenticated ? "md:grid-cols-4" : ""} gap-3 mb-6`}>
+      {/* Hero metrics */}
+      <div className={`grid grid-cols-2 ${isAuthenticated ? "md:grid-cols-4" : ""} gap-2 sm:gap-3 mb-4`}>
         <MetricCard
           label="Annual Rate"
           value={formatYield(fund.annual_yield, fund.yield_unit)}
@@ -232,10 +239,10 @@ const FundDetailPage = () => {
         <>
           {/* Performance context bar */}
           {peerStats && (
-            <div className="rounded-xl border border-border bg-muted/30 p-4 mb-6">
+            <div className="rounded-xl border border-border bg-card p-4 mb-4">
               <div className="flex items-center gap-2 mb-3">
                 <BarChart3 className="h-4 w-4 text-accent" />
-                <h3 className="text-sm font-semibold">Performance Context</h3>
+                <h3 className="text-xs font-semibold uppercase tracking-wider">Performance Context</h3>
                 <Tooltip>
                   <TooltipTrigger asChild>
                     <Info className="h-3.5 w-3.5 text-muted-foreground cursor-help" />
@@ -248,53 +255,53 @@ const FundDetailPage = () => {
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
                 <ContextStat label="Category Rank" value={`#${peerStats.rank}`} sub={`of ${peerStats.total} funds`} />
                 <ContextStat label="Percentile" value={`${peerStats.percentile}th`} sub="among peers" />
-                <ContextStat label="Category Avg" value={`${peerStats.avgYield.toFixed(2)}%`} sub={fund.annual_yield > peerStats.avgYield ? "You're above avg" : "Below average"} highlight={fund.annual_yield > peerStats.avgYield} />
-                <ContextStat label="Category Best" value={`${peerStats.maxYield}%`} sub={fund.annual_yield === peerStats.maxYield ? "This is the top fund!" : `Gap: ${(peerStats.maxYield - fund.annual_yield).toFixed(2)}%`} highlight={fund.annual_yield === peerStats.maxYield} />
+                <ContextStat label="Category Avg" value={`${peerStats.avgYield.toFixed(2)}%`} sub={fund.annual_yield > peerStats.avgYield ? "Above average" : "Below average"} highlight={fund.annual_yield > peerStats.avgYield} />
+                <ContextStat label="Category Best" value={`${peerStats.maxYield}%`} sub={fund.annual_yield === peerStats.maxYield ? "Top fund!" : `Gap: ${(peerStats.maxYield - fund.annual_yield).toFixed(2)}%`} highlight={fund.annual_yield === peerStats.maxYield} />
               </div>
 
               {/* Yield position bar */}
               <div className="mt-4">
-                <div className="flex justify-between text-[10px] text-muted-foreground mb-1">
+                <div className="flex justify-between text-[10px] text-muted-foreground mb-1 tabular-nums">
                   <span>{peerStats.minYield}%</span>
                   <span>{peerStats.maxYield}%</span>
                 </div>
-                <div className="relative h-2 bg-muted rounded-full overflow-hidden">
-                  <div className="absolute inset-y-0 left-0 bg-accent/20 rounded-full" style={{ width: "100%" }} />
+                <div className="relative h-1.5 bg-muted rounded-full overflow-hidden">
+                  <div className="absolute inset-y-0 left-0 bg-accent/15 rounded-full" style={{ width: "100%" }} />
                   <div
-                    className="absolute top-1/2 -translate-y-1/2 h-3.5 w-3.5 rounded-full bg-accent border-2 border-card shadow-md"
+                    className="absolute top-1/2 -translate-y-1/2 h-3 w-3 rounded-full bg-accent border-2 border-card shadow-sm"
                     style={{
                       left: `${peerStats.maxYield === peerStats.minYield ? 50 : ((fund.annual_yield - peerStats.minYield) / (peerStats.maxYield - peerStats.minYield)) * 100}%`,
                       transform: "translate(-50%, -50%)",
                     }}
                   />
                 </div>
-                <p className="text-[10px] text-center text-muted-foreground mt-1">
-                  This fund's position among {FUND_TYPE_LABELS[fund.fund_type]} funds
+                <p className="text-[10px] text-center text-muted-foreground/70 mt-1">
+                  Position among {FUND_TYPE_LABELS[fund.fund_type]} funds
                 </p>
               </div>
             </div>
           )}
 
-          {/* Additional metrics */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-6">
-            <div className="rounded-xl border border-border bg-card p-4 flex items-start gap-3">
-              <div className="rounded-lg bg-muted p-2"><Clock className="h-4 w-4 text-muted-foreground" /></div>
-              <div>
-                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Withdrawal</p>
-                <p className="font-semibold text-sm mt-0.5">{fund.withdrawal_time}</p>
+          {/* Additional metrics row */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 sm:gap-3 mb-4">
+            <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex items-center gap-3">
+              <div className="rounded-lg bg-muted p-2 shrink-0"><Clock className="h-4 w-4 text-muted-foreground" /></div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Withdrawal</p>
+                <p className="font-semibold text-sm mt-0.5 truncate">{fund.withdrawal_time}</p>
               </div>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 flex items-start gap-3">
-              <div className="rounded-lg bg-muted p-2"><Shield className="h-4 w-4 text-muted-foreground" /></div>
-              <div>
-                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Regulation</p>
-                <p className="font-semibold text-sm mt-0.5">{fund.cma_licensed ? "CMA Licensed" : "Not CMA Licensed"}</p>
+            <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex items-center gap-3">
+              <div className="rounded-lg bg-muted p-2 shrink-0"><Shield className="h-4 w-4 text-muted-foreground" /></div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Regulation</p>
+                <p className="font-semibold text-sm mt-0.5">{fund.cma_licensed ? "CMA Licensed" : "Not Licensed"}</p>
               </div>
             </div>
-            <div className="rounded-xl border border-border bg-card p-4 flex items-start gap-3">
-              <div className="rounded-lg bg-muted p-2"><Wallet className="h-4 w-4 text-muted-foreground" /></div>
-              <div>
-                <p className="text-[11px] text-muted-foreground font-medium uppercase tracking-wider">Yield Unit</p>
+            <div className="rounded-xl border border-border bg-card p-3 sm:p-4 flex items-center gap-3">
+              <div className="rounded-lg bg-muted p-2 shrink-0"><Wallet className="h-4 w-4 text-muted-foreground" /></div>
+              <div className="min-w-0">
+                <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-wider">Yield Unit</p>
                 <p className="font-semibold text-sm mt-0.5">{fund.yield_unit === "%" ? "Percentage" : fund.yield_unit}</p>
               </div>
             </div>
@@ -302,9 +309,9 @@ const FundDetailPage = () => {
 
           {/* Rate History Chart */}
           {chartData && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-3">Rate History</h2>
-              <div className="rounded-xl border border-border bg-card p-4 h-72">
+            <div className="mb-4">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Rate History</h2>
+              <div className="rounded-xl border border-border bg-card p-4 h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={chartData}>
                     <defs>
@@ -314,17 +321,18 @@ const FundDetailPage = () => {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="date" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" domain={["dataMin - 0.2", "dataMax + 0.2"]} />
+                    <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={["dataMin - 0.2", "dataMax + 0.2"]} />
                     <RechartsTooltip
                       contentStyle={{
-                        borderRadius: "10px",
+                        borderRadius: "8px",
                         border: "1px solid hsl(var(--border))",
-                        fontSize: "12px",
+                        fontSize: "11px",
                         background: "hsl(var(--card))",
+                        color: "hsl(var(--foreground))",
                       }}
                     />
-                    <Area type="monotone" dataKey="rate" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#rateGrad)" dot={{ fill: "hsl(var(--accent))", r: 3 }} name="Annual Rate" />
+                    <Area type="monotone" dataKey="rate" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#rateGrad)" dot={{ fill: "hsl(var(--accent))", r: 2.5 }} name="Annual Rate" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -333,9 +341,9 @@ const FundDetailPage = () => {
 
           {/* Historical Performance */}
           {yields.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-3">Historical Performance</h2>
-              <div className="rounded-xl border border-border bg-card p-4 h-72">
+            <div className="mb-4">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Historical Performance</h2>
+              <div className="rounded-xl border border-border bg-card p-4 h-64">
                 <ResponsiveContainer width="100%" height="100%">
                   <AreaChart data={yields}>
                     <defs>
@@ -345,26 +353,26 @@ const FundDetailPage = () => {
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-                    <XAxis dataKey="month" tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" />
-                    <YAxis tick={{ fontSize: 11 }} stroke="hsl(var(--muted-foreground))" domain={["dataMin - 0.5", "dataMax + 0.5"]} />
-                    <RechartsTooltip contentStyle={{ borderRadius: "10px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))" }} />
-                    <Area type="monotone" dataKey="yield" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#yieldGrad)" dot={{ fill: "hsl(var(--accent))" }} name="Yield (%)" />
+                    <XAxis dataKey="month" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
+                    <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={["dataMin - 0.5", "dataMax + 0.5"]} />
+                    <RechartsTooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }} />
+                    <Area type="monotone" dataKey="yield" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#yieldGrad)" dot={{ fill: "hsl(var(--accent))", r: 2.5 }} name="Yield (%)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
             </div>
           )}
 
-          {/* Peer comparison quick list */}
+          {/* Peer comparison */}
           {peers.length > 0 && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-3">Similar Funds</h2>
-              <div className="rounded-xl border border-border overflow-hidden">
-                <div className="divide-y divide-border">
-                  {peers.slice(0, 5).map((peer) => {
+            <div className="mb-4">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Similar Funds</h2>
+              <div className="rounded-xl border border-border bg-card overflow-hidden">
+                <div className="divide-y divide-border/60">
+                  {peers.slice(0, 5).map((peer, idx) => {
                     const peerInCompare = isSelected(peer.id);
                     return (
-                      <div key={peer.id} className="flex items-center gap-3 p-3 hover:bg-muted/30 transition-colors">
+                      <div key={peer.id} className={`flex items-center gap-3 px-4 py-2.5 hover:bg-muted/40 transition-colors ${idx % 2 === 1 ? "bg-muted/15" : ""}`}>
                         <div className="flex-1 min-w-0">
                           <Link to={`/compare/${peer.slug}`} className="text-sm font-medium hover:text-accent transition-colors line-clamp-1">
                             {peer.name}
@@ -375,12 +383,12 @@ const FundDetailPage = () => {
                           <p className={`text-sm font-bold tabular-nums ${peer.annual_yield > fund.annual_yield ? "text-accent" : "text-foreground"}`}>
                             {formatYield(peer.annual_yield, peer.yield_unit)}
                           </p>
-                          <p className="text-[10px] text-muted-foreground">Fee: {peer.management_fee}%</p>
+                          <p className="text-[10px] text-muted-foreground tabular-nums">Fee: {peer.management_fee}%</p>
                         </div>
                         <Button
                           variant={peerInCompare ? "default" : "ghost"}
                           size="icon"
-                          className={`h-7 w-7 shrink-0 ${peerInCompare ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`}
+                          className={`h-7 w-7 shrink-0 rounded-lg ${peerInCompare ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`}
                           onClick={() => peerInCompare ? remove(peer.id) : add(peer)}
                         >
                           {peerInCompare ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
@@ -395,24 +403,26 @@ const FundDetailPage = () => {
 
           {/* About */}
           {fund.description && (
-            <div className="mb-6">
-              <h2 className="text-lg font-semibold mb-2">About This Fund</h2>
-              <p className="text-muted-foreground text-sm leading-relaxed">{fund.description}</p>
+            <div className="mb-4">
+              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">About This Fund</h2>
+              <div className="rounded-xl border border-border bg-card p-4">
+                <p className="text-muted-foreground text-sm leading-relaxed">{fund.description}</p>
+              </div>
             </div>
           )}
 
           {/* Actions */}
-          <div className="flex flex-wrap gap-3">
+          <div className="flex flex-wrap gap-2">
             {fund.website && /^https?:\/\//i.test(fund.website) && (
-              <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90">
+              <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg h-8 text-xs">
                 <a href={fund.website} target="_blank" rel="noopener noreferrer">
-                  Visit Official Website <ExternalLink className="ml-2 h-4 w-4" />
+                  Visit Official Website <ExternalLink className="ml-1.5 h-3.5 w-3.5" />
                 </a>
               </Button>
             )}
-            <Button asChild variant="outline">
+            <Button asChild variant="outline" size="sm" className="rounded-lg h-8 text-xs">
               <Link to={`/calculator?fund=${fund.slug}`}>
-                <Calculator className="mr-2 h-4 w-4" /> Use in Calculator
+                <Calculator className="mr-1.5 h-3.5 w-3.5" /> Use in Calculator
               </Link>
             </Button>
           </div>
@@ -420,9 +430,9 @@ const FundDetailPage = () => {
       ) : (
         <>
           {/* Blurred chart teaser */}
-          <div className="relative rounded-xl border border-border bg-card p-4 mb-6 overflow-hidden">
-            <h2 className="text-lg font-semibold mb-3 text-muted-foreground/60">Rate History</h2>
-            <div className="h-56 blur-md pointer-events-none select-none opacity-60" aria-hidden="true">
+          <div className="relative rounded-xl border border-border bg-card p-4 mb-4 overflow-hidden">
+            <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground/60 mb-3">Rate History</h2>
+            <div className="h-48 blur-md pointer-events-none select-none opacity-60" aria-hidden="true">
               <svg viewBox="0 0 400 150" className="w-full h-full" preserveAspectRatio="none">
                 <defs>
                   <linearGradient id="blurGrad" x1="0" y1="0" x2="0" y2="1">
@@ -432,7 +442,6 @@ const FundDetailPage = () => {
                 </defs>
                 <path d="M0,120 Q50,100 100,90 T200,70 T300,50 T400,60" fill="none" stroke="hsl(var(--accent))" strokeWidth="2" />
                 <path d="M0,120 Q50,100 100,90 T200,70 T300,50 T400,60 L400,150 L0,150 Z" fill="url(#blurGrad)" />
-                {/* Fake grid lines */}
                 {[30, 60, 90, 120].map((y) => (
                   <line key={y} x1="0" y1={y} x2="400" y2={y} stroke="hsl(var(--border))" strokeWidth="0.5" strokeDasharray="4 4" />
                 ))}
@@ -440,9 +449,9 @@ const FundDetailPage = () => {
             </div>
             <div className="absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-[1px]">
               <div className="text-center">
-                <BarChart3 className="h-8 w-8 text-accent mx-auto mb-2" />
-                <p className="text-sm font-semibold mb-1">Unlock Performance Charts</p>
-                <p className="text-xs text-muted-foreground">Sign up to view rate history & trends</p>
+                <BarChart3 className="h-7 w-7 text-accent mx-auto mb-2" />
+                <p className="text-sm font-semibold mb-0.5">Unlock Performance Charts</p>
+                <p className="text-[11px] text-muted-foreground">Sign up to view rate history & trends</p>
               </div>
             </div>
           </div>
@@ -455,9 +464,9 @@ const FundDetailPage = () => {
         </>
       )}
 
-      <div className="mt-8 p-4 rounded-xl bg-muted/50 border border-border">
-        <p className="text-xs text-muted-foreground leading-relaxed">
-          <strong>Disclaimer:</strong> {getDisclaimer(fund?.fund_type)}
+      <div className="mt-6 p-3 rounded-xl bg-muted/30 border border-border/60">
+        <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
+          <strong className="text-muted-foreground">Disclaimer:</strong> {getDisclaimer(fund?.fund_type)}
         </p>
       </div>
     </div>
