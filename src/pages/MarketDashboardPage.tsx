@@ -3,7 +3,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useMarketData, type ExchangeRate, type Commodity, type Stock } from "@/components/home/MarketTicker";
-import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search, DollarSign, Gem } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search, DollarSign, Gem, ChevronRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -240,7 +240,15 @@ const MarketDashboardPage = () => {
                     </thead>
                     <tbody>
                       {filteredRates.map((r, i) => (
-                        <tr key={r.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
+                        <tr
+                          key={r.id}
+                          className="border-t border-border/50 hover:bg-accent/5 transition-colors group md:cursor-default cursor-pointer"
+                          onClick={() => {
+                            if (window.innerWidth < 768) {
+                              window.location.href = `/rates?expand=${r.id}`;
+                            }
+                          }}
+                        >
                           <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
                           <td className="px-3 py-3">
                             <span className="font-bold text-foreground text-xs tracking-wide">{r.currency_code}</span>
@@ -248,6 +256,9 @@ const MarketDashboardPage = () => {
                           <td className="px-3 py-3 text-sm text-muted-foreground">{r.currency_name}</td>
                           <td className="px-3 py-3 text-right">
                             <span className="font-bold text-accent text-[15px] tabular-nums">{Number(r.rate).toFixed(2)}</span>
+                          </td>
+                          <td className="md:hidden px-1 py-3 text-right">
+                            <ChevronRight className="h-3.5 w-3.5 text-muted-foreground/40 group-hover:text-accent transition-colors" />
                           </td>
                           <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
                             {r.previous_rate != null ? Number(r.previous_rate).toFixed(2) : "—"}
