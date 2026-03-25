@@ -283,6 +283,7 @@ const OverviewPage = () => {
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  const [profileName, setProfileName] = useState("");
 
   const [alertDialog, setAlertDialog] = useState<{
     open: boolean; assetType: "stock" | "currency" | "commodity";
@@ -301,6 +302,14 @@ const OverviewPage = () => {
       .order("snapshot_date", { ascending: true }).limit(500)
       .then(({ data }) => setFundSnapshots(((data as any) || []).map((s: any) => ({ ...s, annual_yield: Number(s.annual_yield) }))));
   }, []);
+
+  // Fetch profile display name
+  useEffect(() => {
+    if (user) {
+      supabase.from("profiles").select("display_name").eq("user_id", user.id).maybeSingle()
+        .then(({ data }) => { if (data?.display_name) setProfileName(data.display_name); });
+    } else { setProfileName(""); }
+  }, [user]);
 
   const fetchWatchlist = useCallback(async () => {
     if (!user) { setWatchlist([]); setWatchlistLoading(false); return; }
@@ -393,7 +402,7 @@ const OverviewPage = () => {
   const getHistory = (code: string) => rateHistory.filter(h => h.currency_code === code).slice(-30);
   const getFundHistory = (fundId: string) => fundSnapshots.filter(s => s.fund_id === fundId).slice(-30).map(s => ({ snapshot_date: s.snapshot_date, rate: s.annual_yield }));
 
-  const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
+  const displayName = profileName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
 
   if (loading) {

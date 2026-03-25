@@ -41,12 +41,12 @@ const DesktopSidebar = () => {
   const renderNavItem = (item: { to: string; label: string; icon: any }, size: "normal" | "small" = "normal") => {
     const Icon = item.icon;
     const active = isActive(item.to);
-    const py = size === "small" ? "py-1.5" : "py-2";
-    const textSize = size === "small" ? "text-[12px]" : "text-[13px]";
-    const iconSize = size === "small" ? "h-3.5 w-3.5" : "h-4 w-4";
+    const py = size === "small" ? "py-2" : "py-2.5";
+    const textSize = size === "small" ? "text-[13px]" : "text-sm";
+    const iconSize = size === "small" ? "h-4 w-4" : "h-[18px] w-[18px]";
 
     const linkContent = (
-      <Link to={item.to} className={`flex items-center gap-2.5 px-2.5 ${py} rounded-lg ${textSize} font-medium transition-all group ${active ? "bg-accent/15 text-accent" : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
+      <Link to={item.to} className={`flex items-center gap-3 px-3 ${py} rounded-lg ${textSize} font-medium transition-all group ${active ? "bg-accent/15 text-accent" : "text-sidebar-foreground/70 hover:text-sidebar-foreground hover:bg-sidebar-accent"}`}>
         <Icon className={`${iconSize} shrink-0 ${active ? "text-accent" : "text-sidebar-foreground/50 group-hover:text-sidebar-foreground/70"}`} />
         {!collapsed && <span className="truncate">{item.label}</span>}
         {active && !collapsed && <div className="ml-auto w-1.5 h-1.5 rounded-full bg-accent" />}
@@ -75,16 +75,16 @@ const DesktopSidebar = () => {
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
+      <nav className="flex-1 overflow-y-auto px-2.5 py-3 space-y-1">
         {mainNavItems.map((item) => renderNavItem(item))}
 
         <div className="!my-2 mx-2 h-px bg-sidebar-border" />
-        {!collapsed && <p className="px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">Tools</p>}
+        {!collapsed && <p className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/40">Tools</p>}
 
         {utilityNavItems.map((item) => renderNavItem(item))}
 
         <div className="!my-2 mx-2 h-px bg-sidebar-border" />
-        {!collapsed && <p className="px-2.5 py-1 text-[10px] font-medium uppercase tracking-wider text-sidebar-foreground/40">Legal</p>}
+        {!collapsed && <p className="px-3 py-1.5 text-[11px] font-medium uppercase tracking-wider text-sidebar-foreground/40">Legal</p>}
 
         {legalNavItems.map((item) => renderNavItem(item, "small"))}
       </nav>
