@@ -61,44 +61,52 @@ const SortHeader = ({
 );
 
 /* ─── Sparkline ─── */
-const SPARK_W = 100;
-const SPARK_H = 32;
+const SPARK_W = 120;
+const SPARK_H = 36;
 
 const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
-  const { points, isUp } = useMemo(() => {
+  const result = useMemo(() => {
     const vals = [...data.map((d) => d.annual_yield), currentValue];
-    if (vals.length < 2) return { points: null, isUp: true };
-    const last8 = vals.slice(-8);
-    const min = Math.min(...last8);
-    const max = Math.max(...last8);
+    if (vals.length < 2) return null;
+    const last12 = vals.slice(-12);
+    const min = Math.min(...last12);
+    const max = Math.max(...last12);
     const range = max - min || 1;
-    const pad = 2;
-    const pts = last8.map((v, i) => ({
-      x: pad + (i / (last8.length - 1)) * (SPARK_W - pad * 2),
+    const pad = 3;
+    const pts = last12.map((v, i) => ({
+      x: pad + (i / (last12.length - 1)) * (SPARK_W - pad * 2),
       y: pad + (1 - (v - min) / range) * (SPARK_H - pad * 2),
     }));
-    return { points: pts, isUp: pts[pts.length - 1].y <= pts[0].y };
+    const isUp = pts[pts.length - 1].y <= pts[0].y;
+    const change = last12[last12.length - 1] - last12[0];
+    return { pts, isUp, change };
   }, [data, currentValue]);
 
-  if (!points) return <span className="text-[10px] text-muted-foreground">—</span>;
+  if (!result) return <span className="text-[10px] text-muted-foreground">—</span>;
 
+  const { pts, isUp, change } = result;
   const color = isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))";
-  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
-  const areaD = pathD + ` L${points[points.length - 1].x},${SPARK_H} L${points[0].x},${SPARK_H} Z`;
+  const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const areaD = pathD + ` L${pts[pts.length - 1].x.toFixed(1)},${SPARK_H} L${pts[0].x.toFixed(1)},${SPARK_H} Z`;
   const gradId = isUp ? "sg-up" : "sg-dn";
 
   return (
-    <svg width={SPARK_W} height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} className="inline-block">
-      <defs>
-        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.15" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
-        </linearGradient>
-      </defs>
-      <path d={areaD} fill={`url(#${gradId})`} />
-      <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="2.5" fill={color} />
-    </svg>
+    <div className="inline-flex items-center gap-1.5">
+      <svg width={SPARK_W} height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} className="shrink-0">
+        <defs>
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+            <stop offset="100%" stopColor={color} stopOpacity="0" />
+          </linearGradient>
+        </defs>
+        <path d={areaD} fill={`url(#${gradId})`} />
+        <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+        <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r="2.5" fill={color} />
+      </svg>
+      <span className={`text-[10px] font-semibold tabular-nums whitespace-nowrap ${isUp ? "text-accent" : "text-destructive"}`}>
+        {change >= 0 ? "+" : ""}{change.toFixed(2)}
+      </span>
+    </div>
   );
 };
 
@@ -285,14 +293,14 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
           <table className="w-full text-sm">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "12%" }} />
+              <col style={{ width: "18%" }} />
+              <col style={{ width: "18%" }} />
               <col style={{ width: "5%" }} />
-              <col style={{ width: "11%" }} />
-              <col style={{ width: "13%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "12%" }} />
               <col style={{ width: "10%" }} />
               <col style={{ width: "8%" }} />
-              <col style={{ width: "18%" }} />
+              <col style={{ width: "16%" }} />
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
