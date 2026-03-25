@@ -126,7 +126,7 @@ Deno.serve(async (req) => {
   const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   const isServiceCall = triggerHeader === serviceKey;
 
-  if (!isCronCall) {
+  if (!isCronCall && !isServiceCall) {
     // Verify the caller is an authenticated admin
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
