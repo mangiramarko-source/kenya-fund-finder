@@ -238,15 +238,9 @@ const StocksPage = () => {
 
         <ActiveAlertsCard assetType="stock" />
 
-        {/* Summary stats — redesigned */}
-        {!loading && stocks.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-            <StatCard label="Listed" value={String(stocks.length)} icon={<BarChart3 className="h-4 w-4 text-primary" />} />
-            <StatCard label="Gainers" value={String(gainers)} icon={<TrendingUp className="h-4 w-4 text-accent" />} valueColor="text-accent" />
-            <StatCard label="Losers" value={String(losers)} icon={<TrendingDown className="h-4 w-4 text-destructive" />} valueColor="text-destructive" />
-            <StatCard label="Unchanged" value={String(unchanged)} icon={<Minus className="h-4 w-4 text-muted-foreground" />} />
-            <StatCard label="Total Vol" value={formatVolume(totalVolume)} icon={<Activity className="h-4 w-4 text-primary" />} />
-          </div>
+
+        {user && favEntries.length > 0 && (
+          <StockFavourites entries={favEntries} stocks={stocks} />
         )}
 
         {/* Filters */}
