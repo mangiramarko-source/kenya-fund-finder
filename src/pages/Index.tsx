@@ -17,6 +17,8 @@ import FundGrid from "@/components/home/FundGrid";
 import NewsSidebar from "@/components/home/NewsSidebar";
 import AdBanner from "@/components/AdBanner";
 import { useMarketData, RatesMobileCards, CommoditiesMobileCards } from "@/components/home/MarketTicker";
+import { useFundWatchlist } from "@/hooks/useFundWatchlist";
+import FundFavourites from "@/components/home/FundFavourites";
 
 type SortKey = "annual_yield" | "daily_yield" | "name";
 type SortDir = "asc" | "desc";
@@ -80,6 +82,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const { lastUpdateDate, isLive, showDate } = useLiveStatus();
   const { user } = useAuth();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();
+  const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useFundWatchlist();
 
   useEffect(() => {
     Promise.all([
@@ -172,6 +175,11 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
 
       <div className="px-4 md:px-6 pb-3">
+        {/* Favourites overview */}
+        {user && favEntries.length > 0 && (
+          <FundFavourites entries={favEntries} funds={funds} snapshots={snapshots} />
+        )}
+
         {/* Desktop: full-width tabbed fund table */}
         <div className="hidden md:block">
           <FundGrid
@@ -179,6 +187,8 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
             snapshots={snapshots}
             allSnapshots={allSnapshots}
             loading={loading}
+            isFavourite={user ? isFavourite : undefined}
+            onToggleFavourite={user ? toggleFavourite : undefined}
           />
         </div>
 
@@ -215,6 +225,8 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
                 loading={loading}
                 onClearSearch={clearSearch}
                 hasSearch={!!debouncedSearch.trim()}
+                isFavourite={user ? isFavourite : undefined}
+                onToggleFavourite={user ? toggleFavourite : undefined}
               />
 
               <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">

@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Star } from "lucide-react";
 import YieldChange from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
@@ -11,6 +12,8 @@ interface FundMobileCardsProps {
   loading: boolean;
   onClearSearch: () => void;
   hasSearch: boolean;
+  isFavourite?: (id: string) => boolean;
+  onToggleFavourite?: (id: string, name: string) => void;
 }
 
 const currencyLabel = (unit: string) => {
@@ -61,7 +64,7 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
   </div>
 );
 
-const FundMobileCards = ({ funds, snapshots, bestYield, loading, onClearSearch, hasSearch }: FundMobileCardsProps) => {
+const FundMobileCards = ({ funds, snapshots, bestYield, loading, onClearSearch, hasSearch, isFavourite, onToggleFavourite }: FundMobileCardsProps) => {
   if (loading) return <CardSkeleton />;
 
   if (funds.length === 0) return <EmptyState hasSearch={hasSearch} onClearSearch={onClearSearch} />;
@@ -83,6 +86,15 @@ const FundMobileCards = ({ funds, snapshots, bestYield, loading, onClearSearch, 
             </div>
             {snapshots[fund.id] && (
               <YieldChange current={fund.annual_yield} previous={snapshots[fund.id]?.annual_yield} unit={fund.yield_unit} className="text-[11px] shrink-0 mt-0.5" />
+            )}
+            {onToggleFavourite && (
+              <button
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(fund.id, fund.name); }}
+                className="p-1 rounded-md shrink-0"
+                aria-label={isFavourite?.(fund.id) ? "Remove from favourites" : "Add to favourites"}
+              >
+                <Star className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`} />
+              </button>
             )}
           </div>
           <div className="grid grid-cols-3 gap-2">
