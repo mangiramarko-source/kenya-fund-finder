@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
-import StatBar from "@/components/home/StatBar";
+
 
 /* ─── Types ─── */
 interface RateHistory { snapshot_date: string; rate: number; currency_code: string; }
@@ -150,8 +150,7 @@ const MarketDashboardPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <StatBar isLive={false} lastUpdate={null} fundCount={0} bestYield={0} avgYield={0} loading={true} hideYields />
-        <div className="px-4 md:px-6 py-5"><TableSkeleton /></div>
+        <div className="px-4 md:px-6 py-6"><TableSkeleton /></div>
       </div>
     );
   }
