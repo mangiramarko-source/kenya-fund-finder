@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { useMarketData, type ExchangeRate, type Commodity, type Stock } from "@/components/home/MarketTicker";
 import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search, DollarSign, Gem, ChevronRight } from "lucide-react";
