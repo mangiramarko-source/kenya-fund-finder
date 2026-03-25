@@ -119,6 +119,7 @@ Deno.serve(async (req) => {
   // Allow cron jobs using the anon key (called via pg_net)
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
   const isCronCall = token === anonKey;
+  console.log("Auth check:", { hasToken: !!token, isCronCall, tokenLen: token.length, anonKeyLen: anonKey.length });
 
   if (!isCronCall) {
     // Verify the caller is an authenticated admin
