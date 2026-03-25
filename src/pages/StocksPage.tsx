@@ -1,12 +1,15 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ChevronDown, ChevronUp, BarChart3, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ChevronDown, ChevronUp, BarChart3, Activity, Star } from "lucide-react";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
+import StockFavourites from "@/components/home/StockFavourites";
+import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface Stock {
