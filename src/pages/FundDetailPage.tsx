@@ -17,7 +17,7 @@ import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveCont
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
 import YieldChange, { formatYield } from "@/components/YieldChange";
-import { useCompare } from "@/hooks/useCompare";
+
 
 const FUND_TYPE_LABELS: Record<string, string> = {
   money_market: "Money Market",
@@ -612,6 +612,14 @@ const CalcStat = ({ label, value, icon, accent }: { label: string; value: string
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
     </div>
     <p className={`font-bold text-sm tabular-nums ${accent ? "text-accent" : "text-foreground"}`}>{value}</p>
+  </div>
+);
+
+const CompareRow = ({ label, a, b, aWins }: { label: string; a: string; b: string; aWins?: boolean }) => (
+  <div className="grid grid-cols-3 gap-2 items-center py-1.5 border-t border-border/40">
+    <p className={`text-sm font-semibold tabular-nums text-right ${aWins === true ? "text-accent" : "text-foreground"}`}>{a}</p>
+    <p className="text-[10px] text-muted-foreground text-center uppercase tracking-wider">{label}</p>
+    <p className={`text-sm font-semibold tabular-nums ${aWins === false ? "text-accent" : "text-foreground"}`}>{b}</p>
   </div>
 );
 
