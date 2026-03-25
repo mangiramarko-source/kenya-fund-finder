@@ -710,6 +710,45 @@ export type Database = {
         }
         Relationships: []
       }
+      stock_price_history: {
+        Row: {
+          created_at: string
+          id: string
+          price: number
+          snapshot_date: string
+          stock_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          price: number
+          snapshot_date?: string
+          stock_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          price?: number
+          snapshot_date?: string
+          stock_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_price_history_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "stocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_price_history_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "stocks_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stocks: {
         Row: {
           created_at: string
@@ -1126,6 +1165,31 @@ export type Database = {
           url?: string | null
         }
         Relationships: []
+      }
+      stock_price_history_public: {
+        Row: {
+          id: string | null
+          price: number | null
+          snapshot_date: string | null
+          stock_id: string | null
+          symbol: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_price_history_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "stocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_price_history_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: false
+            referencedRelation: "stocks_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stocks_public: {
         Row: {

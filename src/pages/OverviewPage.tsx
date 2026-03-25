@@ -29,6 +29,7 @@ import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
 interface FundYieldSnapshot { snapshot_date: string; annual_yield: number; fund_id: string; }
 interface RateHistory { snapshot_date: string; rate: number; currency_code: string; }
+interface StockPriceHistory { snapshot_date: string; price: number; stock_id: string; }
 
 const SECTIONS = [
   { id: "stocks", label: "Stocks", icon: TrendingUp, description: "Kenyan stock market" },
@@ -278,6 +279,7 @@ const OverviewPage = () => {
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [rateHistory, setRateHistory] = useState<RateHistory[]>([]);
   const [fundSnapshots, setFundSnapshots] = useState<FundYieldSnapshot[]>([]);
+  const [stockHistory, setStockHistory] = useState<StockPriceHistory[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
@@ -299,6 +301,10 @@ const OverviewPage = () => {
       .select("snapshot_date, annual_yield, fund_id")
       .order("snapshot_date", { ascending: true }).limit(500)
       .then(({ data }) => setFundSnapshots(((data as any) || []).map((s: any) => ({ ...s, annual_yield: Number(s.annual_yield) }))));
+    supabase.from("stock_price_history" as any)
+      .select("snapshot_date, price, stock_id")
+      .order("snapshot_date", { ascending: true }).limit(1000)
+      .then(({ data }) => setStockHistory(((data as any) || []).map((h: any) => ({ ...h, price: Number(h.price) }))));
   }, []);
 
   // Fetch profile display name
@@ -399,6 +405,8 @@ const OverviewPage = () => {
 
   const getHistory = (code: string) => rateHistory.filter(h => h.currency_code === code).slice(-30);
   const getFundHistory = (fundId: string) => fundSnapshots.filter(s => s.fund_id === fundId).slice(-30).map(s => ({ snapshot_date: s.snapshot_date, rate: s.annual_yield }));
+  const getStockHistory = (stockId: string) => stockHistory.filter(h => h.stock_id === stockId).slice(-30).map(h => ({ snapshot_date: h.snapshot_date, rate: h.price }));
+  const getStockSparkData = (stockId: string) => stockHistory.filter(h => h.stock_id === stockId).slice(-30).map(h => h.price);
 
   const displayName = profileName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
@@ -453,12 +461,17 @@ const OverviewPage = () => {
             <span className="text-[10px] text-muted-foreground">{watchedStocks.length + watchedRates.length + watchedCommoditiesList.length + watchedFunds.length} items</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {watchedStocks.map(s => (
-              <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${s.price.toFixed(2)}`}
-                change={<Change current={s.price} previous={s.previous_price} />}
-                onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
-                onRemove={() => toggleAsset("stock", s.id, s.name)} />
-            ))}
+            {watchedStocks.map(s => {
+              const sHistory = getStockHistory(s.id);
+              return (
+                <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${s.price.toFixed(2)}`}
+                  change={<Change current={s.price} previous={s.previous_price} />}
+                  chart={sHistory.length > 2 ? <MiniChart data={sHistory} /> : undefined}
+                  sparkData={getStockSparkData(s.id)}
+                  onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
+                  onRemove={() => toggleAsset("stock", s.id, s.name)} />
+              );
+            })}
             {watchedRates.map(r => {
               const history = getHistory(r.currency_code);
               return (
@@ -608,12 +621,17 @@ const OverviewPage = () => {
             <span className="text-[10px] text-muted-foreground">{watchedStocks.length + watchedRates.length + watchedCommoditiesList.length + watchedFunds.length} items</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {watchedStocks.map(s => (
-              <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${s.price.toFixed(2)}`}
-                change={<Change current={s.price} previous={s.previous_price} />}
-                onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
-                onRemove={() => toggleAsset("stock", s.id, s.name)} />
-            ))}
+            {watchedStocks.map(s => {
+              const sHistory = getStockHistory(s.id);
+              return (
+                <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${s.price.toFixed(2)}`}
+                  change={<Change current={s.price} previous={s.previous_price} />}
+                  chart={sHistory.length > 2 ? <MiniChart data={sHistory} /> : undefined}
+                  sparkData={getStockSparkData(s.id)}
+                  onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
+                  onRemove={() => toggleAsset("stock", s.id, s.name)} />
+              );
+            })}
             {watchedRates.map(r => {
               const history = getHistory(r.currency_code);
               return (

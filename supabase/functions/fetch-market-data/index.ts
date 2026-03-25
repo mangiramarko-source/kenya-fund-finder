@@ -12,6 +12,9 @@ const FX_API = "https://open.er-api.com/v6/latest/KES";
 // CoinGecko free API for crypto prices
 const COINGECKO_API = "https://api.coingecko.com/api/v3/simple/price";
 
+// Yahoo Finance v8 quote endpoint
+const YAHOO_QUOTE_API = "https://query1.finance.yahoo.com/v8/finance/chart/";
+
 // Map of common commodity symbols to CoinGecko IDs
 const CRYPTO_MAP: Record<string, string> = {
   BTC: "bitcoin",
@@ -37,6 +40,68 @@ const PRECIOUS_METALS: Record<string, string> = {
   XAG: "silver",
   SILVER: "silver",
 };
+
+// NSE stock symbols → Yahoo Finance tickers (.NR suffix for Nairobi)
+const NSE_YAHOO_MAP: Record<string, string> = {
+  SCOM: "SCOM.NR",
+  EQTY: "EQTY.NR",
+  KCB: "KCB.NR",
+  COOP: "COOP.NR",
+  ABSA: "ABSA.NR",
+  EABL: "EABL.NR",
+  BAT: "BAT.NR",
+  KNRE: "KNRE.NR",
+  KPLC: "KPLC.NR",
+  BAMB: "BAMB.NR",
+  SASN: "SASN.NR",
+  TOTL: "TOTL.NR",
+};
+
+async function fetchYahooQuote(ticker: string): Promise<{
+  price: number;
+  previousClose: number;
+  dayChange: number;
+  dayChangePct: number;
+  volume: number;
+  marketCap: number | null;
+  yearHigh: number | null;
+  yearLow: number | null;
+} | null> {
+  try {
+    const res = await fetch(
+      `${YAHOO_QUOTE_API}${ticker}?interval=1d&range=1d`,
+      {
+        headers: {
+          "User-Agent": "Mozilla/5.0 (compatible; KenyaFundFinder/1.0)",
+        },
+      }
+    );
+    if (!res.ok) return null;
+    const data = await res.json();
+    const result = data?.chart?.result?.[0];
+    if (!result) return null;
+
+    const meta = result.meta;
+    const price = meta.regularMarketPrice ?? 0;
+    const previousClose = meta.chartPreviousClose ?? meta.previousClose ?? 0;
+    const dayChange = price - previousClose;
+    const dayChangePct = previousClose > 0 ? (dayChange / previousClose) * 100 : 0;
+
+    return {
+      price: parseFloat(price.toFixed(2)),
+      previousClose: parseFloat(previousClose.toFixed(2)),
+      dayChange: parseFloat(dayChange.toFixed(2)),
+      dayChangePct: parseFloat(dayChangePct.toFixed(2)),
+      volume: meta.regularMarketVolume ?? 0,
+      marketCap: null, // not available in chart endpoint
+      yearHigh: meta.fiftyTwoWeekHigh ?? null,
+      yearLow: meta.fiftyTwoWeekLow ?? null,
+    };
+  } catch (e) {
+    console.error(`Yahoo Finance error for ${ticker}:`, e);
+    return null;
+  }
+}
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
@@ -131,7 +196,6 @@ Deno.serve(async (req) => {
     if (commodityRows && commodityRows.length > 0) {
       const cryptoItems: typeof commodityRows = [];
       const metalItems: typeof commodityRows = [];
-      const otherItems: typeof commodityRows = [];
 
       for (const c of commodityRows) {
         const sym = (c.symbol || "").toUpperCase();
@@ -139,8 +203,6 @@ Deno.serve(async (req) => {
           cryptoItems.push(c);
         } else if (PRECIOUS_METALS[sym]) {
           metalItems.push(c);
-        } else {
-          otherItems.push(c);
         }
       }
 
@@ -213,6 +275,45 @@ Deno.serve(async (req) => {
       }
 
       results.push(`Commodities: processed ${commodityRows.length} items`);
+    }
+
+    // ── 3. Fetch Kenyan stock prices from Yahoo Finance ──
+    const { data: stockRows } = await supabase
+      .from("stocks")
+      .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low")
+      .eq("is_active", true);
+
+    if (stockRows && stockRows.length > 0) {
+      let stocksUpdated = 0;
+      for (const row of stockRows) {
+        const yahooTicker = NSE_YAHOO_MAP[(row.symbol || "").toUpperCase()];
+        if (!yahooTicker) continue;
+
+        const quote = await fetchYahooQuote(yahooTicker);
+        if (!quote || quote.price <= 0) continue;
+
+        // Only update if price actually changed
+        if (quote.price !== Number(row.price)) {
+          const updateData: Record<string, unknown> = {
+            previous_price: row.price,
+            price: quote.price,
+            day_change: quote.dayChange,
+            day_change_percent: quote.dayChangePct,
+            updated_at: new Date().toISOString(),
+          };
+          if (quote.volume > 0) updateData.volume = quote.volume;
+          if (quote.yearHigh != null) updateData.year_high = quote.yearHigh;
+          if (quote.yearLow != null) updateData.year_low = quote.yearLow;
+
+          await supabase.from("stocks").update(updateData).eq("id", row.id);
+          results.push(`Stock ${row.symbol}: ${row.price} → ${quote.price} (${quote.dayChangePct > 0 ? "+" : ""}${quote.dayChangePct}%)`);
+          stocksUpdated++;
+        }
+
+        // Small delay to avoid rate limiting
+        await new Promise((r) => setTimeout(r, 300));
+      }
+      results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length}`);
     }
 
     return new Response(JSON.stringify({ success: true, results }), {
