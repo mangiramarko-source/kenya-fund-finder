@@ -82,6 +82,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const { lastUpdateDate, isLive, showDate } = useLiveStatus();
   const { user } = useAuth();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();
+  const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useFundWatchlist();
 
   useEffect(() => {
     Promise.all([
