@@ -347,6 +347,13 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
                       )}
                     </div>
                   </td>
+                  <td className="px-2 py-3.5 text-center">
+                    {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
+                      <Sparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground">—</span>
+                    )}
+                  </td>
                   <td className="px-2 py-3.5 text-center text-xs font-medium text-muted-foreground">
                     {currencyLabel(fund.yield_unit)}
                   </td>
@@ -363,13 +370,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
                   </td>
                   <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
                     {fund.management_fee}%
-                  </td>
-                  <td className="px-2 py-3.5 text-center">
-                    {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
-                      <Sparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground">—</span>
-                    )}
                   </td>
                   <td className="pr-4 pl-2 py-3.5 text-right text-[11px] text-muted-foreground/70 truncate max-w-[140px]" title={fund.manager}>
                     {fund.manager}
