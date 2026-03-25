@@ -74,6 +74,7 @@ const MarketDashboardPage = () => {
   );
   useJsonLd({ "@context": "https://schema.org", "@type": "WebPage", name: "Market Overview – Kenya Fund Finder", url: "https://kenyafundfinder.com/markets" });
 
+  const navigate = useNavigate();
   const { rates, commodities, stocks, loading } = useMarketData();
   const { lastUpdateDate, isLive, showDate } = useLiveStatus();
 
