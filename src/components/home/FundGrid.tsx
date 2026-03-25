@@ -34,6 +34,7 @@ const currencyLabel = (unit: string) => {
 interface FundGridProps {
   funds: FundFromDB[];
   snapshots: Record<string, YieldSnapshot>;
+  allSnapshots?: Record<string, YieldSnapshot[]>;
   loading: boolean;
 }
 
@@ -58,6 +59,37 @@ const SortHeader = ({
     <ArrowUpDown className={`h-3 w-3 ${sortKey === field ? "text-accent" : "text-muted-foreground/50"}`} />
   </button>
 );
+
+/* ─── Sparkline ─── */
+const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
+  const points = useMemo(() => {
+    const vals = [...data.map((d) => d.annual_yield), currentValue];
+    if (vals.length < 2) return null;
+    const last6 = vals.slice(-6);
+    const min = Math.min(...last6);
+    const max = Math.max(...last6);
+    const range = max - min || 1;
+    const w = 60;
+    const h = 24;
+    const pad = 2;
+    return last6.map((v, i) => ({
+      x: pad + (i / (last6.length - 1)) * (w - pad * 2),
+      y: pad + (1 - (v - min) / range) * (h - pad * 2),
+    }));
+  }, [data, currentValue]);
+
+  if (!points) return <span className="text-[10px] text-muted-foreground">—</span>;
+
+  const isUp = points[points.length - 1].y <= points[0].y;
+  const pathD = points.map((p, i) => `${i === 0 ? "M" : "L"}${p.x},${p.y}`).join(" ");
+
+  return (
+    <svg width="60" height="24" viewBox="0 0 60 24" className="inline-block">
+      <path d={pathD} fill="none" stroke={isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))"} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={points[points.length - 1].x} cy={points[points.length - 1].y} r="2" fill={isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))"} />
+    </svg>
+  );
+};
 
 /* ─── Skeleton ─── */
 const TableSkeleton = () => (
@@ -108,7 +140,7 @@ const FundStatCard = ({ label, value, icon, valueColor }: { label: string; value
   </div>
 );
 
-const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
+const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProps) => {
   const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState<string>("money_market");
   const [search, setSearch] = useState("");
@@ -242,13 +274,14 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
           <table className="w-full text-sm">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "30%" }} />
+              <col style={{ width: "28%" }} />
               <col style={{ width: "6%" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "13%" }} />
+              <col style={{ width: "11%" }} />
               <col style={{ width: "12%" }} />
               <col style={{ width: "10%" }} />
-              <col style={{ width: "14%" }} />
+              <col style={{ width: "9%" }} />
+              <col style={{ width: "9%" }} />
+              <col style={{ width: "12%" }} />
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
@@ -269,6 +302,7 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Mgmt Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
+                <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Trend</th>
                 <th className="text-right pr-4 pl-2 py-3 font-semibold text-muted-foreground">Manager</th>
               </tr>
             </thead>
@@ -319,6 +353,13 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
                   <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
                     {fund.management_fee}%
                   </td>
+                  <td className="px-2 py-3.5 text-center">
+                    {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
+                      <Sparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground">—</span>
+                    )}
+                  </td>
                   <td className="pr-4 pl-2 py-3.5 text-right text-[11px] text-muted-foreground/70 truncate max-w-[140px]" title={fund.manager}>
                     {fund.manager}
                   </td>
@@ -327,7 +368,7 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={8} className="text-center py-14">
+                  <td colSpan={9} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>

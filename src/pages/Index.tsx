@@ -6,7 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { fetchFunds, fetchLatestSnapshots, fetchPublishedNews, type FundFromDB, type NewsFromDB, type YieldSnapshot } from "@/lib/api";
+import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, fetchPublishedNews, type FundFromDB, type NewsFromDB, type YieldSnapshot } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
@@ -70,6 +70,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
+  const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("money_market");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 250);
@@ -89,6 +90,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
         data.forEach((s) => { map[s.fund_id] = s; });
         setSnapshots(map);
       }).catch(() => {}),
+      fetchAllFundSnapshots().then(setAllSnapshots).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, []);
 
@@ -158,11 +160,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="min-h-screen">
       <div className="px-4 md:px-6 pt-5 pb-2">
-        <h1 className="text-xl md:text-2xl font-bold mb-1">Unit Trust Funds</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed max-w-2xl">
-          Unit trusts pool money from multiple investors to invest in diversified portfolios managed by professional fund managers. 
-          They offer an accessible way to grow your savings with regulated, transparent returns.
-        </p>
+       <h1 className="text-xl md:text-2xl font-bold mb-1">Unit Trust Funds</h1>
       </div>
 
       <div className="px-4 md:px-6 py-3">
@@ -172,6 +170,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
           <FundGrid
             funds={funds}
             snapshots={snapshots}
+            allSnapshots={allSnapshots}
             loading={loading}
           />
         </div>
