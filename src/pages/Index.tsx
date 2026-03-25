@@ -159,15 +159,6 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
     <div ref={ref} className="min-h-screen">
       <h1 className="sr-only">Kenya Fund Finder – Compare Investment Funds</h1>
 
-      <StatBar
-        isLive={isLive}
-        lastUpdate={lastUpdate}
-        fundCount={isFundTab ? processedFunds.length : (selectedCategory === "fx_rates" ? rates.length : commodities.length)}
-        bestYield={isFundTab ? bestYield : 0}
-        avgYield={isFundTab ? avgYield : 0}
-        loading={loading}
-        hideYields={isMarketTab}
-      />
 
       <div className="px-4 md:px-6 py-5">
         {/* Desktop: full-width tabbed fund table */}
