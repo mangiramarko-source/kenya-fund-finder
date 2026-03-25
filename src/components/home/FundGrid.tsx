@@ -285,14 +285,14 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
           <table className="w-full text-sm">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "28%" }} />
-              <col style={{ width: "6%" }} />
+              <col style={{ width: "20%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "5%" }} />
               <col style={{ width: "11%" }} />
-              <col style={{ width: "12%" }} />
+              <col style={{ width: "13%" }} />
               <col style={{ width: "10%" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "12%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "18%" }} />
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
@@ -300,6 +300,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
+                <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Trend</th>
                 <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Unit</th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
@@ -313,7 +314,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Mgmt Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Trend</th>
                 <th className="text-right pr-4 pl-2 py-3 font-semibold text-muted-foreground">Manager</th>
               </tr>
             </thead>
