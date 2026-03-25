@@ -26,6 +26,7 @@ import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
+interface FundYieldSnapshot { snapshot_date: string; annual_yield: number; fund_id: string; }
 interface RateHistory { snapshot_date: string; rate: number; currency_code: string; }
 
 const SECTIONS = [
