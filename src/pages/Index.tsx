@@ -159,14 +159,21 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
 
   return (
     <div ref={ref} className="min-h-screen">
-      <div className="px-4 md:px-6 pt-5 pb-2">
-       <h1 className="text-xl md:text-2xl font-bold mb-1">Unit Trust Funds</h1>
+      <div className="px-4 md:px-6 py-6">
+        <div className="mb-4">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Unit Trust Funds</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Compare CMA-regulated unit trust yields, fees, and performance across Kenya.
+            <span className="ml-2 text-xs text-muted-foreground/70">
+              Yields are gross annual effective rates before 15% withholding tax.
+            </span>
+          </p>
+        </div>
       </div>
 
-      <div className="px-4 md:px-6 py-3">
+      <div className="px-4 md:px-6 pb-3">
         {/* Desktop: full-width tabbed fund table */}
         <div className="hidden md:block">
-          <p className="text-[10px] text-muted-foreground mb-3">Yields are gross annual effective rates before 15% withholding tax.</p>
           <FundGrid
             funds={funds}
             snapshots={snapshots}
