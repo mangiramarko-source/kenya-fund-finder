@@ -115,16 +115,12 @@ Deno.serve(async (req) => {
   // Authentication: require either a valid admin user or the anon key (cron job / internal trigger)
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace("Bearer ", "");
-  const apikeyHeader = req.headers.get("apikey") || "";
 
-  // Allow cron jobs — check both Authorization and apikey headers against anon key
+  // Allow cron jobs — the anon key is passed as Bearer token via pg_net
+  // With verify_jwt=false, the raw token is preserved
   const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-  const isCronCall = token === anonKey || apikeyHeader === anonKey;
-
-  // Also allow trigger via a special x-trigger header with service role key
-  const triggerHeader = req.headers.get("x-trigger-key") || "";
-  const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-  const isServiceCall = triggerHeader === serviceKey;
+  // Compare first 40 chars to handle both raw key and JWT scenarios
+  const isCronCall = token === anonKey || token.startsWith(anonKey.substring(0, 40));
 
   if (!isCronCall && !isServiceCall) {
     // Verify the caller is an authenticated admin
