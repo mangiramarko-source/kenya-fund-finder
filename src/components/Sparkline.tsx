@@ -13,6 +13,9 @@ interface SparklineProps {
  * Renders a simple polyline + gradient fill for trend visualization.
  */
 const Sparkline = ({ data, width = 60, height = 20, color = "hsl(var(--accent))", className }: SparklineProps) => {
+  const id = useMemo(() => `spark-${Math.random().toString(36).slice(2, 8)}`, []);
+  const isUp = data.length >= 2 && data[data.length - 1] >= data[0];
+
   const path = useMemo(() => {
     if (data.length < 2) return null;
     const min = Math.min(...data);
@@ -30,9 +33,6 @@ const Sparkline = ({ data, width = 60, height = 20, color = "hsl(var(--accent))"
   }, [data, width, height]);
 
   if (!path) return null;
-
-  const id = useMemo(() => `spark-${Math.random().toString(36).slice(2, 8)}`, []);
-  const isUp = data.length >= 2 && data[data.length - 1] >= data[0];
   const strokeColor = color === "auto" ? (isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))") : color;
 
   return (
