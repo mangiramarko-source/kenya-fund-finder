@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
-import StatBar from "@/components/home/StatBar";
+
 
 /* ─── Types ─── */
 interface RateHistory { snapshot_date: string; rate: number; currency_code: string; }
@@ -150,25 +150,21 @@ const MarketDashboardPage = () => {
   if (loading) {
     return (
       <div className="min-h-screen">
-        <StatBar isLive={false} lastUpdate={null} fundCount={0} bestYield={0} avgYield={0} loading={true} hideYields />
-        <div className="px-4 md:px-6 py-5"><TableSkeleton /></div>
+        <div className="px-4 md:px-6 py-6"><TableSkeleton /></div>
       </div>
     );
   }
 
   return (
     <div className="min-h-screen">
-      <StatBar
-        isLive={isLive}
-        lastUpdate={lastUpdate}
-        fundCount={activeCount}
-        bestYield={0}
-        avgYield={0}
-        loading={loading}
-        hideYields
-      />
-
-      <div className="px-4 md:px-6 py-5">
+      <div className="px-4 md:px-6 py-6">
+        <div className="mb-4">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Market Dashboard</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Combined view of FX exchange rates and commodity prices.
+            {isLive && <span className="ml-2 inline-flex items-center gap-1 text-xs text-accent font-medium">● Live</span>}
+          </p>
+        </div>
         <p className="text-[10px] text-muted-foreground mb-3">Market data is indicative and may be delayed. For educational purposes only.</p>
 
         <div className="space-y-4">

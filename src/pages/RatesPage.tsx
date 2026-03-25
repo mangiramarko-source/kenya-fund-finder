@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search } from "lucide-react";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
-import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 
@@ -64,6 +64,7 @@ const RatesPage = () => {
 
   const [rates, setRates] = useState<Rate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [history, setHistory] = useState<Record<string, RateHistory[]>>({});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
@@ -111,23 +112,24 @@ const RatesPage = () => {
     ? new Date(rates.reduce((l, r) => (r.updated_at > l ? r.updated_at : l), rates[0].updated_at))
     : null;
 
-  const avgRate = useMemo(() => {
-    if (rates.length === 0) return 0;
-    return rates.reduce((s, r) => s + r.rate, 0) / rates.length;
-  }, [rates]);
-
   const strengthened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate < r.previous_rate).length, [rates]);
   const weakened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate > r.previous_rate).length, [rates]);
 
+  const filtered = useMemo(() => {
+    if (!search.trim()) return rates;
+    const q = search.toLowerCase();
+    return rates.filter(r => r.currency_code.toLowerCase().includes(q) || r.currency_name.toLowerCase().includes(q));
+  }, [rates, search]);
+
   return (
     <div className="min-h-screen">
-      <div className="container max-w-4xl py-8">
+      <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">FX Exchange Rates</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">FX Exchange Rates</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Indicative exchange rates against the Kenya Shilling (KES).
             {latestUpdate && (
-              <span className="ml-2 text-xs">
+              <span className="ml-2 text-xs text-muted-foreground/70">
                 Updated {latestUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
               </span>
             )}
@@ -138,24 +140,36 @@ const RatesPage = () => {
 
         {/* Summary Stats */}
         {!loading && rates.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-3 mb-6">
             <StatCard label="Currencies" value={String(rates.length)} />
             <StatCard label="KES Strengthened" value={String(strengthened)} color="text-accent" />
             <StatCard label="KES Weakened" value={String(weakened)} color="text-destructive" />
-            <StatCard label="Avg Rate" value={avgRate.toFixed(2)} />
           </div>
         )}
+
+        {/* Search */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search currencies…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9 rounded-lg text-[16px] sm:text-sm"
+            />
+          </div>
+        </div>
 
         {/* Table with expandable rows */}
         {loading ? (
           <TableSkeleton />
-        ) : rates.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <EmptyState label="exchange rates" />
         ) : (
           <div className="rounded-xl border border-border overflow-hidden bg-card">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-muted/70 text-xs">
+                <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
                   <th className="text-left px-4 py-3 font-semibold text-muted-foreground w-10">#</th>
                   <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Currency</th>
                   <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Rate (KES)</th>
@@ -164,7 +178,7 @@ const RatesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {rates.map((r, i) => (
+                {filtered.map((r, i) => (
                   <RateRow
                     key={r.id}
                     rate={r}
@@ -180,7 +194,12 @@ const RatesPage = () => {
           </div>
         )}
 
-        <div className="mt-6 rounded-lg bg-muted/40 border border-border/50 p-3">
+        {/* Summary footer */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
+          <span>Showing {filtered.length} of {rates.length} currencies</span>
+        </div>
+
+        <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
           <p className="text-[10px] leading-relaxed text-muted-foreground">
             Exchange rates shown are indicative and sourced from the Central Bank of Kenya and international markets.
             Click on any currency to view historical rate trends. This information is for educational purposes only.
@@ -205,16 +224,16 @@ const RateRow = ({
   return (
     <>
       <tr
-        className="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer"
+        className="border-t border-border/50 hover:bg-accent/5 transition-colors cursor-pointer"
         onClick={onToggle}
       >
-        <td className="px-4 py-3.5 text-muted-foreground text-xs tabular-nums">{index + 1}</td>
+        <td className="px-4 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
         <td className="px-4 py-3.5">
-          <span className="font-semibold text-foreground">{rate.currency_code}</span>
+          <span className="font-bold text-foreground text-xs tracking-wide">{rate.currency_code}</span>
           <span className="block text-xs text-muted-foreground mt-0.5">{rate.currency_name}</span>
         </td>
         <td className="px-4 py-3.5 text-right tabular-nums">
-          <span className="font-bold text-accent text-base">
+          <span className="font-bold text-accent text-[15px]">
             {rate.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
         </td>
@@ -314,7 +333,7 @@ const DetailBox = ({ label, value, color }: { label: string; value: string; colo
 
 const TableSkeleton = () => (
   <div className="rounded-xl border border-border overflow-hidden bg-card">
-    <div className="bg-muted/70 px-4 py-3">
+    <div className="bg-muted/60 px-4 py-3">
       <div className="flex gap-4">
         <Skeleton className="h-4 w-8" />
         <Skeleton className="h-4 w-32" />

@@ -1,10 +1,10 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search } from "lucide-react";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
-import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 
@@ -65,6 +65,7 @@ const CommoditiesPage = () => {
 
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [history, setHistory] = useState<Record<string, PriceHistory[]>>({});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
@@ -118,15 +119,21 @@ const CommoditiesPage = () => {
   const gainers = useMemo(() => commodities.filter((c) => c.previous_price != null && c.price > c.previous_price).length, [commodities]);
   const losers = useMemo(() => commodities.filter((c) => c.previous_price != null && c.price < c.previous_price).length, [commodities]);
 
+  const filtered = useMemo(() => {
+    if (!search.trim()) return commodities;
+    const q = search.toLowerCase();
+    return commodities.filter(c => c.name.toLowerCase().includes(q) || c.symbol.toLowerCase().includes(q));
+  }, [commodities, search]);
+
   return (
     <div className="min-h-screen">
-      <div className="container max-w-4xl py-8">
+      <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          <h1 className="text-2xl font-bold text-foreground">Commodity Prices</h1>
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Commodity Prices</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Indicative commodity prices including metals, energy, and cryptocurrency.
             {latestUpdate && (
-              <span className="ml-2 text-xs">
+              <span className="ml-2 text-xs text-muted-foreground/70">
                 Updated {latestUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
               </span>
             )}
@@ -137,24 +144,36 @@ const CommoditiesPage = () => {
 
         {/* Summary Stats */}
         {!loading && commodities.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
+          <div className="grid grid-cols-3 gap-3 mb-6">
             <StatCard label="Commodities" value={String(commodities.length)} />
             <StatCard label="Gainers" value={String(gainers)} color="text-accent" />
             <StatCard label="Losers" value={String(losers)} color="text-destructive" />
-            <StatCard label="Unchanged" value={String(commodities.length - gainers - losers)} />
           </div>
         )}
+
+        {/* Search */}
+        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+          <div className="relative flex-1 max-w-sm">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search commodities…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9 rounded-lg text-[16px] sm:text-sm"
+            />
+          </div>
+        </div>
 
         {/* Table with expandable rows */}
         {loading ? (
           <TableSkeleton />
-        ) : commodities.length === 0 ? (
+        ) : filtered.length === 0 ? (
           <EmptyState label="commodities" />
         ) : (
           <div className="rounded-xl border border-border overflow-hidden bg-card">
             <table className="w-full text-sm">
               <thead>
-                <tr className="bg-muted/70 text-xs">
+                <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
                   <th className="text-left px-4 py-3 font-semibold text-muted-foreground w-10">#</th>
                   <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Item</th>
                   <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Price</th>
@@ -163,7 +182,7 @@ const CommoditiesPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {commodities.map((c, i) => (
+                {filtered.map((c, i) => (
                   <CommodityRow
                     key={c.id}
                     commodity={c}
@@ -179,7 +198,12 @@ const CommoditiesPage = () => {
           </div>
         )}
 
-        <div className="mt-6 rounded-lg bg-muted/40 border border-border/50 p-3">
+        {/* Summary footer */}
+        <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
+          <span>Showing {filtered.length} of {commodities.length} commodities</span>
+        </div>
+
+        <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
           <p className="text-[10px] leading-relaxed text-muted-foreground">
             Commodity prices are indicative and sourced from international markets. Click on any commodity to view price history.
             This information is for educational purposes only and does not constitute investment advice.
@@ -203,14 +227,14 @@ const CommodityRow = ({
 
   return (
     <>
-      <tr className="border-t border-border hover:bg-muted/30 transition-colors cursor-pointer" onClick={onToggle}>
-        <td className="px-4 py-3.5 text-muted-foreground text-xs tabular-nums">{index + 1}</td>
+      <tr className="border-t border-border/50 hover:bg-accent/5 transition-colors cursor-pointer" onClick={onToggle}>
+        <td className="px-4 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
         <td className="px-4 py-3.5">
-          <span className="font-semibold text-foreground">{c.name}</span>
+          <span className="font-bold text-foreground text-xs tracking-wide">{c.name}</span>
           <span className="block text-xs text-muted-foreground mt-0.5">{c.symbol}</span>
         </td>
         <td className="px-4 py-3.5 text-right tabular-nums">
-          <span className="font-bold text-accent text-base">
+          <span className="font-bold text-accent text-[15px]">
             {c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
           <span className="text-muted-foreground ml-1 text-[10px]">{c.unit}</span>
@@ -311,7 +335,7 @@ const DetailBox = ({ label, value, color }: { label: string; value: string; colo
 
 const TableSkeleton = () => (
   <div className="rounded-xl border border-border overflow-hidden bg-card">
-    <div className="bg-muted/70 px-4 py-3">
+    <div className="bg-muted/60 px-4 py-3">
       <div className="flex gap-4">
         <Skeleton className="h-4 w-8" />
         <Skeleton className="h-4 w-32" />
