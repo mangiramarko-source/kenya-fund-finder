@@ -282,6 +282,13 @@ const Navbar = () => {
             <div className="h-px bg-border my-2" />
             <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Tools</p>
             <Link
+              to="/news"
+              onClick={closeMobile}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+            >
+              <Newspaper className="h-5 w-5" /> News
+            </Link>
+            <Link
               to="/calculator"
               onClick={closeMobile}
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
