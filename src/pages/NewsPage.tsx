@@ -110,18 +110,13 @@ const NewsPage = () => {
   );
 
   return (
-    <div className="py-5 sm:py-8 px-4 sm:px-6 max-w-7xl mx-auto">
+    <div className="px-4 md:px-6 py-6 max-w-7xl mx-auto">
       {/* Header */}
-      <div className="mb-5 sm:mb-6">
-        <div className="flex items-center gap-2.5 mb-1">
-          <div className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent/10">
-            <Megaphone className="h-4 w-4 text-accent" />
-          </div>
-          <div>
-            <h1 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight">News & Updates</h1>
-            <p className="text-xs sm:text-sm text-muted-foreground">Stay informed about investment funds & markets in Kenya</p>
-          </div>
-        </div>
+      <div className="mb-4">
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">News</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Stay informed about investment funds & markets in Kenya.
+        </p>
       </div>
 
       {/* Filters */}
