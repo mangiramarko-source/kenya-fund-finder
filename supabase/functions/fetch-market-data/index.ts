@@ -112,15 +112,20 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // Authentication: require either a valid admin user or the anon key (cron job / internal trigger)
+  // Authentication: require either a valid admin user or an anon/service-role JWT (cron job)
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace("Bearer ", "");
 
-  // Allow cron jobs — the anon key is passed as Bearer token via pg_net
-  // With verify_jwt=false, the raw token is preserved
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-  // Compare first 40 chars to handle both raw key and JWT scenarios
-  const isCronCall = token === anonKey || token.startsWith(anonKey.substring(0, 40));
+  // Check if this is a service-level call (cron job via pg_net sends anon key as JWT)
+  // Decode the JWT payload to check the role claim
+  let isCronCall = false;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // If the role is "anon" or "service_role", it's a system call not a user call
+    if (payload.role === "anon" || payload.role === "service_role") {
+      isCronCall = true;
+    }
+  } catch { /* not a valid JWT, will fall through to user auth */ }
 
   if (!isCronCall && !isServiceCall) {
     // Verify the caller is an authenticated admin
