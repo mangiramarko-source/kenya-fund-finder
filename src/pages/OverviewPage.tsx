@@ -833,9 +833,9 @@ const OverviewPage = () => {
 };
 
 /* ─── Reusable Components ─── */
-const WatchCard = ({ title, sub, value, change, chart, onAlert, onRemove, linkTo }: {
+const WatchCard = ({ title, sub, value, change, chart, sparkData, onAlert, onRemove, linkTo }: {
   title: string; sub: string; value: string; change: React.ReactNode;
-  chart?: React.ReactNode; onAlert?: () => void; onRemove: () => void; linkTo?: string;
+  chart?: React.ReactNode; sparkData?: number[]; onAlert?: () => void; onRemove: () => void; linkTo?: string;
 }) => (
   <div className="rounded-lg border border-border bg-card hover:border-accent/30 transition-colors group relative">
     {/* Mobile: compact horizontal row */}
