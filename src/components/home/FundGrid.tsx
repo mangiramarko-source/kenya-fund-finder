@@ -264,30 +264,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         </div>
       </div>
 
-      {/* Category stats */}
-      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
-        <FundStatCard
-          label="Funds"
-          value={String(categoryCount[activeTab] || 0)}
-          icon={<Layers className="h-4 w-4 text-primary" />}
-        />
-        <FundStatCard
-          label="Best Yield"
-          value={`${bestYield.toFixed(2)}%`}
-          icon={<TrendingUp className="h-4 w-4 text-accent" />}
-          valueColor="text-accent"
-        />
-        <FundStatCard
-          label="Avg Yield"
-          value={`${avgYield.toFixed(2)}%`}
-          icon={<BarChart3 className="h-4 w-4 text-primary" />}
-        />
-        <FundStatCard
-          label="Category"
-          value={categoryLabels[activeTab] || activeTab}
-          icon={<Tag className="h-4 w-4 text-muted-foreground" />}
-        />
-      </div>
 
       {/* Fund table */}
       <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
