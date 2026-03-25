@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import { ArrowLeft, ExternalLink, Calculator, BarChart3, Plus, Check, Shield, Clock, Wallet, TrendingUp, Info, ChevronRight, PiggyBank, CalendarDays } from "lucide-react";
+import { ArrowLeft, ExternalLink, Calculator, BarChart3, Plus, Check, Shield, Clock, Wallet, TrendingUp, Info, ChevronRight, PiggyBank, CalendarDays, GitCompareArrows, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { fetchFundBySlug, fetchFunds, fetchHistoricalYields, fetchFundSnapshots, type FundFromDB, type HistoricalYield, type YieldSnapshot } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
@@ -16,7 +17,7 @@ import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveCont
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
 import YieldChange, { formatYield } from "@/components/YieldChange";
-import { useCompare } from "@/hooks/useCompare";
+
 
 const FUND_TYPE_LABELS: Record<string, string> = {
   money_market: "Money Market",
@@ -63,9 +64,9 @@ const FundDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
-  const { add, remove, isSelected } = useCompare();
   const [fund, setFund] = useState<FundFromDB | null>(null);
   const [peers, setPeers] = useState<FundFromDB[]>([]);
+  const [comparePeerId, setComparePeerId] = useState<string>("");
   const [yields, setYields] = useState<HistoricalYield[]>([]);
   const [snapshots, setSnapshots] = useState<YieldSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
@@ -175,7 +176,7 @@ const FundDetailPage = () => {
 
   const isAuthenticated = !!user;
   const prevSnapshot = snapshots.length > 0 ? snapshots[0] : undefined;
-  const inCompare = isSelected(fund.id);
+  const comparePeer = peers.find((p) => p.id === comparePeerId) || null;
 
   const chartData = snapshots.length >= 1
     ? (() => {
@@ -210,14 +211,6 @@ const FundDetailPage = () => {
         <span className="text-sm text-foreground font-semibold truncate max-w-[200px]">{fund.name}</span>
       </nav>
 
-      {/* Intro text */}
-      <div className="mb-5">
-        <h1 className="text-xl md:text-2xl font-bold mb-1">Unit Trust Fund</h1>
-        <p className="text-sm text-muted-foreground leading-relaxed">
-          Unit trusts pool money from multiple investors to invest in diversified portfolios managed by professional fund managers. 
-          They offer an accessible way to grow your savings with regulated, transparent returns.
-        </p>
-      </div>
 
       {/* Fund header */}
       <div className="rounded-xl border border-border bg-card p-4 sm:p-5 mb-4">
@@ -239,17 +232,7 @@ const FundDetailPage = () => {
               Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
             </p>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            <Button
-              variant={inCompare ? "default" : "outline"}
-              size="sm"
-              onClick={() => inCompare ? remove(fund.id) : add(fund)}
-              className={`text-xs h-8 rounded-lg ${inCompare ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`}
-            >
-              {inCompare ? <Check className="mr-1.5 h-3.5 w-3.5" /> : <Plus className="mr-1.5 h-3.5 w-3.5" />}
-              {inCompare ? "Added to Compare" : "Compare"}
-            </Button>
-          </div>
+          {/* No header compare button - compare is now inline below */}
         </div>
       </div>
 
@@ -354,39 +337,56 @@ const FundDetailPage = () => {
               </div>
             )}
 
-            {/* Peer comparison */}
+            {/* Compare with a peer */}
             {peers.length > 0 && (
               <div>
-                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Compare with Similar Funds</h3>
-                <div className="rounded-xl border border-border bg-card overflow-hidden">
-                  <div className="divide-y divide-border/60">
-                    {peers.slice(0, 5).map((peer, idx) => {
-                      const peerInCompare = isSelected(peer.id);
-                      return (
-                        <div key={peer.id} className={`flex items-center gap-3 px-4 py-2.5 hover:bg-muted/40 transition-colors ${idx % 2 === 1 ? "bg-muted/15" : ""}`}>
-                          <div className="flex-1 min-w-0">
-                            <Link to={`/compare/${peer.slug}`} className="text-sm font-medium hover:text-accent transition-colors line-clamp-1">
-                              {peer.name}
-                            </Link>
-                            <p className="text-[11px] text-muted-foreground truncate">{peer.manager}</p>
-                          </div>
-                          <div className="text-right shrink-0">
-                            <p className={`text-sm font-bold tabular-nums ${peer.annual_yield > fund.annual_yield ? "text-accent" : "text-foreground"}`}>
-                              {formatYield(peer.annual_yield, peer.yield_unit)}
-                            </p>
-                          </div>
-                          <Button
-                            variant={peerInCompare ? "default" : "ghost"}
-                            size="icon"
-                            className={`h-7 w-7 shrink-0 rounded-lg ${peerInCompare ? "bg-accent text-accent-foreground hover:bg-accent/90" : ""}`}
-                            onClick={() => peerInCompare ? remove(peer.id) : add(peer)}
-                          >
-                            {peerInCompare ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
-                          </Button>
-                        </div>
-                      );
-                    })}
+                <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">Compare Side-by-Side</h3>
+                <div className="rounded-xl border border-border bg-card p-4 space-y-4">
+                  <div className="flex items-center gap-3">
+                    <GitCompareArrows className="h-4 w-4 text-accent shrink-0" />
+                    <p className="text-sm text-muted-foreground">Choose a fund to compare against <span className="font-medium text-foreground">{fund.name}</span></p>
                   </div>
+                  <Select value={comparePeerId} onValueChange={setComparePeerId}>
+                    <SelectTrigger className="h-9 text-sm">
+                      <SelectValue placeholder="Select a fund to compare..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {peers.map((peer) => (
+                        <SelectItem key={peer.id} value={peer.id}>
+                          {peer.name} — {formatYield(peer.annual_yield, peer.yield_unit)}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+
+                  {comparePeer && (
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Comparison</p>
+                        <Button variant="ghost" size="sm" className="h-6 text-xs px-2" onClick={() => setComparePeerId("")}>
+                          <X className="h-3 w-3 mr-1" /> Clear
+                        </Button>
+                      </div>
+                      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+                        <div className="font-medium text-foreground truncate">{fund.name}</div>
+                        <div className="text-muted-foreground">vs</div>
+                        <div className="font-medium text-foreground truncate">{comparePeer.name}</div>
+                      </div>
+                      <CompareRow label="Annual Rate" a={formatYield(fund.annual_yield, fund.yield_unit)} b={formatYield(comparePeer.annual_yield, comparePeer.yield_unit)} aWins={fund.annual_yield >= comparePeer.annual_yield} />
+                      <CompareRow label="Daily Yield" a={formatYield(fund.daily_yield, fund.yield_unit)} b={formatYield(comparePeer.daily_yield, comparePeer.yield_unit)} aWins={fund.daily_yield >= comparePeer.daily_yield} />
+                      <CompareRow label="Mgmt Fee" a={`${fund.management_fee}%`} b={`${comparePeer.management_fee}%`} aWins={fund.management_fee <= comparePeer.management_fee} />
+                      <CompareRow label="Min. Investment" a={`KES ${fund.minimum_investment.toLocaleString()}`} b={`KES ${comparePeer.minimum_investment.toLocaleString()}`} aWins={fund.minimum_investment <= comparePeer.minimum_investment} />
+                      <CompareRow label="Withdrawal" a={fund.withdrawal_time} b={comparePeer.withdrawal_time} />
+                      
+                      <div className="pt-2">
+                        <Button asChild variant="outline" size="sm" className="w-full text-xs h-8 rounded-lg">
+                          <Link to={`/compare/${comparePeer.slug}`}>
+                            View {comparePeer.name} Details <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  )}
                 </div>
               </div>
             )}
@@ -612,6 +612,14 @@ const CalcStat = ({ label, value, icon, accent }: { label: string; value: string
       <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
     </div>
     <p className={`font-bold text-sm tabular-nums ${accent ? "text-accent" : "text-foreground"}`}>{value}</p>
+  </div>
+);
+
+const CompareRow = ({ label, a, b, aWins }: { label: string; a: string; b: string; aWins?: boolean }) => (
+  <div className="grid grid-cols-3 gap-2 items-center py-1.5 border-t border-border/40">
+    <p className={`text-sm font-semibold tabular-nums text-right ${aWins === true ? "text-accent" : "text-foreground"}`}>{a}</p>
+    <p className="text-[10px] text-muted-foreground text-center uppercase tracking-wider">{label}</p>
+    <p className={`text-sm font-semibold tabular-nums ${aWins === false ? "text-accent" : "text-foreground"}`}>{b}</p>
   </div>
 );
 
