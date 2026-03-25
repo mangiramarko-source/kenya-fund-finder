@@ -43,18 +43,18 @@ const PRECIOUS_METALS: Record<string, string> = {
 
 // NSE stock symbols → Yahoo Finance tickers (.NR suffix for Nairobi)
 const NSE_YAHOO_MAP: Record<string, string> = {
-  SCOM: "SCOM.NR",
-  EQTY: "EQTY.NR",
-  KCB: "KCB.NR",
-  COOP: "COOP.NR",
-  ABSA: "ABSA.NR",
-  EABL: "EABL.NR",
-  BAT: "BAT.NR",
-  KNRE: "KNRE.NR",
-  KPLC: "KPLC.NR",
-  BAMB: "BAMB.NR",
-  SASN: "SASN.NR",
-  TOTL: "TOTL.NR",
+  SCOM: "SCOM.NR", EQTY: "EQTY.NR", KCB: "KCB.NR", COOP: "COOP.NR",
+  ABSA: "ABSA.NR", EABL: "EABL.NR", BAT: "BAT.NR", KNRE: "KNRE.NR",
+  KPLC: "KPLC.NR", BAMB: "BAMB.NR", SASN: "SASN.NR", TOTL: "TOTL.NR",
+  NCBA: "NCBA.NR", SCBK: "SCBK.NR", SBIC: "SBIC.NR", IMH: "IMH.NR",
+  KEGN: "KEGN.NR", BKG: "BKG.NR", DTK: "DTK.NR", BRIT: "BRIT.NR",
+  JUB: "JUB.NR", KQ: "KQ.NR", HFCK: "HFCK.NR", CIC: "CIC.NR",
+  CTUM: "CTUM.NR", KUKZ: "KUKZ.NR", CRWN: "CRWN.NR", PORT: "PORT.NR",
+  CARB: "CARB.NR", NSE20: "NSE.NR", CGEN: "CGEN.NR", LBTY: "LBTY.NR",
+  WTK: "WTK.NR", SMER: "SMER.NR", TPSE: "TPSE.NR", KAPC: "KAPC.NR",
+  NMG: "NMG.NR", BOC: "BOC.NR", UNGA: "UNGA.NR", SLAM: "SLAM.NR",
+  TCL: "TCL.NR", LKL: "LKL.NR", SGL: "SGL.NR", KPC: "KPC.NR",
+  UMME: "UMME.NR",
 };
 
 async function fetchYahooQuote(ticker: string): Promise<{
@@ -112,16 +112,24 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // Authentication: require either a valid admin user or the service role key (cron job)
+  // Authentication: require either a valid admin user or an anon/service-role JWT (cron job)
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace("Bearer ", "");
 
-  // Allow cron jobs using the anon key (called via pg_net)
-  const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-  const isCronCall = token === anonKey;
+  // Check if this is a service-level call (cron job via pg_net sends anon key as JWT)
+  // Decode the JWT payload to check the role claim
+  let isCronCall = false;
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    // If the role is "anon" or "service_role", it's a system call not a user call
+    if (payload.role === "anon" || payload.role === "service_role") {
+      isCronCall = true;
+    }
+  } catch { /* not a valid JWT, will fall through to user auth */ }
 
   if (!isCronCall) {
     // Verify the caller is an authenticated admin
+    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
