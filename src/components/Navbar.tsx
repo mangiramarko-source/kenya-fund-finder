@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect } from "react";
-import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell } from "lucide-react";
+import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -15,6 +15,13 @@ const navLinks = [
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
   { to: "/markets", label: "Market", icon: LineChart },
   { to: "/calculator", label: "Calculator", icon: Calculator },
+];
+
+const mobileNavLinks = [
+  { to: "/", label: "Home", icon: BarChart3 },
+  { to: "/stocks", label: "Stocks", icon: TrendingUp },
+  { to: "/funds", label: "Trusts", icon: Landmark },
+  { to: "/markets", label: "Market", icon: LineChart },
 ];
 
 const Navbar = () => {
