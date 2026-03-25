@@ -293,14 +293,14 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading }: FundGridProp
           <table className="w-full text-sm">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "12%" }} />
+              <col style={{ width: "18%" }} />
+              <col style={{ width: "18%" }} />
               <col style={{ width: "5%" }} />
-              <col style={{ width: "11%" }} />
-              <col style={{ width: "13%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "12%" }} />
               <col style={{ width: "10%" }} />
               <col style={{ width: "8%" }} />
-              <col style={{ width: "18%" }} />
+              <col style={{ width: "16%" }} />
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
