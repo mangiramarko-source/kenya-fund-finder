@@ -306,6 +306,7 @@ const StocksPage = () => {
                       <SortHeader label="Change" sortKey="day_change_percent" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
                       <SortHeader label="Volume" sortKey="volume" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
                       <SortHeader label="Mkt Cap" sortKey="market_cap" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
+                      {user && <th className="w-8"></th>}
                       <th className="w-8"></th>
                     </tr>
                   </thead>
@@ -319,6 +320,8 @@ const StocksPage = () => {
                         onToggle={() => toggleExpand(s.id)}
                         history={history[s.id]}
                         historyLoading={historyLoading === s.id}
+                        isFavourite={user ? isFavourite(s.id) : undefined}
+                        onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
                       />
                     ))}
                   </tbody>
