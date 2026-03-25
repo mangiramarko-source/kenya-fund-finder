@@ -461,12 +461,17 @@ const OverviewPage = () => {
             <span className="text-[10px] text-muted-foreground">{watchedStocks.length + watchedRates.length + watchedCommoditiesList.length + watchedFunds.length} items</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {watchedStocks.map(s => (
-              <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${s.price.toFixed(2)}`}
-                change={<Change current={s.price} previous={s.previous_price} />}
-                onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
-                onRemove={() => toggleAsset("stock", s.id, s.name)} />
-            ))}
+            {watchedStocks.map(s => {
+              const sHistory = getStockHistory(s.id);
+              return (
+                <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${s.price.toFixed(2)}`}
+                  change={<Change current={s.price} previous={s.previous_price} />}
+                  chart={sHistory.length > 2 ? <MiniChart data={sHistory} /> : undefined}
+                  sparkData={getStockSparkData(s.id)}
+                  onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
+                  onRemove={() => toggleAsset("stock", s.id, s.name)} />
+              );
+            })}
             {watchedRates.map(r => {
               const history = getHistory(r.currency_code);
               return (
@@ -616,12 +621,17 @@ const OverviewPage = () => {
             <span className="text-[10px] text-muted-foreground">{watchedStocks.length + watchedRates.length + watchedCommoditiesList.length + watchedFunds.length} items</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {watchedStocks.map(s => (
-              <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${s.price.toFixed(2)}`}
-                change={<Change current={s.price} previous={s.previous_price} />}
-                onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
-                onRemove={() => toggleAsset("stock", s.id, s.name)} />
-            ))}
+            {watchedStocks.map(s => {
+              const sHistory = getStockHistory(s.id);
+              return (
+                <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${s.price.toFixed(2)}`}
+                  change={<Change current={s.price} previous={s.previous_price} />}
+                  chart={sHistory.length > 2 ? <MiniChart data={sHistory} /> : undefined}
+                  sparkData={getStockSparkData(s.id)}
+                  onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
+                  onRemove={() => toggleAsset("stock", s.id, s.name)} />
+              );
+            })}
             {watchedRates.map(r => {
               const history = getHistory(r.currency_code);
               return (
