@@ -295,93 +295,80 @@ const FundDetailPage = () => {
             )}
           </section>
 
-          {/* ━━━ SECTION 3: Compare ━━━ */}
-          {peers.length > 0 && (
-            <section>
-              <SectionHeader icon={<GitCompareArrows className="h-4 w-4" />} title="Compare" />
-              <div className="rounded-xl border border-border bg-card overflow-hidden">
-                {/* Selector */}
-                <div className="p-4 border-b border-border/50">
-                  <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                    Compare {fund.name} with:
-                  </Label>
-                  <Select value={comparePeerId} onValueChange={setComparePeerId}>
-                    <SelectTrigger className="h-9 text-sm">
-                      <SelectValue placeholder="Choose a similar fund…" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {peers.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name} — {formatYield(p.annual_yield, p.yield_unit)}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+          {/* ━━━ SECTION 3 & 4: Compare + Calculator side by side ━━━ */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 items-start">
+            {/* Compare */}
+            {peers.length > 0 && (
+              <section className="min-w-0">
+                <SectionHeader icon={<GitCompareArrows className="h-4 w-4" />} title="Compare" />
+                <div className="rounded-xl border border-border bg-card overflow-hidden">
+                  <div className="p-4 border-b border-border/50">
+                    <Label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+                      Compare {fund.name} with:
+                    </Label>
+                    <Select value={comparePeerId} onValueChange={setComparePeerId}>
+                      <SelectTrigger className="h-9 text-sm">
+                        <SelectValue placeholder="Choose a similar fund…" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {peers.map((p) => (
+                          <SelectItem key={p.id} value={p.id}>
+                            {p.name} — {formatYield(p.annual_yield, p.yield_unit)}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {comparePeer ? (
+                    <div className="divide-y divide-border/40">
+                      <div className="grid grid-cols-3 px-4 py-3 bg-muted/30 text-xs font-semibold">
+                        <span className="text-foreground truncate">{fund.name}</span>
+                        <span className="text-center text-muted-foreground">Metric</span>
+                        <span className="text-right text-foreground truncate">{comparePeer.name}</span>
+                      </div>
+                      <CmpRow label="Annual Rate" a={formatYield(fund.annual_yield, fund.yield_unit)} b={formatYield(comparePeer.annual_yield, comparePeer.yield_unit)} aWins={fund.annual_yield >= comparePeer.annual_yield} />
+                      <CmpRow label="Daily Yield" a={formatYield(fund.daily_yield, fund.yield_unit)} b={formatYield(comparePeer.daily_yield, comparePeer.yield_unit)} aWins={fund.daily_yield >= comparePeer.daily_yield} />
+                      <CmpRow label="Mgmt Fee" a={`${fund.management_fee}%`} b={`${comparePeer.management_fee}%`} aWins={fund.management_fee <= comparePeer.management_fee} />
+                      <CmpRow label="Min. Invest" a={`KES ${fund.minimum_investment.toLocaleString()}`} b={`KES ${comparePeer.minimum_investment.toLocaleString()}`} aWins={fund.minimum_investment <= comparePeer.minimum_investment} />
+                      <CmpRow label="Withdrawal" a={fund.withdrawal_time} b={comparePeer.withdrawal_time} />
+                      <CmpRow label="CMA Licensed" a={fund.cma_licensed ? "Yes" : "No"} b={comparePeer.cma_licensed ? "Yes" : "No"} />
+                      <div className="p-3">
+                        <Button asChild variant="outline" size="sm" className="w-full text-xs h-8 rounded-lg">
+                          <Link to={`/compare/${comparePeer.slug}`}>
+                            View {comparePeer.name} <ChevronRight className="ml-1 h-3.5 w-3.5" />
+                          </Link>
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div className="p-6 text-center flex flex-col items-center justify-center min-h-[200px]">
+                      <GitCompareArrows className="h-6 w-6 text-muted-foreground/30 mb-2" />
+                      <p className="text-sm text-muted-foreground">Select a fund above to see a side-by-side comparison</p>
+                    </div>
+                  )}
                 </div>
+              </section>
+            )}
 
-                {/* Comparison table */}
-                {comparePeer ? (
-                  <div className="divide-y divide-border/40">
-                    {/* Header row */}
-                    <div className="grid grid-cols-3 px-4 py-3 bg-muted/30 text-xs font-semibold">
-                      <span className="text-foreground truncate">{fund.name}</span>
-                      <span className="text-center text-muted-foreground">Metric</span>
-                      <span className="text-right text-foreground truncate">{comparePeer.name}</span>
-                    </div>
-                    <CmpRow label="Annual Rate" a={formatYield(fund.annual_yield, fund.yield_unit)} b={formatYield(comparePeer.annual_yield, comparePeer.yield_unit)} aWins={fund.annual_yield >= comparePeer.annual_yield} />
-                    <CmpRow label="Daily Yield" a={formatYield(fund.daily_yield, fund.yield_unit)} b={formatYield(comparePeer.daily_yield, comparePeer.yield_unit)} aWins={fund.daily_yield >= comparePeer.daily_yield} />
-                    <CmpRow label="Mgmt Fee" a={`${fund.management_fee}%`} b={`${comparePeer.management_fee}%`} aWins={fund.management_fee <= comparePeer.management_fee} />
-                    <CmpRow label="Min. Invest" a={`KES ${fund.minimum_investment.toLocaleString()}`} b={`KES ${comparePeer.minimum_investment.toLocaleString()}`} aWins={fund.minimum_investment <= comparePeer.minimum_investment} />
-                    <CmpRow label="Withdrawal" a={fund.withdrawal_time} b={comparePeer.withdrawal_time} />
-                    <CmpRow label="CMA Licensed" a={fund.cma_licensed ? "Yes" : "No"} b={comparePeer.cma_licensed ? "Yes" : "No"} />
-
-                    <div className="p-3">
-                      <Button asChild variant="outline" size="sm" className="w-full text-xs h-8 rounded-lg">
-                        <Link to={`/compare/${comparePeer.slug}`}>
-                          View {comparePeer.name} <ChevronRight className="ml-1 h-3.5 w-3.5" />
-                        </Link>
-                      </Button>
-                    </div>
-                  </div>
-                ) : (
-                  <div className="p-6 text-center">
-                    <GitCompareArrows className="h-6 w-6 text-muted-foreground/30 mx-auto mb-2" />
-                    <p className="text-sm text-muted-foreground">Select a fund above to see a side-by-side comparison</p>
-                  </div>
-                )}
-              </div>
-            </section>
-          )}
-
-          {/* ━━━ SECTION 4: Calculator (collapsible) ━━━ */}
-          <section>
-            <button
-              onClick={() => setShowCalc(!showCalc)}
-              className="flex items-center gap-2 w-full text-left mb-2"
-            >
-              <PiggyBank className="h-4 w-4 text-accent" />
-              <h2 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Investment Calculator</h2>
-              <ChevronDown className={`h-4 w-4 text-muted-foreground ml-auto transition-transform ${showCalc ? "rotate-180" : ""}`} />
-            </button>
-
-            {showCalc && (
+            {/* Calculator */}
+            <section className="min-w-0">
+              <SectionHeader icon={<PiggyBank className="h-4 w-4" />} title="Investment Calculator" />
               <div className="rounded-xl border border-border bg-card p-4">
                 <p className="text-[11px] text-muted-foreground mb-4">
                   Estimate returns using <span className="font-medium text-foreground">{fund.name}</span>'s current rate of {fund.annual_yield}% p.a.
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                  <div className="space-y-4">
-                    <CalcInput label="Initial Investment" value={calcAmount} onChange={setCalcAmount} min={1000} max={10000000} step={1000} prefix="KES " />
-                    <CalcInput label="Period" value={calcMonths} onChange={setCalcMonths} min={1} max={120} step={1} suffix=" months" />
-                    <CalcInput label="Monthly Top-up" value={calcMonthly} onChange={setCalcMonthly} min={0} max={1000000} step={500} prefix="KES " />
-                    <div className="flex items-center justify-between">
-                      <Label className="text-xs font-medium">Compound Interest</Label>
-                      <Switch checked={calcCompound} onCheckedChange={setCalcCompound} />
-                    </div>
+                <div className="space-y-4">
+                  <CalcInput label="Initial Investment" value={calcAmount} onChange={setCalcAmount} min={1000} max={10000000} step={1000} prefix="KES " />
+                  <CalcInput label="Period" value={calcMonths} onChange={setCalcMonths} min={1} max={120} step={1} suffix=" months" />
+                  <CalcInput label="Monthly Top-up" value={calcMonthly} onChange={setCalcMonthly} min={0} max={1000000} step={500} prefix="KES " />
+                  <div className="flex items-center justify-between">
+                    <Label className="text-xs font-medium">Compound Interest</Label>
+                    <Switch checked={calcCompound} onCheckedChange={setCalcCompound} />
                   </div>
 
                   {calcResults && (
-                    <div className="space-y-3">
+                    <div className="space-y-3 pt-3 border-t border-border/50">
                       <div className="rounded-lg bg-accent/5 border border-accent/20 p-4 text-center">
                         <p className="text-[10px] text-muted-foreground uppercase tracking-wider mb-1">Estimated Final Value</p>
                         <p className="text-2xl font-bold text-accent tabular-nums">{formatKES(calcResults.finalValue)}</p>
@@ -402,8 +389,8 @@ const FundDetailPage = () => {
                   )}
                 </div>
               </div>
-            )}
-          </section>
+            </section>
+          </div>
 
           {/* ━━━ SECTION 5: About ━━━ */}
           {fund.description && (
