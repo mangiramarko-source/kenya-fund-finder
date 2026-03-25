@@ -325,6 +325,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <SortHeader label="Mgmt Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
                 <th className="text-right pr-4 pl-2 py-3 font-semibold text-muted-foreground">Manager</th>
+                {onToggleFavourite && <th className="w-8 pr-3 py-3"></th>}
               </tr>
             </thead>
             <tbody>
@@ -384,6 +385,17 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <td className="pr-4 pl-2 py-3.5 text-right text-[11px] text-muted-foreground/70 truncate max-w-[140px]" title={fund.manager}>
                     {fund.manager}
                   </td>
+                  {onToggleFavourite && (
+                    <td className="pr-3 py-3.5 text-center">
+                      <button
+                        onClick={(e) => { e.stopPropagation(); onToggleFavourite(fund.id, fund.name); }}
+                        className="p-1 rounded-md hover:bg-muted transition-colors"
+                        aria-label={isFavourite?.(fund.id) ? "Remove from favourites" : "Add to favourites"}
+                      >
+                        <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+                      </button>
+                    </td>
+                  )}
                 </tr>
               ))}
 
