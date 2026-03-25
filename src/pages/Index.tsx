@@ -10,7 +10,11 @@ import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, fetchPublished
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import StatBar from "@/components/home/StatBar";
+import CategoryTabs from "@/components/home/CategoryTabs";
+import FundMobileCards from "@/components/home/FundMobileCards";
+import FundGrid from "@/components/home/FundGrid";
+import NewsSidebar from "@/components/home/NewsSidebar";
+import AdBanner from "@/components/AdBanner";
 import CategoryTabs from "@/components/home/CategoryTabs";
 import FundMobileCards from "@/components/home/FundMobileCards";
 import FundGrid from "@/components/home/FundGrid";
