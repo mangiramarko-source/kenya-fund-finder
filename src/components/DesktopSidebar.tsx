@@ -1,13 +1,11 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   BarChart3, Calculator, Newspaper, GraduationCap, Bell,
-  TrendingUp, Shield, LogOut, ChevronLeft, ChevronRight, LayoutDashboard,
+  TrendingUp, Shield, ChevronLeft, ChevronRight, LayoutDashboard,
   FileText, Scale, DollarSign, Gem,
 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { supabase } from "@/integrations/supabase/client";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const mainNavItems = [
@@ -32,19 +30,8 @@ const legalNavItems = [
 
 const DesktopSidebar = () => {
   const [collapsed, setCollapsed] = useState(false);
-  const [avatarUrl, setAvatarUrl] = useState("");
-  const [displayName, setDisplayName] = useState("");
   const location = useLocation();
-  const { user, isAdmin, signOut } = useAuth();
-
-  useEffect(() => {
-    if (user) {
-      supabase.from("profiles").select("avatar_url, display_name").eq("user_id", user.id).maybeSingle()
-        .then(({ data }) => {
-          if (data) { setAvatarUrl(data.avatar_url || ""); setDisplayName(data.display_name || ""); }
-        });
-    } else { setAvatarUrl(""); setDisplayName(""); }
-  }, [user]);
+  const { isAdmin } = useAuth();
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
