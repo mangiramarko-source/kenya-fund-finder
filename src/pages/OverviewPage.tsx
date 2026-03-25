@@ -428,53 +428,63 @@ const OverviewPage = () => {
           <h2 className="text-sm font-semibold text-foreground">Market Highlights</h2>
           <span className="text-[10px] text-muted-foreground">Best performers at a glance</span>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+
+        {/* Desktop: detailed cards with charts in 3-col grid */}
+        <div className="hidden md:grid md:grid-cols-3 gap-3">
           {bestStock && (
-            <HighlightCard
+            <DetailedHighlightCard
               icon={TrendingUp}
               label="Top Stock"
               name={`${bestStock.symbol} · ${bestStock.name}`}
               value={`KES ${bestStock.price.toFixed(2)}`}
               change={<Change current={bestStock.price} previous={bestStock.previous_price} />}
+              sub={`Vol: ${bestStock.volume?.toLocaleString() || "—"}`}
               linkTo="/stocks"
               color="bg-accent/10"
             />
           )}
           {bestMM && (
-            <HighlightCard
+            <DetailedHighlightCard
               icon={BarChart3}
               label="Money Market"
               name={bestMM.name}
               value={`${bestMM.annual_yield.toFixed(2)}%`}
-              sub={`Daily: ${bestMM.daily_yield.toFixed(4)}%`}
+              sub={`Daily: ${bestMM.daily_yield.toFixed(4)}% · ${bestMM.manager}`}
               linkTo={`/compare/${bestMM.slug}`}
               color="bg-primary/10"
-            />
-          )}
-          {bestFI && (
-            <HighlightCard
-              icon={Landmark}
-              label="Fixed Income"
-              name={bestFI.name}
-              value={`${bestFI.annual_yield.toFixed(2)}%`}
-              sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`}
-              linkTo={`/compare/${bestFI.slug}`}
-              color="bg-secondary/80"
+              chartData={getFundHistory(bestMM.id)}
+              chartColor="hsl(var(--primary))"
             />
           )}
           {bestFXRate && (
-            <HighlightCard
+            <DetailedHighlightCard
               icon={DollarSign}
               label="FX Rate"
               name={`${bestFXRate.currency_code}/KES`}
               value={`KES ${Number(bestFXRate.rate).toFixed(2)}`}
               change={<Change current={Number(bestFXRate.rate)} previous={bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null} />}
+              sub={bestFXRate.currency_name}
               linkTo="/rates"
               color="bg-accent/10"
+              chartData={getHistory(bestFXRate.currency_code)}
+              chartColor="hsl(var(--accent))"
+            />
+          )}
+          {bestFI && (
+            <DetailedHighlightCard
+              icon={Landmark}
+              label="Fixed Income"
+              name={bestFI.name}
+              value={`${bestFI.annual_yield.toFixed(2)}%`}
+              sub={`Daily: ${bestFI.daily_yield.toFixed(4)}% · ${bestFI.manager}`}
+              linkTo={`/compare/${bestFI.slug}`}
+              color="bg-secondary/80"
+              chartData={getFundHistory(bestFI.id)}
+              chartColor="hsl(var(--secondary))"
             />
           )}
           {goldCommodity && (
-            <HighlightCard
+            <DetailedHighlightCard
               icon={Gem}
               label="Gold"
               name={goldCommodity.name}
@@ -485,7 +495,7 @@ const OverviewPage = () => {
             />
           )}
           {silverCommodity && (
-            <HighlightCard
+            <DetailedHighlightCard
               icon={Gem}
               label="Silver"
               name={silverCommodity.name}
@@ -494,6 +504,28 @@ const OverviewPage = () => {
               linkTo="/commodities"
               color="bg-muted"
             />
+          )}
+        </div>
+
+        {/* Mobile: compact 2-col grid */}
+        <div className="grid grid-cols-2 gap-3 md:hidden">
+          {bestStock && (
+            <HighlightCard icon={TrendingUp} label="Top Stock" name={`${bestStock.symbol} · ${bestStock.name}`} value={`KES ${bestStock.price.toFixed(2)}`} change={<Change current={bestStock.price} previous={bestStock.previous_price} />} linkTo="/stocks" color="bg-accent/10" />
+          )}
+          {bestMM && (
+            <HighlightCard icon={BarChart3} label="Money Market" name={bestMM.name} value={`${bestMM.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestMM.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestMM.slug}`} color="bg-primary/10" />
+          )}
+          {bestFI && (
+            <HighlightCard icon={Landmark} label="Fixed Income" name={bestFI.name} value={`${bestFI.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestFI.slug}`} color="bg-secondary/80" />
+          )}
+          {bestFXRate && (
+            <HighlightCard icon={DollarSign} label="FX Rate" name={`${bestFXRate.currency_code}/KES`} value={`KES ${Number(bestFXRate.rate).toFixed(2)}`} change={<Change current={Number(bestFXRate.rate)} previous={bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null} />} linkTo="/rates" color="bg-accent/10" />
+          )}
+          {goldCommodity && (
+            <HighlightCard icon={Gem} label="Gold" name={goldCommodity.name} value={`${Number(goldCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${goldCommodity.unit}`} change={<Change current={Number(goldCommodity.price)} previous={goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null} />} linkTo="/commodities" color="bg-[hsl(45,80%,50%)]/10" />
+          )}
+          {silverCommodity && (
+            <HighlightCard icon={Gem} label="Silver" name={silverCommodity.name} value={`${Number(silverCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${silverCommodity.unit}`} change={<Change current={Number(silverCommodity.price)} previous={silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null} />} linkTo="/commodities" color="bg-muted" />
           )}
         </div>
       </div>
