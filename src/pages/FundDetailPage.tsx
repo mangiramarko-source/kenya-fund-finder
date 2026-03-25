@@ -23,6 +23,7 @@ const FUND_TYPE_LABELS: Record<string, string> = {
 
 const FundDetailPage = () => {
   const { id } = useParams();
+  const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { add, remove, isSelected } = useCompare();
   const [fund, setFund] = useState<FundFromDB | null>(null);
