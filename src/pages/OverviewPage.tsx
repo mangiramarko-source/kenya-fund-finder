@@ -279,6 +279,7 @@ const OverviewPage = () => {
   const [fundsLoading, setFundsLoading] = useState(true);
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [rateHistory, setRateHistory] = useState<RateHistory[]>([]);
+  const [fundSnapshots, setFundSnapshots] = useState<FundYieldSnapshot[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
@@ -295,6 +296,10 @@ const OverviewPage = () => {
       .select("snapshot_date, rate, currency_code")
       .order("snapshot_date", { ascending: true }).limit(500)
       .then(({ data }) => setRateHistory(((data as any) || []).map((h: any) => ({ ...h, rate: Number(h.rate) }))));
+    supabase.from("fund_yield_snapshots")
+      .select("snapshot_date, annual_yield, fund_id")
+      .order("snapshot_date", { ascending: true }).limit(500)
+      .then(({ data }) => setFundSnapshots(((data as any) || []).map((s: any) => ({ ...s, annual_yield: Number(s.annual_yield) }))));
   }, []);
 
   const fetchWatchlist = useCallback(async () => {
