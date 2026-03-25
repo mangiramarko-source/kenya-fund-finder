@@ -12,9 +12,9 @@ import NotificationBell from "@/components/alerts/NotificationBell";
 
 const navLinks = [
   { to: "/", label: "Home", icon: BarChart3 },
-  { to: "/markets", label: "Markets", icon: LineChart },
+  { to: "/stocks", label: "Stocks", icon: TrendingUp },
+  { to: "/markets", label: "Market", icon: LineChart },
   { to: "/calculator", label: "Calculator", icon: Calculator },
-  { to: "/news", label: "News", icon: Newspaper },
 ];
 
 const Navbar = () => {
