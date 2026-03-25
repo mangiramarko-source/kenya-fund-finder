@@ -225,6 +225,8 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
                 loading={loading}
                 onClearSearch={clearSearch}
                 hasSearch={!!debouncedSearch.trim()}
+                isFavourite={user ? isFavourite : undefined}
+                onToggleFavourite={user ? toggleFavourite : undefined}
               />
 
               <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
