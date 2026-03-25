@@ -134,6 +134,8 @@ const RatesPage = () => {
           </p>
         </div>
 
+        <ActiveAlertsCard assetType="currency" />
+
         {/* Summary Stats */}
         {!loading && rates.length > 0 && (
           <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
