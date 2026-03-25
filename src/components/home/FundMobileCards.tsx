@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Star } from "lucide-react";
 import YieldChange from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
@@ -11,6 +12,8 @@ interface FundMobileCardsProps {
   loading: boolean;
   onClearSearch: () => void;
   hasSearch: boolean;
+  isFavourite?: (id: string) => boolean;
+  onToggleFavourite?: (id: string, name: string) => void;
 }
 
 const currencyLabel = (unit: string) => {
@@ -61,7 +64,7 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
   </div>
 );
 
-const FundMobileCards = ({ funds, snapshots, bestYield, loading, onClearSearch, hasSearch }: FundMobileCardsProps) => {
+const FundMobileCards = ({ funds, snapshots, bestYield, loading, onClearSearch, hasSearch, isFavourite, onToggleFavourite }: FundMobileCardsProps) => {
   if (loading) return <CardSkeleton />;
 
   if (funds.length === 0) return <EmptyState hasSearch={hasSearch} onClearSearch={onClearSearch} />;
