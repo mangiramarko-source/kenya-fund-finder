@@ -280,6 +280,23 @@ const Navbar = () => {
             )}
 
             <div className="h-px bg-border my-2" />
+            <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Tools</p>
+            <Link
+              to="/calculator"
+              onClick={closeMobile}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+            >
+              <Calculator className="h-5 w-5" /> Calculator
+            </Link>
+            {user && (
+              <Link
+                to="/alerts"
+                onClick={closeMobile}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
+                <Bell className="h-5 w-5" /> Notifications
+              </Link>
+            )}
 
             <button
               onClick={() => { setDark(!dark); }}
