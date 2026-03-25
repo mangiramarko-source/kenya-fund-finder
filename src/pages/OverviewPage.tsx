@@ -26,6 +26,7 @@ import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
+interface FundYieldSnapshot { snapshot_date: string; annual_yield: number; fund_id: string; }
 interface RateHistory { snapshot_date: string; rate: number; currency_code: string; }
 
 const SECTIONS = [
@@ -207,7 +208,41 @@ const MiniChart = ({ data, color = "hsl(var(--accent))" }: { data: { snapshot_da
   );
 };
 
-/* ─── Highlight Card ─── */
+/* ─── Detailed Highlight Card (desktop) ─── */
+const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color, chartData, chartColor }: {
+  icon: any; label: string; name: string; value: string; sub?: string;
+  change?: React.ReactNode; linkTo?: string; color?: string;
+  chartData?: { snapshot_date: string; rate: number }[]; chartColor?: string;
+}) => (
+  <div className="rounded-xl border border-border bg-card p-5 hover:border-accent/30 transition-colors group flex flex-col">
+    <div className="flex items-center justify-between mb-3">
+      <div className="flex items-center gap-2">
+        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${color || "bg-primary/10"}`}>
+          <Icon className="h-4 w-4 text-primary" />
+        </div>
+        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+      </div>
+      {linkTo && (
+        <Link to={linkTo} className="text-[10px] text-accent hover:underline inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+          View <ArrowRight className="h-3 w-3" />
+        </Link>
+      )}
+    </div>
+    <p className="text-sm font-bold text-foreground truncate" title={name}>{name}</p>
+    <p className="text-xl font-bold text-foreground tabular-nums mt-1">{value}</p>
+    <div className="flex items-center gap-3 mt-1">
+      {change}
+      {sub && <span className="text-[10px] text-muted-foreground">{sub}</span>}
+    </div>
+    {chartData && chartData.length > 2 && (
+      <div className="mt-3 -mx-1 flex-1 min-h-[70px]">
+        <MiniChart data={chartData} color={chartColor || "hsl(var(--accent))"} />
+      </div>
+    )}
+  </div>
+);
+
+/* ─── Compact Highlight Card (mobile) ─── */
 const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color }: {
   icon: any; label: string; name: string; value: string; sub?: string;
   change?: React.ReactNode; linkTo?: string; color?: string;
@@ -244,6 +279,7 @@ const OverviewPage = () => {
   const [fundsLoading, setFundsLoading] = useState(true);
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [rateHistory, setRateHistory] = useState<RateHistory[]>([]);
+  const [fundSnapshots, setFundSnapshots] = useState<FundYieldSnapshot[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
@@ -260,6 +296,10 @@ const OverviewPage = () => {
       .select("snapshot_date, rate, currency_code")
       .order("snapshot_date", { ascending: true }).limit(500)
       .then(({ data }) => setRateHistory(((data as any) || []).map((h: any) => ({ ...h, rate: Number(h.rate) }))));
+    supabase.from("fund_yield_snapshots")
+      .select("snapshot_date, annual_yield, fund_id")
+      .order("snapshot_date", { ascending: true }).limit(500)
+      .then(({ data }) => setFundSnapshots(((data as any) || []).map((s: any) => ({ ...s, annual_yield: Number(s.annual_yield) }))));
   }, []);
 
   const fetchWatchlist = useCallback(async () => {
@@ -334,6 +374,7 @@ const OverviewPage = () => {
   const bestMMYield = useMemo(() => mmFunds.length ? Math.max(...mmFunds.map(f => f.annual_yield)) : 0, [mmFunds]);
 
   const getHistory = (code: string) => rateHistory.filter(h => h.currency_code === code).slice(-30);
+  const getFundHistory = (fundId: string) => fundSnapshots.filter(s => s.fund_id === fundId).slice(-30).map(s => ({ snapshot_date: s.snapshot_date, rate: s.annual_yield }));
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
@@ -387,53 +428,63 @@ const OverviewPage = () => {
           <h2 className="text-sm font-semibold text-foreground">Market Highlights</h2>
           <span className="text-[10px] text-muted-foreground">Best performers at a glance</span>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+
+        {/* Desktop: detailed cards with charts in 3-col grid */}
+        <div className="hidden md:grid md:grid-cols-3 gap-3">
           {bestStock && (
-            <HighlightCard
+            <DetailedHighlightCard
               icon={TrendingUp}
               label="Top Stock"
               name={`${bestStock.symbol} · ${bestStock.name}`}
               value={`KES ${bestStock.price.toFixed(2)}`}
               change={<Change current={bestStock.price} previous={bestStock.previous_price} />}
+              sub={`Vol: ${bestStock.volume?.toLocaleString() || "—"}`}
               linkTo="/stocks"
               color="bg-accent/10"
             />
           )}
           {bestMM && (
-            <HighlightCard
+            <DetailedHighlightCard
               icon={BarChart3}
               label="Money Market"
               name={bestMM.name}
               value={`${bestMM.annual_yield.toFixed(2)}%`}
-              sub={`Daily: ${bestMM.daily_yield.toFixed(4)}%`}
+              sub={`Daily: ${bestMM.daily_yield.toFixed(4)}% · ${bestMM.manager}`}
               linkTo={`/compare/${bestMM.slug}`}
               color="bg-primary/10"
-            />
-          )}
-          {bestFI && (
-            <HighlightCard
-              icon={Landmark}
-              label="Fixed Income"
-              name={bestFI.name}
-              value={`${bestFI.annual_yield.toFixed(2)}%`}
-              sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`}
-              linkTo={`/compare/${bestFI.slug}`}
-              color="bg-secondary/80"
+              chartData={getFundHistory(bestMM.id)}
+              chartColor="hsl(var(--primary))"
             />
           )}
           {bestFXRate && (
-            <HighlightCard
+            <DetailedHighlightCard
               icon={DollarSign}
               label="FX Rate"
               name={`${bestFXRate.currency_code}/KES`}
               value={`KES ${Number(bestFXRate.rate).toFixed(2)}`}
               change={<Change current={Number(bestFXRate.rate)} previous={bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null} />}
+              sub={bestFXRate.currency_name}
               linkTo="/rates"
               color="bg-accent/10"
+              chartData={getHistory(bestFXRate.currency_code)}
+              chartColor="hsl(var(--accent))"
+            />
+          )}
+          {bestFI && (
+            <DetailedHighlightCard
+              icon={Landmark}
+              label="Fixed Income"
+              name={bestFI.name}
+              value={`${bestFI.annual_yield.toFixed(2)}%`}
+              sub={`Daily: ${bestFI.daily_yield.toFixed(4)}% · ${bestFI.manager}`}
+              linkTo={`/compare/${bestFI.slug}`}
+              color="bg-secondary/80"
+              chartData={getFundHistory(bestFI.id)}
+              chartColor="hsl(var(--secondary))"
             />
           )}
           {goldCommodity && (
-            <HighlightCard
+            <DetailedHighlightCard
               icon={Gem}
               label="Gold"
               name={goldCommodity.name}
@@ -444,7 +495,7 @@ const OverviewPage = () => {
             />
           )}
           {silverCommodity && (
-            <HighlightCard
+            <DetailedHighlightCard
               icon={Gem}
               label="Silver"
               name={silverCommodity.name}
@@ -453,6 +504,28 @@ const OverviewPage = () => {
               linkTo="/commodities"
               color="bg-muted"
             />
+          )}
+        </div>
+
+        {/* Mobile: compact 2-col grid */}
+        <div className="grid grid-cols-2 gap-3 md:hidden">
+          {bestStock && (
+            <HighlightCard icon={TrendingUp} label="Top Stock" name={`${bestStock.symbol} · ${bestStock.name}`} value={`KES ${bestStock.price.toFixed(2)}`} change={<Change current={bestStock.price} previous={bestStock.previous_price} />} linkTo="/stocks" color="bg-accent/10" />
+          )}
+          {bestMM && (
+            <HighlightCard icon={BarChart3} label="Money Market" name={bestMM.name} value={`${bestMM.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestMM.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestMM.slug}`} color="bg-primary/10" />
+          )}
+          {bestFI && (
+            <HighlightCard icon={Landmark} label="Fixed Income" name={bestFI.name} value={`${bestFI.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestFI.slug}`} color="bg-secondary/80" />
+          )}
+          {bestFXRate && (
+            <HighlightCard icon={DollarSign} label="FX Rate" name={`${bestFXRate.currency_code}/KES`} value={`KES ${Number(bestFXRate.rate).toFixed(2)}`} change={<Change current={Number(bestFXRate.rate)} previous={bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null} />} linkTo="/rates" color="bg-accent/10" />
+          )}
+          {goldCommodity && (
+            <HighlightCard icon={Gem} label="Gold" name={goldCommodity.name} value={`${Number(goldCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${goldCommodity.unit}`} change={<Change current={Number(goldCommodity.price)} previous={goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null} />} linkTo="/commodities" color="bg-[hsl(45,80%,50%)]/10" />
+          )}
+          {silverCommodity && (
+            <HighlightCard icon={Gem} label="Silver" name={silverCommodity.name} value={`${Number(silverCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${silverCommodity.unit}`} change={<Change current={Number(silverCommodity.price)} previous={silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null} />} linkTo="/commodities" color="bg-muted" />
           )}
         </div>
       </div>
