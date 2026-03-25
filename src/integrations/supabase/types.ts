@@ -445,6 +445,7 @@ export type Database = {
           created_by: string | null
           date_published: string
           id: string
+          image_url: string | null
           is_featured: boolean
           read_time: string
           source: string
@@ -462,6 +463,7 @@ export type Database = {
           created_by?: string | null
           date_published?: string
           id?: string
+          image_url?: string | null
           is_featured?: boolean
           read_time?: string
           source?: string
@@ -479,6 +481,7 @@ export type Database = {
           created_by?: string | null
           date_published?: string
           id?: string
+          image_url?: string | null
           is_featured?: boolean
           read_time?: string
           source?: string
