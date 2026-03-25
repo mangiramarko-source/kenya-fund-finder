@@ -101,6 +101,8 @@ const StocksPage = () => {
     url: "https://kenyafundfinder.com/stocks",
   });
 
+  const { user } = useAuth();
+  const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
