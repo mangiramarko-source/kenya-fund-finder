@@ -175,6 +175,11 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
 
       <div className="px-4 md:px-6 pb-3">
+        {/* Favourites overview */}
+        {user && favEntries.length > 0 && (
+          <FundFavourites entries={favEntries} funds={funds} snapshots={snapshots} />
+        )}
+
         {/* Desktop: full-width tabbed fund table */}
         <div className="hidden md:block">
           <FundGrid
@@ -182,6 +187,8 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
             snapshots={snapshots}
             allSnapshots={allSnapshots}
             loading={loading}
+            isFavourite={user ? isFavourite : undefined}
+            onToggleFavourite={user ? toggleFavourite : undefined}
           />
         </div>
 
