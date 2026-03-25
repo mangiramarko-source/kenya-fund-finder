@@ -189,3 +189,25 @@ export async function fetchFundSnapshots(fundId: string): Promise<YieldSnapshot[
     snapshot_date: row.snapshot_date,
   }));
 }
+
+/** Fetch recent yield snapshots for all funds (for sparklines) */
+export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnapshot[]>> {
+  const { data, error } = await supabase
+    .from("fund_yield_snapshots")
+    .select("fund_id, annual_yield, daily_yield, snapshot_date")
+    .order("snapshot_date", { ascending: true })
+    .limit(1000);
+  if (error) throw error;
+  const grouped: Record<string, YieldSnapshot[]> = {};
+  for (const row of data || []) {
+    const snap: YieldSnapshot = {
+      fund_id: row.fund_id,
+      annual_yield: Number(row.annual_yield),
+      daily_yield: Number(row.daily_yield),
+      snapshot_date: row.snapshot_date,
+    };
+    if (!grouped[row.fund_id]) grouped[row.fund_id] = [];
+    grouped[row.fund_id].push(snap);
+  }
+  return grouped;
+}
