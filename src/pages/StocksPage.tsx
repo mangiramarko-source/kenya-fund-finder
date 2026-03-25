@@ -528,7 +528,7 @@ const StockRow = ({
     </tr>
     {isExpanded && (
       <tr className="border-t border-border bg-muted/20">
-        <td colSpan={10}>
+        <td colSpan={onToggleFavourite !== undefined ? 11 : 10}>
           <StockDetailPanel stock={s} history={history} historyLoading={historyLoading} />
         </td>
       </tr>
