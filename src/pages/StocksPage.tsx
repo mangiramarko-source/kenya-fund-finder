@@ -1,12 +1,15 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
+import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ChevronDown, ChevronUp, BarChart3, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ChevronDown, ChevronUp, BarChart3, Activity, Star } from "lucide-react";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
+import StockFavourites from "@/components/home/StockFavourites";
+import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 interface Stock {
@@ -98,6 +101,8 @@ const StocksPage = () => {
     url: "https://kenyafundfinder.com/stocks",
   });
 
+  const { user } = useAuth();
+  const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -233,15 +238,9 @@ const StocksPage = () => {
 
         <ActiveAlertsCard assetType="stock" />
 
-        {/* Summary stats — redesigned */}
-        {!loading && stocks.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
-            <StatCard label="Listed" value={String(stocks.length)} icon={<BarChart3 className="h-4 w-4 text-primary" />} />
-            <StatCard label="Gainers" value={String(gainers)} icon={<TrendingUp className="h-4 w-4 text-accent" />} valueColor="text-accent" />
-            <StatCard label="Losers" value={String(losers)} icon={<TrendingDown className="h-4 w-4 text-destructive" />} valueColor="text-destructive" />
-            <StatCard label="Unchanged" value={String(unchanged)} icon={<Minus className="h-4 w-4 text-muted-foreground" />} />
-            <StatCard label="Total Vol" value={formatVolume(totalVolume)} icon={<Activity className="h-4 w-4 text-primary" />} />
-          </div>
+
+        {user && favEntries.length > 0 && (
+          <StockFavourites entries={favEntries} stocks={stocks} />
         )}
 
         {/* Filters */}
@@ -307,6 +306,7 @@ const StocksPage = () => {
                       <SortHeader label="Change" sortKey="day_change_percent" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
                       <SortHeader label="Volume" sortKey="volume" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
                       <SortHeader label="Mkt Cap" sortKey="market_cap" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
+                      {user && <th className="w-8"></th>}
                       <th className="w-8"></th>
                     </tr>
                   </thead>
@@ -320,6 +320,8 @@ const StocksPage = () => {
                         onToggle={() => toggleExpand(s.id)}
                         history={history[s.id]}
                         historyLoading={historyLoading === s.id}
+                        isFavourite={user ? isFavourite(s.id) : undefined}
+                        onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
                       />
                     ))}
                   </tbody>
@@ -352,6 +354,8 @@ const StocksPage = () => {
                 onToggle={() => toggleExpand(s.id)}
                 history={history[s.id]}
                 historyLoading={historyLoading === s.id}
+                isFavourite={user ? isFavourite(s.id) : undefined}
+                onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
               />
             ))
           )}
@@ -479,10 +483,11 @@ const StockDetailPanel = ({
 
 /* ─── Desktop Row ─── */
 const StockRow = ({
-  stock: s, index, isExpanded, onToggle, history, historyLoading,
+  stock: s, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
   stock: Stock; index: number; isExpanded: boolean; onToggle: () => void;
   history?: PriceHistory[]; historyLoading: boolean;
+  isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => (
   <>
     <tr
@@ -508,13 +513,24 @@ const StockRow = ({
       <td className="px-3 py-3.5 text-right"><ChangeCell change={s.day_change} pct={s.day_change_percent} /></td>
       <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">{formatVolume(s.volume)}</td>
       <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">{formatMarketCap(s.market_cap)}</td>
+      {onToggleFavourite !== undefined && (
+        <td className="px-2 py-3.5 text-center">
+          <button
+            onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
+            className="p-1 rounded-md hover:bg-muted transition-colors"
+            aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+          >
+            <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+          </button>
+        </td>
+      )}
       <td className="px-3 py-3.5 text-center">
         {isExpanded ? <ChevronUp className="h-4 w-4 text-accent" /> : <ChevronDown className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground" />}
       </td>
     </tr>
     {isExpanded && (
       <tr className="border-t border-border bg-muted/20">
-        <td colSpan={10}>
+        <td colSpan={onToggleFavourite !== undefined ? 11 : 10}>
           <StockDetailPanel stock={s} history={history} historyLoading={historyLoading} />
         </td>
       </tr>
@@ -524,10 +540,11 @@ const StockRow = ({
 
 /* ─── Mobile Card ─── */
 const MobileStockCard = ({
-  stock: s, isExpanded, onToggle, history, historyLoading,
+  stock: s, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
   stock: Stock; isExpanded: boolean; onToggle: () => void;
   history?: PriceHistory[]; historyLoading: boolean;
+  isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => (
   <div className="rounded-xl border border-border bg-card">
     <div className="p-3.5 cursor-pointer" onClick={onToggle}>
@@ -540,6 +557,15 @@ const MobileStockCard = ({
           <p className="text-xs text-muted-foreground mt-0.5">{s.name}</p>
         </div>
         <div className="flex items-center gap-2">
+          {onToggleFavourite !== undefined && (
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
+              className="p-1 rounded-md"
+              aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+            >
+              <Star className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`} />
+            </button>
+          )}
           <ChangeCell change={s.day_change} pct={s.day_change_percent} />
           {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         </div>
