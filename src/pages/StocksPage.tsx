@@ -1,9 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
-import { ArrowLeft, TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ChevronDown, ChevronUp, BarChart3 } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ChevronDown, ChevronUp, BarChart3, Activity } from "lucide-react";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
-import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -50,6 +49,21 @@ const formatMarketCap = (mc: number | null) => {
   if (mc >= 1e9) return `KSh ${(mc / 1e9).toFixed(1)}B`;
   if (mc >= 1e6) return `KSh ${(mc / 1e6).toFixed(0)}M`;
   return `KSh ${mc.toLocaleString()}`;
+};
+
+/* ─── Mini Sparkline ─── */
+const MiniSparkline = ({ data, positive }: { data: PriceHistory[]; positive: boolean }) => {
+  if (!data || data.length < 2) return null;
+  const color = positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  return (
+    <div className="w-[60px] h-[24px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data}>
+          <Line type="monotone" dataKey="price" stroke={color} strokeWidth={1.5} dot={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
+  );
 };
 
 const ChangeCell = ({ change, pct }: { change: number; pct: number }) => {
@@ -124,6 +138,28 @@ const StocksPage = () => {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
+  // Preload sparkline data for all stocks
+  useEffect(() => {
+    if (stocks.length === 0) return;
+    const fetchAllHistory = async () => {
+      const { data } = await supabase
+        .from("stock_price_history" as any)
+        .select("stock_id, price, snapshot_date")
+        .order("snapshot_date", { ascending: true })
+        .limit(1000);
+      if (data) {
+        const grouped: Record<string, PriceHistory[]> = {};
+        (data as any[]).forEach((d) => {
+          const sid = d.stock_id;
+          if (!grouped[sid]) grouped[sid] = [];
+          grouped[sid].push({ snapshot_date: d.snapshot_date, price: Number(d.price) });
+        });
+        setHistory(grouped);
+      }
+    };
+    fetchAllHistory();
+  }, [stocks]);
+
   const toggleExpand = async (stockId: string) => {
     if (expanded === stockId) { setExpanded(null); return; }
     setExpanded(stockId);
@@ -173,6 +209,7 @@ const StocksPage = () => {
   const gainers = useMemo(() => stocks.filter((s) => s.day_change > 0).length, [stocks]);
   const losers = useMemo(() => stocks.filter((s) => s.day_change < 0).length, [stocks]);
   const unchanged = useMemo(() => stocks.filter((s) => s.day_change === 0).length, [stocks]);
+  const totalVolume = useMemo(() => stocks.reduce((sum, s) => sum + s.volume, 0), [stocks]);
 
   const latestUpdate = stocks.length > 0
     ? new Date(stocks.reduce((latest, s) => s.updated_at > latest ? s.updated_at : latest, stocks[0].updated_at))
@@ -193,13 +230,14 @@ const StocksPage = () => {
           </p>
         </div>
 
-        {/* Summary stats */}
+        {/* Summary stats — redesigned */}
         {!loading && stocks.length > 0 && (
-          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-6">
-            <StatCard label="Listed Stocks" value={String(stocks.length)} icon="📊" />
-            <StatCard label="Gainers" value={String(gainers)} color="text-accent" icon="📈" />
-            <StatCard label="Losers" value={String(losers)} color="text-destructive" icon="📉" />
-            <StatCard label="Unchanged" value={String(unchanged)} icon="➖" />
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-3 mb-6">
+            <StatCard label="Listed" value={String(stocks.length)} icon={<BarChart3 className="h-4 w-4 text-primary" />} />
+            <StatCard label="Gainers" value={String(gainers)} icon={<TrendingUp className="h-4 w-4 text-accent" />} valueColor="text-accent" />
+            <StatCard label="Losers" value={String(losers)} icon={<TrendingDown className="h-4 w-4 text-destructive" />} valueColor="text-destructive" />
+            <StatCard label="Unchanged" value={String(unchanged)} icon={<Minus className="h-4 w-4 text-muted-foreground" />} />
+            <StatCard label="Total Vol" value={formatVolume(totalVolume)} icon={<Activity className="h-4 w-4 text-primary" />} />
           </div>
         )}
 
@@ -240,26 +278,28 @@ const StocksPage = () => {
               <p className="text-sm text-muted-foreground">No stocks found</p>
             </div>
           ) : (
-            <div className="rounded-xl border border-border overflow-hidden bg-card">
+            <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <colgroup>
                     <col style={{ width: "3%" }} />
+                    <col style={{ width: "9%" }} />
+                    <col style={{ width: "20%" }} />
+                    <col style={{ width: "9%" }} />
+                    <col style={{ width: "7%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "12%" }} />
                     <col style={{ width: "10%" }} />
-                    <col style={{ width: "22%" }} />
-                    <col style={{ width: "10%" }} />
-                    <col style={{ width: "14%" }} />
-                    <col style={{ width: "13%" }} />
-                    <col style={{ width: "13%" }} />
-                    <col style={{ width: "13%" }} />
-                    <col style={{ width: "2%" }} />
+                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "4%" }} />
                   </colgroup>
                   <thead>
-                    <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
+                    <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
                       <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
                       <SortHeader label="Symbol" sortKey="symbol" currentKey={sortKey} dir={sortDir} onClick={toggleSort} />
                       <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Company</th>
-                      <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Sector</th>
+                      <th className="text-left px-2 py-3 font-semibold text-muted-foreground">Sector</th>
+                      <th className="px-2 py-3 font-semibold text-muted-foreground text-center">Trend</th>
                       <SortHeader label="Price (KSh)" sortKey="price" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
                       <SortHeader label="Change" sortKey="day_change_percent" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
                       <SortHeader label="Volume" sortKey="volume" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
@@ -343,7 +383,6 @@ const StockDetailPanel = ({
 
   return (
     <div className="p-4">
-      {/* Key Metrics */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <DetailBox label="Price" value={`KSh ${formatNumber(s.price)}`} />
         <DetailBox label="Previous" value={s.previous_price != null ? `KSh ${formatNumber(s.previous_price)}` : "—"} />
@@ -357,17 +396,13 @@ const StockDetailPanel = ({
         <DetailBox label="Sector" value={s.sector} />
       </div>
 
-      {/* 52-Week Range Bar */}
       {yearRange && (
         <div className="rounded-lg border border-border bg-card p-3 mb-4">
           <p className="text-xs font-semibold text-foreground mb-2">52-Week Range</p>
           <div className="flex items-center gap-3">
             <span className="text-[10px] text-muted-foreground tabular-nums w-16 text-right">{formatNumber(s.year_low!)}</span>
             <div className="flex-1 relative h-2 bg-muted rounded-full">
-              <div
-                className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive to-accent rounded-full"
-                style={{ width: "100%" }}
-              />
+              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive to-accent rounded-full" style={{ width: "100%" }} />
               <div
                 className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-foreground rounded-full border-2 border-card shadow-sm"
                 style={{ left: `${Math.min(Math.max(pricePosition, 0), 100)}%`, transform: "translate(-50%, -50%)" }}
@@ -379,7 +414,6 @@ const StockDetailPanel = ({
         </div>
       )}
 
-      {/* Price History Chart */}
       <div className="rounded-lg border border-border bg-card p-3">
         <div className="flex items-center gap-2 mb-3">
           <BarChart3 className="h-4 w-4 text-muted-foreground" />
@@ -448,14 +482,22 @@ const StockRow = ({
   history?: PriceHistory[]; historyLoading: boolean;
 }) => (
   <>
-    <tr className="border-t border-border/50 hover:bg-accent/5 transition-colors cursor-pointer group" onClick={onToggle}>
+    <tr
+      className={`border-t border-border/40 hover:bg-accent/8 transition-colors cursor-pointer group ${
+        index % 2 === 0 ? "bg-transparent" : "bg-muted/20"
+      }`}
+      onClick={onToggle}
+    >
       <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
       <td className="px-3 py-3.5">
         <span className="font-bold text-foreground text-sm tracking-wide">{s.symbol}</span>
       </td>
       <td className="px-3 py-3.5 text-foreground text-xs max-w-[200px] truncate" title={s.name}>{s.name}</td>
-      <td className="px-3 py-3.5">
+      <td className="px-2 py-3.5">
         <span className="inline-block text-[10px] font-medium text-muted-foreground bg-muted/60 rounded-md px-1.5 py-0.5 whitespace-nowrap">{s.sector}</span>
+      </td>
+      <td className="px-2 py-3.5 text-center">
+        <MiniSparkline data={history || []} positive={s.day_change >= 0} />
       </td>
       <td className="px-3 py-3.5 text-right">
         <span className="font-bold text-accent text-[15px] tabular-nums">{formatNumber(s.price)}</span>
@@ -469,7 +511,7 @@ const StockRow = ({
     </tr>
     {isExpanded && (
       <tr className="border-t border-border bg-muted/20">
-        <td colSpan={9}>
+        <td colSpan={10}>
           <StockDetailPanel stock={s} history={history} historyLoading={historyLoading} />
         </td>
       </tr>
@@ -525,13 +567,15 @@ const MobileStockCard = ({
 );
 
 /* ─── Shared components ─── */
-const StatCard = ({ label, value, color, icon }: { label: string; value: string; color?: string; icon?: string }) => (
-  <div className="rounded-xl border border-border bg-card p-4">
-    <div className="flex items-center gap-2 mb-1">
-      {icon && <span className="text-sm">{icon}</span>}
-      <p className="text-[11px] text-muted-foreground uppercase tracking-wider font-medium">{label}</p>
+const StatCard = ({ label, value, icon, valueColor }: { label: string; value: string; icon: React.ReactNode; valueColor?: string }) => (
+  <div className="rounded-xl border border-border bg-card p-3.5 flex items-center gap-3">
+    <div className="w-9 h-9 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
+      {icon}
     </div>
-    <p className={`text-2xl font-bold tabular-nums ${color || "text-foreground"}`}>{value}</p>
+    <div>
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-none mb-1">{label}</p>
+      <p className={`text-lg font-bold tabular-nums leading-none ${valueColor || "text-foreground"}`}>{value}</p>
+    </div>
   </div>
 );
 
@@ -565,13 +609,13 @@ const StockTableSkeleton = () => (
   <div className="rounded-xl border border-border overflow-hidden bg-card">
     <div className="bg-muted/70 px-3 py-3">
       <div className="flex gap-4">
-        {Array.from({ length: 8 }).map((_, i) => (
+        {Array.from({ length: 9 }).map((_, i) => (
           <Skeleton key={i} className="h-4 w-16" />
         ))}
       </div>
     </div>
     {Array.from({ length: 8 }).map((_, i) => (
-      <div key={i} className="flex items-center gap-3 px-3 py-3.5 border-t border-border">
+      <div key={i} className={`flex items-center gap-3 px-3 py-3.5 border-t border-border ${i % 2 !== 0 ? "bg-muted/20" : ""}`}>
         <Skeleton className="h-4 w-5" />
         <Skeleton className="h-4 w-14" />
         <Skeleton className="h-4 w-32" />

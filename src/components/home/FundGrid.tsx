@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowUpDown, Search } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -62,13 +62,11 @@ const SortHeader = ({
 /* ─── Skeleton ─── */
 const TableSkeleton = () => (
   <div className="space-y-6">
-    {/* Tab skeleton */}
     <div className="flex gap-1 border-b border-border pb-0">
       {Array.from({ length: 5 }).map((_, i) => (
         <Skeleton key={i} className="h-9 w-28 rounded-t-lg" />
       ))}
     </div>
-    {/* Table skeleton */}
     <div className="rounded-xl border border-border overflow-hidden bg-card">
       <div className="bg-muted/70 px-5 py-3">
         <div className="flex gap-6">
@@ -81,7 +79,7 @@ const TableSkeleton = () => (
         </div>
       </div>
       {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-6 px-5 py-3.5 border-t border-border">
+        <div key={i} className={`flex items-center gap-6 px-5 py-3.5 border-t border-border ${i % 2 !== 0 ? "bg-muted/20" : ""}`}>
           <Skeleton className="h-4 w-5" />
           <div className="flex-1">
             <Skeleton className="h-4 w-44 mb-1" />
@@ -93,6 +91,19 @@ const TableSkeleton = () => (
           <Skeleton className="h-4 w-14" />
         </div>
       ))}
+    </div>
+  </div>
+);
+
+/* ─── Stat Card ─── */
+const FundStatCard = ({ label, value, icon, valueColor }: { label: string; value: string; icon: React.ReactNode; valueColor?: string }) => (
+  <div className="rounded-xl border border-border bg-card p-3.5 flex items-center gap-3">
+    <div className="w-9 h-9 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
+      {icon}
+    </div>
+    <div>
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-none mb-1">{label}</p>
+      <p className={`text-lg font-bold tabular-nums leading-none ${valueColor || "text-foreground"}`}>{value}</p>
     </div>
   </div>
 );
@@ -143,6 +154,12 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
     return Math.max(...catFunds.map((f) => f.annual_yield));
   }, [funds, activeTab]);
 
+  const avgYield = useMemo(() => {
+    const catFunds = funds.filter((f) => f.fund_type === activeTab);
+    if (catFunds.length === 0) return 0;
+    return catFunds.reduce((sum, f) => sum + f.annual_yield, 0) / catFunds.length;
+  }, [funds, activeTab]);
+
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
     else {
@@ -157,30 +174,30 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
     <div className="space-y-4">
       {/* Category tabs + search */}
       <div className="flex items-end justify-between gap-4">
-          <div className="flex gap-1.5 overflow-x-auto no-scrollbar flex-wrap">
-            {categories.map((cat) => (
-              <button
-                key={cat}
-                onClick={() => {
-                  setActiveTab(cat);
-                  setSearch("");
-                  setSortKey("annual_yield");
-                  setSortDir("desc");
-                }}
-                className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-                  activeTab === cat
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {categoryLabels[cat] || cat}
-                <span className={`ml-1.5 tabular-nums text-[10px] ${
-                  activeTab === cat ? "text-primary-foreground/70" : "text-muted-foreground/60"
-                }`}>
-                  {categoryCount[cat] || 0}
-                </span>
-              </button>
-            ))}
+        <div className="flex gap-1.5 overflow-x-auto no-scrollbar flex-wrap">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => {
+                setActiveTab(cat);
+                setSearch("");
+                setSortKey("annual_yield");
+                setSortDir("desc");
+              }}
+              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                activeTab === cat
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {categoryLabels[cat] || cat}
+              <span className={`ml-1.5 tabular-nums text-[10px] ${
+                activeTab === cat ? "text-primary-foreground/70" : "text-muted-foreground/60"
+              }`}>
+                {categoryCount[cat] || 0}
+              </span>
+            </button>
+          ))}
         </div>
 
         <div className="relative w-64 shrink-0">
@@ -194,8 +211,33 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
         </div>
       </div>
 
+      {/* Category stats */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <FundStatCard
+          label="Funds"
+          value={String(categoryCount[activeTab] || 0)}
+          icon={<Layers className="h-4 w-4 text-primary" />}
+        />
+        <FundStatCard
+          label="Best Yield"
+          value={`${bestYield.toFixed(2)}%`}
+          icon={<TrendingUp className="h-4 w-4 text-accent" />}
+          valueColor="text-accent"
+        />
+        <FundStatCard
+          label="Avg Yield"
+          value={`${avgYield.toFixed(2)}%`}
+          icon={<BarChart3 className="h-4 w-4 text-primary" />}
+        />
+        <FundStatCard
+          label="Category"
+          value={categoryLabels[activeTab] || activeTab}
+          icon={<Search className="h-4 w-4 text-muted-foreground" />}
+        />
+      </div>
+
       {/* Fund table */}
-      <div className="rounded-xl border border-border overflow-hidden bg-card">
+      <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <colgroup>
@@ -209,7 +251,7 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
               <col style={{ width: "14%" }} />
             </colgroup>
             <thead>
-              <tr className="bg-muted/50 text-[11px] uppercase tracking-wider">
+              <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
                 <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
@@ -235,7 +277,9 @@ const FundGrid = ({ funds, snapshots, loading }: FundGridProps) => {
                 <tr
                   key={fund.id}
                   onClick={() => navigate(`/compare/${fund.slug}`)}
-                  className="border-t border-border/50 hover:bg-accent/5 transition-colors cursor-pointer group"
+                  className={`border-t border-border/40 hover:bg-accent/8 transition-colors cursor-pointer group ${
+                    i % 2 === 0 ? "bg-transparent" : "bg-muted/20"
+                  }`}
                 >
                   <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
                   <td className="px-3 py-3.5">
