@@ -279,6 +279,7 @@ const OverviewPage = () => {
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [rateHistory, setRateHistory] = useState<RateHistory[]>([]);
   const [fundSnapshots, setFundSnapshots] = useState<FundYieldSnapshot[]>([]);
+  const [stockHistory, setStockHistory] = useState<StockPriceHistory[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
@@ -300,6 +301,10 @@ const OverviewPage = () => {
       .select("snapshot_date, annual_yield, fund_id")
       .order("snapshot_date", { ascending: true }).limit(500)
       .then(({ data }) => setFundSnapshots(((data as any) || []).map((s: any) => ({ ...s, annual_yield: Number(s.annual_yield) }))));
+    supabase.from("stock_price_history" as any)
+      .select("snapshot_date, price, stock_id")
+      .order("snapshot_date", { ascending: true }).limit(1000)
+      .then(({ data }) => setStockHistory(((data as any) || []).map((h: any) => ({ ...h, price: Number(h.price) }))));
   }, []);
 
   // Fetch profile display name
