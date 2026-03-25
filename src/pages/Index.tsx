@@ -170,6 +170,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
           <FundGrid
             funds={funds}
             snapshots={snapshots}
+            allSnapshots={allSnapshots}
             loading={loading}
           />
         </div>
