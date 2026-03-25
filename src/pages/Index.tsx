@@ -70,6 +70,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [news, setNews] = useState<NewsFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
+  const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});
   const [selectedCategory, setSelectedCategory] = useState<string>("money_market");
   const [search, setSearch] = useState("");
   const debouncedSearch = useDebouncedValue(search, 250);
@@ -89,6 +90,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
         data.forEach((s) => { map[s.fund_id] = s; });
         setSnapshots(map);
       }).catch(() => {}),
+      fetchAllFundSnapshots().then(setAllSnapshots).catch(() => {}),
     ]).finally(() => setLoading(false));
   }, []);
 
