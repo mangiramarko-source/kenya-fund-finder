@@ -518,6 +518,7 @@ const OverviewPage = () => {
 
         {/* Desktop: detailed cards with charts in 3-col grid */}
         <div className="hidden md:grid md:grid-cols-3 gap-3">
+          {/* Row 1: Top Stock, Gold, Silver */}
           {bestStock && (
             <DetailedHighlightCard
               icon={TrendingUp}
@@ -530,6 +531,29 @@ const OverviewPage = () => {
               color="bg-accent/10"
             />
           )}
+          {goldCommodity && (
+            <DetailedHighlightCard
+              icon={Gem}
+              label="Gold"
+              name={goldCommodity.name}
+              value={`${Number(goldCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${goldCommodity.unit}`}
+              change={<Change current={Number(goldCommodity.price)} previous={goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null} />}
+              linkTo="/commodities"
+              color="bg-[hsl(45,80%,50%)]/10"
+            />
+          )}
+          {silverCommodity && (
+            <DetailedHighlightCard
+              icon={Gem}
+              label="Silver"
+              name={silverCommodity.name}
+              value={`${Number(silverCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${silverCommodity.unit}`}
+              change={<Change current={Number(silverCommodity.price)} previous={silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null} />}
+              linkTo="/commodities"
+              color="bg-muted"
+            />
+          )}
+          {/* Row 2: Money Market, FX Rate, Fixed Income */}
           {bestMM && (
             <DetailedHighlightCard
               icon={BarChart3}
@@ -570,29 +594,9 @@ const OverviewPage = () => {
               chartColor="hsl(var(--secondary))"
             />
           )}
-          {goldCommodity && (
-            <DetailedHighlightCard
-              icon={Gem}
-              label="Gold"
-              name={goldCommodity.name}
-              value={`${Number(goldCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${goldCommodity.unit}`}
-              change={<Change current={Number(goldCommodity.price)} previous={goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null} />}
-              linkTo="/commodities"
-              color="bg-[hsl(45,80%,50%)]/10"
-            />
-          )}
-          {silverCommodity && (
-            <DetailedHighlightCard
-              icon={Gem}
-              label="Silver"
-              name={silverCommodity.name}
-              value={`${Number(silverCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${silverCommodity.unit}`}
-              change={<Change current={Number(silverCommodity.price)} previous={silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null} />}
-              linkTo="/commodities"
-              color="bg-muted"
-            />
-          )}
         </div>
+
+
 
         {/* Mobile: compact single-column list */}
         <div className="flex flex-col gap-2 md:hidden">
