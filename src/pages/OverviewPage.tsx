@@ -215,34 +215,38 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
   icon: any; label: string; name: string; value: string; sub?: string;
   change?: React.ReactNode; linkTo?: string; color?: string;
   chartData?: { snapshot_date: string; rate: number }[]; chartColor?: string;
-}) => (
-  <div className="rounded-xl border border-border bg-card p-5 hover:border-accent/30 transition-colors group flex flex-col">
-    <div className="flex items-center justify-between mb-3">
-      <div className="flex items-center gap-2">
-        <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${color || "bg-primary/10"}`}>
-          <Icon className="h-4 w-4 text-primary" />
+}) => {
+  const content = (
+    <div className={`rounded-xl border border-border bg-card p-5 hover:border-accent/30 transition-colors group flex flex-col cursor-pointer ${linkTo ? "" : ""}`}>
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${color || "bg-primary/10"}`}>
+            <Icon className="h-4 w-4 text-primary" />
+          </div>
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
         </div>
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+        {linkTo && (
+          <span className="text-[10px] text-accent inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+            View <ArrowRight className="h-3 w-3" />
+          </span>
+        )}
       </div>
-      {linkTo && (
-        <Link to={linkTo} className="text-[10px] text-accent hover:underline inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-          View <ArrowRight className="h-3 w-3" />
-        </Link>
+      <p className="text-sm font-bold text-foreground truncate" title={name}>{name}</p>
+      <p className="text-xl font-bold text-foreground tabular-nums mt-1">{value}</p>
+      <div className="flex items-center gap-3 mt-1">
+        {change}
+        {sub && <span className="text-[10px] text-muted-foreground">{sub}</span>}
+      </div>
+      {chartData && chartData.length > 2 && (
+        <div className="mt-3 -mx-1 flex-1 min-h-[70px]">
+          <MiniChart data={chartData} color={chartColor || "hsl(var(--accent))"} />
+        </div>
       )}
     </div>
-    <p className="text-sm font-bold text-foreground truncate" title={name}>{name}</p>
-    <p className="text-xl font-bold text-foreground tabular-nums mt-1">{value}</p>
-    <div className="flex items-center gap-3 mt-1">
-      {change}
-      {sub && <span className="text-[10px] text-muted-foreground">{sub}</span>}
-    </div>
-    {chartData && chartData.length > 2 && (
-      <div className="mt-3 -mx-1 flex-1 min-h-[70px]">
-        <MiniChart data={chartData} color={chartColor || "hsl(var(--accent))"} />
-      </div>
-    )}
-  </div>
-);
+  );
+  if (linkTo) return <Link to={linkTo} className="flex flex-col">{content}</Link>;
+  return content;
+};
 
 /* ─── Compact Highlight Card (mobile) — matches WatchCard row style ─── */
 const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color }: {

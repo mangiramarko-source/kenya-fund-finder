@@ -243,32 +243,32 @@ const StocksPage = () => {
           <StockFavourites entries={favEntries} stocks={stocks} />
         )}
 
-        {/* Filters */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search stocks…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 rounded-lg text-[16px] sm:text-sm"
-            />
-          </div>
-          <div className="flex gap-1.5 flex-wrap">
-            {sectors.map((s) => (
-              <button
-                key={s}
-                onClick={() => setSector(s)}
-                className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
-                  sector === s
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
+        {/* Search bar */}
+        <div className="relative max-w-md mb-3">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search stocks…"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-9 rounded-lg text-[16px] sm:text-sm w-full"
+          />
+        </div>
+
+        {/* Sector filters */}
+        <div className="flex gap-1.5 flex-wrap mb-4">
+          {sectors.map((s) => (
+            <button
+              key={s}
+              onClick={() => setSector(s)}
+              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+                sector === s
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {s}
+            </button>
+          ))}
         </div>
 
         {/* Desktop Table */}
