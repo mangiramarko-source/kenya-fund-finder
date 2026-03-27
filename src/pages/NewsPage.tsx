@@ -157,23 +157,23 @@ const NewsPage = () => {
                 <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
                   <div className="flex items-center gap-2 mb-2">
                     {heroArticle.is_featured && (
-                      <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-[10px] h-5">
-                        <Sparkles className="h-2.5 w-2.5" /> Featured
+                      <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-xs h-5">
+                        <Sparkles className="h-3 w-3" /> Featured
                       </Badge>
                     )}
-                    <span className="text-[10px] text-white/60">{heroArticle.category}</span>
-                    <span className="text-[10px] text-white/50 ml-auto flex items-center gap-0.5">
-                      <Clock className="h-2.5 w-2.5" /> {heroArticle.read_time}
+                    <span className="text-xs text-white/70">{heroArticle.category}</span>
+                    <span className="text-xs text-white/60 ml-auto flex items-center gap-1">
+                      <Clock className="h-3 w-3" /> {heroArticle.read_time}
                     </span>
                   </div>
-                  <h2 className="font-heading font-bold text-base md:text-xl text-white leading-snug line-clamp-3 group-hover:text-accent transition-colors">
+                  <h2 className="font-heading font-bold text-lg md:text-2xl text-white leading-snug line-clamp-3 group-hover:text-accent transition-colors">
                     {heroArticle.title}
                   </h2>
-                  <p className="text-xs text-white/60 mt-2 line-clamp-2 max-w-lg leading-relaxed hidden sm:block">
+                  <p className="text-sm text-white/70 mt-2 line-clamp-2 max-w-lg leading-relaxed hidden sm:block">
                     {heroArticle.summary}
                   </p>
-                  <span className="text-[10px] text-white/40 mt-2 inline-flex items-center gap-1">
-                    <Calendar className="h-2.5 w-2.5" />
+                  <span className="text-xs text-white/50 mt-2 inline-flex items-center gap-1">
+                    <Calendar className="h-3 w-3" />
                     {heroArticle.source && `${heroArticle.source} · `}{formatDate(heroArticle.date_published)}
                   </span>
                 </div>
@@ -197,11 +197,11 @@ const NewsPage = () => {
                       <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
                     </div>
                     <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
-                      <span className="text-[10px] text-white/50">{article.category}</span>
-                      <h3 className="font-heading font-semibold text-xs md:text-sm text-white leading-snug line-clamp-2 group-hover:text-accent transition-colors mt-0.5">
+                      <span className="text-xs text-white/60">{article.category}</span>
+                      <h3 className="font-heading font-semibold text-sm md:text-base text-white leading-snug line-clamp-2 group-hover:text-accent transition-colors mt-0.5">
                         {article.title}
                       </h3>
-                      <span className="text-[10px] text-white/40 mt-1 inline-block">
+                      <span className="text-xs text-white/50 mt-1 inline-block">
                         {article.source && `${article.source} · `}{formatDate(article.date_published)}
                       </span>
                     </div>
@@ -234,19 +234,19 @@ const NewsPage = () => {
                     {/* Content */}
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-1.5 mb-1">
-                        <span className={`h-1.5 w-1.5 rounded-full ${dot} shrink-0`} />
-                        <span className="text-[10px] text-muted-foreground truncate">{article.category}</span>
-                        <span className="text-[10px] text-muted-foreground/60 ml-auto shrink-0 hidden sm:inline">
+                        <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
+                        <span className="text-xs text-muted-foreground truncate">{article.category}</span>
+                        <span className="text-xs text-muted-foreground/60 ml-auto shrink-0 hidden sm:inline">
                           {article.read_time}
                         </span>
                       </div>
-                      <h3 className="font-heading font-semibold text-xs md:text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                      <h3 className="font-heading font-semibold text-sm md:text-base leading-snug line-clamp-2 group-hover:text-accent transition-colors">
                         {article.title}
                       </h3>
-                      <p className="text-[11px] text-muted-foreground line-clamp-1 mt-0.5 hidden md:block">
+                      <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 hidden md:block">
                         {article.summary}
                       </p>
-                      <span className="text-[10px] text-muted-foreground/60 mt-1 inline-block">
+                      <span className="text-xs text-muted-foreground/60 mt-1 inline-block">
                         {article.source && `${article.source} · `}{formatDate(article.date_published)}
                       </span>
                     </div>
