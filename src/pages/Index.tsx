@@ -4,6 +4,7 @@ import { Calculator, Search } from "lucide-react";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
 import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
+import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, fetchPublishedNews, type FundFromDB, type NewsFromDB, type YieldSnapshot } from "@/lib/api";
@@ -166,10 +167,11 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
           <h1 className="text-xl md:text-2xl font-bold text-foreground">Unit Trust Funds</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Compare CMA-regulated unit trust yields, fees, and performance across Kenya.
-            <span className="ml-2 text-xs text-muted-foreground/70">
-              Yields are gross annual effective rates before 15% withholding tax.
-            </span>
+            <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
           </p>
+          <span className="text-xs text-muted-foreground/70 block mt-0.5">
+            Yields are gross annual effective rates before 15% withholding tax.
+          </span>
         </div>
       </div>
 

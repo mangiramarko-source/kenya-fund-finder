@@ -3,6 +3,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ChevronDown, ChevronUp, BarChart3, Activity, Star } from "lucide-react";
+import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -228,11 +229,7 @@ const StocksPage = () => {
           <h1 className="text-xl md:text-2xl font-bold text-foreground">Kenyan Stock Market</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Track listed stock prices, volumes, and daily performance.
-            {latestUpdate && (
-              <span className="ml-2 text-xs text-muted-foreground/70">
-                Updated {latestUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
-              </span>
-            )}
+            <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} />
           </p>
         </div>
 

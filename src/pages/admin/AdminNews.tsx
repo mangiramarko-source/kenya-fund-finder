@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Search, Eye, EyeOff } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Eye, EyeOff, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface NewsRow {
@@ -182,8 +182,54 @@ const AdminNews = () => {
                 <Input value={editing.url} onChange={(e) => setEditing({ ...editing, url: e.target.value })} className="mt-1" />
               </div>
               <div>
-                <Label>Image URL</Label>
-                <Input value={editing.image_url} onChange={(e) => setEditing({ ...editing, image_url: e.target.value })} className="mt-1" placeholder="https://images.unsplash.com/..." />
+                <Label>Image</Label>
+                <div className="mt-1 space-y-2">
+                  {editing.image_url && (
+                    <div className="relative w-full h-32 rounded-lg overflow-hidden border border-border">
+                      <img src={editing.image_url} alt="Preview" className="w-full h-full object-cover" />
+                      <button
+                        type="button"
+                        onClick={() => setEditing({ ...editing, image_url: "" })}
+                        className="absolute top-1 right-1 h-6 w-6 rounded-full bg-background/80 flex items-center justify-center hover:bg-background"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </div>
+                  )}
+                  <div className="flex gap-2">
+                    <Input
+                      value={editing.image_url}
+                      onChange={(e) => setEditing({ ...editing, image_url: e.target.value })}
+                      placeholder="Paste URL or upload →"
+                      className="flex-1"
+                    />
+                    <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-input bg-background text-sm font-medium cursor-pointer hover:bg-accent/10 transition-colors shrink-0">
+                      <Upload className="h-4 w-4" />
+                      Upload
+                      <input
+                        type="file"
+                        accept="image/*"
+                        className="hidden"
+                        onChange={async (e) => {
+                          const file = e.target.files?.[0];
+                          if (!file) return;
+                          const ext = file.name.split(".").pop() || "jpg";
+                          const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+                          const { error: upErr } = await supabase.storage
+                            .from("news-images")
+                            .upload(path, file, { cacheControl: "3600", upsert: false });
+                          if (upErr) {
+                            toast({ title: "Upload failed", description: upErr.message, variant: "destructive" });
+                            return;
+                          }
+                          const { data: urlData } = supabase.storage.from("news-images").getPublicUrl(path);
+                          setEditing((prev: any) => ({ ...prev, image_url: urlData.publicUrl }));
+                          toast({ title: "Image uploaded" });
+                        }}
+                      />
+                    </label>
+                  </div>
+                </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
