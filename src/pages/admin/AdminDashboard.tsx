@@ -93,7 +93,7 @@ const AdminDashboard = () => {
   const [range, setRange] = useState<TimeRange>("7d");
   const [engagementFilter, setEngagementFilter] = useState<string>("all");
   const [loading, setLoading] = useState(true);
-  const { isLive, toggleLive, lastUpdateDate, setLastUpdate, showDate, setShowDate } = useLiveStatus();
+  const { isLive, toggleLive, lastUpdateDate, setLastUpdate, showDate, setShowDate, sections, setSectionStatus } = useLiveStatus();
   const [stats, setStats] = useState<Stats>({
     fundCount: 0, publishedFunds: 0, draftFunds: 0, newsCount: 0, pendingNews: 0, outdatedFunds: 0,
     lastUpdate: "", totalPageViews: 0, uniqueVisitors: 0, avgPagesPerVisitor: 0,
@@ -392,7 +392,43 @@ const AdminDashboard = () => {
         </div>
       </div>
 
-      {/* Traffic Overview — Key Metrics */}
+      {/* Per-Section Live Status */}
+      <Card>
+        <CardHeader className="pb-2">
+          <CardTitle className="text-sm font-semibold">Live Status Per Section</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {(["stocks", "funds", "rates", "commodities"] as const).map((section) => {
+              const sectionLabels = { stocks: "Stocks", funds: "Unit Trusts", rates: "FX Rates", commodities: "Commodities" };
+              const s = sections[section];
+              return (
+                <div key={section} className="border rounded-lg p-3 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-semibold">{sectionLabels[section]}</span>
+                    <Switch
+                      checked={s.is_live}
+                      onCheckedChange={(v) => setSectionStatus(section, { is_live: v })}
+                      className="scale-75"
+                    />
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <Radio className={`h-3 w-3 ${s.is_live ? "text-emerald-500 animate-pulse" : "text-muted-foreground"}`} />
+                    <span className="text-[10px] text-muted-foreground">{s.is_live ? "Live" : "Offline"}</span>
+                  </div>
+                  <input
+                    type="date"
+                    value={s.last_update_date ?? ""}
+                    onChange={(e) => setSectionStatus(section, { last_update_date: e.target.value || null })}
+                    className="text-xs bg-transparent border border-border rounded px-2 py-1 w-full text-foreground"
+                  />
+                </div>
+              );
+            })}
+          </div>
+        </CardContent>
+      </Card>
+
       <div>
         <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider mb-3">
           Traffic Overview · {RANGE_LABELS[range]}
