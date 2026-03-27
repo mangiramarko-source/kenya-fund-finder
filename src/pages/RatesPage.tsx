@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
 import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search } from "lucide-react";
+import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -128,11 +129,7 @@ const RatesPage = () => {
           <h1 className="text-xl md:text-2xl font-bold text-foreground">FX Exchange Rates</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Indicative exchange rates against the Kenya Shilling (KES).
-            {latestUpdate && (
-              <span className="ml-2 text-xs text-muted-foreground/70">
-                Updated {latestUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}
-              </span>
-            )}
+            <SectionLiveStatus section="rates" fallbackDate={latestUpdate} />
           </p>
         </div>
 
