@@ -88,7 +88,7 @@ const DesktopSidebar = () => {
   return (
     <aside
       className={`hidden md:flex flex-col h-screen sticky top-0 border-r border-border bg-sidebar transition-all duration-200 z-40 ${
-        collapsed ? "w-[52px]" : "w-[200px]"
+        collapsed ? "w-[52px]" : "w-[230px]"
       }`}
     >
       {/* Logo */}
@@ -97,8 +97,8 @@ const DesktopSidebar = () => {
           <TrendingUp className="h-3.5 w-3.5" />
         </div>
         {!collapsed && (
-          <span className="font-heading text-[13px] font-bold text-sidebar-foreground truncate">
-            Fund Finder
+          <span className="font-heading text-sm font-bold text-sidebar-foreground truncate">
+            KenyaFundFinder
           </span>
         )}
       </div>
