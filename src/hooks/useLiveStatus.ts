@@ -49,9 +49,10 @@ export function useLiveStatus() {
       .eq("slug", "live-status")
       .single();
     const existing = (data?.meta as Record<string, unknown>) ?? {};
+    const merged = { ...existing, ...patch };
     await supabase
       .from("site_pages")
-      .update({ meta: { ...existing, ...patch } })
+      .update({ meta: merged as any })
       .eq("slug", "live-status");
   };
 
