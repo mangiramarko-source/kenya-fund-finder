@@ -59,23 +59,23 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
               <div className="flex items-center justify-center h-5 w-5 rounded-md bg-accent/10">
                 <CatIcon className="h-3 w-3 text-accent" />
               </div>
-              <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
-              <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
-                <Clock className="h-2.5 w-2.5" />
+              <span className="text-xs font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
+              <span className="text-xs text-muted-foreground ml-auto flex items-center gap-0.5">
+                <Clock className="h-3 w-3" />
                 {article.read_time}
               </span>
             </div>
             <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
               {article.title}
             </h3>
-            <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{article.summary}</p>
+            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{article.summary}</p>
             <div className="flex items-center justify-between mt-2.5">
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground">
                 {article.source && `${article.source} · `}
                 {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
               </p>
-              <span className="text-[10px] text-accent font-medium flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                Read <ArrowRight className="h-2.5 w-2.5" />
+              <span className="text-xs text-accent font-medium flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
+                Read <ArrowRight className="h-3 w-3" />
               </span>
             </div>
           </div>
@@ -98,13 +98,13 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
           </div>
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 mb-1">
-              <CatIcon className="h-2.5 w-2.5 text-accent" />
-              <span className="text-[9px] font-medium text-muted-foreground uppercase tracking-wider truncate">{article.category}</span>
+              <CatIcon className="h-3 w-3 text-accent" />
+              <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate">{article.category}</span>
             </div>
-            <h3 className="font-heading font-semibold text-xs leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+            <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
               {article.title}
             </h3>
-            <p className="text-[10px] text-muted-foreground mt-1">
+            <p className="text-xs text-muted-foreground mt-1">
               {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
             </p>
           </div>
