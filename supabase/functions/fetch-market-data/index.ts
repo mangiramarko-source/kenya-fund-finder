@@ -1,10 +1,20 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers":
-    "authorization, x-client-info, apikey, content-type",
-};
+const allowedOrigins = [
+  "https://kenya-fund-finder.lovable.app",
+  "https://www.kenyafundfinder.com",
+  "https://id-preview--e72d5937-d879-434f-ab8d-95e8c43f9adf.lovable.app",
+];
+
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const matched = allowedOrigins.find((o) => origin.startsWith(o));
+  return {
+    "Access-Control-Allow-Origin": matched || "",
+    "Access-Control-Allow-Headers":
+      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+  };
+}
 
 // ExchangeRate-API free endpoint (no key needed)
 const FX_API = "https://open.er-api.com/v6/latest/KES";
@@ -104,6 +114,7 @@ async function fetchYahooQuote(ticker: string): Promise<{
 }
 
 Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
   }
