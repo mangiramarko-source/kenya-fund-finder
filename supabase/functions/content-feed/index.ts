@@ -5,6 +5,7 @@ const allowedOrigins = [
   "https://kenyafundfinder.com",
   "https://www.kenyafundfinder.com",
   "https://id-preview--e72d5937-d879-434f-ab8d-95e8c43f9adf.lovable.app",
+  "https://e72d5937-d879-434f-ab8d-95e8c43f9adf.lovableproject.com",
 ];
 
 const CLIENT_KEY = "kff-v1-track";
