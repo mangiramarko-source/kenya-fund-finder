@@ -2,8 +2,24 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 
 const allowedOrigins = [
   "https://kenya-fund-finder.lovable.app",
+  "https://kenyafundfinder.com",
+  "https://www.kenyafundfinder.com",
   "https://id-preview--e72d5937-d879-434f-ab8d-95e8c43f9adf.lovable.app",
 ];
+
+const CLIENT_KEY = "kff-v1-track";
+
+const BOT_UA_PATTERNS = [
+  /bot/i, /crawl/i, /spider/i, /slurp/i, /mediapartners/i,
+  /wget/i, /curl/i, /python/i, /httpx/i, /axios/i, /node-fetch/i,
+  /go-http-client/i, /java\//i, /libwww/i, /scrapy/i, /phantom/i,
+  /headless/i, /puppeteer/i, /playwright/i, /selenium/i,
+];
+
+function isBot(ua: string | null): boolean {
+  if (!ua || ua.length < 10) return true;
+  return BOT_UA_PATTERNS.some((p) => p.test(ua));
+}
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get("origin") || "";
@@ -11,7 +27,7 @@ function getCorsHeaders(req: Request) {
   return {
     "Access-Control-Allow-Origin": matched || "",
     "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+      "authorization, x-client-info, apikey, content-type, x-client-key, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   };
 }
 
@@ -31,9 +47,27 @@ Deno.serve(async (req) => {
     return new Response(null, { headers: corsHeaders });
   }
 
-  // Reject requests without a valid origin (blocks non-browser callers)
+  // Block non-browser origins
   const origin = req.headers.get("origin") || "";
   if (!origin || !allowedOrigins.some((o) => origin.startsWith(o))) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Require X-Client-Key header
+  const clientKey = req.headers.get("x-client-key");
+  if (clientKey !== CLIENT_KEY) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Block bots by User-Agent
+  const ua = req.headers.get("user-agent");
+  if (isBot(ua)) {
     return new Response(JSON.stringify({ error: "Forbidden" }), {
       status: 403,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -45,7 +79,7 @@ Deno.serve(async (req) => {
     Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
   );
 
-  // Use only non-spoofable IP source (Cloudflare), fall back to "unknown"
+  // Rate limit: 8 req/min per IP
   const clientIp =
     req.headers.get("cf-connecting-ip") ||
     req.headers.get("x-real-ip") ||
@@ -56,7 +90,7 @@ Deno.serve(async (req) => {
   const { data: allowed, error: rlError } = await supabaseAdmin.rpc("check_rate_limit", {
     p_ip_hash: ipHash,
     p_window_seconds: 60,
-    p_max_requests: 30,
+    p_max_requests: 8,
   });
 
   if (rlError) {

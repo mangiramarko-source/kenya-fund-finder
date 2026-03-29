@@ -3,8 +3,23 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 const allowedOrigins = [
   "https://kenya-fund-finder.lovable.app",
   "https://kenyafundfinder.com",
+  "https://www.kenyafundfinder.com",
   "https://id-preview--e72d5937-d879-434f-ab8d-95e8c43f9adf.lovable.app",
 ];
+
+const CLIENT_KEY = "kff-v1-track";
+
+const BOT_UA_PATTERNS = [
+  /bot/i, /crawl/i, /spider/i, /slurp/i, /mediapartners/i,
+  /wget/i, /curl/i, /python/i, /httpx/i, /axios/i, /node-fetch/i,
+  /go-http-client/i, /java\//i, /libwww/i, /scrapy/i, /phantom/i,
+  /headless/i, /puppeteer/i, /playwright/i, /selenium/i,
+];
+
+function isBot(ua: string | null): boolean {
+  if (!ua || ua.length < 10) return true;
+  return BOT_UA_PATTERNS.some((p) => p.test(ua));
+}
 
 function getCorsHeaders(req: Request) {
   const origin = req.headers.get("origin") || "";
@@ -12,13 +27,13 @@ function getCorsHeaders(req: Request) {
   return {
     "Access-Control-Allow-Origin": matched || "",
     "Access-Control-Allow-Headers":
-      "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+      "authorization, x-client-info, apikey, content-type, x-client-key, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
   };
 }
 
-// In-memory dedup cache: key → timestamp (ms). Cleaned periodically.
+// In-memory dedup cache
 const recentEvents = new Map<string, number>();
-const DEDUP_WINDOW_MS = 15_000; // 15 seconds
+const DEDUP_WINDOW_MS = 15_000;
 
 function cleanDedup() {
   const cutoff = Date.now() - DEDUP_WINDOW_MS;
@@ -41,6 +56,33 @@ Deno.serve(async (req) => {
 
   if (req.method === "OPTIONS") {
     return new Response(null, { headers: corsHeaders });
+  }
+
+  // Block non-browser origins
+  const origin = req.headers.get("origin") || "";
+  if (!origin || !allowedOrigins.some((o) => origin.startsWith(o))) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Require X-Client-Key header
+  const clientKey = req.headers.get("x-client-key");
+  if (clientKey !== CLIENT_KEY) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
+  // Block bots by User-Agent
+  const ua = req.headers.get("user-agent");
+  if (isBot(ua)) {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
@@ -83,7 +125,6 @@ Deno.serve(async (req) => {
 
     /* ── TRACK EVENT ── */
     if (action === "track") {
-      // Validate event_type
       if (!ad_id || !event_type || !["impression", "click"].includes(event_type)) {
         return new Response(JSON.stringify({ error: "Invalid tracking params" }), {
           status: 400,
@@ -91,7 +132,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Validate ad_id (UUID format, max 50 chars)
       if (typeof ad_id !== "string" || ad_id.length > 50) {
         return new Response(JSON.stringify({ error: "Invalid ad_id" }), {
           status: 400,
@@ -99,7 +139,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Validate page_path (max 200 chars)
       if (page_path && (typeof page_path !== "string" || page_path.length > 200)) {
         return new Response(JSON.stringify({ error: "Invalid page_path" }), {
           status: 400,
@@ -107,7 +146,6 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Validate session_id (max 64 chars)
       if (session_id && (typeof session_id !== "string" || session_id.length > 64)) {
         return new Response(JSON.stringify({ error: "Invalid session_id" }), {
           status: 400,
@@ -115,7 +153,7 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Rate limiting via IP hash
+      // Rate limiting: 8 req/min per IP
       const clientIp =
         req.headers.get("cf-connecting-ip") ||
         req.headers.get("x-real-ip") ||
@@ -125,7 +163,7 @@ Deno.serve(async (req) => {
       const { data: allowed, error: rlError } = await client.rpc("check_rate_limit", {
         p_ip_hash: ipHash,
         p_window_seconds: 60,
-        p_max_requests: 30,
+        p_max_requests: 8,
       });
 
       if (rlError) console.error("rate_limit rpc error:", rlError);
@@ -137,11 +175,10 @@ Deno.serve(async (req) => {
         });
       }
 
-      // Deduplication: reject rapid duplicate events (same session + ad + event + page within 15s)
+      // Deduplication
       const dedupKey = `${session_id || ipHash}:${ad_id}:${event_type}:${page_path || ""}`;
       cleanDedup();
       if (recentEvents.has(dedupKey)) {
-        // Silently accept but don't insert
         return new Response(JSON.stringify({ ok: true, deduped: true }), {
           headers: { ...corsHeaders, "Content-Type": "application/json" },
         });

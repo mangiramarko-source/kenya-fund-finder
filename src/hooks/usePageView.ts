@@ -26,6 +26,7 @@ export const usePageView = () => {
         } else {
           // Anonymous: use backend function (bypasses RLS with service role)
           await supabase.functions.invoke("track-anonymous", {
+            headers: { "x-client-key": "kff-v1-track" },
             body: {
               type: "page_view",
               page_path: location.pathname,

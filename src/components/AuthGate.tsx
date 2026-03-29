@@ -29,6 +29,7 @@ const AuthGate = ({
     try {
       // Always use backend function for rate limiting and input validation
       await supabase.functions.invoke("track-anonymous", {
+        headers: { "x-client-key": "kff-v1-track" },
         body: {
           type: "auth_gate_click",
           page_path: location.pathname,
