@@ -28,6 +28,7 @@ const getSessionId = () => {
 const trackEvent = async (adId: string, type: "impression" | "click") => {
   try {
     await supabase.functions.invoke("content-feed", {
+      headers: { "x-client-key": "kff-v1-track" },
       body: {
         action: "track",
         ad_id: adId,
@@ -48,6 +49,7 @@ const AdBanner = ({ placement, className = "" }: AdBannerProps) => {
     queryKey: ["public-ads", placement],
     queryFn: async () => {
       const { data, error } = await supabase.functions.invoke("content-feed", {
+        headers: { "x-client-key": "kff-v1-track" },
         body: { action: "fetch", placement },
       });
       if (error) throw error;
