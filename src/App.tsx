@@ -26,6 +26,7 @@ import SitePage from "./pages/SitePage";
 import RatesPage from "./pages/RatesPage";
 import CommoditiesPage from "./pages/CommoditiesPage";
 import StocksPage from "./pages/StocksPage";
+import StockDetailPage from "./pages/StockDetailPage";
 import MarketDashboardPage from "./pages/MarketDashboardPage";
 import AlertsPage from "./pages/AlertsPage";
 import OverviewPage from "./pages/OverviewPage";
@@ -66,6 +67,7 @@ const App = () => (
                   <Route path="/rates" element={<RatesPage />} />
                   <Route path="/commodities" element={<CommoditiesPage />} />
                   <Route path="/stocks" element={<StocksPage />} />
+                  <Route path="/stocks/:symbol" element={<StockDetailPage />} />
                   <Route path="/markets" element={<MarketDashboardPage />} />
                   <Route path="/overview" element={<OverviewPage />} />
                   <Route path="/alerts" element={<AlertsPage />} />
