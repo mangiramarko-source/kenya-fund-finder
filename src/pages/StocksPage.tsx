@@ -316,6 +316,7 @@ const StocksPage = () => {
                         index={i}
                         isExpanded={expanded === s.id}
                         onToggle={() => toggleExpand(s.id)}
+                        onNavigate={() => navigate(`/stocks/${s.symbol}`)}
                         history={history[s.id]}
                         historyLoading={historyLoading === s.id}
                         isFavourite={user ? isFavourite(s.id) : undefined}
@@ -350,6 +351,7 @@ const StocksPage = () => {
                 stock={s}
                 isExpanded={expanded === s.id}
                 onToggle={() => toggleExpand(s.id)}
+                onNavigate={() => navigate(`/stocks/${s.symbol}`)}
                 history={history[s.id]}
                 historyLoading={historyLoading === s.id}
                 isFavourite={user ? isFavourite(s.id) : undefined}
