@@ -483,9 +483,9 @@ const StockDetailPanel = ({
 
 /* ─── Desktop Row ─── */
 const StockRow = ({
-  stock: s, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
+  stock: s, index, isExpanded, onToggle, onNavigate, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
-  stock: Stock; index: number; isExpanded: boolean; onToggle: () => void;
+  stock: Stock; index: number; isExpanded: boolean; onToggle: () => void; onNavigate: () => void;
   history?: PriceHistory[]; historyLoading: boolean;
   isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => (
@@ -494,7 +494,7 @@ const StockRow = ({
       className={`border-t border-border/40 hover:bg-accent/8 transition-colors cursor-pointer group ${
         index % 2 === 0 ? "bg-transparent" : "bg-muted/20"
       }`}
-      onClick={onToggle}
+      onClick={onNavigate}
     >
       <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
       <td className="px-3 py-3.5">
@@ -540,9 +540,9 @@ const StockRow = ({
 
 /* ─── Mobile Card ─── */
 const MobileStockCard = ({
-  stock: s, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
+  stock: s, isExpanded, onToggle, onNavigate, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
-  stock: Stock; isExpanded: boolean; onToggle: () => void;
+  stock: Stock; isExpanded: boolean; onToggle: () => void; onNavigate: () => void;
   history?: PriceHistory[]; historyLoading: boolean;
   isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => (
