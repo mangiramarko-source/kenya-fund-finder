@@ -152,8 +152,7 @@ const StocksPage = () => {
       const { data } = await supabase
         .from("stock_price_history" as any)
         .select("stock_id, price, snapshot_date")
-        .order("snapshot_date", { ascending: true })
-        .limit(1000);
+        .order("snapshot_date", { ascending: true });
       if (data) {
         const grouped: Record<string, PriceHistory[]> = {};
         (data as any[]).forEach((d) => {
