@@ -865,6 +865,62 @@ const OverviewPage = () => {
       <QuickAlertDialog open={alertDialog.open} onClose={() => setAlertDialog(prev => ({ ...prev, open: false }))} assetType={alertDialog.assetType} assetId={alertDialog.assetId} assetName={alertDialog.assetName} currentPrice={alertDialog.currentPrice} unit={alertDialog.unit} />
       <CustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} watchlist={watchlist} allStocks={stocks} allRates={rates} allCommodities={commodities} allFunds={funds} onToggleSection={toggleSection} onToggleAsset={toggleAsset} />
     </div>
+    {/* ─── End Main Column ─── */}
+
+    {/* ─── Right Sidebar: FX Rates (desktop only) ─── */}
+    <aside className="hidden lg:block w-[280px] shrink-0">
+      <div className="sticky top-20 space-y-3">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <DollarSign className="h-4 w-4 text-accent" />
+            <h3 className="text-sm font-semibold text-foreground">FX Rates</h3>
+          </div>
+          <Link to="/rates" className="text-[10px] text-accent hover:underline inline-flex items-center gap-0.5">
+            View all <ArrowRight className="h-3 w-3" />
+          </Link>
+        </div>
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="divide-y divide-border">
+            {rates.map((r) => {
+              const diff = r.previous_rate != null ? Number(r.rate) - Number(r.previous_rate) : null;
+              const pct = diff != null && Number(r.previous_rate) !== 0 ? ((diff / Number(r.previous_rate)) * 100).toFixed(2) : null;
+              const isUp = diff != null && diff > 0;
+              const isDown = diff != null && diff < 0;
+              const history = rateHistory.filter(h => h.currency_code === r.currency_code).slice(-20);
+              return (
+                <Link key={r.id} to="/rates" className="flex items-center gap-2 px-3 py-2.5 hover:bg-muted/30 transition-colors">
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-foreground">{r.currency_code}/KES</p>
+                    <p className="text-[10px] text-muted-foreground truncate">{r.currency_name}</p>
+                  </div>
+                  {history.length >= 3 && (
+                    <Sparkline data={history.map(h => h.rate)} width={40} height={16} color="auto" className="shrink-0 opacity-70" />
+                  )}
+                  <div className="text-right shrink-0">
+                    <p className="text-xs font-bold tabular-nums text-foreground">{Number(r.rate).toFixed(2)}</p>
+                    {pct != null && (
+                      <span className={`text-[10px] font-semibold tabular-nums ${isUp ? "text-accent" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
+                        {isUp ? "+" : ""}{pct}%
+                      </span>
+                    )}
+                  </div>
+                </Link>
+              );
+            })}
+            {rates.length === 0 && !marketLoading && (
+              <p className="text-xs text-muted-foreground text-center py-4">No FX rates available</p>
+            )}
+            {marketLoading && (
+              <div className="py-4 space-y-2 px-3">
+                {[1,2,3,4].map(i => <Skeleton key={i} className="h-8 w-full rounded" />)}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    </aside>
+    </div>
+    </div>
   );
 };
 
