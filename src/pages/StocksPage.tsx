@@ -547,7 +547,7 @@ const MobileStockCard = ({
   isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => (
   <div className="rounded-xl border border-border bg-card">
-    <div className="p-3.5 cursor-pointer" onClick={onToggle}>
+    <div className="p-3.5 cursor-pointer" onClick={onNavigate}>
       <div className="flex items-start justify-between mb-2">
         <div>
           <div className="flex items-center gap-2">
