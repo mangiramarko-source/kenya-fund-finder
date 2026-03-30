@@ -87,6 +87,7 @@ const ChangeCell = ({ change, pct }: { change: number; pct: number }) => {
 };
 
 const StocksPage = () => {
+  const navigate = useNavigate();
   useDocumentTitle(
     "Kenyan Stocks – Stock Market | Kenya Fund Finder",
     "Track Kenyan stock market prices, market cap, volumes, and performance.",
