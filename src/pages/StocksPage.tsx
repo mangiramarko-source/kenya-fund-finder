@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -86,6 +87,7 @@ const ChangeCell = ({ change, pct }: { change: number; pct: number }) => {
 };
 
 const StocksPage = () => {
+  const navigate = useNavigate();
   useDocumentTitle(
     "Kenyan Stocks – Stock Market | Kenya Fund Finder",
     "Track Kenyan stock market prices, market cap, volumes, and performance.",
@@ -152,8 +154,7 @@ const StocksPage = () => {
       const { data } = await supabase
         .from("stock_price_history" as any)
         .select("stock_id, price, snapshot_date")
-        .order("snapshot_date", { ascending: true })
-        .limit(1000);
+        .order("snapshot_date", { ascending: true });
       if (data) {
         const grouped: Record<string, PriceHistory[]> = {};
         (data as any[]).forEach((d) => {
@@ -315,6 +316,7 @@ const StocksPage = () => {
                         index={i}
                         isExpanded={expanded === s.id}
                         onToggle={() => toggleExpand(s.id)}
+                        onNavigate={() => navigate(`/stocks/${s.symbol}`)}
                         history={history[s.id]}
                         historyLoading={historyLoading === s.id}
                         isFavourite={user ? isFavourite(s.id) : undefined}
@@ -349,6 +351,7 @@ const StocksPage = () => {
                 stock={s}
                 isExpanded={expanded === s.id}
                 onToggle={() => toggleExpand(s.id)}
+                onNavigate={() => navigate(`/stocks/${s.symbol}`)}
                 history={history[s.id]}
                 historyLoading={historyLoading === s.id}
                 isFavourite={user ? isFavourite(s.id) : undefined}
@@ -480,9 +483,9 @@ const StockDetailPanel = ({
 
 /* ─── Desktop Row ─── */
 const StockRow = ({
-  stock: s, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
+  stock: s, index, isExpanded, onToggle, onNavigate, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
-  stock: Stock; index: number; isExpanded: boolean; onToggle: () => void;
+  stock: Stock; index: number; isExpanded: boolean; onToggle: () => void; onNavigate: () => void;
   history?: PriceHistory[]; historyLoading: boolean;
   isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => (
@@ -491,7 +494,7 @@ const StockRow = ({
       className={`border-t border-border/40 hover:bg-accent/8 transition-colors cursor-pointer group ${
         index % 2 === 0 ? "bg-transparent" : "bg-muted/20"
       }`}
-      onClick={onToggle}
+      onClick={onNavigate}
     >
       <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
       <td className="px-3 py-3.5">
@@ -537,14 +540,14 @@ const StockRow = ({
 
 /* ─── Mobile Card ─── */
 const MobileStockCard = ({
-  stock: s, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
+  stock: s, isExpanded, onToggle, onNavigate, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
-  stock: Stock; isExpanded: boolean; onToggle: () => void;
+  stock: Stock; isExpanded: boolean; onToggle: () => void; onNavigate: () => void;
   history?: PriceHistory[]; historyLoading: boolean;
   isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => (
   <div className="rounded-xl border border-border bg-card">
-    <div className="p-3.5 cursor-pointer" onClick={onToggle}>
+    <div className="p-3.5 cursor-pointer" onClick={onNavigate}>
       <div className="flex items-start justify-between mb-2">
         <div>
           <div className="flex items-center gap-2">
