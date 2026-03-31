@@ -536,7 +536,20 @@ Deno.serve(async (req) => {
       }
 
       for (const row of stockRows) {
-        const quote = nseQuotes[(row.symbol || "").toUpperCase()];
+        const sym = (row.symbol || "").toUpperCase();
+        let quote = nseQuotes[sym];
+        
+        // Yahoo Finance fallback if NSE didn't return data for this stock
+        if ((!quote || quote.price <= 0) && NSE_YAHOO_MAP[sym]) {
+          try {
+            const yq = await fetchYahooQuote(NSE_YAHOO_MAP[sym]);
+            if (yq && yq.price > 0) {
+              quote = { price: yq.price, previousPrice: yq.previousClose, dayChange: yq.dayChange, dayChangePct: yq.dayChangePct, volume: yq.volume };
+              console.log(`[fetch-market-data] Yahoo fallback for ${sym}: ${yq.price}`);
+            }
+          } catch { /* skip */ }
+        }
+        
         if (!quote || quote.price <= 0) continue;
 
         const updateData: Record<string, unknown> = {
@@ -550,7 +563,6 @@ Deno.serve(async (req) => {
         if (quote.volume > 0) updateData.volume = quote.volume;
 
         await supabase.from("stocks").update(updateData).eq("id", row.id);
-        results.push(`Stock ${row.symbol}: synced ${quote.price} (${quote.dayChangePct > 0 ? "+" : ""}${quote.dayChangePct}%)`);
         stocksUpdated++;
       }
 
