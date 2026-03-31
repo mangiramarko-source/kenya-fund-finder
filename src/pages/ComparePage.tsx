@@ -10,7 +10,7 @@ import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { useLiveStatus } from "@/hooks/useLiveStatus";
+import SectionLiveStatus from "@/components/SectionLiveStatus";
 import FundSubTable from "@/components/compare/FundSubTable";
 
 type SortKey = "annual_yield" | "minimum_investment" | "management_fee";
