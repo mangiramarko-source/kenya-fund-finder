@@ -12,8 +12,7 @@ import { fetchFundBySlug, fetchFunds, fetchHistoricalYields, fetchFundSnapshots,
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { useAuth } from "@/hooks/useAuth";
-import AuthGate from "@/components/AuthGate";
+import YieldChange, { formatYield } from "@/components/YieldChange";
 import YieldChange, { formatYield } from "@/components/YieldChange";
 
 const FUND_TYPE_LABELS: Record<string, string> = {
