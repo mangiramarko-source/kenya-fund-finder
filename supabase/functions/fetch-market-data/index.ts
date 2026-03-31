@@ -525,7 +525,15 @@ Deno.serve(async (req) => {
 
     if (stockRows && stockRows.length > 0) {
       let stocksUpdated = 0;
-      const nseQuotes = await fetchNseStockQuotes();
+      let nseQuotes: Record<string, { price: number; previousPrice: number; dayChange: number; dayChangePct: number; volume: number }> = {};
+      
+      try {
+        nseQuotes = await fetchNseStockQuotes();
+        console.log(`[fetch-market-data] NSE quotes fetched: ${Object.keys(nseQuotes).length} stocks`);
+      } catch (nseError) {
+        console.error("[fetch-market-data] NSE scrape failed, will try Yahoo Finance fallback:", String(nseError));
+        results.push(`NSE scrape failed: ${String(nseError)}`);
+      }
 
       for (const row of stockRows) {
         const quote = nseQuotes[(row.symbol || "").toUpperCase()];
