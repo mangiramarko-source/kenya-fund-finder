@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
 interface CreateAlertDialogProps {
-  assetType: "stock" | "currency" | "commodity";
+  assetType: "stock" | "currency" | "commodity" | "fund";
   assetId: string;
   assetName: string;
   currentPrice: number;
