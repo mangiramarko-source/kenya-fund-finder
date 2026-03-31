@@ -1,6 +1,5 @@
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowUpDown } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import YieldChange from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
@@ -124,9 +123,6 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
                 <Link to={`/compare/${fund.slug}`} className="font-semibold hover:text-accent transition-colors">
                   {fund.name}
                 </Link>
-                {fund.annual_yield === bestYield && bestYield > 0 && (
-                  <Badge variant="default" className="ml-2 text-[9px] px-1.5 py-0 h-4 bg-accent text-accent-foreground align-middle">TOP</Badge>
-                )}
                 <span className="block text-xs text-muted-foreground mt-0.5">{fund.manager}</span>
               </td>
               <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{currencyLabel(fund.yield_unit)}</td>
