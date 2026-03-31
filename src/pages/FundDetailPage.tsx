@@ -12,8 +12,6 @@ import { fetchFundBySlug, fetchFunds, fetchHistoricalYields, fetchFundSnapshots,
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
-import { useAuth } from "@/hooks/useAuth";
-import AuthGate from "@/components/AuthGate";
 import YieldChange, { formatYield } from "@/components/YieldChange";
 
 const FUND_TYPE_LABELS: Record<string, string> = {
@@ -55,7 +53,7 @@ const formatKES = (n: number) => `KES ${n.toLocaleString()}`;
 const FundDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user, loading: authLoading } = useAuth();
+  
   const [fund, setFund] = useState<FundFromDB | null>(null);
   const [peers, setPeers] = useState<FundFromDB[]>([]);
   const [comparePeerId, setComparePeerId] = useState<string>("");
@@ -139,7 +137,7 @@ const FundDetailPage = () => {
     return calculateReturns(calcAmount, fund.annual_yield, calcMonths, calcMonthly, calcCompound, fund.management_fee);
   }, [fund, calcAmount, calcMonths, calcMonthly, calcCompound]);
 
-  if (loading || authLoading) {
+  if (loading) {
     return (
       <div className="container py-20 text-center text-muted-foreground">
         <div className="animate-pulse space-y-4 max-w-3xl mx-auto">
@@ -162,7 +160,6 @@ const FundDetailPage = () => {
     );
   }
 
-  const isAuth = !!user;
   const prevSnap = snapshots.length > 0 ? snapshots[0] : undefined;
 
   const chartData = snapshots.length >= 1
@@ -243,9 +240,7 @@ const FundDetailPage = () => {
         </p>
       </div>
 
-      {isAuth ? (
-        <>
-          {/* ━━━ SECTION 2: Rate History Chart ━━━ */}
+      {/* ━━━ SECTION 2: Rate History Chart ━━━ */}
           <section>
             <SectionHeader icon={<BarChart3 className="h-4 w-4" />} title="Rate History" />
             {chartData ? (
@@ -399,37 +394,6 @@ const FundDetailPage = () => {
               <p className="text-muted-foreground text-sm leading-relaxed">{fund.description}</p>
             </div>
           )}
-        </>
-      ) : (
-        <>
-          <div className="relative rounded-xl border border-border bg-card p-4 overflow-hidden">
-            <div className="h-48 blur-md pointer-events-none select-none opacity-60" aria-hidden="true">
-              <svg viewBox="0 0 400 150" className="w-full h-full" preserveAspectRatio="none">
-                <defs>
-                  <linearGradient id="blurGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="0%" stopColor="hsl(var(--accent))" stopOpacity="0.3" />
-                    <stop offset="100%" stopColor="hsl(var(--accent))" stopOpacity="0" />
-                  </linearGradient>
-                </defs>
-                <path d="M0,120 Q50,100 100,90 T200,70 T300,50 T400,60" fill="none" stroke="hsl(var(--accent))" strokeWidth="2" />
-                <path d="M0,120 Q50,100 100,90 T200,70 T300,50 T400,60 L400,150 L0,150 Z" fill="url(#blurGrad)" />
-              </svg>
-            </div>
-            <div className="absolute inset-0 flex items-center justify-center bg-background/40 backdrop-blur-[1px]">
-              <div className="text-center">
-                <BarChart3 className="h-7 w-7 text-accent mx-auto mb-2" />
-                <p className="text-sm font-semibold mb-0.5">Unlock Full Analysis</p>
-                <p className="text-[11px] text-muted-foreground">Sign up to view charts, compare funds, and calculate returns</p>
-              </div>
-            </div>
-          </div>
-          <AuthGate
-            source="fund_detail"
-            title="Sign up to see full fund details"
-            description="Get access to rate history charts, an investment calculator, fund comparison, and more — completely free."
-          />
-        </>
-      )}
 
       <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
         <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
