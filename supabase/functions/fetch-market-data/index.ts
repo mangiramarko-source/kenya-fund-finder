@@ -25,6 +25,9 @@ const COINGECKO_API = "https://api.coingecko.com/api/v3/simple/price";
 // Yahoo Finance v8 quote endpoint
 const YAHOO_QUOTE_API = "https://query1.finance.yahoo.com/v8/finance/chart/";
 
+const NSE_MARKET_STATS_PAGE = "https://www.nse.co.ke/dataservices/market-statistics/";
+const NSE_MARKET_STATS_AJAX = "https://www.nse.co.ke/dataservices/wp-admin/admin-ajax.php";
+
 // Map of common commodity symbols to CoinGecko IDs
 const CRYPTO_MAP: Record<string, string> = {
   BTC: "bitcoin",
@@ -66,6 +69,189 @@ const NSE_YAHOO_MAP: Record<string, string> = {
   TCL: "TCL.NR", LKL: "LKL.NR", SGL: "SGL.NR", KPC: "KPC.NR",
   UMME: "UMME.NR",
 };
+
+const NSE_SECTOR_MAP: Record<string, string> = {
+  SCOM: "tele",
+  EQTY: "bank",
+  KCB: "bank",
+  COOP: "bank",
+  ABSA: "bank",
+  EABL: "manu",
+  BAT: "manu",
+  KNRE: "insr",
+  KPLC: "energy",
+  BAMB: "const",
+  SASN: "agric",
+  TOTL: "energy",
+  KPC: "energy",
+  NCBA: "bank",
+  SCBK: "bank",
+  SBIC: "bank",
+  IMH: "bank",
+  KEGN: "energy",
+  BKG: "bank",
+  DTK: "bank",
+  BRIT: "insr",
+  JUB: "insr",
+  KQ: "comm",
+  HFCK: "bank",
+  CIC: "insr",
+  CTUM: "invest",
+  KUKZ: "agric",
+  CRWN: "const",
+  PORT: "const",
+  CARB: "manu",
+  NSE20: "investse",
+  CGEN: "auto",
+  LBTY: "insr",
+  WTK: "agric",
+  SMER: "manu",
+  TPSE: "comm",
+  KAPC: "agric",
+  NMG: "comm",
+  BOC: "manu",
+  UNGA: "manu",
+  SLAM: "insr",
+  TCL: "invest",
+  LKL: "comm",
+  SGL: "comm",
+  UMME: "energy",
+};
+
+const NSE_SYMBOL_PATTERNS: Record<string, string[]> = {
+  SCOM: ["safaricom"],
+  EQTY: ["equity bank", "equity group"],
+  KCB: ["kenya commercial bank", "kcb"],
+  COOP: ["co operative bank", "co-operative bank"],
+  ABSA: ["absa"],
+  EABL: ["east african breweries"],
+  BAT: ["british american tobacco"],
+  KNRE: ["kenya re insurance", "kenya re-insurance", "kenya re"],
+  KPLC: ["kenya power lighting", "kenya power"],
+  BAMB: ["bamburi cement"],
+  SASN: ["sasini"],
+  TOTL: ["total kenya", "totalenergies"],
+  KPC: ["kenya pipeline"],
+  NCBA: ["ncba"],
+  SCBK: ["standard chartered"],
+  SBIC: ["stanbic"],
+  IMH: ["i m group", "i&m group"],
+  KEGN: ["kengen"],
+  BKG: ["bk group"],
+  DTK: ["diamond trust"],
+  BRIT: ["britam"],
+  JUB: ["jubilee"],
+  KQ: ["kenya airways"],
+  HFCK: ["hf group"],
+  CIC: ["cic insurance"],
+  CTUM: ["centum investment"],
+  KUKZ: ["kakuzi"],
+  CRWN: ["crown berger", "crown paints"],
+  PORT: ["east african portland", "portland cement"],
+  CARB: ["carbacid"],
+  NSE20: ["nairobi securities exchange"],
+  CGEN: ["car and general"],
+  LBTY: ["liberty insurance", "liberty kenya"],
+  WTK: ["williamson tea"],
+  SMER: ["sameer"],
+  TPSE: ["tps eastern africa"],
+  KAPC: ["kapchorua tea"],
+  NMG: ["nation media"],
+  BOC: ["b o c kenya", "boc kenya"],
+  UNGA: ["unga"],
+  SLAM: ["sanlam"],
+  TCL: ["trans century", "trans-century"],
+  LKL: ["longhorn"],
+  SGL: ["standard group"],
+  UMME: ["umeme"],
+};
+
+function normalizeText(value: string) {
+  return value.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
+}
+
+async function fetchNseStockQuotes(): Promise<Record<string, {
+  price: number;
+  previousPrice: number;
+  dayChange: number;
+  dayChangePct: number;
+  volume: number;
+}>> {
+  const pageRes = await fetch(NSE_MARKET_STATS_PAGE, {
+    headers: { "User-Agent": "Mozilla/5.0 (compatible; KenyaFundFinder/1.0)" },
+  });
+  if (!pageRes.ok) throw new Error(`NSE market stats page failed: ${pageRes.status}`);
+
+  const pageHtml = await pageRes.text();
+  const nonce = pageHtml.match(/"ajaxnonce":"([^"]+)"/)?.[1];
+  if (!nonce) throw new Error("NSE ajax nonce not found");
+
+  const sectorRows = new Map<string, Array<{ company: string; price: number; changePct: number; volume: number }>>();
+  const sectors = [...new Set(Object.values(NSE_SECTOR_MAP))];
+
+  for (const sector of sectors) {
+    const body = new URLSearchParams({
+      action: "display_prices",
+      security: nonce,
+      sector,
+    });
+
+    const response = await fetch(NSE_MARKET_STATS_AJAX, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+        "Accept": "text/html, */*",
+        "User-Agent": "Mozilla/5.0 (compatible; KenyaFundFinder/1.0)",
+        "Referer": NSE_MARKET_STATS_PAGE,
+      },
+      body: body.toString(),
+    });
+
+    if (!response.ok) continue;
+
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    const rows = [...(doc?.querySelectorAll("tr") || [])]
+      .map((tr) => [...tr.querySelectorAll("th, td")].map((cell) => cell.textContent?.trim() || ""))
+      .filter((cells) => cells.length >= 5 && cells[0] !== "Company")
+      .map((cells) => ({
+        company: cells[0],
+        volume: Number(cells[2].replace(/,/g, "")) || 0,
+        price: Number(cells[3].replace(/,/g, "")) || 0,
+        changePct: Number(cells[4].replace(/,/g, "")) || 0,
+      }))
+      .filter((row) => row.company && row.price > 0);
+
+    sectorRows.set(sector, rows);
+  }
+
+  const quotes: Record<string, { price: number; previousPrice: number; dayChange: number; dayChangePct: number; volume: number }> = {};
+
+  for (const [symbol, sector] of Object.entries(NSE_SECTOR_MAP)) {
+    const patterns = NSE_SYMBOL_PATTERNS[symbol] || [symbol.toLowerCase()];
+    const row = (sectorRows.get(sector) || []).find((entry) => {
+      const normalizedCompany = normalizeText(entry.company);
+      return patterns.some((pattern) => normalizedCompany.includes(normalizeText(pattern)));
+    });
+
+    if (!row) continue;
+
+    const previousPrice = row.changePct === -100
+      ? row.price
+      : Number((row.price / (1 + row.changePct / 100)).toFixed(2));
+    const dayChange = Number((row.price - previousPrice).toFixed(2));
+
+    quotes[symbol] = {
+      price: Number(row.price.toFixed(2)),
+      previousPrice,
+      dayChange,
+      dayChangePct: Number(row.changePct.toFixed(2)),
+      volume: row.volume,
+    };
+  }
+
+  return quotes;
+}
 
 async function fetchYahooQuote(ticker: string): Promise<{
   price: number;
@@ -296,7 +482,7 @@ Deno.serve(async (req) => {
       results.push(`Commodities: processed ${commodityRows.length} items`);
     }
 
-    // ── 3. Fetch Kenyan stock prices from Yahoo Finance ──
+    // ── 3. Fetch Kenyan stock prices from official NSE market statistics ──
     const { data: stockRows } = await supabase
       .from("stocks")
       .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low")
@@ -304,34 +490,27 @@ Deno.serve(async (req) => {
 
     if (stockRows && stockRows.length > 0) {
       let stocksUpdated = 0;
-      for (const row of stockRows) {
-        const yahooTicker = NSE_YAHOO_MAP[(row.symbol || "").toUpperCase()];
-        if (!yahooTicker) continue;
+      const nseQuotes = await fetchNseStockQuotes();
 
-        const quote = await fetchYahooQuote(yahooTicker);
+      for (const row of stockRows) {
+        const quote = nseQuotes[(row.symbol || "").toUpperCase()];
         if (!quote || quote.price <= 0) continue;
 
-        // Only update if price actually changed
-        if (quote.price !== Number(row.price)) {
-          const updateData: Record<string, unknown> = {
-            previous_price: row.price,
-            price: quote.price,
-            day_change: quote.dayChange,
-            day_change_percent: quote.dayChangePct,
-            updated_at: new Date().toISOString(),
-          };
-          if (quote.volume > 0) updateData.volume = quote.volume;
-          if (quote.yearHigh != null) updateData.year_high = quote.yearHigh;
-          if (quote.yearLow != null) updateData.year_low = quote.yearLow;
+        const updateData: Record<string, unknown> = {
+          previous_price: quote.previousPrice,
+          price: quote.price,
+          day_change: quote.dayChange,
+          day_change_percent: quote.dayChangePct,
+          updated_at: new Date().toISOString(),
+        };
 
-          await supabase.from("stocks").update(updateData).eq("id", row.id);
-          results.push(`Stock ${row.symbol}: ${row.price} → ${quote.price} (${quote.dayChangePct > 0 ? "+" : ""}${quote.dayChangePct}%)`);
-          stocksUpdated++;
-        }
+        if (quote.volume > 0) updateData.volume = quote.volume;
 
-        // Small delay to avoid rate limiting
-        await new Promise((r) => setTimeout(r, 300));
+        await supabase.from("stocks").update(updateData).eq("id", row.id);
+        results.push(`Stock ${row.symbol}: synced ${quote.price} (${quote.dayChangePct > 0 ? "+" : ""}${quote.dayChangePct}%)`);
+        stocksUpdated++;
       }
+
       results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length}`);
     }
 
