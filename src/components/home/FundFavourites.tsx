@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { Star, TrendingUp, TrendingDown, ChevronRight } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import type { FundFromDB, YieldSnapshot } from "@/lib/api";
+import { type FundFromDB, type YieldSnapshot, FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import type { WatchlistEntry } from "@/hooks/useFundWatchlist";
 
 interface FundFavouritesProps {
