@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   TrendingUp, TrendingDown, Minus, Bell, BellPlus, Plus,
-  Settings2, X, Star, Search, Activity, Eye, Check,
+  Settings2, X, Star, Search, Eye, Check,
   BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
   Landmark, ArrowRight, Newspaper, Clock,
 } from "lucide-react";
