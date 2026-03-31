@@ -130,6 +130,7 @@ const ComparePage = () => {
         </div>
         <p className="text-muted-foreground text-sm md:text-base">
           All funds listed are regulated by the Capital Markets Authority of Kenya.
+          <SectionLiveStatus section="funds" />
         </p>
       </div>
 

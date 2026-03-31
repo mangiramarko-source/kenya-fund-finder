@@ -481,9 +481,7 @@ const OverviewPage = () => {
               <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
             </Button>
           )}
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Activity className="h-3 w-3 text-accent animate-pulse" /><span>Live</span>
-          </div>
+          <SectionLiveStatus section="funds" />
         </div>
       </div>
 
