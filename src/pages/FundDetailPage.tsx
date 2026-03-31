@@ -160,7 +160,6 @@ const FundDetailPage = () => {
     );
   }
 
-  const isAuth = !!user;
   const prevSnap = snapshots.length > 0 ? snapshots[0] : undefined;
 
   const chartData = snapshots.length >= 1
