@@ -522,6 +522,7 @@ const OverviewPage = () => {
             {watchedCommoditiesList.map(c => (
               <WatchCard key={c.id} title={c.name} sub={c.symbol} value={`${Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${c.unit}`}
                 change={<Change current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />}
+                linkTo="/commodities"
                 onAlert={() => openAlert("commodity", c.id, c.name, Number(c.price), c.unit)}
                 onRemove={() => toggleAsset("commodity", c.id, c.name)} />
             ))}
