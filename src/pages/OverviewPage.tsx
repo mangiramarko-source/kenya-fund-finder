@@ -869,7 +869,6 @@ const OverviewPage = () => {
       <CustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} watchlist={watchlist} allStocks={stocks} allRates={rates} allCommodities={commodities} allFunds={funds} onToggleSection={toggleSection} onToggleAsset={toggleAsset} />
     </div>
     </div>
-    </div>
     </>
   );
 };
