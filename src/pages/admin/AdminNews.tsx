@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Search, Eye, EyeOff, Upload, X } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Upload, X, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface NewsRow {
@@ -46,6 +46,7 @@ const AdminNews = () => {
   const [search, setSearch] = useState("");
   const [editing, setEditing] = useState<typeof emptyNews & { id?: string }>(emptyNews);
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
 
@@ -72,6 +73,82 @@ const AdminNews = () => {
       new_values: newValues,
       changed_by: user?.id,
     });
+  };
+
+  const getBucketPathFromPublicUrl = (url: string | null) => {
+    if (!url) return null;
+    const marker = "/storage/v1/object/public/news-images/";
+    const index = url.indexOf(marker);
+    if (index === -1) return null;
+    return decodeURIComponent(url.slice(index + marker.length));
+  };
+
+  const uploadNewsImage = async (file: File) => {
+    if (!user) {
+      toast({ title: "Authentication required", description: "Please sign in again.", variant: "destructive" });
+      return;
+    }
+
+    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
+    if (!allowedTypes.includes(file.type)) {
+      toast({ title: "Unsupported image", description: "Use JPG, PNG, WEBP, or GIF.", variant: "destructive" });
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast({ title: "Image too large", description: "Please upload an image under 5MB.", variant: "destructive" });
+      return;
+    }
+
+    setIsUploadingImage(true);
+
+    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+
+    const { error: uploadError } = await supabase.storage
+      .from("news-images")
+      .upload(path, file, {
+        cacheControl: "3600",
+        upsert: false,
+        contentType: file.type,
+      });
+
+    if (uploadError) {
+      setIsUploadingImage(false);
+      toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
+      return;
+    }
+
+    const { data: publicUrlData } = supabase.storage.from("news-images").getPublicUrl(path);
+    const nextImageUrl = publicUrlData.publicUrl;
+
+    if (editing.id) {
+      const oldArticle = articles.find((article) => article.id === editing.id);
+      const { error: updateError } = await supabase
+        .from("news_articles")
+        .update({ image_url: nextImageUrl, updated_by: user.id })
+        .eq("id", editing.id);
+
+      if (updateError) {
+        setIsUploadingImage(false);
+        toast({ title: "Image save failed", description: updateError.message, variant: "destructive" });
+        return;
+      }
+
+      const previousPath = getBucketPathFromPublicUrl(oldArticle?.image_url ?? null);
+      if (previousPath) {
+        await supabase.storage.from("news-images").remove([previousPath]);
+      }
+
+      await logChange(editing.id, "update", oldArticle, { image_url: nextImageUrl, updated_by: user.id });
+      await load();
+      toast({ title: "Image updated" });
+    } else {
+      toast({ title: "Image uploaded", description: "Save the article to attach this image." });
+    }
+
+    setEditing((prev) => ({ ...prev, image_url: nextImageUrl }));
+    setIsUploadingImage(false);
   };
 
   const handleSave = async () => {
@@ -118,8 +195,12 @@ const AdminNews = () => {
 
   const handleDelete = async (article: NewsRow) => {
     if (!confirm(`Delete "${article.title}"?`)) return;
+    const oldImagePath = getBucketPathFromPublicUrl(article.image_url);
     const { error } = await supabase.from("news_articles").delete().eq("id", article.id);
     if (error) { toast({ title: "Error", description: error.message, variant: "destructive" }); return; }
+    if (oldImagePath) {
+      await supabase.storage.from("news-images").remove([oldImagePath]);
+    }
     await logChange(article.id, "delete", article, null);
     toast({ title: "Deleted" });
     load();
@@ -203,32 +284,26 @@ const AdminNews = () => {
                       placeholder="Paste URL or upload →"
                       className="flex-1"
                     />
-                    <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-md border border-input bg-background text-sm font-medium cursor-pointer hover:bg-accent/10 transition-colors shrink-0">
-                      <Upload className="h-4 w-4" />
-                      Upload
+                    <label className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg border border-input bg-background text-sm font-medium cursor-pointer hover:bg-accent/10 transition-colors shrink-0 disabled:pointer-events-none disabled:opacity-50">
+                      {isUploadingImage ? <Loader2 className="h-4 w-4 animate-spin" /> : <Upload className="h-4 w-4" />}
+                      {isUploadingImage ? "Uploading..." : "Upload"}
                       <input
                         type="file"
-                        accept="image/*"
+                        accept="image/jpeg,image/png,image/webp,image/gif"
                         className="hidden"
+                        disabled={isUploadingImage}
                         onChange={async (e) => {
                           const file = e.target.files?.[0];
+                          e.currentTarget.value = "";
                           if (!file) return;
-                          const ext = file.name.split(".").pop() || "jpg";
-                          const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
-                          const { error: upErr } = await supabase.storage
-                            .from("news-images")
-                            .upload(path, file, { cacheControl: "3600", upsert: false });
-                          if (upErr) {
-                            toast({ title: "Upload failed", description: upErr.message, variant: "destructive" });
-                            return;
-                          }
-                          const { data: urlData } = supabase.storage.from("news-images").getPublicUrl(path);
-                          setEditing((prev: any) => ({ ...prev, image_url: urlData.publicUrl }));
-                          toast({ title: "Image uploaded" });
+                          await uploadNewsImage(file);
                         }}
                       />
                     </label>
                   </div>
+                  {editing.id && (
+                    <p className="text-[11px] text-muted-foreground">Uploaded image changes are saved immediately for existing articles.</p>
+                  )}
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">
@@ -265,7 +340,7 @@ const AdminNews = () => {
                   </div>
                 </div>
               </div>
-              <Button onClick={handleSave} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
+              <Button onClick={handleSave} disabled={isUploadingImage} className="w-full bg-accent text-accent-foreground hover:bg-accent/90">
                 Save Article
               </Button>
             </div>
