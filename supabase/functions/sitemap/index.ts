@@ -78,6 +78,19 @@ Deno.serve(async () => {
     }
   }
 
+  // Stock detail pages
+  if (stocks) {
+    for (const stock of stocks) {
+      xml += `  <url>
+    <loc>${SITE_URL}/stocks/${stock.symbol}</loc>
+    <lastmod>${stock.updated_at?.split("T")[0] || today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+    }
+  }
+
   // News article pages
   if (news) {
     for (const article of news) {
@@ -86,6 +99,19 @@ Deno.serve(async () => {
     <lastmod>${article.date_published?.split("T")[0] || today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+  </url>
+`;
+    }
+  }
+
+  // CMS site pages
+  if (sitePages) {
+    for (const page of sitePages) {
+      xml += `  <url>
+    <loc>${SITE_URL}/page/${page.slug}</loc>
+    <lastmod>${page.updated_at?.split("T")[0] || today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 `;
     }
