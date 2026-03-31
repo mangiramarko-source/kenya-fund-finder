@@ -1,5 +1,4 @@
 import { Link } from "react-router-dom";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Star } from "lucide-react";
 import YieldChange from "@/components/YieldChange";
@@ -64,7 +63,7 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
   </div>
 );
 
-const FundMobileCards = ({ funds, snapshots, bestYield, loading, onClearSearch, hasSearch, isFavourite, onToggleFavourite }: FundMobileCardsProps) => {
+const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch, isFavourite, onToggleFavourite }: FundMobileCardsProps) => {
   if (loading) return <CardSkeleton />;
 
   if (funds.length === 0) return <EmptyState hasSearch={hasSearch} onClearSearch={onClearSearch} />;
@@ -78,9 +77,6 @@ const FundMobileCards = ({ funds, snapshots, bestYield, loading, onClearSearch, 
             <div className="flex-1 min-w-0">
               <div className="flex items-center gap-1.5">
                 <h3 className="font-semibold text-[15px] truncate">{fund.name}</h3>
-                {fund.annual_yield === bestYield && bestYield > 0 && (
-                  <Badge variant="default" className="text-[9px] px-1 py-0 h-3.5 bg-accent text-accent-foreground shrink-0">TOP</Badge>
-                )}
               </div>
               <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{fund.manager}</p>
             </div>
