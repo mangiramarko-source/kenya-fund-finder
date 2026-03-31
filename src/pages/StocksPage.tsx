@@ -253,7 +253,7 @@ const StocksPage = () => {
         </div>
 
         {/* Sector filters */}
-        <div className="flex gap-1.5 flex-wrap md:flex-wrap overflow-x-auto md:overflow-visible scrollbar-none mb-4">
+        <div className="flex gap-1.5 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible scrollbar-none pb-2 md:pb-0 mb-4">
           {sectors.map((s) => (
             <button
               key={s}
