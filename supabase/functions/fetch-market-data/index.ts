@@ -178,9 +178,11 @@ async function fetchNseStockQuotes(): Promise<Record<string, {
   volume: number;
 }>> {
   console.log("[fetch-market-data] Fetching NSE market statistics page...");
-  const pageRes = await fetch(NSE_MARKET_STATS_PAGE, {
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; KenyaFundFinder/1.0)" },
-  });
+  const nseHeaders: Record<string, string> = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+  };
+  const pageRes = await fetch(NSE_MARKET_STATS_PAGE, { headers: nseHeaders });
   if (!pageRes.ok) {
     console.error(`[fetch-market-data] NSE page fetch failed: ${pageRes.status} ${pageRes.statusText}`);
     throw new Error(`NSE market stats page failed: ${pageRes.status}`);
@@ -209,7 +211,6 @@ async function fetchNseStockQuotes(): Promise<Record<string, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         "Accept": "text/html, */*",
-        "User-Agent": "Mozilla/5.0 (compatible; KenyaFundFinder/1.0)",
         "Referer": NSE_MARKET_STATS_PAGE,
       },
       body: body.toString(),
