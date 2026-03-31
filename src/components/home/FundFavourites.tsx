@@ -44,7 +44,7 @@ const FundFavourites = ({ entries, funds, snapshots }: FundFavouritesProps) => {
             return (
               <Link
                 key={fund.id}
-                to={`/compare/${fund.slug}`}
+                to={`/funds/${fund.slug}`}
                 className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 hover:border-accent/40 transition-colors group"
               >
                 <div className="flex-1 min-w-0">

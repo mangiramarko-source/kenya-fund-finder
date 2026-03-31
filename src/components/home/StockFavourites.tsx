@@ -46,9 +46,10 @@ const StockFavourites = ({ entries, stocks }: StockFavouritesProps) => {
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
           {favStocks.slice(0, 6).map((s) => (
-            <div
+            <Link
               key={s.id}
-              className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 transition-colors"
+              to={`/stocks/${s.symbol}`}
+              className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2.5 hover:border-accent/40 transition-colors group"
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center gap-1.5">
