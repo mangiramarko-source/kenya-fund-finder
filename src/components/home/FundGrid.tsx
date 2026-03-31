@@ -1,7 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers, Tag, Star } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import YieldChange from "@/components/YieldChange";
@@ -324,14 +323,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       >
                         {fund.name}
                       </Link>
-                      {fund.annual_yield === bestYield && bestYield > 0 && (
-                        <Badge
-                          variant="default"
-                          className="text-[8px] px-1.5 py-0 h-4 bg-accent text-accent-foreground shrink-0"
-                        >
-                          TOP
-                        </Badge>
-                      )}
                     </div>
                   </td>
                   <td className="px-2 py-3.5 text-center">
