@@ -1,3 +1,10 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /profile
+Disallow: /reset-password
+
 User-agent: Googlebot
 Allow: /
 
@@ -10,7 +17,4 @@ Allow: /
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: *
-Allow: /
-
-Sitemap: https://kenyafundfinder.com/sitemap.xml
+Sitemap: https://qrmthciurngpzpjhevdj.supabase.co/functions/v1/sitemap
