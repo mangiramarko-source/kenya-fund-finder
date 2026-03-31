@@ -313,7 +313,7 @@ const OverviewPage = () => {
     assetId: string; assetName: string; currentPrice: number; unit?: string;
   }>({ open: false, assetType: "stock", assetId: "", assetName: "", currentPrice: 0 });
 
-  useEffect(() => {
+  const fetchAllData = useCallback(() => {
     fetchFunds().then(setFunds).catch(() => {}).finally(() => setFundsLoading(false));
     fetchPublishedNews().then(n => setNews(n.slice(0, 4))).catch(() => {});
     supabase.from("exchange_rate_history_public" as any)
@@ -329,6 +329,12 @@ const OverviewPage = () => {
       .order("snapshot_date", { ascending: true }).limit(1000)
       .then(({ data }) => setStockHistory(((data as any) || []).map((h: any) => ({ ...h, price: Number(h.price) }))));
   }, []);
+
+  useEffect(() => {
+    fetchAllData();
+    const interval = window.setInterval(fetchAllData, 60_000);
+    return () => window.clearInterval(interval);
+  }, [fetchAllData]);
 
   // Fetch profile display name
   useEffect(() => {
