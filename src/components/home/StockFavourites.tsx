@@ -77,7 +77,7 @@ const StockFavourites = ({ entries, stocks }: StockFavouritesProps) => {
                   {s.day_change >= 0 ? "+" : ""}{s.day_change_percent.toFixed(2)}%
                 </span>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
 
