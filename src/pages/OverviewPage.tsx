@@ -550,9 +550,16 @@ const OverviewPage = () => {
               name={`${bestStock.symbol} · ${bestStock.name}`}
               value={`KES ${bestStock.price.toFixed(2)}`}
               change={<Change current={bestStock.price} previous={bestStock.previous_price} />}
-              sub={`Vol: ${bestStock.volume?.toLocaleString() || "—"}`}
+              sub={bestStock.sector}
               linkTo="/stocks"
               color="bg-accent/10"
+              sparkData={getStockSparkData(bestStock.id)}
+              extras={[
+                { label: "Volume", value: bestStock.volume?.toLocaleString() || "—" },
+                { label: "Day Chg", value: `${bestStock.day_change >= 0 ? "+" : ""}${bestStock.day_change.toFixed(2)}` },
+                ...(bestStock.market_cap ? [{ label: "Mkt Cap", value: `${(bestStock.market_cap / 1e9).toFixed(1)}B` }] : []),
+                { label: "Change %", value: `${bestStock.day_change_percent >= 0 ? "+" : ""}${bestStock.day_change_percent.toFixed(2)}%` },
+              ]}
             />
           )}
           {goldCommodity && (
@@ -564,6 +571,10 @@ const OverviewPage = () => {
               change={<Change current={Number(goldCommodity.price)} previous={goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null} />}
               linkTo="/commodities"
               color="bg-[hsl(45,80%,50%)]/10"
+              extras={[
+                { label: "Unit", value: goldCommodity.unit },
+                ...(goldCommodity.previous_price != null ? [{ label: "Previous", value: Number(goldCommodity.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2 }) }] : []),
+              ]}
             />
           )}
           {silverCommodity && (
@@ -575,6 +586,10 @@ const OverviewPage = () => {
               change={<Change current={Number(silverCommodity.price)} previous={silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null} />}
               linkTo="/commodities"
               color="bg-muted"
+              extras={[
+                { label: "Unit", value: silverCommodity.unit },
+                ...(silverCommodity.previous_price != null ? [{ label: "Previous", value: Number(silverCommodity.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2 }) }] : []),
+              ]}
             />
           )}
           {/* Row 2: Money Market, FX Rate, Fixed Income */}
@@ -584,11 +599,17 @@ const OverviewPage = () => {
               label="Money Market"
               name={bestMM.name}
               value={`${bestMM.annual_yield.toFixed(2)}%`}
-              sub={`Daily: ${bestMM.daily_yield.toFixed(4)}% · ${bestMM.manager}`}
+              sub={bestMM.manager}
               linkTo={`/compare/${bestMM.slug}`}
               color="bg-primary/10"
               chartData={getFundHistory(bestMM.id)}
               chartColor="hsl(var(--primary))"
+              extras={[
+                { label: "Daily", value: `${bestMM.daily_yield.toFixed(4)}%` },
+                { label: "7-Day", value: `${bestMM.seven_day_yield.toFixed(2)}%` },
+                { label: "30-Day", value: `${bestMM.thirty_day_yield.toFixed(2)}%` },
+                { label: "Min Invest", value: `KES ${bestMM.minimum_investment.toLocaleString()}` },
+              ]}
             />
           )}
           {bestFXRate && (
@@ -603,6 +624,10 @@ const OverviewPage = () => {
               color="bg-accent/10"
               chartData={getHistory(bestFXRate.currency_code)}
               chartColor="hsl(var(--accent))"
+              sparkData={getHistory(bestFXRate.currency_code).map(h => h.rate)}
+              extras={[
+                ...(bestFXRate.previous_rate != null ? [{ label: "Previous", value: `KES ${Number(bestFXRate.previous_rate).toFixed(2)}` }] : []),
+              ]}
             />
           )}
           {bestFI && (
@@ -611,11 +636,17 @@ const OverviewPage = () => {
               label="Fixed Income"
               name={bestFI.name}
               value={`${bestFI.annual_yield.toFixed(2)}%`}
-              sub={`Daily: ${bestFI.daily_yield.toFixed(4)}% · ${bestFI.manager}`}
+              sub={bestFI.manager}
               linkTo={`/compare/${bestFI.slug}`}
               color="bg-secondary/80"
               chartData={getFundHistory(bestFI.id)}
               chartColor="hsl(var(--secondary))"
+              extras={[
+                { label: "Daily", value: `${bestFI.daily_yield.toFixed(4)}%` },
+                { label: "7-Day", value: `${bestFI.seven_day_yield.toFixed(2)}%` },
+                { label: "30-Day", value: `${bestFI.thirty_day_yield.toFixed(2)}%` },
+                { label: "Min Invest", value: `KES ${bestFI.minimum_investment.toLocaleString()}` },
+              ]}
             />
           )}
         </div>
