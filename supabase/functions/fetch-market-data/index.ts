@@ -177,14 +177,22 @@ async function fetchNseStockQuotes(): Promise<Record<string, {
   dayChangePct: number;
   volume: number;
 }>> {
+  console.log("[fetch-market-data] Fetching NSE market statistics page...");
   const pageRes = await fetch(NSE_MARKET_STATS_PAGE, {
     headers: { "User-Agent": "Mozilla/5.0 (compatible; KenyaFundFinder/1.0)" },
   });
-  if (!pageRes.ok) throw new Error(`NSE market stats page failed: ${pageRes.status}`);
+  if (!pageRes.ok) {
+    console.error(`[fetch-market-data] NSE page fetch failed: ${pageRes.status} ${pageRes.statusText}`);
+    throw new Error(`NSE market stats page failed: ${pageRes.status}`);
+  }
 
   const pageHtml = await pageRes.text();
   const nonce = pageHtml.match(/"ajaxnonce":"([^"]+)"/)?.[1];
-  if (!nonce) throw new Error("NSE ajax nonce not found");
+  if (!nonce) {
+    console.error("[fetch-market-data] NSE ajax nonce not found in page HTML (length: " + pageHtml.length + ")");
+    throw new Error("NSE ajax nonce not found");
+  }
+  console.log(`[fetch-market-data] NSE nonce found, fetching ${[...new Set(Object.values(NSE_SECTOR_MAP))].length} sectors...`);
 
   const sectorRows = new Map<string, Array<{ company: string; price: number; changePct: number; volume: number }>>();
   const sectors = [...new Set(Object.values(NSE_SECTOR_MAP))];
