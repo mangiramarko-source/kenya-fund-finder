@@ -209,6 +209,15 @@ const FundDetailPage = () => {
             <h1 className="text-lg md:text-xl font-bold leading-tight">{fund.name}</h1>
             <p className="text-muted-foreground text-sm">{fund.manager}</p>
           </div>
+          <div className="flex items-center gap-2 sm:hidden mt-2">
+            <CreateAlertDialog
+              assetType="fund"
+              assetId={fund.id}
+              assetName={fund.name}
+              currentPrice={fund.annual_yield}
+              unit="%"
+            />
+          </div>
           <div className="flex items-center gap-3 text-right shrink-0">
             <div>
               <p className="text-2xl md:text-3xl font-bold text-accent tabular-nums">{formatYield(fund.annual_yield, fund.yield_unit)}</p>
