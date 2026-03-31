@@ -502,6 +502,7 @@ const OverviewPage = () => {
                   change={<Change current={s.price} previous={s.previous_price} />}
                   chart={sHistory.length > 2 ? <MiniChart data={sHistory} /> : undefined}
                   sparkData={getStockSparkData(s.id)}
+                  linkTo={`/stocks/${s.symbol}`}
                   onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
                   onRemove={() => toggleAsset("stock", s.id, s.name)} />
               );
