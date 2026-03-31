@@ -886,24 +886,31 @@ const OverviewPage = () => {
             <Link to="/news" className="text-[10px] text-accent hover:underline inline-flex items-center gap-1">All news <ArrowRight className="h-3 w-3" /></Link>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {news.map((article, i) => (
+            {news.map((article) => (
               <Link key={article.id} to={`/news/${article.id}`} className="block group">
-                <article className="rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all p-3.5 h-full">
-                  <div className="flex items-center gap-1.5 mb-2">
-                    <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
-                    <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
-                      <Clock className="h-2.5 w-2.5" />
-                      {article.read_time}
-                    </span>
-                  </div>
-                  <h3 className="text-xs font-semibold leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">{article.title}</h3>
-                  <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{article.summary}</p>
-                  <div className="flex items-center justify-between mt-2">
-                    <p className="text-[10px] text-muted-foreground">
-                      {article.source && `${article.source} · `}
-                      {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
-                    </p>
-                    <span className="text-[10px] text-accent font-medium group-hover:underline">Read more →</span>
+                <article className="rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all h-full flex flex-col overflow-hidden">
+                  {article.image_url && (
+                    <div className="w-full h-28 overflow-hidden bg-muted shrink-0">
+                      <img src={article.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
+                    </div>
+                  )}
+                  <div className="p-3 flex flex-col flex-1">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate">{article.category}</span>
+                      <span className="text-[11px] text-muted-foreground ml-auto flex items-center gap-0.5 shrink-0">
+                        <Clock className="h-2.5 w-2.5" />
+                        {article.read_time}
+                      </span>
+                    </div>
+                    <h3 className="text-sm font-semibold leading-snug line-clamp-2 mb-1 group-hover:text-accent transition-colors">{article.title}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed flex-1">{article.summary}</p>
+                    <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-border/30">
+                      <p className="text-[11px] text-muted-foreground truncate">
+                        {article.source && `${article.source} · `}
+                        {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                      </p>
+                      <span className="text-[11px] text-accent font-medium group-hover:underline shrink-0">Read →</span>
+                    </div>
                   </div>
                 </article>
               </Link>
