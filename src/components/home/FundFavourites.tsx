@@ -51,7 +51,7 @@ const FundFavourites = ({ entries, funds, snapshots }: FundFavouritesProps) => {
                   <p className="text-xs font-semibold text-foreground truncate group-hover:text-accent transition-colors">
                     {fund.name}
                   </p>
-                  <p className="text-[10px] text-muted-foreground truncate">{fund.manager}</p>
+                  <p className="text-[10px] text-muted-foreground truncate">{FUND_TYPE_LABELS[fund.fund_type as FundType] || fund.fund_type}</p>
                 </div>
                 <div className="text-right shrink-0">
                   <p className="text-sm font-bold tabular-nums text-accent">
