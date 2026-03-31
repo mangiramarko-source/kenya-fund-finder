@@ -314,15 +314,16 @@ Deno.serve(async (req) => {
   const token = authHeader.replace("Bearer ", "");
 
   // Check if this is a service-level call (cron job via pg_net sends anon key as JWT)
-  // Decode the JWT payload to check the role claim
   let isCronCall = false;
   try {
     const payload = JSON.parse(atob(token.split(".")[1]));
-    // If the role is "anon" or "service_role", it's a system call not a user call
     if (payload.role === "anon" || payload.role === "service_role") {
       isCronCall = true;
+      console.log(`[fetch-market-data] Cron call detected (role: ${payload.role})`);
     }
-  } catch { /* not a valid JWT, will fall through to user auth */ }
+  } catch {
+    console.log("[fetch-market-data] JWT parse failed, checking user auth");
+  }
 
   if (!isCronCall) {
     // Verify the caller is an authenticated admin
@@ -332,6 +333,7 @@ Deno.serve(async (req) => {
     });
     const { data: { user }, error: authError } = await userClient.auth.getUser();
     if (authError || !user) {
+      console.error("[fetch-market-data] Auth failed:", authError?.message || "no user");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -347,6 +349,7 @@ Deno.serve(async (req) => {
       .maybeSingle();
 
     if (!roleData) {
+      console.error("[fetch-market-data] User is not admin:", user.id);
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
