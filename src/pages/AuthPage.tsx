@@ -1,13 +1,15 @@
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable";
+import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { TrendingUp, Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
+import CloudflareTurnstile from "@/components/CloudflareTurnstile";
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -18,13 +20,39 @@ const AuthPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+
+  const handleTurnstileVerify = useCallback((token: string) => {
+    setTurnstileToken(token);
+  }, []);
+
+  const handleTurnstileExpire = useCallback(() => {
+    setTurnstileToken(null);
+  }, []);
+
+  const verifyTurnstile = async (token: string): Promise<boolean> => {
+    try {
+      const { data, error } = await supabase.functions.invoke("verify-turnstile", {
+        body: { token },
+      });
+      if (error) return false;
+      return data?.success === true;
+    } catch {
+      return false;
+    }
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError("");
     setMessage("");
+
+    if (!turnstileToken) {
+      setError("Please complete the security verification");
+      return;
+    }
 
     if (isSignUp && password !== confirmPassword) {
       setError("Passwords do not match");
@@ -32,6 +60,14 @@ const AuthPage = () => {
     }
 
     setLoading(true);
+
+    const verified = await verifyTurnstile(turnstileToken);
+    if (!verified) {
+      setError("Security verification failed. Please try again.");
+      setTurnstileToken(null);
+      setLoading(false);
+      return;
+    }
 
     if (isSignUp) {
       const { error } = await signUp(email, password);
@@ -52,6 +88,7 @@ const AuthPage = () => {
         navigate("/");
       }
     }
+    setTurnstileToken(null);
   };
 
   const handleGoogleSignIn = async () => {
@@ -63,7 +100,6 @@ const AuthPage = () => {
       setError(result.error.message || "Google sign-in failed");
     }
   };
-
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
@@ -81,7 +117,6 @@ const AuthPage = () => {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          {/* Social login buttons */}
           <Button variant="outline" onClick={handleGoogleSignIn} className="w-full gap-2">
             <svg className="h-4 w-4" viewBox="0 0 24 24">
               <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92a5.06 5.06 0 01-2.2 3.32v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.1z" fill="#4285F4"/>
@@ -135,14 +170,15 @@ const AuthPage = () => {
             )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             {message && <p className="text-sm text-accent">{message}</p>}
-            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
+            <CloudflareTurnstile onVerify={handleTurnstileVerify} onExpire={handleTurnstileExpire} />
+            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading || !turnstileToken}>
               {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
             </Button>
           </form>
 
           <p className="text-center text-sm text-muted-foreground">
             {isSignUp ? "Already have an account?" : "Don't have an account?"}{" "}
-            <button onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); setConfirmPassword(""); setShowPassword(false); }} className="text-accent hover:underline font-medium">
+            <button onClick={() => { setIsSignUp(!isSignUp); setError(""); setMessage(""); setConfirmPassword(""); setShowPassword(false); setTurnstileToken(null); }} className="text-accent hover:underline font-medium">
               {isSignUp ? "Sign In" : "Sign Up"}
             </button>
           </p>
