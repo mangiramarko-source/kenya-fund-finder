@@ -15,7 +15,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import {
   TrendingUp, TrendingDown, Minus, Bell, BellPlus, Plus,
-  Settings2, X, Star, Search, Activity, Eye, Check,
+  Settings2, X, Star, Search, Eye, Check,
   BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
   Landmark, ArrowRight, Newspaper, Clock,
 } from "lucide-react";
@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
+import SectionLiveStatus from "@/components/SectionLiveStatus";
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
@@ -481,9 +482,7 @@ const OverviewPage = () => {
               <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
             </Button>
           )}
-          <div className="flex items-center gap-1 text-[10px] text-muted-foreground">
-            <Activity className="h-3 w-3 text-accent animate-pulse" /><span>Live</span>
-          </div>
+          <SectionLiveStatus section="funds" />
         </div>
       </div>
 
