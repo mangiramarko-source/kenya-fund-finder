@@ -945,16 +945,12 @@ const OverviewPage = () => {
 const WatchCard = ({ title, sub, value, change, chart, sparkData, onAlert, onRemove, linkTo }: {
   title: string; sub: string; value: string; change: React.ReactNode;
   chart?: React.ReactNode; sparkData?: number[]; onAlert?: () => void; onRemove: () => void; linkTo?: string;
-}) => (
-  <div className="rounded-lg border border-border bg-card hover:border-accent/30 transition-colors group relative">
-    {/* Mobile: compact horizontal row */}
-    <div className="flex items-center gap-3 px-3 py-2 md:hidden">
+}) => {
+  const mobileMain = (
+    <>
       <div className="flex-1 min-w-0">
         <div className="flex items-center gap-1.5">
           <span className="text-xs font-bold text-foreground">{title}</span>
-          <button onClick={onRemove} className="text-muted-foreground/40 hover:text-destructive transition-colors" title="Remove">
-            <X className="h-2.5 w-2.5" />
-          </button>
         </div>
         <p className="text-[10px] text-muted-foreground truncate">{sub}</p>
       </div>
@@ -965,16 +961,11 @@ const WatchCard = ({ title, sub, value, change, chart, sparkData, onAlert, onRem
         <p className="text-sm font-bold tabular-nums text-foreground">{value}</p>
         <div className="mt-0.5">{change}</div>
       </div>
-      <div className="flex items-center gap-1 shrink-0">
-        {onAlert && <button onClick={onAlert} className="text-muted-foreground hover:text-accent transition-colors p-0.5"><BellPlus className="h-3 w-3" /></button>}
-        {linkTo && <Link to={linkTo} className="text-accent p-0.5"><Eye className="h-3 w-3" /></Link>}
-      </div>
-    </div>
-    {/* Desktop: original card layout */}
-    <div className="hidden md:block p-3">
-      <button onClick={onRemove} className="absolute top-2 right-2 text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity" title="Remove from watchlist">
-        <X className="h-3 w-3" />
-      </button>
+    </>
+  );
+
+  const desktopMain = (
+    <>
       <div className="flex items-start justify-between gap-2 mb-1">
         <div className="min-w-0">
           <p className="text-sm font-bold text-foreground truncate">{title}</p>
@@ -986,15 +977,48 @@ const WatchCard = ({ title, sub, value, change, chart, sparkData, onAlert, onRem
           <p className="text-base font-bold text-foreground tabular-nums">{value}</p>
           <div className="mt-0.5">{change}</div>
         </div>
-        <div className="flex items-center gap-1">
-          {onAlert && <button onClick={onAlert} className="text-muted-foreground hover:text-accent transition-colors p-1"><BellPlus className="h-3.5 w-3.5" /></button>}
-          {linkTo && <Link to={linkTo} className="text-accent hover:underline text-[10px] p-1"><Eye className="h-3.5 w-3.5" /></Link>}
-        </div>
+        {linkTo && <Eye className="h-3.5 w-3.5 text-accent" />}
       </div>
       {chart && <div className="mt-2">{chart}</div>}
+    </>
+  );
+
+  return (
+    <div className="rounded-lg border border-border bg-card hover:border-accent/30 transition-colors group relative">
+      <div className="flex items-center gap-1 shrink-0 absolute top-2 right-2 z-10 md:hidden">
+        {onAlert && <button type="button" onClick={onAlert} className="text-muted-foreground hover:text-accent transition-colors p-0.5"><BellPlus className="h-3 w-3" /></button>}
+        <button type="button" onClick={onRemove} className="text-muted-foreground/40 hover:text-destructive transition-colors p-0.5" title="Remove">
+          <X className="h-2.5 w-2.5" />
+        </button>
+      </div>
+
+      {linkTo ? (
+        <Link to={linkTo} className="flex items-center gap-3 px-3 py-2 md:hidden pr-14">
+          {mobileMain}
+        </Link>
+      ) : (
+        <div className="flex items-center gap-3 px-3 py-2 md:hidden pr-14">
+          {mobileMain}
+        </div>
+      )}
+
+      <button type="button" onClick={onRemove} className="absolute top-2 right-2 text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden md:block" title="Remove from watchlist">
+        <X className="h-3 w-3" />
+      </button>
+      {onAlert && <button type="button" onClick={onAlert} className="absolute bottom-3 right-9 text-muted-foreground hover:text-accent transition-colors p-1 z-10 hidden md:block"><BellPlus className="h-3.5 w-3.5" /></button>}
+
+      {linkTo ? (
+        <Link to={linkTo} className="hidden md:block p-3 pr-16">
+          {desktopMain}
+        </Link>
+      ) : (
+        <div className="hidden md:block p-3 pr-16">
+          {desktopMain}
+        </div>
+      )}
     </div>
-  </div>
-);
+  );
+};
 
 const SectionPanel = ({ title, icon: Icon, link, linkLabel, count, sub, children }: {
   title: string; icon: any; link: string; linkLabel: string; count: number; sub?: string; children: React.ReactNode;
