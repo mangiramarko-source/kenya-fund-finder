@@ -517,15 +517,17 @@ Deno.serve(async (req) => {
       }
 
       results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length}`);
+      console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length}, NSE quotes found: ${Object.keys(nseQuotes).length}`);
     }
 
+    console.log(`[fetch-market-data] Completed successfully: ${results.length} operations`);
     return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("fetch-market-data error:", error);
+    console.error("[fetch-market-data] FATAL error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: "Internal server error" }),
+      JSON.stringify({ success: false, error: String(error) }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
