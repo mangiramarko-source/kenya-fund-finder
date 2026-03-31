@@ -514,6 +514,7 @@ const OverviewPage = () => {
                   change={<Change current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />}
                   chart={history.length > 2 ? <MiniChart data={history} /> : undefined}
                   sparkData={history.length > 2 ? history.map(h => h.rate) : undefined}
+                  linkTo="/rates"
                   onAlert={() => openAlert("currency", r.id, `${r.currency_code}/KES`, Number(r.rate), "KES")}
                   onRemove={() => toggleAsset("currency", r.id, `${r.currency_code}/KES`)} />
               );
