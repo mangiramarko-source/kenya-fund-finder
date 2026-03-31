@@ -53,7 +53,7 @@ const formatKES = (n: number) => `KES ${n.toLocaleString()}`;
 const FundDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const [_loading2, setAuthDone] = useState(false);
+  
   const [fund, setFund] = useState<FundFromDB | null>(null);
   const [peers, setPeers] = useState<FundFromDB[]>([]);
   const [comparePeerId, setComparePeerId] = useState<string>("");
