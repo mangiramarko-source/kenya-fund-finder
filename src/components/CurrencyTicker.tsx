@@ -149,7 +149,7 @@ const CurrencyTicker = () => {
                   maximumFractionDigits: 2,
                 })}
                 {item.unit && (
-                  <span className="text-white/40 font-normal ml-0.5 text-[10px]">
+                  <span className="text-white/60 font-normal ml-0.5 text-[10px]">
                     {item.unit}
                   </span>
                 )}
