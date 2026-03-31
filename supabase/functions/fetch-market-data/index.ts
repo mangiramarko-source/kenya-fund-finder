@@ -317,52 +317,73 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // Authentication: require either a valid admin user or an anon/service-role JWT (cron job)
+  // Authentication: allow cron jobs (via service role or anon JWT) and admin users
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace("Bearer ", "");
 
-  // Check if this is a service-level call (cron job via pg_net sends anon key as JWT)
+  // Check if this is a service-level / cron call
   let isCronCall = false;
+  
+  // Method 1: Check for cron secret in body
+  let body: Record<string, unknown> = {};
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    if (payload.role === "anon" || payload.role === "service_role") {
-      isCronCall = true;
-      console.log(`[fetch-market-data] Cron call detected (role: ${payload.role})`);
-    }
-  } catch {
-    console.log("[fetch-market-data] JWT parse failed, checking user auth");
+    body = await req.json();
+  } catch { /* no body is fine */ }
+  
+  const cronSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (body?.cron_secret === cronSecret && cronSecret) {
+    isCronCall = true;
+    console.log("[fetch-market-data] Cron call authenticated via secret");
   }
 
+  // Method 2: Check JWT role claim (anon/service_role from pg_net)
   if (!isCronCall) {
-    // Verify the caller is an authenticated admin
+    try {
+      const parts = token.split(".");
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload.role === "anon" || payload.role === "service_role") {
+          isCronCall = true;
+          console.log(`[fetch-market-data] Cron call detected (role: ${payload.role})`);
+        }
+      }
+    } catch {
+      // Not a standard JWT
+    }
+  }
+
+  // Method 3: Check getClaims for authenticated admin user
+  if (!isCronCall) {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) {
-      console.error("[fetch-market-data] Auth failed:", authError?.message || "no user");
+    
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      console.error("[fetch-market-data] Auth failed:", claimsError?.message || "no claims");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check admin role
+    const userId = claimsData.claims.sub as string;
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
 
     if (!roleData) {
-      console.error("[fetch-market-data] User is not admin:", user.id);
+      console.error("[fetch-market-data] User is not admin:", userId);
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    console.log("[fetch-market-data] Admin user authenticated:", userId);
   }
 
   const results: string[] = [];
