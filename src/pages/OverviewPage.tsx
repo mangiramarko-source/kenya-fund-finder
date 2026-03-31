@@ -212,17 +212,18 @@ const MiniChart = ({ data, color = "hsl(var(--accent))" }: { data: { snapshot_da
 };
 
 /* ─── Detailed Highlight Card (desktop) ─── */
-const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color, chartData, chartColor }: {
+const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color, chartData, chartColor, sparkData, extras }: {
   icon: any; label: string; name: string; value: string; sub?: string;
   change?: React.ReactNode; linkTo?: string; color?: string;
   chartData?: { snapshot_date: string; rate: number }[]; chartColor?: string;
+  sparkData?: number[]; extras?: { label: string; value: string }[];
 }) => {
   const content = (
-    <div className={`rounded-xl border border-border bg-card p-5 hover:border-accent/30 transition-colors group flex flex-col cursor-pointer ${linkTo ? "" : ""}`}>
-      <div className="flex items-center justify-between mb-3">
+    <div className={`rounded-xl border border-border bg-card p-4 hover:border-accent/30 transition-colors group flex flex-col cursor-pointer h-full`}>
+      <div className="flex items-center justify-between mb-2">
         <div className="flex items-center gap-2">
-          <div className={`h-8 w-8 rounded-lg flex items-center justify-center ${color || "bg-primary/10"}`}>
-            <Icon className="h-4 w-4 text-primary" />
+          <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${color || "bg-primary/10"}`}>
+            <Icon className="h-3.5 w-3.5 text-primary" />
           </div>
           <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
         </div>
@@ -232,20 +233,37 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
           </span>
         )}
       </div>
-      <p className="text-sm font-bold text-foreground truncate" title={name}>{name}</p>
-      <p className="text-xl font-bold text-foreground tabular-nums mt-1">{value}</p>
-      <div className="flex items-center gap-3 mt-1">
-        {change}
-        {sub && <span className="text-[10px] text-muted-foreground">{sub}</span>}
+      <div className="flex items-start justify-between gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-xs font-bold text-foreground truncate" title={name}>{name}</p>
+          <p className="text-lg font-bold text-foreground tabular-nums mt-0.5">{value}</p>
+          <div className="flex items-center gap-2 mt-0.5">
+            {change}
+            {sub && <span className="text-[10px] text-muted-foreground truncate">{sub}</span>}
+          </div>
+        </div>
+        {sparkData && sparkData.length >= 3 && (
+          <Sparkline data={sparkData} width={64} height={28} color="auto" className="shrink-0 mt-2" />
+        )}
       </div>
+      {extras && extras.length > 0 && (
+        <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 pt-2 border-t border-border/50">
+          {extras.map((e, i) => (
+            <div key={i} className="flex items-center justify-between">
+              <span className="text-[9px] text-muted-foreground">{e.label}</span>
+              <span className="text-[10px] font-semibold tabular-nums text-foreground">{e.value}</span>
+            </div>
+          ))}
+        </div>
+      )}
       {chartData && chartData.length > 2 && (
-        <div className="mt-3 -mx-1 flex-1 min-h-[70px]">
+        <div className="mt-2 -mx-1 flex-1 min-h-[50px]">
           <MiniChart data={chartData} color={chartColor || "hsl(var(--accent))"} />
         </div>
       )}
     </div>
   );
-  if (linkTo) return <Link to={linkTo} className="flex flex-col">{content}</Link>;
+  if (linkTo) return <Link to={linkTo} className="flex flex-col h-full">{content}</Link>;
   return content;
 };
 
