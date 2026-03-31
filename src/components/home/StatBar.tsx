@@ -38,11 +38,6 @@ const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, 
             <div className="text-xs text-muted-foreground">
               <span className="font-medium text-foreground">{fundCount}</span> funds
             </div>
-            {bestYield > 0 && (
-              <div className="text-xs text-muted-foreground">
-                Top: <span className="font-bold text-accent">{bestYield.toFixed(2)}%</span>
-              </div>
-            )}
             {avgYield > 0 && (
               <div className="text-xs text-muted-foreground">
                 Avg: <span className="font-medium text-foreground">{avgYield.toFixed(2)}%</span>
