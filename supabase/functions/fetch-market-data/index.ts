@@ -358,6 +358,7 @@ Deno.serve(async (req) => {
   }
 
   const results: string[] = [];
+  console.log("[fetch-market-data] Starting data fetch cycle...");
 
   try {
     // ── 1. Fetch FX rates ──
@@ -393,7 +394,8 @@ Deno.serve(async (req) => {
       }
       results.push(`FX: processed ${existing?.length || 0} currencies`);
     } else {
-      results.push(`FX API returned non-OK status`);
+      console.error(`[fetch-market-data] FX API failed: ${fxRes.status} ${fxRes.statusText}`);
+      results.push(`FX API returned ${fxRes.status}`);
     }
 
     // ── 2. Fetch commodity prices ──
