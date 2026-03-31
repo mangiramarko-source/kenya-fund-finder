@@ -18,6 +18,8 @@ export interface FundFromDB {
   cma_licensed: boolean;
   annual_yield: number;
   daily_yield: number;
+  seven_day_yield: number;
+  thirty_day_yield: number;
   fund_type: FundType;
   minimum_investment: number;
   management_fee: number;
