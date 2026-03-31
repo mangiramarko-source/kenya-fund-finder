@@ -427,10 +427,12 @@ const OverviewPage = () => {
   }
 
   return (
+    <>
+    <div className="hidden md:block">
+      <CurrencyTicker />
+    </div>
     <div className="px-4 md:px-6 py-6 max-w-[1600px]">
-    <div className="flex gap-5">
-    {/* ─── Main Column ─── */}
-    <div className="flex-1 min-w-0 space-y-5">
+    <div className="space-y-5">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
         <div>
