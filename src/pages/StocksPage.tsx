@@ -253,12 +253,12 @@ const StocksPage = () => {
         </div>
 
         {/* Sector filters */}
-        <div className="flex gap-1.5 flex-wrap mb-4">
+        <div className="flex gap-1.5 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible scrollbar-none pb-2 md:pb-0 mb-4">
           {sectors.map((s) => (
             <button
               key={s}
               onClick={() => setSector(s)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                 sector === s
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
