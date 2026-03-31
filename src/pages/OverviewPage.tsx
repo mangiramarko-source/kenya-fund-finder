@@ -25,6 +25,7 @@ import {
 import { toast } from "sonner";
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
+import SectionLiveStatus from "@/components/SectionLiveStatus";
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
