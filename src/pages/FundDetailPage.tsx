@@ -13,6 +13,7 @@ import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import YieldChange, { formatYield } from "@/components/YieldChange";
+import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 
 const FUND_TYPE_LABELS: Record<string, string> = {
   money_market: "Money Market",
