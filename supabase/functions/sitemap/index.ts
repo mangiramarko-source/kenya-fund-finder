@@ -31,11 +31,22 @@ Deno.serve(async () => {
     .select("slug, updated_at")
     .eq("is_published", true);
 
-  // Fetch published news (for lastmod)
+  // Fetch active stocks
+  const { data: stocks } = await supabase
+    .from("stocks")
+    .select("symbol, updated_at")
+    .eq("is_active", true);
+
+  // Fetch published news
   const { data: news } = await supabase
     .from("news_articles")
     .select("id, date_published")
     .eq("status", "published");
+
+  // Fetch site pages
+  const { data: sitePages } = await supabase
+    .from("site_pages")
+    .select("slug, updated_at");
 
   const today = new Date().toISOString().split("T")[0];
 
