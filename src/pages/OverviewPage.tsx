@@ -528,8 +528,9 @@ const OverviewPage = () => {
             ))}
             {watchedFunds.map(f => {
               const fHistory = getFundHistory(f.id);
+              const fundTypeLabel = f.fund_type === "money_market" ? "Money Market" : f.fund_type === "fixed_income" ? "Fixed Income" : f.fund_type === "balanced" ? "Balanced" : f.fund_type === "equity" ? "Equity" : f.fund_type === "bond" ? "Bond" : f.fund_type;
               return (
-                <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${f.annual_yield.toFixed(2)}%`}
+                <WatchCard key={f.id} title={f.name} sub={fundTypeLabel} value={`${f.annual_yield.toFixed(2)}%`}
                   change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
                   chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
                   sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}
@@ -726,8 +727,9 @@ const OverviewPage = () => {
             ))}
             {watchedFunds.map(f => {
               const fHistory = getFundHistory(f.id);
+              const fundTypeLabel = f.fund_type === "money_market" ? "Money Market" : f.fund_type === "fixed_income" ? "Fixed Income" : f.fund_type === "balanced" ? "Balanced" : f.fund_type === "equity" ? "Equity" : f.fund_type === "bond" ? "Bond" : f.fund_type;
               return (
-                <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${f.annual_yield.toFixed(2)}%`}
+                <WatchCard key={f.id} title={f.name} sub={fundTypeLabel} value={`${f.annual_yield.toFixed(2)}%`}
                   change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
                   chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
                   sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}

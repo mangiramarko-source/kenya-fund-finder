@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import { ArrowLeft, ExternalLink, BarChart3, Shield, Clock, Wallet, TrendingUp, ChevronRight, PiggyBank, GitCompareArrows } from "lucide-react";
+import { ArrowLeft, ExternalLink, BarChart3, Shield, Clock, Wallet, TrendingUp, ChevronRight, PiggyBank, GitCompareArrows, Bell } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -13,6 +13,7 @@ import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import YieldChange, { formatYield } from "@/components/YieldChange";
+import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 
 const FUND_TYPE_LABELS: Record<string, string> = {
   money_market: "Money Market",
@@ -208,12 +209,30 @@ const FundDetailPage = () => {
             <h1 className="text-lg md:text-xl font-bold leading-tight">{fund.name}</h1>
             <p className="text-muted-foreground text-sm">{fund.manager}</p>
           </div>
+          <div className="flex items-center gap-2 sm:hidden mt-2">
+            <CreateAlertDialog
+              assetType="fund"
+              assetId={fund.id}
+              assetName={fund.name}
+              currentPrice={fund.annual_yield}
+              unit="%"
+            />
+          </div>
           <div className="flex items-center gap-3 text-right shrink-0">
             <div>
               <p className="text-2xl md:text-3xl font-bold text-accent tabular-nums">{formatYield(fund.annual_yield, fund.yield_unit)}</p>
-              <div className="flex items-center justify-end gap-1.5">
+            <div className="flex items-center justify-end gap-1.5">
                 {prevSnap && <YieldChange current={fund.annual_yield} previous={prevSnap.annual_yield} unit={fund.yield_unit} className="text-xs" />}
                 {peerStats && <span className="text-[10px] text-muted-foreground">#{peerStats.rank} of {peerStats.total}</span>}
+              </div>
+              <div className="hidden sm:block mt-2">
+                <CreateAlertDialog
+                  assetType="fund"
+                  assetId={fund.id}
+                  assetName={fund.name}
+                  currentPrice={fund.annual_yield}
+                  unit="%"
+                />
               </div>
             </div>
           </div>
