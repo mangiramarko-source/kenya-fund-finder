@@ -221,9 +221,18 @@ const FundDetailPage = () => {
           <div className="flex items-center gap-3 text-right shrink-0">
             <div>
               <p className="text-2xl md:text-3xl font-bold text-accent tabular-nums">{formatYield(fund.annual_yield, fund.yield_unit)}</p>
-              <div className="flex items-center justify-end gap-1.5">
+            <div className="flex items-center justify-end gap-1.5">
                 {prevSnap && <YieldChange current={fund.annual_yield} previous={prevSnap.annual_yield} unit={fund.yield_unit} className="text-xs" />}
                 {peerStats && <span className="text-[10px] text-muted-foreground">#{peerStats.rank} of {peerStats.total}</span>}
+              </div>
+              <div className="hidden sm:block mt-2">
+                <CreateAlertDialog
+                  assetType="fund"
+                  assetId={fund.id}
+                  assetName={fund.name}
+                  currentPrice={fund.annual_yield}
+                  unit="%"
+                />
               </div>
             </div>
           </div>
