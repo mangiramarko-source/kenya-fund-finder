@@ -78,7 +78,7 @@ const NewsArticlePage = () => {
     await navigator.clipboard.writeText(shareUrl);
     toast({ title: "Link copied to clipboard" });
   };
-  const isAuthenticated = !!user;
+  
 
   if (loading) {
     return (
