@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo, forwardRef } from "react";
 import { Link } from "react-router-dom";
 import { Calculator, Search } from "lucide-react";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
+import { useAuth } from "@/hooks/useAuth";
 import AuthGate from "@/components/AuthGate";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { Button } from "@/components/ui/button";

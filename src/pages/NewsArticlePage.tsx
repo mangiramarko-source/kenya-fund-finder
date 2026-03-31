@@ -26,7 +26,7 @@ const categoryColors: Record<string, string> = {
 
 const NewsArticlePage = () => {
   const { id } = useParams();
-  const { user } = useAuth();
+  const _user = null; // Auth no longer required for reading
   const { toast } = useToast();
   const [article, setArticle] = useState<NewsFromDB | null>(null);
   const [loading, setLoading] = useState(true);
