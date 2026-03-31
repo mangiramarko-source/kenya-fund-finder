@@ -161,7 +161,7 @@ const CurrencyTicker = () => {
                       ? "text-[hsl(152,70%,55%)]"
                       : isDown
                       ? "text-[hsl(0,85%,65%)]"
-                      : "text-white/40"
+                      : "text-white/60"
                   }`}
                 >
                   {isUp ? (
