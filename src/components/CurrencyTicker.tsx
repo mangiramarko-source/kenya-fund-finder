@@ -149,7 +149,7 @@ const CurrencyTicker = () => {
                   maximumFractionDigits: 2,
                 })}
                 {item.unit && (
-                  <span className="text-white/40 font-normal ml-0.5 text-[10px]">
+                  <span className="text-white/60 font-normal ml-0.5 text-[10px]">
                     {item.unit}
                   </span>
                 )}
@@ -161,7 +161,7 @@ const CurrencyTicker = () => {
                       ? "text-[hsl(152,70%,55%)]"
                       : isDown
                       ? "text-[hsl(0,85%,65%)]"
-                      : "text-white/40"
+                      : "text-white/60"
                   }`}
                 >
                   {isUp ? (

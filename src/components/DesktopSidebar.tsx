@@ -80,7 +80,7 @@ const DesktopSidebar = () => {
 
   const SectionLabel = ({ children }: { children: string }) =>
     collapsed ? null : (
-      <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/30">
+      <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
         {children}
       </p>
     );
