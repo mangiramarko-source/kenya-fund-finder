@@ -533,7 +533,7 @@ const OverviewPage = () => {
                   change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
                   chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
                   sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}
-                  linkTo={`/compare/${f.slug}`}
+                  linkTo={`/funds/${f.slug}`}
                   onRemove={() => toggleAsset("fund", f.id, f.name)} />
               );
             })}
