@@ -1,6 +1,6 @@
 import { forwardRef, useEffect, useState } from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, AlertTriangle, Twitter, Facebook, Instagram, Linkedin, Youtube, Globe, Github } from "lucide-react";
+import { TrendingUp, Twitter, Facebook, Instagram, Linkedin, Youtube, Globe, Github } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 interface SocialLinkItem {
@@ -99,12 +99,9 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
 
         {/* Disclaimer */}
         <div className="pt-6 border-t border-border">
-          <div className="flex items-start gap-2 mb-4">
-            <AlertTriangle className="h-4 w-4 text-yellow-500 shrink-0 mt-0.5" />
-            <p className="text-xs text-muted-foreground leading-relaxed">
-              <strong>Important Disclaimer:</strong> This platform provides information only and does not constitute investment advice. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified financial advisor before making any investment decisions.
-            </p>
-          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed mb-4">
+            <strong>Important Disclaimer:</strong> This platform provides information only and does not constitute investment advice. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified financial advisor before making any investment decisions.
+          </p>
           <p className="text-xs text-muted-foreground leading-relaxed">
             All funds listed are regulated by the <strong>Capital Markets Authority (CMA) of Kenya</strong>. Yields shown are gross annual effective yields before 15% withholding tax. Data may not reflect real-time values.
           </p>

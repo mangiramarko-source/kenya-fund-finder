@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -59,8 +59,9 @@ export function useMarketData() {
   const [stocks, setStocks] = useState<Stock[]>([]);
   const [loading, setLoading] = useState(true);
 
-  const fetchData = async () => {
-    setLoading(true);
+  const fetchData = useCallback(async (showLoading = false) => {
+    if (showLoading) setLoading(true);
+
     const [ratesRes, commoditiesRes, stocksRes] = await Promise.all([
       supabase
         .from("exchange_rates_public" as any)
@@ -79,20 +80,27 @@ export function useMarketData() {
     setCommodities((commoditiesRes.data as any as Commodity[]) || []);
     setStocks((stocksRes.data as any as Stock[]) || []);
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
-    fetchData();
+    void fetchData(true);
 
     const channel = supabase
       .channel("market-realtime")
-      .on("postgres_changes", { event: "*", schema: "public", table: "exchange_rates" }, () => fetchData())
-      .on("postgres_changes", { event: "*", schema: "public", table: "commodities" }, () => fetchData())
-      .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "exchange_rates" }, () => void fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "commodities" }, () => void fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => void fetchData())
       .subscribe();
 
-    return () => { supabase.removeChannel(channel); };
-  }, []);
+    const intervalId = window.setInterval(() => {
+      void fetchData();
+    }, 60_000);
+
+    return () => {
+      window.clearInterval(intervalId);
+      supabase.removeChannel(channel);
+    };
+  }, [fetchData]);
 
   return { rates, commodities, stocks, loading };
 }
