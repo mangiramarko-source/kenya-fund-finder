@@ -177,14 +177,24 @@ async function fetchNseStockQuotes(): Promise<Record<string, {
   dayChangePct: number;
   volume: number;
 }>> {
-  const pageRes = await fetch(NSE_MARKET_STATS_PAGE, {
-    headers: { "User-Agent": "Mozilla/5.0 (compatible; KenyaFundFinder/1.0)" },
-  });
-  if (!pageRes.ok) throw new Error(`NSE market stats page failed: ${pageRes.status}`);
+  console.log("[fetch-market-data] Fetching NSE market statistics page...");
+  const nseHeaders: Record<string, string> = {
+    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+    "Accept-Language": "en-US,en;q=0.5",
+  };
+  const pageRes = await fetch(NSE_MARKET_STATS_PAGE, { headers: nseHeaders });
+  if (!pageRes.ok) {
+    console.error(`[fetch-market-data] NSE page fetch failed: ${pageRes.status} ${pageRes.statusText}`);
+    throw new Error(`NSE market stats page failed: ${pageRes.status}`);
+  }
 
   const pageHtml = await pageRes.text();
   const nonce = pageHtml.match(/"ajaxnonce":"([^"]+)"/)?.[1];
-  if (!nonce) throw new Error("NSE ajax nonce not found");
+  if (!nonce) {
+    console.error("[fetch-market-data] NSE ajax nonce not found in page HTML (length: " + pageHtml.length + ")");
+    throw new Error("NSE ajax nonce not found");
+  }
+  console.log(`[fetch-market-data] NSE nonce found, fetching ${[...new Set(Object.values(NSE_SECTOR_MAP))].length} sectors...`);
 
   const sectorRows = new Map<string, Array<{ company: string; price: number; changePct: number; volume: number }>>();
   const sectors = [...new Set(Object.values(NSE_SECTOR_MAP))];
@@ -201,7 +211,6 @@ async function fetchNseStockQuotes(): Promise<Record<string, {
       headers: {
         "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
         "Accept": "text/html, */*",
-        "User-Agent": "Mozilla/5.0 (compatible; KenyaFundFinder/1.0)",
         "Referer": NSE_MARKET_STATS_PAGE,
       },
       body: body.toString(),
@@ -309,52 +318,77 @@ Deno.serve(async (req) => {
   const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
   const supabase = createClient(supabaseUrl, serviceRoleKey);
 
-  // Authentication: require either a valid admin user or an anon/service-role JWT (cron job)
+  // Authentication: allow cron jobs (via service role or anon JWT) and admin users
   const authHeader = req.headers.get("Authorization") || "";
   const token = authHeader.replace("Bearer ", "");
 
-  // Check if this is a service-level call (cron job via pg_net sends anon key as JWT)
-  // Decode the JWT payload to check the role claim
+  // Check if this is a service-level / cron call
   let isCronCall = false;
+  
+  // Method 1: Check for cron secret in body
+  let body: Record<string, unknown> = {};
   try {
-    const payload = JSON.parse(atob(token.split(".")[1]));
-    // If the role is "anon" or "service_role", it's a system call not a user call
-    if (payload.role === "anon" || payload.role === "service_role") {
-      isCronCall = true;
-    }
-  } catch { /* not a valid JWT, will fall through to user auth */ }
+    body = await req.json();
+  } catch { /* no body is fine */ }
+  
+  const cronSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (body?.cron_secret === cronSecret && cronSecret) {
+    isCronCall = true;
+    console.log("[fetch-market-data] Cron call authenticated via secret");
+  }
 
+  // Method 2: Check JWT role claim (anon/service_role from pg_net)
   if (!isCronCall) {
-    // Verify the caller is an authenticated admin
+    try {
+      const parts = token.split(".");
+      if (parts.length === 3) {
+        const payload = JSON.parse(atob(parts[1]));
+        if (payload.role === "anon" || payload.role === "service_role") {
+          isCronCall = true;
+          console.log(`[fetch-market-data] Cron call detected (role: ${payload.role})`);
+        }
+      }
+    } catch {
+      // Not a standard JWT
+    }
+  }
+
+  // Method 3: Check getClaims for authenticated admin user
+  if (!isCronCall) {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
-    const { data: { user }, error: authError } = await userClient.auth.getUser();
-    if (authError || !user) {
+    
+    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
+    if (claimsError || !claimsData?.claims?.sub) {
+      console.error("[fetch-market-data] Auth failed:", claimsError?.message || "no claims");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    // Check admin role
+    const userId = claimsData.claims.sub as string;
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
-      .eq("user_id", user.id)
+      .eq("user_id", userId)
       .eq("role", "admin")
       .maybeSingle();
 
     if (!roleData) {
+      console.error("[fetch-market-data] User is not admin:", userId);
       return new Response(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
+    console.log("[fetch-market-data] Admin user authenticated:", userId);
   }
 
   const results: string[] = [];
+  console.log("[fetch-market-data] Starting data fetch cycle...");
 
   try {
     // ── 1. Fetch FX rates ──
@@ -390,7 +424,8 @@ Deno.serve(async (req) => {
       }
       results.push(`FX: processed ${existing?.length || 0} currencies`);
     } else {
-      results.push(`FX API returned non-OK status`);
+      console.error(`[fetch-market-data] FX API failed: ${fxRes.status} ${fxRes.statusText}`);
+      results.push(`FX API returned ${fxRes.status}`);
     }
 
     // ── 2. Fetch commodity prices ──
@@ -490,10 +525,31 @@ Deno.serve(async (req) => {
 
     if (stockRows && stockRows.length > 0) {
       let stocksUpdated = 0;
-      const nseQuotes = await fetchNseStockQuotes();
+      let nseQuotes: Record<string, { price: number; previousPrice: number; dayChange: number; dayChangePct: number; volume: number }> = {};
+      
+      try {
+        nseQuotes = await fetchNseStockQuotes();
+        console.log(`[fetch-market-data] NSE quotes fetched: ${Object.keys(nseQuotes).length} stocks`);
+      } catch (nseError) {
+        console.error("[fetch-market-data] NSE scrape failed, will try Yahoo Finance fallback:", String(nseError));
+        results.push(`NSE scrape failed: ${String(nseError)}`);
+      }
 
       for (const row of stockRows) {
-        const quote = nseQuotes[(row.symbol || "").toUpperCase()];
+        const sym = (row.symbol || "").toUpperCase();
+        let quote = nseQuotes[sym];
+        
+        // Yahoo Finance fallback if NSE didn't return data for this stock
+        if ((!quote || quote.price <= 0) && NSE_YAHOO_MAP[sym]) {
+          try {
+            const yq = await fetchYahooQuote(NSE_YAHOO_MAP[sym]);
+            if (yq && yq.price > 0) {
+              quote = { price: yq.price, previousPrice: yq.previousClose, dayChange: yq.dayChange, dayChangePct: yq.dayChangePct, volume: yq.volume };
+              console.log(`[fetch-market-data] Yahoo fallback for ${sym}: ${yq.price}`);
+            }
+          } catch { /* skip */ }
+        }
+        
         if (!quote || quote.price <= 0) continue;
 
         const updateData: Record<string, unknown> = {
@@ -507,20 +563,21 @@ Deno.serve(async (req) => {
         if (quote.volume > 0) updateData.volume = quote.volume;
 
         await supabase.from("stocks").update(updateData).eq("id", row.id);
-        results.push(`Stock ${row.symbol}: synced ${quote.price} (${quote.dayChangePct > 0 ? "+" : ""}${quote.dayChangePct}%)`);
         stocksUpdated++;
       }
 
       results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length}`);
+      console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length}, NSE quotes found: ${Object.keys(nseQuotes).length}`);
     }
 
+    console.log(`[fetch-market-data] Completed successfully: ${results.length} operations`);
     return new Response(JSON.stringify({ success: true, results }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
-    console.error("fetch-market-data error:", error);
+    console.error("[fetch-market-data] FATAL error:", error);
     return new Response(
-      JSON.stringify({ success: false, error: "Internal server error" }),
+      JSON.stringify({ success: false, error: String(error) }),
       {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
