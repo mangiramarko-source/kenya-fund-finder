@@ -130,12 +130,6 @@ const ComparePage = () => {
       <div className="mb-6">
         <div className="flex items-center gap-3 mb-1 flex-wrap">
           <h1 className="text-2xl md:text-3xl font-bold">Compare Unit Trust Funds</h1>
-          {isLive && (
-            <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 text-xs font-semibold">
-              <Radio className="h-3 w-3 animate-pulse" />
-              Live · Updated Today
-            </span>
-          )}
         </div>
         <p className="text-muted-foreground text-sm md:text-base">
           All funds listed are regulated by the Capital Markets Authority of Kenya.
