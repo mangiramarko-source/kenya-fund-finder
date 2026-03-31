@@ -43,7 +43,7 @@ const ComparePage = () => {
   const [searchParams] = useSearchParams();
   const initialType = (searchParams.get("type") as FundType) || "money_market";
   const [activeType, setActiveType] = useState<FundType>(initialType);
-  const { isLive, lastUpdateDate } = useLiveStatus();
+  
 
   useEffect(() => {
     Promise.all([fetchFunds(), fetchLatestSnapshots()]).then(([fundsData, snapshotsData]) => {
