@@ -258,7 +258,7 @@ const StocksPage = () => {
             <button
               key={s}
               onClick={() => setSector(s)}
-              className={`px-3 py-1.5 rounded-full text-xs font-medium transition-all ${
+              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                 sector === s
                   ? "bg-primary text-primary-foreground shadow-sm"
                   : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
