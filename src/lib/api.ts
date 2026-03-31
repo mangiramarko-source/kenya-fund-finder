@@ -84,7 +84,7 @@ export async function fetchFunds(): Promise<FundFromDB[]> {
 export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> {
   const { data, error } = await supabase
     .from("funds_public")
-    .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, fund_type, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, yield_unit, is_published, updated_at")
+    .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, seven_day_yield, thirty_day_yield, fund_type, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, yield_unit, is_published, updated_at")
     .eq("slug", slug)
     .maybeSingle();
   if (error) throw error;
@@ -95,6 +95,8 @@ export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> 
     yield_unit: data.yield_unit || "%",
     annual_yield: Number(data.annual_yield),
     daily_yield: Number(data.daily_yield),
+    seven_day_yield: Number(data.seven_day_yield),
+    thirty_day_yield: Number(data.thirty_day_yield),
     minimum_investment: Number(data.minimum_investment),
     management_fee: Number(data.management_fee),
   };
