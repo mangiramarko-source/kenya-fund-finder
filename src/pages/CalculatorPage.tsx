@@ -251,15 +251,7 @@ const CalculatorPage = () => {
 
         <TabsContent value="investment">
 
-      {showCompareGate && !user && (
-        <div className="mb-8">
-          <AuthGate
-            source="calculator_compare"
-            title="Sign up to compare funds"
-            description="Create a free account to compare funds side by side and see which one earns you more."
-          />
-        </div>
-      )}
+      {/* Compare gate removed — public access */}
 
       {/* Main layout: sidebar inputs + results */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">

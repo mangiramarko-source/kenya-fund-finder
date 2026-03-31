@@ -165,44 +165,31 @@ const NewsArticlePage = () => {
       </p>
 
       {/* Content */}
-      {isAuthenticated ? (
-        <>
-          <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
-            {article.content ? (
-              article.content.split("\n").filter(Boolean).map((paragraph, i) => (
-                <p key={i} className="text-sm sm:text-base text-muted-foreground leading-relaxed">{paragraph}</p>
-              ))
-            ) : (
-              <p className="text-sm text-muted-foreground italic">Full article content is not yet available.</p>
+      {(() => {
+        // All content is now publicly accessible
+        return (
+          <>
+            <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
+              {article.content ? (
+                article.content.split("\n").filter(Boolean).map((paragraph, i) => (
+                  <p key={i} className="text-sm sm:text-base text-muted-foreground leading-relaxed">{paragraph}</p>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground italic">Full article content is not yet available.</p>
+              )}
+            </div>
+            {article.url && /^https?:\/\//i.test(article.url) && (
+              <div className="mt-6 pt-4 border-t border-border">
+                <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
+                  <a href={article.url} target="_blank" rel="noopener noreferrer">
+                    Read Original Source <ArrowRight className="h-3.5 w-3.5" />
+                  </a>
+                </Button>
+              </div>
             )}
-          </div>
-          {article.url && /^https?:\/\//i.test(article.url) && (
-            <div className="mt-6 pt-4 border-t border-border">
-              <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
-                <a href={article.url} target="_blank" rel="noopener noreferrer">
-                  Read Original Source <ArrowRight className="h-3.5 w-3.5" />
-                </a>
-              </Button>
-            </div>
-          )}
-        </>
-      ) : (
-        <div>
-          {article.content && (
-            <div className="relative mb-6">
-              <p className="text-sm text-muted-foreground leading-relaxed">
-                {article.content.split("\n").filter(Boolean)[0]}
-              </p>
-              <div className="mt-2 h-16 bg-gradient-to-b from-transparent to-background" />
-            </div>
-          )}
-          <AuthGate
-            source="news_article"
-            title="Sign up to read full articles"
-            description="Create a free account to access complete news articles, market analysis, and regulatory updates."
-          />
-        </div>
-      )}
+          </>
+        );
+      })()}
 
       {/* Share & actions */}
       <div className="flex items-center justify-between mt-8 pt-4 border-t border-border">

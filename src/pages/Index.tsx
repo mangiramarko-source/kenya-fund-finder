@@ -243,15 +243,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
         {selectedCategory === "fx_rates" && (
           <div className="md:hidden">
             <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Exchange rates are indicative and updated manually by administrators.</p>
-            {user ? (
-              <RatesMobileCards rates={rates} loading={marketLoading} />
-            ) : (
-              <AuthGate
-                source="currency_tab"
-                title="Sign up to view exchange rates"
-                description="Create a free account to access live currency exchange rates, trends, and our currency converter tool."
-              />
-            )}
+            <RatesMobileCards rates={rates} loading={marketLoading} />
           </div>
         )}
 
