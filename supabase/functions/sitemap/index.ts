@@ -4,12 +4,18 @@ const SITE_URL = "https://kenyafundfinder.com";
 
 const staticRoutes = [
   { path: "/", priority: "1.0", changefreq: "daily" },
+  { path: "/stocks", priority: "0.9", changefreq: "daily" },
   { path: "/compare", priority: "0.9", changefreq: "daily" },
-  { path: "/calculator", priority: "0.8", changefreq: "monthly" },
+  { path: "/rates", priority: "0.8", changefreq: "daily" },
+  { path: "/commodities", priority: "0.8", changefreq: "daily" },
+  { path: "/market-dashboard", priority: "0.8", changefreq: "daily" },
+  { path: "/overview", priority: "0.8", changefreq: "daily" },
   { path: "/news", priority: "0.8", changefreq: "daily" },
+  { path: "/calculator", priority: "0.8", changefreq: "monthly" },
   { path: "/learn", priority: "0.7", changefreq: "monthly" },
-  { path: "/rates", priority: "0.7", changefreq: "daily" },
-  { path: "/commodities", priority: "0.7", changefreq: "daily" },
+  { path: "/alerts", priority: "0.6", changefreq: "monthly" },
+  { path: "/checklist", priority: "0.6", changefreq: "monthly" },
+  { path: "/auth", priority: "0.4", changefreq: "yearly" },
   { path: "/privacy", priority: "0.3", changefreq: "yearly" },
   { path: "/terms", priority: "0.3", changefreq: "yearly" },
 ];
@@ -25,11 +31,22 @@ Deno.serve(async () => {
     .select("slug, updated_at")
     .eq("is_published", true);
 
-  // Fetch published news (for lastmod)
+  // Fetch active stocks
+  const { data: stocks } = await supabase
+    .from("stocks")
+    .select("symbol, updated_at")
+    .eq("is_active", true);
+
+  // Fetch published news
   const { data: news } = await supabase
     .from("news_articles")
     .select("id, date_published")
     .eq("status", "published");
+
+  // Fetch site pages
+  const { data: sitePages } = await supabase
+    .from("site_pages")
+    .select("slug, updated_at");
 
   const today = new Date().toISOString().split("T")[0];
 
@@ -61,6 +78,19 @@ Deno.serve(async () => {
     }
   }
 
+  // Stock detail pages
+  if (stocks) {
+    for (const stock of stocks) {
+      xml += `  <url>
+    <loc>${SITE_URL}/stocks/${stock.symbol}</loc>
+    <lastmod>${stock.updated_at?.split("T")[0] || today}</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.7</priority>
+  </url>
+`;
+    }
+  }
+
   // News article pages
   if (news) {
     for (const article of news) {
@@ -69,6 +99,19 @@ Deno.serve(async () => {
     <lastmod>${article.date_published?.split("T")[0] || today}</lastmod>
     <changefreq>monthly</changefreq>
     <priority>0.6</priority>
+  </url>
+`;
+    }
+  }
+
+  // CMS site pages
+  if (sitePages) {
+    for (const page of sitePages) {
+      xml += `  <url>
+    <loc>${SITE_URL}/page/${page.slug}</loc>
+    <lastmod>${page.updated_at?.split("T")[0] || today}</lastmod>
+    <changefreq>monthly</changefreq>
+    <priority>0.5</priority>
   </url>
 `;
     }
