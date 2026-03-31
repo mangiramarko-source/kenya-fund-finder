@@ -137,7 +137,7 @@ const FundDetailPage = () => {
     return calculateReturns(calcAmount, fund.annual_yield, calcMonths, calcMonthly, calcCompound, fund.management_fee);
   }, [fund, calcAmount, calcMonths, calcMonthly, calcCompound]);
 
-  if (loading || authLoading) {
+  if (loading) {
     return (
       <div className="container py-20 text-center text-muted-foreground">
         <div className="animate-pulse space-y-4 max-w-3xl mx-auto">
