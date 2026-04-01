@@ -15,7 +15,6 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Fetch all active, untriggered alerts
     const { data: alerts, error: alertsError } = await supabase
       .from("price_alerts")
       .select("*")
@@ -29,15 +28,15 @@ Deno.serve(async (req) => {
       });
     }
 
-    // Group alerts by type
     const stockAlerts = alerts.filter((a: any) => a.asset_type === "stock");
     const currencyAlerts = alerts.filter((a: any) => a.asset_type === "currency");
     const commodityAlerts = alerts.filter((a: any) => a.asset_type === "commodity");
+    const fundAlerts = alerts.filter((a: any) => a.asset_type === "fund");
 
-    // Fetch current prices
     const stockIds = [...new Set(stockAlerts.map((a: any) => a.asset_id))];
     const currencyIds = [...new Set(currencyAlerts.map((a: any) => a.asset_id))];
     const commodityIds = [...new Set(commodityAlerts.map((a: any) => a.asset_id))];
+    const fundIds = [...new Set(fundAlerts.map((a: any) => a.asset_id))];
 
     const priceMap: Record<string, number> = {};
 
@@ -53,6 +52,10 @@ Deno.serve(async (req) => {
       const { data } = await supabase.from("commodities").select("id, price").in("id", commodityIds);
       (data || []).forEach((c: any) => { priceMap[c.id] = Number(c.price); });
     }
+    if (fundIds.length > 0) {
+      const { data } = await supabase.from("funds").select("id, annual_yield").in("id", fundIds);
+      (data || []).forEach((f: any) => { priceMap[f.id] = Number(f.annual_yield); });
+    }
 
     let triggered = 0;
 
@@ -65,7 +68,6 @@ Deno.serve(async (req) => {
         (alert.condition === "below" && currentPrice <= alert.target_price);
 
       if (shouldTrigger) {
-        // Mark alert as triggered
         await supabase
           .from("price_alerts")
           .update({
@@ -75,11 +77,11 @@ Deno.serve(async (req) => {
           })
           .eq("id", alert.id);
 
-        // Create notification
+        const unitLabel = alert.asset_type === "fund" ? "%" : "";
         await supabase.from("notifications").insert({
           user_id: alert.user_id,
           title: `Price Alert: ${alert.asset_name}`,
-          message: `${alert.asset_name} has gone ${alert.condition} your target of ${alert.target_price.toLocaleString()}. Current price: ${currentPrice.toLocaleString()}.`,
+          message: `${alert.asset_name} has gone ${alert.condition} your target of ${alert.target_price.toLocaleString()}${unitLabel}. Current ${alert.asset_type === "fund" ? "yield" : "price"}: ${currentPrice.toLocaleString()}${unitLabel}.`,
           type: "price_alert",
           metadata: {
             alert_id: alert.id,

@@ -5,7 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 export interface PriceAlert {
   id: string;
   user_id: string;
-  asset_type: "stock" | "currency" | "commodity";
+  asset_type: "stock" | "currency" | "commodity" | "fund";
   asset_id: string;
   asset_name: string;
   target_price: number;
