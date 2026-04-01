@@ -74,7 +74,7 @@ export const CreateAlertDialog = ({
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div className="rounded-lg bg-muted/50 p-3">
-            <p className="text-xs text-muted-foreground">Asset</p>
+            <p className="text-xs text-muted-foreground">{assetType === "fund" ? "Unit Trust" : "Asset"}</p>
             <p className="font-semibold text-foreground">{assetName}</p>
             <p className="text-xs text-muted-foreground mt-1">
               Current price: <span className="font-semibold text-accent">{currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })} {unit}</span>
