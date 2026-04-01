@@ -246,17 +246,18 @@ const FundDetailPage = () => {
           <QuickStat label="Withdrawal" value={fund.withdrawal_time} />
         </div>
 
-        <p className="text-[11px] text-muted-foreground/60 mt-3 tabular-nums">
-          Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+        <div className="flex items-center justify-between mt-3">
+          <p className="text-[11px] text-muted-foreground/60 tabular-nums">
+            Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+          </p>
           {fund.website && /^https?:\/\//i.test(fund.website) && (
-            <>
-              {" · "}
-              <a href={fund.website} target="_blank" rel="noopener noreferrer" className="text-accent hover:underline inline-flex items-center gap-0.5">
-                Official site <ExternalLink className="h-3 w-3" />
-              </a>
-            </>
+            <a href={fund.website} target="_blank" rel="noopener noreferrer">
+              <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1.5 text-xs rounded-full px-4">
+                <ExternalLink className="h-3.5 w-3.5" /> Visit Official Site
+              </Button>
+            </a>
           )}
-        </p>
+        </div>
       </div>
 
       {/* ━━━ SECTION 2: Rate History Chart ━━━ */}
