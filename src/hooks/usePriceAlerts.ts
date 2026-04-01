@@ -36,11 +36,11 @@ export function usePriceAlerts() {
   const fetchAlerts = async () => {
     if (!user) { setAlerts([]); setLoading(false); return; }
     const { data } = await supabase
-      .from("price_alerts" as any)
+      .from("price_alerts")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false });
-    setAlerts((data as any as PriceAlert[]) || []);
+    setAlerts((data as PriceAlert[]) || []);
     setLoading(false);
   };
 
@@ -55,10 +55,17 @@ export function usePriceAlerts() {
     target_price: number;
     condition: string;
   }) => {
-    if (!user) return null;
+    if (!user) return { data: null, error: { message: "Not authenticated" } };
     const { data, error } = await supabase
-      .from("price_alerts" as any)
-      .insert({ ...alert, user_id: user.id } as any)
+      .from("price_alerts")
+      .insert({
+        asset_type: alert.asset_type,
+        asset_id: alert.asset_id,
+        asset_name: alert.asset_name,
+        target_price: alert.target_price,
+        condition: alert.condition,
+        user_id: user.id,
+      })
       .select()
       .single();
     if (!error) {
@@ -68,12 +75,12 @@ export function usePriceAlerts() {
   };
 
   const deleteAlert = async (id: string) => {
-    await supabase.from("price_alerts" as any).delete().eq("id", id);
+    await supabase.from("price_alerts").delete().eq("id", id);
     await fetchAlerts();
   };
 
   const toggleAlert = async (id: string, isActive: boolean) => {
-    await supabase.from("price_alerts" as any).update({ is_active: isActive } as any).eq("id", id);
+    await supabase.from("price_alerts").update({ is_active: isActive }).eq("id", id);
     await fetchAlerts();
   };
 
@@ -88,12 +95,12 @@ export function useNotifications() {
   const fetchNotifications = async () => {
     if (!user) { setNotifications([]); setUnreadCount(0); return; }
     const { data } = await supabase
-      .from("notifications" as any)
+      .from("notifications")
       .select("*")
       .eq("user_id", user.id)
       .order("created_at", { ascending: false })
       .limit(50);
-    const notifs = (data as any as Notification[]) || [];
+    const notifs = (data as Notification[]) || [];
     setNotifications(notifs);
     setUnreadCount(notifs.filter((n) => !n.is_read).length);
   };
@@ -116,18 +123,18 @@ export function useNotifications() {
   }, [user]);
 
   const markAsRead = async (id: string) => {
-    await supabase.from("notifications" as any).update({ is_read: true } as any).eq("id", id);
+    await supabase.from("notifications").update({ is_read: true }).eq("id", id);
     await fetchNotifications();
   };
 
   const markAllRead = async () => {
     if (!user) return;
-    await supabase.from("notifications" as any).update({ is_read: true } as any).eq("user_id", user.id).eq("is_read", false);
+    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
     await fetchNotifications();
   };
 
   const deleteNotification = async (id: string) => {
-    await supabase.from("notifications" as any).delete().eq("id", id);
+    await supabase.from("notifications").delete().eq("id", id);
     await fetchNotifications();
   };
 
