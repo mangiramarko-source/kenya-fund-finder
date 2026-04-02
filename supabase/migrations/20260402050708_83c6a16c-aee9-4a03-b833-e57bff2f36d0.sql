@@ -1,0 +1,1 @@
+DROP POLICY "Anyone can insert ad events" ON public.ad_events;
