@@ -1,6 +1,6 @@
 import { useEffect, useState, useMemo } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
