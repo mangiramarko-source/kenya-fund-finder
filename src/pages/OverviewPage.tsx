@@ -292,7 +292,14 @@ const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, co
 
 /* ─── Main Page ─── */
 const OverviewPage = () => {
-  useDocumentTitle("My Overview | Kenya Fund Finder", "Your personalized market dashboard.");
+  useDocumentTitle(
+    "Kenya Fund Finder – Compare Stocks, Unit Trusts, FX & Commodities",
+    "Kenya's leading platform for comparing CMA-regulated unit trusts, NSE stocks, FX rates, and commodity prices. Daily-updated data, calculators, and alerts.",
+    {
+      title: "Kenya Fund Finder – Compare Stocks, Unit Trusts, FX & Commodities",
+      description: "Kenya's leading platform for comparing CMA-regulated unit trusts, NSE stocks, FX rates, and commodity prices.",
+    }
+  );
   const navigate = useNavigate();
   const { user } = useAuth();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();

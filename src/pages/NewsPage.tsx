@@ -31,9 +31,9 @@ const formatDate = (d: string) =>
 
 const NewsPage = () => {
   useDocumentTitle(
-    "News – Kenya Fund Finder",
-    "Stay informed about Money Market Funds in Kenya with the latest yield updates, market news, and regulatory changes.",
-    { title: "News – Kenya Fund Finder", description: "Stay informed about Money Market Funds in Kenya with the latest yield updates, market news, and regulatory changes." }
+    "Kenya Investment News – Unit Trusts, Stocks & Market Updates",
+    "Stay informed with the latest Kenyan investment news: unit trust yield updates, NSE stock market news, regulatory changes, and fund announcements.",
+    { title: "Kenya Investment News – Unit Trusts, Stocks & Market Updates", description: "Latest Kenyan investment news covering unit trust yields, stock market, FX rates, and regulatory changes." }
   );
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
@@ -147,11 +147,12 @@ const NewsPage = () => {
                 className="lg:col-span-7 group relative rounded-xl overflow-hidden border border-border hover:border-accent/30 transition-all"
               >
                 <div className="aspect-[16/9] lg:aspect-[16/10]">
-                  <img
-                    src={getNewsImage(heroArticle.image_url, heroArticle.category, heroArticle.id)}
-                    alt={heroArticle.title}
-                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                  />
+                    <img
+                      src={getNewsImage(heroArticle.image_url, heroArticle.category, heroArticle.id)}
+                      alt={`${heroArticle.title} – ${heroArticle.category}`}
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                      loading="lazy"
+                    />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
