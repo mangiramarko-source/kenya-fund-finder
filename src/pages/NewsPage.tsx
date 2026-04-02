@@ -31,9 +31,9 @@ const formatDate = (d: string) =>
 
 const NewsPage = () => {
   useDocumentTitle(
-    "News – Kenya Fund Finder",
-    "Stay informed about Money Market Funds in Kenya with the latest yield updates, market news, and regulatory changes.",
-    { title: "News – Kenya Fund Finder", description: "Stay informed about Money Market Funds in Kenya with the latest yield updates, market news, and regulatory changes." }
+    "Kenya Investment News – Unit Trusts, Stocks & Market Updates",
+    "Stay informed with the latest Kenyan investment news: unit trust yield updates, NSE stock market news, regulatory changes, and fund announcements.",
+    { title: "Kenya Investment News – Unit Trusts, Stocks & Market Updates", description: "Latest Kenyan investment news covering unit trust yields, stock market, FX rates, and regulatory changes." }
   );
   const [activeCategory, setActiveCategory] = useState<string>("All");
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
