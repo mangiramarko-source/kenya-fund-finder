@@ -206,6 +206,45 @@ export type Database = {
         }
         Relationships: []
       }
+      commodity_price_history: {
+        Row: {
+          commodity_id: string
+          created_at: string
+          id: string
+          price: number
+          snapshot_date: string
+        }
+        Insert: {
+          commodity_id: string
+          created_at?: string
+          id?: string
+          price: number
+          snapshot_date?: string
+        }
+        Update: {
+          commodity_id?: string
+          created_at?: string
+          id?: string
+          price?: number
+          snapshot_date?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commodity_price_history_commodity_id_fkey"
+            columns: ["commodity_id"]
+            isOneToOne: false
+            referencedRelation: "commodities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commodity_price_history_commodity_id_fkey"
+            columns: ["commodity_id"]
+            isOneToOne: false
+            referencedRelation: "commodities_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       exchange_rate_history: {
         Row: {
           created_at: string
@@ -939,6 +978,31 @@ export type Database = {
           updated_at?: string | null
         }
         Relationships: []
+      }
+      commodity_price_history_public: {
+        Row: {
+          commodity_id: string | null
+          id: string | null
+          price: number | null
+          snapshot_date: string | null
+          symbol: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "commodity_price_history_commodity_id_fkey"
+            columns: ["commodity_id"]
+            isOneToOne: false
+            referencedRelation: "commodities"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "commodity_price_history_commodity_id_fkey"
+            columns: ["commodity_id"]
+            isOneToOne: false
+            referencedRelation: "commodities_public"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       exchange_rate_history_public: {
         Row: {
