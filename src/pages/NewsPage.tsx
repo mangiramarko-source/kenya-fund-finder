@@ -147,11 +147,12 @@ const NewsPage = () => {
                 className="lg:col-span-7 group relative rounded-xl overflow-hidden border border-border hover:border-accent/30 transition-all"
               >
                 <div className="aspect-[16/9] lg:aspect-[16/10]">
-                  <img
-                    src={getNewsImage(heroArticle.image_url, heroArticle.category, heroArticle.id)}
-                    alt={heroArticle.title}
-                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                  />
+                    <img
+                      src={getNewsImage(heroArticle.image_url, heroArticle.category, heroArticle.id)}
+                      alt={`${heroArticle.title} – ${heroArticle.category}`}
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                      loading="lazy"
+                    />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">

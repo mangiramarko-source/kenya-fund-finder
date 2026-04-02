@@ -71,8 +71,28 @@ const StockDetailPage = () => {
 
   useDocumentTitle(
     stock ? `${stock.symbol} – ${stock.name} | Kenya Fund Finder` : "Stock Detail | Kenya Fund Finder",
-    stock ? `View ${stock.symbol} stock price, financials, and statistics on the Kenyan Stock Market.` : ""
+    stock ? `${stock.name} (${stock.symbol}) stock price KSh ${stock.price.toLocaleString()}, daily change, volume, P/E ratio, and dividend yield on the Nairobi Securities Exchange.` : "",
+    stock ? {
+      title: `${stock.symbol} – ${stock.name} Stock Price | Kenya Fund Finder`,
+      description: `${stock.name} (${stock.symbol}) at KSh ${stock.price.toLocaleString()}. Track price history, volume, and financials.`,
+    } : undefined
   );
+  useJsonLd(stock ? {
+    "@context": "https://schema.org",
+    "@type": "FinancialProduct",
+    name: `${stock.name} (${stock.symbol})`,
+    description: `${stock.name} stock listed on the Nairobi Securities Exchange. Current price: KSh ${stock.price.toLocaleString()}.`,
+    url: `https://kenyafundfinder.com/stocks/${stock.symbol}`,
+  } : null);
+  useJsonLd(stock ? {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Home", item: "https://kenyafundfinder.com/" },
+      { "@type": "ListItem", position: 2, name: "Stocks", item: "https://kenyafundfinder.com/stocks" },
+      { "@type": "ListItem", position: 3, name: `${stock.symbol} – ${stock.name}`, item: `https://kenyafundfinder.com/stocks/${stock.symbol}` },
+    ],
+  } : null);
 
   useEffect(() => {
     if (!symbol) return;
