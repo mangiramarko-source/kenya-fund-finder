@@ -4,18 +4,15 @@ const SITE_URL = "https://kenyafundfinder.com";
 
 const staticRoutes = [
   { path: "/", priority: "1.0", changefreq: "daily" },
+  { path: "/funds", priority: "0.9", changefreq: "daily" },
   { path: "/stocks", priority: "0.9", changefreq: "daily" },
   { path: "/compare", priority: "0.9", changefreq: "daily" },
   { path: "/rates", priority: "0.8", changefreq: "daily" },
   { path: "/commodities", priority: "0.8", changefreq: "daily" },
-  { path: "/market-dashboard", priority: "0.8", changefreq: "daily" },
-  { path: "/overview", priority: "0.8", changefreq: "daily" },
+  { path: "/markets", priority: "0.8", changefreq: "daily" },
   { path: "/news", priority: "0.8", changefreq: "daily" },
   { path: "/calculator", priority: "0.8", changefreq: "monthly" },
   { path: "/learn", priority: "0.7", changefreq: "monthly" },
-  { path: "/alerts", priority: "0.6", changefreq: "monthly" },
-  { path: "/checklist", priority: "0.6", changefreq: "monthly" },
-  { path: "/auth", priority: "0.4", changefreq: "yearly" },
   { path: "/privacy", priority: "0.3", changefreq: "yearly" },
   { path: "/terms", priority: "0.3", changefreq: "yearly" },
 ];
