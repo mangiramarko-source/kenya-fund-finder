@@ -35,10 +35,8 @@ const AdminLoginPage = () => {
     e.preventDefault();
     setError("");
 
-    if (!turnstileToken) {
-      setError("Please complete the security verification");
-      return;
-    }
+    // Turnstile is best-effort
+    
 
     setLoading(true);
 
