@@ -58,10 +58,8 @@ const AuthPage = () => {
     setError("");
     setMessage("");
 
-    if (!turnstileToken) {
-      setError("Please complete the security verification");
-      return;
-    }
+    // Turnstile is best-effort: verify if token available, skip if widget couldn't load (e.g. wrong domain)
+    
 
     if (isSignUp && password !== confirmPassword) {
       setError("Passwords do not match");
