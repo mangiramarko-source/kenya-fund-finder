@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { lovable } from "@/integrations/lovable";
@@ -21,6 +21,7 @@ const AuthPage = () => {
   const [loading, setLoading] = useState(false);
   const [message, setMessage] = useState("");
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const botFieldsRef = useRef<{ honeypot: string; formLoadedAt: number }>({ honeypot: "", formLoadedAt: Date.now() });
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
 
@@ -32,10 +33,18 @@ const AuthPage = () => {
     setTurnstileToken(null);
   }, []);
 
+  const handleBotFields = useCallback((fields: { honeypot: string; formLoadedAt: number }) => {
+    botFieldsRef.current = fields;
+  }, []);
+
   const verifyTurnstile = async (token: string): Promise<boolean> => {
     try {
       const { data, error } = await supabase.functions.invoke("verify-turnstile", {
-        body: { token },
+        body: {
+          token,
+          honeypot: botFieldsRef.current.honeypot,
+          formLoadedAt: botFieldsRef.current.formLoadedAt,
+        },
       });
       if (error) return false;
       return data?.success === true;
@@ -75,7 +84,7 @@ const AuthPage = () => {
       if (error) {
         setError(error.message);
       } else {
-        setMessage("Account created! You can now sign in.");
+        setMessage("Account created! Please check your email to verify your account before signing in.");
         setIsSignUp(false);
         setPassword("");
       }
@@ -170,7 +179,7 @@ const AuthPage = () => {
             )}
             {error && <p className="text-sm text-destructive">{error}</p>}
             {message && <p className="text-sm text-accent">{message}</p>}
-            <CloudflareTurnstile onVerify={handleTurnstileVerify} onExpire={handleTurnstileExpire} />
+            <CloudflareTurnstile onVerify={handleTurnstileVerify} onExpire={handleTurnstileExpire} onBotFields={handleBotFields} />
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading || !turnstileToken}>
               {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
             </Button>
