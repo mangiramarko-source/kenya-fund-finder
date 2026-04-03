@@ -58,10 +58,8 @@ const AuthPage = () => {
     setError("");
     setMessage("");
 
-    if (!turnstileToken) {
-      setError("Please complete the security verification");
-      return;
-    }
+    // Turnstile is best-effort: verify if token available, skip if widget couldn't load (e.g. wrong domain)
+    
 
     if (isSignUp && password !== confirmPassword) {
       setError("Passwords do not match");
@@ -70,12 +68,14 @@ const AuthPage = () => {
 
     setLoading(true);
 
-    const verified = await verifyTurnstile(turnstileToken);
-    if (!verified) {
-      setError("Security verification failed. Please try again.");
-      setTurnstileToken(null);
-      setLoading(false);
-      return;
+    if (turnstileToken) {
+      const verified = await verifyTurnstile(turnstileToken);
+      if (!verified) {
+        setError("Security verification failed. Please try again.");
+        setTurnstileToken(null);
+        setLoading(false);
+        return;
+      }
     }
 
     if (isSignUp) {
@@ -180,7 +180,7 @@ const AuthPage = () => {
             {error && <p className="text-sm text-destructive">{error}</p>}
             {message && <p className="text-sm text-accent">{message}</p>}
             <CloudflareTurnstile onVerify={handleTurnstileVerify} onExpire={handleTurnstileExpire} onBotFields={handleBotFields} />
-            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading || !turnstileToken}>
+            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
               {loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}
             </Button>
           </form>

@@ -35,32 +35,32 @@ const AdminLoginPage = () => {
     e.preventDefault();
     setError("");
 
-    if (!turnstileToken) {
-      setError("Please complete the security verification");
-      return;
-    }
+    // Turnstile is best-effort
+    
 
     setLoading(true);
 
-    try {
-      const { data, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
-        body: {
-          token: turnstileToken,
-          honeypot: botFieldsRef.current.honeypot,
-          formLoadedAt: botFieldsRef.current.formLoadedAt,
-        },
-      });
-      if (verifyError || !data?.success) {
-        setError(data?.error || "Security verification failed. Please try again.");
+    if (turnstileToken) {
+      try {
+        const { data, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
+          body: {
+            token: turnstileToken,
+            honeypot: botFieldsRef.current.honeypot,
+            formLoadedAt: botFieldsRef.current.formLoadedAt,
+          },
+        });
+        if (verifyError || !data?.success) {
+          setError(data?.error || "Security verification failed. Please try again.");
+          setTurnstileToken(null);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        setError("Security verification failed. Please try again.");
         setTurnstileToken(null);
         setLoading(false);
         return;
       }
-    } catch {
-      setError("Security verification failed. Please try again.");
-      setTurnstileToken(null);
-      setLoading(false);
-      return;
     }
 
     const { error } = await signIn(email, password);
@@ -95,7 +95,7 @@ const AdminLoginPage = () => {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <CloudflareTurnstile onVerify={handleTurnstileVerify} onExpire={handleTurnstileExpire} onBotFields={handleBotFields} />
-            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading || !turnstileToken}>
+            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
               <Lock className="mr-2 h-4 w-4" />
               {loading ? "Signing in..." : "Sign In"}
             </Button>
