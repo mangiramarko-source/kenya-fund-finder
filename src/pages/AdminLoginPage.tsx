@@ -95,7 +95,7 @@ const AdminLoginPage = () => {
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
             <CloudflareTurnstile onVerify={handleTurnstileVerify} onExpire={handleTurnstileExpire} onBotFields={handleBotFields} />
-            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading || !turnstileToken}>
+            <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading}>
               <Lock className="mr-2 h-4 w-4" />
               {loading ? "Signing in..." : "Sign In"}
             </Button>
