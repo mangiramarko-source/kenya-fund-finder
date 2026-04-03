@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -15,6 +15,7 @@ const AdminLoginPage = () => {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null);
+  const botFieldsRef = useRef<{ honeypot: string; formLoadedAt: number }>({ honeypot: "", formLoadedAt: Date.now() });
   const { signIn } = useAuth();
   const navigate = useNavigate();
 
@@ -24,6 +25,10 @@ const AdminLoginPage = () => {
 
   const handleTurnstileExpire = useCallback(() => {
     setTurnstileToken(null);
+  }, []);
+
+  const handleBotFields = useCallback((fields: { honeypot: string; formLoadedAt: number }) => {
+    botFieldsRef.current = fields;
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -39,10 +44,14 @@ const AdminLoginPage = () => {
 
     try {
       const { data, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
-        body: { token: turnstileToken },
+        body: {
+          token: turnstileToken,
+          honeypot: botFieldsRef.current.honeypot,
+          formLoadedAt: botFieldsRef.current.formLoadedAt,
+        },
       });
       if (verifyError || !data?.success) {
-        setError("Security verification failed. Please try again.");
+        setError(data?.error || "Security verification failed. Please try again.");
         setTurnstileToken(null);
         setLoading(false);
         return;
@@ -85,7 +94,7 @@ const AdminLoginPage = () => {
               <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required minLength={6} maxLength={128} className="mt-1" autoComplete="current-password" />
             </div>
             {error && <p className="text-sm text-destructive">{error}</p>}
-            <CloudflareTurnstile onVerify={handleTurnstileVerify} onExpire={handleTurnstileExpire} />
+            <CloudflareTurnstile onVerify={handleTurnstileVerify} onExpire={handleTurnstileExpire} onBotFields={handleBotFields} />
             <Button type="submit" className="w-full bg-accent text-accent-foreground hover:bg-accent/90" disabled={loading || !turnstileToken}>
               <Lock className="mr-2 h-4 w-4" />
               {loading ? "Signing in..." : "Sign In"}
