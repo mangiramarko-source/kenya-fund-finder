@@ -68,12 +68,14 @@ const AuthPage = () => {
 
     setLoading(true);
 
-    const verified = await verifyTurnstile(turnstileToken);
-    if (!verified) {
-      setError("Security verification failed. Please try again.");
-      setTurnstileToken(null);
-      setLoading(false);
-      return;
+    if (turnstileToken) {
+      const verified = await verifyTurnstile(turnstileToken);
+      if (!verified) {
+        setError("Security verification failed. Please try again.");
+        setTurnstileToken(null);
+        setLoading(false);
+        return;
+      }
     }
 
     if (isSignUp) {
