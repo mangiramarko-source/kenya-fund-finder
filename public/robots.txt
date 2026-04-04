@@ -5,39 +5,27 @@ Disallow: /admin-login
 Disallow: /profile
 Disallow: /reset-password
 
-# --- ALLOWED FOR SEO & DISCOVERY ---
+# --- ALLOWED FOR SEARCH & DISCOVERY ---
+# These bots help companies like Google find and index your site
 User-agent: Googlebot
-Allow: /
-
 User-agent: Bingbot
-Allow: /
-
 User-agent: Slurp
-Allow: /
-
 User-agent: DuckDuckBot
-Allow: /
-
 User-agent: Baiduspider
-Allow: /
-
 User-agent: Yandex
 Allow: /
 
-# --- ALLOWED FOR SOCIAL MEDIA PREVIEWS ---
+# --- ALLOWED FOR SOCIAL MEDIA & MESSAGING ---
+# These ensure high-quality previews on LinkedIn, WhatsApp, etc.
 User-agent: Twitterbot
-Allow: /
-
 User-agent: facebookexternalhit
-Allow: /
-
 User-agent: LinkedInBot
-Allow: /
-
 User-agent: Pinterestbot
+User-agent: WhatsApp
 Allow: /
 
-# --- DISALLOWED AI & SCRAPERS ---
+# --- DISALLOWED AI, SCRAPERS & SEO TOOLS ---
+# Comprehensive list to protect your data from being harvested
 User-agent: ai2bot
 User-agent: ai2bot-dolma
 User-agent: ahrefsbot
