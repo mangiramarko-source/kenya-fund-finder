@@ -102,11 +102,24 @@ const AuthPage = () => {
 
   const handleGoogleSignIn = async () => {
     setError("");
-    const result = await lovable.auth.signInWithOAuth("google", {
-      redirect_uri: window.location.origin,
-    });
-    if (result.error) {
-      setError(result.error.message || "Google sign-in failed");
+    setLoading(true);
+    try {
+      const result = await lovable.auth.signInWithOAuth("google", {
+        redirect_uri: window.location.origin,
+      });
+      if (result.error) {
+        setError(result.error.message || "Google sign-in failed");
+        setLoading(false);
+        return;
+      }
+      if (result.redirected) {
+        return; // Browser will redirect to Google
+      }
+      // Session set successfully — redirect to home
+      navigate("/");
+    } catch {
+      setError("Google sign-in failed. Please try again.");
+      setLoading(false);
     }
   };
 
