@@ -11,8 +11,11 @@ const staticRoutes = [
   { path: "/commodities", priority: "0.8", changefreq: "daily" },
   { path: "/markets", priority: "0.8", changefreq: "daily" },
   { path: "/news", priority: "0.8", changefreq: "daily" },
+  { path: "/overview", priority: "0.8", changefreq: "daily" },
   { path: "/calculator", priority: "0.8", changefreq: "monthly" },
+  { path: "/alerts", priority: "0.7", changefreq: "monthly" },
   { path: "/learn", priority: "0.7", changefreq: "monthly" },
+  { path: "/checklist", priority: "0.6", changefreq: "monthly" },
   { path: "/privacy", priority: "0.3", changefreq: "yearly" },
   { path: "/terms", priority: "0.3", changefreq: "yearly" },
 ];
