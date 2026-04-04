@@ -5,40 +5,180 @@ Disallow: /admin-login
 Disallow: /profile
 Disallow: /reset-password
 
+# --- ALLOWED FOR SEO & DISCOVERY ---
 User-agent: Googlebot
 Allow: /
 
 User-agent: Bingbot
 Allow: /
 
+User-agent: Slurp
+Allow: /
+
+User-agent: DuckDuckBot
+Allow: /
+
+User-agent: Baiduspider
+Allow: /
+
+User-agent: Yandex
+Allow: /
+
+# --- ALLOWED FOR SOCIAL MEDIA PREVIEWS ---
 User-agent: Twitterbot
 Allow: /
 
 User-agent: facebookexternalhit
 Allow: /
 
-User-agent: GPTBot
-Disallow: /
+User-agent: LinkedInBot
+Allow: /
 
-User-agent: ChatGPT-User
-Disallow: /
+User-agent: Pinterestbot
+Allow: /
 
-User-agent: ClaudeBot
-Disallow: /
-
-User-agent: CCBot
-Disallow: /
-
+# --- DISALLOWED AI & SCRAPERS ---
+User-agent: ai2bot
+User-agent: ai2bot-dolma
+User-agent: ahrefsbot
+User-agent: aliyunsecbot
+User-agent: amazon-kendra
+User-agent: amazonbot
+User-agent: amzn-searchbot
 User-agent: anthropic-ai
-Disallow: /
-
-User-agent: Google-Extended
-Disallow: /
-
-User-agent: Bytespider
-Disallow: /
-
-User-agent: PerplexityBot
+User-agent: applebot-extended
+User-agent: archive-org-bot
+User-agent: arquivo-web-crawler
+User-agent: aspiegelbot
+User-agent: audigentadbot
+User-agent: awariorssbot
+User-agent: awariosmartbot
+User-agent: barkrowler
+User-agent: big-sur-ai
+User-agent: blexbot
+User-agent: brandwatch
+User-agent: bravest
+User-agent: bytespider
+User-agent: ccbot
+User-agent: chatgpt-operator
+User-agent: chatgpt-user
+User-agent: chatgpt-user-2-0
+User-agent: chrome-lighthouse
+User-agent: claude-code
+User-agent: claude-searchbot
+User-agent: claude-user
+User-agent: claude-web
+User-agent: claudebot
+User-agent: coccocbot-web
+User-agent: cohere-ai
+User-agent: cohere-training-data-crawler
+User-agent: cotoyogi
+User-agent: crawl4ai
+User-agent: crawler4j
+User-agent: crawlspace
+User-agent: dataforseobot
+User-agent: deepseekbot
+User-agent: diffbot
+User-agent: digitaloceangenai-crawler
+User-agent: dotbot
+User-agent: duckassistbot
+User-agent: echobot-bot
+User-agent: echoboxbot
+User-agent: facebookbot
+User-agent: factset-spyderbot
+User-agent: firecrawl
+User-agent: friendlycrawler
+User-agent: gemini-deep-research
+User-agent: google-cloudvertexbot
+User-agent: google-extended
+User-agent: google-inspectiontool
+User-agent: google-page-speed-insights
+User-agent: googlebot-discovery
+User-agent: googlebot-image
+User-agent: googlebot-news
+User-agent: googlebot-video
+User-agent: googleother
+User-agent: googleother-image
+User-agent: googleother-video
+User-agent: gptbot
+User-agent: grok
+User-agent: grokbot
+User-agent: hada-news
+User-agent: ia-archiver
+User-agent: ia-archiver-web-archive-org
+User-agent: iaskspider
+User-agent: iaskspider-2-0
+User-agent: icc-crawler
+User-agent: imediaethics-org
+User-agent: img2dataset
+User-agent: imgproxy
+User-agent: isscyberriskcrawler
+User-agent: imagesiftbot
+User-agent: jenkersbot
+User-agent: jetslide
+User-agent: kangaroo-bot
+User-agent: liner-bot
+User-agent: livelapbot
+User-agent: magpie-crawler
+User-agent: mauibot
+User-agent: meltwater
+User-agent: meta-externalagent
+User-agent: meta-externalagent-lowercase
+User-agent: meta-externalfetcher
+User-agent: meta-externalfetcher-lowercase
+User-agent: mistralai-user
+User-agent: mistralai-user-1-0
+User-agent: mj12bot
+User-agent: moodlebot
+User-agent: mycentralaiscraperbot
+User-agent: netestate-imprint-crawler
+User-agent: neticlebot
+User-agent: netvibes
+User-agent: news-please
+User-agent: newsnow
+User-agent: novaact
+User-agent: oai-searchbot
+User-agent: omgili
+User-agent: omgilibot
+User-agent: pangubot
+User-agent: peer39-crawler
+User-agent: peer39-crawler-1-0
+User-agent: perplexity-user
+User-agent: perplexity-user-1-0
+User-agent: perplexitybot
+User-agent: petalbot
+User-agent: poseidon-research-crawler
+User-agent: qualifiedbot
+User-agent: quillbot-com
+User-agent: quora-bot
+User-agent: sbintuitionsbot
+User-agent: screaming-frog-seo-spider
+User-agent: scrapy
+User-agent: searchmetricsbot
+User-agent: seekportbot
+User-agent: seekr
+User-agent: seekrbot
+User-agent: semrushbot
+User-agent: semrushbot-ocob
+User-agent: semrushbotswa
+User-agent: seznamhomepagecrawler
+User-agent: sidetrade-indexer-bot
+User-agent: slackbot
+User-agent: storebot-google
+User-agent: taragroup-intelligent-bot
+User-agent: timpibot
+User-agent: turnitin
+User-agent: turnitinbot
+User-agent: velenpublicwebcrawler
+User-agent: viennatinybot
+User-agent: webzio-extended
+User-agent: yacy
+User-agent: yacybot
+User-agent: yahoo-blogs
+User-agent: yahoo-feedseeker
+User-agent: yahoo-mmcrawler
+User-agent: yahooseeker
+User-agent: youbot
 Disallow: /
 
 Sitemap: https://kenyafundfinder.com/sitemap.xml
