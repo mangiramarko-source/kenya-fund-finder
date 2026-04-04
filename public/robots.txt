@@ -167,6 +167,16 @@ User-agent: yahoo-feedseeker
 User-agent: yahoo-mmcrawler
 User-agent: yahooseeker
 User-agent: youbot
+User-agent: TaraGroup Intelligent Bot
+User-agent: Factset_spyderbot
+User-agent: Kangaroo Bot
+User-agent: netEstate Imprint Crawler
+User-agent: Echobot Bot
+User-agent: https://hada.news
+User-agent: https://www.imediaethics.org
+User-agent: AliyunSecBot
+User-agent: peer39_crawler
+User-agent: archive.org_bot
 Disallow: /
 
 Sitemap: https://kenyafundfinder.com/sitemap.xml
