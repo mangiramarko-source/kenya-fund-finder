@@ -41,4 +41,4 @@ Disallow: /
 User-agent: PerplexityBot
 Disallow: /
 
-Sitemap: https://qrmthciurngpzpjhevdj.supabase.co/functions/v1/sitemap
+Sitemap: https://kenyafundfinder.com/sitemap.xml
