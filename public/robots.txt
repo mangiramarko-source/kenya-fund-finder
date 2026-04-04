@@ -6,7 +6,7 @@ Disallow: /profile
 Disallow: /reset-password
 
 # --- ALLOWED FOR SEARCH & DISCOVERY ---
-# These bots help companies like Google find and index your site
+# Essential for companies like Google and Bing to find your site
 User-agent: Googlebot
 User-agent: Bingbot
 User-agent: Slurp
@@ -16,7 +16,7 @@ User-agent: Yandex
 Allow: /
 
 # --- ALLOWED FOR SOCIAL MEDIA & MESSAGING ---
-# These ensure high-quality previews on LinkedIn, WhatsApp, etc.
+# Ensures your links look professional when shared on LinkedIn or WhatsApp
 User-agent: Twitterbot
 User-agent: facebookexternalhit
 User-agent: LinkedInBot
@@ -25,7 +25,7 @@ User-agent: WhatsApp
 Allow: /
 
 # --- DISALLOWED AI, SCRAPERS & SEO TOOLS ---
-# Comprehensive list to protect your data from being harvested
+# Blocks training bots and aggressive scrapers (Safe to submit)
 User-agent: ai2bot
 User-agent: ai2bot-dolma
 User-agent: ahrefsbot
@@ -51,7 +51,6 @@ User-agent: ccbot
 User-agent: chatgpt-operator
 User-agent: chatgpt-user
 User-agent: chatgpt-user-2-0
-User-agent: chrome-lighthouse
 User-agent: claude-code
 User-agent: claude-searchbot
 User-agent: claude-user
@@ -80,16 +79,10 @@ User-agent: gemini-deep-research
 User-agent: google-cloudvertexbot
 User-agent: google-extended
 User-agent: google-inspectiontool
-User-agent: google-page-speed-insights
-User-agent: googlebot-discovery
-User-agent: googlebot-image
-User-agent: googlebot-news
-User-agent: googlebot-video
 User-agent: googleother
 User-agent: googleother-image
 User-agent: googleother-video
 User-agent: gptbot
-User-agent: grok
 User-agent: grokbot
 User-agent: hada-news
 User-agent: ia-archiver
@@ -167,13 +160,8 @@ User-agent: yahoo-feedseeker
 User-agent: yahoo-mmcrawler
 User-agent: yahooseeker
 User-agent: youbot
-User-agent: TaraGroup Intelligent Bot
+User-agent: taragroup-intelligent-bot
 User-agent: Factset_spyderbot
-User-agent: Kangaroo Bot
-User-agent: netEstate Imprint Crawler
-User-agent: Echobot Bot
-User-agent: https://hada.news
-User-agent: https://www.imediaethics.org
 User-agent: AliyunSecBot
 User-agent: peer39_crawler
 User-agent: archive.org_bot
