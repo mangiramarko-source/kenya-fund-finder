@@ -33,6 +33,14 @@ export interface NewPortfolioItem {
   notes?: string;
 }
 
+export interface LiveAsset {
+  name: string;
+  ticker?: string;
+  price: number;
+  yld?: number;
+  id?: string;
+}
+
 /** MMF daily compounding: Value = Principal × (1 + Rate/365)^Days */
 export const calcMMFValue = (principal: number, annualRate: number, days: number) => {
   return principal * Math.pow(1 + annualRate / 100 / 365, days);
@@ -53,21 +61,11 @@ export const getCurrentValue = (item: PortfolioItem): number => {
   return item.units * item.current_price;
 };
 
-/** Cost basis */
-export const getCostBasis = (item: PortfolioItem): number => {
-  return item.units * item.buy_price;
-};
-
-/** PnL */
-export const getPnL = (item: PortfolioItem): number => {
-  return getCurrentValue(item) - getCostBasis(item);
-};
-
-/** PnL percentage */
+export const getCostBasis = (item: PortfolioItem): number => item.units * item.buy_price;
+export const getPnL = (item: PortfolioItem): number => getCurrentValue(item) - getCostBasis(item);
 export const getPnLPercent = (item: PortfolioItem): number => {
   const cost = getCostBasis(item);
-  if (cost === 0) return 0;
-  return (getPnL(item) / cost) * 100;
+  return cost === 0 ? 0 : (getPnL(item) / cost) * 100;
 };
 
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
@@ -78,11 +76,81 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   commodity: "Commodities",
 };
 
+/** Fetch live asset lists from DB */
+export const useLiveAssets = () => {
+  return useQuery({
+    queryKey: ["live_assets_for_portfolio"],
+    queryFn: async () => {
+      const [fundsRes, stocksRes, commoditiesRes, fxRes] = await Promise.all([
+        supabase.from("funds_public").select("id, name, slug, annual_yield, daily_yield").order("name"),
+        supabase.from("stocks_public").select("id, name, symbol, price").order("name"),
+        supabase.from("commodities_public").select("id, name, symbol, price, unit").order("name"),
+        supabase.from("exchange_rates_public").select("id, currency_code, currency_name, rate").order("sort_order"),
+      ]);
+
+      const funds: LiveAsset[] = (fundsRes.data || []).map((f) => ({
+        name: f.name || "",
+        ticker: f.slug || undefined,
+        price: 1,
+        yld: Number(f.annual_yield) || 15,
+        id: f.id || undefined,
+      }));
+
+      const stocks: LiveAsset[] = (stocksRes.data || []).map((s) => ({
+        name: s.name || "",
+        ticker: s.symbol || undefined,
+        price: Number(s.price) || 0,
+        id: s.id || undefined,
+      }));
+
+      const commodities: LiveAsset[] = (commoditiesRes.data || []).map((c) => ({
+        name: `${c.name || ""} (${c.unit || "USD"})`,
+        ticker: c.symbol || undefined,
+        price: Number(c.price) || 0,
+        id: c.id || undefined,
+      }));
+
+      const fx: LiveAsset[] = (fxRes.data || []).map((r) => ({
+        name: `KES / ${r.currency_code || ""}`,
+        ticker: `KES/${r.currency_code || ""}`,
+        price: Number(r.rate) || 0,
+        id: r.id || undefined,
+      }));
+
+      const fixedIncome: LiveAsset[] = [
+        { name: "91-Day T-Bill", price: 100, yld: 15.8 },
+        { name: "182-Day T-Bill", price: 100, yld: 16.2 },
+        { name: "364-Day T-Bill", price: 100, yld: 16.5 },
+        { name: "2-Year Bond", price: 100, yld: 16.8 },
+        { name: "5-Year Bond", price: 100, yld: 17.0 },
+        { name: "10-Year Bond", price: 100, yld: 16.0 },
+      ];
+
+      return { mmf: funds, stock: stocks, commodity: commodities, fx, fixed_income: fixedIncome } as Record<AssetType, LiveAsset[]>;
+    },
+    staleTime: 60_000,
+  });
+};
+
+/** Build a lookup map: ticker/name → live price */
+const buildPriceLookup = (liveAssets: Record<AssetType, LiveAsset[]> | undefined) => {
+  if (!liveAssets) return new Map<string, { price: number; yld?: number }>();
+  const map = new Map<string, { price: number; yld?: number }>();
+  for (const [, assets] of Object.entries(liveAssets)) {
+    for (const a of assets) {
+      if (a.ticker) map.set(a.ticker.toLowerCase(), { price: a.price, yld: a.yld });
+      map.set(a.name.toLowerCase(), { price: a.price, yld: a.yld });
+    }
+  }
+  return map;
+};
+
 export const usePortfolio = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
+  const { data: liveAssets } = useLiveAssets();
 
-  const { data: items = [], isLoading } = useQuery({
+  const { data: rawItems = [], isLoading } = useQuery({
     queryKey: ["mock_portfolios", user?.id],
     queryFn: async () => {
       if (!user) return [];
@@ -94,6 +162,21 @@ export const usePortfolio = () => {
       return (data || []) as PortfolioItem[];
     },
     enabled: !!user,
+  });
+
+  // Enrich items with live prices
+  const priceLookup = buildPriceLookup(liveAssets);
+  const items: PortfolioItem[] = rawItems.map((item) => {
+    if (item.asset_type === "mmf") {
+      // For MMFs, update yield from live fund data
+      const live = priceLookup.get(item.ticker?.toLowerCase() || "") || priceLookup.get(item.asset_name.toLowerCase());
+      if (live?.yld) return { ...item, current_yield: live.yld };
+      return item;
+    }
+    // For stocks, commodities, fx — update current_price from live data
+    const live = priceLookup.get(item.ticker?.toLowerCase() || "") || priceLookup.get(item.asset_name.toLowerCase());
+    if (live) return { ...item, current_price: live.price };
+    return item;
   });
 
   const addItem = useMutation({
@@ -127,28 +210,16 @@ export const usePortfolio = () => {
     onError: () => toast.error("Failed to remove investment"),
   });
 
-  // Computed totals
   const totalValue = items.reduce((sum, i) => sum + getCurrentValue(i), 0);
   const totalCost = items.reduce((sum, i) => sum + getCostBasis(i), 0);
   const totalPnL = totalValue - totalCost;
   const totalPnLPercent = totalCost > 0 ? (totalPnL / totalCost) * 100 : 0;
 
-  // Allocation by asset type
   const allocation = items.reduce<Record<AssetType, number>>((acc, item) => {
     const val = getCurrentValue(item);
     acc[item.asset_type] = (acc[item.asset_type] || 0) + val;
     return acc;
   }, {} as Record<AssetType, number>);
 
-  return {
-    items,
-    isLoading,
-    addItem,
-    deleteItem,
-    totalValue,
-    totalCost,
-    totalPnL,
-    totalPnLPercent,
-    allocation,
-  };
+  return { items, isLoading, addItem, deleteItem, totalValue, totalCost, totalPnL, totalPnLPercent, allocation };
 };
