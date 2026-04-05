@@ -563,6 +563,54 @@ export type Database = {
         }
         Relationships: []
       }
+      mock_portfolios: {
+        Row: {
+          asset_name: string
+          asset_type: string
+          buy_date: string
+          buy_price: number
+          created_at: string
+          current_price: number
+          current_yield: number | null
+          id: string
+          notes: string | null
+          ticker: string | null
+          units: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_name: string
+          asset_type: string
+          buy_date?: string
+          buy_price: number
+          created_at?: string
+          current_price: number
+          current_yield?: number | null
+          id?: string
+          notes?: string | null
+          ticker?: string | null
+          units?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_name?: string
+          asset_type?: string
+          buy_date?: string
+          buy_price?: number
+          created_at?: string
+          current_price?: number
+          current_yield?: number | null
+          id?: string
+          notes?: string | null
+          ticker?: string | null
+          units?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       news_articles: {
         Row: {
           category: string
