@@ -30,6 +30,7 @@ import StockDetailPage from "./pages/StockDetailPage";
 import MarketDashboardPage from "./pages/MarketDashboardPage";
 import AlertsPage from "./pages/AlertsPage";
 import OverviewPage from "./pages/OverviewPage";
+import PortfolioPage from "./pages/PortfolioPage";
 import NotFound from "./pages/NotFound";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
@@ -71,6 +72,7 @@ const App = () => (
                   <Route path="/markets" element={<MarketDashboardPage />} />
                   <Route path="/overview" element={<OverviewPage />} />
                   <Route path="/alerts" element={<AlertsPage />} />
+                  <Route path="/portfolio" element={<PortfolioPage />} />
                   <Route path="/admin/login" element={<AdminLoginPage />} />
                   <Route path="/admin" element={<AdminPage />} />
                   <Route path="*" element={<NotFound />} />
