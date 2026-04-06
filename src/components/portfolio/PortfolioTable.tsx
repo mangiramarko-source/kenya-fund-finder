@@ -32,6 +32,14 @@ const typeColor: Record<AssetType, string> = {
   commodity: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
 };
 
+const TYPE_BADGE_LABELS: Record<AssetType, string> = {
+  mmf: "Unit Trust",
+  stock: "Stock",
+  fx: "FX",
+  fixed_income: "Fixed Income",
+  commodity: "Commodity",
+};
+
 const PortfolioTable = ({ items, currency, onDelete }: Props) => {
   if (items.length === 0) {
     return (
@@ -86,7 +94,7 @@ const PortfolioTable = ({ items, currency, onDelete }: Props) => {
               </TableCell>
               <TableCell>
                 <Badge variant="outline" className={`text-[10px] ${typeColor[item.asset_type]}`}>
-                  {ASSET_TYPE_LABELS[item.asset_type]}
+                  {TYPE_BADGE_LABELS[item.asset_type]}
                 </Badge>
               </TableCell>
               <TableCell className="text-right tabular-nums">{item.units.toLocaleString()}</TableCell>
