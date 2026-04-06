@@ -13,9 +13,19 @@ interface Props {
   isPending: boolean;
 }
 
+const FUND_TYPE_LABELS: Record<string, string> = {
+  all: "All Fund Types",
+  money_market: "Money Market",
+  fixed_income: "Fixed Income",
+  equity: "Equity",
+  balanced: "Balanced",
+  bond: "Bond",
+};
+
 const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
   const [open, setOpen] = useState(false);
   const [assetType, setAssetType] = useState<AssetType>("mmf");
+  const [fundTypeFilter, setFundTypeFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedAsset, setSelectedAsset] = useState<LiveAsset | null>(null);
   const [units, setUnits] = useState("1");
@@ -26,16 +36,28 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
 
   const { data: liveAssets } = useLiveAssets();
 
+  // Get unique fund types from data
+  const availableFundTypes = useMemo(() => {
+    if (assetType !== "mmf") return [];
+    const list = liveAssets?.mmf || [];
+    const types = new Set(list.map((a) => a.fundType).filter(Boolean));
+    return Array.from(types) as string[];
+  }, [liveAssets, assetType]);
+
   const filteredAssets = useMemo(() => {
-    const list = liveAssets?.[assetType] || [];
+    let list = liveAssets?.[assetType] || [];
+    // Apply fund type filter for unit trusts
+    if (assetType === "mmf" && fundTypeFilter !== "all") {
+      list = list.filter((a) => a.fundType === fundTypeFilter);
+    }
     if (!search) return list;
     const q = search.toLowerCase();
     return list.filter((a) => a.name.toLowerCase().includes(q) || a.ticker?.toLowerCase().includes(q));
-  }, [liveAssets, assetType, search]);
+  }, [liveAssets, assetType, search, fundTypeFilter]);
 
   const resetForm = () => {
     setSearch(""); setSelectedAsset(null); setUnits("1"); setBuyPrice(""); setYld("15");
-    setCustomName(""); setCustomTicker("");
+    setCustomName(""); setCustomTicker(""); setFundTypeFilter("all");
   };
 
   const handleSelectAsset = (asset: LiveAsset) => {
@@ -89,6 +111,24 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
               </SelectContent>
             </Select>
           </div>
+
+          {/* Fund Type Sub-category for Unit Trusts */}
+          {assetType === "mmf" && availableFundTypes.length > 0 && (
+            <div>
+              <Label className="text-xs">Fund Category</Label>
+              <Select value={fundTypeFilter} onValueChange={setFundTypeFilter}>
+                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">All Fund Types</SelectItem>
+                  {availableFundTypes.map((ft) => (
+                    <SelectItem key={ft} value={ft}>
+                      {FUND_TYPE_LABELS[ft] || ft.replace(/_/g, " ").replace(/\b\w/g, (c) => c.toUpperCase())}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          )}
 
           {/* Asset Picker with Search */}
           {!selectedAsset ? (

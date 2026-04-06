@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
 import {
-  PortfolioItem, AssetType, ASSET_TYPE_LABELS,
+  PortfolioItem, AssetType,
   getCurrentValue, getCostBasis, getPnL, getPnLPercent,
   daysBetween, calcMMFValue,
 } from "@/hooks/usePortfolio";
@@ -30,6 +30,14 @@ const typeColor: Record<AssetType, string> = {
   fx: "bg-blue-500/15 text-blue-600 dark:text-blue-400 border-blue-500/30",
   fixed_income: "bg-amber-500/15 text-amber-600 dark:text-amber-400 border-amber-500/30",
   commodity: "bg-rose-500/15 text-rose-600 dark:text-rose-400 border-rose-500/30",
+};
+
+const TYPE_BADGE_LABELS: Record<AssetType, string> = {
+  mmf: "Unit Trust",
+  stock: "Stock",
+  fx: "FX",
+  fixed_income: "Fixed Income",
+  commodity: "Commodity",
 };
 
 const PortfolioTable = ({ items, currency, onDelete }: Props) => {
@@ -86,7 +94,7 @@ const PortfolioTable = ({ items, currency, onDelete }: Props) => {
               </TableCell>
               <TableCell>
                 <Badge variant="outline" className={`text-[10px] ${typeColor[item.asset_type]}`}>
-                  {ASSET_TYPE_LABELS[item.asset_type]}
+                  {TYPE_BADGE_LABELS[item.asset_type]}
                 </Badge>
               </TableCell>
               <TableCell className="text-right tabular-nums">{item.units.toLocaleString()}</TableCell>
