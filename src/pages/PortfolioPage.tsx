@@ -50,6 +50,12 @@ const PortfolioPage = () => {
           <p className="text-sm text-muted-foreground mt-1">
             Simulate investments across 5 asset classes with real Kenyan market data.
           </p>
+          {lastSynced && (
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+              <RefreshCw className="h-3 w-3" />
+              Prices synced {formatDistanceToNow(lastSynced, { addSuffix: true })}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border overflow-hidden text-xs">
