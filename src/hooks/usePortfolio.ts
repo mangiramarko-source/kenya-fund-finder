@@ -39,6 +39,7 @@ export interface LiveAsset {
   price: number;
   yld?: number;
   id?: string;
+  fundType?: string;
 }
 
 /** MMF daily compounding: Value = Principal × (1 + Rate/365)^Days */
@@ -69,7 +70,7 @@ export const getPnLPercent = (item: PortfolioItem): number => {
 };
 
 export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
-  mmf: "Unit Trusts (MMFs)",
+  mmf: "Unit Trusts",
   stock: "Stocks (NSE)",
   fx: "FX (Currency)",
   fixed_income: "Fixed Income",
@@ -82,7 +83,7 @@ export const useLiveAssets = () => {
     queryKey: ["live_assets_for_portfolio"],
     queryFn: async () => {
       const [fundsRes, stocksRes, commoditiesRes, fxRes] = await Promise.all([
-        supabase.from("funds_public").select("id, name, slug, annual_yield, daily_yield").order("name"),
+        supabase.from("funds_public").select("id, name, slug, annual_yield, daily_yield, fund_type").order("name"),
         supabase.from("stocks_public").select("id, name, symbol, price").order("name"),
         supabase.from("commodities_public").select("id, name, symbol, price, unit").order("name"),
         supabase.from("exchange_rates_public").select("id, currency_code, currency_name, rate").order("sort_order"),
@@ -94,6 +95,7 @@ export const useLiveAssets = () => {
         price: 1,
         yld: Number(f.annual_yield) || 15,
         id: f.id || undefined,
+        fundType: (f as any).fund_type || undefined,
       }));
 
       const stocks: LiveAsset[] = (stocksRes.data || []).map((s) => ({
