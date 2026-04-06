@@ -1,21 +1,28 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase } from "lucide-react";
+import { Briefcase, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import PortfolioKPICards from "@/components/portfolio/PortfolioKPICards";
 import PortfolioCharts from "@/components/portfolio/PortfolioCharts";
 import PortfolioTable from "@/components/portfolio/PortfolioTable";
 import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
+import { formatDistanceToNow } from "date-fns";
 
 const PortfolioPage = () => {
   useDocumentTitle("Mock Portfolio | KenyaFundFinder");
   const { user } = useAuth();
   const [currency, setCurrency] = useState<"KES" | "USD">("KES");
   const { items, isLoading, addItem, deleteItem, totalValue, totalPnL, totalPnLPercent, allocation } = usePortfolio();
+
+  const lastSynced = useMemo(() => {
+    if (!items.length) return null;
+    const dates = items.map((i) => new Date(i.updated_at).getTime());
+    return new Date(Math.max(...dates));
+  }, [items]);
 
   if (!user) {
     return (
@@ -43,6 +50,12 @@ const PortfolioPage = () => {
           <p className="text-sm text-muted-foreground mt-1">
             Simulate investments across 5 asset classes with real Kenyan market data.
           </p>
+          {lastSynced && (
+            <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
+              <RefreshCw className="h-3 w-3" />
+              Prices synced {formatDistanceToNow(lastSynced, { addSuffix: true })}
+            </p>
+          )}
         </div>
         <div className="flex items-center gap-2">
           <div className="flex rounded-lg border border-border overflow-hidden text-xs">
