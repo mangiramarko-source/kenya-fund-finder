@@ -1,21 +1,28 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { usePortfolio } from "@/hooks/usePortfolio";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase } from "lucide-react";
+import { Briefcase, RefreshCw } from "lucide-react";
 import { Link } from "react-router-dom";
 import PortfolioKPICards from "@/components/portfolio/PortfolioKPICards";
 import PortfolioCharts from "@/components/portfolio/PortfolioCharts";
 import PortfolioTable from "@/components/portfolio/PortfolioTable";
 import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
+import { formatDistanceToNow } from "date-fns";
 
 const PortfolioPage = () => {
   useDocumentTitle("Mock Portfolio | KenyaFundFinder");
   const { user } = useAuth();
   const [currency, setCurrency] = useState<"KES" | "USD">("KES");
   const { items, isLoading, addItem, deleteItem, totalValue, totalPnL, totalPnLPercent, allocation } = usePortfolio();
+
+  const lastSynced = useMemo(() => {
+    if (!items.length) return null;
+    const dates = items.map((i) => new Date(i.updated_at).getTime());
+    return new Date(Math.max(...dates));
+  }, [items]);
 
   if (!user) {
     return (
