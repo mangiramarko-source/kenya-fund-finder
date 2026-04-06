@@ -3,7 +3,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Trash2 } from "lucide-react";
 import {
-  PortfolioItem, AssetType, ASSET_TYPE_LABELS,
+  PortfolioItem, AssetType,
   getCurrentValue, getCostBasis, getPnL, getPnLPercent,
   daysBetween, calcMMFValue,
 } from "@/hooks/usePortfolio";
