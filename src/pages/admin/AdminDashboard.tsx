@@ -282,9 +282,26 @@ const AdminDashboard = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  const [sendingEmails, setSendingEmails] = useState(false);
+
   const handleLogout = async () => {
     await signOut();
     navigate("/admin/login");
+  };
+
+  const handleSendMarketUpdate = async () => {
+    setSendingEmails(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-market-update", {
+        body: {},
+      });
+      if (error) throw error;
+      toast.success(`Market update sent to ${data?.sent ?? 0} user(s)`);
+    } catch (err: any) {
+      toast.error("Failed to send market update: " + (err.message || "Unknown error"));
+    } finally {
+      setSendingEmails(false);
+    }
   };
 
   const gateLabels: Record<string, string> = {
