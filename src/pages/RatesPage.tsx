@@ -65,6 +65,9 @@ const RatesPage = () => {
     url: "https://kenyafundfinder.com/rates",
   });
 
+  const { user } = useAuth();
+  const { isFavourite, toggle: toggleFavourite } = useAssetWatchlist("currency");
+
   const [rates, setRates] = useState<Rate[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");

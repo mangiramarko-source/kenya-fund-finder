@@ -66,6 +66,9 @@ const CommoditiesPage = () => {
     url: "https://kenyafundfinder.com/commodities",
   });
 
+  const { user } = useAuth();
+  const { isFavourite, toggle: toggleFavourite } = useAssetWatchlist("commodity");
+
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
