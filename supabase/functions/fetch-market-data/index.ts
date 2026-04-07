@@ -641,6 +641,8 @@ Deno.serve(async (req) => {
           if (yq.yearHigh) updateData.year_high = yq.yearHigh;
           if (yq.yearLow) updateData.year_low = yq.yearLow;
           if (yq.marketCap) updateData.market_cap = yq.marketCap;
+          if (yq.peRatio) updateData.pe_ratio = yq.peRatio;
+          if (yq.dividendYield) updateData.dividend_yield = yq.dividendYield;
 
           await supabase.from("stocks").update(updateData).eq("id", row.id);
           yahooEnriched++;
