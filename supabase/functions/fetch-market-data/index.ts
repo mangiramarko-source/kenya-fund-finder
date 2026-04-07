@@ -609,50 +609,12 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Yahoo Finance: price fallback for missing stocks + fundamentals enrichment for ALL stocks
-      console.log(`[fetch-market-data] Running Yahoo Finance enrichment for fundamentals...`);
-      let yahooEnriched = 0;
-      for (const row of stockRows) {
-        const sym = (row.symbol || "").toUpperCase();
-        const yahooTicker = NSE_YAHOO_MAP[sym];
-        if (!yahooTicker) continue;
+      // Note: Yahoo Finance no longer supports NSE (.NR/.NBO) tickers.
+      // Fundamentals (market_cap, pe_ratio, dividend_yield, year_high, year_low)
+      // must be managed manually or via a future API source.
 
-        const wasUpdatedByRapid = rapidApiQuotes.has(sym);
-
-        try {
-          const yq = await fetchYahooQuote(yahooTicker);
-          if (!yq || yq.price <= 0) continue;
-
-          const updateData: Record<string, unknown> = {
-            updated_at: new Date().toISOString(),
-          };
-
-          // If RapidAPI didn't update this stock, use Yahoo for price data too
-          if (!wasUpdatedByRapid) {
-            updateData.previous_price = yq.previousClose;
-            updateData.price = yq.price;
-            updateData.day_change = yq.dayChange;
-            updateData.day_change_percent = yq.dayChangePct;
-            if (yq.volume > 0) updateData.volume = yq.volume;
-            stocksUpdated++;
-          }
-
-          // Always enrich with fundamentals from Yahoo (fields RapidAPI doesn't have)
-          if (yq.yearHigh) updateData.year_high = yq.yearHigh;
-          if (yq.yearLow) updateData.year_low = yq.yearLow;
-          if (yq.marketCap) updateData.market_cap = yq.marketCap;
-          if (yq.peRatio) updateData.pe_ratio = yq.peRatio;
-          if (yq.dividendYield) updateData.dividend_yield = yq.dividendYield;
-
-          await supabase.from("stocks").update(updateData).eq("id", row.id);
-          yahooEnriched++;
-        } catch (e) {
-          console.error(`[fetch-market-data] Yahoo failed for ${sym}:`, e);
-        }
-      }
-
-      results.push(`Stocks: ${stocksUpdated}/${stockRows.length} prices, Yahoo enriched ${yahooEnriched}`);
-      console.log(`[fetch-market-data] Stocks: ${stocksUpdated}/${stockRows.length} prices, Yahoo enriched ${yahooEnriched}`);
+      results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length} prices`);
+      console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length} prices`);
     }
     } // end shouldFetchStocks
 
