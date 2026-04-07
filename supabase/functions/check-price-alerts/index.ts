@@ -58,6 +58,7 @@ Deno.serve(async (req) => {
     }
 
     let triggered = 0;
+    const triggeredUserIds = new Set<string>();
 
     for (const alert of alerts) {
       const currentPrice = priceMap[alert.asset_id];
@@ -92,12 +93,34 @@ Deno.serve(async (req) => {
           },
         });
 
+        triggeredUserIds.add(alert.user_id);
         triggered++;
       }
     }
 
+    // Send instant email alerts to users who have instant_alerts enabled
+    if (triggeredUserIds.size > 0) {
+      const { data: prefs } = await supabase
+        .from("email_preferences")
+        .select("user_id")
+        .eq("instant_alerts", true)
+        .in("user_id", [...triggeredUserIds]);
+
+      const eligibleUserIds = (prefs || []).map((p: any) => p.user_id);
+
+      for (const userId of eligibleUserIds) {
+        try {
+          await supabase.functions.invoke("send-market-update", {
+            body: { user_id: userId },
+          });
+        } catch (err) {
+          console.error(`Failed to send instant email to ${userId}:`, err);
+        }
+      }
+    }
+
     return new Response(
-      JSON.stringify({ checked: alerts.length, triggered }),
+      JSON.stringify({ checked: alerts.length, triggered, emailed: triggeredUserIds.size }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (error) {
