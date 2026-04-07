@@ -11,7 +11,7 @@ const SuggestionBox = () => {
   const [isOpen, setIsOpen] = useState(false);
   const [message, setMessage] = useState("");
   const [sending, setSending] = useState(false);
-  const { user, profile } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
 
   const handleSubmit = async () => {
@@ -27,7 +27,7 @@ const SuggestionBox = () => {
     setSending(true);
     const { error } = await supabase.from("suggestions" as any).insert({
       user_id: user.id,
-      display_name: profile?.display_name || user.email?.split("@")[0] || "User",
+      display_name: user.email?.split("@")[0] || "User",
       message: message.trim(),
     } as any);
     setSending(false);
