@@ -532,7 +532,7 @@ Deno.serve(async (req) => {
     }
     } // end shouldFetchCommodities
 
-    // ── 3. Fetch Kenyan stock prices (Yahoo Finance primary, NSE fallback) ──
+    // ── 3. Fetch Kenyan stock prices (RapidAPI NSE primary, Yahoo fallback) ──
     if (shouldFetchStocks) {
     const { data: stockRows } = await supabase
       .from("stocks")
@@ -541,58 +541,100 @@ Deno.serve(async (req) => {
 
     if (stockRows && stockRows.length > 0) {
       let stocksUpdated = 0;
+      const rapidApiKey = Deno.env.get("RAPIDAPI_KEY");
 
-      // Try Yahoo Finance first for all stocks (more reliable)
+      // Build a lookup from RapidAPI NSE data
+      let rapidApiQuotes: Map<string, { price: number; change: string; volume: number }> = new Map();
+
+      if (rapidApiKey) {
+        try {
+          const nseRes = await fetch("https://nairobi-stock-exchange-nse.p.rapidapi.com/stocks", {
+            headers: {
+              "Content-Type": "application/json",
+              "x-rapidapi-host": "nairobi-stock-exchange-nse.p.rapidapi.com",
+              "x-rapidapi-key": rapidApiKey,
+            },
+          });
+
+          if (nseRes.ok) {
+            const nseData = await nseRes.json();
+            const stocks = nseData?.data || [];
+            for (const s of stocks) {
+              const ticker = (s.ticker || "").toUpperCase();
+              const price = parseFloat((s.price || "0").replace(/,/g, ""));
+              const volume = parseInt((s.volume || "0").replace(/,/g, ""), 10) || 0;
+              if (ticker && price > 0) {
+                rapidApiQuotes.set(ticker, { price, change: s.change || "0", volume });
+              }
+            }
+            console.log(`[fetch-market-data] RapidAPI NSE: ${rapidApiQuotes.size} stocks fetched`);
+          } else {
+            console.error(`[fetch-market-data] RapidAPI NSE failed: ${nseRes.status}`);
+            await nseRes.text();
+          }
+        } catch (e) {
+          console.error("[fetch-market-data] RapidAPI NSE error:", e);
+        }
+      } else {
+        console.warn("[fetch-market-data] RAPIDAPI_KEY not set, skipping RapidAPI");
+      }
+
+      // Update stocks from RapidAPI data
       for (const row of stockRows) {
         const sym = (row.symbol || "").toUpperCase();
-        const yahooTicker = NSE_YAHOO_MAP[sym];
-        if (!yahooTicker) continue;
+        const quote = rapidApiQuotes.get(sym);
 
-        try {
-          const yq = await fetchYahooQuote(yahooTicker);
-          if (!yq || yq.price <= 0) continue;
+        if (quote && quote.price > 0) {
+          // Parse change value (e.g. "+0.25" or "-3.25")
+          const changeStr = (quote.change || "0").replace(/\(.*\)/, "").trim();
+          const dayChange = parseFloat(changeStr) || 0;
+          const previousPrice = parseFloat((quote.price - dayChange).toFixed(2));
+          const dayChangePct = previousPrice > 0 ? parseFloat(((dayChange / previousPrice) * 100).toFixed(2)) : 0;
 
           const updateData: Record<string, unknown> = {
-            previous_price: yq.previousClose,
-            price: yq.price,
-            day_change: yq.dayChange,
-            day_change_percent: yq.dayChangePct,
+            previous_price: previousPrice,
+            price: quote.price,
+            day_change: dayChange,
+            day_change_percent: dayChangePct,
             updated_at: new Date().toISOString(),
           };
-          if (yq.volume > 0) updateData.volume = yq.volume;
-          if (yq.yearHigh) updateData.year_high = yq.yearHigh;
-          if (yq.yearLow) updateData.year_low = yq.yearLow;
+          if (quote.volume > 0) updateData.volume = quote.volume;
 
           await supabase.from("stocks").update(updateData).eq("id", row.id);
           stocksUpdated++;
-        } catch (e) {
-          console.error(`[fetch-market-data] Yahoo failed for ${sym}:`, e);
         }
       }
 
-      // If Yahoo got fewer than half, try NSE scrape as fallback
+      // Fallback to Yahoo Finance for stocks not updated by RapidAPI
       if (stocksUpdated < stockRows.length / 2) {
-        try {
-          const nseQuotes = await fetchNseStockQuotes();
-          console.log(`[fetch-market-data] NSE fallback: ${Object.keys(nseQuotes).length} quotes`);
-          for (const row of stockRows) {
-            const sym = (row.symbol || "").toUpperCase();
-            const quote = nseQuotes[sym];
-            if (!quote || quote.price <= 0) continue;
-            // Only update stocks not already updated by Yahoo
+        console.log(`[fetch-market-data] RapidAPI got ${stocksUpdated}/${stockRows.length}, trying Yahoo fallback...`);
+        for (const row of stockRows) {
+          const sym = (row.symbol || "").toUpperCase();
+          if (rapidApiQuotes.has(sym)) continue; // already updated
+
+          const yahooTicker = NSE_YAHOO_MAP[sym];
+          if (!yahooTicker) continue;
+
+          try {
+            const yq = await fetchYahooQuote(yahooTicker);
+            if (!yq || yq.price <= 0) continue;
+
             const updateData: Record<string, unknown> = {
-              previous_price: quote.previousPrice,
-              price: quote.price,
-              day_change: quote.dayChange,
-              day_change_percent: quote.dayChangePct,
+              previous_price: yq.previousClose,
+              price: yq.price,
+              day_change: yq.dayChange,
+              day_change_percent: yq.dayChangePct,
               updated_at: new Date().toISOString(),
             };
-            if (quote.volume > 0) updateData.volume = quote.volume;
+            if (yq.volume > 0) updateData.volume = yq.volume;
+            if (yq.yearHigh) updateData.year_high = yq.yearHigh;
+            if (yq.yearLow) updateData.year_low = yq.yearLow;
+
             await supabase.from("stocks").update(updateData).eq("id", row.id);
             stocksUpdated++;
+          } catch (e) {
+            console.error(`[fetch-market-data] Yahoo fallback failed for ${sym}:`, e);
           }
-        } catch (nseErr) {
-          console.error("[fetch-market-data] NSE fallback also failed:", String(nseErr));
         }
       }
 
