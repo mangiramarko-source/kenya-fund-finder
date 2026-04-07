@@ -387,8 +387,13 @@ Deno.serve(async (req) => {
     console.log("[fetch-market-data] Admin user authenticated:", userId);
   }
 
+  const fetchType = (body as Record<string, unknown>)?.fetch_type as string | undefined;
   const results: string[] = [];
-  console.log("[fetch-market-data] Starting data fetch cycle...");
+  console.log(`[fetch-market-data] Starting data fetch cycle... (type: ${fetchType || "all"})`);
+
+  const shouldFetchFx = !fetchType || fetchType === "fx";
+  const shouldFetchCommodities = !fetchType || fetchType === "commodities";
+  const shouldFetchStocks = !fetchType || fetchType === "stocks";
 
   try {
     // ── 1. Fetch FX rates ──
