@@ -30,7 +30,7 @@ function buildEmailHtml(
   watchlistFunds: WatchlistFund[],
   topFunds: TopFund[],
   news: NewsItem[],
-  siteUrl: string
+  siteUrl: string,
 ): string {
   const watchlistRows = watchlistFunds
     .map((f) => {
@@ -51,7 +51,7 @@ function buildEmailHtml(
           <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#64748b;">${i + 1}</td>
           <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;color:#1e293b;font-weight:500;">${f.name}</td>
           <td style="padding:10px 12px;border-bottom:1px solid #e5e7eb;font-size:14px;font-weight:700;color:#2d8a56;text-align:right;">${f.annual_yield}%</td>
-        </tr>`
+        </tr>`,
     )
     .join("");
 
@@ -61,7 +61,7 @@ function buildEmailHtml(
         `<div style="margin-bottom:16px;padding-bottom:16px;border-bottom:1px solid #e5e7eb;">
           <a href="${siteUrl}/news/${n.id}" style="font-size:15px;font-weight:600;color:#1e3a5f;text-decoration:none;line-height:1.4;">${n.title}</a>
           <p style="margin:6px 0 0;font-size:13px;color:#64748b;line-height:1.5;">${(n.summary || "").slice(0, 150)}…</p>
-        </div>`
+        </div>`,
     )
     .join("");
 
@@ -204,18 +204,17 @@ Deno.serve(async (req) => {
           .select("display_name")
           .eq("user_id", targetUserId)
           .maybeSingle();
-        users = [{
-          user_id: targetUserId,
-          email: authUser.user.email!,
-          display_name: profile?.display_name || authUser.user.email!.split("@")[0],
-        }];
+        users = [
+          {
+            user_id: targetUserId,
+            email: authUser.user.email!,
+            display_name: profile?.display_name || authUser.user.email!.split("@")[0],
+          },
+        ];
       }
     } else {
       // Batch mode: send to all users with weekly_summary enabled
-      const { data: prefs } = await supabase
-        .from("email_preferences")
-        .select("user_id")
-        .eq("weekly_summary", true);
+      const { data: prefs } = await supabase.from("email_preferences").select("user_id").eq("weekly_summary", true);
 
       if (prefs && prefs.length > 0) {
         for (const pref of prefs) {
@@ -237,10 +236,9 @@ Deno.serve(async (req) => {
     }
 
     if (users.length === 0) {
-      return new Response(
-        JSON.stringify({ message: "No users to send to", sent: 0 }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
+      return new Response(JSON.stringify({ message: "No users to send to", sent: 0 }), {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     let sentCount = 0;
@@ -285,7 +283,7 @@ Deno.serve(async (req) => {
           url: n.url,
           id: n.id,
         })),
-        siteUrl
+        siteUrl,
       );
 
       try {
@@ -297,7 +295,7 @@ Deno.serve(async (req) => {
             "X-Connection-Api-Key": RESEND_API_KEY,
           },
           body: JSON.stringify({
-            from: "Kenya Fund Finder <onboarding@resend.dev>",
+            from: "Kenya Fund Finder <alerts@kenyafundfinder.com>",
             to: [user.email],
             subject: "📊 Your Market Update — Kenya Fund Finder",
             html,
@@ -322,7 +320,7 @@ Deno.serve(async (req) => {
         sent: sentCount,
         errors: errors.length > 0 ? errors : undefined,
       }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      { headers: { ...corsHeaders, "Content-Type": "application/json" } },
     );
   } catch (err) {
     console.error("send-market-update error:", err);
