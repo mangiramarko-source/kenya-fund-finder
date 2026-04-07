@@ -26,6 +26,7 @@ const mobileNavLinks = [
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light") return false;
