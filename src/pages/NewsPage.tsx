@@ -2,10 +2,11 @@ import { useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Clock, TrendingUp, Landmark, Shield, Megaphone, SortAsc, Sparkles, Calendar } from "lucide-react";
+import { Clock, TrendingUp, Landmark, Shield, Megaphone, SortAsc, Sparkles, Calendar, Newspaper, ExternalLink, Search } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
 import { getNewsImage } from "@/lib/news-images";
 
 const categories = ["All", "Yield Updates", "Market News", "Regulatory Updates", "Fund Announcements"] as const;
@@ -24,10 +25,31 @@ const categoryDot: Record<string, string> = {
   "Fund Announcements": "bg-primary",
 };
 
+const sourceColors: Record<string, string> = {
+  "Business Daily": "bg-blue-500/10 text-blue-400 border-blue-500/20",
+  "Standard Media": "bg-orange-500/10 text-orange-400 border-orange-500/20",
+  "The Star": "bg-red-500/10 text-red-400 border-red-500/20",
+  "Nation": "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+  "Capital FM": "bg-purple-500/10 text-purple-400 border-purple-500/20",
+  "Tuko News": "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
+};
+
 type SortOption = "latest" | "oldest" | "featured";
 
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString("en-KE", { month: "short", day: "numeric" });
+
+const formatDateLong = (d: string) =>
+  new Date(d).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" });
+
+const SourceBadge = ({ source }: { source: string }) => {
+  const colors = sourceColors[source] || "bg-muted text-muted-foreground border-border";
+  return (
+    <span className={`inline-flex items-center text-[10px] font-medium px-1.5 py-0.5 rounded border ${colors}`}>
+      {source}
+    </span>
+  );
+};
 
 const NewsPage = () => {
   useDocumentTitle(
@@ -39,13 +61,27 @@ const NewsPage = () => {
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>("latest");
+  const [searchQuery, setSearchQuery] = useState("");
 
   useEffect(() => {
     fetchPublishedNews().then((data) => { setArticles(data); setLoading(false); }).catch(() => setLoading(false));
   }, []);
 
+  // Unique sources for filter
+  const sources = useMemo(() => {
+    const s = new Set(articles.map(a => a.source).filter(Boolean));
+    return Array.from(s).sort();
+  }, [articles]);
+  const [activeSource, setActiveSource] = useState<string>("All");
+
   const filtered = useMemo(() => {
-    let list = activeCategory === "All" ? articles : articles.filter((a) => a.category === activeCategory);
+    let list = articles;
+    if (activeCategory !== "All") list = list.filter((a) => a.category === activeCategory);
+    if (activeSource !== "All") list = list.filter((a) => a.source === activeSource);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      list = list.filter(a => a.title.toLowerCase().includes(q) || a.summary.toLowerCase().includes(q));
+    }
     if (sortBy === "featured") {
       list = [...list].sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0));
     } else {
@@ -55,48 +91,83 @@ const NewsPage = () => {
       });
     }
     return list;
-  }, [articles, activeCategory, sortBy]);
+  }, [articles, activeCategory, activeSource, sortBy, searchQuery]);
 
   const heroArticle = useMemo(() => filtered.find((a) => a.is_featured) || filtered[0] || null, [filtered]);
   const topArticles = useMemo(() => {
-    if (!heroArticle) return filtered.slice(0, 2);
-    return filtered.filter((a) => a.id !== heroArticle.id).slice(0, 2);
+    if (!heroArticle) return filtered.slice(0, 3);
+    return filtered.filter((a) => a.id !== heroArticle.id).slice(0, 3);
   }, [filtered, heroArticle]);
   const listArticles = useMemo(() => {
     const usedIds = new Set([heroArticle?.id, ...topArticles.map(a => a.id)]);
     return filtered.filter((a) => !usedIds.has(a.id));
   }, [filtered, heroArticle, topArticles]);
 
+  // Source stats
+  const sourceStats = useMemo(() => {
+    const counts: Record<string, number> = {};
+    articles.forEach(a => { counts[a.source] = (counts[a.source] || 0) + 1; });
+    return counts;
+  }, [articles]);
+
   if (loading) return (
     <div className="px-4 md:px-6 py-6">
-      <Skeleton className="h-7 w-24 mb-1" />
+      <Skeleton className="h-7 w-32 mb-1" />
       <Skeleton className="h-4 w-72 mb-5" />
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
-        <Skeleton className="lg:col-span-7 h-80 rounded-xl" />
-        <div className="lg:col-span-5 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
-          <Skeleton className="h-44 rounded-xl" />
-          <Skeleton className="h-44 rounded-xl" />
+        <Skeleton className="lg:col-span-8 h-80 rounded-xl" />
+        <div className="lg:col-span-4 space-y-3">
+          {[...Array(3)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
         </div>
       </div>
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mt-5">
-        {[...Array(4)].map((_, i) => <Skeleton key={i} className="h-24 rounded-xl" />)}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 mt-5">
+        {[...Array(6)].map((_, i) => <Skeleton key={i} className="h-28 rounded-xl" />)}
       </div>
     </div>
   );
 
   return (
     <div className="px-4 md:px-6 py-6">
-      {/* Header — matches stocks/unit-trusts pages */}
+      {/* Header */}
       <div className="mb-4">
         <h1 className="text-xl md:text-2xl font-bold text-foreground">News</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Latest on Kenyan unit trusts, stocks, FX rates &amp; commodities.
+          Auto-updated from {sources.length} Kenyan business sources
         </p>
       </div>
 
-      {/* Filters row */}
-      <div className="flex items-center gap-2 mb-5 overflow-x-auto scrollbar-hide pb-1">
-        <div className="flex gap-1.5 shrink-0">
+      {/* Source pills */}
+      <div className="flex items-center gap-1.5 mb-3 overflow-x-auto scrollbar-hide pb-1">
+        <button
+          onClick={() => setActiveSource("All")}
+          className={`inline-flex items-center gap-1 rounded-lg text-xs font-medium whitespace-nowrap border h-7 px-2.5 transition-all ${
+            activeSource === "All"
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-card text-muted-foreground border-border hover:border-accent/30"
+          }`}
+        >
+          All Sources
+          <span className="text-[10px] opacity-70">({articles.length})</span>
+        </button>
+        {sources.map(src => (
+          <button
+            key={src}
+            onClick={() => setActiveSource(src)}
+            className={`inline-flex items-center gap-1 rounded-lg text-xs font-medium whitespace-nowrap border h-7 px-2.5 transition-all ${
+              activeSource === src
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-muted-foreground border-border hover:border-accent/30"
+            }`}
+          >
+            {src}
+            <span className="text-[10px] opacity-70">({sourceStats[src] || 0})</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Category + search + sort row */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-5">
+        <div className="flex gap-1.5 shrink-0 overflow-x-auto scrollbar-hide pb-1">
           {categories.map((cat) => {
             const Icon = categoryIcons[cat];
             const isActive = activeCategory === cat;
@@ -106,7 +177,7 @@ const NewsPage = () => {
                 onClick={() => setActiveCategory(cat)}
                 className={`inline-flex items-center gap-1.5 rounded-lg text-xs font-medium whitespace-nowrap border h-8 px-3 transition-all ${
                   isActive
-                    ? "bg-primary text-primary-foreground border-primary"
+                    ? "bg-accent/15 text-accent border-accent/30"
                     : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
                 }`}
               >
@@ -116,53 +187,66 @@ const NewsPage = () => {
             );
           })}
         </div>
-        <div className="ml-auto flex items-center gap-1.5 shrink-0">
-          <SortAsc className="h-3 w-3 text-muted-foreground" />
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-            <SelectTrigger className="w-[120px] h-8 text-xs border-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="latest">Latest</SelectItem>
-              <SelectItem value="oldest">Oldest</SelectItem>
-              <SelectItem value="featured">Featured</SelectItem>
-            </SelectContent>
-          </Select>
+        <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-48">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search articles..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 text-xs pl-8 bg-card border-border"
+            />
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <SortAsc className="h-3 w-3 text-muted-foreground" />
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+              <SelectTrigger className="w-[110px] h-8 text-xs border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="latest">Latest</SelectItem>
+                <SelectItem value="oldest">Oldest</SelectItem>
+                <SelectItem value="featured">Featured</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
         </div>
       </div>
 
       {filtered.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground border border-dashed border-border rounded-xl">
           <Megaphone className="h-8 w-8 mx-auto mb-3 text-muted-foreground/40" />
-          <p className="text-sm font-medium">No articles in this category yet.</p>
+          <p className="text-sm font-medium">No articles match your filters.</p>
+          <p className="text-xs mt-1 text-muted-foreground/60">Try a different source or category.</p>
         </div>
       ) : (
         <>
-          {/* Top section: hero + 2 secondary */}
+          {/* Hero + sidebar grid */}
           {heroArticle && (
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-5">
               {/* Hero */}
               <Link
                 to={`/news/${heroArticle.id}`}
-                className="lg:col-span-7 group relative rounded-xl overflow-hidden border border-border hover:border-accent/30 transition-all"
+                className="lg:col-span-8 group relative rounded-xl overflow-hidden border border-border hover:border-accent/30 transition-all"
               >
                 <div className="aspect-[16/9] lg:aspect-[16/10]">
-                    <img
-                      src={getNewsImage(heroArticle.image_url, heroArticle.category, heroArticle.id)}
-                      alt={`${heroArticle.title} – ${heroArticle.category}`}
-                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                      loading="lazy"
-                    />
+                  <img
+                    src={getNewsImage(heroArticle.image_url, heroArticle.category, heroArticle.id)}
+                    alt={`${heroArticle.title} – ${heroArticle.category}`}
+                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                    loading="lazy"
+                  />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 </div>
                 <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
-                  <div className="flex items-center gap-2 mb-2">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
                     {heroArticle.is_featured && (
                       <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-xs h-5">
                         <Sparkles className="h-3 w-3" /> Featured
                       </Badge>
                     )}
                     <span className="text-xs text-white/70">{heroArticle.category}</span>
+                    {heroArticle.source && <SourceBadge source={heroArticle.source} />}
                     <span className="text-xs text-white/60 ml-auto flex items-center gap-1">
                       <Clock className="h-3 w-3" /> {heroArticle.read_time}
                     </span>
@@ -175,56 +259,63 @@ const NewsPage = () => {
                   </p>
                   <span className="text-xs text-white/50 mt-2 inline-flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
-                    {heroArticle.source && `${heroArticle.source} · `}{formatDate(heroArticle.date_published)}
+                    {formatDateLong(heroArticle.date_published)}
                   </span>
                 </div>
               </Link>
 
-              {/* 2 secondary cards */}
-              <div className="lg:col-span-5 grid grid-cols-2 lg:grid-cols-1 gap-4">
-                {topArticles.map((article) => (
-                  <Link
-                    key={article.id}
-                    to={`/news/${article.id}`}
-                    className="group relative rounded-xl overflow-hidden border border-border hover:border-accent/30 transition-all"
-                  >
-                    <div className="aspect-[16/9] lg:aspect-[21/9]">
-                      <img
-                        src={getNewsImage(article.image_url, article.category, article.id)}
-                        alt={article.title}
-                        className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-300"
-                        loading="lazy"
-                      />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/20 to-transparent" />
-                    </div>
-                    <div className="absolute bottom-0 left-0 right-0 p-3 md:p-4">
-                      <span className="text-xs text-white/60">{article.category}</span>
-                      <h3 className="font-heading font-semibold text-sm md:text-base text-white leading-snug line-clamp-2 group-hover:text-accent transition-colors mt-0.5">
-                        {article.title}
-                      </h3>
-                      <span className="text-xs text-white/50 mt-1 inline-block">
-                        {article.source && `${article.source} · `}{formatDate(article.date_published)}
-                      </span>
-                    </div>
-                  </Link>
-                ))}
+              {/* Sidebar — 3 stacked cards */}
+              <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
+                {topArticles.map((article) => {
+                  const CatIcon = categoryIcons[article.category] || Megaphone;
+                  return (
+                    <Link
+                      key={article.id}
+                      to={`/news/${article.id}`}
+                      className="group flex gap-3 p-3 rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all"
+                    >
+                      <div className="w-20 h-16 rounded-lg overflow-hidden shrink-0">
+                        <img
+                          src={getNewsImage(article.image_url, article.category, article.id)}
+                          alt={article.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center gap-1 mb-1">
+                          <CatIcon className="h-3 w-3 text-accent shrink-0" />
+                          <span className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">{article.category}</span>
+                        </div>
+                        <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                          {article.title}
+                        </h3>
+                        <div className="flex items-center gap-1.5 mt-1">
+                          {article.source && <SourceBadge source={article.source} />}
+                          <span className="text-[10px] text-muted-foreground">{formatDate(article.date_published)}</span>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
               </div>
             </div>
           )}
 
-          {/* List — compact rows for remaining articles */}
+          {/* Grid of remaining articles */}
           {listArticles.length > 0 && (
-            <div className="border border-border rounded-xl overflow-hidden divide-y divide-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
               {listArticles.map((article) => {
                 const dot = categoryDot[article.category] || "bg-muted-foreground";
+                const CatIcon = categoryIcons[article.category] || Megaphone;
                 return (
                   <Link
                     key={article.id}
                     to={`/news/${article.id}`}
-                    className="group flex items-start gap-3 p-3 md:p-4 hover:bg-muted/40 transition-colors"
+                    className="group rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all overflow-hidden"
                   >
-                    {/* Thumbnail */}
-                    <div className="w-20 h-14 md:w-28 md:h-[72px] rounded-lg overflow-hidden shrink-0">
+                    {/* Card image */}
+                    <div className="aspect-[16/9] overflow-hidden">
                       <img
                         src={getNewsImage(article.image_url, article.category, article.id)}
                         alt={article.title}
@@ -232,24 +323,27 @@ const NewsPage = () => {
                         loading="lazy"
                       />
                     </div>
-                    {/* Content */}
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5 mb-1">
+                    <div className="p-3.5">
+                      <div className="flex items-center gap-1.5 mb-2">
                         <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
-                        <span className="text-xs text-muted-foreground truncate">{article.category}</span>
-                        <span className="text-xs text-muted-foreground/60 ml-auto shrink-0 hidden sm:inline">
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
+                          <Clock className="h-2.5 w-2.5" />
                           {article.read_time}
                         </span>
                       </div>
-                      <h3 className="font-heading font-semibold text-sm md:text-base leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                      <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
                         {article.title}
                       </h3>
-                      <p className="text-xs text-muted-foreground line-clamp-1 mt-0.5 hidden md:block">
+                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-2">
                         {article.summary}
                       </p>
-                      <span className="text-xs text-muted-foreground/60 mt-1 inline-block">
-                        {article.source && `${article.source} · `}{formatDate(article.date_published)}
-                      </span>
+                      <div className="flex items-center gap-1.5">
+                        {article.source && <SourceBadge source={article.source} />}
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatDate(article.date_published)}
+                        </span>
+                      </div>
                     </div>
                   </Link>
                 );
@@ -260,10 +354,12 @@ const NewsPage = () => {
       )}
 
       {/* Footer stats */}
-      <div className="flex items-center justify-center gap-3 mt-6 text-[10px] text-muted-foreground">
+      <div className="flex items-center justify-center gap-3 mt-6 text-[10px] text-muted-foreground flex-wrap">
         <span>{filtered.length} article{filtered.length !== 1 ? "s" : ""}</span>
         <span className="w-px h-3 bg-border" />
         <span>{activeCategory === "All" ? "All categories" : activeCategory}</span>
+        <span className="w-px h-3 bg-border" />
+        <span>{activeSource === "All" ? `${sources.length} sources` : activeSource}</span>
       </div>
     </div>
   );
