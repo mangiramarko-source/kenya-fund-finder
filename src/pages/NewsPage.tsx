@@ -103,6 +103,33 @@ const NewsPage = () => {
     return filtered.filter((a) => !usedIds.has(a.id));
   }, [filtered, heroArticle, topArticles]);
 
+  // Infinite scroll / load more
+  const PAGE_SIZE = 12;
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const loaderRef = useRef<HTMLDivElement>(null);
+
+  // Reset visible count when filters change
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [activeCategory, activeSource, sortBy, searchQuery]);
+
+  const visibleList = useMemo(() => listArticles.slice(0, visibleCount), [listArticles, visibleCount]);
+  const hasMore = visibleCount < listArticles.length;
+
+  // Intersection observer for infinite scroll
+  useEffect(() => {
+    const el = loaderRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0].isIntersecting && hasMore) {
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, listArticles.length));
+        }
+      },
+      { rootMargin: "200px" }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [hasMore, listArticles.length]);
+
   // Source stats
   const sourceStats = useMemo(() => {
     const counts: Record<string, number> = {};
