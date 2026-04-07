@@ -56,18 +56,18 @@ const PRECIOUS_METALS: Record<string, string> = {
 
 // NSE stock symbols → Yahoo Finance tickers (.NR suffix for Nairobi)
 const NSE_YAHOO_MAP: Record<string, string> = {
-  SCOM: "SCOM.NBO", EQTY: "EQTY.NBO", KCB: "KCB.NBO", COOP: "COOP.NBO",
-  ABSA: "ABSA.NBO", EABL: "EABL.NBO", BAT: "BAT.NBO", KNRE: "KNRE.NBO",
-  KPLC: "KPLC.NBO", BAMB: "BAMB.NBO", SASN: "SASN.NBO", TOTL: "TOTL.NBO",
-  NCBA: "NCBA.NBO", SCBK: "SCBK.NBO", SBIC: "SBIC.NBO", IMH: "IMH.NBO",
-  KEGN: "KEGN.NBO", BKG: "BKG.NBO", DTK: "DTK.NBO", BRIT: "BRIT.NBO",
-  JUB: "JUB.NBO", KQ: "KQ.NBO", HFCK: "HFCK.NBO", CIC: "CIC.NBO",
-  CTUM: "CTUM.NBO", KUKZ: "KUKZ.NBO", CRWN: "CRWN.NBO", PORT: "PORT.NBO",
-  CARB: "CARB.NBO", NSE20: "NSE.NBO", CGEN: "CGEN.NBO", LBTY: "LBTY.NBO",
-  WTK: "WTK.NBO", SMER: "SMER.NBO", TPSE: "TPSE.NBO", KAPC: "KAPC.NBO",
-  NMG: "NMG.NBO", BOC: "BOC.NBO", UNGA: "UNGA.NBO", SLAM: "SLAM.NBO",
-  TCL: "TCL.NBO", LKL: "LKL.NBO", SGL: "SGL.NBO", KPC: "KPC.NBO",
-  UMME: "UMME.NBO",
+  SCOM: "SCOM.NR", EQTY: "EQTY.NR", KCB: "KCB.NR", COOP: "COOP.NR",
+  ABSA: "ABSA.NR", EABL: "EABL.NR", BAT: "BAT.NR", KNRE: "KNRE.NR",
+  KPLC: "KPLC.NR", BAMB: "BAMB.NR", SASN: "SASN.NR", TOTL: "TOTL.NR",
+  NCBA: "NCBA.NR", SCBK: "SCBK.NR", SBIC: "SBIC.NR", IMH: "IMH.NR",
+  KEGN: "KEGN.NR", BKG: "BKG.NR", DTK: "DTK.NR", BRIT: "BRIT.NR",
+  JUB: "JUB.NR", KQ: "KQ.NR", HFCK: "HFCK.NR", CIC: "CIC.NR",
+  CTUM: "CTUM.NR", KUKZ: "KUKZ.NR", CRWN: "CRWN.NR", PORT: "PORT.NR",
+  CARB: "CARB.NR", NSE20: "NSE.NR", CGEN: "CGEN.NR", LBTY: "LBTY.NR",
+  WTK: "WTK.NR", SMER: "SMER.NR", TPSE: "TPSE.NR", KAPC: "KAPC.NR",
+  NMG: "NMG.NR", BOC: "BOC.NR", UNGA: "UNGA.NR", SLAM: "SLAM.NR",
+  TCL: "TCL.NR", LKL: "LKL.NR", SGL: "SGL.NR", KPC: "KPC.NR",
+  UMME: "UMME.NR",
 };
 
 const NSE_SECTOR_MAP: Record<string, string> = {
@@ -271,6 +271,8 @@ async function fetchYahooQuote(ticker: string): Promise<{
   marketCap: number | null;
   yearHigh: number | null;
   yearLow: number | null;
+  peRatio: number | null;
+  dividendYield: number | null;
 } | null> {
   try {
     const res = await fetch(
@@ -302,9 +304,11 @@ async function fetchYahooQuote(ticker: string): Promise<{
       dayChange: parseFloat(dayChange.toFixed(2)),
       dayChangePct: parseFloat(dayChangePct.toFixed(2)),
       volume: meta.regularMarketVolume ?? 0,
-      marketCap: null, // not available in chart endpoint
+      marketCap: meta.marketCap ?? null,
       yearHigh: meta.fiftyTwoWeekHigh ?? null,
       yearLow: meta.fiftyTwoWeekLow ?? null,
+      peRatio: meta.trailingPE ?? null,
+      dividendYield: meta.dividendYield ?? null,
     };
   } catch (e) {
     console.error(`Yahoo Finance error for ${ticker}:`, e);
@@ -605,41 +609,12 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Fallback to Yahoo Finance for stocks not updated by RapidAPI
-      if (stocksUpdated < stockRows.length / 2) {
-        console.log(`[fetch-market-data] RapidAPI got ${stocksUpdated}/${stockRows.length}, trying Yahoo fallback...`);
-        for (const row of stockRows) {
-          const sym = (row.symbol || "").toUpperCase();
-          if (rapidApiQuotes.has(sym)) continue; // already updated
+      // Note: Yahoo Finance no longer supports NSE (.NR/.NBO) tickers.
+      // Fundamentals (market_cap, pe_ratio, dividend_yield, year_high, year_low)
+      // must be managed manually or via a future API source.
 
-          const yahooTicker = NSE_YAHOO_MAP[sym];
-          if (!yahooTicker) continue;
-
-          try {
-            const yq = await fetchYahooQuote(yahooTicker);
-            if (!yq || yq.price <= 0) continue;
-
-            const updateData: Record<string, unknown> = {
-              previous_price: yq.previousClose,
-              price: yq.price,
-              day_change: yq.dayChange,
-              day_change_percent: yq.dayChangePct,
-              updated_at: new Date().toISOString(),
-            };
-            if (yq.volume > 0) updateData.volume = yq.volume;
-            if (yq.yearHigh) updateData.year_high = yq.yearHigh;
-            if (yq.yearLow) updateData.year_low = yq.yearLow;
-
-            await supabase.from("stocks").update(updateData).eq("id", row.id);
-            stocksUpdated++;
-          } catch (e) {
-            console.error(`[fetch-market-data] Yahoo fallback failed for ${sym}:`, e);
-          }
-        }
-      }
-
-      results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length}`);
-      console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length}`);
+      results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length} prices`);
+      console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length} prices`);
     }
     } // end shouldFetchStocks
 
