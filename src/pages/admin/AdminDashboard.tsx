@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users,
   TrendingUp, Activity, MousePointerClick, ShieldAlert, ArrowUpRight,
-  ArrowDownRight, Globe, PieChart, RefreshCw, Radio,
+  ArrowDownRight, Globe, PieChart, RefreshCw, Radio, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, LineChart, Line, PieChart as RechartsPie, Pie, Legend,
