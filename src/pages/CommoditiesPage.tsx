@@ -87,12 +87,32 @@ const CommoditiesPage = () => {
       setLoading(false);
     };
     fetchData();
+
+    // Subscribe to commodity price changes for real-time updates
     const ch = supabase
       .channel("commodities-page-rt")
-      .on("postgres_changes", { event: "*", schema: "public", table: "commodities" }, () => fetchData())
+      .on("postgres_changes", { event: "*", schema: "public", table: "commodities" }, () => {
+        fetchData();
+        // Clear cached history so graphs re-fetch with latest data
+        setHistory({});
+        if (expanded) {
+          // Re-fetch history for the currently expanded commodity
+          (async () => {
+            setHistoryLoading(expanded);
+            const { data: histData } = await supabase
+              .from("commodity_price_history" as any)
+              .select("price, snapshot_date")
+              .eq("commodity_id", expanded)
+              .order("snapshot_date", { ascending: true })
+              .limit(90);
+            setHistory({ [expanded]: ((histData as any) || []).map((d: any) => ({ snapshot_date: d.snapshot_date, price: Number(d.price) })) });
+            setHistoryLoading(null);
+          })();
+        }
+      })
       .subscribe();
     return () => { supabase.removeChannel(ch); };
-  }, []);
+  }, [expanded]);
 
   const toggleExpand = async (id: string) => {
     if (expanded === id) { setExpanded(null); return; }
