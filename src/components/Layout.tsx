@@ -6,6 +6,7 @@ import SkipToContent from "./SkipToContent";
 import CurrencyTicker from "./CurrencyTicker";
 import DesktopSidebar from "./DesktopSidebar";
 import DesktopTopBar from "./DesktopTopBar";
+import SuggestionBox from "./SuggestionBox";
 import { usePageView } from "@/hooks/usePageView";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -37,6 +38,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <main id="main-content" className="flex-1">{children}</main>
         <Footer />
         <CookieConsent />
+        <SuggestionBox />
       </div>
     </div>
   );
