@@ -409,6 +409,26 @@ const AdminDashboard = () => {
             <ToggleGroupItem value="7d" size="sm" className="text-xs px-3">7d</ToggleGroupItem>
             <ToggleGroupItem value="30d" size="sm" className="text-xs px-3">30d</ToggleGroupItem>
           </ToggleGroup>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={sendingEmails}>
+                <Mail className={`mr-2 h-4 w-4 ${sendingEmails ? "animate-spin" : ""}`} />
+                {sendingEmails ? "Sending…" : "Send Market Update"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Send Market Update Email</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will send a branded Market Update email to all users who have opted in to the weekly summary. Continue?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSendMarketUpdate}>Send Emails</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button variant="outline" size="sm" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>
