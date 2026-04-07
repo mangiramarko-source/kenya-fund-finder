@@ -2,7 +2,8 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Clock, TrendingUp, Landmark, Shield, Megaphone, SortAsc, Sparkles, Calendar, Newspaper, ExternalLink, Search, Loader2 } from "lucide-react";
+import { Clock, TrendingUp, Landmark, Shield, Megaphone, SortAsc, Sparkles, Calendar, Newspaper, ExternalLink, Search, Loader2, Calculator } from "lucide-react";
+import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -52,6 +53,7 @@ const SourceBadge = ({ source }: { source: string }) => {
 };
 
 const NewsPage = () => {
+  const navTo = useNavigate();
   useDocumentTitle(
     "Kenya Investment News – Unit Trusts, Stocks & Market Updates",
     "Stay informed with the latest Kenyan investment news: unit trust yield updates, NSE stock market news, regulatory changes, and fund announcements.",
@@ -370,6 +372,13 @@ const NewsPage = () => {
                           <span className="text-[10px] text-muted-foreground">
                             {formatDate(article.date_published)}
                           </span>
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navTo("/calculator"); }}
+                            className="ml-auto inline-flex items-center gap-1 text-[10px] font-medium text-accent hover:text-accent/80 transition-colors"
+                            title="Use ROI Calculator"
+                          >
+                            <Calculator className="h-3 w-3" /> Calc
+                          </button>
                         </div>
                       </div>
                     </Link>

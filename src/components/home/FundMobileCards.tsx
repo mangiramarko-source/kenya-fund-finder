@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Star } from "lucide-react";
+import { Bell } from "lucide-react";
 import YieldChange from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
@@ -87,9 +87,9 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch, 
               <button
                 onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(fund.id, fund.name); }}
                 className="p-1 rounded-md shrink-0"
-                aria-label={isFavourite?.(fund.id) ? "Remove from favourites" : "Add to favourites"}
+                aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
               >
-                <Star className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`} />
+                <Bell className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-accent fill-accent" : "text-muted-foreground/40"}`} />
               </button>
             )}
           </div>
