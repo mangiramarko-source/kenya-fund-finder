@@ -62,7 +62,7 @@ const SuggestionBox = () => {
             placeholder="Type your suggestion here..."
             value={message}
             onChange={(e) => setMessage(e.target.value)}
-            className="mb-3 min-h-[100px] resize-none text-sm"
+            className="mb-3 min-h-[100px] resize-none text-base md:text-sm"
             maxLength={1000}
           />
           <div className="flex items-center justify-between">
