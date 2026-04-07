@@ -162,9 +162,54 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
 
   return (
     <div ref={ref} className="min-h-screen">
-      <div className="px-4 md:px-6 py-6">
+      {/* Mobile sticky header */}
+      <div className="md:hidden sticky top-0 z-20 bg-background border-b border-border/50 pb-3">
+        <div className="px-4 pt-4 pb-2">
+          <h1 className="text-xl font-bold text-foreground">Unit Trust Funds</h1>
+          <p className="text-sm text-muted-foreground mt-1">
+            Compare CMA-regulated unit trust yields, fees, and performance across Kenya.
+            <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
+          </p>
+        </div>
+
+        {user && favEntries.length > 0 && (
+          <div className="px-4 pb-1">
+            <FundFavourites entries={favEntries} funds={funds} snapshots={snapshots} />
+          </div>
+        )}
+
+        <div className="px-4">
+          <CategoryTabs
+            tabs={allTabs}
+            selectedCategory={selectedCategory}
+            categoryCount={categoryCount}
+            onSelect={setSelectedCategory}
+            loading={loading}
+          />
+
+          {isFundTab && (
+            <>
+              <p className="text-[10px] text-muted-foreground/70 -mt-1 mb-2">Gross annual effective rates before 15% withholding tax.</p>
+              <div className="flex gap-2">
+                <div className="relative flex-1">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    placeholder="Search funds or managers…"
+                    value={search}
+                    onChange={(e) => setSearch(e.target.value)}
+                    className="pl-9 h-9 rounded-lg text-[16px]"
+                  />
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Desktop header */}
+      <div className="hidden md:block px-6 py-6">
         <div className="mb-4">
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">Unit Trust Funds</h1>
+          <h1 className="text-2xl font-bold text-foreground">Unit Trust Funds</h1>
           <p className="text-sm text-muted-foreground mt-1">
             Compare CMA-regulated unit trust yields, fees, and performance across Kenya.
             <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
@@ -176,10 +221,12 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
       </div>
 
       <div className="px-4 md:px-6 pb-3">
-        {/* Favourites overview */}
-        {user && favEntries.length > 0 && (
-          <FundFavourites entries={favEntries} funds={funds} snapshots={snapshots} />
-        )}
+        {/* Desktop favourites */}
+        <div className="hidden md:block">
+          {user && favEntries.length > 0 && (
+            <FundFavourites entries={favEntries} funds={funds} snapshots={snapshots} />
+          )}
+        </div>
 
         {/* Desktop: full-width tabbed fund table */}
         <div className="hidden md:block">
@@ -193,31 +240,9 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
           />
         </div>
 
-        {/* Mobile: tabbed view with cards */}
-        <div className="md:hidden">
-          <CategoryTabs
-            tabs={allTabs}
-            selectedCategory={selectedCategory}
-            categoryCount={categoryCount}
-            onSelect={setSelectedCategory}
-            loading={loading}
-          />
-
+        {/* Mobile: scrollable content below sticky header */}
+        <div className="md:hidden pt-3">
           {isFundTab && (
-            <>
-              <p className="text-[10px] text-muted-foreground/70 -mt-1 mb-3">Gross annual effective rates before 15% withholding tax.</p>
-
-              <div className="flex gap-2 mb-4">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search funds or managers…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 h-9 rounded-lg text-[16px]"
-                  />
-                </div>
-              </div>
 
               <FundMobileCards
                 funds={processedFunds}
