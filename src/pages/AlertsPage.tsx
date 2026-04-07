@@ -347,6 +347,9 @@ const AlertsPage = () => {
             <TabsTrigger value="active">Active ({activeAlerts.length})</TabsTrigger>
             <TabsTrigger value="triggered">Triggered ({triggeredAlerts.length})</TabsTrigger>
             <TabsTrigger value="paused">Paused ({pausedAlerts.length})</TabsTrigger>
+            <TabsTrigger value="settings" className="gap-1">
+              <Settings2 className="h-3.5 w-3.5" /> Settings
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value="active" className="space-y-3">
@@ -371,6 +374,49 @@ const AlertsPage = () => {
             ) : (
               <EmptyState icon={BellOff} title="No paused alerts" description="Pause alerts to temporarily stop monitoring" />
             )}
+          </TabsContent>
+
+          <TabsContent value="settings">
+            <Card>
+              <CardContent className="p-5 space-y-6">
+                <div>
+                  <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2">
+                    <Mail className="h-4 w-4 text-accent" /> Email Notifications
+                  </h3>
+                  <p className="text-xs text-muted-foreground mb-4">
+                    Control which email alerts you receive from Kenya Fund Finder.
+                  </p>
+                </div>
+
+                <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+                  <div>
+                    <p className="font-medium text-sm text-foreground">Instant Price Alerts</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Get an email immediately when your price targets are hit.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={prefs.instant_alerts}
+                    onCheckedChange={(v) => updatePref("instant_alerts", v)}
+                    disabled={prefsLoading}
+                  />
+                </div>
+
+                <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
+                  <div>
+                    <p className="font-medium text-sm text-foreground">Weekly Market Summary</p>
+                    <p className="text-xs text-muted-foreground mt-0.5">
+                      Receive a weekly digest with your watchlist performance, top funds, and latest news.
+                    </p>
+                  </div>
+                  <Switch
+                    checked={prefs.weekly_summary}
+                    onCheckedChange={(v) => updatePref("weekly_summary", v)}
+                    disabled={prefsLoading}
+                  />
+                </div>
+              </CardContent>
+            </Card>
           </TabsContent>
         </Tabs>
       )}
