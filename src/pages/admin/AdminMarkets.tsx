@@ -158,26 +158,31 @@ const AdminMarkets = () => {
 
   if (loading) return <div className="text-center py-10 text-muted-foreground">Loading…</div>;
 
-  const triggerAutoFetch = async () => {
+  const callFetchFunction = async (fetchType?: string) => {
     setSaving(true);
     try {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const body: Record<string, unknown> = {};
+      if (fetchType) body.fetch_type = fetchType;
       const res = await fetch(
         `https://${projectId}.supabase.co/functions/v1/fetch-market-data`,
-        { method: "POST", headers: { "Content-Type": "application/json" } }
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
       );
       const result = await res.json();
       if (result.success) {
-        toast.success("Auto-fetch complete! Refreshing data...");
+        toast.success(`Fetch complete! ${(result.results || []).join(', ')}`);
         fetchData();
       } else {
-        toast.error(result.error || "Auto-fetch failed");
+        toast.error(result.error || "Fetch failed");
       }
     } catch (e: any) {
       toast.error(e.message);
     }
     setSaving(false);
   };
+
+  const triggerAutoFetch = () => callFetchFunction();
+  const triggerStocksFetch = () => callFetchFunction("stocks");
 
   return (
     <div className="space-y-8">
