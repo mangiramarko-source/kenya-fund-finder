@@ -438,6 +438,7 @@ Deno.serve(async (req) => {
     }
 
     // ── 2. Fetch commodity prices ──
+    if (shouldFetchCommodities) {
     const { data: commodityRows } = await supabase
       .from("commodities")
       .select("id, symbol, name, price, unit");
