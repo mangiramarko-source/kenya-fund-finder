@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers, Tag, Star } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers, Tag, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import YieldChange from "@/components/YieldChange";
@@ -357,9 +357,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       <button
                         onClick={(e) => { e.stopPropagation(); onToggleFavourite(fund.id, fund.name); }}
                         className="p-1 rounded-md hover:bg-muted transition-colors"
-                        aria-label={isFavourite?.(fund.id) ? "Remove from favourites" : "Add to favourites"}
+                        aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
                       >
-                        <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+                        <Bell className={`h-3.5 w-3.5 transition-colors ${isFavourite?.(fund.id) ? "text-accent fill-accent" : "text-muted-foreground/40 hover:text-accent"}`} />
                       </button>
                     </td>
                   )}
