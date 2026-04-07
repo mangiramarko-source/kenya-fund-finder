@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import {
   BarChart3, Newspaper, Clock, AlertTriangle, LogOut, Eye, Users,
   TrendingUp, Activity, MousePointerClick, ShieldAlert, ArrowUpRight,
-  ArrowDownRight, Globe, PieChart, RefreshCw, Radio,
+  ArrowDownRight, Globe, PieChart, RefreshCw, Radio, Mail,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNavigate } from "react-router-dom";
@@ -15,6 +15,12 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
+import { toast } from "sonner";
+import {
+  AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
+  AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
   Cell, LineChart, Line, PieChart as RechartsPie, Pie, Legend,
@@ -276,9 +282,26 @@ const AdminDashboard = () => {
 
   useEffect(() => { load(); }, [load]);
 
+  const [sendingEmails, setSendingEmails] = useState(false);
+
   const handleLogout = async () => {
     await signOut();
     navigate("/admin/login");
+  };
+
+  const handleSendMarketUpdate = async () => {
+    setSendingEmails(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("send-market-update", {
+        body: {},
+      });
+      if (error) throw error;
+      toast.success(`Market update sent to ${data?.sent ?? 0} user(s)`);
+    } catch (err: any) {
+      toast.error("Failed to send market update: " + (err.message || "Unknown error"));
+    } finally {
+      setSendingEmails(false);
+    }
   };
 
   const gateLabels: Record<string, string> = {
@@ -386,6 +409,26 @@ const AdminDashboard = () => {
             <ToggleGroupItem value="7d" size="sm" className="text-xs px-3">7d</ToggleGroupItem>
             <ToggleGroupItem value="30d" size="sm" className="text-xs px-3">30d</ToggleGroupItem>
           </ToggleGroup>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <Button variant="outline" size="sm" disabled={sendingEmails}>
+                <Mail className={`mr-2 h-4 w-4 ${sendingEmails ? "animate-spin" : ""}`} />
+                {sendingEmails ? "Sending…" : "Send Market Update"}
+              </Button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Send Market Update Email</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will send a branded Market Update email to all users who have opted in to the weekly summary. Continue?
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction onClick={handleSendMarketUpdate}>Send Emails</AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
           <Button variant="outline" size="sm" onClick={handleLogout}>
             <LogOut className="mr-2 h-4 w-4" /> Sign Out
           </Button>
