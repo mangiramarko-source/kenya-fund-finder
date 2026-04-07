@@ -583,6 +583,28 @@ Deno.serve(async (req) => {
         console.warn("[fetch-market-data] RAPIDAPI_KEY not set, skipping RapidAPI");
       }
 
+      // Fetch 52-week price history for year_high/year_low calculation
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      const { data: priceHistRows } = await supabase
+        .from("stock_price_history")
+        .select("stock_id, price")
+        .gte("snapshot_date", oneYearAgo.toISOString().split("T")[0]);
+
+      // Build lookup: stock_id → { high, low }
+      const yearRanges = new Map<string, { high: number; low: number }>();
+      if (priceHistRows) {
+        for (const ph of priceHistRows) {
+          const existing = yearRanges.get(ph.stock_id);
+          if (existing) {
+            if (ph.price > existing.high) existing.high = ph.price;
+            if (ph.price < existing.low) existing.low = ph.price;
+          } else {
+            yearRanges.set(ph.stock_id, { high: ph.price, low: ph.price });
+          }
+        }
+      }
+
       // Update stocks from RapidAPI data
       for (const row of stockRows) {
         const sym = (row.symbol || "").toUpperCase();
@@ -595,11 +617,26 @@ Deno.serve(async (req) => {
           const previousPrice = parseFloat((quote.price - dayChange).toFixed(2));
           const dayChangePct = previousPrice > 0 ? parseFloat(((dayChange / previousPrice) * 100).toFixed(2)) : 0;
 
+          // Calculate year_high / year_low including current price
+          const hist = yearRanges.get(row.id);
+          let yearHigh = row.year_high;
+          let yearLow = row.year_low;
+          if (hist) {
+            yearHigh = Math.max(hist.high, quote.price);
+            yearLow = Math.min(hist.low, quote.price);
+          } else {
+            // No history yet — use current price vs existing values
+            yearHigh = yearHigh ? Math.max(yearHigh, quote.price) : quote.price;
+            yearLow = yearLow ? Math.min(yearLow, quote.price) : quote.price;
+          }
+
           const updateData: Record<string, unknown> = {
             previous_price: previousPrice,
             price: quote.price,
             day_change: dayChange,
             day_change_percent: dayChangePct,
+            year_high: yearHigh,
+            year_low: yearLow,
             updated_at: new Date().toISOString(),
           };
           if (quote.volume > 0) updateData.volume = quote.volume;
@@ -610,10 +647,9 @@ Deno.serve(async (req) => {
       }
 
       // Note: Yahoo Finance no longer supports NSE (.NR/.NBO) tickers.
-      // Fundamentals (market_cap, pe_ratio, dividend_yield, year_high, year_low)
-      // must be managed manually or via a future API source.
+      // market_cap, pe_ratio, dividend_yield require manual entry or a future API source.
 
-      results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length} prices`);
+      results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length} prices (with 52-week ranges)`);
       console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length} prices`);
     }
     } // end shouldFetchStocks
