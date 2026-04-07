@@ -1,5 +1,5 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -27,11 +27,13 @@ const mobileNavLinks = [
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
+  const [mobileHeaderHeight, setMobileHeaderHeight] = useState(156);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light") return false;
     return true;
   });
+  const headerRef = useRef<HTMLElement | null>(null);
   const [avatarUrl, setAvatarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
   const location = useLocation();
@@ -78,6 +80,29 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  useEffect(() => {
+    const element = headerRef.current;
+    if (!element) return;
+
+    const updateHeight = () => {
+      setMobileHeaderHeight(element.getBoundingClientRect().height);
+    };
+
+    updateHeight();
+
+    const observer = typeof ResizeObserver !== "undefined"
+      ? new ResizeObserver(updateHeight)
+      : null;
+
+    observer?.observe(element);
+    window.addEventListener("resize", updateHeight);
+
+    return () => {
+      observer?.disconnect();
+      window.removeEventListener("resize", updateHeight);
+    };
+  }, []);
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
@@ -86,7 +111,11 @@ const Navbar = () => {
   const closeMobile = () => setOpen(false);
 
   return (
-    <header className={`sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border transition-shadow duration-200 ${scrolled ? "shadow-[0_4px_16px_-4px_hsl(0_0%_0%/0.25)]" : ""}`}>
+    <>
+    <header
+      ref={headerRef}
+      className={`fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border transition-shadow duration-200 ${scrolled ? "shadow-[0_12px_28px_-18px_hsl(var(--foreground)/0.35)]" : ""}`}
+    >
       <div className="container flex h-16 items-center justify-between relative">
         {/* Logo */}
         <Link to="/" className="hidden md:flex items-center gap-2.5 font-heading text-xl font-extrabold text-primary shrink-0">
@@ -364,6 +393,8 @@ const Navbar = () => {
         </SheetContent>
       </Sheet>
     </header>
+    <div aria-hidden="true" className="md:hidden shrink-0" style={{ height: mobileHeaderHeight }} />
+    </>
   );
 };
 
