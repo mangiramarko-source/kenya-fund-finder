@@ -243,7 +243,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
         {/* Mobile: scrollable content below sticky header */}
         <div className="md:hidden pt-3">
           {isFundTab && (
-
+            <>
               <FundMobileCards
                 funds={processedFunds}
                 snapshots={snapshots}
