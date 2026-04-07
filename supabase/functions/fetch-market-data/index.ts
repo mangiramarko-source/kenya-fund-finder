@@ -526,8 +526,10 @@ Deno.serve(async (req) => {
 
       results.push(`Commodities: processed ${commodityRows.length} items`);
     }
+    } // end shouldFetchCommodities
 
     // ── 3. Fetch Kenyan stock prices (Yahoo Finance primary, NSE fallback) ──
+    if (shouldFetchStocks) {
     const { data: stockRows } = await supabase
       .from("stocks")
       .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low")
