@@ -271,6 +271,8 @@ async function fetchYahooQuote(ticker: string): Promise<{
   marketCap: number | null;
   yearHigh: number | null;
   yearLow: number | null;
+  peRatio: number | null;
+  dividendYield: number | null;
 } | null> {
   try {
     const res = await fetch(
@@ -302,9 +304,11 @@ async function fetchYahooQuote(ticker: string): Promise<{
       dayChange: parseFloat(dayChange.toFixed(2)),
       dayChangePct: parseFloat(dayChangePct.toFixed(2)),
       volume: meta.regularMarketVolume ?? 0,
-      marketCap: null, // not available in chart endpoint
+      marketCap: meta.marketCap ?? null,
       yearHigh: meta.fiftyTwoWeekHigh ?? null,
       yearLow: meta.fiftyTwoWeekLow ?? null,
+      peRatio: meta.trailingPE ?? null,
+      dividendYield: meta.dividendYield ?? null,
     };
   } catch (e) {
     console.error(`Yahoo Finance error for ${ticker}:`, e);
