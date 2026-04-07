@@ -181,16 +181,21 @@ const AdminMarkets = () => {
 
   return (
     <div className="space-y-8">
-      {/* Auto-fetch trigger */}
+      {/* Auto-fetch triggers */}
       <div className="flex items-center gap-3 p-4 rounded-xl border border-border bg-muted/30">
         <RefreshCw className="h-5 w-5 text-accent" />
         <div className="flex-1">
           <p className="text-sm font-semibold">Automated Data Updates</p>
-          <p className="text-xs text-muted-foreground">FX rates update hourly from ExchangeRate-API. Crypto prices from CoinGecko.</p>
+          <p className="text-xs text-muted-foreground">FX rates, crypto, commodities &amp; NSE stocks update hourly. Stocks use Yahoo Finance with NSE fallback.</p>
         </div>
-        <Button size="sm" onClick={triggerAutoFetch} disabled={saving}>
-          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Fetch Now
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={triggerStocksFetch} disabled={saving}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Fetch Stocks
+          </Button>
+          <Button size="sm" onClick={triggerAutoFetch} disabled={saving}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Fetch All
+          </Button>
+        </div>
       </div>
 
       {/* Exchange Rates */}
