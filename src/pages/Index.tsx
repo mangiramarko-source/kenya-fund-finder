@@ -170,7 +170,7 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   return (
     <div ref={ref} className="min-h-screen">
       {/* Mobile sticky header */}
-      <div className="md:hidden sticky top-0 z-20 bg-background border-b border-border/50 pb-3">
+      <div className={`md:hidden sticky top-0 z-20 bg-background border-b border-border/50 pb-3 transition-shadow duration-200 ${scrolled ? "shadow-[0_4px_12px_-2px_hsl(var(--background)/0.8),0_2px_6px_-2px_hsl(0_0%_0%/0.3)]" : ""}`}>
         <div className="px-4 pt-4 pb-2">
           <h1 className="text-xl font-bold text-foreground">Unit Trust Funds</h1>
           <p className="text-sm text-muted-foreground mt-1">
