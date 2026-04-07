@@ -281,7 +281,11 @@ async function fetchYahooQuote(ticker: string): Promise<{
         },
       }
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`Yahoo Finance ${ticker}: HTTP ${res.status}`);
+      await res.text();
+      return null;
+    }
     const data = await res.json();
     const result = data?.chart?.result?.[0];
     if (!result) return null;
