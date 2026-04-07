@@ -83,6 +83,13 @@ const Index = forwardRef<HTMLDivElement>((_, ref) => {
   const { user } = useAuth();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useFundWatchlist();
+  const [scrolled, setScrolled] = useState(false);
+
+  useEffect(() => {
+    const onScroll = () => setScrolled(window.scrollY > 8);
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
 
   useEffect(() => {
     Promise.all([
