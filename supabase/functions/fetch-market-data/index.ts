@@ -56,18 +56,18 @@ const PRECIOUS_METALS: Record<string, string> = {
 
 // NSE stock symbols → Yahoo Finance tickers (.NR suffix for Nairobi)
 const NSE_YAHOO_MAP: Record<string, string> = {
-  SCOM: "SCOM.NR", EQTY: "EQTY.NR", KCB: "KCB.NR", COOP: "COOP.NR",
-  ABSA: "ABSA.NR", EABL: "EABL.NR", BAT: "BAT.NR", KNRE: "KNRE.NR",
-  KPLC: "KPLC.NR", BAMB: "BAMB.NR", SASN: "SASN.NR", TOTL: "TOTL.NR",
-  NCBA: "NCBA.NR", SCBK: "SCBK.NR", SBIC: "SBIC.NR", IMH: "IMH.NR",
-  KEGN: "KEGN.NR", BKG: "BKG.NR", DTK: "DTK.NR", BRIT: "BRIT.NR",
-  JUB: "JUB.NR", KQ: "KQ.NR", HFCK: "HFCK.NR", CIC: "CIC.NR",
-  CTUM: "CTUM.NR", KUKZ: "KUKZ.NR", CRWN: "CRWN.NR", PORT: "PORT.NR",
-  CARB: "CARB.NR", NSE20: "NSE.NR", CGEN: "CGEN.NR", LBTY: "LBTY.NR",
-  WTK: "WTK.NR", SMER: "SMER.NR", TPSE: "TPSE.NR", KAPC: "KAPC.NR",
-  NMG: "NMG.NR", BOC: "BOC.NR", UNGA: "UNGA.NR", SLAM: "SLAM.NR",
-  TCL: "TCL.NR", LKL: "LKL.NR", SGL: "SGL.NR", KPC: "KPC.NR",
-  UMME: "UMME.NR",
+  SCOM: "SCOM.NBO", EQTY: "EQTY.NBO", KCB: "KCB.NBO", COOP: "COOP.NBO",
+  ABSA: "ABSA.NBO", EABL: "EABL.NBO", BAT: "BAT.NBO", KNRE: "KNRE.NBO",
+  KPLC: "KPLC.NBO", BAMB: "BAMB.NBO", SASN: "SASN.NBO", TOTL: "TOTL.NBO",
+  NCBA: "NCBA.NBO", SCBK: "SCBK.NBO", SBIC: "SBIC.NBO", IMH: "IMH.NBO",
+  KEGN: "KEGN.NBO", BKG: "BKG.NBO", DTK: "DTK.NBO", BRIT: "BRIT.NBO",
+  JUB: "JUB.NBO", KQ: "KQ.NBO", HFCK: "HFCK.NBO", CIC: "CIC.NBO",
+  CTUM: "CTUM.NBO", KUKZ: "KUKZ.NBO", CRWN: "CRWN.NBO", PORT: "PORT.NBO",
+  CARB: "CARB.NBO", NSE20: "NSE.NBO", CGEN: "CGEN.NBO", LBTY: "LBTY.NBO",
+  WTK: "WTK.NBO", SMER: "SMER.NBO", TPSE: "TPSE.NBO", KAPC: "KAPC.NBO",
+  NMG: "NMG.NBO", BOC: "BOC.NBO", UNGA: "UNGA.NBO", SLAM: "SLAM.NBO",
+  TCL: "TCL.NBO", LKL: "LKL.NBO", SGL: "SGL.NBO", KPC: "KPC.NBO",
+  UMME: "UMME.NBO",
 };
 
 const NSE_SECTOR_MAP: Record<string, string> = {
@@ -281,7 +281,11 @@ async function fetchYahooQuote(ticker: string): Promise<{
         },
       }
     );
-    if (!res.ok) return null;
+    if (!res.ok) {
+      console.error(`Yahoo Finance ${ticker}: HTTP ${res.status}`);
+      await res.text();
+      return null;
+    }
     const data = await res.json();
     const result = data?.chart?.result?.[0];
     if (!result) return null;
@@ -387,48 +391,58 @@ Deno.serve(async (req) => {
     console.log("[fetch-market-data] Admin user authenticated:", userId);
   }
 
+  const fetchType = (body as Record<string, unknown>)?.fetch_type as string | undefined;
   const results: string[] = [];
-  console.log("[fetch-market-data] Starting data fetch cycle...");
+  console.log(`[fetch-market-data] Starting data fetch cycle... (type: ${fetchType || "all"})`);
+
+  const shouldFetchFx = !fetchType || fetchType === "fx";
+  const shouldFetchCommodities = !fetchType || fetchType === "commodities";
+  const shouldFetchStocks = !fetchType || fetchType === "stocks";
 
   try {
     // ── 1. Fetch FX rates ──
-    const fxRes = await fetch(FX_API);
     let kesRates: Record<string, number> = {};
-    if (fxRes.ok) {
-      const fxData = await fxRes.json();
-      kesRates = fxData.rates || {};
+    if (shouldFetchFx || shouldFetchCommodities) {
+      const fxRes = await fetch(FX_API);
+      if (fxRes.ok) {
+        const fxData = await fxRes.json();
+        kesRates = fxData.rates || {};
 
-      const { data: existing } = await supabase
-        .from("exchange_rates")
-        .select("id, currency_code, rate");
+        if (shouldFetchFx) {
+          const { data: existing } = await supabase
+            .from("exchange_rates")
+            .select("id, currency_code, rate");
 
-      if (existing && existing.length > 0) {
-        for (const row of existing) {
-          const code = row.currency_code;
-          const apiRate = kesRates[code];
-          if (apiRate && apiRate > 0) {
-            const newRate = parseFloat((1 / apiRate).toFixed(4));
-            if (newRate !== row.rate) {
-              await supabase
-                .from("exchange_rates")
-                .update({
-                  previous_rate: row.rate,
-                  rate: newRate,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", row.id);
-              results.push(`FX ${code}: ${row.rate} → ${newRate}`);
+          if (existing && existing.length > 0) {
+            for (const row of existing) {
+              const code = row.currency_code;
+              const apiRate = kesRates[code];
+              if (apiRate && apiRate > 0) {
+                const newRate = parseFloat((1 / apiRate).toFixed(4));
+                if (newRate !== row.rate) {
+                  await supabase
+                    .from("exchange_rates")
+                    .update({
+                      previous_rate: row.rate,
+                      rate: newRate,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq("id", row.id);
+                  results.push(`FX ${code}: ${row.rate} → ${newRate}`);
+                }
+              }
             }
           }
+          results.push(`FX: processed ${existing?.length || 0} currencies`);
         }
+      } else {
+        console.error(`[fetch-market-data] FX API failed: ${fxRes.status} ${fxRes.statusText}`);
+        results.push(`FX API returned ${fxRes.status}`);
       }
-      results.push(`FX: processed ${existing?.length || 0} currencies`);
-    } else {
-      console.error(`[fetch-market-data] FX API failed: ${fxRes.status} ${fxRes.statusText}`);
-      results.push(`FX API returned ${fxRes.status}`);
     }
 
     // ── 2. Fetch commodity prices ──
+    if (shouldFetchCommodities) {
     const { data: commodityRows } = await supabase
       .from("commodities")
       .select("id, symbol, name, price, unit");
@@ -516,8 +530,10 @@ Deno.serve(async (req) => {
 
       results.push(`Commodities: processed ${commodityRows.length} items`);
     }
+    } // end shouldFetchCommodities
 
-    // ── 3. Fetch Kenyan stock prices from official NSE market statistics ──
+    // ── 3. Fetch Kenyan stock prices (Yahoo Finance primary, NSE fallback) ──
+    if (shouldFetchStocks) {
     const { data: stockRows } = await supabase
       .from("stocks")
       .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low")
@@ -525,50 +541,65 @@ Deno.serve(async (req) => {
 
     if (stockRows && stockRows.length > 0) {
       let stocksUpdated = 0;
-      let nseQuotes: Record<string, { price: number; previousPrice: number; dayChange: number; dayChangePct: number; volume: number }> = {};
-      
-      try {
-        nseQuotes = await fetchNseStockQuotes();
-        console.log(`[fetch-market-data] NSE quotes fetched: ${Object.keys(nseQuotes).length} stocks`);
-      } catch (nseError) {
-        console.error("[fetch-market-data] NSE scrape failed, will try Yahoo Finance fallback:", String(nseError));
-        results.push(`NSE scrape failed: ${String(nseError)}`);
-      }
 
+      // Try Yahoo Finance first for all stocks (more reliable)
       for (const row of stockRows) {
         const sym = (row.symbol || "").toUpperCase();
-        let quote = nseQuotes[sym];
-        
-        // Yahoo Finance fallback if NSE didn't return data for this stock
-        if ((!quote || quote.price <= 0) && NSE_YAHOO_MAP[sym]) {
-          try {
-            const yq = await fetchYahooQuote(NSE_YAHOO_MAP[sym]);
-            if (yq && yq.price > 0) {
-              quote = { price: yq.price, previousPrice: yq.previousClose, dayChange: yq.dayChange, dayChangePct: yq.dayChangePct, volume: yq.volume };
-              console.log(`[fetch-market-data] Yahoo fallback for ${sym}: ${yq.price}`);
-            }
-          } catch { /* skip */ }
+        const yahooTicker = NSE_YAHOO_MAP[sym];
+        if (!yahooTicker) continue;
+
+        try {
+          const yq = await fetchYahooQuote(yahooTicker);
+          if (!yq || yq.price <= 0) continue;
+
+          const updateData: Record<string, unknown> = {
+            previous_price: yq.previousClose,
+            price: yq.price,
+            day_change: yq.dayChange,
+            day_change_percent: yq.dayChangePct,
+            updated_at: new Date().toISOString(),
+          };
+          if (yq.volume > 0) updateData.volume = yq.volume;
+          if (yq.yearHigh) updateData.year_high = yq.yearHigh;
+          if (yq.yearLow) updateData.year_low = yq.yearLow;
+
+          await supabase.from("stocks").update(updateData).eq("id", row.id);
+          stocksUpdated++;
+        } catch (e) {
+          console.error(`[fetch-market-data] Yahoo failed for ${sym}:`, e);
         }
-        
-        if (!quote || quote.price <= 0) continue;
+      }
 
-        const updateData: Record<string, unknown> = {
-          previous_price: quote.previousPrice,
-          price: quote.price,
-          day_change: quote.dayChange,
-          day_change_percent: quote.dayChangePct,
-          updated_at: new Date().toISOString(),
-        };
-
-        if (quote.volume > 0) updateData.volume = quote.volume;
-
-        await supabase.from("stocks").update(updateData).eq("id", row.id);
-        stocksUpdated++;
+      // If Yahoo got fewer than half, try NSE scrape as fallback
+      if (stocksUpdated < stockRows.length / 2) {
+        try {
+          const nseQuotes = await fetchNseStockQuotes();
+          console.log(`[fetch-market-data] NSE fallback: ${Object.keys(nseQuotes).length} quotes`);
+          for (const row of stockRows) {
+            const sym = (row.symbol || "").toUpperCase();
+            const quote = nseQuotes[sym];
+            if (!quote || quote.price <= 0) continue;
+            // Only update stocks not already updated by Yahoo
+            const updateData: Record<string, unknown> = {
+              previous_price: quote.previousPrice,
+              price: quote.price,
+              day_change: quote.dayChange,
+              day_change_percent: quote.dayChangePct,
+              updated_at: new Date().toISOString(),
+            };
+            if (quote.volume > 0) updateData.volume = quote.volume;
+            await supabase.from("stocks").update(updateData).eq("id", row.id);
+            stocksUpdated++;
+          }
+        } catch (nseErr) {
+          console.error("[fetch-market-data] NSE fallback also failed:", String(nseErr));
+        }
       }
 
       results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length}`);
-      console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length}, NSE quotes found: ${Object.keys(nseQuotes).length}`);
+      console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length}`);
     }
+    } // end shouldFetchStocks
 
     console.log(`[fetch-market-data] Completed successfully: ${results.length} operations`);
     return new Response(JSON.stringify({ success: true, results }), {

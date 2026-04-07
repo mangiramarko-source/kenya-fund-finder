@@ -158,20 +158,22 @@ const AdminMarkets = () => {
 
   if (loading) return <div className="text-center py-10 text-muted-foreground">Loading…</div>;
 
-  const triggerAutoFetch = async () => {
+  const callFetchFunction = async (fetchType?: string) => {
     setSaving(true);
     try {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const body: Record<string, unknown> = {};
+      if (fetchType) body.fetch_type = fetchType;
       const res = await fetch(
         `https://${projectId}.supabase.co/functions/v1/fetch-market-data`,
-        { method: "POST", headers: { "Content-Type": "application/json" } }
+        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
       );
       const result = await res.json();
       if (result.success) {
-        toast.success("Auto-fetch complete! Refreshing data...");
+        toast.success(`Fetch complete! ${(result.results || []).join(', ')}`);
         fetchData();
       } else {
-        toast.error(result.error || "Auto-fetch failed");
+        toast.error(result.error || "Fetch failed");
       }
     } catch (e: any) {
       toast.error(e.message);
@@ -179,18 +181,26 @@ const AdminMarkets = () => {
     setSaving(false);
   };
 
+  const triggerAutoFetch = () => callFetchFunction();
+  const triggerStocksFetch = () => callFetchFunction("stocks");
+
   return (
     <div className="space-y-8">
-      {/* Auto-fetch trigger */}
+      {/* Auto-fetch triggers */}
       <div className="flex items-center gap-3 p-4 rounded-xl border border-border bg-muted/30">
         <RefreshCw className="h-5 w-5 text-accent" />
         <div className="flex-1">
           <p className="text-sm font-semibold">Automated Data Updates</p>
-          <p className="text-xs text-muted-foreground">FX rates update hourly from ExchangeRate-API. Crypto prices from CoinGecko.</p>
+          <p className="text-xs text-muted-foreground">FX rates, crypto, commodities &amp; NSE stocks update hourly. Stocks use Yahoo Finance with NSE fallback.</p>
         </div>
-        <Button size="sm" onClick={triggerAutoFetch} disabled={saving}>
-          <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Fetch Now
-        </Button>
+        <div className="flex gap-2">
+          <Button size="sm" variant="outline" onClick={triggerStocksFetch} disabled={saving}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Fetch Stocks
+          </Button>
+          <Button size="sm" onClick={triggerAutoFetch} disabled={saving}>
+            <RefreshCw className="h-3.5 w-3.5 mr-1.5" /> Fetch All
+          </Button>
+        </div>
       </div>
 
       {/* Exchange Rates */}
