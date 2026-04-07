@@ -595,6 +595,7 @@ Deno.serve(async (req) => {
       results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length}`);
       console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length}`);
     }
+    } // end shouldFetchStocks
 
     console.log(`[fetch-market-data] Completed successfully: ${results.length} operations`);
     return new Response(JSON.stringify({ success: true, results }), {
