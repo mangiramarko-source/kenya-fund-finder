@@ -213,6 +213,8 @@ const CommoditiesPage = () => {
                     onToggle={() => toggleExpand(c.id)}
                     history={history[c.id]}
                     historyLoading={historyLoading === c.id}
+                    isFavourite={user ? isFavourite(c.id) : undefined}
+                    onToggleFavourite={user ? () => toggleFavourite(c.id, c.name) : undefined}
                   />
                 ))}
               </tbody>
@@ -237,10 +239,11 @@ const CommoditiesPage = () => {
 };
 
 const CommodityRow = ({
-  commodity: c, index, isExpanded, onToggle, history, historyLoading,
+  commodity: c, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
   commodity: Commodity; index: number; isExpanded: boolean; onToggle: () => void;
   history?: PriceHistory[]; historyLoading: boolean;
+  isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => {
   const change = c.previous_price != null ? c.price - c.previous_price : null;
   const changePct = c.previous_price != null && c.previous_price !== 0
@@ -252,8 +255,21 @@ const CommodityRow = ({
       <tr className="border-t border-border/50 hover:bg-accent/5 transition-colors cursor-pointer" onClick={onToggle}>
         <td className="px-4 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
         <td className="px-4 py-3.5">
-          <span className="font-bold text-foreground text-xs tracking-wide">{c.name}</span>
-          <span className="block text-xs text-muted-foreground mt-0.5">{c.symbol}</span>
+          <div className="flex items-center gap-2">
+            {onToggleFavourite !== undefined && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
+                className="p-1 rounded-md hover:bg-muted transition-colors"
+                aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+              >
+                <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+              </button>
+            )}
+            <div>
+              <span className="font-bold text-foreground text-xs tracking-wide">{c.name}</span>
+              <span className="block text-xs text-muted-foreground mt-0.5">{c.symbol}</span>
+            </div>
+          </div>
         </td>
         <td className="px-4 py-3.5 text-right tabular-nums">
           <span className="font-bold text-accent text-[15px]">
