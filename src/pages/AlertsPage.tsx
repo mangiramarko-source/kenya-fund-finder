@@ -29,6 +29,7 @@ const AlertsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { alerts, loading, deleteAlert, toggleAlert, createAlert } = usePriceAlerts();
+  const { prefs, loading: prefsLoading, updatePref } = useEmailPreferences();
 
   // New Alert dialog state
   const [showCreate, setShowCreate] = useState(false);
