@@ -14,3 +14,6 @@ verify_jwt = true
 
 [functions.sync-portfolio-prices]
 verify_jwt = false
+
+[functions.fetch-news]
+verify_jwt = false
