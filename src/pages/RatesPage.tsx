@@ -189,6 +189,8 @@ const RatesPage = () => {
                     onToggle={() => toggleExpand(r.id)}
                     history={history[r.id]}
                     historyLoading={historyLoading === r.id}
+                    isFavourite={user ? isFavourite(r.id) : undefined}
+                    onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
                   />
                 ))}
               </tbody>
@@ -213,10 +215,11 @@ const RatesPage = () => {
 };
 
 const RateRow = ({
-  rate, index, isExpanded, onToggle, history, historyLoading,
+  rate, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
   rate: Rate; index: number; isExpanded: boolean; onToggle: () => void;
   history?: RateHistory[]; historyLoading: boolean;
+  isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => {
   const change = rate.previous_rate != null ? rate.rate - rate.previous_rate : null;
   const changePct = rate.previous_rate != null && rate.previous_rate !== 0
@@ -231,8 +234,21 @@ const RateRow = ({
       >
         <td className="px-4 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
         <td className="px-4 py-3.5">
-          <span className="font-bold text-foreground text-xs tracking-wide">{rate.currency_code}</span>
-          <span className="block text-xs text-muted-foreground mt-0.5">{rate.currency_name}</span>
+          <div className="flex items-center gap-2">
+            {onToggleFavourite !== undefined && (
+              <button
+                onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
+                className="p-1 rounded-md hover:bg-muted transition-colors"
+                aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+              >
+                <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+              </button>
+            )}
+            <div>
+              <span className="font-bold text-foreground text-xs tracking-wide">{rate.currency_code}</span>
+              <span className="block text-xs text-muted-foreground mt-0.5">{rate.currency_name}</span>
+            </div>
+          </div>
         </td>
         <td className="px-4 py-3.5 text-right tabular-nums">
           <span className="font-bold text-accent text-[15px]">
