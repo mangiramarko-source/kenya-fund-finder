@@ -330,58 +330,73 @@ const NewsPage = () => {
           )}
 
           {/* Grid of remaining articles */}
-          {listArticles.length > 0 && (
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              {listArticles.map((article) => {
-                const dot = categoryDot[article.category] || "bg-muted-foreground";
-                const CatIcon = categoryIcons[article.category] || Megaphone;
-                return (
-                  <Link
-                    key={article.id}
-                    to={`/news/${article.id}`}
-                    className="group rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all overflow-hidden"
-                  >
-                    {/* Card image */}
-                    <div className="aspect-[16/9] overflow-hidden">
-                      <img
-                        src={getNewsImage(article.image_url, article.category, article.id)}
-                        alt={article.title}
-                        className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                        loading="lazy"
-                      />
-                    </div>
-                    <div className="p-3.5">
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
-                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
-                        <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
-                          <Clock className="h-2.5 w-2.5" />
-                          {article.read_time}
-                        </span>
+          {visibleList.length > 0 && (
+            <>
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                {visibleList.map((article) => {
+                  const dot = categoryDot[article.category] || "bg-muted-foreground";
+                  const CatIcon = categoryIcons[article.category] || Megaphone;
+                  return (
+                    <Link
+                      key={article.id}
+                      to={`/news/${article.id}`}
+                      className="group rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all overflow-hidden"
+                    >
+                      <div className="aspect-[16/9] overflow-hidden">
+                        <img
+                          src={getNewsImage(article.image_url, article.category, article.id)}
+                          alt={article.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                        />
                       </div>
-                      <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
-                        {article.title}
-                      </h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-2">
-                        {article.summary}
-                      </p>
-                      <div className="flex items-center gap-1.5">
-                        {article.source && <SourceBadge source={article.source} />}
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatDate(article.date_published)}
-                        </span>
+                      <div className="p-3.5">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
+                          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
+                          <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
+                            <Clock className="h-2.5 w-2.5" />
+                            {article.read_time}
+                          </span>
+                        </div>
+                        <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
+                          {article.title}
+                        </h3>
+                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-2">
+                          {article.summary}
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          {article.source && <SourceBadge source={article.source} />}
+                          <span className="text-[10px] text-muted-foreground">
+                            {formatDate(article.date_published)}
+                          </span>
+                        </div>
                       </div>
-                    </div>
-                  </Link>
-                );
-              })}
-            </div>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Infinite scroll sentinel */}
+              <div ref={loaderRef} className="flex items-center justify-center py-6">
+                {hasMore ? (
+                  <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Loading more articles...
+                  </div>
+                ) : listArticles.length > 0 ? (
+                  <p className="text-[10px] text-muted-foreground">
+                    Showing all {listArticles.length + (heroArticle ? 1 : 0) + topArticles.length} articles
+                  </p>
+                ) : null}
+              </div>
+            </>
           )}
         </>
       )}
 
       {/* Footer stats */}
-      <div className="flex items-center justify-center gap-3 mt-6 text-[10px] text-muted-foreground flex-wrap">
+      <div className="flex items-center justify-center gap-3 mt-2 text-[10px] text-muted-foreground flex-wrap">
         <span>{filtered.length} article{filtered.length !== 1 ? "s" : ""}</span>
         <span className="w-px h-3 bg-border" />
         <span>{activeCategory === "All" ? "All categories" : activeCategory}</span>
