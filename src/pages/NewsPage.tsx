@@ -62,17 +62,9 @@ const NewsPage = () => {
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>("latest");
   const [searchQuery, setSearchQuery] = useState("");
-  const [scrolled, setScrolled] = useState(false);
 
   useEffect(() => {
     fetchPublishedNews().then((data) => { setArticles(data); setLoading(false); }).catch(() => setLoading(false));
-  }, []);
-
-  useEffect(() => {
-    const handleScroll = () => setScrolled(window.scrollY > 12);
-    handleScroll();
-    window.addEventListener("scroll", handleScroll, { passive: true });
-    return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
   // Unique sources for filter
@@ -145,94 +137,6 @@ const NewsPage = () => {
     return counts;
   }, [articles]);
 
-  const pageHeader = (
-    <div>
-      <h1 className="text-xl md:text-2xl font-bold text-foreground">News</h1>
-      <p className="text-sm text-muted-foreground mt-1">
-        Auto-updated from {sources.length} Kenyan business sources
-      </p>
-    </div>
-  );
-
-  const sourcePills = (
-    <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide pb-1">
-      <button
-        onClick={() => setActiveSource("All")}
-        className={`inline-flex items-center gap-1 rounded-lg text-xs font-medium whitespace-nowrap border h-7 px-2.5 transition-all ${
-          activeSource === "All"
-            ? "bg-primary text-primary-foreground border-primary"
-            : "bg-card text-muted-foreground border-border hover:border-accent/30"
-        }`}
-      >
-        All Sources
-        <span className="text-[10px] opacity-70">({articles.length})</span>
-      </button>
-      {sources.map(src => (
-        <button
-          key={src}
-          onClick={() => setActiveSource(src)}
-          className={`inline-flex items-center gap-1 rounded-lg text-xs font-medium whitespace-nowrap border h-7 px-2.5 transition-all ${
-            activeSource === src
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-card text-muted-foreground border-border hover:border-accent/30"
-          }`}
-        >
-          {src}
-          <span className="text-[10px] opacity-70">({sourceStats[src] || 0})</span>
-        </button>
-      ))}
-    </div>
-  );
-
-  const filterControls = (
-    <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2">
-      <div className="flex gap-1.5 shrink-0 overflow-x-auto scrollbar-hide pb-1">
-        {categories.map((cat) => {
-          const Icon = categoryIcons[cat];
-          const isActive = activeCategory === cat;
-          return (
-            <button
-              key={cat}
-              onClick={() => setActiveCategory(cat)}
-              className={`inline-flex items-center gap-1.5 rounded-lg text-xs font-medium whitespace-nowrap border h-8 px-3 transition-all ${
-                isActive
-                  ? "bg-accent/15 text-accent border-accent/30"
-                  : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
-              }`}
-            >
-              {Icon && <Icon className="h-3 w-3" />}
-              {cat}
-            </button>
-          );
-        })}
-      </div>
-      <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
-        <div className="relative flex-1 sm:w-48">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            placeholder="Search articles..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 sm:h-8 text-[16px] sm:text-xs pl-8 bg-card border-border"
-          />
-        </div>
-        <div className="flex items-center gap-1.5 shrink-0">
-          <SortAsc className="h-3 w-3 text-muted-foreground" />
-          <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-            <SelectTrigger className="w-[110px] h-9 sm:h-8 text-xs border-border">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="latest">Latest</SelectItem>
-              <SelectItem value="oldest">Oldest</SelectItem>
-              <SelectItem value="featured">Featured</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
-    </div>
-  );
-
   if (loading) return (
     <div className="px-4 md:px-6 py-6">
       <Skeleton className="h-7 w-32 mb-1" />
@@ -251,15 +155,90 @@ const NewsPage = () => {
 
   return (
     <div className="px-4 md:px-6 py-6">
-      <div className={`md:hidden sticky top-16 z-30 -mx-4 mb-5 bg-background/95 px-4 pb-3 backdrop-blur border-b border-border/60 transition-shadow duration-200 ${scrolled ? "shadow-[0_12px_28px_-20px_hsl(var(--foreground)/0.35)]" : ""}`}>
-        {pageHeader}
-        <div className="mt-3">{sourcePills}</div>
-        <div className="mt-3">{filterControls}</div>
+      {/* Header */}
+      <div className="mb-4">
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">News</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Auto-updated from {sources.length} Kenyan business sources
+        </p>
       </div>
 
-      <div className="hidden md:block mb-4">{pageHeader}</div>
-      <div className="hidden md:block mb-3">{sourcePills}</div>
-      <div className="hidden md:block mb-5">{filterControls}</div>
+      {/* Source pills */}
+      <div className="flex items-center gap-1.5 mb-3 overflow-x-auto scrollbar-hide pb-1">
+        <button
+          onClick={() => setActiveSource("All")}
+          className={`inline-flex items-center gap-1 rounded-lg text-xs font-medium whitespace-nowrap border h-7 px-2.5 transition-all ${
+            activeSource === "All"
+              ? "bg-primary text-primary-foreground border-primary"
+              : "bg-card text-muted-foreground border-border hover:border-accent/30"
+          }`}
+        >
+          All Sources
+          <span className="text-[10px] opacity-70">({articles.length})</span>
+        </button>
+        {sources.map(src => (
+          <button
+            key={src}
+            onClick={() => setActiveSource(src)}
+            className={`inline-flex items-center gap-1 rounded-lg text-xs font-medium whitespace-nowrap border h-7 px-2.5 transition-all ${
+              activeSource === src
+                ? "bg-primary text-primary-foreground border-primary"
+                : "bg-card text-muted-foreground border-border hover:border-accent/30"
+            }`}
+          >
+            {src}
+            <span className="text-[10px] opacity-70">({sourceStats[src] || 0})</span>
+          </button>
+        ))}
+      </div>
+
+      {/* Category + search + sort row */}
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-5">
+        <div className="flex gap-1.5 shrink-0 overflow-x-auto scrollbar-hide pb-1">
+          {categories.map((cat) => {
+            const Icon = categoryIcons[cat];
+            const isActive = activeCategory === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => setActiveCategory(cat)}
+                className={`inline-flex items-center gap-1.5 rounded-lg text-xs font-medium whitespace-nowrap border h-8 px-3 transition-all ${
+                  isActive
+                    ? "bg-accent/15 text-accent border-accent/30"
+                    : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
+                }`}
+              >
+                {Icon && <Icon className="h-3 w-3" />}
+                {cat}
+              </button>
+            );
+          })}
+        </div>
+        <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
+          <div className="relative flex-1 sm:w-48">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search articles..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-8 text-xs pl-8 bg-card border-border"
+            />
+          </div>
+          <div className="flex items-center gap-1.5 shrink-0">
+            <SortAsc className="h-3 w-3 text-muted-foreground" />
+            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+              <SelectTrigger className="w-[110px] h-8 text-xs border-border">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="latest">Latest</SelectItem>
+                <SelectItem value="oldest">Oldest</SelectItem>
+                <SelectItem value="featured">Featured</SelectItem>
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+      </div>
 
       {filtered.length === 0 ? (
         <div className="text-center py-20 text-muted-foreground border border-dashed border-border rounded-xl">

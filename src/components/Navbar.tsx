@@ -26,6 +26,7 @@ const mobileNavLinks = [
 
 const Navbar = () => {
   const [open, setOpen] = useState(false);
+  const [scrolled, setScrolled] = useState(false);
   const [dark, setDark] = useState(() => {
     const saved = localStorage.getItem("theme");
     if (saved === "light") return false;
@@ -70,6 +71,13 @@ const Navbar = () => {
     if (saved === "light") setDark(false);
   }, []);
 
+  useEffect(() => {
+    const handleScroll = () => setScrolled(window.scrollY > 8);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
   const handleSignOut = async () => {
     await signOut();
     navigate("/");
@@ -78,7 +86,7 @@ const Navbar = () => {
   const closeMobile = () => setOpen(false);
 
   return (
-    <header className="sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border">
+    <header className={`sticky top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border transition-shadow duration-200 ${scrolled ? "shadow-[0_4px_16px_-4px_hsl(0_0%_0%/0.25)]" : ""}`}>
       <div className="container flex h-16 items-center justify-between relative">
         {/* Logo */}
         <Link to="/" className="hidden md:flex items-center gap-2.5 font-heading text-xl font-extrabold text-primary shrink-0">
