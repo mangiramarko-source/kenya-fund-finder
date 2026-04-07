@@ -605,41 +605,48 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Fallback to Yahoo Finance for stocks not updated by RapidAPI
-      if (stocksUpdated < stockRows.length / 2) {
-        console.log(`[fetch-market-data] RapidAPI got ${stocksUpdated}/${stockRows.length}, trying Yahoo fallback...`);
-        for (const row of stockRows) {
-          const sym = (row.symbol || "").toUpperCase();
-          if (rapidApiQuotes.has(sym)) continue; // already updated
+      // Yahoo Finance: price fallback for missing stocks + fundamentals enrichment for ALL stocks
+      console.log(`[fetch-market-data] Running Yahoo Finance enrichment for fundamentals...`);
+      let yahooEnriched = 0;
+      for (const row of stockRows) {
+        const sym = (row.symbol || "").toUpperCase();
+        const yahooTicker = NSE_YAHOO_MAP[sym];
+        if (!yahooTicker) continue;
 
-          const yahooTicker = NSE_YAHOO_MAP[sym];
-          if (!yahooTicker) continue;
+        const wasUpdatedByRapid = rapidApiQuotes.has(sym);
 
-          try {
-            const yq = await fetchYahooQuote(yahooTicker);
-            if (!yq || yq.price <= 0) continue;
+        try {
+          const yq = await fetchYahooQuote(yahooTicker);
+          if (!yq || yq.price <= 0) continue;
 
-            const updateData: Record<string, unknown> = {
-              previous_price: yq.previousClose,
-              price: yq.price,
-              day_change: yq.dayChange,
-              day_change_percent: yq.dayChangePct,
-              updated_at: new Date().toISOString(),
-            };
+          const updateData: Record<string, unknown> = {
+            updated_at: new Date().toISOString(),
+          };
+
+          // If RapidAPI didn't update this stock, use Yahoo for price data too
+          if (!wasUpdatedByRapid) {
+            updateData.previous_price = yq.previousClose;
+            updateData.price = yq.price;
+            updateData.day_change = yq.dayChange;
+            updateData.day_change_percent = yq.dayChangePct;
             if (yq.volume > 0) updateData.volume = yq.volume;
-            if (yq.yearHigh) updateData.year_high = yq.yearHigh;
-            if (yq.yearLow) updateData.year_low = yq.yearLow;
-
-            await supabase.from("stocks").update(updateData).eq("id", row.id);
             stocksUpdated++;
-          } catch (e) {
-            console.error(`[fetch-market-data] Yahoo fallback failed for ${sym}:`, e);
           }
+
+          // Always enrich with fundamentals from Yahoo (fields RapidAPI doesn't have)
+          if (yq.yearHigh) updateData.year_high = yq.yearHigh;
+          if (yq.yearLow) updateData.year_low = yq.yearLow;
+          if (yq.marketCap) updateData.market_cap = yq.marketCap;
+
+          await supabase.from("stocks").update(updateData).eq("id", row.id);
+          yahooEnriched++;
+        } catch (e) {
+          console.error(`[fetch-market-data] Yahoo failed for ${sym}:`, e);
         }
       }
 
-      results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length}`);
-      console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length}`);
+      results.push(`Stocks: ${stocksUpdated}/${stockRows.length} prices, Yahoo enriched ${yahooEnriched}`);
+      console.log(`[fetch-market-data] Stocks: ${stocksUpdated}/${stockRows.length} prices, Yahoo enriched ${yahooEnriched}`);
     }
     } // end shouldFetchStocks
 
