@@ -397,40 +397,44 @@ Deno.serve(async (req) => {
 
   try {
     // ── 1. Fetch FX rates ──
-    const fxRes = await fetch(FX_API);
     let kesRates: Record<string, number> = {};
-    if (fxRes.ok) {
-      const fxData = await fxRes.json();
-      kesRates = fxData.rates || {};
+    if (shouldFetchFx || shouldFetchCommodities) {
+      const fxRes = await fetch(FX_API);
+      if (fxRes.ok) {
+        const fxData = await fxRes.json();
+        kesRates = fxData.rates || {};
 
-      const { data: existing } = await supabase
-        .from("exchange_rates")
-        .select("id, currency_code, rate");
+        if (shouldFetchFx) {
+          const { data: existing } = await supabase
+            .from("exchange_rates")
+            .select("id, currency_code, rate");
 
-      if (existing && existing.length > 0) {
-        for (const row of existing) {
-          const code = row.currency_code;
-          const apiRate = kesRates[code];
-          if (apiRate && apiRate > 0) {
-            const newRate = parseFloat((1 / apiRate).toFixed(4));
-            if (newRate !== row.rate) {
-              await supabase
-                .from("exchange_rates")
-                .update({
-                  previous_rate: row.rate,
-                  rate: newRate,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", row.id);
-              results.push(`FX ${code}: ${row.rate} → ${newRate}`);
+          if (existing && existing.length > 0) {
+            for (const row of existing) {
+              const code = row.currency_code;
+              const apiRate = kesRates[code];
+              if (apiRate && apiRate > 0) {
+                const newRate = parseFloat((1 / apiRate).toFixed(4));
+                if (newRate !== row.rate) {
+                  await supabase
+                    .from("exchange_rates")
+                    .update({
+                      previous_rate: row.rate,
+                      rate: newRate,
+                      updated_at: new Date().toISOString(),
+                    })
+                    .eq("id", row.id);
+                  results.push(`FX ${code}: ${row.rate} → ${newRate}`);
+                }
+              }
             }
           }
+          results.push(`FX: processed ${existing?.length || 0} currencies`);
         }
+      } else {
+        console.error(`[fetch-market-data] FX API failed: ${fxRes.status} ${fxRes.statusText}`);
+        results.push(`FX API returned ${fxRes.status}`);
       }
-      results.push(`FX: processed ${existing?.length || 0} currencies`);
-    } else {
-      console.error(`[fetch-market-data] FX API failed: ${fxRes.status} ${fxRes.statusText}`);
-      results.push(`FX API returned ${fxRes.status}`);
     }
 
     // ── 2. Fetch commodity prices ──
