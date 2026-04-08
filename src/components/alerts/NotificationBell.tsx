@@ -1,17 +1,32 @@
 import { useState } from "react";
-import { Bell, Check, Trash2, X } from "lucide-react";
+import { Bell, Check, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/hooks/usePriceAlerts";
 import { useAuth } from "@/hooks/useAuth";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { useNavigate } from "react-router-dom";
 
 const NotificationBell = () => {
   const { user } = useAuth();
   const { notifications, unreadCount, markAsRead, markAllRead, deleteNotification } = useNotifications();
   const [open, setOpen] = useState(false);
+  const navigate = useNavigate();
 
-  if (!user) return null;
+  // For non-authenticated users on mobile, show bell that prompts sign-up
+  if (!user) {
+    return (
+      <Button
+        variant="ghost"
+        size="sm"
+        className="relative h-9 w-9 p-0"
+        onClick={() => navigate("/auth")}
+        aria-label="Sign in for notifications"
+      >
+        <Bell className="h-4 w-4" />
+      </Button>
+    );
+  }
 
   return (
     <Popover open={open} onOpenChange={setOpen}>
