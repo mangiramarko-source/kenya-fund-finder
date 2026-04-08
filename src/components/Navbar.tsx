@@ -207,15 +207,7 @@ const Navbar = () => {
 
         {/* Mobile: left side */}
         <div className="flex md:hidden items-center gap-1">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setDark(!dark)}
-            className="rounded-full h-9 w-9"
-            aria-label="Toggle dark mode"
-          >
-            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
+          <NotificationBell />
         </div>
 
         {/* Mobile: logo centered */}
