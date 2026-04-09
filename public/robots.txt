@@ -1,3 +1,15 @@
+# --- GOOGLE PRIORITY ACCESS ---
+# These lines must be at the top to fix the Search Console "Blocked" error
+User-agent: Google-InspectionTool
+Allow: /
+
+User-agent: Googlebot
+Allow: /
+
+User-agent: Storebot-Google
+Allow: /
+
+# --- GENERAL SITE RULES ---
 User-agent: *
 Allow: /
 Disallow: /admin
@@ -6,19 +18,14 @@ Disallow: /profile
 Disallow: /reset-password
 
 # --- ALLOWED FOR SEARCH & DISCOVERY ---
-# Essential for companies like Google and Bing to find your site
-User-agent: Googlebot
 User-agent: Bingbot
 User-agent: Slurp
 User-agent: DuckDuckBot
 User-agent: Baiduspider
 User-agent: Yandex
-User-agent: Google-InspectionTool
-User-agent: Storebot-Google
 Allow: /
 
 # --- ALLOWED FOR SOCIAL MEDIA & MESSAGING ---
-# Ensures your links look professional when shared on LinkedIn or WhatsApp
 User-agent: Twitterbot
 User-agent: facebookexternalhit
 User-agent: LinkedInBot
@@ -27,7 +34,6 @@ User-agent: WhatsApp
 Allow: /
 
 # --- DISALLOWED AI, SCRAPERS & SEO TOOLS ---
-# Blocks training bots and aggressive scrapers (Safe to submit)
 User-agent: ai2bot
 User-agent: ai2bot-dolma
 User-agent: ahrefsbot
@@ -155,11 +161,10 @@ User-agent: yahoo-feedseeker
 User-agent: yahoo-mmcrawler
 User-agent: yahooseeker
 User-agent: youbot
-User-agent: taragroup-intelligent-bot
 User-agent: Factset_spyderbot
 User-agent: AliyunSecBot
 User-agent: peer39_crawler
 User-agent: archive.org_bot
 Disallow: /
 
-Sitemap: https://kenyafundfinder.com/sitemap.xml
+Sitemap: https://www.kenyafundfinder.com/sitemap.xml
