@@ -13,6 +13,8 @@ User-agent: Slurp
 User-agent: DuckDuckBot
 User-agent: Baiduspider
 User-agent: Yandex
+User-agent: Google-InspectionTool
+User-agent: Storebot-Google
 Allow: /
 
 # --- ALLOWED FOR SOCIAL MEDIA & MESSAGING ---
