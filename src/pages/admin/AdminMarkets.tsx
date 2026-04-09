@@ -164,9 +164,14 @@ const AdminMarkets = () => {
       const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
       const body: Record<string, unknown> = {};
       if (fetchType) body.fetch_type = fetchType;
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
       const res = await fetch(
         `https://${projectId}.supabase.co/functions/v1/fetch-market-data`,
-        { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(body) }
+        { method: "POST", headers, body: JSON.stringify(body) }
       );
       const result = await res.json();
       if (result.success) {
