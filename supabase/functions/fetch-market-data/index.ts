@@ -361,23 +361,23 @@ Deno.serve(async (req) => {
     }
   }
 
-  // Method 3: Check getClaims for authenticated admin user
+  // Method 3: Check getUser for authenticated admin user
   if (!isCronCall) {
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
     const userClient = createClient(supabaseUrl, anonKey, {
       global: { headers: { Authorization: authHeader } },
     });
     
-    const { data: claimsData, error: claimsError } = await userClient.auth.getClaims(token);
-    if (claimsError || !claimsData?.claims?.sub) {
-      console.error("[fetch-market-data] Auth failed:", claimsError?.message || "no claims");
+    const { data: userData, error: userError } = await userClient.auth.getUser(token);
+    if (userError || !userData?.user?.id) {
+      console.error("[fetch-market-data] Auth failed:", userError?.message || "no user");
       return new Response(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
 
-    const userId = claimsData.claims.sub as string;
+    const userId = userData.user.id;
     const { data: roleData } = await supabase
       .from("user_roles")
       .select("role")
