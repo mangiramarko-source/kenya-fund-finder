@@ -651,6 +651,8 @@ Deno.serve(async (req) => {
         }
       }
 
+      const snapshotDate = new Date().toISOString().split("T")[0];
+
       // Update stocks from RapidAPI data, falling back to NSE when needed
       for (const row of stockRows) {
         const sym = (row.symbol || "").toUpperCase();
@@ -669,6 +671,7 @@ Deno.serve(async (req) => {
             yearLow = yearLow ? Math.min(yearLow, quote.price) : quote.price;
           }
 
+          const nowIso = new Date().toISOString();
           const updateData: Record<string, unknown> = {
             previous_price: quote.previousPrice,
             price: quote.price,
@@ -676,11 +679,21 @@ Deno.serve(async (req) => {
             day_change_percent: quote.dayChangePct,
             year_high: yearHigh,
             year_low: yearLow,
-            updated_at: new Date().toISOString(),
+            updated_at: nowIso,
           };
           if (quote.volume > 0) updateData.volume = quote.volume;
 
           await supabase.from("stocks").update(updateData).eq("id", row.id);
+          await supabase
+            .from("stock_price_history")
+            .upsert(
+              {
+                stock_id: row.id,
+                price: quote.price,
+                snapshot_date: snapshotDate,
+              },
+              { onConflict: "stock_id,snapshot_date" }
+            );
           stocksUpdated++;
         }
       }
