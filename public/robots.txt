@@ -76,12 +76,6 @@ User-agent: factset-spyderbot
 User-agent: firecrawl
 User-agent: friendlycrawler
 User-agent: gemini-deep-research
-User-agent: google-cloudvertexbot
-User-agent: google-extended
-User-agent: google-inspectiontool
-User-agent: googleother
-User-agent: googleother-image
-User-agent: googleother-video
 User-agent: gptbot
 User-agent: grokbot
 User-agent: hada-news
