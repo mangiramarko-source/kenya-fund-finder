@@ -546,9 +546,14 @@ Deno.serve(async (req) => {
     if (stockRows && stockRows.length > 0) {
       let stocksUpdated = 0;
       const rapidApiKey = Deno.env.get("RAPIDAPI_KEY");
-
-      // Build a lookup from RapidAPI NSE data
-      let rapidApiQuotes: Map<string, { price: number; change: string; volume: number }> = new Map();
+      const stockQuotes = new Map<string, {
+        price: number;
+        previousPrice: number;
+        dayChange: number;
+        dayChangePct: number;
+        volume: number;
+      }>();
+      let rapidApiStatus = "RapidAPI skipped";
 
       if (rapidApiKey) {
         try {
@@ -568,19 +573,60 @@ Deno.serve(async (req) => {
               const price = parseFloat((s.price || "0").replace(/,/g, ""));
               const volume = parseInt((s.volume || "0").replace(/,/g, ""), 10) || 0;
               if (ticker && price > 0) {
-                rapidApiQuotes.set(ticker, { price, change: s.change || "0", volume });
+                const changeStr = String(s.change || "0").replace(/\(.*\)/, "").trim();
+                const dayChange = parseFloat(changeStr) || 0;
+                const previousPrice = parseFloat((price - dayChange).toFixed(2));
+                const dayChangePct = previousPrice > 0 ? parseFloat(((dayChange / previousPrice) * 100).toFixed(2)) : 0;
+                stockQuotes.set(ticker, {
+                  price,
+                  previousPrice,
+                  dayChange,
+                  dayChangePct,
+                  volume,
+                });
               }
             }
-            console.log(`[fetch-market-data] RapidAPI NSE: ${rapidApiQuotes.size} stocks fetched`);
+            rapidApiStatus = `RapidAPI: fetched ${stockQuotes.size} stocks`;
+            console.log(`[fetch-market-data] ${rapidApiStatus}`);
           } else {
-            console.error(`[fetch-market-data] RapidAPI NSE failed: ${nseRes.status}`);
-            await nseRes.text();
+            const errorBody = await nseRes.text();
+            rapidApiStatus = `RapidAPI failed ${nseRes.status}`;
+            console.error(`[fetch-market-data] RapidAPI NSE failed: ${nseRes.status} ${errorBody}`);
           }
         } catch (e) {
+          rapidApiStatus = "RapidAPI request failed";
           console.error("[fetch-market-data] RapidAPI NSE error:", e);
         }
       } else {
+        rapidApiStatus = "RapidAPI key missing";
         console.warn("[fetch-market-data] RAPIDAPI_KEY not set, skipping RapidAPI");
+      }
+
+      const missingSymbols = stockRows
+        .map((row) => (row.symbol || "").toUpperCase())
+        .filter((symbol) => symbol && !stockQuotes.has(symbol));
+
+      if (stockQuotes.size === 0 || missingSymbols.length > 0) {
+        try {
+          const fallbackQuotes = await fetchNseStockQuotes();
+          let fallbackAdded = 0;
+
+          for (const [symbol, quote] of Object.entries(fallbackQuotes)) {
+            if (!stockQuotes.has(symbol)) {
+              stockQuotes.set(symbol, quote);
+              fallbackAdded++;
+            }
+          }
+
+          const fallbackCount = Object.keys(fallbackQuotes).length;
+          results.push(`${rapidApiStatus}; NSE fallback fetched ${fallbackCount} stocks and filled ${fallbackAdded} gaps`);
+          console.log(`[fetch-market-data] NSE fallback fetched ${fallbackCount} stocks and filled ${fallbackAdded} gaps`);
+        } catch (e) {
+          results.push(`${rapidApiStatus}; NSE fallback failed`);
+          console.error("[fetch-market-data] NSE fallback error:", e);
+        }
+      } else {
+        results.push(rapidApiStatus);
       }
 
       // Fetch 52-week price history for year_high/year_low calculation
@@ -605,18 +651,14 @@ Deno.serve(async (req) => {
         }
       }
 
-      // Update stocks from RapidAPI data
+      const snapshotDate = new Date().toISOString().split("T")[0];
+
+      // Update stocks from RapidAPI data, falling back to NSE when needed
       for (const row of stockRows) {
         const sym = (row.symbol || "").toUpperCase();
-        const quote = rapidApiQuotes.get(sym);
+        const quote = stockQuotes.get(sym);
 
         if (quote && quote.price > 0) {
-          // Parse change value (e.g. "+0.25" or "-3.25")
-          const changeStr = (quote.change || "0").replace(/\(.*\)/, "").trim();
-          const dayChange = parseFloat(changeStr) || 0;
-          const previousPrice = parseFloat((quote.price - dayChange).toFixed(2));
-          const dayChangePct = previousPrice > 0 ? parseFloat(((dayChange / previousPrice) * 100).toFixed(2)) : 0;
-
           // Calculate year_high / year_low including current price
           const hist = yearRanges.get(row.id);
           let yearHigh = row.year_high;
@@ -625,29 +667,44 @@ Deno.serve(async (req) => {
             yearHigh = Math.max(hist.high, quote.price);
             yearLow = Math.min(hist.low, quote.price);
           } else {
-            // No history yet — use current price vs existing values
             yearHigh = yearHigh ? Math.max(yearHigh, quote.price) : quote.price;
             yearLow = yearLow ? Math.min(yearLow, quote.price) : quote.price;
           }
 
+          const nowIso = new Date().toISOString();
           const updateData: Record<string, unknown> = {
-            previous_price: previousPrice,
+            previous_price: quote.previousPrice,
             price: quote.price,
-            day_change: dayChange,
-            day_change_percent: dayChangePct,
+            day_change: quote.dayChange,
+            day_change_percent: quote.dayChangePct,
             year_high: yearHigh,
             year_low: yearLow,
-            updated_at: new Date().toISOString(),
+            updated_at: nowIso,
           };
           if (quote.volume > 0) updateData.volume = quote.volume;
 
           await supabase.from("stocks").update(updateData).eq("id", row.id);
+          await supabase
+            .from("stock_price_history")
+            .upsert(
+              {
+                stock_id: row.id,
+                price: quote.price,
+                snapshot_date: snapshotDate,
+              },
+              { onConflict: "stock_id,snapshot_date" }
+            );
           stocksUpdated++;
         }
       }
 
-      // Note: Yahoo Finance no longer supports NSE (.NR/.NBO) tickers.
-      // market_cap, pe_ratio, dividend_yield require manual entry or a future API source.
+      const stillMissing = stockRows
+        .map((row) => (row.symbol || "").toUpperCase())
+        .filter((symbol) => symbol && !stockQuotes.has(symbol));
+      if (stillMissing.length > 0) {
+        results.push(`Stocks missing quotes: ${stillMissing.join(", ")}`);
+        console.warn(`[fetch-market-data] Missing quotes for: ${stillMissing.join(", ")}`);
+      }
 
       results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length} prices (with 52-week ranges)`);
       console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length} prices`);
