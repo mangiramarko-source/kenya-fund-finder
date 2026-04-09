@@ -145,7 +145,6 @@ User-agent: semrushbotswa
 User-agent: seznamhomepagecrawler
 User-agent: sidetrade-indexer-bot
 User-agent: slackbot
-User-agent: storebot-google
 User-agent: taragroup-intelligent-bot
 User-agent: timpibot
 User-agent: turnitin
