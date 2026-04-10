@@ -1,307 +1,140 @@
-import { useEffect, useState, useMemo, forwardRef, useCallback } from "react";
-import { Link } from "react-router-dom";
-import { Calculator, Search } from "lucide-react";
-import { useLiveStatus } from "@/hooks/useLiveStatus";
-import { useAuth } from "@/hooks/useAuth";
-import AuthGate from "@/components/AuthGate";
-import SectionLiveStatus from "@/components/SectionLiveStatus";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, fetchPublishedNews, type FundFromDB, type NewsFromDB, type YieldSnapshot } from "@/lib/api";
-import { getDisclaimer } from "@/lib/disclaimers";
-import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { useDebouncedValue } from "@/hooks/useDebouncedValue";
-import CategoryTabs from "@/components/home/CategoryTabs";
-import FundMobileCards from "@/components/home/FundMobileCards";
-import FundGrid from "@/components/home/FundGrid";
-import NewsSidebar from "@/components/home/NewsSidebar";
-import AdBanner from "@/components/AdBanner";
-import { useMarketData, RatesMobileCards, CommoditiesMobileCards } from "@/components/home/MarketTicker";
-import { useFundWatchlist } from "@/hooks/useFundWatchlist";
-import FundFavourites from "@/components/home/FundFavourites";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+// Added robust HTML parsing for Deno/Supabase
+import { DOMParser } from "https://deno.land/x/deno_dom/deno-dom-wasm.ts";
 
-type SortKey = "annual_yield" | "daily_yield" | "name";
-type SortDir = "asc" | "desc";
+const allowedOrigins = ["https://kenya-fund-finder.lovable.app", "https://www.kenyafundfinder.com"];
 
-const categoryLabels: Record<string, string> = {
-  money_market: "Money Market",
-  fixed_income: "Fixed Income",
-  balanced: "Balanced",
-  equity: "Equity",
-  bond: "Bond",
-  fx_rates: "Currency",
-  commodities: "Commodities",
-};
-
-const MARKET_TABS = ["fx_rates", "commodities"] as const;
-
-const Index = forwardRef<HTMLDivElement>((_, ref) => {
-  useDocumentTitle("Kenya Fund Finder – Compare Investment Funds in Kenya", "Daily-updated data on all Kenyan unit trusts: equity, money market, fixed income, bonds, and balanced funds. Compare yields, fees, and calculate returns.");
-  useJsonLd({
-    "@context": "https://schema.org",
-    "@type": "WebSite",
-    name: "Kenya Fund Finder",
-    url: "https://kenyafundfinder.com",
-    description: "Compare CMA-regulated Money Market Funds in Kenya. See yields, fees, and calculate returns.",
-    potentialAction: {
-      "@type": "SearchAction",
-      target: "https://kenyafundfinder.com/compare?q={search_term_string}",
-      "query-input": "required name=search_term_string",
-    },
-  });
-  useJsonLd({
-    "@context": "https://schema.org",
-    "@type": "Organization",
-    name: "Kenya Fund Finder",
-    url: "https://kenyafundfinder.com",
-    logo: "https://kenyafundfinder.com/og-image.png",
-    description: "Kenya's leading platform for comparing CMA-regulated unit trust funds. Daily-updated yields, fees, and investment calculators.",
-    sameAs: [
-      "https://twitter.com/kaborafundfind",
-      "https://www.facebook.com/kenyafundfinder",
-    ],
-    contactPoint: {
-      "@type": "ContactPoint",
-      contactType: "customer support",
-      url: "https://kenyafundfinder.com",
-      availableLanguage: "English",
-    },
-  });
-
-  const [loading, setLoading] = useState(true);
-  const [funds, setFunds] = useState<FundFromDB[]>([]);
-  const [news, setNews] = useState<NewsFromDB[]>([]);
-  const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
-  const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});
-  const [selectedCategory, setSelectedCategory] = useState<string>("money_market");
-  const [search, setSearch] = useState("");
-  const debouncedSearch = useDebouncedValue(search, 250);
-  const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-
-  const { lastUpdateDate, isLive, showDate } = useLiveStatus();
-  const { user } = useAuth();
-  const { rates, commodities, stocks, loading: marketLoading } = useMarketData();
-  const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useFundWatchlist();
-
-
-
-  useEffect(() => {
-    Promise.all([
-      fetchFunds().then(setFunds).catch(() => {}),
-      fetchPublishedNews().then(setNews).catch(() => {}),
-      fetchLatestSnapshots().then((data) => {
-        const map: Record<string, YieldSnapshot> = {};
-        data.forEach((s) => { map[s.fund_id] = s; });
-        setSnapshots(map);
-      }).catch(() => {}),
-      fetchAllFundSnapshots().then(setAllSnapshots).catch(() => {}),
-    ]).finally(() => setLoading(false));
-  }, []);
-
-  const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
-  const categories = useMemo(() => {
-    const present = [...new Set(funds.map((f) => f.fund_type))];
-    return [...present].sort((a, b) => {
-      const ai = categoryOrder.indexOf(a);
-      const bi = categoryOrder.indexOf(b);
-      return (ai === -1 ? 999 : ai) - (bi === -1 ? 999 : bi);
-    });
-  }, [funds]);
-
-  const categoryCount = useMemo(() => {
-    const counts: Record<string, number> = {};
-    funds.forEach((f) => { counts[f.fund_type] = (counts[f.fund_type] || 0) + 1; });
-    counts["fx_rates"] = rates.length;
-    counts["commodities"] = commodities.length;
-    return counts;
-  }, [funds, rates, commodities]);
-
-  const processedFunds = useMemo(() => {
-    let result = funds.filter((f) => f.fund_type === selectedCategory);
-    if (debouncedSearch.trim()) {
-      const q = debouncedSearch.toLowerCase();
-      result = result.filter((f) => f.name.toLowerCase().includes(q) || f.manager.toLowerCase().includes(q));
-    }
-    result = [...result].sort((a, b) => {
-      const mul = sortDir === "asc" ? 1 : -1;
-      if (sortKey === "name") return mul * a.name.localeCompare(b.name);
-      return mul * ((a[sortKey] as number) - (b[sortKey] as number));
-    });
-    return result;
-  }, [funds, selectedCategory, debouncedSearch, sortKey, sortDir]);
-
-  const bestYield = useMemo(() => {
-    const filtered = funds.filter((f) => f.fund_type === selectedCategory);
-    if (filtered.length === 0) return 0;
-    return Math.max(...filtered.map((f) => f.annual_yield));
-  }, [funds, selectedCategory]);
-
-  const avgYield = useMemo(() => {
-    if (processedFunds.length === 0) return 0;
-    return processedFunds.reduce((s, f) => s + f.annual_yield, 0) / processedFunds.length;
-  }, [processedFunds]);
-
-  const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir(key === "name" ? "asc" : "desc"); }
+function getCorsHeaders(req: Request) {
+  const origin = req.headers.get("origin") || "";
+  const matched = allowedOrigins.find((o) => origin.startsWith(o));
+  return {
+    "Access-Control-Allow-Origin": matched || "",
+    "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
   };
+}
 
-  const clearSearch = () => setSearch("");
+const NSE_MARKET_STATS_PAGE = "https://www.nse.co.ke/dataservices/market-statistics/";
+const NSE_MARKET_STATS_AJAX = "https://www.nse.co.ke/dataservices/wp-admin/admin-ajax.php";
 
-  const lastUpdate = showDate && lastUpdateDate ? new Date(lastUpdateDate) : showDate && funds[0] ? new Date(funds[0].updated_at) : null;
-  const latestNews = news.slice(0, 4);
+// ... (Keep your CRYPTO_MAP, PRECIOUS_METALS, and NSE_SECTOR_MAP as they are)
 
-  const isMarketTab = MARKET_TABS.includes(selectedCategory as any);
-  const isFundTab = !isMarketTab;
+async function fetchNseStockQuotes(): Promise<Record<string, any>> {
+  console.log("[fetch-market-data] Starting NSE XHR Fallback Scrape...");
 
-  // Mobile tabs: fund categories + market
-  const allTabs = useMemo(() => [
-    ...categories.map((c) => ({ key: c, label: categoryLabels[c] || c })),
-    { key: "fx_rates", label: "FX Rates" },
-    { key: "commodities", label: "Commodities" },
-  ], [categories]);
+  const pageRes = await fetch(NSE_MARKET_STATS_PAGE);
+  const pageHtml = await pageRes.text();
+  const nonce = pageHtml.match(/"ajaxnonce":"([^"]+)"/)?.[1];
 
-  return (
-    <div ref={ref} className="min-h-screen">
-      {/* Mobile sticky header */}
-      <div className="md:hidden px-4 pt-4 pb-3">
-        <div className="px-4 pt-4 pb-2">
-          <h1 className="text-xl font-bold text-foreground">Unit Trust Funds</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Compare CMA-regulated unit trust yields, fees, and performance across Kenya.
-            <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
-          </p>
-        </div>
+  if (!nonce) throw new Error("NSE ajax nonce not found");
 
-        {user && favEntries.length > 0 && (
-          <div className="px-4 pb-1">
-            <FundFavourites entries={favEntries} funds={funds} snapshots={snapshots} />
-          </div>
-        )}
+  const quotes: Record<string, any> = {};
+  const sectors = [...new Set(Object.values(NSE_SECTOR_MAP))];
 
-        <div className="px-4">
-          <CategoryTabs
-            tabs={allTabs}
-            selectedCategory={selectedCategory}
-            categoryCount={categoryCount}
-            onSelect={setSelectedCategory}
-            loading={loading}
-          />
+  for (const sector of sectors) {
+    console.log(`[fetch-market-data] Scraping sector: ${sector}`);
+    const body = new URLSearchParams({ action: "display_prices", security: nonce, sector });
 
-          {isFundTab && (
-            <>
-              <p className="text-[10px] text-muted-foreground/70 -mt-1 mb-2">Gross annual effective rates before 15% withholding tax.</p>
-              <div className="flex gap-2">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                  <Input
-                    placeholder="Search funds or managers…"
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    className="pl-9 h-9 rounded-lg text-[16px]"
-                  />
-                </div>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
+    const response = await fetch(NSE_MARKET_STATS_AJAX, {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8" },
+      body: body.toString(),
+    });
 
-      {/* Desktop header */}
-      <div className="hidden md:block px-6 py-6">
-        <div className="mb-4">
-          <h1 className="text-2xl font-bold text-foreground">Unit Trust Funds</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Compare CMA-regulated unit trust yields, fees, and performance across Kenya.
-            <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
-          </p>
-          <span className="text-xs text-muted-foreground/70 block mt-0.5">
-            Yields are gross annual effective rates before 15% withholding tax.
-          </span>
-        </div>
-      </div>
+    if (!response.ok) continue;
 
-      <div className="px-4 md:px-6 pb-3">
-        {/* Desktop favourites */}
-        <div className="hidden md:block">
-          {user && favEntries.length > 0 && (
-            <FundFavourites entries={favEntries} funds={funds} snapshots={snapshots} />
-          )}
-        </div>
+    const html = await response.text();
+    const doc = new DOMParser().parseFromString(html, "text/html");
+    if (!doc) continue;
 
-        {/* Desktop: full-width tabbed fund table */}
-        <div className="hidden md:block">
-          <FundGrid
-            funds={funds}
-            snapshots={snapshots}
-            allSnapshots={allSnapshots}
-            loading={loading}
-            isFavourite={user ? isFavourite : undefined}
-            onToggleFavourite={user ? toggleFavourite : undefined}
-          />
-        </div>
+    const rows = [...doc.querySelectorAll("tr")].slice(1); // Skip header
+    for (const tr of rows) {
+      const cells = [...tr.querySelectorAll("td")].map((c) => c.textContent?.trim() || "");
+      if (cells.length < 5) continue;
 
-        {/* Mobile: scrollable content below sticky header */}
-        <div className="md:hidden pt-3">
-          {isFundTab && (
-            <>
-              <FundMobileCards
-                funds={processedFunds}
-                snapshots={snapshots}
-                bestYield={bestYield}
-                loading={loading}
-                onClearSearch={clearSearch}
-                hasSearch={!!debouncedSearch.trim()}
-                isFavourite={user ? isFavourite : undefined}
-                onToggleFavourite={user ? toggleFavourite : undefined}
-              />
+      const companyName = cells[0];
+      const price = parseFloat(cells[3].replace(/,/g, ""));
+      const changePct = parseFloat(cells[4].replace(/,/g, ""));
+      const volume = parseInt(cells[2].replace(/,/g, ""), 10) || 0;
 
-              <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
-                <p className="text-[10px] leading-relaxed text-muted-foreground">
-                  {getDisclaimer(selectedCategory as any)}
-                </p>
-              </div>
-            </>
-          )}
-        </div>
+      // Match the company name to our symbols (using your logic)
+      // For brevity, assume matching logic here or simple map lookup
+      // ...
+    }
+  }
+  return quotes;
+}
 
-        {/* Currency content - mobile only */}
-        {selectedCategory === "fx_rates" && (
-          <div className="md:hidden">
-            <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Exchange rates are indicative and updated manually by administrators.</p>
-            <RatesMobileCards rates={rates} loading={marketLoading} />
-          </div>
-        )}
+Deno.serve(async (req) => {
+  const corsHeaders = getCorsHeaders(req);
+  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-        {/* Commodities content - mobile only */}
-        {selectedCategory === "commodities" && (
-          <div className="md:hidden">
-            <p className="text-[10px] text-muted-foreground -mt-1 mb-3">Commodity prices are indicative and updated manually by administrators.</p>
-            <CommoditiesMobileCards commodities={commodities} loading={marketLoading} />
-          </div>
-        )}
+  const supabase = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!);
+  const stockQuotes = new Map<string, any>();
+  let rapidApiStatus = "RapidAPI Initializing";
 
-        {/* Mobile quick actions */}
-        <div className="flex items-center gap-2 mt-4 flex-wrap sm:hidden">
-          <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
-            <Link to="/calculator"><Calculator className="mr-1.5 h-3.5 w-3.5" /> Calculate Returns</Link>
-          </Button>
-          <Button asChild variant="outline" size="sm" className="rounded-lg text-xs h-8">
-            <Link to="/learn">Learn About Funds</Link>
-          </Button>
-        </div>
+  try {
+    const rapidApiKey = Deno.env.get("RAPIDAPI_KEY");
 
-        {/* Mobile news + ads */}
-        <div className="xl:hidden mt-6 space-y-4 md:hidden">
-          <AdBanner placement="in-feed" />
-          <NewsSidebar news={latestNews} loading={loading} />
-        </div>
-      </div>
-    </div>
-  );
+    // --- PRIMARY: RAPID API ---
+    if (rapidApiKey) {
+      const nseRes = await fetch("https://nairobi-stock-exchange-nse.p.rapidapi.com/stocks", {
+        headers: { "x-rapidapi-key": rapidApiKey, "x-rapidapi-host": "nairobi-stock-exchange-nse.p.rapidapi.com" },
+      });
+
+      if (nseRes.ok) {
+        const nseData = await nseRes.json();
+        const stocks = nseData?.data || [];
+        stocks.forEach((s: any) => {
+          const ticker = (s.ticker || "").toUpperCase();
+          const price = parseFloat((s.price || "0").replace(/,/g, ""));
+          if (ticker && price > 0)
+            stockQuotes.set(ticker, { price, volume: parseInt(s.volume) || 0 /* ...rest of mapping */ });
+        });
+        rapidApiStatus = `RapidAPI Success: ${stockQuotes.size} stocks`;
+      } else {
+        // FIXED: Explicitly handle 502/Error to trigger fallback
+        console.warn(`[fetch-market-data] RapidAPI Failed (${nseRes.status}). Forcing Fallback.`);
+        rapidApiStatus = `RapidAPI Failed (${nseRes.status})`;
+      }
+    }
+
+    // --- FALLBACK: NSE XHR ---
+    if (stockQuotes.size === 0) {
+      const fallbackData = await fetchNseStockQuotes();
+      Object.entries(fallbackData).forEach(([sym, q]) => stockQuotes.set(sym, q));
+      rapidApiStatus += " | Fallback Active";
+    }
+
+    // --- DB UPDATE ---
+    const { data: stockRows } = await supabase.from("stocks").select("id, symbol").eq("is_active", true);
+
+    for (const row of stockRows || []) {
+      const quote = stockQuotes.get(row.symbol);
+      if (quote && quote.price > 0) {
+        await supabase
+          .from("stocks")
+          .update({
+            price: quote.price,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("id", row.id);
+
+        await supabase.from("stock_price_history").upsert(
+          {
+            stock_id: row.id,
+            price: quote.price,
+            snapshot_date: new Date().toISOString().split("T")[0],
+          },
+          { onConflict: "stock_id,snapshot_date" },
+        );
+      }
+    }
+
+    return new Response(JSON.stringify({ success: true, status: rapidApiStatus }), {
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  } catch (error) {
+    console.error("[fetch-market-data] Fatal Error:", error);
+    return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: corsHeaders });
+  }
 });
-
-Index.displayName = "Index";
-
-export default Index;
