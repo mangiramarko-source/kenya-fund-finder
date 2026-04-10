@@ -22,11 +22,13 @@ const FX_API = "https://open.er-api.com/v6/latest/KES";
 // CoinGecko free API for crypto prices
 const COINGECKO_API = "https://api.coingecko.com/api/v3/simple/price";
 
-// Yahoo Finance v8 quote endpoint
-const YAHOO_QUOTE_API = "https://query1.finance.yahoo.com/v8/finance/chart/";
-
+const RAPIDAPI_STOCKS_API = "https://nairobi-stock-exchange-nse.p.rapidapi.com/stocks";
 const NSE_MARKET_STATS_PAGE = "https://www.nse.co.ke/dataservices/market-statistics/";
 const NSE_MARKET_STATS_AJAX = "https://www.nse.co.ke/dataservices/wp-admin/admin-ajax.php";
+const STOCK_REQUEST_HEADERS = {
+  "User-Agent": "Mozilla/5.0",
+  "Accept": "application/json",
+};
 
 // Map of common commodity symbols to CoinGecko IDs
 const CRYPTO_MAP: Record<string, string> = {
@@ -170,71 +172,248 @@ function normalizeText(value: string) {
   return value.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-async function fetchNseStockQuotes(): Promise<Record<string, {
+type StockQuoteSource = "primary" | "secondary" | "cache";
+
+type StockQuote = {
   price: number;
   previousPrice: number;
   dayChange: number;
   dayChangePct: number;
   volume: number;
-}>> {
-  console.log("[fetch-market-data] Fetching NSE market statistics page...");
-  const nseHeaders: Record<string, string> = {
-    "Accept": "text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
-    "Accept-Language": "en-US,en;q=0.5",
-  };
-  const pageRes = await fetch(NSE_MARKET_STATS_PAGE, { headers: nseHeaders });
-  if (!pageRes.ok) {
-    console.error(`[fetch-market-data] NSE page fetch failed: ${pageRes.status} ${pageRes.statusText}`);
-    throw new Error(`NSE market stats page failed: ${pageRes.status}`);
-  }
+  source: StockQuoteSource;
+  asOfDate: string | null;
+};
 
-  const pageHtml = await pageRes.text();
-  const nonce = pageHtml.match(/"ajaxnonce":"([^"]+)"/)?.[1];
-  if (!nonce) {
-    console.error("[fetch-market-data] NSE ajax nonce not found in page HTML (length: " + pageHtml.length + ")");
-    throw new Error("NSE ajax nonce not found");
-  }
-  console.log(`[fetch-market-data] NSE nonce found, fetching ${[...new Set(Object.values(NSE_SECTOR_MAP))].length} sectors...`);
+type StockCacheRow = {
+  id: string;
+  symbol: string;
+  price: number;
+  previous_price: number | null;
+  day_change: number;
+  day_change_percent: number;
+  volume: number;
+  market_cap: number | null;
+  year_high: number | null;
+  year_low: number | null;
+  updated_at: string;
+};
 
-  const sectorRows = new Map<string, Array<{ company: string; price: number; changePct: number; volume: number }>>();
-  const sectors = [...new Set(Object.values(NSE_SECTOR_MAP))];
+type StockDataResult = {
+  quotes: Map<string, StockQuote>;
+  source: "primary" | "secondary" | "cache" | "mixed";
+  fallback: boolean;
+  cacheTimestamp: string | null;
+  notes: string[];
+};
 
-  for (const sector of sectors) {
-    const body = new URLSearchParams({
-      action: "display_prices",
-      security: nonce,
-      sector,
+const NSE_XHR_SECTORS = [...new Set(Object.values(NSE_SECTOR_MAP))];
+const MONTH_NUMBERS: Record<string, string> = {
+  jan: "01",
+  feb: "02",
+  mar: "03",
+  apr: "04",
+  may: "05",
+  jun: "06",
+  jul: "07",
+  aug: "08",
+  sep: "09",
+  oct: "10",
+  nov: "11",
+  dec: "12",
+};
+
+const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+function parseNumber(value: string | number | null | undefined) {
+  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
+  const cleaned = String(value ?? "").replace(/,/g, "").replace(/[^\d.-]/g, "").trim();
+  return cleaned ? Number.parseFloat(cleaned) || 0 : 0;
+}
+
+function parseInteger(value: string | number | null | undefined) {
+  if (typeof value === "number") return Number.isFinite(value) ? Math.trunc(value) : 0;
+  const cleaned = String(value ?? "").replace(/,/g, "").replace(/[^\d-]/g, "").trim();
+  return cleaned ? Number.parseInt(cleaned, 10) || 0 : 0;
+}
+
+function buildCachedStockQuotes(stockRows: StockCacheRow[]) {
+  const quotes = new Map<string, StockQuote>();
+
+  for (const row of stockRows) {
+    const symbol = (row.symbol || "").toUpperCase();
+    if (!symbol || row.price <= 0) continue;
+
+    const previousPrice = row.previous_price ?? Number((row.price - row.day_change).toFixed(2));
+    quotes.set(symbol, {
+      price: Number(row.price.toFixed(2)),
+      previousPrice,
+      dayChange: Number(row.day_change.toFixed(2)),
+      dayChangePct: Number(row.day_change_percent.toFixed(2)),
+      volume: row.volume || 0,
+      source: "cache",
+      asOfDate: row.updated_at ? row.updated_at.split("T")[0] : null,
     });
+  }
 
-    const response = await fetch(NSE_MARKET_STATS_AJAX, {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-        "Accept": "text/html, */*",
-        "Referer": NSE_MARKET_STATS_PAGE,
+  return quotes;
+}
+
+function getLatestCacheTimestamp(stockRows: StockCacheRow[]) {
+  return stockRows.reduce<string | null>((latest, row) => {
+    if (!row.updated_at) return latest;
+    return !latest || row.updated_at > latest ? row.updated_at : latest;
+  }, null);
+}
+
+async function fetchWithRetry(url: string, init: RequestInit, attempts = 2) {
+  let lastError = `Request failed for ${url}`;
+
+  for (let attempt = 1; attempt <= attempts; attempt++) {
+    try {
+      const response = await fetch(url, init);
+      if (response.ok) {
+        return response;
+      }
+
+      const errorBody = await response.text();
+      lastError = `HTTP ${response.status}${errorBody ? `: ${errorBody.slice(0, 200)}` : ""}`;
+      console.error(`[fetch-market-data] Request failed (${attempt}/${attempts}) ${url}: ${lastError}`);
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+      console.error(`[fetch-market-data] Request error (${attempt}/${attempts}) ${url}:`, error);
+    }
+
+    if (attempt < attempts) {
+      await sleep(300 * attempt);
+    }
+  }
+
+  throw new Error(lastError);
+}
+
+async function fetchRapidApiStockQuotes(rapidApiKey: string) {
+  try {
+    const response = await fetchWithRetry(
+      RAPIDAPI_STOCKS_API,
+      {
+        headers: {
+          ...STOCK_REQUEST_HEADERS,
+          "Content-Type": "application/json",
+          "x-rapidapi-host": "nairobi-stock-exchange-nse.p.rapidapi.com",
+          "x-rapidapi-key": rapidApiKey,
+        },
       },
-      body: body.toString(),
-    });
+      2,
+    );
 
-    if (!response.ok) continue;
+    const payload = await response.json() as { data?: Array<Record<string, unknown>> };
+    const quotes = new Map<string, StockQuote>();
 
-    const html = await response.text();
-    const doc = new DOMParser().parseFromString(html, "text/html");
-    const rows = [...(doc?.querySelectorAll("tr") || [])]
-      .map((tr) => [...tr.querySelectorAll("th, td")].map((cell) => cell.textContent?.trim() || ""))
-      .filter((cells) => cells.length >= 5 && cells[0] !== "Company")
-      .map((cells) => ({
-        company: cells[0],
-        volume: Number(cells[2].replace(/,/g, "")) || 0,
-        price: Number(cells[3].replace(/,/g, "")) || 0,
-        changePct: Number(cells[4].replace(/,/g, "")) || 0,
-      }))
-      .filter((row) => row.company && row.price > 0);
+    for (const stock of payload.data || []) {
+      const ticker = String(stock.ticker || "").toUpperCase();
+      const price = parseNumber(stock.price);
+      const volume = parseInteger(stock.volume);
+      if (!ticker || price <= 0) continue;
 
-    sectorRows.set(sector, rows);
+      const changeValue = String(stock.change || "0").replace(/\(.*\)/, "").trim();
+      const dayChange = parseNumber(changeValue);
+      const previousPrice = Number((price - dayChange).toFixed(2));
+      const dayChangePct = previousPrice > 0
+        ? Number(((dayChange / previousPrice) * 100).toFixed(2))
+        : 0;
+
+      quotes.set(ticker, {
+        price: Number(price.toFixed(2)),
+        previousPrice,
+        dayChange: Number(dayChange.toFixed(2)),
+        dayChangePct,
+        volume,
+        source: "primary",
+        asOfDate: null,
+      });
+    }
+
+    return {
+      quotes,
+      note: `Primary API fetched ${quotes.size} stocks`,
+    };
+  } catch (error) {
+    const message = error instanceof Error ? error.message : String(error);
+    return {
+      quotes: new Map<string, StockQuote>(),
+      note: `Primary API failed: ${message}`,
+    };
+  }
+}
+
+function parseNseSnapshotDate(html: string) {
+  const match = html.match(/Statistics as of\s+(\d{2})-([A-Za-z]{3})-(\d{4})/i);
+  if (!match) return null;
+
+  const [, day, monthName, year] = match;
+  const month = MONTH_NUMBERS[monthName.toLowerCase()];
+  return month ? `${year}-${month}-${day}` : null;
+}
+
+function parseNseQuoteRows(html: string) {
+  const doc = new DOMParser().parseFromString(html, "text/html");
+  if (!doc) return [] as Array<{ company: string; price: number; changePct: number; volume: number }>;
+
+  return [...doc.querySelectorAll("table tr")]
+    .map((tr) => [...tr.querySelectorAll("td")].map((cell) => cell.textContent?.trim() || ""))
+    .filter((cells) => cells.length >= 5)
+    .map((cells) => ({
+      company: cells[0],
+      volume: parseInteger(cells[2]),
+      price: parseNumber(cells[3]),
+      changePct: parseNumber(cells[4]),
+    }))
+    .filter((row) => row.company && row.price > 0);
+}
+
+async function fetchNseXhrStockQuotes() {
+  const sectorRows = new Map<string, Array<{ company: string; price: number; changePct: number; volume: number }>>();
+  let snapshotDate: string | null = null;
+
+  const responses = await Promise.all(
+    NSE_XHR_SECTORS.map(async (sector) => {
+      try {
+        const response = await fetchWithRetry(
+          NSE_MARKET_STATS_AJAX,
+          {
+            method: "POST",
+            headers: {
+              ...STOCK_REQUEST_HEADERS,
+              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
+              "Referer": NSE_MARKET_STATS_PAGE,
+            },
+            body: new URLSearchParams({
+              action: "display_prices",
+              sector,
+            }).toString(),
+          },
+          2,
+        );
+
+        return { sector, html: await response.text() };
+      } catch (error) {
+        console.error(`[fetch-market-data] NSE XHR failed for sector ${sector}:`, error);
+        return { sector, html: "" };
+      }
+    }),
+  );
+
+  for (const { sector, html } of responses) {
+    if (!html) continue;
+    snapshotDate = snapshotDate || parseNseSnapshotDate(html);
+
+    const rows = parseNseQuoteRows(html);
+    if (rows.length > 0) {
+      sectorRows.set(sector, rows);
+    }
   }
 
-  const quotes: Record<string, { price: number; previousPrice: number; dayChange: number; dayChangePct: number; volume: number }> = {};
+  const quotes = new Map<string, StockQuote>();
 
   for (const [symbol, sector] of Object.entries(NSE_SECTOR_MAP)) {
     const patterns = NSE_SYMBOL_PATTERNS[symbol] || [symbol.toLowerCase()];
@@ -250,70 +429,88 @@ async function fetchNseStockQuotes(): Promise<Record<string, {
       : Number((row.price / (1 + row.changePct / 100)).toFixed(2));
     const dayChange = Number((row.price - previousPrice).toFixed(2));
 
-    quotes[symbol] = {
+    quotes.set(symbol, {
       price: Number(row.price.toFixed(2)),
       previousPrice,
       dayChange,
       dayChangePct: Number(row.changePct.toFixed(2)),
       volume: row.volume,
-    };
+      source: "secondary",
+      asOfDate: snapshotDate,
+    });
   }
 
-  return quotes;
+  return {
+    quotes,
+    note: `NSE XHR fetched ${quotes.size} stocks${snapshotDate ? ` (${snapshotDate})` : ""}`,
+  };
 }
 
-async function fetchYahooQuote(ticker: string): Promise<{
-  price: number;
-  previousClose: number;
-  dayChange: number;
-  dayChangePct: number;
-  volume: number;
-  marketCap: number | null;
-  yearHigh: number | null;
-  yearLow: number | null;
-  peRatio: number | null;
-  dividendYield: number | null;
-} | null> {
-  try {
-    const res = await fetch(
-      `${YAHOO_QUOTE_API}${ticker}?interval=1d&range=1d`,
-      {
-        headers: {
-          "User-Agent": "Mozilla/5.0 (compatible; KenyaFundFinder/1.0)",
-        },
-      }
-    );
-    if (!res.ok) {
-      console.error(`Yahoo Finance ${ticker}: HTTP ${res.status}`);
-      await res.text();
-      return null;
-    }
-    const data = await res.json();
-    const result = data?.chart?.result?.[0];
-    if (!result) return null;
+function getQuoteSource(quotes: Map<string, StockQuote>) {
+  const sources = new Set(Array.from(quotes.values(), (quote) => quote.source));
+  if (sources.size > 1) return "mixed" as const;
+  if (sources.has("primary")) return "primary" as const;
+  if (sources.has("secondary")) return "secondary" as const;
+  return "cache" as const;
+}
 
-    const meta = result.meta;
-    const price = meta.regularMarketPrice ?? 0;
-    const previousClose = meta.chartPreviousClose ?? meta.previousClose ?? 0;
-    const dayChange = price - previousClose;
-    const dayChangePct = previousClose > 0 ? (dayChange / previousClose) * 100 : 0;
+async function getStockData(stockRows: StockCacheRow[]): Promise<StockDataResult> {
+  const quotes = new Map<string, StockQuote>();
+  const notes: string[] = [];
+  const cachedQuotes = buildCachedStockQuotes(stockRows);
+  const cacheTimestamp = getLatestCacheTimestamp(stockRows);
+  const stockSymbols = stockRows
+    .map((row) => (row.symbol || "").toUpperCase())
+    .filter(Boolean);
 
-    return {
-      price: parseFloat(price.toFixed(2)),
-      previousClose: parseFloat(previousClose.toFixed(2)),
-      dayChange: parseFloat(dayChange.toFixed(2)),
-      dayChangePct: parseFloat(dayChangePct.toFixed(2)),
-      volume: meta.regularMarketVolume ?? 0,
-      marketCap: meta.marketCap ?? null,
-      yearHigh: meta.fiftyTwoWeekHigh ?? null,
-      yearLow: meta.fiftyTwoWeekLow ?? null,
-      peRatio: meta.trailingPE ?? null,
-      dividendYield: meta.dividendYield ?? null,
-    };
-  } catch (e) {
-    console.error(`Yahoo Finance error for ${ticker}:`, e);
-    return null;
+  const rapidApiKey = Deno.env.get("RAPIDAPI_KEY");
+  if (rapidApiKey) {
+    const primary = await fetchRapidApiStockQuotes(rapidApiKey);
+    notes.push(primary.note);
+    primary.quotes.forEach((quote, symbol) => quotes.set(symbol, quote));
+  } else {
+    notes.push("Primary API key missing");
   }
+
+  const missingAfterPrimary = stockSymbols.filter((symbol) => !quotes.has(symbol));
+  if (missingAfterPrimary.length > 0) {
+    const secondary = await fetchNseXhrStockQuotes();
+    notes.push(secondary.note);
+
+    for (const symbol of missingAfterPrimary) {
+      const quote = secondary.quotes.get(symbol);
+      if (quote) {
+        quotes.set(symbol, quote);
+      }
+    }
+  }
+
+  const missingAfterSecondary = stockSymbols.filter((symbol) => !quotes.has(symbol));
+  let cacheHits = 0;
+
+  for (const symbol of missingAfterSecondary) {
+    const cached = cachedQuotes.get(symbol);
+    if (!cached) continue;
+    quotes.set(symbol, cached);
+    cacheHits++;
+  }
+
+  if (cacheHits > 0) {
+    notes.push(`Cache supplied ${cacheHits} stocks${cacheTimestamp ? ` from ${cacheTimestamp}` : ""}`);
+  }
+
+  if (quotes.size === 0 && cachedQuotes.size > 0) {
+    cachedQuotes.forEach((quote, symbol) => quotes.set(symbol, quote));
+    notes.push(`All providers failed, serving cached data${cacheTimestamp ? ` from ${cacheTimestamp}` : ""}`);
+  }
+
+  return {
+    quotes,
+    source: getQuoteSource(quotes),
+    fallback: Array.from(quotes.values()).some((quote) => quote.source === "cache"),
+    cacheTimestamp,
+    notes,
+  };
 }
 
 Deno.serve(async (req) => {
@@ -540,94 +737,16 @@ Deno.serve(async (req) => {
     if (shouldFetchStocks) {
     const { data: stockRows } = await supabase
       .from("stocks")
-      .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low")
+      .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, updated_at")
       .eq("is_active", true);
 
     if (stockRows && stockRows.length > 0) {
       let stocksUpdated = 0;
-      const rapidApiKey = Deno.env.get("RAPIDAPI_KEY");
-      const stockQuotes = new Map<string, {
-        price: number;
-        previousPrice: number;
-        dayChange: number;
-        dayChangePct: number;
-        volume: number;
-      }>();
-      let rapidApiStatus = "RapidAPI skipped";
+      const stockData = await getStockData(stockRows as StockCacheRow[]);
+      const fallbackCount = Array.from(stockData.quotes.values()).filter((quote) => quote.source === "cache").length;
+      const freshCount = stockData.quotes.size - fallbackCount;
 
-      if (rapidApiKey) {
-        try {
-          const nseRes = await fetch("https://nairobi-stock-exchange-nse.p.rapidapi.com/stocks", {
-            headers: {
-              "Content-Type": "application/json",
-              "x-rapidapi-host": "nairobi-stock-exchange-nse.p.rapidapi.com",
-              "x-rapidapi-key": rapidApiKey,
-            },
-          });
-
-          if (nseRes.ok) {
-            const nseData = await nseRes.json();
-            const stocks = nseData?.data || [];
-            for (const s of stocks) {
-              const ticker = (s.ticker || "").toUpperCase();
-              const price = parseFloat((s.price || "0").replace(/,/g, ""));
-              const volume = parseInt((s.volume || "0").replace(/,/g, ""), 10) || 0;
-              if (ticker && price > 0) {
-                const changeStr = String(s.change || "0").replace(/\(.*\)/, "").trim();
-                const dayChange = parseFloat(changeStr) || 0;
-                const previousPrice = parseFloat((price - dayChange).toFixed(2));
-                const dayChangePct = previousPrice > 0 ? parseFloat(((dayChange / previousPrice) * 100).toFixed(2)) : 0;
-                stockQuotes.set(ticker, {
-                  price,
-                  previousPrice,
-                  dayChange,
-                  dayChangePct,
-                  volume,
-                });
-              }
-            }
-            rapidApiStatus = `RapidAPI: fetched ${stockQuotes.size} stocks`;
-            console.log(`[fetch-market-data] ${rapidApiStatus}`);
-          } else {
-            const errorBody = await nseRes.text();
-            rapidApiStatus = `RapidAPI failed ${nseRes.status}`;
-            console.error(`[fetch-market-data] RapidAPI NSE failed: ${nseRes.status} ${errorBody}`);
-          }
-        } catch (e) {
-          rapidApiStatus = "RapidAPI request failed";
-          console.error("[fetch-market-data] RapidAPI NSE error:", e);
-        }
-      } else {
-        rapidApiStatus = "RapidAPI key missing";
-        console.warn("[fetch-market-data] RAPIDAPI_KEY not set, skipping RapidAPI");
-      }
-
-      const missingSymbols = stockRows
-        .map((row) => (row.symbol || "").toUpperCase())
-        .filter((symbol) => symbol && !stockQuotes.has(symbol));
-
-      if (stockQuotes.size === 0 || missingSymbols.length > 0) {
-        try {
-          const fallbackQuotes = await fetchNseStockQuotes();
-          let fallbackAdded = 0;
-
-          for (const [symbol, quote] of Object.entries(fallbackQuotes)) {
-            if (!stockQuotes.has(symbol)) {
-              stockQuotes.set(symbol, quote);
-              fallbackAdded++;
-            }
-          }
-
-          const fallbackCount = Object.keys(fallbackQuotes).length;
-          results.push(`${rapidApiStatus}; NSE fallback fetched ${fallbackCount} stocks and filled ${fallbackAdded} gaps`);
-          console.log(`[fetch-market-data] NSE fallback fetched ${fallbackCount} stocks and filled ${fallbackAdded} gaps`);
-        } catch (e) {
-          results.push(`${rapidApiStatus}; NSE fallback failed`);
-          console.error("[fetch-market-data] NSE fallback error:", e);
-        }
-      } else {
-        results.push(rapidApiStatus);
-      }
+      results.push(...stockData.notes);
 
       // Fetch 52-week price history for year_high/year_low calculation
       const oneYearAgo = new Date();
@@ -651,14 +770,16 @@ Deno.serve(async (req) => {
         }
       }
 
-      const snapshotDate = new Date().toISOString().split("T")[0];
-
-      // Update stocks from RapidAPI data, falling back to NSE when needed
+      // Update stocks from fresh data, falling back to cached DB values when providers fail
       for (const row of stockRows) {
         const sym = (row.symbol || "").toUpperCase();
-        const quote = stockQuotes.get(sym);
+        const quote = stockData.quotes.get(sym);
 
         if (quote && quote.price > 0) {
+          if (quote.source === "cache") {
+            continue;
+          }
+
           // Calculate year_high / year_low including current price
           const hist = yearRanges.get(row.id);
           let yearHigh = row.year_high;
@@ -671,7 +792,10 @@ Deno.serve(async (req) => {
             yearLow = yearLow ? Math.min(yearLow, quote.price) : quote.price;
           }
 
-          const nowIso = new Date().toISOString();
+          const snapshotDate = quote.asOfDate || new Date().toISOString().split("T")[0];
+          const updatedAt = quote.asOfDate
+            ? new Date(`${quote.asOfDate}T17:00:00+03:00`).toISOString()
+            : new Date().toISOString();
           const updateData: Record<string, unknown> = {
             previous_price: quote.previousPrice,
             price: quote.price,
@@ -679,7 +803,7 @@ Deno.serve(async (req) => {
             day_change_percent: quote.dayChangePct,
             year_high: yearHigh,
             year_low: yearLow,
-            updated_at: nowIso,
+            updated_at: updatedAt,
           };
           if (quote.volume > 0) updateData.volume = quote.volume;
 
@@ -700,14 +824,18 @@ Deno.serve(async (req) => {
 
       const stillMissing = stockRows
         .map((row) => (row.symbol || "").toUpperCase())
-        .filter((symbol) => symbol && !stockQuotes.has(symbol));
+        .filter((symbol) => symbol && !stockData.quotes.has(symbol));
       if (stillMissing.length > 0) {
         results.push(`Stocks missing quotes: ${stillMissing.join(", ")}`);
         console.warn(`[fetch-market-data] Missing quotes for: ${stillMissing.join(", ")}`);
       }
 
-      results.push(`Stocks: updated ${stocksUpdated}/${stockRows.length} prices (with 52-week ranges)`);
-      console.log(`[fetch-market-data] Stocks: updated ${stocksUpdated}/${stockRows.length} prices`);
+      if (freshCount === 0 && stockData.cacheTimestamp) {
+        results.push(`Stocks: served cached data from ${stockData.cacheTimestamp}`);
+      } else {
+        results.push(`Stocks: refreshed ${stocksUpdated}/${stockRows.length} prices${fallbackCount > 0 ? `, using cache for ${fallbackCount}` : ""}`);
+      }
+      console.log(`[fetch-market-data] Stocks source=${stockData.source}, refreshed=${stocksUpdated}, cacheFallback=${fallbackCount}, usedCache=${stockData.fallback}`);
     }
     } // end shouldFetchStocks
 
