@@ -237,15 +237,15 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 setSortKey("annual_yield");
                 setSortDir("desc");
               }}
-              className={`px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+              className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                 activeTab === cat
-                  ? "bg-primary text-primary-foreground shadow-sm"
+                  ? "bg-accent text-accent-foreground shadow-sm"
                   : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
               {categoryLabels[cat] || cat}
               <span className={`ml-1.5 tabular-nums text-[10px] ${
-                activeTab === cat ? "text-primary-foreground/70" : "text-muted-foreground/60"
+                activeTab === cat ? "text-accent-foreground/70" : "text-muted-foreground/60"
               }`}>
                 {categoryCount[cat] || 0}
               </span>
@@ -254,12 +254,12 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         </div>
 
         <div className="relative w-full md:w-64 shrink-0 max-w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
           <Input
             placeholder="Search funds or managers…"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-8 text-xs rounded-lg bg-muted/30 border-border"
+            className="pl-9 h-8 md:h-9 text-[16px] sm:text-sm rounded-lg bg-muted/30 border-border w-full"
           />
         </div>
       </div>
