@@ -205,9 +205,9 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile: left side */}
+        {/* Mobile: left side – search trigger */}
         <div className="flex md:hidden items-center gap-1">
-          <NotificationBell />
+          <SearchDialog variant="icon" />
         </div>
 
         {/* Mobile: logo centered */}
@@ -253,10 +253,6 @@ const Navbar = () => {
         </nav>
       </div>
 
-      {/* Mobile: search bar row */}
-      <div className="md:hidden px-4 pb-2 pt-0.5 border-b border-border bg-card/95">
-        <SearchDialog />
-      </div>
 
       {/* Mobile slide-in sheet from right */}
       <Sheet open={open} onOpenChange={setOpen}>
@@ -324,15 +320,13 @@ const Navbar = () => {
             >
               <Calculator className="h-5 w-5" /> Calculator
             </Link>
-            {user && (
-              <Link
-                to="/alerts"
-                onClick={closeMobile}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-              >
-                <Bell className="h-5 w-5" /> Notifications
-              </Link>
-            )}
+            <Link
+              to={user ? "/alerts" : "/auth"}
+              onClick={closeMobile}
+              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+            >
+              <Bell className="h-5 w-5" /> Notifications
+            </Link>
 
             <button
               onClick={() => { setDark(!dark); }}

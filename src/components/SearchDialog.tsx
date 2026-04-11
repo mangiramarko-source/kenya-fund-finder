@@ -12,7 +12,7 @@ import {
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 
 interface SearchDialogProps {
-  variant?: "default" | "topbar";
+  variant?: "default" | "topbar" | "icon";
 }
 
 const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
@@ -47,7 +47,15 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
 
   return (
     <>
-      {variant === "topbar" ? (
+      {variant === "icon" ? (
+        <button
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center justify-center h-9 w-9 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+          aria-label="Search"
+        >
+          <Search className="h-4 w-4" />
+        </button>
+      ) : variant === "topbar" ? (
         <button
           onClick={() => setOpen(true)}
           className="flex items-center gap-3 w-full px-4 py-2 h-10 rounded-xl bg-muted/60 border border-border text-muted-foreground text-sm hover:bg-muted/80 hover:border-accent/30 transition-all shadow-sm"
