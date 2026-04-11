@@ -1,22 +1,67 @@
-import { Navigation } from "@/components/Navigation";
-import { Hero } from "@/components/Hero";
-import { StatsGrid } from "@/components/StatsGrid";
-import { Footer } from "@/components/Footer";
+import { useEffect, useState, useCallback } from "react";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { fetchFunds, fetchLatestSnapshots, type FundFromDB, type YieldSnapshot } from "@/lib/api";
+import { useFundWatchlist } from "@/hooks/useFundWatchlist";
+import FundGrid from "@/components/home/FundGrid";
+import StatBar from "@/components/home/StatBar";
+import SectionLiveStatus from "@/components/SectionLiveStatus";
 
 const Index = () => {
+  useDocumentTitle("Funds – Kenya Fund Finder");
+  const [funds, setFunds] = useState<FundFromDB[]>([]);
+  const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
+  const [loading, setLoading] = useState(true);
+  const { isFavourite, toggle } = useFundWatchlist();
+
+  const load = useCallback(async () => {
+    setLoading(true);
+    try {
+      const [f, s] = await Promise.all([fetchFunds(), fetchLatestSnapshots()]);
+      setFunds(f);
+      const map: Record<string, YieldSnapshot> = {};
+      s.forEach((snap) => { map[snap.fund_id] = snap; });
+      setSnapshots(map);
+    } catch (e) {
+      console.error("Failed to load funds", e);
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => { load(); }, [load]);
+
+  const published = funds.filter((f) => f.is_published);
+  const bestYield = published.length ? Math.max(...published.map((f) => f.annual_yield)) : 0;
+  const avgYield = published.length
+    ? published.reduce((a, f) => a + f.annual_yield, 0) / published.length
+    : 0;
+
+  const lastUpdate = published.length
+    ? new Date(Math.max(...published.map((f) => new Date(f.updated_at).getTime())))
+    : null;
+
   return (
-    <div className="min-h-screen bg-background">
-      <Navigation />
-      <main>
-        <Hero
-          title="Kenya Fund Finder"
-          subtitle="Real-time insights into the Nairobi Securities Exchange and Investment Funds."
-        />
-        <div className="container mx-auto px-4 py-12">
-          <StatsGrid />
-        </div>
-      </main>
-      <Footer />
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-foreground">Investment Funds</h1>
+        <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
+      </div>
+      <StatBar
+        isLive={false}
+        lastUpdate={lastUpdate}
+        fundCount={published.length}
+        bestYield={bestYield}
+        avgYield={avgYield}
+        loading={loading}
+        hideYields={false}
+      />
+      <FundGrid
+        funds={published}
+        snapshots={snapshots}
+        loading={loading}
+        isFavourite={isFavourite}
+        onToggleFavourite={toggle}
+      />
     </div>
   );
 };
