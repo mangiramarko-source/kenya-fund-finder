@@ -205,17 +205,7 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile: left side – search trigger */}
-        <div className="flex md:hidden items-center gap-1">
-          <SearchDialog variant="icon" />
-        </div>
-
-        {/* Mobile: logo centered */}
-        <Link to="/" className="md:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
-          <TrendingUp className="h-5 w-5" />
-        </Link>
-
-        {/* Mobile: hamburger on right */}
+        {/* Mobile: hamburger on left */}
         <div className="flex md:hidden items-center">
           <Button
             variant="ghost"
@@ -226,6 +216,16 @@ const Navbar = () => {
           >
             <Menu className="h-5 w-5" />
           </Button>
+        </div>
+
+        {/* Mobile: logo centered */}
+        <Link to="/" className="md:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
+          <TrendingUp className="h-5 w-5" />
+        </Link>
+
+        {/* Mobile: search on right */}
+        <div className="flex md:hidden items-center gap-1">
+          <SearchDialog variant="icon" />
         </div>
       </div>
 
