@@ -21,7 +21,7 @@ const mobileNavLinks = [
   { to: "/", label: "Home", icon: BarChart3 },
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
   { to: "/funds", label: "Trusts", icon: Landmark },
-  { to: "/markets", label: "Market", icon: LineChart },
+  { to: "/news", label: "News", icon: Newspaper },
 ];
 
 const Navbar = () => {
