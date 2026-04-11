@@ -227,7 +227,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
     <div className="space-y-4">
       {/* Category tabs + search */}
       <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
-        <div className="flex gap-1.5 overflow-x-auto no-scrollbar scrollbar-none">
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
           {categories.map((cat) => (
             <button
               key={cat}
