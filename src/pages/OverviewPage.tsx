@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
+import { decodeHtmlEntities } from "@/lib/utils";
 import Sparkline from "@/components/Sparkline";
 import { Link, useNavigate } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -921,8 +922,8 @@ const OverviewPage = () => {
                         {article.read_time}
                       </span>
                     </div>
-                    <h3 className="text-sm font-semibold leading-snug line-clamp-2 mb-1 group-hover:text-accent transition-colors">{article.title}</h3>
-                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed flex-1">{article.summary}</p>
+                    <h3 className="text-sm font-semibold leading-snug line-clamp-2 mb-1 group-hover:text-accent transition-colors">{decodeHtmlEntities(article.title)}</h3>
+                    <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed flex-1">{decodeHtmlEntities(article.summary)}</p>
                     <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-border/30">
                       <p className="text-[11px] text-muted-foreground truncate">
                         {article.source && `${article.source} · `}
