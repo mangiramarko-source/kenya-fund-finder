@@ -265,8 +265,22 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
       </div>
 
 
-      {/* Fund table */}
-      <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
+      {/* Mobile: card view */}
+      <div className="md:hidden">
+        <FundMobileCards
+          funds={filtered}
+          snapshots={snapshots}
+          bestYield={bestYield}
+          loading={false}
+          onClearSearch={() => setSearch("")}
+          hasSearch={!!search.trim()}
+          isFavourite={isFavourite}
+          onToggleFavourite={onToggleFavourite}
+        />
+      </div>
+
+      {/* Desktop: table view */}
+      <div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <colgroup>
