@@ -229,10 +229,10 @@ const NewsPage = () => {
                     </span>
                   </div>
                   <h2 className="font-heading font-bold text-lg md:text-2xl text-white leading-snug line-clamp-3 group-hover:text-accent transition-colors">
-                    {heroArticle.title}
+                    {decodeHtmlEntities(heroArticle.title)}
                   </h2>
                   <p className="text-sm text-white/70 mt-2 line-clamp-2 max-w-lg leading-relaxed hidden sm:block">
-                    {heroArticle.summary}
+                    {decodeHtmlEntities(heroArticle.summary)}
                   </p>
                   <span className="text-xs text-white/50 mt-2 inline-flex items-center gap-1">
                     <Calendar className="h-3 w-3" />
@@ -266,7 +266,7 @@ const NewsPage = () => {
                           <span className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">{article.category}</span>
                         </div>
                         <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
-                          {article.title}
+                          {decodeHtmlEntities(article.title)}
                         </h3>
                         <div className="flex items-center gap-1.5 mt-1">
                           {article.source && <SourceBadge source={article.source} />}
@@ -312,10 +312,10 @@ const NewsPage = () => {
                           </span>
                         </div>
                         <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
-                          {article.title}
+                          {decodeHtmlEntities(article.title)}
                         </h3>
                         <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-2">
-                          {article.summary}
+                          {decodeHtmlEntities(article.summary)}
                         </p>
                         <div className="flex items-center gap-1.5">
                           {article.source && <SourceBadge source={article.source} />}
