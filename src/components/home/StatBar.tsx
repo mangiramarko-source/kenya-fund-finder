@@ -27,9 +27,7 @@ const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, 
           </div>
         )}
         <p className="text-xs text-muted-foreground">
-          {lastUpdate
-            ? `Updated ${lastUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}`
-            : "CMA-regulated unit trusts"}
+          CMA-regulated unit trusts
         </p>
 
         {/* Desktop stats */}
