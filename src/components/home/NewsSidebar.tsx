@@ -3,7 +3,7 @@ import { ArrowRight, Newspaper, Clock, TrendingUp, Landmark, Shield, Megaphone }
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { NewsFromDB } from "@/lib/api";
-import { getNewsImage } from "@/lib/news-images";
+import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 
 interface NewsSidebarProps {
   news: NewsFromDB[];
@@ -52,6 +52,7 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
               alt={article.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
+              onError={(e) => handleNewsImageError(e, article.category, article.id)}
             />
           </div>
           <div className="p-3.5">
@@ -94,6 +95,7 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
               alt={article.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
+              onError={(e) => handleNewsImageError(e, article.category, article.id)}
             />
           </div>
           <div className="flex-1 min-w-0">

@@ -8,7 +8,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { getNewsImage } from "@/lib/news-images";
+import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 
 const categories = ["All", "Yield Updates", "Market News", "Regulatory Updates", "Fund Announcements"] as const;
 
@@ -264,6 +264,7 @@ const NewsPage = () => {
                     alt={`${heroArticle.title} – ${heroArticle.category}`}
                     className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
                     loading="lazy"
+                    onError={(e) => handleNewsImageError(e, heroArticle.category, heroArticle.id)}
                   />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                 </div>
@@ -309,6 +310,7 @@ const NewsPage = () => {
                           alt={article.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
+                          onError={(e) => handleNewsImageError(e, article.category, article.id)}
                         />
                       </div>
                       <div className="flex-1 min-w-0">
@@ -346,10 +348,11 @@ const NewsPage = () => {
                     >
                       <div className="aspect-[16/9] overflow-hidden">
                         <img
-                          src={getNewsImage(article.image_url, article.category, article.id)}
+                         src={getNewsImage(article.image_url, article.category, article.id)}
                           alt={article.title}
                           className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                           loading="lazy"
+                          onError={(e) => handleNewsImageError(e, article.category, article.id)}
                         />
                       </div>
                       <div className="p-3.5">
