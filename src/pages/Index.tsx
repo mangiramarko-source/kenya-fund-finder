@@ -43,15 +43,13 @@ const Index = () => {
   return (
     <div className="space-y-4 px-4 md:px-6 py-4 md:py-6">
       <div>
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-foreground">
-            <span className="md:hidden">Unit Trusts</span>
-            <span className="hidden md:inline">Investment Funds</span>
-          </h1>
+        <h1 className="text-xl md:text-2xl font-bold text-foreground">
+          <span className="md:hidden">Unit Trusts</span>
+          <span className="hidden md:inline">Investment Funds</span>
+        </h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          <span className="md:hidden">Track listed unit trust funds in Kenya.</span>
           <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
-        </div>
-        <p className="text-sm text-muted-foreground mt-1 md:hidden">
-          Track listed unit trust funds in Kenya.
         </p>
       </div>
       <StatBar
