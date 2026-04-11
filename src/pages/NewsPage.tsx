@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Clock, TrendingUp, Landmark, Shield, Megaphone, SortAsc, Sparkles, Calendar, Newspaper, ExternalLink, Search, Loader2, Calculator } from "lucide-react";
+import { Clock, TrendingUp, Landmark, Shield, Megaphone, Sparkles, Calendar, Newspaper, ExternalLink, Search, Loader2, Calculator } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -59,7 +59,7 @@ const NewsPage = () => {
     "Stay informed with the latest Kenyan investment news: unit trust yield updates, NSE stock market news, regulatory changes, and fund announcements.",
     { title: "Kenya Investment News – Unit Trusts, Stocks & Market Updates", description: "Latest Kenyan investment news covering unit trust yields, stock market, FX rates, and regulatory changes." }
   );
-  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [activeCategory] = useState<string>("All");
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>("latest");
@@ -74,7 +74,7 @@ const NewsPage = () => {
     const s = new Set(articles.map(a => a.source).filter(Boolean));
     return Array.from(s).sort();
   }, [articles]);
-  const [activeSource, setActiveSource] = useState<string>("All");
+  const [activeSource] = useState<string>("All");
 
   const filtered = useMemo(() => {
     let list = articles;
@@ -165,81 +165,27 @@ const NewsPage = () => {
         </p>
       </div>
 
-      {/* Source pills */}
-      <div className="flex items-center gap-1.5 mb-3 overflow-x-auto scrollbar-hide pb-1">
-        <button
-          onClick={() => setActiveSource("All")}
-          className={`inline-flex items-center gap-1 rounded-lg text-xs font-medium whitespace-nowrap border h-7 px-2.5 transition-all ${
-            activeSource === "All"
-              ? "bg-primary text-primary-foreground border-primary"
-              : "bg-card text-muted-foreground border-border hover:border-accent/30"
-          }`}
-        >
-          All Sources
-          <span className="text-[10px] opacity-70">({articles.length})</span>
-        </button>
-        {sources.map(src => (
-          <button
-            key={src}
-            onClick={() => setActiveSource(src)}
-            className={`inline-flex items-center gap-1 rounded-lg text-xs font-medium whitespace-nowrap border h-7 px-2.5 transition-all ${
-              activeSource === src
-                ? "bg-primary text-primary-foreground border-primary"
-                : "bg-card text-muted-foreground border-border hover:border-accent/30"
-            }`}
-          >
-            {src}
-            <span className="text-[10px] opacity-70">({sourceStats[src] || 0})</span>
-          </button>
-        ))}
-      </div>
-
-      {/* Category + search + sort row */}
-      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 mb-5">
-        <div className="flex gap-1.5 shrink-0 overflow-x-auto scrollbar-hide pb-1">
-          {categories.map((cat) => {
-            const Icon = categoryIcons[cat];
-            const isActive = activeCategory === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => setActiveCategory(cat)}
-                className={`inline-flex items-center gap-1.5 rounded-lg text-xs font-medium whitespace-nowrap border h-8 px-3 transition-all ${
-                  isActive
-                    ? "bg-accent/15 text-accent border-accent/30"
-                    : "bg-card text-muted-foreground border-border hover:border-accent/30 hover:text-foreground"
-                }`}
-              >
-                {Icon && <Icon className="h-3 w-3" />}
-                {cat}
-              </button>
-            );
-          })}
+      {/* Search + sort row */}
+      <div className="flex items-center gap-2 mb-5">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search articles..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 text-[16px] md:text-xs pl-8 bg-card border-border"
+          />
         </div>
-        <div className="flex items-center gap-2 sm:ml-auto w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-48">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input
-              placeholder="Search articles..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="h-8 text-xs pl-8 bg-card border-border"
-            />
-          </div>
-          <div className="flex items-center gap-1.5 shrink-0">
-            <SortAsc className="h-3 w-3 text-muted-foreground" />
-            <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-              <SelectTrigger className="w-[110px] h-8 text-xs border-border">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="latest">Latest</SelectItem>
-                <SelectItem value="oldest">Oldest</SelectItem>
-                <SelectItem value="featured">Featured</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-        </div>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+          <SelectTrigger className="w-[110px] h-9 text-xs border-border shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="latest">Latest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+            <SelectItem value="featured">Featured</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {filtered.length === 0 ? (
