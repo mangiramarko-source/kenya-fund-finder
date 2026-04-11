@@ -26,6 +26,7 @@ import { toast } from "sonner";
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
+import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
@@ -903,11 +904,15 @@ const OverviewPage = () => {
             {news.map((article) => (
               <Link key={article.id} to={`/news/${article.id}`} className="block group">
                 <article className="rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all h-full flex flex-col overflow-hidden">
-                  {article.image_url && (
-                    <div className="w-full h-28 overflow-hidden bg-muted shrink-0">
-                      <img src={article.image_url} alt="" className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" loading="lazy" />
-                    </div>
-                  )}
+                  <div className="w-full h-28 overflow-hidden bg-muted shrink-0">
+                    <img
+                      src={getNewsImage(article.image_url, article.category, article.id)}
+                      alt={article.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      loading="lazy"
+                      onError={(e) => handleNewsImageError(e, article.category, article.id)}
+                    />
+                  </div>
                   <div className="p-3 flex flex-col flex-1">
                     <div className="flex items-center gap-1.5 mb-1.5">
                       <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate">{article.category}</span>
