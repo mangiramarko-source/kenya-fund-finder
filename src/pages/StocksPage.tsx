@@ -242,7 +242,7 @@ const StocksPage = () => {
         )}
 
         {/* Sector filters + Search - swapped order on mobile */}
-        <div className="flex flex-col-reverse md:flex-col gap-3 mb-4">
+        <div className="flex flex-col md:flex-col gap-3 mb-4">
           {/* Search bar */}
           <div className="relative max-w-full md:max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
@@ -555,7 +555,7 @@ const MobileStockCard = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-foreground">{s.symbol}</span>
-            <Badge variant="secondary" className="text-[9px]">{s.sector}</Badge>
+            <Badge variant="secondary" className="text-[9px] hidden md:inline-flex">{s.sector}</Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">{s.name}</p>
         </div>
