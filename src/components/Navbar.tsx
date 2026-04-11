@@ -207,7 +207,7 @@ const Navbar = () => {
 
         {/* Mobile: left side – search trigger */}
         <div className="flex md:hidden items-center gap-1">
-          <SearchDialog triggerVariant="icon" />
+          <SearchDialog variant="icon" />
         </div>
 
         {/* Mobile: logo centered */}
