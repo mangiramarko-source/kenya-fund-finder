@@ -241,32 +241,35 @@ const StocksPage = () => {
           <StockFavourites entries={favEntries} stocks={stocks} />
         )}
 
-        {/* Search bar */}
-        <div className="relative max-w-md mb-3">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search stocks…"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 rounded-lg text-[16px] sm:text-sm w-full"
-          />
-        </div>
+        {/* Sector filters + Search - swapped order on mobile */}
+        <div className="flex flex-col-reverse md:flex-col gap-3 mb-4">
+          {/* Search bar */}
+          <div className="relative max-w-full md:max-w-md">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search stocks…"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-8 md:h-9 rounded-lg text-[16px] sm:text-sm w-full bg-muted/30 border-border"
+            />
+          </div>
 
-        {/* Sector filters */}
-        <div className="flex gap-1.5 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible scrollbar-none pb-2 md:pb-0 mb-4">
-          {sectors.map((s) => (
-            <button
-              key={s}
-              onClick={() => setSector(s)}
-              className={`shrink-0 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-                sector === s
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-              }`}
-            >
-              {s}
-            </button>
-          ))}
+          {/* Sector filters */}
+          <div className="flex gap-1.5 flex-nowrap md:flex-wrap overflow-x-auto md:overflow-visible scrollbar-hide pb-0 md:pb-0">
+            {sectors.map((s) => (
+              <button
+                key={s}
+                onClick={() => setSector(s)}
+                className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                  sector === s
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {s}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Desktop Table */}
