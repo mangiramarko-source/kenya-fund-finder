@@ -226,7 +226,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
   return (
     <div className="space-y-4">
       {/* Category tabs + search */}
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar flex-wrap">
           {categories.map((cat) => (
             <button
@@ -253,7 +253,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           ))}
         </div>
 
-        <div className="relative w-64 shrink-0">
+        <div className="relative w-full md:w-64 shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Search funds or managers…"
