@@ -69,9 +69,9 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch, 
   if (funds.length === 0) return <EmptyState hasSearch={hasSearch} onClearSearch={onClearSearch} />;
 
   return (
-    <div className="space-y-2.5">
+    <div className="space-y-2.5 w-full overflow-hidden">
       {funds.map((fund, i) => (
-        <Link key={fund.id} to={`/compare/${fund.slug}`} className="block rounded-xl border border-border bg-card p-3.5 hover:border-accent/30 transition-all active:scale-[0.99]">
+        <Link key={fund.id} to={`/compare/${fund.slug}`} className="block rounded-xl border border-border bg-card p-3 hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden">
           <div className="flex items-start gap-2.5 mb-2.5">
             <span className="text-xs font-bold text-muted-foreground tabular-nums shrink-0 w-5 text-center mt-0.5">{i + 1}</span>
             <div className="flex-1 min-w-0">
