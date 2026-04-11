@@ -12,7 +12,6 @@ const Index = () => {
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
   const [loading, setLoading] = useState(true);
   const { isFavourite, toggle } = useFundWatchlist();
-  const { isLive, lastUpdate } = useLiveStatus();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -37,14 +36,18 @@ const Index = () => {
     ? published.reduce((a, f) => a + f.annual_yield, 0) / published.length
     : 0;
 
+  const lastUpdate = published.length
+    ? new Date(Math.max(...published.map((f) => new Date(f.updated_at).getTime())))
+    : null;
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Investment Funds</h1>
-        <SectionLiveStatus isLive={isLive} lastUpdate={lastUpdate} />
+        <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
       </div>
       <StatBar
-        isLive={isLive}
+        isLive={false}
         lastUpdate={lastUpdate}
         fundCount={published.length}
         bestYield={bestYield}
