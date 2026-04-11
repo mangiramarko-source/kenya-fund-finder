@@ -12,7 +12,7 @@ import {
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 
 interface SearchDialogProps {
-  variant?: "default" | "topbar";
+  variant?: "default" | "topbar" | "icon";
 }
 
 const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
