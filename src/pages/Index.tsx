@@ -1,6 +1,6 @@
 import { useEffect, useState, useCallback } from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { fetchFunds, fetchLatestSnapshots, type FundFromDB, type YieldSnapshot } from "@/lib/api";
+import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, type FundFromDB, type YieldSnapshot } from "@/lib/api";
 import { useFundWatchlist } from "@/hooks/useFundWatchlist";
 import FundGrid from "@/components/home/FundGrid";
 import StatBar from "@/components/home/StatBar";
@@ -10,14 +10,16 @@ const Index = () => {
   useDocumentTitle("Funds – Kenya Fund Finder");
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
+  const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});
   const [loading, setLoading] = useState(true);
   const { isFavourite, toggle } = useFundWatchlist();
 
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [f, s] = await Promise.all([fetchFunds(), fetchLatestSnapshots()]);
+      const [f, s, as] = await Promise.all([fetchFunds(), fetchLatestSnapshots(), fetchAllFundSnapshots()]);
       setFunds(f);
+      setAllSnapshots(as);
       const map: Record<string, YieldSnapshot> = {};
       s.forEach((snap) => { map[snap.fund_id] = snap; });
       setSnapshots(map);
@@ -61,6 +63,7 @@ const Index = () => {
       <FundGrid
         funds={published}
         snapshots={snapshots}
+        allSnapshots={allSnapshots}
         loading={loading}
         isFavourite={isFavourite}
         onToggleFavourite={toggle}
