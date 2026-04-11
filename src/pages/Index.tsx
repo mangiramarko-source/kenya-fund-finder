@@ -41,7 +41,7 @@ const Index = () => {
     : null;
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-4 px-4 md:px-6 py-4 md:py-6">
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-foreground">Investment Funds</h1>
         <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
