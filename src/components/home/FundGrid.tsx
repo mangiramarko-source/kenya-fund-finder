@@ -4,6 +4,7 @@ import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers, Tag, Bell } from "l
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import YieldChange from "@/components/YieldChange";
+import FundMobileCards from "./FundMobileCards";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
 type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee";
@@ -225,7 +226,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
   return (
     <div className="space-y-4">
       {/* Category tabs + search */}
-      <div className="flex items-end justify-between gap-4">
+      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
         <div className="flex gap-1.5 overflow-x-auto no-scrollbar flex-wrap">
           {categories.map((cat) => (
             <button
@@ -252,7 +253,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           ))}
         </div>
 
-        <div className="relative w-64 shrink-0">
+        <div className="relative w-full md:w-64 shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
             placeholder="Search funds or managers…"
@@ -264,8 +265,22 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
       </div>
 
 
-      {/* Fund table */}
-      <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
+      {/* Mobile: card view */}
+      <div className="md:hidden">
+        <FundMobileCards
+          funds={filtered}
+          snapshots={snapshots}
+          bestYield={bestYield}
+          loading={false}
+          onClearSearch={() => setSearch("")}
+          hasSearch={!!search.trim()}
+          isFavourite={isFavourite}
+          onToggleFavourite={onToggleFavourite}
+        />
+      </div>
+
+      {/* Desktop: table view */}
+      <div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card shadow-sm">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <colgroup>
