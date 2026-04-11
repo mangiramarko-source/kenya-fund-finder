@@ -2,7 +2,6 @@ import { useEffect, useState, useCallback } from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { fetchFunds, fetchLatestSnapshots, type FundFromDB, type YieldSnapshot } from "@/lib/api";
 import { useFundWatchlist } from "@/hooks/useFundWatchlist";
-import { useLiveStatus } from "@/hooks/useLiveStatus";
 import FundGrid from "@/components/home/FundGrid";
 import StatBar from "@/components/home/StatBar";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
