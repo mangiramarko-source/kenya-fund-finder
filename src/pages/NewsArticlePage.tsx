@@ -8,7 +8,7 @@ import { fetchNewsById, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { getNewsImage } from "@/lib/news-images";
+import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 
 const categoryIcons: Record<string, typeof TrendingUp> = {
   "Yield Updates": TrendingUp,
@@ -128,6 +128,7 @@ const NewsArticlePage = () => {
           src={heroImage}
           alt={article.title}
           className="w-full aspect-[2/1] object-cover"
+          onError={(e) => handleNewsImageError(e, article.category, article.id)}
           loading="eager"
         />
       </div>
