@@ -50,10 +50,10 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
       {variant === "icon" ? (
         <button
           onClick={() => setOpen(true)}
-          className="inline-flex items-center justify-center h-9 w-9 rounded-full text-muted-foreground hover:bg-muted transition-colors"
+          className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-accent/15 text-accent hover:bg-accent/25 transition-colors"
           aria-label="Search"
         >
-          <Search className="h-4 w-4" />
+          <Search className="h-[18px] w-[18px]" />
         </button>
       ) : variant === "topbar" ? (
         <button
