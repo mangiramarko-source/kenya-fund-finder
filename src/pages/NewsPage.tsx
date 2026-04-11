@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Clock, TrendingUp, Landmark, Shield, Megaphone, SortAsc, Sparkles, Calendar, Newspaper, ExternalLink, Search, Loader2, Calculator } from "lucide-react";
+import { Clock, TrendingUp, Landmark, Shield, Megaphone, Sparkles, Calendar, Newspaper, ExternalLink, Search, Loader2, Calculator } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -59,7 +59,7 @@ const NewsPage = () => {
     "Stay informed with the latest Kenyan investment news: unit trust yield updates, NSE stock market news, regulatory changes, and fund announcements.",
     { title: "Kenya Investment News – Unit Trusts, Stocks & Market Updates", description: "Latest Kenyan investment news covering unit trust yields, stock market, FX rates, and regulatory changes." }
   );
-  const [activeCategory, setActiveCategory] = useState<string>("All");
+  const [activeCategory] = useState<string>("All");
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [sortBy, setSortBy] = useState<SortOption>("latest");
@@ -74,7 +74,7 @@ const NewsPage = () => {
     const s = new Set(articles.map(a => a.source).filter(Boolean));
     return Array.from(s).sort();
   }, [articles]);
-  const [activeSource, setActiveSource] = useState<string>("All");
+  const [activeSource] = useState<string>("All");
 
   const filtered = useMemo(() => {
     let list = articles;
