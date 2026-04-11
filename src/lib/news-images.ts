@@ -24,11 +24,27 @@ const categoryImages: Record<string, string[]> = {
 
 const fallback = "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?w=800&h=500&fit=crop";
 
-export function getNewsImage(imageUrl: string | null, category: string, id: string): string {
-  if (imageUrl) return imageUrl;
+function getFallbackImage(category: string, id: string): string {
   const imgs = categoryImages[category] || categoryImages["Market News"]!;
-  // Deterministic pick based on id
   let hash = 0;
   for (let i = 0; i < id.length; i++) hash = ((hash << 5) - hash + id.charCodeAt(i)) | 0;
   return imgs[Math.abs(hash) % imgs.length] || fallback;
+}
+
+export function getNewsImage(imageUrl: string | null, category: string, id: string): string {
+  if (imageUrl) return imageUrl;
+  return getFallbackImage(category, id);
+}
+
+/** onError handler for news images — swaps broken src to a category fallback */
+export function handleNewsImageError(
+  e: React.SyntheticEvent<HTMLImageElement>,
+  category: string,
+  id: string
+) {
+  const img = e.currentTarget;
+  const fb = getFallbackImage(category, id);
+  if (img.src !== fb) {
+    img.src = fb;
+  }
 }
