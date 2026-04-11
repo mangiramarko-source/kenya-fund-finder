@@ -16,7 +16,7 @@ interface StatBarProps {
 const StatBar = forwardRef<HTMLDivElement, StatBarProps>(({ isLive, lastUpdate, fundCount, bestYield, avgYield, loading, hideYields }, ref) => {
   return (
     <div ref={ref} className="border-b border-border bg-card">
-      <div className="px-6 py-3 flex items-center gap-3">
+      <div className="hidden md:flex px-6 py-3 items-center gap-3">
         {isLive && (
           <div className="flex items-center gap-1.5 rounded-full bg-accent/10 border border-accent/20 px-2.5 py-1">
             <span className="relative flex h-2 w-2">
