@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { decodeHtmlEntities } from "@/lib/utils";
 import { useEffect, useState } from "react";
 import { ArrowLeft, ArrowRight, Clock, Calendar, Share2, Link2, Twitter, Facebook, TrendingUp, Landmark, Shield, Megaphone } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -119,7 +120,7 @@ const NewsArticlePage = () => {
         <span>/</span>
         <Link to="/news" className="hover:text-foreground transition-colors">News</Link>
         <span>/</span>
-        <span className="text-foreground font-medium truncate max-w-[200px]">{article.title}</span>
+        <span className="text-foreground font-medium truncate max-w-[200px]">{decodeHtmlEntities(article.title)}</span>
       </nav>
 
       {/* Hero image */}
@@ -147,7 +148,7 @@ const NewsArticlePage = () => {
       </div>
 
       {/* Title */}
-      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight mb-3">{article.title}</h1>
+      <h1 className="text-xl sm:text-2xl md:text-3xl font-bold leading-tight mb-3">{decodeHtmlEntities(article.title)}</h1>
 
       {/* Date & source */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground mb-6">
@@ -160,7 +161,7 @@ const NewsArticlePage = () => {
 
       {/* Summary */}
       <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6 border-l-2 border-accent/30 pl-4">
-        {article.summary}
+        {decodeHtmlEntities(article.summary)}
       </p>
 
       {/* Content */}
@@ -171,7 +172,7 @@ const NewsArticlePage = () => {
             <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
               {article.content ? (
                 article.content.split("\n").filter(Boolean).map((paragraph, i) => (
-                  <p key={i} className="text-sm sm:text-base text-muted-foreground leading-relaxed">{paragraph}</p>
+                  <p key={i} className="text-sm sm:text-base text-muted-foreground leading-relaxed">{decodeHtmlEntities(paragraph)}</p>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground italic">Full article content is not yet available.</p>
