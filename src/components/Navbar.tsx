@@ -114,7 +114,7 @@ const Navbar = () => {
     <>
     <header
       ref={headerRef}
-      className={`fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border transition-shadow duration-200 ${scrolled ? "shadow-[0_12px_28px_-18px_hsl(var(--foreground)/0.35)]" : ""}`}
+      className={`fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border transition-shadow duration-200 ${scrolled ? "md:shadow-[0_12px_28px_-18px_hsl(var(--foreground)/0.35)]" : ""}`}
     >
       <div className="container flex h-16 items-center justify-between relative">
         {/* Logo */}
