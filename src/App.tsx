@@ -8,7 +8,6 @@ import { AuthProvider } from "@/hooks/useAuth";
 import { CompareProvider } from "@/hooks/useCompare";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Layout from "@/components/Layout";
-import OverviewPage from "./pages/OverviewPage";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
 import CompareModal from "./components/compare/CompareModal";
@@ -37,6 +36,7 @@ const StockDetailPage = lazy(() => import("./pages/StockDetailPage"));
 const MarketDashboardPage = lazy(() => import("./pages/MarketDashboardPage"));
 const AlertsPage = lazy(() => import("./pages/AlertsPage"));
 const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
+const OverviewPage = lazy(() => import("./pages/OverviewPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
