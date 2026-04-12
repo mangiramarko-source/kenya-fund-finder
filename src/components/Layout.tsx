@@ -35,7 +35,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <CurrencyTicker />
           </div>
         )}
-        <main id="main-content" className="flex-1">{children}</main>
+        <main id="main-content" className="flex-1 min-h-[80vh]">{children}</main>
         <Footer />
         <CookieConsent />
         <SuggestionBox />
