@@ -112,7 +112,7 @@
     @apply bg-background text-foreground antialiased text-base md:text-base;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-size: 17px;
-    font-display: swap;
+    font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   }
 
   @media (min-width: 768px) {
