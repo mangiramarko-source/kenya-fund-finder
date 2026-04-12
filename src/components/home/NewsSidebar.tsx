@@ -51,7 +51,7 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
               src={imgSrc}
               alt={article.title}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
+              fetchPriority="high"
               onError={(e) => handleNewsImageError(e, article.category, article.id)}
             />
           </div>
