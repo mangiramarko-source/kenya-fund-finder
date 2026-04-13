@@ -1,7 +1,7 @@
 import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 
-export type AssetSection = "funds" | "stocks" | "rates" | "commodities";
+export type AssetSection = "funds" | "stocks" | "rates" | "commodities" | "overview";
 
 interface SectionStatus {
   is_live: boolean;
@@ -17,6 +17,7 @@ export function useLiveStatus() {
     stocks: { is_live: false, last_update_date: null },
     rates: { is_live: false, last_update_date: null },
     commodities: { is_live: false, last_update_date: null },
+    overview: { is_live: false, last_update_date: null },
   });
   const [loading, setLoading] = useState(true);
 
@@ -38,6 +39,7 @@ export function useLiveStatus() {
       stocks: secs.stocks ?? { is_live: false, last_update_date: null },
       rates: secs.rates ?? { is_live: false, last_update_date: null },
       commodities: secs.commodities ?? { is_live: false, last_update_date: null },
+      overview: secs.overview ?? { is_live: false, last_update_date: null },
     });
     setLoading(false);
   };

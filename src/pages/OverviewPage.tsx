@@ -493,7 +493,7 @@ const OverviewPage = () => {
               <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
             </Button>
           )}
-          <SectionLiveStatus section="funds" />
+          <SectionLiveStatus section="overview" />
         </div>
       </div>
 
