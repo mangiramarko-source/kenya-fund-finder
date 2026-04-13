@@ -442,8 +442,8 @@ const AdminDashboard = () => {
         </CardHeader>
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            {(["stocks", "funds", "rates", "commodities"] as const).map((section) => {
-              const sectionLabels = { stocks: "Stocks", funds: "Unit Trusts", rates: "FX Rates", commodities: "Commodities" };
+            {(["overview", "stocks", "funds", "rates", "commodities"] as const).map((section) => {
+              const sectionLabels: Record<string, string> = { overview: "Market Overview", stocks: "Stocks", funds: "Unit Trusts", rates: "FX Rates", commodities: "Commodities" };
               const s = sections[section];
               return (
                 <div key={section} className="border rounded-lg p-3 space-y-2">
