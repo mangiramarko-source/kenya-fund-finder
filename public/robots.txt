@@ -166,7 +166,10 @@ User-agent: AliyunSecBot
 User-agent: peer39_crawler
 User-agent: archive.org_bot
 User-agent: Poseidon Research Crawler
-
+User-agent: TaraGroup Intelligent Bot
+User-agent: Kangaroo Bot
+User-agent: https://hada.news
+User-agent: https://www.imediaethics.org
 Disallow: /
 
 Sitemap: https://www.kenyafundfinder.com/sitemap.xml
