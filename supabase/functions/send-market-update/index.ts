@@ -3,59 +3,84 @@ import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 
-interface WatchlistFund {
+interface WatchlistAsset {
   name: string;
-  annual_yield: number;
-  daily_yield: number;
-  yield_unit: string;
-  fund_type: string;
+  category: string; // e.g. "Money Market", "Banking", "USD/KES"
+  value: string;    // formatted primary value
+  change: string;   // formatted change badge
+  changeColor: string;
+  changeBg: string;
 }
 
 interface TopFund {
   name: string;
   annual_yield: number;
-  daily_yield: number;
   slug: string;
 }
 
 interface NewsItem {
   title: string;
   summary: string;
-  url: string | null;
   id: string;
+}
+
+// ── Helpers ──────────────────────────────────────────────────────────
+
+function formatChange(val: number, suffix: string): { text: string; color: string; bg: string } {
+  const isUp = val >= 0;
+  return {
+    text: `${isUp ? "▲" : "▼"} ${Math.abs(val).toFixed(2)}${suffix}`,
+    color: isUp ? "#16a34a" : "#dc2626",
+    bg: isUp ? "#f0fdf4" : "#fef2f2",
+  };
+}
+
+// ── Email builder ────────────────────────────────────────────────────
+
+function buildWatchlistGroup(title: string, emoji: string, assets: WatchlistAsset[]): string {
+  if (assets.length === 0) return "";
+  const rows = assets.map((a) =>
+    `<tr>
+      <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;">
+        <div style="font-size:14px;font-weight:600;color:#0f172a;line-height:1.3;">${a.name}</div>
+        <div style="font-size:11px;color:#94a3b8;margin-top:2px;text-transform:uppercase;letter-spacing:0.3px;">${a.category}</div>
+      </td>
+      <td style="padding:10px 16px;border-bottom:1px solid #f1f5f9;text-align:right;vertical-align:middle;">
+        <div style="font-size:15px;font-weight:700;color:#0f172a;">${a.value}</div>
+        <div style="display:inline-block;font-size:11px;font-weight:600;color:${a.changeColor};background:${a.changeBg};padding:2px 6px;border-radius:4px;margin-top:3px;">${a.change}</div>
+      </td>
+    </tr>`
+  ).join("");
+
+  return `<div style="margin-bottom:12px;">
+    <div style="font-size:12px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.4px;padding:0 0 6px;">${emoji} ${title}</div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;">${rows}</table>
+  </div>`;
 }
 
 function buildEmailHtml(
   displayName: string,
-  watchlistFunds: WatchlistFund[],
+  fundAssets: WatchlistAsset[],
+  stockAssets: WatchlistAsset[],
+  currencyAssets: WatchlistAsset[],
   topFunds: TopFund[],
   news: NewsItem[],
   siteUrl: string,
 ): string {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
+  const hasWatchlist = fundAssets.length + stockAssets.length + currencyAssets.length > 0;
 
-  // Watchlist: compact card-style rows
-  const watchlistSection = watchlistFunds.length > 0
-    ? watchlistFunds.map((f) => {
-        const isUp = f.daily_yield >= 0;
-        const changeColor = isUp ? "#16a34a" : "#dc2626";
-        const changeBg = isUp ? "#f0fdf4" : "#fef2f2";
-        const arrow = isUp ? "▲" : "▼";
-        const yieldSuffix = f.yield_unit === "%" ? "%" : "";
-        return `<tr>
-          <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;">
-            <div style="font-size:14px;font-weight:600;color:#0f172a;line-height:1.3;">${f.name}</div>
-            <div style="font-size:11px;color:#94a3b8;margin-top:2px;text-transform:uppercase;letter-spacing:0.3px;">${f.fund_type.replace(/_/g, " ")}</div>
-          </td>
-          <td style="padding:12px 16px;border-bottom:1px solid #f1f5f9;text-align:right;vertical-align:middle;">
-            <div style="font-size:15px;font-weight:700;color:#0f172a;">${f.annual_yield}${yieldSuffix}</div>
-            <div style="display:inline-block;font-size:11px;font-weight:600;color:${changeColor};background:${changeBg};padding:2px 6px;border-radius:4px;margin-top:3px;">${arrow} ${Math.abs(f.daily_yield).toFixed(2)}${yieldSuffix}</div>
-          </td>
-        </tr>`;
-      }).join("")
-    : "";
+  const watchlistHtml = hasWatchlist
+    ? [
+        buildWatchlistGroup("Unit Trusts", "📈", fundAssets),
+        buildWatchlistGroup("Stocks", "📊", stockAssets),
+        buildWatchlistGroup("Currencies", "💱", currencyAssets),
+      ].join("")
+    : `<div style="background:#f8fafc;border-radius:8px;padding:16px;text-align:center;margin-top:8px;border:1px dashed #cbd5e1;">
+        <p style="margin:0;font-size:13px;color:#64748b;">No watchlist items yet.</p>
+        <a href="${siteUrl}" style="display:inline-block;margin-top:8px;font-size:12px;color:#16a34a;font-weight:600;text-decoration:none;">+ Add assets to your watchlist</a>
+      </div>`;
 
-  // Top performers: numbered with medal emojis
   const medals = ["🥇", "🥈", "🥉"];
   const topFundRows = topFunds.map((f, i) =>
     `<tr>
@@ -65,7 +90,6 @@ function buildEmailHtml(
     </tr>`
   ).join("");
 
-  // News: tight headline + one-line summary
   const newsSection = news.map((n) =>
     `<table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:12px;">
       <tr>
@@ -118,13 +142,7 @@ function buildEmailHtml(
                 <td style="text-align:right;"><a href="${siteUrl}" style="font-size:12px;color:#16a34a;text-decoration:none;font-weight:600;">View all →</a></td>
               </tr>
             </table>
-            ${watchlistSection
-              ? `<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:8px;overflow:hidden;margin-top:8px;">${watchlistSection}</table>`
-              : `<div style="background:#f8fafc;border-radius:8px;padding:16px;text-align:center;margin-top:8px;border:1px dashed #cbd5e1;">
-                  <p style="margin:0;font-size:13px;color:#64748b;">No watchlist items yet.</p>
-                  <a href="${siteUrl}" style="display:inline-block;margin-top:8px;font-size:12px;color:#16a34a;font-weight:600;text-decoration:none;">+ Add funds to your watchlist</a>
-                </div>`
-            }
+            <div style="margin-top:8px;">${watchlistHtml}</div>
           </td>
         </tr>
 
@@ -179,6 +197,89 @@ function buildEmailHtml(
 </html>`;
 }
 
+// ── Per-user watchlist data fetching ─────────────────────────────────
+
+async function fetchUserWatchlistAssets(supabase: any, userId: string) {
+  // Fetch all watchlist items for the user in one query
+  const { data: watchlist } = await supabase
+    .from("user_watchlist")
+    .select("item_id, item_name, item_type")
+    .eq("user_id", userId);
+
+  const fundIds = (watchlist || []).filter((w: any) => w.item_type === "fund").map((w: any) => w.item_id);
+  const stockIds = (watchlist || []).filter((w: any) => w.item_type === "stock").map((w: any) => w.item_id);
+  const currencyIds = (watchlist || []).filter((w: any) => w.item_type === "currency").map((w: any) => w.item_id);
+
+  let fundAssets: WatchlistAsset[] = [];
+  let stockAssets: WatchlistAsset[] = [];
+  let currencyAssets: WatchlistAsset[] = [];
+
+  // Fetch fund data
+  if (fundIds.length > 0) {
+    const { data: funds } = await supabase
+      .from("funds")
+      .select("name, annual_yield, daily_yield, yield_unit, fund_type")
+      .in("id", fundIds);
+    fundAssets = (funds || []).map((f: any) => {
+      const suffix = f.yield_unit === "%" ? "%" : "";
+      const chg = formatChange(Number(f.daily_yield), suffix);
+      return {
+        name: f.name,
+        category: (f.fund_type || "fund").replace(/_/g, " "),
+        value: `${f.annual_yield}${suffix}`,
+        change: chg.text,
+        changeColor: chg.color,
+        changeBg: chg.bg,
+      };
+    });
+  }
+
+  // Fetch stock data
+  if (stockIds.length > 0) {
+    const { data: stocks } = await supabase
+      .from("stocks")
+      .select("name, symbol, price, day_change, day_change_percent, sector")
+      .in("id", stockIds);
+    stockAssets = (stocks || []).map((s: any) => {
+      const chg = formatChange(Number(s.day_change_percent), "%");
+      return {
+        name: s.name,
+        category: `${s.symbol} · ${s.sector}`,
+        value: `KES ${Number(s.price).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        change: chg.text,
+        changeColor: chg.color,
+        changeBg: chg.bg,
+      };
+    });
+  }
+
+  // Fetch currency data
+  if (currencyIds.length > 0) {
+    const { data: currencies } = await supabase
+      .from("exchange_rates")
+      .select("currency_name, currency_code, rate, previous_rate")
+      .in("id", currencyIds);
+    currencyAssets = (currencies || []).map((c: any) => {
+      const rate = Number(c.rate);
+      const prev = Number(c.previous_rate || rate);
+      const pctChange = prev !== 0 ? ((rate - prev) / prev) * 100 : 0;
+      const chg = formatChange(pctChange, "%");
+      return {
+        name: c.currency_name,
+        category: `${c.currency_code}/KES`,
+        value: `KES ${rate.toFixed(2)}`,
+        change: chg.text,
+        changeColor: chg.color,
+        changeBg: chg.bg,
+      };
+    });
+  }
+
+  return { fundAssets, stockAssets, currencyAssets };
+}
+
+// ── Main handler ─────────────────────────────────────────────────────
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -204,32 +305,41 @@ Deno.serve(async (req) => {
     const supabase = createClient(supabaseUrl, serviceKey);
     const siteUrl = "https://kenya-fund-finder.lovable.app";
 
-    // Parse request body for optional user_id (single user) or send to all opted-in users
     const body = await req.json().catch(() => ({}));
     const targetUserId = body.user_id as string | undefined;
 
-    // Get top 3 performing funds
-    const { data: topFunds } = await supabase
-      .from("funds")
-      .select("name, annual_yield, daily_yield, slug")
-      .eq("is_published", true)
-      .eq("yield_unit", "%")
-      .order("annual_yield", { ascending: false })
-      .limit(3);
+    // Shared data: top funds + news
+    const [{ data: topFundsRaw }, { data: latestNewsRaw }] = await Promise.all([
+      supabase
+        .from("funds")
+        .select("name, annual_yield, daily_yield, slug")
+        .eq("is_published", true)
+        .eq("yield_unit", "%")
+        .order("annual_yield", { ascending: false })
+        .limit(3),
+      supabase
+        .from("news_articles")
+        .select("id, title, summary")
+        .eq("status", "published")
+        .order("date_published", { ascending: false })
+        .limit(3),
+    ]);
 
-    // Get latest 3 news articles
-    const { data: latestNews } = await supabase
-      .from("news_articles")
-      .select("id, title, summary, url")
-      .eq("status", "published")
-      .order("date_published", { ascending: false })
-      .limit(3);
+    const topFunds: TopFund[] = (topFundsRaw || []).map((f: any) => ({
+      name: f.name,
+      annual_yield: Number(f.annual_yield),
+      slug: f.slug,
+    }));
+    const news: NewsItem[] = (latestNewsRaw || []).map((n: any) => ({
+      title: n.title,
+      summary: n.summary,
+      id: n.id,
+    }));
 
     // Determine target users
     let users: { user_id: string; email: string; display_name: string }[] = [];
 
     if (targetUserId) {
-      // Single user mode (for instant alerts)
       const { data: authUser } = await supabase.auth.admin.getUserById(targetUserId);
       if (authUser?.user) {
         const { data: profile } = await supabase
@@ -237,18 +347,14 @@ Deno.serve(async (req) => {
           .select("display_name")
           .eq("user_id", targetUserId)
           .maybeSingle();
-        users = [
-          {
-            user_id: targetUserId,
-            email: authUser.user.email!,
-            display_name: profile?.display_name || authUser.user.email!.split("@")[0],
-          },
-        ];
+        users = [{
+          user_id: targetUserId,
+          email: authUser.user.email!,
+          display_name: profile?.display_name || authUser.user.email!.split("@")[0],
+        }];
       }
     } else {
-      // Batch mode: send to all users with weekly_summary enabled
       const { data: prefs } = await supabase.from("email_preferences").select("user_id").eq("weekly_summary", true);
-
       if (prefs && prefs.length > 0) {
         for (const pref of prefs) {
           const { data: authUser } = await supabase.auth.admin.getUserById(pref.user_id);
@@ -278,44 +384,15 @@ Deno.serve(async (req) => {
     const errors: string[] = [];
 
     for (const user of users) {
-      // Get user's watchlist funds
-      const { data: watchlist } = await supabase
-        .from("user_watchlist")
-        .select("item_id, item_name")
-        .eq("user_id", user.user_id)
-        .eq("item_type", "fund");
-
-      let watchlistFunds: WatchlistFund[] = [];
-      if (watchlist && watchlist.length > 0) {
-        const fundIds = watchlist.map((w) => w.item_id);
-        const { data: funds } = await supabase
-          .from("funds")
-          .select("id, name, annual_yield, daily_yield, yield_unit, fund_type")
-          .in("id", fundIds);
-        watchlistFunds = (funds || []).map((f) => ({
-          name: f.name,
-          annual_yield: Number(f.annual_yield),
-          daily_yield: Number(f.daily_yield),
-          yield_unit: f.yield_unit,
-          fund_type: f.fund_type,
-        }));
-      }
+      const { fundAssets, stockAssets, currencyAssets } = await fetchUserWatchlistAssets(supabase, user.user_id);
 
       const html = buildEmailHtml(
         user.display_name,
-        watchlistFunds,
-        (topFunds || []).map((f) => ({
-          name: f.name,
-          annual_yield: Number(f.annual_yield),
-          daily_yield: Number(f.daily_yield),
-          slug: f.slug,
-        })),
-        (latestNews || []).map((n) => ({
-          title: n.title,
-          summary: n.summary,
-          url: n.url,
-          id: n.id,
-        })),
+        fundAssets,
+        stockAssets,
+        currencyAssets,
+        topFunds,
+        news,
         siteUrl,
       );
 
