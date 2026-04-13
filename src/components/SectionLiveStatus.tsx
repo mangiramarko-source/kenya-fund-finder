@@ -10,6 +10,7 @@ const SectionLiveStatus = ({ section, fallbackDate }: SectionLiveStatusProps) =>
   if (loading) return null;
 
   const s = sections[section];
+  if (!s) return null;
   const displayDate = s.last_update_date
     ? new Date(s.last_update_date + "T00:00:00").toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })
     : fallbackDate
