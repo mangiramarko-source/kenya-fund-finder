@@ -165,6 +165,8 @@ User-agent: Factset_spyderbot
 User-agent: AliyunSecBot
 User-agent: peer39_crawler
 User-agent: archive.org_bot
+User-agent: Poseidon Research Crawler
+
 Disallow: /
 
 Sitemap: https://www.kenyafundfinder.com/sitemap.xml
