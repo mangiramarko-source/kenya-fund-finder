@@ -170,6 +170,7 @@ User-agent: TaraGroup Intelligent Bot
 User-agent: Kangaroo Bot
 User-agent: https://hada.news
 User-agent: https://www.imediaethics.org
+
 Disallow: /
 
 Sitemap: https://www.kenyafundfinder.com/sitemap.xml
