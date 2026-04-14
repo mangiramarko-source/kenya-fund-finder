@@ -231,24 +231,25 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile: nav pills row */}
-      <div className="md:hidden flex justify-center px-4 pb-2.5 pt-1.5 bg-card/95">
-        <nav className="flex items-center gap-0.5 bg-muted/60 rounded-full px-1.5 py-1.5">
+      {/* Mobile: full-width scrollable tab bar */}
+      <div className="md:hidden overflow-x-auto scrollbar-none bg-card border-b border-border">
+        <nav className="flex min-w-max">
           {mobileNavLinks.map((link) => {
-            const Icon = link.icon;
             const isActive = location.pathname === link.to;
             return (
               <Link
                 key={link.to}
                 to={link.to}
-                className={`flex items-center gap-1.5 px-4 py-2.5 rounded-full text-[13px] font-medium transition-all ${
+                className={`relative shrink-0 px-4 py-3 text-sm whitespace-nowrap transition-colors ${
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                    ? "font-bold text-foreground"
+                    : "font-medium text-muted-foreground hover:text-foreground"
                 }`}
               >
-                <Icon className="h-3.5 w-3.5" />
-                <span>{link.label}</span>
+                {link.label}
+                {isActive && (
+                  <span className="absolute bottom-0 left-4 right-4 h-[3px] rounded-t-full bg-primary" />
+                )}
               </Link>
             );
           })}
