@@ -229,7 +229,7 @@ const StocksPage = () => {
         <div className="mb-6">
           <h1 className="text-xl md:text-2xl font-bold text-foreground">Kenyan Stock Market</h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Track listed stock prices, volumes, and daily performance.
+            <span className="hidden md:inline">Track listed stock prices, volumes, and daily performance.</span>
             <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} />
           </p>
         </div>
