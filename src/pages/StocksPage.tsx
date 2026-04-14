@@ -232,6 +232,7 @@ const StocksPage = () => {
             <span className="hidden md:inline">Track listed stock prices, volumes, and daily performance.</span>
             <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} />
           </p>
+          <div className="md:hidden border-b border-border mt-3" />
         </div>
 
         <ActiveAlertsCard assetType="stock" />
