@@ -18,10 +18,12 @@ const navLinks = [
 ];
 
 const mobileNavLinks = [
-  { to: "/", label: "Home", icon: BarChart3 },
-  { to: "/stocks", label: "Stocks", icon: TrendingUp },
-  { to: "/funds", label: "Trusts", icon: Landmark },
-  { to: "/news", label: "News", icon: Newspaper },
+  { to: "/", label: "Overview" },
+  { to: "/stocks", label: "Stocks" },
+  { to: "/funds", label: "Unit trusts" },
+  { to: "/news", label: "News" },
+  { to: "/calculator", label: "Calculator" },
+  { to: "/rates", label: "Fx rates" },
 ];
 
 const Navbar = () => {
