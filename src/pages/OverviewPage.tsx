@@ -470,30 +470,59 @@ const OverviewPage = () => {
     <div className="px-4 md:px-6 py-6 max-w-[1600px]">
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3">
-        <div>
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
-          <p className="text-sm text-muted-foreground mt-0.5">
+      <div>
+        {/* Mobile header */}
+        <div className="md:hidden">
+          <div className="flex items-center justify-between">
+            <h1 className="text-lg font-bold text-foreground">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
+            <SectionLiveStatus section="overview" />
+          </div>
+          <p className="text-xs text-muted-foreground mt-0.5 mb-3">
             {user ? "Your personalized market overview" : "Best performers across Kenyan markets"}
           </p>
-        </div>
-        <div className="flex items-center gap-2">
-          {user && (
-            <>
-              <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setCustomizeOpen(true)}>
+          {user ? (
+            <div className="flex items-center gap-2">
+              <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5 flex-1" onClick={() => setCustomizeOpen(true)}>
                 <Settings2 className="h-3.5 w-3.5" /> Customize
               </Button>
               <Button asChild variant="outline" size="sm" className="text-xs h-8 gap-1.5">
                 <Link to="/alerts"><Bell className="h-3.5 w-3.5" />{alerts.length}</Link>
               </Button>
-            </>
-          )}
-          {!user && (
-            <Button size="sm" className="text-xs h-8 gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
+            </div>
+          ) : (
+            <Button size="sm" className="text-xs h-8 gap-1.5 w-full bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
               <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
             </Button>
           )}
-          <SectionLiveStatus section="overview" />
+          <div className="border-b border-border mt-4" />
+        </div>
+
+        {/* Desktop header */}
+        <div className="hidden md:flex flex-row items-end justify-between gap-3">
+          <div>
+            <h1 className="text-2xl font-bold text-foreground">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              {user ? "Your personalized market overview" : "Best performers across Kenyan markets"}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            {user && (
+              <>
+                <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setCustomizeOpen(true)}>
+                  <Settings2 className="h-3.5 w-3.5" /> Customize
+                </Button>
+                <Button asChild variant="outline" size="sm" className="text-xs h-8 gap-1.5">
+                  <Link to="/alerts"><Bell className="h-3.5 w-3.5" />{alerts.length}</Link>
+                </Button>
+              </>
+            )}
+            {!user && (
+              <Button size="sm" className="text-xs h-8 gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
+                <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
+              </Button>
+            )}
+            <SectionLiveStatus section="overview" />
+          </div>
         </div>
       </div>
 
