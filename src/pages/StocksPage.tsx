@@ -3,7 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, TrendingDown, Minus, Search, ArrowUpDown, ChevronDown, ChevronUp, BarChart3, Activity, Star } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  Search,
+  ArrowUpDown,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
+  Activity,
+  Star,
+} from "lucide-react";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -73,17 +84,23 @@ const MiniSparkline = ({ data, positive }: { data: PriceHistory[]; positive: boo
 };
 
 const ChangeCell = ({ change, pct }: { change: number; pct: number }) => {
-  if (change > 0) return (
-    <span className="inline-flex items-center gap-0.5 text-accent text-[11px] font-semibold tabular-nums">
-      <TrendingUp className="h-3 w-3" /> +{formatNumber(pct)}%
+  if (change > 0)
+    return (
+      <span className="inline-flex items-center gap-0.5 text-accent text-[11px] font-semibold tabular-nums">
+        <TrendingUp className="h-3 w-3" /> +{formatNumber(pct)}%
+      </span>
+    );
+  if (change < 0)
+    return (
+      <span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold tabular-nums">
+        <TrendingDown className="h-3 w-3" /> {formatNumber(pct)}%
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]">
+      <Minus className="h-3 w-3" /> 0.00%
     </span>
   );
-  if (change < 0) return (
-    <span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold tabular-nums">
-      <TrendingDown className="h-3 w-3" /> {formatNumber(pct)}%
-    </span>
-  );
-  return <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]"><Minus className="h-3 w-3" /> 0.00%</span>;
 };
 
 const StocksPage = () => {
@@ -94,7 +111,7 @@ const StocksPage = () => {
     {
       title: "Kenyan Stocks – Stock Market | Kenya Fund Finder",
       description: "Track Kenyan stock prices, volumes, and daily performance.",
-    }
+    },
   );
   useJsonLd({
     "@context": "https://schema.org",
@@ -120,7 +137,9 @@ const StocksPage = () => {
     const fetchStocks = async () => {
       const { data } = await supabase
         .from("stocks_public")
-        .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, updated_at")
+        .select(
+          "id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, updated_at",
+        )
         .order("sort_order");
       setStocks(
         (data || []).map((s: any) => ({
@@ -135,7 +154,7 @@ const StocksPage = () => {
           year_low: s.year_low != null ? Number(s.year_low) : null,
           pe_ratio: s.pe_ratio != null ? Number(s.pe_ratio) : null,
           dividend_yield: s.dividend_yield != null ? Number(s.dividend_yield) : null,
-        }))
+        })),
       );
       setLoading(false);
     };
@@ -144,7 +163,9 @@ const StocksPage = () => {
       .channel("stocks-page-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => fetchStocks())
       .subscribe();
-    return () => { supabase.removeChannel(ch); };
+    return () => {
+      supabase.removeChannel(ch);
+    };
   }, []);
 
   // Preload sparkline data for all stocks
@@ -169,7 +190,10 @@ const StocksPage = () => {
   }, [stocks]);
 
   const toggleExpand = async (stockId: string) => {
-    if (expanded === stockId) { setExpanded(null); return; }
+    if (expanded === stockId) {
+      setExpanded(null);
+      return;
+    }
     setExpanded(stockId);
     if (!history[stockId]) {
       setHistoryLoading(stockId);
@@ -211,7 +235,10 @@ const StocksPage = () => {
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else { setSortKey(key); setSortDir(key === "symbol" ? "asc" : "desc"); }
+    else {
+      setSortKey(key);
+      setSortDir(key === "symbol" ? "asc" : "desc");
+    }
   };
 
   const gainers = useMemo(() => stocks.filter((s) => s.day_change > 0).length, [stocks]);
@@ -219,31 +246,33 @@ const StocksPage = () => {
   const unchanged = useMemo(() => stocks.filter((s) => s.day_change === 0).length, [stocks]);
   const totalVolume = useMemo(() => stocks.reduce((sum, s) => sum + s.volume, 0), [stocks]);
 
-  const latestUpdate = stocks.length > 0
-    ? new Date(stocks.reduce((latest, s) => s.updated_at > latest ? s.updated_at : latest, stocks[0].updated_at))
-    : null;
+  const latestUpdate =
+    stocks.length > 0
+      ? new Date(stocks.reduce((latest, s) => (s.updated_at > latest ? s.updated_at : latest), stocks[0].updated_at))
+      : null;
 
   return (
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          <div className="flex items-center justify-between md:block">
+          {/* FIXED HEADER SECTION BELOW */}
+          <div className="flex flex-col items-start md:block">
             <h1 className="text-xl md:text-2xl font-bold text-foreground">Kenyan Stock Market</h1>
-            <div className="md:hidden"><SectionLiveStatus section="stocks" fallbackDate={latestUpdate} /></div>
+            <div className="mt-1">
+              <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} />
+            </div>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
-            <span className="hidden md:inline">Track listed stock prices, volumes, and daily performance.</span>
-            <span className="hidden md:inline"><SectionLiveStatus section="stocks" fallbackDate={latestUpdate} /></span>
+          {/* END FIXED HEADER SECTION */}
+
+          <p className="text-sm text-muted-foreground mt-1 hidden md:block">
+            Track listed stock prices, volumes, and daily performance.
           </p>
           <div className="md:hidden border-b border-border mt-3" />
         </div>
 
         <ActiveAlertsCard assetType="stock" />
 
-
-        {user && favEntries.length > 0 && (
-          <StockFavourites entries={favEntries} stocks={stocks} />
-        )}
+        {user && favEntries.length > 0 && <StockFavourites entries={favEntries} stocks={stocks} />}
 
         {/* Sector filters + Search */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3 mb-4">
@@ -303,14 +332,48 @@ const StocksPage = () => {
                   <thead>
                     <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
                       <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
-                      <SortHeader label="Symbol" sortKey="symbol" currentKey={sortKey} dir={sortDir} onClick={toggleSort} />
+                      <SortHeader
+                        label="Symbol"
+                        sortKey="symbol"
+                        currentKey={sortKey}
+                        dir={sortDir}
+                        onClick={toggleSort}
+                      />
                       <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Company</th>
                       <th className="text-left px-2 py-3 font-semibold text-muted-foreground">Sector</th>
                       <th className="px-2 py-3 font-semibold text-muted-foreground text-center">Trend</th>
-                      <SortHeader label="Price (KSh)" sortKey="price" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
-                      <SortHeader label="Change" sortKey="day_change_percent" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
-                      <SortHeader label="Volume" sortKey="volume" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
-                      <SortHeader label="Mkt Cap" sortKey="market_cap" currentKey={sortKey} dir={sortDir} onClick={toggleSort} align="right" />
+                      <SortHeader
+                        label="Price (KSh)"
+                        sortKey="price"
+                        currentKey={sortKey}
+                        dir={sortDir}
+                        onClick={toggleSort}
+                        align="right"
+                      />
+                      <SortHeader
+                        label="Change"
+                        sortKey="day_change_percent"
+                        currentKey={sortKey}
+                        dir={sortDir}
+                        onClick={toggleSort}
+                        align="right"
+                      />
+                      <SortHeader
+                        label="Volume"
+                        sortKey="volume"
+                        currentKey={sortKey}
+                        dir={sortDir}
+                        onClick={toggleSort}
+                        align="right"
+                      />
+                      <SortHeader
+                        label="Mkt Cap"
+                        sortKey="market_cap"
+                        currentKey={sortKey}
+                        dir={sortDir}
+                        onClick={toggleSort}
+                        align="right"
+                      />
                       {user && <th className="w-8"></th>}
                       <th className="w-8"></th>
                     </tr>
@@ -370,13 +433,15 @@ const StocksPage = () => {
 
         {/* Summary footer */}
         <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
-          <span>Showing {filtered.length} of {stocks.length} stocks</span>
+          <span>
+            Showing {filtered.length} of {stocks.length} stocks
+          </span>
         </div>
 
         <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
           <p className="text-[10px] leading-relaxed text-muted-foreground">
-            Stock prices shown are indicative and may be delayed. Data is sourced from the Kenyan stock market.
-            Click on any stock to view price history and detailed metrics. This information is for educational purposes only.
+            Stock prices shown are indicative and may be delayed. Data is sourced from the Kenyan stock market. Click on
+            any stock to view price history and detailed metrics. This information is for educational purposes only.
           </p>
         </div>
       </div>
@@ -386,27 +451,37 @@ const StocksPage = () => {
 
 /* ─── Stock Detail Panel ─── */
 const StockDetailPanel = ({
-  stock: s, history, historyLoading,
+  stock: s,
+  history,
+  historyLoading,
 }: {
-  stock: Stock; history?: PriceHistory[]; historyLoading: boolean;
+  stock: Stock;
+  history?: PriceHistory[];
+  historyLoading: boolean;
 }) => {
   const yearRange = s.year_low != null && s.year_high != null;
-  const pricePosition = yearRange
-    ? ((s.price - s.year_low!) / (s.year_high! - s.year_low!)) * 100
-    : 0;
+  const pricePosition = yearRange ? ((s.price - s.year_low!) / (s.year_high! - s.year_low!)) * 100 : 0;
 
   return (
     <div className="p-4">
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <DetailBox label="Price" value={`KSh ${formatNumber(s.price)}`} />
         <DetailBox label="Previous" value={s.previous_price != null ? `KSh ${formatNumber(s.previous_price)}` : "—"} />
-        <DetailBox label="Day Change" value={`${s.day_change > 0 ? "+" : ""}${formatNumber(s.day_change)}`} color={s.day_change > 0 ? "text-accent" : s.day_change < 0 ? "text-destructive" : undefined} />
+        <DetailBox
+          label="Day Change"
+          value={`${s.day_change > 0 ? "+" : ""}${formatNumber(s.day_change)}`}
+          color={s.day_change > 0 ? "text-accent" : s.day_change < 0 ? "text-destructive" : undefined}
+        />
         <DetailBox label="Volume" value={formatVolume(s.volume)} />
       </div>
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
         <DetailBox label="Market Cap" value={formatMarketCap(s.market_cap)} />
         <DetailBox label="P/E Ratio" value={s.pe_ratio != null ? formatNumber(s.pe_ratio) : "—"} />
-        <DetailBox label="Div Yield" value={s.dividend_yield != null ? `${formatNumber(s.dividend_yield)}%` : "—"} color={s.dividend_yield != null ? "text-accent" : undefined} />
+        <DetailBox
+          label="Div Yield"
+          value={s.dividend_yield != null ? `${formatNumber(s.dividend_yield)}%` : "—"}
+          color={s.dividend_yield != null ? "text-accent" : undefined}
+        />
         <DetailBox label="Sector" value={s.sector} />
       </div>
 
@@ -414,9 +489,14 @@ const StockDetailPanel = ({
         <div className="rounded-lg border border-border bg-card p-3 mb-4">
           <p className="text-xs font-semibold text-foreground mb-2">52-Week Range</p>
           <div className="flex items-center gap-3">
-            <span className="text-[10px] text-muted-foreground tabular-nums w-16 text-right">{formatNumber(s.year_low!)}</span>
+            <span className="text-[10px] text-muted-foreground tabular-nums w-16 text-right">
+              {formatNumber(s.year_low!)}
+            </span>
             <div className="flex-1 relative h-2 bg-muted rounded-full">
-              <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive to-accent rounded-full" style={{ width: "100%" }} />
+              <div
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive to-accent rounded-full"
+                style={{ width: "100%" }}
+              />
               <div
                 className="absolute top-1/2 -translate-y-1/2 w-3 h-3 bg-foreground rounded-full border-2 border-card shadow-sm"
                 style={{ left: `${Math.min(Math.max(pricePosition, 0), 100)}%`, transform: "translate(-50%, -50%)" }}
@@ -463,7 +543,9 @@ const StockDetailPanel = ({
                   borderRadius: "8px",
                   fontSize: "12px",
                 }}
-                labelFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
+                labelFormatter={(v) =>
+                  new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })
+                }
                 formatter={(value: number) => [`KSh ${formatNumber(value)}`, "Price"]}
               />
               <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
@@ -490,11 +572,25 @@ const StockDetailPanel = ({
 
 /* ─── Desktop Row ─── */
 const StockRow = ({
-  stock: s, index, isExpanded, onToggle, onNavigate, history, historyLoading, isFavourite, onToggleFavourite,
+  stock: s,
+  index,
+  isExpanded,
+  onToggle,
+  onNavigate,
+  history,
+  historyLoading,
+  isFavourite,
+  onToggleFavourite,
 }: {
-  stock: Stock; index: number; isExpanded: boolean; onToggle: () => void; onNavigate: () => void;
-  history?: PriceHistory[]; historyLoading: boolean;
-  isFavourite?: boolean; onToggleFavourite?: () => void;
+  stock: Stock;
+  index: number;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onNavigate: () => void;
+  history?: PriceHistory[];
+  historyLoading: boolean;
+  isFavourite?: boolean;
+  onToggleFavourite?: () => void;
 }) => (
   <>
     <tr
@@ -507,9 +603,13 @@ const StockRow = ({
       <td className="px-3 py-3.5">
         <span className="font-bold text-foreground text-sm tracking-wide">{s.symbol}</span>
       </td>
-      <td className="px-3 py-3.5 text-foreground text-xs max-w-[200px] truncate" title={s.name}>{s.name}</td>
+      <td className="px-3 py-3.5 text-foreground text-xs max-w-[200px] truncate" title={s.name}>
+        {s.name}
+      </td>
       <td className="px-2 py-3.5">
-        <span className="inline-block text-[10px] font-medium text-muted-foreground bg-muted/60 rounded-md px-1.5 py-0.5 whitespace-nowrap">{s.sector}</span>
+        <span className="inline-block text-[10px] font-medium text-muted-foreground bg-muted/60 rounded-md px-1.5 py-0.5 whitespace-nowrap">
+          {s.sector}
+        </span>
       </td>
       <td className="px-2 py-3.5 text-center">
         <MiniSparkline data={history || []} positive={s.day_change >= 0} />
@@ -517,22 +617,35 @@ const StockRow = ({
       <td className="px-3 py-3.5 text-right">
         <span className="font-bold text-accent text-[15px] tabular-nums">{formatNumber(s.price)}</span>
       </td>
-      <td className="px-3 py-3.5 text-right"><ChangeCell change={s.day_change} pct={s.day_change_percent} /></td>
+      <td className="px-3 py-3.5 text-right">
+        <ChangeCell change={s.day_change} pct={s.day_change_percent} />
+      </td>
       <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">{formatVolume(s.volume)}</td>
-      <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">{formatMarketCap(s.market_cap)}</td>
+      <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">
+        {formatMarketCap(s.market_cap)}
+      </td>
       {onToggleFavourite !== undefined && (
         <td className="px-2 py-3.5 text-center">
           <button
-            onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
+            onClick={(e) => {
+              e.stopPropagation();
+              onToggleFavourite();
+            }}
             className="p-1 rounded-md hover:bg-muted transition-colors"
             aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
           >
-            <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+            <Star
+              className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`}
+            />
           </button>
         </td>
       )}
       <td className="px-3 py-3.5 text-center">
-        {isExpanded ? <ChevronUp className="h-4 w-4 text-accent" /> : <ChevronDown className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground" />}
+        {isExpanded ? (
+          <ChevronUp className="h-4 w-4 text-accent" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground" />
+        )}
       </td>
     </tr>
     {isExpanded && (
@@ -547,11 +660,23 @@ const StockRow = ({
 
 /* ─── Mobile Card ─── */
 const MobileStockCard = ({
-  stock: s, isExpanded, onToggle, onNavigate, history, historyLoading, isFavourite, onToggleFavourite,
+  stock: s,
+  isExpanded,
+  onToggle,
+  onNavigate,
+  history,
+  historyLoading,
+  isFavourite,
+  onToggleFavourite,
 }: {
-  stock: Stock; isExpanded: boolean; onToggle: () => void; onNavigate: () => void;
-  history?: PriceHistory[]; historyLoading: boolean;
-  isFavourite?: boolean; onToggleFavourite?: () => void;
+  stock: Stock;
+  isExpanded: boolean;
+  onToggle: () => void;
+  onNavigate: () => void;
+  history?: PriceHistory[];
+  historyLoading: boolean;
+  isFavourite?: boolean;
+  onToggleFavourite?: () => void;
 }) => (
   <div className="rounded-xl border border-border bg-card">
     <div className="p-3.5 cursor-pointer" onClick={onNavigate}>
@@ -559,22 +684,33 @@ const MobileStockCard = ({
         <div>
           <div className="flex items-center gap-2">
             <span className="font-bold text-foreground">{s.symbol}</span>
-            <Badge variant="secondary" className="text-[9px] hidden md:inline-flex">{s.sector}</Badge>
+            <Badge variant="secondary" className="text-[9px] hidden md:inline-flex">
+              {s.sector}
+            </Badge>
           </div>
           <p className="text-xs text-muted-foreground mt-0.5">{s.name}</p>
         </div>
         <div className="flex items-center gap-2">
           {onToggleFavourite !== undefined && (
             <button
-              onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavourite();
+              }}
               className="p-1 rounded-md"
               aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
             >
-              <Star className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`} />
+              <Star
+                className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
+              />
             </button>
           )}
           <ChangeCell change={s.day_change} pct={s.day_change_percent} />
-          {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+          {isExpanded ? (
+            <ChevronUp className="h-4 w-4 text-muted-foreground" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-muted-foreground" />
+          )}
         </div>
       </div>
       <div className="grid grid-cols-3 gap-2">
@@ -603,13 +739,23 @@ const MobileStockCard = ({
 );
 
 /* ─── Shared components ─── */
-const StatCard = ({ label, value, icon, valueColor }: { label: string; value: string; icon: React.ReactNode; valueColor?: string }) => (
+const StatCard = ({
+  label,
+  value,
+  icon,
+  valueColor,
+}: {
+  label: string;
+  value: string;
+  icon: React.ReactNode;
+  valueColor?: string;
+}) => (
   <div className="rounded-xl border border-border bg-card p-3.5 flex items-center gap-3">
-    <div className="w-9 h-9 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
-      {icon}
-    </div>
+    <div className="w-9 h-9 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">{icon}</div>
     <div>
-      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-none mb-1">{label}</p>
+      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-none mb-1">
+        {label}
+      </p>
       <p className={`text-lg font-bold tabular-nums leading-none ${valueColor || "text-foreground"}`}>{value}</p>
     </div>
   </div>
@@ -623,10 +769,19 @@ const DetailBox = ({ label, value, color }: { label: string; value: string; colo
 );
 
 const SortHeader = ({
-  label, sortKey, currentKey, dir, onClick, align = "left",
+  label,
+  sortKey,
+  currentKey,
+  dir,
+  onClick,
+  align = "left",
 }: {
-  label: string; sortKey: SortKey; currentKey: SortKey; dir: SortDir;
-  onClick: (key: SortKey) => void; align?: "left" | "right";
+  label: string;
+  sortKey: SortKey;
+  currentKey: SortKey;
+  dir: SortDir;
+  onClick: (key: SortKey) => void;
+  align?: "left" | "right";
 }) => (
   <th
     className={`px-3 py-3 font-semibold text-muted-foreground cursor-pointer hover:text-foreground transition-colors select-none ${
@@ -651,7 +806,10 @@ const StockTableSkeleton = () => (
       </div>
     </div>
     {Array.from({ length: 8 }).map((_, i) => (
-      <div key={i} className={`flex items-center gap-3 px-3 py-3.5 border-t border-border ${i % 2 !== 0 ? "bg-muted/20" : ""}`}>
+      <div
+        key={i}
+        className={`flex items-center gap-3 px-3 py-3.5 border-t border-border ${i % 2 !== 0 ? "bg-muted/20" : ""}`}
+      >
         <Skeleton className="h-4 w-5" />
         <Skeleton className="h-4 w-14" />
         <Skeleton className="h-4 w-32" />
