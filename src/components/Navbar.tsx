@@ -232,28 +232,31 @@ const Navbar = () => {
       </div>
 
       {/* Mobile: full-width scrollable tab bar */}
-      <div className="md:hidden overflow-x-auto scrollbar-none bg-card border-b border-border">
-        <nav className="flex min-w-max">
-          {mobileNavLinks.map((link) => {
-            const isActive = location.pathname === link.to;
-            return (
-              <Link
-                key={link.to}
-                to={link.to}
-                className={`relative shrink-0 px-4 py-3 text-sm whitespace-nowrap transition-colors ${
-                  isActive
-                    ? "font-bold text-foreground"
-                    : "font-medium text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {link.label}
-                {isActive && (
-                  <span className="absolute bottom-0 left-4 right-4 h-[3px] rounded-t-full bg-primary" />
-                )}
-              </Link>
-            );
-          })}
-        </nav>
+      <div className="md:hidden relative">
+        <div className="overflow-x-auto scrollbar-none bg-card border-b border-border">
+          <nav className="flex min-w-max">
+            {mobileNavLinks.map((link) => {
+              const isActive = location.pathname === link.to;
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  className={`relative shrink-0 px-4 py-3 text-sm whitespace-nowrap transition-colors ${
+                    isActive
+                      ? "font-bold text-foreground"
+                      : "font-medium text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-4 right-4 h-[3px] rounded-t-full bg-primary" />
+                  )}
+                </Link>
+              );
+            })}
+          </nav>
+        </div>
+        <div className="pointer-events-none absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent" />
       </div>
 
 
