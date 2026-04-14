@@ -45,11 +45,15 @@ const Index = () => {
   return (
     <div className="space-y-4 px-4 md:px-6 py-4 md:py-6">
       <div>
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">Unit Trusts</h1>
+        <div className="flex items-center justify-between md:block">
+          <h1 className="text-xl md:text-2xl font-bold text-foreground">Unit Trusts</h1>
+          <div className="md:hidden"><SectionLiveStatus section="funds" fallbackDate={lastUpdate} /></div>
+        </div>
         <p className="text-sm text-muted-foreground mt-1">
           <span className="hidden md:inline">Track listed unit trust funds in Kenya.</span>
-          <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
+          <span className="hidden md:inline"><SectionLiveStatus section="funds" fallbackDate={lastUpdate} /></span>
         </p>
+        <div className="md:hidden border-b border-border mt-3" />
       </div>
       <StatBar
         isLive={false}
