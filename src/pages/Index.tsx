@@ -47,7 +47,7 @@ const Index = () => {
       <div>
         <h1 className="text-xl md:text-2xl font-bold text-foreground">Unit Trusts</h1>
         <p className="text-sm text-muted-foreground mt-1">
-          Track listed unit trust funds in Kenya.
+          <span className="hidden md:inline">Track listed unit trust funds in Kenya.</span>
           <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
         </p>
       </div>
