@@ -255,17 +255,12 @@ const StocksPage = () => {
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          {/* FIXED HEADER SECTION BELOW */}
-          <div className="flex flex-col items-start md:block">
+          <div className="flex items-center justify-between md:block">
             <h1 className="text-xl md:text-2xl font-bold text-foreground">Kenyan Stock Market</h1>
-            <div className="mt-1">
-              <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} />
-            </div>
+            <div className="md:hidden"><SectionLiveStatus section="stocks" fallbackDate={latestUpdate} /></div>
           </div>
-          {/* END FIXED HEADER SECTION */}
-
-          <p className="text-sm text-muted-foreground mt-1 hidden md:block">
-            Track listed stock prices, volumes, and daily performance.
+          <p className="text-sm text-muted-foreground mt-1">
+            <span className="hidden md:inline"><SectionLiveStatus section="stocks" fallbackDate={latestUpdate} /></span>
           </p>
           <div className="md:hidden border-b border-border mt-3" />
         </div>
