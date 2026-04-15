@@ -72,11 +72,19 @@ const formatMarketCap = (mc: number | null) => {
 const MiniSparkline = ({ data, positive }: { data: PriceHistory[]; positive: boolean }) => {
   if (!data || data.length < 2) return null;
   const color = positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  const prices = data.map((point) => point.price);
+  const min = Math.min(...prices);
+  const max = Math.max(...prices);
+  const spread = max - min;
+  const padding = spread === 0 ? Math.max(Math.abs(max) * 0.005, 0.01) : spread * 0.1;
+  const yDomain: [number, number] = [min - padding, max + padding];
+
   return (
     <div className="w-[60px] h-[24px]">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data}>
-          <Line type="monotone" dataKey="price" stroke={color} strokeWidth={1.5} dot={false} />
+        <LineChart data={data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+          <YAxis hide domain={yDomain} />
+          <Line type="monotone" dataKey="price" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
