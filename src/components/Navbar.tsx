@@ -233,7 +233,7 @@ const Navbar = () => {
 
       {/* Mobile: full-width scrollable tab bar */}
       <div className="md:hidden relative">
-        <div className="overflow-x-auto scrollbar-none bg-card border-b border-border">
+        <div className="overflow-x-auto scrollbar-hide bg-card border-b border-border" style={{ scrollBehavior: "smooth" }}>
           <nav className="flex min-w-max">
             {mobileNavLinks.map((link) => {
               const isActive = location.pathname === link.to;
@@ -241,6 +241,9 @@ const Navbar = () => {
                 <Link
                   key={link.to}
                   to={link.to}
+                  onClick={(e) => {
+                    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+                  }}
                   className={`relative shrink-0 px-4 py-3 text-sm whitespace-nowrap transition-colors ${
                     isActive
                       ? "font-bold text-foreground"
