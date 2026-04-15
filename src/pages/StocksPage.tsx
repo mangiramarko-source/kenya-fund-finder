@@ -674,56 +674,53 @@ const MobileStockCard = ({
   onToggleFavourite?: () => void;
 }) => (
   <div className="rounded-xl border border-border bg-card">
-    <div className="p-3.5 cursor-pointer" onClick={onNavigate}>
-      <div className="flex items-start justify-between mb-2">
-        <div>
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-foreground">{s.symbol}</span>
-            <Badge variant="secondary" className="text-[9px] hidden md:inline-flex">
-              {s.sector}
-            </Badge>
-          </div>
-          <p className="text-xs text-muted-foreground mt-0.5">{s.name}</p>
-        </div>
-        <div className="flex items-center gap-2">
-          {onToggleFavourite !== undefined && (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                onToggleFavourite();
-              }}
-              className="p-1 rounded-md"
-              aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
-            >
-              <Star
-                className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
-              />
-            </button>
-          )}
-          <ChangeCell change={s.day_change} pct={s.day_change_percent} />
-          {isExpanded ? (
-            <ChevronUp className="h-4 w-4 text-muted-foreground" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-muted-foreground" />
-          )}
-        </div>
+    <div className="flex items-center gap-3 p-3.5">
+      {/* Left: Symbol + Name */}
+      <div className="flex-1 min-w-0 cursor-pointer" onClick={onNavigate}>
+        <span className="font-bold text-foreground text-sm">{s.symbol}</span>
+        <p className="text-[11px] text-muted-foreground truncate">{s.name}</p>
       </div>
-      <div className="grid grid-cols-3 gap-2">
-        <div className="bg-muted/40 rounded-lg px-2 py-2 text-center">
-          <p className="text-[9px] text-muted-foreground">Price</p>
-          <p className="font-bold text-foreground text-sm tabular-nums">KSh {formatNumber(s.price)}</p>
-        </div>
-        <div className="bg-muted/40 rounded-lg px-2 py-2 text-center">
-          <p className="text-[9px] text-muted-foreground">Volume</p>
-          <p className="font-semibold text-muted-foreground text-sm tabular-nums">{formatVolume(s.volume)}</p>
-        </div>
-        <div className="bg-muted/40 rounded-lg px-2 py-2 text-center">
-          <p className="text-[9px] text-muted-foreground">Div Yield</p>
-          <p className="font-semibold text-accent text-sm tabular-nums">
-            {s.dividend_yield != null ? `${formatNumber(s.dividend_yield)}%` : "—"}
-          </p>
-        </div>
+
+      {/* Center: Sparkline */}
+      <div className="shrink-0">
+        <MiniSparkline data={history || []} positive={s.day_change >= 0} />
       </div>
+
+      {/* Right: Price + Change */}
+      <div className="text-right shrink-0 cursor-pointer" onClick={onNavigate}>
+        <p className="font-bold text-foreground text-sm tabular-nums">KES {formatNumber(s.price)}</p>
+        <ChangeCell change={s.day_change} pct={s.day_change_percent} />
+      </div>
+
+      {/* Action buttons */}
+      {onToggleFavourite !== undefined && (
+        <button
+          onClick={(e) => {
+            e.stopPropagation();
+            onToggleFavourite();
+          }}
+          className="p-1 shrink-0"
+          aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+        >
+          <Star
+            className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
+          />
+        </button>
+      )}
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onToggle();
+        }}
+        className="p-1 shrink-0"
+        aria-label="Toggle details"
+      >
+        {isExpanded ? (
+          <ChevronUp className="h-4 w-4 text-muted-foreground" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-muted-foreground/50" />
+        )}
+      </button>
     </div>
     {isExpanded && (
       <div className="border-t border-border">
@@ -732,7 +729,6 @@ const MobileStockCard = ({
     )}
   </div>
 );
-
 /* ─── Shared components ─── */
 const StatCard = ({
   label,
