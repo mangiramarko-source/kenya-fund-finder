@@ -23,7 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import StockFavourites from "@/components/home/StockFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area } from "recharts";
 
 interface Stock {
   id: string;
@@ -70,20 +70,22 @@ const formatMarketCap = (mc: number | null) => {
 
 /* ─── Mini Sparkline ─── */
 const MiniSparkline = ({ data, positive }: { data: PriceHistory[]; positive: boolean }) => {
-  if (!data || data.length < 2) return null;
+  if (!data?.length || data.length < 2) return null;
   const color = positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
-  const prices = data.map((point) => point.price);
-  const min = Math.min(...prices);
-  const max = Math.max(...prices);
-  const spread = max - min;
-  const padding = spread === 0 ? Math.max(Math.abs(max) * 0.005, 0.01) : spread * 0.1;
-  const yDomain: [number, number] = [min - padding, max + padding];
+  const gradientId = `sparkline-fill-${positive ? "up" : "down"}`;
 
   return (
     <div className="w-[60px] h-[24px]">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-          <YAxis hide domain={yDomain} />
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <YAxis hide domain={["dataMin - 0.5", "dataMax + 0.5"]} />
+          <Area type="monotone" dataKey="price" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
           <Line type="monotone" dataKey="price" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
@@ -150,7 +152,7 @@ const StocksPage = () => {
         )
         .order("sort_order");
       setStocks(
-        (data || []).map((s: any) => ({
+        data?.map((s: any) => ({
           ...s,
           price: Number(s.price),
           previous_price: s.previous_price != null ? Number(s.previous_price) : null,
@@ -162,7 +164,7 @@ const StocksPage = () => {
           year_low: s.year_low != null ? Number(s.year_low) : null,
           pe_ratio: s.pe_ratio != null ? Number(s.pe_ratio) : null,
           dividend_yield: s.dividend_yield != null ? Number(s.dividend_yield) : null,
-        })),
+        })) || [],
       );
       setLoading(false);
     };
