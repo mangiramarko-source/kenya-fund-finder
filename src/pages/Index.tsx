@@ -53,7 +53,7 @@ const Index = () => {
           <span className="hidden md:inline">Track listed unit trust funds in Kenya.</span>
           <span className="hidden md:inline"><SectionLiveStatus section="funds" fallbackDate={lastUpdate} /></span>
         </p>
-        <div className="md:hidden border-b border-border mt-3" />
+        
       </div>
       <StatBar
         isLive={false}
