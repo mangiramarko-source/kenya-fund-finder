@@ -256,7 +256,7 @@ const StocksPage = () => {
       <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
           <div className="flex items-center justify-between md:block">
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">Kenyan Stock Market</h1>
+            
             <div className="md:hidden"><SectionLiveStatus section="stocks" fallbackDate={latestUpdate} /></div>
           </div>
           <p className="text-sm text-muted-foreground mt-1">
