@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -424,11 +424,8 @@ const StocksPage = () => {
               <MobileStockCard
                 key={s.id}
                 stock={s}
-                isExpanded={expanded === s.id}
-                onToggle={() => toggleExpand(s.id)}
                 onNavigate={() => navigate(`/stocks/${s.symbol}`)}
                 history={history[s.id]}
-                historyLoading={historyLoading === s.id}
                 isFavourite={user ? isFavourite(s.id) : undefined}
                 onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
               />
@@ -666,27 +663,24 @@ const StockRow = ({
 /* ─── Mobile Card ─── */
 const MobileStockCard = ({
   stock: s,
-  isExpanded,
-  onToggle,
   onNavigate,
   history,
-  historyLoading,
   isFavourite,
   onToggleFavourite,
 }: {
   stock: Stock;
-  isExpanded: boolean;
-  onToggle: () => void;
   onNavigate: () => void;
   history?: PriceHistory[];
-  historyLoading: boolean;
   isFavourite?: boolean;
   onToggleFavourite?: () => void;
 }) => (
-  <div className="rounded-xl border border-border bg-card">
+  <Link
+    to={`/stocks/${s.symbol}`}
+    className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
+  >
     <div className="flex items-center gap-3 p-3.5">
       {/* Left: Symbol + Name */}
-      <div className="flex-1 min-w-0 cursor-pointer" onClick={onNavigate}>
+      <div className="flex-1 min-w-0">
         <span className="font-bold text-foreground text-sm">{s.symbol}</span>
         <p className="text-[11px] text-muted-foreground truncate">{s.name}</p>
       </div>
@@ -697,15 +691,16 @@ const MobileStockCard = ({
       </div>
 
       {/* Right: Price + Change */}
-      <div className="text-right shrink-0 cursor-pointer" onClick={onNavigate}>
+      <div className="text-right shrink-0">
         <p className="font-bold text-foreground text-sm tabular-nums">KES {formatNumber(s.price)}</p>
         <ChangeCell change={s.day_change} pct={s.day_change_percent} />
       </div>
 
-      {/* Action buttons */}
+      {/* Watchlist button */}
       {onToggleFavourite !== undefined && (
         <button
           onClick={(e) => {
+            e.preventDefault();
             e.stopPropagation();
             onToggleFavourite();
           }}
@@ -717,27 +712,8 @@ const MobileStockCard = ({
           />
         </button>
       )}
-      <button
-        onClick={(e) => {
-          e.stopPropagation();
-          onToggle();
-        }}
-        className="p-1 shrink-0"
-        aria-label="Toggle details"
-      >
-        {isExpanded ? (
-          <ChevronUp className="h-4 w-4 text-muted-foreground" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-muted-foreground/50" />
-        )}
-      </button>
     </div>
-    {isExpanded && (
-      <div className="border-t border-border">
-        <StockDetailPanel stock={s} history={history} historyLoading={historyLoading} />
-      </div>
-    )}
-  </div>
+  </Link>
 );
 /* ─── Shared components ─── */
 const StatCard = ({
