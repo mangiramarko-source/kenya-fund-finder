@@ -7,8 +7,8 @@ import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 interface FundMobileCardsProps {
   funds: FundFromDB[];
   snapshots: Record<string, YieldSnapshot>;
-  allSnapshots: Record<string, YieldSnapshot[]>;
-  bestYield: number;
+  allSnapshots?: Record<string, YieldSnapshot[]>;
+  bestYield?: number;
   loading: boolean;
   onClearSearch: () => void;
   hasSearch: boolean;
