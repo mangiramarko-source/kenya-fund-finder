@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -424,11 +424,8 @@ const StocksPage = () => {
               <MobileStockCard
                 key={s.id}
                 stock={s}
-                isExpanded={expanded === s.id}
-                onToggle={() => toggleExpand(s.id)}
                 onNavigate={() => navigate(`/stocks/${s.symbol}`)}
                 history={history[s.id]}
-                historyLoading={historyLoading === s.id}
                 isFavourite={user ? isFavourite(s.id) : undefined}
                 onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
               />
