@@ -270,8 +270,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         <FundMobileCards
           funds={filtered}
           snapshots={snapshots}
+          allSnapshots={allSnapshots}
           bestYield={bestYield}
-          loading={false}
+          loading={loading}
           onClearSearch={() => setSearch("")}
           hasSearch={!!search.trim()}
           isFavourite={isFavourite}
