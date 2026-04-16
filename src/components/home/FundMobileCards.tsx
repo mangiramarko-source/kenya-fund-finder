@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Bell } from "lucide-react";
+
 import YieldChange from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
@@ -60,7 +60,7 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
   </div>
 );
 
-const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch, isFavourite, onToggleFavourite }: FundMobileCardsProps) => {
+const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }: FundMobileCardsProps) => {
   if (loading) return <CardSkeleton />;
 
   if (funds.length === 0) return <EmptyState hasSearch={hasSearch} onClearSearch={onClearSearch} />;
@@ -74,13 +74,13 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch, 
           className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
         >
           <div className="flex items-center gap-3 p-3.5">
-            {/* Left: Fund Name + Manager */}
+            {/* Left: Fund Name + Currency Code */}
             <div className="flex-1 min-w-0">
               <span className="font-bold text-foreground text-sm truncate block">{fund.name}</span>
-              <p className="text-[11px] text-muted-foreground truncate">{fund.manager}</p>
+              <p className="text-[11px] text-muted-foreground truncate">{currencyLabel(fund.yield_unit)}</p>
             </div>
 
-            {/* Center: Yield Change (if snapshot available) */}
+            {/* Center: Yield Change */}
             {snapshots[fund.id] && (
               <div className="shrink-0">
                 <YieldChange 
@@ -92,24 +92,15 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch, 
               </div>
             )}
 
-            {/* Right: Annual Yield */}
+            {/* Right: Annual Yield stacked over Daily Yield */}
             <div className="text-right shrink-0">
               <p className="font-bold text-accent text-sm tabular-nums">
                 {fmtYield(fund.annual_yield, fund.yield_unit)}
               </p>
-              <p className="text-[10px] text-muted-foreground">{currencyLabel(fund.yield_unit)}</p>
+              <p className="text-[10px] text-muted-foreground tabular-nums">
+                {fmtYield(fund.daily_yield, fund.yield_unit)}
+              </p>
             </div>
-
-            {/* Watchlist button */}
-            {onToggleFavourite && (
-              <button
-                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onToggleFavourite(fund.id, fund.name); }}
-                className="p-1 shrink-0"
-                aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
-              >
-                <Bell className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-accent fill-accent" : "text-muted-foreground/40"}`} />
-              </button>
-            )}
           </div>
         </Link>
       ))}
