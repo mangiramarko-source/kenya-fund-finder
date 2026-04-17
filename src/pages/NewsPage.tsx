@@ -158,14 +158,6 @@ const NewsPage = () => {
 
   return (
     <div className="px-4 md:px-6 py-6">
-      {/* Header */}
-      <div className="mb-4">
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">News</h1>
-        <p className="text-sm text-muted-foreground mt-1">
-          Auto-updated from {sources.length} Kenyan business sources
-        </p>
-      </div>
-
       {/* Search + sort row */}
       <div className="flex items-center gap-2 mb-5">
         <div className="relative flex-1">
