@@ -73,10 +73,9 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }
           className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
         >
           <div className="flex items-center gap-3 p-3.5">
-            {/* Left: Fund Name + Currency Code */}
+            {/* Left: Fund Name */}
             <div className="flex-1 min-w-0">
               <span className="font-bold text-foreground text-sm truncate block">{fund.name}</span>
-              <p className="text-[11px] text-muted-foreground truncate">{currencyLabel(fund.yield_unit)}</p>
             </div>
 
             {/* Right: Annual Yield stacked over Daily Yield */}
