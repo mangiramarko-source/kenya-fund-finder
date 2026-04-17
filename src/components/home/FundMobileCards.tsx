@@ -74,9 +74,29 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }
           className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
         >
           <div className="flex items-center gap-3 p-3.5">
-            {/* Left: Fund Name */}
+            {/* Left: Fund Name + Trend */}
             <div className="flex-1 min-w-0">
               <span className="font-bold text-foreground text-sm truncate block">{fund.name}</span>
+              {(() => {
+                const prev = snapshots[fund.id]?.annual_yield;
+                if (prev === undefined) return null;
+                const diff = fund.annual_yield - prev;
+                const isFlat = Math.abs(diff) < 0.0001;
+                const isUp = diff > 0;
+                const Icon = isFlat ? Minus : isUp ? TrendingUp : TrendingDown;
+                const colorClass = isFlat
+                  ? "text-muted-foreground"
+                  : isUp
+                  ? "text-emerald-500 dark:text-emerald-400"
+                  : "text-red-500 dark:text-red-400";
+                const sign = isFlat ? "" : isUp ? "+" : "";
+                return (
+                  <span className={`mt-0.5 inline-flex items-center gap-1 text-xs font-medium tabular-nums ${colorClass}`}>
+                    <Icon className="h-3 w-3" />
+                    <span>{sign}{diff.toFixed(2)}%</span>
+                  </span>
+                );
+              })()}
             </div>
 
             {/* Right: Annual Yield stacked over Daily Yield */}
