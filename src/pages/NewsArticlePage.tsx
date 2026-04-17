@@ -172,7 +172,7 @@ const NewsArticlePage = () => {
             <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
               {article.content ? (
                 article.content.split("\n").filter(Boolean).map((paragraph, i) => (
-                  <p key={i} className="text-sm sm:text-base text-muted-foreground leading-relaxed">{decodeHtmlEntities(paragraph)}</p>
+                  <p key={i} className="sm:text-base text-muted-foreground leading-relaxed text-base text-justify font-normal">{decodeHtmlEntities(paragraph)}</p>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground italic">Full article content is not yet available.</p>
