@@ -58,24 +58,24 @@ const AuthPage = () => {
     setError("");
     setMessage("");
 
-    // Turnstile is best-effort: verify if token available, skip if widget couldn't load (e.g. wrong domain)
-    
-
     if (isSignUp && password !== confirmPassword) {
       setError("Passwords do not match");
       return;
     }
 
+    if (!turnstileToken) {
+      setError("Please complete the security check before continuing.");
+      return;
+    }
+
     setLoading(true);
 
-    if (turnstileToken) {
-      const verified = await verifyTurnstile(turnstileToken);
-      if (!verified) {
-        setError("Security verification failed. Please try again.");
-        setTurnstileToken(null);
-        setLoading(false);
-        return;
-      }
+    const verified = await verifyTurnstile(turnstileToken);
+    if (!verified) {
+      setError("Security verification failed. Please try again.");
+      setTurnstileToken(null);
+      setLoading(false);
+      return;
     }
 
     if (isSignUp) {
