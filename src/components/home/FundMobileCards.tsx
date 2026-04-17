@@ -1,7 +1,6 @@
 import { Link } from "react-router-dom";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import YieldChange from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
 interface FundMobileCardsProps {
@@ -79,18 +78,6 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }
               <span className="font-bold text-foreground text-sm truncate block">{fund.name}</span>
               <p className="text-[11px] text-muted-foreground truncate">{currencyLabel(fund.yield_unit)}</p>
             </div>
-
-            {/* Center: Yield Change */}
-            {snapshots[fund.id] && (
-              <div className="shrink-0">
-                <YieldChange 
-                  current={fund.annual_yield} 
-                  previous={snapshots[fund.id]?.annual_yield} 
-                  unit={fund.yield_unit} 
-                  className="text-[11px]" 
-                />
-              </div>
-            )}
 
             {/* Right: Annual Yield stacked over Daily Yield */}
             <div className="text-right shrink-0">
