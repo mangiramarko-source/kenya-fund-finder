@@ -115,7 +115,7 @@ const NewsArticlePage = () => {
   return (
     <div className="max-w-3xl mx-auto py-5 sm:py-8 px-4 sm:px-6">
       {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-xs text-muted-foreground mb-5">
+      <nav className="flex items-center gap-2 text-muted-foreground mb-5 text-sm">
         <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
         <span>/</span>
         <Link to="/news" className="hover:text-foreground transition-colors">News</Link>
