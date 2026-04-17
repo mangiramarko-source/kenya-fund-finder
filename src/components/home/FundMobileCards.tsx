@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
