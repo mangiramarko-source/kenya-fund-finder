@@ -74,13 +74,16 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }
           className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
         >
           <div className="flex items-center gap-3 p-3.5">
-            {/* Left: Fund Name + Currency Code */}
+            {/* Left: Fund Name + Annual Yield below */}
             <div className="flex-1 min-w-0">
               <span className="font-bold text-foreground text-sm truncate block">{fund.name}</span>
-              <p className="text-[11px] text-muted-foreground truncate">{currencyLabel(fund.yield_unit)}</p>
+              <p className="font-bold text-accent text-[11px] tabular-nums">
+                {fmtYield(fund.annual_yield, fund.yield_unit)}
+                <span className="ml-1 text-muted-foreground font-normal">{currencyLabel(fund.yield_unit)}</span>
+              </p>
             </div>
 
-            {/* Center: Yield Change */}
+            {/* Right: Yield Change indicator */}
             {snapshots[fund.id] && (
               <div className="shrink-0">
                 <YieldChange 
@@ -91,16 +94,6 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }
                 />
               </div>
             )}
-
-            {/* Right: Annual Yield stacked over Daily Yield */}
-            <div className="text-right shrink-0">
-              <p className="font-bold text-accent text-sm tabular-nums">
-                {fmtYield(fund.annual_yield, fund.yield_unit)}
-              </p>
-              <p className="text-[10px] text-muted-foreground tabular-nums">
-                {fmtYield(fund.daily_yield, fund.yield_unit)}
-              </p>
-            </div>
           </div>
         </Link>
       ))}
