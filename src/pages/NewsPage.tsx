@@ -191,7 +191,7 @@ const NewsPage = () => {
         <>
           {/* Hero + sidebar grid */}
           {heroArticle && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-5">
+            <div className="hidden lg:grid grid-cols-1 lg:grid-cols-12 gap-4 mb-5">
               {/* Hero */}
               <Link
                 to={`/news/${heroArticle.id}`}
