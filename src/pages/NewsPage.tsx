@@ -116,6 +116,9 @@ const NewsPage = () => {
 
   const visibleList = useMemo(() => listArticles.slice(0, visibleCount), [listArticles, visibleCount]);
   const hasMore = visibleCount < listArticles.length;
+  // On mobile, show ALL filtered articles in the grid (no hero/sidebar)
+  const visibleListMobile = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const hasMoreMobile = visibleCount < filtered.length;
 
   // Intersection observer for infinite scroll
   useEffect(() => {
