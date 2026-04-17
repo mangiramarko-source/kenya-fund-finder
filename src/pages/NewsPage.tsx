@@ -314,7 +314,7 @@ const NewsPage = () => {
                         <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
                           {decodeHtmlEntities(article.title)}
                         </h3>
-                        <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-2">
+                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-2">
                           {decodeHtmlEntities(article.summary)}
                         </p>
                         <div className="flex items-center gap-1.5">
