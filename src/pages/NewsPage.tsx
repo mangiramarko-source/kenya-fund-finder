@@ -116,6 +116,9 @@ const NewsPage = () => {
 
   const visibleList = useMemo(() => listArticles.slice(0, visibleCount), [listArticles, visibleCount]);
   const hasMore = visibleCount < listArticles.length;
+  // On mobile, show ALL filtered articles in the grid (no hero/sidebar)
+  const visibleListMobile = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
+  const hasMoreMobile = visibleCount < filtered.length;
 
   // Intersection observer for infinite scroll
   useEffect(() => {
@@ -191,7 +194,7 @@ const NewsPage = () => {
         <>
           {/* Hero + sidebar grid */}
           {heroArticle && (
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-4 mb-5">
+            <div className="hidden lg:grid grid-cols-1 lg:grid-cols-12 gap-4 mb-5">
               {/* Hero */}
               <Link
                 to={`/news/${heroArticle.id}`}
@@ -273,12 +276,65 @@ const NewsPage = () => {
           )}
 
           {/* Grid of remaining articles */}
-          {visibleList.length > 0 && (
+          {(visibleList.length > 0 || visibleListMobile.length > 0) && (
             <>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {/* Mobile grid: shows ALL filtered articles (hero is hidden on mobile) */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
+                {visibleListMobile.map((article) => {
+                  const dot = categoryDot[article.category] || "bg-muted-foreground";
+                  return (
+                    <Link
+                      key={article.id}
+                      to={`/news/${article.id}`}
+                      className="group rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all overflow-hidden"
+                    >
+                      <div className="aspect-[16/9] overflow-hidden">
+                        <img
+                          src={getNewsImage(article.image_url, article.category, article.id)}
+                          alt={article.title}
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          loading="lazy"
+                          onError={(e) => handleNewsImageError(e, article.category, article.id)}
+                        />
+                      </div>
+                      <div className="p-3.5">
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
+                          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
+                          <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
+                            <Clock className="h-2.5 w-2.5" />
+                            {article.read_time}
+                          </span>
+                        </div>
+                        <h3 className="font-heading font-semibold text-base leading-snug line-clamp-2 mb-1 group-hover:text-accent transition-colors">
+                          {decodeHtmlEntities(article.title)}
+                        </h3>
+                        <p className="text-muted-foreground line-clamp-2 leading-relaxed mb-2 text-sm">
+                          {decodeHtmlEntities(article.summary)}
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          {article.source && <SourceBadge source={article.source} />}
+                          <span className="text-[10px] text-muted-foreground">
+                            {formatDate(article.date_published)}
+                          </span>
+                          <button
+                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navTo("/calculator"); }}
+                            className="ml-auto inline-flex items-center gap-1 text-[10px] font-medium text-accent hover:text-accent/80 transition-colors"
+                            title="Use ROI Calculator"
+                          >
+                            <Calculator className="h-3 w-3" /> Calc
+                          </button>
+                        </div>
+                      </div>
+                    </Link>
+                  );
+                })}
+              </div>
+
+              {/* Desktop grid: excludes hero/sidebar articles */}
+              <div className="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 {visibleList.map((article) => {
                   const dot = categoryDot[article.category] || "bg-muted-foreground";
-                  const CatIcon = categoryIcons[article.category] || Megaphone;
                   return (
                     <Link
                       key={article.id}
@@ -303,10 +359,10 @@ const NewsPage = () => {
                             {article.read_time}
                           </span>
                         </div>
-                        <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
+                        <h3 className="font-heading font-semibold text-base leading-snug line-clamp-2 mb-1 group-hover:text-accent transition-colors">
                           {decodeHtmlEntities(article.title)}
                         </h3>
-                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-2">
+                        <p className="text-muted-foreground line-clamp-2 leading-relaxed mb-2 text-sm">
                           {decodeHtmlEntities(article.summary)}
                         </p>
                         <div className="flex items-center gap-1.5">
@@ -330,14 +386,14 @@ const NewsPage = () => {
 
               {/* Infinite scroll sentinel */}
               <div ref={loaderRef} className="flex items-center justify-center py-6">
-                {hasMore ? (
+                {(hasMore || hasMoreMobile) ? (
                   <div className="flex items-center gap-2 text-xs text-muted-foreground">
                     <Loader2 className="h-4 w-4 animate-spin" />
                     Loading more articles...
                   </div>
-                ) : listArticles.length > 0 ? (
+                ) : filtered.length > 0 ? (
                   <p className="text-[10px] text-muted-foreground">
-                    Showing all {listArticles.length + (heroArticle ? 1 : 0) + topArticles.length} articles
+                    Showing all {filtered.length} articles
                   </p>
                 ) : null}
               </div>
