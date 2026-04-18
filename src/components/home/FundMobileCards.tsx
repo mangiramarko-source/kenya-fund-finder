@@ -100,16 +100,16 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }
             </div>
 
             {/* Right: Annual Yield stacked over Daily Yield */}
-            <div className="text-right shrink-0 space-y-0.5">
-              <div className="flex items-baseline justify-end gap-1.5">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">annual</span>
-                <span className="font-bold text-accent tabular-nums text-base leading-none">
+            <div className="text-right shrink-0 space-y-1">
+              <div className="flex items-baseline justify-end gap-2">
+                <span className="text-xs text-muted-foreground uppercase tracking-wider w-11 text-right">annual</span>
+                <span className="font-bold text-accent tabular-nums text-base leading-none w-16 text-right">
                   {fmtYield(fund.annual_yield, fund.yield_unit)}
                 </span>
               </div>
-              <div className="flex items-baseline justify-end gap-1.5">
-                <span className="text-[10px] text-muted-foreground uppercase tracking-wider">daily</span>
-                <span className="text-muted-foreground tabular-nums text-sm font-normal leading-none">
+              <div className="flex items-baseline justify-end gap-2">
+                <span className="text-xs text-muted-foreground uppercase tracking-wider w-11 text-right">daily</span>
+                <span className="text-muted-foreground tabular-nums text-sm font-normal leading-none w-16 text-right">
                   {fmtYield(fund.daily_yield, fund.yield_unit)}
                 </span>
               </div>
