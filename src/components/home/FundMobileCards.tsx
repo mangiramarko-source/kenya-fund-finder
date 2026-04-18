@@ -109,7 +109,7 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }
               </div>
               <div className="flex items-baseline justify-end gap-2">
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider w-10 text-right leading-none">daily</span>
-                <span className="text-muted-foreground tabular-nums font-normal leading-none w-14 text-right text-xs">
+                <span className="text-muted-foreground tabular-nums font-normal leading-none w-14 text-right text-sm">
                   {fmtYield(fund.daily_yield, fund.yield_unit)}
                 </span>
               </div>
