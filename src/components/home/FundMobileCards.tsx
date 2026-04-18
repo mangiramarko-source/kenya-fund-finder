@@ -101,10 +101,12 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }
 
             {/* Right: Annual Yield stacked over Daily Yield */}
             <div className="text-right shrink-0">
-              <p className="font-bold text-accent tabular-nums text-base">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider leading-none mb-0.5">annual</p>
+              <p className="font-bold text-accent tabular-nums text-base leading-tight">
                 {fmtYield(fund.annual_yield, fund.yield_unit)}
               </p>
-              <p className="text-muted-foreground tabular-nums text-sm font-normal">
+              <p className="text-[10px] text-muted-foreground uppercase tracking-wider leading-none mt-1 mb-0.5">daily</p>
+              <p className="text-muted-foreground tabular-nums text-sm font-normal leading-tight">
                 {fmtYield(fund.daily_yield, fund.yield_unit)}
               </p>
             </div>
