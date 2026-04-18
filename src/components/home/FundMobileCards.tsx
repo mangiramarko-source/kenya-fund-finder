@@ -103,7 +103,7 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }
             <div className="text-right shrink-0 space-y-1">
               <div className="flex items-baseline justify-end gap-2">
                 <span className="text-[9px] text-muted-foreground uppercase tracking-wider w-10 text-right leading-none">annual</span>
-                <span className="font-bold text-accent tabular-nums leading-none w-14 text-right text-sm">
+                <span className="text-accent tabular-nums leading-none w-14 text-right text-sm font-extrabold">
                   {fmtYield(fund.annual_yield, fund.yield_unit)}
                 </span>
               </div>
