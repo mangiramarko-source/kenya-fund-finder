@@ -177,8 +177,7 @@ const RatesPage = () => {
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">FX Exchange Rates</h1>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground">
             Indicative exchange rates against the Kenya Shilling (KES).
             <SectionLiveStatus section="rates" fallbackDate={latestUpdate} />
           </p>
