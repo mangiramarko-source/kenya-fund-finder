@@ -37,7 +37,8 @@ const Sparkline = ({ data, width = 60, height = 20, color = "hsl(var(--accent))"
   }, [data, width, height]);
 
   if (!path) return null;
-  const strokeColor = color === "auto" ? (isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))") : color;
+  const autoColor = trend === "flat" ? "hsl(var(--muted-foreground))" : isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  const strokeColor = color === "auto" ? autoColor : color;
 
   return (
     <svg
