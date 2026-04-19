@@ -995,9 +995,10 @@ const OverviewPage = () => {
 };
 
 /* ─── Reusable Components ─── */
-const WatchCard = ({ title, sub, value, change, chart, sparkData, onAlert, onRemove, linkTo }: {
+const WatchCard = ({ title, sub, value, change, chart, sparkData, trend, onAlert, onRemove, linkTo }: {
   title: string; sub: string; value: string; change: React.ReactNode;
-  chart?: React.ReactNode; sparkData?: number[]; onAlert?: () => void; onRemove: () => void; linkTo?: string;
+  chart?: React.ReactNode; sparkData?: number[]; trend?: "up" | "down" | "flat";
+  onAlert?: () => void; onRemove: () => void; linkTo?: string;
 }) => {
   const mobileMain = (
     <>
@@ -1008,7 +1009,7 @@ const WatchCard = ({ title, sub, value, change, chart, sparkData, onAlert, onRem
         <p className="text-[10px] text-muted-foreground truncate">{sub}</p>
       </div>
       {sparkData && sparkData.length >= 3 && (
-        <Sparkline data={sparkData} width={48} height={18} color="auto" className="shrink-0" />
+        <Sparkline data={sparkData} width={48} height={18} color="auto" trend={trend} className="shrink-0" />
       )}
       <div className="text-right shrink-0">
         <p className="text-sm font-bold tabular-nums text-foreground">{value}</p>
