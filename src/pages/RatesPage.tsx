@@ -185,14 +185,6 @@ const RatesPage = () => {
 
         <ActiveAlertsCard assetType="currency" />
 
-        {/* Summary Stats */}
-        {!loading && rates.length > 0 && (
-          <div className="grid grid-cols-3 gap-3 mb-6">
-            <StatCard label="Currencies" value={String(rates.length)} />
-            <StatCard label="KES Strengthened" value={String(strengthened)} color="text-accent" />
-            <StatCard label="KES Weakened" value={String(weakened)} color="text-destructive" />
-          </div>
-        )}
 
         {/* Search */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
