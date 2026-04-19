@@ -44,6 +44,14 @@ const SECTIONS = [
 ] as const;
 
 /* ─── Change Indicator ─── */
+const trendOf = (current: number, previous: number | null | undefined): "up" | "down" | "flat" | undefined => {
+  if (previous == null) return undefined;
+  const diff = current - previous;
+  if (diff > 0) return "up";
+  if (diff < 0) return "down";
+  return "flat";
+};
+
 const Change = ({ current, previous }: { current: number; previous: number | null }) => {
   if (previous == null) return <span className="text-muted-foreground text-xs">—</span>;
   const diff = current - previous;
@@ -215,11 +223,11 @@ const MiniChart = ({ data, color = "hsl(var(--accent))" }: { data: { snapshot_da
 };
 
 /* ─── Detailed Highlight Card (desktop) ─── */
-const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color, chartData, chartColor, sparkData, extras }: {
+const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color, chartData, chartColor, sparkData, trend, extras }: {
   icon: any; label: string; name: string; value: string; sub?: string;
   change?: React.ReactNode; linkTo?: string; color?: string;
   chartData?: { snapshot_date: string; rate: number }[]; chartColor?: string;
-  sparkData?: number[]; extras?: { label: string; value: string }[];
+  sparkData?: number[]; trend?: "up" | "down" | "flat"; extras?: { label: string; value: string }[];
 }) => {
   const content = (
     <div className={`rounded-xl border border-border bg-card p-4 hover:border-accent/30 transition-colors group flex flex-col cursor-pointer h-full`}>
@@ -246,7 +254,7 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
           </div>
         </div>
         {sparkData && sparkData.length >= 3 && (
-          <Sparkline data={sparkData} width={64} height={28} color="auto" className="shrink-0 mt-2" />
+          <Sparkline data={sparkData} width={64} height={28} color="auto" trend={trend} className="shrink-0 mt-2" />
         )}
       </div>
       {extras && extras.length > 0 && (
@@ -549,6 +557,7 @@ const OverviewPage = () => {
                   change={<Change current={s.price} previous={s.previous_price} />}
                   chart={sHistory.length > 2 ? <MiniChart data={sHistory} /> : undefined}
                   sparkData={getStockSparkData(s.id)}
+                  trend={trendOf(s.price, s.previous_price)}
                   linkTo={`/stocks/${s.symbol}`}
                   onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
                   onRemove={() => toggleAsset("stock", s.id, s.name)} />
@@ -561,6 +570,7 @@ const OverviewPage = () => {
                   change={<Change current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />}
                   chart={history.length > 2 ? <MiniChart data={history} /> : undefined}
                   sparkData={history.length > 2 ? history.map(h => h.rate) : undefined}
+                  trend={trendOf(Number(r.rate), r.previous_rate != null ? Number(r.previous_rate) : null)}
                   linkTo="/rates"
                   onAlert={() => openAlert("currency", r.id, `${r.currency_code}/KES`, Number(r.rate), "KES")}
                   onRemove={() => toggleAsset("currency", r.id, `${r.currency_code}/KES`)} />
@@ -569,6 +579,7 @@ const OverviewPage = () => {
             {watchedCommoditiesList.map(c => (
               <WatchCard key={c.id} title={c.name} sub={c.symbol} value={`${Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${c.unit}`}
                 change={<Change current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />}
+                trend={trendOf(Number(c.price), c.previous_price != null ? Number(c.previous_price) : null)}
                 linkTo="/commodities"
                 onAlert={() => openAlert("commodity", c.id, c.name, Number(c.price), c.unit)}
                 onRemove={() => toggleAsset("commodity", c.id, c.name)} />
@@ -576,11 +587,15 @@ const OverviewPage = () => {
             {watchedFunds.map(f => {
               const fHistory = getFundHistory(f.id);
               const fundTypeLabel = f.fund_type === "money_market" ? "Money Market" : f.fund_type === "fixed_income" ? "Fixed Income" : f.fund_type === "balanced" ? "Balanced" : f.fund_type === "equity" ? "Equity" : f.fund_type === "bond" ? "Bond" : f.fund_type;
+              const fundTrend: "up" | "down" | "flat" | undefined = fHistory.length >= 2
+                ? (fHistory[fHistory.length - 1].rate > fHistory[0].rate ? "up" : fHistory[fHistory.length - 1].rate < fHistory[0].rate ? "down" : "flat")
+                : undefined;
               return (
                 <WatchCard key={f.id} title={f.name} sub={fundTypeLabel} value={`${f.annual_yield.toFixed(2)}%`}
                   change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
                   chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
                   sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}
+                  trend={fundTrend}
                    linkTo={`/compare/${f.slug}`}
                   onRemove={() => toggleAsset("fund", f.id, f.name)} />
               );
@@ -611,6 +626,7 @@ const OverviewPage = () => {
               linkTo="/stocks"
               color="bg-accent/10"
               sparkData={getStockSparkData(bestStock.id)}
+              trend={trendOf(bestStock.price, bestStock.previous_price)}
               extras={[
                 { label: "Volume", value: bestStock.volume?.toLocaleString() || "—" },
                 { label: "Day Chg", value: `${bestStock.day_change >= 0 ? "+" : ""}${bestStock.day_change.toFixed(2)}` },
@@ -682,6 +698,7 @@ const OverviewPage = () => {
               chartData={getHistory(bestFXRate.currency_code)}
               chartColor="hsl(var(--accent))"
               sparkData={getHistory(bestFXRate.currency_code).map(h => h.rate)}
+              trend={trendOf(Number(bestFXRate.rate), bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null)}
               extras={[
                 ...(bestFXRate.previous_rate != null ? [{ label: "Previous", value: `KES ${Number(bestFXRate.previous_rate).toFixed(2)}` }] : []),
               ]}
@@ -748,6 +765,7 @@ const OverviewPage = () => {
                   change={<Change current={s.price} previous={s.previous_price} />}
                   chart={sHistory.length > 2 ? <MiniChart data={sHistory} /> : undefined}
                   sparkData={getStockSparkData(s.id)}
+                  trend={trendOf(s.price, s.previous_price)}
                   linkTo={`/stocks/${s.symbol}`}
                   onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
                   onRemove={() => toggleAsset("stock", s.id, s.name)} />
@@ -760,6 +778,7 @@ const OverviewPage = () => {
                   change={<Change current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />}
                   chart={history.length > 2 ? <MiniChart data={history} /> : undefined}
                   sparkData={history.length > 2 ? history.map(h => h.rate) : undefined}
+                  trend={trendOf(Number(r.rate), r.previous_rate != null ? Number(r.previous_rate) : null)}
                   linkTo="/rates"
                   onAlert={() => openAlert("currency", r.id, `${r.currency_code}/KES`, Number(r.rate), "KES")}
                   onRemove={() => toggleAsset("currency", r.id, `${r.currency_code}/KES`)} />
@@ -768,6 +787,7 @@ const OverviewPage = () => {
             {watchedCommoditiesList.map(c => (
               <WatchCard key={c.id} title={c.name} sub={c.symbol} value={`${Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${c.unit}`}
                 change={<Change current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />}
+                trend={trendOf(Number(c.price), c.previous_price != null ? Number(c.previous_price) : null)}
                 linkTo="/commodities"
                 onAlert={() => openAlert("commodity", c.id, c.name, Number(c.price), c.unit)}
                 onRemove={() => toggleAsset("commodity", c.id, c.name)} />
@@ -775,11 +795,15 @@ const OverviewPage = () => {
             {watchedFunds.map(f => {
               const fHistory = getFundHistory(f.id);
               const fundTypeLabel = f.fund_type === "money_market" ? "Money Market" : f.fund_type === "fixed_income" ? "Fixed Income" : f.fund_type === "balanced" ? "Balanced" : f.fund_type === "equity" ? "Equity" : f.fund_type === "bond" ? "Bond" : f.fund_type;
+              const fundTrend: "up" | "down" | "flat" | undefined = fHistory.length >= 2
+                ? (fHistory[fHistory.length - 1].rate > fHistory[0].rate ? "up" : fHistory[fHistory.length - 1].rate < fHistory[0].rate ? "down" : "flat")
+                : undefined;
               return (
                 <WatchCard key={f.id} title={f.name} sub={fundTypeLabel} value={`${f.annual_yield.toFixed(2)}%`}
                   change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
                   chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
                   sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}
+                  trend={fundTrend}
                   linkTo={`/compare/${f.slug}`}
                   onRemove={() => toggleAsset("fund", f.id, f.name)} />
               );
@@ -995,9 +1019,10 @@ const OverviewPage = () => {
 };
 
 /* ─── Reusable Components ─── */
-const WatchCard = ({ title, sub, value, change, chart, sparkData, onAlert, onRemove, linkTo }: {
+const WatchCard = ({ title, sub, value, change, chart, sparkData, trend, onAlert, onRemove, linkTo }: {
   title: string; sub: string; value: string; change: React.ReactNode;
-  chart?: React.ReactNode; sparkData?: number[]; onAlert?: () => void; onRemove: () => void; linkTo?: string;
+  chart?: React.ReactNode; sparkData?: number[]; trend?: "up" | "down" | "flat";
+  onAlert?: () => void; onRemove: () => void; linkTo?: string;
 }) => {
   const mobileMain = (
     <>
@@ -1008,7 +1033,7 @@ const WatchCard = ({ title, sub, value, change, chart, sparkData, onAlert, onRem
         <p className="text-[10px] text-muted-foreground truncate">{sub}</p>
       </div>
       {sparkData && sparkData.length >= 3 && (
-        <Sparkline data={sparkData} width={48} height={18} color="auto" className="shrink-0" />
+        <Sparkline data={sparkData} width={48} height={18} color="auto" trend={trend} className="shrink-0" />
       )}
       <div className="text-right shrink-0">
         <p className="text-sm font-bold tabular-nums text-foreground">{value}</p>

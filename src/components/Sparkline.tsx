@@ -6,15 +6,19 @@ interface SparklineProps {
   height?: number;
   color?: string;
   className?: string;
+  /** Override auto trend detection so stroke matches an external change indicator. */
+  trend?: "up" | "down" | "flat";
 }
 
 /**
  * Lightweight SVG sparkline — no recharts dependency.
  * Renders a simple polyline + gradient fill for trend visualization.
  */
-const Sparkline = ({ data, width = 60, height = 20, color = "hsl(var(--accent))", className }: SparklineProps) => {
+const Sparkline = ({ data, width = 60, height = 20, color = "hsl(var(--accent))", className, trend }: SparklineProps) => {
   const id = useMemo(() => `spark-${Math.random().toString(36).slice(2, 8)}`, []);
-  const isUp = data.length >= 2 && data[data.length - 1] >= data[0];
+  const isUp = trend
+    ? trend === "up"
+    : data.length >= 2 && data[data.length - 1] >= data[0];
 
   const path = useMemo(() => {
     if (data.length < 2) return null;
@@ -33,7 +37,8 @@ const Sparkline = ({ data, width = 60, height = 20, color = "hsl(var(--accent))"
   }, [data, width, height]);
 
   if (!path) return null;
-  const strokeColor = color === "auto" ? (isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))") : color;
+  const autoColor = trend === "flat" ? "hsl(var(--muted-foreground))" : isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  const strokeColor = color === "auto" ? autoColor : color;
 
   return (
     <svg
