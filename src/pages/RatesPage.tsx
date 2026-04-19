@@ -7,7 +7,7 @@ import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 
@@ -45,6 +45,31 @@ const ChangeIndicator = ({ current, previous }: { current: number; previous: num
     <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]">
       <Minus className="h-3 w-3" /> 0.00%
     </span>
+  );
+};
+
+/* ─── Mini Sparkline (matches Stocks page) ─── */
+const MiniSparkline = ({ data, positive }: { data: RateHistory[]; positive: boolean }) => {
+  if (!data?.length || data.length < 2) return null;
+  const color = positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  const gradientId = `rate-sparkline-fill-${positive ? "up" : "down"}`;
+
+  return (
+    <div className="w-[60px] h-[24px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <YAxis hide domain={["dataMin - 0.01", "dataMax + 0.01"]} />
+          <Area type="monotone" dataKey="rate" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
+          <Line type="monotone" dataKey="rate" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+        </LineChart>
+      </ResponsiveContainer>
+    </div>
   );
 };
 
@@ -91,6 +116,27 @@ const RatesPage = () => {
       .subscribe();
     return () => { supabase.removeChannel(ch); };
   }, []);
+
+  // Preload sparkline history for all rates
+  useEffect(() => {
+    if (rates.length === 0) return;
+    const fetchAllHistory = async () => {
+      const { data } = await supabase
+        .from("exchange_rate_history_public" as any)
+        .select("exchange_rate_id, rate, snapshot_date")
+        .order("snapshot_date", { ascending: true });
+      if (data) {
+        const grouped: Record<string, RateHistory[]> = {};
+        (data as any[]).forEach((d) => {
+          const rid = d.exchange_rate_id;
+          if (!grouped[rid]) grouped[rid] = [];
+          grouped[rid].push({ snapshot_date: d.snapshot_date, rate: Number(d.rate) });
+        });
+        setHistory(grouped);
+      }
+    };
+    fetchAllHistory();
+  }, [rates]);
 
   const toggleExpand = async (rateId: string) => {
     if (expanded === rateId) {
@@ -162,41 +208,72 @@ const RatesPage = () => {
           </div>
         </div>
 
-        {/* Table with expandable rows */}
-        {loading ? (
-          <TableSkeleton />
-        ) : filtered.length === 0 ? (
-          <EmptyState label="exchange rates" />
-        ) : (
-          <div className="rounded-xl border border-border overflow-hidden bg-card">
-            <table className="w-full text-sm">
-              <thead>
-                <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
-                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground w-10">#</th>
-                  <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Currency</th>
-                  <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Rate (KES)</th>
-                  <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Change</th>
-                  <th className="w-10"></th>
-                </tr>
-              </thead>
-              <tbody>
-                {filtered.map((r, i) => (
-                  <RateRow
-                    key={r.id}
-                    rate={r}
-                    index={i}
-                    isExpanded={expanded === r.id}
-                    onToggle={() => toggleExpand(r.id)}
-                    history={history[r.id]}
-                    historyLoading={historyLoading === r.id}
-                    isFavourite={user ? isFavourite(r.id) : undefined}
-                    onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
-                  />
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
+        {/* Desktop Table */}
+        <div className="hidden md:block">
+          {loading ? (
+            <TableSkeleton />
+          ) : filtered.length === 0 ? (
+            <EmptyState label="exchange rates" />
+          ) : (
+            <div className="rounded-xl border border-border overflow-hidden bg-card">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
+                    <th className="text-left px-4 py-3 font-semibold text-muted-foreground w-10">#</th>
+                    <th className="text-left px-4 py-3 font-semibold text-muted-foreground">Currency</th>
+                    <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Rate (KES)</th>
+                    <th className="text-right px-4 py-3 font-semibold text-muted-foreground">Change</th>
+                    <th className="w-10"></th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {filtered.map((r, i) => (
+                    <RateRow
+                      key={r.id}
+                      rate={r}
+                      index={i}
+                      isExpanded={expanded === r.id}
+                      onToggle={() => toggleExpand(r.id)}
+                      history={history[r.id]}
+                      historyLoading={historyLoading === r.id}
+                      isFavourite={user ? isFavourite(r.id) : undefined}
+                      onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
+                    />
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="md:hidden space-y-2.5">
+          {loading ? (
+            Array.from({ length: 5 }).map((_, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-3.5">
+                <Skeleton className="h-5 w-20 mb-2" />
+                <Skeleton className="h-4 w-40 mb-3" />
+                <Skeleton className="h-12 rounded-lg" />
+              </div>
+            ))
+          ) : filtered.length === 0 ? (
+            <EmptyState label="exchange rates" />
+          ) : (
+            filtered.map((r) => {
+              const positive = r.previous_rate != null ? r.rate >= r.previous_rate : true;
+              return (
+                <MobileRateCard
+                  key={r.id}
+                  rate={r}
+                  history={history[r.id]}
+                  positive={positive}
+                  isFavourite={user ? isFavourite(r.id) : undefined}
+                  onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
+                />
+              );
+            })
+          )}
+        </div>
 
         {/* Summary footer */}
         <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
@@ -213,6 +290,61 @@ const RatesPage = () => {
     </div>
   );
 };
+
+/* ─── Mobile Card (matches Stocks page layout) ─── */
+const MobileRateCard = ({
+  rate: r,
+  history,
+  positive,
+  isFavourite,
+  onToggleFavourite,
+}: {
+  rate: Rate;
+  history?: RateHistory[];
+  positive: boolean;
+  isFavourite?: boolean;
+  onToggleFavourite?: () => void;
+}) => (
+  <div className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all overflow-hidden">
+    <div className="flex items-center gap-3 p-3.5">
+      {/* Left: Code + Name */}
+      <div className="flex-1 min-w-0">
+        <span className="font-bold text-foreground text-sm">{r.currency_code}</span>
+        <p className="text-[11px] text-muted-foreground truncate">{r.currency_name}</p>
+      </div>
+
+      {/* Center: Sparkline */}
+      <div className="shrink-0">
+        <MiniSparkline data={history || []} positive={positive} />
+      </div>
+
+      {/* Right: Rate + Change */}
+      <div className="text-right shrink-0">
+        <p className="font-bold text-foreground text-sm tabular-nums">
+          KES {r.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        </p>
+        <ChangeIndicator current={r.rate} previous={r.previous_rate} />
+      </div>
+
+      {/* Watchlist button */}
+      {onToggleFavourite !== undefined && (
+        <button
+          onClick={(e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            onToggleFavourite();
+          }}
+          className="p-1 shrink-0"
+          aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+        >
+          <Star
+            className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
+          />
+        </button>
+      )}
+    </div>
+  </div>
+);
 
 const RateRow = ({
   rate, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
