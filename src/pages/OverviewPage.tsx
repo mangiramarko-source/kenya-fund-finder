@@ -44,6 +44,14 @@ const SECTIONS = [
 ] as const;
 
 /* ─── Change Indicator ─── */
+const trendOf = (current: number, previous: number | null | undefined): "up" | "down" | "flat" | undefined => {
+  if (previous == null) return undefined;
+  const diff = current - previous;
+  if (diff > 0) return "up";
+  if (diff < 0) return "down";
+  return "flat";
+};
+
 const Change = ({ current, previous }: { current: number; previous: number | null }) => {
   if (previous == null) return <span className="text-muted-foreground text-xs">—</span>;
   const diff = current - previous;
