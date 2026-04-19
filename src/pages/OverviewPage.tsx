@@ -215,11 +215,11 @@ const MiniChart = ({ data, color = "hsl(var(--accent))" }: { data: { snapshot_da
 };
 
 /* ─── Detailed Highlight Card (desktop) ─── */
-const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color, chartData, chartColor, sparkData, extras }: {
+const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color, chartData, chartColor, sparkData, trend, extras }: {
   icon: any; label: string; name: string; value: string; sub?: string;
   change?: React.ReactNode; linkTo?: string; color?: string;
   chartData?: { snapshot_date: string; rate: number }[]; chartColor?: string;
-  sparkData?: number[]; extras?: { label: string; value: string }[];
+  sparkData?: number[]; trend?: "up" | "down" | "flat"; extras?: { label: string; value: string }[];
 }) => {
   const content = (
     <div className={`rounded-xl border border-border bg-card p-4 hover:border-accent/30 transition-colors group flex flex-col cursor-pointer h-full`}>
@@ -246,7 +246,7 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
           </div>
         </div>
         {sparkData && sparkData.length >= 3 && (
-          <Sparkline data={sparkData} width={64} height={28} color="auto" className="shrink-0 mt-2" />
+          <Sparkline data={sparkData} width={64} height={28} color="auto" trend={trend} className="shrink-0 mt-2" />
         )}
       </div>
       {extras && extras.length > 0 && (
