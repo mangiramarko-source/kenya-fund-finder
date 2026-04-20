@@ -815,7 +815,8 @@ const OverviewPage = () => {
       {/* ─── Section: Stocks ─── */}
       {enabledSections.includes("stocks") && (
         <SectionPanel title="Kenyan Stocks" icon={TrendingUp} link="/stocks" linkLabel="All stocks" count={stocks.length} sub={`${stocks.filter(s => s.day_change > 0).length}↑ ${stocks.filter(s => s.day_change < 0).length}↓`}>
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+          {/* Desktop: table */}
+          <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-sm">
               <thead><tr className="bg-muted/70 text-xs">
                 <th className="text-left px-4 py-2 font-semibold text-muted-foreground">#</th>
@@ -837,13 +838,44 @@ const OverviewPage = () => {
               </tbody>
             </table>
           </div>
+          {/* Mobile: cards matching /stocks page */}
+          <div className="md:hidden space-y-2.5">
+            {stocks.slice(0, 10).map((s) => {
+              const sparkData = getStockSparkData(s.id);
+              return (
+                <Link key={s.id} to={`/stocks/${s.symbol}`} className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden">
+                  <div className="flex items-center gap-3 p-3.5">
+                    <div className="flex-1 min-w-0">
+                      <span className="font-bold text-foreground text-sm">{s.symbol}</span>
+                      <p className="text-[11px] text-muted-foreground truncate">{s.name}</p>
+                    </div>
+                    {sparkData.length >= 3 && (
+                      <Sparkline data={sparkData} width={60} height={24} color="auto" trend={trendOf(s.price, s.previous_price)} className="shrink-0" />
+                    )}
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-foreground text-sm tabular-nums">KES {s.price.toFixed(2)}</p>
+                      <Change current={s.price} previous={s.previous_price} />
+                    </div>
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); openAlert("stock", s.id, s.name, s.price, "KES"); }}
+                      className="p-1 shrink-0 text-muted-foreground hover:text-accent transition-colors"
+                      aria-label="Set price alert"
+                    >
+                      <BellPlus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </SectionPanel>
       )}
 
       {/* ─── Section: FX ─── */}
       {enabledSections.includes("fx") && (
         <SectionPanel title="FX Rates" icon={DollarSign} link="/rates" linkLabel="All rates" count={rates.length}>
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+          {/* Desktop: table */}
+          <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-sm">
               <thead><tr className="bg-muted/70 text-xs">
                 <th className="text-left px-4 py-2 font-semibold text-muted-foreground">#</th>
@@ -865,13 +897,44 @@ const OverviewPage = () => {
               </tbody>
             </table>
           </div>
+          {/* Mobile: cards matching /rates page */}
+          <div className="md:hidden space-y-2.5">
+            {rates.map((r) => {
+              const sparkData = getHistory(r.currency_code).map(h => h.rate);
+              return (
+                <Link key={r.id} to="/rates" className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden">
+                  <div className="flex items-center gap-3 p-3.5">
+                    <div className="flex-1 min-w-0">
+                      <span className="font-bold text-foreground text-sm">{r.currency_code}</span>
+                      <p className="text-[11px] text-muted-foreground truncate">{r.currency_name}</p>
+                    </div>
+                    {sparkData.length >= 3 && (
+                      <Sparkline data={sparkData} width={60} height={24} color="auto" trend={trendOf(Number(r.rate), r.previous_rate != null ? Number(r.previous_rate) : null)} className="shrink-0" />
+                    )}
+                    <div className="text-right shrink-0">
+                      <p className="font-bold text-foreground text-sm tabular-nums">KES {Number(r.rate).toFixed(2)}</p>
+                      <Change current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />
+                    </div>
+                    <button
+                      onClick={(e) => { e.preventDefault(); e.stopPropagation(); openAlert("currency", r.id, `${r.currency_code}/KES`, Number(r.rate), "KES"); }}
+                      className="p-1 shrink-0 text-muted-foreground hover:text-accent transition-colors"
+                      aria-label="Set price alert"
+                    >
+                      <BellPlus className="h-4 w-4" />
+                    </button>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
         </SectionPanel>
       )}
 
       {/* ─── Section: Commodities ─── */}
       {enabledSections.includes("commodities") && (
         <SectionPanel title="Commodities" icon={Gem} link="/commodities" linkLabel="All commodities" count={commodities.length}>
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+          {/* Desktop: table */}
+          <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-sm">
               <thead><tr className="bg-muted/70 text-xs">
                 <th className="text-left px-4 py-2 font-semibold text-muted-foreground">#</th>
@@ -892,6 +955,33 @@ const OverviewPage = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Mobile: cards matching /commodities page */}
+          <div className="md:hidden space-y-2.5">
+            {commodities.map((c) => (
+              <Link key={c.id} to="/commodities" className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden">
+                <div className="flex items-center gap-3 p-3.5">
+                  <div className="flex-1 min-w-0">
+                    <span className="font-bold text-foreground text-sm">{c.name}</span>
+                    <p className="text-[11px] text-muted-foreground truncate">{c.symbol}</p>
+                  </div>
+                  <div className="text-right shrink-0">
+                    <p className="font-bold text-foreground text-sm tabular-nums">
+                      {Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                      <span className="text-muted-foreground ml-1 text-[10px]">{c.unit}</span>
+                    </p>
+                    <Change current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />
+                  </div>
+                  <button
+                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); openAlert("commodity", c.id, c.name, Number(c.price), c.unit); }}
+                    className="p-1 shrink-0 text-muted-foreground hover:text-accent transition-colors"
+                    aria-label="Set price alert"
+                  >
+                    <BellPlus className="h-4 w-4" />
+                  </button>
+                </div>
+              </Link>
+            ))}
           </div>
         </SectionPanel>
       )}
