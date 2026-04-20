@@ -53,8 +53,7 @@ const AuthPage = () => {
     }
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitAuth = useCallback(async (token: string) => {
     setError("");
     setMessage("");
 
@@ -63,14 +62,9 @@ const AuthPage = () => {
       return;
     }
 
-    if (!turnstileToken) {
-      setError("Please complete the security check before continuing.");
-      return;
-    }
-
     setLoading(true);
 
-    const verified = await verifyTurnstile(turnstileToken);
+    const verified = await verifyTurnstile(token);
     if (!verified) {
       setError("Security verification failed. Please try again.");
       setTurnstileToken(null);
@@ -98,6 +92,24 @@ const AuthPage = () => {
       }
     }
     setTurnstileToken(null);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isSignUp, email, password, confirmPassword, signIn, signUp, navigate]);
+
+  // Auto-submit when Turnstile verification completes (after fields are filled)
+  useEffect(() => {
+    if (!turnstileToken || loading) return;
+    if (!email || !password) return;
+    if (isSignUp && !confirmPassword) return;
+    submitAuth(turnstileToken);
+  }, [turnstileToken, loading, email, password, confirmPassword, isSignUp, submitAuth]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!turnstileToken) {
+      setError("Please complete the security check before continuing.");
+      return;
+    }
+    submitAuth(turnstileToken);
   };
 
   const handleGoogleSignIn = async () => {
