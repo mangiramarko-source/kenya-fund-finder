@@ -34,9 +34,13 @@ const CloudflareTurnstile = ({ onVerify, onExpire, onBotFields }: Props) => {
     if (!containerRef.current || !window.turnstile || widgetIdRef.current) return;
     widgetIdRef.current = window.turnstile.render(containerRef.current, {
       sitekey: SITE_KEY,
-      size: "invisible",
+      size: "flexible",
+      theme: "dark",
+      appearance: "always",
       callback: (token: string) => onVerify(token),
       "expired-callback": () => onExpire?.(),
+      "error-callback": () => onExpire?.(),
+      "timeout-callback": () => onExpire?.(),
     });
   }, [onVerify, onExpire]);
 
@@ -75,7 +79,7 @@ const CloudflareTurnstile = ({ onVerify, onExpire, onBotFields }: Props) => {
           onChange={(e) => setHoneypot(e.target.value)}
         />
       </div>
-      <div ref={containerRef} />
+      <div ref={containerRef} className="flex justify-center min-h-[65px]" />
     </>
   );
 };
