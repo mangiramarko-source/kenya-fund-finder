@@ -31,21 +31,14 @@ const AdminLoginPage = () => {
     botFieldsRef.current = fields;
   }, []);
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
+  const submitLogin = useCallback(async (token: string) => {
     setError("");
-
-    if (!turnstileToken) {
-      setError("Please complete the security check before signing in.");
-      return;
-    }
-
     setLoading(true);
 
     try {
       const { data, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
         body: {
-          token: turnstileToken,
+          token,
           honeypot: botFieldsRef.current.honeypot,
           formLoadedAt: botFieldsRef.current.formLoadedAt,
         },
@@ -71,6 +64,22 @@ const AdminLoginPage = () => {
     } else {
       navigate("/admin");
     }
+  }, [email, password, signIn, navigate]);
+
+  // Auto-submit when Turnstile verification completes (after fields are filled)
+  useEffect(() => {
+    if (!turnstileToken || loading) return;
+    if (!email || !password) return;
+    submitLogin(turnstileToken);
+  }, [turnstileToken, loading, email, password, submitLogin]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!turnstileToken) {
+      setError("Please complete the security check before signing in.");
+      return;
+    }
+    submitLogin(turnstileToken);
   };
 
   return (
