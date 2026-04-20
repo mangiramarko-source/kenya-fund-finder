@@ -79,7 +79,7 @@ const CloudflareTurnstile = ({ onVerify, onExpire, onBotFields }: Props) => {
           onChange={(e) => setHoneypot(e.target.value)}
         />
       </div>
-      <div ref={containerRef} />
+      <div ref={containerRef} className="flex justify-center min-h-[65px]" />
     </>
   );
 };
