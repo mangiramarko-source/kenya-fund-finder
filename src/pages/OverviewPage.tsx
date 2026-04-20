@@ -989,7 +989,8 @@ const OverviewPage = () => {
       {/* ─── Section: Money Market ─── */}
       {enabledSections.includes("money_market") && (
         <SectionPanel title="Money Market Funds" icon={BarChart3} link="/funds" linkLabel="All funds" count={mmFunds.length} sub={`Best: ${bestMMYield.toFixed(2)}%`}>
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+          {/* Desktop: table */}
+          <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-sm">
               <thead><tr className="bg-muted/70 text-xs">
                 <th className="text-left px-4 py-2 font-semibold text-muted-foreground">#</th>
@@ -1011,13 +1012,20 @@ const OverviewPage = () => {
               </tbody>
             </table>
           </div>
+          {/* Mobile: cards matching /funds page */}
+          <div className="md:hidden space-y-2.5">
+            {mmFunds.slice(0, 10).map((f) => (
+              <FundCardMobile key={f.id} fund={f} isBest={f.annual_yield === bestMMYield} />
+            ))}
+          </div>
         </SectionPanel>
       )}
 
       {/* ─── Section: Fixed Income ─── */}
       {enabledSections.includes("fixed_income") && (
         <SectionPanel title="Fixed Income Funds" icon={Landmark} link="/funds" linkLabel="All funds" count={fiFunds.length}>
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+          {/* Desktop: table */}
+          <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
             <table className="w-full text-sm">
               <thead><tr className="bg-muted/70 text-xs">
                 <th className="text-left px-4 py-2 font-semibold text-muted-foreground">#</th>
@@ -1038,6 +1046,12 @@ const OverviewPage = () => {
                 ))}
               </tbody>
             </table>
+          </div>
+          {/* Mobile: cards matching /funds page */}
+          <div className="md:hidden space-y-2.5">
+            {fiFunds.slice(0, 10).map((f) => (
+              <FundCardMobile key={f.id} fund={f} />
+            ))}
           </div>
         </SectionPanel>
       )}
