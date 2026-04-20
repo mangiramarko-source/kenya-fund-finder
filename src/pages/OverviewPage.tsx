@@ -1219,4 +1219,33 @@ const SectionPanel = ({ title, icon: Icon, link, linkLabel, count, sub, children
   </div>
 );
 
+/* ─── Mobile Fund Card (matches /funds page style) ─── */
+const FundCardMobile = ({ fund, isBest }: { fund: FundFromDB; isBest?: boolean }) => (
+  <Link
+    to={`/compare/${fund.slug}`}
+    className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
+  >
+    <div className="flex items-center gap-3 p-3.5">
+      <div className="flex-1 min-w-0">
+        <span className="font-bold text-foreground text-sm truncate block">{fund.name}</span>
+        <p className="text-[11px] text-muted-foreground truncate">{fund.manager}</p>
+      </div>
+      <div className="text-right shrink-0 space-y-1">
+        <div className="flex items-baseline justify-end gap-2">
+          <span className="text-[9px] text-muted-foreground uppercase tracking-wider w-10 text-right leading-none">annual</span>
+          <span className={`tabular-nums leading-none w-14 text-right text-sm font-extrabold ${isBest ? "text-accent" : "text-foreground"}`}>
+            {fund.annual_yield.toFixed(2)}%
+          </span>
+        </div>
+        <div className="flex items-baseline justify-end gap-2">
+          <span className="text-[9px] text-muted-foreground uppercase tracking-wider w-10 text-right leading-none">daily</span>
+          <span className="text-muted-foreground tabular-nums font-normal leading-none w-14 text-right text-sm">
+            {fund.daily_yield.toFixed(4)}%
+          </span>
+        </div>
+      </div>
+    </div>
+  </Link>
+);
+
 export default OverviewPage;
