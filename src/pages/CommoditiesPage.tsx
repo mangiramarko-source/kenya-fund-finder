@@ -155,11 +155,20 @@ const CommoditiesPage = () => {
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          <h1 className="text-xl md:text-2xl font-bold text-foreground">Commodity Prices</h1>
-          <p className="text-sm text-muted-foreground mt-1">
-            Indicative commodity prices including metals, energy, and cryptocurrency.
-            <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} />
-          </p>
+          <div className="flex items-start justify-between">
+            <div>
+              <h1 className="hidden md:block text-xl md:text-2xl font-bold text-foreground">Commodity Prices</h1>
+              <p className="text-sm text-muted-foreground md:mt-1">
+                <span className="hidden md:inline">Indicative commodity prices including metals, energy, and cryptocurrency.</span>
+              </p>
+            </div>
+            <div className="hidden md:flex flex-col items-end gap-1">
+              <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} hideDate />
+              <span className="text-xs text-muted-foreground/70">Updated {latestUpdate?.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
+            </div>
+            <div className="md:hidden"><SectionLiveStatus section="commodities" fallbackDate={latestUpdate} /></div>
+          </div>
+          <div className="md:hidden border-b border-border mt-3" />
         </div>
 
         <ActiveAlertsCard assetType="commodity" />

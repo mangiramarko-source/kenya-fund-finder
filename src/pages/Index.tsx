@@ -45,15 +45,20 @@ const Index = () => {
   return (
     <div className="space-y-4 px-4 md:px-6 py-4 md:py-6">
       <div>
-        <div className="flex items-center justify-between md:block">
-          <h1 className="hidden md:block text-xl md:text-2xl font-bold text-foreground">Unit Trusts</h1>
+        <div className="flex items-start justify-between">
+          <div>
+            <h1 className="hidden md:block text-xl md:text-2xl font-bold text-foreground">Unit Trusts</h1>
+            <p className="text-sm text-muted-foreground md:mt-1">
+              <span className="hidden md:inline">Track listed unit trust funds in Kenya.</span>
+            </p>
+          </div>
+          <div className="hidden md:flex flex-col items-end gap-1">
+            <SectionLiveStatus section="funds" fallbackDate={lastUpdate} hideDate />
+            <span className="text-xs text-muted-foreground/70">Updated {lastUpdate?.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
+          </div>
           <div className="md:hidden"><SectionLiveStatus section="funds" fallbackDate={lastUpdate} /></div>
         </div>
-        <p className="text-sm text-muted-foreground md:mt-1">
-          <span className="hidden md:inline">Track listed unit trust funds in Kenya.</span>
-          <span className="hidden md:inline"><SectionLiveStatus section="funds" fallbackDate={lastUpdate} /></span>
-        </p>
-        
+        <div className="md:hidden border-b border-border mt-3" />
       </div>
       <StatBar
         isLive={false}
