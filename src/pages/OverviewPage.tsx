@@ -267,7 +267,7 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
           <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${color || "bg-primary/10"}`}>
             <Icon className="h-3.5 w-3.5 text-primary" />
           </div>
-          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
+          <span className="font-semibold text-muted-foreground uppercase tracking-wider text-sm">{label}</span>
         </div>
         {linkTo && (
           <span className="text-[10px] text-accent inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
