@@ -239,20 +239,35 @@ const MiniChart = ({ data, color = "hsl(var(--accent))", trend }: { data: { snap
 };
 
 /* ─── Detailed Highlight Card (desktop) ─── */
-const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color, chartData, chartColor, sparkData, trend, extras }: {
+/**
+ * Compact highlight card matching the reference design:
+ *  - Header row: icon chip + LABEL
+ *  - Body: name + large value + change/sub  (sparkline floated right)
+ *  - Divider + 2-col stats grid
+ * No full-width bottom chart — the inline sparkline carries the trend.
+ */
+const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color, chartData, sparkData, trend, extras }: {
   icon: any; label: string; name: string; value: string; sub?: string;
   change?: React.ReactNode; linkTo?: string; color?: string;
   chartData?: { snapshot_date: string; rate: number }[]; chartColor?: string;
   sparkData?: number[]; trend?: "up" | "down" | "flat"; extras?: { label: string; value: string }[];
 }) => {
+  // Fall back to deriving spark series from chartData when sparkData isn't provided
+  const spark = sparkData && sparkData.length >= 3
+    ? sparkData
+    : chartData && chartData.length >= 3
+      ? chartData.map((d) => d.rate)
+      : undefined;
+
   const content = (
-    <div className={`rounded-xl border border-border bg-card p-4 hover:border-accent/30 transition-colors group flex flex-col cursor-pointer h-full`}>
-      <div className="flex items-center justify-between mb-2">
+    <div className="rounded-xl border border-border bg-card p-4 hover:border-accent/30 transition-colors group flex flex-col cursor-pointer h-full">
+      {/* Header */}
+      <div className="flex items-center justify-between mb-3">
         <div className="flex items-center gap-2">
           <div className={`h-7 w-7 rounded-lg flex items-center justify-center ${color || "bg-primary/10"}`}>
             <Icon className="h-3.5 w-3.5 text-primary" />
           </div>
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+          <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</span>
         </div>
         {linkTo && (
           <span className="text-[10px] text-accent inline-flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -260,32 +275,31 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
           </span>
         )}
       </div>
-      <div className="flex items-start justify-between gap-2">
+
+      {/* Body: name + value + change   |   sparkline (right) */}
+      <div className="flex items-start justify-between gap-3">
         <div className="min-w-0 flex-1">
-          <p className="text-xs font-bold text-foreground truncate" title={name}>{name}</p>
-          <p className="text-lg font-bold text-foreground tabular-nums mt-0.5">{value}</p>
-          <div className="flex items-center gap-2 mt-0.5">
+          <p className="text-sm font-semibold text-foreground truncate" title={name}>{name}</p>
+          <p className="text-2xl font-bold text-foreground tabular-nums mt-1 leading-none">{value}</p>
+          <div className="flex items-center gap-2 mt-2">
             {change}
-            {sub && <span className="text-[10px] text-muted-foreground truncate">{sub}</span>}
+            {sub && <span className="text-[11px] text-muted-foreground truncate">{sub}</span>}
           </div>
         </div>
-        {sparkData && sparkData.length >= 3 && (
-          <Sparkline data={sparkData} width={64} height={28} color="auto" trend={trend} className="shrink-0 mt-2" />
+        {spark && (
+          <Sparkline data={spark} width={88} height={36} color="auto" trend={trend} className="shrink-0" />
         )}
       </div>
+
+      {/* Stats grid */}
       {extras && extras.length > 0 && (
-        <div className="grid grid-cols-2 gap-x-3 gap-y-1 mt-2 pt-2 border-t border-border/50">
+        <div className="grid grid-cols-2 gap-x-6 gap-y-1.5 mt-3 pt-3 border-t border-border/60">
           {extras.map((e, i) => (
             <div key={i} className="flex items-center justify-between">
-              <span className="text-[9px] text-muted-foreground">{e.label}</span>
-              <span className="text-[10px] font-semibold tabular-nums text-foreground">{e.value}</span>
+              <span className="text-[11px] text-muted-foreground">{e.label}</span>
+              <span className="text-[11px] font-semibold tabular-nums text-foreground">{e.value}</span>
             </div>
           ))}
-        </div>
-      )}
-      {chartData && chartData.length > 2 && (
-        <div className="mt-2 -mx-1 flex-1 min-h-[50px]">
-          <MiniChart data={chartData} color={chartColor || "auto"} trend={trend} />
         </div>
       )}
     </div>
