@@ -46,10 +46,10 @@ const Index = () => {
     <div className="space-y-4 px-4 md:px-6 py-4 md:py-6">
       <div>
         <div className="flex items-center justify-between md:block">
-          
+          <h1 className="hidden md:block text-xl md:text-2xl font-bold text-foreground">Unit Trusts</h1>
           <div className="md:hidden"><SectionLiveStatus section="funds" fallbackDate={lastUpdate} /></div>
         </div>
-        <p className="text-sm text-muted-foreground mt-1">
+        <p className="text-sm text-muted-foreground md:mt-1">
           <span className="hidden md:inline">Track listed unit trust funds in Kenya.</span>
           <span className="hidden md:inline"><SectionLiveStatus section="funds" fallbackDate={lastUpdate} /></span>
         </p>
