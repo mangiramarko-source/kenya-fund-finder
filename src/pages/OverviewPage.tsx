@@ -203,20 +203,36 @@ const AssetGroup = ({ label, items, onToggle }: { label: string; items: { id: st
 );
 
 /* ─── Mini Chart ─── */
-const MiniChart = ({ data, color = "hsl(var(--accent))" }: { data: { snapshot_date: string; rate: number }[]; color?: string }) => {
+/**
+ * Pass color="auto" to derive stroke from data trend (green up / red down).
+ * Pass an explicit trend prop to override auto detection (keeps line in sync
+ * with an external % change indicator).
+ */
+const MiniChart = ({ data, color = "hsl(var(--accent))", trend }: { data: { snapshot_date: string; rate: number }[]; color?: string; trend?: "up" | "down" | "flat" }) => {
   if (data.length < 2) return null;
+  const autoTrend: "up" | "down" | "flat" =
+    trend ?? (data[data.length - 1].rate > data[0].rate ? "up" : data[data.length - 1].rate < data[0].rate ? "down" : "flat");
+  const resolvedColor =
+    color === "auto"
+      ? autoTrend === "down"
+        ? "hsl(var(--destructive))"
+        : autoTrend === "flat"
+          ? "hsl(var(--muted-foreground))"
+          : "hsl(var(--accent))"
+      : color;
+  const gradId = `mc-${resolvedColor.replace(/[^a-z0-9]/gi, "")}`;
   return (
     <ResponsiveContainer width="100%" height={60}>
       <AreaChart data={data}>
         <defs>
-          <linearGradient id={`mc-${color.replace(/[^a-z0-9]/gi, "")}`} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={color} stopOpacity={0.2} />
-            <stop offset="95%" stopColor={color} stopOpacity={0} />
+          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+            <stop offset="5%" stopColor={resolvedColor} stopOpacity={0.25} />
+            <stop offset="95%" stopColor={resolvedColor} stopOpacity={0} />
           </linearGradient>
         </defs>
         <XAxis dataKey="snapshot_date" hide />
         <YAxis domain={["auto", "auto"]} hide />
-        <Area type="monotone" dataKey="rate" stroke={color} strokeWidth={1.5} fill={`url(#mc-${color.replace(/[^a-z0-9]/gi, "")})`} />
+        <Area type="monotone" dataKey="rate" stroke={resolvedColor} strokeWidth={1.5} fill={`url(#${gradId})`} />
       </AreaChart>
     </ResponsiveContainer>
   );
@@ -269,7 +285,7 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
       )}
       {chartData && chartData.length > 2 && (
         <div className="mt-2 -mx-1 flex-1 min-h-[50px]">
-          <MiniChart data={chartData} color={chartColor || "hsl(var(--accent))"} />
+          <MiniChart data={chartData} color={chartColor || "auto"} trend={trend} />
         </div>
       )}
     </div>
@@ -625,7 +641,8 @@ const OverviewPage = () => {
               sub={bestStock.sector}
               linkTo="/stocks"
               color="bg-accent/10"
-              sparkData={getStockSparkData(bestStock.id)}
+              chartData={getStockHistory(bestStock.id)}
+              chartColor="auto"
               trend={trendOf(bestStock.price, bestStock.previous_price)}
               extras={[
                 { label: "Volume", value: bestStock.volume?.toLocaleString() || "—" },
@@ -644,9 +661,12 @@ const OverviewPage = () => {
               change={<Change current={Number(goldCommodity.price)} previous={goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null} />}
               linkTo="/commodities"
               color="bg-[hsl(45,80%,50%)]/10"
+              trend={trendOf(Number(goldCommodity.price), goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null)}
               extras={[
                 { label: "Unit", value: goldCommodity.unit },
                 ...(goldCommodity.previous_price != null ? [{ label: "Previous", value: Number(goldCommodity.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2 }) }] : []),
+                { label: "Day Chg", value: goldCommodity.previous_price != null ? `${(Number(goldCommodity.price) - Number(goldCommodity.previous_price)) >= 0 ? "+" : ""}${(Number(goldCommodity.price) - Number(goldCommodity.previous_price)).toFixed(2)}` : "—" },
+                { label: "Change %", value: goldCommodity.previous_price != null && Number(goldCommodity.previous_price) !== 0 ? `${((Number(goldCommodity.price) - Number(goldCommodity.previous_price)) / Number(goldCommodity.previous_price) * 100) >= 0 ? "+" : ""}${((Number(goldCommodity.price) - Number(goldCommodity.previous_price)) / Number(goldCommodity.previous_price) * 100).toFixed(2)}%` : "—" },
               ]}
             />
           )}
@@ -659,9 +679,12 @@ const OverviewPage = () => {
               change={<Change current={Number(silverCommodity.price)} previous={silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null} />}
               linkTo="/commodities"
               color="bg-muted"
+              trend={trendOf(Number(silverCommodity.price), silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null)}
               extras={[
                 { label: "Unit", value: silverCommodity.unit },
                 ...(silverCommodity.previous_price != null ? [{ label: "Previous", value: Number(silverCommodity.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2 }) }] : []),
+                { label: "Day Chg", value: silverCommodity.previous_price != null ? `${(Number(silverCommodity.price) - Number(silverCommodity.previous_price)) >= 0 ? "+" : ""}${(Number(silverCommodity.price) - Number(silverCommodity.previous_price)).toFixed(2)}` : "—" },
+                { label: "Change %", value: silverCommodity.previous_price != null && Number(silverCommodity.previous_price) !== 0 ? `${((Number(silverCommodity.price) - Number(silverCommodity.previous_price)) / Number(silverCommodity.previous_price) * 100) >= 0 ? "+" : ""}${((Number(silverCommodity.price) - Number(silverCommodity.previous_price)) / Number(silverCommodity.previous_price) * 100).toFixed(2)}%` : "—" },
               ]}
             />
           )}
@@ -676,7 +699,7 @@ const OverviewPage = () => {
               linkTo={`/compare/${bestMM.slug}`}
               color="bg-primary/10"
               chartData={getFundHistory(bestMM.id)}
-              chartColor="hsl(var(--primary))"
+              chartColor="auto"
               extras={[
                 { label: "Daily", value: `${bestMM.daily_yield.toFixed(4)}%` },
                 { label: "7-Day", value: `${bestMM.seven_day_yield.toFixed(2)}%` },
@@ -696,8 +719,7 @@ const OverviewPage = () => {
               linkTo="/rates"
               color="bg-accent/10"
               chartData={getHistory(bestFXRate.currency_code)}
-              chartColor="hsl(var(--accent))"
-              sparkData={getHistory(bestFXRate.currency_code).map(h => h.rate)}
+              chartColor="auto"
               trend={trendOf(Number(bestFXRate.rate), bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null)}
               extras={[
                 ...(bestFXRate.previous_rate != null ? [{ label: "Previous", value: `KES ${Number(bestFXRate.previous_rate).toFixed(2)}` }] : []),
@@ -714,7 +736,7 @@ const OverviewPage = () => {
               linkTo={`/compare/${bestFI.slug}`}
               color="bg-secondary/80"
               chartData={getFundHistory(bestFI.id)}
-              chartColor="hsl(var(--secondary))"
+              chartColor="auto"
               extras={[
                 { label: "Daily", value: `${bestFI.daily_yield.toFixed(4)}%` },
                 { label: "7-Day", value: `${bestFI.seven_day_yield.toFixed(2)}%` },
