@@ -266,10 +266,11 @@ const StocksPage = () => {
       <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
           <div className="flex items-center justify-between md:block">
-            
+            <h1 className="hidden md:block text-xl md:text-2xl font-bold text-foreground">Kenyan Stocks</h1>
             <div className="md:hidden"><SectionLiveStatus section="stocks" fallbackDate={latestUpdate} /></div>
           </div>
-          <p className="text-sm text-muted-foreground mt-1">
+          <p className="text-sm text-muted-foreground md:mt-1">
+            <span className="hidden md:inline">Track Kenyan stock market prices, market cap, volumes, and performance.</span>
             <span className="hidden md:inline"><SectionLiveStatus section="stocks" fallbackDate={latestUpdate} /></span>
           </p>
           <div className="md:hidden border-b border-border mt-3" />
