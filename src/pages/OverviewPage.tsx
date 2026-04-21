@@ -285,7 +285,7 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
       )}
       {chartData && chartData.length > 2 && (
         <div className="mt-2 -mx-1 flex-1 min-h-[50px]">
-          <MiniChart data={chartData} color={chartColor || "hsl(var(--accent))"} />
+          <MiniChart data={chartData} color={chartColor || "auto"} trend={trend} />
         </div>
       )}
     </div>
