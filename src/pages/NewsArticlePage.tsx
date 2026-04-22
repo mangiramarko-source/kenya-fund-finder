@@ -228,9 +228,10 @@ const NewsArticlePage = () => {
         </DropdownMenu>
       </div>
 
-      <p className="text-[10px] text-muted-foreground text-center mt-8">
+      <p className="text-[10px] text-muted-foreground text-center mt-8 pb-6 md:pb-0">
         All information is sourced from publicly available data. Fund yields and regulatory details are based on CMA-regulated disclosures.
       </p>
+      </div>
     </div>
   );
 };
