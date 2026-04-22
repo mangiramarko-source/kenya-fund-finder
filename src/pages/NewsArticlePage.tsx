@@ -113,9 +113,18 @@ const NewsArticlePage = () => {
   const heroImage = getNewsImage(article.image_url, article.category, article.id);
 
   return (
-    <div className="max-w-3xl mx-auto py-5 sm:py-8 px-4 sm:px-6">
-      {/* Breadcrumb */}
-      <nav className="flex items-center gap-2 text-muted-foreground mb-5 text-sm">
+    <div className="md:max-w-3xl md:mx-auto md:py-8 md:px-6">
+      {/* Mobile-only sticky back button (replaces top nav) */}
+      <div className="md:hidden sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border px-3 py-2">
+        <Button asChild variant="ghost" size="sm" className="gap-1.5 -ml-2">
+          <Link to="/news" aria-label="Back to news">
+            <ArrowLeft className="h-4 w-4" /> Back
+          </Link>
+        </Button>
+      </div>
+
+      {/* Breadcrumb — desktop only */}
+      <nav className="hidden md:flex items-center gap-2 text-muted-foreground mb-5 text-sm">
         <Link to="/" className="hover:text-foreground transition-colors">Home</Link>
         <span>/</span>
         <Link to="/news" className="hover:text-foreground transition-colors">News</Link>
@@ -123,8 +132,8 @@ const NewsArticlePage = () => {
         <span className="text-foreground font-medium truncate max-w-[200px]">{decodeHtmlEntities(article.title)}</span>
       </nav>
 
-      {/* Hero image */}
-      <div className="rounded-2xl overflow-hidden mb-5 border border-border">
+      {/* Hero image — full-bleed on mobile, rounded card on desktop */}
+      <div className="md:rounded-2xl overflow-hidden md:mb-5 md:border md:border-border">
         <img
           src={heroImage}
           alt={article.title}
@@ -133,6 +142,9 @@ const NewsArticlePage = () => {
           loading="eager"
         />
       </div>
+
+      {/* Inner content padding for mobile */}
+      <div className="px-4 pt-5 md:px-0 md:pt-0">
 
       {/* Category & meta */}
       <div className="flex items-center gap-2 mb-3 flex-wrap">
