@@ -13,6 +13,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   usePageView();
   const { pathname } = useLocation();
   const showTicker = pathname === "/";
+  // Immersive mobile view for news article pages: hide mobile navbar & footer
+  const isNewsArticle = /^\/news\/[^/]+/.test(pathname);
 
   return (
     <div className="flex min-h-screen font-body">
@@ -26,17 +28,22 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         {/* Desktop top bar */}
         <DesktopTopBar />
 
-        {/* Mobile-only navbar */}
-        <div className="md:hidden">
-          <Navbar />
-        </div>
+        {/* Mobile-only navbar — hidden on news article pages */}
+        {!isNewsArticle && (
+          <div className="md:hidden">
+            <Navbar />
+          </div>
+        )}
         {showTicker && (
           <div className="md:hidden">
             <CurrencyTicker />
           </div>
         )}
         <main id="main-content" className="flex-1 min-h-[80vh]">{children}</main>
-        <Footer />
+        {/* Footer hidden on mobile news article pages for immersive view */}
+        <div className={isNewsArticle ? "hidden md:block" : ""}>
+          <Footer />
+        </div>
         <CookieConsent />
         <SuggestionBox />
       </div>
