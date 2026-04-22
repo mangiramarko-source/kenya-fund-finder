@@ -3,7 +3,7 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, type FundFromDB, type YieldSnapshot } from "@/lib/api";
 import { useFundWatchlist } from "@/hooks/useFundWatchlist";
 import FundGrid from "@/components/home/FundGrid";
-import StatBar from "@/components/home/StatBar";
+
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 
 const Index = () => {
@@ -63,15 +63,6 @@ const Index = () => {
         </div>
         <div className="md:hidden border-b border-border mt-3" />
       </div>
-      <StatBar
-        isLive={false}
-        lastUpdate={lastUpdate}
-        fundCount={published.length}
-        bestYield={bestYield}
-        avgYield={avgYield}
-        loading={loading}
-        hideYields={false}
-      />
       <FundGrid
         funds={published}
         snapshots={snapshots}
