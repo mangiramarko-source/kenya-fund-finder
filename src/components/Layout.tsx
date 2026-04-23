@@ -44,7 +44,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           <Footer />
         </div>
         <CookieConsent />
-        <SuggestionBox />
       </div>
     </div>
   );
