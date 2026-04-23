@@ -197,7 +197,7 @@ const MarketDashboardPage = () => {
                 placeholder={`Search ${categoryLabels[activeTab].toLowerCase()}…`}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-9 h-8 text-xs rounded-lg bg-muted/30 border-border"
+                className="pl-9 h-8 text-[16px] md:text-xs rounded-lg bg-muted/30 border-border"
               />
             </div>
           </div>

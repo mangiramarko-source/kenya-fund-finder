@@ -207,7 +207,7 @@ const RatesPage = () => {
               placeholder="Search "
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 rounded-lg sm:text-sm text-xs"
+              className="pl-9 h-9 rounded-lg text-[16px] sm:text-sm"
             />
           </div>
         </div>
