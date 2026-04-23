@@ -230,6 +230,9 @@ const StocksPage = () => {
   const filtered = useMemo(() => {
     let result = stocks;
     if (sector !== "All") result = result.filter((s) => s.sector === sector);
+    if (mobileMovement === "gainers") result = result.filter((s) => s.day_change > 0);
+    else if (mobileMovement === "losers") result = result.filter((s) => s.day_change < 0);
+    else if (mobileMovement === "unchanged") result = result.filter((s) => s.day_change === 0);
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((s) => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
@@ -242,7 +245,7 @@ const StocksPage = () => {
       return mul * (av - bv);
     });
     return result;
-  }, [stocks, sector, search, sortKey, sortDir]);
+  }, [stocks, sector, search, sortKey, sortDir, mobileMovement]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
