@@ -476,6 +476,10 @@ const OverviewPage = () => {
     const mm = funds.filter(f => f.fund_type === "money_market");
     return mm.length ? [...mm].sort((a, b) => b.annual_yield - a.annual_yield)[0] : null;
   }, [funds]);
+  const moneyMarketFunds = useMemo(
+    () => funds.filter(f => f.fund_type === "money_market").sort((a, b) => b.annual_yield - a.annual_yield).slice(0, 5),
+    [funds]
+  );
   const bestFI = useMemo(() => {
     const fi = funds.filter(f => f.fund_type === "fixed_income");
     return fi.length ? [...fi].sort((a, b) => b.annual_yield - a.annual_yield)[0] : null;
