@@ -464,6 +464,14 @@ const OverviewPage = () => {
 
   // Best performers
   const bestStock = useMemo(() => stocks.length ? [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [stocks]);
+  const topGainers = useMemo(
+    () => [...stocks].filter(s => s.day_change_percent > 0).sort((a, b) => b.day_change_percent - a.day_change_percent).slice(0, 5),
+    [stocks]
+  );
+  const topLosers = useMemo(
+    () => [...stocks].filter(s => s.day_change_percent < 0).sort((a, b) => a.day_change_percent - b.day_change_percent).slice(0, 5),
+    [stocks]
+  );
   const bestMM = useMemo(() => {
     const mm = funds.filter(f => f.fund_type === "money_market");
     return mm.length ? [...mm].sort((a, b) => b.annual_yield - a.annual_yield)[0] : null;
@@ -765,8 +773,57 @@ const OverviewPage = () => {
 
         {/* Mobile: compact single-column list */}
         <div className="flex flex-col gap-2 md:hidden">
-          {bestStock && (
-            <HighlightCard icon={TrendingUp} label="Top Stock" name={`${bestStock.symbol} · ${bestStock.name}`} value={`KES ${bestStock.price.toFixed(2)}`} change={<Change current={bestStock.price} previous={bestStock.previous_price} />} linkTo="/stocks" color="bg-accent/10" />
+          {(topGainers.length > 0 || topLosers.length > 0) && (
+            <div className="rounded-lg border border-border bg-card overflow-hidden">
+              {topGainers.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 px-3 py-2 bg-success/10 border-b border-border">
+                    <TrendingUp className="h-3.5 w-3.5 text-success" />
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-success">Top Gainers</span>
+                  </div>
+                  <ul className="divide-y divide-border">
+                    {topGainers.map(s => (
+                      <li key={`g-${s.id}`}>
+                        <Link to={`/stocks/${s.symbol}`} className="flex items-center justify-between px-3 py-2 hover:bg-muted/40 transition-colors">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-foreground truncate">{s.symbol}</div>
+                            <div className="text-[10px] text-muted-foreground truncate">{s.name}</div>
+                          </div>
+                          <div className="text-right ml-2 shrink-0">
+                            <div className="text-xs font-mono text-foreground">KES {s.price.toFixed(2)}</div>
+                            <div className="text-[10px] font-medium text-success">+{s.day_change_percent.toFixed(2)}%</div>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {topLosers.length > 0 && (
+                <div>
+                  <div className="flex items-center gap-1.5 px-3 py-2 bg-destructive/10 border-y border-border">
+                    <TrendingUp className="h-3.5 w-3.5 text-destructive rotate-180" />
+                    <span className="text-[11px] font-semibold uppercase tracking-wide text-destructive">Top Losers</span>
+                  </div>
+                  <ul className="divide-y divide-border">
+                    {topLosers.map(s => (
+                      <li key={`l-${s.id}`}>
+                        <Link to={`/stocks/${s.symbol}`} className="flex items-center justify-between px-3 py-2 hover:bg-muted/40 transition-colors">
+                          <div className="min-w-0 flex-1">
+                            <div className="text-xs font-semibold text-foreground truncate">{s.symbol}</div>
+                            <div className="text-[10px] text-muted-foreground truncate">{s.name}</div>
+                          </div>
+                          <div className="text-right ml-2 shrink-0">
+                            <div className="text-xs font-mono text-foreground">KES {s.price.toFixed(2)}</div>
+                            <div className="text-[10px] font-medium text-destructive">{s.day_change_percent.toFixed(2)}%</div>
+                          </div>
+                        </Link>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+            </div>
           )}
           {bestMM && (
             <HighlightCard icon={BarChart3} label="Money Market" name={bestMM.name} value={`${bestMM.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestMM.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestMM.slug}`} color="bg-primary/10" />
