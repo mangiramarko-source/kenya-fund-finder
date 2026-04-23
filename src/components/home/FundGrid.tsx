@@ -256,10 +256,10 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         <div className="relative w-full md:w-64 shrink-0 max-w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
           <Input
-            placeholder="Search funds or managers…"
+            placeholder="Search "
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-8 md:h-9 text-[16px] sm:text-sm rounded-lg bg-muted/30 border-border w-full"
+            className="pl-9 h-8 md:h-9 text-xs sm:text-sm rounded-lg bg-muted/30 border-border w-full"
           />
         </div>
       </div>
