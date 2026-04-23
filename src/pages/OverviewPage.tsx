@@ -773,9 +773,6 @@ const OverviewPage = () => {
 
         {/* Mobile: compact single-column list */}
         <div className="flex flex-col gap-2 md:hidden">
-          {bestStock && (
-            <HighlightCard icon={TrendingUp} label="Top Stock" name={`${bestStock.symbol} · ${bestStock.name}`} value={`KES ${bestStock.price.toFixed(2)}`} change={<Change current={bestStock.price} previous={bestStock.previous_price} />} linkTo="/stocks" color="bg-accent/10" />
-          )}
           {(topGainers.length > 0 || topLosers.length > 0) && (
             <div className="rounded-lg border border-border bg-card overflow-hidden">
               {topGainers.length > 0 && (
