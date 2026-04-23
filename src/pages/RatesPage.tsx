@@ -204,10 +204,10 @@ const RatesPage = () => {
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
-              placeholder="Search currencies…"
+              placeholder="Search "
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 rounded-lg text-[16px] sm:text-sm"
+              className="pl-9 h-9 rounded-lg sm:text-sm text-xs"
             />
           </div>
         </div>
