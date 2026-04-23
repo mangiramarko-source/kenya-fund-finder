@@ -323,9 +323,9 @@ const StocksPage = () => {
           </div>
         </div>
 
-        {/* Mobile-only movement filter (visible when sector = All) */}
+        {/* Movement filter (visible when sector = All) */}
         {sector === "All" && (
-          <div className="md:hidden -mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
+          <div className="-mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
             {([
               { key: "all", label: "All", count: stocks.length },
               { key: "gainers", label: "Gainers", count: gainers },
