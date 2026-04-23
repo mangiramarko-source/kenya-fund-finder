@@ -142,6 +142,7 @@ const StocksPage = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [history, setHistory] = useState<Record<string, PriceHistory[]>>({});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
+  const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
 
   useEffect(() => {
     const fetchStocks = async () => {
@@ -229,6 +230,9 @@ const StocksPage = () => {
   const filtered = useMemo(() => {
     let result = stocks;
     if (sector !== "All") result = result.filter((s) => s.sector === sector);
+    if (mobileMovement === "gainers") result = result.filter((s) => s.day_change > 0);
+    else if (mobileMovement === "losers") result = result.filter((s) => s.day_change < 0);
+    else if (mobileMovement === "unchanged") result = result.filter((s) => s.day_change === 0);
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter((s) => s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q));
@@ -241,7 +245,7 @@ const StocksPage = () => {
       return mul * (av - bv);
     });
     return result;
-  }, [stocks, sector, search, sortKey, sortDir]);
+  }, [stocks, sector, search, sortKey, sortDir, mobileMovement]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -318,6 +322,43 @@ const StocksPage = () => {
             />
           </div>
         </div>
+
+        {/* Mobile-only movement filter (visible when sector = All) */}
+        {sector === "All" && (
+          <div className="md:hidden -mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
+            {([
+              { key: "all", label: "All", count: stocks.length },
+              { key: "gainers", label: "Gainers", count: gainers },
+              { key: "losers", label: "Losers", count: losers },
+              { key: "unchanged", label: "Unchanged", count: unchanged },
+            ] as const).map((opt) => {
+              const active = mobileMovement === opt.key;
+              const activeColor =
+                opt.key === "gainers"
+                  ? "bg-accent text-accent-foreground"
+                  : opt.key === "losers"
+                  ? "bg-destructive text-destructive-foreground"
+                  : opt.key === "unchanged"
+                  ? "bg-muted-foreground/80 text-background"
+                  : "bg-foreground text-background";
+              return (
+                <button
+                  key={opt.key}
+                  onClick={() => setMobileMovement(opt.key)}
+                  className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                    active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
+                  {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
+                  {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
+                  {opt.label}
+                  <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
 
         {/* Desktop Table */}
         <div className="hidden md:block">
