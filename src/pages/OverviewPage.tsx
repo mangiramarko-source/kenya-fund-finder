@@ -464,6 +464,14 @@ const OverviewPage = () => {
 
   // Best performers
   const bestStock = useMemo(() => stocks.length ? [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [stocks]);
+  const topGainers = useMemo(
+    () => [...stocks].filter(s => s.day_change_percent > 0).sort((a, b) => b.day_change_percent - a.day_change_percent).slice(0, 5),
+    [stocks]
+  );
+  const topLosers = useMemo(
+    () => [...stocks].filter(s => s.day_change_percent < 0).sort((a, b) => a.day_change_percent - b.day_change_percent).slice(0, 5),
+    [stocks]
+  );
   const bestMM = useMemo(() => {
     const mm = funds.filter(f => f.fund_type === "money_market");
     return mm.length ? [...mm].sort((a, b) => b.annual_yield - a.annual_yield)[0] : null;
