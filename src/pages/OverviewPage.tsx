@@ -790,12 +790,12 @@ const OverviewPage = () => {
                       <li key={`g-${s.id}`}>
                         <Link to={`/stocks/${s.symbol}`} className="flex items-center justify-between px-3 py-2 hover:bg-muted/40 transition-colors">
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold text-foreground truncate">{s.symbol}</div>
+                            <div className="font-semibold text-foreground truncate text-sm">{s.symbol}</div>
                             <div className="text-[10px] text-muted-foreground truncate">{s.name}</div>
                           </div>
                           <div className="text-right ml-2 shrink-0">
-                            <div className="text-xs font-mono text-foreground">KES {s.price.toFixed(2)}</div>
-                            <div className="text-[10px] font-medium text-success">+{s.day_change_percent.toFixed(2)}%</div>
+                            <div className="font-mono text-foreground text-sm">KES {s.price.toFixed(2)}</div>
+                            <div className="font-medium text-success text-xs">+{s.day_change_percent.toFixed(2)}%</div>
                           </div>
                         </Link>
                       </li>
@@ -814,12 +814,12 @@ const OverviewPage = () => {
                       <li key={`l-${s.id}`}>
                         <Link to={`/stocks/${s.symbol}`} className="flex items-center justify-between px-3 py-2 hover:bg-muted/40 transition-colors">
                           <div className="min-w-0 flex-1">
-                            <div className="text-xs font-semibold text-foreground truncate">{s.symbol}</div>
+                            <div className="font-semibold text-foreground truncate text-sm">{s.symbol}</div>
                             <div className="text-[10px] text-muted-foreground truncate">{s.name}</div>
                           </div>
                           <div className="text-right ml-2 shrink-0">
-                            <div className="text-xs font-mono text-foreground">KES {s.price.toFixed(2)}</div>
-                            <div className="text-[10px] font-medium text-destructive">{s.day_change_percent.toFixed(2)}%</div>
+                            <div className="font-mono text-foreground text-sm">KES {s.price.toFixed(2)}</div>
+                            <div className="font-medium text-destructive text-xs">{s.day_change_percent.toFixed(2)}%</div>
                           </div>
                         </Link>
                       </li>
@@ -840,11 +840,11 @@ const OverviewPage = () => {
                   <li key={`mm-${f.id}`}>
                     <Link to={`/compare/${f.slug}`} className="flex items-center justify-between px-3 py-2 hover:bg-muted/40 transition-colors">
                       <div className="min-w-0 flex-1">
-                        <div className="text-xs font-semibold text-foreground truncate">{f.name}</div>
+                        <div className="font-semibold text-foreground truncate text-sm">{f.name}</div>
                         <div className="text-[10px] text-muted-foreground truncate">{f.manager}</div>
                       </div>
                       <div className="text-right ml-2 shrink-0">
-                        <div className="text-xs font-mono text-foreground">{f.annual_yield.toFixed(2)}%</div>
+                        <div className="font-mono text-foreground text-sm">{f.annual_yield.toFixed(2)}%</div>
                         <div className="text-[10px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</div>
                       </div>
                     </Link>
