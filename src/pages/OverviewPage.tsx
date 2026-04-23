@@ -162,7 +162,7 @@ const CustomizeDialog = ({
           <div className="flex-1 overflow-hidden flex flex-col">
             <div className="relative mb-3">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input placeholder="Search stocks, currencies, commodities, funds…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-xs" />
+              <Input placeholder="Search stocks, currencies, commodities, funds…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-[16px] md:text-xs" />
             </div>
             <div className="flex-1 overflow-y-auto space-y-4 pr-1">
               {filteredStocks.length > 0 && (

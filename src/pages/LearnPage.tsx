@@ -130,7 +130,7 @@ const LearnPage = () => {
               placeholder="Search terms..."
               value={glossarySearch}
               onChange={(e) => setGlossarySearch(e.target.value)}
-              className="pl-9 h-9 text-sm border-border bg-card"
+              className="pl-9 h-9 text-[16px] md:text-sm border-border bg-card"
             />
           </div>
 

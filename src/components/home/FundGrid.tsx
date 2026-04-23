@@ -259,7 +259,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
             placeholder="Search "
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-8 md:h-9 md:text-xs rounded-lg bg-muted/30 border-border w-full text-xs"
+            className="pl-9 h-8 md:h-9 md:text-xs rounded-lg bg-muted/30 border-border w-full text-[16px]"
           />
         </div>
       </div>
