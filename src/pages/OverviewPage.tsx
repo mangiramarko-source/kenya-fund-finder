@@ -476,6 +476,10 @@ const OverviewPage = () => {
     const mm = funds.filter(f => f.fund_type === "money_market");
     return mm.length ? [...mm].sort((a, b) => b.annual_yield - a.annual_yield)[0] : null;
   }, [funds]);
+  const moneyMarketFunds = useMemo(
+    () => funds.filter(f => f.fund_type === "money_market").sort((a, b) => b.annual_yield - a.annual_yield).slice(0, 5),
+    [funds]
+  );
   const bestFI = useMemo(() => {
     const fi = funds.filter(f => f.fund_type === "fixed_income");
     return fi.length ? [...fi].sort((a, b) => b.annual_yield - a.annual_yield)[0] : null;
@@ -825,8 +829,29 @@ const OverviewPage = () => {
               )}
             </div>
           )}
-          {bestMM && (
-            <HighlightCard icon={BarChart3} label="Money Market" name={bestMM.name} value={`${bestMM.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestMM.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestMM.slug}`} color="bg-primary/10" />
+          {moneyMarketFunds.length > 0 && (
+            <div className="rounded-lg border border-border bg-card overflow-hidden">
+              <div className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 border-b border-border">
+                <BarChart3 className="h-3.5 w-3.5 text-primary" />
+                <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Money Market Funds</span>
+              </div>
+              <ul className="divide-y divide-border">
+                {moneyMarketFunds.map(f => (
+                  <li key={`mm-${f.id}`}>
+                    <Link to={`/compare/${f.slug}`} className="flex items-center justify-between px-3 py-2 hover:bg-muted/40 transition-colors">
+                      <div className="min-w-0 flex-1">
+                        <div className="text-xs font-semibold text-foreground truncate">{f.name}</div>
+                        <div className="text-[10px] text-muted-foreground truncate">{f.manager}</div>
+                      </div>
+                      <div className="text-right ml-2 shrink-0">
+                        <div className="text-xs font-mono text-foreground">{f.annual_yield.toFixed(2)}%</div>
+                        <div className="text-[10px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</div>
+                      </div>
+                    </Link>
+                  </li>
+                ))}
+              </ul>
+            </div>
           )}
           {bestFI && (
             <HighlightCard icon={Landmark} label="Fixed Income" name={bestFI.name} value={`${bestFI.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestFI.slug}`} color="bg-secondary/80" />
