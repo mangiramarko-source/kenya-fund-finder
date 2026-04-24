@@ -535,6 +535,8 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               {filtered.map((fund, i) => {
                 const prev = snapshots[fund.id]?.annual_yield;
                 const change = prev != null ? fund.annual_yield - prev : 0;
+                const prevDaily = snapshots[fund.id]?.daily_yield;
+                const dailyChange = prevDaily != null ? fund.daily_yield - prevDaily : 0;
                 
                 return (
                   <tr
