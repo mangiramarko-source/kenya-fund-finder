@@ -65,9 +65,9 @@ const SortHeader = ({
 );
 
 /* ─── MiniSparkline (matches StocksPage visual) ─── */
-const MiniSparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
+const MiniSparkline = ({ data, currentValue, field = "annual_yield" }: { data: YieldSnapshot[]; currentValue: number; field?: "annual_yield" | "daily_yield" }) => {
   const series = useMemo(() => {
-    const vals = [...data.map((d) => d.annual_yield), currentValue];
+    const vals = [...data.map((d) => d[field]), currentValue];
     if (vals.length < 2) return null;
     const last12 = vals.slice(-12);
     const min = Math.min(...last12);
