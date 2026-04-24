@@ -546,14 +546,14 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="block max-w-[180px] font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
+                        className="block max-w-[180px] font-bold text-foreground group-hover:text-accent transition-colors text-xs tracking-tight truncate"
                         title={fund.name}
                       >
                         {fund.name}
                       </Link>
                     </td>
                     <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums">
-                      <span className="font-bold text-accent text-[15px]">
+                      <span className="font-bold text-accent text-xs">
                         {fmtYield(fund.annual_yield, fund.yield_unit)}
                       </span>
                     </td>
@@ -561,7 +561,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       <ChangeCell change={change} unit={fund.yield_unit} />
                     </td>
                     <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap">
-                      <span className="font-bold text-accent text-[15px]">
+                      <span className="font-bold text-accent text-xs">
                         {fmtYield(fund.daily_yield, fund.yield_unit)}
                       </span>
                     </td>
