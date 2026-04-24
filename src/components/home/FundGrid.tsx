@@ -537,7 +537,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <tr
                     key={fund.id}
                     onClick={() => navigate(`/compare/${fund.slug}`)}
-                    className={`border-t border-border/40 hover:bg-accent/8 transition-colors cursor-pointer group ${
+                    className={`border-t border-border/40 hover:bg-accent/15 hover:shadow-[inset_2px_0_0_0_hsl(var(--accent))] transition-colors cursor-pointer group ${
                       i % 2 === 0 ? "bg-transparent" : "bg-muted/20"
                     }`}
                   >
@@ -546,7 +546,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="block max-w-[180px] font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
+                        className="block max-w-[250px] font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
                         title={fund.name}
                       >
                         {fund.name}
