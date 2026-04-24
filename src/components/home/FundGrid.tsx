@@ -486,6 +486,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "12%" }} />
+              <col style={{ width: "7%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "5%" }} />
               <col style={{ width: "8%" }} />
