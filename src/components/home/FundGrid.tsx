@@ -496,7 +496,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                
+                <th className="text-center px-3 py-3 font-semibold text-muted-foreground">Trend</th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
