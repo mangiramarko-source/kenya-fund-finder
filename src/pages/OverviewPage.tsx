@@ -777,82 +777,42 @@ const OverviewPage = () => {
 
         {/* Mobile: compact single-column list */}
         <div className="flex flex-col gap-2 md:hidden">
-          {(topGainers.length > 0 || topLosers.length > 0) && (
-            <div className="rounded-lg border border-border bg-card overflow-hidden">
-              {topGainers.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 px-3 py-2 bg-success/10 border-b border-border">
-                    <TrendingUp className="h-3.5 w-3.5 text-success" />
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-success">Top Gainers</span>
-                  </div>
-                  <ul className="divide-y divide-border">
-                    {topGainers.map(s => (
-                      <li key={`g-${s.id}`}>
-                        <Link to={`/stocks/${s.symbol}`} className="flex items-center justify-between px-3 py-2 hover:bg-muted/40 transition-colors">
-                          <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-foreground truncate text-sm">{s.symbol}</div>
-                            <div className="text-[10px] text-muted-foreground truncate">{s.name}</div>
-                          </div>
-                          <div className="text-right ml-2 shrink-0">
-                            <div className="font-mono text-foreground text-sm">KES {s.price.toFixed(2)}</div>
-                            <div className="font-medium text-success text-xs">+{s.day_change_percent.toFixed(2)}%</div>
-                          </div>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-              {topLosers.length > 0 && (
-                <div>
-                  <div className="flex items-center gap-1.5 px-3 py-2 bg-destructive/10 border-y border-border">
-                    <TrendingUp className="h-3.5 w-3.5 text-destructive rotate-180" />
-                    <span className="text-[11px] font-semibold uppercase tracking-wide text-destructive">Top Losers</span>
-                  </div>
-                  <ul className="divide-y divide-border">
-                    {topLosers.map(s => (
-                      <li key={`l-${s.id}`}>
-                        <Link to={`/stocks/${s.symbol}`} className="flex items-center justify-between px-3 py-2 hover:bg-muted/40 transition-colors">
-                          <div className="min-w-0 flex-1">
-                            <div className="font-semibold text-foreground truncate text-sm">{s.symbol}</div>
-                            <div className="text-[10px] text-muted-foreground truncate">{s.name}</div>
-                          </div>
-                          <div className="text-right ml-2 shrink-0">
-                            <div className="font-mono text-foreground text-sm">KES {s.price.toFixed(2)}</div>
-                            <div className="font-medium text-destructive text-xs">{s.day_change_percent.toFixed(2)}%</div>
-                          </div>
-                        </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              )}
-            </div>
-          )}
-          {moneyMarketFunds.length > 0 && (
-            <div className="rounded-lg border border-border bg-card overflow-hidden">
-              <div className="flex items-center gap-1.5 px-3 py-2 bg-primary/10 border-b border-border">
-                <BarChart3 className="h-3.5 w-3.5 text-primary" />
-                <span className="text-[11px] font-semibold uppercase tracking-wide text-primary">Money Market Funds</span>
-              </div>
-              <ul className="divide-y divide-border">
-                {moneyMarketFunds.map(f => (
-                  <li key={`mm-${f.id}`}>
-                    <Link to={`/compare/${f.slug}`} className="flex items-center justify-between px-3 py-2 hover:bg-muted/40 transition-colors">
-                      <div className="min-w-0 flex-1">
-                        <div className="font-semibold text-foreground truncate text-sm">{f.name}</div>
-                        <div className="text-[10px] text-muted-foreground truncate">{f.manager}</div>
-                      </div>
-                      <div className="text-right ml-2 shrink-0">
-                        <div className="font-mono text-foreground text-sm">{f.annual_yield.toFixed(2)}%</div>
-                        <div className="text-[10px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</div>
-                      </div>
-                    </Link>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
+          {topGainers.map(s => (
+            <HighlightCard
+              key={`g-${s.id}`}
+              icon={TrendingUp}
+              label="Top Gainer"
+              name={`${s.symbol} · ${s.name}`}
+              value={`KES ${s.price.toFixed(2)}`}
+              change={<span className="inline-flex items-center gap-0.5 text-success text-[11px] font-semibold"><TrendingUp className="h-3 w-3" />+{s.day_change_percent.toFixed(2)}%</span>}
+              linkTo={`/stocks/${s.symbol}`}
+              color="bg-success/10"
+            />
+          ))}
+          {topLosers.map(s => (
+            <HighlightCard
+              key={`l-${s.id}`}
+              icon={TrendingDown}
+              label="Top Loser"
+              name={`${s.symbol} · ${s.name}`}
+              value={`KES ${s.price.toFixed(2)}`}
+              change={<span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold"><TrendingDown className="h-3 w-3" />{s.day_change_percent.toFixed(2)}%</span>}
+              linkTo={`/stocks/${s.symbol}`}
+              color="bg-destructive/10"
+            />
+          ))}
+          {moneyMarketFunds.map(f => (
+            <HighlightCard
+              key={`mm-${f.id}`}
+              icon={BarChart3}
+              label="Money Market"
+              name={f.name}
+              value={`${f.annual_yield.toFixed(2)}%`}
+              sub={`Daily: ${f.daily_yield.toFixed(4)}%`}
+              linkTo={`/compare/${f.slug}`}
+              color="bg-primary/10"
+            />
+          ))}
           {bestFI && (
             <HighlightCard icon={Landmark} label="Fixed Income" name={bestFI.name} value={`${bestFI.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestFI.slug}`} color="bg-secondary/80" />
           )}
