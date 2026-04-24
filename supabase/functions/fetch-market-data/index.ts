@@ -755,51 +755,52 @@ Deno.serve(async (req) => {
         }
       }
 
-      // ── 2b. Metals, energy, agri via Yahoo Finance futures ──
+      // ── 2b. Metals, energy, agri via Yahoo Finance chart API (per-ticker) ──
       if (yahooItems.length > 0) {
-        const tickers = [...new Set(yahooItems.map((i) => i.ticker))].join(",");
-        try {
-          const yfRes = await fetch(
-            `https://query1.finance.yahoo.com/v7/finance/quote?symbols=${encodeURIComponent(tickers)}`,
-            { headers: { "User-Agent": "Mozilla/5.0" } }
-          );
-          if (yfRes.ok) {
-            const yfData = await yfRes.json();
-            const quotes: any[] = yfData?.quoteResponse?.result || [];
-            const priceByTicker: Record<string, number> = {};
-            for (const q of quotes) {
-              const sym = (q.symbol || "").toUpperCase();
-              const p = q.regularMarketPrice ?? q.postMarketPrice ?? q.preMarketPrice;
-              if (typeof p === "number" && p > 0) priceByTicker[sym] = p;
-            }
+        const uniqueTickers = [...new Set(yahooItems.map((i) => i.ticker))];
+        const priceByTicker: Record<string, number> = {};
 
-            for (const { row, ticker } of yahooItems) {
-              const newPrice = priceByTicker[ticker.toUpperCase()];
-              if (newPrice && newPrice !== row.price) {
-                const rounded = parseFloat(newPrice.toFixed(4));
-                await supabase
-                  .from("commodities")
-                  .update({
-                    previous_price: row.price,
-                    price: rounded,
-                    updated_at: new Date().toISOString(),
-                  })
-                  .eq("id", row.id);
-                results.push(`Yahoo ${row.symbol} (${ticker}): ${row.price} → ${rounded}`);
-              } else if (newPrice) {
-                await supabase
-                  .from("commodities")
-                  .update({ updated_at: new Date().toISOString() })
-                  .eq("id", row.id);
+        await Promise.all(
+          uniqueTickers.map(async (ticker) => {
+            try {
+              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`;
+              const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+              if (!r.ok) {
+                console.error(`[fetch-market-data] Yahoo chart ${ticker} ${r.status}`);
+                return;
               }
+              const j = await r.json();
+              const meta = j?.chart?.result?.[0]?.meta;
+              const p = meta?.regularMarketPrice;
+              if (typeof p === "number" && p > 0) {
+                priceByTicker[ticker.toUpperCase()] = p;
+              }
+            } catch (e) {
+              console.error(`Yahoo chart ${ticker} fetch error:`, e);
             }
+          })
+        );
+
+        for (const { row, ticker } of yahooItems) {
+          const newPrice = priceByTicker[ticker.toUpperCase()];
+          if (!newPrice) continue;
+          const rounded = parseFloat(newPrice.toFixed(4));
+          if (rounded !== row.price) {
+            await supabase
+              .from("commodities")
+              .update({
+                previous_price: row.price,
+                price: rounded,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", row.id);
+            results.push(`Yahoo ${row.symbol} (${ticker}): ${row.price} → ${rounded}`);
           } else {
-            console.error(`[fetch-market-data] Yahoo commodities ${yfRes.status}`);
-            results.push(`Yahoo commodities returned ${yfRes.status}`);
+            await supabase
+              .from("commodities")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", row.id);
           }
-        } catch (e) {
-          console.error("Yahoo commodities fetch error:", e);
-          results.push(`Yahoo commodities fetch failed`);
         }
       }
 
