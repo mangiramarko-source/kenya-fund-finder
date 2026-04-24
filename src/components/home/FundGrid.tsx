@@ -473,14 +473,15 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           <table className="w-full text-sm table-fixed">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "16%" }} />
-              <col style={{ width: "20%" }} />
+              <col style={{ width: "15%" }} />
+              <col style={{ width: "18%" }} />
               
               <col style={{ width: "9%" }} />
-              <col style={{ width: "11%" }} />
               <col style={{ width: "10%" }} />
+              <col style={{ width: "9%" }} />
               <col style={{ width: "8%" }} />
-              <col style={{ width: "10%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "9%" }} />
               <col style={{ width: "6%" }} />
               {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
@@ -511,6 +512,16 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
+                <th className="text-right px-3 py-3 font-semibold text-muted-foreground">
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">Daily Δ</span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px] text-xs">
+                      Difference between the current and previous daily yield.
+                    </TooltipContent>
+                  </Tooltip>
+                </th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
@@ -524,6 +535,8 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               {filtered.map((fund, i) => {
                 const prev = snapshots[fund.id]?.annual_yield;
                 const change = prev != null ? fund.annual_yield - prev : 0;
+                const prevDaily = snapshots[fund.id]?.daily_yield;
+                const dailyChange = prevDaily != null ? fund.daily_yield - prevDaily : 0;
                 
                 return (
                   <tr
@@ -565,6 +578,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground text-xs">
                       {fmtYield(fund.daily_yield, fund.yield_unit)}
                     </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <ChangeCell change={dailyChange} unit={fund.yield_unit} />
+                    </td>
                     <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
                       KSh {fund.minimum_investment.toLocaleString()}
                     </td>
@@ -588,7 +604,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 11 : 10} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 12 : 11} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
