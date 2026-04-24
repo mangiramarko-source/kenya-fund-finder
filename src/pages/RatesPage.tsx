@@ -252,26 +252,26 @@ const RatesPage = () => {
         </div>
 
         {/* Mobile: combined search + filter button */}
-        <div className="md:hidden flex items-center gap-2.5 mb-4">
+        <div className="md:hidden flex items-center gap-2 mb-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
               placeholder="Search currencies..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-11 rounded-xl bg-muted/30 border-border w-full text-[16px]"
+              className="pl-9 h-9 rounded-lg bg-muted/30 border-border w-full text-[16px]"
             />
           </div>
           <Sheet>
             <SheetTrigger asChild>
               <button
                 type="button"
-                className="relative inline-flex items-center justify-center h-11 w-11 shrink-0 rounded-xl border border-border bg-card text-foreground transition-colors"
+                className="relative inline-flex items-center justify-center h-9 w-9 shrink-0 rounded-md border border-border bg-card text-foreground transition-colors"
                 aria-label="Filters"
               >
                 <SlidersHorizontal className="h-4 w-4" />
                 {mobileSort !== "default" && (
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-accent" />
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
                 )}
               </button>
             </SheetTrigger>
