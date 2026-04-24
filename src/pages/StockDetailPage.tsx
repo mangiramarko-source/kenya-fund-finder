@@ -201,9 +201,6 @@ const StockDetailPage = () => {
   return (
     <div className="min-h-screen px-4 md:px-6 py-6 max-w-6xl mx-auto">
       {/* Header */}
-      <button onClick={() => navigate("/stocks")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4 transition-colors">
-        <ArrowLeft className="h-4 w-4" /> Back to Stocks
-      </button>
 
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
         <div>
