@@ -37,6 +37,7 @@ const MarketDashboardPage = lazy(() => import("./pages/MarketDashboardPage"));
 const AlertsPage = lazy(() => import("./pages/AlertsPage"));
 const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
 const OverviewPage = lazy(() => import("./pages/OverviewPage"));
+const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient();
@@ -83,6 +84,7 @@ const App = () => (
                     <Route path="/overview" element={<OverviewPage />} />
                     <Route path="/alerts" element={<AlertsPage />} />
                     <Route path="/portfolio" element={<PortfolioPage />} />
+                    <Route path="/calculator" element={<CalculatorPage />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin" element={<AdminPage />} />
                     <Route path="*" element={<NotFound />} />
