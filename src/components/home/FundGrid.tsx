@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers, Tag, Bell } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, BarChart3, Layers, Tag, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -168,6 +168,17 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [movement, setMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
+
+  /** Compute per-category gainer/loser counts based on annual_yield change vs latest snapshot */
+  const movementForFund = (f: FundFromDB): "gainer" | "loser" | "unchanged" => {
+    const prev = snapshots[f.id]?.annual_yield;
+    if (prev == null) return "unchanged";
+    const diff = f.annual_yield - prev;
+    if (diff > 0) return "gainer";
+    if (diff < 0) return "loser";
+    return "unchanged";
+  };
 
   const categories = useMemo(() => {
     const present = [...new Set(funds.map((f) => f.fund_type))];
