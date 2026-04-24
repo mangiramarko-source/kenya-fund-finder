@@ -659,11 +659,7 @@ const OverviewPage = () => {
     () => [...rates].sort((a, b) => Number(b.rate) - Number(a.rate)).slice(0, 5),
     [rates]
   );
-  const topCommodities = useMemo(() => {
-    const goldKeywords = ["gold", "silver", "platinum", "palladium", "copper"];
-    const metals = commodities.filter(c => goldKeywords.some(k => c.name.toLowerCase().includes(k)));
-    return metals.slice(0, 5);
-  }, [commodities]);
+  const topCommodities = useMemo(() => commodities.slice(0, 5), [commodities]);
 
   const mmFunds = useMemo(() => funds.filter(f => f.fund_type === "money_market"), [funds]);
   const fiFunds = useMemo(() => funds.filter(f => f.fund_type === "fixed_income"), [funds]);
@@ -903,8 +899,8 @@ const OverviewPage = () => {
             })}
           </HighlightColumn>
 
-          {/* Gold / Metals */}
-          <HighlightColumn icon={Gem} label="Gold & Metals" link="/commodities">
+          {/* Commodities */}
+          <HighlightColumn icon={Gem} label="Commodities" link="/commodities">
             {topCommodities.length === 0 && (
               <p className="text-[11px] text-muted-foreground">No data available</p>
             )}
