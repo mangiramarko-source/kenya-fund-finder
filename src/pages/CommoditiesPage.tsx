@@ -305,7 +305,10 @@ const CommoditiesPage = () => {
                   key={c.id}
                   commodity={c}
                   history={history[c.id]}
+                  historyLoading={historyLoading === c.id}
                   positive={positive}
+                  isExpanded={expanded === c.id}
+                  onToggle={() => toggleExpand(c.id)}
                   isFavourite={user ? isFavourite(c.id) : undefined}
                   onToggleFavourite={user ? () => toggleFavourite(c.id, c.name) : undefined}
                 />
@@ -336,57 +339,161 @@ const CommoditiesPage = () => {
   );
 };
 
-/* ─── Mobile Card ─── */
+/* ─── Mobile Card (expandable, matches Rates page) ─── */
 const MobileCommodityCard = ({
   commodity: c,
   history,
+  historyLoading,
   positive,
+  isExpanded,
+  onToggle,
   isFavourite,
   onToggleFavourite,
 }: {
   commodity: Commodity;
   history?: PriceHistory[];
+  historyLoading?: boolean;
   positive: boolean;
+  isExpanded?: boolean;
+  onToggle?: () => void;
   isFavourite?: boolean;
   onToggleFavourite?: () => void;
-}) => (
-  <div className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all overflow-hidden">
-    <div className="flex items-center gap-3 p-3.5">
-      <div className="flex-1 min-w-0">
-        <span className="font-bold text-foreground text-sm">{c.symbol}</span>
-        <p className="text-[11px] text-muted-foreground truncate">{c.name}</p>
-      </div>
+}) => {
+  const change = c.previous_price != null ? c.price - c.previous_price : null;
+  const changePct = c.previous_price != null && c.previous_price !== 0
+    ? ((change! / c.previous_price) * 100)
+    : null;
 
-      <div className="shrink-0">
-        <MiniSparkline data={history || []} positive={positive} />
-      </div>
+  return (
+    <div className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 p-3.5 text-left"
+        aria-expanded={isExpanded}
+      >
+        <div className="flex-1 min-w-0">
+          <span className="font-bold text-foreground text-sm">{c.symbol}</span>
+          <p className="text-[11px] text-muted-foreground truncate">{c.name}</p>
+        </div>
 
-      <div className="text-right shrink-0">
-        <p className="font-bold text-foreground text-sm tabular-nums">
-          {c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          <span className="text-muted-foreground ml-1 text-[10px]">{c.unit}</span>
-        </p>
-        <ChangeIndicator current={c.price} previous={c.previous_price} />
-      </div>
+        <div className="shrink-0">
+          <MiniSparkline data={history || []} positive={positive} />
+        </div>
 
-      {onToggleFavourite !== undefined && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onToggleFavourite();
-          }}
-          className="p-1 shrink-0"
-          aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
-        >
-          <Star
-            className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
-          />
-        </button>
+        <div className="text-right shrink-0">
+          <p className="font-bold text-foreground text-sm tabular-nums">
+            {c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            <span className="text-muted-foreground ml-1 text-[10px]">{c.unit}</span>
+          </p>
+          <ChangeIndicator current={c.price} previous={c.previous_price} />
+        </div>
+
+        {onToggleFavourite !== undefined && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleFavourite();
+            }}
+            className="p-1 shrink-0"
+            aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+          >
+            <Star
+              className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
+            />
+          </span>
+        )}
+
+        <span className="shrink-0 text-muted-foreground">
+          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </span>
+      </button>
+
+      {isExpanded && (
+        <div className="border-t border-border bg-muted/20 p-3 space-y-3">
+          <div className="grid grid-cols-2 gap-2">
+            <DetailBox label="Current Price" value={c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} />
+            <DetailBox
+              label="Previous Price"
+              value={c.previous_price != null ? c.previous_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+            />
+            <DetailBox
+              label="Change (Abs)"
+              value={change != null ? `${change > 0 ? "+" : ""}${change.toFixed(2)}` : "—"}
+              color={change != null ? (change > 0 ? "text-accent" : change < 0 ? "text-destructive" : undefined) : undefined}
+            />
+            <DetailBox
+              label="Change (%)"
+              value={changePct != null ? `${changePct > 0 ? "+" : ""}${changePct.toFixed(2)}%` : "—"}
+              color={changePct != null ? (changePct > 0 ? "text-accent" : changePct < 0 ? "text-destructive" : undefined) : undefined}
+            />
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-[11px] font-semibold text-foreground">Price History (Last 90 Days)</span>
+            </div>
+            {historyLoading ? (
+              <div className="h-[180px] flex items-center justify-center">
+                <Skeleton className="h-full w-full rounded-lg" />
+              </div>
+            ) : !history || history.length === 0 ? (
+              <div className="h-[180px] flex items-center justify-center text-xs text-muted-foreground">
+                No historical data available yet
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={history}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis
+                    dataKey="snapshot_date"
+                    tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                    tickFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                    minTickGap={20}
+                  />
+                  <YAxis
+                    domain={["auto", "auto"]}
+                    tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                    width={45}
+                    tickFormatter={(v) => v.toFixed(2)}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "11px",
+                    }}
+                    labelFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
+                    formatter={(value: number) => [value.toFixed(2), "Price"]}
+                  />
+                  <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] text-muted-foreground">
+              Updated: {new Date(c.updated_at).toLocaleString("en-KE")}
+            </p>
+            <CreateAlertDialog
+              assetType="commodity"
+              assetId={c.id}
+              assetName={c.name}
+              currentPrice={c.price}
+              unit={c.unit}
+            />
+          </div>
+        </div>
       )}
     </div>
-  </div>
-);
+  );
+};
 
 const CommodityRow = ({
   commodity: c, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
