@@ -127,7 +127,6 @@ const Navbar = () => {
 
   const minimalRoutes = [
     "/calculator",
-    "/news",
     "/learn",
     "/alerts",
     "/portfolio",
