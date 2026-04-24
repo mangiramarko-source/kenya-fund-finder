@@ -501,13 +501,13 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-3">
-                  <SortHeader label="Change" field="change" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-left px-3 py-3">
+                  <SortHeader label="Change" field="change" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-3 font-semibold text-muted-foreground">
+                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className="inline-flex">Change</span>
@@ -518,11 +518,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   </Tooltip>
                 </th>
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
-                <th className="text-right px-3 py-3">
-                  <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-left px-3 py-3">
+                  <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-right px-3 py-3">
-                  <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-left px-3 py-3">
+                  <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Withdrawal</th>
                 {onToggleFavourite && <th className="w-8"></th>}
@@ -562,7 +562,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                         {fmtYield(fund.annual_yield, fund.yield_unit)}
                       </span>
                     </td>
-                    <td className="px-3 py-3.5 text-right">
+                    <td className="px-3 py-3.5 text-left">
                       <ChangeCell change={change} unit={fund.yield_unit} />
                     </td>
                     <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap">
@@ -570,16 +570,16 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                         {fmtYield(fund.daily_yield, fund.yield_unit)}
                       </span>
                     </td>
-                    <td className="px-3 py-3.5 text-right">
+                    <td className="px-3 py-3.5 text-left">
                       <ChangeCell change={dailyChange} unit={fund.yield_unit} />
                     </td>
                     <td className="px-3 py-3.5 text-foreground text-sm truncate text-left" title={fund.manager}>
                       {fund.manager}
                     </td>
-                    <td className="px-3 py-3.5 text-right text-sm tabular-nums text-muted-foreground whitespace-nowrap">
+                    <td className="px-3 py-3.5 text-sm tabular-nums text-muted-foreground whitespace-nowrap text-left">
                       KSh {fund.minimum_investment.toLocaleString()}
                     </td>
-                    <td className="px-3 py-3.5 text-right text-sm tabular-nums text-muted-foreground whitespace-nowrap">
+                    <td className="px-3 py-3.5 text-sm tabular-nums text-muted-foreground whitespace-nowrap text-left">
                       {fund.management_fee}%
                     </td>
                     <td className="px-3 py-3.5 text-left text-sm text-muted-foreground truncate" title={fund.withdrawal_time}>
