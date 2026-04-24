@@ -243,13 +243,14 @@ const CommoditiesPage = () => {
                 <colgroup>
                   <col style={{ width: "3%" }} />
                   <col style={{ width: "8%" }} />
-                  <col style={{ width: "16%" }} />
-                  <col style={{ width: "11%" }} />
+                  <col style={{ width: "14%" }} />
                   <col style={{ width: "10%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "9%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "8%" }} />
                   <col style={{ width: "9%" }} />
                   <col style={{ width: "9%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "10%" }} />
                   <col style={{ width: "10%" }} />
                   <col style={{ width: "4%" }} />
                 </colgroup>
@@ -259,6 +260,7 @@ const CommoditiesPage = () => {
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Symbol</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Name</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Price</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Unit</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Previous</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change %</th>
@@ -442,7 +444,9 @@ const CommodityRow = ({
           <span className="font-bold text-foreground text-sm">
             {c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span className="text-muted-foreground ml-1 text-[10px]">{c.unit}</span>
+        </td>
+        <td className="px-3 py-4 whitespace-nowrap text-sm text-muted-foreground">
+          {c.unit}
         </td>
         <td className="px-3 py-4 tabular-nums whitespace-nowrap text-sm text-muted-foreground">
           {c.previous_price != null
@@ -485,7 +489,7 @@ const CommodityRow = ({
       </tr>
       {isExpanded && (
         <tr className="border-t border-border bg-muted/20">
-          <td colSpan={11} className="p-4">
+          <td colSpan={12} className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <DetailBox label="Current Price" value={`${c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}`} />
               <DetailBox label="Previous Price" value={c.previous_price != null ? `${c.previous_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}` : "—"} />
