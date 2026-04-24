@@ -316,7 +316,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               return (
                 <button
                   key={opt.key}
-                  onClick={() => setMovement(opt.key)}
+                  onClick={() => {
+                    setMovement(opt.key);
+                    if (opt.key === "gainers") { setSortKey("change"); setSortDir("desc"); }
+                    else if (opt.key === "losers") { setSortKey("change"); setSortDir("asc"); }
+                  }}
                   className={`inline-flex items-center gap-1 px-2.5 h-8 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
                     active ? activeColor + " shadow-sm" : "text-muted-foreground hover:text-foreground"
                   }`}
@@ -391,7 +395,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
             return (
               <button
                 key={opt.key}
-                onClick={() => setMovement(opt.key)}
+                onClick={() => {
+                  setMovement(opt.key);
+                  if (opt.key === "gainers") { setSortKey("change"); setSortDir("desc"); }
+                  else if (opt.key === "losers") { setSortKey("change"); setSortDir("asc"); }
+                }}
                 className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                   active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
@@ -455,7 +463,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Trend</th>
+                <th className="text-center px-2 py-3">
+                  <SortHeader label="Trend" field="change" sortKey={sortKey} onToggleSort={toggleSort} className="justify-center" />
+                </th>
                 <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Unit</th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
