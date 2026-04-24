@@ -474,13 +474,13 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
             <colgroup>
               <col style={{ width: "3%" }} />
               <col style={{ width: "15%" }} />
-              <col style={{ width: "18%" }} />
               
               <col style={{ width: "9%" }} />
               <col style={{ width: "10%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "8%" }} />
+              <col style={{ width: "18%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "6%" }} />
               {onToggleFavourite && <col style={{ width: "3%" }} />}
@@ -491,7 +491,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
                 
                 <th className="px-2 py-3 font-semibold text-muted-foreground text-center">
                   <Tooltip>
@@ -522,6 +521,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     </TooltipContent>
                   </Tooltip>
                 </th>
+                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
@@ -557,9 +557,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                         {fund.name}
                       </Link>
                     </td>
-                    <td className="px-3 py-3.5 text-foreground text-xs max-w-[200px] truncate" title={fund.manager}>
-                      {fund.manager}
-                    </td>
                     <td className="px-2 py-3.5 text-center">
                       {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
                         <MiniSparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
@@ -582,6 +579,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     </td>
                     <td className="px-3 py-3.5 text-right">
                       <ChangeCell change={dailyChange} unit={fund.yield_unit} />
+                    </td>
+                    <td className="px-3 py-3.5 text-foreground text-xs truncate" title={fund.manager}>
+                      {fund.manager}
                     </td>
                     <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
                       KSh {fund.minimum_investment.toLocaleString()}
