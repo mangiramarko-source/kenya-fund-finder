@@ -534,11 +534,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     }`}
                   >
                     <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
-                    <td className="px-3 py-3.5">
+                    <td className="px-3 py-3.5 max-w-0">
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight line-clamp-1"
+                        className="block font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
                         title={fund.name}
                       >
                         {fund.name}
