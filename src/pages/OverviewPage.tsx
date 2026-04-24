@@ -831,123 +831,99 @@ const OverviewPage = () => {
           <span className="text-[10px] text-muted-foreground">Best performers at a glance</span>
         </div>
 
-        {/* Desktop: detailed cards with charts in 3-col grid */}
-        <div className="hidden md:grid md:grid-cols-3 gap-3">
-          {/* Row 1: Top Stock, Gold, Silver */}
-          {bestStock && (
-            <DetailedHighlightCard
-              icon={TrendingUp}
-              label="Top Stock"
-              name={`${bestStock.symbol} · ${bestStock.name}`}
-              value={`KES ${bestStock.price.toFixed(2)}`}
-              change={<Change current={bestStock.price} previous={bestStock.previous_price} />}
-              sub={bestStock.sector}
-              linkTo="/stocks"
-              color="bg-accent/10"
-              chartData={getStockHistory(bestStock.id)}
-              chartColor="auto"
-              trend={trendOf(bestStock.price, bestStock.previous_price)}
-              extras={[
-                { label: "Volume", value: bestStock.volume?.toLocaleString() || "—" },
-                { label: "Day Chg", value: `${bestStock.day_change >= 0 ? "+" : ""}${bestStock.day_change.toFixed(2)}` },
-                ...(bestStock.market_cap ? [{ label: "Mkt Cap", value: `${(bestStock.market_cap / 1e9).toFixed(1)}B` }] : []),
-                { label: "Change %", value: `${bestStock.day_change_percent >= 0 ? "+" : ""}${bestStock.day_change_percent.toFixed(2)}%` },
-              ]}
-            />
-          )}
-          {goldCommodity && (
-            <DetailedHighlightCard
-              icon={Gem}
-              label="Gold"
-              name={goldCommodity.name}
-              value={`${Number(goldCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${goldCommodity.unit}`}
-              change={<Change current={Number(goldCommodity.price)} previous={goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null} />}
-              linkTo="/commodities"
-              color="bg-[hsl(45,80%,50%)]/10"
-              trend={trendOf(Number(goldCommodity.price), goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null)}
-              extras={[
-                { label: "Unit", value: goldCommodity.unit },
-                ...(goldCommodity.previous_price != null ? [{ label: "Previous", value: Number(goldCommodity.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2 }) }] : []),
-                { label: "Day Chg", value: goldCommodity.previous_price != null ? `${(Number(goldCommodity.price) - Number(goldCommodity.previous_price)) >= 0 ? "+" : ""}${(Number(goldCommodity.price) - Number(goldCommodity.previous_price)).toFixed(2)}` : "—" },
-                { label: "Change %", value: goldCommodity.previous_price != null && Number(goldCommodity.previous_price) !== 0 ? `${((Number(goldCommodity.price) - Number(goldCommodity.previous_price)) / Number(goldCommodity.previous_price) * 100) >= 0 ? "+" : ""}${((Number(goldCommodity.price) - Number(goldCommodity.previous_price)) / Number(goldCommodity.previous_price) * 100).toFixed(2)}%` : "—" },
-              ]}
-            />
-          )}
-          {silverCommodity && (
-            <DetailedHighlightCard
-              icon={Gem}
-              label="Silver"
-              name={silverCommodity.name}
-              value={`${Number(silverCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${silverCommodity.unit}`}
-              change={<Change current={Number(silverCommodity.price)} previous={silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null} />}
-              linkTo="/commodities"
-              color="bg-muted"
-              trend={trendOf(Number(silverCommodity.price), silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null)}
-              extras={[
-                { label: "Unit", value: silverCommodity.unit },
-                ...(silverCommodity.previous_price != null ? [{ label: "Previous", value: Number(silverCommodity.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2 }) }] : []),
-                { label: "Day Chg", value: silverCommodity.previous_price != null ? `${(Number(silverCommodity.price) - Number(silverCommodity.previous_price)) >= 0 ? "+" : ""}${(Number(silverCommodity.price) - Number(silverCommodity.previous_price)).toFixed(2)}` : "—" },
-                { label: "Change %", value: silverCommodity.previous_price != null && Number(silverCommodity.previous_price) !== 0 ? `${((Number(silverCommodity.price) - Number(silverCommodity.previous_price)) / Number(silverCommodity.previous_price) * 100) >= 0 ? "+" : ""}${((Number(silverCommodity.price) - Number(silverCommodity.previous_price)) / Number(silverCommodity.previous_price) * 100).toFixed(2)}%` : "—" },
-              ]}
-            />
-          )}
-          {/* Row 2: Money Market, FX Rate, Fixed Income */}
-          {bestMM && (
-            <DetailedHighlightCard
-              icon={BarChart3}
-              label="Money Market"
-              name={bestMM.name}
-              value={`${bestMM.annual_yield.toFixed(2)}%`}
-              sub={bestMM.manager}
-              linkTo={`/compare/${bestMM.slug}`}
-              color="bg-primary/10"
-              chartData={getFundHistory(bestMM.id)}
-              chartColor="auto"
-              extras={[
-                { label: "Daily", value: `${bestMM.daily_yield.toFixed(4)}%` },
-                { label: "7-Day", value: `${bestMM.seven_day_yield.toFixed(2)}%` },
-                { label: "30-Day", value: `${bestMM.thirty_day_yield.toFixed(2)}%` },
-                { label: "Min Invest", value: `KES ${bestMM.minimum_investment.toLocaleString()}` },
-              ]}
-            />
-          )}
-          {bestFXRate && (
-            <DetailedHighlightCard
-              icon={DollarSign}
-              label="FX Rate"
-              name={`${bestFXRate.currency_code}/KES`}
-              value={`KES ${Number(bestFXRate.rate).toFixed(2)}`}
-              change={<Change current={Number(bestFXRate.rate)} previous={bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null} />}
-              sub={bestFXRate.currency_name}
-              linkTo="/rates"
-              color="bg-accent/10"
-              chartData={getHistory(bestFXRate.currency_code)}
-              chartColor="auto"
-              trend={trendOf(Number(bestFXRate.rate), bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null)}
-              extras={[
-                ...(bestFXRate.previous_rate != null ? [{ label: "Previous", value: `KES ${Number(bestFXRate.previous_rate).toFixed(2)}` }] : []),
-              ]}
-            />
-          )}
-          {bestFI && (
-            <DetailedHighlightCard
-              icon={Landmark}
-              label="Fixed Income"
-              name={bestFI.name}
-              value={`${bestFI.annual_yield.toFixed(2)}%`}
-              sub={bestFI.manager}
-              linkTo={`/compare/${bestFI.slug}`}
-              color="bg-secondary/80"
-              chartData={getFundHistory(bestFI.id)}
-              chartColor="auto"
-              extras={[
-                { label: "Daily", value: `${bestFI.daily_yield.toFixed(4)}%` },
-                { label: "7-Day", value: `${bestFI.seven_day_yield.toFixed(2)}%` },
-                { label: "30-Day", value: `${bestFI.thirty_day_yield.toFixed(2)}%` },
-                { label: "Min Invest", value: `KES ${bestFI.minimum_investment.toLocaleString()}` },
-              ]}
-            />
-          )}
+        {/* Desktop: 4 vertical columns of top-5 cards */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
+          {/* Stocks */}
+          <HighlightColumn icon={TrendingUp} label="Stocks" link="/stocks">
+            {topGainers.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">No data available</p>
+            )}
+            {topGainers.map((s) => (
+              <HighlightListCard
+                key={`hl-stock-${s.id}`}
+                title={s.symbol}
+                sub={s.name}
+                value={`KES ${s.price.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                changePct={s.day_change_percent}
+                sparkData={getStockSparkData(s.id)}
+                trend={trendOf(s.price, s.previous_price)}
+                linkTo={`/stocks/${s.symbol}`}
+              />
+            ))}
+          </HighlightColumn>
+
+          {/* Money Markets */}
+          <HighlightColumn icon={BarChart3} label="Money Markets" link="/funds">
+            {moneyMarketFunds.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">No data available</p>
+            )}
+            {moneyMarketFunds.map((f) => {
+              const snaps = fundSnapshots.filter((s) => s.fund_id === f.id);
+              const sparkData = snaps.slice(-30).map((s) => s.annual_yield);
+              const prev = snaps.length > 0 ? snaps[snaps.length - 1].annual_yield : null;
+              const diff = prev != null ? f.annual_yield - prev : null;
+              const trend: "up" | "down" | "flat" | undefined =
+                diff == null ? undefined : diff > 0 ? "up" : diff < 0 ? "down" : "flat";
+              return (
+                <HighlightListCard
+                  key={`hl-mm-${f.id}`}
+                  title={f.name}
+                  sub={f.manager}
+                  value={`${f.annual_yield.toFixed(2)}%`}
+                  changePct={diff}
+                  sparkData={sparkData}
+                  trend={trend}
+                  linkTo={`/compare/${f.slug}`}
+                />
+              );
+            })}
+          </HighlightColumn>
+
+          {/* FX Rates */}
+          <HighlightColumn icon={DollarSign} label="FX Rates" link="/rates">
+            {topFXRates.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">No data available</p>
+            )}
+            {topFXRates.map((r) => {
+              const sparkSeries = getHistory(r.currency_code).map((h) => h.rate);
+              const prev = r.previous_rate != null ? Number(r.previous_rate) : null;
+              const diff = prev != null && prev !== 0 ? ((Number(r.rate) - prev) / prev) * 100 : null;
+              return (
+                <HighlightListCard
+                  key={`hl-fx-${r.id}`}
+                  title={`${r.currency_code}/KES`}
+                  sub={r.currency_name}
+                  value={`KES ${Number(r.rate).toFixed(2)}`}
+                  changePct={diff}
+                  sparkData={sparkSeries}
+                  trend={trendOf(Number(r.rate), prev)}
+                  linkTo="/rates"
+                />
+              );
+            })}
+          </HighlightColumn>
+
+          {/* Gold / Metals */}
+          <HighlightColumn icon={Gem} label="Gold & Metals" link="/commodities">
+            {topCommodities.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">No data available</p>
+            )}
+            {topCommodities.map((c) => {
+              const prev = c.previous_price != null ? Number(c.previous_price) : null;
+              const diff = prev != null && prev !== 0 ? ((Number(c.price) - prev) / prev) * 100 : null;
+              return (
+                <HighlightListCard
+                  key={`hl-cmd-${c.id}`}
+                  title={c.name}
+                  sub={`${c.symbol} · ${c.unit}`}
+                  value={`${Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                  changePct={diff}
+                  trend={trendOf(Number(c.price), prev)}
+                  linkTo="/commodities"
+                />
+              );
+            })}
+          </HighlightColumn>
         </div>
 
 
