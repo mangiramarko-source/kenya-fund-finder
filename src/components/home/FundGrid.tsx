@@ -85,9 +85,14 @@ const MiniSparkline = ({ data, currentValue, field = "annual_yield", change }: {
   if (!series) return <span className="text-[10px] text-muted-foreground">—</span>;
 
   // Prefer explicit change (matches ChangeCell) over derived series direction
-  const isPositive = change !== undefined ? change >= 0 : series.positive;
-  const color = isPositive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
-  const gradientId = `fund-spark-${isPositive ? "up" : "down"}`;
+  const isUnchanged = change !== undefined && change === 0;
+  const isPositive = change !== undefined ? change > 0 : series.positive;
+  const color = isUnchanged
+    ? "hsl(var(--muted-foreground))"
+    : isPositive
+    ? "hsl(var(--accent))"
+    : "hsl(var(--destructive))";
+  const gradientId = `fund-spark-${isUnchanged ? "flat" : isPositive ? "up" : "down"}`;
 
   return (
     <div className="w-[60px] h-[24px] inline-block">
