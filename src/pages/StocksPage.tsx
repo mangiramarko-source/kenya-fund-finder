@@ -415,41 +415,7 @@ const StocksPage = () => {
                   </div>
                 </div>
 
-                {/* Movement */}
-                {sector === "All" && (
-                  <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Movement</p>
-                    <div className="grid grid-cols-2 gap-1.5">
-                      {([
-                        { key: "all", label: "All", count: stocks.length },
-                        { key: "gainers", label: "Gainers", count: gainers },
-                        { key: "losers", label: "Losers", count: losers },
-                        { key: "unchanged", label: "Unchanged", count: unchanged },
-                      ] as const).map((opt) => {
-                        const active = mobileMovement === opt.key;
-                        return (
-                          <button
-                            key={opt.key}
-                            onClick={() => setMobileMovement(opt.key)}
-                            className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-md text-xs font-medium border transition-colors ${
-                              active
-                                ? "bg-foreground text-background border-foreground"
-                                : "bg-card text-muted-foreground border-border"
-                            }`}
-                          >
-                            {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
-                            {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
-                            {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
-                            {opt.label}
-                            <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>
-                              {opt.count}
-                            </span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                )}
+                {/* Movement is shown inline below the search row */}
 
                 <SheetClose asChild>
                   <button
