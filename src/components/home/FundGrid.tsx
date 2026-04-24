@@ -524,7 +524,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               {filtered.map((fund, i) => {
                 const prev = snapshots[fund.id]?.annual_yield;
                 const change = prev != null ? fund.annual_yield - prev : 0;
-                const typeLabel = categoryLabels[fund.fund_type] || fund.fund_type;
+                
                 return (
                   <tr
                     key={fund.id}
