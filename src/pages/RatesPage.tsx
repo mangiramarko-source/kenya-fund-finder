@@ -400,7 +400,7 @@ const RateRow = ({
       >
         <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
         <td className="px-3 py-3.5">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {onToggleFavourite !== undefined && (
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
@@ -410,11 +410,11 @@ const RateRow = ({
                 <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
               </button>
             )}
-            <div className="min-w-0">
-              <span className="font-bold text-foreground text-xs tracking-wide">{rate.currency_code}</span>
-              <span className="block text-xs text-muted-foreground mt-0.5 truncate" title={rate.currency_name}>{rate.currency_name}</span>
-            </div>
+            <span className="font-bold text-foreground text-xs tracking-wide">{rate.currency_code}</span>
           </div>
+        </td>
+        <td className="px-3 py-3.5">
+          <span className="block text-xs text-foreground truncate" title={rate.currency_name}>{rate.currency_name}</span>
         </td>
         <td className="px-3 py-3.5 tabular-nums whitespace-nowrap">
           <span className="font-bold text-foreground text-sm">
