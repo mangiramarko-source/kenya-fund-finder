@@ -491,7 +491,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
-              <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
+              <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
                 <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
