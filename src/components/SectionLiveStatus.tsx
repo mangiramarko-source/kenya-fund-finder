@@ -20,18 +20,18 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate }: Sectio
       : null;
 
   return (
-    <span className="inline-flex items-center gap-2 md:gap-3">
+    <span className="inline-flex items-center gap-2">
       {!hideLive && s.is_live && (
-        <span className="inline-flex items-center gap-1.5 md:gap-2 rounded-full bg-[hsl(152,30%,94%)] dark:bg-accent/15 border border-[hsl(152,30%,85%)] dark:border-accent/25 px-3 py-1 md:px-4 md:py-1.5">
-          <span className="relative flex h-2 w-2 md:h-2.5 md:w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(152,55%,40%)] dark:bg-accent opacity-75 md:hidden" />
-            <span className="relative inline-flex rounded-full h-2 w-2 md:h-2.5 md:w-2.5 bg-[hsl(152,55%,40%)] dark:bg-accent" />
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(152,30%,94%)] dark:bg-accent/15 border border-[hsl(152,30%,85%)] dark:border-accent/25 px-3 py-1">
+          <span className="relative flex h-2 w-2">
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(152,55%,40%)] dark:bg-accent opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[hsl(152,55%,40%)] dark:bg-accent" />
           </span>
-          <span className="text-xs md:text-sm font-semibold text-[hsl(152,40%,30%)] dark:text-accent uppercase tracking-wide">LIVE</span>
+          <span className="text-xs font-semibold text-[hsl(152,40%,30%)] dark:text-accent uppercase tracking-wide">LIVE</span>
         </span>
       )}
       {!hideDate && displayDate && (
-        <span className="text-xs md:text-sm text-muted-foreground/70">Updated {displayDate}</span>
+        <span className="text-xs text-muted-foreground/70">Updated {displayDate}</span>
       )}
     </span>
   );
