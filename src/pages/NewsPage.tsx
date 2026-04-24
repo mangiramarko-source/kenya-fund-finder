@@ -458,6 +458,55 @@ const NewsPage = () => {
                 </section>
               )}
 
+              {/* INTERNATIONAL: 4-col equal cards (only on default "All" view) */}
+              {internationalArticles.length > 0 && (
+                <section className="overscroll-x-contain">
+                  <div className="mb-4 flex items-center gap-2">
+                    <h2 className="font-heading font-bold text-2xl text-foreground">International</h2>
+                    <Badge variant="outline" className="text-[10px] uppercase tracking-wider border-accent/40 text-accent">
+                      Global
+                    </Badge>
+                  </div>
+                  <div className="overflow-x-auto overscroll-x-contain -mx-4 px-4 pb-2 [scrollbar-width:thin]">
+                    <div className="flex gap-4 snap-x snap-mandatory overscroll-x-contain">
+                      {internationalArticles.map((article) => (
+                        <Link
+                          key={article.id}
+                          to={`/news/${article.id}`}
+                          className="group shrink-0 w-[calc((100%-3rem)/4)] snap-start rounded-xl border border-border bg-card hover:border-accent/40 hover:-translate-y-0.5 transition-all overflow-hidden"
+                        >
+                          <div className="aspect-square overflow-hidden bg-muted">
+                            <img
+                              src={getNewsImage(article.image_url, article.category, article.id)}
+                              alt={article.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                              loading="lazy"
+                              onError={(e) => handleNewsImageError(e, article.category, article.id)}
+                            />
+                          </div>
+                          <div className="p-3">
+                            <div className="flex items-center gap-1.5 mb-1.5">
+                              <Newspaper className="h-3 w-3 text-accent" />
+                              <span className="text-[10px] font-semibold text-foreground truncate">{article.source || "News"}</span>
+                              <span className="text-[9px] text-muted-foreground">· {formatDate(article.date_published)}</span>
+                            </div>
+                            <h3 className="font-heading font-bold text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                              {decodeHtmlEntities(article.title)}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-2">
+                              <span className="text-[10px] uppercase tracking-wider font-semibold text-accent">{article.category}</span>
+                              <span className="text-[10px] text-muted-foreground ml-auto inline-flex items-center gap-0.5">
+                                <Clock className="h-2.5 w-2.5" /> {article.read_time}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
+
               {/* TOP SOURCES (placeholder for "Top Creators") */}
               {topSources.length > 0 && (
                 <section>
