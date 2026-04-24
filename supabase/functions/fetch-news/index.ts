@@ -2,20 +2,49 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 
 const KEYWORDS = [
+  // Kenyan / local
   "unit trust", "money market", "cma", "nse", "shares", "dividend",
   "interest rates", "investment", "capital markets", "nairobi securities",
   "bond", "treasury bill", "equity fund", "fixed income", "mutual fund",
   "stock market", "central bank", "cbk", "inflation", "gdp",
   "ipo", "rights issue", "fund manager", "sacco", "pension",
+  "kenya", "nairobi", "shilling", "kes", "east africa", "eac",
+  // International / macro relevant to Kenyan investors
+  "federal reserve", "fed", "ecb", "imf", "world bank", "treasury",
+  "yields", "yield curve", "sovereign bond", "eurobond", "currency",
+  "forex", "fx", "dollar", "euro", "sterling", "oil", "brent", "crude",
+  "gold", "commodities", "etf", "hedge fund", "private equity",
+  "emerging markets", "africa", "frontier markets", "msci",
+  "wall street", "s&p 500", "nasdaq", "ftse", "dow jones", "bond market",
 ];
 
 const RSS_FEEDS = [
+  // Kenyan business press
   { url: "https://www.businessdailyafrica.com/service/search/edp/21010-420078!/feed.rss", source: "Business Daily" },
   { url: "https://www.standardmedia.co.ke/rss/business.php", source: "Standard Media" },
   { url: "https://www.the-star.co.ke/rss/business", source: "The Star" },
   { url: "https://nation.africa/kenya/rss/business", source: "Nation" },
   { url: "https://www.capitalfm.co.ke/business/feed/", source: "Capital FM" },
   { url: "https://www.tuko.co.ke/rss/business.rss", source: "Tuko News" },
+  { url: "https://citizen.digital/feed/business", source: "Citizen Digital" },
+  { url: "https://www.kbc.co.ke/category/business/feed/", source: "KBC" },
+  { url: "https://www.pd.co.ke/category/business/feed/", source: "People Daily" },
+  { url: "https://kenyanwallstreet.com/feed/", source: "Kenyan Wall Street" },
+  { url: "https://www.bizna.co.ke/feed/", source: "Bizna Kenya" },
+  // Pan-African / regional
+  { url: "https://african.business/feed", source: "African Business" },
+  { url: "https://www.theafricareport.com/feed/", source: "The Africa Report" },
+  { url: "https://furtherafrica.com/feed/", source: "Further Africa" },
+  // International financial press
+  { url: "https://feeds.reuters.com/reuters/businessNews", source: "Reuters Business" },
+  { url: "https://feeds.reuters.com/news/wealth", source: "Reuters Markets" },
+  { url: "https://feeds.bbci.co.uk/news/business/rss.xml", source: "BBC Business" },
+  { url: "https://www.ft.com/world/africa?format=rss", source: "Financial Times Africa" },
+  { url: "https://www.aljazeera.com/xml/rss/all.xml", source: "Al Jazeera" },
+  { url: "https://www.cnbc.com/id/100727362/device/rss/rss.html", source: "CNBC World" },
+  { url: "https://www.investing.com/rss/news_25.rss", source: "Investing.com" },
+  { url: "https://www.marketwatch.com/rss/topstories", source: "MarketWatch" },
+  { url: "https://seekingalpha.com/feed.xml", source: "Seeking Alpha" },
 ];
 
 interface ParsedArticle {
@@ -78,6 +107,7 @@ function categorize(text: string): string {
   if (/yield|return|interest rate|cbk|central bank|treasury bill|t-bill/.test(lower)) return "Yield Updates";
   if (/cma|regulator|compliance|policy|law|act|parliament/.test(lower)) return "Regulatory Updates";
   if (/fund manager|unit trust|money market|mutual fund|sacco|pension|ipo|rights issue/.test(lower)) return "Fund Announcements";
+  if (/\b(fed|federal reserve|ecb|imf|world bank|wall street|s&p|nasdaq|ftse|dow jones|eurobond|brent|opec|emerging markets|global|us economy|china|europe)\b/.test(lower)) return "International";
   return "Market News";
 }
 
