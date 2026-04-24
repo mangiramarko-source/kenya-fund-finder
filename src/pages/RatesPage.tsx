@@ -183,12 +183,21 @@ const RatesPage = () => {
 
   const strengthened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate < r.previous_rate).length, [rates]);
   const weakened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate > r.previous_rate).length, [rates]);
+  const unchanged = useMemo(() => rates.filter((r) => r.previous_rate == null || r.rate === r.previous_rate).length, [rates]);
+
+  const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return rates;
-    const q = search.toLowerCase();
-    return rates.filter(r => r.currency_code.toLowerCase().includes(q) || r.currency_name.toLowerCase().includes(q));
-  }, [rates, search]);
+    let result = rates;
+    if (mobileMovement === "gainers") result = result.filter((r) => r.previous_rate != null && r.rate < r.previous_rate);
+    else if (mobileMovement === "losers") result = result.filter((r) => r.previous_rate != null && r.rate > r.previous_rate);
+    else if (mobileMovement === "unchanged") result = result.filter((r) => r.previous_rate == null || r.rate === r.previous_rate);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(r => r.currency_code.toLowerCase().includes(q) || r.currency_name.toLowerCase().includes(q));
+    }
+    return result;
+  }, [rates, search, mobileMovement]);
 
   return (
     <div className="min-h-screen">
@@ -279,6 +288,48 @@ const RatesPage = () => {
               </table>
             </div>
           )}
+        </div>
+
+        {/* Mobile movement pills */}
+        <div className="md:hidden -mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide rounded">
+          {([
+            { key: "all", label: "All", count: rates.length },
+            { key: "gainers", label: "Gainers", count: strengthened },
+            { key: "losers", label: "Losers", count: weakened },
+            { key: "unchanged", label: "Unchanged", count: unchanged },
+          ] as const).map((opt) => {
+            const active = mobileMovement === opt.key;
+            const activeColor =
+              opt.key === "gainers"
+                ? "bg-accent text-accent-foreground"
+                : opt.key === "losers"
+                ? "bg-destructive text-destructive-foreground"
+                : opt.key === "unchanged"
+                ? "bg-muted-foreground/80 text-background"
+                : "bg-foreground text-background";
+            return (
+              <button
+                key={opt.key}
+                onClick={(e) => {
+                  setMobileMovement(opt.key);
+                  e.currentTarget.scrollIntoView({
+                    behavior: "smooth",
+                    inline: "center",
+                    block: "nearest",
+                  });
+                }}
+                className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
+                  active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
+                {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
+                {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
+                {opt.label}
+                <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Mobile Cards */}
