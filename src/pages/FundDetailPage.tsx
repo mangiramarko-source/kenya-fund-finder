@@ -187,8 +187,6 @@ const FundDetailPage = () => {
         <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
         <Link to="/" className="hidden md:inline text-sm text-muted-foreground hover:text-foreground transition-colors">Home</Link>
         <ChevronRight className="h-4 w-4 text-muted-foreground/40 hidden md:block" />
-        <Link to="/funds" className="text-sm text-muted-foreground hover:text-foreground transition-colors">Unit Trusts</Link>
-        <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
         <span className="text-sm text-foreground font-semibold truncate max-w-[200px]">{fund.name}</span>
       </nav>
 
