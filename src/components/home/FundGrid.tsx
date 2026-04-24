@@ -557,9 +557,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                         {fund.name}
                       </Link>
                     </td>
-                    <td className="px-3 py-3.5 text-foreground text-xs max-w-[200px] truncate" title={fund.manager}>
-                      {fund.manager}
-                    </td>
                     <td className="px-2 py-3.5 text-center">
                       {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
                         <MiniSparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
