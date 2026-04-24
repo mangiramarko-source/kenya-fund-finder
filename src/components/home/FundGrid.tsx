@@ -474,21 +474,21 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
       </div>
 
       {/* Desktop: table view */}
-      <div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card shadow-sm">
+      <div className="hidden md:block max-w-[1200px] mx-auto w-full rounded-xl border border-border overflow-hidden bg-card shadow-sm">
         <div>
           <table className="w-full text-sm table-fixed">
             <colgroup>
-              <col style={{ width: "3%" }} />
-              <col style={{ width: "15%" }} />
-              
-              <col style={{ width: "10%" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "8%" }} />
-              <col style={{ width: "8%" }} />
-              <col style={{ width: "18%" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "6%" }} />
-              {onToggleFavourite && <col style={{ width: "3%" }} />}
+              <col style={{ width: "40px" }} />
+              <col style={{ width: "220px" }} />
+
+              <col style={{ width: "90px" }} />
+              <col style={{ width: "100px" }} />
+              <col style={{ width: "80px" }} />
+              <col style={{ width: "100px" }} />
+              <col />
+              <col style={{ width: "110px" }} />
+              <col style={{ width: "70px" }} />
+              {onToggleFavourite && <col style={{ width: "40px" }} />}
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
