@@ -575,8 +575,10 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-right">
                       <ChangeCell change={change} unit={fund.yield_unit} />
                     </td>
-                    <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground text-xs">
-                      {fmtYield(fund.daily_yield, fund.yield_unit)}
+                    <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap">
+                      <span className="font-bold text-accent text-[15px]">
+                        {fmtYield(fund.daily_yield, fund.yield_unit)}
+                      </span>
                     </td>
                     <td className="px-3 py-3.5 text-right">
                       <ChangeCell change={dailyChange} unit={fund.yield_unit} />
