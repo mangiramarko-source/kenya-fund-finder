@@ -2,6 +2,7 @@ import { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CurrencyConverter from "@/components/calculator/CurrencyConverter";
 import PayeCalculator from "@/components/calculator/PayeCalculator";
+import InvestmentCalculator from "@/components/calculator/InvestmentCalculator";
 import { Calculator as CalcIcon } from "lucide-react";
 
 const CalculatorPage = () => {
@@ -18,16 +19,20 @@ const CalculatorPage = () => {
           </div>
           <div>
             <h1 className="text-xl md:text-2xl font-bold tracking-tight">Calculator</h1>
-            <p className="text-xs md:text-sm text-muted-foreground">Currency conversion and KRA PAYE estimates</p>
+            <p className="text-xs md:text-sm text-muted-foreground">Investment, currency, and KRA PAYE estimates</p>
           </div>
         </div>
       </header>
 
-      <Tabs defaultValue="currency" className="w-full">
-        <TabsList className="grid w-full grid-cols-2 mb-4">
+      <Tabs defaultValue="investment" className="w-full">
+        <TabsList className="grid w-full grid-cols-3 mb-4">
+          <TabsTrigger value="investment">Investment</TabsTrigger>
           <TabsTrigger value="currency">Currency</TabsTrigger>
           <TabsTrigger value="paye">PAYE</TabsTrigger>
         </TabsList>
+        <TabsContent value="investment">
+          <InvestmentCalculator />
+        </TabsContent>
         <TabsContent value="currency">
           <CurrencyConverter />
         </TabsContent>
@@ -40,3 +45,4 @@ const CalculatorPage = () => {
 };
 
 export default CalculatorPage;
+
