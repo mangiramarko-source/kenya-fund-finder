@@ -430,6 +430,43 @@ const StocksPage = () => {
           </Sheet>
         </div>
 
+        {/* Mobile movement filter (visible when sector = All) */}
+        {sector === "All" && (
+          <div className="md:hidden -mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
+            {([
+              { key: "all", label: "All", count: stocks.length },
+              { key: "gainers", label: "Gainers", count: gainers },
+              { key: "losers", label: "Losers", count: losers },
+              { key: "unchanged", label: "Unchanged", count: unchanged },
+            ] as const).map((opt) => {
+              const active = mobileMovement === opt.key;
+              const activeColor =
+                opt.key === "gainers"
+                  ? "bg-accent text-accent-foreground"
+                  : opt.key === "losers"
+                  ? "bg-destructive text-destructive-foreground"
+                  : opt.key === "unchanged"
+                  ? "bg-muted-foreground/80 text-background"
+                  : "bg-foreground text-background";
+              return (
+                <button
+                  key={opt.key}
+                  onClick={() => setMobileMovement(opt.key)}
+                  className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                    active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  }`}
+                >
+                  {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
+                  {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
+                  {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
+                  {opt.label}
+                  <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        )}
+
         {/* Desktop Table */}
         <div className="hidden md:block">
           {loading ? (
