@@ -232,7 +232,7 @@ const RatesPage = () => {
             <span className="text-xs text-muted-foreground/70">Updated {latestUpdate?.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
             <SectionLiveStatus section="rates" fallbackDate={latestUpdate} hideDate />
           </div>
-          <div className="md:hidden border-b border-border mt-3" />
+          <div className="md:hidden border-b border-border mt-2" />
         </div>
 
         <ActiveAlertsCard assetType="currency" />
@@ -252,7 +252,7 @@ const RatesPage = () => {
         </div>
 
         {/* Mobile: combined search + filter button */}
-        <div className="md:hidden flex items-center gap-2 mb-4">
+        <div className="md:hidden -mt-2 flex items-center gap-2 mb-4">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
