@@ -1,5 +1,5 @@
-import { useState, useMemo } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { useState, useMemo, useEffect } from "react";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, BarChart3, Layers, Tag, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -162,13 +162,40 @@ const FundStatCard = ({ label, value, icon, valueColor }: { label: string; value
   </div>
 );
 
+const VALID_SORT: SortKey[] = ["annual_yield", "daily_yield", "name", "minimum_investment", "management_fee", "change"];
+const VALID_MOVEMENT = ["all", "gainers", "losers", "unchanged"] as const;
+type Movement = typeof VALID_MOVEMENT[number];
+
 const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, onToggleFavourite }: FundGridProps) => {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<string>("money_market");
-  const [search, setSearch] = useState("");
-  const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
-  const [sortDir, setSortDir] = useState<SortDir>("desc");
-  const [movement, setMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  // Derive state from URL with defaults
+  const activeTab = searchParams.get("category") || "money_market";
+  const search = searchParams.get("q") || "";
+  const sortParam = searchParams.get("sort") as SortKey | null;
+  const sortKey: SortKey = sortParam && VALID_SORT.includes(sortParam) ? sortParam : "annual_yield";
+  const dirParam = searchParams.get("dir");
+  const sortDir: SortDir = dirParam === "asc" || dirParam === "desc" ? dirParam : "desc";
+  const movementParam = searchParams.get("movement") as Movement | null;
+  const movement: Movement = movementParam && VALID_MOVEMENT.includes(movementParam) ? movementParam : "all";
+
+  /** Update URL params; omits values equal to defaults to keep URLs clean */
+  const updateParams = (patch: Partial<{ category: string; q: string; sort: SortKey; dir: SortDir; movement: Movement }>) => {
+    const next = new URLSearchParams(searchParams);
+    const defaults = { category: "money_market", q: "", sort: "annual_yield", dir: "desc", movement: "all" };
+    Object.entries(patch).forEach(([k, v]) => {
+      if (v === undefined || v === null || v === "" || v === defaults[k as keyof typeof defaults]) next.delete(k);
+      else next.set(k, String(v));
+    });
+    setSearchParams(next, { replace: true });
+  };
+
+  const setActiveTab = (val: string) => updateParams({ category: val });
+  const setSearch = (val: string) => updateParams({ q: val });
+  const setSortKey = (val: SortKey) => updateParams({ sort: val });
+  const setSortDir = (val: SortDir) => updateParams({ dir: val });
+  const setMovement = (val: Movement) => updateParams({ movement: val });
 
   /** Compute per-category gainer/loser counts based on annual_yield change vs latest snapshot */
   const movementForFund = (f: FundFromDB): "gainer" | "loser" | "unchanged" => {
