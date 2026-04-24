@@ -152,13 +152,13 @@ const Navbar = () => {
           ref={headerRef}
           className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border"
         >
-          <div className="container flex h-14 items-center justify-between px-2">
+          <div className="container flex h-16 items-center justify-between">
             {isDetailPage ? (
               <Button
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate(-1)}
-                className="rounded-full h-9 pl-1 pr-2 gap-1.5 text-foreground hover:bg-muted -ml-1"
+                className="rounded-full h-9 px-2 gap-1.5 text-foreground hover:bg-muted"
                 aria-label="Go back"
               >
                 <ArrowLeft className="h-5 w-5" />
@@ -169,7 +169,7 @@ const Navbar = () => {
                 variant="ghost"
                 size="sm"
                 onClick={() => navigate("/")}
-                className="rounded-full h-9 pl-1 pr-2 gap-1.5 text-foreground hover:bg-muted -ml-1"
+                className="rounded-full h-9 px-2 gap-1.5 text-foreground hover:bg-muted"
                 aria-label="Go home"
               >
                 <BarChart3 className="h-5 w-5" />
@@ -187,7 +187,7 @@ const Navbar = () => {
             </Button>
           </div>
         </header>
-        <div className="md:hidden h-14" aria-hidden="true" />
+        <div className="md:hidden h-16" aria-hidden="true" />
 
         {/* Mobile slide-in sheet from right (shared with full navbar) */}
         <Sheet open={open} onOpenChange={setOpen}>
