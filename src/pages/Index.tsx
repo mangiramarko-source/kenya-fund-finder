@@ -2,6 +2,7 @@ import { useEffect, useState, useCallback } from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, type FundFromDB, type YieldSnapshot } from "@/lib/api";
 import { useFundWatchlist } from "@/hooks/useFundWatchlist";
+import { useAuth } from "@/hooks/useAuth";
 import FundGrid from "@/components/home/FundGrid";
 
 import SectionLiveStatus from "@/components/SectionLiveStatus";
@@ -12,6 +13,7 @@ const Index = () => {
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
   const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});
   const [loading, setLoading] = useState(true);
+  const { user } = useAuth();
   const { isFavourite, toggle } = useFundWatchlist();
 
   const load = useCallback(async () => {
@@ -65,8 +67,8 @@ const Index = () => {
         snapshots={snapshots}
         allSnapshots={allSnapshots}
         loading={loading}
-        isFavourite={isFavourite}
-        onToggleFavourite={toggle}
+        isFavourite={user ? isFavourite : undefined}
+        onToggleFavourite={user ? toggle : undefined}
       />
     </div>
   );
