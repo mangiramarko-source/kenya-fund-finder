@@ -678,13 +678,6 @@ const NewsPage = () => {
                           <span className="text-[10px] text-muted-foreground">
                             {formatDate(article.date_published)}
                           </span>
-                          <button
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navTo("/calculator"); }}
-                            className="ml-auto inline-flex items-center gap-1 text-[10px] font-medium text-accent hover:text-accent/80 transition-colors"
-                            title="Use ROI Calculator"
-                          >
-                            <Calculator className="h-3 w-3" /> Calc
-                          </button>
                         </div>
                       </div>
                     </Link>

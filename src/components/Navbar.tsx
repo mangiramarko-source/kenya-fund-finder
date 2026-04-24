@@ -344,13 +344,6 @@ const Navbar = () => {
               <Newspaper className="h-5 w-5" /> News
             </Link>
             <Link
-              to="/calculator"
-              onClick={closeMobile}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-            >
-              <Calculator className="h-5 w-5" /> Calculator
-            </Link>
-            <Link
               to={user ? "/alerts" : "/auth"}
               onClick={closeMobile}
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
