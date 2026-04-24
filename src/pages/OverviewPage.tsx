@@ -885,14 +885,15 @@ const OverviewPage = () => {
             <>
               <MobileGroupHeading icon={TrendingUp} label="Top Gainers" tone="success" />
               {topGainers.map(s => (
-                <HighlightCard
+                <MobileStockHighlightCard
                   key={`g-${s.id}`}
-                  icon={TrendingUp}
-                  name={`${s.symbol} · ${s.name}`}
-                  value={`KES ${s.price.toFixed(2)}`}
-                  change={<span className="inline-flex items-center gap-0.5 text-success text-[11px] font-semibold"><TrendingUp className="h-3 w-3" />+{s.day_change_percent.toFixed(2)}%</span>}
+                  symbol={s.symbol}
+                  name={s.name}
+                  price={s.price}
+                  dayChange={s.day_change}
+                  dayChangePct={s.day_change_percent}
+                  sparkData={getStockSparkData(s.id)}
                   linkTo={`/stocks/${s.symbol}`}
-                  color="bg-success/10"
                 />
               ))}
             </>
@@ -901,14 +902,15 @@ const OverviewPage = () => {
             <>
               <MobileGroupHeading icon={TrendingDown} label="Top Losers" tone="destructive" />
               {topLosers.map(s => (
-                <HighlightCard
+                <MobileStockHighlightCard
                   key={`l-${s.id}`}
-                  icon={TrendingDown}
-                  name={`${s.symbol} · ${s.name}`}
-                  value={`KES ${s.price.toFixed(2)}`}
-                  change={<span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold"><TrendingDown className="h-3 w-3" />{s.day_change_percent.toFixed(2)}%</span>}
+                  symbol={s.symbol}
+                  name={s.name}
+                  price={s.price}
+                  dayChange={s.day_change}
+                  dayChangePct={s.day_change_percent}
+                  sparkData={getStockSparkData(s.id)}
                   linkTo={`/stocks/${s.symbol}`}
-                  color="bg-destructive/10"
                 />
               ))}
             </>
@@ -916,25 +918,38 @@ const OverviewPage = () => {
           {moneyMarketFunds.length > 0 && (
             <>
               <MobileGroupHeading icon={BarChart3} label="Money Market" tone="primary" />
-              {moneyMarketFunds.map(f => (
-                <HighlightCard
-                  key={`mm-${f.id}`}
-                  icon={BarChart3}
-                  name={f.name}
-                  value={`${f.annual_yield.toFixed(2)}%`}
-                  sub={`Daily: ${f.daily_yield.toFixed(4)}%`}
-                  linkTo={`/compare/${f.slug}`}
-                  color="bg-primary/10"
+              {moneyMarketFunds.map(f => {
+                const snaps = fundSnapshots.filter(s => s.fund_id === f.id);
+                const prev = snaps.length > 0 ? snaps[snaps.length - 1].annual_yield : undefined;
+                return (
+                  <MobileFundHighlightCard
+                    key={`mm-${f.id}`}
+                    name={f.name}
+                    annualYield={f.annual_yield}
+                    dailyYield={f.daily_yield}
+                    prevAnnualYield={prev}
+                    linkTo={`/compare/${f.slug}`}
+                  />
+                );
+              })}
+            </>
+          )}
+          {bestFI && (() => {
+            const snaps = fundSnapshots.filter(s => s.fund_id === bestFI.id);
+            const prev = snaps.length > 0 ? snaps[snaps.length - 1].annual_yield : undefined;
+            return (
+              <>
+                <MobileGroupHeading icon={Landmark} label="Fixed Income" tone="muted" />
+                <MobileFundHighlightCard
+                  name={bestFI.name}
+                  annualYield={bestFI.annual_yield}
+                  dailyYield={bestFI.daily_yield}
+                  prevAnnualYield={prev}
+                  linkTo={`/compare/${bestFI.slug}`}
                 />
-              ))}
-            </>
-          )}
-          {bestFI && (
-            <>
-              <MobileGroupHeading icon={Landmark} label="Fixed Income" tone="muted" />
-              <HighlightCard icon={Landmark} name={bestFI.name} value={`${bestFI.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestFI.slug}`} color="bg-secondary/80" />
-            </>
-          )}
+              </>
+            );
+          })()}
           {bestFXRate && (
             <>
               <MobileGroupHeading icon={DollarSign} label="FX Rate" tone="accent" />
