@@ -582,6 +582,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-right text-sm tabular-nums text-muted-foreground whitespace-nowrap">
                       {fund.management_fee}%
                     </td>
+                    <td className="px-3 py-3.5 text-left text-sm text-muted-foreground truncate" title={fund.withdrawal_time}>
+                      {fund.withdrawal_time}
+                    </td>
                     {onToggleFavourite && (
                       <td className="px-2 py-3.5 text-center">
                         <button
