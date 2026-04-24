@@ -828,7 +828,7 @@ const OverviewPage = () => {
             <div className="flex gap-4 min-w-max">
               {/* Top Gainers */}
               <div className="w-[300px] shrink-0">
-                <HighlightColumn icon={TrendingUp} label="Top Gainers" link="/stocks">
+                <HighlightColumn icon={TrendingUp} label="Stocks · Top Gainers" link="/stocks">
                   {topGainers.length === 0 && (
                     <p className="text-[11px] text-muted-foreground">No data available</p>
                   )}
