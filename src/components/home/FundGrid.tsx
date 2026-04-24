@@ -366,6 +366,40 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
             </button>
           ))}
         </div>
+        {/* Mobile movement pills */}
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+          {([
+            { key: "all", label: "All", count: categoryFunds.length },
+            { key: "gainers", label: "Gainers", count: movementCounts.gainers },
+            { key: "losers", label: "Losers", count: movementCounts.losers },
+            { key: "unchanged", label: "Unchanged", count: movementCounts.unchanged },
+          ] as const).map((opt) => {
+            const active = movement === opt.key;
+            const activeColor =
+              opt.key === "gainers"
+                ? "bg-accent text-accent-foreground"
+                : opt.key === "losers"
+                ? "bg-destructive text-destructive-foreground"
+                : opt.key === "unchanged"
+                ? "bg-muted-foreground/80 text-background"
+                : "bg-foreground text-background";
+            return (
+              <button
+                key={opt.key}
+                onClick={() => setMovement(opt.key)}
+                className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                  active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
+                {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
+                {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
+                {opt.label}
+                <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+              </button>
+            );
+          })}
+        </div>
 
         <div className="relative w-full">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
