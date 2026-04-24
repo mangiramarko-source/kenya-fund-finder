@@ -822,16 +822,35 @@ const OverviewPage = () => {
       {/* ─── Market Highlights (always shown) ─── */}
       <div>
 
-        {/* Desktop: 4 vertical columns of top-5 cards */}
-        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Stocks */}
-          <HighlightColumn icon={TrendingUp} label="Stocks" link="/stocks">
+        {/* Desktop: 5 vertical columns of top-5 cards */}
+        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-5 gap-4">
+          {/* Top Gainers */}
+          <HighlightColumn icon={TrendingUp} label="Top Gainers" link="/stocks">
             {topGainers.length === 0 && (
               <p className="text-[11px] text-muted-foreground">No data available</p>
             )}
             {topGainers.map((s) => (
               <HighlightListCard
-                key={`hl-stock-${s.id}`}
+                key={`hl-gainer-${s.id}`}
+                title={s.symbol}
+                sub={s.name}
+                value={`KES ${s.price.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                changePct={s.day_change_percent}
+                sparkData={getStockSparkData(s.id)}
+                trend={trendOf(s.price, s.previous_price)}
+                linkTo={`/stocks/${s.symbol}`}
+              />
+            ))}
+          </HighlightColumn>
+
+          {/* Top Losers */}
+          <HighlightColumn icon={TrendingDown} label="Top Losers" link="/stocks">
+            {topLosers.length === 0 && (
+              <p className="text-[11px] text-muted-foreground">No data available</p>
+            )}
+            {topLosers.map((s) => (
+              <HighlightListCard
+                key={`hl-loser-${s.id}`}
                 title={s.symbol}
                 sub={s.name}
                 value={`KES ${s.price.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
