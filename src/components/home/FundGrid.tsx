@@ -279,10 +279,10 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
   }, [funds, activeTab]);
 
   const toggleSort = (key: SortKey) => {
-    if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
-    else {
-      setSortKey(key);
-      setSortDir(key === "name" ? "asc" : "desc");
+    if (sortKey === key) {
+      updateParams({ dir: sortDir === "asc" ? "desc" : "asc" });
+    } else {
+      updateParams({ sort: key, dir: key === "name" ? "asc" : "desc" });
     }
   };
 
@@ -296,11 +296,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           <Select
             value={activeTab}
             onValueChange={(val) => {
-              setActiveTab(val);
-              setSearch("");
-              setSortKey("annual_yield");
-              setSortDir("desc");
-              setMovement("all");
+              updateParams({ category: val, q: "", sort: "annual_yield", dir: "desc", movement: "all" });
             }}
           >
             <SelectTrigger className="h-9 w-[220px] rounded-lg bg-muted/30 border-border text-xs font-medium">
@@ -381,11 +377,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
             <button
               key={cat}
               onClick={() => {
-                setActiveTab(cat);
-                setSearch("");
-                setSortKey("annual_yield");
-                setSortDir("desc");
-                setMovement("all");
+                updateParams({ category: cat, q: "", sort: "annual_yield", dir: "desc", movement: "all" });
               }}
               className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                 activeTab === cat
