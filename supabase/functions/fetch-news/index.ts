@@ -320,9 +320,14 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    console.log(`Inserted ${rows.length} news articles from ${successCount} feeds`);
+    console.log(`Inserted ${rows.length} news articles from ${successCount} feeds (rewritten: ${rewrittenCount})`);
     return new Response(
-      JSON.stringify({ message: `Inserted ${rows.length} articles`, inserted: rows.length, feeds: { success: successCount, failed: failCount } }),
+      JSON.stringify({
+        message: `Inserted ${rows.length} articles`,
+        inserted: rows.length,
+        rewritten: rewrittenCount,
+        feeds: { success: successCount, failed: failCount },
+      }),
       { headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   } catch (err) {
