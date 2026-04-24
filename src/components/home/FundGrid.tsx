@@ -1,4 +1,4 @@
-import { useState, useMemo, useEffect } from "react";
+import { useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, BarChart3, Layers, Tag, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -191,11 +191,8 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
     setSearchParams(next, { replace: true });
   };
 
-  const setActiveTab = (val: string) => updateParams({ category: val });
+  // Convenience setters used by Search input
   const setSearch = (val: string) => updateParams({ q: val });
-  const setSortKey = (val: SortKey) => updateParams({ sort: val });
-  const setSortDir = (val: SortDir) => updateParams({ dir: val });
-  const setMovement = (val: Movement) => updateParams({ movement: val });
 
   /** Compute per-category gainer/loser counts based on annual_yield change vs latest snapshot */
   const movementForFund = (f: FundFromDB): "gainer" | "loser" | "unchanged" => {
