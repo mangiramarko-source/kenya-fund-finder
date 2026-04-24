@@ -96,9 +96,22 @@ const NewsPage = () => {
     return Array.from(s).sort();
   }, [articles]);
   const [activeSource] = useState<string>("All");
+  const [region, setRegion] = useState<RegionFilter>("all");
+
+  const regionCounts = useMemo(() => {
+    let intl = 0;
+    let ke = 0;
+    for (const a of articles) {
+      if (isInternationalArticle(a)) intl++;
+      else ke++;
+    }
+    return { kenya: ke, international: intl };
+  }, [articles]);
 
   const filtered = useMemo(() => {
     let list = articles;
+    if (region === "kenya") list = list.filter(a => !isInternationalArticle(a));
+    else if (region === "international") list = list.filter(a => isInternationalArticle(a));
     if (activeCategory !== "All") list = list.filter((a) => a.category === activeCategory);
     if (activeSource !== "All") list = list.filter((a) => a.source === activeSource);
     if (searchQuery.trim()) {
@@ -114,7 +127,7 @@ const NewsPage = () => {
       });
     }
     return list;
-  }, [articles, activeCategory, activeSource, sortBy, searchQuery]);
+  }, [articles, activeCategory, activeSource, sortBy, searchQuery, region]);
 
   // Hero pool: featured first, then latest, capped at 6
   const heroPool = useMemo(() => {
