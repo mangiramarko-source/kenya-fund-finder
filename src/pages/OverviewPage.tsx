@@ -434,6 +434,70 @@ const MobileGroupHeading = ({ icon: Icon, label, tone = "muted" }: { icon: any; 
   );
 };
 
+/* ─── Highlight List Card (desktop, mirrors mobile card style) ─── */
+const HighlightListCard = ({
+  title, sub, value, changePct, sparkData, trend, linkTo,
+}: {
+  title: string; sub: string; value: string;
+  changePct?: number | null; sparkData?: number[];
+  trend?: "up" | "down" | "flat"; linkTo: string;
+}) => {
+  return (
+    <Link
+      to={linkTo}
+      className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all overflow-hidden"
+    >
+      <div className="flex items-center gap-3 p-3.5">
+        <div className="flex-1 min-w-0">
+          <span className="font-bold text-foreground text-sm truncate block">{title}</span>
+          <p className="text-[11px] text-muted-foreground truncate">{sub}</p>
+        </div>
+        {sparkData && sparkData.length >= 2 && (
+          <div className="shrink-0">
+            <Sparkline data={sparkData} width={60} height={24} color="auto" trend={trend} />
+          </div>
+        )}
+        <div className="text-right shrink-0">
+          <p className="font-bold text-foreground text-sm tabular-nums">{value}</p>
+          {changePct != null ? (
+            changePct > 0 ? (
+              <span className="inline-flex items-center gap-0.5 text-accent text-[11px] font-semibold tabular-nums">
+                <TrendingUp className="h-3 w-3" /> +{changePct.toFixed(2)}%
+              </span>
+            ) : changePct < 0 ? (
+              <span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold tabular-nums">
+                <TrendingDown className="h-3 w-3" /> {changePct.toFixed(2)}%
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]">
+                <Minus className="h-3 w-3" /> 0.00%
+              </span>
+            )
+          ) : null}
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+/* ─── Highlight Column (desktop) — heading + stacked HighlightListCards ─── */
+const HighlightColumn = ({ icon: Icon, label, link, children }: {
+  icon: any; label: string; link: string; children: React.ReactNode;
+}) => (
+  <div className="flex flex-col gap-2">
+    <div className="flex items-center justify-between mb-1">
+      <div className="flex items-center gap-1.5">
+        <Icon className="h-3.5 w-3.5 text-muted-foreground" />
+        <span className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{label}</span>
+      </div>
+      <Link to={link} className="text-[10px] text-accent hover:underline inline-flex items-center gap-0.5">
+        View <ArrowRight className="h-3 w-3" />
+      </Link>
+    </div>
+    {children}
+  </div>
+);
+
 /* ─── Main Page ─── */
 const OverviewPage = () => {
   useDocumentTitle(
