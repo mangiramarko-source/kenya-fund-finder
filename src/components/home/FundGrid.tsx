@@ -112,19 +112,19 @@ const ChangeCell = ({ change, unit }: { change: number; unit: string }) => {
   const formatted = `${Math.abs(change).toFixed(2)}${suffix}`;
   if (change > 0)
     return (
-      <span className="inline-flex items-center gap-0.5 text-accent text-xs font-semibold tabular-nums">
-        <TrendingUp className="h-3 w-3" /> +{formatted}
+      <span className="inline-flex items-center gap-0.5 text-accent text-sm font-semibold tabular-nums">
+        <TrendingUp className="h-3.5 w-3.5" /> +{formatted}
       </span>
     );
   if (change < 0)
     return (
-      <span className="inline-flex items-center gap-0.5 text-destructive text-xs font-semibold tabular-nums">
-        <TrendingDown className="h-3 w-3" /> -{formatted}
+      <span className="inline-flex items-center gap-0.5 text-destructive text-sm font-semibold tabular-nums">
+        <TrendingDown className="h-3.5 w-3.5" /> -{formatted}
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-0.5 text-muted-foreground text-xs">
-      <Minus className="h-3 w-3" /> 0.00{suffix}
+    <span className="inline-flex items-center gap-0.5 text-muted-foreground text-sm">
+      <Minus className="h-3.5 w-3.5" /> 0.00{suffix}
     </span>
   );
 };
