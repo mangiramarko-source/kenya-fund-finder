@@ -243,13 +243,14 @@ const CommoditiesPage = () => {
                 <colgroup>
                   <col style={{ width: "3%" }} />
                   <col style={{ width: "8%" }} />
-                  <col style={{ width: "16%" }} />
-                  <col style={{ width: "11%" }} />
+                  <col style={{ width: "14%" }} />
                   <col style={{ width: "10%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "9%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "8%" }} />
                   <col style={{ width: "9%" }} />
                   <col style={{ width: "9%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "10%" }} />
                   <col style={{ width: "10%" }} />
                   <col style={{ width: "4%" }} />
                 </colgroup>
@@ -259,6 +260,7 @@ const CommoditiesPage = () => {
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Symbol</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Name</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Price</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Unit</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Previous</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change %</th>
