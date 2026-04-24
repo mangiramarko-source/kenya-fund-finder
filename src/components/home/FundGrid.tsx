@@ -604,7 +604,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 11 : 10} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 12 : 11} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
