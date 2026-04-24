@@ -462,7 +462,7 @@ const RateRow = ({
       </tr>
       {isExpanded && (
         <tr className="border-t border-border bg-muted/20">
-          <td colSpan={10} className="p-4">
+          <td colSpan={11} className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <DetailBox label="Current Rate" value={`KES ${rate.rate.toFixed(2)}`} />
               <DetailBox label="Previous Rate" value={rate.previous_rate != null ? `KES ${rate.previous_rate.toFixed(2)}` : "—"} />
