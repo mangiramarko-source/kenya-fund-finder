@@ -509,7 +509,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-right px-3 py-3 font-semibold text-muted-foreground">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="inline-flex">Daily Δ</span>
+                      <span className="inline-flex">Change</span>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-[220px] text-xs">
                       Difference between the current and previous daily yield.
