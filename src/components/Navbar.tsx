@@ -129,58 +129,22 @@ const Navbar = () => {
 
   if (isMinimal) {
     return (
-      <>
-        <header
-          ref={headerRef}
-          className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border"
-        >
-          <div className="container flex h-14 items-center justify-between">
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => navigate(-1)}
-              className="rounded-full h-9 w-9 text-foreground hover:bg-muted"
-              aria-label="Go back"
-            >
-              <ArrowLeft className="h-5 w-5" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpen(true)}
-              className="rounded-full h-9 w-9 text-foreground hover:bg-muted"
-              aria-label="Open menu"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
-          </div>
-        </header>
-        <div className="md:hidden h-14" />
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="right" className="w-[280px] p-0 flex flex-col">
-            <SheetHeader className="p-5 pb-3 border-b border-border">
-              <SheetTitle className="flex items-center gap-2 text-base">
-                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent text-accent-foreground">
-                  <TrendingUp className="h-4 w-4" />
-                </div>
-                Menu
-              </SheetTitle>
-            </SheetHeader>
-            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-              {mobileNavLinks.map((link) => (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={closeMobile}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-                >
-                  {link.label}
-                </Link>
-              ))}
-            </nav>
-          </SheetContent>
-        </Sheet>
-      </>
+      <header
+        ref={headerRef}
+        className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border"
+      >
+        <div className="container flex h-14 items-center">
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => navigate(-1)}
+            className="rounded-full h-9 w-9 text-foreground hover:bg-muted"
+            aria-label="Go back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </Button>
+        </div>
+      </header>
     );
   }
 
