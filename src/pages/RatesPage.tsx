@@ -2,11 +2,12 @@ import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
-import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star, SlidersHorizontal } from "lucide-react";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
@@ -186,6 +187,8 @@ const RatesPage = () => {
   const unchanged = useMemo(() => rates.filter((r) => r.previous_rate == null || r.rate === r.previous_rate).length, [rates]);
 
   const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
+  type SortKey = "default" | "rate_desc" | "rate_asc" | "change_desc" | "change_asc" | "name_asc" | "name_desc";
+  const [mobileSort, setMobileSort] = useState<SortKey>("default");
 
   const filtered = useMemo(() => {
     let result = rates;
@@ -196,8 +199,21 @@ const RatesPage = () => {
       const q = search.toLowerCase();
       result = result.filter(r => r.currency_code.toLowerCase().includes(q) || r.currency_name.toLowerCase().includes(q));
     }
+    if (mobileSort !== "default") {
+      const pct = (r: Rate) => (r.previous_rate != null && r.previous_rate !== 0 ? ((r.rate - r.previous_rate) / r.previous_rate) * 100 : 0);
+      const arr = [...result];
+      switch (mobileSort) {
+        case "rate_desc": arr.sort((a, b) => b.rate - a.rate); break;
+        case "rate_asc": arr.sort((a, b) => a.rate - b.rate); break;
+        case "change_desc": arr.sort((a, b) => pct(b) - pct(a)); break;
+        case "change_asc": arr.sort((a, b) => pct(a) - pct(b)); break;
+        case "name_asc": arr.sort((a, b) => a.currency_code.localeCompare(b.currency_code)); break;
+        case "name_desc": arr.sort((a, b) => b.currency_code.localeCompare(a.currency_code)); break;
+      }
+      result = arr;
+    }
     return result;
-  }, [rates, search, mobileMovement]);
+  }, [rates, search, mobileMovement, mobileSort]);
 
   return (
     <div className="min-h-screen">
@@ -222,8 +238,8 @@ const RatesPage = () => {
         <ActiveAlertsCard assetType="currency" />
 
 
-        {/* Search */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
+        {/* Desktop Search */}
+        <div className="hidden md:flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1 max-w-sm">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
@@ -233,6 +249,79 @@ const RatesPage = () => {
               className="pl-9 h-9 rounded-lg text-[16px] sm:text-sm"
             />
           </div>
+        </div>
+
+        {/* Mobile: combined search + filter button */}
+        <div className="md:hidden flex items-center gap-2 mb-3">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search currencies..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9 rounded-lg bg-muted/30 border-border w-full text-[16px]"
+            />
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="relative inline-flex items-center justify-center h-9 w-9 shrink-0 rounded-md border border-border bg-card text-foreground transition-colors"
+                aria-label="Filters"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {mobileSort !== "default" && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
+                )}
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="text-base">Sort & Filter</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-5">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Sort by</p>
+                  <div className="grid grid-cols-1 gap-1.5">
+                    {([
+                      { key: "default", label: "Default order" },
+                      { key: "rate_desc", label: "Rate: High → Low" },
+                      { key: "rate_asc", label: "Rate: Low → High" },
+                      { key: "change_desc", label: "Change %: High → Low" },
+                      { key: "change_asc", label: "Change %: Low → High" },
+                      { key: "name_asc", label: "Currency: A → Z" },
+                      { key: "name_desc", label: "Currency: Z → A" },
+                    ] as const).map((opt) => {
+                      const active = mobileSort === opt.key;
+                      return (
+                        <button
+                          key={opt.key}
+                          onClick={() => setMobileSort(opt.key)}
+                          className={`inline-flex items-center justify-between px-3 h-10 rounded-md text-xs font-medium border transition-colors ${
+                            active
+                              ? "bg-foreground text-background border-foreground"
+                              : "bg-card text-muted-foreground border-border"
+                          }`}
+                        >
+                          <span>{opt.label}</span>
+                          {active && <span className="text-[10px] opacity-80">Selected</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    className="w-full h-10 rounded-md bg-accent text-accent-foreground text-sm font-semibold"
+                  >
+                    Apply
+                  </button>
+                </SheetClose>
+              </div>
+            </SheetContent>
+          </Sheet>
         </div>
 
         {/* Desktop Table */}
