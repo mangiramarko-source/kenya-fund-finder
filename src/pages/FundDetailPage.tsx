@@ -181,10 +181,6 @@ const FundDetailPage = () => {
     <div className="container py-4 sm:py-8 max-w-5xl space-y-5">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-3 py-1">
-        <button onClick={() => navigate(-1)} className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground transition-colors">
-          <ArrowLeft className="h-4 w-4" /> Back
-        </button>
-        <ChevronRight className="h-4 w-4 text-muted-foreground/40" />
         <Link to="/" className="hidden md:inline text-sm text-muted-foreground hover:text-foreground transition-colors">Home</Link>
         <ChevronRight className="h-4 w-4 text-muted-foreground/40 hidden md:block" />
         <span className="text-sm text-foreground font-semibold truncate max-w-[200px]">{fund.name}</span>
