@@ -250,7 +250,7 @@ const NewsPage = () => {
                   <div className="mb-4">
                     <h2 className="font-heading font-bold text-2xl text-foreground">Latest News</h2>
                   </div>
-                  <div className="overflow-x-auto -mx-4 px-4 pb-2 [scrollbar-width:thin]">
+                  <div className="overflow-x-auto overscroll-x-contain -mx-4 px-4 pb-2 [scrollbar-width:thin]">
                     <div className="flex gap-4 snap-x snap-mandatory">
                       {latestArticles.map((article) => (
                         <Link
@@ -296,7 +296,7 @@ const NewsPage = () => {
                   <div className="mb-4">
                     <h2 className="font-heading font-bold text-2xl text-foreground">Must Read</h2>
                   </div>
-                  <div className="overflow-x-auto -mx-4 px-4 pb-2 [scrollbar-width:thin]">
+                  <div className="overflow-x-auto overscroll-x-contain -mx-4 px-4 pb-2 [scrollbar-width:thin]">
                     <div className="flex gap-4 snap-x snap-mandatory">
                       {[mustReadFeature, ...mustReadList].filter(Boolean).map((article) => (
                         <Link
@@ -342,7 +342,7 @@ const NewsPage = () => {
                   <div className="mb-4">
                     <h2 className="font-heading font-bold text-2xl text-foreground">Weekly Highlight</h2>
                   </div>
-                  <div className="overflow-x-auto -mx-4 px-4 pb-2 [scrollbar-width:thin]">
+                  <div className="overflow-x-auto overscroll-x-contain -mx-4 px-4 pb-2 [scrollbar-width:thin]">
                     <div className="flex gap-4 snap-x snap-mandatory">
                       {weeklyHighlight.map((article) => (
                         <Link
@@ -468,7 +468,7 @@ const NewsPage = () => {
               </div>
 
               {/* Desktop horizontal scroll: excludes hero/sidebar articles */}
-              <div className="hidden lg:block overflow-x-auto -mx-4 px-4 pb-2 [scrollbar-width:thin]">
+              <div className="hidden lg:block overflow-x-auto overscroll-x-contain -mx-4 px-4 pb-2 [scrollbar-width:thin]">
                 <div className="flex gap-4 snap-x snap-mandatory">
                   {visibleList.map((article) => (
                     <Link
