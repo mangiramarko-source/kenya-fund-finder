@@ -501,13 +501,13 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-3">
-                  <SortHeader label="Change" field="change" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-left px-3 py-3">
+                  <SortHeader label="Change" field="change" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-3 font-semibold text-muted-foreground">
+                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <span className="inline-flex">Change</span>
@@ -518,11 +518,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   </Tooltip>
                 </th>
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
-                <th className="text-right px-3 py-3">
-                  <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-left px-3 py-3">
+                  <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-right px-3 py-3">
-                  <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-left px-3 py-3">
+                  <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Withdrawal</th>
                 {onToggleFavourite && <th className="w-8"></th>}
