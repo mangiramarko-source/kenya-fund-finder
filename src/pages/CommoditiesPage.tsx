@@ -444,7 +444,9 @@ const CommodityRow = ({
           <span className="font-bold text-foreground text-sm">
             {c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
           </span>
-          <span className="text-muted-foreground ml-1 text-[10px]">{c.unit}</span>
+        </td>
+        <td className="px-3 py-4 whitespace-nowrap text-sm text-muted-foreground">
+          {c.unit}
         </td>
         <td className="px-3 py-4 tabular-nums whitespace-nowrap text-sm text-muted-foreground">
           {c.previous_price != null
