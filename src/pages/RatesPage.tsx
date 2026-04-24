@@ -415,8 +415,8 @@ const RateRow = ({
         }`}
         onClick={onToggle}
       >
-        <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
-        <td className="px-3 py-3.5">
+        <td className="pl-4 pr-2 py-4 text-muted-foreground/60 text-sm tabular-nums">{index + 1}</td>
+        <td className="px-3 py-4">
           <div className="flex items-center gap-2 min-w-0">
             {onToggleFavourite !== undefined && (
               <button
@@ -424,26 +424,26 @@ const RateRow = ({
                 className="p-1 rounded-md hover:bg-muted transition-colors shrink-0"
                 aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
               >
-                <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+                <Star className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
               </button>
             )}
-            <span className="font-bold text-foreground text-xs tracking-wide">{rate.currency_code}</span>
+            <span className="font-bold text-foreground text-sm tracking-wide">{rate.currency_code}</span>
           </div>
         </td>
-        <td className="px-3 py-3.5">
-          <span className="block text-xs text-foreground truncate" title={rate.currency_name}>{rate.currency_name}</span>
+        <td className="px-3 py-4">
+          <span className="block text-sm text-foreground truncate" title={rate.currency_name}>{rate.currency_name}</span>
         </td>
-        <td className="px-3 py-3.5 tabular-nums whitespace-nowrap">
-          <span className="font-bold text-foreground text-xs">
+        <td className="px-3 py-4 tabular-nums whitespace-nowrap">
+          <span className="font-bold text-foreground text-sm">
             {rate.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
           </span>
         </td>
-        <td className="px-3 py-3.5 tabular-nums whitespace-nowrap text-xs text-muted-foreground">
+        <td className="px-3 py-4 tabular-nums whitespace-nowrap text-sm text-muted-foreground">
           {rate.previous_rate != null
             ? rate.previous_rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 4 })
             : "—"}
         </td>
-        <td className="px-3 py-3.5 tabular-nums whitespace-nowrap text-xs">
+        <td className="px-3 py-4 tabular-nums whitespace-nowrap text-sm">
           {change == null ? (
             <span className="text-muted-foreground">—</span>
           ) : change > 0 ? (
@@ -454,26 +454,26 @@ const RateRow = ({
             <span className="text-muted-foreground">0.0000</span>
           )}
         </td>
-        <td className="px-3 py-3.5">
+        <td className="px-3 py-4">
           <ChangeIndicator current={rate.rate} previous={rate.previous_rate} />
         </td>
-        <td className="px-3 py-3.5">
+        <td className="px-3 py-4">
           {history && history.length >= 2 ? (
             <MiniSparkline data={history} positive={positive} />
           ) : (
-            <span className="text-[10px] text-muted-foreground">—</span>
+            <span className="text-xs text-muted-foreground">—</span>
           )}
         </td>
-        <td className="px-3 py-3.5">
-          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${direction.className}`}>
-            {direction.label === "Up" && <TrendingUp className="h-3 w-3" />}
-            {direction.label === "Down" && <TrendingDown className="h-3 w-3" />}
-            {direction.label === "Flat" && <Minus className="h-3 w-3" />}
+        <td className="px-3 py-4">
+          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider ${direction.className}`}>
+            {direction.label === "Up" && <TrendingUp className="h-3.5 w-3.5" />}
+            {direction.label === "Down" && <TrendingDown className="h-3.5 w-3.5" />}
+            {direction.label === "Flat" && <Minus className="h-3.5 w-3.5" />}
             {direction.label}
           </span>
         </td>
-        <td className="px-3 py-3.5 text-xs text-muted-foreground whitespace-nowrap">{updatedShort}</td>
-        <td className="px-2 py-3.5 text-center">
+        <td className="px-3 py-4 text-sm text-muted-foreground whitespace-nowrap">{updatedShort}</td>
+        <td className="px-2 py-4 text-center">
           {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         </td>
       </tr>
