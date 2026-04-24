@@ -554,8 +554,16 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                         {fund.name.length > 17 ? `${fund.name.slice(0, 17)}…` : fund.name}
                       </Link>
                     </td>
-                    <td className="px-3 py-3.5 text-center">
-                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.annual_yield} />
+                    <td className="px-3 py-3.5 tabular-nums whitespace-nowrap text-left">
+                      <span className="font-bold text-foreground text-sm">
+                        {fmtYield(fund.daily_yield, fund.yield_unit)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3.5 text-left">
+                      <ChangeCell change={dailyChange} unit={fund.yield_unit} />
+                    </td>
+                    <td className="px-3 py-3.5 text-left">
+                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.daily_yield} field="daily_yield" />
                     </td>
                     <td className="px-3 py-3.5 whitespace-nowrap tabular-nums text-left">
                       <span className="font-bold text-foreground text-sm">
@@ -565,19 +573,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-left">
                       <ChangeCell change={change} unit={fund.yield_unit} />
                     </td>
-                    <td className="px-3 py-3.5 tabular-nums whitespace-nowrap text-left">
-                      <span className="font-bold text-foreground text-sm">
-                        {fmtYield(fund.daily_yield, fund.yield_unit)}
-                      </span>
-                    </td>
                     <td className="px-3 py-3.5 text-left">
-                      <ChangeCell change={dailyChange} unit={fund.yield_unit} />
+                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.annual_yield} />
                     </td>
                     <td className="px-3 py-3.5 text-foreground text-sm truncate text-left" title={fund.manager}>
                       {fund.manager}
-                    </td>
-                    <td className="px-3 py-3.5 text-left">
-                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.daily_yield} field="daily_yield" />
                     </td>
                     <td className="px-3 py-3.5 text-sm tabular-nums text-muted-foreground whitespace-nowrap text-left">
                       KSh {fund.minimum_investment.toLocaleString()}
@@ -588,17 +588,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-left text-sm text-muted-foreground truncate" title={fund.withdrawal_time}>
                       {fund.withdrawal_time}
                     </td>
-                    {onToggleFavourite && (
-                      <td className="px-2 py-3.5 text-center">
-                        <button
-                          onClick={(e) => { e.stopPropagation(); onToggleFavourite(fund.id, fund.name); }}
-                          className="p-1 rounded-md hover:bg-muted transition-colors"
-                          aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
-                        >
-                          <Star className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
-                        </button>
-                      </td>
-                    )}
                   </tr>
                 );
               })}
