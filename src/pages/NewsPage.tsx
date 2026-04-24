@@ -246,7 +246,7 @@ const NewsPage = () => {
             <div className="hidden lg:block space-y-8 mb-8 overscroll-x-contain">
               {/* LATEST NEWS: 3-col grid */}
               {latestArticles.length > 0 && (
-                <section>
+                <section className="overscroll-x-contain">
                   <div className="mb-4">
                     <h2 className="font-heading font-bold text-2xl text-foreground">Latest News</h2>
                   </div>
@@ -292,7 +292,7 @@ const NewsPage = () => {
 
               {/* MUST READ: 4-col equal cards (matches Weekly Highlight) */}
               {(mustReadFeature || mustReadList.length > 0) && (
-                <section>
+                <section className="overscroll-x-contain">
                   <div className="mb-4">
                     <h2 className="font-heading font-bold text-2xl text-foreground">Must Read</h2>
                   </div>
@@ -338,7 +338,7 @@ const NewsPage = () => {
 
               {/* WEEKLY HIGHLIGHT: 4-col equal cards */}
               {weeklyHighlight.length > 0 && (
-                <section>
+                <section className="overscroll-x-contain">
                   <div className="mb-4">
                     <h2 className="font-heading font-bold text-2xl text-foreground">Weekly Highlight</h2>
                   </div>
