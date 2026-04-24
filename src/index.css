@@ -17,6 +17,10 @@
   button, a, input, select, textarea, [role="button"] {
     touch-action: manipulation;
   }
+  /* Disable browser back/forward swipe gesture across the app */
+  html, body {
+    overscroll-behavior-x: contain;
+  }
 }
 
 @layer base {
