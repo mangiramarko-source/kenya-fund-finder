@@ -400,9 +400,9 @@ const Navbar = () => {
                   key={link.to}
                   to={link.to}
                   onClick={closeMobile}
-                  className="flex items-center gap-3 px-3 py-2.5 rounded-xl text-xs font-medium text-foreground/60 hover:bg-muted transition-colors"
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
                 >
-                  <Icon className="h-4 w-4" /> {link.label}
+                  <Icon className="h-5 w-5" /> {link.label}
                 </Link>
               );
             })}
