@@ -21,7 +21,7 @@ const CategoryTabs = ({ tabs, selectedCategory, categoryCount, onSelect, loading
   const handleSelect = useCallback((key: string, el: HTMLButtonElement | null) => {
     onSelect(key);
     if (el && scrollRef.current) {
-      el.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+      el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
     }
   }, [onSelect]);
 
