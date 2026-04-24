@@ -497,16 +497,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 
-                <th className="px-2 py-3 font-semibold text-muted-foreground text-center">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex">Trend</span>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[220px] text-xs">
-                      Difference between the current and previous annual yield.
-                    </TooltipContent>
-                  </Tooltip>
-                </th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
