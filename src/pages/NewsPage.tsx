@@ -337,14 +337,14 @@ const NewsPage = () => {
                       See all →
                     </button>
                   </div>
-                  <div className="grid grid-cols-3 gap-5">
+                  <div className="grid grid-cols-4 gap-5">
                     {latestArticles.map((article) => (
                       <Link
                         key={article.id}
                         to={`/news/${article.id}`}
                         className="group rounded-xl border border-border bg-card hover:border-accent/40 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-15px_hsl(var(--accent)/0.3)] transition-all overflow-hidden flex flex-col"
                       >
-                        <div className="aspect-[16/10] overflow-hidden bg-muted">
+                        <div className="aspect-[4/5] overflow-hidden bg-muted">
                           <img
                             src={getNewsImage(article.image_url, article.category, article.id)}
                             alt={article.title}
@@ -353,24 +353,24 @@ const NewsPage = () => {
                             onError={(e) => handleNewsImageError(e, article.category, article.id)}
                           />
                         </div>
-                        <div className="p-4 flex-1 flex flex-col">
-                          <div className="flex items-center gap-1.5 mb-2">
-                            <Newspaper className="h-3 w-3 text-accent" />
-                            <span className="text-[11px] font-semibold text-foreground">{article.source || "News"}</span>
-                            <span className="text-[10px] text-muted-foreground">· {formatDate(article.date_published)}</span>
+                        <div className="p-5 flex-1 flex flex-col">
+                          <div className="flex items-center gap-2 mb-3">
+                            <Newspaper className="h-4 w-4 text-accent" />
+                            <span className="text-sm font-semibold text-foreground">{article.source || "News"}</span>
+                            <span className="text-xs text-muted-foreground">· {formatDate(article.date_published)}</span>
                           </div>
-                          <h3 className="font-heading font-bold text-base leading-snug line-clamp-2 mb-2 group-hover:text-accent transition-colors">
+                          <h3 className="font-heading font-bold text-xl leading-snug line-clamp-3 mb-3 group-hover:text-accent transition-colors">
                             {decodeHtmlEntities(article.title)}
                           </h3>
-                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-3">
+                          <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-4">
                             {decodeHtmlEntities(article.summary)}
                           </p>
-                          <div className="flex items-center gap-2 mt-auto pt-2 border-t border-border/60">
-                            <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent/10 text-accent border border-accent/20">
+                          <div className="flex items-center gap-2 mt-auto pt-3 border-t border-border/60">
+                            <span className="inline-flex items-center text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-accent/10 text-accent border border-accent/20">
                               {article.category}
                             </span>
-                            <span className="text-[10px] text-muted-foreground ml-auto inline-flex items-center gap-0.5">
-                              <Clock className="h-2.5 w-2.5" /> {article.read_time}
+                            <span className="text-xs text-muted-foreground ml-auto inline-flex items-center gap-1">
+                              <Clock className="h-3 w-3" /> {article.read_time}
                             </span>
                           </div>
                         </div>
@@ -605,51 +605,44 @@ const NewsPage = () => {
               </div>
 
               {/* Desktop grid: excludes hero/sidebar articles */}
-              <div className="hidden lg:grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="hidden lg:grid grid-cols-4 gap-5">
                 {visibleList.map((article) => {
                   const dot = categoryDot[article.category] || "bg-muted-foreground";
                   return (
                     <Link
                       key={article.id}
                       to={`/news/${article.id}`}
-                      className="group rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all overflow-hidden"
+                      className="group rounded-xl border border-border bg-card hover:border-accent/40 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-15px_hsl(var(--accent)/0.3)] transition-all overflow-hidden flex flex-col"
                     >
-                      <div className="aspect-[16/9] overflow-hidden">
+                      <div className="aspect-[4/5] overflow-hidden bg-muted">
                         <img
                          src={getNewsImage(article.image_url, article.category, article.id)}
                           alt={article.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
                           loading="lazy"
                           onError={(e) => handleNewsImageError(e, article.category, article.id)}
                         />
                       </div>
-                      <div className="p-3.5">
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
-                          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
-                          <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
-                            <Clock className="h-2.5 w-2.5" />
-                            {article.read_time}
-                          </span>
+                      <div className="p-5 flex-1 flex flex-col">
+                        <div className="flex items-center gap-2 mb-3">
+                          <Newspaper className="h-4 w-4 text-accent" />
+                          <span className="text-sm font-semibold text-foreground">{article.source || "News"}</span>
+                          <span className="text-xs text-muted-foreground">· {formatDate(article.date_published)}</span>
                         </div>
-                        <h3 className="font-heading font-semibold text-base leading-snug line-clamp-2 mb-1 group-hover:text-accent transition-colors">
+                        <h3 className="font-heading font-bold text-xl leading-snug line-clamp-3 mb-3 group-hover:text-accent transition-colors">
                           {decodeHtmlEntities(article.title)}
                         </h3>
-                        <p className="text-muted-foreground line-clamp-2 leading-relaxed mb-2 text-sm">
+                        <p className="text-sm text-muted-foreground line-clamp-2 leading-relaxed mb-4">
                           {decodeHtmlEntities(article.summary)}
                         </p>
-                        <div className="flex items-center gap-1.5">
-                          {article.source && <SourceBadge source={article.source} />}
-                          <span className="text-[10px] text-muted-foreground">
-                            {formatDate(article.date_published)}
+                        <div className="flex items-center gap-2 mt-auto pt-3 border-t border-border/60">
+                          <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
+                          <span className="inline-flex items-center text-[11px] font-bold uppercase tracking-wider px-2.5 py-1 rounded bg-accent/10 text-accent border border-accent/20">
+                            {article.category}
                           </span>
-                          <button
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navTo("/calculator"); }}
-                            className="ml-auto inline-flex items-center gap-1 text-[10px] font-medium text-accent hover:text-accent/80 transition-colors"
-                            title="Use ROI Calculator"
-                          >
-                            <Calculator className="h-3 w-3" /> Calc
-                          </button>
+                          <span className="text-xs text-muted-foreground ml-auto inline-flex items-center gap-1">
+                            <Clock className="h-3 w-3" /> {article.read_time}
+                          </span>
                         </div>
                       </div>
                     </Link>
