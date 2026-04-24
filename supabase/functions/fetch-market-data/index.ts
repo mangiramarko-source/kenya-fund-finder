@@ -404,7 +404,7 @@ function parseNseSnapshotDate(html: string) {
 
 function parseNseQuoteRows(html: string) {
   // deno-lint-ignore no-explicit-any
-  const DOMParserCtor = (globalThis as any).DOMParser as { new(): { parseFromString(s: string, t: string): Document | null } } | undefined;
+  const DOMParserCtor = (globalThis as any).DOMParser;
   if (!DOMParserCtor) return [] as Array<{ company: string; price: number; changePct: number; volume: number }>;
   const doc = new DOMParserCtor().parseFromString(html, "text/html");
   if (!doc) return [] as Array<{ company: string; price: number; changePct: number; volume: number }>;
