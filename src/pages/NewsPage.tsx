@@ -3,10 +3,11 @@ import { decodeHtmlEntities } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Clock, TrendingUp, Landmark, Shield, Megaphone, Sparkles, Calendar, Newspaper, ExternalLink, Search, Loader2, Calculator } from "lucide-react";
+import { Clock, TrendingUp, Landmark, Shield, Megaphone, Sparkles, Calendar, Newspaper, ExternalLink, Search, Loader2, Calculator, SlidersHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
@@ -309,8 +310,8 @@ const NewsPage = () => {
         </Select>
       </div>
 
-      {/* Mobile: search + sort row */}
-      <div className="md:hidden flex items-center gap-2 mb-3">
+      {/* Mobile: combined search + filter button */}
+      <div className="md:hidden flex items-center gap-2 mb-5">
         <div className="relative flex-1">
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
@@ -320,47 +321,92 @@ const NewsPage = () => {
             className="h-9 text-[16px] pl-8 bg-card border-border"
           />
         </div>
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-          <SelectTrigger className="w-[110px] h-9 text-xs border-border shrink-0">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="latest">Latest</SelectItem>
-            <SelectItem value="oldest">Oldest</SelectItem>
-            <SelectItem value="featured">Featured</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
+        <Sheet>
+          <SheetTrigger asChild>
+            <button
+              type="button"
+              className="relative inline-flex items-center justify-center h-9 w-9 shrink-0 rounded-md border border-border bg-card text-foreground hover:border-accent/40 transition-colors"
+              aria-label="Filters"
+            >
+              <SlidersHorizontal className="h-4 w-4" />
+              {(region !== "all" || sortBy !== "latest") && (
+                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
+              )}
+            </button>
+          </SheetTrigger>
+          <SheetContent side="bottom" className="rounded-t-2xl border-border">
+            <SheetHeader>
+              <SheetTitle className="text-base">Filters</SheetTitle>
+            </SheetHeader>
 
-      {/* Mobile: segmented control matching desktop */}
-      <div className="md:hidden flex items-center mb-5">
-        <div className="inline-flex items-center rounded-lg bg-muted/30 border border-border p-0.5">
-          {([
-            { key: "all", label: "All", count: articles.length },
-            { key: "kenya", label: "Kenya", count: regionCounts.kenya },
-            { key: "international", label: "International", count: regionCounts.international },
-          ] as const).map((opt) => {
-            const active = region === opt.key;
-            return (
-              <button
-                key={opt.key}
-                type="button"
-                onClick={() => setRegion(opt.key)}
-                className={`inline-flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
-                  active
-                    ? "bg-foreground text-background shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-pressed={active}
-              >
-                {opt.label}
-                <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>
-                  {opt.count}
-                </span>
-              </button>
-            );
-          })}
-        </div>
+            <div className="mt-4 space-y-5">
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Region</p>
+                <div className="inline-flex items-center rounded-lg bg-muted/30 border border-border p-0.5 w-full">
+                  {([
+                    { key: "all", label: "All", count: articles.length },
+                    { key: "kenya", label: "Kenya", count: regionCounts.kenya },
+                    { key: "international", label: "International", count: regionCounts.international },
+                  ] as const).map((opt) => {
+                    const active = region === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setRegion(opt.key)}
+                        className={`flex-1 inline-flex items-center justify-center gap-1.5 px-2.5 h-9 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
+                          active ? "bg-foreground text-background shadow-sm" : "text-muted-foreground"
+                        }`}
+                        aria-pressed={active}
+                      >
+                        {opt.label}
+                        <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>
+                          {opt.count}
+                        </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Sort by</p>
+                <div className="grid grid-cols-3 gap-1.5">
+                  {([
+                    { key: "latest", label: "Latest" },
+                    { key: "oldest", label: "Oldest" },
+                    { key: "featured", label: "Featured" },
+                  ] as const).map((opt) => {
+                    const active = sortBy === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setSortBy(opt.key)}
+                        className={`h-9 rounded-md text-xs font-medium border transition-colors ${
+                          active
+                            ? "bg-foreground text-background border-foreground"
+                            : "bg-card text-muted-foreground border-border"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <SheetClose asChild>
+                <button
+                  type="button"
+                  className="w-full h-10 rounded-md bg-accent text-accent-foreground text-sm font-semibold"
+                >
+                  Apply filters
+                </button>
+              </SheetClose>
+            </div>
+          </SheetContent>
+        </Sheet>
       </div>
 
       {filtered.length === 0 ? (
