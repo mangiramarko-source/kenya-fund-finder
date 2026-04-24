@@ -70,9 +70,15 @@ const MiniSparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentV
     const vals = [...data.map((d) => d.annual_yield), currentValue];
     if (vals.length < 2) return null;
     const last12 = vals.slice(-12);
+    const min = Math.min(...last12);
+    const max = Math.max(...last12);
+    // Tight padding (5% of range, with a tiny floor) so micro-changes become visible
+    const range = max - min;
+    const pad = range > 0 ? range * 0.05 : Math.max(Math.abs(max) * 0.001, 0.01);
     return {
       points: last12.map((v, i) => ({ i, value: v })),
       positive: last12[last12.length - 1] >= last12[0],
+      domain: [min - pad, max + pad] as [number, number],
     };
   }, [data, currentValue]);
 
@@ -84,16 +90,16 @@ const MiniSparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentV
   return (
     <div className="w-[60px] h-[24px] inline-block">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={series.points} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+        <LineChart data={series.points} margin={{ top: 2, right: 0, bottom: 2, left: 0 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.25} />
               <stop offset="100%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
-          <YAxis hide domain={["dataMin - 0.5", "dataMax + 0.5"]} />
-          <Area type="monotone" dataKey="value" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
-          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+          <YAxis hide domain={series.domain} />
+          <Area type="linear" dataKey="value" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
+          <Line type="linear" dataKey="value" stroke={color} strokeWidth={1.5} dot={false} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
