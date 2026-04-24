@@ -232,7 +232,7 @@ const RatesPage = () => {
             <span className="text-xs text-muted-foreground/70">Updated {latestUpdate?.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
             <SectionLiveStatus section="rates" fallbackDate={latestUpdate} hideDate />
           </div>
-          <div className="md:hidden border-b border-border mt-3" />
+          <div className="md:hidden border-b border-border mt-2" />
         </div>
 
         <ActiveAlertsCard assetType="currency" />
