@@ -224,45 +224,68 @@ const NewsPage = () => {
           {heroArticle && (
             <div className="hidden lg:grid grid-cols-1 lg:grid-cols-12 gap-4 mb-5">
               {/* Hero */}
-              <Link
-                to={`/news/${heroArticle.id}`}
-                className="lg:col-span-8 group relative rounded-xl overflow-hidden border border-border hover:border-accent/30 transition-all"
+              <div
+                className="lg:col-span-8 relative"
+                onMouseEnter={() => setHeroPaused(true)}
+                onMouseLeave={() => setHeroPaused(false)}
               >
-                <div className="aspect-[16/9] lg:aspect-[16/10]">
-                  <img
-                    src={getNewsImage(heroArticle.image_url, heroArticle.category, heroArticle.id)}
-                    alt={`${heroArticle.title} – ${heroArticle.category}`}
-                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                    loading="lazy"
-                    onError={(e) => handleNewsImageError(e, heroArticle.category, heroArticle.id)}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    {heroArticle.is_featured && (
-                      <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-xs h-5">
-                        <Sparkles className="h-3 w-3" /> Featured
-                      </Badge>
-                    )}
-                    <span className="text-xs text-white/70">{heroArticle.category}</span>
-                    {heroArticle.source && <SourceBadge source={heroArticle.source} />}
-                    <span className="text-xs text-white/60 ml-auto flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {heroArticle.read_time}
+                <Link
+                  key={heroArticle.id}
+                  to={`/news/${heroArticle.id}`}
+                  className="group block relative rounded-xl overflow-hidden border border-border hover:border-accent/30 transition-all animate-in fade-in duration-500"
+                >
+                  <div className="aspect-[16/9] lg:aspect-[16/10]">
+                    <img
+                      src={getNewsImage(heroArticle.image_url, heroArticle.category, heroArticle.id)}
+                      alt={`${heroArticle.title} – ${heroArticle.category}`}
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
+                      loading="lazy"
+                      onError={(e) => handleNewsImageError(e, heroArticle.category, heroArticle.id)}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  </div>
+                  <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
+                    <div className="flex items-center gap-2 mb-2 flex-wrap">
+                      {heroArticle.is_featured && (
+                        <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-xs h-5">
+                          <Sparkles className="h-3 w-3" /> Featured
+                        </Badge>
+                      )}
+                      <span className="text-xs text-white/70">{heroArticle.category}</span>
+                      {heroArticle.source && <SourceBadge source={heroArticle.source} />}
+                      <span className="text-xs text-white/60 ml-auto flex items-center gap-1">
+                        <Clock className="h-3 w-3" /> {heroArticle.read_time}
+                      </span>
+                    </div>
+                    <h2 className="font-heading font-bold text-lg md:text-2xl text-white leading-snug line-clamp-3 group-hover:text-accent transition-colors">
+                      {decodeHtmlEntities(heroArticle.title)}
+                    </h2>
+                    <p className="text-sm text-white/70 mt-2 line-clamp-2 max-w-lg leading-relaxed hidden sm:block">
+                      {decodeHtmlEntities(heroArticle.summary)}
+                    </p>
+                    <span className="text-xs text-white/50 mt-2 inline-flex items-center gap-1">
+                      <Calendar className="h-3 w-3" />
+                      {formatDateLong(heroArticle.date_published)}
                     </span>
                   </div>
-                  <h2 className="font-heading font-bold text-lg md:text-2xl text-white leading-snug line-clamp-3 group-hover:text-accent transition-colors">
-                    {decodeHtmlEntities(heroArticle.title)}
-                  </h2>
-                  <p className="text-sm text-white/70 mt-2 line-clamp-2 max-w-lg leading-relaxed hidden sm:block">
-                    {decodeHtmlEntities(heroArticle.summary)}
-                  </p>
-                  <span className="text-xs text-white/50 mt-2 inline-flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {formatDateLong(heroArticle.date_published)}
-                  </span>
-                </div>
-              </Link>
+                </Link>
+
+                {heroPool.length > 1 && (
+                  <div className="absolute top-3 right-3 flex items-center gap-1.5 bg-black/40 backdrop-blur-sm rounded-full px-2 py-1.5 z-10">
+                    {heroPool.map((_, i) => (
+                      <button
+                        key={i}
+                        type="button"
+                        aria-label={`Show featured article ${i + 1}`}
+                        onClick={(e) => { e.preventDefault(); setHeroIndex(i); }}
+                        className={`h-1.5 rounded-full transition-all ${
+                          i === heroIndex ? "w-5 bg-white" : "w-1.5 bg-white/40 hover:bg-white/70"
+                        }`}
+                      />
+                    ))}
+                  </div>
+                )}
+              </div>
 
               {/* Sidebar — 3 stacked cards */}
               <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
