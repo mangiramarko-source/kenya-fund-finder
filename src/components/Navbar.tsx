@@ -129,22 +129,25 @@ const Navbar = () => {
 
   if (isMinimal) {
     return (
-      <header
-        ref={headerRef}
-        className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border"
-      >
-        <div className="container flex h-14 items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => navigate(-1)}
-            className="rounded-full h-9 w-9 text-foreground hover:bg-muted"
-            aria-label="Go back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </Button>
-        </div>
-      </header>
+      <>
+        <header
+          ref={headerRef}
+          className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border"
+        >
+          <div className="container flex h-14 items-center">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => navigate(-1)}
+              className="rounded-full h-9 w-9 text-foreground hover:bg-muted"
+              aria-label="Go back"
+            >
+              <ArrowLeft className="h-5 w-5" />
+            </Button>
+          </div>
+        </header>
+        <div className="md:hidden h-14" aria-hidden="true" />
+      </>
     );
   }
 
