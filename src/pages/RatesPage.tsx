@@ -252,17 +252,17 @@ const RatesPage = () => {
                   <col style={{ width: "4%" }} />
                 </colgroup>
                 <thead>
-                  <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
-                    <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
-                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Symbol</th>
-                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Currency</th>
-                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Rate (KES)</th>
-                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Previous</th>
-                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Change</th>
-                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Change %</th>
-                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Trend</th>
-                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Direction</th>
-                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Updated</th>
+                  <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
+                    <th className="text-left pl-4 pr-2 py-3.5 font-semibold text-muted-foreground">#</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Symbol</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Currency</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Rate (KES)</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Previous</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change %</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Trend</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Direction</th>
+                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Updated</th>
                     <th className="w-8"></th>
                   </tr>
                 </thead>
