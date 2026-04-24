@@ -481,7 +481,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               <col style={{ width: "3%" }} />
               <col style={{ width: "15%" }} />
               
-              <col style={{ width: "9%" }} />
               <col style={{ width: "10%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "8%" }} />
@@ -498,16 +497,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 
-                <th className="px-2 py-3 font-semibold text-muted-foreground text-center">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex">Trend</span>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[220px] text-xs">
-                      Difference between the current and previous annual yield.
-                    </TooltipContent>
-                  </Tooltip>
-                </th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
@@ -563,13 +552,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                         {fund.name}
                       </Link>
                     </td>
-                    <td className="px-2 py-3.5 text-center">
-                      {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
-                        <MiniSparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
-                      ) : (
-                        <span className="text-[10px] text-muted-foreground">—</span>
-                      )}
-                    </td>
                     <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums">
                       <span className="font-bold text-accent text-[15px]">
                         {fmtYield(fund.annual_yield, fund.yield_unit)}
@@ -612,7 +594,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 12 : 11} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 11 : 10} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
