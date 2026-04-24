@@ -332,6 +332,92 @@ const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, co
   </Link>
 );
 
+/* ─── Mobile Stock Highlight Card (mirrors StocksPage MobileStockCard) ─── */
+const MobileStockHighlightCard = ({
+  symbol, name, price, dayChange, dayChangePct, sparkData, linkTo,
+}: {
+  symbol: string; name: string; price: number; dayChange: number; dayChangePct: number;
+  sparkData?: number[]; linkTo: string;
+}) => {
+  const positive = dayChange >= 0;
+  const trend: "up" | "down" | "flat" = dayChange > 0 ? "up" : dayChange < 0 ? "down" : "flat";
+  return (
+    <Link
+      to={linkTo}
+      className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
+    >
+      <div className="flex items-center gap-3 p-3.5">
+        <div className="flex-1 min-w-0">
+          <span className="font-bold text-foreground text-sm">{symbol}</span>
+          <p className="text-[11px] text-muted-foreground truncate">{name}</p>
+        </div>
+        {sparkData && sparkData.length >= 2 && (
+          <div className="shrink-0">
+            <Sparkline data={sparkData} width={60} height={24} color="auto" trend={trend} />
+          </div>
+        )}
+        <div className="text-right shrink-0">
+          <p className="font-bold text-foreground text-sm tabular-nums">KES {price.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+          {dayChange > 0 ? (
+            <span className="inline-flex items-center gap-0.5 text-accent text-[11px] font-semibold tabular-nums">
+              <TrendingUp className="h-3 w-3" /> +{dayChangePct.toFixed(2)}%
+            </span>
+          ) : dayChange < 0 ? (
+            <span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold tabular-nums">
+              <TrendingDown className="h-3 w-3" /> {dayChangePct.toFixed(2)}%
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]">
+              <Minus className="h-3 w-3" /> 0.00%
+            </span>
+          )}
+        </div>
+      </div>
+    </Link>
+  );
+};
+
+/* ─── Mobile Fund Highlight Card (mirrors FundMobileCards) ─── */
+const MobileFundHighlightCard = ({
+  name, annualYield, dailyYield, prevAnnualYield, linkTo,
+}: {
+  name: string; annualYield: number; dailyYield: number; prevAnnualYield?: number; linkTo: string;
+}) => {
+  const diff = prevAnnualYield != null ? annualYield - prevAnnualYield : null;
+  const isFlat = diff != null && Math.abs(diff) < 0.0001;
+  const isUp = diff != null && diff > 0;
+  return (
+    <Link
+      to={linkTo}
+      className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
+    >
+      <div className="flex items-center gap-3 p-3.5">
+        <div className="flex-1 min-w-0">
+          <span className="font-bold text-foreground text-sm truncate block">{name}</span>
+          {diff != null && (
+            <span className={`mt-0.5 inline-flex items-center gap-1 text-xs font-medium tabular-nums ${
+              isFlat ? "text-muted-foreground" : isUp ? "text-emerald-500 dark:text-emerald-400" : "text-red-500 dark:text-red-400"
+            }`}>
+              {isFlat ? <Minus className="h-3 w-3" /> : isUp ? <TrendingUp className="h-3 w-3" /> : <TrendingDown className="h-3 w-3" />}
+              <span>{isFlat ? "" : isUp ? "+" : ""}{diff.toFixed(2)}%</span>
+            </span>
+          )}
+        </div>
+        <div className="text-right shrink-0 space-y-1">
+          <div className="flex items-baseline justify-end gap-2">
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wider w-10 text-right leading-none">annual</span>
+            <span className="text-accent tabular-nums leading-none w-14 text-right text-sm font-extrabold">{annualYield.toFixed(2)}%</span>
+          </div>
+          <div className="flex items-baseline justify-end gap-2">
+            <span className="text-[9px] text-muted-foreground uppercase tracking-wider w-10 text-right leading-none">daily</span>
+            <span className="text-muted-foreground tabular-nums font-normal leading-none w-14 text-right text-sm">{dailyYield.toFixed(2)}%</span>
+          </div>
+        </div>
+      </div>
+    </Link>
+  );
+};
+
 /* ─── Mobile section heading for grouped highlight cards ─── */
 const MobileGroupHeading = ({ icon: Icon, label, tone = "muted" }: { icon: any; label: string; tone?: "success" | "destructive" | "primary" | "accent" | "muted" }) => {
   const toneClass =
@@ -799,14 +885,15 @@ const OverviewPage = () => {
             <>
               <MobileGroupHeading icon={TrendingUp} label="Top Gainers" tone="success" />
               {topGainers.map(s => (
-                <HighlightCard
+                <MobileStockHighlightCard
                   key={`g-${s.id}`}
-                  icon={TrendingUp}
-                  name={`${s.symbol} · ${s.name}`}
-                  value={`KES ${s.price.toFixed(2)}`}
-                  change={<span className="inline-flex items-center gap-0.5 text-success text-[11px] font-semibold"><TrendingUp className="h-3 w-3" />+{s.day_change_percent.toFixed(2)}%</span>}
+                  symbol={s.symbol}
+                  name={s.name}
+                  price={s.price}
+                  dayChange={s.day_change}
+                  dayChangePct={s.day_change_percent}
+                  sparkData={getStockSparkData(s.id)}
                   linkTo={`/stocks/${s.symbol}`}
-                  color="bg-success/10"
                 />
               ))}
             </>
@@ -815,14 +902,15 @@ const OverviewPage = () => {
             <>
               <MobileGroupHeading icon={TrendingDown} label="Top Losers" tone="destructive" />
               {topLosers.map(s => (
-                <HighlightCard
+                <MobileStockHighlightCard
                   key={`l-${s.id}`}
-                  icon={TrendingDown}
-                  name={`${s.symbol} · ${s.name}`}
-                  value={`KES ${s.price.toFixed(2)}`}
-                  change={<span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold"><TrendingDown className="h-3 w-3" />{s.day_change_percent.toFixed(2)}%</span>}
+                  symbol={s.symbol}
+                  name={s.name}
+                  price={s.price}
+                  dayChange={s.day_change}
+                  dayChangePct={s.day_change_percent}
+                  sparkData={getStockSparkData(s.id)}
                   linkTo={`/stocks/${s.symbol}`}
-                  color="bg-destructive/10"
                 />
               ))}
             </>
@@ -830,25 +918,38 @@ const OverviewPage = () => {
           {moneyMarketFunds.length > 0 && (
             <>
               <MobileGroupHeading icon={BarChart3} label="Money Market" tone="primary" />
-              {moneyMarketFunds.map(f => (
-                <HighlightCard
-                  key={`mm-${f.id}`}
-                  icon={BarChart3}
-                  name={f.name}
-                  value={`${f.annual_yield.toFixed(2)}%`}
-                  sub={`Daily: ${f.daily_yield.toFixed(4)}%`}
-                  linkTo={`/compare/${f.slug}`}
-                  color="bg-primary/10"
+              {moneyMarketFunds.map(f => {
+                const snaps = fundSnapshots.filter(s => s.fund_id === f.id);
+                const prev = snaps.length > 0 ? snaps[snaps.length - 1].annual_yield : undefined;
+                return (
+                  <MobileFundHighlightCard
+                    key={`mm-${f.id}`}
+                    name={f.name}
+                    annualYield={f.annual_yield}
+                    dailyYield={f.daily_yield}
+                    prevAnnualYield={prev}
+                    linkTo={`/compare/${f.slug}`}
+                  />
+                );
+              })}
+            </>
+          )}
+          {bestFI && (() => {
+            const snaps = fundSnapshots.filter(s => s.fund_id === bestFI.id);
+            const prev = snaps.length > 0 ? snaps[snaps.length - 1].annual_yield : undefined;
+            return (
+              <>
+                <MobileGroupHeading icon={Landmark} label="Fixed Income" tone="muted" />
+                <MobileFundHighlightCard
+                  name={bestFI.name}
+                  annualYield={bestFI.annual_yield}
+                  dailyYield={bestFI.daily_yield}
+                  prevAnnualYield={prev}
+                  linkTo={`/compare/${bestFI.slug}`}
                 />
-              ))}
-            </>
-          )}
-          {bestFI && (
-            <>
-              <MobileGroupHeading icon={Landmark} label="Fixed Income" tone="muted" />
-              <HighlightCard icon={Landmark} name={bestFI.name} value={`${bestFI.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestFI.slug}`} color="bg-secondary/80" />
-            </>
-          )}
+              </>
+            );
+          })()}
           {bestFXRate && (
             <>
               <MobileGroupHeading icon={DollarSign} label="FX Rate" tone="accent" />
