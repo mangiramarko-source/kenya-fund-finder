@@ -310,7 +310,7 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
 
 /* ─── Compact Highlight Card (mobile) — matches WatchCard row style ─── */
 const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color }: {
-  icon: any; label: string; name: string; value: string; sub?: string;
+  icon: any; label?: string; name: string; value: string; sub?: string;
   change?: React.ReactNode; linkTo?: string; color?: string;
 }) => (
   <Link to={linkTo || "#"} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 hover:border-accent/30 transition-colors group">
@@ -318,9 +318,11 @@ const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, co
       <Icon className="h-3.5 w-3.5 text-primary" />
     </div>
     <div className="flex-1 min-w-0">
-      <div className="flex items-center gap-1.5">
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
-      </div>
+      {label && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+        </div>
+      )}
       <p className="text-xs font-semibold text-foreground truncate">{name}</p>
     </div>
     <div className="text-right shrink-0">
@@ -329,6 +331,22 @@ const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, co
     </div>
   </Link>
 );
+
+/* ─── Mobile section heading for grouped highlight cards ─── */
+const MobileGroupHeading = ({ icon: Icon, label, tone = "muted" }: { icon: any; label: string; tone?: "success" | "destructive" | "primary" | "accent" | "muted" }) => {
+  const toneClass =
+    tone === "success" ? "text-success"
+    : tone === "destructive" ? "text-destructive"
+    : tone === "primary" ? "text-primary"
+    : tone === "accent" ? "text-accent"
+    : "text-muted-foreground";
+  return (
+    <div className="flex items-center gap-1.5 mt-1 mb-0.5">
+      <Icon className={`h-3.5 w-3.5 ${toneClass}`} />
+      <span className={`text-[11px] font-semibold uppercase tracking-wide ${toneClass}`}>{label}</span>
+    </div>
+  );
+};
 
 /* ─── Main Page ─── */
 const OverviewPage = () => {
