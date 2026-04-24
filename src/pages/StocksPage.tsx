@@ -362,70 +362,107 @@ const StocksPage = () => {
           </div>
         </div>
 
-        {/* Mobile: keep original pill filters + search */}
-        <div className="md:hidden flex flex-col gap-3 mb-4">
-          <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
-            {sectors.map((s) => (
-              <button
-                key={s}
-                onClick={() => setSector(s)}
-                className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-                  sector === s
-                    ? "bg-accent text-accent-foreground shadow-sm"
-                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                }`}
-              >
-                {s}
-              </button>
-            ))}
-          </div>
-          <div className="relative w-full">
+        {/* Mobile: combined search + filter button */}
+        <div className="md:hidden flex items-center gap-2 mb-4">
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
             <Input
-              placeholder="Search"
+              placeholder="Search stocks..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-8 rounded-lg bg-muted/30 border-border w-full text-[16px]"
+              className="pl-9 h-9 rounded-lg bg-muted/30 border-border w-full text-[16px]"
             />
           </div>
-        </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="relative inline-flex items-center justify-center h-9 w-9 shrink-0 rounded-md border border-border bg-card text-foreground transition-colors"
+                aria-label="Filters"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                {(sector !== "All" || mobileMovement !== "all") && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
+                )}
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="text-base">Filters</SheetTitle>
+              </SheetHeader>
 
-        {/* Mobile movement filter (visible when sector = All) */}
-        {sector === "All" && (
-          <div className="md:hidden -mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide">
-            {([
-              { key: "all", label: "All", count: stocks.length },
-              { key: "gainers", label: "Gainers", count: gainers },
-              { key: "losers", label: "Losers", count: losers },
-              { key: "unchanged", label: "Unchanged", count: unchanged },
-            ] as const).map((opt) => {
-              const active = mobileMovement === opt.key;
-              const activeColor =
-                opt.key === "gainers"
-                  ? "bg-accent text-accent-foreground"
-                  : opt.key === "losers"
-                  ? "bg-destructive text-destructive-foreground"
-                  : opt.key === "unchanged"
-                  ? "bg-muted-foreground/80 text-background"
-                  : "bg-foreground text-background";
-              return (
-                <button
-                  key={opt.key}
-                  onClick={() => setMobileMovement(opt.key)}
-                  className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
-                    active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                  }`}
-                >
-                  {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
-                  {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
-                  {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
-                  {opt.label}
-                  <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
-                </button>
-              );
-            })}
-          </div>
-        )}
+              <div className="mt-4 space-y-5">
+                {/* Sector */}
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Sector</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {sectors.map((s) => {
+                      const active = sector === s;
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => setSector(s)}
+                          className={`inline-flex items-center px-3 h-8 rounded-md text-xs font-medium border transition-colors ${
+                            active
+                              ? "bg-foreground text-background border-foreground"
+                              : "bg-card text-muted-foreground border-border"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Movement */}
+                {sector === "All" && (
+                  <div>
+                    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Movement</p>
+                    <div className="grid grid-cols-2 gap-1.5">
+                      {([
+                        { key: "all", label: "All", count: stocks.length },
+                        { key: "gainers", label: "Gainers", count: gainers },
+                        { key: "losers", label: "Losers", count: losers },
+                        { key: "unchanged", label: "Unchanged", count: unchanged },
+                      ] as const).map((opt) => {
+                        const active = mobileMovement === opt.key;
+                        return (
+                          <button
+                            key={opt.key}
+                            onClick={() => setMobileMovement(opt.key)}
+                            className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-md text-xs font-medium border transition-colors ${
+                              active
+                                ? "bg-foreground text-background border-foreground"
+                                : "bg-card text-muted-foreground border-border"
+                            }`}
+                          >
+                            {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
+                            {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
+                            {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
+                            {opt.label}
+                            <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>
+                              {opt.count}
+                            </span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
+
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    className="w-full h-10 rounded-md bg-accent text-accent-foreground text-sm font-semibold"
+                  >
+                    Apply filters
+                  </button>
+                </SheetClose>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
 
         {/* Desktop Table */}
         <div className="hidden md:block">
