@@ -822,118 +822,132 @@ const OverviewPage = () => {
       {/* ─── Market Highlights (always shown) ─── */}
       <div>
 
-        {/* Desktop: 5 vertical columns of top-5 cards */}
-        <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-5 gap-4">
-          {/* Top Gainers */}
-          <HighlightColumn icon={TrendingUp} label="Top Gainers" link="/stocks">
-            {topGainers.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">No data available</p>
-            )}
-            {topGainers.map((s) => (
-              <HighlightListCard
-                key={`hl-gainer-${s.id}`}
-                title={s.symbol}
-                sub={s.name}
-                value={`KES ${s.price.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                changePct={s.day_change_percent}
-                sparkData={getStockSparkData(s.id)}
-                trend={trendOf(s.price, s.previous_price)}
-                linkTo={`/stocks/${s.symbol}`}
-              />
-            ))}
-          </HighlightColumn>
+        {/* Desktop: horizontally scrollable row of fixed-width columns */}
+        <div className="hidden md:block -mx-4 md:-mx-6">
+          <div className="overflow-x-auto px-4 md:px-6 pb-2 [&::-webkit-scrollbar]:h-1.5 [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
+            <div className="flex gap-4 min-w-max">
+              {/* Top Gainers */}
+              <div className="w-[300px] shrink-0">
+                <HighlightColumn icon={TrendingUp} label="Top Gainers" link="/stocks">
+                  {topGainers.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground">No data available</p>
+                  )}
+                  {topGainers.map((s) => (
+                    <HighlightListCard
+                      key={`hl-gainer-${s.id}`}
+                      title={s.symbol}
+                      sub={s.name}
+                      value={`KES ${s.price.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      changePct={s.day_change_percent}
+                      sparkData={getStockSparkData(s.id)}
+                      trend={trendOf(s.price, s.previous_price)}
+                      linkTo={`/stocks/${s.symbol}`}
+                    />
+                  ))}
+                </HighlightColumn>
+              </div>
 
-          {/* Top Losers */}
-          <HighlightColumn icon={TrendingDown} label="Top Losers" link="/stocks">
-            {topLosers.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">No data available</p>
-            )}
-            {topLosers.map((s) => (
-              <HighlightListCard
-                key={`hl-loser-${s.id}`}
-                title={s.symbol}
-                sub={s.name}
-                value={`KES ${s.price.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                changePct={s.day_change_percent}
-                sparkData={getStockSparkData(s.id)}
-                trend={trendOf(s.price, s.previous_price)}
-                linkTo={`/stocks/${s.symbol}`}
-              />
-            ))}
-          </HighlightColumn>
+              {/* Top Losers */}
+              <div className="w-[300px] shrink-0">
+                <HighlightColumn icon={TrendingDown} label="Top Losers" link="/stocks">
+                  {topLosers.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground">No data available</p>
+                  )}
+                  {topLosers.map((s) => (
+                    <HighlightListCard
+                      key={`hl-loser-${s.id}`}
+                      title={s.symbol}
+                      sub={s.name}
+                      value={`KES ${s.price.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                      changePct={s.day_change_percent}
+                      sparkData={getStockSparkData(s.id)}
+                      trend={trendOf(s.price, s.previous_price)}
+                      linkTo={`/stocks/${s.symbol}`}
+                    />
+                  ))}
+                </HighlightColumn>
+              </div>
 
-          {/* Money Markets */}
-          <HighlightColumn icon={BarChart3} label="Money Markets" link="/funds">
-            {moneyMarketFunds.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">No data available</p>
-            )}
-            {moneyMarketFunds.map((f) => {
-              const snaps = fundSnapshots.filter((s) => s.fund_id === f.id);
-              const sparkData = snaps.slice(-30).map((s) => s.annual_yield);
-              const prev = snaps.length > 0 ? snaps[snaps.length - 1].annual_yield : null;
-              const diff = prev != null ? f.annual_yield - prev : null;
-              const trend: "up" | "down" | "flat" | undefined =
-                diff == null ? undefined : diff > 0 ? "up" : diff < 0 ? "down" : "flat";
-              return (
-                <HighlightListCard
-                  key={`hl-mm-${f.id}`}
-                  title={f.name}
-                  sub={f.manager}
-                  value={`${f.annual_yield.toFixed(2)}%`}
-                  changePct={diff}
-                  sparkData={sparkData}
-                  trend={trend}
-                  linkTo={`/compare/${f.slug}`}
-                />
-              );
-            })}
-          </HighlightColumn>
+              {/* Money Markets */}
+              <div className="w-[320px] shrink-0">
+                <HighlightColumn icon={BarChart3} label="Money Markets" link="/funds">
+                  {moneyMarketFunds.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground">No data available</p>
+                  )}
+                  {moneyMarketFunds.map((f) => {
+                    const snaps = fundSnapshots.filter((s) => s.fund_id === f.id);
+                    const sparkData = snaps.slice(-30).map((s) => s.annual_yield);
+                    const prev = snaps.length > 0 ? snaps[snaps.length - 1].annual_yield : null;
+                    const diff = prev != null ? f.annual_yield - prev : null;
+                    const trend: "up" | "down" | "flat" | undefined =
+                      diff == null ? undefined : diff > 0 ? "up" : diff < 0 ? "down" : "flat";
+                    return (
+                      <HighlightListCard
+                        key={`hl-mm-${f.id}`}
+                        title={f.name}
+                        sub={f.manager}
+                        value={`${f.annual_yield.toFixed(2)}%`}
+                        changePct={diff}
+                        sparkData={sparkData}
+                        trend={trend}
+                        linkTo={`/compare/${f.slug}`}
+                      />
+                    );
+                  })}
+                </HighlightColumn>
+              </div>
 
-          {/* FX Rates */}
-          <HighlightColumn icon={DollarSign} label="FX Rates" link="/rates">
-            {topFXRates.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">No data available</p>
-            )}
-            {topFXRates.map((r) => {
-              const sparkSeries = getHistory(r.currency_code).map((h) => h.rate);
-              const prev = r.previous_rate != null ? Number(r.previous_rate) : null;
-              const diff = prev != null && prev !== 0 ? ((Number(r.rate) - prev) / prev) * 100 : null;
-              return (
-                <HighlightListCard
-                  key={`hl-fx-${r.id}`}
-                  title={`${r.currency_code}/KES`}
-                  sub={r.currency_name}
-                  value={`KES ${Number(r.rate).toFixed(2)}`}
-                  changePct={diff}
-                  sparkData={sparkSeries}
-                  trend={trendOf(Number(r.rate), prev)}
-                  linkTo="/rates"
-                />
-              );
-            })}
-          </HighlightColumn>
+              {/* FX Rates */}
+              <div className="w-[300px] shrink-0">
+                <HighlightColumn icon={DollarSign} label="FX Rates" link="/rates">
+                  {topFXRates.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground">No data available</p>
+                  )}
+                  {topFXRates.map((r) => {
+                    const sparkSeries = getHistory(r.currency_code).map((h) => h.rate);
+                    const prev = r.previous_rate != null ? Number(r.previous_rate) : null;
+                    const diff = prev != null && prev !== 0 ? ((Number(r.rate) - prev) / prev) * 100 : null;
+                    return (
+                      <HighlightListCard
+                        key={`hl-fx-${r.id}`}
+                        title={`${r.currency_code}/KES`}
+                        sub={r.currency_name}
+                        value={`KES ${Number(r.rate).toFixed(2)}`}
+                        changePct={diff}
+                        sparkData={sparkSeries}
+                        trend={trendOf(Number(r.rate), prev)}
+                        linkTo="/rates"
+                      />
+                    );
+                  })}
+                </HighlightColumn>
+              </div>
 
-          {/* Commodities */}
-          <HighlightColumn icon={Gem} label="Commodities" link="/commodities">
-            {topCommodities.length === 0 && (
-              <p className="text-[11px] text-muted-foreground">No data available</p>
-            )}
-            {topCommodities.map((c) => {
-              const prev = c.previous_price != null ? Number(c.previous_price) : null;
-              const diff = prev != null && prev !== 0 ? ((Number(c.price) - prev) / prev) * 100 : null;
-              return (
-                <HighlightListCard
-                  key={`hl-cmd-${c.id}`}
-                  title={c.name}
-                  sub={`${c.symbol} · ${c.unit}`}
-                  value={`${Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                  changePct={diff}
-                  trend={trendOf(Number(c.price), prev)}
-                  linkTo="/commodities"
-                />
-              );
-            })}
-          </HighlightColumn>
+              {/* Commodities */}
+              <div className="w-[300px] shrink-0">
+                <HighlightColumn icon={Gem} label="Commodities" link="/commodities">
+                  {topCommodities.length === 0 && (
+                    <p className="text-[11px] text-muted-foreground">No data available</p>
+                  )}
+                  {topCommodities.map((c) => {
+                    const prev = c.previous_price != null ? Number(c.previous_price) : null;
+                    const diff = prev != null && prev !== 0 ? ((Number(c.price) - prev) / prev) * 100 : null;
+                    return (
+                      <HighlightListCard
+                        key={`hl-cmd-${c.id}`}
+                        title={c.name}
+                        sub={`${c.symbol} · ${c.unit}`}
+                        value={`${Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
+                        changePct={diff}
+                        trend={trendOf(Number(c.price), prev)}
+                        linkTo="/commodities"
+                      />
+                    );
+                  })}
+                </HighlightColumn>
+              </div>
+            </div>
+          </div>
         </div>
 
 
