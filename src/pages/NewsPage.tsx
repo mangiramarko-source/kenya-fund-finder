@@ -109,17 +109,51 @@ const NewsPage = () => {
     return merged;
   }, [filtered]);
 
-  // Hero rotates only when new articles arrive (not on a timer).
-  // Each fetch picks the freshest top item from the pool.
+  // Hero: large feature card (left) + 4 mini cards (right sidebar)
   const heroArticle = heroPool[0] || null;
-  const topArticles = useMemo(() => {
-    if (!heroArticle) return filtered.slice(0, 3);
-    return filtered.filter((a) => a.id !== heroArticle.id).slice(0, 3);
+  const heroSidebar = useMemo(() => {
+    if (!heroArticle) return filtered.slice(0, 4);
+    return filtered.filter((a) => a.id !== heroArticle.id).slice(0, 4);
   }, [filtered, heroArticle]);
+  // Latest News: next 6 after hero+sidebar (3-col x 2 rows)
+  const latestArticles = useMemo(() => {
+    const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id)]);
+    return filtered.filter((a) => !used.has(a.id)).slice(0, 6);
+  }, [filtered, heroArticle, heroSidebar]);
+  // Must Read: 1 wide + 3 list items
+  const mustReadFeature = useMemo(() => {
+    const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id), ...latestArticles.map(a => a.id)]);
+    return filtered.find((a) => !used.has(a.id)) || null;
+  }, [filtered, heroArticle, heroSidebar, latestArticles]);
+  const mustReadList = useMemo(() => {
+    const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id), ...latestArticles.map(a => a.id), mustReadFeature?.id]);
+    return filtered.filter((a) => !used.has(a.id)).slice(0, 3);
+  }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature]);
+  // Weekly Highlight: 4 across
+  const weeklyHighlight = useMemo(() => {
+    const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id), ...latestArticles.map(a => a.id), mustReadFeature?.id, ...mustReadList.map(a => a.id)]);
+    return filtered.filter((a) => !used.has(a.id)).slice(0, 4);
+  }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList]);
+  // Top Sources (placeholder for "Top Creators")
+  const topSources = useMemo(() => {
+    const counts: Record<string, number> = {};
+    articles.forEach(a => { if (a.source) counts[a.source] = (counts[a.source] || 0) + 1; });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  }, [articles]);
+  // Remaining articles for the load-more list (desktop)
   const listArticles = useMemo(() => {
-    const usedIds = new Set([heroArticle?.id, ...topArticles.map(a => a.id)]);
-    return filtered.filter((a) => !usedIds.has(a.id));
-  }, [filtered, heroArticle, topArticles]);
+    const used = new Set([
+      heroArticle?.id,
+      ...heroSidebar.map(a => a.id),
+      ...latestArticles.map(a => a.id),
+      mustReadFeature?.id,
+      ...mustReadList.map(a => a.id),
+      ...weeklyHighlight.map(a => a.id),
+    ]);
+    return filtered.filter((a) => !used.has(a.id));
+  }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList, weeklyHighlight]);
+  // Backwards-compatible alias for the old hero sidebar (used in mobile-only paths)
+  const topArticles = heroSidebar.slice(0, 3);
 
   // Infinite scroll / load more
   const PAGE_SIZE = 12;
@@ -207,62 +241,64 @@ const NewsPage = () => {
         </div>
       ) : (
         <>
-          {/* Hero + sidebar grid */}
+          {/* ===== DESKTOP: NewsHub layout (hidden on mobile) ===== */}
           {heroArticle && (
-            <div className="hidden lg:grid grid-cols-1 lg:grid-cols-12 gap-4 mb-5">
-              {/* Hero — refreshes when new articles arrive */}
-              <Link
-                key={heroArticle.id}
-                to={`/news/${heroArticle.id}`}
-                className="lg:col-span-8 group block relative rounded-xl overflow-hidden border border-border hover:border-accent/30 transition-all animate-in fade-in duration-500"
-              >
-                <div className="aspect-[16/9] lg:aspect-[16/10]">
-                  <img
-                    src={getNewsImage(heroArticle.image_url, heroArticle.category, heroArticle.id)}
-                    alt={`${heroArticle.title} – ${heroArticle.category}`}
-                    className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-500"
-                    loading="lazy"
-                    onError={(e) => handleNewsImageError(e, heroArticle.category, heroArticle.id)}
-                  />
-                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
-                </div>
-                <div className="absolute bottom-0 left-0 right-0 p-4 md:p-5">
-                  <div className="flex items-center gap-2 mb-2 flex-wrap">
-                    {heroArticle.is_featured && (
-                      <Badge className="bg-accent text-accent-foreground border-0 gap-1 text-xs h-5">
-                        <Sparkles className="h-3 w-3" /> Featured
-                      </Badge>
-                    )}
-                    <span className="text-xs text-white/70">{heroArticle.category}</span>
-                    {heroArticle.source && <SourceBadge source={heroArticle.source} />}
-                    <span className="text-xs text-white/60 ml-auto flex items-center gap-1">
-                      <Clock className="h-3 w-3" /> {heroArticle.read_time}
-                    </span>
+            <div className="hidden lg:block space-y-8 mb-8">
+              {/* HERO: Feature card + 4 mini cards sidebar */}
+              <section className="grid grid-cols-12 gap-5">
+                <Link
+                  key={heroArticle.id}
+                  to={`/news/${heroArticle.id}`}
+                  className="col-span-8 group relative block rounded-2xl overflow-hidden border border-border bg-card hover:border-accent/40 hover:shadow-[0_8px_30px_-10px_hsl(var(--accent)/0.25)] transition-all animate-in fade-in duration-500"
+                >
+                  <div className="aspect-[16/10]">
+                    <img
+                      src={getNewsImage(heroArticle.image_url, heroArticle.category, heroArticle.id)}
+                      alt={`${heroArticle.title} – ${heroArticle.category}`}
+                      className="w-full h-full object-cover group-hover:scale-[1.03] transition-transform duration-700"
+                      loading="eager"
+                      onError={(e) => handleNewsImageError(e, heroArticle.category, heroArticle.id)}
+                    />
+                    <div className="absolute inset-0 bg-gradient-to-t from-black/90 via-black/40 to-transparent" />
                   </div>
-                  <h2 className="font-heading font-bold text-lg md:text-2xl text-white leading-snug line-clamp-3 group-hover:text-accent transition-colors">
-                    {decodeHtmlEntities(heroArticle.title)}
-                  </h2>
-                  <p className="text-sm text-white/70 mt-2 line-clamp-2 max-w-lg leading-relaxed hidden sm:block">
-                    {decodeHtmlEntities(heroArticle.summary)}
-                  </p>
-                  <span className="text-xs text-white/50 mt-2 inline-flex items-center gap-1">
-                    <Calendar className="h-3 w-3" />
-                    {formatDateLong(heroArticle.date_published)}
-                  </span>
-                </div>
-              </Link>
+                  {/* Source chip top-left */}
+                  <div className="absolute top-4 left-4 inline-flex items-center gap-2 bg-background/85 backdrop-blur-sm rounded-lg px-2.5 py-1.5 border border-border/60">
+                    <Newspaper className="h-3.5 w-3.5 text-accent" />
+                    <span className="text-xs font-semibold text-foreground">{heroArticle.source || "NewsHub"}</span>
+                    <span className="text-[10px] text-muted-foreground">· {formatDate(heroArticle.date_published)}</span>
+                  </div>
+                  {heroArticle.is_featured && (
+                    <Badge className="absolute top-4 right-4 bg-accent text-accent-foreground border-0 gap-1 text-[10px] h-6 uppercase tracking-wider font-bold">
+                      <Sparkles className="h-3 w-3" /> Featured
+                    </Badge>
+                  )}
+                  <div className="absolute bottom-0 left-0 right-0 p-6">
+                    <h2 className="font-heading font-bold text-3xl text-white leading-tight line-clamp-3 group-hover:text-accent transition-colors">
+                      {decodeHtmlEntities(heroArticle.title)}
+                    </h2>
+                    <p className="text-sm text-white/75 mt-3 line-clamp-2 max-w-2xl leading-relaxed">
+                      {decodeHtmlEntities(heroArticle.summary)}
+                    </p>
+                    <div className="flex items-center gap-3 mt-4 text-xs text-white/60">
+                      <span className="inline-flex items-center gap-1"><Clock className="h-3 w-3" />{heroArticle.read_time}</span>
+                      <span className="w-px h-3 bg-white/30" />
+                      <span>{heroArticle.category}</span>
+                      <span className="ml-auto inline-flex items-center gap-1 text-accent font-medium opacity-0 group-hover:opacity-100 transition-opacity">
+                        Read more <ExternalLink className="h-3 w-3" />
+                      </span>
+                    </div>
+                  </div>
+                </Link>
 
-              {/* Sidebar — 3 stacked cards */}
-              <div className="lg:col-span-4 grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-1 gap-3">
-                {topArticles.map((article) => {
-                  const CatIcon = categoryIcons[article.category] || Megaphone;
-                  return (
+                {/* Sidebar: 4 mini cards */}
+                <div className="col-span-4 flex flex-col gap-3">
+                  {heroSidebar.map((article) => (
                     <Link
                       key={article.id}
                       to={`/news/${article.id}`}
-                      className="group flex gap-3 p-3 rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all"
+                      className="group flex gap-3 p-2.5 rounded-xl border border-border bg-card hover:border-accent/40 hover:bg-card/80 transition-all"
                     >
-                      <div className="w-20 h-16 rounded-lg overflow-hidden shrink-0">
+                      <div className="w-24 h-20 rounded-lg overflow-hidden shrink-0 bg-muted">
                         <img
                           src={getNewsImage(article.image_url, article.category, article.id)}
                           alt={article.title}
@@ -271,23 +307,244 @@ const NewsPage = () => {
                           onError={(e) => handleNewsImageError(e, article.category, article.id)}
                         />
                       </div>
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-1 mb-1">
-                          <CatIcon className="h-3 w-3 text-accent shrink-0" />
-                          <span className="text-[10px] text-muted-foreground uppercase tracking-wider truncate">{article.category}</span>
+                      <div className="flex-1 min-w-0 flex flex-col">
+                        <div className="flex items-center gap-1.5 mb-1">
+                          <Newspaper className="h-3 w-3 text-accent shrink-0" />
+                          <span className="text-[10px] font-semibold text-foreground truncate">{article.source || "News"}</span>
+                          <span className="text-[10px] text-muted-foreground">· {formatDate(article.date_published)}</span>
                         </div>
-                        <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                        <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-3 group-hover:text-accent transition-colors">
                           {decodeHtmlEntities(article.title)}
                         </h3>
-                        <div className="flex items-center gap-1.5 mt-1">
-                          {article.source && <SourceBadge source={article.source} />}
-                          <span className="text-[10px] text-muted-foreground">{formatDate(article.date_published)}</span>
-                        </div>
+                        <span className="text-[10px] text-muted-foreground mt-auto pt-1 inline-flex items-center gap-1">
+                          <Clock className="h-2.5 w-2.5" /> {article.read_time}
+                        </span>
                       </div>
                     </Link>
-                  );
-                })}
-              </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* LATEST NEWS: 3-col grid */}
+              {latestArticles.length > 0 && (
+                <section>
+                  <div className="flex items-end justify-between mb-4">
+                    <h2 className="font-heading font-bold text-2xl text-foreground">Latest News</h2>
+                    <button
+                      onClick={() => setSortBy("latest")}
+                      className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
+                    >
+                      See all →
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-3 gap-5">
+                    {latestArticles.map((article) => (
+                      <Link
+                        key={article.id}
+                        to={`/news/${article.id}`}
+                        className="group rounded-xl border border-border bg-card hover:border-accent/40 hover:-translate-y-0.5 hover:shadow-[0_10px_30px_-15px_hsl(var(--accent)/0.3)] transition-all overflow-hidden flex flex-col"
+                      >
+                        <div className="aspect-[16/10] overflow-hidden bg-muted">
+                          <img
+                            src={getNewsImage(article.image_url, article.category, article.id)}
+                            alt={article.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                            onError={(e) => handleNewsImageError(e, article.category, article.id)}
+                          />
+                        </div>
+                        <div className="p-4 flex-1 flex flex-col">
+                          <div className="flex items-center gap-1.5 mb-2">
+                            <Newspaper className="h-3 w-3 text-accent" />
+                            <span className="text-[11px] font-semibold text-foreground">{article.source || "News"}</span>
+                            <span className="text-[10px] text-muted-foreground">· {formatDate(article.date_published)}</span>
+                          </div>
+                          <h3 className="font-heading font-bold text-base leading-snug line-clamp-2 mb-2 group-hover:text-accent transition-colors">
+                            {decodeHtmlEntities(article.title)}
+                          </h3>
+                          <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed mb-3">
+                            {decodeHtmlEntities(article.summary)}
+                          </p>
+                          <div className="flex items-center gap-2 mt-auto pt-2 border-t border-border/60">
+                            <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent/10 text-accent border border-accent/20">
+                              {article.category}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground ml-auto inline-flex items-center gap-0.5">
+                              <Clock className="h-2.5 w-2.5" /> {article.read_time}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* MUST READ: split section */}
+              {mustReadFeature && (
+                <section>
+                  <div className="flex items-end justify-between mb-4">
+                    <h2 className="font-heading font-bold text-2xl text-foreground">Must Read</h2>
+                    <button
+                      onClick={() => setSortBy("featured")}
+                      className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
+                    >
+                      See all →
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-12 gap-5">
+                    {/* Wide feature card */}
+                    <Link
+                      to={`/news/${mustReadFeature.id}`}
+                      className="col-span-7 group relative block rounded-xl overflow-hidden border border-border bg-card hover:border-accent/40 transition-all"
+                    >
+                      <div className="aspect-[16/10]">
+                        <img
+                          src={getNewsImage(mustReadFeature.image_url, mustReadFeature.category, mustReadFeature.id)}
+                          alt={mustReadFeature.title}
+                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
+                          loading="lazy"
+                          onError={(e) => handleNewsImageError(e, mustReadFeature.category, mustReadFeature.id)}
+                        />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
+                      </div>
+                      <div className="absolute top-4 left-4 flex items-center gap-2 bg-background/85 backdrop-blur-sm rounded-full pl-1 pr-3 py-1 border border-border/60">
+                        <div className="h-7 w-7 rounded-full bg-accent/20 grid place-items-center text-[11px] font-bold text-accent">
+                          {(mustReadFeature.source || "N").slice(0, 1)}
+                        </div>
+                        <div className="flex flex-col leading-none">
+                          <span className="text-[11px] font-bold text-foreground">{mustReadFeature.source || "NewsHub"}</span>
+                          <span className="text-[9px] text-muted-foreground">{formatDate(mustReadFeature.date_published)}</span>
+                        </div>
+                      </div>
+                      <div className="absolute bottom-0 left-0 right-0 p-5">
+                        <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent text-accent-foreground mb-2">
+                          {mustReadFeature.category}
+                        </span>
+                        <h3 className="font-heading font-bold text-2xl text-white leading-tight line-clamp-3 group-hover:text-accent transition-colors">
+                          {decodeHtmlEntities(mustReadFeature.title)}
+                        </h3>
+                      </div>
+                    </Link>
+
+                    {/* List items */}
+                    <div className="col-span-5 flex flex-col gap-3">
+                      {mustReadList.map((article) => (
+                        <Link
+                          key={article.id}
+                          to={`/news/${article.id}`}
+                          className="group flex gap-3 p-3 rounded-xl border border-border bg-card hover:border-accent/40 transition-all flex-1"
+                        >
+                          <div className="w-24 h-24 rounded-lg overflow-hidden shrink-0 bg-muted">
+                            <img
+                              src={getNewsImage(article.image_url, article.category, article.id)}
+                              alt={article.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                              loading="lazy"
+                              onError={(e) => handleNewsImageError(e, article.category, article.id)}
+                            />
+                          </div>
+                          <div className="flex-1 min-w-0 flex flex-col">
+                            <div className="flex items-center gap-1.5 mb-1">
+                              <div className="h-5 w-5 rounded-full bg-accent/20 grid place-items-center text-[9px] font-bold text-accent">
+                                {(article.source || "N").slice(0, 1)}
+                              </div>
+                              <span className="text-[11px] font-semibold text-foreground truncate">{article.source || "News"}</span>
+                              <span className="text-[10px] text-muted-foreground">· {formatDate(article.date_published)}</span>
+                            </div>
+                            <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                              {decodeHtmlEntities(article.title)}
+                            </h3>
+                            <div className="flex items-center gap-2 mt-auto pt-1.5">
+                              <span className="text-[10px] uppercase tracking-wider font-semibold text-accent">{article.category}</span>
+                              <span className="text-[10px] text-muted-foreground inline-flex items-center gap-0.5">
+                                <Clock className="h-2.5 w-2.5" /> {article.read_time}
+                              </span>
+                            </div>
+                          </div>
+                        </Link>
+                      ))}
+                    </div>
+                  </div>
+                </section>
+              )}
+
+              {/* WEEKLY HIGHLIGHT: 4-col equal cards */}
+              {weeklyHighlight.length > 0 && (
+                <section>
+                  <div className="flex items-end justify-between mb-4">
+                    <h2 className="font-heading font-bold text-2xl text-foreground">Weekly Highlight</h2>
+                    <button
+                      onClick={() => setSortBy("oldest")}
+                      className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
+                    >
+                      See all →
+                    </button>
+                  </div>
+                  <div className="grid grid-cols-4 gap-4">
+                    {weeklyHighlight.map((article) => (
+                      <Link
+                        key={article.id}
+                        to={`/news/${article.id}`}
+                        className="group rounded-xl border border-border bg-card hover:border-accent/40 hover:-translate-y-0.5 transition-all overflow-hidden"
+                      >
+                        <div className="aspect-square overflow-hidden bg-muted">
+                          <img
+                            src={getNewsImage(article.image_url, article.category, article.id)}
+                            alt={article.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                            onError={(e) => handleNewsImageError(e, article.category, article.id)}
+                          />
+                        </div>
+                        <div className="p-3">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <Newspaper className="h-3 w-3 text-accent" />
+                            <span className="text-[10px] font-semibold text-foreground truncate">{article.source || "News"}</span>
+                            <span className="text-[9px] text-muted-foreground">· {formatDate(article.date_published)}</span>
+                          </div>
+                          <h3 className="font-heading font-bold text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                            {decodeHtmlEntities(article.title)}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-[10px] uppercase tracking-wider font-semibold text-accent">{article.category}</span>
+                            <span className="text-[10px] text-muted-foreground ml-auto inline-flex items-center gap-0.5">
+                              <Clock className="h-2.5 w-2.5" /> {article.read_time}
+                            </span>
+                          </div>
+                        </div>
+                      </Link>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* TOP SOURCES (placeholder for "Top Creators") */}
+              {topSources.length > 0 && (
+                <section>
+                  <div className="flex items-end justify-between mb-4">
+                    <h2 className="font-heading font-bold text-2xl text-foreground">Top Sources</h2>
+                  </div>
+                  <div className="flex flex-wrap items-start gap-6">
+                    {topSources.map(([source, count]) => (
+                      <div key={source} className="flex flex-col items-center gap-2 w-28 text-center">
+                        <div className="h-16 w-16 rounded-full border-2 border-accent/30 bg-card grid place-items-center text-xl font-bold text-accent shadow-[0_0_20px_-8px_hsl(var(--accent)/0.4)]">
+                          {source.slice(0, 1)}
+                        </div>
+                        <span className="text-xs font-semibold text-foreground truncate w-full">{source}</span>
+                        <span className="text-[10px] text-muted-foreground">{count} article{count !== 1 ? "s" : ""}</span>
+                      </div>
+                    ))}
+                  </div>
+                </section>
+              )}
+
+              {/* "More News" header before remaining grid */}
+              {listArticles.length > 0 && (
+                <div className="flex items-end justify-between pt-2 border-t border-border">
+                  <h2 className="font-heading font-bold text-2xl text-foreground pt-6">More News</h2>
+                </div>
+              )}
             </div>
           )}
 
