@@ -56,6 +56,53 @@ const PRECIOUS_METALS: Record<string, string> = {
   SILVER: "silver",
 };
 
+// Yahoo Finance futures tickers for commodities (metals, energy, agriculture)
+// Used by name-match fallback when symbol isn't in this map.
+const YAHOO_COMMODITY_MAP: Record<string, string> = {
+  XAU: "GC=F", GOLD: "GC=F",
+  XAG: "SI=F", SILVER: "SI=F",
+  BRENT: "BZ=F",
+  WTI: "CL=F", CRUDE: "CL=F", OIL: "CL=F",
+  NG: "NG=F", NATGAS: "NG=F",
+  HG: "HG=F", COPPER: "HG=F",
+  KC: "KC=F", COFFEE: "KC=F",
+  CC: "CC=F", COCOA: "CC=F",
+  SB: "SB=F", SUGAR: "SB=F",
+  ZC: "ZC=F", CORN: "ZC=F",
+  ZW: "ZW=F", WHEAT: "ZW=F",
+  ZS: "ZS=F", SOY: "ZS=F", SOYBEAN: "ZS=F",
+  PL: "PL=F", PLATINUM: "PL=F",
+  PA: "PA=F", PALLADIUM: "PA=F",
+};
+
+// Name-keyword fallback when symbol isn't recognized
+const YAHOO_NAME_KEYWORDS: Array<{ keywords: string[]; ticker: string }> = [
+  { keywords: ["gold"], ticker: "GC=F" },
+  { keywords: ["silver"], ticker: "SI=F" },
+  { keywords: ["brent"], ticker: "BZ=F" },
+  { keywords: ["wti", "crude"], ticker: "CL=F" },
+  { keywords: ["natural gas", "natgas"], ticker: "NG=F" },
+  { keywords: ["copper"], ticker: "HG=F" },
+  { keywords: ["coffee"], ticker: "KC=F" },
+  { keywords: ["cocoa"], ticker: "CC=F" },
+  { keywords: ["sugar"], ticker: "SB=F" },
+  { keywords: ["corn"], ticker: "ZC=F" },
+  { keywords: ["wheat"], ticker: "ZW=F" },
+  { keywords: ["soy"], ticker: "ZS=F" },
+  { keywords: ["platinum"], ticker: "PL=F" },
+  { keywords: ["palladium"], ticker: "PA=F" },
+];
+
+function resolveYahooTicker(symbol: string, name: string): string | null {
+  const sym = (symbol || "").toUpperCase();
+  if (YAHOO_COMMODITY_MAP[sym]) return YAHOO_COMMODITY_MAP[sym];
+  const lowerName = (name || "").toLowerCase();
+  for (const { keywords, ticker } of YAHOO_NAME_KEYWORDS) {
+    if (keywords.some((k) => lowerName.includes(k))) return ticker;
+  }
+  return null;
+}
+
 // NSE stock symbols → Yahoo Finance tickers (.NR suffix for Nairobi)
 const NSE_YAHOO_MAP: Record<string, string> = {
   SCOM: "SCOM.NR", EQTY: "EQTY.NR", KCB: "KCB.NR", COOP: "COOP.NR",
