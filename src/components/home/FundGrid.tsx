@@ -8,7 +8,7 @@ import YieldChange from "@/components/YieldChange";
 import FundMobileCards from "./FundMobileCards";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
-type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee";
+type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee" | "change";
 type SortDir = "asc" | "desc";
 
 const categoryLabels: Record<string, string> = {
@@ -225,9 +225,14 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         (f) => f.name.toLowerCase().includes(q) || f.manager.toLowerCase().includes(q)
       );
     }
+    const yieldChange = (f: FundFromDB) => {
+      const prev = snapshots[f.id]?.annual_yield;
+      return prev == null ? 0 : f.annual_yield - prev;
+    };
     result = [...result].sort((a, b) => {
       const mul = sortDir === "asc" ? 1 : -1;
       if (sortKey === "name") return mul * a.name.localeCompare(b.name);
+      if (sortKey === "change") return mul * (yieldChange(a) - yieldChange(b));
       return mul * ((a[sortKey] as number) - (b[sortKey] as number));
     });
     return result;
