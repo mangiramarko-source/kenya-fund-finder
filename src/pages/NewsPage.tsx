@@ -36,6 +36,26 @@ const sourceColors: Record<string, string> = {
   "Tuko News": "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
 };
 
+const INTERNATIONAL_SOURCES = new Set([
+  "Reuters Business",
+  "Reuters Markets",
+  "BBC Business",
+  "Financial Times Africa",
+  "Al Jazeera",
+  "CNBC World",
+  "Investing.com",
+  "MarketWatch",
+  "Seeking Alpha",
+  "African Business",
+  "The Africa Report",
+  "Further Africa",
+]);
+
+const isInternationalArticle = (a: { source?: string | null; category?: string | null }) =>
+  a.category === "International" || (a.source ? INTERNATIONAL_SOURCES.has(a.source) : false);
+
+type RegionFilter = "all" | "kenya" | "international";
+
 type SortOption = "latest" | "oldest" | "featured";
 
 const formatDate = (d: string) =>
