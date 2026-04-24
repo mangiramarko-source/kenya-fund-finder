@@ -150,12 +150,12 @@ const Navbar = () => {
             <Button
               variant="ghost"
               size="sm"
-              onClick={() => navigate(-1)}
+              onClick={() => navigate("/")}
               className="rounded-full h-9 px-2 gap-1.5 text-foreground hover:bg-muted"
-              aria-label="Go back"
+              aria-label="Go home"
             >
-              <ArrowLeft className="h-5 w-5" />
-              <span className="text-sm font-medium">Back</span>
+              <BarChart3 className="h-5 w-5" />
+              <span className="text-sm font-medium">Home</span>
             </Button>
             <Button
               variant="ghost"
