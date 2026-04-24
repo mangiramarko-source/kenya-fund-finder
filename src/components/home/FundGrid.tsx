@@ -519,7 +519,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   </Tooltip>
                 </th>
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
-                <th className="px-3 py-3 font-semibold text-muted-foreground text-left">Daily Trend</th>
+                <th className="px-3 py-3 font-semibold text-muted-foreground text-left">Daily </th>
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
