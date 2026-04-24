@@ -167,6 +167,19 @@ const NewsPage = () => {
     const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id), ...latestArticles.map(a => a.id), mustReadFeature?.id, ...mustReadList.map(a => a.id)]);
     return filtered.filter((a) => !used.has(a.id)).slice(0, 12);
   }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList]);
+  // International: dedicated row of global articles (only when not already filtered to a region)
+  const internationalArticles = useMemo(() => {
+    if (region !== "all") return [];
+    const used = new Set([
+      heroArticle?.id,
+      ...heroSidebar.map(a => a.id),
+      ...latestArticles.map(a => a.id),
+      mustReadFeature?.id,
+      ...mustReadList.map(a => a.id),
+      ...weeklyHighlight.map(a => a.id),
+    ]);
+    return filtered.filter((a) => isInternationalArticle(a) && !used.has(a.id)).slice(0, 12);
+  }, [filtered, region, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList, weeklyHighlight]);
   // Top Sources (placeholder for "Top Creators")
   const topSources = useMemo(() => {
     const counts: Record<string, number> = {};
@@ -182,9 +195,10 @@ const NewsPage = () => {
       mustReadFeature?.id,
       ...mustReadList.map(a => a.id),
       ...weeklyHighlight.map(a => a.id),
+      ...internationalArticles.map(a => a.id),
     ]);
     return filtered.filter((a) => !used.has(a.id));
-  }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList, weeklyHighlight]);
+  }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList, weeklyHighlight, internationalArticles]);
   // Backwards-compatible alias for the old hero sidebar (used in mobile-only paths)
   const topArticles = heroSidebar.slice(0, 3);
 
