@@ -479,31 +479,23 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           <table className="w-full text-sm table-fixed">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "11%" }} />
+              <col style={{ width: "13%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "8%" }} />
               <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "7%" }} />
-              <col style={{ width: "8%" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "7%" }} />
+              <col style={{ width: "13%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "5%" }} />
-              <col style={{ width: "8%" }} />
-              {onToggleFavourite && <col style={{ width: "3%" }} />}
+              <col style={{ width: "11%" }} />
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
                 <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
-                </th>
-                <th className="px-3 py-3 font-semibold text-muted-foreground text-left">Trend</th>
-                <th className="px-3 py-3 text-left">
-                  <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} />
-                </th>
-                <th className="text-left px-3 py-3">
-                  <SortHeader label="Change" field="change" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 <th className="px-3 py-3 text-left">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} />
@@ -518,8 +510,15 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     </TooltipContent>
                   </Tooltip>
                 </th>
+                <th className="px-3 py-3 font-semibold text-muted-foreground text-left">Trend</th>
+                <th className="px-3 py-3 text-left">
+                  <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} />
+                </th>
+                <th className="text-left px-3 py-3">
+                  <SortHeader label="Change" field="change" sortKey={sortKey} onToggleSort={toggleSort} />
+                </th>
+                <th className="px-3 py-3 font-semibold text-muted-foreground text-left">Trend</th>
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
-                <th className="px-3 py-3 font-semibold text-muted-foreground text-left">Daily </th>
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
@@ -527,7 +526,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Withdrawal</th>
-                {onToggleFavourite && <th className="w-8"></th>}
               </tr>
             </thead>
             <tbody>
