@@ -247,14 +247,8 @@ const NewsPage = () => {
               {/* LATEST NEWS: 3-col grid */}
               {latestArticles.length > 0 && (
                 <section>
-                  <div className="flex items-end justify-between mb-4">
+                  <div className="mb-4">
                     <h2 className="font-heading font-bold text-2xl text-foreground">Latest News</h2>
-                    <button
-                      onClick={() => setSortBy("latest")}
-                      className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
-                    >
-                      See all →
-                    </button>
                   </div>
                   <div className="overflow-x-auto -mx-4 px-4 pb-2 [scrollbar-width:thin]">
                     <div className="flex gap-4 snap-x snap-mandatory">
@@ -299,14 +293,8 @@ const NewsPage = () => {
               {/* MUST READ: 4-col equal cards (matches Weekly Highlight) */}
               {(mustReadFeature || mustReadList.length > 0) && (
                 <section>
-                  <div className="flex items-end justify-between mb-4">
+                  <div className="mb-4">
                     <h2 className="font-heading font-bold text-2xl text-foreground">Must Read</h2>
-                    <button
-                      onClick={() => setSortBy("featured")}
-                      className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
-                    >
-                      See all →
-                    </button>
                   </div>
                   <div className="overflow-x-auto -mx-4 px-4 pb-2 [scrollbar-width:thin]">
                     <div className="flex gap-4 snap-x snap-mandatory">
@@ -351,14 +339,8 @@ const NewsPage = () => {
               {/* WEEKLY HIGHLIGHT: 4-col equal cards */}
               {weeklyHighlight.length > 0 && (
                 <section>
-                  <div className="flex items-end justify-between mb-4">
+                  <div className="mb-4">
                     <h2 className="font-heading font-bold text-2xl text-foreground">Weekly Highlight</h2>
-                    <button
-                      onClick={() => setSortBy("oldest")}
-                      className="text-xs font-semibold text-accent hover:text-accent/80 transition-colors"
-                    >
-                      See all →
-                    </button>
                   </div>
                   <div className="overflow-x-auto -mx-4 px-4 pb-2 [scrollbar-width:thin]">
                     <div className="flex gap-4 snap-x snap-mandatory">
