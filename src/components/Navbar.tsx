@@ -125,7 +125,19 @@ const Navbar = () => {
 
   const closeMobile = () => setOpen(false);
 
-  const isMinimal = location.pathname === "/calculator";
+  const minimalRoutes = [
+    "/calculator",
+    "/news",
+    "/learn",
+    "/alerts",
+    "/portfolio",
+    "/profile",
+    "/privacy",
+    "/terms",
+    "/admin",
+    "/page/",
+  ];
+  const isMinimal = minimalRoutes.some((p) => location.pathname.startsWith(p));
 
   if (isMinimal) {
     return (
