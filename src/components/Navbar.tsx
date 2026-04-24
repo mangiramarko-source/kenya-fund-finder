@@ -14,7 +14,6 @@ const navLinks = [
   { to: "/", label: "Home", icon: BarChart3 },
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
   { to: "/markets", label: "Market", icon: LineChart },
-  { to: "/calculator", label: "Calculator", icon: Calculator },
 ];
 
 const mobileNavLinks = [
@@ -22,7 +21,6 @@ const mobileNavLinks = [
   { to: "/stocks", label: "Stocks" },
   { to: "/funds", label: "Unit trusts" },
   { to: "/news", label: "News" },
-  { to: "/calculator", label: "Calculator" },
   { to: "/rates", label: "Fx rates" },
   { to: "/commodities", label: "Commodities" },
 ];
