@@ -340,9 +340,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <button
                   key={opt.key}
                   onClick={() => {
-                    setMovement(opt.key);
-                    if (opt.key === "gainers") { setSortKey("change"); setSortDir("desc"); }
-                    else if (opt.key === "losers") { setSortKey("change"); setSortDir("asc"); }
+                    if (opt.key === "gainers") updateParams({ movement: opt.key, sort: "change", dir: "desc" });
+                    else if (opt.key === "losers") updateParams({ movement: opt.key, sort: "change", dir: "asc" });
+                    else updateParams({ movement: opt.key });
                   }}
                   className={`inline-flex items-center gap-1 px-2.5 h-8 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
                     active ? activeColor + " shadow-sm" : "text-muted-foreground hover:text-foreground"
@@ -415,9 +415,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               <button
                 key={opt.key}
                 onClick={() => {
-                  setMovement(opt.key);
-                  if (opt.key === "gainers") { setSortKey("change"); setSortDir("desc"); }
-                  else if (opt.key === "losers") { setSortKey("change"); setSortDir("asc"); }
+                  if (opt.key === "gainers") updateParams({ movement: opt.key, sort: "change", dir: "desc" });
+                  else if (opt.key === "losers") updateParams({ movement: opt.key, sort: "change", dir: "asc" });
+                  else updateParams({ movement: opt.key });
                 }}
                 className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                   active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
