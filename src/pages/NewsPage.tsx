@@ -96,7 +96,7 @@ const NewsPage = () => {
     return list;
   }, [articles, activeCategory, activeSource, sortBy, searchQuery]);
 
-  // Rotating hero pool: featured first, then latest, capped at 6
+  // Hero pool: featured first, then latest, capped at 6
   const heroPool = useMemo(() => {
     const featured = filtered.filter((a) => a.is_featured);
     const rest = filtered.filter((a) => !a.is_featured);
@@ -109,22 +109,9 @@ const NewsPage = () => {
     return merged;
   }, [filtered]);
 
-  const [heroIndex, setHeroIndex] = useState(0);
-  const [heroPaused, setHeroPaused] = useState(false);
-
-  // Reset rotation when the pool changes
-  useEffect(() => { setHeroIndex(0); }, [heroPool.length, heroPool[0]?.id]);
-
-  // Auto-rotate every 6s on desktop; pauses on hover
-  useEffect(() => {
-    if (heroPool.length <= 1 || heroPaused) return;
-    const id = window.setInterval(() => {
-      setHeroIndex((i) => (i + 1) % heroPool.length);
-    }, 6000);
-    return () => window.clearInterval(id);
-  }, [heroPool.length, heroPaused]);
-
-  const heroArticle = heroPool[heroIndex] || heroPool[0] || null;
+  // Hero rotates only when new articles arrive (not on a timer).
+  // Each fetch picks the freshest top item from the pool.
+  const heroArticle = heroPool[0] || null;
   const topArticles = useMemo(() => {
     if (!heroArticle) return filtered.slice(0, 3);
     return filtered.filter((a) => a.id !== heroArticle.id).slice(0, 3);
