@@ -36,6 +36,8 @@ const Navbar = () => {
     return true;
   });
   const headerRef = useRef<HTMLElement | null>(null);
+  const mobileTabsScrollRef = useRef<HTMLDivElement | null>(null);
+  const mobileTabRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [avatarUrl, setAvatarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
   const location = useLocation();
