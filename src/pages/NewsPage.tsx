@@ -299,8 +299,8 @@ const NewsPage = () => {
                 </section>
               )}
 
-              {/* MUST READ: split section */}
-              {mustReadFeature && (
+              {/* MUST READ: 4-col equal cards (matches Weekly Highlight) */}
+              {(mustReadFeature || mustReadList.length > 0) && (
                 <section>
                   <div className="flex items-end justify-between mb-4">
                     <h2 className="font-heading font-bold text-2xl text-foreground">Must Read</h2>
@@ -311,79 +311,40 @@ const NewsPage = () => {
                       See all →
                     </button>
                   </div>
-                  <div className="grid grid-cols-12 gap-5">
-                    {/* Wide feature card */}
-                    <Link
-                      to={`/news/${mustReadFeature.id}`}
-                      className="col-span-7 group relative block rounded-xl overflow-hidden border border-border bg-card hover:border-accent/40 transition-all"
-                    >
-                      <div className="aspect-[16/10]">
-                        <img
-                          src={getNewsImage(mustReadFeature.image_url, mustReadFeature.category, mustReadFeature.id)}
-                          alt={mustReadFeature.title}
-                          className="w-full h-full object-cover group-hover:scale-[1.02] transition-transform duration-500"
-                          loading="lazy"
-                          onError={(e) => handleNewsImageError(e, mustReadFeature.category, mustReadFeature.id)}
-                        />
-                        <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/30 to-transparent" />
-                      </div>
-                      <div className="absolute top-4 left-4 flex items-center gap-2 bg-background/85 backdrop-blur-sm rounded-full pl-1 pr-3 py-1 border border-border/60">
-                        <div className="h-7 w-7 rounded-full bg-accent/20 grid place-items-center text-[11px] font-bold text-accent">
-                          {(mustReadFeature.source || "N").slice(0, 1)}
+                  <div className="grid grid-cols-4 gap-4">
+                    {[mustReadFeature, ...mustReadList].filter(Boolean).slice(0, 4).map((article) => (
+                      <Link
+                        key={article!.id}
+                        to={`/news/${article!.id}`}
+                        className="group rounded-xl border border-border bg-card hover:border-accent/40 hover:-translate-y-0.5 transition-all overflow-hidden"
+                      >
+                        <div className="aspect-square overflow-hidden bg-muted">
+                          <img
+                            src={getNewsImage(article!.image_url, article!.category, article!.id)}
+                            alt={article!.title}
+                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                            loading="lazy"
+                            onError={(e) => handleNewsImageError(e, article!.category, article!.id)}
+                          />
                         </div>
-                        <div className="flex flex-col leading-none">
-                          <span className="text-[11px] font-bold text-foreground">{mustReadFeature.source || "NewsHub"}</span>
-                          <span className="text-[9px] text-muted-foreground">{formatDate(mustReadFeature.date_published)}</span>
+                        <div className="p-3">
+                          <div className="flex items-center gap-1.5 mb-1.5">
+                            <Newspaper className="h-3 w-3 text-accent" />
+                            <span className="text-[10px] font-semibold text-foreground truncate">{article!.source || "News"}</span>
+                            <span className="text-[9px] text-muted-foreground">· {formatDate(article!.date_published)}</span>
+                          </div>
+                          <h3 className="font-heading font-bold text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                            {decodeHtmlEntities(article!.title)}
+                          </h3>
+                          <div className="flex items-center gap-2 mt-2">
+                            <span className="text-[10px] uppercase tracking-wider font-semibold text-accent">{article!.category}</span>
+                            <span className="text-[10px] text-muted-foreground ml-auto inline-flex items-center gap-0.5">
+                              <Clock className="h-2.5 w-2.5" /> {article!.read_time}
+                            </span>
+                          </div>
                         </div>
-                      </div>
-                      <div className="absolute bottom-0 left-0 right-0 p-5">
-                        <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-accent text-accent-foreground mb-2">
-                          {mustReadFeature.category}
-                        </span>
-                        <h3 className="font-heading font-bold text-2xl text-white leading-tight line-clamp-3 group-hover:text-accent transition-colors">
-                          {decodeHtmlEntities(mustReadFeature.title)}
-                        </h3>
-                      </div>
-                    </Link>
-
-                    {/* List items */}
-                    <div className="col-span-5 flex flex-col gap-3">
-                      {mustReadList.map((article) => (
-                        <Link
-                          key={article.id}
-                          to={`/news/${article.id}`}
-                          className="group flex gap-3 p-3 rounded-xl border border-border bg-card hover:border-accent/40 transition-all flex-1"
-                        >
-                          <div className="w-24 h-24 rounded-lg overflow-hidden shrink-0 bg-muted">
-                            <img
-                              src={getNewsImage(article.image_url, article.category, article.id)}
-                              alt={article.title}
-                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                              loading="lazy"
-                              onError={(e) => handleNewsImageError(e, article.category, article.id)}
-                            />
-                          </div>
-                          <div className="flex-1 min-w-0 flex flex-col">
-                            <div className="flex items-center gap-1.5 mb-1">
-                              <div className="h-5 w-5 rounded-full bg-accent/20 grid place-items-center text-[9px] font-bold text-accent">
-                                {(article.source || "N").slice(0, 1)}
-                              </div>
-                              <span className="text-[11px] font-semibold text-foreground truncate">{article.source || "News"}</span>
-                              <span className="text-[10px] text-muted-foreground">· {formatDate(article.date_published)}</span>
-                            </div>
-                            <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
-                              {decodeHtmlEntities(article.title)}
-                            </h3>
-                            <div className="flex items-center gap-2 mt-auto pt-1.5">
-                              <span className="text-[10px] uppercase tracking-wider font-semibold text-accent">{article.category}</span>
-                              <span className="text-[10px] text-muted-foreground inline-flex items-center gap-0.5">
-                                <Clock className="h-2.5 w-2.5" /> {article.read_time}
-                              </span>
-                            </div>
-                          </div>
-                        </Link>
-                      ))}
-                    </div>
+                      </Link>
+                    ))}
                   </div>
                 </section>
               )}
