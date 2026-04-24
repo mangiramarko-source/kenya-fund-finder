@@ -146,7 +146,7 @@ const Navbar = () => {
           ref={headerRef}
           className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border"
         >
-          <div className="container flex h-14 items-center px-4">
+          <div className="container flex h-14 items-center justify-between px-4">
             <Button
               variant="ghost"
               size="sm"
@@ -157,9 +157,145 @@ const Navbar = () => {
               <ArrowLeft className="h-5 w-5" />
               <span className="text-sm font-medium">Back</span>
             </Button>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setOpen(true)}
+              className="rounded-full h-9 w-9 -mr-2 text-foreground hover:bg-muted"
+              aria-label="Open menu"
+            >
+              <Menu className="h-5 w-5" />
+            </Button>
           </div>
         </header>
         <div className="md:hidden h-14" aria-hidden="true" />
+
+        {/* Mobile slide-in sheet from right (shared with full navbar) */}
+        <Sheet open={open} onOpenChange={setOpen}>
+          <SheetContent side="right" className="w-[280px] p-0 flex flex-col">
+            <SheetHeader className="p-5 pb-3 border-b border-border">
+              <SheetTitle className="flex items-center gap-2 text-base">
+                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent text-accent-foreground">
+                  <TrendingUp className="h-4 w-4" />
+                </div>
+                Menu
+              </SheetTitle>
+            </SheetHeader>
+
+            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+              {user && (
+                <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl bg-muted/50">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={avatarUrl} alt={displayName} />
+                    <AvatarFallback className="bg-accent text-accent-foreground text-xs">
+                      {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{displayName || "User"}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                </div>
+              )}
+
+              {!user && (
+                <Link
+                  to="/auth"
+                  onClick={closeMobile}
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-colors mb-2"
+                >
+                  <User className="h-5 w-5" /> Sign In / Sign Up
+                </Link>
+              )}
+
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  onClick={closeMobile}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
+                >
+                  <Shield className="h-5 w-5" /> Admin Panel
+                </Link>
+              )}
+
+              <div className="h-px bg-border my-2" />
+              <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Navigate</p>
+              {mobileNavLinks.map((link) => (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  onClick={closeMobile}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+                >
+                  {link.label}
+                </Link>
+              ))}
+
+              <div className="h-px bg-border my-2" />
+              <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Tools</p>
+              <Link to="/calculator" onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors">
+                <Calculator className="h-5 w-5" /> Calculator
+              </Link>
+              <Link to="/news" onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors">
+                <Newspaper className="h-5 w-5" /> News
+              </Link>
+              <Link to={user ? "/alerts" : "/auth"} onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors">
+                <Bell className="h-5 w-5" /> Alerts
+              </Link>
+              <Link to="/learn" onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors">
+                <GraduationCap className="h-5 w-5" /> Learn
+              </Link>
+
+              <button
+                onClick={() => { setDark(!dark); }}
+                className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
+                {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {dark ? "Light Mode" : "Dark Mode"}
+              </button>
+
+              <div className="h-px bg-border my-2" />
+              <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Info</p>
+              {[
+                { to: "/page/about", label: "About", icon: Info },
+                { to: "/page/contact", label: "Contact", icon: Mail },
+                { to: "/page/legal", label: "Legal", icon: Scale },
+                { to: "/privacy", label: "Privacy Policy", icon: FileText },
+                { to: "/terms", label: "Terms of Use", icon: FileText },
+              ].map((link) => {
+                const Icon = link.icon;
+                return (
+                  <Link
+                    key={link.to}
+                    to={link.to}
+                    onClick={closeMobile}
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+                  >
+                    <Icon className="h-5 w-5" /> {link.label}
+                  </Link>
+                );
+              })}
+              {user && (
+                <>
+                  <div className="h-px bg-border my-2" />
+                  <Link
+                    to="/profile"
+                    onClick={closeMobile}
+                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+                  >
+                    <Settings className="h-5 w-5" /> Profile Settings
+                  </Link>
+                  <button
+                    onClick={async () => { await signOut(); closeMobile(); navigate("/"); }}
+                    className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
+                  >
+                    <LogOut className="h-5 w-5" /> Sign Out
+                  </button>
+                </>
+              )}
+            </nav>
+          </SheetContent>
+        </Sheet>
       </>
     );
   }
