@@ -149,12 +149,13 @@ const Navbar = () => {
           <div className="container flex h-14 items-center">
             <Button
               variant="ghost"
-              size="icon"
+              size="sm"
               onClick={() => navigate(-1)}
-              className="rounded-full h-9 w-9 text-foreground hover:bg-muted"
+              className="rounded-full h-9 px-3 gap-1.5 text-foreground hover:bg-muted"
               aria-label="Go back"
             >
               <ArrowLeft className="h-5 w-5" />
+              <span className="text-sm font-medium">Back</span>
             </Button>
           </div>
         </header>
