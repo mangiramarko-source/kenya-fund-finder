@@ -434,11 +434,11 @@ const RateRow = ({
           <span className="block text-xs text-foreground truncate" title={rate.currency_name}>{rate.currency_name}</span>
         </td>
         <td className="px-3 py-3.5 tabular-nums whitespace-nowrap">
-          <span className="font-bold text-foreground text-sm">
+          <span className="font-bold text-foreground text-xs">
             {rate.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
           </span>
         </td>
-        <td className="px-3 py-3.5 tabular-nums whitespace-nowrap text-sm text-muted-foreground">
+        <td className="px-3 py-3.5 tabular-nums whitespace-nowrap text-xs text-muted-foreground">
           {rate.previous_rate != null
             ? rate.previous_rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 4 })
             : "—"}
