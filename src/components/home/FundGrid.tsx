@@ -65,7 +65,7 @@ const SortHeader = ({
 );
 
 /* ─── MiniSparkline (matches StocksPage visual) ─── */
-const MiniSparkline = ({ data, currentValue, field = "annual_yield" }: { data: YieldSnapshot[]; currentValue: number; field?: "annual_yield" | "daily_yield" }) => {
+const MiniSparkline = ({ data, currentValue, field = "annual_yield", change }: { data: YieldSnapshot[]; currentValue: number; field?: "annual_yield" | "daily_yield"; change?: number }) => {
   const series = useMemo(() => {
     const vals = [...data.map((d) => d[field]), currentValue];
     if (vals.length < 2) return null;
@@ -80,12 +80,14 @@ const MiniSparkline = ({ data, currentValue, field = "annual_yield" }: { data: Y
       positive: last12[last12.length - 1] >= last12[0],
       domain: [min - pad, max + pad] as [number, number],
     };
-  }, [data, currentValue]);
+  }, [data, currentValue, field]);
 
   if (!series) return <span className="text-[10px] text-muted-foreground">—</span>;
 
-  const color = series.positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
-  const gradientId = `fund-spark-${series.positive ? "up" : "down"}`;
+  // Prefer explicit change (matches ChangeCell) over derived series direction
+  const isPositive = change !== undefined ? change >= 0 : series.positive;
+  const color = isPositive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  const gradientId = `fund-spark-${isPositive ? "up" : "down"}`;
 
   return (
     <div className="w-[60px] h-[24px] inline-block">
@@ -563,7 +565,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       <ChangeCell change={dailyChange} unit={fund.yield_unit} />
                     </td>
                     <td className="px-3 py-3.5 text-left">
-                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.daily_yield} field="daily_yield" />
+                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.daily_yield} field="daily_yield" change={dailyChange} />
                     </td>
                     <td className="px-3 py-3.5 whitespace-nowrap tabular-nums text-left">
                       <span className="font-bold text-foreground text-sm">
@@ -574,7 +576,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       <ChangeCell change={change} unit={fund.yield_unit} />
                     </td>
                     <td className="px-3 py-3.5 text-left">
-                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.annual_yield} />
+                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.annual_yield} change={change} />
                     </td>
                     <td className="px-3 py-3.5 text-foreground text-sm truncate text-left" title={fund.manager}>
                       {fund.manager}
