@@ -36,6 +36,26 @@ const sourceColors: Record<string, string> = {
   "Tuko News": "bg-yellow-500/10 text-yellow-400 border-yellow-500/20",
 };
 
+const INTERNATIONAL_SOURCES = new Set([
+  "Reuters Business",
+  "Reuters Markets",
+  "BBC Business",
+  "Financial Times Africa",
+  "Al Jazeera",
+  "CNBC World",
+  "Investing.com",
+  "MarketWatch",
+  "Seeking Alpha",
+  "African Business",
+  "The Africa Report",
+  "Further Africa",
+]);
+
+const isInternationalArticle = (a: { source?: string | null; category?: string | null }) =>
+  a.category === "International" || (a.source ? INTERNATIONAL_SOURCES.has(a.source) : false);
+
+type RegionFilter = "all" | "kenya" | "international";
+
 type SortOption = "latest" | "oldest" | "featured";
 
 const formatDate = (d: string) =>
@@ -76,9 +96,22 @@ const NewsPage = () => {
     return Array.from(s).sort();
   }, [articles]);
   const [activeSource] = useState<string>("All");
+  const [region, setRegion] = useState<RegionFilter>("all");
+
+  const regionCounts = useMemo(() => {
+    let intl = 0;
+    let ke = 0;
+    for (const a of articles) {
+      if (isInternationalArticle(a)) intl++;
+      else ke++;
+    }
+    return { kenya: ke, international: intl };
+  }, [articles]);
 
   const filtered = useMemo(() => {
     let list = articles;
+    if (region === "kenya") list = list.filter(a => !isInternationalArticle(a));
+    else if (region === "international") list = list.filter(a => isInternationalArticle(a));
     if (activeCategory !== "All") list = list.filter((a) => a.category === activeCategory);
     if (activeSource !== "All") list = list.filter((a) => a.source === activeSource);
     if (searchQuery.trim()) {
@@ -94,7 +127,7 @@ const NewsPage = () => {
       });
     }
     return list;
-  }, [articles, activeCategory, activeSource, sortBy, searchQuery]);
+  }, [articles, activeCategory, activeSource, sortBy, searchQuery, region]);
 
   // Hero pool: featured first, then latest, capped at 6
   const heroPool = useMemo(() => {
@@ -161,7 +194,7 @@ const NewsPage = () => {
   const loaderRef = useRef<HTMLDivElement>(null);
 
   // Reset visible count when filters change
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [activeCategory, activeSource, sortBy, searchQuery]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [activeCategory, activeSource, sortBy, searchQuery, region]);
 
   const visibleList = useMemo(() => listArticles.slice(0, visibleCount), [listArticles, visibleCount]);
   const hasMore = visibleCount < listArticles.length;
@@ -231,6 +264,35 @@ const NewsPage = () => {
             <SelectItem value="featured">Featured</SelectItem>
           </SelectContent>
         </Select>
+      </div>
+
+      {/* Region toggle: Kenya / International */}
+      <div className="flex items-center gap-1.5 mb-5 -mt-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+        {([
+          { key: "all", label: "All", count: articles.length },
+          { key: "kenya", label: "Kenya", count: regionCounts.kenya },
+          { key: "international", label: "International", count: regionCounts.international },
+        ] as const).map((opt) => {
+          const active = region === opt.key;
+          return (
+            <button
+              key={opt.key}
+              type="button"
+              onClick={() => setRegion(opt.key)}
+              className={`shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full border text-xs font-semibold transition-colors ${
+                active
+                  ? "bg-accent text-accent-foreground border-accent"
+                  : "bg-card text-muted-foreground border-border hover:text-foreground hover:border-accent/40"
+              }`}
+              aria-pressed={active}
+            >
+              {opt.label}
+              <span className={`text-[10px] font-medium ${active ? "opacity-80" : "opacity-60"}`}>
+                {opt.count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {filtered.length === 0 ? (
