@@ -67,8 +67,8 @@ const Index = () => {
         snapshots={snapshots}
         allSnapshots={allSnapshots}
         loading={loading}
-        isFavourite={isFavourite}
-        onToggleFavourite={toggle}
+        isFavourite={user ? isFavourite : undefined}
+        onToggleFavourite={user ? toggle : undefined}
       />
     </div>
   );
