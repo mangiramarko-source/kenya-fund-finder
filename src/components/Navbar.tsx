@@ -137,7 +137,14 @@ const Navbar = () => {
     "/admin",
     "/page/",
   ];
-  const isMinimal = minimalRoutes.some((p) => location.pathname.startsWith(p));
+  // Detail pages get a Back button instead of Home
+  const detailRoutePatterns = [
+    /^\/stocks\/[^/]+/,
+    /^\/compare\/[^/]+/,
+    /^\/funds\/[^/]+/,
+  ];
+  const isDetailPage = detailRoutePatterns.some((re) => re.test(location.pathname));
+  const isMinimal = isDetailPage || minimalRoutes.some((p) => location.pathname.startsWith(p));
 
   if (isMinimal) {
     return (
@@ -147,16 +154,29 @@ const Navbar = () => {
           className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border"
         >
           <div className="container flex h-14 items-center justify-between">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => navigate("/")}
-              className="rounded-full h-9 px-2 gap-1.5 text-foreground hover:bg-muted"
-              aria-label="Go home"
-            >
-              <BarChart3 className="h-5 w-5" />
-              <span className="text-sm font-medium">Home</span>
-            </Button>
+            {isDetailPage ? (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate(-1)}
+                className="rounded-full h-9 px-2 gap-1.5 text-foreground hover:bg-muted"
+                aria-label="Go back"
+              >
+                <ArrowLeft className="h-5 w-5" />
+                <span className="text-sm font-medium">Back</span>
+              </Button>
+            ) : (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => navigate("/")}
+                className="rounded-full h-9 px-2 gap-1.5 text-foreground hover:bg-muted"
+                aria-label="Go home"
+              >
+                <BarChart3 className="h-5 w-5" />
+                <span className="text-sm font-medium">Home</span>
+              </Button>
+            )}
             <Button
               variant="ghost"
               size="icon"
