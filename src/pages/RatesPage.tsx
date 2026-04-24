@@ -384,56 +384,161 @@ const RatesPage = () => {
 const MobileRateCard = ({
   rate: r,
   history,
+  historyLoading,
   positive,
+  isExpanded,
+  onToggle,
   isFavourite,
   onToggleFavourite,
 }: {
   rate: Rate;
   history?: RateHistory[];
+  historyLoading?: boolean;
   positive: boolean;
+  isExpanded?: boolean;
+  onToggle?: () => void;
   isFavourite?: boolean;
   onToggleFavourite?: () => void;
-}) => (
-  <div className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all overflow-hidden">
-    <div className="flex items-center gap-3 p-3.5">
-      {/* Left: Code + Name */}
-      <div className="flex-1 min-w-0">
-        <span className="font-bold text-foreground text-sm">{r.currency_code}</span>
-        <p className="text-[11px] text-muted-foreground truncate">{r.currency_name}</p>
-      </div>
+}) => {
+  const change = r.previous_rate != null ? r.rate - r.previous_rate : null;
+  const changePct = r.previous_rate != null && r.previous_rate !== 0 ? ((change! / r.previous_rate) * 100) : null;
 
-      {/* Center: Sparkline */}
-      <div className="shrink-0">
-        <MiniSparkline data={history || []} positive={positive} />
-      </div>
+  return (
+    <div className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all overflow-hidden">
+      <button
+        type="button"
+        onClick={onToggle}
+        className="w-full flex items-center gap-3 p-3.5 text-left"
+        aria-expanded={isExpanded}
+      >
+        {/* Left: Code + Name */}
+        <div className="flex-1 min-w-0">
+          <span className="font-bold text-foreground text-sm">{r.currency_code}</span>
+          <p className="text-[11px] text-muted-foreground truncate">{r.currency_name}</p>
+        </div>
 
-      {/* Right: Rate + Change */}
-      <div className="text-right shrink-0">
-        <p className="font-bold text-foreground text-sm tabular-nums">
-          KES {r.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-        </p>
-        <ChangeIndicator current={r.rate} previous={r.previous_rate} />
-      </div>
+        {/* Center: Sparkline */}
+        <div className="shrink-0">
+          <MiniSparkline data={history || []} positive={positive} />
+        </div>
 
-      {/* Watchlist button */}
-      {onToggleFavourite !== undefined && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onToggleFavourite();
-          }}
-          className="p-1 shrink-0"
-          aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
-        >
-          <Star
-            className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
-          />
-        </button>
+        {/* Right: Rate + Change */}
+        <div className="text-right shrink-0">
+          <p className="font-bold text-foreground text-sm tabular-nums">
+            KES {r.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </p>
+          <ChangeIndicator current={r.rate} previous={r.previous_rate} />
+        </div>
+
+        {/* Watchlist button */}
+        {onToggleFavourite !== undefined && (
+          <span
+            role="button"
+            tabIndex={0}
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleFavourite();
+            }}
+            className="p-1 shrink-0"
+            aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+          >
+            <Star
+              className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
+            />
+          </span>
+        )}
+
+        {/* Expand chevron */}
+        <span className="shrink-0 text-muted-foreground">
+          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+        </span>
+      </button>
+
+      {isExpanded && (
+        <div className="border-t border-border bg-muted/20 p-3 space-y-3">
+          {/* KPI grid */}
+          <div className="grid grid-cols-2 gap-2">
+            <DetailBox label="Current Rate" value={`KES ${r.rate.toFixed(2)}`} />
+            <DetailBox
+              label="Previous Rate"
+              value={r.previous_rate != null ? `KES ${r.previous_rate.toFixed(2)}` : "—"}
+            />
+            <DetailBox
+              label="Change (Abs)"
+              value={change != null ? `${change > 0 ? "+" : ""}${change.toFixed(4)}` : "—"}
+              color={change != null ? (change > 0 ? "text-destructive" : change < 0 ? "text-accent" : undefined) : undefined}
+            />
+            <DetailBox
+              label="Change (%)"
+              value={changePct != null ? `${changePct > 0 ? "+" : ""}${changePct.toFixed(2)}%` : "—"}
+              color={changePct != null ? (changePct > 0 ? "text-destructive" : changePct < 0 ? "text-accent" : undefined) : undefined}
+            />
+          </div>
+
+          {/* History chart */}
+          <div className="rounded-lg border border-border bg-card p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-[11px] font-semibold text-foreground">Rate History (Last 90 Days)</span>
+            </div>
+            {historyLoading ? (
+              <div className="h-[180px] flex items-center justify-center">
+                <Skeleton className="h-full w-full rounded-lg" />
+              </div>
+            ) : !history || history.length === 0 ? (
+              <div className="h-[180px] flex items-center justify-center text-xs text-muted-foreground">
+                No historical data available yet
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                <LineChart data={history}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis
+                    dataKey="snapshot_date"
+                    tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                    tickFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                    minTickGap={20}
+                  />
+                  <YAxis
+                    domain={["auto", "auto"]}
+                    tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                    width={45}
+                    tickFormatter={(v) => v.toFixed(2)}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "11px",
+                    }}
+                    labelFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
+                    formatter={(value: number) => [`KES ${value.toFixed(4)}`, "Rate"]}
+                  />
+                  <Line type="monotone" dataKey="rate" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+                </LineChart>
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-[10px] text-muted-foreground">
+              Updated: {new Date(r.updated_at).toLocaleString("en-KE")}
+            </p>
+            <CreateAlertDialog
+              assetType="currency"
+              assetId={r.id}
+              assetName={`${r.currency_code}/KES`}
+              currentPrice={r.rate}
+              unit="KES"
+            />
+          </div>
+        </div>
       )}
     </div>
-  </div>
-);
+  );
+};
 
 const RateRow = ({
   rate, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
