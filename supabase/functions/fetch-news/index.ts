@@ -81,6 +81,116 @@ function categorize(text: string): string {
   return "Market News";
 }
 
+// --- AI rewriting (summary + long-form body, in original words) ----------
+const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const AI_MODEL = "google/gemini-3-flash-preview";
+
+interface RewrittenArticle {
+  summary: string;
+  content: string;
+}
+
+async function rewriteArticle(
+  apiKey: string,
+  title: string,
+  source: string,
+  rawText: string,
+): Promise<RewrittenArticle | null> {
+  const sourceText = rawText.slice(0, 6000);
+  if (!sourceText || sourceText.length < 80) return null;
+
+  const systemPrompt = `You are a financial journalist for "Kenya Fund Finder", a Kenyan markets website.
+Rewrite the provided news item entirely in your own words to avoid plagiarism. Be factual, neutral and accurate.
+Keep all named entities, numbers, dates, currencies and quotes truthful — never invent facts. If something is unclear, omit it.
+Write in clean British/Kenyan English. Do NOT say things like "the article says" or reference the original source inside the body.
+Return ONLY a JSON object that matches the schema — no markdown, no commentary.`;
+
+  const userPrompt = `Title: ${title}
+Original source: ${source}
+
+Source text:
+"""
+${sourceText}
+"""
+
+Rewrite this as:
+- "summary": a punchy 2-3 sentence standalone summary (max ~320 characters).
+- "content": a richer 3-6 paragraph article (roughly 250-450 words) in your own words covering the key facts, context, numbers and implications for Kenyan investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
+
+  try {
+    const controller = new AbortController();
+    const t = setTimeout(() => controller.abort(), 25000);
+    const res = await fetch(AI_GATEWAY_URL, {
+      method: "POST",
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+      },
+      signal: controller.signal,
+      body: JSON.stringify({
+        model: AI_MODEL,
+        messages: [
+          { role: "system", content: systemPrompt },
+          { role: "user", content: userPrompt },
+        ],
+        tools: [
+          {
+            type: "function",
+            function: {
+              name: "publish_article",
+              description: "Publish the rewritten article",
+              parameters: {
+                type: "object",
+                properties: {
+                  summary: { type: "string", description: "2-3 sentence standalone summary, max ~320 chars" },
+                  content: { type: "string", description: "3-6 paragraph rewritten article body, ~250-450 words" },
+                },
+                required: ["summary", "content"],
+                additionalProperties: false,
+              },
+            },
+          },
+        ],
+        tool_choice: { type: "function", function: { name: "publish_article" } },
+      }),
+    });
+    clearTimeout(t);
+
+    if (!res.ok) {
+      console.error(`AI rewrite failed [${res.status}] for "${title.slice(0, 60)}"`);
+      return null;
+    }
+    const data = await res.json();
+    const call = data?.choices?.[0]?.message?.tool_calls?.[0];
+    const argsStr = call?.function?.arguments;
+    if (!argsStr) return null;
+    const parsed = JSON.parse(argsStr) as Partial<RewrittenArticle>;
+    if (!parsed.summary || !parsed.content) return null;
+    return { summary: parsed.summary.trim(), content: parsed.content.trim() };
+  } catch (err) {
+    console.error(`AI rewrite error for "${title.slice(0, 60)}":`, err);
+    return null;
+  }
+}
+
+async function mapWithConcurrency<T, R>(
+  items: T[],
+  limit: number,
+  worker: (item: T, index: number) => Promise<R>,
+): Promise<R[]> {
+  const results: R[] = new Array(items.length);
+  let cursor = 0;
+  const runners = Array.from({ length: Math.min(limit, items.length) }, async () => {
+    while (true) {
+      const i = cursor++;
+      if (i >= items.length) return;
+      results[i] = await worker(items[i], i);
+    }
+  });
+  await Promise.all(runners);
+  return results;
+}
+
 async function fetchFeed(feedUrl: string, source: string): Promise<ParsedArticle[]> {
   const articles: ParsedArticle[] = [];
   try {
