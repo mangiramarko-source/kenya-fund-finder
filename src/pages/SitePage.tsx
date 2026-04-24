@@ -73,7 +73,7 @@ const SitePage = () => {
 
       <div className="prose prose-sm dark:prose-invert max-w-none">
         {page.content.split("\n").filter(Boolean).map((p, i) => (
-          <p key={i} className="text-sm text-muted-foreground leading-relaxed mb-4">{p}</p>
+          <p key={i} className="text-sm text-muted-foreground leading-relaxed mb-4 text-justify">{p}</p>
         ))}
       </div>
 
