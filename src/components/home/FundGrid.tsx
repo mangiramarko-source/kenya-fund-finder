@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers, Tag, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import YieldChange from "@/components/YieldChange";
 import FundMobileCards from "./FundMobileCards";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
@@ -225,8 +226,50 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
   return (
     <div className="space-y-4">
-      {/* Category tabs + search */}
-      <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
+      {/* Desktop toolbar: Category dropdown + Search */}
+      <div className="hidden md:flex items-center justify-between gap-3">
+        <Select
+          value={activeTab}
+          onValueChange={(val) => {
+            setActiveTab(val);
+            setSearch("");
+            setSortKey("annual_yield");
+            setSortDir("desc");
+          }}
+        >
+          <SelectTrigger className="h-9 w-[240px] rounded-lg bg-muted/30 border-border text-xs font-medium">
+            <div className="flex items-center gap-1.5 min-w-0">
+              <span className="text-muted-foreground shrink-0">Category:</span>
+              <SelectValue />
+            </div>
+          </SelectTrigger>
+          <SelectContent className="max-h-72">
+            {categories.map((cat) => (
+              <SelectItem key={cat} value={cat} className="text-xs">
+                <span className="inline-flex items-center gap-2">
+                  {categoryLabels[cat] || cat}
+                  <span className="text-[10px] tabular-nums text-muted-foreground/70">
+                    {categoryCount[cat] || 0}
+                  </span>
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="relative w-72 shrink-0">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search fund or manager"
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 h-9 text-xs rounded-lg bg-muted/30 border-border w-full"
+          />
+        </div>
+      </div>
+
+      {/* Mobile: keep original pill tabs + search */}
+      <div className="md:hidden flex flex-col gap-3">
         <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
           {categories.map((cat) => (
             <button
@@ -253,13 +296,13 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           ))}
         </div>
 
-        <div className="relative w-full md:w-64 shrink-0 max-w-full">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 md:h-4 md:w-4 text-muted-foreground" />
+        <div className="relative w-full">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
           <Input
-            placeholder="Search "
+            placeholder="Search"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-8 md:h-9 md:text-xs rounded-lg bg-muted/30 border-border w-full text-[16px]"
+            className="pl-9 h-8 rounded-lg bg-muted/30 border-border w-full text-[16px]"
           />
         </div>
       </div>
