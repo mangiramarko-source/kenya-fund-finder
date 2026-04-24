@@ -1,6 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import {
-  BarChart3, Calculator, Newspaper, GraduationCap, Bell,
+  BarChart3, Newspaper, GraduationCap, Bell,
   TrendingUp, Shield, ChevronLeft, ChevronRight, LayoutDashboard,
   FileText, Scale, DollarSign, Gem, Briefcase,
 } from "lucide-react";

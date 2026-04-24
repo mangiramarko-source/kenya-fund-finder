@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, BarChart3, Newspaper, Calculator, GraduationCap, TrendingUp } from "lucide-react";
+import { Search, BarChart3, Newspaper, GraduationCap, TrendingUp } from "lucide-react";
 import {
   CommandDialog,
   CommandEmpty,
