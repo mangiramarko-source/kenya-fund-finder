@@ -474,21 +474,21 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
       </div>
 
       {/* Desktop: table view */}
-      <div className="hidden md:block max-w-[1100px] mx-auto w-full rounded-xl border border-border overflow-hidden bg-card shadow-sm">
+      <div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card shadow-sm">
         <div>
           <table className="w-full text-sm table-fixed">
             <colgroup>
-              <col style={{ width: "40px" }} />
-              <col style={{ width: "170px" }} />
-              <col style={{ width: "70px" }} />
-              <col style={{ width: "88px" }} />
-              <col style={{ width: "96px" }} />
-              <col style={{ width: "78px" }} />
-              <col style={{ width: "96px" }} />
-              <col />
-              <col style={{ width: "120px" }} />
-              <col style={{ width: "60px" }} />
-              {onToggleFavourite && <col style={{ width: "40px" }} />}
+              <col style={{ width: "3%" }} />
+              <col style={{ width: "15%" }} />
+              
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "9%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "18%" }} />
+              <col style={{ width: "9%" }} />
+              <col style={{ width: "6%" }} />
+              {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
@@ -537,16 +537,16 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <tr
                     key={fund.id}
                     onClick={() => navigate(`/compare/${fund.slug}`)}
-                    className={`border-t border-border/40 hover:bg-accent/15 hover:shadow-[inset_2px_0_0_0_hsl(var(--accent))] transition-colors cursor-pointer group ${
+                    className={`border-t border-border/40 hover:bg-accent/8 transition-colors cursor-pointer group ${
                       i % 2 === 0 ? "bg-transparent" : "bg-muted/20"
                     }`}
                   >
                     <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-sm tabular-nums">{i + 1}</td>
-                    <td className="px-3 py-3.5 max-w-[170px]">
+                    <td className="px-3 py-3.5">
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="block max-w-full font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
+                        className="block max-w-[180px] font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
                         title={fund.name}
                       >
                         {fund.name}
