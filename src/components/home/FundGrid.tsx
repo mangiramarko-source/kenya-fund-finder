@@ -521,6 +521,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     </TooltipContent>
                   </Tooltip>
                 </th>
+                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
