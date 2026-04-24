@@ -84,6 +84,18 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
+  // Auto-scroll active mobile tab into center on route change
+  useEffect(() => {
+    const activeEl = mobileTabRefs.current[location.pathname];
+    const container = mobileTabsScrollRef.current;
+    if (!activeEl || !container) return;
+    const elRect = activeEl.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const offset =
+      activeEl.offsetLeft - container.offsetLeft - (containerRect.width / 2) + (elRect.width / 2);
+    container.scrollTo({ left: Math.max(0, offset), behavior: "smooth" });
+  }, [location.pathname]);
+
   useEffect(() => {
     const element = headerRef.current;
     if (!element) return;
