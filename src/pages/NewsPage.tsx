@@ -257,33 +257,9 @@ const NewsPage = () => {
 
   return (
     <div className="px-4 md:px-6 py-6">
-      {/* Search + sort row */}
-      <div className="flex items-center gap-2 mb-5">
-        <div className="relative flex-1">
-          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            placeholder="Search articles..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 text-[16px] md:text-xs pl-8 bg-card border-border"
-          />
-        </div>
-        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
-          <SelectTrigger className="w-[110px] h-9 text-xs border-border shrink-0">
-            <SelectValue />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="latest">Latest</SelectItem>
-            <SelectItem value="oldest">Oldest</SelectItem>
-            <SelectItem value="featured">Featured</SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      {/* Region toggle: Kenya / International */}
-      {/* Desktop: segmented control matching Stocks UI */}
-      <div className="hidden md:flex items-center mb-5 -mt-2">
-        <div className="inline-flex items-center rounded-lg bg-muted/30 border border-border p-0.5">
+      {/* Desktop: single row — Region segmented + Search + Sort */}
+      <div className="hidden md:flex items-center gap-3 mb-5">
+        <div className="inline-flex items-center rounded-lg bg-muted/30 border border-border p-0.5 shrink-0">
           {([
             { key: "all", label: "All", count: articles.length },
             { key: "kenya", label: "Kenya", count: regionCounts.kenya },
@@ -310,6 +286,50 @@ const NewsPage = () => {
             );
           })}
         </div>
+
+        <div className="relative flex-1 min-w-0">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search articles..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 text-xs pl-8 bg-card border-border w-full"
+          />
+        </div>
+
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+          <SelectTrigger className="w-[110px] h-9 text-xs border-border shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="latest">Latest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+            <SelectItem value="featured">Featured</SelectItem>
+          </SelectContent>
+        </Select>
+      </div>
+
+      {/* Mobile: search + sort row */}
+      <div className="md:hidden flex items-center gap-2 mb-3">
+        <div className="relative flex-1">
+          <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            placeholder="Search articles..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 text-[16px] pl-8 bg-card border-border"
+          />
+        </div>
+        <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+          <SelectTrigger className="w-[110px] h-9 text-xs border-border shrink-0">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="latest">Latest</SelectItem>
+            <SelectItem value="oldest">Oldest</SelectItem>
+            <SelectItem value="featured">Featured</SelectItem>
+          </SelectContent>
+        </Select>
       </div>
 
       {/* Mobile: pill style */}
