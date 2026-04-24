@@ -56,6 +56,53 @@ const PRECIOUS_METALS: Record<string, string> = {
   SILVER: "silver",
 };
 
+// Yahoo Finance futures tickers for commodities (metals, energy, agriculture)
+// Used by name-match fallback when symbol isn't in this map.
+const YAHOO_COMMODITY_MAP: Record<string, string> = {
+  XAU: "GC=F", GOLD: "GC=F",
+  XAG: "SI=F", SILVER: "SI=F",
+  BRENT: "BZ=F",
+  WTI: "CL=F", CRUDE: "CL=F", OIL: "CL=F",
+  NG: "NG=F", NATGAS: "NG=F",
+  HG: "HG=F", COPPER: "HG=F",
+  KC: "KC=F", COFFEE: "KC=F",
+  CC: "CC=F", COCOA: "CC=F",
+  SB: "SB=F", SUGAR: "SB=F",
+  ZC: "ZC=F", CORN: "ZC=F",
+  ZW: "ZW=F", WHEAT: "ZW=F",
+  ZS: "ZS=F", SOY: "ZS=F", SOYBEAN: "ZS=F",
+  PL: "PL=F", PLATINUM: "PL=F",
+  PA: "PA=F", PALLADIUM: "PA=F",
+};
+
+// Name-keyword fallback when symbol isn't recognized
+const YAHOO_NAME_KEYWORDS: Array<{ keywords: string[]; ticker: string }> = [
+  { keywords: ["gold"], ticker: "GC=F" },
+  { keywords: ["silver"], ticker: "SI=F" },
+  { keywords: ["brent"], ticker: "BZ=F" },
+  { keywords: ["wti", "crude"], ticker: "CL=F" },
+  { keywords: ["natural gas", "natgas"], ticker: "NG=F" },
+  { keywords: ["copper"], ticker: "HG=F" },
+  { keywords: ["coffee"], ticker: "KC=F" },
+  { keywords: ["cocoa"], ticker: "CC=F" },
+  { keywords: ["sugar"], ticker: "SB=F" },
+  { keywords: ["corn"], ticker: "ZC=F" },
+  { keywords: ["wheat"], ticker: "ZW=F" },
+  { keywords: ["soy"], ticker: "ZS=F" },
+  { keywords: ["platinum"], ticker: "PL=F" },
+  { keywords: ["palladium"], ticker: "PA=F" },
+];
+
+function resolveYahooTicker(symbol: string, name: string): string | null {
+  const sym = (symbol || "").toUpperCase();
+  if (YAHOO_COMMODITY_MAP[sym]) return YAHOO_COMMODITY_MAP[sym];
+  const lowerName = (name || "").toLowerCase();
+  for (const { keywords, ticker } of YAHOO_NAME_KEYWORDS) {
+    if (keywords.some((k) => lowerName.includes(k))) return ticker;
+  }
+  return null;
+}
+
 // NSE stock symbols → Yahoo Finance tickers (.NR suffix for Nairobi)
 const NSE_YAHOO_MAP: Record<string, string> = {
   SCOM: "SCOM.NR", EQTY: "EQTY.NR", KCB: "KCB.NR", COOP: "COOP.NR",
@@ -650,14 +697,17 @@ Deno.serve(async (req) => {
 
     if (commodityRows && commodityRows.length > 0) {
       const cryptoItems: typeof commodityRows = [];
-      const metalItems: typeof commodityRows = [];
+      const yahooItems: Array<{ row: typeof commodityRows[number]; ticker: string }> = [];
 
       for (const c of commodityRows) {
         const sym = (c.symbol || "").toUpperCase();
         if (CRYPTO_MAP[sym]) {
           cryptoItems.push(c);
-        } else if (PRECIOUS_METALS[sym]) {
-          metalItems.push(c);
+          continue;
+        }
+        const ticker = resolveYahooTicker(c.symbol || "", c.name || "");
+        if (ticker) {
+          yahooItems.push({ row: c, ticker });
         }
       }
 
@@ -688,6 +738,12 @@ Deno.serve(async (req) => {
                   })
                   .eq("id", row.id);
                 results.push(`Crypto ${row.symbol}: ${row.price} → ${newPrice}`);
+              } else if (newPrice) {
+                // Price unchanged — still bump updated_at to reflect a successful refresh
+                await supabase
+                  .from("commodities")
+                  .update({ updated_at: new Date().toISOString() })
+                  .eq("id", row.id);
               }
             }
           } else {
@@ -699,37 +755,56 @@ Deno.serve(async (req) => {
         }
       }
 
-      // ── 2b. Precious metals via FX rates ──
-      if (metalItems.length > 0 && Object.keys(kesRates).length > 0) {
-        const usdPerKes = kesRates["USD"] || 0;
-        const metalFxMap: Record<string, string> = {
-          XAU: "XAU", GOLD: "XAU",
-          XAG: "XAG", SILVER: "XAG",
-        };
+      // ── 2b. Metals, energy, agri via Yahoo Finance chart API (per-ticker) ──
+      if (yahooItems.length > 0) {
+        const uniqueTickers = [...new Set(yahooItems.map((i) => i.ticker))];
+        const priceByTicker: Record<string, number> = {};
 
-        for (const row of metalItems) {
-          const sym = (row.symbol || "").toUpperCase();
-          const fxCode = metalFxMap[sym];
-          const metalRate = fxCode ? kesRates[fxCode] : undefined;
-
-          if (metalRate && metalRate > 0 && usdPerKes > 0) {
-            const priceUsd = parseFloat((usdPerKes / metalRate).toFixed(2));
-            if (priceUsd !== row.price) {
-              await supabase
-                .from("commodities")
-                .update({
-                  previous_price: row.price,
-                  price: priceUsd,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("id", row.id);
-              results.push(`Metal ${row.symbol}: ${row.price} → ${priceUsd}`);
+        await Promise.all(
+          uniqueTickers.map(async (ticker) => {
+            try {
+              const url = `https://query1.finance.yahoo.com/v8/finance/chart/${encodeURIComponent(ticker)}?interval=1d&range=1d`;
+              const r = await fetch(url, { headers: { "User-Agent": "Mozilla/5.0" } });
+              if (!r.ok) {
+                console.error(`[fetch-market-data] Yahoo chart ${ticker} ${r.status}`);
+                return;
+              }
+              const j = await r.json();
+              const meta = j?.chart?.result?.[0]?.meta;
+              const p = meta?.regularMarketPrice;
+              if (typeof p === "number" && p > 0) {
+                priceByTicker[ticker.toUpperCase()] = p;
+              }
+            } catch (e) {
+              console.error(`Yahoo chart ${ticker} fetch error:`, e);
             }
+          })
+        );
+
+        for (const { row, ticker } of yahooItems) {
+          const newPrice = priceByTicker[ticker.toUpperCase()];
+          if (!newPrice) continue;
+          const rounded = parseFloat(newPrice.toFixed(4));
+          if (rounded !== row.price) {
+            await supabase
+              .from("commodities")
+              .update({
+                previous_price: row.price,
+                price: rounded,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", row.id);
+            results.push(`Yahoo ${row.symbol} (${ticker}): ${row.price} → ${rounded}`);
+          } else {
+            await supabase
+              .from("commodities")
+              .update({ updated_at: new Date().toISOString() })
+              .eq("id", row.id);
           }
         }
       }
 
-      results.push(`Commodities: processed ${commodityRows.length} items`);
+      results.push(`Commodities: processed ${commodityRows.length} items (crypto=${cryptoItems.length}, yahoo=${yahooItems.length})`);
     }
     } // end shouldFetchCommodities
 
