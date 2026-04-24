@@ -479,7 +479,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           <table className="w-full text-sm table-fixed">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "14%" }} />
+              <col style={{ width: "11%" }} />
               <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "9%" }} />
@@ -548,10 +548,10 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="block max-w-[180px] font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
+                        className="block font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight"
                         title={fund.name}
                       >
-                        {fund.name}
+                        {fund.name.length > 17 ? `${fund.name.slice(0, 17)}…` : fund.name}
                       </Link>
                     </td>
                     <td className="px-3 py-3.5 text-center">
