@@ -117,25 +117,42 @@ const RatesPage = () => {
     return () => { supabase.removeChannel(ch); };
   }, []);
 
-  // Preload sparkline history for all rates
+  // Preload sparkline history for all rates (last ~90 days, refreshed periodically)
   useEffect(() => {
     if (rates.length === 0) return;
+    let cancelled = false;
     const fetchAllHistory = async () => {
+      // Pull the most recent ~90 days across all currencies. Order DESC so the
+      // 1000-row Supabase default cap drops the OLDEST rows, not the newest.
+      const sinceIso = new Date(Date.now() - 95 * 24 * 60 * 60 * 1000)
+        .toISOString()
+        .slice(0, 10);
       const { data } = await supabase
         .from("exchange_rate_history_public" as any)
         .select("exchange_rate_id, rate, snapshot_date")
-        .order("snapshot_date", { ascending: true });
-      if (data) {
-        const grouped: Record<string, RateHistory[]> = {};
-        (data as any[]).forEach((d) => {
-          const rid = d.exchange_rate_id;
-          if (!grouped[rid]) grouped[rid] = [];
-          grouped[rid].push({ snapshot_date: d.snapshot_date, rate: Number(d.rate) });
-        });
-        setHistory(grouped);
-      }
+        .gte("snapshot_date", sinceIso)
+        .order("snapshot_date", { ascending: false })
+        .limit(2000);
+      if (cancelled || !data) return;
+      const grouped: Record<string, RateHistory[]> = {};
+      (data as any[]).forEach((d) => {
+        const rid = d.exchange_rate_id;
+        if (!grouped[rid]) grouped[rid] = [];
+        grouped[rid].push({ snapshot_date: d.snapshot_date, rate: Number(d.rate) });
+      });
+      // Sort ascending for chart rendering
+      Object.keys(grouped).forEach((k) => {
+        grouped[k].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+      });
+      setHistory(grouped);
     };
     fetchAllHistory();
+    // Refresh every 5 minutes so newly-snapshotted points appear without reload
+    const intervalId = window.setInterval(() => void fetchAllHistory(), 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
   }, [rates]);
 
   const toggleExpand = async (rateId: string) => {
