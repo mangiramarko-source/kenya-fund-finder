@@ -475,7 +475,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               <col style={{ width: "3%" }} />
               <col style={{ width: "16%" }} />
               <col style={{ width: "20%" }} />
-              <col style={{ width: "7%" }} />
+              
               <col style={{ width: "9%" }} />
               <col style={{ width: "11%" }} />
               <col style={{ width: "10%" }} />
@@ -491,7 +491,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
-                <th className="text-left px-2 py-3 font-semibold text-muted-foreground">Type</th>
+                
                 <th className="px-2 py-3 font-semibold text-muted-foreground text-center">
                   <Tooltip>
                     <TooltipTrigger asChild>
@@ -524,7 +524,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               {filtered.map((fund, i) => {
                 const prev = snapshots[fund.id]?.annual_yield;
                 const change = prev != null ? fund.annual_yield - prev : 0;
-                const typeLabel = categoryLabels[fund.fund_type] || fund.fund_type;
+                
                 return (
                   <tr
                     key={fund.id}
@@ -546,11 +546,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     </td>
                     <td className="px-3 py-3.5 text-foreground text-xs max-w-[200px] truncate" title={fund.manager}>
                       {fund.manager}
-                    </td>
-                    <td className="px-2 py-3.5">
-                      <span className="inline-block text-[10px] font-medium text-muted-foreground bg-muted/60 rounded-md px-1.5 py-0.5 whitespace-nowrap">
-                        {typeLabel}
-                      </span>
                     </td>
                     <td className="px-2 py-3.5 text-center">
                       {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
