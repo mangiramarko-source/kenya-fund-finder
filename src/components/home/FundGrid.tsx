@@ -480,12 +480,12 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
             <colgroup>
               <col style={{ width: "3%" }} />
               <col style={{ width: "15%" }} />
-              
-              <col style={{ width: "10%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "9%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "8%" }} />
-              <col style={{ width: "18%" }} />
+              <col style={{ width: "14%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "6%" }} />
               {onToggleFavourite && <col style={{ width: "3%" }} />}
@@ -496,7 +496,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                
+                <th className="text-center px-3 py-3 font-semibold text-muted-foreground">Trend</th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
@@ -552,6 +552,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                         {fund.name}
                       </Link>
                     </td>
+                    <td className="px-3 py-3.5 text-center">
+                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.annual_yield} />
+                    </td>
                     <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums">
                       <span className="font-bold text-accent text-sm">
                         {fmtYield(fund.annual_yield, fund.yield_unit)}
@@ -594,7 +597,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 11 : 10} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 12 : 11} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
