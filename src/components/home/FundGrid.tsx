@@ -557,7 +557,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-center">
                       <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.annual_yield} />
                     </td>
-                    <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums">
+                    <td className="px-3 py-3.5 whitespace-nowrap tabular-nums text-left">
                       <span className="font-bold text-foreground text-sm">
                         {fmtYield(fund.annual_yield, fund.yield_unit)}
                       </span>
@@ -565,7 +565,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-left">
                       <ChangeCell change={change} unit={fund.yield_unit} />
                     </td>
-                    <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap">
+                    <td className="px-3 py-3.5 tabular-nums whitespace-nowrap text-left">
                       <span className="font-bold text-foreground text-sm">
                         {fmtYield(fund.daily_yield, fund.yield_unit)}
                       </span>
