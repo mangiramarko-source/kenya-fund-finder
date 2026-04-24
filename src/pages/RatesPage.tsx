@@ -167,12 +167,12 @@ const RatesPage = () => {
         .from("exchange_rate_history_public" as any)
         .select("id, exchange_rate_id, rate, snapshot_date")
         .eq("exchange_rate_id", rateId)
-        .order("snapshot_date", { ascending: true })
+        .order("snapshot_date", { ascending: false })
         .limit(90);
-      setHistory((prev) => ({
-        ...prev,
-        [rateId]: ((data as any) || []).map((d: any) => ({ snapshot_date: d.snapshot_date, rate: Number(d.rate) })),
-      }));
+      const points = ((data as any) || [])
+        .map((d: any) => ({ snapshot_date: d.snapshot_date, rate: Number(d.rate) }))
+        .sort((a: RateHistory, b: RateHistory) => a.snapshot_date.localeCompare(b.snapshot_date));
+      setHistory((prev) => ({ ...prev, [rateId]: points }));
       setHistoryLoading(null);
     }
   };
