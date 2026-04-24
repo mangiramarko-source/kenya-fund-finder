@@ -127,12 +127,12 @@ const NewsPage = () => {
   }, [filtered, heroArticle, heroSidebar, latestArticles]);
   const mustReadList = useMemo(() => {
     const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id), ...latestArticles.map(a => a.id), mustReadFeature?.id]);
-    return filtered.filter((a) => !used.has(a.id)).slice(0, 3);
+    return filtered.filter((a) => !used.has(a.id)).slice(0, 11);
   }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature]);
-  // Weekly Highlight: 4 across
+  // Weekly Highlight: horizontal scroll
   const weeklyHighlight = useMemo(() => {
     const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id), ...latestArticles.map(a => a.id), mustReadFeature?.id, ...mustReadList.map(a => a.id)]);
-    return filtered.filter((a) => !used.has(a.id)).slice(0, 4);
+    return filtered.filter((a) => !used.has(a.id)).slice(0, 12);
   }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList]);
   // Top Sources (placeholder for "Top Creators")
   const topSources = useMemo(() => {
