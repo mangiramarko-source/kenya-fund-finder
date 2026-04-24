@@ -183,19 +183,81 @@ const Navbar = () => {
             </SheetHeader>
 
             <nav className="flex-1 overflow-y-auto p-4 space-y-1">
+              {/* User info */}
+              {user && (
+                <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl bg-muted/50">
+                  <Avatar className="h-9 w-9">
+                    <AvatarImage src={avatarUrl} alt={displayName} />
+                    <AvatarFallback className="bg-accent text-accent-foreground text-xs">
+                      {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
+                    </AvatarFallback>
+                  </Avatar>
+                  <div className="min-w-0">
+                    <p className="text-sm font-medium truncate">{displayName || "User"}</p>
+                    <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
+                  </div>
+                </div>
+              )}
+
+              {/* Sign In CTA — priority for non-authenticated */}
+              {!user && (
+                <Link
+                  to="/auth"
+                  onClick={closeMobile}
+                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-colors mb-2"
+                >
+                  <User className="h-5 w-5" /> Sign In / Sign Up
+                </Link>
+              )}
+
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  onClick={closeMobile}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
+                >
+                  <Shield className="h-5 w-5" /> Admin Panel
+                </Link>
+              )}
+
+              <div className="h-px bg-border my-2" />
               <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Tools</p>
-              <Link to="/calculator" onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors">
+              <Link
+                to="/calculator"
+                onClick={closeMobile}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
                 <Calculator className="h-5 w-5" /> Calculator
               </Link>
-              <Link to="/news" onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors">
+              <Link
+                to="/news"
+                onClick={closeMobile}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
                 <Newspaper className="h-5 w-5" /> News
               </Link>
-              <Link to={user ? "/alerts" : "/auth"} onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors">
+              <Link
+                to={user ? "/alerts" : "/auth"}
+                onClick={closeMobile}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
                 <Bell className="h-5 w-5" /> Alerts
               </Link>
-              <Link to="/learn" onClick={closeMobile} className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors">
+              <Link
+                to="/learn"
+                onClick={closeMobile}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
                 <GraduationCap className="h-5 w-5" /> Learn
               </Link>
+
+              <button
+                onClick={() => { setDark(!dark); }}
+                className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
+              >
+                {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
+                {dark ? "Light Mode" : "Dark Mode"}
+              </button>
 
               <div className="h-px bg-border my-2" />
               <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Info</p>
@@ -221,7 +283,6 @@ const Navbar = () => {
               {user && (
                 <>
                   <div className="h-px bg-border my-2" />
-                  <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Settings</p>
                   <Link
                     to="/profile"
                     onClick={closeMobile}
