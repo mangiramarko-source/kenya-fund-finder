@@ -379,45 +379,88 @@ const RateRow = ({
     ? ((change! / rate.previous_rate) * 100)
     : null;
 
+  const positive = rate.previous_rate != null ? rate.rate >= rate.previous_rate : true;
+  const direction =
+    change == null || change === 0
+      ? { label: "Flat", className: "text-muted-foreground bg-muted/40" }
+      : change > 0
+      ? { label: "Up", className: "text-accent bg-accent/10" }
+      : { label: "Down", className: "text-destructive bg-destructive/10" };
+  const updatedShort = new Date(rate.updated_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" });
+
   return (
     <>
       <tr
-        className="border-t border-border/50 hover:bg-accent/5 transition-colors cursor-pointer"
+        className={`border-t border-border/40 hover:bg-accent/5 transition-colors cursor-pointer group ${
+          index % 2 === 0 ? "bg-transparent" : "bg-muted/20"
+        }`}
         onClick={onToggle}
       >
-        <td className="px-4 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
-        <td className="px-4 py-3.5">
+        <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
+        <td className="px-3 py-3.5">
           <div className="flex items-center gap-2">
             {onToggleFavourite !== undefined && (
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
-                className="p-1 rounded-md hover:bg-muted transition-colors"
+                className="p-1 rounded-md hover:bg-muted transition-colors shrink-0"
                 aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
               >
                 <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
               </button>
             )}
-            <div>
+            <div className="min-w-0">
               <span className="font-bold text-foreground text-xs tracking-wide">{rate.currency_code}</span>
-              <span className="block text-xs text-muted-foreground mt-0.5">{rate.currency_name}</span>
+              <span className="block text-xs text-muted-foreground mt-0.5 truncate" title={rate.currency_name}>{rate.currency_name}</span>
             </div>
           </div>
         </td>
-        <td className="px-4 py-3.5 text-right tabular-nums">
-          <span className="font-bold text-accent text-[15px]">
-            {rate.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+        <td className="px-3 py-3.5 tabular-nums whitespace-nowrap">
+          <span className="font-bold text-foreground text-sm">
+            {rate.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 4 })}
           </span>
         </td>
-        <td className="px-4 py-3.5 text-right">
+        <td className="px-3 py-3.5 tabular-nums whitespace-nowrap text-sm text-muted-foreground">
+          {rate.previous_rate != null
+            ? rate.previous_rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 4 })
+            : "—"}
+        </td>
+        <td className="px-3 py-3.5 tabular-nums whitespace-nowrap text-xs">
+          {change == null ? (
+            <span className="text-muted-foreground">—</span>
+          ) : change > 0 ? (
+            <span className="text-accent font-semibold">+{change.toFixed(4)}</span>
+          ) : change < 0 ? (
+            <span className="text-destructive font-semibold">{change.toFixed(4)}</span>
+          ) : (
+            <span className="text-muted-foreground">0.0000</span>
+          )}
+        </td>
+        <td className="px-3 py-3.5">
           <ChangeIndicator current={rate.rate} previous={rate.previous_rate} />
         </td>
-        <td className="px-4 py-3.5 text-center">
+        <td className="px-3 py-3.5">
+          {history && history.length >= 2 ? (
+            <MiniSparkline data={history} positive={positive} />
+          ) : (
+            <span className="text-[10px] text-muted-foreground">—</span>
+          )}
+        </td>
+        <td className="px-3 py-3.5">
+          <span className={`inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wider ${direction.className}`}>
+            {direction.label === "Up" && <TrendingUp className="h-3 w-3" />}
+            {direction.label === "Down" && <TrendingDown className="h-3 w-3" />}
+            {direction.label === "Flat" && <Minus className="h-3 w-3" />}
+            {direction.label}
+          </span>
+        </td>
+        <td className="px-3 py-3.5 text-xs text-muted-foreground whitespace-nowrap">{updatedShort}</td>
+        <td className="px-2 py-3.5 text-center">
           {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         </td>
       </tr>
       {isExpanded && (
         <tr className="border-t border-border bg-muted/20">
-          <td colSpan={5} className="p-4">
+          <td colSpan={10} className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <DetailBox label="Current Rate" value={`KES ${rate.rate.toFixed(2)}`} />
               <DetailBox label="Previous Rate" value={rate.previous_rate != null ? `KES ${rate.previous_rate.toFixed(2)}` : "—"} />
