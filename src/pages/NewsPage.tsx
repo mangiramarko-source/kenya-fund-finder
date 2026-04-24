@@ -96,7 +96,35 @@ const NewsPage = () => {
     return list;
   }, [articles, activeCategory, activeSource, sortBy, searchQuery]);
 
-  const heroArticle = useMemo(() => filtered.find((a) => a.is_featured) || filtered[0] || null, [filtered]);
+  // Rotating hero pool: featured first, then latest, capped at 6
+  const heroPool = useMemo(() => {
+    const featured = filtered.filter((a) => a.is_featured);
+    const rest = filtered.filter((a) => !a.is_featured);
+    const merged: typeof filtered = [];
+    const seen = new Set<string>();
+    for (const a of [...featured, ...rest]) {
+      if (!seen.has(a.id)) { seen.add(a.id); merged.push(a); }
+      if (merged.length >= 6) break;
+    }
+    return merged;
+  }, [filtered]);
+
+  const [heroIndex, setHeroIndex] = useState(0);
+  const [heroPaused, setHeroPaused] = useState(false);
+
+  // Reset rotation when the pool changes
+  useEffect(() => { setHeroIndex(0); }, [heroPool.length, heroPool[0]?.id]);
+
+  // Auto-rotate every 6s on desktop; pauses on hover
+  useEffect(() => {
+    if (heroPool.length <= 1 || heroPaused) return;
+    const id = window.setInterval(() => {
+      setHeroIndex((i) => (i + 1) % heroPool.length);
+    }, 6000);
+    return () => window.clearInterval(id);
+  }, [heroPool.length, heroPaused]);
+
+  const heroArticle = heroPool[heroIndex] || heroPool[0] || null;
   const topArticles = useMemo(() => {
     if (!heroArticle) return filtered.slice(0, 3);
     return filtered.filter((a) => a.id !== heroArticle.id).slice(0, 3);
