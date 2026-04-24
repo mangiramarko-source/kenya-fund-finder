@@ -65,9 +65,9 @@ const SortHeader = ({
 );
 
 /* ─── MiniSparkline (matches StocksPage visual) ─── */
-const MiniSparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
+const MiniSparkline = ({ data, currentValue, field = "annual_yield" }: { data: YieldSnapshot[]; currentValue: number; field?: "annual_yield" | "daily_yield" }) => {
   const series = useMemo(() => {
-    const vals = [...data.map((d) => d.annual_yield), currentValue];
+    const vals = [...data.map((d) => d[field]), currentValue];
     if (vals.length < 2) return null;
     const last12 = vals.slice(-12);
     const min = Math.min(...last12);
@@ -486,6 +486,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "12%" }} />
+              <col style={{ width: "7%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "5%" }} />
               <col style={{ width: "8%" }} />
@@ -518,6 +519,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   </Tooltip>
                 </th>
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
+                <th className="px-3 py-3 font-semibold text-muted-foreground text-left">Daily Trend</th>
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
@@ -575,6 +577,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     </td>
                     <td className="px-3 py-3.5 text-foreground text-sm truncate text-left" title={fund.manager}>
                       {fund.manager}
+                    </td>
+                    <td className="px-3 py-3.5 text-left">
+                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.daily_yield} field="daily_yield" />
                     </td>
                     <td className="px-3 py-3.5 text-sm tabular-nums text-muted-foreground whitespace-nowrap text-left">
                       KSh {fund.minimum_investment.toLocaleString()}
