@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Menu, TrendingUp, BarChart3, Calculator, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark } from "lucide-react";
+import { Menu, TrendingUp, BarChart3, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -14,7 +14,6 @@ const navLinks = [
   { to: "/", label: "Home", icon: BarChart3 },
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
   { to: "/markets", label: "Market", icon: LineChart },
-  { to: "/calculator", label: "Calculator", icon: Calculator },
 ];
 
 const mobileNavLinks = [
@@ -22,7 +21,6 @@ const mobileNavLinks = [
   { to: "/stocks", label: "Stocks" },
   { to: "/funds", label: "Unit trusts" },
   { to: "/news", label: "News" },
-  { to: "/calculator", label: "Calculator" },
   { to: "/rates", label: "Fx rates" },
   { to: "/commodities", label: "Commodities" },
 ];
@@ -344,13 +342,6 @@ const Navbar = () => {
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
             >
               <Newspaper className="h-5 w-5" /> News
-            </Link>
-            <Link
-              to="/calculator"
-              onClick={closeMobile}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-            >
-              <Calculator className="h-5 w-5" /> Calculator
             </Link>
             <Link
               to={user ? "/alerts" : "/auth"}

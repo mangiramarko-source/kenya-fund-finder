@@ -16,7 +16,7 @@ import CompareModal from "./components/compare/CompareModal";
 const Index = lazy(() => import("./pages/Index"));
 const ComparePage = lazy(() => import("./pages/ComparePage"));
 const FundDetailPage = lazy(() => import("./pages/FundDetailPage"));
-const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
+
 const NewsPage = lazy(() => import("./pages/NewsPage"));
 const NewsArticlePage = lazy(() => import("./pages/NewsArticlePage"));
 const LearnPage = lazy(() => import("./pages/LearnPage"));
@@ -64,7 +64,7 @@ const App = () => (
                     <Route path="/funds" element={<Index />} />
                     <Route path="/compare" element={<ComparePage />} />
                     <Route path="/compare/:id" element={<FundDetailPage />} />
-                    <Route path="/calculator" element={<CalculatorPage />} />
+                    
                     <Route path="/news" element={<NewsPage />} />
                     <Route path="/news/:id" element={<NewsArticlePage />} />
                     <Route path="/learn" element={<LearnPage />} />

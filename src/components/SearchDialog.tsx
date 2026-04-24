@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
-import { Search, BarChart3, Newspaper, Calculator, GraduationCap, TrendingUp } from "lucide-react";
+import { Search, BarChart3, Newspaper, GraduationCap, TrendingUp } from "lucide-react";
 import {
   CommandDialog,
   CommandEmpty,
@@ -84,9 +84,6 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
           <CommandGroup heading="Pages">
             <CommandItem onSelect={() => go("/compare")}>
               <BarChart3 className="mr-2 h-4 w-4" /> Compare Funds
-            </CommandItem>
-            <CommandItem onSelect={() => go("/calculator")}>
-              <Calculator className="mr-2 h-4 w-4" /> Investment Calculator
             </CommandItem>
             <CommandItem onSelect={() => go("/news")}>
               <Newspaper className="mr-2 h-4 w-4" /> News & Updates

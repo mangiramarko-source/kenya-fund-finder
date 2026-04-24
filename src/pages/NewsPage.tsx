@@ -3,7 +3,7 @@ import { decodeHtmlEntities } from "@/lib/utils";
 import { Link } from "react-router-dom";
 import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Clock, TrendingUp, Landmark, Shield, Megaphone, Sparkles, Calendar, Newspaper, ExternalLink, Search, Loader2, Calculator, SlidersHorizontal } from "lucide-react";
+import { Clock, TrendingUp, Landmark, Shield, Megaphone, Sparkles, Calendar, Newspaper, ExternalLink, Search, Loader2, SlidersHorizontal } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -678,13 +678,6 @@ const NewsPage = () => {
                           <span className="text-[10px] text-muted-foreground">
                             {formatDate(article.date_published)}
                           </span>
-                          <button
-                            onClick={(e) => { e.preventDefault(); e.stopPropagation(); navTo("/calculator"); }}
-                            className="ml-auto inline-flex items-center gap-1 text-[10px] font-medium text-accent hover:text-accent/80 transition-colors"
-                            title="Use ROI Calculator"
-                          >
-                            <Calculator className="h-3 w-3" /> Calc
-                          </button>
                         </div>
                       </div>
                     </Link>
