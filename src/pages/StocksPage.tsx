@@ -72,10 +72,15 @@ const formatMarketCap = (mc: number | null) => {
 };
 
 /* ─── Mini Sparkline ─── */
-const MiniSparkline = ({ data, positive }: { data: PriceHistory[]; positive: boolean }) => {
+const MiniSparkline = ({ data, trend }: { data: PriceHistory[]; trend: "up" | "down" | "flat" }) => {
   if (!data?.length || data.length < 2) return null;
-  const color = positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
-  const gradientId = `sparkline-fill-${positive ? "up" : "down"}`;
+  const color =
+    trend === "flat"
+      ? "hsl(var(--muted-foreground))"
+      : trend === "up"
+      ? "hsl(var(--accent))"
+      : "hsl(var(--destructive))";
+  const gradientId = `sparkline-fill-${trend}`;
 
   return (
     <div className="w-[60px] h-[24px]">
@@ -771,7 +776,7 @@ const StockRow = ({
         </span>
       </td>
       <td className="px-2 py-3.5 text-center">
-        <MiniSparkline data={history || []} positive={s.day_change >= 0} />
+        <MiniSparkline data={history || []} trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"} />
       </td>
       <td className="px-3 py-3.5 text-right">
         <span className="font-bold text-accent text-[15px] tabular-nums">{formatNumber(s.price)}</span>
@@ -844,7 +849,7 @@ const MobileStockCard = ({
 
       {/* Center: Sparkline */}
       <div className="shrink-0">
-        <MiniSparkline data={history || []} positive={s.day_change >= 0} />
+        <MiniSparkline data={history || []} trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"} />
       </div>
 
       {/* Right: Price + Change */}
