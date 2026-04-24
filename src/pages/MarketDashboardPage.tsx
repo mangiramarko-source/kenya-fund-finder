@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
+import MiniCurrencyConverter from "@/components/calculator/MiniCurrencyConverter";
 
 
 /* ─── Types ─── */
@@ -205,6 +206,11 @@ const MarketDashboardPage = () => {
           {/* ─── FX Rates Table ─── */}
           {activeTab === "fx_rates" && (
             <>
+              {/* Mobile-only inline currency calculator */}
+              <div className="md:hidden">
+                <MiniCurrencyConverter rates={rates} />
+              </div>
+
               {/* Last updated info - mobile */}
               {filteredRates.length > 0 && filteredRates[0].updated_at && (
                 <p className="md:hidden text-[10px] text-muted-foreground/60 text-right -mt-2 mb-1">
