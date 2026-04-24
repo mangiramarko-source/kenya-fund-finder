@@ -112,18 +112,18 @@ const ChangeCell = ({ change, unit }: { change: number; unit: string }) => {
   const formatted = `${Math.abs(change).toFixed(2)}${suffix}`;
   if (change > 0)
     return (
-      <span className="inline-flex items-center gap-0.5 text-accent text-[11px] font-semibold tabular-nums">
+      <span className="inline-flex items-center gap-0.5 text-accent text-xs font-semibold tabular-nums">
         <TrendingUp className="h-3 w-3" /> +{formatted}
       </span>
     );
   if (change < 0)
     return (
-      <span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold tabular-nums">
+      <span className="inline-flex items-center gap-0.5 text-destructive text-xs font-semibold tabular-nums">
         <TrendingDown className="h-3 w-3" /> -{formatted}
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]">
+    <span className="inline-flex items-center gap-0.5 text-muted-foreground text-xs">
       <Minus className="h-3 w-3" /> 0.00{suffix}
     </span>
   );
@@ -546,14 +546,14 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="block max-w-[180px] font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
+                        className="block max-w-[180px] font-bold text-foreground group-hover:text-accent transition-colors text-xs tracking-tight truncate"
                         title={fund.name}
                       >
                         {fund.name}
                       </Link>
                     </td>
                     <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums">
-                      <span className="font-bold text-accent text-[15px]">
+                      <span className="font-bold text-accent text-xs">
                         {fmtYield(fund.annual_yield, fund.yield_unit)}
                       </span>
                     </td>
@@ -561,7 +561,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       <ChangeCell change={change} unit={fund.yield_unit} />
                     </td>
                     <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap">
-                      <span className="font-bold text-accent text-[15px]">
+                      <span className="font-bold text-accent text-xs">
                         {fmtYield(fund.daily_yield, fund.yield_unit)}
                       </span>
                     </td>
