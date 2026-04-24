@@ -358,8 +358,8 @@ async function fetchRapidApiStockQuotes(rapidApiKey: string) {
 
     for (const stock of payload.data || []) {
       const ticker = String(stock.ticker || "").toUpperCase();
-      const price = parseNumber(stock.price);
-      const volume = parseInteger(stock.volume);
+      const price = parseNumber(stock.price as string | number | null | undefined);
+      const volume = parseInteger(stock.volume as string | number | null | undefined);
       if (!ticker || price <= 0) continue;
 
       const changeValue = String(stock.change || "0").replace(/\(.*\)/, "").trim();
@@ -403,7 +403,10 @@ function parseNseSnapshotDate(html: string) {
 }
 
 function parseNseQuoteRows(html: string) {
-  const doc = new DOMParser().parseFromString(html, "text/html");
+  // deno-lint-ignore no-explicit-any
+  const DOMParserCtor = (globalThis as any).DOMParser as { new(): { parseFromString(s: string, t: string): Document | null } } | undefined;
+  if (!DOMParserCtor) return [] as Array<{ company: string; price: number; changePct: number; volume: number }>;
+  const doc = new DOMParserCtor().parseFromString(html, "text/html");
   if (!doc) return [] as Array<{ company: string; price: number; changePct: number; volume: number }>;
 
   return [...doc.querySelectorAll("table tr")]
