@@ -72,10 +72,15 @@ const formatMarketCap = (mc: number | null) => {
 };
 
 /* ─── Mini Sparkline ─── */
-const MiniSparkline = ({ data, positive }: { data: PriceHistory[]; positive: boolean }) => {
+const MiniSparkline = ({ data, trend }: { data: PriceHistory[]; trend: "up" | "down" | "flat" }) => {
   if (!data?.length || data.length < 2) return null;
-  const color = positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
-  const gradientId = `sparkline-fill-${positive ? "up" : "down"}`;
+  const color =
+    trend === "flat"
+      ? "hsl(var(--muted-foreground))"
+      : trend === "up"
+      ? "hsl(var(--accent))"
+      : "hsl(var(--destructive))";
+  const gradientId = `sparkline-fill-${trend}`;
 
   return (
     <div className="w-[60px] h-[24px]">
