@@ -489,7 +489,7 @@ const CommodityRow = ({
       </tr>
       {isExpanded && (
         <tr className="border-t border-border bg-muted/20">
-          <td colSpan={11} className="p-4">
+          <td colSpan={12} className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <DetailBox label="Current Price" value={`${c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}`} />
               <DetailBox label="Previous Price" value={c.previous_price != null ? `${c.previous_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}` : "—"} />
