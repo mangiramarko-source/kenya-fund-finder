@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, BarChart3, Layers, Tag, Bell } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, BarChart3, Layers, Tag, Bell } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -168,6 +168,17 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
   const [search, setSearch] = useState("");
   const [sortKey, setSortKey] = useState<SortKey>("annual_yield");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
+  const [movement, setMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
+
+  /** Compute per-category gainer/loser counts based on annual_yield change vs latest snapshot */
+  const movementForFund = (f: FundFromDB): "gainer" | "loser" | "unchanged" => {
+    const prev = snapshots[f.id]?.annual_yield;
+    if (prev == null) return "unchanged";
+    const diff = f.annual_yield - prev;
+    if (diff > 0) return "gainer";
+    if (diff < 0) return "loser";
+    return "unchanged";
+  };
 
   const categories = useMemo(() => {
     const present = [...new Set(funds.map((f) => f.fund_type))];
@@ -186,8 +197,28 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
     return counts;
   }, [funds]);
 
+  const categoryFunds = useMemo(
+    () => funds.filter((f) => f.fund_type === activeTab),
+    [funds, activeTab],
+  );
+
+  const movementCounts = useMemo(() => {
+    const c = { gainers: 0, losers: 0, unchanged: 0 };
+    categoryFunds.forEach((f) => {
+      const m = movementForFund(f);
+      if (m === "gainer") c.gainers++;
+      else if (m === "loser") c.losers++;
+      else c.unchanged++;
+    });
+    return c;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryFunds, snapshots]);
+
   const filtered = useMemo(() => {
-    let result = funds.filter((f) => f.fund_type === activeTab);
+    let result = categoryFunds;
+    if (movement === "gainers") result = result.filter((f) => movementForFund(f) === "gainer");
+    else if (movement === "losers") result = result.filter((f) => movementForFund(f) === "loser");
+    else if (movement === "unchanged") result = result.filter((f) => movementForFund(f) === "unchanged");
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(
@@ -200,7 +231,8 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
       return mul * ((a[sortKey] as number) - (b[sortKey] as number));
     });
     return result;
-  }, [funds, activeTab, search, sortKey, sortDir]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categoryFunds, search, sortKey, sortDir, movement, snapshots]);
 
   const bestYield = useMemo(() => {
     const catFunds = funds.filter((f) => f.fund_type === activeTab);
@@ -226,36 +258,74 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
   return (
     <div className="space-y-4">
-      {/* Desktop toolbar: Category dropdown + Search */}
+      {/* Desktop toolbar: Category dropdown + Movement segmented + Search */}
       <div className="hidden md:flex items-center justify-between gap-3">
-        <Select
-          value={activeTab}
-          onValueChange={(val) => {
-            setActiveTab(val);
-            setSearch("");
-            setSortKey("annual_yield");
-            setSortDir("desc");
-          }}
-        >
-          <SelectTrigger className="h-9 w-[240px] rounded-lg bg-muted/30 border-border text-xs font-medium">
-            <div className="flex items-center gap-1.5 min-w-0">
-              <span className="text-muted-foreground shrink-0">Category:</span>
-              <SelectValue />
-            </div>
-          </SelectTrigger>
-          <SelectContent className="max-h-72">
-            {categories.map((cat) => (
-              <SelectItem key={cat} value={cat} className="text-xs">
-                <span className="inline-flex items-center gap-2">
-                  {categoryLabels[cat] || cat}
-                  <span className="text-[10px] tabular-nums text-muted-foreground/70">
-                    {categoryCount[cat] || 0}
+        <div className="flex items-center gap-2">
+          <Select
+            value={activeTab}
+            onValueChange={(val) => {
+              setActiveTab(val);
+              setSearch("");
+              setSortKey("annual_yield");
+              setSortDir("desc");
+              setMovement("all");
+            }}
+          >
+            <SelectTrigger className="h-9 w-[220px] rounded-lg bg-muted/30 border-border text-xs font-medium">
+              <div className="flex items-center gap-1.5 min-w-0">
+                <span className="text-muted-foreground shrink-0">Category:</span>
+                <SelectValue />
+              </div>
+            </SelectTrigger>
+            <SelectContent className="max-h-72">
+              {categories.map((cat) => (
+                <SelectItem key={cat} value={cat} className="text-xs">
+                  <span className="inline-flex items-center gap-2">
+                    {categoryLabels[cat] || cat}
+                    <span className="text-[10px] tabular-nums text-muted-foreground/70">
+                      {categoryCount[cat] || 0}
+                    </span>
                   </span>
-                </span>
-              </SelectItem>
-            ))}
-          </SelectContent>
-        </Select>
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+
+          {/* Movement segmented control */}
+          <div className="inline-flex items-center rounded-lg bg-muted/30 border border-border p-0.5">
+            {([
+              { key: "all", label: "All", count: categoryFunds.length },
+              { key: "gainers", label: "Gainers", count: movementCounts.gainers },
+              { key: "losers", label: "Losers", count: movementCounts.losers },
+              { key: "unchanged", label: "Unchanged", count: movementCounts.unchanged },
+            ] as const).map((opt) => {
+              const active = movement === opt.key;
+              const activeColor =
+                opt.key === "gainers"
+                  ? "bg-accent text-accent-foreground"
+                  : opt.key === "losers"
+                  ? "bg-destructive text-destructive-foreground"
+                  : opt.key === "unchanged"
+                  ? "bg-muted-foreground/80 text-background"
+                  : "bg-foreground text-background";
+              return (
+                <button
+                  key={opt.key}
+                  onClick={() => setMovement(opt.key)}
+                  className={`inline-flex items-center gap-1 px-2.5 h-8 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
+                    active ? activeColor + " shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
+                  {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
+                  {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
+                  {opt.label}
+                  <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
 
         <div className="relative w-72 shrink-0">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -279,6 +349,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 setSearch("");
                 setSortKey("annual_yield");
                 setSortDir("desc");
+                setMovement("all");
               }}
               className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
                 activeTab === cat
@@ -294,6 +365,40 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               </span>
             </button>
           ))}
+        </div>
+        {/* Mobile movement pills */}
+        <div className="flex gap-1.5 overflow-x-auto scrollbar-hide">
+          {([
+            { key: "all", label: "All", count: categoryFunds.length },
+            { key: "gainers", label: "Gainers", count: movementCounts.gainers },
+            { key: "losers", label: "Losers", count: movementCounts.losers },
+            { key: "unchanged", label: "Unchanged", count: movementCounts.unchanged },
+          ] as const).map((opt) => {
+            const active = movement === opt.key;
+            const activeColor =
+              opt.key === "gainers"
+                ? "bg-accent text-accent-foreground"
+                : opt.key === "losers"
+                ? "bg-destructive text-destructive-foreground"
+                : opt.key === "unchanged"
+                ? "bg-muted-foreground/80 text-background"
+                : "bg-foreground text-background";
+            return (
+              <button
+                key={opt.key}
+                onClick={() => setMovement(opt.key)}
+                className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap ${
+                  active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
+                {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
+                {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
+                {opt.label}
+                <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+              </button>
+            );
+          })}
         </div>
 
         <div className="relative w-full">
