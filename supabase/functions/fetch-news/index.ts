@@ -107,6 +107,7 @@ function categorize(text: string): string {
   if (/yield|return|interest rate|cbk|central bank|treasury bill|t-bill/.test(lower)) return "Yield Updates";
   if (/cma|regulator|compliance|policy|law|act|parliament/.test(lower)) return "Regulatory Updates";
   if (/fund manager|unit trust|money market|mutual fund|sacco|pension|ipo|rights issue/.test(lower)) return "Fund Announcements";
+  if (/\b(fed|federal reserve|ecb|imf|world bank|wall street|s&p|nasdaq|ftse|dow jones|eurobond|brent|opec|emerging markets|global|us economy|china|europe)\b/.test(lower)) return "International";
   return "Market News";
 }
 
