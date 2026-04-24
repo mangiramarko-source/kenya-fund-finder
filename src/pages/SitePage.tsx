@@ -54,14 +54,19 @@ const SitePage = () => {
 
   return (
     <div className="container py-8 md:py-10 max-w-3xl px-4">
-      {/* Mobile: centered icon above title */}
-      <div className="md:hidden flex flex-col items-center text-center mb-6">
-        <div className="flex items-center justify-center h-14 w-14 rounded-2xl bg-accent/10 ring-1 ring-accent/20 mb-3">
-          <Icon className="h-7 w-7 text-accent" />
-        </div>
-        <h1 className="text-2xl font-bold tracking-tight">{page.title}</h1>
-        <div className="mt-2 h-[3px] w-10 rounded-full bg-accent/60" />
-      </div>
+      {/* Mobile: label above main title, left-aligned */}
+      {(() => {
+        const parts = page.title.split(" ");
+        const label = parts[0];
+        const rest = parts.slice(1).join(" ");
+        return (
+          <div className="md:hidden mb-6">
+            <p className="text-sm font-medium text-muted-foreground mb-1">{label}</p>
+            <h1 className="text-2xl font-bold tracking-tight leading-tight">{rest || label}</h1>
+            <div className="mt-3 h-[3px] w-10 rounded-full bg-accent/60" />
+          </div>
+        );
+      })()}
 
       {/* Desktop: icon left of title */}
       <div className="hidden md:flex items-center gap-3 mb-6">
