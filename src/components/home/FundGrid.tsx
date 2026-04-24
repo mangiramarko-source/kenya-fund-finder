@@ -541,19 +541,19 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       i % 2 === 0 ? "bg-transparent" : "bg-muted/20"
                     }`}
                   >
-                    <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
+                    <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-sm tabular-nums">{i + 1}</td>
                     <td className="px-3 py-3.5">
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="block max-w-[180px] font-bold text-foreground group-hover:text-accent transition-colors text-xs tracking-tight truncate"
+                        className="block max-w-[180px] font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
                         title={fund.name}
                       >
                         {fund.name}
                       </Link>
                     </td>
                     <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums">
-                      <span className="font-bold text-accent text-xs">
+                      <span className="font-bold text-accent text-sm">
                         {fmtYield(fund.annual_yield, fund.yield_unit)}
                       </span>
                     </td>
@@ -561,20 +561,20 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       <ChangeCell change={change} unit={fund.yield_unit} />
                     </td>
                     <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap">
-                      <span className="font-bold text-accent text-xs">
+                      <span className="font-bold text-accent text-sm">
                         {fmtYield(fund.daily_yield, fund.yield_unit)}
                       </span>
                     </td>
                     <td className="px-3 py-3.5 text-right">
                       <ChangeCell change={dailyChange} unit={fund.yield_unit} />
                     </td>
-                    <td className="px-3 py-3.5 text-foreground text-xs truncate text-left" title={fund.manager}>
+                    <td className="px-3 py-3.5 text-foreground text-sm truncate text-left" title={fund.manager}>
                       {fund.manager}
                     </td>
-                    <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                    <td className="px-3 py-3.5 text-right text-sm tabular-nums text-muted-foreground whitespace-nowrap">
                       KSh {fund.minimum_investment.toLocaleString()}
                     </td>
-                    <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                    <td className="px-3 py-3.5 text-right text-sm tabular-nums text-muted-foreground whitespace-nowrap">
                       {fund.management_fee}%
                     </td>
                     {onToggleFavourite && (
@@ -584,7 +584,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                           className="p-1 rounded-md hover:bg-muted transition-colors"
                           aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
                         >
-                          <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+                          <Star className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
                         </button>
                       </td>
                     )}
