@@ -180,7 +180,7 @@ const Navbar = () => {
               variant="ghost"
               size="icon"
               onClick={() => setOpen(true)}
-              className="rounded-full h-9 w-9 text-foreground hover:bg-muted"
+              className="rounded-full h-9 w-9 -mr-2 text-foreground hover:bg-muted"
               aria-label="Open menu"
             >
               <Menu className="h-5 w-5" />
