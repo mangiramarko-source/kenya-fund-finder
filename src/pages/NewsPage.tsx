@@ -243,7 +243,7 @@ const NewsPage = () => {
         <>
           {/* ===== DESKTOP: NewsHub layout (hidden on mobile) ===== */}
           {heroArticle && (
-            <div className="hidden lg:block space-y-8 mb-8">
+            <div className="hidden lg:block space-y-8 mb-8 overscroll-x-contain">
               {/* LATEST NEWS: 3-col grid */}
               {latestArticles.length > 0 && (
                 <section>
