@@ -64,53 +64,62 @@ const SortHeader = ({
   </button>
 );
 
-/* ─── Sparkline ─── */
-const SPARK_W = 120;
-const SPARK_H = 36;
-
-const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
-  const result = useMemo(() => {
+/* ─── MiniSparkline (matches StocksPage visual) ─── */
+const MiniSparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
+  const series = useMemo(() => {
     const vals = [...data.map((d) => d.annual_yield), currentValue];
     if (vals.length < 2) return null;
     const last12 = vals.slice(-12);
-    const min = Math.min(...last12);
-    const max = Math.max(...last12);
-    const range = max - min || 1;
-    const pad = 3;
-    const pts = last12.map((v, i) => ({
-      x: pad + (i / (last12.length - 1)) * (SPARK_W - pad * 2),
-      y: pad + (1 - (v - min) / range) * (SPARK_H - pad * 2),
-    }));
-    const isUp = pts[pts.length - 1].y <= pts[0].y;
-    const change = last12[last12.length - 1] - last12[0];
-    return { pts, isUp, change };
+    return {
+      points: last12.map((v, i) => ({ i, value: v })),
+      positive: last12[last12.length - 1] >= last12[0],
+    };
   }, [data, currentValue]);
 
-  if (!result) return <span className="text-[10px] text-muted-foreground">—</span>;
+  if (!series) return <span className="text-[10px] text-muted-foreground">—</span>;
 
-  const { pts, isUp, change } = result;
-  const color = isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))";
-  const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const areaD = pathD + ` L${pts[pts.length - 1].x.toFixed(1)},${SPARK_H} L${pts[0].x.toFixed(1)},${SPARK_H} Z`;
-  const gradId = isUp ? "sg-up" : "sg-dn";
+  const color = series.positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  const gradientId = `fund-spark-${series.positive ? "up" : "down"}`;
 
   return (
-    <div className="inline-flex items-center gap-1.5">
-      <svg width={SPARK_W} height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} className="shrink-0">
-        <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.2" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={areaD} fill={`url(#${gradId})`} />
-        <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r="2.5" fill={color} />
-      </svg>
-      <span className={`text-[10px] font-semibold tabular-nums whitespace-nowrap ${isUp ? "text-accent" : "text-destructive"}`}>
-        {change >= 0 ? "+" : ""}{change.toFixed(2)}
-      </span>
+    <div className="w-[60px] h-[24px] inline-block">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={series.points} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <YAxis hide domain={["dataMin - 0.5", "dataMax + 0.5"]} />
+          <Area type="monotone" dataKey="value" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
+          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
+  );
+};
+
+/* ─── ChangeCell (matches StocksPage visual) ─── */
+const ChangeCell = ({ change, unit }: { change: number; unit: string }) => {
+  const suffix = unit === "%" ? "%" : "";
+  const formatted = `${Math.abs(change).toFixed(2)}${suffix}`;
+  if (change > 0)
+    return (
+      <span className="inline-flex items-center gap-0.5 text-accent text-[11px] font-semibold tabular-nums">
+        <TrendingUp className="h-3 w-3" /> +{formatted}
+      </span>
+    );
+  if (change < 0)
+    return (
+      <span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold tabular-nums">
+        <TrendingDown className="h-3 w-3" /> -{formatted}
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]">
+      <Minus className="h-3 w-3" /> 0.00{suffix}
+    </span>
   );
 };
 
