@@ -4,6 +4,7 @@ import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, BarChart3, Layers
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import YieldChange from "@/components/YieldChange";
 import FundMobileCards from "./FundMobileCards";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
@@ -480,7 +481,16 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 <th className="text-center px-2 py-3">
-                  <SortHeader label="Trend" field="change" sortKey={sortKey} onToggleSort={toggleSort} className="justify-center" />
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <span className="inline-flex">
+                        <SortHeader label="Trend" field="change" sortKey={sortKey} onToggleSort={toggleSort} className="justify-center" />
+                      </span>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" className="max-w-[220px] text-xs">
+                      Difference between the current and previous annual yield.
+                    </TooltipContent>
+                  </Tooltip>
                 </th>
                 <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Unit</th>
                 <th className="text-right px-3 py-3">
