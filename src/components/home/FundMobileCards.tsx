@@ -60,7 +60,7 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
   </div>
 );
 
-const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }: FundMobileCardsProps) => {
+const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch, isFavourite, onToggleFavourite }: FundMobileCardsProps) => {
   if (loading) return <CardSkeleton />;
 
   if (funds.length === 0) return <EmptyState hasSearch={hasSearch} onClearSearch={onClearSearch} />;
@@ -74,6 +74,24 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch }
           className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
         >
           <div className="flex items-center gap-3 p-3.5">
+            {/* Favourite star (mobile, logged-in only) */}
+            {onToggleFavourite && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleFavourite(fund.id, fund.name);
+                }}
+                aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
+                className="shrink-0 -ml-1 p-1.5 rounded-md hover:bg-muted transition-colors"
+              >
+                <Star
+                  className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
+                />
+              </button>
+            )}
+
             {/* Left: Fund Name + Trend */}
             <div className="flex-1 min-w-0">
               <span className="font-bold text-foreground text-sm truncate block">{fund.name}</span>
