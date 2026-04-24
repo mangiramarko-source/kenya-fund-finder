@@ -776,7 +776,7 @@ const StockRow = ({
         </span>
       </td>
       <td className="px-2 py-3.5 text-center">
-        <MiniSparkline data={history || []} positive={s.day_change >= 0} />
+        <MiniSparkline data={history || []} trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"} />
       </td>
       <td className="px-3 py-3.5 text-right">
         <span className="font-bold text-accent text-[15px] tabular-nums">{formatNumber(s.price)}</span>
@@ -849,7 +849,7 @@ const MobileStockCard = ({
 
       {/* Center: Sparkline */}
       <div className="shrink-0">
-        <MiniSparkline data={history || []} positive={s.day_change >= 0} />
+        <MiniSparkline data={history || []} trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"} />
       </div>
 
       {/* Right: Price + Change */}
