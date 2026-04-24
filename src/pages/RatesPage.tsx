@@ -380,7 +380,7 @@ const RatesPage = () => {
         </div>
 
         {/* Mobile movement pills */}
-        <div className="md:hidden -mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide rounded">
+        <div className="md:hidden mb-4 flex gap-2 overflow-x-auto scrollbar-hide rounded -mx-4 px-4">
           {([
             { key: "all", label: "All", count: rates.length },
             { key: "gainers", label: "Gainers", count: strengthened },
