@@ -36,6 +36,8 @@ const Navbar = () => {
     return true;
   });
   const headerRef = useRef<HTMLElement | null>(null);
+  const mobileTabsScrollRef = useRef<HTMLDivElement | null>(null);
+  const mobileTabRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [avatarUrl, setAvatarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
   const location = useLocation();
@@ -81,6 +83,18 @@ const Navbar = () => {
     window.addEventListener("scroll", handleScroll, { passive: true });
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
+
+  // Auto-scroll active mobile tab into center on route change
+  useEffect(() => {
+    const activeEl = mobileTabRefs.current[location.pathname];
+    const container = mobileTabsScrollRef.current;
+    if (!activeEl || !container) return;
+    const elRect = activeEl.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+    const offset =
+      activeEl.offsetLeft - container.offsetLeft - (containerRect.width / 2) + (elRect.width / 2);
+    container.scrollTo({ left: Math.max(0, offset), behavior: "smooth" });
+  }, [location.pathname]);
 
   useEffect(() => {
     const element = headerRef.current;
@@ -233,7 +247,7 @@ const Navbar = () => {
 
       {/* Mobile: full-width scrollable tab bar */}
       <div className="md:hidden relative">
-        <div className="overflow-x-auto scrollbar-hide bg-card border-b border-border" style={{ scrollBehavior: "smooth" }}>
+        <div ref={mobileTabsScrollRef} className="overflow-x-auto scrollbar-hide bg-card border-b border-border" style={{ scrollBehavior: "smooth" }}>
           <nav className="flex min-w-max">
             {mobileNavLinks.map((link) => {
               const isActive = location.pathname === link.to;
@@ -241,8 +255,9 @@ const Navbar = () => {
                 <Link
                   key={link.to}
                   to={link.to}
+                  ref={(el) => { mobileTabRefs.current[link.to] = el; }}
                   onClick={(e) => {
-                    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "nearest", block: "nearest" });
+                    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
                   }}
                   className={`relative shrink-0 px-4 py-3 text-sm whitespace-nowrap transition-colors ${
                     isActive
