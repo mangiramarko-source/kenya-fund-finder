@@ -109,17 +109,51 @@ const NewsPage = () => {
     return merged;
   }, [filtered]);
 
-  // Hero rotates only when new articles arrive (not on a timer).
-  // Each fetch picks the freshest top item from the pool.
+  // Hero: large feature card (left) + 4 mini cards (right sidebar)
   const heroArticle = heroPool[0] || null;
-  const topArticles = useMemo(() => {
-    if (!heroArticle) return filtered.slice(0, 3);
-    return filtered.filter((a) => a.id !== heroArticle.id).slice(0, 3);
+  const heroSidebar = useMemo(() => {
+    if (!heroArticle) return filtered.slice(0, 4);
+    return filtered.filter((a) => a.id !== heroArticle.id).slice(0, 4);
   }, [filtered, heroArticle]);
+  // Latest News: next 6 after hero+sidebar (3-col x 2 rows)
+  const latestArticles = useMemo(() => {
+    const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id)]);
+    return filtered.filter((a) => !used.has(a.id)).slice(0, 6);
+  }, [filtered, heroArticle, heroSidebar]);
+  // Must Read: 1 wide + 3 list items
+  const mustReadFeature = useMemo(() => {
+    const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id), ...latestArticles.map(a => a.id)]);
+    return filtered.find((a) => !used.has(a.id)) || null;
+  }, [filtered, heroArticle, heroSidebar, latestArticles]);
+  const mustReadList = useMemo(() => {
+    const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id), ...latestArticles.map(a => a.id), mustReadFeature?.id]);
+    return filtered.filter((a) => !used.has(a.id)).slice(0, 3);
+  }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature]);
+  // Weekly Highlight: 4 across
+  const weeklyHighlight = useMemo(() => {
+    const used = new Set([heroArticle?.id, ...heroSidebar.map(a => a.id), ...latestArticles.map(a => a.id), mustReadFeature?.id, ...mustReadList.map(a => a.id)]);
+    return filtered.filter((a) => !used.has(a.id)).slice(0, 4);
+  }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList]);
+  // Top Sources (placeholder for "Top Creators")
+  const topSources = useMemo(() => {
+    const counts: Record<string, number> = {};
+    articles.forEach(a => { if (a.source) counts[a.source] = (counts[a.source] || 0) + 1; });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
+  }, [articles]);
+  // Remaining articles for the load-more list (desktop)
   const listArticles = useMemo(() => {
-    const usedIds = new Set([heroArticle?.id, ...topArticles.map(a => a.id)]);
-    return filtered.filter((a) => !usedIds.has(a.id));
-  }, [filtered, heroArticle, topArticles]);
+    const used = new Set([
+      heroArticle?.id,
+      ...heroSidebar.map(a => a.id),
+      ...latestArticles.map(a => a.id),
+      mustReadFeature?.id,
+      ...mustReadList.map(a => a.id),
+      ...weeklyHighlight.map(a => a.id),
+    ]);
+    return filtered.filter((a) => !used.has(a.id));
+  }, [filtered, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList, weeklyHighlight]);
+  // Backwards-compatible alias for the old hero sidebar (used in mobile-only paths)
+  const topArticles = heroSidebar.slice(0, 3);
 
   // Infinite scroll / load more
   const PAGE_SIZE = 12;
