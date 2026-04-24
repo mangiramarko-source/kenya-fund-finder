@@ -223,19 +223,21 @@ const RatesPage = () => {
               <table className="w-full text-sm table-fixed">
                 <colgroup>
                   <col style={{ width: "3%" }} />
-                  <col style={{ width: "18%" }} />
+                  <col style={{ width: "7%" }} />
+                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "9%" }} />
+                  <col style={{ width: "9%" }} />
+                  <col style={{ width: "10%" }} />
                   <col style={{ width: "11%" }} />
-                  <col style={{ width: "11%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "13%" }} />
-                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "12%" }} />
                   <col style={{ width: "4%" }} />
                 </colgroup>
                 <thead>
                   <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
                     <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
+                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Symbol</th>
                     <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Currency</th>
                     <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Rate (KES)</th>
                     <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Previous</th>
@@ -398,7 +400,7 @@ const RateRow = ({
       >
         <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
         <td className="px-3 py-3.5">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 min-w-0">
             {onToggleFavourite !== undefined && (
               <button
                 onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
@@ -408,11 +410,11 @@ const RateRow = ({
                 <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
               </button>
             )}
-            <div className="min-w-0">
-              <span className="font-bold text-foreground text-xs tracking-wide">{rate.currency_code}</span>
-              <span className="block text-xs text-muted-foreground mt-0.5 truncate" title={rate.currency_name}>{rate.currency_name}</span>
-            </div>
+            <span className="font-bold text-foreground text-xs tracking-wide">{rate.currency_code}</span>
           </div>
+        </td>
+        <td className="px-3 py-3.5">
+          <span className="block text-xs text-foreground truncate" title={rate.currency_name}>{rate.currency_name}</span>
         </td>
         <td className="px-3 py-3.5 tabular-nums whitespace-nowrap">
           <span className="font-bold text-foreground text-sm">
@@ -460,7 +462,7 @@ const RateRow = ({
       </tr>
       {isExpanded && (
         <tr className="border-t border-border bg-muted/20">
-          <td colSpan={10} className="p-4">
+          <td colSpan={11} className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <DetailBox label="Current Rate" value={`KES ${rate.rate.toFixed(2)}`} />
               <DetailBox label="Previous Rate" value={rate.previous_rate != null ? `KES ${rate.previous_rate.toFixed(2)}` : "—"} />
