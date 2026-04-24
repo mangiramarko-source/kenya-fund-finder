@@ -26,24 +26,24 @@ interface RateHistory {
 }
 
 const ChangeIndicator = ({ current, previous }: { current: number; previous: number | null }) => {
-  if (previous == null) return <span className="text-muted-foreground text-xs">—</span>;
+  if (previous == null) return <span className="text-muted-foreground text-sm">—</span>;
   const diff = current - previous;
   const pct = previous !== 0 ? ((diff / previous) * 100).toFixed(2) : "0.00";
   if (diff > 0)
     return (
-      <span className="inline-flex items-center gap-0.5 text-accent text-[11px] font-semibold">
-        <TrendingUp className="h-3 w-3" /> +{pct}%
+      <span className="inline-flex items-center gap-1 text-accent text-sm font-semibold">
+        <TrendingUp className="h-3.5 w-3.5" /> +{pct}%
       </span>
     );
   if (diff < 0)
     return (
-      <span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold">
-        <TrendingDown className="h-3 w-3" /> {pct}%
+      <span className="inline-flex items-center gap-1 text-destructive text-sm font-semibold">
+        <TrendingDown className="h-3.5 w-3.5" /> {pct}%
       </span>
     );
   return (
-    <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]">
-      <Minus className="h-3 w-3" /> 0.00%
+    <span className="inline-flex items-center gap-1 text-muted-foreground text-sm">
+      <Minus className="h-3.5 w-3.5" /> 0.00%
     </span>
   );
 };
