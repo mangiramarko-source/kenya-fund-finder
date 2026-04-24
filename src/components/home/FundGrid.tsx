@@ -480,12 +480,12 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
             <colgroup>
               <col style={{ width: "3%" }} />
               <col style={{ width: "15%" }} />
-              
-              <col style={{ width: "10%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "9%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "8%" }} />
-              <col style={{ width: "18%" }} />
+              <col style={{ width: "14%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "6%" }} />
               {onToggleFavourite && <col style={{ width: "3%" }} />}
