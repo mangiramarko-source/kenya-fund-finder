@@ -578,6 +578,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-foreground text-sm truncate text-left" title={fund.manager}>
                       {fund.manager}
                     </td>
+                    <td className="px-3 py-3.5 text-left">
+                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.daily_yield} field="daily_yield" />
+                    </td>
                     <td className="px-3 py-3.5 text-sm tabular-nums text-muted-foreground whitespace-nowrap text-left">
                       KSh {fund.minimum_investment.toLocaleString()}
                     </td>
