@@ -223,19 +223,21 @@ const RatesPage = () => {
               <table className="w-full text-sm table-fixed">
                 <colgroup>
                   <col style={{ width: "3%" }} />
-                  <col style={{ width: "18%" }} />
+                  <col style={{ width: "7%" }} />
+                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "9%" }} />
+                  <col style={{ width: "9%" }} />
+                  <col style={{ width: "10%" }} />
                   <col style={{ width: "11%" }} />
-                  <col style={{ width: "11%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "10%" }} />
-                  <col style={{ width: "13%" }} />
-                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "12%" }} />
                   <col style={{ width: "4%" }} />
                 </colgroup>
                 <thead>
                   <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
                     <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
+                    <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Symbol</th>
                     <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Currency</th>
                     <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Rate (KES)</th>
                     <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Previous</th>
