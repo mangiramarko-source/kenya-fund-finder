@@ -279,19 +279,40 @@ Deno.serve(async (req) => {
       );
     }
 
-    const rows = newArticles.map((a) => ({
-      title: a.title,
-      url: a.url,
-      summary: a.summary,
-      content: a.content,
-      date_published: a.date_published,
-      source: a.source,
-      image_url: a.image_url,
-      category: categorize(`${a.title} ${a.summary}`),
-      status: "published",
-      is_featured: false,
-      read_time: estimateReadTime(a.summary + (a.content || "")),
-    }));
+    // Rewrite each new article in original words via Lovable AI (concurrent, with fallback)
+    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    let rewrittenCount = 0;
+    let rewrites: Array<RewrittenArticle | null> = new Array(newArticles.length).fill(null);
+
+    if (lovableKey) {
+      rewrites = await mapWithConcurrency(newArticles, 4, async (a) => {
+        const raw = `${a.summary || ""}\n\n${a.content || ""}`.trim();
+        const out = await rewriteArticle(lovableKey, a.title, a.source, raw);
+        if (out) rewrittenCount++;
+        return out;
+      });
+    } else {
+      console.warn("LOVABLE_API_KEY not configured — inserting feed text as-is");
+    }
+
+    const rows = newArticles.map((a, i) => {
+      const rw = rewrites[i];
+      const summary = rw?.summary || a.summary;
+      const content = rw?.content || a.content;
+      return {
+        title: a.title,
+        url: a.url,
+        summary,
+        content,
+        date_published: a.date_published,
+        source: a.source,
+        image_url: a.image_url,
+        category: categorize(`${a.title} ${summary}`),
+        status: "published",
+        is_featured: false,
+        read_time: estimateReadTime(summary + " " + (content || "")),
+      };
+    });
 
     const { error } = await supabase.from("news_articles").insert(rows);
     if (error) {
