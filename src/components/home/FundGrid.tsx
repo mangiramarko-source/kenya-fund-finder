@@ -57,7 +57,7 @@ const SortHeader = ({
 }) => (
   <button
     onClick={() => onToggleSort(field)}
-    className={`inline-flex items-center gap-1 font-semibold hover:text-accent transition-colors ${className}`}
+    className={`inline-flex items-center gap-1 font-semibold uppercase tracking-wider hover:text-accent transition-colors ${className}`}
   >
     {label}
     <ArrowUpDown className={`h-3 w-3 ${sortKey === field ? "text-accent" : "text-muted-foreground/50"}`} />
