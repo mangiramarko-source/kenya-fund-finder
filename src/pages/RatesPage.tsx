@@ -187,6 +187,8 @@ const RatesPage = () => {
   const unchanged = useMemo(() => rates.filter((r) => r.previous_rate == null || r.rate === r.previous_rate).length, [rates]);
 
   const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
+  type SortKey = "default" | "rate_desc" | "rate_asc" | "change_desc" | "change_asc" | "name_asc" | "name_desc";
+  const [mobileSort, setMobileSort] = useState<SortKey>("default");
 
   const filtered = useMemo(() => {
     let result = rates;
@@ -197,8 +199,21 @@ const RatesPage = () => {
       const q = search.toLowerCase();
       result = result.filter(r => r.currency_code.toLowerCase().includes(q) || r.currency_name.toLowerCase().includes(q));
     }
+    if (mobileSort !== "default") {
+      const pct = (r: Rate) => (r.previous_rate != null && r.previous_rate !== 0 ? ((r.rate - r.previous_rate) / r.previous_rate) * 100 : 0);
+      const arr = [...result];
+      switch (mobileSort) {
+        case "rate_desc": arr.sort((a, b) => b.rate - a.rate); break;
+        case "rate_asc": arr.sort((a, b) => a.rate - b.rate); break;
+        case "change_desc": arr.sort((a, b) => pct(b) - pct(a)); break;
+        case "change_asc": arr.sort((a, b) => pct(a) - pct(b)); break;
+        case "name_asc": arr.sort((a, b) => a.currency_code.localeCompare(b.currency_code)); break;
+        case "name_desc": arr.sort((a, b) => b.currency_code.localeCompare(a.currency_code)); break;
+      }
+      result = arr;
+    }
     return result;
-  }, [rates, search, mobileMovement]);
+  }, [rates, search, mobileMovement, mobileSort]);
 
   return (
     <div className="min-h-screen">
