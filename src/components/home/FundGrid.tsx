@@ -474,20 +474,19 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
       </div>
 
       {/* Desktop: table view */}
-      <div className="hidden md:block max-w-[1200px] mx-auto w-full rounded-xl border border-border overflow-hidden bg-card shadow-sm">
+      <div className="hidden md:block max-w-[1100px] mx-auto w-full rounded-xl border border-border overflow-hidden bg-card shadow-sm">
         <div>
           <table className="w-full text-sm table-fixed">
             <colgroup>
               <col style={{ width: "40px" }} />
-              <col style={{ width: "220px" }} />
-
-              <col style={{ width: "90px" }} />
-              <col style={{ width: "100px" }} />
-              <col style={{ width: "80px" }} />
-              <col style={{ width: "100px" }} />
+              <col style={{ width: "170px" }} />
+              <col style={{ width: "88px" }} />
+              <col style={{ width: "96px" }} />
+              <col style={{ width: "78px" }} />
+              <col style={{ width: "96px" }} />
               <col />
-              <col style={{ width: "110px" }} />
-              <col style={{ width: "70px" }} />
+              <col style={{ width: "120px" }} />
+              <col style={{ width: "60px" }} />
               {onToggleFavourite && <col style={{ width: "40px" }} />}
             </colgroup>
             <thead>
@@ -542,11 +541,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     }`}
                   >
                     <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-sm tabular-nums">{i + 1}</td>
-                    <td className="px-3 py-3.5">
+                    <td className="px-3 py-3.5 max-w-[170px]">
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="block max-w-[250px] font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
+                        className="block max-w-full font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight truncate"
                         title={fund.name}
                       >
                         {fund.name}
