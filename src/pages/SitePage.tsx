@@ -54,10 +54,6 @@ const SitePage = () => {
 
   return (
     <div className="container py-10 max-w-3xl">
-      <Link to="/" className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground mb-6">
-        <ArrowLeft className="mr-1 h-4 w-4" /> Home
-      </Link>
-
       <div className="flex items-center gap-3 mb-6">
         <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-accent/10">
           <Icon className="h-5 w-5 text-accent" />
