@@ -491,7 +491,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
                 
                 <th className="px-2 py-3 font-semibold text-muted-foreground text-center">
                   <Tooltip>
