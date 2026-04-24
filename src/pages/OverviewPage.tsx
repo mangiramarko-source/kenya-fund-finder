@@ -899,8 +899,8 @@ const OverviewPage = () => {
             })}
           </HighlightColumn>
 
-          {/* Gold / Metals */}
-          <HighlightColumn icon={Gem} label="Gold & Metals" link="/commodities">
+          {/* Commodities */}
+          <HighlightColumn icon={Gem} label="Commodities" link="/commodities">
             {topCommodities.length === 0 && (
               <p className="text-[11px] text-muted-foreground">No data available</p>
             )}
