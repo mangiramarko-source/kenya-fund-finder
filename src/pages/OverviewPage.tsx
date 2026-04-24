@@ -591,6 +591,15 @@ const OverviewPage = () => {
   const bestFXRate = useMemo(() => rates.length ? rates[0] : null, [rates]);
   const goldCommodity = useMemo(() => commodities.find(c => c.name.toLowerCase().includes("gold")) || null, [commodities]);
   const silverCommodity = useMemo(() => commodities.find(c => c.name.toLowerCase().includes("silver")) || null, [commodities]);
+  const topFXRates = useMemo(
+    () => [...rates].sort((a, b) => Number(b.rate) - Number(a.rate)).slice(0, 5),
+    [rates]
+  );
+  const topCommodities = useMemo(() => {
+    const goldKeywords = ["gold", "silver", "platinum", "palladium", "copper"];
+    const metals = commodities.filter(c => goldKeywords.some(k => c.name.toLowerCase().includes(k)));
+    return metals.slice(0, 5);
+  }, [commodities]);
 
   const mmFunds = useMemo(() => funds.filter(f => f.fund_type === "money_market"), [funds]);
   const fiFunds = useMemo(() => funds.filter(f => f.fund_type === "fixed_income"), [funds]);
