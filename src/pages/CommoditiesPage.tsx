@@ -495,13 +495,6 @@ const MobileCommodityCard = ({
   );
 };
 
-const DetailBox = ({ label, value, color }: { label: string; value: string; color?: string }) => (
-  <div className="rounded-md border border-border bg-card p-2">
-    <p className="text-[10px] text-muted-foreground uppercase tracking-wider">{label}</p>
-    <p className={`text-xs font-semibold tabular-nums mt-0.5 ${color ?? "text-foreground"}`}>{value}</p>
-  </div>
-);
-
 const CommodityRow = ({
   commodity: c, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
