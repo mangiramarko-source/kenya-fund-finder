@@ -332,33 +332,35 @@ const NewsPage = () => {
         </Select>
       </div>
 
-      {/* Mobile: pill style */}
-      <div className="md:hidden flex items-center gap-1.5 mb-5 -mt-2 overflow-x-auto [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-        {([
-          { key: "all", label: "All", count: articles.length },
-          { key: "kenya", label: "Kenya", count: regionCounts.kenya },
-          { key: "international", label: "International", count: regionCounts.international },
-        ] as const).map((opt) => {
-          const active = region === opt.key;
-          return (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => setRegion(opt.key)}
-              className={`shrink-0 inline-flex items-center gap-1.5 h-8 px-3 rounded-full border text-xs font-semibold transition-colors ${
-                active
-                  ? "bg-accent text-accent-foreground border-accent"
-                  : "bg-card text-muted-foreground border-border hover:text-foreground hover:border-accent/40"
-              }`}
-              aria-pressed={active}
-            >
-              {opt.label}
-              <span className={`text-[10px] font-medium ${active ? "opacity-80" : "opacity-60"}`}>
-                {opt.count}
-              </span>
-            </button>
-          );
-        })}
+      {/* Mobile: segmented control matching desktop */}
+      <div className="md:hidden flex items-center mb-5">
+        <div className="inline-flex items-center rounded-lg bg-muted/30 border border-border p-0.5">
+          {([
+            { key: "all", label: "All", count: articles.length },
+            { key: "kenya", label: "Kenya", count: regionCounts.kenya },
+            { key: "international", label: "International", count: regionCounts.international },
+          ] as const).map((opt) => {
+            const active = region === opt.key;
+            return (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setRegion(opt.key)}
+                className={`inline-flex items-center gap-1.5 px-2.5 h-8 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
+                  active
+                    ? "bg-foreground text-background shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                aria-pressed={active}
+              >
+                {opt.label}
+                <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>
+                  {opt.count}
+                </span>
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {filtered.length === 0 ? (
