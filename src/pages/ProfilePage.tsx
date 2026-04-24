@@ -147,10 +147,6 @@ const ProfilePage = () => {
 
   return (
     <div className="container max-w-2xl py-10">
-      <button onClick={() => navigate(-1)} className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-6">
-        <ArrowLeft className="h-3.5 w-3.5" /> Back
-      </button>
-
       <h1 className="text-2xl font-bold mb-6">My Profile</h1>
 
       {/* Avatar Section */}
