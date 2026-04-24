@@ -247,7 +247,6 @@ const RatesPage = () => {
                   <col style={{ width: "9%" }} />
                   <col style={{ width: "9%" }} />
                   <col style={{ width: "10%" }} />
-                  <col style={{ width: "11%" }} />
                   <col style={{ width: "12%" }} />
                   <col style={{ width: "4%" }} />
                 </colgroup>
@@ -261,7 +260,6 @@ const RatesPage = () => {
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change %</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Trend</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Direction</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Updated</th>
                     <th className="w-8"></th>
                   </tr>
@@ -464,14 +462,6 @@ const RateRow = ({
             <span className="text-xs text-muted-foreground">—</span>
           )}
         </td>
-        <td className="px-3 py-4">
-          <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-semibold uppercase tracking-wider ${direction.className}`}>
-            {direction.label === "Up" && <TrendingUp className="h-3.5 w-3.5" />}
-            {direction.label === "Down" && <TrendingDown className="h-3.5 w-3.5" />}
-            {direction.label === "Flat" && <Minus className="h-3.5 w-3.5" />}
-            {direction.label}
-          </span>
-        </td>
         <td className="px-3 py-4 text-sm text-muted-foreground whitespace-nowrap">{updatedShort}</td>
         <td className="px-2 py-4 text-center">
           {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
@@ -479,7 +469,7 @@ const RateRow = ({
       </tr>
       {isExpanded && (
         <tr className="border-t border-border bg-muted/20">
-          <td colSpan={11} className="p-4">
+          <td colSpan={10} className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <DetailBox label="Current Rate" value={`KES ${rate.rate.toFixed(2)}`} />
               <DetailBox label="Previous Rate" value={rate.previous_rate != null ? `KES ${rate.previous_rate.toFixed(2)}` : "—"} />
