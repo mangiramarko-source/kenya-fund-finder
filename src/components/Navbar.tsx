@@ -24,6 +24,7 @@ const mobileNavLinks = [
   { to: "/news", label: "News" },
   { to: "/calculator", label: "Calculator" },
   { to: "/rates", label: "Fx rates" },
+  { to: "/commodities", label: "Commodities" },
 ];
 
 const Navbar = () => {
