@@ -821,11 +821,6 @@ const OverviewPage = () => {
 
       {/* ─── Market Highlights (always shown) ─── */}
       <div>
-        <div className="flex items-center gap-2 mb-3">
-          <Crown className="h-4 w-4 text-primary" />
-          <h2 className="text-sm font-semibold text-foreground">Market Highlights</h2>
-          <span className="text-[10px] text-muted-foreground">Best performers at a glance</span>
-        </div>
 
         {/* Desktop: 4 vertical columns of top-5 cards */}
         <div className="hidden md:grid md:grid-cols-2 lg:grid-cols-4 gap-4">
