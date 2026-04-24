@@ -310,7 +310,7 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
 
 /* ─── Compact Highlight Card (mobile) — matches WatchCard row style ─── */
 const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color }: {
-  icon: any; label: string; name: string; value: string; sub?: string;
+  icon: any; label?: string; name: string; value: string; sub?: string;
   change?: React.ReactNode; linkTo?: string; color?: string;
 }) => (
   <Link to={linkTo || "#"} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 hover:border-accent/30 transition-colors group">
@@ -318,9 +318,11 @@ const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, co
       <Icon className="h-3.5 w-3.5 text-primary" />
     </div>
     <div className="flex-1 min-w-0">
-      <div className="flex items-center gap-1.5">
-        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
-      </div>
+      {label && (
+        <div className="flex items-center gap-1.5">
+          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+        </div>
+      )}
       <p className="text-xs font-semibold text-foreground truncate">{name}</p>
     </div>
     <div className="text-right shrink-0">
@@ -329,6 +331,22 @@ const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, co
     </div>
   </Link>
 );
+
+/* ─── Mobile section heading for grouped highlight cards ─── */
+const MobileGroupHeading = ({ icon: Icon, label, tone = "muted" }: { icon: any; label: string; tone?: "success" | "destructive" | "primary" | "accent" | "muted" }) => {
+  const toneClass =
+    tone === "success" ? "text-success"
+    : tone === "destructive" ? "text-destructive"
+    : tone === "primary" ? "text-primary"
+    : tone === "accent" ? "text-accent"
+    : "text-muted-foreground";
+  return (
+    <div className="flex items-center gap-1.5 mt-1 mb-0.5">
+      <Icon className={`h-3.5 w-3.5 ${toneClass}`} />
+      <span className={`text-[11px] font-semibold uppercase tracking-wide ${toneClass}`}>{label}</span>
+    </div>
+  );
+};
 
 /* ─── Main Page ─── */
 const OverviewPage = () => {
@@ -775,55 +793,78 @@ const OverviewPage = () => {
 
 
 
-        {/* Mobile: compact single-column list */}
+        {/* Mobile: grouped single-column cards by category */}
         <div className="flex flex-col gap-2 md:hidden">
-          {topGainers.map(s => (
-            <HighlightCard
-              key={`g-${s.id}`}
-              icon={TrendingUp}
-              label="Top Gainer"
-              name={`${s.symbol} · ${s.name}`}
-              value={`KES ${s.price.toFixed(2)}`}
-              change={<span className="inline-flex items-center gap-0.5 text-success text-[11px] font-semibold"><TrendingUp className="h-3 w-3" />+{s.day_change_percent.toFixed(2)}%</span>}
-              linkTo={`/stocks/${s.symbol}`}
-              color="bg-success/10"
-            />
-          ))}
-          {topLosers.map(s => (
-            <HighlightCard
-              key={`l-${s.id}`}
-              icon={TrendingDown}
-              label="Top Loser"
-              name={`${s.symbol} · ${s.name}`}
-              value={`KES ${s.price.toFixed(2)}`}
-              change={<span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold"><TrendingDown className="h-3 w-3" />{s.day_change_percent.toFixed(2)}%</span>}
-              linkTo={`/stocks/${s.symbol}`}
-              color="bg-destructive/10"
-            />
-          ))}
-          {moneyMarketFunds.map(f => (
-            <HighlightCard
-              key={`mm-${f.id}`}
-              icon={BarChart3}
-              label="Money Market"
-              name={f.name}
-              value={`${f.annual_yield.toFixed(2)}%`}
-              sub={`Daily: ${f.daily_yield.toFixed(4)}%`}
-              linkTo={`/compare/${f.slug}`}
-              color="bg-primary/10"
-            />
-          ))}
+          {topGainers.length > 0 && (
+            <>
+              <MobileGroupHeading icon={TrendingUp} label="Top Gainers" tone="success" />
+              {topGainers.map(s => (
+                <HighlightCard
+                  key={`g-${s.id}`}
+                  icon={TrendingUp}
+                  name={`${s.symbol} · ${s.name}`}
+                  value={`KES ${s.price.toFixed(2)}`}
+                  change={<span className="inline-flex items-center gap-0.5 text-success text-[11px] font-semibold"><TrendingUp className="h-3 w-3" />+{s.day_change_percent.toFixed(2)}%</span>}
+                  linkTo={`/stocks/${s.symbol}`}
+                  color="bg-success/10"
+                />
+              ))}
+            </>
+          )}
+          {topLosers.length > 0 && (
+            <>
+              <MobileGroupHeading icon={TrendingDown} label="Top Losers" tone="destructive" />
+              {topLosers.map(s => (
+                <HighlightCard
+                  key={`l-${s.id}`}
+                  icon={TrendingDown}
+                  name={`${s.symbol} · ${s.name}`}
+                  value={`KES ${s.price.toFixed(2)}`}
+                  change={<span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold"><TrendingDown className="h-3 w-3" />{s.day_change_percent.toFixed(2)}%</span>}
+                  linkTo={`/stocks/${s.symbol}`}
+                  color="bg-destructive/10"
+                />
+              ))}
+            </>
+          )}
+          {moneyMarketFunds.length > 0 && (
+            <>
+              <MobileGroupHeading icon={BarChart3} label="Money Market" tone="primary" />
+              {moneyMarketFunds.map(f => (
+                <HighlightCard
+                  key={`mm-${f.id}`}
+                  icon={BarChart3}
+                  name={f.name}
+                  value={`${f.annual_yield.toFixed(2)}%`}
+                  sub={`Daily: ${f.daily_yield.toFixed(4)}%`}
+                  linkTo={`/compare/${f.slug}`}
+                  color="bg-primary/10"
+                />
+              ))}
+            </>
+          )}
           {bestFI && (
-            <HighlightCard icon={Landmark} label="Fixed Income" name={bestFI.name} value={`${bestFI.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestFI.slug}`} color="bg-secondary/80" />
+            <>
+              <MobileGroupHeading icon={Landmark} label="Fixed Income" tone="muted" />
+              <HighlightCard icon={Landmark} name={bestFI.name} value={`${bestFI.annual_yield.toFixed(2)}%`} sub={`Daily: ${bestFI.daily_yield.toFixed(4)}%`} linkTo={`/compare/${bestFI.slug}`} color="bg-secondary/80" />
+            </>
           )}
           {bestFXRate && (
-            <HighlightCard icon={DollarSign} label="FX Rate" name={`${bestFXRate.currency_code}/KES`} value={`KES ${Number(bestFXRate.rate).toFixed(2)}`} change={<Change current={Number(bestFXRate.rate)} previous={bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null} />} linkTo="/rates" color="bg-accent/10" />
+            <>
+              <MobileGroupHeading icon={DollarSign} label="FX Rate" tone="accent" />
+              <HighlightCard icon={DollarSign} name={`${bestFXRate.currency_code}/KES`} value={`KES ${Number(bestFXRate.rate).toFixed(2)}`} change={<Change current={Number(bestFXRate.rate)} previous={bestFXRate.previous_rate != null ? Number(bestFXRate.previous_rate) : null} />} linkTo="/rates" color="bg-accent/10" />
+            </>
           )}
-          {goldCommodity && (
-            <HighlightCard icon={Gem} label="Gold" name={goldCommodity.name} value={`${Number(goldCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${goldCommodity.unit}`} change={<Change current={Number(goldCommodity.price)} previous={goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null} />} linkTo="/commodities" color="bg-[hsl(45,80%,50%)]/10" />
-          )}
-          {silverCommodity && (
-            <HighlightCard icon={Gem} label="Silver" name={silverCommodity.name} value={`${Number(silverCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${silverCommodity.unit}`} change={<Change current={Number(silverCommodity.price)} previous={silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null} />} linkTo="/commodities" color="bg-muted" />
+          {(goldCommodity || silverCommodity) && (
+            <>
+              <MobileGroupHeading icon={Gem} label="Commodities" tone="muted" />
+              {goldCommodity && (
+                <HighlightCard icon={Gem} name={goldCommodity.name} value={`${Number(goldCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${goldCommodity.unit}`} change={<Change current={Number(goldCommodity.price)} previous={goldCommodity.previous_price != null ? Number(goldCommodity.previous_price) : null} />} linkTo="/commodities" color="bg-[hsl(45,80%,50%)]/10" />
+              )}
+              {silverCommodity && (
+                <HighlightCard icon={Gem} name={silverCommodity.name} value={`${Number(silverCommodity.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${silverCommodity.unit}`} change={<Change current={Number(silverCommodity.price)} previous={silverCommodity.previous_price != null ? Number(silverCommodity.previous_price) : null} />} linkTo="/commodities" color="bg-muted" />
+              )}
+            </>
           )}
         </div>
       </div>
