@@ -1,11 +1,11 @@
 import { useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, BarChart3, Layers, Tag, Bell } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import YieldChange from "@/components/YieldChange";
+import { LineChart, Line, YAxis, ResponsiveContainer, Area } from "recharts";
 import FundMobileCards from "./FundMobileCards";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
@@ -64,53 +64,62 @@ const SortHeader = ({
   </button>
 );
 
-/* ─── Sparkline ─── */
-const SPARK_W = 120;
-const SPARK_H = 36;
-
-const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
-  const result = useMemo(() => {
+/* ─── MiniSparkline (matches StocksPage visual) ─── */
+const MiniSparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
+  const series = useMemo(() => {
     const vals = [...data.map((d) => d.annual_yield), currentValue];
     if (vals.length < 2) return null;
     const last12 = vals.slice(-12);
-    const min = Math.min(...last12);
-    const max = Math.max(...last12);
-    const range = max - min || 1;
-    const pad = 3;
-    const pts = last12.map((v, i) => ({
-      x: pad + (i / (last12.length - 1)) * (SPARK_W - pad * 2),
-      y: pad + (1 - (v - min) / range) * (SPARK_H - pad * 2),
-    }));
-    const isUp = pts[pts.length - 1].y <= pts[0].y;
-    const change = last12[last12.length - 1] - last12[0];
-    return { pts, isUp, change };
+    return {
+      points: last12.map((v, i) => ({ i, value: v })),
+      positive: last12[last12.length - 1] >= last12[0],
+    };
   }, [data, currentValue]);
 
-  if (!result) return <span className="text-[10px] text-muted-foreground">—</span>;
+  if (!series) return <span className="text-[10px] text-muted-foreground">—</span>;
 
-  const { pts, isUp, change } = result;
-  const color = isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))";
-  const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
-  const areaD = pathD + ` L${pts[pts.length - 1].x.toFixed(1)},${SPARK_H} L${pts[0].x.toFixed(1)},${SPARK_H} Z`;
-  const gradId = isUp ? "sg-up" : "sg-dn";
+  const color = series.positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  const gradientId = `fund-spark-${series.positive ? "up" : "down"}`;
 
   return (
-    <div className="inline-flex items-center gap-1.5">
-      <svg width={SPARK_W} height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} className="shrink-0">
-        <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="0%" stopColor={color} stopOpacity="0.2" />
-            <stop offset="100%" stopColor={color} stopOpacity="0" />
-          </linearGradient>
-        </defs>
-        <path d={areaD} fill={`url(#${gradId})`} />
-        <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-        <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r="2.5" fill={color} />
-      </svg>
-      <span className={`text-[10px] font-semibold tabular-nums whitespace-nowrap ${isUp ? "text-accent" : "text-destructive"}`}>
-        {change >= 0 ? "+" : ""}{change.toFixed(2)}
-      </span>
+    <div className="w-[60px] h-[24px] inline-block">
+      <ResponsiveContainer width="100%" height="100%">
+        <LineChart data={series.points} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <YAxis hide domain={["dataMin - 0.5", "dataMax + 0.5"]} />
+          <Area type="monotone" dataKey="value" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
+          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+        </LineChart>
+      </ResponsiveContainer>
     </div>
+  );
+};
+
+/* ─── ChangeCell (matches StocksPage visual) ─── */
+const ChangeCell = ({ change, unit }: { change: number; unit: string }) => {
+  const suffix = unit === "%" ? "%" : "";
+  const formatted = `${Math.abs(change).toFixed(2)}${suffix}`;
+  if (change > 0)
+    return (
+      <span className="inline-flex items-center gap-0.5 text-accent text-[11px] font-semibold tabular-nums">
+        <TrendingUp className="h-3 w-3" /> +{formatted}
+      </span>
+    );
+  if (change < 0)
+    return (
+      <span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold tabular-nums">
+        <TrendingDown className="h-3 w-3" /> -{formatted}
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]">
+      <Minus className="h-3 w-3" /> 0.00{suffix}
+    </span>
   );
 };
 
@@ -463,118 +472,128 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <colgroup>
-              <col style={{ width: "2.5%" }} />
-              <col style={{ width: "13%" }} />
-              <col style={{ width: "15%" }} />
-              <col style={{ width: "4.5%" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "11%" }} />
+              <col style={{ width: "3%" }} />
+              <col style={{ width: "20%" }} />
+              <col style={{ width: "16%" }} />
               <col style={{ width: "7%" }} />
-              <col style={{ width: "18%" }} />
+              <col style={{ width: "9%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "6%" }} />
               {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
                 <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
                 <th className="text-left px-3 py-3">
-                  <SortHeader label="Fund Name" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
+                  <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-center px-2 py-3">
+                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
+                <th className="text-left px-2 py-3 font-semibold text-muted-foreground">Type</th>
+                <th className="px-2 py-3 font-semibold text-muted-foreground text-center">
                   <Tooltip>
                     <TooltipTrigger asChild>
-                      <span className="inline-flex">
-                        <SortHeader label="Trend" field="change" sortKey={sortKey} onToggleSort={toggleSort} className="justify-center" />
-                      </span>
+                      <span className="inline-flex">Trend</span>
                     </TooltipTrigger>
                     <TooltipContent side="top" className="max-w-[220px] text-xs">
                       Difference between the current and previous annual yield.
                     </TooltipContent>
                   </Tooltip>
                 </th>
-                <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Unit</th>
+                <th className="text-right px-3 py-3">
+                  <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                </th>
+                <th className="text-right px-3 py-3">
+                  <SortHeader label="Change" field="change" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                </th>
                 <th className="text-right px-3 py-3">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
                 <th className="text-right px-3 py-3">
-                  <SortHeader label="Annual Rate" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                  <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
                 <th className="text-right px-3 py-3">
-                  <SortHeader label="Min. Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                  <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-3">
-                  <SortHeader label="Mgmt Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
-                </th>
-                <th className="text-right pr-4 pl-2 py-3 font-semibold text-muted-foreground">Manager</th>
-                {onToggleFavourite && <th className="w-8 pr-3 py-3"></th>}
+                {onToggleFavourite && <th className="w-8"></th>}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((fund, i) => (
-                <tr
-                  key={fund.id}
-                  onClick={() => navigate(`/compare/${fund.slug}`)}
-                  className={`border-t border-border/40 hover:bg-accent/8 transition-colors cursor-pointer group ${
-                    i % 2 === 0 ? "bg-transparent" : "bg-muted/20"
-                  }`}
-                >
-                  <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
-                  <td className="px-3 py-3.5">
-                    <div className="flex items-center gap-1.5 min-w-0">
+              {filtered.map((fund, i) => {
+                const prev = snapshots[fund.id]?.annual_yield;
+                const change = prev != null ? fund.annual_yield - prev : 0;
+                const typeLabel = categoryLabels[fund.fund_type] || fund.fund_type;
+                return (
+                  <tr
+                    key={fund.id}
+                    onClick={() => navigate(`/compare/${fund.slug}`)}
+                    className={`border-t border-border/40 hover:bg-accent/8 transition-colors cursor-pointer group ${
+                      i % 2 === 0 ? "bg-transparent" : "bg-muted/20"
+                    }`}
+                  >
+                    <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
+                    <td className="px-3 py-3.5">
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="font-semibold text-foreground group-hover:text-accent transition-colors truncate text-[13px]"
+                        className="font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight line-clamp-1"
                         title={fund.name}
                       >
                         {fund.name}
                       </Link>
-                    </div>
-                  </td>
-                  <td className="px-2 py-3.5 text-center">
-                    {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
-                      <Sparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
-                    ) : (
-                      <span className="text-[10px] text-muted-foreground">—</span>
-                    )}
-                  </td>
-                  <td className="px-2 py-3.5 text-center text-xs font-medium text-muted-foreground">
-                    {currencyLabel(fund.yield_unit)}
-                  </td>
-                  <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground text-xs">
-                    {fmtYield(fund.daily_yield, fund.yield_unit)}
-                  </td>
-                  <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums">
-                    <span className="font-bold text-accent text-[15px]">
-                      {fmtYield(fund.annual_yield, fund.yield_unit)}
-                    </span>
-                  </td>
-                  <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
-                    KSh {fund.minimum_investment.toLocaleString()}
-                  </td>
-                  <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
-                    {fund.management_fee}%
-                  </td>
-                  <td className="pr-4 pl-2 py-3.5 text-right text-[11px] text-muted-foreground/70 truncate max-w-[140px]" title={fund.manager}>
-                    {fund.manager}
-                  </td>
-                  {onToggleFavourite && (
-                    <td className="pr-3 py-3.5 text-center">
-                      <button
-                        onClick={(e) => { e.stopPropagation(); onToggleFavourite(fund.id, fund.name); }}
-                        className="p-1 rounded-md hover:bg-muted transition-colors"
-                        aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
-                      >
-                        <Bell className={`h-3.5 w-3.5 transition-colors ${isFavourite?.(fund.id) ? "text-accent fill-accent" : "text-muted-foreground/40 hover:text-accent"}`} />
-                      </button>
                     </td>
-                  )}
-                </tr>
-              ))}
+                    <td className="px-3 py-3.5 text-foreground text-xs max-w-[200px] truncate" title={fund.manager}>
+                      {fund.manager}
+                    </td>
+                    <td className="px-2 py-3.5">
+                      <span className="inline-block text-[10px] font-medium text-muted-foreground bg-muted/60 rounded-md px-1.5 py-0.5 whitespace-nowrap">
+                        {typeLabel}
+                      </span>
+                    </td>
+                    <td className="px-2 py-3.5 text-center">
+                      {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
+                        <MiniSparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">—</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums">
+                      <span className="font-bold text-accent text-[15px]">
+                        {fmtYield(fund.annual_yield, fund.yield_unit)}
+                      </span>
+                    </td>
+                    <td className="px-3 py-3.5 text-right">
+                      <ChangeCell change={change} unit={fund.yield_unit} />
+                    </td>
+                    <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground text-xs">
+                      {fmtYield(fund.daily_yield, fund.yield_unit)}
+                    </td>
+                    <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                      KSh {fund.minimum_investment.toLocaleString()}
+                    </td>
+                    <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap">
+                      {fund.management_fee}%
+                    </td>
+                    {onToggleFavourite && (
+                      <td className="px-2 py-3.5 text-center">
+                        <button
+                          onClick={(e) => { e.stopPropagation(); onToggleFavourite(fund.id, fund.name); }}
+                          className="p-1 rounded-md hover:bg-muted transition-colors"
+                          aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
+                        >
+                          <Star className={`h-3.5 w-3.5 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+                        </button>
+                      </td>
+                    )}
+                  </tr>
+                );
+              })}
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 10 : 9} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 11 : 10} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
