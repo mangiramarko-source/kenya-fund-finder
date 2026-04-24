@@ -352,7 +352,10 @@ const RatesPage = () => {
                   key={r.id}
                   rate={r}
                   history={history[r.id]}
+                  historyLoading={historyLoading === r.id}
                   positive={positive}
+                  isExpanded={expanded === r.id}
+                  onToggle={() => toggleExpand(r.id)}
                   isFavourite={user ? isFavourite(r.id) : undefined}
                   onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
                 />
