@@ -368,10 +368,16 @@ Deno.serve(async (req) => {
         .map((e: { title: string }) => normalizeTitle(e.title || ""))
         .filter(Boolean),
     );
+    // Pre-tokenize existing titles once for fuzzy comparison
+    const existingTokenSets: Set<string>[] = (existing || [])
+      .map((e: { title: string }) => tokenize(e.title || ""))
+      .filter((s: Set<string>) => s.size >= 3);
 
     // Dedupe within this batch as well (cross-feed duplicates from Google News etc.)
     const seenUrls = new Set<string>();
     const seenTitles = new Set<string>();
+    const seenTokenSets: Set<string>[] = [];
+    let fuzzySkipped = 0;
     const newArticles = allArticles.filter((a) => {
       const nUrl = normalizeUrl(a.url);
       const nTitle = normalizeTitle(a.title);
@@ -379,10 +385,20 @@ Deno.serve(async (req) => {
       if (nTitle && existingTitles.has(nTitle)) return false;
       if (nUrl && seenUrls.has(nUrl)) return false;
       if (nTitle && seenTitles.has(nTitle)) return false;
+
+      // Fuzzy title match against existing DB + this batch
+      const tokens = tokenize(a.title);
+      if (isFuzzyDuplicate(tokens, existingTokenSets) || isFuzzyDuplicate(tokens, seenTokenSets)) {
+        fuzzySkipped++;
+        return false;
+      }
+
       if (nUrl) seenUrls.add(nUrl);
       if (nTitle) seenTitles.add(nTitle);
+      if (tokens.size >= 3) seenTokenSets.push(tokens);
       return true;
     });
+    if (fuzzySkipped > 0) console.log(`Fuzzy dedup skipped ${fuzzySkipped} near-duplicate articles`);
 
     if (newArticles.length === 0) {
       return new Response(
