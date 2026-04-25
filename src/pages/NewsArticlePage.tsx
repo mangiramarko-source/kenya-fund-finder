@@ -33,6 +33,19 @@ const NewsArticlePage = () => {
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<NewsFromDB[]>([]);
 
+  const [dark, setDark] = useState(() => {
+    if (typeof window === "undefined") return true;
+    const saved = localStorage.getItem("theme");
+    if (saved) return saved === "dark";
+    return document.documentElement.classList.contains("dark");
+  });
+
+  useEffect(() => {
+    if (dark) document.documentElement.classList.add("dark");
+    else document.documentElement.classList.remove("dark");
+    localStorage.setItem("theme", dark ? "dark" : "light");
+  }, [dark]);
+
   useEffect(() => {
     if (!id) return;
     setLoading(true);
