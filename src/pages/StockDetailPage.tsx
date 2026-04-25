@@ -99,7 +99,7 @@ const StockDetailPage = () => {
     const fetchStock = async () => {
       const { data } = await supabase
         .from("stocks_public")
-        .select("*")
+        .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, dividend_yield, year_high, year_low, updated_at")
         .eq("symbol", symbol.toUpperCase())
         .maybeSingle();
       if (!data) { setLoading(false); return; }
