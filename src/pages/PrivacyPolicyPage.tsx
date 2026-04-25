@@ -109,7 +109,7 @@ const PrivacyPolicyPage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">11. Contact Us</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          If you have questions about this Privacy Policy or wish to exercise your data rights, please contact us through the Platform.
+          If you have questions about this Privacy Policy or wish to exercise your data rights, please contact <strong>Elyon Innovation LTD</strong> through the Platform.
         </p>
       </section>
     </div>
