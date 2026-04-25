@@ -131,6 +131,42 @@ function normalizeTitle(title: string): string {
     .trim();
 }
 
+// Common English stopwords removed before fuzzy comparison
+const STOPWORDS = new Set([
+  "a", "an", "the", "and", "or", "but", "of", "in", "on", "at", "to", "for", "with", "by",
+  "from", "as", "is", "are", "was", "were", "be", "been", "being", "it", "its", "this", "that",
+  "these", "those", "has", "have", "had", "will", "would", "could", "should", "may", "can",
+  "s", "t", "up", "down", "out", "over", "under", "after", "before", "into", "than",
+  "new", "says", "said", "amid", "vs", "via",
+]);
+
+function tokenize(title: string): Set<string> {
+  return new Set(
+    normalizeTitle(title)
+      .split(" ")
+      .filter((w) => w.length > 2 && !STOPWORDS.has(w)),
+  );
+}
+
+function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
+  if (a.size === 0 || b.size === 0) return 0;
+  let intersection = 0;
+  for (const w of a) if (b.has(w)) intersection++;
+  const union = a.size + b.size - intersection;
+  return intersection / union;
+}
+
+// Two titles are "fuzzy duplicates" when they share ≥70% of significant tokens
+const FUZZY_THRESHOLD = 0.7;
+
+function isFuzzyDuplicate(tokens: Set<string>, existingTokens: Set<string>[]): boolean {
+  if (tokens.size < 3) return false; // too short to compare reliably
+  for (const ex of existingTokens) {
+    if (jaccardSimilarity(tokens, ex) >= FUZZY_THRESHOLD) return true;
+  }
+  return false;
+}
+
 function categorize(text: string): string {
   const lower = text.toLowerCase();
   if (/yield|return|interest rate|cbk|central bank|treasury bill|t-bill/.test(lower)) return "Yield Updates";
@@ -332,10 +368,16 @@ Deno.serve(async (req) => {
         .map((e: { title: string }) => normalizeTitle(e.title || ""))
         .filter(Boolean),
     );
+    // Pre-tokenize existing titles once for fuzzy comparison
+    const existingTokenSets: Set<string>[] = (existing || [])
+      .map((e: { title: string }) => tokenize(e.title || ""))
+      .filter((s: Set<string>) => s.size >= 3);
 
     // Dedupe within this batch as well (cross-feed duplicates from Google News etc.)
     const seenUrls = new Set<string>();
     const seenTitles = new Set<string>();
+    const seenTokenSets: Set<string>[] = [];
+    let fuzzySkipped = 0;
     const newArticles = allArticles.filter((a) => {
       const nUrl = normalizeUrl(a.url);
       const nTitle = normalizeTitle(a.title);
@@ -343,10 +385,20 @@ Deno.serve(async (req) => {
       if (nTitle && existingTitles.has(nTitle)) return false;
       if (nUrl && seenUrls.has(nUrl)) return false;
       if (nTitle && seenTitles.has(nTitle)) return false;
+
+      // Fuzzy title match against existing DB + this batch
+      const tokens = tokenize(a.title);
+      if (isFuzzyDuplicate(tokens, existingTokenSets) || isFuzzyDuplicate(tokens, seenTokenSets)) {
+        fuzzySkipped++;
+        return false;
+      }
+
       if (nUrl) seenUrls.add(nUrl);
       if (nTitle) seenTitles.add(nTitle);
+      if (tokens.size >= 3) seenTokenSets.push(tokens);
       return true;
     });
+    if (fuzzySkipped > 0) console.log(`Fuzzy dedup skipped ${fuzzySkipped} near-duplicate articles`);
 
     if (newArticles.length === 0) {
       return new Response(
