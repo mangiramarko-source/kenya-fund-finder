@@ -20,8 +20,6 @@ const FundDetailPage = lazy(() => import("./pages/FundDetailPage"));
 const NewsPage = lazy(() => import("./pages/NewsPage"));
 const NewsArticlePage = lazy(() => import("./pages/NewsArticlePage"));
 const LearnPage = lazy(() => import("./pages/LearnPage"));
-const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
-const TermsOfUsePage = lazy(() => import("./pages/TermsOfUsePage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
@@ -69,8 +67,8 @@ const App = () => (
                     <Route path="/news" element={<NewsPage />} />
                     <Route path="/news/:id" element={<NewsArticlePage />} />
                     <Route path="/learn" element={<LearnPage />} />
-                    <Route path="/privacy" element={<PrivacyPolicyPage />} />
-                    <Route path="/terms" element={<TermsOfUsePage />} />
+                    <Route path="/privacy" element={<SitePage />} />
+                    <Route path="/terms" element={<SitePage />} />
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/profile" element={<ProfilePage />} />

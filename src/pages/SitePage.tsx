@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, ArrowLeft, Info } from "lucide-react";
 
@@ -13,7 +13,10 @@ interface SitePage {
 }
 
 const SitePage = () => {
-  const { slug } = useParams<{ slug: string }>();
+  const params = useParams<{ slug: string }>();
+  const location = useLocation();
+  // Support both /page/:slug routes and direct routes like /privacy, /terms
+  const slug = params.slug || location.pathname.replace(/^\/+/, "").split("/")[0];
   const [page, setPage] = useState<SitePage | null>(null);
   const [loading, setLoading] = useState(true);
 

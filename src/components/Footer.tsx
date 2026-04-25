@@ -24,6 +24,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 
 const Footer = forwardRef<HTMLElement>((_, ref) => {
   const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>([]);
+  const [disclaimer, setDisclaimer] = useState<string[]>([]);
 
   useEffect(() => {
     supabase
@@ -31,6 +32,17 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
       .select("id, platform, url, icon_name, sort_order")
       .order("sort_order")
       .then(({ data }) => setSocialLinks((data as any as SocialLinkItem[]) || []));
+
+    supabase
+      .from("site_pages_public")
+      .select("content")
+      .eq("slug", "disclaimer")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.content) {
+          setDisclaimer(data.content.split("\n").map((s) => s.trim()).filter(Boolean));
+        }
+      });
   }, []);
 
   return (
@@ -97,14 +109,19 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
           </div>
         </div>
 
-        {/* Disclaimer */}
+        {/* Disclaimer (admin-editable via Site Pages → "disclaimer") */}
         <div className="pt-6 border-t border-border">
-          <p className="text-xs text-muted-foreground leading-relaxed mb-4">
-            <strong>Important Disclaimer:</strong> This platform provides information only and does not constitute investment advice. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified financial advisor before making any investment decisions.
-          </p>
-          <p className="text-xs text-muted-foreground leading-relaxed">
-            All funds listed are regulated by the <strong>Capital Markets Authority (CMA) of Kenya</strong>. Yields shown are gross annual effective yields before 15% withholding tax. Data may not reflect real-time values.
-          </p>
+          {(disclaimer.length > 0
+            ? disclaimer
+            : [
+                "Important Disclaimer: This platform provides information only and does not constitute investment advice. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified financial advisor before making any investment decisions.",
+                "All funds listed are regulated by the Capital Markets Authority (CMA) of Kenya. Yields shown are gross annual effective yields before 15% withholding tax. Data may not reflect real-time values.",
+              ]
+          ).map((para, i) => (
+            <p key={i} className="text-xs text-muted-foreground leading-relaxed mb-4 last:mb-0">
+              {para}
+            </p>
+          ))}
           <p className="text-xs text-muted-foreground text-center mt-6">
             © {new Date().getFullYear()} Kenya Fund Finder. All rights reserved. Not affiliated with any fund manager or the CMA.
           </p>

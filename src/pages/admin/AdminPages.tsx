@@ -112,7 +112,7 @@ const AdminPages = () => {
   return (
     <div className="space-y-4">
       <h3 className="font-semibold">Site Pages</h3>
-      <p className="text-sm text-muted-foreground">Edit the content of your About and Contact pages.</p>
+      <p className="text-sm text-muted-foreground">Edit About, Contact, Privacy Policy, Terms of Use, and the footer Disclaimer.</p>
       <div className="space-y-2">
         {pages.map((p) => (
           <div key={p.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-4">
