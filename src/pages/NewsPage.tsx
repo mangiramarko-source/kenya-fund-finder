@@ -640,46 +640,44 @@ const NewsPage = () => {
           {/* Grid of remaining articles */}
           {(visibleList.length > 0 || visibleListMobile.length > 0) && (
             <>
-              {/* Mobile grid: shows ALL filtered articles (hero is hidden on mobile) */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 lg:hidden">
+              {/* Mobile list: edge-to-edge, no cards — full screen width */}
+              <div className="lg:hidden -mx-4 divide-y divide-border border-y border-border">
                 {visibleListMobile.map((article) => {
                   const dot = categoryDot[article.category] || "bg-muted-foreground";
                   return (
                     <Link
                       key={article.id}
                       to={`/news/${article.id}`}
-                      className="group rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all overflow-hidden"
+                      className="group block px-4 py-4 active:bg-muted/30 transition-colors"
                     >
-                      <div className="aspect-[16/9] overflow-hidden">
+                      <div className="flex items-center gap-1.5 mb-2">
+                        <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
+                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
+                        <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
+                          <Clock className="h-2.5 w-2.5" />
+                          {article.read_time}
+                        </span>
+                      </div>
+                      <h3 className="font-heading font-semibold text-base leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
+                        {decodeHtmlEntities(article.title)}
+                      </h3>
+                      <div className="aspect-[16/9] overflow-hidden mb-2 -mx-4">
                         <img
                           src={getNewsImage(article.image_url, article.category, article.id)}
                           alt={article.title}
-                          className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                          className="w-full h-full object-cover"
                           loading="lazy"
                           onError={(e) => handleNewsImageError(e, article.category, article.id)}
                         />
                       </div>
-                      <div className="p-3.5">
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
-                          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
-                          <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
-                            <Clock className="h-2.5 w-2.5" />
-                            {article.read_time}
-                          </span>
-                        </div>
-                        <h3 className="font-heading font-semibold text-base leading-snug line-clamp-2 mb-1 group-hover:text-accent transition-colors">
-                          {decodeHtmlEntities(article.title)}
-                        </h3>
-                        <p className="text-muted-foreground line-clamp-2 leading-relaxed mb-2 text-sm">
-                          {decodeHtmlEntities(article.summary)}
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                          {article.source && <SourceBadge source={article.source} />}
-                          <span className="text-[10px] text-muted-foreground">
-                            {formatDate(article.date_published)}
-                          </span>
-                        </div>
+                      <p className="text-muted-foreground line-clamp-2 leading-relaxed mb-2 text-sm">
+                        {decodeHtmlEntities(article.summary)}
+                      </p>
+                      <div className="flex items-center gap-1.5">
+                        {article.source && <SourceBadge source={article.source} />}
+                        <span className="text-[10px] text-muted-foreground">
+                          {formatDate(article.date_published)}
+                        </span>
                       </div>
                     </Link>
                   );
