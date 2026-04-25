@@ -722,22 +722,10 @@ const NewsPage = () => {
                       )}
                       <Link
                         to={`/news/${article.id}`}
-                        className="group block active:bg-muted/30 transition-colors"
+                        className="group flex items-stretch gap-3 px-4 py-3 active:bg-muted/30 transition-colors"
                       >
-                        {/* Full-bleed image at top */}
-                        <div className="aspect-[16/9] overflow-hidden bg-muted">
-                          <img
-                            src={getNewsImage(article.image_url, article.category, article.id)}
-                            alt={article.title}
-                            className="w-full h-full object-cover"
-                            loading={idx === 0 ? "eager" : "lazy"}
-                            fetchPriority={idx === 0 ? "high" : "auto"}
-                            decoding={idx === 0 ? "sync" : "async"}
-                            onError={(e) => handleNewsImageError(e, article.category, article.id)}
-                          />
-                        </div>
-                        {/* Content */}
-                        <div className="px-4 pt-3 pb-3.5">
+                        {/* Content on the left */}
+                        <div className="flex-1 min-w-0 flex flex-col">
                           <div className="flex items-center justify-between mb-1">
                             <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
                               {article.category}
@@ -747,22 +735,31 @@ const NewsPage = () => {
                               {article.read_time}
                             </span>
                           </div>
-                          <h3 className="font-heading font-bold text-lg leading-tight line-clamp-2 mb-1 text-foreground group-hover:text-accent transition-colors">
+                          <h3 className="font-heading font-bold text-base leading-tight line-clamp-3 mb-1.5 text-foreground group-hover:text-accent transition-colors">
                             {decodeHtmlEntities(article.title)}
                           </h3>
-                          <p className="text-muted-foreground line-clamp-2 leading-snug mb-2 text-sm">
-                            {decodeHtmlEntities(article.summary)}
-                          </p>
-                          <div className="flex items-center gap-2">
+                          <div className="mt-auto flex items-center gap-1.5 flex-wrap">
                             {article.source && (
-                              <div className="h-7 w-7 rounded-full bg-accent/15 grid place-items-center text-[11px] font-bold text-accent shrink-0">
+                              <div className="h-5 w-5 rounded-full bg-accent/15 grid place-items-center text-[9px] font-bold text-accent shrink-0">
                                 {article.source.slice(0, 2).toUpperCase()}
                               </div>
                             )}
-                            <span className="text-sm font-medium text-foreground">{article.source}</span>
-                            <span className="text-sm text-muted-foreground">·</span>
-                            <span className="text-sm text-muted-foreground">{formatDate(article.date_published)}</span>
+                            <span className="text-xs font-medium text-foreground truncate">{article.source}</span>
+                            <span className="text-xs text-muted-foreground">·</span>
+                            <span className="text-xs text-muted-foreground">{formatDate(article.date_published)}</span>
                           </div>
+                        </div>
+                        {/* Image on the right - fills vertical space, not rounded */}
+                        <div className="w-32 shrink-0 overflow-hidden bg-muted self-stretch">
+                          <img
+                            src={getNewsImage(article.image_url, article.category, article.id)}
+                            alt={article.title}
+                            className="w-full h-full object-cover min-h-[110px]"
+                            loading={idx === 0 ? "eager" : "lazy"}
+                            fetchPriority={idx === 0 ? "high" : "auto"}
+                            decoding={idx === 0 ? "sync" : "async"}
+                            onError={(e) => handleNewsImageError(e, article.category, article.id)}
+                          />
                         </div>
                       </Link>
                     </div>
