@@ -751,26 +751,6 @@ const NewsPage = () => {
                 </section>
               )}
 
-              {/* TOP SOURCES (placeholder for "Top Creators") */}
-              {topSources.length > 0 && (
-                <section>
-                  <div className="flex items-end justify-between mb-4">
-                    <h2 className="font-heading font-bold text-2xl text-foreground">Top Sources</h2>
-                  </div>
-                  <div className="flex flex-wrap items-start gap-6">
-                    {topSources.map(([source, count]) => (
-                      <div key={source} className="flex flex-col items-center gap-2 w-28 text-center">
-                        <div className="h-16 w-16 rounded-full border-2 border-accent/30 bg-card grid place-items-center text-xl font-bold text-accent shadow-[0_0_20px_-8px_hsl(var(--accent)/0.4)]">
-                          {source.slice(0, 1)}
-                        </div>
-                        <span className="text-xs font-semibold text-foreground truncate w-full">{source}</span>
-                        <span className="text-[10px] text-muted-foreground">{count} article{count !== 1 ? "s" : ""}</span>
-                      </div>
-                    ))}
-                  </div>
-                </section>
-              )}
-
               {/* "More News" header before remaining grid */}
               {listArticles.length > 0 && (
                 <div className="flex items-end justify-between pt-2 border-t border-border">
