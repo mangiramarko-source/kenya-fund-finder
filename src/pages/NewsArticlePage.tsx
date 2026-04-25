@@ -94,6 +94,7 @@ const NewsArticlePage = () => {
     publisher: {
       "@type": "Organization",
       name: "Kenya Fund Finder",
+      legalName: "Elyon Innovation LTD",
       url: "https://kenyafundfinder.com",
       logo: { "@type": "ImageObject", url: "https://kenyafundfinder.com/og-image.png" },
     },

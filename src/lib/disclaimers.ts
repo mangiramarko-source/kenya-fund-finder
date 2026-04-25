@@ -24,5 +24,5 @@ export function getDisclaimer(fundType?: FundType): string {
   if (fundType && FUND_TYPE_DISCLAIMERS[fundType]) {
     return FUND_TYPE_DISCLAIMERS[fundType];
   }
-  return "Yields shown are gross annual effective rates before the 15% withholding tax. Past performance is not indicative of future results. Data is sourced from publicly available fund fact sheets and may not reflect real-time values. All investments carry risk, including the potential loss of principal. This platform does not offer investment advice. Please consult a licensed financial advisor before making investment decisions.";
+  return "Yields shown are gross annual effective rates before the 15% withholding tax. Past performance is not indicative of future results. Data is sourced from publicly available fund fact sheets and may not reflect real-time values. All investments carry risk, including the potential loss of principal. This platform, operated by Elyon Innovation LTD, does not offer investment advice. Please consult a licensed financial advisor before making investment decisions.";
 }
