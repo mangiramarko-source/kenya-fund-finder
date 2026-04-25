@@ -182,7 +182,7 @@ const NewsArticlePage = () => {
       </div>
 
       {/* Summary */}
-      <p className="text-sm sm:text-base text-muted-foreground leading-relaxed mb-6 border-l-2 border-accent/30 pl-4 px-[20px]">
+      <p className="sm:text-base text-muted-foreground leading-relaxed mb-6 border-l-2 border-accent/30 pl-4 px-[20px] text-base">
         {decodeHtmlEntities(article.summary)}
       </p>
 
