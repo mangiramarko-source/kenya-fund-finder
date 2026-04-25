@@ -4,7 +4,7 @@
  *  A deterministic Picsum URL is used as the final guaranteed fallback
  *  if Unsplash itself ever 404s. */
 const UNSPLASH = (id: string) =>
-  `https://images.unsplash.com/photo-${id}?w=800&h=500&fit=crop&auto=format&q=70`;
+  `https://images.unsplash.com/photo-${id}?w=520&h=325&fit=crop&auto=format&q=60`;
 
 const categoryImages: Record<string, string[]> = {
   "Yield Updates": [
