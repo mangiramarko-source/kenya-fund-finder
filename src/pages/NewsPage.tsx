@@ -276,18 +276,22 @@ const NewsPage = () => {
   const visibleListMobile = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
   const hasMoreMobile = visibleCount < filtered.length;
 
-  // Mobile category rails: group filtered articles by category for horizontal-scroll rows
-  // injected between list items.
+  // Mobile category rails: group articles by category for horizontal-scroll rows
+  // injected between list items. CRITICAL: exclude articles already shown in the
+  // main mobile list to prevent the same story appearing twice (e.g. once as a
+  // top card and again inside the "Market News" rail).
   const mobileCategoryRails = useMemo(() => {
+    const visibleIds = new Set(visibleListMobile.map((a) => a.id));
     const groups: Record<string, NewsFromDB[]> = {};
     for (const a of filtered) {
+      if (visibleIds.has(a.id)) continue; // skip articles already rendered as cards
       const key = a.category || "Other";
       (groups[key] ||= []).push(a);
     }
     return Object.entries(groups)
       .filter(([, items]) => items.length >= 2)
       .sort((a, b) => b[1].length - a[1].length);
-  }, [filtered]);
+  }, [filtered, visibleListMobile]);
 
   // Intersection observer for infinite scroll
   useEffect(() => {
