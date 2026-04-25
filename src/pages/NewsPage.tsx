@@ -312,21 +312,22 @@ const NewsPage = () => {
   const hasMoreMobile = visibleCount < mobilePartition.cards.length;
   const mobileCategoryRails = mobilePartition.rails;
 
-  // Intersection observer for infinite scroll
+  // Intersection observer for infinite scroll (handles desktop + mobile lists)
   useEffect(() => {
     const el = loaderRef.current;
     if (!el) return;
+    const maxLen = Math.max(listArticles.length, mobilePartition.cards.length);
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting && hasMore) {
-          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, listArticles.length));
+        if (entries[0].isIntersecting && (hasMore || hasMoreMobile)) {
+          setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, maxLen));
         }
       },
       { rootMargin: "200px" }
     );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [hasMore, listArticles.length]);
+  }, [hasMore, hasMoreMobile, listArticles.length, mobilePartition.cards.length]);
 
   // Source stats
   const sourceStats = useMemo(() => {
