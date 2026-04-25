@@ -37,7 +37,7 @@ const CookieConsent = () => {
         <div className="relative w-full max-w-[320px] rounded-2xl bg-card/95 backdrop-blur-md border border-border p-5 shadow-lg flex flex-col items-center gap-4 text-center">
           <Cookie className="h-6 w-6 text-accent" />
           <p className="text-sm text-muted-foreground">
-            We use cookies to enhance your experience and serve ads.{" "}
+            We use cookies to enhance your experience and serve ads. Cookie data is processed by <span className="text-foreground font-medium">Elyon Innovation LTD</span>.{" "}
             <Link to="/privacy" className="text-accent hover:underline">Privacy Policy</Link>
           </p>
           <div className="flex items-center gap-3 w-full">
@@ -56,7 +56,7 @@ const CookieConsent = () => {
         <div className="flex items-center gap-3 px-4 py-2.5 bg-card/95 backdrop-blur-md border-t border-border">
           <Cookie className="h-4 w-4 text-accent shrink-0" />
           <p className="text-xs text-muted-foreground flex-1 min-w-0">
-            We use cookies to enhance your experience and serve ads.{" "}
+            We use cookies to enhance your experience and serve ads. Processed by <span className="text-foreground font-medium">Elyon Innovation LTD</span>.{" "}
             <Link to="/privacy" className="text-accent hover:underline">Privacy Policy</Link>
           </p>
           <div className="flex items-center gap-2 shrink-0">
