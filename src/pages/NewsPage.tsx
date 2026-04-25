@@ -442,7 +442,7 @@ const NewsPage = () => {
                   </div>
                   <div className="overflow-x-auto overscroll-x-contain -mx-4 px-4 pb-2 [scrollbar-width:thin]">
                     <div className="flex gap-4 snap-x snap-mandatory overscroll-x-contain">
-                      {latestArticles.map((article) => (
+                      {latestArticles.map((article, lIdx) => (
                         <Link
                           key={article.id}
                           to={`/news/${article.id}`}
@@ -453,7 +453,9 @@ const NewsPage = () => {
                               src={getNewsImage(article.image_url, article.category, article.id)}
                               alt={article.title}
                               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                              loading="lazy"
+                              loading={lIdx === 0 ? "eager" : "lazy"}
+                              fetchPriority={lIdx === 0 ? "high" : "auto"}
+                              decoding={lIdx === 0 ? "sync" : "async"}
                               onError={(e) => handleNewsImageError(e, article.category, article.id)}
                             />
                           </div>
