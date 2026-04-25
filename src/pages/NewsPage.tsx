@@ -414,7 +414,7 @@ const NewsPage = () => {
             >
               <SlidersHorizontal className="h-4 w-4" />
               <span>Filter</span>
-              {(region !== "all" || sortBy !== "latest") && (
+              {(region !== "all" || sortBy !== "latest" || recency !== "all") && (
                 <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
               )}
             </button>
