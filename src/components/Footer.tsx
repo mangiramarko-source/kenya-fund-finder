@@ -87,7 +87,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
               <li><Link to="/funds" className="hover:text-foreground transition-colors">Unit Trusts</Link></li>
               <li><Link to="/rates" className="hover:text-foreground transition-colors">FX Rates</Link></li>
               <li><Link to="/commodities" className="hover:text-foreground transition-colors">Commodities</Link></li>
-              <li><Link to="/markets" className="hover:text-foreground transition-colors">Market Dashboard</Link></li>
+              
             </ul>
           </div>
 
