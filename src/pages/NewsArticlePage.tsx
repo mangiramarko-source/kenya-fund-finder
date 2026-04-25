@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Clock, Calendar, Share2, Link2, Twitter, Faceboo
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchNewsById, type NewsFromDB } from "@/lib/api";
+import { fetchNewsById, fetchRelatedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
