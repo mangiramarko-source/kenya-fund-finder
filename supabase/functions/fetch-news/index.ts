@@ -45,6 +45,10 @@ const RSS_FEEDS = [
   { url: "https://www.investing.com/rss/news_25.rss", source: "Investing.com" },
   { url: "https://www.marketwatch.com/rss/topstories", source: "MarketWatch" },
   { url: "https://seekingalpha.com/feed.xml", source: "Seeking Alpha" },
+  // Free, no-key Google News RSS queries (auto-aggregates many sources)
+  { url: "https://news.google.com/rss/search?q=Kenya+economy+OR+NSE+OR+CBK+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
+  { url: "https://news.google.com/rss/search?q=Kenya+shilling+OR+%22unit+trust%22+OR+%22money+market%22+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
+  { url: "https://news.google.com/rss/search?q=Africa+markets+OR+Eurobond+OR+%22emerging+markets%22+when:7d&hl=en&gl=US&ceid=US:en", source: "Google News" },
 ];
 
 interface ParsedArticle {
