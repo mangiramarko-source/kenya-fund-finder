@@ -20,8 +20,6 @@ const FundDetailPage = lazy(() => import("./pages/FundDetailPage"));
 const NewsPage = lazy(() => import("./pages/NewsPage"));
 const NewsArticlePage = lazy(() => import("./pages/NewsArticlePage"));
 const LearnPage = lazy(() => import("./pages/LearnPage"));
-const PrivacyPolicyPage = lazy(() => import("./pages/PrivacyPolicyPage"));
-const TermsOfUsePage = lazy(() => import("./pages/TermsOfUsePage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
