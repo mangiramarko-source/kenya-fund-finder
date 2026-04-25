@@ -773,51 +773,55 @@ const NewsPage = () => {
                         <div className="h-px bg-foreground/30" role="separator" />
                       )}
                       {rail && RailIcon && railItems.length > 0 && (
-                        <section className="border-t border-border bg-muted/10 py-4">
-                          <div className="flex items-center gap-2 px-4 mb-3">
+                        <section className="border-t border-border bg-muted/10">
+                          <div className="flex items-center gap-2 px-4 pt-4 pb-2">
                             <RailIcon className="h-4 w-4 text-foreground" />
                             <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
-                              {rail[0]}
+                              Related: {rail[0]}
                             </h3>
                           </div>
-                          <div className="overflow-x-auto overscroll-x-contain px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
-                            <div className="flex gap-3 snap-x snap-mandatory">
-                              {railItems.map((item) => (
-                                <Link
-                                  key={item.id}
-                                  to={`/news/${item.id}`}
-                                  className="group shrink-0 w-[78%] snap-start rounded-xl border border-border bg-card overflow-hidden"
-                                >
-                                  <div className="flex gap-2.5 p-2.5">
-                                    <div className="h-20 w-20 rounded-lg overflow-hidden bg-muted shrink-0">
-                                      <img
-                                        src={getNewsImage(item.image_url, item.category, item.id)}
-                                        alt={item.title}
-                                        className="w-full h-full object-cover"
-                                        loading="lazy"
-                                        onError={(e) => handleNewsImageError(e, item.category, item.id)}
-                                      />
-                                    </div>
-                                    <div className="flex-1 min-w-0">
-                                      <h4 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mt-0.5 group-hover:text-accent transition-colors">
-                                        {decodeHtmlEntities(item.title)}
-                                      </h4>
-                                      <div className="flex items-center gap-1.5 mt-1.5">
-                                        {item.source && (
-                                          <div className="h-5 w-5 rounded-full bg-accent/15 grid place-items-center text-[9px] font-bold text-accent shrink-0">
-                                            {item.source.slice(0, 2).toUpperCase()}
-                                          </div>
-                                        )}
-                                        <span className="text-xs font-medium text-foreground truncate">{item.source}</span>
-                                        <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
-                                          {formatDate(item.date_published)}
-                                        </span>
-                                      </div>
-                                    </div>
+                          <div className="divide-y divide-border border-y border-border">
+                            {railItems.map((item) => (
+                              <Link
+                                key={item.id}
+                                to={`/news/${item.id}`}
+                                className="group flex items-stretch gap-3 px-4 py-3 active:bg-muted/30 transition-colors"
+                              >
+                                <div className="flex-1 min-w-0 flex flex-col">
+                                  <div className="flex items-center justify-between mb-1">
+                                    <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
+                                      {item.category}
+                                    </span>
+                                    <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                      <Clock className="h-3 w-3" />
+                                      {item.read_time}
+                                    </span>
                                   </div>
-                                </Link>
-                              ))}
-                            </div>
+                                  <h4 className="font-heading font-bold text-base leading-tight line-clamp-3 mb-1.5 text-foreground group-hover:text-accent transition-colors">
+                                    {decodeHtmlEntities(item.title)}
+                                  </h4>
+                                  <div className="mt-auto flex items-center gap-1.5 flex-wrap">
+                                    {item.source && (
+                                      <div className="h-5 w-5 rounded-full bg-accent/15 grid place-items-center text-[9px] font-bold text-accent shrink-0">
+                                        {item.source.slice(0, 2).toUpperCase()}
+                                      </div>
+                                    )}
+                                    <span className="text-xs font-medium text-foreground truncate">{item.source}</span>
+                                    <span className="text-xs text-muted-foreground">·</span>
+                                    <span className="text-xs text-muted-foreground">{formatDate(item.date_published)}</span>
+                                  </div>
+                                </div>
+                                <div className="w-32 shrink-0 overflow-hidden bg-muted self-stretch">
+                                  <img
+                                    src={getNewsImage(item.image_url, item.category, item.id)}
+                                    alt={item.title}
+                                    className="w-full h-full object-cover min-h-[110px]"
+                                    loading="lazy"
+                                    onError={(e) => handleNewsImageError(e, item.category, item.id)}
+                                  />
+                                </div>
+                              </Link>
+                            ))}
                           </div>
                         </section>
                       )}
