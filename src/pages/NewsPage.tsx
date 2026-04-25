@@ -668,6 +668,9 @@ const NewsPage = () => {
 
                   return (
                     <div key={article.id}>
+                      {idx > 0 && !rail && (
+                        <div className="h-px bg-foreground/30" role="separator" />
+                      )}
                       {rail && RailIcon && railItems.length > 0 && (
                         <section className="border-t border-border bg-muted/10 py-4">
                           <div className="flex items-center gap-2 px-4 mb-3">
