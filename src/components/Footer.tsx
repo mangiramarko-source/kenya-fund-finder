@@ -116,13 +116,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
 
         {/* Disclaimer (admin-editable via Site Pages → "disclaimer") */}
         <div className="pt-6 border-t border-border">
-          {(disclaimer.length > 0
-            ? disclaimer
-            : [
-                "Important Disclaimer: This platform provides information only and does not constitute investment advice. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified financial advisor before making any investment decisions.",
-                "All funds listed are regulated by the Capital Markets Authority (CMA) of Kenya. Yields shown are gross annual effective yields before 15% withholding tax. Data may not reflect real-time values.",
-              ]
-          ).map((para, i) => (
+          {disclaimer.map((para, i) => (
             <p key={i} className="text-xs text-muted-foreground leading-relaxed mb-4 last:mb-0">
               {para}
             </p>
