@@ -733,8 +733,8 @@ const NewsPage = () => {
                           />
                         </div>
                         {/* Content */}
-                        <div className="px-4 pt-4 pb-5">
-                          <div className="flex items-center justify-between mb-2">
+                        <div className="px-4 pt-3 pb-3.5">
+                          <div className="flex items-center justify-between mb-1">
                             <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
                               {article.category}
                             </span>
@@ -743,15 +743,15 @@ const NewsPage = () => {
                               {article.read_time}
                             </span>
                           </div>
-                          <h3 className="font-heading font-bold text-lg leading-snug line-clamp-2 mb-2 text-foreground group-hover:text-accent transition-colors">
+                          <h3 className="font-heading font-bold text-lg leading-tight line-clamp-2 mb-1 text-foreground group-hover:text-accent transition-colors">
                             {decodeHtmlEntities(article.title)}
                           </h3>
-                          <p className="text-muted-foreground line-clamp-2 leading-relaxed mb-3 text-sm">
+                          <p className="text-muted-foreground line-clamp-2 leading-snug mb-2 text-sm">
                             {decodeHtmlEntities(article.summary)}
                           </p>
                           <div className="flex items-center gap-2">
                             {article.source && (
-                              <div className="h-7 w-7 rounded-full bg-accent/15 grid place-items-center text-[10px] font-bold text-accent shrink-0">
+                              <div className="h-6 w-6 rounded-full bg-accent/15 grid place-items-center text-[10px] font-bold text-accent shrink-0">
                                 {article.source.slice(0, 2).toUpperCase()}
                               </div>
                             )}
