@@ -704,8 +704,13 @@ const NewsPage = () => {
                                         {decodeHtmlEntities(item.title)}
                                       </h4>
                                       <div className="flex items-center gap-1.5 mt-1.5">
-                                        {item.source && <SourceBadge source={item.source} />}
-                                        <span className="text-[10px] text-muted-foreground ml-auto">
+                                        {item.source && (
+                                          <div className="h-5 w-5 rounded-full bg-accent/15 grid place-items-center text-[9px] font-bold text-accent shrink-0">
+                                            {item.source.slice(0, 2).toUpperCase()}
+                                          </div>
+                                        )}
+                                        <span className="text-xs font-medium text-foreground truncate">{item.source}</span>
+                                        <span className="text-[10px] text-muted-foreground ml-auto shrink-0">
                                           {formatDate(item.date_published)}
                                         </span>
                                       </div>
