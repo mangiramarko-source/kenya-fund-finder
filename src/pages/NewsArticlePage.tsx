@@ -174,11 +174,11 @@ const NewsArticlePage = () => {
 
       {/* Date & source */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground mb-6">
-        <span className="flex items-center gap-1">
+        <span className="flex items-center gap-1 text-sm">
           <Calendar className="h-3 w-3" />
           {new Date(article.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
         </span>
-        {article.source && <span>· {article.source}</span>}
+        {article.source && <span className="text-sm">· {article.source}</span>}
       </div>
 
       {/* Summary */}
