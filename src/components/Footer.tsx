@@ -22,9 +22,15 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   tiktok: Globe,
 };
 
+const DEFAULT_DISCLAIMER = [
+  "Important Disclaimer: This platform provides information only and does not constitute investment advice. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified financial advisor before making any investment decisions.",
+  "All funds listed are regulated by the Capital Markets Authority (CMA) of Kenya. Yields shown are gross annual effective yields before 15% withholding tax. Data may not reflect real-time values.",
+];
+
 const Footer = forwardRef<HTMLElement>((_, ref) => {
   const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>([]);
-  const [disclaimer, setDisclaimer] = useState<string[]>([]);
+  // Initialize with default text so footer height is stable on first paint (avoids CLS).
+  const [disclaimer, setDisclaimer] = useState<string[]>(DEFAULT_DISCLAIMER);
 
   useEffect(() => {
     supabase
@@ -60,18 +66,17 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
               Your trusted platform for comparing CMA-regulated investment funds in Kenya.
             </p>
 
-            {socialLinks.length > 0 && (
-              <div className="flex items-center gap-3 mt-4">
-                {socialLinks.map((link) => {
-                  const IconComponent = ICON_MAP[link.icon_name.toLowerCase()] || Globe;
-                  return (
-                    <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-accent transition-colors" aria-label={link.platform}>
-                      <IconComponent className="h-4 w-4" />
-                    </a>
-                  );
-                })}
-              </div>
-            )}
+            {/* Reserve height to prevent CLS while social links load async */}
+            <div className="flex items-center gap-3 mt-4 min-h-[1rem]">
+              {socialLinks.map((link) => {
+                const IconComponent = ICON_MAP[link.icon_name.toLowerCase()] || Globe;
+                return (
+                  <a key={link.id} href={link.url} target="_blank" rel="noopener noreferrer" className="text-muted-foreground hover:text-accent transition-colors" aria-label={link.platform}>
+                    <IconComponent className="h-4 w-4" />
+                  </a>
+                );
+              })}
+            </div>
           </div>
 
           {/* Markets */}
@@ -111,13 +116,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
 
         {/* Disclaimer (admin-editable via Site Pages → "disclaimer") */}
         <div className="pt-6 border-t border-border">
-          {(disclaimer.length > 0
-            ? disclaimer
-            : [
-                "Important Disclaimer: This platform provides information only and does not constitute investment advice. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified financial advisor before making any investment decisions.",
-                "All funds listed are regulated by the Capital Markets Authority (CMA) of Kenya. Yields shown are gross annual effective yields before 15% withholding tax. Data may not reflect real-time values.",
-              ]
-          ).map((para, i) => (
+          {disclaimer.map((para, i) => (
             <p key={i} className="text-xs text-muted-foreground leading-relaxed mb-4 last:mb-0">
               {para}
             </p>
