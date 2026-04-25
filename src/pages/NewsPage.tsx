@@ -455,6 +455,34 @@ const NewsPage = () => {
               </div>
 
               <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Recency</p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {([
+                    { key: "all", label: "All" },
+                    { key: "24h", label: "24h" },
+                    { key: "7d", label: "7d" },
+                    { key: "30d", label: "30d" },
+                  ] as const).map((opt) => {
+                    const active = recency === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setRecency(opt.key)}
+                        className={`h-9 rounded-md text-xs font-medium border transition-colors ${
+                          active
+                            ? "bg-foreground text-background border-foreground"
+                            : "bg-card text-muted-foreground border-border"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Sort by</p>
                 <div className="grid grid-cols-3 gap-1.5">
                   {([
