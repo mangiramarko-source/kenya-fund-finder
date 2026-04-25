@@ -170,7 +170,7 @@ const NewsArticlePage = () => {
       </div>
 
       {/* Title */}
-      <h1 className="text-2xl sm:text-2xl md:text-3xl font-bold leading-tight mb-3">{decodeHtmlEntities(article.title)}</h1>
+      <h1 className="sm:text-2xl md:text-3xl font-bold leading-tight mb-3 text-3xl text-left">{decodeHtmlEntities(article.title)}</h1>
 
       {/* Date & source */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground mb-6">
@@ -194,7 +194,7 @@ const NewsArticlePage = () => {
             <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
               {article.content ? (
                 article.content.split("\n").filter(Boolean).map((paragraph, i) => (
-                  <p key={i} className="sm:text-base text-muted-foreground leading-relaxed font-normal px-0 font-sans text-left text-lg">{decodeHtmlEntities(paragraph)}</p>
+                  <p key={i} className="sm:text-base text-muted-foreground leading-relaxed font-normal px-0 font-sans text-left text-xl">{decodeHtmlEntities(paragraph)}</p>
                 ))
               ) : (
                 <p className="text-sm text-muted-foreground italic">Full article content is not yet available.</p>
