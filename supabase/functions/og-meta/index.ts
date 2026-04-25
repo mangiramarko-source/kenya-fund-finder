@@ -111,6 +111,9 @@ Deno.serve(async (req) => {
     }
   }
 
+  const isArticle = path.startsWith("/news/") && path.split("/").length === 3;
+  const ogType = isArticle ? "article" : "website";
+
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -121,7 +124,7 @@ Deno.serve(async (req) => {
   <meta property="og:title" content="${escapeHtml(title)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />
   <meta property="og:url" content="${escapeHtml(pageUrl)}" />
-  <meta property="og:type" content="website" />
+  <meta property="og:type" content="${ogType}" />
   <meta property="og:image" content="${escapeHtml(image)}" />
   <meta property="og:site_name" content="Kenya Fund Finder" />
   <meta name="twitter:card" content="summary_large_image" />
