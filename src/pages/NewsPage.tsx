@@ -59,6 +59,37 @@ type RegionFilter = "all" | "kenya" | "international";
 
 type SortOption = "latest" | "oldest" | "featured";
 
+type RecencyOption = "all" | "24h" | "7d" | "30d";
+
+const RECENCY_HOURS: Record<RecencyOption, number | null> = {
+  all: null,
+  "24h": 24,
+  "7d": 24 * 7,
+  "30d": 24 * 30,
+};
+
+const normalizeUrlForDedup = (url?: string | null): string | null => {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    u.hash = "";
+    Array.from(u.searchParams.keys()).forEach((k) => {
+      if (k.startsWith("utm_") || ["fbclid", "gclid", "ref", "mc_cid", "mc_eid"].includes(k)) {
+        u.searchParams.delete(k);
+      }
+    });
+    let s = `${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "")}`;
+    const qs = u.searchParams.toString();
+    if (qs) s += `?${qs}`;
+    return s;
+  } catch {
+    return url.toLowerCase().trim();
+  }
+};
+
+const normalizeTitleForDedup = (title: string): string =>
+  title.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString("en-KE", { month: "short", day: "numeric" });
 
