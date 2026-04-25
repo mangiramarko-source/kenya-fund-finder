@@ -20,9 +20,6 @@ import {
   BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
   Landmark, ArrowRight, Newspaper, Clock,
 } from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, ResponsiveContainer,
-} from "recharts";
 import { toast } from "sonner";
 import { fetchFunds, fetchLatestNewsPreview, type FundFromDB, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
