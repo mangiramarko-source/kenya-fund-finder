@@ -370,6 +370,18 @@ const NewsPage = () => {
           />
         </div>
 
+        <Select value={recency} onValueChange={(v) => setRecency(v as RecencyOption)}>
+          <SelectTrigger className="w-[120px] h-9 text-xs border-border shrink-0" aria-label="Recency">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All time</SelectItem>
+            <SelectItem value="24h">Last 24h</SelectItem>
+            <SelectItem value="7d">Last 7 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
           <SelectTrigger className="w-[110px] h-9 text-xs border-border shrink-0">
             <SelectValue />
