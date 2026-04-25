@@ -22,9 +22,15 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
   tiktok: Globe,
 };
 
+const DEFAULT_DISCLAIMER = [
+  "Important Disclaimer: This platform provides information only and does not constitute investment advice. Past performance is not indicative of future results. All investments carry risk. Please consult with a qualified financial advisor before making any investment decisions.",
+  "All funds listed are regulated by the Capital Markets Authority (CMA) of Kenya. Yields shown are gross annual effective yields before 15% withholding tax. Data may not reflect real-time values.",
+];
+
 const Footer = forwardRef<HTMLElement>((_, ref) => {
   const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>([]);
-  const [disclaimer, setDisclaimer] = useState<string[]>([]);
+  // Initialize with default text so footer height is stable on first paint (avoids CLS).
+  const [disclaimer, setDisclaimer] = useState<string[]>(DEFAULT_DISCLAIMER);
 
   useEffect(() => {
     supabase
