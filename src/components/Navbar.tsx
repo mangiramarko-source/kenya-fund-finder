@@ -63,11 +63,16 @@ const Navbar = () => {
     }
   }, [user]);
 
+  const themeInitial = useRef(true);
   useEffect(() => {
     if (dark) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
+    }
+    if (themeInitial.current) {
+      themeInitial.current = false;
+      return; // Preserve system-preference following until user toggles
     }
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
