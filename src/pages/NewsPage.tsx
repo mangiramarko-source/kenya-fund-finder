@@ -280,28 +280,24 @@ const NewsPage = () => {
   const MIN_RAIL_SIZE = 3;
 
   const mobilePartition = useMemo(() => {
-    const topCards = filtered.slice(0, MOBILE_TOP_CARDS);
-    const rest = filtered.slice(MOBILE_TOP_CARDS);
+    // Cards list always contains every filtered article so nothing gets
+    // dropped from the mobile feed (rails are injected as a bonus discovery
+    // strip every few cards, but never own/exclude articles).
+    const cards = filtered;
 
     const groups: Record<string, NewsFromDB[]> = {};
-    for (const a of rest) {
+    for (const a of filtered.slice(MOBILE_TOP_CARDS)) {
       const key = a.category || "Other";
       (groups[key] ||= []).push(a);
     }
 
     const rails: Array<[string, NewsFromDB[]]> = [];
-    const railOwnedIds = new Set<string>();
     Object.entries(groups)
       .sort((a, b) => b[1].length - a[1].length)
       .forEach(([cat, items]) => {
-        if (items.length >= MIN_RAIL_SIZE) {
-          rails.push([cat, items]);
-          items.forEach((it) => railOwnedIds.add(it.id));
-        }
+        if (items.length >= MIN_RAIL_SIZE) rails.push([cat, items]);
       });
 
-    const extraCards = rest.filter((a) => !railOwnedIds.has(a.id));
-    const cards = [...topCards, ...extraCards];
     return { cards, rails };
   }, [filtered]);
 
