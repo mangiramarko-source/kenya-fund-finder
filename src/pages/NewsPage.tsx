@@ -708,7 +708,7 @@ const NewsPage = () => {
                                       </h4>
                                       <div className="flex items-center gap-1.5 mt-1.5">
                                         {item.source && <SourceBadge source={item.source} />}
-                                        <span className="text-[10px] text-muted-foreground">
+                                        <span className="text-[10px] text-muted-foreground ml-auto">
                                           {formatDate(item.date_published)}
                                         </span>
                                       </div>
