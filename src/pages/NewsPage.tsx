@@ -240,12 +240,6 @@ const NewsPage = () => {
     ]);
     return filtered.filter((a) => isInternationalArticle(a) && !used.has(a.id)).slice(0, 12);
   }, [filtered, region, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList, weeklyHighlight]);
-  // Top Sources (placeholder for "Top Creators")
-  const topSources = useMemo(() => {
-    const counts: Record<string, number> = {};
-    articles.forEach(a => { if (a.source) counts[a.source] = (counts[a.source] || 0) + 1; });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  }, [articles]);
   // Remaining articles for the load-more list (desktop)
   const listArticles = useMemo(() => {
     const used = new Set([
@@ -747,26 +741,6 @@ const NewsPage = () => {
                         </Link>
                       ))}
                     </div>
-                  </div>
-                </section>
-              )}
-
-              {/* TOP SOURCES (placeholder for "Top Creators") */}
-              {topSources.length > 0 && (
-                <section>
-                  <div className="flex items-end justify-between mb-4">
-                    <h2 className="font-heading font-bold text-2xl text-foreground">Top Sources</h2>
-                  </div>
-                  <div className="flex flex-wrap items-start gap-6">
-                    {topSources.map(([source, count]) => (
-                      <div key={source} className="flex flex-col items-center gap-2 w-28 text-center">
-                        <div className="h-16 w-16 rounded-full border-2 border-accent/30 bg-card grid place-items-center text-xl font-bold text-accent shadow-[0_0_20px_-8px_hsl(var(--accent)/0.4)]">
-                          {source.slice(0, 1)}
-                        </div>
-                        <span className="text-xs font-semibold text-foreground truncate w-full">{source}</span>
-                        <span className="text-[10px] text-muted-foreground">{count} article{count !== 1 ? "s" : ""}</span>
-                      </div>
-                    ))}
                   </div>
                 </section>
               )}
