@@ -217,6 +217,19 @@ const NewsPage = () => {
   const visibleListMobile = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
   const hasMoreMobile = visibleCount < filtered.length;
 
+  // Mobile category rails: group filtered articles by category for horizontal-scroll rows
+  // injected between list items.
+  const mobileCategoryRails = useMemo(() => {
+    const groups: Record<string, NewsFromDB[]> = {};
+    for (const a of filtered) {
+      const key = a.category || "Other";
+      (groups[key] ||= []).push(a);
+    }
+    return Object.entries(groups)
+      .filter(([, items]) => items.length >= 2)
+      .sort((a, b) => b[1].length - a[1].length);
+  }, [filtered]);
+
   // Intersection observer for infinite scroll
   useEffect(() => {
     const el = loaderRef.current;
