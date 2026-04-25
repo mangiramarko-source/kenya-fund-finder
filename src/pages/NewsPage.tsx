@@ -720,7 +720,7 @@ const NewsPage = () => {
                       )}
                       <Link
                         to={`/news/${article.id}`}
-                        className="group block px-4 py-5 [&:not(:first-child)]:before:content-[''] [&:not(:first-child)]:before:block [&:not(:first-child)]:before:h-px [&:not(:first-child)]:before:bg-foreground/40 [&:not(:first-child)]:before:-mx-4 [&:not(:first-child)]:before:-mt-5 [&:not(:first-child)]:before:mb-5 active:bg-muted/30 transition-colors"
+                        className="group block px-4 py-5 active:bg-muted/30 transition-colors"
                       >
                         <div className="flex items-center gap-1.5 mb-2">
                           <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
