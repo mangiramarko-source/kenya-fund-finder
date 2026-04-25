@@ -217,6 +217,19 @@ const NewsPage = () => {
   const visibleListMobile = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
   const hasMoreMobile = visibleCount < filtered.length;
 
+  // Mobile category rails: group filtered articles by category for horizontal-scroll rows
+  // injected between list items.
+  const mobileCategoryRails = useMemo(() => {
+    const groups: Record<string, NewsFromDB[]> = {};
+    for (const a of filtered) {
+      const key = a.category || "Other";
+      (groups[key] ||= []).push(a);
+    }
+    return Object.entries(groups)
+      .filter(([, items]) => items.length >= 2)
+      .sort((a, b) => b[1].length - a[1].length);
+  }, [filtered]);
+
   // Intersection observer for infinite scroll
   useEffect(() => {
     const el = loaderRef.current;
@@ -640,46 +653,103 @@ const NewsPage = () => {
           {/* Grid of remaining articles */}
           {(visibleList.length > 0 || visibleListMobile.length > 0) && (
             <>
-              {/* Mobile list: edge-to-edge, no cards — full screen width */}
-              <div className="lg:hidden -mx-4 divide-y divide-border border-y border-border">
-                {visibleListMobile.map((article) => {
+              {/* Mobile list: edge-to-edge full-screen articles, with category horizontal scroll rails interleaved */}
+              <div className="lg:hidden -mx-4 border-y border-border">
+                {visibleListMobile.map((article, idx) => {
                   const dot = categoryDot[article.category] || "bg-muted-foreground";
+                  // Inject a category rail after every 3rd article
+                  const railIndex = Math.floor(idx / 3);
+                  const showRail = idx > 0 && idx % 3 === 0 && mobileCategoryRails[railIndex - 1];
+                  const rail = showRail ? mobileCategoryRails[railIndex - 1] : null;
+                  const RailIcon = rail ? (categoryIcons[rail[0]] || Megaphone) : null;
+                  const railItems = rail
+                    ? rail[1].filter((a) => a.id !== article.id).slice(0, 8)
+                    : [];
+
                   return (
-                    <Link
-                      key={article.id}
-                      to={`/news/${article.id}`}
-                      className="group block px-4 py-4 active:bg-muted/30 transition-colors"
-                    >
-                      <div className="flex items-center gap-1.5 mb-2">
-                        <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
-                        <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
-                        <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
-                          <Clock className="h-2.5 w-2.5" />
-                          {article.read_time}
-                        </span>
-                      </div>
-                      <h3 className="font-heading font-semibold text-base leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
-                        {decodeHtmlEntities(article.title)}
-                      </h3>
-                      <div className="aspect-[16/9] overflow-hidden mb-2 -mx-4">
-                        <img
-                          src={getNewsImage(article.image_url, article.category, article.id)}
-                          alt={article.title}
-                          className="w-full h-full object-cover"
-                          loading="lazy"
-                          onError={(e) => handleNewsImageError(e, article.category, article.id)}
-                        />
-                      </div>
-                      <p className="text-muted-foreground line-clamp-2 leading-relaxed mb-2 text-sm">
-                        {decodeHtmlEntities(article.summary)}
-                      </p>
-                      <div className="flex items-center gap-1.5">
-                        {article.source && <SourceBadge source={article.source} />}
-                        <span className="text-[10px] text-muted-foreground">
-                          {formatDate(article.date_published)}
-                        </span>
-                      </div>
-                    </Link>
+                    <div key={article.id}>
+                      {rail && RailIcon && railItems.length > 0 && (
+                        <section className="border-t border-border bg-muted/10 py-4">
+                          <div className="flex items-center gap-2 px-4 mb-3">
+                            <RailIcon className="h-4 w-4 text-foreground" />
+                            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                              {rail[0]}
+                            </h3>
+                          </div>
+                          <div className="overflow-x-auto overscroll-x-contain px-4 pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
+                            <div className="flex gap-3 snap-x snap-mandatory">
+                              {railItems.map((item) => (
+                                <Link
+                                  key={item.id}
+                                  to={`/news/${item.id}`}
+                                  className="group shrink-0 w-[78%] snap-start rounded-xl border border-border bg-card overflow-hidden"
+                                >
+                                  <div className="flex gap-2.5 p-2.5">
+                                    <div className="h-20 w-20 rounded-lg overflow-hidden bg-muted shrink-0">
+                                      <img
+                                        src={getNewsImage(item.image_url, item.category, item.id)}
+                                        alt={item.title}
+                                        className="w-full h-full object-cover"
+                                        loading="lazy"
+                                        onError={(e) => handleNewsImageError(e, item.category, item.id)}
+                                      />
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                      <span className="text-[10px] font-bold uppercase tracking-wider text-accent">
+                                        {item.category}
+                                      </span>
+                                      <h4 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mt-0.5 group-hover:text-accent transition-colors">
+                                        {decodeHtmlEntities(item.title)}
+                                      </h4>
+                                      <div className="flex items-center gap-1.5 mt-1.5">
+                                        {item.source && <SourceBadge source={item.source} />}
+                                        <span className="text-[10px] text-muted-foreground">
+                                          {formatDate(item.date_published)}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  </div>
+                                </Link>
+                              ))}
+                            </div>
+                          </div>
+                        </section>
+                      )}
+                      <Link
+                        to={`/news/${article.id}`}
+                        className="group block px-4 py-4 border-t border-border first:border-t-0 active:bg-muted/30 transition-colors"
+                      >
+                        <div className="flex items-center gap-1.5 mb-2">
+                          <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
+                          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
+                          <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
+                            <Clock className="h-2.5 w-2.5" />
+                            {article.read_time}
+                          </span>
+                        </div>
+                        <h3 className="font-heading font-semibold text-base leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
+                          {decodeHtmlEntities(article.title)}
+                        </h3>
+                        <div className="aspect-[16/9] overflow-hidden mb-2 -mx-4">
+                          <img
+                            src={getNewsImage(article.image_url, article.category, article.id)}
+                            alt={article.title}
+                            className="w-full h-full object-cover"
+                            loading="lazy"
+                            onError={(e) => handleNewsImageError(e, article.category, article.id)}
+                          />
+                        </div>
+                        <p className="text-muted-foreground line-clamp-2 leading-relaxed mb-2 text-sm">
+                          {decodeHtmlEntities(article.summary)}
+                        </p>
+                        <div className="flex items-center gap-1.5">
+                          {article.source && <SourceBadge source={article.source} />}
+                          <span className="text-[10px] text-muted-foreground">
+                            {formatDate(article.date_published)}
+                          </span>
+                        </div>
+                      </Link>
+                    </div>
                   );
                 })}
               </div>
