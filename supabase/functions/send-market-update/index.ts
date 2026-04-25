@@ -186,6 +186,7 @@ function buildEmailHtml(
           <td style="padding:20px 28px;border-top:1px solid #e2e8f0;margin-top:16px;">
             <p style="margin:0;font-size:11px;color:#94a3b8;text-align:center;line-height:1.6;">
               Kenya Fund Finder — Kenyan investment insights, simplified.<br/>
+              Operated by Elyon Innovation LTD. © ${new Date().getFullYear()} All rights reserved.<br/>
               <a href="${siteUrl}/profile" style="color:#64748b;text-decoration:underline;">Manage preferences</a>
             </p>
           </td>
