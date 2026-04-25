@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
 
     const { data: article } = await supabase
       .from("news_articles")
-      .select("title, summary, category, date_published, source")
+      .select("title, summary, category, date_published, source, image_url")
       .eq("id", articleId)
       .eq("status", "published")
       .single();
@@ -104,6 +104,10 @@ Deno.serve(async (req) => {
     if (article) {
       title = `${article.title} – Kenya Fund Finder`;
       description = article.summary;
+      // Use article's own image if available and absolute http(s)
+      if (article.image_url && /^https?:\/\//i.test(article.image_url)) {
+        image = article.image_url;
+      }
     }
   }
 
