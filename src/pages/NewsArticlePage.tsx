@@ -31,11 +31,21 @@ const NewsArticlePage = () => {
   const { toast } = useToast();
   const [article, setArticle] = useState<NewsFromDB | null>(null);
   const [loading, setLoading] = useState(true);
+  const [related, setRelated] = useState<NewsFromDB[]>([]);
 
   useEffect(() => {
     if (!id) return;
+    setLoading(true);
+    setRelated([]);
     fetchNewsById(id)
-      .then(setArticle)
+      .then((a) => {
+        setArticle(a);
+        if (a) {
+          fetchRelatedNews(a.category, a.id, 3)
+            .then(setRelated)
+            .catch(() => {});
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
