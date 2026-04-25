@@ -1,6 +1,6 @@
 import { useParams, Link } from "react-router-dom";
 import { decodeHtmlEntities } from "@/lib/utils";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { ArrowLeft, ArrowRight, Clock, Calendar, Share2, Link2, Twitter, Facebook, TrendingUp, Landmark, Shield, Megaphone, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -37,14 +37,28 @@ const NewsArticlePage = () => {
     if (typeof window === "undefined") return true;
     const saved = localStorage.getItem("theme");
     if (saved) return saved === "dark";
-    return document.documentElement.classList.contains("dark");
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
 
+  const themeInitial = useRef(true);
   useEffect(() => {
     if (dark) document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
+    if (themeInitial.current) {
+      themeInitial.current = false;
+      return;
+    }
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem("theme")) setDark(e.matches);
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
 
   useEffect(() => {
     if (!id) return;

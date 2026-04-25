@@ -30,9 +30,10 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(156);
   const [dark, setDark] = useState(() => {
+    if (typeof window === "undefined") return true;
     const saved = localStorage.getItem("theme");
-    if (saved === "light") return false;
-    return true;
+    if (saved) return saved === "dark";
+    return window.matchMedia("(prefers-color-scheme: dark)").matches;
   });
   const headerRef = useRef<HTMLElement | null>(null);
   const mobileTabsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -62,18 +63,28 @@ const Navbar = () => {
     }
   }, [user]);
 
+  const themeInitial = useRef(true);
   useEffect(() => {
     if (dark) {
       document.documentElement.classList.add("dark");
     } else {
       document.documentElement.classList.remove("dark");
     }
+    if (themeInitial.current) {
+      themeInitial.current = false;
+      return; // Preserve system-preference following until user toggles
+    }
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
 
   useEffect(() => {
-    const saved = localStorage.getItem("theme");
-    if (saved === "light") setDark(false);
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => {
+      // Only follow system if user hasn't explicitly chosen
+      if (!localStorage.getItem("theme")) setDark(e.matches);
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
   }, []);
 
   useEffect(() => {
