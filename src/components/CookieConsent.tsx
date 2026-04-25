@@ -6,12 +6,16 @@ import { Link } from "react-router-dom";
 const CONSENT_KEY = "cookie-consent";
 
 const CookieConsent = () => {
-  const [visible, setVisible] = useState(false);
-
-  useEffect(() => {
-    const consent = localStorage.getItem(CONSENT_KEY);
-    if (!consent) setVisible(true);
-  }, []);
+  // Read synchronously on first render so the banner either appears at FCP
+  // (no longer counted as a late LCP) or never blocks layout at all.
+  const [visible, setVisible] = useState(() => {
+    if (typeof window === "undefined") return false;
+    try {
+      return !localStorage.getItem(CONSENT_KEY);
+    } catch {
+      return false;
+    }
+  });
 
   const accept = () => {
     localStorage.setItem(CONSENT_KEY, "accepted");
