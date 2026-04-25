@@ -1361,7 +1361,59 @@ const OverviewPage = () => {
             </div>
             <Link to="/news" className="text-[10px] text-accent hover:underline inline-flex items-center gap-1">All news <ArrowRight className="h-3 w-3" /></Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          {/* Mobile: edge-to-edge stacked rows matching /news page UI */}
+          <div className="sm:hidden -mx-4 border-y border-border">
+            {news.map((article, idx) => (
+              <Link
+                key={article.id}
+                to={`/news/${article.id}`}
+                className="group block px-4 py-3.5 active:bg-muted/30 transition-colors"
+              >
+                {idx > 0 && (
+                  <div className="h-px bg-foreground/30 -mx-4 mb-3.5" role="separator" />
+                )}
+                <div className="flex gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 mb-1.5">
+                      <span className="text-[11px] font-bold uppercase tracking-wider text-accent truncate">
+                        {article.category}
+                      </span>
+                      <span className="text-[10px] text-muted-foreground inline-flex items-center gap-0.5 shrink-0">
+                        <Clock className="h-2.5 w-2.5" />
+                        {article.read_time}
+                      </span>
+                    </div>
+                    <h3 className="font-heading font-bold text-[17px] leading-snug line-clamp-3 group-hover:text-accent transition-colors mb-2">
+                      {decodeHtmlEntities(article.title)}
+                    </h3>
+                    <div className="flex items-center gap-2">
+                      <div className="h-7 w-7 rounded-full border border-border bg-muted/50 grid place-items-center text-[9px] font-bold text-muted-foreground uppercase shrink-0">
+                        {(article.source || "N").slice(0, 2)}
+                      </div>
+                      <span className="text-[11px] font-medium text-foreground truncate">
+                        {article.source || "News"}
+                      </span>
+                      <span className="text-[11px] text-muted-foreground shrink-0">
+                        · {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                      </span>
+                    </div>
+                  </div>
+                  <div className="h-[100px] w-[100px] rounded-lg overflow-hidden bg-muted shrink-0">
+                    <img
+                      src={getNewsImage(article.image_url, article.category, article.id)}
+                      alt={article.title}
+                      className="w-full h-full object-cover"
+                      loading="lazy"
+                      onError={(e) => handleNewsImageError(e, article.category, article.id)}
+                    />
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop / tablet: existing card grid */}
+          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
             {news.map((article) => (
               <Link key={article.id} to={`/news/${article.id}`} className="block group">
                 <article className="rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all h-full flex flex-col overflow-hidden">
