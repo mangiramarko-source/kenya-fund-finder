@@ -138,12 +138,39 @@ const NewsArticlePage = () => {
   return (
     <div className="md:max-w-3xl md:mx-auto md:py-8 md:px-6">
       {/* Mobile-only sticky back button (replaces top nav) */}
-      <div className="md:hidden sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border px-3 py-2">
+      <div className="md:hidden sticky top-0 z-40 bg-background/90 backdrop-blur-md border-b border-border px-3 py-2 flex items-center justify-between">
         <Button asChild variant="ghost" size="sm" className="gap-1.5 -ml-2">
           <Link to="/news" aria-label="Back to news">
             <ArrowLeft className="h-4 w-4" /> Back
           </Link>
         </Button>
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={() => setDark(!dark)}
+          aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          className="h-9 w-9"
+        >
+          {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" aria-label="Share article" className="h-9 w-9 -mr-1">
+              <Share2 className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem onClick={handleCopyLink}>
+              <Link2 className="mr-2 h-3.5 w-3.5" /> Copy Link
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(shareUrl)}`, "_blank", "noopener")}>
+              <Twitter className="mr-2 h-3.5 w-3.5" /> Share on X
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank", "noopener")}>
+              <Facebook className="mr-2 h-3.5 w-3.5" /> Share on Facebook
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       {/* Breadcrumb — desktop only */}
