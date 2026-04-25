@@ -544,6 +544,13 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         })}
       </div>
 
+      {/* Mobile: active category label */}
+      <div className="md:hidden -mt-2 mb-1 px-1">
+        <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
+          {categoryLabels[activeTab] || activeTab}
+        </span>
+      </div>
+
       {/* Mobile: card view */}
       <div className="md:hidden">
         <FundMobileCards
