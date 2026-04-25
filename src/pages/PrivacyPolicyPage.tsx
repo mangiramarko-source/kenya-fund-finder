@@ -12,7 +12,7 @@ const PrivacyPolicyPage = () => (
       <section>
         <h2 className="text-lg font-semibold mb-2">1. Introduction</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          Kenya Fund Finder ("we", "our", or "the Platform") is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website. By using this Platform, you agree to the practices described in this policy.
+          Kenya Fund Finder ("the Platform") is owned and operated by <strong>Elyon Innovation LTD</strong>, a company incorporated in the Republic of Kenya ("we", "our", or "the Company"). The Company acts as the data controller for personal information collected through the Platform and is committed to protecting your privacy. This Privacy Policy explains how we collect, use, and safeguard your information when you visit our website. By using this Platform, you agree to the practices described in this policy.
         </p>
       </section>
 
