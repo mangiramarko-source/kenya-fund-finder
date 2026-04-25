@@ -4,7 +4,7 @@
  *  A deterministic Picsum URL is used as the final guaranteed fallback
  *  if Unsplash itself ever 404s. */
 const UNSPLASH = (id: string) =>
-  `https://images.unsplash.com/photo-${id}?w=800&h=500&fit=crop&auto=format&q=70`;
+  `https://images.unsplash.com/photo-${id}?w=520&h=325&fit=crop&auto=format&q=60`;
 
 const categoryImages: Record<string, string[]> = {
   "Yield Updates": [
@@ -94,7 +94,7 @@ function hashId(id: string): number {
 function picsumFallback(id: string): string {
   // Use the article id as a stable seed so each article gets a unique image.
   const seed = encodeURIComponent(id || "kenya-fund-finder");
-  return `https://picsum.photos/seed/${seed}/800/500`;
+  return `https://picsum.photos/seed/${seed}/520/325`;
 }
 
 function getCategoryImage(category: string, id: string): string {
@@ -102,8 +102,36 @@ function getCategoryImage(category: string, id: string): string {
   return imgs[hashId(id) % imgs.length] || picsumFallback(id);
 }
 
+/** Rewrite known CDN URLs to request right-sized variants for card thumbnails.
+ *  Saves significant bandwidth vs. serving full-resolution editorial images. */
+function optimizeImageUrl(url: string): string {
+  try {
+    // Unsplash: enforce reasonable size + quality params.
+    if (url.includes("images.unsplash.com")) {
+      const u = new URL(url);
+      u.searchParams.set("w", "520");
+      u.searchParams.set("h", "325");
+      u.searchParams.set("fit", "crop");
+      u.searchParams.set("auto", "format");
+      u.searchParams.set("q", "60");
+      return u.toString();
+    }
+    // Tuko CDN delivers /images/{w}x{h}/file.jpg — rewrite to a smaller variant.
+    if (url.includes("cdn.tuko.co.ke/images/")) {
+      return url.replace(/\/images\/\d+x\d+\//, "/images/520x292/");
+    }
+    // Picsum direct URLs.
+    if (url.includes("picsum.photos/seed/")) {
+      return url.replace(/\/(\d+)\/(\d+)(?=$|\?)/, "/520/325");
+    }
+  } catch {
+    // Fall through and return original on parse errors.
+  }
+  return url;
+}
+
 export function getNewsImage(imageUrl: string | null, category: string, id: string): string {
-  if (imageUrl) return imageUrl;
+  if (imageUrl) return optimizeImageUrl(imageUrl);
   return getCategoryImage(category, id);
 }
 
