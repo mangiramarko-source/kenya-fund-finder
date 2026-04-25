@@ -770,7 +770,7 @@ const NewsPage = () => {
                   return (
                     <div key={article.id}>
                       {idx > 0 && !rail && (
-                        <div className="h-px bg-foreground/30" role="separator" />
+                        <div className="h-px bg-border/60" role="separator" />
                       )}
                       {rail && RailIcon && railItems.length > 0 && (
                         <section className="border-t border-border bg-muted/10">
