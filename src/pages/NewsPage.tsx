@@ -717,7 +717,7 @@ const NewsPage = () => {
                       )}
                       <Link
                         to={`/news/${article.id}`}
-                        className="group block px-4 py-5 border-t-[6px] border-border first:border-t-0 active:bg-muted/30 transition-colors"
+                        className="group block px-4 py-5 border-t-8 border-background shadow-[inset_0_1px_0_0_hsl(var(--border)),inset_0_-1px_0_0_hsl(var(--border))] first:border-t-0 first:shadow-[inset_0_-1px_0_0_hsl(var(--border))] active:bg-muted/30 transition-colors"
                       >
                         <div className="flex items-center gap-1.5 mb-2">
                           <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
