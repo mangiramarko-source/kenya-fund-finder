@@ -755,13 +755,13 @@ const NewsPage = () => {
                           </p>
                           <div className="flex items-center gap-2">
                             {article.source && (
-                              <div className="h-6 w-6 rounded-full bg-accent/15 grid place-items-center text-[10px] font-bold text-accent shrink-0">
+                              <div className="h-7 w-7 rounded-full bg-accent/15 grid place-items-center text-[11px] font-bold text-accent shrink-0">
                                 {article.source.slice(0, 2).toUpperCase()}
                               </div>
                             )}
-                            <span className="text-xs font-medium text-foreground">{article.source}</span>
-                            <span className="text-xs text-muted-foreground">·</span>
-                            <span className="text-xs text-muted-foreground">{formatDate(article.date_published)}</span>
+                            <span className="text-sm font-medium text-foreground">{article.source}</span>
+                            <span className="text-sm text-muted-foreground">·</span>
+                            <span className="text-sm text-muted-foreground">{formatDate(article.date_published)}</span>
                           </div>
                         </div>
                       </Link>
