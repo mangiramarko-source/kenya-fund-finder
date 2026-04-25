@@ -266,10 +266,11 @@ const RatesPage = () => {
             <SheetTrigger asChild>
               <button
                 type="button"
-                className="relative inline-flex items-center justify-center h-9 w-9 shrink-0 rounded-md border border-border bg-card text-foreground transition-colors"
+                className="relative inline-flex items-center justify-center gap-1.5 h-9 px-3 shrink-0 rounded-md border border-border bg-card text-foreground text-xs font-medium transition-colors"
                 aria-label="Filters"
               >
                 <SlidersHorizontal className="h-4 w-4" />
+                <span>Filter</span>
                 {mobileSort !== "default" && (
                   <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
                 )}
