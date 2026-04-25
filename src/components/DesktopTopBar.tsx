@@ -22,11 +22,25 @@ const DesktopTopBar = () => {
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
 
+  const isInitialMount = useRef(true);
   useEffect(() => {
     if (dark) document.documentElement.classList.add("dark");
     else document.documentElement.classList.remove("dark");
+    if (isInitialMount.current) {
+      isInitialMount.current = false;
+      return; // Don't persist on mount — preserves system-preference following
+    }
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
+
+  useEffect(() => {
+    const mq = window.matchMedia("(prefers-color-scheme: dark)");
+    const handler = (e: MediaQueryListEvent) => {
+      if (!localStorage.getItem("theme")) setDark(e.matches);
+    };
+    mq.addEventListener?.("change", handler);
+    return () => mq.removeEventListener?.("change", handler);
+  }, []);
 
   useEffect(() => {
     if (user) {
