@@ -136,6 +136,31 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
   };
 }
 
+export async function fetchRelatedNews(category: string, excludeId: string, limit = 3): Promise<NewsFromDB[]> {
+  const { data, error } = await supabase
+    .from("news_articles_public")
+    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status, image_url")
+    .eq("category", category)
+    .neq("id", excludeId)
+    .order("date_published", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data || []).map((d: any) => ({
+    id: d.id,
+    title: d.title,
+    summary: d.summary,
+    content: d.content || null,
+    source: d.source,
+    date_published: d.date_published,
+    url: d.url,
+    category: d.category,
+    read_time: d.read_time,
+    is_featured: d.is_featured,
+    status: d.status,
+    image_url: d.image_url || null,
+  }));
+}
+
 export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")
