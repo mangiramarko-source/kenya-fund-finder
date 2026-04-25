@@ -240,12 +240,6 @@ const NewsPage = () => {
     ]);
     return filtered.filter((a) => isInternationalArticle(a) && !used.has(a.id)).slice(0, 12);
   }, [filtered, region, heroArticle, heroSidebar, latestArticles, mustReadFeature, mustReadList, weeklyHighlight]);
-  // Top Sources (placeholder for "Top Creators")
-  const topSources = useMemo(() => {
-    const counts: Record<string, number> = {};
-    articles.forEach(a => { if (a.source) counts[a.source] = (counts[a.source] || 0) + 1; });
-    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 6);
-  }, [articles]);
   // Remaining articles for the load-more list (desktop)
   const listArticles = useMemo(() => {
     const used = new Set([
