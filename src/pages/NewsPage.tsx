@@ -720,20 +720,10 @@ const NewsPage = () => {
                       )}
                       <Link
                         to={`/news/${article.id}`}
-                        className="group block px-4 py-5 active:bg-muted/30 transition-colors"
+                        className="group block active:bg-muted/30 transition-colors"
                       >
-                        <div className="flex items-center gap-1.5 mb-2">
-                          <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
-                          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{article.category}</span>
-                          <span className="text-[10px] text-muted-foreground ml-auto flex items-center gap-0.5">
-                            <Clock className="h-2.5 w-2.5" />
-                            {article.read_time}
-                          </span>
-                        </div>
-                        <h3 className="font-heading font-semibold text-base leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
-                          {decodeHtmlEntities(article.title)}
-                        </h3>
-                        <div className="aspect-[16/9] overflow-hidden mb-2 -mx-4">
+                        {/* Full-bleed image at top */}
+                        <div className="aspect-[16/9] overflow-hidden bg-muted">
                           <img
                             src={getNewsImage(article.image_url, article.category, article.id)}
                             alt={article.title}
@@ -742,14 +732,33 @@ const NewsPage = () => {
                             onError={(e) => handleNewsImageError(e, article.category, article.id)}
                           />
                         </div>
-                        <p className="text-muted-foreground line-clamp-2 leading-relaxed mb-2 text-sm">
-                          {decodeHtmlEntities(article.summary)}
-                        </p>
-                        <div className="flex items-center gap-1.5">
-                          {article.source && <SourceBadge source={article.source} />}
-                          <span className="text-[10px] text-muted-foreground">
-                            {formatDate(article.date_published)}
-                          </span>
+                        {/* Content */}
+                        <div className="px-4 pt-4 pb-5">
+                          <div className="flex items-center justify-between mb-2">
+                            <span className="text-[11px] font-bold uppercase tracking-wider text-accent">
+                              {article.category}
+                            </span>
+                            <span className="text-[10px] text-muted-foreground flex items-center gap-1">
+                              <Clock className="h-3 w-3" />
+                              {article.read_time}
+                            </span>
+                          </div>
+                          <h3 className="font-heading font-bold text-lg leading-snug line-clamp-2 mb-2 text-foreground group-hover:text-accent transition-colors">
+                            {decodeHtmlEntities(article.title)}
+                          </h3>
+                          <p className="text-muted-foreground line-clamp-2 leading-relaxed mb-3 text-sm">
+                            {decodeHtmlEntities(article.summary)}
+                          </p>
+                          <div className="flex items-center gap-2">
+                            {article.source && (
+                              <div className="h-7 w-7 rounded-full bg-accent/15 grid place-items-center text-[10px] font-bold text-accent shrink-0">
+                                {article.source.slice(0, 2).toUpperCase()}
+                              </div>
+                            )}
+                            <span className="text-xs font-medium text-foreground">{article.source}</span>
+                            <span className="text-xs text-muted-foreground">·</span>
+                            <span className="text-xs text-muted-foreground">{formatDate(article.date_published)}</span>
+                          </div>
                         </div>
                       </Link>
                     </div>
