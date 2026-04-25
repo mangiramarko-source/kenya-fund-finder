@@ -122,7 +122,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
             </p>
           ))}
           <p className="text-xs text-muted-foreground text-center mt-6">
-            © {new Date().getFullYear()} Kenya Fund Finder. All rights reserved. Not affiliated with any fund manager or the CMA.
+            © {new Date().getFullYear()} Kenya Fund Finder. All rights reserved. Operated by Elyon Innovation LTD. Not affiliated with any fund manager or the CMA.
           </p>
         </div>
       </div>
