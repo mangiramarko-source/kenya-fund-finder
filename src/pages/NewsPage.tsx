@@ -700,9 +700,6 @@ const NewsPage = () => {
                                       />
                                     </div>
                                     <div className="flex-1 min-w-0">
-                                      <span className="text-[10px] font-bold uppercase tracking-wider text-accent">
-                                        {item.category}
-                                      </span>
                                       <h4 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mt-0.5 group-hover:text-accent transition-colors">
                                         {decodeHtmlEntities(item.title)}
                                       </h4>
