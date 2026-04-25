@@ -45,6 +45,10 @@ const RSS_FEEDS = [
   { url: "https://www.investing.com/rss/news_25.rss", source: "Investing.com" },
   { url: "https://www.marketwatch.com/rss/topstories", source: "MarketWatch" },
   { url: "https://seekingalpha.com/feed.xml", source: "Seeking Alpha" },
+  // Free, no-key Google News RSS queries (auto-aggregates many sources)
+  { url: "https://news.google.com/rss/search?q=Kenya+economy+OR+NSE+OR+CBK+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
+  { url: "https://news.google.com/rss/search?q=Kenya+shilling+OR+%22unit+trust%22+OR+%22money+market%22+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
+  { url: "https://news.google.com/rss/search?q=Africa+markets+OR+Eurobond+OR+%22emerging+markets%22+when:7d&hl=en&gl=US&ceid=US:en", source: "Google News" },
 ];
 
 interface ParsedArticle {
@@ -100,6 +104,31 @@ function estimateReadTime(text: string): string {
 function matchesKeywords(text: string): boolean {
   const lower = text.toLowerCase();
   return KEYWORDS.some((kw) => lower.includes(kw));
+}
+
+function normalizeUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url.trim());
+    // Strip tracking params, fragment, trailing slash; lowercase host
+    const stripParams = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid", "ref", "mc_cid", "mc_eid"];
+    stripParams.forEach((p) => u.searchParams.delete(p));
+    u.hash = "";
+    let normalized = `${u.protocol}//${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "")}`;
+    const qs = u.searchParams.toString();
+    if (qs) normalized += `?${qs}`;
+    return normalized.toLowerCase();
+  } catch {
+    return url.trim().toLowerCase();
+  }
+}
+
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ") // strip punctuation
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function categorize(text: string): string {
@@ -291,14 +320,31 @@ Deno.serve(async (req) => {
       .from("news_articles")
       .select("url, title")
       .order("created_at", { ascending: false })
-      .limit(1000);
+      .limit(2000);
 
-    const existingUrls = new Set((existing || []).map((e: { url: string | null }) => e.url?.toLowerCase()).filter(Boolean));
-    const existingTitles = new Set((existing || []).map((e: { title: string }) => e.title?.toLowerCase()).filter(Boolean));
+    const existingUrls = new Set(
+      (existing || [])
+        .map((e: { url: string | null }) => normalizeUrl(e.url))
+        .filter((v): v is string => Boolean(v)),
+    );
+    const existingTitles = new Set(
+      (existing || [])
+        .map((e: { title: string }) => normalizeTitle(e.title || ""))
+        .filter(Boolean),
+    );
 
+    // Dedupe within this batch as well (cross-feed duplicates from Google News etc.)
+    const seenUrls = new Set<string>();
+    const seenTitles = new Set<string>();
     const newArticles = allArticles.filter((a) => {
-      if (a.url && existingUrls.has(a.url.toLowerCase())) return false;
-      if (existingTitles.has(a.title.toLowerCase())) return false;
+      const nUrl = normalizeUrl(a.url);
+      const nTitle = normalizeTitle(a.title);
+      if (nUrl && existingUrls.has(nUrl)) return false;
+      if (nTitle && existingTitles.has(nTitle)) return false;
+      if (nUrl && seenUrls.has(nUrl)) return false;
+      if (nTitle && seenTitles.has(nTitle)) return false;
+      if (nUrl) seenUrls.add(nUrl);
+      if (nTitle) seenTitles.add(nTitle);
       return true;
     });
 
