@@ -147,7 +147,7 @@ const NewsArticlePage = () => {
         <img
           src={heroImage}
           alt={article.title}
-          className="w-full aspect-[4/5] md:aspect-[2/1] object-cover"
+          className="w-full aspect-[2/1] object-cover"
           onError={(e) => handleNewsImageError(e, article.category, article.id)}
           loading="eager"
         />
