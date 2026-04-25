@@ -24,6 +24,7 @@ const ICON_MAP: Record<string, React.ComponentType<{ className?: string }>> = {
 
 const Footer = forwardRef<HTMLElement>((_, ref) => {
   const [socialLinks, setSocialLinks] = useState<SocialLinkItem[]>([]);
+  const [disclaimer, setDisclaimer] = useState<string[]>([]);
 
   useEffect(() => {
     supabase
@@ -31,6 +32,17 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
       .select("id, platform, url, icon_name, sort_order")
       .order("sort_order")
       .then(({ data }) => setSocialLinks((data as any as SocialLinkItem[]) || []));
+
+    supabase
+      .from("site_pages_public")
+      .select("content")
+      .eq("slug", "disclaimer")
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data?.content) {
+          setDisclaimer(data.content.split("\n").map((s) => s.trim()).filter(Boolean));
+        }
+      });
   }, []);
 
   return (
