@@ -106,6 +106,31 @@ function matchesKeywords(text: string): boolean {
   return KEYWORDS.some((kw) => lower.includes(kw));
 }
 
+function normalizeUrl(url: string | null): string | null {
+  if (!url) return null;
+  try {
+    const u = new URL(url.trim());
+    // Strip tracking params, fragment, trailing slash; lowercase host
+    const stripParams = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid", "ref", "mc_cid", "mc_eid"];
+    stripParams.forEach((p) => u.searchParams.delete(p));
+    u.hash = "";
+    let normalized = `${u.protocol}//${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "")}`;
+    const qs = u.searchParams.toString();
+    if (qs) normalized += `?${qs}`;
+    return normalized.toLowerCase();
+  } catch {
+    return url.trim().toLowerCase();
+  }
+}
+
+function normalizeTitle(title: string): string {
+  return title
+    .toLowerCase()
+    .replace(/[^\w\s]/g, " ") // strip punctuation
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
 function categorize(text: string): string {
   const lower = text.toLowerCase();
   if (/yield|return|interest rate|cbk|central bank|treasury bill|t-bill/.test(lower)) return "Yield Updates";
