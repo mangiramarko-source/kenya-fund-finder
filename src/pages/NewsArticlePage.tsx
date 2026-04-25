@@ -1,7 +1,7 @@
 import { useParams, Link } from "react-router-dom";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { useEffect, useState } from "react";
-import { ArrowLeft, ArrowRight, Clock, Calendar, Share2, Link2, Twitter, Facebook, TrendingUp, Landmark, Shield, Megaphone } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, Calendar, Share2, Link2, Twitter, Facebook, TrendingUp, Landmark, Shield, Megaphone, Sun, Moon } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
