@@ -272,26 +272,51 @@ const NewsPage = () => {
 
   const visibleList = useMemo(() => listArticles.slice(0, visibleCount), [listArticles, visibleCount]);
   const hasMore = visibleCount < listArticles.length;
-  // On mobile, show ALL filtered articles in the grid (no hero/sidebar)
-  const visibleListMobile = useMemo(() => filtered.slice(0, visibleCount), [filtered, visibleCount]);
-  const hasMoreMobile = visibleCount < filtered.length;
 
-  // Mobile category rails: group articles by category for horizontal-scroll rows
-  // injected between list items. CRITICAL: exclude articles already shown in the
-  // main mobile list to prevent the same story appearing twice (e.g. once as a
-  // top card and again inside the "Market News" rail).
-  const mobileCategoryRails = useMemo(() => {
-    const visibleIds = new Set(visibleListMobile.map((a) => a.id));
+  // ===== Mobile per-tab partitioning =====
+  // Strict rule: within the active tab, every article appears in EXACTLY ONE
+  // place — either as a main card OR inside a single category rail. Never both.
+  //
+  // 1. Top cards own the first MOBILE_TOP_CARDS articles (by current sort).
+  // 2. Each remaining article is grouped by category. Categories with >=
+  //    MIN_RAIL_SIZE leftover articles become rails and "own" those articles.
+  // 3. Articles whose category did NOT qualify as a rail fall back into the
+  //    main mobile card list so nothing is dropped.
+  const MOBILE_TOP_CARDS = 3;
+  const MIN_RAIL_SIZE = 3;
+
+  const mobilePartition = useMemo(() => {
+    const topCards = filtered.slice(0, MOBILE_TOP_CARDS);
+    const rest = filtered.slice(MOBILE_TOP_CARDS);
+
     const groups: Record<string, NewsFromDB[]> = {};
-    for (const a of filtered) {
-      if (visibleIds.has(a.id)) continue; // skip articles already rendered as cards
+    for (const a of rest) {
       const key = a.category || "Other";
       (groups[key] ||= []).push(a);
     }
-    return Object.entries(groups)
-      .filter(([, items]) => items.length >= 2)
-      .sort((a, b) => b[1].length - a[1].length);
-  }, [filtered, visibleListMobile]);
+
+    const rails: Array<[string, NewsFromDB[]]> = [];
+    const railOwnedIds = new Set<string>();
+    Object.entries(groups)
+      .sort((a, b) => b[1].length - a[1].length)
+      .forEach(([cat, items]) => {
+        if (items.length >= MIN_RAIL_SIZE) {
+          rails.push([cat, items]);
+          items.forEach((it) => railOwnedIds.add(it.id));
+        }
+      });
+
+    const extraCards = rest.filter((a) => !railOwnedIds.has(a.id));
+    const cards = [...topCards, ...extraCards];
+    return { cards, rails };
+  }, [filtered]);
+
+  const visibleListMobile = useMemo(
+    () => mobilePartition.cards.slice(0, visibleCount),
+    [mobilePartition.cards, visibleCount]
+  );
+  const hasMoreMobile = visibleCount < mobilePartition.cards.length;
+  const mobileCategoryRails = mobilePartition.rails;
 
   // Intersection observer for infinite scroll
   useEffect(() => {
