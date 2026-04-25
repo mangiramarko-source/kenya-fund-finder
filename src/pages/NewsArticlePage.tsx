@@ -248,7 +248,45 @@ const NewsArticlePage = () => {
               More <ArrowRight className="h-3 w-3" />
             </Link>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          {/* Mobile: stacked horizontal band cards */}
+          <div className="sm:hidden -mx-4 divide-y divide-border border-y border-border">
+            {related.map((r) => (
+              <Link
+                key={r.id}
+                to={`/news/${r.id}`}
+                className="group flex items-stretch gap-3 px-4 py-3 active:bg-muted/30 transition-colors"
+              >
+                <div className="flex-1 min-w-0 flex flex-col">
+                  <div className="flex items-center justify-between mb-1">
+                    <span className="text-[11px] font-bold uppercase text-accent truncate">{r.category}</span>
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-1 shrink-0">
+                      <Clock className="h-3 w-3" />{r.read_time}
+                    </span>
+                  </div>
+                  <h4 className="font-heading font-bold text-base leading-tight line-clamp-3 mb-1.5 text-foreground">
+                    {decodeHtmlEntities(r.title)}
+                  </h4>
+                  <div className="mt-auto flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                    {r.source && <span className="truncate">{r.source}</span>}
+                    {r.source && <span>·</span>}
+                    <span>{new Date(r.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}</span>
+                  </div>
+                </div>
+                <div className="w-32 shrink-0 overflow-hidden bg-muted self-stretch rounded-md">
+                  <img
+                    src={getNewsImage(r.image_url, r.category, r.id)}
+                    alt={r.title}
+                    className="w-full h-full object-cover min-h-[110px]"
+                    loading="lazy"
+                    onError={(e) => handleNewsImageError(e, r.category, r.id)}
+                  />
+                </div>
+              </Link>
+            ))}
+          </div>
+
+          {/* Desktop: card grid (unchanged) */}
+          <div className="hidden sm:grid grid-cols-3 gap-4">
             {related.map((r) => {
               const RelIcon = categoryIcons[r.category] || Megaphone;
               return (
