@@ -129,6 +129,7 @@ const NewsPage = () => {
   }, [articles]);
   const [activeSource] = useState<string>("All");
   const [region, setRegion] = useState<RegionFilter>("all");
+  const [recency, setRecency] = useState<RecencyOption>("all");
 
   const regionCounts = useMemo(() => {
     let intl = 0;
@@ -146,10 +147,37 @@ const NewsPage = () => {
     else if (region === "international") list = list.filter(a => isInternationalArticle(a));
     if (activeCategory !== "All") list = list.filter((a) => a.category === activeCategory);
     if (activeSource !== "All") list = list.filter((a) => a.source === activeSource);
+
+    // Recency window
+    const hours = RECENCY_HOURS[recency];
+    if (hours != null) {
+      const cutoff = Date.now() - hours * 3600 * 1000;
+      list = list.filter((a) => new Date(a.date_published).getTime() >= cutoff);
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(a => a.title.toLowerCase().includes(q) || a.summary.toLowerCase().includes(q));
     }
+
+    // Within-window dedup by URL and normalized title (newest kept)
+    const byTime = [...list].sort(
+      (a, b) => new Date(b.date_published).getTime() - new Date(a.date_published).getTime()
+    );
+    const seenUrls = new Set<string>();
+    const seenTitles = new Set<string>();
+    const deduped: typeof list = [];
+    for (const a of byTime) {
+      const nUrl = normalizeUrlForDedup(a.url);
+      const nTitle = normalizeTitleForDedup(a.title);
+      if (nUrl && seenUrls.has(nUrl)) continue;
+      if (nTitle && seenTitles.has(nTitle)) continue;
+      if (nUrl) seenUrls.add(nUrl);
+      if (nTitle) seenTitles.add(nTitle);
+      deduped.push(a);
+    }
+    list = deduped;
+
     if (sortBy === "featured") {
       list = [...list].sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0));
     } else {
@@ -159,7 +187,7 @@ const NewsPage = () => {
       });
     }
     return list;
-  }, [articles, activeCategory, activeSource, sortBy, searchQuery, region]);
+  }, [articles, activeCategory, activeSource, sortBy, searchQuery, region, recency]);
 
   // Hero pool: featured first, then latest, capped at 6
   const heroPool = useMemo(() => {
