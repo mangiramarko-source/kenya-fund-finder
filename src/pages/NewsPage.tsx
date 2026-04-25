@@ -268,7 +268,7 @@ const NewsPage = () => {
   const loaderRef = useRef<HTMLDivElement>(null);
 
   // Reset visible count when filters change
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [activeCategory, activeSource, sortBy, searchQuery, region]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [activeCategory, activeSource, sortBy, searchQuery, region, recency]);
 
   const visibleList = useMemo(() => listArticles.slice(0, visibleCount), [listArticles, visibleCount]);
   const hasMore = visibleCount < listArticles.length;
