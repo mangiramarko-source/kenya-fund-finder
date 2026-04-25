@@ -1541,6 +1541,7 @@ export type Database = {
         }
         Returns: boolean
       }
+      cleanup_email_unsubscribe_tokens: { Args: never; Returns: number }
       delete_email: {
         Args: { message_id: number; queue_name: string }
         Returns: boolean
