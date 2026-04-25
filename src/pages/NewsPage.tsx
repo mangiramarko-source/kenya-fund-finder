@@ -59,6 +59,37 @@ type RegionFilter = "all" | "kenya" | "international";
 
 type SortOption = "latest" | "oldest" | "featured";
 
+type RecencyOption = "all" | "24h" | "7d" | "30d";
+
+const RECENCY_HOURS: Record<RecencyOption, number | null> = {
+  all: null,
+  "24h": 24,
+  "7d": 24 * 7,
+  "30d": 24 * 30,
+};
+
+const normalizeUrlForDedup = (url?: string | null): string | null => {
+  if (!url) return null;
+  try {
+    const u = new URL(url);
+    u.hash = "";
+    Array.from(u.searchParams.keys()).forEach((k) => {
+      if (k.startsWith("utm_") || ["fbclid", "gclid", "ref", "mc_cid", "mc_eid"].includes(k)) {
+        u.searchParams.delete(k);
+      }
+    });
+    let s = `${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "")}`;
+    const qs = u.searchParams.toString();
+    if (qs) s += `?${qs}`;
+    return s;
+  } catch {
+    return url.toLowerCase().trim();
+  }
+};
+
+const normalizeTitleForDedup = (title: string): string =>
+  title.toLowerCase().replace(/[^\w\s]/g, " ").replace(/\s+/g, " ").trim();
+
 const formatDate = (d: string) =>
   new Date(d).toLocaleDateString("en-KE", { month: "short", day: "numeric" });
 
@@ -98,6 +129,7 @@ const NewsPage = () => {
   }, [articles]);
   const [activeSource] = useState<string>("All");
   const [region, setRegion] = useState<RegionFilter>("all");
+  const [recency, setRecency] = useState<RecencyOption>("all");
 
   const regionCounts = useMemo(() => {
     let intl = 0;
@@ -115,10 +147,37 @@ const NewsPage = () => {
     else if (region === "international") list = list.filter(a => isInternationalArticle(a));
     if (activeCategory !== "All") list = list.filter((a) => a.category === activeCategory);
     if (activeSource !== "All") list = list.filter((a) => a.source === activeSource);
+
+    // Recency window
+    const hours = RECENCY_HOURS[recency];
+    if (hours != null) {
+      const cutoff = Date.now() - hours * 3600 * 1000;
+      list = list.filter((a) => new Date(a.date_published).getTime() >= cutoff);
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       list = list.filter(a => a.title.toLowerCase().includes(q) || a.summary.toLowerCase().includes(q));
     }
+
+    // Within-window dedup by URL and normalized title (newest kept)
+    const byTime = [...list].sort(
+      (a, b) => new Date(b.date_published).getTime() - new Date(a.date_published).getTime()
+    );
+    const seenUrls = new Set<string>();
+    const seenTitles = new Set<string>();
+    const deduped: typeof list = [];
+    for (const a of byTime) {
+      const nUrl = normalizeUrlForDedup(a.url);
+      const nTitle = normalizeTitleForDedup(a.title);
+      if (nUrl && seenUrls.has(nUrl)) continue;
+      if (nTitle && seenTitles.has(nTitle)) continue;
+      if (nUrl) seenUrls.add(nUrl);
+      if (nTitle) seenTitles.add(nTitle);
+      deduped.push(a);
+    }
+    list = deduped;
+
     if (sortBy === "featured") {
       list = [...list].sort((a, b) => (b.is_featured ? 1 : 0) - (a.is_featured ? 1 : 0));
     } else {
@@ -128,7 +187,7 @@ const NewsPage = () => {
       });
     }
     return list;
-  }, [articles, activeCategory, activeSource, sortBy, searchQuery, region]);
+  }, [articles, activeCategory, activeSource, sortBy, searchQuery, region, recency]);
 
   // Hero pool: featured first, then latest, capped at 6
   const heroPool = useMemo(() => {
@@ -209,7 +268,7 @@ const NewsPage = () => {
   const loaderRef = useRef<HTMLDivElement>(null);
 
   // Reset visible count when filters change
-  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [activeCategory, activeSource, sortBy, searchQuery, region]);
+  useEffect(() => { setVisibleCount(PAGE_SIZE); }, [activeCategory, activeSource, sortBy, searchQuery, region, recency]);
 
   const visibleList = useMemo(() => listArticles.slice(0, visibleCount), [listArticles, visibleCount]);
   const hasMore = visibleCount < listArticles.length;
@@ -311,6 +370,18 @@ const NewsPage = () => {
           />
         </div>
 
+        <Select value={recency} onValueChange={(v) => setRecency(v as RecencyOption)}>
+          <SelectTrigger className="w-[120px] h-9 text-xs border-border shrink-0" aria-label="Recency">
+            <SelectValue />
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="all">All time</SelectItem>
+            <SelectItem value="24h">Last 24h</SelectItem>
+            <SelectItem value="7d">Last 7 days</SelectItem>
+            <SelectItem value="30d">Last 30 days</SelectItem>
+          </SelectContent>
+        </Select>
+
         <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
           <SelectTrigger className="w-[110px] h-9 text-xs border-border shrink-0">
             <SelectValue />
@@ -343,7 +414,7 @@ const NewsPage = () => {
             >
               <SlidersHorizontal className="h-4 w-4" />
               <span>Filter</span>
-              {(region !== "all" || sortBy !== "latest") && (
+              {(region !== "all" || sortBy !== "latest" || recency !== "all") && (
                 <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
               )}
             </button>
@@ -377,6 +448,34 @@ const NewsPage = () => {
                         <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>
                           {opt.count}
                         </span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              <div>
+                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Recency</p>
+                <div className="grid grid-cols-4 gap-1.5">
+                  {([
+                    { key: "all", label: "All" },
+                    { key: "24h", label: "24h" },
+                    { key: "7d", label: "7d" },
+                    { key: "30d", label: "30d" },
+                  ] as const).map((opt) => {
+                    const active = recency === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setRecency(opt.key)}
+                        className={`h-9 rounded-md text-xs font-medium border transition-colors ${
+                          active
+                            ? "bg-foreground text-background border-foreground"
+                            : "bg-card text-muted-foreground border-border"
+                        }`}
+                      >
+                        {opt.label}
                       </button>
                     );
                   })}
