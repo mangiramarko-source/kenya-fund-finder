@@ -5,7 +5,7 @@ import { ArrowLeft, ArrowRight, Clock, Calendar, Share2, Link2, Twitter, Faceboo
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchNewsById, type NewsFromDB } from "@/lib/api";
+import { fetchNewsById, fetchRelatedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -31,11 +31,21 @@ const NewsArticlePage = () => {
   const { toast } = useToast();
   const [article, setArticle] = useState<NewsFromDB | null>(null);
   const [loading, setLoading] = useState(true);
+  const [related, setRelated] = useState<NewsFromDB[]>([]);
 
   useEffect(() => {
     if (!id) return;
+    setLoading(true);
+    setRelated([]);
     fetchNewsById(id)
-      .then(setArticle)
+      .then((a) => {
+        setArticle(a);
+        if (a) {
+          fetchRelatedNews(a.category, a.id, 3)
+            .then(setRelated)
+            .catch(() => {});
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [id]);
@@ -227,6 +237,57 @@ const NewsArticlePage = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+
+
+      {/* Related Articles */}
+      {related.length > 0 && (
+        <section className="mt-10 pt-6 border-t border-border">
+          <div className="flex items-center justify-between mb-4">
+            <h2 className="font-heading font-bold text-lg sm:text-xl text-foreground">Related Articles</h2>
+            <Link to="/news" className="text-xs text-accent hover:underline inline-flex items-center gap-1">
+              More <ArrowRight className="h-3 w-3" />
+            </Link>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+            {related.map((r) => {
+              const RelIcon = categoryIcons[r.category] || Megaphone;
+              return (
+                <Link
+                  key={r.id}
+                  to={`/news/${r.id}`}
+                  className="group block rounded-xl border border-border bg-card hover:border-accent/40 hover:-translate-y-0.5 transition-all overflow-hidden"
+                >
+                  <div className="aspect-[16/9] overflow-hidden bg-muted">
+                    <img
+                      src={getNewsImage(r.image_url, r.category, r.id)}
+                      alt={r.title}
+                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                      loading="lazy"
+                      onError={(e) => handleNewsImageError(e, r.category, r.id)}
+                    />
+                  </div>
+                  <div className="p-3">
+                    <div className="flex items-center gap-1.5 mb-1.5">
+                      <RelIcon className="h-3 w-3 text-accent" />
+                      <span className="text-[10px] font-bold uppercase tracking-wider text-accent truncate">{r.category}</span>
+                      <span className="text-[10px] text-muted-foreground ml-auto inline-flex items-center gap-0.5">
+                        <Clock className="h-2.5 w-2.5" /> {r.read_time}
+                      </span>
+                    </div>
+                    <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 group-hover:text-accent transition-colors">
+                      {decodeHtmlEntities(r.title)}
+                    </h3>
+                    <p className="text-[11px] text-muted-foreground mt-1.5">
+                      {r.source && `${r.source} · `}
+                      {new Date(r.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                    </p>
+                  </div>
+                </Link>
+              );
+            })}
+          </div>
+        </section>
+      )}
 
       <p className="text-[10px] text-muted-foreground text-center mt-8 pb-6 md:pb-0">
         All information is sourced from publicly available data. Fund yields and regulatory details are based on CMA-regulated disclosures.

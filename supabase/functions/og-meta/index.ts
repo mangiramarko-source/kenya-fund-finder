@@ -96,7 +96,7 @@ Deno.serve(async (req) => {
 
     const { data: article } = await supabase
       .from("news_articles")
-      .select("title, summary, category, date_published, source")
+      .select("title, summary, category, date_published, source, image_url")
       .eq("id", articleId)
       .eq("status", "published")
       .single();
@@ -104,8 +104,15 @@ Deno.serve(async (req) => {
     if (article) {
       title = `${article.title} – Kenya Fund Finder`;
       description = article.summary;
+      // Use article's own image if available and absolute http(s)
+      if (article.image_url && /^https?:\/\//i.test(article.image_url)) {
+        image = article.image_url;
+      }
     }
   }
+
+  const isArticle = path.startsWith("/news/") && path.split("/").length === 3;
+  const ogType = isArticle ? "article" : "website";
 
   const html = `<!DOCTYPE html>
 <html lang="en">
@@ -117,7 +124,7 @@ Deno.serve(async (req) => {
   <meta property="og:title" content="${escapeHtml(title)}" />
   <meta property="og:description" content="${escapeHtml(description)}" />
   <meta property="og:url" content="${escapeHtml(pageUrl)}" />
-  <meta property="og:type" content="website" />
+  <meta property="og:type" content="${ogType}" />
   <meta property="og:image" content="${escapeHtml(image)}" />
   <meta property="og:site_name" content="Kenya Fund Finder" />
   <meta name="twitter:card" content="summary_large_image" />
