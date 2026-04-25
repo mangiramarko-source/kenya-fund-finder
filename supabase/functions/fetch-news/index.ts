@@ -156,8 +156,9 @@ function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   return intersection / union;
 }
 
-// Two titles are "fuzzy duplicates" when they share ≥70% of significant tokens
-const FUZZY_THRESHOLD = 0.7;
+// Two titles are "fuzzy duplicates" when they share ≥45% of significant tokens.
+// Lowered from 0.7 to better catch reworded coverage of the same story across sources.
+const FUZZY_THRESHOLD = 0.45;
 
 function isFuzzyDuplicate(tokens: Set<string>, existingTokens: Set<string>[]): boolean {
   if (tokens.size < 3) return false; // too short to compare reliably
