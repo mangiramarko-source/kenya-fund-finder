@@ -20,9 +20,6 @@ import {
   BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
   Landmark, ArrowRight, Newspaper, Clock,
 } from "lucide-react";
-import {
-  AreaChart, Area, XAxis, YAxis, ResponsiveContainer,
-} from "recharts";
 import { toast } from "sonner";
 import { fetchFunds, fetchLatestNewsPreview, type FundFromDB, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
@@ -207,34 +204,24 @@ const AssetGroup = ({ label, items, onToggle }: { label: string; items: { id: st
  * Pass color="auto" to derive stroke from data trend (green up / red down).
  * Pass an explicit trend prop to override auto detection (keeps line in sync
  * with an external % change indicator).
+ *
+ * Uses lightweight SVG Sparkline (no recharts) to keep the homepage critical
+ * JS path small and improve Speed Index / LCP.
  */
 const MiniChart = ({ data, color = "hsl(var(--accent))", trend }: { data: { snapshot_date: string; rate: number }[]; color?: string; trend?: "up" | "down" | "flat" }) => {
   if (data.length < 2) return null;
-  const autoTrend: "up" | "down" | "flat" =
-    trend ?? (data[data.length - 1].rate > data[0].rate ? "up" : data[data.length - 1].rate < data[0].rate ? "down" : "flat");
-  const resolvedColor =
-    color === "auto"
-      ? autoTrend === "down"
-        ? "hsl(var(--destructive))"
-        : autoTrend === "flat"
-          ? "hsl(var(--muted-foreground))"
-          : "hsl(var(--accent))"
-      : color;
-  const gradId = `mc-${resolvedColor.replace(/[^a-z0-9]/gi, "")}`;
+  const series = data.map((d) => d.rate);
   return (
-    <ResponsiveContainer width="100%" height={60}>
-      <AreaChart data={data}>
-        <defs>
-          <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
-            <stop offset="5%" stopColor={resolvedColor} stopOpacity={0.25} />
-            <stop offset="95%" stopColor={resolvedColor} stopOpacity={0} />
-          </linearGradient>
-        </defs>
-        <XAxis dataKey="snapshot_date" hide />
-        <YAxis domain={["auto", "auto"]} hide />
-        <Area type="monotone" dataKey="rate" stroke={resolvedColor} strokeWidth={1.5} fill={`url(#${gradId})`} />
-      </AreaChart>
-    </ResponsiveContainer>
+    <div className="w-full" style={{ height: 60 }}>
+      <Sparkline
+        data={series}
+        width={300}
+        height={60}
+        color={color}
+        trend={trend}
+        className="w-full h-full"
+      />
+    </div>
   );
 };
 
