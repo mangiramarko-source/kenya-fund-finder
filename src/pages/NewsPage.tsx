@@ -728,7 +728,9 @@ const NewsPage = () => {
                             src={getNewsImage(article.image_url, article.category, article.id)}
                             alt={article.title}
                             className="w-full h-full object-cover"
-                            loading="lazy"
+                            loading={idx === 0 ? "eager" : "lazy"}
+                            fetchPriority={idx === 0 ? "high" : "auto"}
+                            decoding={idx === 0 ? "sync" : "async"}
                             onError={(e) => handleNewsImageError(e, article.category, article.id)}
                           />
                         </div>
