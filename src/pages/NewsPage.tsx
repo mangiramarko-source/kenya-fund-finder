@@ -717,7 +717,7 @@ const NewsPage = () => {
                       )}
                       <Link
                         to={`/news/${article.id}`}
-                        className="group block px-4 py-4 border-t border-border first:border-t-0 active:bg-muted/30 transition-colors"
+                        className="group block px-4 py-5 border-t-[6px] border-border first:border-t-0 active:bg-muted/30 transition-colors"
                       >
                         <div className="flex items-center gap-1.5 mb-2">
                           <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
