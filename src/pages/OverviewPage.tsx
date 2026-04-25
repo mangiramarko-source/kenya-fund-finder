@@ -24,7 +24,7 @@ import {
   AreaChart, Area, XAxis, YAxis, ResponsiveContainer,
 } from "recharts";
 import { toast } from "sonner";
-import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
+import { fetchFunds, fetchLatestNewsPreview, type FundFromDB, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
@@ -531,7 +531,7 @@ const OverviewPage = () => {
 
   const fetchAllData = useCallback(() => {
     fetchFunds().then(setFunds).catch(() => {}).finally(() => setFundsLoading(false));
-    fetchPublishedNews().then(n => setNews(n.slice(0, 4))).catch(() => {});
+    fetchLatestNewsPreview(4).then(n => setNews(n)).catch(() => {});
     supabase.from("exchange_rate_history_public" as any)
       .select("snapshot_date, rate, currency_code")
       .order("snapshot_date", { ascending: true }).limit(500)

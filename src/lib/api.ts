@@ -161,6 +161,30 @@ export async function fetchRelatedNews(category: string, excludeId: string, limi
   }));
 }
 
+/** Lightweight news preview fetch (no `content` body) for homepage/sidebar lists. */
+export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
+  const { data, error } = await supabase
+    .from("news_articles_public")
+    .select("id, title, summary, source, date_published, url, category, read_time, is_featured, status, image_url")
+    .order("date_published", { ascending: false })
+    .limit(limit);
+  if (error) throw error;
+  return (data || []).map((d: any) => ({
+    id: d.id,
+    title: d.title,
+    summary: d.summary,
+    content: null,
+    source: d.source,
+    date_published: d.date_published,
+    url: d.url,
+    category: d.category,
+    read_time: d.read_time,
+    is_featured: d.is_featured,
+    status: d.status,
+    image_url: d.image_url || null,
+  }));
+}
+
 export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")
