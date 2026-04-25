@@ -668,6 +668,9 @@ const NewsPage = () => {
 
                   return (
                     <div key={article.id}>
+                      {idx > 0 && !rail && (
+                        <div className="h-px bg-foreground/30" role="separator" />
+                      )}
                       {rail && RailIcon && railItems.length > 0 && (
                         <section className="border-t border-border bg-muted/10 py-4">
                           <div className="flex items-center gap-2 px-4 mb-3">
@@ -717,7 +720,7 @@ const NewsPage = () => {
                       )}
                       <Link
                         to={`/news/${article.id}`}
-                        className="group block px-4 py-5 border-t-2 border-foreground/20 first:border-t-0 active:bg-muted/30 transition-colors"
+                        className="group block px-4 py-5 active:bg-muted/30 transition-colors"
                       >
                         <div className="flex items-center gap-1.5 mb-2">
                           <span className={`h-2 w-2 rounded-full ${dot} shrink-0`} />
