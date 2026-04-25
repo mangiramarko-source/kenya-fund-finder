@@ -157,15 +157,15 @@ const NewsArticlePage = () => {
       <div className="px-4 pt-5 md:px-0 md:pt-0">
 
       {/* Category & meta */}
-      <div className="flex items-center gap-2 mb-3 flex-wrap">
-        <div className={`flex items-center justify-center h-6 w-6 rounded-md ${categoryColors[article.category]?.split(" ")[0] || "bg-muted"}`}>
-          <CatIcon className={`h-3 w-3 ${categoryColors[article.category]?.split(" ")[1] || "text-muted-foreground"}`} />
+      <div className="flex items-center gap-2.5 mb-4 flex-wrap">
+        <div className={`flex items-center justify-center h-8 w-8 rounded-md ${categoryColors[article.category]?.split(" ")[0] || "bg-muted"}`}>
+          <CatIcon className={`h-4 w-4 ${categoryColors[article.category]?.split(" ")[1] || "text-muted-foreground"}`} />
         </div>
-        <Badge variant="outline" className={`text-[10px] sm:text-xs ${categoryColors[article.category] || ""}`}>
+        <Badge variant="outline" className={`text-sm sm:text-sm ${categoryColors[article.category] || ""}`}>
           {article.category}
         </Badge>
-        <span className="flex items-center gap-1 text-xs text-muted-foreground">
-          <Clock className="h-3 w-3" /> {article.read_time}
+        <span className="flex items-center gap-1 text-sm text-muted-foreground">
+          <Clock className="h-4 w-4" /> {article.read_time}
         </span>
       </div>
 
