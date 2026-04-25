@@ -320,14 +320,31 @@ Deno.serve(async (req) => {
       .from("news_articles")
       .select("url, title")
       .order("created_at", { ascending: false })
-      .limit(1000);
+      .limit(2000);
 
-    const existingUrls = new Set((existing || []).map((e: { url: string | null }) => e.url?.toLowerCase()).filter(Boolean));
-    const existingTitles = new Set((existing || []).map((e: { title: string }) => e.title?.toLowerCase()).filter(Boolean));
+    const existingUrls = new Set(
+      (existing || [])
+        .map((e: { url: string | null }) => normalizeUrl(e.url))
+        .filter((v): v is string => Boolean(v)),
+    );
+    const existingTitles = new Set(
+      (existing || [])
+        .map((e: { title: string }) => normalizeTitle(e.title || ""))
+        .filter(Boolean),
+    );
 
+    // Dedupe within this batch as well (cross-feed duplicates from Google News etc.)
+    const seenUrls = new Set<string>();
+    const seenTitles = new Set<string>();
     const newArticles = allArticles.filter((a) => {
-      if (a.url && existingUrls.has(a.url.toLowerCase())) return false;
-      if (existingTitles.has(a.title.toLowerCase())) return false;
+      const nUrl = normalizeUrl(a.url);
+      const nTitle = normalizeTitle(a.title);
+      if (nUrl && existingUrls.has(nUrl)) return false;
+      if (nTitle && existingTitles.has(nTitle)) return false;
+      if (nUrl && seenUrls.has(nUrl)) return false;
+      if (nTitle && seenTitles.has(nTitle)) return false;
+      if (nUrl) seenUrls.add(nUrl);
+      if (nTitle) seenTitles.add(nTitle);
       return true;
     });
 
