@@ -181,9 +181,9 @@ const FundDetailPage = () => {
     <div className="container py-4 sm:py-8 max-w-5xl space-y-5">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-3 py-1">
-         <Link to="/" className="hidden md:inline text-sm text-muted-foreground hover:text-foreground transition-colors">Back  </Link>
-        <ChevronRight className="h-4 w-4 text-muted-foreground/40 hidden md:block" />
-        <span className="text-sm text-foreground font-semibold truncate max-w-[200px]">{fund.name}</span>
+        <Link to="/" className="hidden md:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
+          <ArrowLeft className="h-4 w-4" /> Back
+        </Link>
       </nav>
 
       {/* ━━━ SECTION 1: Fund Identity ━━━ */}
