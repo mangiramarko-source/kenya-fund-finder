@@ -83,7 +83,7 @@ const ResetPasswordPage = () => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
-      <Card className="w-full max-w-md mx-4">
+      <Card className="w-full max-w-md mx-4 rounded-none">
         <CardHeader className="text-center">
           <Link to="/auth" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 self-start">
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Sign In
