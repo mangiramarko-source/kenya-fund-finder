@@ -68,6 +68,7 @@ const NewsArticlePage = () => {
     if (!id) return;
     setLoading(true);
     setRelated([]);
+    setEnrichError(null);
     fetchNewsById(id)
       .then((a) => {
         setArticle(a);
@@ -75,6 +76,24 @@ const NewsArticlePage = () => {
           fetchRelatedNews(a.category, a.id, 3)
             .then(setRelated)
             .catch(() => {});
+
+          // Auto-enrich if content is missing/short and source URL exists
+          const needsEnrichment = (!a.content || a.content.trim().length < 200) && a.url && /^https?:\/\//i.test(a.url);
+          if (needsEnrichment) {
+            setEnriching(true);
+            supabase.functions.invoke("enrich-article", { body: { articleId: a.id } })
+              .then(({ data, error }) => {
+                if (error) {
+                  setEnrichError(error.message || "Could not load full article");
+                } else if (data?.content) {
+                  setArticle((prev) => prev ? { ...prev, content: data.content } : prev);
+                } else if (data?.error) {
+                  setEnrichError(data.error);
+                }
+              })
+              .catch((e) => setEnrichError(e?.message || "Could not load full article"))
+              .finally(() => setEnriching(false));
+          }
         }
       })
       .catch(() => {})
