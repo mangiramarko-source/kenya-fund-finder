@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchNewsById, fetchRelatedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Sparkles } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 
@@ -32,6 +34,8 @@ const NewsArticlePage = () => {
   const [article, setArticle] = useState<NewsFromDB | null>(null);
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<NewsFromDB[]>([]);
+  const [enriching, setEnriching] = useState(false);
+  const [enrichError, setEnrichError] = useState<string | null>(null);
 
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -64,6 +68,7 @@ const NewsArticlePage = () => {
     if (!id) return;
     setLoading(true);
     setRelated([]);
+    setEnrichError(null);
     fetchNewsById(id)
       .then((a) => {
         setArticle(a);
@@ -71,6 +76,24 @@ const NewsArticlePage = () => {
           fetchRelatedNews(a.category, a.id, 3)
             .then(setRelated)
             .catch(() => {});
+
+          // Auto-enrich if content is missing/short and source URL exists
+          const needsEnrichment = (!a.content || a.content.trim().length < 200) && a.url && /^https?:\/\//i.test(a.url);
+          if (needsEnrichment) {
+            setEnriching(true);
+            supabase.functions.invoke("enrich-article", { body: { articleId: a.id } })
+              .then(({ data, error }) => {
+                if (error) {
+                  setEnrichError(error.message || "Could not load full article");
+                } else if (data?.content) {
+                  setArticle((prev) => prev ? { ...prev, content: data.content } : prev);
+                } else if (data?.error) {
+                  setEnrichError(data.error);
+                }
+              })
+              .catch((e) => setEnrichError(e?.message || "Could not load full article"))
+              .finally(() => setEnriching(false));
+          }
         }
       })
       .catch(() => {})
@@ -243,14 +266,29 @@ const NewsArticlePage = () => {
 
       {/* Content */}
       {(() => {
-        // All content is now publicly accessible
+        const hasContent = article.content && article.content.trim().length > 0;
         return (
           <>
+            {hasContent && (
+              <div className="flex items-center gap-1.5 mb-3 text-[11px] text-muted-foreground">
+                <Sparkles className="h-3 w-3 text-accent" />
+                <span>AI-generated summary based on the original source</span>
+              </div>
+            )}
             <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
-              {article.content ? (
-                article.content.split("\n").filter(Boolean).map((paragraph, i) => (
+              {hasContent ? (
+                article.content!.split("\n").filter(Boolean).map((paragraph, i) => (
                   <p key={i} className="sm:text-base text-foreground leading-relaxed font-sans mx-[2px] my-0 px-0 py-0 border-8 border-none pl-[10px] pr-[10px] text-left text-xl font-medium">{decodeHtmlEntities(paragraph)}</p>
                 ))
+              ) : enriching ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground italic py-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                  <span>Generating extended summary from the original source…</span>
+                </div>
+              ) : enrichError ? (
+                <p className="text-sm text-muted-foreground italic">
+                  Extended summary unavailable. {article.url ? "You can read the full article at the original source below." : ""}
+                </p>
               ) : (
                 <p className="text-sm text-muted-foreground italic">Full article content is not yet available.</p>
               )}
