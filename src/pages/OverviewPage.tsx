@@ -1116,24 +1116,46 @@ const OverviewPage = () => {
         </div>
       </div>
 
-      {/* ─── Watched Individual Assets (for signed-in users, shown first) ─── */}
+      {/* ─── Watched Individual Assets ───
+          Mobile: only when "Watchlist" tab is active. Desktop: always above highlights. */}
       {user && hasWatchlist && (
-        <WatchlistGroupedSection
-          watchedFunds={watchedFunds}
-          watchedStocks={watchedStocks}
-          watchedRates={watchedRates}
-          watchedCommoditiesList={watchedCommoditiesList}
-          getFundHistory={getFundHistory}
-          getStockHistory={getStockHistory}
-          getStockSparkData={getStockSparkData}
-          getHistory={getHistory}
-          openAlert={openAlert}
-          toggleAsset={toggleAsset}
-        />
+        <div className={mobileTab === "watchlist" ? "block" : "hidden md:block"}>
+          <WatchlistGroupedSection
+            watchedFunds={watchedFunds}
+            watchedStocks={watchedStocks}
+            watchedRates={watchedRates}
+            watchedCommoditiesList={watchedCommoditiesList}
+            getFundHistory={getFundHistory}
+            getStockHistory={getStockHistory}
+            getStockSparkData={getStockSparkData}
+            getHistory={getHistory}
+            openAlert={openAlert}
+            toggleAsset={toggleAsset}
+          />
+        </div>
       )}
+
+      {/* Mobile-only empty state on Watchlist tab when nothing tracked */}
+      {user && !hasWatchlist && mobileTab === "watchlist" && (
+        <div className="md:hidden rounded-xl border border-dashed border-border bg-card/40 p-8 text-center">
+          <Star className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+          <h3 className="text-sm font-semibold text-foreground mb-1">Your watchlist is empty</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            Tap Customize to start tracking stocks, funds, currencies, and commodities.
+          </p>
+          <Button size="sm" className="rounded-full gap-1.5" onClick={() => setCustomizeOpen(true)}>
+            <Settings2 className="h-3.5 w-3.5" /> Customize Watchlist
+          </Button>
+        </div>
+      )}
+
+      {/* ─── Overview content (Highlights, news, disclaimer) ───
+          Mobile: only when "Overview" tab. Desktop: always. */}
+      <div className={user && mobileTab === "watchlist" ? "hidden md:contents" : "contents"}>
 
       {/* ─── Market Highlights (always shown) ─── */}
       <div>
+
 
         {/* Desktop: horizontally scrollable row of fixed-width columns */}
         <div className="hidden md:block -mx-4 md:-mx-6">
