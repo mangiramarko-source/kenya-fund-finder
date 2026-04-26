@@ -214,29 +214,39 @@ const CustomizeDialog = ({
                 )}
               </button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle className="text-base">Filters</SheetTitle>
+            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[85vh] p-0 flex flex-col">
+              <SheetHeader className="px-4 pt-4 pb-3 border-b border-border">
+                <div className="flex items-center justify-between gap-2">
+                  <SheetTitle className="text-base">Filters</SheetTitle>
+                  {activeFilterCount > 0 && (
+                    <button
+                      onClick={() => { setCategory("all"); setWatchedOnly(false); }}
+                      className="text-[11px] text-accent hover:underline"
+                    >
+                      Clear all
+                    </button>
+                  )}
+                </div>
               </SheetHeader>
 
-              <div className="mt-4 space-y-5">
+              <div className="flex-1 overflow-y-auto px-4 py-4 space-y-5">
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Category</p>
-                  <div className="flex flex-wrap gap-1.5">
+                  <div className="grid grid-cols-2 gap-2">
                     {CATEGORY_TABS.map(tab => {
                       const active = category === tab.value;
                       return (
                         <button
                           key={tab.value}
                           onClick={() => setCategory(tab.value)}
-                          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                          className={`inline-flex items-center justify-between gap-2 rounded-lg border px-3 h-10 text-xs font-medium transition-colors ${
                             active
                               ? "bg-primary text-primary-foreground border-primary"
                               : "bg-card border-border text-muted-foreground"
                           }`}
                         >
-                          {tab.label}
-                          <span className={`tabular-nums text-[10px] ${active ? "opacity-90" : "opacity-70"}`}>
+                          <span className="truncate">{tab.label}</span>
+                          <span className={`tabular-nums text-[10px] shrink-0 ${active ? "opacity-90" : "opacity-70"}`}>
                             {counts[tab.value]}
                           </span>
                         </button>
@@ -249,7 +259,7 @@ const CustomizeDialog = ({
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Show</p>
                   <button
                     onClick={() => setWatchedOnly(v => !v)}
-                    className={`w-full inline-flex items-center justify-between rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors ${
+                    className={`w-full inline-flex items-center justify-between rounded-lg border px-3 h-11 text-xs font-medium transition-colors ${
                       watchedOnly
                         ? "bg-accent/10 border-accent/40 text-accent"
                         : "bg-card border-border text-muted-foreground"
@@ -263,18 +273,13 @@ const CustomizeDialog = ({
                     {watchedOnly && <Check className="h-3.5 w-3.5" />}
                   </button>
                 </div>
+              </div>
 
-                {activeFilterCount > 0 && (
-                  <button
-                    onClick={() => { setCategory("all"); setWatchedOnly(false); }}
-                    className="w-full text-[11px] text-accent hover:underline py-2"
-                  >
-                    Clear filters
-                  </button>
-                )}
-
+              <div className="px-4 py-3 border-t border-border">
                 <SheetClose asChild>
-                  <Button size="sm" className="w-full h-9 text-xs">Apply</Button>
+                  <Button className="w-full h-10 text-sm">
+                    Show {totalShown} {totalShown === 1 ? "result" : "results"}
+                  </Button>
                 </SheetClose>
               </div>
             </SheetContent>
