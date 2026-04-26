@@ -8,7 +8,10 @@ interface SectionStatus {
   last_update_date: string | null;
 }
 
-export function useLiveStatus() {
+// Module-level cache to deduplicate concurrent fetches from multiple hook instances
+let liveStatusFetchPromise: Promise<{ meta: unknown } | null> | null = null;
+
+
   const [isLive, setIsLive] = useState<boolean | null>(null);
   const [lastUpdateDate, setLastUpdateDate] = useState<string | null>(null);
   const [showDate, setShowDateState] = useState<boolean>(true);
