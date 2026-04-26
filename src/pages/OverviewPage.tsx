@@ -1483,26 +1483,26 @@ const WatchCard = ({ title, sub, value, change, chart, sparkData, trend, onAlert
   );
 
   const desktopMain = (
-    <>
-      <div className="flex items-start justify-between gap-2 mb-1">
-        <div className="min-w-0">
-          <p className="text-sm font-bold text-foreground truncate">{title}</p>
-          <p className="text-[10px] text-muted-foreground truncate">{sub}</p>
-        </div>
+    <div className="flex items-center gap-3 p-3.5">
+      <div className="flex-1 min-w-0">
+        <span className="font-bold text-foreground text-sm truncate block">{title}</span>
+        <p className="text-[11px] text-muted-foreground truncate">{sub}</p>
       </div>
-      <div className="flex items-end justify-between gap-2 mt-1.5">
-        <div>
-          <p className="text-base font-bold text-foreground tabular-nums">{value}</p>
-          <div className="mt-0.5">{change}</div>
+      {sparkData && sparkData.length >= 2 && (
+        <div className="shrink-0">
+          <Sparkline data={sparkData} width={60} height={24} color="auto" trend={trend} />
         </div>
-        {linkTo && <Eye className="h-3.5 w-3.5 text-accent" />}
+      )}
+      <div className="text-right shrink-0">
+        <p className="font-bold text-foreground text-sm tabular-nums">{value}</p>
+        <div className="mt-0.5">{change}</div>
       </div>
-      {chart && <div className="mt-2">{chart}</div>}
-    </>
+    </div>
   );
 
   return (
-    <div className="rounded-lg border border-border bg-card hover:border-accent/30 transition-colors group relative">
+    <div className="rounded-lg md:rounded-xl border border-border bg-card hover:border-accent/30 transition-colors group relative overflow-hidden">
+      {/* Mobile action buttons */}
       <div className="flex items-center gap-1 shrink-0 absolute top-2 right-2 z-10 md:hidden">
         {onAlert && <button type="button" onClick={onAlert} className="text-muted-foreground hover:text-accent transition-colors p-0.5"><BellPlus className="h-3 w-3" /></button>}
         <button type="button" onClick={onRemove} className="text-muted-foreground/40 hover:text-destructive transition-colors p-0.5" title="Remove">
@@ -1510,6 +1510,7 @@ const WatchCard = ({ title, sub, value, change, chart, sparkData, trend, onAlert
         </button>
       </div>
 
+      {/* Mobile body */}
       {linkTo ? (
         <Link to={linkTo} className="flex items-center gap-3 px-3 py-2 md:hidden pr-14">
           {mobileMain}
@@ -1520,17 +1521,25 @@ const WatchCard = ({ title, sub, value, change, chart, sparkData, trend, onAlert
         </div>
       )}
 
-      <button type="button" onClick={onRemove} className="absolute top-2 right-2 text-muted-foreground/40 hover:text-destructive opacity-0 group-hover:opacity-100 transition-opacity z-10 hidden md:block" title="Remove from watchlist">
-        <X className="h-3 w-3" />
-      </button>
-      {onAlert && <button type="button" onClick={onAlert} className="absolute bottom-3 right-9 text-muted-foreground hover:text-accent transition-colors p-1 z-10 hidden md:block"><BellPlus className="h-3.5 w-3.5" /></button>}
+      {/* Desktop action buttons (hover) */}
+      <div className="hidden md:flex items-center gap-1 absolute top-1/2 -translate-y-1/2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-card/95 backdrop-blur-sm rounded-md px-1 py-0.5">
+        {onAlert && (
+          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAlert(); }} className="text-muted-foreground hover:text-accent transition-colors p-1" title="Set alert">
+            <BellPlus className="h-3.5 w-3.5" />
+          </button>
+        )}
+        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }} className="text-muted-foreground/60 hover:text-destructive transition-colors p-1" title="Remove from watchlist">
+          <X className="h-3.5 w-3.5" />
+        </button>
+      </div>
 
+      {/* Desktop body — matches HighlightListCard layout */}
       {linkTo ? (
-        <Link to={linkTo} className="hidden md:block p-3 pr-16">
+        <Link to={linkTo} className="hidden md:block">
           {desktopMain}
         </Link>
       ) : (
-        <div className="hidden md:block p-3 pr-16">
+        <div className="hidden md:block">
           {desktopMain}
         </div>
       )}
