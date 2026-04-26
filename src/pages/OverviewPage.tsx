@@ -25,6 +25,7 @@ import { fetchFunds, fetchLatestNewsPreview, type FundFromDB, type NewsFromDB } 
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
+import WatchCard from "@/components/watchlist/WatchCard";
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
