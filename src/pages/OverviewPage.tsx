@@ -690,7 +690,6 @@ const OverviewPage = () => {
   };
 
   // Derived watchlist data
-  const enabledSections = useMemo(() => watchlist.filter(w => w.item_type === "section").map(w => w.item_id), [watchlist]);
   const watchedStockIds = useMemo(() => watchlist.filter(w => w.item_type === "stock").map(w => w.item_id), [watchlist]);
   const watchedCurrencyIds = useMemo(() => watchlist.filter(w => w.item_type === "currency").map(w => w.item_id), [watchlist]);
   const watchedCommodityIds = useMemo(() => watchlist.filter(w => w.item_type === "commodity").map(w => w.item_id), [watchlist]);
@@ -702,7 +701,6 @@ const OverviewPage = () => {
   const watchedFunds = useMemo(() => funds.filter(f => watchedFundIds.includes(f.id)), [funds, watchedFundIds]);
 
   const hasWatchlist = watchedStocks.length > 0 || watchedRates.length > 0 || watchedCommoditiesList.length > 0 || watchedFunds.length > 0;
-  const hasSections = enabledSections.length > 0;
 
   const loading = marketLoading || fundsLoading || watchlistLoading;
 
