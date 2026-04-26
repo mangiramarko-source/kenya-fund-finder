@@ -99,6 +99,16 @@ const QuickAlertDialog = ({
 };
 
 /* ─── Customize Dialog ─── */
+type AssetCategory = "all" | "stock" | "currency" | "commodity" | "fund";
+
+const CATEGORY_TABS: { value: AssetCategory; label: string }[] = [
+  { value: "all", label: "All" },
+  { value: "stock", label: "Stocks" },
+  { value: "currency", label: "FX Rates" },
+  { value: "commodity", label: "Commodities" },
+  { value: "fund", label: "Funds" },
+];
+
 const CustomizeDialog = ({
   open, onClose, watchlist, allStocks, allRates, allCommodities, allFunds, onToggleAsset,
 }: {
@@ -108,43 +118,166 @@ const CustomizeDialog = ({
   onToggleAsset: (type: string, id: string, name: string) => void;
 }) => {
   const [search, setSearch] = useState("");
+  const [category, setCategory] = useState<AssetCategory>("all");
+  const [watchedOnly, setWatchedOnly] = useState(false);
 
   const isWatched = (type: string, id: string) => watchlist.some(w => w.item_type === type && w.item_id === id);
 
-  const filteredStocks = allStocks.filter(s => !search || s.name.toLowerCase().includes(search.toLowerCase()) || s.symbol.toLowerCase().includes(search.toLowerCase()));
-  const filteredRates = allRates.filter(r => !search || r.currency_code.toLowerCase().includes(search.toLowerCase()) || r.currency_name.toLowerCase().includes(search.toLowerCase()));
-  const filteredCommodities = allCommodities.filter(c => !search || c.name.toLowerCase().includes(search.toLowerCase()) || c.symbol.toLowerCase().includes(search.toLowerCase()));
-  const filteredFunds = allFunds.filter(f => !search || f.name.toLowerCase().includes(search.toLowerCase()));
+  const q = search.trim().toLowerCase();
+  const matches = (...vals: string[]) => !q || vals.some(v => v.toLowerCase().includes(q));
+
+  const filteredStocks = allStocks
+    .filter(s => matches(s.name, s.symbol))
+    .filter(s => !watchedOnly || isWatched("stock", s.id));
+  const filteredRates = allRates
+    .filter(r => matches(r.currency_code, r.currency_name))
+    .filter(r => !watchedOnly || isWatched("currency", r.id));
+  const filteredCommodities = allCommodities
+    .filter(c => matches(c.name, c.symbol))
+    .filter(c => !watchedOnly || isWatched("commodity", c.id));
+  const filteredFunds = allFunds
+    .filter(f => matches(f.name, f.manager))
+    .filter(f => !watchedOnly || isWatched("fund", f.id));
+
+  const showStocks = (category === "all" || category === "stock") && filteredStocks.length > 0;
+  const showRates = (category === "all" || category === "currency") && filteredRates.length > 0;
+  const showCommodities = (category === "all" || category === "commodity") && filteredCommodities.length > 0;
+  const showFunds = (category === "all" || category === "fund") && filteredFunds.length > 0;
+
+  const totalShown =
+    (showStocks ? filteredStocks.length : 0) +
+    (showRates ? filteredRates.length : 0) +
+    (showCommodities ? filteredCommodities.length : 0) +
+    (showFunds ? filteredFunds.length : 0);
+
+  const watchedCount = watchlist.length;
+
+  const counts: Record<AssetCategory, number> = {
+    all: allStocks.length + allRates.length + allCommodities.length + allFunds.length,
+    stock: allStocks.length,
+    currency: allRates.length,
+    commodity: allCommodities.length,
+    fund: allFunds.length,
+  };
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-[520px] max-h-[80vh] flex flex-col">
-        <DialogHeader>
-          <DialogTitle className="text-base">Customize Your Watchlist</DialogTitle>
+      <DialogContent className="sm:max-w-[760px] max-h-[85vh] flex flex-col p-0 gap-0">
+        <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <DialogTitle className="text-base">Customize Your Watchlist</DialogTitle>
+              <p className="text-[11px] text-muted-foreground mt-0.5">
+                Pick the specific assets you want to track on your overview.
+              </p>
+            </div>
+            <Badge variant="secondary" className="shrink-0 text-[10px]">
+              {watchedCount} tracked
+            </Badge>
+          </div>
         </DialogHeader>
 
-        <div className="flex-1 overflow-hidden flex flex-col">
-          <p className="text-xs text-muted-foreground mb-2">
-            Pick the specific stocks, currencies, commodities and funds you want to track on your overview.
+        {/* Toolbar: search + watched-only toggle */}
+        <div className="px-5 pt-4 pb-3 space-y-3 border-b border-border">
+          <div className="flex items-center gap-2">
+            <div className="relative flex-1">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+              <Input
+                placeholder="Search by name, symbol, manager…"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-9 text-[16px] md:text-xs"
+              />
+              {search && (
+                <button
+                  onClick={() => setSearch("")}
+                  className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  aria-label="Clear search"
+                >
+                  <X className="h-3.5 w-3.5" />
+                </button>
+              )}
+            </div>
+            <button
+              onClick={() => setWatchedOnly(v => !v)}
+              className={`shrink-0 inline-flex items-center gap-1.5 rounded-lg border px-3 h-9 text-xs font-medium transition-colors ${
+                watchedOnly
+                  ? "bg-accent/10 border-accent/40 text-accent"
+                  : "bg-card border-border text-muted-foreground hover:border-accent/30 hover:text-foreground"
+              }`}
+              aria-pressed={watchedOnly}
+            >
+              <Star className={`h-3.5 w-3.5 ${watchedOnly ? "fill-accent" : ""}`} />
+              Tracked only
+            </button>
+          </div>
+
+          {/* Category filter tabs */}
+          <div className="flex flex-wrap gap-1.5">
+            {CATEGORY_TABS.map(tab => {
+              const active = category === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  onClick={() => setCategory(tab.value)}
+                  className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-[11px] font-medium transition-colors ${
+                    active
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card border-border text-muted-foreground hover:border-accent/30 hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                  <span className={`tabular-nums text-[10px] ${active ? "opacity-90" : "opacity-70"}`}>
+                    {counts[tab.value]}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Scrollable list area */}
+        <div className="flex-1 overflow-y-auto px-5 py-4">
+          {totalShown === 0 ? (
+            <div className="flex flex-col items-center justify-center py-12 text-center">
+              <Search className="h-8 w-8 text-muted-foreground/50 mb-2" />
+              <p className="text-sm font-medium text-foreground">No matches</p>
+              <p className="text-[11px] text-muted-foreground mt-1">
+                {watchedOnly ? "You're not tracking anything in this view yet." : "Try a different search or filter."}
+              </p>
+              {(search || watchedOnly || category !== "all") && (
+                <button
+                  onClick={() => { setSearch(""); setWatchedOnly(false); setCategory("all"); }}
+                  className="mt-3 text-[11px] text-accent hover:underline"
+                >
+                  Clear filters
+                </button>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-5">
+              {showStocks && (
+                <AssetGroup label="Stocks" items={filteredStocks.map(s => ({ id: s.id, name: s.name, sub: s.symbol, watched: isWatched("stock", s.id) }))} onToggle={(id, name) => onToggleAsset("stock", id, name)} />
+              )}
+              {showRates && (
+                <AssetGroup label="FX Rates" items={filteredRates.map(r => ({ id: r.id, name: `${r.currency_code}/KES`, sub: r.currency_name, watched: isWatched("currency", r.id) }))} onToggle={(id, name) => onToggleAsset("currency", id, name)} />
+              )}
+              {showCommodities && (
+                <AssetGroup label="Commodities" items={filteredCommodities.map(c => ({ id: c.id, name: c.name, sub: c.symbol, watched: isWatched("commodity", c.id) }))} onToggle={(id, name) => onToggleAsset("commodity", id, name)} />
+              )}
+              {showFunds && (
+                <AssetGroup label="Funds" items={filteredFunds.map(f => ({ id: f.id, name: f.name, sub: `${f.manager} · ${f.fund_type.replace("_", " ")}`, watched: isWatched("fund", f.id) }))} onToggle={(id, name) => onToggleAsset("fund", id, name)} />
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Footer */}
+        <div className="px-5 py-3 border-t border-border flex items-center justify-between gap-2">
+          <p className="text-[11px] text-muted-foreground">
+            Changes save automatically.
           </p>
-          <div className="relative mb-3">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-            <Input placeholder="Search stocks, currencies, commodities, funds…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-[16px] md:text-xs" />
-          </div>
-          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-            {filteredStocks.length > 0 && (
-              <AssetGroup label="Stocks" items={filteredStocks.map(s => ({ id: s.id, name: s.name, sub: s.symbol, watched: isWatched("stock", s.id) }))} onToggle={(id, name) => onToggleAsset("stock", id, name)} />
-            )}
-            {filteredRates.length > 0 && (
-              <AssetGroup label="FX Rates" items={filteredRates.map(r => ({ id: r.id, name: `${r.currency_code}/KES`, sub: r.currency_name, watched: isWatched("currency", r.id) }))} onToggle={(id, name) => onToggleAsset("currency", id, name)} />
-            )}
-            {filteredCommodities.length > 0 && (
-              <AssetGroup label="Commodities" items={filteredCommodities.map(c => ({ id: c.id, name: c.name, sub: c.symbol, watched: isWatched("commodity", c.id) }))} onToggle={(id, name) => onToggleAsset("commodity", id, name)} />
-            )}
-            {filteredFunds.length > 0 && (
-              <AssetGroup label="Funds" items={filteredFunds.map(f => ({ id: f.id, name: f.name, sub: `${f.manager} · ${f.fund_type.replace("_", " ")}`, watched: isWatched("fund", f.id) }))} onToggle={(id, name) => onToggleAsset("fund", id, name)} />
-            )}
-          </div>
+          <Button size="sm" onClick={onClose} className="h-8 text-xs">Done</Button>
         </div>
       </DialogContent>
     </Dialog>
@@ -153,8 +286,11 @@ const CustomizeDialog = ({
 
 const AssetGroup = ({ label, items, onToggle }: { label: string; items: { id: string; name: string; sub: string; watched: boolean }[]; onToggle: (id: string, name: string) => void }) => (
   <div>
-    <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-1.5">{label}</p>
-    <div className="space-y-1">
+    <div className="flex items-center justify-between mb-2">
+      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
+      <span className="text-[10px] text-muted-foreground tabular-nums">{items.length}</span>
+    </div>
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-1.5">
       {items.map(item => (
         <button key={item.id} onClick={() => onToggle(item.id, item.name)} className={`w-full flex items-center justify-between rounded-lg px-3 py-2 text-left transition-colors ${item.watched ? "bg-accent/10 border border-accent/30" : "bg-card border border-border hover:border-accent/20"}`}>
           <div className="min-w-0">
