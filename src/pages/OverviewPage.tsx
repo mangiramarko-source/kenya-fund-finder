@@ -861,6 +861,8 @@ const OverviewPage = () => {
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [profileName, setProfileName] = useState("");
+  // Mobile-only top tab: "overview" or "watchlist"
+  const [mobileTab, setMobileTab] = useState<"overview" | "watchlist">("overview");
 
   const [alertDialog, setAlertDialog] = useState<{
     open: boolean; assetType: "stock" | "currency" | "commodity";
