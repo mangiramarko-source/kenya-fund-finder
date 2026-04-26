@@ -584,7 +584,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               <col style={{ width: "9%" }} />
               <col style={{ width: "5%" }} />
               <col style={{ width: "11%" }} />
-              {onToggleFavourite && <col style={{ width: "3%" }} />}
+              {onToggleFavourite && <col style={{ width: "32px" }} />}
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
@@ -685,7 +685,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       {fund.withdrawal_time?.replace('business days', 'days')}
                     </td>
                     {onToggleFavourite && (
-                      <td className="px-2 py-3.5 text-center">
+                      <td className="pl-1 pr-2 py-3.5 text-left">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
