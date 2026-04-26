@@ -60,7 +60,10 @@ const CookieConsent = () => {
       }
     };
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    return () => {
+      cic(handle);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
   const acceptAll = () => {
