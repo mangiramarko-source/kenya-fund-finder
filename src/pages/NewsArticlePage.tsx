@@ -34,6 +34,8 @@ const NewsArticlePage = () => {
   const [article, setArticle] = useState<NewsFromDB | null>(null);
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<NewsFromDB[]>([]);
+  const [enriching, setEnriching] = useState(false);
+  const [enrichError, setEnrichError] = useState<string | null>(null);
 
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") return true;
