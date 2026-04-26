@@ -217,6 +217,8 @@ const CommoditiesPage = () => {
 
         <ActiveAlertsCard assetType="commodity" />
 
+        {user && favEntries.length > 0 && <CommodityFavourites entries={favEntries} commodities={commodities} />}
+
         {/* Search */}
         <div className="flex flex-col sm:flex-row gap-3 mb-4">
           <div className="relative flex-1 max-w-sm">
