@@ -4,6 +4,7 @@ import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, type FundFromD
 import { useFundWatchlist } from "@/hooks/useFundWatchlist";
 import { useAuth } from "@/hooks/useAuth";
 import FundGrid from "@/components/home/FundGrid";
+import FundFavourites from "@/components/home/FundFavourites";
 
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 
@@ -14,7 +15,7 @@ const Index = () => {
   const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});
   const [loading, setLoading] = useState(true);
   const { user } = useAuth();
-  const { isFavourite, toggle } = useFundWatchlist();
+  const { entries: favEntries, isFavourite, toggle } = useFundWatchlist();
 
   const load = useCallback(async () => {
     setLoading(true);
@@ -67,6 +68,9 @@ const Index = () => {
         </div>
         <div className="md:hidden border-b border-border mt-3" />
       </div>
+      {user && favEntries.length > 0 && (
+        <FundFavourites entries={favEntries} funds={published} snapshots={snapshots} />
+      )}
       <FundGrid
         funds={published}
         snapshots={snapshots}
