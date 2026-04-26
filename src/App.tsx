@@ -10,7 +10,10 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Layout from "@/components/Layout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
-import CompareModal from "./components/compare/CompareModal";
+
+// Defer heavy/non-critical UI to shrink initial JS bundle
+const CompareModal = lazy(() => import("./components/compare/CompareModal"));
+const CookieConsent = lazy(() => import("./components/CookieConsent"));
 
 // Lazy-loaded routes
 const Index = lazy(() => import("./pages/Index"));
