@@ -955,7 +955,9 @@ const OverviewPage = () => {
 
   const hasWatchlist = watchedStocks.length > 0 || watchedRates.length > 0 || watchedCommoditiesList.length > 0 || watchedFunds.length > 0;
 
-  const loading = marketLoading || fundsLoading || watchlistLoading;
+  // Only block on essentials: market data and (for signed-in users) the watchlist itself.
+  // Funds + historical snapshots stream in progressively to keep TTFP fast.
+  const loading = marketLoading || (!!user && watchlistLoading);
 
   // Best performers
   const bestStock = useMemo(() => stocks.length ? [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [stocks]);
