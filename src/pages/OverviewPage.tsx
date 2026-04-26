@@ -1098,67 +1098,69 @@ const OverviewPage = () => {
             )}
           </button>
         </div>
-        <div className="hidden md:flex flex-row items-end justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-2xl font-bold text-foreground">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              {user ? "Your personalized market overview" : "Best performers across Kenyan markets"}
-            </p>
-            {/* Desktop tabs: under greeting + subtitle */}
-            <div className="mt-3 inline-grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
-              <button
-                type="button"
-                onClick={() => setMobileTab("overview")}
-                className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
-                  mobileTab === "overview"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-pressed={mobileTab === "overview"}
-              >
-                <LayoutDashboard className="h-3.5 w-3.5" /> Overview
-              </button>
-              <button
-                type="button"
-                onClick={() => {
-                  if (!user) { setWatchlistPromptOpen(true); return; }
-                  setMobileTab("watchlist");
-                }}
-                className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
-                  mobileTab === "watchlist"
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-                aria-pressed={mobileTab === "watchlist"}
-              >
-                <Star className={`h-3.5 w-3.5 ${mobileTab === "watchlist" ? "fill-current" : ""}`} /> Watchlist
-                {user && watchlist.length > 0 && (
-                  <span className={`tabular-nums text-[10px] rounded-full px-1.5 ${
-                    mobileTab === "watchlist" ? "bg-primary-foreground/20" : "bg-muted text-foreground"
-                  }`}>
-                    {watchlist.length}
-                  </span>
+        <div className="hidden md:block">
+          <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
+            <div className="min-w-0 flex items-center gap-3 flex-wrap">
+              <h1 className="text-2xl font-bold text-foreground">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
+              <div className="flex items-center gap-2 shrink-0">
+                {user && (
+                  <>
+                    <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setCustomizeOpen(true)}>
+                      <Settings2 className="h-3.5 w-3.5" /> Customize
+                    </Button>
+                    <Button asChild variant="outline" size="sm" className="text-xs h-8 gap-1.5">
+                      <Link to="/alerts"><Bell className="h-3.5 w-3.5" />{alerts.length}</Link>
+                    </Button>
+                  </>
                 )}
-              </button>
+                {!user && (
+                  <Button size="sm" className="text-xs h-8 gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
+                    <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
+                  </Button>
+                )}
+                <SectionLiveStatus section="overview" />
+              </div>
             </div>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
-            {user && (
-              <>
-                <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setCustomizeOpen(true)}>
-                  <Settings2 className="h-3.5 w-3.5" /> Customize
-                </Button>
-                <Button asChild variant="outline" size="sm" className="text-xs h-8 gap-1.5">
-                  <Link to="/alerts"><Bell className="h-3.5 w-3.5" />{alerts.length}</Link>
-                </Button>
-              </>
-            )}
-            {!user && (
-              <Button size="sm" className="text-xs h-8 gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
-                <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
-              </Button>
-            )}
-            <SectionLiveStatus section="overview" />
+          <p className="text-sm text-muted-foreground mt-0.5">
+            {user ? "Your personalized market overview" : "Best performers across Kenyan markets"}
+          </p>
+          {/* Desktop tabs: under greeting + subtitle */}
+          <div className="mt-3 inline-grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setMobileTab("overview")}
+              className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
+                mobileTab === "overview"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-pressed={mobileTab === "overview"}
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" /> Overview
+            </button>
+            <button
+              type="button"
+              onClick={() => {
+                if (!user) { setWatchlistPromptOpen(true); return; }
+                setMobileTab("watchlist");
+              }}
+              className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
+                mobileTab === "watchlist"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-pressed={mobileTab === "watchlist"}
+            >
+              <Star className={`h-3.5 w-3.5 ${mobileTab === "watchlist" ? "fill-current" : ""}`} /> Watchlist
+              {user && watchlist.length > 0 && (
+                <span className={`tabular-nums text-[10px] rounded-full px-1.5 ${
+                  mobileTab === "watchlist" ? "bg-primary-foreground/20" : "bg-muted text-foreground"
+                }`}>
+                  {watchlist.length}
+                </span>
+              )}
+            </button>
           </div>
         </div>
       </div>
