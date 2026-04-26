@@ -1791,6 +1791,54 @@ const OverviewPage = () => {
       {/* Dialogs */}
       <QuickAlertDialog open={alertDialog.open} onClose={() => setAlertDialog(prev => ({ ...prev, open: false }))} assetType={alertDialog.assetType} assetId={alertDialog.assetId} assetName={alertDialog.assetName} currentPrice={alertDialog.currentPrice} unit={alertDialog.unit} />
       <CustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} watchlist={watchlist} allStocks={stocks} allRates={rates} allCommodities={commodities} allFunds={funds} onToggleAsset={toggleAsset} />
+
+      {/* Watchlist benefits prompt for unauthenticated users */}
+      <Dialog open={watchlistPromptOpen} onOpenChange={setWatchlistPromptOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
+              <Star className="h-6 w-6 text-accent fill-accent" />
+            </div>
+            <DialogTitle className="text-center text-lg">Build your personal watchlist</DialogTitle>
+          </DialogHeader>
+          <p className="text-center text-sm text-muted-foreground -mt-1">
+            Sign up free to unlock your watchlist and track what matters to you.
+          </p>
+          <ul className="space-y-2.5 text-sm">
+            <li className="flex items-start gap-2.5">
+              <Check className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+              <span><span className="font-medium text-foreground">Track favorites</span> — stocks, FX, commodities &amp; unit trusts in one view.</span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <Check className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+              <span><span className="font-medium text-foreground">Price alerts</span> — get notified when assets hit your targets.</span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <Check className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+              <span><span className="font-medium text-foreground">Personalized overview</span> — your picks, front and center.</span>
+            </li>
+            <li className="flex items-start gap-2.5">
+              <Check className="h-4 w-4 text-accent mt-0.5 shrink-0" />
+              <span><span className="font-medium text-foreground">Sync across devices</span> — access anywhere, anytime.</span>
+            </li>
+          </ul>
+          <div className="flex flex-col gap-2 pt-1">
+            <Button
+              className="w-full bg-accent text-accent-foreground hover:bg-accent/90 rounded-full"
+              onClick={() => { setWatchlistPromptOpen(false); navigate("/auth"); }}
+            >
+              <TrendingUp className="mr-2 h-4 w-4" /> Sign Up Free
+            </Button>
+            <button
+              type="button"
+              onClick={() => setWatchlistPromptOpen(false)}
+              className="text-xs text-muted-foreground hover:text-foreground"
+            >
+              Maybe later
+            </button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
     </div>
     </>
