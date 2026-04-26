@@ -776,7 +776,7 @@ const NewsPage = () => {
                         <section className="border-t border-border bg-muted/10">
                           <div className="flex items-center gap-2 px-4 pt-4 pb-2">
                             <RailIcon className="h-4 w-4 text-foreground" />
-                            <h3 className="text-xs font-bold uppercase tracking-wider text-foreground">
+                            <h3 className="font-bold uppercase tracking-wider text-foreground text-lg">
                               Related: {rail[0]}
                             </h3>
                           </div>
