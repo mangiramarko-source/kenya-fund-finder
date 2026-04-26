@@ -3,6 +3,7 @@ import { Cookie, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Link } from "react-router-dom";
+import { notifyConsentChange } from "@/lib/consent";
 
 const CONSENT_KEY = "cookie-consent";
 const PREFS_KEY = "cookie-preferences";
@@ -20,6 +21,9 @@ const savePreferences = (prefs: Preferences, choice: "accepted" | "rejected" | "
   } catch {
     // ignore
   }
+  // Notify same-tab listeners (onConsent subscribers) so ads/analytics
+  // initialize immediately without a reload.
+  notifyConsentChange();
 };
 
 const CookieConsent = () => {
