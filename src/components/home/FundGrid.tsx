@@ -584,6 +584,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               <col style={{ width: "9%" }} />
               <col style={{ width: "5%" }} />
               <col style={{ width: "11%" }} />
+              {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
