@@ -25,18 +25,23 @@ export default defineConfig(({ mode }) => ({
       output: {
         manualChunks(id) {
           if (!id.includes("node_modules")) return;
-          if (id.includes("@radix-ui")) return "radix";
-          if (id.includes("@tanstack")) return "tanstack";
-          if (id.includes("@supabase")) return "supabase";
-          if (id.includes("recharts") || id.includes("d3-")) return "charts";
-          if (id.includes("lucide-react")) return "icons";
-          if (id.includes("react-router")) return "router";
+          // Keep React + scheduler + react-dom + tanstack-query together.
+          // Splitting them caused a runtime error where react-query lost
+          // its React reference ("observer.getOptimisticResult is not a function").
           if (
             id.includes("/react/") ||
             id.includes("/react-dom/") ||
-            id.includes("scheduler")
+            id.includes("scheduler") ||
+            id.includes("@tanstack")
           )
-            return "react";
+            return "react-core";
+          if (id.includes("@radix-ui")) return "radix";
+          if (id.includes("@supabase")) return "supabase";
+          if (id.includes("recharts") || id.includes("d3-")) return "charts";
+          // Bundle ALL lucide icons together — splitting them produced 20+ tiny
+          // ~1KB chunks that wasted HTTP overhead and stalled the network.
+          if (id.includes("lucide-react")) return "icons";
+          if (id.includes("react-router")) return "router";
         },
       },
     },

@@ -3,8 +3,10 @@
  *  articles in the same category rarely collide on the same hero image.
  *  A deterministic Picsum URL is used as the final guaranteed fallback
  *  if Unsplash itself ever 404s. */
+// Default size targets thumbnail use (100-200px display); the hero card
+// uses optimizeImageUrl with size override when needed.
 const UNSPLASH = (id: string) =>
-  `https://images.unsplash.com/photo-${id}?w=520&h=325&fit=crop&auto=format&q=60`;
+  `https://images.unsplash.com/photo-${id}?w=280&h=175&fit=crop&auto=format&q=55`;
 
 const categoryImages: Record<string, string[]> = {
   "Yield Updates": [
@@ -94,7 +96,7 @@ function hashId(id: string): number {
 function picsumFallback(id: string): string {
   // Use the article id as a stable seed so each article gets a unique image.
   const seed = encodeURIComponent(id || "kenya-fund-finder");
-  return `https://picsum.photos/seed/${seed}/520/325`;
+  return `https://picsum.photos/seed/${seed}/280/175`;
 }
 
 function getCategoryImage(category: string, id: string): string {
@@ -103,26 +105,29 @@ function getCategoryImage(category: string, id: string): string {
 }
 
 /** Rewrite known CDN URLs to request right-sized variants for card thumbnails.
- *  Saves significant bandwidth vs. serving full-resolution editorial images. */
-function optimizeImageUrl(url: string): string {
+ *  Saves significant bandwidth vs. serving full-resolution editorial images.
+ *  `large=true` requests a hero-sized variant for the first/featured card. */
+function optimizeImageUrl(url: string, large = false): string {
+  const w = large ? 520 : 280;
+  const h = large ? 325 : 175;
   try {
     // Unsplash: enforce reasonable size + quality params.
     if (url.includes("images.unsplash.com")) {
       const u = new URL(url);
-      u.searchParams.set("w", "520");
-      u.searchParams.set("h", "325");
+      u.searchParams.set("w", String(w));
+      u.searchParams.set("h", String(h));
       u.searchParams.set("fit", "crop");
       u.searchParams.set("auto", "format");
-      u.searchParams.set("q", "60");
+      u.searchParams.set("q", large ? "60" : "55");
       return u.toString();
     }
     // Tuko CDN delivers /images/{w}x{h}/file.jpg — rewrite to a smaller variant.
     if (url.includes("cdn.tuko.co.ke/images/")) {
-      return url.replace(/\/images\/\d+x\d+\//, "/images/520x292/");
+      return url.replace(/\/images\/\d+x\d+\//, `/images/${w}x${h}/`);
     }
     // Picsum direct URLs.
     if (url.includes("picsum.photos/seed/")) {
-      return url.replace(/\/(\d+)\/(\d+)(?=$|\?)/, "/520/325");
+      return url.replace(/\/(\d+)\/(\d+)(?=$|\?)/, `/${w}/${h}`);
     }
   } catch {
     // Fall through and return original on parse errors.
@@ -130,9 +135,16 @@ function optimizeImageUrl(url: string): string {
   return url;
 }
 
-export function getNewsImage(imageUrl: string | null, category: string, id: string): string {
-  if (imageUrl) return optimizeImageUrl(imageUrl);
-  return getCategoryImage(category, id);
+export function getNewsImage(
+  imageUrl: string | null,
+  category: string,
+  id: string,
+  large = false
+): string {
+  if (imageUrl) return optimizeImageUrl(imageUrl, large);
+  const fallback = getCategoryImage(category, id);
+  // Hero variant: upgrade the default thumbnail-sized fallback to a larger one.
+  return large ? optimizeImageUrl(fallback, true) : fallback;
 }
 
 /** onError handler — tries category fallback, then a guaranteed Picsum image. */
