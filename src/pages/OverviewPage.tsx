@@ -1052,16 +1052,16 @@ const OverviewPage = () => {
           </div>
         </div>
 
-        {/* Mobile-only top tabs: Overview / Watchlist */}
+        {/* Top tabs: Overview / Watchlist (mobile full-width, desktop inline pill) */}
         {user && (
-          <div className="md:hidden mt-3 grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
+          <div className="mt-3 md:mt-4 grid grid-cols-2 md:inline-grid md:w-auto gap-1 p-1 rounded-full border border-border bg-card">
             <button
               type="button"
               onClick={() => setMobileTab("overview")}
-              className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center justify-center gap-1.5 h-9 md:h-8 md:px-4 rounded-full text-xs font-semibold transition-colors ${
                 mobileTab === "overview"
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               aria-pressed={mobileTab === "overview"}
             >
@@ -1070,10 +1070,10 @@ const OverviewPage = () => {
             <button
               type="button"
               onClick={() => setMobileTab("watchlist")}
-              className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center justify-center gap-1.5 h-9 md:h-8 md:px-4 rounded-full text-xs font-semibold transition-colors ${
                 mobileTab === "watchlist"
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               aria-pressed={mobileTab === "watchlist"}
             >
@@ -1117,9 +1117,9 @@ const OverviewPage = () => {
       </div>
 
       {/* ─── Watched Individual Assets ───
-          Mobile: only when "Watchlist" tab is active. Desktop: always above highlights. */}
-      {user && hasWatchlist && (
-        <div className={mobileTab === "watchlist" ? "block" : "hidden md:block"}>
+          Shown only when the "Watchlist" tab is active (mobile + desktop). */}
+      {user && hasWatchlist && mobileTab === "watchlist" && (
+        <div className="block">
           <WatchlistGroupedSection
             watchedFunds={watchedFunds}
             watchedStocks={watchedStocks}
@@ -1135,13 +1135,13 @@ const OverviewPage = () => {
         </div>
       )}
 
-      {/* Mobile-only empty state on Watchlist tab when nothing tracked */}
+      {/* Empty state on Watchlist tab when nothing tracked (mobile + desktop) */}
       {user && !hasWatchlist && mobileTab === "watchlist" && (
-        <div className="md:hidden rounded-xl border border-dashed border-border bg-card/40 p-8 text-center">
-          <Star className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
-          <h3 className="text-sm font-semibold text-foreground mb-1">Your watchlist is empty</h3>
-          <p className="text-xs text-muted-foreground mb-4">
-            Tap Customize to start tracking stocks, funds, currencies, and commodities.
+        <div className="rounded-xl border border-dashed border-border bg-card/40 p-8 md:p-12 text-center">
+          <Star className="h-10 w-10 md:h-12 md:w-12 mx-auto text-muted-foreground/40 mb-3" />
+          <h3 className="text-sm md:text-base font-semibold text-foreground mb-1">Your watchlist is empty</h3>
+          <p className="text-xs md:text-sm text-muted-foreground mb-4">
+            Use Customize to start tracking stocks, funds, currencies, and commodities.
           </p>
           <Button size="sm" className="rounded-full gap-1.5" onClick={() => setCustomizeOpen(true)}>
             <Settings2 className="h-3.5 w-3.5" /> Customize Watchlist
@@ -1150,8 +1150,8 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Overview content (Highlights, news, disclaimer) ───
-          Mobile: only when "Overview" tab. Desktop: always. */}
-      <div className={user && mobileTab === "watchlist" ? "hidden md:contents" : "contents"}>
+          Hidden when "Watchlist" tab is active (mobile + desktop). */}
+      <div className={user && mobileTab === "watchlist" ? "hidden" : "contents"}>
 
       {/* ─── Market Highlights (always shown) ─── */}
       <div>
