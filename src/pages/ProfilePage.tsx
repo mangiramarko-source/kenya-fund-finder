@@ -10,6 +10,7 @@ import { Separator } from "@/components/ui/separator";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Save, ArrowLeft, User, Mail, Lock, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import CookiePreferences from "@/components/CookiePreferences";
 
 const ProfilePage = () => {
   const { user, loading: authLoading } = useAuth();
@@ -258,6 +259,8 @@ const ProfilePage = () => {
           </Button>
         </CardContent>
       </Card>
+
+      <CookiePreferences />
     </div>
   );
 };
