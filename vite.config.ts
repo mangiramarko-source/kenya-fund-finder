@@ -18,4 +18,14 @@ export default defineConfig(({ mode }) => ({
       "@": path.resolve(__dirname, "./src"),
     },
   },
+  build: {
+    cssMinify: "lightningcss",
+    cssCodeSplit: true,
+  },
+  css: {
+    transformer: "lightningcss",
+    lightningcss: {
+      drafts: { customMedia: true },
+    },
+  },
 }));
