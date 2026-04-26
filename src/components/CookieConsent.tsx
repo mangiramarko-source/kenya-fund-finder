@@ -35,6 +35,24 @@ const CookieConsent = () => {
   const [analytics, setAnalytics] = useState(false);
   const [ads, setAds] = useState(false);
 
+  // Sync consent across open tabs via the storage event.
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const onStorage = (e: StorageEvent) => {
+      if (e.key !== CONSENT_KEY) return;
+      // A choice was made (or cleared) in another tab — reflect it here immediately.
+      if (e.newValue) {
+        setVisible(false);
+        setShowSettings(false);
+      } else {
+        // Consent cleared elsewhere — re-show banner.
+        setVisible(true);
+      }
+    };
+    window.addEventListener("storage", onStorage);
+    return () => window.removeEventListener("storage", onStorage);
+  }, []);
+
   const acceptAll = () => {
     savePreferences({ necessary: true, analytics: true, ads: true }, "accepted");
     setVisible(false);
