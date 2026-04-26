@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Pencil, Trash2, Search, Upload, X, Loader2 } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, Upload, X, Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 interface NewsRow {
@@ -47,8 +47,33 @@ const AdminNews = () => {
   const [editing, setEditing] = useState<typeof emptyNews & { id?: string }>(emptyNews);
   const [dialogOpen, setDialogOpen] = useState(false);
   const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const [isFetchingNews, setIsFetchingNews] = useState(false);
   const { user } = useAuth();
   const { toast } = useToast();
+
+  const handleFetchNewsNow = async () => {
+    setIsFetchingNews(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-news", { body: {} });
+      if (error) throw error;
+      const inserted = (data as any)?.inserted ?? (data as any)?.count ?? 0;
+      toast({
+        title: "News fetch complete",
+        description: typeof inserted === "number"
+          ? `${inserted} new article${inserted === 1 ? "" : "s"} added.`
+          : "Fetch triggered successfully.",
+      });
+      await load();
+    } catch (e: any) {
+      toast({
+        title: "Fetch failed",
+        description: e?.message || "Could not trigger news fetch.",
+        variant: "destructive",
+      });
+    } finally {
+      setIsFetchingNews(false);
+    }
+  };
 
   const load = async () => {
     const { data } = await supabase
@@ -217,8 +242,22 @@ const AdminNews = () => {
 
   return (
     <div>
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-4 gap-2 flex-wrap">
         <h2 className="text-xl font-bold">News Management</h2>
+        <div className="flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={handleFetchNewsNow}
+            disabled={isFetchingNews}
+          >
+            {isFetchingNews ? (
+              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+            ) : (
+              <RefreshCw className="mr-2 h-4 w-4" />
+            )}
+            {isFetchingNews ? "Fetching..." : "Fetch News Now"}
+          </Button>
         <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditing(emptyNews); }}>
           <DialogTrigger asChild>
             <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
@@ -346,6 +385,7 @@ const AdminNews = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="relative mb-4">
