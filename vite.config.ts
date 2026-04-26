@@ -19,7 +19,6 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
-    cssMinify: "lightningcss",
     cssCodeSplit: true,
     rollupOptions: {
       output: {
@@ -44,12 +43,6 @@ export default defineConfig(({ mode }) => ({
           if (id.includes("react-router")) return "router";
         },
       },
-    },
-  },
-  css: {
-    transformer: "lightningcss",
-    lightningcss: {
-      drafts: { customMedia: true },
     },
   },
 }));
