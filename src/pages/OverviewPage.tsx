@@ -1442,6 +1442,8 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Latest News ─── */}
+      {/* Reserve vertical space to prevent CLS while news data loads (matches ~4-card row height at lg breakpoint). */}
+      {news.length === 0 && <div className="hidden sm:block sm:min-h-[280px]" aria-hidden="true" />}
       {news.length > 0 && (
         <div>
           <div className="flex items-center justify-between mb-3">
