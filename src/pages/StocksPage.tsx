@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import {
   TrendingUp,
   TrendingDown,
@@ -270,7 +271,7 @@ const StocksPage = () => {
 
   const latestUpdate =
     stocks.length > 0
-      ? new Date(stocks.reduce((latest, s) => (s.updated_at > latest ? s.updated_at : latest), stocks[0].updated_at))
+      ? toLastWeekday(stocks.reduce((latest, s) => (s.updated_at > latest ? s.updated_at : latest), stocks[0].updated_at))
       : null;
 
   return (
@@ -728,7 +729,7 @@ const StockDetailPanel = ({
 
       <div className="flex items-center justify-between mt-2">
         <p className="text-[10px] text-muted-foreground">
-          Last updated: {new Date(s.updated_at).toLocaleString("en-KE")}
+          Last updated: {formatMarketDateTime(s.updated_at)}
         </p>
         <CreateAlertDialog
           assetType="stock"
