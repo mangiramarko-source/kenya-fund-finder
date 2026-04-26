@@ -703,13 +703,24 @@ const RateRow = ({
           )}
         </td>
         <td className="px-3 py-4 text-sm text-muted-foreground whitespace-nowrap">{updatedShort}</td>
+        {onToggleFavourite !== undefined && (
+          <td className="px-2 py-4 text-center">
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
+              className="p-1 rounded-md hover:bg-muted transition-colors"
+              aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+            >
+              <Star className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+            </button>
+          </td>
+        )}
         <td className="px-2 py-4 text-center">
           {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         </td>
       </tr>
       {isExpanded && (
         <tr className="border-t border-border bg-muted/20">
-          <td colSpan={10} className="p-4">
+          <td colSpan={onToggleFavourite !== undefined ? 11 : 10} className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <DetailBox label="Current Rate" value={`KES ${rate.rate.toFixed(2)}`} />
               <DetailBox label="Previous Rate" value={rate.previous_rate != null ? `KES ${rate.previous_rate.toFixed(2)}` : "—"} />
