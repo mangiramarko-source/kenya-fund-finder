@@ -1443,7 +1443,7 @@ const OverviewPage = () => {
 
       {/* ─── Latest News ─── */}
       {news.length > 0 && (
-        <div className="mt-16 md:mt-20">
+        <div className="mt-8 md:mt-10">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-accent/10">
