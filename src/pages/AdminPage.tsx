@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminFunds from "./admin/AdminFunds";
 import AdminNews from "./admin/AdminNews";
@@ -10,6 +10,7 @@ import AdminPages from "./admin/AdminPages";
 import AdminAds from "./admin/AdminAds";
 import AdminMarkets from "./admin/AdminMarkets";
 import AdminSuggestions from "./admin/AdminSuggestions";
+import AdminNewsEnrichment from "./admin/AdminNewsEnrichment";
 
 const AdminPage = () => {
   const { isAdmin, loading, user } = useAuth();
@@ -34,7 +35,7 @@ const AdminPage = () => {
   return (
     <div className="container py-6">
       <Tabs defaultValue="dashboard" className="space-y-6">
-         <TabsList className="grid w-full grid-cols-8 max-w-5xl">
+         <TabsList className="grid w-full grid-cols-9 max-w-6xl">
           <TabsTrigger value="dashboard" className="gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -46,6 +47,10 @@ const AdminPage = () => {
           <TabsTrigger value="news" className="gap-1.5">
             <Newspaper className="h-4 w-4" />
             <span className="hidden sm:inline">News</span>
+          </TabsTrigger>
+          <TabsTrigger value="enrichment" className="gap-1.5">
+            <Sparkles className="h-4 w-4" />
+            <span className="hidden sm:inline">Enrich</span>
           </TabsTrigger>
           <TabsTrigger value="ads" className="gap-1.5">
             <Megaphone className="h-4 w-4" />
@@ -73,6 +78,7 @@ const AdminPage = () => {
         <TabsContent value="funds"><AdminFunds /></TabsContent>
         
         <TabsContent value="news"><AdminNews /></TabsContent>
+        <TabsContent value="enrichment"><AdminNewsEnrichment /></TabsContent>
         <TabsContent value="ads"><AdminAds /></TabsContent>
         <TabsContent value="pages"><AdminPages /></TabsContent>
         <TabsContent value="markets"><AdminMarkets /></TabsContent>
