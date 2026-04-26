@@ -66,7 +66,7 @@ const CookieConsent = () => {
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!hydrated || !visible) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
