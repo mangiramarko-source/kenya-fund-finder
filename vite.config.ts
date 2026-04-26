@@ -31,10 +31,15 @@ export default defineConfig(({ mode }) => ({
             id.includes("/react/") ||
             id.includes("/react-dom/") ||
             id.includes("scheduler") ||
-            id.includes("@tanstack")
+            id.includes("@tanstack") ||
+            // Radix primitives call React.forwardRef at module top-level.
+            // If they land in a separate chunk that loads before react-core
+            // finishes initializing, we get:
+            //   "Cannot read properties of undefined (reading 'forwardRef')"
+            // Keep them bundled with React to guarantee init order.
+            id.includes("@radix-ui")
           )
             return "react-core";
-          if (id.includes("@radix-ui")) return "radix";
           if (id.includes("@supabase")) return "supabase";
           // NOTE: Do NOT manually split recharts/d3-* into a "charts" chunk.
           // Doing so creates a circular init between the charts chunk and
