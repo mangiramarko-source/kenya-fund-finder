@@ -31,12 +31,24 @@ const CookieConsent = () => {
 
   useEffect(() => {
     if (typeof window === "undefined") return;
-    try {
-      setVisible(!localStorage.getItem(CONSENT_KEY));
-    } catch {
-      setVisible(false);
-    }
-    setHydrated(true);
+
+    // Defer hydration of the banner until the browser is idle so it does
+    // NOT become the LCP element (it's a fixed full-viewport overlay).
+    // This lets the actual page content paint first.
+    const ric: (cb: () => void) => number =
+      (window as any).requestIdleCallback ||
+      ((cb: () => void) => window.setTimeout(cb, 1500));
+    const cic: (id: number) => void =
+      (window as any).cancelIdleCallback || window.clearTimeout;
+
+    const handle = ric(() => {
+      try {
+        setVisible(!localStorage.getItem(CONSENT_KEY));
+      } catch {
+        setVisible(false);
+      }
+      setHydrated(true);
+    });
 
     const onStorage = (e: StorageEvent) => {
       if (e.key !== CONSENT_KEY) return;
@@ -48,7 +60,10 @@ const CookieConsent = () => {
       }
     };
     window.addEventListener("storage", onStorage);
-    return () => window.removeEventListener("storage", onStorage);
+    return () => {
+      cic(handle);
+      window.removeEventListener("storage", onStorage);
+    };
   }, []);
 
   const acceptAll = () => {
