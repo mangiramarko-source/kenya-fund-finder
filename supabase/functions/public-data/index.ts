@@ -19,8 +19,11 @@ const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
 // --- Limits -----------------------------------------------------------------
+// Set high enough to never throttle real browser sessions (a single page load
+// can fan out to ~10–15 calls; many users share an IP via mobile NAT/CGNAT or
+// office networks). The goal here is scraper deterrence, not user throttling.
 const RATE_WINDOW_SECONDS = 60;
-const RATE_MAX_REQUESTS = 60; // 60 req / IP / minute
+const RATE_MAX_REQUESTS = 300; // 300 req / IP / minute
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
 // Bulk feeds (snapshots / recent history without a parent id) are heavier;
