@@ -11,6 +11,7 @@ interface SectionStatus {
 // Module-level cache to deduplicate concurrent fetches from multiple hook instances
 let liveStatusFetchPromise: Promise<{ meta: unknown } | null> | null = null;
 
+export function useLiveStatus() {
 
   const [isLive, setIsLive] = useState<boolean | null>(null);
   const [lastUpdateDate, setLastUpdateDate] = useState<string | null>(null);
