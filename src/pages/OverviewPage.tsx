@@ -1100,26 +1100,24 @@ const OverviewPage = () => {
         </div>
         <div className="hidden md:block">
           <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
-            <div className="min-w-0 flex items-center gap-3 flex-wrap">
-              <h1 className="text-2xl font-bold text-foreground">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
-              <div className="flex items-center gap-2 shrink-0">
-                {user && (
-                  <>
-                    <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setCustomizeOpen(true)}>
-                      <Settings2 className="h-3.5 w-3.5" /> Customize
-                    </Button>
-                    <Button asChild variant="outline" size="sm" className="text-xs h-8 gap-1.5">
-                      <Link to="/alerts"><Bell className="h-3.5 w-3.5" />{alerts.length}</Link>
-                    </Button>
-                  </>
-                )}
-                {!user && (
-                  <Button size="sm" className="text-xs h-8 gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
-                    <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
+            <h1 className="text-2xl font-bold text-foreground min-w-0">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
+            <div className="flex items-center gap-2 shrink-0 ml-auto">
+              {user && (
+                <>
+                  <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setCustomizeOpen(true)}>
+                    <Settings2 className="h-3.5 w-3.5" /> Customize
                   </Button>
-                )}
-                <SectionLiveStatus section="overview" />
-              </div>
+                  <Button asChild variant="outline" size="sm" className="text-xs h-8 gap-1.5">
+                    <Link to="/alerts"><Bell className="h-3.5 w-3.5" />{alerts.length}</Link>
+                  </Button>
+                </>
+              )}
+              {!user && (
+                <Button size="sm" className="text-xs h-8 gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
+                  <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
+                </Button>
+              )}
+              <SectionLiveStatus section="overview" />
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">
