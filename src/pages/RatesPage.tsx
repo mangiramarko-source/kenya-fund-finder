@@ -239,6 +239,7 @@ const RatesPage = () => {
 
         <ActiveAlertsCard assetType="currency" />
 
+        {user && favEntries.length > 0 && <RateFavourites entries={favEntries} rates={rates} />}
 
         {/* Desktop Search */}
         <div className="hidden md:flex flex-col sm:flex-row gap-3 mb-4">
