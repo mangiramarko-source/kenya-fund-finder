@@ -991,64 +991,18 @@ const OverviewPage = () => {
 
       {/* ─── Watched Individual Assets (for non-signed-in, keep original position) ─── */}
       {!user && hasWatchlist && (
-        <div>
-          <div className="flex items-center justify-between mb-3">
-            <h2 className="text-sm font-semibold text-foreground flex items-center gap-2"><Star className="h-4 w-4 text-warning" /> Your Watchlist</h2>
-            <span className="text-[10px] text-muted-foreground">{watchedStocks.length + watchedRates.length + watchedCommoditiesList.length + watchedFunds.length} items</span>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-            {watchedStocks.map(s => {
-              const sHistory = getStockHistory(s.id);
-              return (
-                <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${s.price.toFixed(2)}`}
-                  change={<Change current={s.price} previous={s.previous_price} />}
-                  chart={sHistory.length > 2 ? <MiniChart data={sHistory} /> : undefined}
-                  sparkData={getStockSparkData(s.id)}
-                  trend={trendOf(s.price, s.previous_price)}
-                  linkTo={`/stocks/${s.symbol}`}
-                  onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
-                  onRemove={() => toggleAsset("stock", s.id, s.name)} />
-              );
-            })}
-            {watchedRates.map(r => {
-              const history = getHistory(r.currency_code);
-              return (
-                <WatchCard key={r.id} title={`${r.currency_code}/KES`} sub={r.currency_name} value={`KES ${Number(r.rate).toFixed(2)}`}
-                  change={<Change current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />}
-                  chart={history.length > 2 ? <MiniChart data={history} /> : undefined}
-                  sparkData={history.length > 2 ? history.map(h => h.rate) : undefined}
-                  trend={trendOf(Number(r.rate), r.previous_rate != null ? Number(r.previous_rate) : null)}
-                  linkTo="/rates"
-                  onAlert={() => openAlert("currency", r.id, `${r.currency_code}/KES`, Number(r.rate), "KES")}
-                  onRemove={() => toggleAsset("currency", r.id, `${r.currency_code}/KES`)} />
-              );
-            })}
-            {watchedCommoditiesList.map(c => (
-              <WatchCard key={c.id} title={c.name} sub={c.symbol} value={`${Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${c.unit}`}
-                change={<Change current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />}
-                trend={trendOf(Number(c.price), c.previous_price != null ? Number(c.previous_price) : null)}
-                linkTo="/commodities"
-                onAlert={() => openAlert("commodity", c.id, c.name, Number(c.price), c.unit)}
-                onRemove={() => toggleAsset("commodity", c.id, c.name)} />
-            ))}
-            {watchedFunds.map(f => {
-              const fHistory = getFundHistory(f.id);
-              const fundTypeLabel = f.fund_type === "money_market" ? "Money Market" : f.fund_type === "fixed_income" ? "Fixed Income" : f.fund_type === "balanced" ? "Balanced" : f.fund_type === "equity" ? "Equity" : f.fund_type === "bond" ? "Bond" : f.fund_type;
-              const fundTrend: "up" | "down" | "flat" | undefined = fHistory.length >= 2
-                ? (fHistory[fHistory.length - 1].rate > fHistory[0].rate ? "up" : fHistory[fHistory.length - 1].rate < fHistory[0].rate ? "down" : "flat")
-                : undefined;
-              return (
-                <WatchCard key={f.id} title={f.name} sub={fundTypeLabel} value={`${f.annual_yield.toFixed(2)}%`}
-                  change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
-                  chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
-                  sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}
-                  trend={fundTrend}
-                  linkTo={`/compare/${f.slug}`}
-                  onRemove={() => toggleAsset("fund", f.id, f.name)} />
-              );
-            })}
-          </div>
-        </div>
+        <WatchlistGroupedSection
+          watchedFunds={watchedFunds}
+          watchedStocks={watchedStocks}
+          watchedRates={watchedRates}
+          watchedCommoditiesList={watchedCommoditiesList}
+          getFundHistory={getFundHistory}
+          getStockHistory={getStockHistory}
+          getStockSparkData={getStockSparkData}
+          getHistory={getHistory}
+          openAlert={openAlert}
+          toggleAsset={toggleAsset}
+        />
       )}
 
       {/* ─── Section: Stocks ─── */}
