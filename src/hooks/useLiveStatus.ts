@@ -28,12 +28,13 @@ export function useLiveStatus() {
   const fetchStatus = async () => {
     // Deduplicate concurrent requests across hook instances on the same page load
     if (!liveStatusFetchPromise) {
-      liveStatusFetchPromise = supabase
-        .from("site_pages_public")
-        .select("meta")
-        .eq("slug", "live-status")
-        .single()
-        .then((res) => res.data);
+      liveStatusFetchPromise = Promise.resolve(
+        supabase
+          .from("site_pages_public")
+          .select("meta")
+          .eq("slug", "live-status")
+          .single()
+      ).then((res) => res.data);
       // Clear cache shortly after so subsequent navigations get fresh data
       setTimeout(() => { liveStatusFetchPromise = null; }, 30000);
     }
