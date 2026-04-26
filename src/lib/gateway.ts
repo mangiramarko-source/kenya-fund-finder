@@ -6,14 +6,21 @@
 // the *_public views. Existing direct reads still work, but new code should
 // prefer the gateway so we can throttle and monitor scrapers in one place.
 
-// Use VITE_SUPABASE_URL as the source of truth — VITE_SUPABASE_PROJECT_ID is
-// not injected in every build environment and resolved to "undefined" on the
-// live published deploy, breaking every gateway call.
+// Use VITE_SUPABASE_URL as the source of truth. Published builds may omit both
+// VITE_SUPABASE_URL and VITE_SUPABASE_PROJECT_ID, so keep a public, generated
+// project URL fallback instead of ever producing https://undefined.supabase.co.
+const envSupabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const envProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
 const SUPABASE_URL =
-  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ||
-  `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co`;
+  envSupabaseUrl && envSupabaseUrl !== "undefined"
+    ? envSupabaseUrl
+    : envProjectId && envProjectId !== "undefined"
+      ? `https://${envProjectId}.supabase.co`
+      : "https://qrmthciurngpzpjhevdj.supabase.co";
 const BASE = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/public-data`;
-const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
+const ANON_KEY =
+  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFybXRoY2l1cm5ncHpwamhldmRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNzQ1ODksImV4cCI6MjA4Nzg1MDU4OX0.WeQLthaDLzYdmSjY_tt4_ZClx68aXQe3EOjn314yygs";
 
 export type GatewayResource =
   | "funds"
