@@ -684,6 +684,22 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-left text-sm text-muted-foreground truncate" title={fund.withdrawal_time}>
                       {fund.withdrawal_time}
                     </td>
+                    {onToggleFavourite && (
+                      <td className="px-2 py-3.5 text-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFavourite(fund.id, fund.name);
+                          }}
+                          className="p-1 rounded-md hover:bg-muted transition-colors"
+                          aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
+                        >
+                          <Star
+                            className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`}
+                          />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
