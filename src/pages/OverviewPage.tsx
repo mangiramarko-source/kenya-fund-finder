@@ -1052,16 +1052,16 @@ const OverviewPage = () => {
           </div>
         </div>
 
-        {/* Mobile-only top tabs: Overview / Watchlist */}
+        {/* Top tabs: Overview / Watchlist (mobile full-width, desktop inline pill) */}
         {user && (
-          <div className="md:hidden mt-3 grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
+          <div className="mt-3 md:mt-4 grid grid-cols-2 md:inline-grid md:w-auto gap-1 p-1 rounded-full border border-border bg-card">
             <button
               type="button"
               onClick={() => setMobileTab("overview")}
-              className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center justify-center gap-1.5 h-9 md:h-8 md:px-4 rounded-full text-xs font-semibold transition-colors ${
                 mobileTab === "overview"
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               aria-pressed={mobileTab === "overview"}
             >
@@ -1070,10 +1070,10 @@ const OverviewPage = () => {
             <button
               type="button"
               onClick={() => setMobileTab("watchlist")}
-              className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
+              className={`inline-flex items-center justify-center gap-1.5 h-9 md:h-8 md:px-4 rounded-full text-xs font-semibold transition-colors ${
                 mobileTab === "watchlist"
                   ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground"
+                  : "text-muted-foreground hover:text-foreground"
               }`}
               aria-pressed={mobileTab === "watchlist"}
             >
