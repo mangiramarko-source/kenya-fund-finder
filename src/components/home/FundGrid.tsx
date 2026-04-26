@@ -685,7 +685,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       {fund.withdrawal_time?.replace('business days', 'days')}
                     </td>
                     {onToggleFavourite && (
-                      <td className="px-2 py-3.5 text-center">
+                      <td className="pl-1 pr-2 py-3.5 text-left">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
