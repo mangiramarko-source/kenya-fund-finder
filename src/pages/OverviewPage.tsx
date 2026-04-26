@@ -108,16 +108,14 @@ const QuickAlertDialog = ({
 
 /* ─── Customize Dialog ─── */
 const CustomizeDialog = ({
-  open, onClose, watchlist, allStocks, allRates, allCommodities, allFunds, onToggleSection, onToggleAsset,
+  open, onClose, watchlist, allStocks, allRates, allCommodities, allFunds, onToggleAsset,
 }: {
   open: boolean; onClose: () => void;
   watchlist: WatchlistItem[];
   allStocks: Stock[]; allRates: ExchangeRate[]; allCommodities: Commodity[]; allFunds: FundFromDB[];
-  onToggleSection: (sectionId: string, label: string) => void;
   onToggleAsset: (type: string, id: string, name: string) => void;
 }) => {
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<"sections" | "assets">("sections");
 
   const isWatched = (type: string, id: string) => watchlist.some(w => w.item_type === type && w.item_id === id);
 
@@ -130,54 +128,32 @@ const CustomizeDialog = ({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-[520px] max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-base">Customize Your Overview</DialogTitle>
+          <DialogTitle className="text-base">Customize Your Watchlist</DialogTitle>
         </DialogHeader>
 
-        <div className="flex gap-2 mb-3">
-          <button onClick={() => setTab("sections")} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${tab === "sections" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>Sections</button>
-          <button onClick={() => setTab("assets")} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${tab === "assets" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>Specific Assets</button>
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <p className="text-xs text-muted-foreground mb-2">
+            Pick the specific stocks, currencies, commodities and funds you want to track on your overview.
+          </p>
+          <div className="relative mb-3">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input placeholder="Search stocks, currencies, commodities, funds…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-[16px] md:text-xs" />
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            {filteredStocks.length > 0 && (
+              <AssetGroup label="Stocks" items={filteredStocks.map(s => ({ id: s.id, name: s.name, sub: s.symbol, watched: isWatched("stock", s.id) }))} onToggle={(id, name) => onToggleAsset("stock", id, name)} />
+            )}
+            {filteredRates.length > 0 && (
+              <AssetGroup label="FX Rates" items={filteredRates.map(r => ({ id: r.id, name: `${r.currency_code}/KES`, sub: r.currency_name, watched: isWatched("currency", r.id) }))} onToggle={(id, name) => onToggleAsset("currency", id, name)} />
+            )}
+            {filteredCommodities.length > 0 && (
+              <AssetGroup label="Commodities" items={filteredCommodities.map(c => ({ id: c.id, name: c.name, sub: c.symbol, watched: isWatched("commodity", c.id) }))} onToggle={(id, name) => onToggleAsset("commodity", id, name)} />
+            )}
+            {filteredFunds.length > 0 && (
+              <AssetGroup label="Funds" items={filteredFunds.map(f => ({ id: f.id, name: f.name, sub: `${f.manager} · ${f.fund_type.replace("_", " ")}`, watched: isWatched("fund", f.id) }))} onToggle={(id, name) => onToggleAsset("fund", id, name)} />
+            )}
+          </div>
         </div>
-
-        {tab === "sections" && (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground mb-2">Choose which market sections appear on your overview.</p>
-            {SECTIONS.map(s => (
-              <div key={s.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-3">
-                <div className="flex items-center gap-3">
-                  <s.icon className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{s.label}</p>
-                    <p className="text-[10px] text-muted-foreground">{s.description}</p>
-                  </div>
-                </div>
-                <Switch checked={isWatched("section", s.id)} onCheckedChange={() => onToggleSection(s.id, s.label)} />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {tab === "assets" && (
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="relative mb-3">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input placeholder="Search stocks, currencies, commodities, funds…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-[16px] md:text-xs" />
-            </div>
-            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-              {filteredStocks.length > 0 && (
-                <AssetGroup label="Stocks" items={filteredStocks.map(s => ({ id: s.id, name: s.name, sub: s.symbol, watched: isWatched("stock", s.id) }))} onToggle={(id, name) => onToggleAsset("stock", id, name)} />
-              )}
-              {filteredRates.length > 0 && (
-                <AssetGroup label="FX Rates" items={filteredRates.map(r => ({ id: r.id, name: `${r.currency_code}/KES`, sub: r.currency_name, watched: isWatched("currency", r.id) }))} onToggle={(id, name) => onToggleAsset("currency", id, name)} />
-              )}
-              {filteredCommodities.length > 0 && (
-                <AssetGroup label="Commodities" items={filteredCommodities.map(c => ({ id: c.id, name: c.name, sub: c.symbol, watched: isWatched("commodity", c.id) }))} onToggle={(id, name) => onToggleAsset("commodity", id, name)} />
-              )}
-              {filteredFunds.length > 0 && (
-                <AssetGroup label="Funds" items={filteredFunds.map(f => ({ id: f.id, name: f.name, sub: `${f.manager} · ${f.fund_type.replace("_", " ")}`, watched: isWatched("fund", f.id) }))} onToggle={(id, name) => onToggleAsset("fund", id, name)} />
-              )}
-            </div>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );
