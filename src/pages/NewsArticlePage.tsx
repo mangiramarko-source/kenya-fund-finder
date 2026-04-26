@@ -248,7 +248,7 @@ const NewsArticlePage = () => {
       </div>
 
       {/* Title */}
-      <h1 className="sm:text-2xl md:text-3xl font-bold leading-tight mb-3 text-3xl text-left">{decodeHtmlEntities(article.title)}</h1>
+      <h1 className="sm:text-2xl font-bold leading-tight mb-3 text-3xl text-left md:text-5xl">{decodeHtmlEntities(article.title)}</h1>
 
       {/* Date & source */}
       <div className="flex items-center gap-3 text-xs text-muted-foreground mb-6">
