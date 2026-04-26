@@ -248,11 +248,17 @@ export async function fetchFundSnapshots(fundId: string): Promise<YieldSnapshot[
   }));
 }
 
-/** Fetch recent yield snapshots for all funds (for sparklines) */
+/** Fetch recent yield snapshots for all funds (for sparklines) — last ~30 days only */
 export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnapshot[]>> {
+  // Only pull the last ~30 days of history — plenty for sparklines, far less payload.
+  const since = new Date();
+  since.setDate(since.getDate() - 30);
+  const sinceISO = since.toISOString().slice(0, 10);
+
   const { data, error } = await supabase
     .from("fund_yield_snapshots")
     .select("fund_id, annual_yield, daily_yield, snapshot_date")
+    .gte("snapshot_date", sinceISO)
     .order("snapshot_date", { ascending: true })
     .limit(1000);
   if (error) throw error;
