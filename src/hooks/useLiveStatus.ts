@@ -1,4 +1,5 @@
-import { useState, useEffect } from "react";
+import { useEffect, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 
 export type AssetSection = "funds" | "stocks" | "rates" | "commodities" | "overview";
@@ -8,10 +9,28 @@ interface SectionStatus {
   last_update_date: string | null;
 }
 
-// Module-level cache to deduplicate concurrent fetches from multiple hook instances
-let liveStatusFetchPromise: Promise<{ meta: unknown } | null> | null = null;
+const LIVE_STATUS_QUERY_KEY = ["live-status"] as const;
+
+async function fetchLiveStatusMeta(): Promise<Record<string, unknown> | null> {
+  const { data } = await supabase
+    .from("site_pages_public")
+    .select("meta")
+    .eq("slug", "live-status")
+    .single();
+  return (data?.meta as Record<string, unknown> | null) ?? null;
+}
 
 export function useLiveStatus() {
+  const queryClient = useQueryClient();
+
+  // React Query handles deduplication across all concurrent hook instances natively.
+  // staleTime ensures repeat mounts within 60s reuse cache without refetching.
+  const { data: meta, isLoading } = useQuery({
+    queryKey: LIVE_STATUS_QUERY_KEY,
+    queryFn: fetchLiveStatusMeta,
+    staleTime: 60_000,
+    gcTime: 5 * 60_000,
+  });
 
   const [isLive, setIsLive] = useState<boolean | null>(null);
   const [lastUpdateDate, setLastUpdateDate] = useState<string | null>(null);
@@ -23,38 +42,26 @@ export function useLiveStatus() {
     commodities: { is_live: false, last_update_date: null },
     overview: { is_live: false, last_update_date: null },
   });
-  const [loading, setLoading] = useState(true);
 
-  const fetchStatus = async () => {
-    // Deduplicate concurrent requests across hook instances on the same page load
-    if (!liveStatusFetchPromise) {
-      liveStatusFetchPromise = Promise.resolve(
-        supabase
-          .from("site_pages_public")
-          .select("meta")
-          .eq("slug", "live-status")
-          .single()
-      ).then((res) => res.data);
-      // Clear cache shortly after so subsequent navigations get fresh data
-      setTimeout(() => { liveStatusFetchPromise = null; }, 30000);
-    }
-    const data = await liveStatusFetchPromise;
-    const meta = data?.meta as Record<string, unknown> | null;
-    setIsLive(meta?.is_live === true);
-    setLastUpdateDate((meta?.last_update_date as string) ?? null);
-    setShowDateState(meta?.show_date !== false);
+  useEffect(() => {
+    if (!meta) return;
+    setIsLive(meta.is_live === true);
+    setLastUpdateDate((meta.last_update_date as string) ?? null);
+    setShowDateState(meta.show_date !== false);
 
-    // Load per-section status
-    const secs = (meta?.sections as Record<string, SectionStatus>) ?? {};
+    const secs = (meta.sections as Record<string, SectionStatus>) ?? {};
     setSections({
-      funds: secs.funds ?? { is_live: meta?.is_live === true, last_update_date: (meta?.last_update_date as string) ?? null },
+      funds: secs.funds ?? { is_live: meta.is_live === true, last_update_date: (meta.last_update_date as string) ?? null },
       stocks: secs.stocks ?? { is_live: false, last_update_date: null },
       rates: secs.rates ?? { is_live: false, last_update_date: null },
       commodities: secs.commodities ?? { is_live: false, last_update_date: null },
       overview: secs.overview ?? { is_live: false, last_update_date: null },
     });
-    setLoading(false);
-  };
+  }, [meta]);
+
+  const loading = isLoading;
+
+  const invalidate = () => queryClient.invalidateQueries({ queryKey: LIVE_STATUS_QUERY_KEY });
 
   const updateMeta = async (patch: Record<string, unknown>) => {
     const { data } = await supabase
