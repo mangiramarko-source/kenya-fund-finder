@@ -278,7 +278,7 @@ const NewsArticlePage = () => {
             <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
               {hasContent ? (
                 article.content!.split("\n").filter(Boolean).map((paragraph, i) => (
-                  <p key={i} className="text-foreground leading-relaxed font-sans mx-[2px] my-0 px-0 py-0 border-8 border-none pl-[10px] pr-[10px] text-left text-xl font-medium sm:text-2xl">{decodeHtmlEntities(paragraph)}</p>
+                  <p key={i} className="text-foreground leading-relaxed font-sans mx-[2px] my-0 px-0 py-0 border-8 border-none pl-[10px] pr-[10px] text-left text-xl font-medium sm:text-xl">{decodeHtmlEntities(paragraph)}</p>
                 ))
               ) : enriching ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground italic py-4">
