@@ -21,6 +21,25 @@ export default defineConfig(({ mode }) => ({
   build: {
     cssMinify: "lightningcss",
     cssCodeSplit: true,
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) return;
+          if (id.includes("@radix-ui")) return "radix";
+          if (id.includes("@tanstack")) return "tanstack";
+          if (id.includes("@supabase")) return "supabase";
+          if (id.includes("recharts") || id.includes("d3-")) return "charts";
+          if (id.includes("lucide-react")) return "icons";
+          if (id.includes("react-router")) return "router";
+          if (
+            id.includes("/react/") ||
+            id.includes("/react-dom/") ||
+            id.includes("scheduler")
+          )
+            return "react";
+        },
+      },
+    },
   },
   css: {
     transformer: "lightningcss",
