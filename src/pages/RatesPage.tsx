@@ -333,7 +333,8 @@ const RatesPage = () => {
             <EmptyState label="exchange rates" />
           ) : (
             <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
-              <table className="w-full text-sm table-fixed">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm table-fixed min-w-[900px] lg:min-w-0">
                 <colgroup>
                   <col style={{ width: "3%" }} />
                   <col style={{ width: "7%" }} />
