@@ -664,25 +664,7 @@ const OverviewPage = () => {
 
   useEffect(() => { fetchWatchlist(); }, [fetchWatchlist]);
 
-  const toggleSection = async (sectionId: string, label: string) => {
-    if (!user) { navigate("/auth"); return; }
-    const existing = watchlist.find(w => w.item_type === "section" && w.item_id === sectionId);
-    if (existing) {
-      // Optimistic remove
-      setWatchlist(prev => prev.filter(w => w.id !== existing.id));
-      const { error } = await supabase.from("user_watchlist").delete().eq("id", existing.id);
-      if (error) { toast.error("Failed to update"); fetchWatchlist(); return; }
-      toast.success(`Removed ${label}`);
-    } else {
-      // Optimistic add
-      const tempItem: WatchlistItem = { id: crypto.randomUUID(), user_id: user.id, item_type: "section", item_id: sectionId, item_name: label, sort_order: 0 };
-      setWatchlist(prev => [...prev, tempItem]);
-      const { error } = await supabase.from("user_watchlist").insert({ user_id: user.id, item_type: "section", item_id: sectionId, item_name: label });
-      if (error) { toast.error("Failed to update"); fetchWatchlist(); return; }
-      toast.success(`Added ${label}`);
-      fetchWatchlist(); // sync real ID
-    }
-  };
+
 
   const toggleAsset = async (type: string, id: string, name: string) => {
     if (!user) { navigate("/auth"); return; }
