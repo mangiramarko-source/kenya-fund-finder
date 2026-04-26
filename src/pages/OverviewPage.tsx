@@ -14,9 +14,10 @@ import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import {
   TrendingUp, TrendingDown, Minus, Bell, BellPlus, Plus,
-  Settings2, X, Star, Search, Eye, Check,
+  Settings2, X, Star, Search, Eye, Check, SlidersHorizontal,
   BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
   Landmark, ArrowRight, Newspaper, Clock,
 } from "lucide-react";
