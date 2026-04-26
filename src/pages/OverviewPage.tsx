@@ -1070,7 +1070,7 @@ const OverviewPage = () => {
           <button
             type="button"
             onClick={() => {
-              if (!user) { navigate("/auth"); return; }
+              if (!user) { setWatchlistPromptOpen(true); return; }
               setMobileTab("watchlist");
             }}
             className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
@@ -1113,7 +1113,7 @@ const OverviewPage = () => {
               <button
                 type="button"
                 onClick={() => {
-                  if (!user) { navigate("/auth"); return; }
+                  if (!user) { setWatchlistPromptOpen(true); return; }
                   setMobileTab("watchlist");
                 }}
                 className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
