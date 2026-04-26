@@ -33,14 +33,6 @@ interface FundYieldSnapshot { snapshot_date: string; annual_yield: number; fund_
 interface RateHistory { snapshot_date: string; rate: number; currency_code: string; }
 interface StockPriceHistory { snapshot_date: string; price: number; stock_id: string; }
 
-const SECTIONS = [
-  { id: "stocks", label: "Stocks", icon: TrendingUp, description: "Kenyan stock market" },
-  { id: "fx", label: "FX Rates", icon: DollarSign, description: "Currency exchange rates" },
-  { id: "commodities", label: "Commodities", icon: Gem, description: "Gold, oil, crypto & more" },
-  { id: "money_market", label: "Money Market", icon: BarChart3, description: "Fund yields & rates" },
-  { id: "fixed_income", label: "Fixed Income", icon: Landmark, description: "Fixed income fund yields" },
-] as const;
-
 /* ─── Change Indicator ─── */
 const trendOf = (current: number, previous: number | null | undefined): "up" | "down" | "flat" | undefined => {
   if (previous == null) return undefined;
