@@ -346,6 +346,7 @@ const RatesPage = () => {
                   <col style={{ width: "9%" }} />
                   <col style={{ width: "10%" }} />
                   <col style={{ width: "12%" }} />
+                  {user && <col style={{ width: "3%" }} />}
                   <col style={{ width: "4%" }} />
                 </colgroup>
                 <thead>
@@ -359,6 +360,7 @@ const RatesPage = () => {
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change %</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Trend</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Updated</th>
+                    {user && <th className="w-8"></th>}
                     <th className="w-8"></th>
                   </tr>
                 </thead>
