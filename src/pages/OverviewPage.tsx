@@ -1053,41 +1053,42 @@ const OverviewPage = () => {
         </div>
 
         {/* Mobile-only top tabs: Overview / Watchlist */}
-        {user && (
-          <div className="md:hidden mt-3 grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
-            <button
-              type="button"
-              onClick={() => setMobileTab("overview")}
-              className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
-                mobileTab === "overview"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground"
-              }`}
-              aria-pressed={mobileTab === "overview"}
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" /> Overview
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileTab("watchlist")}
-              className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
-                mobileTab === "watchlist"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground"
-              }`}
-              aria-pressed={mobileTab === "watchlist"}
-            >
-              <Star className={`h-3.5 w-3.5 ${mobileTab === "watchlist" ? "fill-current" : ""}`} /> Watchlist
-              {watchlist.length > 0 && (
-                <span className={`tabular-nums text-[10px] rounded-full px-1.5 ${
-                  mobileTab === "watchlist" ? "bg-primary-foreground/20" : "bg-muted text-foreground"
-                }`}>
-                  {watchlist.length}
-                </span>
-              )}
-            </button>
-          </div>
-        )}
+        <div className="md:hidden mt-3 grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
+          <button
+            type="button"
+            onClick={() => setMobileTab("overview")}
+            className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
+              mobileTab === "overview"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground"
+            }`}
+            aria-pressed={mobileTab === "overview"}
+          >
+            <LayoutDashboard className="h-3.5 w-3.5" /> Overview
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              if (!user) { navigate("/auth"); return; }
+              setMobileTab("watchlist");
+            }}
+            className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
+              mobileTab === "watchlist"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground"
+            }`}
+            aria-pressed={mobileTab === "watchlist"}
+          >
+            <Star className={`h-3.5 w-3.5 ${mobileTab === "watchlist" ? "fill-current" : ""}`} /> Watchlist
+            {user && watchlist.length > 0 && (
+              <span className={`tabular-nums text-[10px] rounded-full px-1.5 ${
+                mobileTab === "watchlist" ? "bg-primary-foreground/20" : "bg-muted text-foreground"
+              }`}>
+                {watchlist.length}
+              </span>
+            )}
+          </button>
+        </div>
         <div className="hidden md:flex flex-row items-end justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-2xl font-bold text-foreground">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
@@ -1095,41 +1096,42 @@ const OverviewPage = () => {
               {user ? "Your personalized market overview" : "Best performers across Kenyan markets"}
             </p>
             {/* Desktop tabs: under greeting + subtitle */}
-            {user && (
-              <div className="mt-3 inline-grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
-                <button
-                  type="button"
-                  onClick={() => setMobileTab("overview")}
-                  className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
-                    mobileTab === "overview"
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  aria-pressed={mobileTab === "overview"}
-                >
-                  <LayoutDashboard className="h-3.5 w-3.5" /> Overview
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setMobileTab("watchlist")}
-                  className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
-                    mobileTab === "watchlist"
-                      ? "bg-primary text-primary-foreground shadow-sm"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                  aria-pressed={mobileTab === "watchlist"}
-                >
-                  <Star className={`h-3.5 w-3.5 ${mobileTab === "watchlist" ? "fill-current" : ""}`} /> Watchlist
-                  {watchlist.length > 0 && (
-                    <span className={`tabular-nums text-[10px] rounded-full px-1.5 ${
-                      mobileTab === "watchlist" ? "bg-primary-foreground/20" : "bg-muted text-foreground"
-                    }`}>
-                      {watchlist.length}
-                    </span>
-                  )}
-                </button>
-              </div>
-            )}
+            <div className="mt-3 inline-grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
+              <button
+                type="button"
+                onClick={() => setMobileTab("overview")}
+                className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
+                  mobileTab === "overview"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                aria-pressed={mobileTab === "overview"}
+              >
+                <LayoutDashboard className="h-3.5 w-3.5" /> Overview
+              </button>
+              <button
+                type="button"
+                onClick={() => {
+                  if (!user) { navigate("/auth"); return; }
+                  setMobileTab("watchlist");
+                }}
+                className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
+                  mobileTab === "watchlist"
+                    ? "bg-primary text-primary-foreground shadow-sm"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+                aria-pressed={mobileTab === "watchlist"}
+              >
+                <Star className={`h-3.5 w-3.5 ${mobileTab === "watchlist" ? "fill-current" : ""}`} /> Watchlist
+                {user && watchlist.length > 0 && (
+                  <span className={`tabular-nums text-[10px] rounded-full px-1.5 ${
+                    mobileTab === "watchlist" ? "bg-primary-foreground/20" : "bg-muted text-foreground"
+                  }`}>
+                    {watchlist.length}
+                  </span>
+                )}
+              </button>
+            </div>
           </div>
           <div className="flex items-center gap-2 shrink-0">
             {user && (
