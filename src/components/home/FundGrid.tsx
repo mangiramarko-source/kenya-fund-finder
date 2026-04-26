@@ -620,7 +620,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Withdrawal</th>
+                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Withdraw</th>
                 {onToggleFavourite && <th className="px-2 py-3 w-8"></th>}
               </tr>
             </thead>
