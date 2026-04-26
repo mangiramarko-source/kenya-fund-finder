@@ -1092,7 +1092,7 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Section: Stocks ─── */}
-      {enabledSections.includes("stocks") && (
+      {(
         <SectionPanel title="Kenyan Stocks" icon={TrendingUp} link="/stocks" linkLabel="All stocks" count={stocks.length} sub={`${stocks.filter(s => s.day_change > 0).length}↑ ${stocks.filter(s => s.day_change < 0).length}↓`}>
           {/* Desktop: table */}
           <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
@@ -1151,7 +1151,7 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Section: FX ─── */}
-      {enabledSections.includes("fx") && (
+      {(
         <SectionPanel title="FX Rates" icon={DollarSign} link="/rates" linkLabel="All rates" count={rates.length}>
           {/* Desktop: table */}
           <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
@@ -1210,7 +1210,7 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Section: Commodities ─── */}
-      {enabledSections.includes("commodities") && (
+      {(
         <SectionPanel title="Commodities" icon={Gem} link="/commodities" linkLabel="All commodities" count={commodities.length}>
           {/* Desktop: table */}
           <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
@@ -1266,7 +1266,7 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Section: Money Market ─── */}
-      {enabledSections.includes("money_market") && (
+      {(
         <SectionPanel title="Money Market Funds" icon={BarChart3} link="/funds" linkLabel="All funds" count={mmFunds.length} sub={`Best: ${bestMMYield.toFixed(2)}%`}>
           {/* Desktop: table */}
           <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
@@ -1301,7 +1301,7 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Section: Fixed Income ─── */}
-      {enabledSections.includes("fixed_income") && (
+      {(
         <SectionPanel title="Fixed Income Funds" icon={Landmark} link="/funds" linkLabel="All funds" count={fiFunds.length}>
           {/* Desktop: table */}
           <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
