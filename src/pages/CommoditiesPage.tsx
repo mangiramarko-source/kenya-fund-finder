@@ -236,7 +236,8 @@ const CommoditiesPage = () => {
             <EmptyState label="commodities" />
           ) : (
             <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
-              <table className="w-full text-sm table-fixed">
+              <div className="overflow-x-auto">
+              <table className="w-full text-sm table-fixed min-w-[960px] lg:min-w-0">
                 <colgroup>
                   <col style={{ width: "3%" }} />
                   <col style={{ width: "8%" }} />
@@ -281,6 +282,7 @@ const CommoditiesPage = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>

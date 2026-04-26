@@ -569,8 +569,8 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
       {/* Desktop: table view */}
       <div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card shadow-sm">
-        <div>
-          <table className="w-full text-sm table-fixed">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm table-fixed min-w-[1000px] lg:min-w-0">
             <colgroup>
               <col style={{ width: "3%" }} />
               <col style={{ width: "13%" }} />
