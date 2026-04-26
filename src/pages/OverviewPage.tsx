@@ -164,16 +164,16 @@ const CustomizeDialog = ({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-[760px] max-h-[85vh] flex flex-col p-0 gap-0">
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
-          <div className="flex items-center justify-between gap-3">
-            <div className="min-w-0">
+          <div className="min-w-0 pr-8">
+            <div className="flex items-center gap-2">
               <DialogTitle className="text-base">Customize Your Watchlist</DialogTitle>
-              <p className="text-[11px] text-muted-foreground mt-0.5">
-                Pick the specific assets you want to track on your overview.
-              </p>
+              <Badge variant="secondary" className="shrink-0 text-[10px]">
+                {watchedCount} tracked
+              </Badge>
             </div>
-            <Badge variant="secondary" className="shrink-0 text-[10px]">
-              {watchedCount} tracked
-            </Badge>
+            <p className="text-[11px] text-muted-foreground mt-0.5">
+              Pick the specific assets you want to track on your overview.
+            </p>
           </div>
         </DialogHeader>
 
