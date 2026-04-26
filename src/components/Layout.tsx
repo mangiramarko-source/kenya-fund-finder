@@ -42,7 +42,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <div className={isNewsArticle ? "hidden md:block" : ""}>
           <Footer />
         </div>
-        <CookieConsent />
       </div>
     </div>
   );
