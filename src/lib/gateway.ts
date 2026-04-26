@@ -18,7 +18,9 @@ export type GatewayResource =
   | "news"
   | "stock-history"
   | "rate-history"
-  | "commodity-history";
+  | "commodity-history"
+  | "fund-snapshots"
+  | "stock-history-bulk";
 
 export interface GatewayQuery {
   select?: string[];
@@ -27,8 +29,10 @@ export interface GatewayQuery {
   offset?: number;
   /** History resources only: parent UUID */
   id?: string;
-  /** History resources only: lookback window in days (max 90) */
+  /** History / bulk-recent resources only: lookback window in days (max 90) */
   days?: number;
+  /** Whitelisted equality filters for list resources (e.g. { slug: "foo" }) */
+  filters?: Record<string, string>;
 }
 
 export interface GatewayResponse<T> {
@@ -56,6 +60,11 @@ export async function fetchPublicData<T = Record<string, unknown>>(
   if (query.offset != null) params.set("offset", String(query.offset));
   if (query.id) params.set("id", query.id);
   if (query.days != null) params.set("days", String(query.days));
+  if (query.filters) {
+    for (const [k, v] of Object.entries(query.filters)) {
+      if (v != null && v !== "") params.set(k, v);
+    }
+  }
 
   const url = `${BASE}/${resource}${params.toString() ? `?${params}` : ""}`;
   const res = await fetch(url, {

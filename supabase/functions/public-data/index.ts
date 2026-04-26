@@ -23,10 +23,15 @@ const RATE_WINDOW_SECONDS = 60;
 const RATE_MAX_REQUESTS = 60; // 60 req / IP / minute
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
+// Bulk feeds (snapshots / recent history without a parent id) are heavier;
+// allow more rows but still cap and force a date window.
+const MAX_BULK_LIMIT = 5000;
+const DEFAULT_BULK_LIMIT = 1000;
 const MAX_HISTORY_DAYS = 90;
+const DEFAULT_BULK_DAYS = 30;
 
 // --- Resource registry ------------------------------------------------------
-type ResourceKind = "list" | "history";
+type ResourceKind = "list" | "history" | "bulk-recent";
 
 interface ResourceDef {
   kind: ResourceKind;
@@ -40,6 +45,8 @@ interface ResourceDef {
   defaultOrder: string;
   /** For history resources: the column holding the parent id (must be filtered) */
   parentIdColumn?: string;
+  /** Equality filters clients may apply via ?<col>=<value> (whitelisted, scalar). */
+  filterable?: string[];
   /** Cache-control max-age in seconds */
   cacheSeconds: number;
 }
@@ -57,6 +64,7 @@ const RESOURCES: Record<string, ResourceDef> = {
     ],
     orderable: ["annual_yield", "daily_yield", "name", "updated_at"],
     defaultOrder: "annual_yield.desc",
+    filterable: ["slug", "fund_type"],
     cacheSeconds: 300,
   },
   stocks: {
@@ -70,6 +78,7 @@ const RESOURCES: Record<string, ResourceDef> = {
     ],
     orderable: ["sort_order", "symbol", "price", "day_change_percent", "updated_at"],
     defaultOrder: "sort_order.asc",
+    filterable: ["symbol", "sector"],
     cacheSeconds: 60,
   },
   rates: {
@@ -133,6 +142,26 @@ const RESOURCES: Record<string, ResourceDef> = {
     parentIdColumn: "commodity_id",
     cacheSeconds: 600,
   },
+
+  // Bulk feeds: cross-entity recent windows used to render sparklines on list
+  // pages. No parent id required, but capped to a recent window + row limit
+  // and rate-limited like everything else.
+  "fund-snapshots": {
+    kind: "bulk-recent",
+    view: "fund_yield_snapshots",
+    columns: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
+    orderable: ["snapshot_date"],
+    defaultOrder: "snapshot_date.asc",
+    cacheSeconds: 300,
+  },
+  "stock-history-bulk": {
+    kind: "bulk-recent",
+    view: "stock_price_history_public",
+    columns: ["stock_id", "snapshot_date", "price"],
+    orderable: ["snapshot_date"],
+    defaultOrder: "snapshot_date.asc",
+    cacheSeconds: 600,
+  },
 };
 
 // --- Helpers ----------------------------------------------------------------
@@ -158,6 +187,7 @@ async function hashIp(ip: string): Promise<string> {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+const SAFE_FILTER_RE = /^[A-Za-z0-9_\-]+$/;
 
 function parseOrder(raw: string | null, def: string, allowed: string[]): { col: string; asc: boolean } {
   const value = raw && raw.includes(".") ? raw : def;
@@ -223,7 +253,13 @@ Deno.serve(async (req) => {
   }
 
   // Build query
-  const limit = clampInt(url.searchParams.get("limit"), DEFAULT_LIMIT, 1, MAX_LIMIT);
+  const isBulk = resource.kind === "bulk-recent";
+  const limit = clampInt(
+    url.searchParams.get("limit"),
+    isBulk ? DEFAULT_BULK_LIMIT : DEFAULT_LIMIT,
+    1,
+    isBulk ? MAX_BULK_LIMIT : MAX_LIMIT,
+  );
   const offset = clampInt(url.searchParams.get("offset"), 0, 0, 10_000);
   const columns = parseColumns(url.searchParams.get("select"), resource.columns);
   const order = parseOrder(url.searchParams.get("order"), resource.defaultOrder, resource.orderable);
@@ -250,6 +286,20 @@ Deno.serve(async (req) => {
     query = query
       .eq(resource.parentIdColumn!, parentId)
       .gte("snapshot_date", sinceStr);
+  } else if (resource.kind === "bulk-recent") {
+    const days = clampInt(url.searchParams.get("days"), DEFAULT_BULK_DAYS, 1, MAX_HISTORY_DAYS);
+    const since = new Date();
+    since.setUTCDate(since.getUTCDate() - days);
+    const sinceStr = since.toISOString().slice(0, 10);
+    query = query.gte("snapshot_date", sinceStr);
+  } else if (resource.kind === "list" && resource.filterable?.length) {
+    // Apply whitelisted equality filters (e.g. ?slug=foo, ?symbol=SCOM).
+    for (const col of resource.filterable) {
+      const v = url.searchParams.get(col);
+      if (v && SAFE_FILTER_RE.test(v) && v.length <= 80) {
+        query = query.eq(col, v);
+      }
+    }
   }
 
   const { data, error, count } = await query;

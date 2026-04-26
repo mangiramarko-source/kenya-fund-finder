@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPublicData } from "@/lib/gateway";
 import { formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import {
   TrendingUp,
@@ -155,28 +156,36 @@ const StocksPage = () => {
 
   useEffect(() => {
     const fetchStocks = async () => {
-      const { data } = await supabase
-        .from("stocks_public")
-        .select(
-          "id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, updated_at",
-        )
-        .order("sort_order");
-      setStocks(
-        data?.map((s: any) => ({
-          ...s,
-          price: Number(s.price),
-          previous_price: s.previous_price != null ? Number(s.previous_price) : null,
-          day_change: Number(s.day_change),
-          day_change_percent: Number(s.day_change_percent),
-          volume: Number(s.volume),
-          market_cap: s.market_cap != null ? Number(s.market_cap) : null,
-          year_high: s.year_high != null ? Number(s.year_high) : null,
-          year_low: s.year_low != null ? Number(s.year_low) : null,
-          pe_ratio: s.pe_ratio != null ? Number(s.pe_ratio) : null,
-          dividend_yield: s.dividend_yield != null ? Number(s.dividend_yield) : null,
-        })) || [],
-      );
-      setLoading(false);
+      try {
+        const { data } = await fetchPublicData<any>("stocks", {
+          select: [
+            "id", "symbol", "name", "sector", "price", "previous_price",
+            "day_change", "day_change_percent", "volume", "market_cap",
+            "year_high", "year_low", "pe_ratio", "dividend_yield", "updated_at",
+          ],
+          order: "sort_order.asc",
+          limit: 200,
+        });
+        setStocks(
+          data.map((s: any) => ({
+            ...s,
+            price: Number(s.price),
+            previous_price: s.previous_price != null ? Number(s.previous_price) : null,
+            day_change: Number(s.day_change),
+            day_change_percent: Number(s.day_change_percent),
+            volume: Number(s.volume),
+            market_cap: s.market_cap != null ? Number(s.market_cap) : null,
+            year_high: s.year_high != null ? Number(s.year_high) : null,
+            year_low: s.year_low != null ? Number(s.year_low) : null,
+            pe_ratio: s.pe_ratio != null ? Number(s.pe_ratio) : null,
+            dividend_yield: s.dividend_yield != null ? Number(s.dividend_yield) : null,
+          })),
+        );
+      } catch (e) {
+        console.error("Failed to load stocks", e);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchStocks();
     const ch = supabase
@@ -188,22 +197,26 @@ const StocksPage = () => {
     };
   }, []);
 
-  // Preload sparkline data for all stocks
+  // Preload sparkline data for all stocks (recent window via gateway).
   useEffect(() => {
     if (stocks.length === 0) return;
     const fetchAllHistory = async () => {
-      const { data } = await supabase
-        .from("stock_price_history" as any)
-        .select("stock_id, price, snapshot_date")
-        .order("snapshot_date", { ascending: true });
-      if (data) {
+      try {
+        const { data } = await fetchPublicData<any>("stock-history-bulk", {
+          select: ["stock_id", "price", "snapshot_date"],
+          order: "snapshot_date.asc",
+          days: 30,
+          limit: 5000,
+        });
         const grouped: Record<string, PriceHistory[]> = {};
-        (data as any[]).forEach((d) => {
+        data.forEach((d: any) => {
           const sid = d.stock_id;
           if (!grouped[sid]) grouped[sid] = [];
           grouped[sid].push({ snapshot_date: d.snapshot_date, price: Number(d.price) });
         });
         setHistory(grouped);
+      } catch (e) {
+        console.error("Failed to load stock sparkline data", e);
       }
     };
     fetchAllHistory();
@@ -217,17 +230,23 @@ const StocksPage = () => {
     setExpanded(stockId);
     if (!history[stockId]) {
       setHistoryLoading(stockId);
-      const { data } = await supabase
-        .from("stock_price_history" as any)
-        .select("price, snapshot_date")
-        .eq("stock_id", stockId)
-        .order("snapshot_date", { ascending: true })
-        .limit(90);
-      setHistory((prev) => ({
-        ...prev,
-        [stockId]: ((data as any) || []).map((d: any) => ({ snapshot_date: d.snapshot_date, price: Number(d.price) })),
-      }));
-      setHistoryLoading(null);
+      try {
+        const { data } = await fetchPublicData<any>("stock-history", {
+          select: ["price", "snapshot_date"],
+          id: stockId,
+          days: 90,
+          order: "snapshot_date.asc",
+          limit: 200,
+        });
+        setHistory((prev) => ({
+          ...prev,
+          [stockId]: data.map((d: any) => ({ snapshot_date: d.snapshot_date, price: Number(d.price) })),
+        }));
+      } catch (e) {
+        console.error("Failed to load stock history", e);
+      } finally {
+        setHistoryLoading(null);
+      }
     }
   };
 
