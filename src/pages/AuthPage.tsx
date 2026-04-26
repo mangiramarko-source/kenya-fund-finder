@@ -136,14 +136,14 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="min-h-[80vh] flex items-center justify-center">
+    <div className="min-h-[70vh] flex items-start md:items-center justify-center pt-6 md:pt-10">
       <Card className="w-full max-w-md mx-4">
-        <CardHeader className="text-center">
-          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-4 self-start">
+        <CardHeader className="text-center pb-3 pt-4">
+          <Link to="/" className="inline-flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground mb-2 self-start">
             <ArrowLeft className="h-3.5 w-3.5" /> Back
           </Link>
-          <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
-            <TrendingUp className="h-7 w-7" />
+          <div className="mx-auto mb-2 flex h-11 w-11 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
+            <TrendingUp className="h-5 w-5" />
           </div>
           <CardTitle className="text-xl">{isSignUp ? "Create Account" : "Welcome Back"}</CardTitle>
           <CardDescription>
