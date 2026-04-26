@@ -80,16 +80,19 @@ export function useLiveStatus() {
   const toggleLive = async (value: boolean) => {
     setIsLive(value);
     await updateMeta({ is_live: value });
+    invalidate();
   };
 
   const setLastUpdate = async (date: string | null) => {
     setLastUpdateDate(date);
     await updateMeta({ last_update_date: date });
+    invalidate();
   };
 
   const setShowDate = async (value: boolean) => {
     setShowDateState(value);
     await updateMeta({ show_date: value });
+    invalidate();
   };
 
   const setSectionStatus = async (section: AssetSection, status: Partial<SectionStatus>) => {
