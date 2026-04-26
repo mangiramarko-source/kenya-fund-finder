@@ -1,4 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPublicData } from "@/lib/gateway";
 
 export type FundType = "money_market" | "fixed_income" | "balanced" | "equity" | "bond";
 
