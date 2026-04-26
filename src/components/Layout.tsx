@@ -1,7 +1,6 @@
 import { useLocation } from "react-router-dom";
 import Navbar from "./Navbar";
 import Footer from "./Footer";
-import CookieConsent from "./CookieConsent";
 import SkipToContent from "./SkipToContent";
 import CurrencyTicker from "./CurrencyTicker";
 import DesktopSidebar from "./DesktopSidebar";
