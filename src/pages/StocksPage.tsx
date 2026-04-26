@@ -3,6 +3,7 @@ import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPublicData } from "@/lib/gateway";
 import { formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import {
   TrendingUp,
