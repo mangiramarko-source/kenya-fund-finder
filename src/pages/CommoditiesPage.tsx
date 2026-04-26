@@ -282,6 +282,7 @@ const CommoditiesPage = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>

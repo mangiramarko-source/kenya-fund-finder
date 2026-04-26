@@ -709,6 +709,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
             </tbody>
           </table>
         </div>
+        </div>
       </div>
 
       {/* Summary footer */}

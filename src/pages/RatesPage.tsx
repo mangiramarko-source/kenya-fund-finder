@@ -377,6 +377,7 @@ const RatesPage = () => {
                   ))}
                 </tbody>
               </table>
+              </div>
             </div>
           )}
         </div>
