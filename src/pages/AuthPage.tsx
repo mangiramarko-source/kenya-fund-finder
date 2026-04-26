@@ -216,8 +216,8 @@ const AuthPage = () => {
               {isSignUp ? "Sign In" : "Sign Up"}
             </button>
           </p>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
     </div>
   );
 };
