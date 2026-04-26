@@ -1544,7 +1544,7 @@ const OverviewPage = () => {
       )}
 
       {/* Disclaimer */}
-      <div className="rounded-lg bg-muted/40 border border-border/50 p-3">
+      <div className="mt-8 rounded-lg bg-muted/40 border border-border/50 p-3">
         <p className="text-[10px] leading-relaxed text-muted-foreground">
           Market data is indicative and may be delayed. {user ? "Click the bell icon to set price alerts on any asset." : "Sign in to set price alerts and customize your dashboard."}
         </p>
