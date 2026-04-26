@@ -39,7 +39,16 @@ const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-const queryClient = new QueryClient();
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      staleTime: 60_000,        // 1 min — data feels fresh, no refetch on revisit
+      gcTime: 5 * 60_000,       // keep cache 5 min
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
 const PageFallback = () => (
   <div className="flex items-center justify-center min-h-[60vh]">

@@ -19,15 +19,20 @@ const Index = () => {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const [f, s, as] = await Promise.all([fetchFunds(), fetchLatestSnapshots(), fetchAllFundSnapshots()]);
+      // Critical path: funds + latest snapshots → renders the table.
+      const [f, s] = await Promise.all([fetchFunds(), fetchLatestSnapshots()]);
       setFunds(f);
-      setAllSnapshots(as);
       const map: Record<string, YieldSnapshot> = {};
       s.forEach((snap) => { map[snap.fund_id] = snap; });
       setSnapshots(map);
+      setLoading(false);
+
+      // Deferred: sparkline history loads in the background after the table is visible.
+      fetchAllFundSnapshots()
+        .then(setAllSnapshots)
+        .catch((e) => console.error("Failed to load sparkline data", e));
     } catch (e) {
       console.error("Failed to load funds", e);
-    } finally {
       setLoading(false);
     }
   }, []);
