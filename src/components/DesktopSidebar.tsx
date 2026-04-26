@@ -4,7 +4,7 @@ import {
   TrendingUp, Shield, ChevronLeft, ChevronRight, LayoutDashboard,
   FileText, Scale, DollarSign, Gem, Briefcase, Calculator,
 } from "lucide-react";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
@@ -30,7 +30,20 @@ const legalNavItems = [
 ];
 
 const DesktopSidebar = () => {
-  const [collapsed, setCollapsed] = useState(false);
+  // Default: collapsed on tablet (md → lg), expanded on desktop (≥ lg)
+  const [collapsed, setCollapsed] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia("(max-width: 1023.98px)").matches;
+  });
+
+  // Auto-collapse when entering tablet range, auto-expand when leaving it.
+  // Only applies on initial breakpoint crossing — user can still toggle manually.
+  useEffect(() => {
+    const mql = window.matchMedia("(max-width: 1023.98px)");
+    const handler = (e: MediaQueryListEvent) => setCollapsed(e.matches);
+    mql.addEventListener("change", handler);
+    return () => mql.removeEventListener("change", handler);
+  }, []);
   const location = useLocation();
   const { isAdmin } = useAuth();
 
