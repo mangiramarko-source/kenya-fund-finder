@@ -584,6 +584,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               <col style={{ width: "9%" }} />
               <col style={{ width: "5%" }} />
               <col style={{ width: "11%" }} />
+              {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
               <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
@@ -620,6 +621,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Withdrawal</th>
+                {onToggleFavourite && <th className="px-2 py-3 w-8"></th>}
               </tr>
             </thead>
             <tbody>
@@ -682,13 +684,29 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-left text-sm text-muted-foreground truncate" title={fund.withdrawal_time}>
                       {fund.withdrawal_time}
                     </td>
+                    {onToggleFavourite && (
+                      <td className="px-2 py-3.5 text-center">
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleFavourite(fund.id, fund.name);
+                          }}
+                          className="p-1 rounded-md hover:bg-muted transition-colors"
+                          aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
+                        >
+                          <Star
+                            className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`}
+                          />
+                        </button>
+                      </td>
+                    )}
                   </tr>
                 );
               })}
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={12} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 13 : 12} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>

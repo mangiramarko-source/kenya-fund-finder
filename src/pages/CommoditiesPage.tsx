@@ -250,6 +250,7 @@ const CommoditiesPage = () => {
                   <col style={{ width: "8%" }} />
                   <col style={{ width: "9%" }} />
                   <col style={{ width: "10%" }} />
+                  {user && <col style={{ width: "3%" }} />}
                   <col style={{ width: "4%" }} />
                 </colgroup>
                 <thead>
@@ -264,6 +265,7 @@ const CommoditiesPage = () => {
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change %</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Trend</th>
                     <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Updated</th>
+                    {user && <th className="w-8"></th>}
                     <th className="w-8"></th>
                   </tr>
                 </thead>
@@ -529,18 +531,7 @@ const CommodityRow = ({
       >
         <td className="pl-4 pr-2 py-4 text-muted-foreground/60 text-sm tabular-nums">{index + 1}</td>
         <td className="px-3 py-4">
-          <div className="flex items-center gap-2 min-w-0">
-            {onToggleFavourite !== undefined && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
-                className="p-1 rounded-md hover:bg-muted transition-colors shrink-0"
-                aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
-              >
-                <Star className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
-              </button>
-            )}
-            <span className="font-bold text-foreground text-sm tracking-wide">{c.symbol}</span>
-          </div>
+          <span className="font-bold text-foreground text-sm tracking-wide">{c.symbol}</span>
         </td>
         <td className="px-3 py-4">
           <span className="block text-sm text-foreground truncate" title={c.name}>{c.name}</span>
@@ -580,13 +571,24 @@ const CommodityRow = ({
           )}
         </td>
         <td className="px-3 py-4 text-sm text-muted-foreground whitespace-nowrap">{updatedShort}</td>
+        {onToggleFavourite !== undefined && (
+          <td className="px-2 py-4 text-center">
+            <button
+              onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
+              className="p-1 rounded-md hover:bg-muted transition-colors"
+              aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+            >
+              <Star className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+            </button>
+          </td>
+        )}
         <td className="px-2 py-4 text-center">
           {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
         </td>
       </tr>
       {isExpanded && (
         <tr className="border-t border-border bg-muted/20">
-          <td colSpan={11} className="p-4">
+          <td colSpan={onToggleFavourite !== undefined ? 12 : 11} className="p-4">
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <DetailBox label="Current Price" value={`${c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}`} />
               <DetailBox label="Previous Price" value={c.previous_price != null ? `${c.previous_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}` : "—"} />
