@@ -10,6 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
+import CommodityFavourites from "@/components/home/CommodityFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 
 interface Commodity {
@@ -93,7 +94,7 @@ const CommoditiesPage = () => {
   });
 
   const { user } = useAuth();
-  const { isFavourite, toggle: toggleFavourite } = useAssetWatchlist("commodity");
+  const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("commodity");
 
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [loading, setLoading] = useState(true);
