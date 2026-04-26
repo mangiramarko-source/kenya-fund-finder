@@ -33,14 +33,6 @@ interface FundYieldSnapshot { snapshot_date: string; annual_yield: number; fund_
 interface RateHistory { snapshot_date: string; rate: number; currency_code: string; }
 interface StockPriceHistory { snapshot_date: string; price: number; stock_id: string; }
 
-const SECTIONS = [
-  { id: "stocks", label: "Stocks", icon: TrendingUp, description: "Kenyan stock market" },
-  { id: "fx", label: "FX Rates", icon: DollarSign, description: "Currency exchange rates" },
-  { id: "commodities", label: "Commodities", icon: Gem, description: "Gold, oil, crypto & more" },
-  { id: "money_market", label: "Money Market", icon: BarChart3, description: "Fund yields & rates" },
-  { id: "fixed_income", label: "Fixed Income", icon: Landmark, description: "Fixed income fund yields" },
-] as const;
-
 /* ─── Change Indicator ─── */
 const trendOf = (current: number, previous: number | null | undefined): "up" | "down" | "flat" | undefined => {
   if (previous == null) return undefined;
@@ -108,16 +100,14 @@ const QuickAlertDialog = ({
 
 /* ─── Customize Dialog ─── */
 const CustomizeDialog = ({
-  open, onClose, watchlist, allStocks, allRates, allCommodities, allFunds, onToggleSection, onToggleAsset,
+  open, onClose, watchlist, allStocks, allRates, allCommodities, allFunds, onToggleAsset,
 }: {
   open: boolean; onClose: () => void;
   watchlist: WatchlistItem[];
   allStocks: Stock[]; allRates: ExchangeRate[]; allCommodities: Commodity[]; allFunds: FundFromDB[];
-  onToggleSection: (sectionId: string, label: string) => void;
   onToggleAsset: (type: string, id: string, name: string) => void;
 }) => {
   const [search, setSearch] = useState("");
-  const [tab, setTab] = useState<"sections" | "assets">("sections");
 
   const isWatched = (type: string, id: string) => watchlist.some(w => w.item_type === type && w.item_id === id);
 
@@ -130,54 +120,32 @@ const CustomizeDialog = ({
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
       <DialogContent className="sm:max-w-[520px] max-h-[80vh] flex flex-col">
         <DialogHeader>
-          <DialogTitle className="text-base">Customize Your Overview</DialogTitle>
+          <DialogTitle className="text-base">Customize Your Watchlist</DialogTitle>
         </DialogHeader>
 
-        <div className="flex gap-2 mb-3">
-          <button onClick={() => setTab("sections")} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${tab === "sections" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>Sections</button>
-          <button onClick={() => setTab("assets")} className={`text-xs font-medium px-3 py-1.5 rounded-md transition-colors ${tab === "assets" ? "bg-accent text-accent-foreground" : "bg-muted text-muted-foreground hover:text-foreground"}`}>Specific Assets</button>
+        <div className="flex-1 overflow-hidden flex flex-col">
+          <p className="text-xs text-muted-foreground mb-2">
+            Pick the specific stocks, currencies, commodities and funds you want to track on your overview.
+          </p>
+          <div className="relative mb-3">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input placeholder="Search stocks, currencies, commodities, funds…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-[16px] md:text-xs" />
+          </div>
+          <div className="flex-1 overflow-y-auto space-y-4 pr-1">
+            {filteredStocks.length > 0 && (
+              <AssetGroup label="Stocks" items={filteredStocks.map(s => ({ id: s.id, name: s.name, sub: s.symbol, watched: isWatched("stock", s.id) }))} onToggle={(id, name) => onToggleAsset("stock", id, name)} />
+            )}
+            {filteredRates.length > 0 && (
+              <AssetGroup label="FX Rates" items={filteredRates.map(r => ({ id: r.id, name: `${r.currency_code}/KES`, sub: r.currency_name, watched: isWatched("currency", r.id) }))} onToggle={(id, name) => onToggleAsset("currency", id, name)} />
+            )}
+            {filteredCommodities.length > 0 && (
+              <AssetGroup label="Commodities" items={filteredCommodities.map(c => ({ id: c.id, name: c.name, sub: c.symbol, watched: isWatched("commodity", c.id) }))} onToggle={(id, name) => onToggleAsset("commodity", id, name)} />
+            )}
+            {filteredFunds.length > 0 && (
+              <AssetGroup label="Funds" items={filteredFunds.map(f => ({ id: f.id, name: f.name, sub: `${f.manager} · ${f.fund_type.replace("_", " ")}`, watched: isWatched("fund", f.id) }))} onToggle={(id, name) => onToggleAsset("fund", id, name)} />
+            )}
+          </div>
         </div>
-
-        {tab === "sections" && (
-          <div className="space-y-2">
-            <p className="text-xs text-muted-foreground mb-2">Choose which market sections appear on your overview.</p>
-            {SECTIONS.map(s => (
-              <div key={s.id} className="flex items-center justify-between rounded-lg border border-border bg-card p-3">
-                <div className="flex items-center gap-3">
-                  <s.icon className="h-4 w-4 text-muted-foreground" />
-                  <div>
-                    <p className="text-sm font-medium text-foreground">{s.label}</p>
-                    <p className="text-[10px] text-muted-foreground">{s.description}</p>
-                  </div>
-                </div>
-                <Switch checked={isWatched("section", s.id)} onCheckedChange={() => onToggleSection(s.id, s.label)} />
-              </div>
-            ))}
-          </div>
-        )}
-
-        {tab === "assets" && (
-          <div className="flex-1 overflow-hidden flex flex-col">
-            <div className="relative mb-3">
-              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-              <Input placeholder="Search stocks, currencies, commodities, funds…" value={search} onChange={(e) => setSearch(e.target.value)} className="pl-8 h-8 text-[16px] md:text-xs" />
-            </div>
-            <div className="flex-1 overflow-y-auto space-y-4 pr-1">
-              {filteredStocks.length > 0 && (
-                <AssetGroup label="Stocks" items={filteredStocks.map(s => ({ id: s.id, name: s.name, sub: s.symbol, watched: isWatched("stock", s.id) }))} onToggle={(id, name) => onToggleAsset("stock", id, name)} />
-              )}
-              {filteredRates.length > 0 && (
-                <AssetGroup label="FX Rates" items={filteredRates.map(r => ({ id: r.id, name: `${r.currency_code}/KES`, sub: r.currency_name, watched: isWatched("currency", r.id) }))} onToggle={(id, name) => onToggleAsset("currency", id, name)} />
-              )}
-              {filteredCommodities.length > 0 && (
-                <AssetGroup label="Commodities" items={filteredCommodities.map(c => ({ id: c.id, name: c.name, sub: c.symbol, watched: isWatched("commodity", c.id) }))} onToggle={(id, name) => onToggleAsset("commodity", id, name)} />
-              )}
-              {filteredFunds.length > 0 && (
-                <AssetGroup label="Funds" items={filteredFunds.map(f => ({ id: f.id, name: f.name, sub: `${f.manager} · ${f.fund_type.replace("_", " ")}`, watched: isWatched("fund", f.id) }))} onToggle={(id, name) => onToggleAsset("fund", id, name)} />
-              )}
-            </div>
-          </div>
-        )}
       </DialogContent>
     </Dialog>
   );
@@ -696,25 +664,7 @@ const OverviewPage = () => {
 
   useEffect(() => { fetchWatchlist(); }, [fetchWatchlist]);
 
-  const toggleSection = async (sectionId: string, label: string) => {
-    if (!user) { navigate("/auth"); return; }
-    const existing = watchlist.find(w => w.item_type === "section" && w.item_id === sectionId);
-    if (existing) {
-      // Optimistic remove
-      setWatchlist(prev => prev.filter(w => w.id !== existing.id));
-      const { error } = await supabase.from("user_watchlist").delete().eq("id", existing.id);
-      if (error) { toast.error("Failed to update"); fetchWatchlist(); return; }
-      toast.success(`Removed ${label}`);
-    } else {
-      // Optimistic add
-      const tempItem: WatchlistItem = { id: crypto.randomUUID(), user_id: user.id, item_type: "section", item_id: sectionId, item_name: label, sort_order: 0 };
-      setWatchlist(prev => [...prev, tempItem]);
-      const { error } = await supabase.from("user_watchlist").insert({ user_id: user.id, item_type: "section", item_id: sectionId, item_name: label });
-      if (error) { toast.error("Failed to update"); fetchWatchlist(); return; }
-      toast.success(`Added ${label}`);
-      fetchWatchlist(); // sync real ID
-    }
-  };
+
 
   const toggleAsset = async (type: string, id: string, name: string) => {
     if (!user) { navigate("/auth"); return; }
@@ -740,7 +690,6 @@ const OverviewPage = () => {
   };
 
   // Derived watchlist data
-  const enabledSections = useMemo(() => watchlist.filter(w => w.item_type === "section").map(w => w.item_id), [watchlist]);
   const watchedStockIds = useMemo(() => watchlist.filter(w => w.item_type === "stock").map(w => w.item_id), [watchlist]);
   const watchedCurrencyIds = useMemo(() => watchlist.filter(w => w.item_type === "currency").map(w => w.item_id), [watchlist]);
   const watchedCommodityIds = useMemo(() => watchlist.filter(w => w.item_type === "commodity").map(w => w.item_id), [watchlist]);
@@ -752,7 +701,6 @@ const OverviewPage = () => {
   const watchedFunds = useMemo(() => funds.filter(f => watchedFundIds.includes(f.id)), [funds, watchedFundIds]);
 
   const hasWatchlist = watchedStocks.length > 0 || watchedRates.length > 0 || watchedCommoditiesList.length > 0 || watchedFunds.length > 0;
-  const hasSections = enabledSections.length > 0;
 
   const loading = marketLoading || fundsLoading || watchlistLoading;
 
@@ -1144,7 +1092,7 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Section: Stocks ─── */}
-      {enabledSections.includes("stocks") && (
+      {(
         <SectionPanel title="Kenyan Stocks" icon={TrendingUp} link="/stocks" linkLabel="All stocks" count={stocks.length} sub={`${stocks.filter(s => s.day_change > 0).length}↑ ${stocks.filter(s => s.day_change < 0).length}↓`}>
           {/* Desktop: table */}
           <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
@@ -1203,7 +1151,7 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Section: FX ─── */}
-      {enabledSections.includes("fx") && (
+      {(
         <SectionPanel title="FX Rates" icon={DollarSign} link="/rates" linkLabel="All rates" count={rates.length}>
           {/* Desktop: table */}
           <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
@@ -1262,7 +1210,7 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Section: Commodities ─── */}
-      {enabledSections.includes("commodities") && (
+      {(
         <SectionPanel title="Commodities" icon={Gem} link="/commodities" linkLabel="All commodities" count={commodities.length}>
           {/* Desktop: table */}
           <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
@@ -1318,7 +1266,7 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Section: Money Market ─── */}
-      {enabledSections.includes("money_market") && (
+      {(
         <SectionPanel title="Money Market Funds" icon={BarChart3} link="/funds" linkLabel="All funds" count={mmFunds.length} sub={`Best: ${bestMMYield.toFixed(2)}%`}>
           {/* Desktop: table */}
           <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
@@ -1353,7 +1301,7 @@ const OverviewPage = () => {
       )}
 
       {/* ─── Section: Fixed Income ─── */}
-      {enabledSections.includes("fixed_income") && (
+      {(
         <SectionPanel title="Fixed Income Funds" icon={Landmark} link="/funds" linkLabel="All funds" count={fiFunds.length}>
           {/* Desktop: table */}
           <div className="hidden md:block rounded-xl border border-border bg-card overflow-hidden">
@@ -1498,7 +1446,7 @@ const OverviewPage = () => {
 
       {/* Dialogs */}
       <QuickAlertDialog open={alertDialog.open} onClose={() => setAlertDialog(prev => ({ ...prev, open: false }))} assetType={alertDialog.assetType} assetId={alertDialog.assetId} assetName={alertDialog.assetName} currentPrice={alertDialog.currentPrice} unit={alertDialog.unit} />
-      <CustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} watchlist={watchlist} allStocks={stocks} allRates={rates} allCommodities={commodities} allFunds={funds} onToggleSection={toggleSection} onToggleAsset={toggleAsset} />
+      <CustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} watchlist={watchlist} allStocks={stocks} allRates={rates} allCommodities={commodities} allFunds={funds} onToggleAsset={toggleAsset} />
     </div>
     </div>
     </>
