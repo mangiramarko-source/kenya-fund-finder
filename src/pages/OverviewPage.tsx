@@ -1794,37 +1794,47 @@ const OverviewPage = () => {
 
       {/* Watchlist benefits prompt for unauthenticated users */}
       <Dialog open={watchlistPromptOpen} onOpenChange={setWatchlistPromptOpen}>
-        <DialogContent className="sm:max-w-md">
-          <DialogHeader>
-            <div className="mx-auto mb-2 flex h-12 w-12 items-center justify-center rounded-2xl bg-accent/10">
-              <Star className="h-6 w-6 text-accent fill-accent" />
+        <DialogContent className="sm:max-w-md p-0 overflow-hidden border-border/60">
+          {/* Hero band */}
+          <div className="relative bg-gradient-to-br from-accent/15 via-accent/5 to-transparent px-6 pt-7 pb-5 text-center">
+            <div className="absolute inset-x-0 -top-16 h-32 bg-accent/20 blur-3xl opacity-60 pointer-events-none" />
+            <div className="relative mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground shadow-lg shadow-accent/30 ring-4 ring-accent/10">
+              <Star className="h-7 w-7 fill-current" />
             </div>
-            <DialogTitle className="text-center text-lg">Build your personal watchlist</DialogTitle>
-          </DialogHeader>
-          <p className="text-center text-sm text-muted-foreground -mt-1">
-            Sign up free to unlock your watchlist and track what matters to you.
-          </p>
-          <ul className="space-y-2.5 text-sm">
-            <li className="flex items-start gap-2.5">
-              <Check className="h-4 w-4 text-accent mt-0.5 shrink-0" />
-              <span><span className="font-medium text-foreground">Track favorites</span> — stocks, FX, commodities &amp; unit trusts in one view.</span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <Check className="h-4 w-4 text-accent mt-0.5 shrink-0" />
-              <span><span className="font-medium text-foreground">Price alerts</span> — get notified when assets hit your targets.</span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <Check className="h-4 w-4 text-accent mt-0.5 shrink-0" />
-              <span><span className="font-medium text-foreground">Personalized overview</span> — your picks, front and center.</span>
-            </li>
-            <li className="flex items-start gap-2.5">
-              <Check className="h-4 w-4 text-accent mt-0.5 shrink-0" />
-              <span><span className="font-medium text-foreground">Sync across devices</span> — access anywhere, anytime.</span>
-            </li>
-          </ul>
-          <div className="flex flex-col gap-2 pt-1">
+            <DialogHeader className="space-y-1.5">
+              <DialogTitle className="text-center text-xl font-bold tracking-tight">
+                Build your personal watchlist
+              </DialogTitle>
+              <p className="text-center text-sm text-muted-foreground">
+                Free forever. Takes 30 seconds to set up.
+              </p>
+            </DialogHeader>
+          </div>
+
+          {/* Benefits */}
+          <div className="px-6 pb-5 space-y-3">
+            {[
+              { icon: Star, title: "Track favorites", desc: "Stocks, FX, commodities & unit trusts in one view." },
+              { icon: Bell, title: "Price alerts", desc: "Get notified the moment assets hit your targets." },
+              { icon: LayoutDashboard, title: "Personalized overview", desc: "Your picks, front and center on every visit." },
+              { icon: Check, title: "Sync across devices", desc: "Access your watchlist anywhere, anytime." },
+            ].map(({ icon: Icon, title, desc }) => (
+              <div key={title} className="flex items-start gap-3 rounded-xl border border-border/50 bg-card/40 px-3 py-2.5 transition-colors hover:bg-card hover:border-border">
+                <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-accent/10 text-accent">
+                  <Icon className="h-4 w-4" />
+                </div>
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold text-foreground leading-tight">{title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5 leading-snug">{desc}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+
+          {/* CTA */}
+          <div className="px-6 pb-6 pt-1 space-y-2">
             <Button
-              className="w-full bg-accent text-accent-foreground hover:bg-accent/90 rounded-full"
+              className="w-full h-11 bg-accent text-accent-foreground hover:bg-accent/90 rounded-full font-semibold shadow-md shadow-accent/20"
               onClick={() => { setWatchlistPromptOpen(false); navigate("/auth"); }}
             >
               <TrendingUp className="mr-2 h-4 w-4" /> Sign Up Free
@@ -1832,7 +1842,7 @@ const OverviewPage = () => {
             <button
               type="button"
               onClick={() => setWatchlistPromptOpen(false)}
-              className="text-xs text-muted-foreground hover:text-foreground"
+              className="w-full text-xs text-muted-foreground hover:text-foreground py-1.5 transition-colors"
             >
               Maybe later
             </button>
