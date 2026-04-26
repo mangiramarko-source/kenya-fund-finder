@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
+import RateFavourites from "@/components/home/RateFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 
 interface Rate {
@@ -93,7 +94,7 @@ const RatesPage = () => {
   });
 
   const { user } = useAuth();
-  const { isFavourite, toggle: toggleFavourite } = useAssetWatchlist("currency");
+  const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("currency");
 
   const [rates, setRates] = useState<Rate[]>([]);
   const [loading, setLoading] = useState(true);
