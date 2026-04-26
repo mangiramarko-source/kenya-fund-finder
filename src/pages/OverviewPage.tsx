@@ -1747,6 +1747,8 @@ const OverviewPage = () => {
         </p>
       </div>
 
+      </div>{/* end of mobile-tab "overview" content wrapper */}
+
       {/* Dialogs */}
       <QuickAlertDialog open={alertDialog.open} onClose={() => setAlertDialog(prev => ({ ...prev, open: false }))} assetType={alertDialog.assetType} assetId={alertDialog.assetId} assetName={alertDialog.assetName} currentPrice={alertDialog.currentPrice} unit={alertDialog.unit} />
       <CustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} watchlist={watchlist} allStocks={stocks} allRates={rates} allCommodities={commodities} allFunds={funds} onToggleAsset={toggleAsset} />
