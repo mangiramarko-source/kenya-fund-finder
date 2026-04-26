@@ -1509,7 +1509,7 @@ const OverviewPage = () => {
 
           {/* Desktop / tablet: existing card grid */}
           <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {news.map((article) => (
+            {news.map((article, idx) => (
               <Link key={article.id} to={`/news/${article.id}`} className="block group">
                 <article className="rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all h-full flex flex-col overflow-hidden">
                   <div className="w-full h-28 overflow-hidden bg-muted shrink-0">
@@ -1517,7 +1517,11 @@ const OverviewPage = () => {
                       src={getNewsImage(article.image_url, article.category, article.id)}
                       alt={article.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading="lazy"
+                      loading={idx === 0 ? "eager" : "lazy"}
+                      fetchPriority={idx === 0 ? "high" : "auto"}
+                      decoding="async"
+                      width={520}
+                      height={325}
                       onError={(e) => handleNewsImageError(e, article.category, article.id)}
                     />
                   </div>
