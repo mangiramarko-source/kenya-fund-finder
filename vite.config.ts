@@ -36,7 +36,11 @@ export default defineConfig(({ mode }) => ({
             return "react-core";
           if (id.includes("@radix-ui")) return "radix";
           if (id.includes("@supabase")) return "supabase";
-          if (id.includes("recharts") || id.includes("d3-")) return "charts";
+          // NOTE: Do NOT manually split recharts/d3-* into a "charts" chunk.
+          // Doing so creates a circular init between the charts chunk and
+          // react-core, producing a runtime "Cannot access 'S' before
+          // initialization" TDZ error that white-screens the app on prod.
+          // Let Rollup decide where recharts/d3 go.
           // Bundle ALL lucide icons together — splitting them produced 20+ tiny
           // ~1KB chunks that wasted HTTP overhead and stalled the network.
           if (id.includes("lucide-react")) return "icons";
