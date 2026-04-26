@@ -1201,7 +1201,7 @@ const OverviewPage = () => {
       <div className={user && mobileTab === "watchlist" ? "hidden" : "contents"}>
 
       {/* ─── Market Highlights (always shown) ─── */}
-      <div className="md:pt-8">
+      <div className="md:pt-3">
 
 
         {/* Desktop: horizontally scrollable row of fixed-width columns */}
@@ -1443,7 +1443,7 @@ const OverviewPage = () => {
 
       {/* ─── Latest News ─── */}
       {news.length > 0 && (
-        <div className="mt-8 md:mt-10">
+        <div>
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-accent/10">
