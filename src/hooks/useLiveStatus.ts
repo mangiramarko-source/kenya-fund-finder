@@ -97,9 +97,8 @@ export function useLiveStatus() {
     const newSections = { ...sections, [section]: updated };
     setSections(newSections);
     await updateMeta({ sections: newSections });
+    invalidate();
   };
-
-  useEffect(() => { fetchStatus(); }, []);
 
   return {
     isLive, loading, toggleLive,
