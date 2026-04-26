@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useAuth } from "@/hooks/useAuth";
 import { useNavigate } from "react-router-dom";
@@ -9,13 +9,16 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
 import { Input } from "@/components/ui/input";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Bell, BellOff, Trash2, TrendingUp, TrendingDown, Clock, CheckCircle, Plus, Mail, Settings2 } from "lucide-react";
-import { format } from "date-fns";
+import {
+  Bell, BellOff, Trash2, TrendingUp, TrendingDown, Clock, CheckCircle,
+  Plus, Mail, Settings2, Search, ChevronRight,
+} from "lucide-react";
+import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
+import { cn } from "@/lib/utils";
 
 interface AssetOption {
   id: string;
@@ -24,6 +27,8 @@ interface AssetOption {
   unit?: string;
 }
 
+type TabKey = "active" | "triggered" | "paused" | "settings";
+
 const AlertsPage = () => {
   useDocumentTitle("Price Alerts | Kenya Fund Finder");
   const { user } = useAuth();
@@ -31,12 +36,15 @@ const AlertsPage = () => {
   const { alerts, loading, deleteAlert, toggleAlert, createAlert } = usePriceAlerts();
   const { prefs, loading: prefsLoading, updatePref } = useEmailPreferences();
 
+  const [tab, setTab] = useState<TabKey>("active");
+
   // New Alert dialog state
   const [showCreate, setShowCreate] = useState(false);
   const [assetType, setAssetType] = useState<"stock" | "currency" | "commodity" | "fund">("stock");
   const [assetOptions, setAssetOptions] = useState<AssetOption[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState("");
+  const [assetSearch, setAssetSearch] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
   const [condition, setCondition] = useState<"above" | "below">("above");
   const [saving, setSaving] = useState(false);
@@ -46,6 +54,7 @@ const AlertsPage = () => {
     if (!showCreate) return;
     setLoadingAssets(true);
     setSelectedAssetId("");
+    setAssetSearch("");
     setTargetPrice("");
 
     const fetchAssets = async () => {
@@ -70,6 +79,11 @@ const AlertsPage = () => {
   }, [assetType, showCreate]);
 
   const selectedAsset = assetOptions.find((a) => a.id === selectedAssetId);
+  const filteredAssets = useMemo(() => {
+    if (!assetSearch.trim()) return assetOptions;
+    const q = assetSearch.toLowerCase();
+    return assetOptions.filter((a) => a.name.toLowerCase().includes(q));
+  }, [assetOptions, assetSearch]);
 
   const handleCreate = async () => {
     if (!selectedAsset) { toast.error("Please select an asset"); return; }
@@ -119,309 +133,439 @@ const AlertsPage = () => {
     toast.success(currentActive ? "Alert paused" : "Alert resumed");
   };
 
-  const AlertCard = ({ alert }: { alert: typeof alerts[0] }) => {
-    const isTriggered = alert.is_triggered;
-    const isPaused = !alert.is_active && !isTriggered;
+  const tabs: { key: TabKey; label: string; count: number; icon: any }[] = [
+    { key: "active", label: "Active", count: activeAlerts.length, icon: Bell },
+    { key: "triggered", label: "Triggered", count: triggeredAlerts.length, icon: CheckCircle },
+    { key: "paused", label: "Paused", count: pausedAlerts.length, icon: BellOff },
+    { key: "settings", label: "Settings", count: 0, icon: Settings2 },
+  ];
 
+  const renderList = () => {
+    if (loading) {
+      return (
+        <div className="space-y-2.5">
+          {[1, 2, 3].map(i => (
+            <div key={i} className="rounded-xl border border-border bg-card p-4 h-24 animate-pulse" />
+          ))}
+        </div>
+      );
+    }
+    if (tab === "active") {
+      return activeAlerts.length > 0
+        ? <div className="space-y-2.5">{activeAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
+        : <EmptyState icon={Bell} title="No active alerts" description="Tap '+ New' to create your first one." onCta={() => setShowCreate(true)} ctaLabel="New Alert" />;
+    }
+    if (tab === "triggered") {
+      return triggeredAlerts.length > 0
+        ? <div className="space-y-2.5">{triggeredAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
+        : <EmptyState icon={CheckCircle} title="Nothing triggered yet" description="Alerts move here once your target is hit." />;
+    }
+    if (tab === "paused") {
+      return pausedAlerts.length > 0
+        ? <div className="space-y-2.5">{pausedAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
+        : <EmptyState icon={BellOff} title="No paused alerts" description="Pause an alert to temporarily stop monitoring." />;
+    }
     return (
-      <Card className={`transition-all ${isTriggered ? "border-accent/50 bg-accent/5" : isPaused ? "opacity-60" : ""}`}>
-        <CardContent className="p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center gap-2 mb-1 flex-wrap">
-                <span className="font-semibold text-foreground truncate">{alert.asset_name}</span>
-                <Badge variant="outline" className="text-xs capitalize shrink-0">
-                  {alert.asset_type === "fund" ? "Unit Trust" : alert.asset_type}
-                </Badge>
-                {isTriggered && (
-                  <Badge className="bg-accent text-accent-foreground text-xs shrink-0">
-                    <CheckCircle className="h-3 w-3 mr-1" /> Triggered
-                  </Badge>
-                )}
-                {isPaused && (
-                  <Badge variant="secondary" className="text-xs shrink-0">
-                    <BellOff className="h-3 w-3 mr-1" /> Paused
-                  </Badge>
-                )}
-              </div>
-
-              <div className="flex items-center gap-1.5 text-sm text-muted-foreground mb-2">
-                {alert.condition === "above" ? (
-                  <TrendingUp className="h-3.5 w-3.5 text-accent" />
-                ) : (
-                  <TrendingDown className="h-3.5 w-3.5 text-destructive" />
-                )}
-                <span>
-                  When {alert.asset_type === "fund" ? "yield" : "price"} goes <strong className="text-foreground">{alert.condition}</strong>{" "}
-                  <strong className="text-foreground">{alert.target_price.toLocaleString()}{alert.asset_type === "fund" ? "%" : ""}</strong>
-                </span>
-              </div>
-
-              {isTriggered && alert.triggered_price != null && (
-                <p className="text-sm text-accent">
-                  Triggered at {alert.triggered_price.toLocaleString()}{alert.asset_type === "fund" ? "%" : ""}
-                  {alert.triggered_at && ` on ${format(new Date(alert.triggered_at), "MMM d, yyyy h:mm a")}`}
-                </p>
-              )}
-
-              <div className="flex items-center gap-1 text-xs text-muted-foreground mt-1">
-                <Clock className="h-3 w-3" />
-                Created {format(new Date(alert.created_at), "MMM d, yyyy")}
-              </div>
+      <div className="space-y-3">
+        <Card>
+          <CardContent className="p-4">
+            <div className="flex items-center gap-2 mb-3">
+              <Mail className="h-4 w-4 text-accent" />
+              <h3 className="font-semibold text-sm text-foreground">Email Notifications</h3>
             </div>
-
-            <div className="flex items-center gap-2 shrink-0">
-              {!isTriggered && (
-                <Switch
-                  checked={alert.is_active}
-                  onCheckedChange={() => handleToggle(alert.id, alert.is_active)}
-                  aria-label={alert.is_active ? "Pause alert" : "Resume alert"}
-                />
-              )}
-              <Button
-                variant="ghost"
-                size="icon"
-                className="text-muted-foreground hover:text-destructive"
-                onClick={() => handleDelete(alert.id)}
-              >
-                <Trash2 className="h-4 w-4" />
-              </Button>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
+            <SettingRow
+              title="Instant Price Alerts"
+              description="Email you immediately when targets are hit."
+              checked={prefs.instant_alerts}
+              onChange={(v) => updatePref("instant_alerts", v)}
+              disabled={prefsLoading}
+            />
+            <SettingRow
+              title="Weekly Market Summary"
+              description="A digest with watchlist, top funds and news."
+              checked={prefs.weekly_summary}
+              onChange={(v) => updatePref("weekly_summary", v)}
+              disabled={prefsLoading}
+            />
+          </CardContent>
+        </Card>
+      </div>
     );
   };
 
-  const EmptyState = ({ icon: Icon, title, description }: { icon: any; title: string; description: string }) => (
-    <div className="text-center py-12">
-      <Icon className="h-12 w-12 mx-auto text-muted-foreground/50 mb-3" />
-      <h3 className="font-medium text-foreground mb-1">{title}</h3>
-      <p className="text-sm text-muted-foreground">{description}</p>
-    </div>
-  );
-
   return (
-    <main className="container mx-auto px-4 py-8 max-w-3xl">
-      <div className="flex items-center justify-between mb-6">
-        <div>
-          <h1 className="text-2xl font-bold text-foreground">Price Alerts</h1>
-          <p className="text-muted-foreground text-sm mt-1">
-            {alerts.length} alert{alerts.length !== 1 ? "s" : ""} total
-          </p>
+    <main className="mx-auto max-w-3xl px-3 sm:px-4 pt-3 pb-28 md:pb-10">
+      {/* Sticky compact header */}
+      <header className="sticky top-0 z-20 -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b border-border/60">
+        <div className="flex items-center justify-between gap-3">
+          <div className="min-w-0">
+            <h1 className="text-lg sm:text-2xl font-bold text-foreground leading-tight">Price Alerts</h1>
+            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
+              {activeAlerts.length} active · {triggeredAlerts.length} triggered · {pausedAlerts.length} paused
+            </p>
+          </div>
+          <Button
+            onClick={() => setShowCreate(true)}
+            size="sm"
+            className="gap-1 shrink-0 h-9 px-3 rounded-full"
+          >
+            <Plus className="h-4 w-4" /> New
+          </Button>
         </div>
-        <Button onClick={() => setShowCreate(true)} className="gap-1.5">
-          <Plus className="h-4 w-4" /> New Alert
-        </Button>
+
+        {/* Scrollable tabs */}
+        <div className="mt-3 -mx-3 sm:-mx-4 px-3 sm:px-4 overflow-x-auto no-scrollbar">
+          <div className="flex gap-1.5 min-w-max">
+            {tabs.map((t) => {
+              const isActive = tab === t.key;
+              const Icon = t.icon;
+              return (
+                <button
+                  key={t.key}
+                  onClick={() => setTab(t.key)}
+                  className={cn(
+                    "inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium border transition-colors whitespace-nowrap",
+                    isActive
+                      ? "bg-primary text-primary-foreground border-primary"
+                      : "bg-card text-muted-foreground border-border hover:text-foreground"
+                  )}
+                >
+                  <Icon className="h-3.5 w-3.5" />
+                  {t.label}
+                  {t.key !== "settings" && (
+                    <span className={cn(
+                      "ml-0.5 rounded-full px-1.5 text-[10px] font-semibold",
+                      isActive ? "bg-primary-foreground/20 text-primary-foreground" : "bg-muted text-muted-foreground"
+                    )}>
+                      {t.count}
+                    </span>
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+      </header>
+
+      {/* Body */}
+      <div className="mt-4">
+        {alerts.length === 0 && !loading && tab !== "settings" ? (
+          <Card>
+            <CardContent className="py-12 text-center px-4">
+              <div className="mx-auto w-14 h-14 rounded-full bg-primary/10 flex items-center justify-center mb-4">
+                <Bell className="h-7 w-7 text-primary" />
+              </div>
+              <h2 className="text-base font-semibold text-foreground mb-1">No alerts yet</h2>
+              <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">
+                Get notified when stocks, unit trusts, currencies, or commodities hit your target.
+              </p>
+              <Button onClick={() => setShowCreate(true)} className="gap-1.5 rounded-full">
+                <Plus className="h-4 w-4" /> Create your first alert
+              </Button>
+            </CardContent>
+          </Card>
+        ) : (
+          renderList()
+        )}
       </div>
 
-      {/* Create Alert Dialog */}
+      {/* Mobile floating action button */}
+      <button
+        onClick={() => setShowCreate(true)}
+        aria-label="New alert"
+        className="md:hidden fixed bottom-20 right-4 z-30 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 flex items-center justify-center active:scale-95 transition-transform"
+      >
+        <Plus className="h-6 w-6" />
+      </button>
+
+      {/* Create Alert Dialog — mobile bottom sheet, desktop centered */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent className="sm:max-w-[440px]">
-          <DialogHeader>
-            <DialogTitle>Create New Alert</DialogTitle>
+        <DialogContent
+          className="p-0 gap-0 sm:max-w-[440px] max-h-[92vh] overflow-hidden
+                     fixed bottom-0 left-0 right-0 top-auto translate-x-0 translate-y-0
+                     w-full rounded-t-2xl rounded-b-none border-b-0
+                     sm:relative sm:bottom-auto sm:left-auto sm:right-auto sm:top-1/2
+                     sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-auto sm:rounded-2xl sm:border"
+        >
+          <DialogHeader className="px-4 pt-4 pb-2 border-b border-border/60">
+            <div className="sm:hidden mx-auto -mt-2 mb-2 h-1 w-10 rounded-full bg-muted" />
+            <DialogTitle className="text-base">Create New Alert</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 mt-2">
-            {/* Asset Type */}
+
+          <div className="px-4 py-4 space-y-4 overflow-y-auto max-h-[calc(92vh-140px)]">
+            {/* Asset Type — segmented chips */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Asset Type</label>
-              <div className="grid grid-cols-4 gap-1.5">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Asset Type</label>
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
                 {([
                   { value: "stock", label: "Stocks" },
                   { value: "fund", label: "Unit Trusts" },
                   { value: "currency", label: "FX Rates" },
                   { value: "commodity", label: "Commodities" },
                 ] as const).map((t) => (
-                  <Button
+                  <button
                     key={t.value}
-                    variant={assetType === t.value ? "default" : "outline"}
-                    size="sm"
-                    className="text-xs"
                     onClick={() => setAssetType(t.value)}
+                    className={cn(
+                      "h-9 rounded-lg text-xs font-medium border transition-colors",
+                      assetType === t.value
+                        ? "bg-primary text-primary-foreground border-primary"
+                        : "bg-card text-foreground border-border hover:bg-muted"
+                    )}
                   >
                     {t.label}
-                  </Button>
+                  </button>
                 ))}
               </div>
             </div>
 
-            {/* Asset Selection */}
+            {/* Asset search + select */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
                 Select {assetType === "fund" ? "Unit Trust" : assetType === "currency" ? "Currency" : assetType === "commodity" ? "Commodity" : "Stock"}
               </label>
+              <div className="relative mb-2">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                <Input
+                  placeholder="Search..."
+                  value={assetSearch}
+                  onChange={(e) => setAssetSearch(e.target.value)}
+                  className="pl-8 h-9 text-[16px] sm:text-sm"
+                  disabled={loadingAssets}
+                />
+              </div>
               <Select value={selectedAssetId} onValueChange={setSelectedAssetId} disabled={loadingAssets}>
-                <SelectTrigger>
-                  <SelectValue placeholder={loadingAssets ? "Loading..." : "Choose an asset"} />
+                <SelectTrigger className="h-10">
+                  <SelectValue placeholder={loadingAssets ? "Loading..." : `Choose (${filteredAssets.length})`} />
                 </SelectTrigger>
-                <SelectContent className="max-h-[250px]">
-                  {assetOptions.map((a) => (
-                    <SelectItem key={a.id} value={a.id}>
-                      {a.name}
-                    </SelectItem>
-                  ))}
+                <SelectContent className="max-h-[260px]">
+                  {filteredAssets.length === 0 ? (
+                    <div className="px-3 py-4 text-xs text-muted-foreground text-center">No matches</div>
+                  ) : (
+                    filteredAssets.map((a) => (
+                      <SelectItem key={a.id} value={a.id}>{a.name}</SelectItem>
+                    ))
+                  )}
                 </SelectContent>
               </Select>
             </div>
 
             {/* Current value display */}
             {selectedAsset && (
-              <div className="rounded-lg bg-muted/50 p-3">
-                <p className="text-xs text-muted-foreground">
-                  Current {assetType === "fund" ? "yield" : "price"}
-                </p>
-                <p className="font-semibold text-accent">
-                  {selectedAsset.currentValue.toLocaleString("en-US", { minimumFractionDigits: 2 })} {selectedAsset.unit}
-                </p>
+              <div className="rounded-lg border border-border bg-muted/40 p-3 flex items-center justify-between">
+                <div>
+                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Current {assetType === "fund" ? "yield" : "price"}</p>
+                  <p className="text-base font-semibold text-accent">
+                    {selectedAsset.currentValue.toLocaleString("en-US", { minimumFractionDigits: 2 })} {selectedAsset.unit}
+                  </p>
+                </div>
+                {targetPrice && !isNaN(parseFloat(targetPrice)) && (
+                  <div className="text-right">
+                    <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Δ</p>
+                    <p className={cn("text-sm font-semibold",
+                      parseFloat(targetPrice) > selectedAsset.currentValue ? "text-accent" : "text-destructive"
+                    )}>
+                      {parseFloat(targetPrice) > selectedAsset.currentValue ? "+" : ""}
+                      {((parseFloat(targetPrice) - selectedAsset.currentValue) / selectedAsset.currentValue * 100).toFixed(2)}%
+                    </p>
+                  </div>
+                )}
               </div>
             )}
 
-            {/* Condition */}
+            {/* Condition — toggle */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
-                Notify me when {assetType === "fund" ? "yield" : "price"} goes
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
+                Notify when {assetType === "fund" ? "yield" : "price"} goes
               </label>
-              <Select value={condition} onValueChange={(v) => setCondition(v as "above" | "below")}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="above">
-                    <span className="inline-flex items-center gap-1.5">
-                      <TrendingUp className="h-3.5 w-3.5 text-accent" /> Above target
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="below">
-                    <span className="inline-flex items-center gap-1.5">
-                      <TrendingDown className="h-3.5 w-3.5 text-destructive" /> Below target
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+              <div className="grid grid-cols-2 gap-1.5">
+                <button
+                  onClick={() => setCondition("above")}
+                  className={cn(
+                    "h-11 rounded-lg border text-sm font-medium inline-flex items-center justify-center gap-1.5 transition-colors",
+                    condition === "above"
+                      ? "bg-accent/15 text-accent border-accent/40"
+                      : "bg-card text-muted-foreground border-border"
+                  )}
+                >
+                  <TrendingUp className="h-4 w-4" /> Above
+                </button>
+                <button
+                  onClick={() => setCondition("below")}
+                  className={cn(
+                    "h-11 rounded-lg border text-sm font-medium inline-flex items-center justify-center gap-1.5 transition-colors",
+                    condition === "below"
+                      ? "bg-destructive/15 text-destructive border-destructive/40"
+                      : "bg-card text-muted-foreground border-border"
+                  )}
+                >
+                  <TrendingDown className="h-4 w-4" /> Below
+                </button>
+              </div>
             </div>
 
             {/* Target */}
             <div>
-              <label className="text-xs font-medium text-muted-foreground mb-1.5 block">
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
                 Target {assetType === "fund" ? "Yield (%)" : "Price"}
               </label>
               <Input
                 type="number"
+                inputMode="decimal"
                 step="0.01"
                 placeholder={selectedAsset ? `e.g. ${selectedAsset.currentValue.toFixed(2)}` : "Enter target"}
                 value={targetPrice}
                 onChange={(e) => setTargetPrice(e.target.value)}
-                className="text-[16px] sm:text-sm"
+                className="h-12 text-[16px] sm:text-base font-semibold"
               />
             </div>
+          </div>
 
-            <Button onClick={handleCreate} disabled={saving || !selectedAssetId} className="w-full">
+          <div className="px-4 py-3 border-t border-border/60 bg-background/95 sticky bottom-0">
+            <Button
+              onClick={handleCreate}
+              disabled={saving || !selectedAssetId || !targetPrice}
+              className="w-full h-11 rounded-full"
+            >
               {saving ? "Creating…" : "Create Alert"}
             </Button>
           </div>
         </DialogContent>
       </Dialog>
-
-      {loading ? (
-        <div className="space-y-3">
-          {[1, 2, 3].map(i => (
-            <Card key={i}><CardContent className="p-4 h-24 animate-pulse bg-muted/30" /></Card>
-          ))}
-        </div>
-      ) : alerts.length === 0 ? (
-        <Card>
-          <CardContent className="py-16 text-center">
-            <Bell className="h-16 w-16 mx-auto text-muted-foreground/30 mb-4" />
-            <h2 className="text-lg font-semibold text-foreground mb-2">No alerts yet</h2>
-            <p className="text-muted-foreground mb-6">
-              Set alerts on stocks, unit trusts, currencies, or commodities to get notified when they hit your target.
-            </p>
-            <Button onClick={() => setShowCreate(true)} className="gap-1.5">
-              <Plus className="h-4 w-4" /> Create Your First Alert
-            </Button>
-          </CardContent>
-        </Card>
-      ) : (
-        <Tabs defaultValue="active">
-          <TabsList className="mb-4">
-            <TabsTrigger value="active">Active ({activeAlerts.length})</TabsTrigger>
-            <TabsTrigger value="triggered">Triggered ({triggeredAlerts.length})</TabsTrigger>
-            <TabsTrigger value="paused">Paused ({pausedAlerts.length})</TabsTrigger>
-            <TabsTrigger value="settings" className="gap-1">
-              <Settings2 className="h-3.5 w-3.5" /> Settings
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="active" className="space-y-3">
-            {activeAlerts.length > 0 ? (
-              activeAlerts.map(a => <AlertCard key={a.id} alert={a} />)
-            ) : (
-              <EmptyState icon={Bell} title="No active alerts" description="Create a new alert using the button above" />
-            )}
-          </TabsContent>
-
-          <TabsContent value="triggered" className="space-y-3">
-            {triggeredAlerts.length > 0 ? (
-              triggeredAlerts.map(a => <AlertCard key={a.id} alert={a} />)
-            ) : (
-              <EmptyState icon={CheckCircle} title="No triggered alerts" description="Alerts appear here once triggered" />
-            )}
-          </TabsContent>
-
-          <TabsContent value="paused" className="space-y-3">
-            {pausedAlerts.length > 0 ? (
-              pausedAlerts.map(a => <AlertCard key={a.id} alert={a} />)
-            ) : (
-              <EmptyState icon={BellOff} title="No paused alerts" description="Pause alerts to temporarily stop monitoring" />
-            )}
-          </TabsContent>
-
-          <TabsContent value="settings">
-            <Card>
-              <CardContent className="p-5 space-y-6">
-                <div>
-                  <h3 className="font-semibold text-foreground mb-1 flex items-center gap-2">
-                    <Mail className="h-4 w-4 text-accent" /> Email Notifications
-                  </h3>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Control which email alerts you receive from Kenya Fund Finder.
-                  </p>
-                </div>
-
-                <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
-                  <div>
-                    <p className="font-medium text-sm text-foreground">Instant Price Alerts</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Get an email immediately when your price targets are hit.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={prefs.instant_alerts}
-                    onCheckedChange={(v) => updatePref("instant_alerts", v)}
-                    disabled={prefsLoading}
-                  />
-                </div>
-
-                <div className="flex items-center justify-between gap-4 p-4 rounded-lg border border-border bg-muted/30">
-                  <div>
-                    <p className="font-medium text-sm text-foreground">Weekly Market Summary</p>
-                    <p className="text-xs text-muted-foreground mt-0.5">
-                      Receive a weekly digest with your watchlist performance, top funds, and latest news.
-                    </p>
-                  </div>
-                  <Switch
-                    checked={prefs.weekly_summary}
-                    onCheckedChange={(v) => updatePref("weekly_summary", v)}
-                    disabled={prefsLoading}
-                  />
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
-      )}
     </main>
   );
 };
+
+/* ─── Alert card ─── */
+const AlertCard = ({
+  alert, onToggle, onDelete,
+}: {
+  alert: any;
+  onToggle: (id: string, isActive: boolean) => void;
+  onDelete: (id: string) => void;
+}) => {
+  const isTriggered = alert.is_triggered;
+  const isPaused = !alert.is_active && !isTriggered;
+  const isFund = alert.asset_type === "fund";
+  const suffix = isFund ? "%" : "";
+
+  return (
+    <div className={cn(
+      "rounded-xl border bg-card p-3.5 transition-all",
+      isTriggered && "border-accent/40 bg-accent/5",
+      isPaused && "opacity-70",
+      !isTriggered && !isPaused && "border-border"
+    )}>
+      <div className="flex items-start gap-3">
+        {/* Direction icon */}
+        <div className={cn(
+          "shrink-0 h-9 w-9 rounded-lg flex items-center justify-center",
+          alert.condition === "above" ? "bg-accent/10 text-accent" : "bg-destructive/10 text-destructive"
+        )}>
+          {alert.condition === "above"
+            ? <TrendingUp className="h-4.5 w-4.5" />
+            : <TrendingDown className="h-4.5 w-4.5" />}
+        </div>
+
+        {/* Content */}
+        <div className="flex-1 min-w-0">
+          <div className="flex items-center gap-1.5 flex-wrap">
+            <span className="font-semibold text-sm text-foreground truncate max-w-[180px] sm:max-w-none">
+              {alert.asset_name}
+            </span>
+            <Badge variant="outline" className="text-[10px] capitalize px-1.5 py-0 h-4">
+              {isFund ? "Unit Trust" : alert.asset_type}
+            </Badge>
+            {isTriggered && (
+              <Badge className="bg-accent text-accent-foreground text-[10px] px-1.5 py-0 h-4 gap-0.5">
+                <CheckCircle className="h-2.5 w-2.5" /> Hit
+              </Badge>
+            )}
+            {isPaused && (
+              <Badge variant="secondary" className="text-[10px] px-1.5 py-0 h-4 gap-0.5">
+                <BellOff className="h-2.5 w-2.5" /> Paused
+              </Badge>
+            )}
+          </div>
+
+          <p className="text-xs text-muted-foreground mt-1">
+            {alert.condition === "above" ? "Above" : "Below"}{" "}
+            <span className="font-semibold text-foreground">
+              {alert.target_price.toLocaleString()}{suffix}
+            </span>
+          </p>
+
+          {isTriggered && alert.triggered_price != null && (
+            <p className="text-[11px] text-accent mt-1 inline-flex items-center gap-1">
+              <CheckCircle className="h-3 w-3" />
+              Hit at {alert.triggered_price.toLocaleString()}{suffix}
+              {alert.triggered_at && ` · ${formatDistanceToNow(new Date(alert.triggered_at), { addSuffix: true })}`}
+            </p>
+          )}
+
+          {!isTriggered && (
+            <p className="text-[11px] text-muted-foreground/80 mt-1 inline-flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {formatDistanceToNow(new Date(alert.created_at), { addSuffix: true })}
+            </p>
+          )}
+        </div>
+
+        {/* Controls */}
+        <div className="flex flex-col items-end gap-1.5 shrink-0">
+          {!isTriggered && (
+            <Switch
+              checked={alert.is_active}
+              onCheckedChange={() => onToggle(alert.id, alert.is_active)}
+              aria-label={alert.is_active ? "Pause alert" : "Resume alert"}
+            />
+          )}
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 text-muted-foreground hover:text-destructive"
+            onClick={() => onDelete(alert.id)}
+            aria-label="Delete alert"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* ─── Empty state ─── */
+const EmptyState = ({
+  icon: Icon, title, description, onCta, ctaLabel,
+}: {
+  icon: any; title: string; description: string; onCta?: () => void; ctaLabel?: string;
+}) => (
+  <div className="text-center py-12 px-4 rounded-xl border border-dashed border-border bg-card/40">
+    <Icon className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+    <h3 className="font-medium text-sm text-foreground mb-1">{title}</h3>
+    <p className="text-xs text-muted-foreground mb-4">{description}</p>
+    {onCta && ctaLabel && (
+      <Button size="sm" onClick={onCta} className="rounded-full gap-1.5">
+        <Plus className="h-3.5 w-3.5" /> {ctaLabel}
+      </Button>
+    )}
+  </div>
+);
+
+/* ─── Setting row ─── */
+const SettingRow = ({
+  title, description, checked, onChange, disabled,
+}: {
+  title: string; description: string; checked: boolean; onChange: (v: boolean) => void; disabled?: boolean;
+}) => (
+  <div className="flex items-center justify-between gap-3 py-3 border-t border-border/60 first:border-t-0">
+    <div className="min-w-0">
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="text-xs text-muted-foreground mt-0.5">{description}</p>
+    </div>
+    <Switch checked={checked} onCheckedChange={onChange} disabled={disabled} />
+  </div>
+);
 
 export default AlertsPage;
