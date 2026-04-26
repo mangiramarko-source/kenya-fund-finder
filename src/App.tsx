@@ -108,8 +108,8 @@ const App = () => (
               <CompareBar />
               <Suspense fallback={null}>
                 <CompareModal />
-                <CookieConsent />
               </Suspense>
+              <CookieConsent />
             </BrowserRouter>
           </CompareProvider>
         </AuthProvider>
