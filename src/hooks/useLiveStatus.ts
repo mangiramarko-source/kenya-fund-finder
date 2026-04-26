@@ -22,11 +22,18 @@ export function useLiveStatus() {
   const [loading, setLoading] = useState(true);
 
   const fetchStatus = async () => {
-    const { data } = await supabase
-      .from("site_pages_public")
-      .select("meta")
-      .eq("slug", "live-status")
-      .single();
+    // Deduplicate concurrent requests across hook instances on the same page load
+    if (!liveStatusFetchPromise) {
+      liveStatusFetchPromise = supabase
+        .from("site_pages_public")
+        .select("meta")
+        .eq("slug", "live-status")
+        .single()
+        .then((res) => res.data);
+      // Clear cache shortly after so subsequent navigations get fresh data
+      setTimeout(() => { liveStatusFetchPromise = null; }, 30000);
+    }
+    const data = await liveStatusFetchPromise;
     const meta = data?.meta as Record<string, unknown> | null;
     setIsLive(meta?.is_live === true);
     setLastUpdateDate((meta?.last_update_date as string) ?? null);
