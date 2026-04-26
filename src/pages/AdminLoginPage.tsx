@@ -84,7 +84,7 @@ const AdminLoginPage = () => {
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center">
-      <Card className="w-full max-w-md mx-4">
+      <Card className="w-full max-w-md mx-4 rounded-none">
         <CardHeader className="text-center">
           <div className="mx-auto mb-3 flex h-14 w-14 items-center justify-center rounded-2xl bg-accent text-accent-foreground">
             <TrendingUp className="h-7 w-7" />
