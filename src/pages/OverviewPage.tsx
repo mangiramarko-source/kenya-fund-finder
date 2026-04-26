@@ -1498,7 +1498,11 @@ const OverviewPage = () => {
                       src={getNewsImage(article.image_url, article.category, article.id)}
                       alt={article.title}
                       className="w-full h-full object-cover"
-                      loading="lazy"
+                      loading={idx === 0 ? "eager" : "lazy"}
+                      fetchPriority={idx === 0 ? "high" : "auto"}
+                      decoding="async"
+                      width={100}
+                      height={100}
                       onError={(e) => handleNewsImageError(e, article.category, article.id)}
                     />
                   </div>
@@ -1517,8 +1521,8 @@ const OverviewPage = () => {
                       src={getNewsImage(article.image_url, article.category, article.id)}
                       alt={article.title}
                       className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading={idx === 0 ? "eager" : "lazy"}
-                      fetchPriority={idx === 0 ? "high" : "auto"}
+                      loading={idx < 4 ? "eager" : "lazy"}
+                      fetchPriority={idx < 4 ? "high" : "auto"}
                       decoding="async"
                       width={520}
                       height={325}
