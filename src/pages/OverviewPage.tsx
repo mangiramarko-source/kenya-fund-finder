@@ -1837,7 +1837,7 @@ const OverviewPage = () => {
               className="w-full h-11 bg-accent text-accent-foreground hover:bg-accent/90 rounded-full font-semibold shadow-md shadow-accent/20"
               onClick={() => { setWatchlistPromptOpen(false); navigate("/auth"); }}
             >
-              <TrendingUp className="mr-2 h-4 w-4" /> Sign Up Free
+              <span className="inline-flex items-center justify-center"><TrendingUp className="mr-2 h-4 w-4" /> Sign Up Free</span>
             </Button>
             <button
               type="button"
