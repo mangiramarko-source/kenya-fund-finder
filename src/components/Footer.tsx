@@ -99,6 +99,7 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
               <li><Link to="/news" className="hover:text-foreground transition-colors">News</Link></li>
               <li><Link to="/learn" className="hover:text-foreground transition-colors">Learn</Link></li>
               <li><Link to="/compare" className="hover:text-foreground transition-colors">Compare Funds</Link></li>
+              <li><Link to="/watchlist" className="hover:text-foreground transition-colors">Watchlist</Link></li>
               <li><Link to="/page/about" className="hover:text-foreground transition-colors">About</Link></li>
             </ul>
           </div>
