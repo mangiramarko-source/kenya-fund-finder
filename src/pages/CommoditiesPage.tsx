@@ -531,18 +531,7 @@ const CommodityRow = ({
       >
         <td className="pl-4 pr-2 py-4 text-muted-foreground/60 text-sm tabular-nums">{index + 1}</td>
         <td className="px-3 py-4">
-          <div className="flex items-center gap-2 min-w-0">
-            {onToggleFavourite !== undefined && (
-              <button
-                onClick={(e) => { e.stopPropagation(); onToggleFavourite(); }}
-                className="p-1 rounded-md hover:bg-muted transition-colors shrink-0"
-                aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
-              >
-                <Star className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
-              </button>
-            )}
-            <span className="font-bold text-foreground text-sm tracking-wide">{c.symbol}</span>
-          </div>
+          <span className="font-bold text-foreground text-sm tracking-wide">{c.symbol}</span>
         </td>
         <td className="px-3 py-4">
           <span className="block text-sm text-foreground truncate" title={c.name}>{c.name}</span>
