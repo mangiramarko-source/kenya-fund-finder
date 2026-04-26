@@ -1207,7 +1207,8 @@ const OverviewPage = () => {
         {/* Desktop: horizontally scrollable row of fixed-width columns */}
         <div className="hidden md:block -mx-4 md:-mx-6">
           <div className="overflow-x-auto overscroll-x-contain px-4 md:px-6 pb-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-            <div className="flex gap-4 min-w-max">
+            {/* Reserve vertical space to prevent CLS while highlight data loads */}
+            <div className="flex gap-4 min-w-max min-h-[420px]">
               {/* Top Gainers */}
               <div className="w-[300px] shrink-0">
                 <HighlightColumn icon={TrendingUp} label="Stocks · Top Gainers" link="/stocks">
