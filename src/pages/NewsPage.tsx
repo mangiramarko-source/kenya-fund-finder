@@ -774,9 +774,9 @@ const NewsPage = () => {
                       )}
                        {rail && RailIcon && railItems.length > 0 && (
                         <section className="mt-8 border-t-2 border-border bg-muted/10">
-                          <div className="flex items-center gap-2 px-4 pt-7 pb-4">
+                          <div className="flex items-center gap-2 px-4 py-5">
                             <RailIcon className="h-4 w-4 text-foreground" />
-                            <h3 className="font-bold uppercase tracking-wider text-foreground text-lg">
+                            <h3 className="font-bold uppercase tracking-wider text-foreground text-lg leading-none">
                               Related: {rail[0]}
                             </h3>
                           </div>
