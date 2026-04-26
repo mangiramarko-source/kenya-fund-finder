@@ -1190,7 +1190,7 @@ const OverviewPage = () => {
       <div className={user && mobileTab === "watchlist" ? "hidden" : "contents"}>
 
       {/* ─── Market Highlights (always shown) ─── */}
-      <div>
+      <div className="md:pt-3">
 
 
         {/* Desktop: horizontally scrollable row of fixed-width columns */}
