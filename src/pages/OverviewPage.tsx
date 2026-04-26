@@ -161,9 +161,11 @@ const CustomizeDialog = ({
     fund: allFunds.length,
   };
 
+  const activeFilterCount = (category !== "all" ? 1 : 0) + (watchedOnly ? 1 : 0);
+
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
-      <DialogContent className="sm:max-w-[760px] max-h-[85vh] flex flex-col p-0 gap-0">
+      <DialogContent className="sm:max-w-[760px] max-h-[100vh] sm:max-h-[85vh] h-[100vh] sm:h-auto w-screen sm:w-full max-w-none sm:rounded-lg rounded-none flex flex-col p-0 gap-0">
         <DialogHeader className="px-5 pt-5 pb-3 border-b border-border">
           <div className="min-w-0 pr-8">
             <div className="flex items-center gap-2">
@@ -178,8 +180,109 @@ const CustomizeDialog = ({
           </div>
         </DialogHeader>
 
-        {/* Toolbar: search + watched-only toggle */}
-        <div className="px-5 pt-4 pb-3 space-y-3 border-b border-border">
+        {/* Mobile toolbar: search + filter sheet (consistent with Stocks/Rates pages) */}
+        <div className="md:hidden px-4 pt-3 pb-3 border-b border-border flex items-center gap-2">
+          <div className="relative flex-1">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Input
+              placeholder="Search assets..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 h-9 rounded-lg bg-muted/30 border-border w-full text-[16px]"
+            />
+            {search && (
+              <button
+                onClick={() => setSearch("")}
+                className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                aria-label="Clear search"
+              >
+                <X className="h-3.5 w-3.5" />
+              </button>
+            )}
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="relative inline-flex items-center justify-center gap-1.5 h-9 px-3 shrink-0 rounded-md border border-border bg-card text-foreground text-xs font-medium transition-colors"
+                aria-label="Filters"
+              >
+                <SlidersHorizontal className="h-4 w-4" />
+                <span>Filter</span>
+                {activeFilterCount > 0 && (
+                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
+                )}
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto">
+              <SheetHeader>
+                <SheetTitle className="text-base">Filters</SheetTitle>
+              </SheetHeader>
+
+              <div className="mt-4 space-y-5">
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Category</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {CATEGORY_TABS.map(tab => {
+                      const active = category === tab.value;
+                      return (
+                        <button
+                          key={tab.value}
+                          onClick={() => setCategory(tab.value)}
+                          className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors ${
+                            active
+                              ? "bg-primary text-primary-foreground border-primary"
+                              : "bg-card border-border text-muted-foreground"
+                          }`}
+                        >
+                          {tab.label}
+                          <span className={`tabular-nums text-[10px] ${active ? "opacity-90" : "opacity-70"}`}>
+                            {counts[tab.value]}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Show</p>
+                  <button
+                    onClick={() => setWatchedOnly(v => !v)}
+                    className={`w-full inline-flex items-center justify-between rounded-lg border px-3 py-2.5 text-xs font-medium transition-colors ${
+                      watchedOnly
+                        ? "bg-accent/10 border-accent/40 text-accent"
+                        : "bg-card border-border text-muted-foreground"
+                    }`}
+                    aria-pressed={watchedOnly}
+                  >
+                    <span className="inline-flex items-center gap-2">
+                      <Star className={`h-3.5 w-3.5 ${watchedOnly ? "fill-accent" : ""}`} />
+                      Tracked only
+                    </span>
+                    {watchedOnly && <Check className="h-3.5 w-3.5" />}
+                  </button>
+                </div>
+
+                {activeFilterCount > 0 && (
+                  <button
+                    onClick={() => { setCategory("all"); setWatchedOnly(false); }}
+                    className="w-full text-[11px] text-accent hover:underline py-2"
+                  >
+                    Clear filters
+                  </button>
+                )}
+
+                <SheetClose asChild>
+                  <Button size="sm" className="w-full h-9 text-xs">Apply</Button>
+                </SheetClose>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Desktop toolbar: search + watched-only toggle + category tabs */}
+        <div className="hidden md:block px-5 pt-4 pb-3 space-y-3 border-b border-border">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -187,7 +290,7 @@ const CustomizeDialog = ({
                 placeholder="Search by name, symbol, manager…"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-9 text-[16px] md:text-xs"
+                className="pl-8 h-9 text-xs"
               />
               {search && (
                 <button
@@ -213,7 +316,6 @@ const CustomizeDialog = ({
             </button>
           </div>
 
-          {/* Category filter tabs */}
           <div className="flex flex-wrap gap-1.5">
             {CATEGORY_TABS.map(tab => {
               const active = category === tab.value;
