@@ -225,7 +225,7 @@ const StockDetailPage = () => {
         onClick={() => navigate("/stocks")}
         className="hidden md:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4"
       >
-        <ArrowLeft className="h-4 w-4" /> Back to Stocks
+        <ArrowLeft className="h-4 w-4" /> Back
       </button>
 
       <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
