@@ -385,6 +385,7 @@ const AdminNews = () => {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       <div className="relative mb-4">
