@@ -6,8 +6,13 @@
 // the *_public views. Existing direct reads still work, but new code should
 // prefer the gateway so we can throttle and monitor scrapers in one place.
 
-const PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID as string;
-const BASE = `https://${PROJECT_ID}.supabase.co/functions/v1/public-data`;
+// Use VITE_SUPABASE_URL as the source of truth — VITE_SUPABASE_PROJECT_ID is
+// not injected in every build environment and resolved to "undefined" on the
+// live published deploy, breaking every gateway call.
+const SUPABASE_URL =
+  (import.meta.env.VITE_SUPABASE_URL as string | undefined) ||
+  `https://${import.meta.env.VITE_SUPABASE_PROJECT_ID}.supabase.co`;
+const BASE = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/public-data`;
 const ANON_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string;
 
 export type GatewayResource =
