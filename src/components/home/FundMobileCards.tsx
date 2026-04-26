@@ -114,6 +114,24 @@ const FundMobileCards = ({ funds, snapshots, loading, onClearSearch, hasSearch, 
                 </span>
               </div>
             </div>
+
+            {/* Favourite star on the right (mobile, logged-in only) */}
+            {onToggleFavourite && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleFavourite(fund.id, fund.name);
+                }}
+                aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
+                className="shrink-0 -mr-1 p-1.5 rounded-md hover:bg-muted transition-colors"
+              >
+                <Star
+                  className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
+                />
+              </button>
+            )}
           </div>
         </Link>
       ))}
