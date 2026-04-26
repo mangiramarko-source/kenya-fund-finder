@@ -27,6 +27,33 @@ const DEFAULT_PREFS: ConsentPreferences = {
 
 const CONSENT_EVENT = "cookie-consent-change";
 
+export type ConsentChoice = "accepted" | "rejected" | "custom";
+
+/** Persist a full consent decision and notify subscribers in this tab. */
+export function setConsent(choice: ConsentChoice, prefs: Omit<ConsentPreferences, "necessary">): void {
+  if (typeof window === "undefined") return;
+  const full: ConsentPreferences = { necessary: true, analytics: !!prefs.analytics, ads: !!prefs.ads };
+  try {
+    localStorage.setItem(CONSENT_KEY, choice);
+    localStorage.setItem(PREFS_KEY, JSON.stringify(full));
+  } catch {
+    // ignore
+  }
+  notifyConsentChange();
+}
+
+/** Clear all consent — banner will re-appear on next render. */
+export function clearConsent(): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.removeItem(CONSENT_KEY);
+    localStorage.removeItem(PREFS_KEY);
+  } catch {
+    // ignore
+  }
+  notifyConsentChange();
+}
+
 export function getConsentChoice(): "accepted" | "rejected" | "custom" | null {
   if (typeof window === "undefined") return null;
   try {

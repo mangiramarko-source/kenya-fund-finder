@@ -3,10 +3,9 @@ import { Cookie, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { Link } from "react-router-dom";
-import { notifyConsentChange } from "@/lib/consent";
+import { setConsent } from "@/lib/consent";
 
 const CONSENT_KEY = "cookie-consent";
-const PREFS_KEY = "cookie-preferences";
 
 type Preferences = {
   necessary: true;
@@ -15,15 +14,8 @@ type Preferences = {
 };
 
 const savePreferences = (prefs: Preferences, choice: "accepted" | "rejected" | "custom") => {
-  try {
-    localStorage.setItem(CONSENT_KEY, choice);
-    localStorage.setItem(PREFS_KEY, JSON.stringify(prefs));
-  } catch {
-    // ignore
-  }
-  // Notify same-tab listeners (onConsent subscribers) so ads/analytics
-  // initialize immediately without a reload.
-  notifyConsentChange();
+  // Single source of truth — also dispatches the same-tab change event.
+  setConsent(choice, { analytics: prefs.analytics, ads: prefs.ads });
 };
 
 const CookieConsent = () => {
