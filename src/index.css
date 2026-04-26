@@ -140,6 +140,13 @@
   .glass {
     @apply bg-card/80 backdrop-blur-sm border border-border/50;
   }
+  .no-scrollbar {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .no-scrollbar::-webkit-scrollbar {
+    display: none;
+  }
 }
 
 @keyframes ticker-scroll {
