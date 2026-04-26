@@ -50,8 +50,11 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
             <img
               src={imgSrc}
               alt={article.title}
+              width={520}
+              height={325}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               fetchPriority="high"
+              decoding="async"
               onError={(e) => handleNewsImageError(e, article.category, article.id)}
             />
           </div>
@@ -93,8 +96,11 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
             <img
               src={imgSrc}
               alt={article.title}
+              width={280}
+              height={175}
               className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
               loading="lazy"
+              decoding="async"
               onError={(e) => handleNewsImageError(e, article.category, article.id)}
             />
           </div>
