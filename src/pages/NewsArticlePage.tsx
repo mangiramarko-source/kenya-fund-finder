@@ -8,6 +8,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { fetchNewsById, fetchRelatedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
+import { Loader2, Sparkles } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 
