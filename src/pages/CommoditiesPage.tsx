@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star } from "lucide-react";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
@@ -181,7 +182,7 @@ const CommoditiesPage = () => {
   };
 
   const latestUpdate = commodities.length > 0
-    ? new Date(commodities.reduce((l, c) => (c.updated_at > l ? c.updated_at : l), commodities[0].updated_at))
+    ? toLastWeekday(commodities.reduce((l, c) => (c.updated_at > l ? c.updated_at : l), commodities[0].updated_at))
     : null;
 
   const gainers = useMemo(() => commodities.filter((c) => c.previous_price != null && c.price > c.previous_price).length, [commodities]);
@@ -481,7 +482,7 @@ const MobileCommodityCard = ({
 
           <div className="flex items-center justify-between gap-2">
             <p className="text-[10px] text-muted-foreground">
-              Updated: {new Date(c.updated_at).toLocaleString("en-KE")}
+              Updated: {formatMarketDateTime(c.updated_at)}
             </p>
             <CreateAlertDialog
               assetType="commodity"
@@ -516,7 +517,7 @@ const CommodityRow = ({
       : change > 0
       ? { label: "Up", className: "text-accent bg-accent/10" }
       : { label: "Down", className: "text-destructive bg-destructive/10" };
-  const updatedShort = new Date(c.updated_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" });
+  const updatedShort = formatMarketDate(c.updated_at);
 
   return (
     <>
@@ -639,7 +640,7 @@ const CommodityRow = ({
 
             <div className="flex items-center justify-between mt-2">
               <p className="text-[10px] text-muted-foreground">
-                Last updated: {new Date(c.updated_at).toLocaleString("en-KE")}
+                Last updated: {formatMarketDateTime(c.updated_at)}
               </p>
               <CreateAlertDialog
                 assetType="commodity"

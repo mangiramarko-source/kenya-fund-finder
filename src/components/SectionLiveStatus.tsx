@@ -1,4 +1,5 @@
 import { useLiveStatus, type AssetSection } from "@/hooks/useLiveStatus";
+import { toLastWeekday } from "@/lib/utils";
 
 interface SectionLiveStatusProps {
   section: AssetSection;
@@ -13,11 +14,12 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate }: Sectio
 
   const s = sections[section];
   if (!s) return null;
-  const displayDate = s.last_update_date
-    ? new Date(s.last_update_date + "T00:00:00").toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })
-    : fallbackDate
-      ? fallbackDate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })
-      : null;
+  const rawDate = s.last_update_date
+    ? new Date(s.last_update_date + "T00:00:00")
+    : fallbackDate ?? null;
+  const displayDate = rawDate
+    ? toLastWeekday(rawDate).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })
+    : null;
 
   return (
     <span className="inline-flex items-center gap-2">

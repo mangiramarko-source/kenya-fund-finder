@@ -13,3 +13,35 @@ export function decodeHtmlEntities(text: string): string {
   _textarea.innerHTML = text;
   return _textarea.value;
 }
+
+/**
+ * Roll a date back to the most recent weekday (Mon–Fri).
+ * Markets are closed on Saturday and Sunday, so any displayed
+ * "last updated" date that falls on a weekend should be shown
+ * as the prior Friday (preserving the original time-of-day).
+ */
+export function toLastWeekday(input: string | Date): Date {
+  const d = new Date(input);
+  const day = d.getDay(); // 0=Sun, 6=Sat
+  if (day === 6) d.setDate(d.getDate() - 1); // Sat → Fri
+  else if (day === 0) d.setDate(d.getDate() - 2); // Sun → Fri
+  return d;
+}
+
+/** Format a market timestamp, snapping weekends back to the prior Friday. */
+export function formatMarketDateTime(
+  input: string | Date,
+  locale = "en-KE",
+  options?: Intl.DateTimeFormatOptions,
+): string {
+  return toLastWeekday(input).toLocaleString(locale, options);
+}
+
+/** Format a market date (no time), snapping weekends back to the prior Friday. */
+export function formatMarketDate(
+  input: string | Date,
+  locale = "en-KE",
+  options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" },
+): string {
+  return toLastWeekday(input).toLocaleDateString(locale, options);
+}

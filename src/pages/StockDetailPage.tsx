@@ -3,6 +3,7 @@ import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { formatMarketDateTime } from "@/lib/utils";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -218,7 +219,7 @@ const StockDetailPage = () => {
           </div>
           <p className="text-sm text-muted-foreground">{s.name}</p>
           <p className="text-xs text-muted-foreground mt-1">
-            Nairobi Securities Exchange · Last updated: {new Date(s.updated_at).toLocaleString("en-KE")}
+            Nairobi Securities Exchange · Last updated: {formatMarketDateTime(s.updated_at)}
           </p>
         </div>
 

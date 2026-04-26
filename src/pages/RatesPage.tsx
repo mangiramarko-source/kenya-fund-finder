@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
+import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star, SlidersHorizontal } from "lucide-react";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
@@ -179,7 +180,7 @@ const RatesPage = () => {
   };
 
   const latestUpdate = rates.length > 0
-    ? new Date(rates.reduce((l, r) => (r.updated_at > l ? r.updated_at : l), rates[0].updated_at))
+    ? toLastWeekday(rates.reduce((l, r) => (r.updated_at > l ? r.updated_at : l), rates[0].updated_at))
     : null;
 
   const strengthened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate < r.previous_rate).length, [rates]);
@@ -616,7 +617,7 @@ const MobileRateCard = ({
 
           <div className="flex items-center justify-between gap-2">
             <p className="text-[10px] text-muted-foreground">
-              Updated: {new Date(r.updated_at).toLocaleString("en-KE")}
+              Updated: {formatMarketDateTime(r.updated_at)}
             </p>
             <CreateAlertDialog
               assetType="currency"
@@ -651,7 +652,7 @@ const RateRow = ({
       : change > 0
       ? { label: "Up", className: "text-accent bg-accent/10" }
       : { label: "Down", className: "text-destructive bg-destructive/10" };
-  const updatedShort = new Date(rate.updated_at).toLocaleDateString("en-KE", { month: "short", day: "numeric" });
+  const updatedShort = formatMarketDate(rate.updated_at);
 
   return (
     <>
@@ -771,7 +772,7 @@ const RateRow = ({
 
             <div className="flex items-center justify-between mt-2">
               <p className="text-[10px] text-muted-foreground">
-                Last updated: {new Date(rate.updated_at).toLocaleString("en-KE")}
+                Last updated: {formatMarketDateTime(rate.updated_at)}
               </p>
               <CreateAlertDialog
                 assetType="currency"

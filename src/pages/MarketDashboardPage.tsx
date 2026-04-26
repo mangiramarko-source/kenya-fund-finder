@@ -2,6 +2,7 @@ import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { formatMarketDate } from "@/lib/utils";
 import { useMarketData, type ExchangeRate, type Commodity, type Stock } from "@/components/home/MarketTicker";
 import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search, DollarSign, Gem } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -214,7 +215,7 @@ const MarketDashboardPage = () => {
               {/* Last updated info - mobile */}
               {filteredRates.length > 0 && filteredRates[0].updated_at && (
                 <p className="md:hidden text-[10px] text-muted-foreground/60 text-right -mt-2 mb-1">
-                  Last updated: {new Date(filteredRates[0].updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                  Last updated: {formatMarketDate(filteredRates[0].updated_at, "en-KE", { day: "numeric", month: "short", year: "numeric" })}
                 </p>
               )}
               <div className="rounded-xl border border-border overflow-hidden bg-card">
@@ -258,7 +259,7 @@ const MarketDashboardPage = () => {
                             <ChangeIndicator current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />
                           </td>
                           <td className="hidden md:table-cell pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
-                            {r.updated_at ? new Date(r.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}
+                            {r.updated_at ? formatMarketDate(r.updated_at, "en-KE", { day: "numeric", month: "short" }) : "—"}
                           </td>
                         </tr>
                       ))}
@@ -276,7 +277,7 @@ const MarketDashboardPage = () => {
               {/* Last updated info - mobile */}
               {filteredCommodities.length > 0 && filteredCommodities[0].updated_at && (
                 <p className="md:hidden text-[10px] text-muted-foreground/60 text-right -mt-2 mb-1">
-                  Last updated: {new Date(filteredCommodities[0].updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+                  Last updated: {formatMarketDate(filteredCommodities[0].updated_at, "en-KE", { day: "numeric", month: "short", year: "numeric" })}
                 </p>
               )}
               <div className="rounded-xl border border-border overflow-hidden bg-card">
@@ -323,7 +324,7 @@ const MarketDashboardPage = () => {
                             <ChangeIndicator current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />
                           </td>
                           <td className="hidden md:table-cell pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
-                            {c.updated_at ? new Date(c.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short" }) : "—"}
+                            {c.updated_at ? formatMarketDate(c.updated_at, "en-KE", { day: "numeric", month: "short" }) : "—"}
                           </td>
                         </tr>
                       ))}
