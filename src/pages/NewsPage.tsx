@@ -772,9 +772,9 @@ const NewsPage = () => {
                       {idx > 0 && !rail && (
                         <div className="h-px bg-border/60" role="separator" />
                       )}
-                      {rail && RailIcon && railItems.length > 0 && (
-                        <section className="border-t border-border bg-muted/10">
-                          <div className="flex items-center gap-2 px-4 pt-4 pb-2">
+                       {rail && RailIcon && railItems.length > 0 && (
+                        <section className="mt-8 border-t-2 border-border bg-muted/10">
+                          <div className="flex items-center gap-2 px-4 pt-7 pb-4">
                             <RailIcon className="h-4 w-4 text-foreground" />
                             <h3 className="font-bold uppercase tracking-wider text-foreground text-lg">
                               Related: {rail[0]}
