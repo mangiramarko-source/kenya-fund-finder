@@ -209,16 +209,16 @@ export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
 
 /** Fetch the most recent yield snapshot for each fund (previous values before last update) */
 export async function fetchLatestSnapshots(): Promise<YieldSnapshot[]> {
-  const { data, error } = await supabase
-    .from("fund_yield_snapshots")
-    .select("fund_id, annual_yield, daily_yield, snapshot_date")
-    .order("snapshot_date", { ascending: false })
-    .limit(500);
-  if (error) throw error;
-  // Deduplicate: keep only the latest snapshot per fund
+  // Pull the recent window via the gateway, then dedupe to the latest per fund.
+  const { data } = await fetchPublicData<any>("fund-snapshots", {
+    select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
+    order: "snapshot_date.desc",
+    days: 90,
+    limit: 1000,
+  });
   const seen = new Set<string>();
   const result: YieldSnapshot[] = [];
-  for (const row of data || []) {
+  for (const row of data) {
     if (!seen.has(row.fund_id)) {
       seen.add(row.fund_id);
       result.push({
@@ -250,20 +250,14 @@ export async function fetchFundSnapshots(fundId: string): Promise<YieldSnapshot[
 
 /** Fetch recent yield snapshots for all funds (for sparklines) — last ~30 days only */
 export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnapshot[]>> {
-  // Only pull the last ~30 days of history — plenty for sparklines, far less payload.
-  const since = new Date();
-  since.setDate(since.getDate() - 30);
-  const sinceISO = since.toISOString().slice(0, 10);
-
-  const { data, error } = await supabase
-    .from("fund_yield_snapshots")
-    .select("fund_id, annual_yield, daily_yield, snapshot_date")
-    .gte("snapshot_date", sinceISO)
-    .order("snapshot_date", { ascending: true })
-    .limit(1000);
-  if (error) throw error;
+  const { data } = await fetchPublicData<any>("fund-snapshots", {
+    select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
+    order: "snapshot_date.asc",
+    days: 30,
+    limit: 2000,
+  });
   const grouped: Record<string, YieldSnapshot[]> = {};
-  for (const row of data || []) {
+  for (const row of data) {
     const snap: YieldSnapshot = {
       fund_id: row.fund_id,
       annual_yield: Number(row.annual_yield),
@@ -275,3 +269,4 @@ export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnaps
   }
   return grouped;
 }
+
