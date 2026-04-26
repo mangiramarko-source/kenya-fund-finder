@@ -19,29 +19,31 @@ const savePreferences = (prefs: Preferences, choice: "accepted" | "rejected" | "
 };
 
 const CookieConsent = () => {
-  const [visible, setVisible] = useState(() => {
-    if (typeof window === "undefined") return false;
-    try {
-      return !localStorage.getItem(CONSENT_KEY);
-    } catch {
-      return false;
-    }
-  });
+  // SSR-safe: render nothing on the server and on the very first client render.
+  // The banner is only mounted after the client has synchronously verified
+  // consent via localStorage, so SSR HTML never includes optional UI or scripts
+  // and there is no hydration mismatch.
+  const [hydrated, setHydrated] = useState(false);
+  const [visible, setVisible] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [analytics, setAnalytics] = useState(false);
   const [ads, setAds] = useState(false);
 
-  // Sync consent across open tabs via the storage event.
   useEffect(() => {
     if (typeof window === "undefined") return;
+    try {
+      setVisible(!localStorage.getItem(CONSENT_KEY));
+    } catch {
+      setVisible(false);
+    }
+    setHydrated(true);
+
     const onStorage = (e: StorageEvent) => {
       if (e.key !== CONSENT_KEY) return;
-      // A choice was made (or cleared) in another tab — reflect it here immediately.
       if (e.newValue) {
         setVisible(false);
         setShowSettings(false);
       } else {
-        // Consent cleared elsewhere — re-show banner.
         setVisible(true);
       }
     };
@@ -64,7 +66,7 @@ const CookieConsent = () => {
     setVisible(false);
   };
 
-  if (!visible) return null;
+  if (!hydrated || !visible) return null;
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
