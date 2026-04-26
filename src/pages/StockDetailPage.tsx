@@ -99,26 +99,36 @@ const StockDetailPage = () => {
   useEffect(() => {
     if (!symbol) return;
     const fetchStock = async () => {
-      const { data } = await supabase
-        .from("stocks_public")
-        .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, dividend_yield, year_high, year_low, updated_at")
-        .eq("symbol", symbol.toUpperCase())
-        .maybeSingle();
-      if (!data) { setLoading(false); return; }
-      setStock({
-        ...data,
-        price: Number(data.price),
-        previous_price: data.previous_price != null ? Number(data.previous_price) : null,
-        day_change: Number(data.day_change),
-        day_change_percent: Number(data.day_change_percent),
-        volume: Number(data.volume),
-        market_cap: data.market_cap != null ? Number(data.market_cap) : null,
-        year_high: data.year_high != null ? Number(data.year_high) : null,
-        year_low: data.year_low != null ? Number(data.year_low) : null,
-        pe_ratio: data.pe_ratio != null ? Number(data.pe_ratio) : null,
-        dividend_yield: data.dividend_yield != null ? Number(data.dividend_yield) : null,
-      } as Stock);
-      setLoading(false);
+      try {
+        const { data } = await fetchPublicData<any>("stocks", {
+          select: [
+            "id", "symbol", "name", "sector", "price", "previous_price",
+            "day_change", "day_change_percent", "volume", "market_cap",
+            "pe_ratio", "dividend_yield", "year_high", "year_low", "updated_at",
+          ],
+          filters: { symbol: symbol.toUpperCase() },
+          limit: 1,
+        });
+        const row = data[0];
+        if (!row) { setLoading(false); return; }
+        setStock({
+          ...row,
+          price: Number(row.price),
+          previous_price: row.previous_price != null ? Number(row.previous_price) : null,
+          day_change: Number(row.day_change),
+          day_change_percent: Number(row.day_change_percent),
+          volume: Number(row.volume),
+          market_cap: row.market_cap != null ? Number(row.market_cap) : null,
+          year_high: row.year_high != null ? Number(row.year_high) : null,
+          year_low: row.year_low != null ? Number(row.year_low) : null,
+          pe_ratio: row.pe_ratio != null ? Number(row.pe_ratio) : null,
+          dividend_yield: row.dividend_yield != null ? Number(row.dividend_yield) : null,
+        } as Stock);
+      } catch (e) {
+        console.error("Failed to load stock", e);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchStock();
   }, [symbol]);
@@ -127,18 +137,25 @@ const StockDetailPage = () => {
     if (!stock) return;
     const fetchHistory = async () => {
       setHistoryLoading(true);
-      const { data } = await supabase
-        .from("stock_price_history" as any)
-        .select("price, snapshot_date")
-        .eq("stock_id", stock.id)
-        .order("snapshot_date", { ascending: true });
-      setHistory(
-        ((data as any) || []).map((d: any) => ({
-          snapshot_date: d.snapshot_date,
-          price: Number(d.price),
-        }))
-      );
-      setHistoryLoading(false);
+      try {
+        const { data } = await fetchPublicData<any>("stock-history", {
+          select: ["price", "snapshot_date"],
+          id: stock.id,
+          order: "snapshot_date.asc",
+          days: 90,
+          limit: 200,
+        });
+        setHistory(
+          data.map((d: any) => ({
+            snapshot_date: d.snapshot_date,
+            price: Number(d.price),
+          }))
+        );
+      } catch (e) {
+        console.error("Failed to load stock history", e);
+      } finally {
+        setHistoryLoading(false);
+      }
     };
     fetchHistory();
   }, [stock?.id]);
