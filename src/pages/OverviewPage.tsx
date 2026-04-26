@@ -1474,7 +1474,7 @@ const OverviewPage = () => {
 
       {/* Dialogs */}
       <QuickAlertDialog open={alertDialog.open} onClose={() => setAlertDialog(prev => ({ ...prev, open: false }))} assetType={alertDialog.assetType} assetId={alertDialog.assetId} assetName={alertDialog.assetName} currentPrice={alertDialog.currentPrice} unit={alertDialog.unit} />
-      <CustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} watchlist={watchlist} allStocks={stocks} allRates={rates} allCommodities={commodities} allFunds={funds} onToggleSection={toggleSection} onToggleAsset={toggleAsset} />
+      <CustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} watchlist={watchlist} allStocks={stocks} allRates={rates} allCommodities={commodities} allFunds={funds} onToggleAsset={toggleAsset} />
     </div>
     </div>
     </>
