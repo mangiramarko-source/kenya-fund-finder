@@ -861,6 +861,8 @@ const OverviewPage = () => {
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [profileName, setProfileName] = useState("");
+  // Mobile-only top tab: "overview" or "watchlist"
+  const [mobileTab, setMobileTab] = useState<"overview" | "watchlist">("overview");
 
   const [alertDialog, setAlertDialog] = useState<{
     open: boolean; assetType: "stock" | "currency" | "commodity";
@@ -1050,7 +1052,42 @@ const OverviewPage = () => {
           </div>
         </div>
 
-        {/* Desktop header */}
+        {/* Mobile-only top tabs: Overview / Watchlist */}
+        {user && (
+          <div className="md:hidden mt-3 grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
+            <button
+              type="button"
+              onClick={() => setMobileTab("overview")}
+              className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
+                mobileTab === "overview"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground"
+              }`}
+              aria-pressed={mobileTab === "overview"}
+            >
+              <LayoutDashboard className="h-3.5 w-3.5" /> Overview
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab("watchlist")}
+              className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
+                mobileTab === "watchlist"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground"
+              }`}
+              aria-pressed={mobileTab === "watchlist"}
+            >
+              <Star className={`h-3.5 w-3.5 ${mobileTab === "watchlist" ? "fill-current" : ""}`} /> Watchlist
+              {watchlist.length > 0 && (
+                <span className={`tabular-nums text-[10px] rounded-full px-1.5 ${
+                  mobileTab === "watchlist" ? "bg-primary-foreground/20" : "bg-muted text-foreground"
+                }`}>
+                  {watchlist.length}
+                </span>
+              )}
+            </button>
+          </div>
+        )}
         <div className="hidden md:flex flex-row items-end justify-between gap-3">
           <div>
             <h1 className="text-2xl font-bold text-foreground">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
@@ -1079,24 +1116,46 @@ const OverviewPage = () => {
         </div>
       </div>
 
-      {/* ─── Watched Individual Assets (for signed-in users, shown first) ─── */}
+      {/* ─── Watched Individual Assets ───
+          Mobile: only when "Watchlist" tab is active. Desktop: always above highlights. */}
       {user && hasWatchlist && (
-        <WatchlistGroupedSection
-          watchedFunds={watchedFunds}
-          watchedStocks={watchedStocks}
-          watchedRates={watchedRates}
-          watchedCommoditiesList={watchedCommoditiesList}
-          getFundHistory={getFundHistory}
-          getStockHistory={getStockHistory}
-          getStockSparkData={getStockSparkData}
-          getHistory={getHistory}
-          openAlert={openAlert}
-          toggleAsset={toggleAsset}
-        />
+        <div className={mobileTab === "watchlist" ? "block" : "hidden md:block"}>
+          <WatchlistGroupedSection
+            watchedFunds={watchedFunds}
+            watchedStocks={watchedStocks}
+            watchedRates={watchedRates}
+            watchedCommoditiesList={watchedCommoditiesList}
+            getFundHistory={getFundHistory}
+            getStockHistory={getStockHistory}
+            getStockSparkData={getStockSparkData}
+            getHistory={getHistory}
+            openAlert={openAlert}
+            toggleAsset={toggleAsset}
+          />
+        </div>
       )}
+
+      {/* Mobile-only empty state on Watchlist tab when nothing tracked */}
+      {user && !hasWatchlist && mobileTab === "watchlist" && (
+        <div className="md:hidden rounded-xl border border-dashed border-border bg-card/40 p-8 text-center">
+          <Star className="h-10 w-10 mx-auto text-muted-foreground/40 mb-3" />
+          <h3 className="text-sm font-semibold text-foreground mb-1">Your watchlist is empty</h3>
+          <p className="text-xs text-muted-foreground mb-4">
+            Tap Customize to start tracking stocks, funds, currencies, and commodities.
+          </p>
+          <Button size="sm" className="rounded-full gap-1.5" onClick={() => setCustomizeOpen(true)}>
+            <Settings2 className="h-3.5 w-3.5" /> Customize Watchlist
+          </Button>
+        </div>
+      )}
+
+      {/* ─── Overview content (Highlights, news, disclaimer) ───
+          Mobile: only when "Overview" tab. Desktop: always. */}
+      <div className={user && mobileTab === "watchlist" ? "hidden md:contents" : "contents"}>
 
       {/* ─── Market Highlights (always shown) ─── */}
       <div>
+
 
         {/* Desktop: horizontally scrollable row of fixed-width columns */}
         <div className="hidden md:block -mx-4 md:-mx-6">
@@ -1687,6 +1746,8 @@ const OverviewPage = () => {
           Market data is indicative and may be delayed. {user ? "Click the bell icon to set price alerts on any asset." : "Sign in to set price alerts and customize your dashboard."}
         </p>
       </div>
+
+      </div>{/* end of mobile-tab "overview" content wrapper */}
 
       {/* Dialogs */}
       <QuickAlertDialog open={alertDialog.open} onClose={() => setAlertDialog(prev => ({ ...prev, open: false }))} assetType={alertDialog.assetType} assetId={alertDialog.assetId} assetName={alertDialog.assetName} currentPrice={alertDialog.currentPrice} unit={alertDialog.unit} />
