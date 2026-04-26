@@ -266,14 +266,29 @@ const NewsArticlePage = () => {
 
       {/* Content */}
       {(() => {
-        // All content is now publicly accessible
+        const hasContent = article.content && article.content.trim().length > 0;
         return (
           <>
+            {hasContent && (
+              <div className="flex items-center gap-1.5 mb-3 text-[11px] text-muted-foreground">
+                <Sparkles className="h-3 w-3 text-accent" />
+                <span>AI-generated summary based on the original source</span>
+              </div>
+            )}
             <div className="prose prose-sm max-w-none text-foreground leading-relaxed space-y-4">
-              {article.content ? (
-                article.content.split("\n").filter(Boolean).map((paragraph, i) => (
+              {hasContent ? (
+                article.content!.split("\n").filter(Boolean).map((paragraph, i) => (
                   <p key={i} className="sm:text-base text-foreground leading-relaxed font-sans mx-[2px] my-0 px-0 py-0 border-8 border-none pl-[10px] pr-[10px] text-left text-xl font-medium">{decodeHtmlEntities(paragraph)}</p>
                 ))
+              ) : enriching ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground italic py-4">
+                  <Loader2 className="h-4 w-4 animate-spin text-accent" />
+                  <span>Generating extended summary from the original source…</span>
+                </div>
+              ) : enrichError ? (
+                <p className="text-sm text-muted-foreground italic">
+                  Extended summary unavailable. {article.url ? "You can read the full article at the original source below." : ""}
+                </p>
               ) : (
                 <p className="text-sm text-muted-foreground italic">Full article content is not yet available.</p>
               )}
