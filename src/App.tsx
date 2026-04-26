@@ -10,10 +10,12 @@ import ErrorBoundary from "@/components/ErrorBoundary";
 import Layout from "@/components/Layout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
+// CookieConsent loaded eagerly: it's the LCP element on first visit;
+// lazy-loading it delays paint and tanks the LCP score.
+import CookieConsent from "./components/CookieConsent";
 
 // Defer heavy/non-critical UI to shrink initial JS bundle
 const CompareModal = lazy(() => import("./components/compare/CompareModal"));
-const CookieConsent = lazy(() => import("./components/CookieConsent"));
 
 // Lazy-loaded routes
 const Index = lazy(() => import("./pages/Index"));
@@ -106,8 +108,8 @@ const App = () => (
               <CompareBar />
               <Suspense fallback={null}>
                 <CompareModal />
-                <CookieConsent />
               </Suspense>
+              <CookieConsent />
             </BrowserRouter>
           </CompareProvider>
         </AuthProvider>
