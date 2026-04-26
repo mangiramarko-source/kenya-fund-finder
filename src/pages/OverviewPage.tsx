@@ -25,6 +25,7 @@ import { fetchFunds, fetchLatestNewsPreview, type FundFromDB, type NewsFromDB } 
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
+import WatchCard from "@/components/watchlist/WatchCard";
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
@@ -1458,94 +1459,7 @@ const OverviewPage = () => {
   );
 };
 
-/* ─── Reusable Components ─── */
-const WatchCard = ({ title, sub, value, change, chart, sparkData, trend, onAlert, onRemove, linkTo }: {
-  title: string; sub: string; value: string; change: React.ReactNode;
-  chart?: React.ReactNode; sparkData?: number[]; trend?: "up" | "down" | "flat";
-  onAlert?: () => void; onRemove: () => void; linkTo?: string;
-}) => {
-  const mobileMain = (
-    <>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-foreground">{title}</span>
-        </div>
-        <p className="text-[10px] text-muted-foreground truncate">{sub}</p>
-      </div>
-      {sparkData && sparkData.length >= 3 && (
-        <Sparkline data={sparkData} width={48} height={18} color="auto" trend={trend} className="shrink-0" />
-      )}
-      <div className="text-right shrink-0">
-        <p className="text-sm font-bold tabular-nums text-foreground">{value}</p>
-        <div className="mt-0.5">{change}</div>
-      </div>
-    </>
-  );
-
-  const desktopMain = (
-    <div className="flex items-center gap-3 p-3.5">
-      <div className="flex-1 min-w-0">
-        <span className="font-bold text-foreground text-sm truncate block">{title}</span>
-        <p className="text-[11px] text-muted-foreground truncate">{sub}</p>
-      </div>
-      {sparkData && sparkData.length >= 2 && (
-        <div className="shrink-0">
-          <Sparkline data={sparkData} width={60} height={24} color="auto" trend={trend} />
-        </div>
-      )}
-      <div className="text-right shrink-0">
-        <p className="font-bold text-foreground text-sm tabular-nums">{value}</p>
-        <div className="mt-0.5">{change}</div>
-      </div>
-    </div>
-  );
-
-  return (
-    <div className="rounded-lg md:rounded-xl border border-border bg-card hover:border-accent/30 transition-colors group relative overflow-hidden">
-      {/* Mobile action buttons */}
-      <div className="flex items-center gap-1 shrink-0 absolute top-2 right-2 z-10 md:hidden">
-        {onAlert && <button type="button" onClick={onAlert} className="text-muted-foreground hover:text-accent transition-colors p-0.5"><BellPlus className="h-3 w-3" /></button>}
-        <button type="button" onClick={onRemove} className="text-muted-foreground/40 hover:text-destructive transition-colors p-0.5" title="Remove">
-          <X className="h-2.5 w-2.5" />
-        </button>
-      </div>
-
-      {/* Mobile body */}
-      {linkTo ? (
-        <Link to={linkTo} className="flex items-center gap-3 px-3 py-2 md:hidden pr-14">
-          {mobileMain}
-        </Link>
-      ) : (
-        <div className="flex items-center gap-3 px-3 py-2 md:hidden pr-14">
-          {mobileMain}
-        </div>
-      )}
-
-      {/* Desktop action buttons (hover) */}
-      <div className="hidden md:flex items-center gap-1 absolute top-1/2 -translate-y-1/2 right-2 z-10 opacity-0 group-hover:opacity-100 transition-opacity bg-card/95 backdrop-blur-sm rounded-md px-1 py-0.5">
-        {onAlert && (
-          <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAlert(); }} className="text-muted-foreground hover:text-accent transition-colors p-1" title="Set alert">
-            <BellPlus className="h-3.5 w-3.5" />
-          </button>
-        )}
-        <button type="button" onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }} className="text-muted-foreground/60 hover:text-destructive transition-colors p-1" title="Remove from watchlist">
-          <X className="h-3.5 w-3.5" />
-        </button>
-      </div>
-
-      {/* Desktop body — matches HighlightListCard layout */}
-      {linkTo ? (
-        <Link to={linkTo} className="hidden md:block">
-          {desktopMain}
-        </Link>
-      ) : (
-        <div className="hidden md:block">
-          {desktopMain}
-        </div>
-      )}
-    </div>
-  );
-};
+/* WatchCard moved to src/components/watchlist/WatchCard.tsx (shared with /watchlist page) */
 
 const SectionPanel = ({ title, icon: Icon, link, linkLabel, count, sub, children }: {
   title: string; icon: any; link: string; linkLabel: string; count: number; sub?: string; children: React.ReactNode;
