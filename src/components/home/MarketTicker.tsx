@@ -92,12 +92,7 @@ export function useMarketData() {
       .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => void fetchData())
       .subscribe();
 
-    const intervalId = window.setInterval(() => {
-      void fetchData();
-    }, 60_000);
-
     return () => {
-      window.clearInterval(intervalId);
       supabase.removeChannel(channel);
     };
   }, [fetchData]);

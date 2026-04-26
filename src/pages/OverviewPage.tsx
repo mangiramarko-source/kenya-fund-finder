@@ -873,23 +873,29 @@ const OverviewPage = () => {
   const fetchAllData = useCallback(() => {
     fetchFunds().then(setFunds).catch(() => {}).finally(() => setFundsLoading(false));
     fetchLatestNewsPreview(4).then(n => setNews(n)).catch(() => {});
+    // 90-day window for history (much smaller payloads than limit=500/1000 unfiltered)
+    const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     supabase.from("exchange_rate_history_public" as any)
       .select("snapshot_date, rate, currency_code")
-      .order("snapshot_date", { ascending: true }).limit(500)
+      .gte("snapshot_date", since)
+      .order("snapshot_date", { ascending: true })
       .then(({ data }) => setRateHistory(((data as any) || []).map((h: any) => ({ ...h, rate: Number(h.rate) }))));
     supabase.from("fund_yield_snapshots")
       .select("snapshot_date, annual_yield, fund_id")
-      .order("snapshot_date", { ascending: true }).limit(500)
+      .gte("snapshot_date", since)
+      .order("snapshot_date", { ascending: true })
       .then(({ data }) => setFundSnapshots(((data as any) || []).map((s: any) => ({ ...s, annual_yield: Number(s.annual_yield) }))));
     supabase.from("stock_price_history" as any)
       .select("snapshot_date, price, stock_id")
-      .order("snapshot_date", { ascending: true }).limit(1000)
+      .gte("snapshot_date", since)
+      .order("snapshot_date", { ascending: true })
       .then(({ data }) => setStockHistory(((data as any) || []).map((h: any) => ({ ...h, price: Number(h.price) }))));
   }, []);
 
   useEffect(() => {
     fetchAllData();
-    const interval = window.setInterval(fetchAllData, 60_000);
+    // Refresh every 5 min — market data realtime already updates live prices
+    const interval = window.setInterval(fetchAllData, 5 * 60_000);
     return () => window.clearInterval(interval);
   }, [fetchAllData]);
 
@@ -949,7 +955,9 @@ const OverviewPage = () => {
 
   const hasWatchlist = watchedStocks.length > 0 || watchedRates.length > 0 || watchedCommoditiesList.length > 0 || watchedFunds.length > 0;
 
-  const loading = marketLoading || fundsLoading || watchlistLoading;
+  // Only block on essentials: market data and (for signed-in users) the watchlist itself.
+  // Funds + historical snapshots stream in progressively to keep TTFP fast.
+  const loading = marketLoading || (!!user && watchlistLoading);
 
   // Best performers
   const bestStock = useMemo(() => stocks.length ? [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [stocks]);
