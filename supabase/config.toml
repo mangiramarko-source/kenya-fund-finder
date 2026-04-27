@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.public-data]
 verify_jwt = false
+
+[functions.update-live-status]
+verify_jwt = false
