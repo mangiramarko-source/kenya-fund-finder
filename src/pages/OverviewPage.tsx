@@ -22,7 +22,7 @@ import {
   Landmark, ArrowRight, Newspaper, Clock,
 } from "lucide-react";
 import { toast } from "sonner";
-import { fetchFunds, fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
+import { fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
@@ -871,7 +871,29 @@ const OverviewPage = () => {
   }>({ open: false, assetType: "stock", assetId: "", assetName: "", currentPrice: 0 });
 
   const fetchAllData = useCallback(() => {
-    fetchFunds().then(setFunds).catch(() => {}).finally(() => setFundsLoading(false));
+    // Fetch funds directly from the public view (avoids the public-data edge function
+    // round-trip / cold-start, which was lagging the Money Markets column on first paint).
+    supabase
+      .from("funds_public")
+      .select("id, slug, name, manager, cma_licensed, annual_yield, daily_yield, seven_day_yield, thirty_day_yield, fund_type, minimum_investment, management_fee, withdrawal_time, description, website, fact_sheet_date, yield_unit, is_published, updated_at")
+      .eq("is_published", true)
+      .order("annual_yield", { ascending: false })
+      .limit(200)
+      .then(({ data }) => {
+        setFunds(((data as any) || []).map((f: any) => ({
+          ...f,
+          fund_type: (f.fund_type || "money_market") as FundType,
+          yield_unit: f.yield_unit || "%",
+          annual_yield: Number(f.annual_yield),
+          daily_yield: Number(f.daily_yield),
+          seven_day_yield: Number(f.seven_day_yield),
+          thirty_day_yield: Number(f.thirty_day_yield),
+          minimum_investment: Number(f.minimum_investment),
+          management_fee: Number(f.management_fee),
+        })));
+      })
+      .then(undefined, () => {})
+      .then(() => setFundsLoading(false));
     fetchLatestNewsPreview(4).then(n => setNews(n)).catch(() => {});
     // 90-day window for history (much smaller payloads than limit=500/1000 unfiltered)
     const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
