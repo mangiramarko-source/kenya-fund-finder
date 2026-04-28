@@ -222,7 +222,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
 
       <CommandDialog open={open} onOpenChange={setOpen}>
         <CommandInput
-          placeholder="Search funds, stocks, FX, commodities, news…"
+          placeholder="Search "
           value={query}
           onValueChange={setQuery}
         />
