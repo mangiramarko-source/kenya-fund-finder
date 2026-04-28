@@ -220,7 +220,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
         </button>
       )}
 
-      <CommandDialog open={open} onOpenChange={setOpen}>
+      <CommandDialog open={open} onOpenChange={setOpen} commandProps={{ shouldFilter: false }}>
         <CommandInput
           placeholder="Search "
           value={query}
@@ -244,7 +244,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
           ))}
         </div>
 
-        <CommandList className="max-h-[60vh]">
+        <CommandList className="h-[60vh] max-h-[60vh] min-h-[60vh]">
           {/* Recent searches — only when no query */}
           {!q && recent.length > 0 && (
             <>
