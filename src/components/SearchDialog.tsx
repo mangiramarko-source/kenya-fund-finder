@@ -161,23 +161,23 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
   const showCat = (c: Category) => category === "all" || category === c;
 
   const filteredFunds = useMemo(
-    () => (showCat("funds") ? funds.filter((f) => !q || f.name.toLowerCase().includes(q) || f.manager?.toLowerCase().includes(q)).slice(0, 8) : []),
+    () => (showCat("funds") ? funds.filter((f) => !q || f.name.toLowerCase().includes(q) || f.manager?.toLowerCase().includes(q) || f.slug?.toLowerCase().includes(q)).slice(0, 25) : []),
     [funds, q, category]
   );
   const filteredStocks = useMemo(
-    () => (showCat("stocks") ? stocks.filter((s) => !q || s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)).slice(0, 8) : []),
+    () => (showCat("stocks") ? stocks.filter((s) => !q || s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)).slice(0, 25) : []),
     [stocks, q, category]
   );
   const filteredRates = useMemo(
-    () => (showCat("rates") ? rates.filter((r) => !q || r.currency_code.toLowerCase().includes(q) || r.currency_name.toLowerCase().includes(q)).slice(0, 6) : []),
+    () => (showCat("rates") ? rates.filter((r) => !q || r.currency_code.toLowerCase().includes(q) || r.currency_name.toLowerCase().includes(q)).slice(0, 25) : []),
     [rates, q, category]
   );
   const filteredCommodities = useMemo(
-    () => (showCat("commodities") ? commodities.filter((c) => !q || c.symbol.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)).slice(0, 6) : []),
+    () => (showCat("commodities") ? commodities.filter((c) => !q || c.symbol.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)).slice(0, 25) : []),
     [commodities, q, category]
   );
   const filteredNews = useMemo(
-    () => (showCat("news") ? news.filter((n) => !q || n.title.toLowerCase().includes(q) || n.category?.toLowerCase().includes(q)).slice(0, 6) : []),
+    () => (showCat("news") ? news.filter((n) => !q || n.title.toLowerCase().includes(q) || n.category?.toLowerCase().includes(q) || n.summary?.toLowerCase().includes(q)).slice(0, 25) : []),
     [news, q, category]
   );
   const filteredPages = useMemo(
