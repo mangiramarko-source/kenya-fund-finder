@@ -1,3 +1,11 @@
+# Global security headers — applied to every response.
+/*
+  X-Content-Type-Options: nosniff
+  X-Frame-Options: SAMEORIGIN
+  Referrer-Policy: strict-origin-when-cross-origin
+  Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+  Permissions-Policy: camera=(), microphone=(), geolocation=(), interest-cohort=()
+
 # Static asset cache lifetimes — fingerprinted Vite output is safe to cache long.
 # Fixes Lighthouse "Use efficient cache lifetimes" audit (~254 KiB savings).
 
