@@ -129,7 +129,7 @@ const AdminDashboard = () => {
       ? supabase.from("auth_gate_clicks").select("created_at").gte("created_at", sparklineStartISO)
       : null;
 
-    const [fundsRes, newsRes, pendingRes, viewsRes, changeLogRes, gateClicksRes, rateLimitRes, sparkViewsRes, sparkGateRes] = await Promise.all([
+    const [fundsRes, newsRes, pendingRes, viewsRes, changeLogRes, gateClicksRes, rateLimitRes, sparkViewsRes, sparkGateRes, stocksRes, ratesRes, commoditiesRes] = await Promise.all([
       supabase.from("funds").select("id, slug, name, updated_at, annual_yield, fund_type, is_published"),
       supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "published"),
       supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "pending_review"),
@@ -139,6 +139,9 @@ const AdminDashboard = () => {
       supabase.from("rate_limit_hits").select("ip_hash, created_at").gte("created_at", windowStart),
       fetchSparklineViews,
       fetchSparklineGate,
+      supabase.from("stocks").select("symbol, name").eq("is_active", true),
+      supabase.from("exchange_rates").select("currency_code, currency_name").eq("is_active", true),
+      supabase.from("commodities").select("symbol, name").eq("is_active", true),
     ]);
 
     const funds = fundsRes.data || [];
