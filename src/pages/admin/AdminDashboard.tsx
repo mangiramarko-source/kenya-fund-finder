@@ -34,6 +34,8 @@ interface FundEngagement {
   slug: string;
   views: number;
   fundType: string;
+  /** Top-level asset category — used for filtering (funds + stocks/rates/commodities). */
+  category: "fund" | "stock" | "rate" | "commodity";
 }
 
 interface DailyTraffic {
@@ -127,7 +129,7 @@ const AdminDashboard = () => {
       ? supabase.from("auth_gate_clicks").select("created_at").gte("created_at", sparklineStartISO)
       : null;
 
-    const [fundsRes, newsRes, pendingRes, viewsRes, changeLogRes, gateClicksRes, rateLimitRes, sparkViewsRes, sparkGateRes] = await Promise.all([
+    const [fundsRes, newsRes, pendingRes, viewsRes, changeLogRes, gateClicksRes, rateLimitRes, sparkViewsRes, sparkGateRes, stocksRes, ratesRes, commoditiesRes] = await Promise.all([
       supabase.from("funds").select("id, slug, name, updated_at, annual_yield, fund_type, is_published"),
       supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "published"),
       supabase.from("news_articles").select("id", { count: "exact" }).eq("status", "pending_review"),
@@ -137,6 +139,9 @@ const AdminDashboard = () => {
       supabase.from("rate_limit_hits").select("ip_hash, created_at").gte("created_at", windowStart),
       fetchSparklineViews,
       fetchSparklineGate,
+      supabase.from("stocks").select("symbol, name").eq("is_active", true),
+      supabase.from("exchange_rates").select("currency_code, currency_name").eq("is_active", true),
+      supabase.from("commodities").select("symbol, name").eq("is_active", true),
     ]);
 
     const funds = fundsRes.data || [];
@@ -194,18 +199,39 @@ const AdminDashboard = () => {
 
     const pageCounts: Record<string, number> = {};
     const fundViewCounts: Record<string, number> = {};
+    const stockViewCounts: Record<string, number> = {};
+    let ratesPageViews = 0;
+    let commoditiesPageViews = 0;
     views.forEach((v) => {
       pageCounts[v.page_path] = (pageCounts[v.page_path] || 0) + 1;
       const fundMatch = v.page_path.match(/^\/compare\/(.+)$/);
       if (fundMatch) fundViewCounts[fundMatch[1]] = (fundViewCounts[fundMatch[1]] || 0) + 1;
+      const stockMatch = v.page_path.match(/^\/stocks\/(.+)$/);
+      if (stockMatch) stockViewCounts[stockMatch[1]] = (stockViewCounts[stockMatch[1]] || 0) + 1;
+      if (v.page_path === "/rates") ratesPageViews++;
+      if (v.page_path === "/commodities") commoditiesPageViews++;
     });
 
     const topPages = Object.entries(pageCounts)
       .sort((a, b) => b[1] - a[1]).slice(0, 8)
       .map(([page, count]) => ({ page, views: count, pct: views.length > 0 ? Math.round((count / views.length) * 100) : 0 }));
 
-    const fundEngagement: FundEngagement[] = funds
-      .map((f) => ({ fundName: f.name, slug: f.slug, views: fundViewCounts[f.slug] || 0, fundType: f.fund_type || "money_market" }))
+    const fundEngagementFunds: FundEngagement[] = funds
+      .map((f) => ({ fundName: f.name, slug: f.slug, views: fundViewCounts[f.slug] || 0, fundType: f.fund_type || "money_market", category: "fund" as const }));
+
+    const stockEngagement: FundEngagement[] = (stocksRes.data || []).map((s: any) => ({
+      fundName: `${s.symbol} · ${s.name}`, slug: s.symbol, views: stockViewCounts[s.symbol] || 0, fundType: "stock", category: "stock" as const,
+    }));
+
+    const rateEngagement: FundEngagement[] = (ratesRes.data || []).map((r: any) => ({
+      fundName: `${r.currency_code} · ${r.currency_name}`, slug: r.currency_code, views: ratesPageViews, fundType: "rate", category: "rate" as const,
+    }));
+
+    const commodityEngagement: FundEngagement[] = (commoditiesRes.data || []).map((c: any) => ({
+      fundName: `${c.symbol} · ${c.name}`, slug: c.symbol, views: commoditiesPageViews, fundType: "commodity", category: "commodity" as const,
+    }));
+
+    const fundEngagement: FundEngagement[] = [...fundEngagementFunds, ...stockEngagement, ...rateEngagement, ...commodityEngagement]
       .sort((a, b) => b.views - a.views);
 
     const clicks = gateClicksRes.data || [];
@@ -623,26 +649,30 @@ const AdminDashboard = () => {
         {stats.fundEngagement.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Fund Engagement</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Asset Engagement</h2>
               <Select value={engagementFilter} onValueChange={setEngagementFilter}>
-                <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectTrigger className="w-[160px] h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {Object.entries(FUND_TYPE_LABELS).map(([val, label]) => (
-                    <SelectItem key={val} value={val}>{label}</SelectItem>
-                  ))}
+                  <SelectItem value="all">All Assets</SelectItem>
+                  <SelectItem value="fund">Unit Trusts</SelectItem>
+                  <SelectItem value="stock">Stocks</SelectItem>
+                  <SelectItem value="rate">FX Rates</SelectItem>
+                  <SelectItem value="commodity">Commodities</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {(() => {
-              const filteredEngagement = stats.fundEngagement.filter((f) => engagementFilter === "all" || f.fundType === engagementFilter);
+              // Filter by category, then take top 10 by views to keep the chart compact.
+              const filteredEngagement = stats.fundEngagement
+                .filter((f) => engagementFilter === "all" || f.category === engagementFilter)
+                .slice(0, 10);
               const chartData = filteredEngagement.map((f) => ({
                 name: f.fundName.length > 18 ? f.fundName.slice(0, 16) + "…" : f.fundName,
                 fullName: f.fundName,
                 views: f.views,
-                type: FUND_TYPE_LABELS[f.fundType as FundType] || f.fundType,
+                type: f.category === "fund" ? (FUND_TYPE_LABELS[f.fundType as FundType] || f.fundType) : f.category,
               }));
               const maxViews = Math.max(...chartData.map((d) => d.views), 1);
               return chartData.length > 0 ? (
