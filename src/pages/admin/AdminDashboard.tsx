@@ -34,6 +34,8 @@ interface FundEngagement {
   slug: string;
   views: number;
   fundType: string;
+  /** Top-level asset category — used for filtering (funds + stocks/rates/commodities). */
+  category: "fund" | "stock" | "rate" | "commodity";
 }
 
 interface DailyTraffic {
