@@ -199,18 +199,39 @@ const AdminDashboard = () => {
 
     const pageCounts: Record<string, number> = {};
     const fundViewCounts: Record<string, number> = {};
+    const stockViewCounts: Record<string, number> = {};
+    let ratesPageViews = 0;
+    let commoditiesPageViews = 0;
     views.forEach((v) => {
       pageCounts[v.page_path] = (pageCounts[v.page_path] || 0) + 1;
       const fundMatch = v.page_path.match(/^\/compare\/(.+)$/);
       if (fundMatch) fundViewCounts[fundMatch[1]] = (fundViewCounts[fundMatch[1]] || 0) + 1;
+      const stockMatch = v.page_path.match(/^\/stocks\/(.+)$/);
+      if (stockMatch) stockViewCounts[stockMatch[1]] = (stockViewCounts[stockMatch[1]] || 0) + 1;
+      if (v.page_path === "/rates") ratesPageViews++;
+      if (v.page_path === "/commodities") commoditiesPageViews++;
     });
 
     const topPages = Object.entries(pageCounts)
       .sort((a, b) => b[1] - a[1]).slice(0, 8)
       .map(([page, count]) => ({ page, views: count, pct: views.length > 0 ? Math.round((count / views.length) * 100) : 0 }));
 
-    const fundEngagement: FundEngagement[] = funds
-      .map((f) => ({ fundName: f.name, slug: f.slug, views: fundViewCounts[f.slug] || 0, fundType: f.fund_type || "money_market" }))
+    const fundEngagementFunds: FundEngagement[] = funds
+      .map((f) => ({ fundName: f.name, slug: f.slug, views: fundViewCounts[f.slug] || 0, fundType: f.fund_type || "money_market", category: "fund" as const }));
+
+    const stockEngagement: FundEngagement[] = (stocksRes.data || []).map((s: any) => ({
+      fundName: `${s.symbol} · ${s.name}`, slug: s.symbol, views: stockViewCounts[s.symbol] || 0, fundType: "stock", category: "stock" as const,
+    }));
+
+    const rateEngagement: FundEngagement[] = (ratesRes.data || []).map((r: any) => ({
+      fundName: `${r.currency_code} · ${r.currency_name}`, slug: r.currency_code, views: ratesPageViews, fundType: "rate", category: "rate" as const,
+    }));
+
+    const commodityEngagement: FundEngagement[] = (commoditiesRes.data || []).map((c: any) => ({
+      fundName: `${c.symbol} · ${c.name}`, slug: c.symbol, views: commoditiesPageViews, fundType: "commodity", category: "commodity" as const,
+    }));
+
+    const fundEngagement: FundEngagement[] = [...fundEngagementFunds, ...stockEngagement, ...rateEngagement, ...commodityEngagement]
       .sort((a, b) => b.views - a.views);
 
     const clicks = gateClicksRes.data || [];
