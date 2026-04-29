@@ -125,6 +125,17 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
           <p className="text-xs text-muted-foreground text-center mt-6">
             © {new Date().getFullYear()} Kenya Fund Finder. All rights reserved. Operated by Elyon Innovation LTD. Not affiliated with any fund manager or the CMA.
           </p>
+          <p className="text-xs text-muted-foreground text-center mt-2">
+            A product of{" "}
+            <a
+              href="https://www.elyon.ltd"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-accent hover:underline font-medium"
+            >
+              Elyon.ltd
+            </a>
+          </p>
         </div>
       </div>
     </footer>
