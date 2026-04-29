@@ -649,26 +649,30 @@ const AdminDashboard = () => {
         {stats.fundEngagement.length > 0 && (
           <div>
             <div className="flex items-center justify-between mb-3">
-              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Fund Engagement</h2>
+              <h2 className="text-sm font-semibold text-muted-foreground uppercase tracking-wider">Asset Engagement</h2>
               <Select value={engagementFilter} onValueChange={setEngagementFilter}>
-                <SelectTrigger className="w-[140px] h-8 text-xs">
+                <SelectTrigger className="w-[160px] h-8 text-xs">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Types</SelectItem>
-                  {Object.entries(FUND_TYPE_LABELS).map(([val, label]) => (
-                    <SelectItem key={val} value={val}>{label}</SelectItem>
-                  ))}
+                  <SelectItem value="all">All Assets</SelectItem>
+                  <SelectItem value="fund">Unit Trusts</SelectItem>
+                  <SelectItem value="stock">Stocks</SelectItem>
+                  <SelectItem value="rate">FX Rates</SelectItem>
+                  <SelectItem value="commodity">Commodities</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {(() => {
-              const filteredEngagement = stats.fundEngagement.filter((f) => engagementFilter === "all" || f.fundType === engagementFilter);
+              // Filter by category, then take top 10 by views to keep the chart compact.
+              const filteredEngagement = stats.fundEngagement
+                .filter((f) => engagementFilter === "all" || f.category === engagementFilter)
+                .slice(0, 10);
               const chartData = filteredEngagement.map((f) => ({
                 name: f.fundName.length > 18 ? f.fundName.slice(0, 16) + "…" : f.fundName,
                 fullName: f.fundName,
                 views: f.views,
-                type: FUND_TYPE_LABELS[f.fundType as FundType] || f.fundType,
+                type: f.category === "fund" ? (FUND_TYPE_LABELS[f.fundType as FundType] || f.fundType) : f.category,
               }));
               const maxViews = Math.max(...chartData.map((d) => d.views), 1);
               return chartData.length > 0 ? (
