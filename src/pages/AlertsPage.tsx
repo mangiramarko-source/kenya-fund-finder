@@ -414,7 +414,7 @@ const AlertsPage = () => {
             </div>
           </div>
 
-          <div className="px-4 py-3 border-t border-border/60 bg-background/95 sticky bottom-0">
+          <div className="px-4 py-3 border-t border-border/60 bg-background/95 shrink-0">
             <Button
               onClick={handleCreate}
               disabled={saving || !selectedAssetId || !targetPrice}
