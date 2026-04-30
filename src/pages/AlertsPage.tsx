@@ -280,19 +280,12 @@ const AlertsPage = () => {
 
       {/* Create Alert Dialog — mobile bottom sheet, desktop centered */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
-        <DialogContent
-          className="p-0 gap-0 sm:max-w-[440px] max-h-[92vh] overflow-hidden
-                     fixed bottom-0 left-0 right-0 top-auto translate-x-0 translate-y-0
-                     w-full rounded-t-2xl rounded-b-none border-b-0
-                     sm:relative sm:bottom-auto sm:left-auto sm:right-auto sm:top-1/2
-                     sm:translate-x-[-50%] sm:translate-y-[-50%] sm:w-auto sm:rounded-2xl sm:border"
-        >
-          <DialogHeader className="px-4 pt-4 pb-2 border-b border-border/60">
-            <div className="sm:hidden mx-auto -mt-2 mb-2 h-1 w-10 rounded-full bg-muted" />
+        <DialogContent className="p-0 gap-0 sm:max-w-[440px] max-h-[92vh] overflow-hidden flex flex-col">
+          <DialogHeader className="px-4 pt-4 pb-2 border-b border-border/60 shrink-0">
             <DialogTitle className="text-base">Create New Alert</DialogTitle>
           </DialogHeader>
 
-          <div className="px-4 py-4 space-y-4 overflow-y-auto max-h-[calc(92vh-140px)]">
+          <div className="px-4 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
             {/* Asset Type — segmented chips */}
             <div>
               <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Asset Type</label>
@@ -421,7 +414,7 @@ const AlertsPage = () => {
             </div>
           </div>
 
-          <div className="px-4 py-3 border-t border-border/60 bg-background/95 sticky bottom-0">
+          <div className="px-4 py-3 border-t border-border/60 bg-background/95 shrink-0">
             <Button
               onClick={handleCreate}
               disabled={saving || !selectedAssetId || !targetPrice}
