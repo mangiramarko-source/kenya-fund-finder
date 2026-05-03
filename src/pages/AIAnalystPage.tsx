@@ -236,10 +236,12 @@ const AIAnalystPage = () => {
                       </div>
                     ) : (
                       <div className="bg-[#F7F7F7] dark:bg-muted/30 border border-border/40 rounded-3xl rounded-tl-md px-5 py-4 text-sm">
-                        <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-table:text-xs prose-th:bg-muted/40 prose-th:px-2 prose-th:py-1 prose-td:px-2 prose-td:py-1 prose-table:border prose-th:border prose-td:border prose-th:border-border prose-td:border-border">
-                          <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                            {m.content || "..."}
-                          </ReactMarkdown>
+                        <div className="prose prose-sm dark:prose-invert max-w-none prose-headings:font-semibold prose-headings:mt-4 prose-headings:mb-2 prose-h2:text-base prose-h3:text-sm prose-p:my-2 prose-table:text-xs prose-table:my-2 prose-th:bg-muted/40 prose-th:px-2 prose-th:py-1.5 prose-th:text-left prose-td:px-2 prose-td:py-1.5 prose-th:border prose-td:border prose-th:border-border prose-td:border-border prose-table:border-collapse">
+                          <div className="overflow-x-auto -mx-1 px-1">
+                            <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                              {m.content || "..."}
+                            </ReactMarkdown>
+                          </div>
                         </div>
                         {m.content && !streaming && i === messages.length - 1 && (
                           <div className="mt-3 pt-3 border-t border-border/40 flex justify-end">
