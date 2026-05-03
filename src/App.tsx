@@ -42,6 +42,7 @@ const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
 const OverviewPage = lazy(() => import("./pages/OverviewPage"));
 const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
+const AIAnalystPage = lazy(() => import("./pages/AIAnalystPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
