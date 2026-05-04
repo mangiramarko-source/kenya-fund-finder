@@ -91,12 +91,24 @@ const AIAnalystPage = () => {
     };
 
     try {
-      const url = `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/ai-analyst`;
+      const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+      const envProj = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
+      const SUPABASE_URL =
+        envUrl && envUrl !== "undefined"
+          ? envUrl
+          : envProj && envProj !== "undefined"
+            ? `https://${envProj}.supabase.co`
+            : "https://qrmthciurngpzpjhevdj.supabase.co";
+      const ANON =
+        (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFybXRoY2l1cm5ncHpwamhldmRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNzQ1ODksImV4cCI6MjA4Nzg1MDU4OX0.WeQLthaDLzYdmSjY_tt4_ZClx68aXQe3EOjn314yygs";
+      const url = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/ai-analyst`;
       const resp = await fetch(url, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
-          Authorization: `Bearer ${import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY}`,
+          apikey: ANON,
+          Authorization: `Bearer ${ANON}`,
         },
         body: JSON.stringify({ messages: next, riskProfile: risk }),
       });
