@@ -8,7 +8,6 @@ import { Card } from "@/components/ui/card";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { supabase } from "@/integrations/supabase/client";
-import { Sparkline } from "@/components/Sparkline";
 
 type Risk = "low" | "medium" | "high";
 type Msg = { role: "user" | "assistant"; content: string };
