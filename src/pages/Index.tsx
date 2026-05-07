@@ -90,7 +90,6 @@ const Index = () => {
           </span>
         </div>
       )}
-      </div>
       {user && favEntries.length > 0 && (
         <FundFavourites entries={favEntries} funds={published} snapshots={snapshots} />
       )}
