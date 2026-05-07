@@ -5,20 +5,28 @@ import { useFundWatchlist } from "@/hooks/useFundWatchlist";
 import { useAuth } from "@/hooks/useAuth";
 import FundGrid from "@/components/home/FundGrid";
 import FundFavourites from "@/components/home/FundFavourites";
+import { fundCache } from "@/lib/fundCache";
+import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 
 const Index = () => {
   useDocumentTitle("Funds – Kenya Fund Finder");
-  const [funds, setFunds] = useState<FundFromDB[]>([]);
-  const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>({});
+  // Hydrate immediately from last-known cache so the page is never blank when offline.
+  const cachedFunds = fundCache.loadFunds();
+  const cachedSnaps = fundCache.loadSnapshots();
+  const [funds, setFunds] = useState<FundFromDB[]>(cachedFunds?.funds ?? []);
+  const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>(cachedSnaps?.snapshots ?? {});
   const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedFunds);
+  const [usingCache, setUsingCache] = useState(false);
+  const [cacheSavedAt, setCacheSavedAt] = useState<number | null>(cachedFunds?.savedAt ?? null);
+  const online = useOnlineStatus();
   const { user } = useAuth();
   const { entries: favEntries, isFavourite, toggle } = useFundWatchlist();
 
   const load = useCallback(async () => {
-    setLoading(true);
+    if (!cachedFunds) setLoading(true);
     try {
       // Critical path: funds + latest snapshots → renders the table.
       const [f, s] = await Promise.all([fetchFunds(), fetchLatestSnapshots()]);
@@ -26,7 +34,11 @@ const Index = () => {
       const map: Record<string, YieldSnapshot> = {};
       s.forEach((snap) => { map[snap.fund_id] = snap; });
       setSnapshots(map);
+      setUsingCache(false);
+      setCacheSavedAt(Date.now());
       setLoading(false);
+      fundCache.saveFunds(f);
+      fundCache.saveSnapshots(map);
 
       // Deferred: sparkline history loads in the background after the table is visible.
       fetchAllFundSnapshots()
@@ -34,6 +46,8 @@ const Index = () => {
         .catch((e) => console.error("Failed to load sparkline data", e));
     } catch (e) {
       console.error("Failed to load funds", e);
+      // If we have cached data, keep showing it and flag staleness.
+      if (cachedFunds) setUsingCache(true);
       setLoading(false);
     }
   }, []);
@@ -68,6 +82,14 @@ const Index = () => {
         </div>
         <div className="md:hidden border-b border-border mt-3" />
       </div>
+      {(usingCache || !online) && cacheSavedAt && (
+        <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-foreground">
+          <span className="font-medium">Cached data shown.</span>{" "}
+          <span className="text-muted-foreground">
+            Last synced {new Date(cacheSavedAt).toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" })}.
+          </span>
+        </div>
+      )}
       {user && favEntries.length > 0 && (
         <FundFavourites entries={favEntries} funds={published} snapshots={snapshots} />
       )}
