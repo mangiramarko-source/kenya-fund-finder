@@ -1073,6 +1073,45 @@ export type Database = {
         }
         Relationships: []
       }
+      testimonials: {
+        Row: {
+          author_name: string
+          author_role: string
+          avatar_url: string
+          created_at: string
+          id: string
+          is_active: boolean
+          quote: string
+          sort_order: number
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          author_name: string
+          author_role?: string
+          avatar_url?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          quote: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          author_name?: string
+          author_role?: string
+          avatar_url?: string
+          created_at?: string
+          id?: string
+          is_active?: boolean
+          quote?: string
+          sort_order?: number
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       user_roles: {
         Row: {
           created_at: string

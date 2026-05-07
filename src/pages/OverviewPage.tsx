@@ -27,6 +27,7 @@ import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import WatchCard from "@/components/watchlist/WatchCard";
+import TestimonialsSection from "@/components/TestimonialsSection";
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
@@ -1648,6 +1649,7 @@ const OverviewPage = () => {
       </Dialog>
     </div>
     </div>
+    <TestimonialsSection />
     </>
   );
 };
