@@ -23,5 +23,3 @@ verify_jwt = false
 
 [functions.update-live-status]
 verify_jwt = false
-[functions.ai-analyst]
-verify_jwt = false

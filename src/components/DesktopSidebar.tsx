@@ -2,7 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import {
   BarChart3, Newspaper, GraduationCap, Bell,
   TrendingUp, Shield, ChevronLeft, ChevronRight, LayoutDashboard,
-  FileText, Scale, DollarSign, Gem, Briefcase, Calculator, Sparkles,
+  FileText, Scale, DollarSign, Gem, Briefcase, Calculator,
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
@@ -17,7 +17,6 @@ const mainNavItems = [
 ];
 
 const utilityNavItems = [
-  { to: "/ai-analyst", label: "AI Analyst", icon: Sparkles },
   { to: "/portfolio", label: "Portfolio", icon: Briefcase },
   { to: "/calculator", label: "Calculator", icon: Calculator },
   { to: "/news", label: "News", icon: Newspaper },
