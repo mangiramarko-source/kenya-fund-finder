@@ -5,6 +5,7 @@ import SkipToContent from "./SkipToContent";
 import CurrencyTicker from "./CurrencyTicker";
 import DesktopSidebar from "./DesktopSidebar";
 import DesktopTopBar from "./DesktopTopBar";
+import OfflineBanner from "./OfflineBanner";
 import { usePageView } from "@/hooks/usePageView";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -25,6 +26,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       <div className="flex-1 flex flex-col min-w-0">
         {/* Desktop top bar */}
         <DesktopTopBar />
+
+        <OfflineBanner />
 
         {/* Mobile-only navbar — hidden on news article pages */}
         {!isNewsArticle && (
