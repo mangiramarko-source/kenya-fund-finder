@@ -37,7 +37,7 @@ const AdminPage = () => {
   return (
     <div className="container py-6">
       <Tabs defaultValue="dashboard" className="space-y-6">
-         <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-10 md:max-w-6xl justify-start md:justify-stretch">
+         <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-11 md:max-w-6xl justify-start md:justify-stretch">
           <TabsTrigger value="dashboard" className="gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
