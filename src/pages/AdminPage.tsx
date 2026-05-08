@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote, KeyRound } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminFunds from "./admin/AdminFunds";
 import AdminNews from "./admin/AdminNews";
@@ -12,6 +12,7 @@ import AdminMarkets from "./admin/AdminMarkets";
 import AdminSuggestions from "./admin/AdminSuggestions";
 import AdminNewsEnrichment from "./admin/AdminNewsEnrichment";
 import AdminTestimonials from "./admin/AdminTestimonials";
+import AdminApiKeys from "./admin/AdminApiKeys";
 
 const AdminPage = () => {
   const { isAdmin, loading, user } = useAuth();
