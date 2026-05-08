@@ -74,6 +74,10 @@ const AdminPage = () => {
             <Quote className="h-4 w-4" />
             <span className="hidden sm:inline">Quotes</span>
           </TabsTrigger>
+          <TabsTrigger value="apikeys" className="gap-1.5">
+            <KeyRound className="h-4 w-4" />
+            <span className="hidden sm:inline">API</span>
+          </TabsTrigger>
           <TabsTrigger value="log" className="gap-1.5">
             <ClipboardList className="h-4 w-4" />
             <span className="hidden sm:inline">Log</span>
