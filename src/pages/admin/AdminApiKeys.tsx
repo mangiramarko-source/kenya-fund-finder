@@ -7,7 +7,7 @@ import { Label } from "@/components/ui/label";
 import { Card } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
 import { useToast } from "@/hooks/use-toast";
-import { Copy, Trash2, Plus } from "lucide-react";
+import { Copy, Trash2, Plus, RefreshCw } from "lucide-react";
 
 interface ApiKey {
   id: string;
