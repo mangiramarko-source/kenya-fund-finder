@@ -225,12 +225,22 @@ curl -H "Authorization: Bearer YOUR_KEY" \\
                     {k.rate_limit_per_minute} req/min · {last24} calls in last 24h ·{" "}
                     {k.last_used_at ? `last used ${new Date(k.last_used_at).toLocaleString()}` : "never used"}
                   </div>
+                  {k.expires_at && (
+                    <div className={`text-xs ${new Date(k.expires_at) < new Date() ? "text-destructive" : "text-warning"}`}>
+                      {new Date(k.expires_at) < new Date()
+                        ? `Expired ${new Date(k.expires_at).toLocaleString()}`
+                        : `Expires ${new Date(k.expires_at).toLocaleString()}`}
+                    </div>
+                  )}
                 </div>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2">
                   <div className="flex items-center gap-2">
                     <Switch checked={k.is_active} onCheckedChange={() => toggle(k)} />
                     <span className="text-xs">{k.is_active ? "Active" : "Disabled"}</span>
                   </div>
+                  <Button size="sm" variant="outline" onClick={() => rotate(k)} disabled={loading} className="gap-1">
+                    <RefreshCw className="h-3 w-3" /> Rotate
+                  </Button>
                   <Button size="sm" variant="ghost" onClick={() => remove(k.id)}>
                     <Trash2 className="h-4 w-4" />
                   </Button>
