@@ -107,6 +107,54 @@ export default function AdminApiKeys() {
     load();
   };
 
+  const rotate = async (k: ApiKey) => {
+    const graceStr = prompt(
+      `Rotate "${k.name}"?\n\nA new key will be issued. The old key keeps working for the grace period below, then auto-expires.\n\nGrace period in hours (0 = revoke old immediately):`,
+      "24"
+    );
+    if (graceStr === null) return;
+    const graceHours = Math.max(0, Number(graceStr));
+    if (Number.isNaN(graceHours)) { toast({ title: "Invalid grace period", variant: "destructive" }); return; }
+
+    setLoading(true);
+    const fullKey = generateRandomKey();
+    const hash = await sha256Hex(fullKey);
+    const prefix = fullKey.slice(0, 12);
+
+    // 1. Insert new key with same name + rate
+    const { data: newKey, error: insErr } = await supabase.from("api_keys").insert({
+      name: k.name,
+      key_prefix: prefix,
+      key_hash: hash,
+      rate_limit_per_minute: k.rate_limit_per_minute,
+      created_by: user?.id,
+    }).select().single();
+
+    if (insErr || !newKey) {
+      setLoading(false);
+      toast({ title: "Rotation failed", description: insErr?.message, variant: "destructive" });
+      return;
+    }
+
+    // 2. Schedule old key for expiry (or revoke immediately)
+    if (graceHours === 0) {
+      await supabase.from("api_keys").update({ is_active: false }).eq("id", k.id);
+    } else {
+      const expiresAt = new Date(Date.now() + graceHours * 3600_000).toISOString();
+      await supabase.from("api_keys").update({ expires_at: expiresAt }).eq("id", k.id);
+    }
+
+    setLoading(false);
+    setRevealed({ id: newKey.id, key: fullKey });
+    toast({
+      title: "Key rotated",
+      description: graceHours === 0
+        ? "Old key revoked immediately."
+        : `Old key expires in ${graceHours}h.`,
+    });
+    load();
+  };
+
   const copy = (text: string) => {
     navigator.clipboard.writeText(text);
     toast({ title: "Copied" });
