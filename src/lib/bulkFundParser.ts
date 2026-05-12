@@ -139,7 +139,7 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
   // Stem-based: trailing word may end in extra letters to catch typos like
   // "Markett", "Funde", "Incomes".
   const knownLabels = new Set(mergedHeaders.map(([l]) => l));
-  const HEADER_STEM = "(?:Fund\\w*|Bond\\w*|REIT\\w*|Trust\\w*|Note\\w*|Income\\w*|Market\\w*|Mkt\\w*)";
+  const HEADER_STEM = "(?:Funds?|Fundes?|Bonds?|REITs?|Trusts?|Notes?|Incomes?|Marketts?|Markets?|Mkts?)";
   const headerLike = new RegExp(
     `([A-Z][a-zA-Z]+(?:\\s+[A-Z][a-zA-Z]+){0,3}\\s+${HEADER_STEM})`,
     "g",
