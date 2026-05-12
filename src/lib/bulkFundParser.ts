@@ -191,7 +191,14 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
     }
 
     const managerRaw = text.slice(segStart, nextRow.currencyIdx);
-    const manager = managerRaw.replace(/[\s\|]+/g, " ").trim();
+    const manager = managerRaw
+      .replace(/[\s\|]+/g, " ")
+      .trim()
+      // Defensive strip: if a stray currency token leaked into the manager
+      // segment (e.g. "Britam Sh", "Cytonn USD"), remove the trailing token
+      // so the name matches existing DB rows.
+      .replace(/\s+(?:Sh|KES|USD|GBP)\s*$/i, "")
+      .trim();
     const rawSegment = text.slice(segStart, nextRow.endIdx).trim();
 
     const fund_type = currentCategory?.fund_type ?? null;
