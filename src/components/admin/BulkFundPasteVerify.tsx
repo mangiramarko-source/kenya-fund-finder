@@ -630,7 +630,8 @@ const BulkFundPasteVerify = () => {
         onOpenChange={(v) => { if (!v) setSetupDialogIdx(null); }}
         row={setupDialogRow}
         edit={setupDialogEdit}
-        onSave={(setup) => { if (setupDialogIdx !== null) setEdit(setupDialogIdx, { newSetup: setup }); }}
+        similarManagers={setupDialogIdx !== null ? similarManagersForRow(setupDialogIdx) : []}
+        onSave={(setup, confirmed) => { if (setupDialogIdx !== null) setEdit(setupDialogIdx, { newSetup: setup, confirmedNew: confirmed }); }}
       />
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
