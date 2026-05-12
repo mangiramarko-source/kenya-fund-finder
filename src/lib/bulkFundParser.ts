@@ -130,7 +130,7 @@ function findNextRow(text: string, fromIdx: number): {
   };
 }
 
-export function parseBulkFundText(input: string): ParseReport {
+export function parseBulkFundText(input: string, extraHeaders: Array<[string, FundType]> = []): ParseReport {
   const text = input.replace(/\r/g, "");
   const rows: ParsedRow[] = [];
   const unparsedSegments: string[] = [];
