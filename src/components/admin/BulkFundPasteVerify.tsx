@@ -812,17 +812,19 @@ const BulkFundPasteVerify = () => {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Sync to database?</AlertDialogTitle>
+            <AlertDialogTitle>{dryRun ? "Simulate sync?" : "Sync to database?"}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
                 <div>You are about to:</div>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><b className="text-emerald-500">Update {counts.matched}</b> existing fund{counts.matched === 1 ? "" : "s"} (previous yields auto-saved to history)</li>
-                  <li><b className="text-red-500">Create {counts.ready}</b> new fund{counts.ready === 1 ? "" : "s"}</li>
+                  <li><b className="text-emerald-500">Update {counts.matched}</b> existing fund{counts.matched === 1 ? "" : "s"} {dryRun ? "(simulated)" : "(previous yields auto-saved to history)"}</li>
+                  <li><b className="text-red-500">Create {counts.ready}</b> new fund{counts.ready === 1 ? "" : "s"} {dryRun ? "(simulated)" : ""}</li>
                   {counts.skipped > 0 && <li className="text-muted-foreground">Skip {counts.skipped} row{counts.skipped === 1 ? "" : "s"}</li>}
                 </ul>
-                <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground mt-2">
-                  This is atomic — if any single row fails, the whole batch is rolled back and nothing changes.
+                <div className={`rounded-md px-3 py-2 text-xs mt-2 ${dryRun ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30" : "bg-muted text-muted-foreground"}`}>
+                  {dryRun
+                    ? "Simulation mode: every UPDATE and INSERT will execute (so triggers fire), then the entire transaction is rolled back. Nothing is saved."
+                    : "This is atomic — if any single row fails, the whole batch is rolled back and nothing changes."}
                 </div>
               </div>
             </AlertDialogDescription>
@@ -830,7 +832,7 @@ const BulkFundPasteVerify = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={performSync}>
-              Yes, sync {counts.matched + counts.ready} fund{counts.matched + counts.ready === 1 ? "" : "s"}
+              {dryRun ? `Simulate ${counts.matched + counts.ready}` : `Yes, sync ${counts.matched + counts.ready}`} fund{counts.matched + counts.ready === 1 ? "" : "s"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
