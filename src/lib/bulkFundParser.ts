@@ -130,22 +130,21 @@ function findNextRow(text: string, fromIdx: number): {
 
 export function parseBulkFundText(input: string, extraHeaders: Array<[string, FundType]> = []): ParseReport {
   const text = input.replace(/\r/g, "");
+  const mergedHeaders: Array<[string, FundType]> = [...extraHeaders, ...CATEGORY_HEADERS];
   const rows: ParsedRow[] = [];
   const unparsedSegments: string[] = [];
   const categoriesSeen: string[] = [];
 
   // Detect header-like phrases that DON'T match known categories.
-  // Heuristic: TitleCase words ending in a header keyword.
-  const knownLabels = new Set(CATEGORY_HEADERS.map(([l]) => l));
+  const knownLabels = new Set(mergedHeaders.map(([l]) => l));
   const headerLike = /([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){0,3}\s+(?:Fund|Funds|Bonds|Bond|REITs|REIT|Trust|Trusts|Notes|Note|Income|Market))/g;
   const unknownHeaders: string[] = [];
   const seenUnknown = new Set<string>();
   let hm: RegExpExecArray | null;
   while ((hm = headerLike.exec(text)) !== null) {
     const phrase = hm[1].trim();
-    // Skip if it (or any known label) matches as an exact header at this position
     let isKnown = false;
-    for (const [label] of CATEGORY_HEADERS) {
+    for (const [label] of mergedHeaders) {
       if (phrase === label || phrase.endsWith(label) || label.endsWith(phrase)) { isKnown = true; break; }
     }
     if (isKnown) continue;
