@@ -244,5 +244,5 @@ export function parseBulkFundText(input: string): ParseReport {
     cursor = nextRow.endIdx;
   }
 
-  return { rows, unparsedSegments, categoriesSeen };
+  return { rows, unparsedSegments, categoriesSeen, unknownHeaders };
 }
