@@ -1649,9 +1649,10 @@ export type Database = {
       }
     }
     Functions: {
-      bulk_sync_funds:
-        | { Args: { payload: Json }; Returns: Json }
-        | { Args: { dry_run?: boolean; payload: Json }; Returns: Json }
+      bulk_sync_funds: {
+        Args: { dry_run?: boolean; p_effective_date?: string; payload: Json }
+        Returns: Json
+      }
       check_rate_limit: {
         Args: {
           p_ip_hash: string
@@ -1668,6 +1669,13 @@ export type Database = {
       enqueue_email: {
         Args: { payload: Json; queue_name: string }
         Returns: number
+      }
+      fund_snapshot_days_in_range: {
+        Args: { p_end: string; p_start: string }
+        Returns: {
+          fund_count: number
+          snapshot_date: string
+        }[]
       }
       has_role: {
         Args: {
