@@ -729,15 +729,25 @@ const BulkFundPasteVerify = () => {
                 <span>Ready to sync {counts.matched + counts.ready} row{counts.matched + counts.ready === 1 ? "" : "s"}.</span>
               )}
             </div>
-            <Button
-              size="lg"
-              disabled={!canSync}
-              onClick={() => setConfirmOpen(true)}
-              className="gap-2"
-            >
-              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              Sync All Funds to Database
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button size="sm" variant="outline" onClick={exportCsv} className="gap-2">
+                <Download className="h-3.5 w-3.5" /> Export CSV
+              </Button>
+              <label className="flex items-center gap-2 text-xs cursor-pointer select-none rounded-md border border-border bg-background px-3 py-1.5">
+                <FlaskConical className={`h-3.5 w-3.5 ${dryRun ? "text-amber-500" : "text-muted-foreground"}`} />
+                <span className={dryRun ? "font-medium" : "text-muted-foreground"}>Simulate</span>
+                <Switch checked={dryRun} onCheckedChange={setDryRun} />
+              </label>
+              <Button
+                size="lg"
+                disabled={!canSync}
+                onClick={() => setConfirmOpen(true)}
+                className="gap-2"
+              >
+                {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                {dryRun ? "Simulate Sync" : "Sync All Funds"}
+              </Button>
+            </div>
           </div>
 
           {/* Parse log */}
