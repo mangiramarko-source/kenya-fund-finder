@@ -1649,7 +1649,9 @@ export type Database = {
       }
     }
     Functions: {
-      bulk_sync_funds: { Args: { payload: Json }; Returns: Json }
+      bulk_sync_funds:
+        | { Args: { payload: Json }; Returns: Json }
+        | { Args: { dry_run?: boolean; payload: Json }; Returns: Json }
       check_rate_limit: {
         Args: {
           p_ip_hash: string
@@ -1691,6 +1693,7 @@ export type Database = {
           read_ct: number
         }[]
       }
+      revert_last_bulk_sync: { Args: never; Returns: Json }
       verify_api_key: {
         Args: { _key_hash: string }
         Returns: {

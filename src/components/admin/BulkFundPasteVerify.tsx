@@ -14,7 +14,7 @@ import { FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckCircle2, AlertTriangle, XCircle, Search, FileText, Settings2, Loader2, ExternalLink, Sparkles, ShieldAlert, HelpCircle } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, Search, FileText, Settings2, Loader2, ExternalLink, Sparkles, ShieldAlert, HelpCircle, Download, FlaskConical } from "lucide-react";
 import { toast } from "sonner";
 
 interface ExistingFund {
@@ -252,7 +252,10 @@ const BulkFundPasteVerify = () => {
   const [setupDialogIdx, setSetupDialogIdx] = useState<number | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ updated: string[]; created: string[] } | null>(null);
+  const [syncResult, setSyncResult] = useState<{ updated: string[]; created: string[]; dryRun?: boolean } | null>(null);
+  const [dryRun, setDryRun] = useState(false);
+  const [failedRowIdx, setFailedRowIdx] = useState<number | null>(null);
+  const [failedMessage, setFailedMessage] = useState<string | null>(null);
   /** Mapping for unknown headers detected in the input → fund_type */
   const [headerMap, setHeaderMap] = useState<Record<string, FundType>>({});
 
@@ -388,11 +391,14 @@ const BulkFundPasteVerify = () => {
     if (!report || !user) return;
     setSyncing(true);
     setConfirmOpen(false);
+    setFailedRowIdx(null);
+    setFailedMessage(null);
     try {
-      const payload = effectiveRows
+      const eligible = effectiveRows
         .filter((er) => !er.edit.skipped && er.row.status === "ok" && er.match?.kind !== "type-mismatch")
-        .filter((er) => er.match?.kind === "matched" || (er.edit.newSetup && er.edit.confirmedNew))
-        .map((er) => {
+        .filter((er) => er.match?.kind === "matched" || (er.edit.newSetup && er.edit.confirmedNew));
+
+      const payload = eligible.map((er) => {
           const m = er.match;
           if (m?.kind === "matched" && m.fund) {
             return {
@@ -422,18 +428,83 @@ const BulkFundPasteVerify = () => {
           };
         });
 
-      const { data, error } = await supabase.rpc("bulk_sync_funds", { payload });
+      const { data, error } = await supabase.rpc("bulk_sync_funds", { payload, dry_run: dryRun });
       if (error) throw error;
-      const result = data as { updated: string[]; created: string[] };
-      setSyncResult({ updated: result.updated || [], created: result.created || [] });
-      toast.success(`Synced: ${result.updated?.length || 0} updated, ${result.created?.length || 0} created`);
-      // Refresh existing for any subsequent runs
-      await loadExisting();
+      const result = data as { updated: string[]; created: string[]; dry_run?: boolean };
+      setSyncResult({ updated: result.updated || [], created: result.created || [], dryRun });
+      if (dryRun) {
+        toast.success(`Dry-run OK: would update ${result.updated?.length || 0}, create ${result.created?.length || 0}`, {
+          description: "Triggers fired and rolled back. No changes saved.",
+        });
+      } else {
+        toast.success(`Synced: ${result.updated?.length || 0} updated, ${result.created?.length || 0} created`);
+        await loadExisting();
+      }
     } catch (err: any) {
-      toast.error(err.message || "Sync failed", { description: "Nothing was saved — the entire batch was rolled back." });
+      const msg: string = err?.message || "Sync failed";
+      // Parse "Row N:" out of the SQL error to highlight the offender
+      const m = /Row\s+(\d+)\s*:/i.exec(msg);
+      if (m) {
+        const payloadRowOneBased = parseInt(m[1], 10);
+        const eligibleNow = effectiveRows
+          .filter((er) => !er.edit.skipped && er.row.status === "ok" && er.match?.kind !== "type-mismatch")
+          .filter((er) => er.match?.kind === "matched" || (er.edit.newSetup && er.edit.confirmedNew));
+        const offender = eligibleNow[payloadRowOneBased - 1];
+        if (offender) {
+          setFailedRowIdx(offender.row.index);
+          setFailedMessage(msg);
+          // Scroll into view + retrigger animation
+          setTimeout(() => {
+            const el = document.getElementById(`bulk-row-${offender.row.index}`);
+            if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+          }, 50);
+        }
+      }
+      toast.error(msg, { description: "Nothing was saved — the entire batch was rolled back." });
     } finally {
       setSyncing(false);
     }
+  };
+
+  const exportCsv = () => {
+    if (!report) return;
+    const headers = [
+      "row", "status", "category", "fund_type", "manager", "currency",
+      "yield_unit", "daily_yield", "annual_yield", "match_kind",
+      "matched_manager", "similarity_pct", "skipped", "warnings", "raw",
+    ];
+    const escape = (v: any) => {
+      const s = v === null || v === undefined ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [headers.join(",")];
+    for (const er of effectiveRows) {
+      lines.push([
+        er.row.index + 1,
+        er.row.status,
+        er.row.category ?? "",
+        er.row.fund_type ?? "",
+        er.row.manager,
+        er.row.currency ?? "",
+        er.row.yield_unit ?? "",
+        er.daily,
+        er.annual,
+        er.match?.kind ?? "new",
+        er.match?.fund?.manager ?? "",
+        er.match?.similarity != null ? Math.round(er.match.similarity * 100) : "",
+        er.edit.skipped ? "yes" : "no",
+        er.row.warnings.join("; "),
+        er.row.raw,
+      ].map(escape).join(","));
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    a.href = url; a.download = `parsed-funds-${ts}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast.success("CSV downloaded");
   };
 
   const setupDialogRow = setupDialogIdx !== null ? report?.rows[setupDialogIdx] ?? null : null;
@@ -545,8 +616,13 @@ const BulkFundPasteVerify = () => {
                 const isReview = match?.kind === "review";
                 const dimmed = edit.skipped ? "opacity-40" : "";
                 const rowBg = isMismatch ? "bg-red-500/5 border-l-2 border-red-500" : "";
+                const isFailed = failedRowIdx === r.index;
+                const failedCls = isFailed ? "bg-destructive/10 border-l-2 border-destructive animate-shake" : "";
                 return (
-                  <div key={r.index} className={`grid grid-cols-12 items-center px-3 py-2 text-xs hover:bg-muted/30 ${dimmed} ${rowBg}`}>
+                  <TooltipProvider key={r.index}>
+                    <Tooltip open={isFailed ? true : undefined}>
+                      <TooltipTrigger asChild>
+                  <div id={`bulk-row-${r.index}`} className={`grid grid-cols-12 items-center px-3 py-2 text-xs hover:bg-muted/30 ${dimmed} ${rowBg} ${failedCls}`}>
                     <div className="col-span-1 text-muted-foreground tabular-nums">{r.index + 1}</div>
                     <div className="col-span-3 font-mono text-[10px] text-muted-foreground break-words pr-2 leading-tight">
                       {r.raw}
@@ -624,6 +700,15 @@ const BulkFundPasteVerify = () => {
                       <StatusBadge row={r} match={match} edit={edit} />
                     </div>
                   </div>
+                      </TooltipTrigger>
+                      {isFailed && failedMessage && (
+                        <TooltipContent side="top" className="max-w-md bg-destructive text-destructive-foreground">
+                          <div className="text-[11px] font-semibold mb-0.5">Sync failed on this row</div>
+                          <div className="text-[11px] font-mono break-words">{failedMessage}</div>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 );
               })}
             </div>
@@ -644,15 +729,25 @@ const BulkFundPasteVerify = () => {
                 <span>Ready to sync {counts.matched + counts.ready} row{counts.matched + counts.ready === 1 ? "" : "s"}.</span>
               )}
             </div>
-            <Button
-              size="lg"
-              disabled={!canSync}
-              onClick={() => setConfirmOpen(true)}
-              className="gap-2"
-            >
-              {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-              Sync All Funds to Database
-            </Button>
+            <div className="flex items-center gap-3">
+              <Button size="sm" variant="outline" onClick={exportCsv} className="gap-2">
+                <Download className="h-3.5 w-3.5" /> Export CSV
+              </Button>
+              <label className="flex items-center gap-2 text-xs cursor-pointer select-none rounded-md border border-border bg-background px-3 py-1.5">
+                <FlaskConical className={`h-3.5 w-3.5 ${dryRun ? "text-amber-500" : "text-muted-foreground"}`} />
+                <span className={dryRun ? "font-medium" : "text-muted-foreground"}>Simulate</span>
+                <Switch checked={dryRun} onCheckedChange={setDryRun} />
+              </label>
+              <Button
+                size="lg"
+                disabled={!canSync}
+                onClick={() => setConfirmOpen(true)}
+                className="gap-2"
+              >
+                {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
+                {dryRun ? "Simulate Sync" : "Sync All Funds"}
+              </Button>
+            </div>
           </div>
 
           {/* Parse log */}
@@ -670,32 +765,37 @@ const BulkFundPasteVerify = () => {
 
       {/* Success state */}
       {syncResult && (
-        <Card className="p-6 text-center space-y-4">
-          <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-emerald-500/10">
-            <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+        <Card className={`p-6 text-center space-y-4 ${syncResult.dryRun ? "border-amber-500/40" : ""}`}>
+          <div className={`inline-flex items-center justify-center h-12 w-12 rounded-full ${syncResult.dryRun ? "bg-amber-500/10" : "bg-emerald-500/10"}`}>
+            {syncResult.dryRun
+              ? <FlaskConical className="h-6 w-6 text-amber-500" />
+              : <CheckCircle2 className="h-6 w-6 text-emerald-500" />}
           </div>
           <div>
-            <h3 className="text-lg font-semibold">All funds synced</h3>
+            <h3 className="text-lg font-semibold">
+              {syncResult.dryRun ? "Dry-run completed" : "All funds synced"}
+            </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              {syncResult.updated.length} updated · {syncResult.created.length} created.
-              Previous yields are saved automatically to history.
+              {syncResult.dryRun
+                ? <>Simulated {syncResult.updated.length} update{syncResult.updated.length === 1 ? "" : "s"} and {syncResult.created.length} create{syncResult.created.length === 1 ? "" : "s"}. Triggers fired and rolled back — <b>no changes saved</b>.</>
+                : <>{syncResult.updated.length} updated · {syncResult.created.length} created. Previous yields are saved automatically to history.</>}
             </p>
           </div>
           <div className="flex justify-center gap-2">
-            <Button variant="outline" onClick={() => { setSyncResult(null); setReport(null); setRaw(""); setEdits({}); }}>
-              Paste another batch
+            <Button variant="outline" onClick={() => { setSyncResult(null); if (!syncResult.dryRun) { setReport(null); setRaw(""); setEdits({}); } }}>
+              {syncResult.dryRun ? "Back to review" : "Paste another batch"}
             </Button>
-            <Button variant="ghost" asChild>
-              <a href="#log" onClick={(e) => {
-                e.preventDefault();
-                // Switch to Log tab in AdminPage
-                const logTab = document.querySelector('[data-state] [value="log"], [role="tab"][data-state]') as HTMLElement | null;
-                const tabs = document.querySelectorAll('[role="tab"]');
-                tabs.forEach((t) => { if ((t as HTMLElement).innerText.toLowerCase().includes("log")) (t as HTMLElement).click(); });
-              }} className="gap-2">
-                View Change Log <ExternalLink className="h-3 w-3" />
-              </a>
-            </Button>
+            {!syncResult.dryRun && (
+              <Button variant="ghost" asChild>
+                <a href="#log" onClick={(e) => {
+                  e.preventDefault();
+                  const tabs = document.querySelectorAll('[role="tab"]');
+                  tabs.forEach((t) => { if ((t as HTMLElement).innerText.toLowerCase().includes("log")) (t as HTMLElement).click(); });
+                }} className="gap-2">
+                  View Change Log <ExternalLink className="h-3 w-3" />
+                </a>
+              </Button>
+            )}
           </div>
         </Card>
       )}
@@ -712,17 +812,19 @@ const BulkFundPasteVerify = () => {
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
-            <AlertDialogTitle>Sync to database?</AlertDialogTitle>
+            <AlertDialogTitle>{dryRun ? "Simulate sync?" : "Sync to database?"}</AlertDialogTitle>
             <AlertDialogDescription asChild>
               <div className="space-y-2 text-sm">
                 <div>You are about to:</div>
                 <ul className="list-disc pl-5 space-y-1">
-                  <li><b className="text-emerald-500">Update {counts.matched}</b> existing fund{counts.matched === 1 ? "" : "s"} (previous yields auto-saved to history)</li>
-                  <li><b className="text-red-500">Create {counts.ready}</b> new fund{counts.ready === 1 ? "" : "s"}</li>
+                  <li><b className="text-emerald-500">Update {counts.matched}</b> existing fund{counts.matched === 1 ? "" : "s"} {dryRun ? "(simulated)" : "(previous yields auto-saved to history)"}</li>
+                  <li><b className="text-red-500">Create {counts.ready}</b> new fund{counts.ready === 1 ? "" : "s"} {dryRun ? "(simulated)" : ""}</li>
                   {counts.skipped > 0 && <li className="text-muted-foreground">Skip {counts.skipped} row{counts.skipped === 1 ? "" : "s"}</li>}
                 </ul>
-                <div className="rounded-md bg-muted px-3 py-2 text-xs text-muted-foreground mt-2">
-                  This is atomic — if any single row fails, the whole batch is rolled back and nothing changes.
+                <div className={`rounded-md px-3 py-2 text-xs mt-2 ${dryRun ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30" : "bg-muted text-muted-foreground"}`}>
+                  {dryRun
+                    ? "Simulation mode: every UPDATE and INSERT will execute (so triggers fire), then the entire transaction is rolled back. Nothing is saved."
+                    : "This is atomic — if any single row fails, the whole batch is rolled back and nothing changes."}
                 </div>
               </div>
             </AlertDialogDescription>
@@ -730,7 +832,7 @@ const BulkFundPasteVerify = () => {
           <AlertDialogFooter>
             <AlertDialogCancel>Cancel</AlertDialogCancel>
             <AlertDialogAction onClick={performSync}>
-              Yes, sync {counts.matched + counts.ready} fund{counts.matched + counts.ready === 1 ? "" : "s"}
+              {dryRun ? `Simulate ${counts.matched + counts.ready}` : `Yes, sync ${counts.matched + counts.ready}`} fund{counts.matched + counts.ready === 1 ? "" : "s"}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
