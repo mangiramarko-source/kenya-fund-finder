@@ -554,17 +554,18 @@ const BulkFundPasteVerify = () => {
           };
         });
 
-      const { data, error } = await supabase.rpc("bulk_sync_funds", { payload, dry_run: dryRun });
+      const { data, error } = await supabase.rpc("bulk_sync_funds", { payload, dry_run: dryRun, p_effective_date: effectiveDate });
       if (error) throw error;
       const result = data as { updated: string[]; created: string[]; dry_run?: boolean };
       setSyncResult({ updated: result.updated || [], created: result.created || [], dryRun });
       if (dryRun) {
-        toast.success(`Dry-run OK: would update ${result.updated?.length || 0}, create ${result.created?.length || 0}`, {
+        toast.success(`Dry-run OK for ${effectiveDate}: would update ${result.updated?.length || 0}, create ${result.created?.length || 0}`, {
           description: "Triggers fired and rolled back. No changes saved.",
         });
       } else {
-        toast.success(`Synced: ${result.updated?.length || 0} updated, ${result.created?.length || 0} created`);
+        toast.success(`Synced for ${effectiveDate}: ${result.updated?.length || 0} updated, ${result.created?.length || 0} created`);
         await loadExisting();
+        await loadWeekHealth();
       }
     } catch (err: any) {
       const msg: string = err?.message || "Sync failed";
