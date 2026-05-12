@@ -382,7 +382,7 @@ const AdminFunds = () => {
           </Dialog>
         </div>
       </div>
-      <BulkFundImport open={bulkImportOpen} onOpenChange={setBulkImportOpen} onComplete={load} />
+      
 
       <details className="mb-4 rounded-lg border border-border bg-card">
         <summary className="cursor-pointer select-none px-4 py-2 text-sm font-medium hover:bg-muted/40">
