@@ -154,24 +154,27 @@ const EditableNumber = ({ value, onChange, warn }: { value: number; onChange: (v
 };
 
 const NewFundSetupDialog = ({
-  open, onOpenChange, row, edit, onSave,
+  open, onOpenChange, row, edit, similarManagers, onSave,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   row: ParsedRow | null;
   edit: RowEdit | null;
-  onSave: (setup: { minimum_investment: number; management_fee: number; withdrawal_time: string }) => void;
+  similarManagers: string[];
+  onSave: (setup: { minimum_investment: number; management_fee: number; withdrawal_time: string }, confirmed: boolean) => void;
 }) => {
   const [min, setMin] = useState("1000");
   const [fee, setFee] = useState("2");
   const [wd, setWd] = useState("T+1");
+  const [confirmed, setConfirmed] = useState(false);
   useEffect(() => {
     if (open && edit?.newSetup) {
       setMin(String(edit.newSetup.minimum_investment));
       setFee(String(edit.newSetup.management_fee));
       setWd(edit.newSetup.withdrawal_time);
+      setConfirmed(!!edit.confirmedNew);
     } else if (open) {
-      setMin("1000"); setFee("2"); setWd("T+1");
+      setMin("1000"); setFee("2"); setWd("T+1"); setConfirmed(false);
     }
   }, [open, edit]);
   if (!row) return null;
@@ -188,6 +191,16 @@ const NewFundSetupDialog = ({
               {row.fund_type ? FUND_TYPE_LABELS[row.fund_type as FundType] : "—"} · {row.yield_unit}
             </div>
           </div>
+          {similarManagers.length > 0 && (
+            <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-xs">
+              <div className="flex items-center gap-1 font-semibold text-yellow-600 dark:text-yellow-400">
+                <AlertTriangle className="h-3 w-3" /> Similar names already exist
+              </div>
+              <div className="mt-1 text-muted-foreground">
+                Make sure this isn't a misspelling of: {similarManagers.map((s) => <b key={s} className="mr-1">{s}</b>)}
+              </div>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="text-xs">Minimum investment ({row.yield_unit === "%" ? "KES" : row.yield_unit})</Label>
             <Input type="number" inputMode="decimal" value={min} onChange={(e) => setMin(e.target.value)} />
@@ -200,6 +213,13 @@ const NewFundSetupDialog = ({
             <Label className="text-xs">Withdrawal time</Label>
             <Input value={wd} onChange={(e) => setWd(e.target.value)} placeholder="e.g. T+1, T+3, Same day" />
           </div>
+          <label className="flex items-start gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs cursor-pointer">
+            <Checkbox checked={confirmed} onCheckedChange={(v) => setConfirmed(!!v)} className="mt-0.5" />
+            <span>
+              <b>I confirm this is a new fund</b> and not a misspelling of an existing one.
+              Without this confirmation, the row will stay in quarantine.
+            </span>
+          </label>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
@@ -209,7 +229,7 @@ const NewFundSetupDialog = ({
                 minimum_investment: parseFloat(min) || 0,
                 management_fee: parseFloat(fee) || 0,
                 withdrawal_time: wd.trim() || "T+1",
-              });
+              }, confirmed);
               onOpenChange(false);
             }}
           >
