@@ -310,6 +310,8 @@ const BulkFundPasteVerify = () => {
   const [effectiveDate, setEffectiveDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [detectedDate, setDetectedDate] = useState<string | null>(null);
   const [weekHealth, setWeekHealth] = useState<{ date: string; label: string; present: boolean }[]>([]);
+  /** True when the user explicitly picked a date (calendar or health pill). Blocks auto-detect override. */
+  const [dateLocked, setDateLocked] = useState(false);
 
   /** Compute Monday→Friday of the ISO week containing `ref` (local time). */
   const getCurrentBusinessWeek = (ref: Date = new Date()) => {
