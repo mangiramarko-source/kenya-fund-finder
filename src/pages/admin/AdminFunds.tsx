@@ -273,9 +273,6 @@ const AdminFunds = () => {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Fund Management</h2>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => setBulkImportOpen(true)}>
-            <Upload className="mr-2 h-4 w-4" /> Bulk Import
-          </Button>
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditingFund(emptyFund); }}>
             <DialogTrigger asChild>
               <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
