@@ -617,7 +617,7 @@ const BulkFundPasteVerify = () => {
           className="min-h-[140px] font-mono text-xs"
         />
         <div className="flex items-center gap-2">
-          <Button size="sm" onClick={handleParse} disabled={running || !raw.trim()} className="gap-2">
+          <Button size="sm" onClick={() => handleParse()} disabled={running || !raw.trim()} className="gap-2">
             <Search className="h-4 w-4" /> Parse &amp; verify
           </Button>
           <span className="text-[11px] text-muted-foreground">
@@ -675,7 +675,7 @@ const BulkFundPasteVerify = () => {
                 ))}
               </div>
               {Object.keys(headerMap).length > 0 && unmappedHeaders.length === 0 && (
-                <Button size="sm" className="mt-3 h-7 text-xs" onClick={handleParse}>
+                <Button size="sm" className="mt-3 h-7 text-xs" onClick={() => handleParse()}>
                   Re-parse with mappings
                 </Button>
               )}
