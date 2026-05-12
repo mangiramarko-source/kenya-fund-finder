@@ -168,7 +168,7 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
     // Track the LAST one before currencyIdx — that's the active category for this row.
     let scan = cursor;
     while (true) {
-      const cat = findNextCategory(text, scan);
+      const cat = findNextCategory(text, scan, mergedHeaders);
       if (!cat || cat.idx >= nextRow.currencyIdx) break;
       currentCategory = { label: cat.label, fund_type: cat.fund_type };
       if (!categoriesSeen.includes(cat.label)) categoriesSeen.push(cat.label);
@@ -183,7 +183,7 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
       // by re-scanning from cursor.
       let s = cursor;
       while (true) {
-        const cat = findNextCategory(text, s);
+        const cat = findNextCategory(text, s, mergedHeaders);
         if (!cat || cat.idx >= nextRow.currencyIdx) break;
         segStart = cat.idx + cat.label.length;
         s = segStart;
