@@ -252,7 +252,10 @@ const BulkFundPasteVerify = () => {
   const [setupDialogIdx, setSetupDialogIdx] = useState<number | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
-  const [syncResult, setSyncResult] = useState<{ updated: string[]; created: string[] } | null>(null);
+  const [syncResult, setSyncResult] = useState<{ updated: string[]; created: string[]; dryRun?: boolean } | null>(null);
+  const [dryRun, setDryRun] = useState(false);
+  const [failedRowIdx, setFailedRowIdx] = useState<number | null>(null);
+  const [failedMessage, setFailedMessage] = useState<string | null>(null);
   /** Mapping for unknown headers detected in the input → fund_type */
   const [headerMap, setHeaderMap] = useState<Record<string, FundType>>({});
 
