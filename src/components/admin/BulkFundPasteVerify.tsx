@@ -640,6 +640,57 @@ const BulkFundPasteVerify = () => {
 
   return (
     <div className="space-y-4">
+      {/* Data Health Strip — current business week (Mon-Fri) */}
+      {weekHealth.length > 0 && (
+        <Card className="p-3 shadow-sm">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">This week's data</span>
+              <button
+                type="button"
+                onClick={loadWeekHealth}
+                className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                title="Refresh"
+              >
+                refresh
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {weekHealth.map((d) => {
+                const isToday = d.date === new Date().toISOString().slice(0, 10);
+                const isFuture = d.date > new Date().toISOString().slice(0, 10);
+                return (
+                  <button
+                    key={d.date}
+                    type="button"
+                    disabled={isFuture}
+                    onClick={() => setEffectiveDate(d.date)}
+                    className={`flex flex-col items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all
+                      ${isFuture ? "opacity-30 cursor-not-allowed" : "hover:scale-105 cursor-pointer"}
+                      ${effectiveDate === d.date ? "ring-2 ring-primary" : ""}
+                      ${d.present ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : isFuture ? "bg-muted text-muted-foreground" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}
+                    title={d.present ? `Data present for ${d.label}` : isFuture ? "Future date" : `No data for ${d.label} — click to backfill`}
+                  >
+                    <span>{d.label}</span>
+                    <span className="text-[12px] leading-none">{d.present ? "🟢" : isFuture ? "⚪" : "🔴"}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {firstMissingDay && (
+            <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+              <span>
+                💡 Missing data for <b>{firstMissingDay.label}</b>. Want to upload it now?
+              </span>
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setEffectiveDate(firstMissingDay.date)}>
+                Use {firstMissingDay.label}
+              </Button>
+            </div>
+          )}
+        </Card>
+      )}
+
       <Card className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div>
