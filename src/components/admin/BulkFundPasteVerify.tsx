@@ -671,7 +671,7 @@ const BulkFundPasteVerify = () => {
                     key={d.date}
                     type="button"
                     disabled={isFuture}
-                    onClick={() => setEffectiveDate(d.date)}
+                    onClick={() => { setEffectiveDate(d.date); setDateLocked(true); }}
                     className={`flex flex-col items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all
                       ${isFuture ? "opacity-30 cursor-not-allowed" : "hover:scale-105 cursor-pointer"}
                       ${effectiveDate === d.date ? "ring-2 ring-primary" : ""}
