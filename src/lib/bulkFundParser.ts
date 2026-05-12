@@ -54,7 +54,7 @@ const CATEGORY_HEADERS: Array<[string, FundType]> = [
   ["Fixed Income", "fixed_income"],
   ["Balanced Fund", "balanced"],
   ["Equity Fund", "equity"],
-  ["Special Fund", "money_market"],   // Special treated as MMF; UI can override
+  ["Special Fund", "special"],
   ["Bond Fund", "bond"],
   // NOTE: bare "Balanced", "Equity", "Special", "Bond" are intentionally
   // NOT included — they collide with manager names like
