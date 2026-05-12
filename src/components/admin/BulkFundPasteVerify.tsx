@@ -938,43 +938,68 @@ const BulkFundPasteVerify = () => {
             </div>
           <div className="flex items-end gap-3 flex-wrap">
               {(() => {
-                const isAuto = !!detectedDate && detectedDate === effectiveDate;
-                const today = new Date().toISOString().slice(0, 10);
-                const d = effectiveDate ? new Date(effectiveDate + "T00:00:00") : null;
-                const isWeekend = !!d && (d.getDay() === 0 || d.getDay() === 6);
-                const borderCls = isAuto
-                  ? "border-blue-500 ring-2 ring-blue-500/30 bg-blue-500/5"
-                  : isWeekend
-                    ? "border-amber-500 ring-2 ring-amber-500/30 bg-amber-500/5"
-                    : "border-border bg-background";
+                const isAuto = !!detectedDate && detectedDate === effectiveDate && !dateLocked;
+                const today = new Date();
+                const todayIso = today.toISOString().slice(0, 10);
+                const dateObj = effectiveDate ? new Date(effectiveDate + "T00:00:00") : undefined;
+                const isWeekend = !!dateObj && (dateObj.getDay() === 0 || dateObj.getDay() === 6);
+                const borderCls = dateLocked
+                  ? "border-blue-600 ring-2 ring-blue-600/40 bg-blue-500/5"
+                  : isAuto
+                    ? "border-blue-500 ring-2 ring-blue-500/30 bg-blue-500/5"
+                    : isWeekend
+                      ? "border-amber-500 ring-2 ring-amber-500/30 bg-amber-500/5"
+                      : "border-border bg-background";
                 return (
                   <div className="flex flex-col gap-1">
                     <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                      <Calendar className="h-3 w-3" /> Data Effective Date
-                      {isAuto && <span className="text-blue-500 normal-case font-medium tracking-normal">· auto-filled</span>}
+                      <CalendarIcon className="h-3 w-3" /> Effective Date
+                      {dateLocked && <span className="text-blue-600 normal-case font-medium tracking-normal inline-flex items-center gap-0.5"><Lock className="h-2.5 w-2.5" /> locked</span>}
+                      {!dateLocked && isAuto && <span className="text-blue-500 normal-case font-medium tracking-normal">· auto-filled</span>}
                     </Label>
-                    <div className={`flex items-center gap-2 rounded-md border px-2.5 py-1 transition-colors ${borderCls}`}>
-                      <Input
-                        type="date"
-                        value={effectiveDate}
-                        max={today}
-                        onChange={(e) => { setEffectiveDate(e.target.value); setDetectedDate(null); }}
-                        className="h-7 w-36 px-1 py-0 text-xs border-0 bg-transparent focus-visible:ring-0"
-                        aria-label="Data effective date"
-                      />
-                      {effectiveDate !== today && (
-                        <button
-                          type="button"
-                          onClick={() => { setEffectiveDate(today); setDetectedDate(null); }}
-                          className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          className={cn(
+                            "h-9 min-w-[180px] justify-start gap-2 text-xs font-medium transition-colors",
+                            borderCls,
+                          )}
                         >
-                          today
-                        </button>
-                      )}
-                    </div>
+                          <CalendarIcon className={cn("h-3.5 w-3.5", dateLocked ? "text-blue-600" : isAuto ? "text-blue-500" : isWeekend ? "text-amber-500" : "text-muted-foreground")} />
+                          <span>{dateObj ? format(dateObj, "MMM d, yyyy") : "Pick a date"}</span>
+                          {dateLocked && (
+                            <button
+                              type="button"
+                              onClick={(e) => { e.stopPropagation(); e.preventDefault(); setDateLocked(false); setEffectiveDate(detectedDate ?? todayIso); }}
+                              className="ml-auto text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                              title="Unlock — let auto-detect manage this"
+                            >
+                              unlock
+                            </button>
+                          )}
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-auto p-0" align="start">
+                        <Calendar
+                          mode="single"
+                          selected={dateObj}
+                          onSelect={(d) => {
+                            if (!d) return;
+                            const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+                            setEffectiveDate(iso);
+                            setDateLocked(true);
+                          }}
+                          disabled={(d) => d > today}
+                          initialFocus
+                          className={cn("p-3 pointer-events-auto")}
+                        />
+                      </PopoverContent>
+                    </Popover>
                     {isWeekend && (
                       <span className="text-[10px] text-amber-600 dark:text-amber-400">
-                        ⚠ Note: This is a weekend. Markets are usually closed.
+                        ⚠️ You have selected a weekend.
                       </span>
                     )}
                   </div>
