@@ -690,7 +690,7 @@ const BulkFundPasteVerify = () => {
               <span>
                 💡 Missing data for <b>{firstMissingDay.label}</b>. Want to upload it now?
               </span>
-              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setEffectiveDate(firstMissingDay.date)}>
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => { setEffectiveDate(firstMissingDay.date); setDateLocked(true); }}>
                 Use {firstMissingDay.label}
               </Button>
             </div>
