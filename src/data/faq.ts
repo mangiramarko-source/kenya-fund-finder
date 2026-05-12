@@ -176,6 +176,13 @@ export const faqByFundType: Record<FundType | "general" | "stocks", FaqItem[]> =
         "Bond Funds are suitable for investors seeking regular income with moderate risk over a 2–5 year horizon. They tend to perform well when interest rates are stable or declining. If you expect rates to rise significantly, bond prices may fall, reducing short-term returns. They offer better yields than MMFs with more stability than equity funds.",
     },
   ],
+  special: [
+    {
+      question: "What is a Special Fund?",
+      answer:
+        "Special Funds are specialised mandates that fall outside the standard money market, fixed income, balanced, equity, or bond categories. They include thematic funds, shariah-compliant funds, high-yield strategies, private debt, and momentum or absolute-return funds. Each fund has its own strategy, risk profile, and liquidity terms — read the fact sheet carefully before investing.",
+    },
+  ],
 };
 
 /** Flat array of all FAQ items (for backward compatibility / JSON-LD) */
