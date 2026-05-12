@@ -14,7 +14,7 @@ import { FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckCircle2, AlertTriangle, XCircle, Search, FileText, Settings2, Loader2, ExternalLink, Sparkles, ShieldAlert, HelpCircle, Download, FlaskConical } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, Search, FileText, Settings2, Loader2, ExternalLink, Sparkles, ShieldAlert, HelpCircle, Download, FlaskConical, Clipboard, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
 interface ExistingFund {
