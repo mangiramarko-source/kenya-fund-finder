@@ -930,19 +930,30 @@ const BulkFundPasteVerify = () => {
               )}
             </div>
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-xs rounded-md border border-border bg-background px-3 py-1.5">
-                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground">Effective</span>
-                <Input
-                  type="date"
-                  value={effectiveDate}
-                  onChange={(e) => setEffectiveDate(e.target.value)}
-                  className="h-6 w-32 px-1 py-0 text-xs border-0 bg-transparent focus-visible:ring-0"
-                />
-                {detectedDate && detectedDate === effectiveDate && (
-                  <span className="text-[9px] text-emerald-500" title="Detected from pasted text">auto</span>
-                )}
-              </label>
+              {(() => {
+                const isAuto = detectedDate && detectedDate === effectiveDate;
+                const d = effectiveDate ? new Date(effectiveDate + "T00:00:00") : null;
+                const isWeekend = d && (d.getDay() === 0 || d.getDay() === 6);
+                return (
+                  <label
+                    className={`flex items-center gap-2 text-xs rounded-md border px-3 py-1.5 transition-colors
+                      ${isAuto ? "border-blue-500/60 bg-blue-500/10 ring-1 ring-blue-500/30" : "border-border bg-background"}
+                      ${isWeekend ? "border-amber-500/60 bg-amber-500/10" : ""}`}
+                    title={isAuto ? "Auto-detected from pasted text — change if wrong" : "Effective date for this batch"}
+                  >
+                    <Calendar className={`h-3.5 w-3.5 ${isAuto ? "text-blue-500" : isWeekend ? "text-amber-500" : "text-muted-foreground"}`} />
+                    <span className={isAuto ? "text-blue-600 dark:text-blue-400 font-medium" : isWeekend ? "text-amber-600 dark:text-amber-400 font-medium" : "text-muted-foreground"}>
+                      {isAuto ? "Auto-filled" : isWeekend ? "Weekend!" : "Effective"}
+                    </span>
+                    <Input
+                      type="date"
+                      value={effectiveDate}
+                      onChange={(e) => setEffectiveDate(e.target.value)}
+                      className="h-6 w-32 px-1 py-0 text-xs border-0 bg-transparent focus-visible:ring-0"
+                    />
+                  </label>
+                );
+              })()}
               <Button size="sm" variant="outline" onClick={exportCsv} className="gap-2">
                 <Download className="h-3.5 w-3.5" /> Export CSV
               </Button>
