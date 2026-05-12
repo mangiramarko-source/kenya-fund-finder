@@ -99,32 +99,32 @@ function findNextCategory(text: string, fromIdx: number, headers: Array<[string,
 
 
 /**
- * Find the next currency token followed by 2 numbers, starting from `fromIdx`.
- * Returns the position and the parsed numbers + which currency.
+ * Find the next currency token followed by 1 or 2 numbers, starting from `fromIdx`.
+ * If only 1 number is found the row is reported as partial so the UI can
+ * surface "missing daily or annual" instead of silently dropping it.
  */
 function findNextRow(text: string, fromIdx: number): {
-  currencyIdx: number;        // Position where the currency token starts
+  currencyIdx: number;
   currency: "Sh" | "USD" | "GBP";
   daily: number;
-  annual: number;
-  endIdx: number;             // Position right after the second number
+  annual: number | null;
+  endIdx: number;
   rawNumbers: string;
+  partial: boolean;
 } | null {
-  // Regex: a currency token followed by exactly two numbers.
-  // Numbers in this dataset are always either `\d+\.\d{2}` (e.g. 167.09) or
-  // a bare integer. Constraining to 2-decimal precision prevents greedy
-  // matching from chewing across two adjacent values like "167.09172.49".
-  const re = /(Sh|USD|GBP)\s*(-?\d+\.\d{2}|-?\d+)\s*(-?\d+\.\d{2}|-?\d+)/g;
+  const re = /(Sh|USD|GBP)\s*(-?\d+\.\d{2}|-?\d+)(?:\s*(-?\d+\.\d{2}|-?\d+))?/g;
   re.lastIndex = fromIdx;
   const m = re.exec(text);
   if (!m) return null;
+  const hasSecond = m[3] !== undefined;
   return {
     currencyIdx: m.index,
     currency: m[1] as "Sh" | "USD" | "GBP",
     daily: parseFloat(m[2]),
-    annual: parseFloat(m[3]),
+    annual: hasSecond ? parseFloat(m[3]) : null,
     endIdx: m.index + m[0].length,
-    rawNumbers: `${m[2]} ${m[3]}`,
+    rawNumbers: hasSecond ? `${m[2]} ${m[3]}` : m[2],
+    partial: !hasSecond,
   };
 }
 
@@ -136,10 +136,20 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
   const categoriesSeen: string[] = [];
 
   // Detect header-like phrases that DON'T match known categories.
+  // Stem-based: trailing word may end in extra letters to catch typos like
+  // "Markett", "Funde", "Incomes".
   const knownLabels = new Set(mergedHeaders.map(([l]) => l));
-  const headerLike = /([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){0,3}\s+(?:Fund|Funds|Bonds|Bond|REITs|REIT|Trust|Trusts|Notes|Note|Income|Market))/g;
+  const HEADER_STEM = "(?:Funds?|Fundes?|Bonds?|REITs?|Trusts?|Notes?|Incomes?|Marketts?|Markets?|Mkts?)";
+  const headerLike = new RegExp(
+    `([A-Z][a-zA-Z]+(?:\\s+[A-Z][a-zA-Z]+){0,3}\\s+${HEADER_STEM})`,
+    "g",
+  );
   const unknownHeaders: string[] = [];
   const seenUnknown = new Set<string>();
+  // Capture every occurrence so we can use them as segment boundaries — this
+  // prevents typos from bleeding their tail into the next manager segment
+  // (e.g. "Money Markett" → manager "tBritam").
+  const unknownOccurrences: Array<{ idx: number; len: number }> = [];
   let hm: RegExpExecArray | null;
   while ((hm = headerLike.exec(text)) !== null) {
     const phrase = hm[1].trim();
@@ -147,10 +157,30 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
     for (const [label] of mergedHeaders) {
       if (phrase === label || phrase.endsWith(label) || label.endsWith(phrase)) { isKnown = true; break; }
     }
-    if (isKnown) continue;
-    if (knownLabels.has(phrase)) continue;
+    if (isKnown || knownLabels.has(phrase)) continue;
     if (!seenUnknown.has(phrase)) { seenUnknown.add(phrase); unknownHeaders.push(phrase); }
+    unknownOccurrences.push({ idx: hm.index, len: hm[1].length });
   }
+
+  // Latest boundary (known category OR unknown header) ending strictly before
+  // beforeIdx, starting search at fromIdx. Falls back to fromIdx.
+  const lastBoundaryEnd = (fromIdx: number, beforeIdx: number): number => {
+    let best = fromIdx;
+    let s = fromIdx;
+    while (true) {
+      const cat = findNextCategory(text, s, mergedHeaders);
+      if (!cat || cat.idx >= beforeIdx) break;
+      best = Math.max(best, cat.idx + cat.label.length);
+      s = cat.idx + cat.label.length;
+    }
+    for (const u of unknownOccurrences) {
+      if (u.idx >= fromIdx && u.idx < beforeIdx) {
+        const end = u.idx + u.len;
+        if (end > best) best = end;
+      }
+    }
+    return best;
+  };
 
   let cursor = 0;
   let currentCategory: { label: string; fund_type: FundType } | null = null;
@@ -164,8 +194,7 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
       break;
     }
 
-    // Look for any new category header that appears between cursor and the next row.
-    // Track the LAST one before currencyIdx — that's the active category for this row.
+    // Promote current category if a KNOWN header appears before this row.
     let scan = cursor;
     while (true) {
       const cat = findNextCategory(text, scan, mergedHeaders);
@@ -175,49 +204,44 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
       scan = cat.idx + cat.label.length;
     }
 
-    // Manager segment = text between (last consumed position OR last category end) and currencyIdx.
-    // We use the most recent category end if it falls after `cursor`, else `cursor`.
-    let segStart = cursor;
-    if (currentCategory) {
-      // Find the position of the most recent category header ending before currencyIdx
-      // by re-scanning from cursor.
-      let s = cursor;
-      while (true) {
-        const cat = findNextCategory(text, s, mergedHeaders);
-        if (!cat || cat.idx >= nextRow.currencyIdx) break;
-        segStart = cat.idx + cat.label.length;
-        s = segStart;
-      }
-    }
+    // Manager segment starts after the latest boundary (known OR unknown).
+    const segStart = lastBoundaryEnd(cursor, nextRow.currencyIdx);
 
     const managerRaw = text.slice(segStart, nextRow.currencyIdx);
     const manager = managerRaw
       .replace(/[\s\|]+/g, " ")
       .trim()
-      // Defensive strip: if a stray currency token leaked into the manager
-      // segment (e.g. "Britam Sh", "Cytonn USD"), remove the trailing token
-      // so the name matches existing DB rows.
       .replace(/\s+(?:Sh|KES|USD|GBP)\s*$/i, "")
       .trim();
     const rawSegment = text.slice(segStart, nextRow.endIdx).trim();
 
     const fund_type = currentCategory?.fund_type ?? null;
-    const status: ParseStatus = !currentCategory ? "category-missing" : !manager ? "unparsed" : "ok";
-    const yield_unit = currentCategory && manager
-      ? deriveYieldUnit(nextRow.currency, fund_type, nextRow.daily, nextRow.annual)
+    const status: ParseStatus = !currentCategory
+      ? "category-missing"
+      : !manager || nextRow.partial
+        ? "unparsed"
+        : "ok";
+
+    const annualForUnit = nextRow.annual ?? nextRow.daily;
+    const yield_unit = currentCategory && manager && !nextRow.partial
+      ? deriveYieldUnit(nextRow.currency, fund_type, nextRow.daily, annualForUnit)
       : null;
 
     const warnings: string[] = [];
-    // Sanity: percentage funds shouldn't exceed 100%
-    if (yield_unit === "%" && (nextRow.annual > 100 || nextRow.daily > 100)) {
+
+    if (nextRow.partial) {
+      warnings.push("Missing either Daily or Annual yield — partial row, please verify the source.");
+    }
+    if (nextRow.daily < 0 || (nextRow.annual !== null && nextRow.annual < 0)) {
+      warnings.push("Negative yield detected — unusual for Kenyan UTs. Please verify.");
+    }
+    if (yield_unit === "%" && nextRow.annual !== null && (nextRow.annual > 100 || nextRow.daily > 100)) {
       warnings.push("Yield > 100% — likely NAV mis-tagged as %");
     }
-    // Sanity: NAV funds shouldn't be < 1
-    if ((yield_unit === "KES" || yield_unit === "USD" || yield_unit === "GBP") && nextRow.annual < 1) {
+    if ((yield_unit === "KES" || yield_unit === "USD" || yield_unit === "GBP") && nextRow.annual !== null && nextRow.annual < 1) {
       warnings.push("NAV < 1 — likely % mis-tagged as currency");
     }
-    // Sanity: daily and annual should be in same ballpark (within 50% of each other) for % funds
-    if (yield_unit === "%" && nextRow.daily > 0 && nextRow.annual > 0) {
+    if (yield_unit === "%" && nextRow.daily > 0 && nextRow.annual !== null && nextRow.annual > 0) {
       const ratio = nextRow.daily / nextRow.annual;
       if (ratio < 0.5 || ratio > 1.5) {
         warnings.push(`Daily/Annual ratio unusual (${ratio.toFixed(2)})`);
@@ -228,7 +252,9 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
       ? `Row ${rowIdx + 1}: [${currentCategory!.label}] [${manager}] [${nextRow.currency}] daily=${nextRow.daily} annual=${nextRow.annual} → unit=${yield_unit}`
       : status === "category-missing"
         ? `Row ${rowIdx + 1}: ⚠ no active category before "${manager || nextRow.rawNumbers}" — flagged`
-        : `Row ${rowIdx + 1}: ⚠ empty manager segment before ${nextRow.currency} ${nextRow.rawNumbers} — flagged`;
+        : nextRow.partial
+          ? `Row ${rowIdx + 1}: ⚠ partial row "${manager}" ${nextRow.currency} ${nextRow.rawNumbers} — missing one yield value`
+          : `Row ${rowIdx + 1}: ⚠ empty manager segment before ${nextRow.currency} ${nextRow.rawNumbers} — flagged`;
 
     rows.push({
       index: rowIdx,
