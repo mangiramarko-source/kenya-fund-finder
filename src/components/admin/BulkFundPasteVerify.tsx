@@ -789,8 +789,21 @@ const BulkFundPasteVerify = () => {
                         <span className="text-[10px] text-muted-foreground">existing fund</span>
                       )}
                     </div>
-                    <div className="col-span-1 flex justify-center">
+                    <div className="col-span-1 flex flex-col items-center gap-1">
                       <Switch checked={!!edit.skipped} onCheckedChange={(v) => setEdit(r.index, { skipped: v })} />
+                      {r.status === "ok" && r.fund_type && r.yield_unit && (
+                        <label className="flex items-center gap-1 text-[9px] text-muted-foreground cursor-pointer leading-none" title="Skip this fund permanently in all future sessions">
+                          <Checkbox
+                            className="h-3 w-3"
+                            checked={permaSkips.has(compositeKey(r.manager, r.fund_type, r.yield_unit))}
+                            onCheckedChange={(v) => {
+                              togglePermaSkip(r.manager, r.fund_type!, r.yield_unit!, !!v);
+                              if (v) setEdit(r.index, { skipped: true });
+                            }}
+                          />
+                          forever
+                        </label>
+                      )}
                     </div>
                     <div className="col-span-1 text-right">
                       <StatusBadge row={r} match={match} edit={edit} />
