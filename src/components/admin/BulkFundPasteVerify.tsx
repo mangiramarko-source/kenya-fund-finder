@@ -839,6 +839,19 @@ const BulkFundPasteVerify = () => {
               )}
             </div>
             <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-xs rounded-md border border-border bg-background px-3 py-1.5">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">Effective</span>
+                <Input
+                  type="date"
+                  value={effectiveDate}
+                  onChange={(e) => setEffectiveDate(e.target.value)}
+                  className="h-6 w-32 px-1 py-0 text-xs border-0 bg-transparent focus-visible:ring-0"
+                />
+                {detectedDate && detectedDate === effectiveDate && (
+                  <span className="text-[9px] text-emerald-500" title="Detected from pasted text">auto</span>
+                )}
+              </label>
               <Button size="sm" variant="outline" onClick={exportCsv} className="gap-2">
                 <Download className="h-3.5 w-3.5" /> Export CSV
               </Button>
@@ -847,15 +860,20 @@ const BulkFundPasteVerify = () => {
                 <span className={dryRun ? "font-medium" : "text-muted-foreground"}>Simulate</span>
                 <Switch checked={dryRun} onCheckedChange={setDryRun} />
               </label>
-              <Button
-                size="lg"
-                disabled={!canSync}
-                onClick={() => setConfirmOpen(true)}
-                className="gap-2"
-              >
-                {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                {dryRun ? "Simulate Sync" : "Sync All Funds"}
-              </Button>
+              {(() => {
+                const isPerfect = !!canSync && !dryRun && counts.review === 0 && counts.unparsed === 0 && counts.mismatch === 0 && counts.new === 0;
+                return (
+                  <Button
+                    size="lg"
+                    disabled={!canSync}
+                    onClick={() => setConfirmOpen(true)}
+                    className={`gap-2 transition-all ${isPerfect ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-400/40 animate-pulse-soft" : ""}`}
+                  >
+                    {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : isPerfect ? <Sparkles className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                    {dryRun ? "Simulate Sync" : isPerfect ? "Perfect batch — Sync now" : "Sync All Funds"}
+                  </Button>
+                );
+              })()}
             </div>
           </div>
 
