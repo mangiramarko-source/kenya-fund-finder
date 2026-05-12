@@ -616,8 +616,13 @@ const BulkFundPasteVerify = () => {
                 const isReview = match?.kind === "review";
                 const dimmed = edit.skipped ? "opacity-40" : "";
                 const rowBg = isMismatch ? "bg-red-500/5 border-l-2 border-red-500" : "";
+                const isFailed = failedRowIdx === r.index;
+                const failedCls = isFailed ? "bg-destructive/10 border-l-2 border-destructive animate-shake" : "";
                 return (
-                  <div key={r.index} className={`grid grid-cols-12 items-center px-3 py-2 text-xs hover:bg-muted/30 ${dimmed} ${rowBg}`}>
+                  <TooltipProvider key={r.index}>
+                    <Tooltip open={isFailed ? true : undefined}>
+                      <TooltipTrigger asChild>
+                  <div id={`bulk-row-${r.index}`} className={`grid grid-cols-12 items-center px-3 py-2 text-xs hover:bg-muted/30 ${dimmed} ${rowBg} ${failedCls}`}>
                     <div className="col-span-1 text-muted-foreground tabular-nums">{r.index + 1}</div>
                     <div className="col-span-3 font-mono text-[10px] text-muted-foreground break-words pr-2 leading-tight">
                       {r.raw}
