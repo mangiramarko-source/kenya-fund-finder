@@ -20,6 +20,13 @@
   .animate-shake {
     animation: shake-row 0.5s ease-in-out;
   }
+  @keyframes pulse-soft {
+    0%, 100% { box-shadow: 0 0 0 0 hsl(var(--accent) / 0.45), 0 10px 25px -5px hsl(142 76% 45% / 0.35); }
+    50% { box-shadow: 0 0 0 8px hsl(var(--accent) / 0), 0 12px 30px -5px hsl(142 76% 45% / 0.55); }
+  }
+  .animate-pulse-soft {
+    animation: pulse-soft 1.8s ease-in-out infinite;
+  }
 }
 
 @layer base {
