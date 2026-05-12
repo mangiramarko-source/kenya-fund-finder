@@ -632,9 +632,13 @@ const BulkFundPasteVerify = () => {
           {/* Sync action */}
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
             <div className="text-xs text-muted-foreground">
-              {counts.blocked > 0 ? (
+              {unmappedHeaders.length > 0 ? (
+                <span className="text-red-600">
+                  {unmappedHeaders.length} unknown categor{unmappedHeaders.length === 1 ? "y" : "ies"} must be mapped first.
+                </span>
+              ) : counts.blocked > 0 ? (
                 <span className="text-orange-500">
-                  {counts.blocked} row{counts.blocked === 1 ? "" : "s"} need attention before you can sync (set up new funds, accept reviews, or skip).
+                  {counts.blocked} row{counts.blocked === 1 ? "" : "s"} need attention before you can sync (resolve type mismatches, confirm new funds, accept potential matches, or skip).
                 </span>
               ) : (
                 <span>Ready to sync {counts.matched + counts.ready} row{counts.matched + counts.ready === 1 ? "" : "s"}.</span>
