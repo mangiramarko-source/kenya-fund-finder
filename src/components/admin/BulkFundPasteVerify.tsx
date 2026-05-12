@@ -97,14 +97,20 @@ const StatusBadge = ({ row, match, edit }: { row: ParsedRow; match?: MatchInfo; 
     return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-destructive"><XCircle className="h-3 w-3" /> UNPARSED</span>;
   }
   const effectiveKind: MatchKind = edit.acceptedFundId ? "matched" : (match?.kind ?? "new");
+  if (effectiveKind === "type-mismatch") {
+    return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-600"><ShieldAlert className="h-3 w-3" /> TYPE MISMATCH</span>;
+  }
   if (effectiveKind === "new") {
-    if (edit.newSetup) {
+    if (edit.newSetup && edit.confirmedNew) {
       return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-500"><Sparkles className="h-3 w-3" /> READY</span>;
+    }
+    if (edit.newSetup) {
+      return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-orange-500"><AlertTriangle className="h-3 w-3" /> CONFIRM</span>;
     }
     return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-500"><span className="h-2 w-2 rounded-full bg-red-500" /> NEW</span>;
   }
   if (effectiveKind === "review") {
-    return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-yellow-500"><span className="h-2 w-2 rounded-full bg-yellow-500" /> REVIEW</span>;
+    return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-yellow-500"><span className="h-2 w-2 rounded-full bg-yellow-500" /> POTENTIAL MATCH</span>;
   }
   return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-500"><CheckCircle2 className="h-3 w-3" /> MATCHED</span>;
 };
