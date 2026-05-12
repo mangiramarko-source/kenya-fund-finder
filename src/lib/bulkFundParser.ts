@@ -41,15 +41,24 @@ export interface ParseReport {
   categoriesSeen: string[];
 }
 
-// Known category headers. Add new ones here — order matters (longest first).
+// Known category headers. Both legacy ("Money Mkt Fund") and current
+// ("Money Market") variants are supported. The matcher always prefers the
+// LONGEST label that matches at a given position so that "Money Market"
+// never accidentally matches inside "Money Market Fund".
 const CATEGORY_HEADERS: Array<[string, FundType]> = [
-  ["Money Mkt Fund", "money_market"],
   ["Money Market Fund", "money_market"],
+  ["Money Mkt Fund", "money_market"],
+  ["Money Market", "money_market"],
   ["Fixed Income Fund", "fixed_income"],
+  ["Fixed Income", "fixed_income"],
   ["Balanced Fund", "balanced"],
+  ["Balanced", "balanced"],
   ["Equity Fund", "equity"],
-  ["Special Fund", "money_market"],   // Special is treated as MMF for now; UI can override
+  ["Equity", "equity"],
+  ["Special Fund", "money_market"],   // Special treated as MMF; UI can override
+  ["Special", "money_market"],
   ["Bond Fund", "bond"],
+  ["Bond", "bond"],
 ];
 
 const CURRENCY_TOKENS = ["Sh", "USD", "GBP"] as const;
@@ -70,7 +79,6 @@ function deriveYieldUnit(
 ): "%" | "KES" | "USD" | "GBP" {
   if (currency === "USD") return "USD";
   if (currency === "GBP") return "GBP";
-  // currency === "Sh"
   const isNavType = fund_type === "balanced" || fund_type === "equity";
   if (isNavType) return "KES";
   if (daily > 100 || annual > 100) return "KES";
@@ -82,10 +90,15 @@ function findNextCategory(text: string, fromIdx: number): { idx: number; label: 
   for (const [label, ft] of CATEGORY_HEADERS) {
     const idx = text.indexOf(label, fromIdx);
     if (idx === -1) continue;
-    if (best === null || idx < best.idx) best = { idx, label, fund_type: ft };
+    // Prefer earliest position; on tie, prefer LONGEST label so prefix labels
+    // like "Money Market" don't beat "Money Market Fund" at the same offset.
+    if (best === null || idx < best.idx || (idx === best.idx && label.length > best.label.length)) {
+      best = { idx, label, fund_type: ft };
+    }
   }
   return best;
 }
+
 
 /**
  * Find the next currency token followed by 2 numbers, starting from `fromIdx`.
