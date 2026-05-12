@@ -540,11 +540,13 @@ const BulkFundPasteVerify = () => {
                   ? Math.abs((annual - match.prevAnnual) / match.prevAnnual) * 100
                   : 0;
                 const driftWarn = drift > 20 && match?.kind === "matched";
-                const isNew = match?.kind === "new" || !match;
+                const isMismatch = match?.kind === "type-mismatch";
+                const isNew = (match?.kind === "new" || !match) && !isMismatch;
                 const isReview = match?.kind === "review";
                 const dimmed = edit.skipped ? "opacity-40" : "";
+                const rowBg = isMismatch ? "bg-red-500/5 border-l-2 border-red-500" : "";
                 return (
-                  <div key={r.index} className={`grid grid-cols-12 items-center px-3 py-2 text-xs hover:bg-muted/30 ${dimmed}`}>
+                  <div key={r.index} className={`grid grid-cols-12 items-center px-3 py-2 text-xs hover:bg-muted/30 ${dimmed} ${rowBg}`}>
                     <div className="col-span-1 text-muted-foreground tabular-nums">{r.index + 1}</div>
                     <div className="col-span-3 font-mono text-[10px] text-muted-foreground break-words pr-2 leading-tight">
                       {r.raw}
@@ -567,24 +569,48 @@ const BulkFundPasteVerify = () => {
                       )}
                     </div>
                     <div className="col-span-2 text-right">
+                      {isMismatch && match?.conflictingFund && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="inline-flex items-center gap-1 text-[10px] text-red-600 cursor-help">
+                                <ShieldAlert className="h-3 w-3" />
+                                <span className="truncate">unit conflict</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <b>Data format mismatch:</b> "{match.conflictingFund.manager}" usually tracks{" "}
+                              {unitClass(match.conflictingFund.yield_unit) === "percent" ? "percentages" : "a unit price"},
+                              but this paste shows {unitClass(r.yield_unit ?? "%") === "percent" ? "a percentage" : "a unit price"}.
+                              Fix the source or skip this row.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                       {isReview && match?.fund && (
                         <div className="space-y-1">
-                          <div className="text-[10px] text-yellow-500 truncate">≈ {match.fund.manager}</div>
+                          <div className="text-[10px] text-yellow-500 truncate">
+                            ≈ {match.fund.manager} ({((match.similarity ?? 0) * 100).toFixed(0)}%)
+                          </div>
                           <div className="flex justify-end gap-1">
-                            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setEdit(r.index, { acceptedFundId: match.fund!.id })}>Accept</Button>
-                            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setEdit(r.index, { acceptedFundId: undefined })}>Treat as new</Button>
+                            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setEdit(r.index, { acceptedFundId: match.fund!.id })}>
+                              Link to {match.fund.manager.split(" ")[0]}
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setSetupDialogIdx(r.index)}>
+                              Create as new
+                            </Button>
                           </div>
                         </div>
                       )}
                       {isNew && r.status === "ok" && (
                         <Button
                           size="sm"
-                          variant={edit.newSetup ? "outline" : "default"}
+                          variant={edit.newSetup && edit.confirmedNew ? "outline" : "default"}
                           className="h-6 px-2 gap-1 text-[10px]"
                           onClick={() => setSetupDialogIdx(r.index)}
                         >
                           <Settings2 className="h-3 w-3" />
-                          {edit.newSetup ? "Edit setup" : "Setup"}
+                          {edit.newSetup && edit.confirmedNew ? "Edit setup" : edit.newSetup ? "Confirm" : "Setup"}
                         </Button>
                       )}
                       {match?.kind === "matched" && !isReview && (
