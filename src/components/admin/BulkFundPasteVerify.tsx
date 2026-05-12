@@ -473,11 +473,55 @@ const BulkFundPasteVerify = () => {
             <span className="rounded-full border border-border px-2 py-0.5">Total: <b>{report.rows.length}</b></span>
             <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5">Matched: {counts.matched}</span>
             <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5">Ready: {counts.ready}</span>
-            {counts.review > 0 && <span className="rounded-full border border-yellow-500/40 bg-yellow-500/10 px-2 py-0.5">Review: {counts.review}</span>}
-            {counts.new > 0 && <span className="rounded-full border border-red-500/40 bg-red-500/10 px-2 py-0.5">New (needs setup): {counts.new}</span>}
+            {counts.review > 0 && <span className="rounded-full border border-yellow-500/40 bg-yellow-500/10 px-2 py-0.5">Potential match: {counts.review}</span>}
+            {counts.new > 0 && <span className="rounded-full border border-red-500/40 bg-red-500/10 px-2 py-0.5">New (quarantined): {counts.new}</span>}
+            {counts.mismatch > 0 && <span className="rounded-full border border-red-600/40 bg-red-600/10 px-2 py-0.5 text-red-600">Type mismatch: {counts.mismatch}</span>}
             {counts.skipped > 0 && <span className="rounded-full border border-border px-2 py-0.5">Skipped: {counts.skipped}</span>}
             {counts.unparsed > 0 && <span className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5">Unparsed: {counts.unparsed}</span>}
           </div>
+
+          {/* Unknown categories panel */}
+          {report.unknownHeaders.length > 0 && (
+            <Card className="p-3 border-zinc-700 bg-zinc-900/40">
+              <div className="flex items-center gap-2 mb-2">
+                <HelpCircle className="h-4 w-4 text-zinc-400" />
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">Unknown categories detected</h4>
+                <span className="text-[10px] text-muted-foreground">({report.unknownHeaders.length})</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mb-3">
+                These header-like phrases aren't recognized. Map each to an existing fund type then re-run "Parse &amp; verify".
+                Sync is blocked until every unknown header is mapped or removed from the input.
+              </p>
+              <div className="space-y-2">
+                {report.unknownHeaders.map((h) => (
+                  <div key={h} className="flex items-center gap-2 text-xs">
+                    <span className="font-mono text-zinc-300 flex-1 truncate">⚫ {h}</span>
+                    <Select
+                      value={headerMap[h] ?? ""}
+                      onValueChange={(v) => setHeaderMap((prev) => ({ ...prev, [h]: v as FundType }))}
+                    >
+                      <SelectTrigger className="h-7 w-44 text-xs"><SelectValue placeholder="Map to fund type…" /></SelectTrigger>
+                      <SelectContent>
+                        {(Object.keys(FUND_TYPE_LABELS) as FundType[]).map((ft) => (
+                          <SelectItem key={ft} value={ft}>{FUND_TYPE_LABELS[ft]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {headerMap[h] && (
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setHeaderMap((p) => { const n = { ...p }; delete n[h]; return n; })}>
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {Object.keys(headerMap).length > 0 && unmappedHeaders.length === 0 && (
+                <Button size="sm" className="mt-3 h-7 text-xs" onClick={handleParse}>
+                  Re-parse with mappings
+                </Button>
+              )}
+            </Card>
+          )}
 
           <Card className="p-0 overflow-hidden">
             <div className="grid grid-cols-12 bg-muted px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
