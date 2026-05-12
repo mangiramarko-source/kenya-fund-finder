@@ -700,6 +700,15 @@ const BulkFundPasteVerify = () => {
                       <StatusBadge row={r} match={match} edit={edit} />
                     </div>
                   </div>
+                      </TooltipTrigger>
+                      {isFailed && failedMessage && (
+                        <TooltipContent side="top" className="max-w-md bg-destructive text-destructive-foreground">
+                          <div className="text-[11px] font-semibold mb-0.5">Sync failed on this row</div>
+                          <div className="text-[11px] font-mono break-words">{failedMessage}</div>
+                        </TooltipContent>
+                      )}
+                    </Tooltip>
+                  </TooltipProvider>
                 );
               })}
             </div>
