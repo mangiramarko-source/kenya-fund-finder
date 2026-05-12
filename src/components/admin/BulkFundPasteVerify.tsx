@@ -765,32 +765,37 @@ const BulkFundPasteVerify = () => {
 
       {/* Success state */}
       {syncResult && (
-        <Card className="p-6 text-center space-y-4">
-          <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-emerald-500/10">
-            <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+        <Card className={`p-6 text-center space-y-4 ${syncResult.dryRun ? "border-amber-500/40" : ""}`}>
+          <div className={`inline-flex items-center justify-center h-12 w-12 rounded-full ${syncResult.dryRun ? "bg-amber-500/10" : "bg-emerald-500/10"}`}>
+            {syncResult.dryRun
+              ? <FlaskConical className="h-6 w-6 text-amber-500" />
+              : <CheckCircle2 className="h-6 w-6 text-emerald-500" />}
           </div>
           <div>
-            <h3 className="text-lg font-semibold">All funds synced</h3>
+            <h3 className="text-lg font-semibold">
+              {syncResult.dryRun ? "Dry-run completed" : "All funds synced"}
+            </h3>
             <p className="text-sm text-muted-foreground mt-1">
-              {syncResult.updated.length} updated · {syncResult.created.length} created.
-              Previous yields are saved automatically to history.
+              {syncResult.dryRun
+                ? <>Simulated {syncResult.updated.length} update{syncResult.updated.length === 1 ? "" : "s"} and {syncResult.created.length} create{syncResult.created.length === 1 ? "" : "s"}. Triggers fired and rolled back — <b>no changes saved</b>.</>
+                : <>{syncResult.updated.length} updated · {syncResult.created.length} created. Previous yields are saved automatically to history.</>}
             </p>
           </div>
           <div className="flex justify-center gap-2">
-            <Button variant="outline" onClick={() => { setSyncResult(null); setReport(null); setRaw(""); setEdits({}); }}>
-              Paste another batch
+            <Button variant="outline" onClick={() => { setSyncResult(null); if (!syncResult.dryRun) { setReport(null); setRaw(""); setEdits({}); } }}>
+              {syncResult.dryRun ? "Back to review" : "Paste another batch"}
             </Button>
-            <Button variant="ghost" asChild>
-              <a href="#log" onClick={(e) => {
-                e.preventDefault();
-                // Switch to Log tab in AdminPage
-                const logTab = document.querySelector('[data-state] [value="log"], [role="tab"][data-state]') as HTMLElement | null;
-                const tabs = document.querySelectorAll('[role="tab"]');
-                tabs.forEach((t) => { if ((t as HTMLElement).innerText.toLowerCase().includes("log")) (t as HTMLElement).click(); });
-              }} className="gap-2">
-                View Change Log <ExternalLink className="h-3 w-3" />
-              </a>
-            </Button>
+            {!syncResult.dryRun && (
+              <Button variant="ghost" asChild>
+                <a href="#log" onClick={(e) => {
+                  e.preventDefault();
+                  const tabs = document.querySelectorAll('[role="tab"]');
+                  tabs.forEach((t) => { if ((t as HTMLElement).innerText.toLowerCase().includes("log")) (t as HTMLElement).click(); });
+                }} className="gap-2">
+                  View Change Log <ExternalLink className="h-3 w-3" />
+                </a>
+              </Button>
+            )}
           </div>
         </Card>
       )}
