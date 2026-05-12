@@ -85,13 +85,11 @@ function deriveYieldUnit(
   return "%";
 }
 
-function findNextCategory(text: string, fromIdx: number): { idx: number; label: string; fund_type: FundType } | null {
+function findNextCategory(text: string, fromIdx: number, headers: Array<[string, FundType]>): { idx: number; label: string; fund_type: FundType } | null {
   let best: { idx: number; label: string; fund_type: FundType } | null = null;
-  for (const [label, ft] of CATEGORY_HEADERS) {
+  for (const [label, ft] of headers) {
     const idx = text.indexOf(label, fromIdx);
     if (idx === -1) continue;
-    // Prefer earliest position; on tie, prefer LONGEST label so prefix labels
-    // like "Money Market" don't beat "Money Market Fund" at the same offset.
     if (best === null || idx < best.idx || (idx === best.idx && label.length > best.label.length)) {
       best = { idx, label, fund_type: ft };
     }
