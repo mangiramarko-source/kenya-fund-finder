@@ -39,6 +39,7 @@ export interface ParseReport {
   rows: ParsedRow[];
   unparsedSegments: string[];   // Anything we couldn't make sense of
   categoriesSeen: string[];
+  unknownHeaders: string[];     // Header-like phrases in input not in CATEGORY_HEADERS
 }
 
 // Known category headers. Both legacy ("Money Mkt Fund") and current
