@@ -25,12 +25,16 @@ interface ExistingFund {
   annual_yield: number;
 }
 
-type MatchKind = "matched" | "review" | "new";
+type MatchKind = "matched" | "review" | "new" | "type-mismatch";
 interface MatchInfo {
   kind: MatchKind;
   fund?: ExistingFund;
   prevAnnual?: number;
   drift?: number;
+  /** For type-mismatch: the existing fund whose unit class differs */
+  conflictingFund?: ExistingFund;
+  /** For "review": similarity 0..1 */
+  similarity?: number;
 }
 
 /** Per-row admin overrides on top of parsed data */
@@ -45,6 +49,31 @@ interface RowEdit {
   };
   /** When user manually accepts a fuzzy "review" match */
   acceptedFundId?: string;
+  /** Required confirmation before a NEW fund can be synced */
+  confirmedNew?: boolean;
+}
+
+// Levenshtein distance for fuzzy manager-name matching
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
+    dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+  }
+  return dp[m][n];
+}
+function similarity(a: string, b: string): number {
+  const la = a.toLowerCase(), lb = b.toLowerCase();
+  const max = Math.max(la.length, lb.length);
+  if (!max) return 1;
+  return 1 - levenshtein(la, lb) / max;
+}
+/** Whether two yield_units belong to the same "class" (% vs price) */
+function unitClass(u: string): "percent" | "price" {
+  return u === "%" ? "percent" : "price";
 }
 
 const SAMPLE = `Fund TypeFund ManagerCurrencyDaily Yield (%)Annual Rate (%)Money Mkt FundBritamSh9.269.71Money Mkt FundICEASh7.758.06Money Mkt FundCytonnSh11.4512.13Money Mkt FundCytonnUSD5.575.72Fixed Income FundICEASh12.0013.82Fixed Income FundICEAUSD7.007.50Balanced FundBritamSh167.09172.49Equity FundICEASh157.84157.84`;
