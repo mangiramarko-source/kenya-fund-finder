@@ -52,13 +52,12 @@ const CATEGORY_HEADERS: Array<[string, FundType]> = [
   ["Fixed Income Fund", "fixed_income"],
   ["Fixed Income", "fixed_income"],
   ["Balanced Fund", "balanced"],
-  ["Balanced", "balanced"],
   ["Equity Fund", "equity"],
-  ["Equity", "equity"],
   ["Special Fund", "money_market"],   // Special treated as MMF; UI can override
-  ["Special", "money_market"],
   ["Bond Fund", "bond"],
-  ["Bond", "bond"],
+  // NOTE: bare "Balanced", "Equity", "Special", "Bond" are intentionally
+  // NOT included — they collide with manager names like
+  // "African Alliance Special", "CIC Global Balanced", etc.
 ];
 
 const CURRENCY_TOKENS = ["Sh", "USD", "GBP"] as const;
