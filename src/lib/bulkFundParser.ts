@@ -99,9 +99,11 @@ function findNextRow(text: string, fromIdx: number): {
   endIdx: number;             // Position right after the second number
   rawNumbers: string;
 } | null {
-  // Regex: a currency token followed by exactly two numbers (with optional decimals).
-  // Numbers can be touching the currency or separated by whitespace.
-  const re = /(Sh|USD|GBP)\s*(-?\d+(?:\.\d+)?)\s*(-?\d+(?:\.\d+)?)/g;
+  // Regex: a currency token followed by exactly two numbers.
+  // Numbers in this dataset are always either `\d+\.\d{2}` (e.g. 167.09) or
+  // a bare integer. Constraining to 2-decimal precision prevents greedy
+  // matching from chewing across two adjacent values like "167.09172.49".
+  const re = /(Sh|USD|GBP)\s*(-?\d+\.\d{2}|-?\d+)\s*(-?\d+\.\d{2}|-?\d+)/g;
   re.lastIndex = fromIdx;
   const m = re.exec(text);
   if (!m) return null;
