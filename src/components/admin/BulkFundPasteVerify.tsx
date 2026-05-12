@@ -379,7 +379,8 @@ const BulkFundPasteVerify = () => {
     // Date detection
     const found = detectDate(text);
     setDetectedDate(found);
-    setEffectiveDate(found ?? new Date().toISOString().slice(0, 10));
+    // Respect a user-locked date — never let auto-detect override a manual pick
+    if (!dateLocked) setEffectiveDate(found ?? new Date().toISOString().slice(0, 10));
     setSyncResult(null);
     setFailedRowIdx(null);
     setFailedMessage(null);
