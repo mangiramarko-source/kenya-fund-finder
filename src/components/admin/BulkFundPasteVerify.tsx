@@ -391,11 +391,14 @@ const BulkFundPasteVerify = () => {
     if (!report || !user) return;
     setSyncing(true);
     setConfirmOpen(false);
+    setFailedRowIdx(null);
+    setFailedMessage(null);
     try {
-      const payload = effectiveRows
+      const eligible = effectiveRows
         .filter((er) => !er.edit.skipped && er.row.status === "ok" && er.match?.kind !== "type-mismatch")
-        .filter((er) => er.match?.kind === "matched" || (er.edit.newSetup && er.edit.confirmedNew))
-        .map((er) => {
+        .filter((er) => er.match?.kind === "matched" || (er.edit.newSetup && er.edit.confirmedNew));
+
+      const payload = eligible.map((er) => {
           const m = er.match;
           if (m?.kind === "matched" && m.fund) {
             return {
@@ -425,18 +428,83 @@ const BulkFundPasteVerify = () => {
           };
         });
 
-      const { data, error } = await supabase.rpc("bulk_sync_funds", { payload });
+      const { data, error } = await supabase.rpc("bulk_sync_funds", { payload, dry_run: dryRun });
       if (error) throw error;
-      const result = data as { updated: string[]; created: string[] };
-      setSyncResult({ updated: result.updated || [], created: result.created || [] });
-      toast.success(`Synced: ${result.updated?.length || 0} updated, ${result.created?.length || 0} created`);
-      // Refresh existing for any subsequent runs
-      await loadExisting();
+      const result = data as { updated: string[]; created: string[]; dry_run?: boolean };
+      setSyncResult({ updated: result.updated || [], created: result.created || [], dryRun });
+      if (dryRun) {
+        toast.success(`Dry-run OK: would update ${result.updated?.length || 0}, create ${result.created?.length || 0}`, {
+          description: "Triggers fired and rolled back. No changes saved.",
+        });
+      } else {
+        toast.success(`Synced: ${result.updated?.length || 0} updated, ${result.created?.length || 0} created`);
+        await loadExisting();
+      }
     } catch (err: any) {
-      toast.error(err.message || "Sync failed", { description: "Nothing was saved — the entire batch was rolled back." });
+      const msg: string = err?.message || "Sync failed";
+      // Parse "Row N:" out of the SQL error to highlight the offender
+      const m = /Row\s+(\d+)\s*:/i.exec(msg);
+      if (m) {
+        const payloadRowOneBased = parseInt(m[1], 10);
+        const eligibleNow = effectiveRows
+          .filter((er) => !er.edit.skipped && er.row.status === "ok" && er.match?.kind !== "type-mismatch")
+          .filter((er) => er.match?.kind === "matched" || (er.edit.newSetup && er.edit.confirmedNew));
+        const offender = eligibleNow[payloadRowOneBased - 1];
+        if (offender) {
+          setFailedRowIdx(offender.row.index);
+          setFailedMessage(msg);
+          // Scroll into view + retrigger animation
+          setTimeout(() => {
+            const el = document.getElementById(`bulk-row-${offender.row.index}`);
+            if (el) el.scrollIntoView({ block: "center", behavior: "smooth" });
+          }, 50);
+        }
+      }
+      toast.error(msg, { description: "Nothing was saved — the entire batch was rolled back." });
     } finally {
       setSyncing(false);
     }
+  };
+
+  const exportCsv = () => {
+    if (!report) return;
+    const headers = [
+      "row", "status", "category", "fund_type", "manager", "currency",
+      "yield_unit", "daily_yield", "annual_yield", "match_kind",
+      "matched_manager", "similarity_pct", "skipped", "warnings", "raw",
+    ];
+    const escape = (v: any) => {
+      const s = v === null || v === undefined ? "" : String(v);
+      return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+    };
+    const lines = [headers.join(",")];
+    for (const er of effectiveRows) {
+      lines.push([
+        er.row.index + 1,
+        er.row.status,
+        er.row.category ?? "",
+        er.row.fund_type ?? "",
+        er.row.manager,
+        er.row.currency ?? "",
+        er.row.yield_unit ?? "",
+        er.daily,
+        er.annual,
+        er.match?.kind ?? "new",
+        er.match?.fund?.manager ?? "",
+        er.match?.similarity != null ? Math.round(er.match.similarity * 100) : "",
+        er.edit.skipped ? "yes" : "no",
+        er.row.warnings.join("; "),
+        er.row.raw,
+      ].map(escape).join(","));
+    }
+    const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
+    a.href = url; a.download = `parsed-funds-${ts}.csv`;
+    document.body.appendChild(a); a.click(); a.remove();
+    URL.revokeObjectURL(url);
+    toast.success("CSV downloaded");
   };
 
   const setupDialogRow = setupDialogIdx !== null ? report?.rows[setupDialogIdx] ?? null : null;
