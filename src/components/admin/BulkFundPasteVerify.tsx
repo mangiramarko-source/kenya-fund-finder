@@ -253,6 +253,8 @@ const BulkFundPasteVerify = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ updated: string[]; created: string[] } | null>(null);
+  /** Mapping for unknown headers detected in the input → fund_type */
+  const [headerMap, setHeaderMap] = useState<Record<string, FundType>>({});
 
   const loadExisting = async () => {
     const { data, error } = await supabase
@@ -267,11 +269,15 @@ const BulkFundPasteVerify = () => {
   const handleParse = async () => {
     setRunning(true);
     if (!loadedDb) await loadExisting();
-    setReport(parseBulkFundText(raw));
+    const extras: Array<[string, FundType]> = Object.entries(headerMap).map(([label, ft]) => [label, ft]);
+    setReport(parseBulkFundText(raw, extras));
     setEdits({});
     setSyncResult(null);
     setRunning(false);
   };
+
+  /** Strict match: exact composite OR Levenshtein similarity ≥ 0.85 (NEVER auto-corrects). */
+  const SIMILARITY_THRESHOLD = 0.85;
 
   const matches = useMemo<Record<number, MatchInfo>>(() => {
     if (!report) return {};
@@ -283,6 +289,18 @@ const BulkFundPasteVerify = () => {
         out[r.index] = { kind: "new" };
         continue;
       }
+
+      // Type-consistency check FIRST: same manager exists with a different unit class
+      const conflicting = existing.find(
+        (f) =>
+          f.manager.toLowerCase().trim() === r.manager.toLowerCase().trim() &&
+          unitClass(f.yield_unit) !== unitClass(r.yield_unit!),
+      );
+      if (conflicting) {
+        out[r.index] = { kind: "type-mismatch", conflictingFund: conflicting };
+        continue;
+      }
+
       const exact = byKey.get(compositeKey(r.manager, r.fund_type, r.yield_unit));
       if (exact) {
         const drift = exact.annual_yield > 0
@@ -291,14 +309,20 @@ const BulkFundPasteVerify = () => {
         out[r.index] = { kind: "matched", fund: exact, prevAnnual: exact.annual_yield, drift };
         continue;
       }
-      const fuzzy = existing.find(
-        (f) =>
-          f.fund_type === r.fund_type &&
-          f.yield_unit === r.yield_unit &&
-          (f.manager.toLowerCase().includes(r.manager.toLowerCase()) || r.manager.toLowerCase().includes(f.manager.toLowerCase())),
-      );
-      if (fuzzy) out[r.index] = { kind: "review", fund: fuzzy, prevAnnual: fuzzy.annual_yield };
-      else out[r.index] = { kind: "new" };
+
+      // Strict fuzzy: same fund_type + same unit class, similarity ≥ threshold
+      let best: { fund: ExistingFund; sim: number } | null = null;
+      for (const f of existing) {
+        if (f.fund_type !== r.fund_type) continue;
+        if (unitClass(f.yield_unit) !== unitClass(r.yield_unit)) continue;
+        const sim = similarity(f.manager, r.manager);
+        if (sim >= SIMILARITY_THRESHOLD && (!best || sim > best.sim)) best = { fund: f, sim };
+      }
+      if (best) {
+        out[r.index] = { kind: "review", fund: best.fund, prevAnnual: best.fund.annual_yield, similarity: best.sim };
+      } else {
+        out[r.index] = { kind: "new" };
+      }
     }
     return out;
   }, [report, existing]);
@@ -319,20 +343,42 @@ const BulkFundPasteVerify = () => {
     });
   }, [report, edits, matches, existing]);
 
+  /** For the "is this a misspelling?" warning shown in the new-fund setup dialog. */
+  const similarManagersForRow = (rowIdx: number): string[] => {
+    const r = report?.rows[rowIdx];
+    if (!r) return [];
+    return Array.from(new Set(
+      existing
+        .filter((f) => similarity(f.manager, r.manager) >= 0.6 && f.manager.toLowerCase() !== r.manager.toLowerCase())
+        .map((f) => f.manager),
+    )).slice(0, 5);
+  };
+
+  /** Unknown headers in the parsed input that the user hasn't mapped yet. */
+  const unmappedHeaders = useMemo(() => {
+    if (!report) return [];
+    return report.unknownHeaders.filter((h) => !headerMap[h]);
+  }, [report, headerMap]);
+
   const counts = useMemo(() => {
-    const c = { ok: 0, unparsed: 0, matched: 0, review: 0, new: 0, ready: 0, skipped: 0, blocked: 0 };
+    const c = { ok: 0, unparsed: 0, matched: 0, review: 0, new: 0, ready: 0, skipped: 0, blocked: 0, mismatch: 0 };
     for (const er of effectiveRows) {
       if (er.edit.skipped) { c.skipped++; continue; }
       if (er.row.status !== "ok") { c.unparsed++; c.blocked++; continue; }
       c.ok++;
-      if (er.match?.kind === "matched") c.matched++;
+      if (er.match?.kind === "type-mismatch") { c.mismatch++; c.blocked++; }
+      else if (er.match?.kind === "matched") c.matched++;
       else if (er.match?.kind === "review") { c.review++; c.blocked++; }
-      else { c.new++; if (er.edit.newSetup) c.ready++; else c.blocked++; }
+      else {
+        c.new++;
+        if (er.edit.newSetup && er.edit.confirmedNew) c.ready++;
+        else c.blocked++;
+      }
     }
     return c;
   }, [effectiveRows]);
 
-  const canSync = report && counts.blocked === 0 && (counts.matched + counts.ready) > 0 && !syncing;
+  const canSync = report && counts.blocked === 0 && unmappedHeaders.length === 0 && (counts.matched + counts.ready) > 0 && !syncing;
 
   const setEdit = (idx: number, patch: Partial<RowEdit>) => {
     setEdits((prev) => ({ ...prev, [idx]: { ...prev[idx], ...patch } }));
