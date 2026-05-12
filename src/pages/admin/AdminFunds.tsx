@@ -13,7 +13,7 @@ import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowU
 import { useToast } from "@/hooks/use-toast";
 import { type FundType, FUND_TYPE_LABELS, YIELD_UNITS } from "@/lib/api";
 import AdminYieldHistory from "./AdminYieldHistory";
-import BulkFundImport from "@/components/admin/BulkFundImport";
+
 import BulkFundPasteVerify from "@/components/admin/BulkFundPasteVerify";
 
 interface FundRow {
