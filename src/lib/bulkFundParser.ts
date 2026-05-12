@@ -39,6 +39,7 @@ export interface ParseReport {
   rows: ParsedRow[];
   unparsedSegments: string[];   // Anything we couldn't make sense of
   categoriesSeen: string[];
+  unknownHeaders: string[];     // Header-like phrases in input not in CATEGORY_HEADERS
 }
 
 // Known category headers. Both legacy ("Money Mkt Fund") and current
@@ -84,13 +85,11 @@ function deriveYieldUnit(
   return "%";
 }
 
-function findNextCategory(text: string, fromIdx: number): { idx: number; label: string; fund_type: FundType } | null {
+function findNextCategory(text: string, fromIdx: number, headers: Array<[string, FundType]>): { idx: number; label: string; fund_type: FundType } | null {
   let best: { idx: number; label: string; fund_type: FundType } | null = null;
-  for (const [label, ft] of CATEGORY_HEADERS) {
+  for (const [label, ft] of headers) {
     const idx = text.indexOf(label, fromIdx);
     if (idx === -1) continue;
-    // Prefer earliest position; on tie, prefer LONGEST label so prefix labels
-    // like "Money Market" don't beat "Money Market Fund" at the same offset.
     if (best === null || idx < best.idx || (idx === best.idx && label.length > best.label.length)) {
       best = { idx, label, fund_type: ft };
     }
@@ -129,11 +128,29 @@ function findNextRow(text: string, fromIdx: number): {
   };
 }
 
-export function parseBulkFundText(input: string): ParseReport {
+export function parseBulkFundText(input: string, extraHeaders: Array<[string, FundType]> = []): ParseReport {
   const text = input.replace(/\r/g, "");
+  const mergedHeaders: Array<[string, FundType]> = [...extraHeaders, ...CATEGORY_HEADERS];
   const rows: ParsedRow[] = [];
   const unparsedSegments: string[] = [];
   const categoriesSeen: string[] = [];
+
+  // Detect header-like phrases that DON'T match known categories.
+  const knownLabels = new Set(mergedHeaders.map(([l]) => l));
+  const headerLike = /([A-Z][a-zA-Z]+(?:\s+[A-Z][a-zA-Z]+){0,3}\s+(?:Fund|Funds|Bonds|Bond|REITs|REIT|Trust|Trusts|Notes|Note|Income|Market))/g;
+  const unknownHeaders: string[] = [];
+  const seenUnknown = new Set<string>();
+  let hm: RegExpExecArray | null;
+  while ((hm = headerLike.exec(text)) !== null) {
+    const phrase = hm[1].trim();
+    let isKnown = false;
+    for (const [label] of mergedHeaders) {
+      if (phrase === label || phrase.endsWith(label) || label.endsWith(phrase)) { isKnown = true; break; }
+    }
+    if (isKnown) continue;
+    if (knownLabels.has(phrase)) continue;
+    if (!seenUnknown.has(phrase)) { seenUnknown.add(phrase); unknownHeaders.push(phrase); }
+  }
 
   let cursor = 0;
   let currentCategory: { label: string; fund_type: FundType } | null = null;
@@ -151,7 +168,7 @@ export function parseBulkFundText(input: string): ParseReport {
     // Track the LAST one before currencyIdx — that's the active category for this row.
     let scan = cursor;
     while (true) {
-      const cat = findNextCategory(text, scan);
+      const cat = findNextCategory(text, scan, mergedHeaders);
       if (!cat || cat.idx >= nextRow.currencyIdx) break;
       currentCategory = { label: cat.label, fund_type: cat.fund_type };
       if (!categoriesSeen.includes(cat.label)) categoriesSeen.push(cat.label);
@@ -166,7 +183,7 @@ export function parseBulkFundText(input: string): ParseReport {
       // by re-scanning from cursor.
       let s = cursor;
       while (true) {
-        const cat = findNextCategory(text, s);
+        const cat = findNextCategory(text, s, mergedHeaders);
         if (!cat || cat.idx >= nextRow.currencyIdx) break;
         segStart = cat.idx + cat.label.length;
         s = segStart;
@@ -224,5 +241,5 @@ export function parseBulkFundText(input: string): ParseReport {
     cursor = nextRow.endIdx;
   }
 
-  return { rows, unparsedSegments, categoriesSeen };
+  return { rows, unparsedSegments, categoriesSeen, unknownHeaders };
 }

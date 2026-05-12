@@ -11,7 +11,10 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
 import { parseBulkFundText, type ParsedRow } from "@/lib/bulkFundParser";
 import { FUND_TYPE_LABELS, type FundType } from "@/lib/api";
-import { CheckCircle2, AlertTriangle, XCircle, Search, FileText, Settings2, Loader2, ExternalLink, Sparkles } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import { CheckCircle2, AlertTriangle, XCircle, Search, FileText, Settings2, Loader2, ExternalLink, Sparkles, ShieldAlert, HelpCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface ExistingFund {
@@ -22,12 +25,16 @@ interface ExistingFund {
   annual_yield: number;
 }
 
-type MatchKind = "matched" | "review" | "new";
+type MatchKind = "matched" | "review" | "new" | "type-mismatch";
 interface MatchInfo {
   kind: MatchKind;
   fund?: ExistingFund;
   prevAnnual?: number;
   drift?: number;
+  /** For type-mismatch: the existing fund whose unit class differs */
+  conflictingFund?: ExistingFund;
+  /** For "review": similarity 0..1 */
+  similarity?: number;
 }
 
 /** Per-row admin overrides on top of parsed data */
@@ -42,6 +49,31 @@ interface RowEdit {
   };
   /** When user manually accepts a fuzzy "review" match */
   acceptedFundId?: string;
+  /** Required confirmation before a NEW fund can be synced */
+  confirmedNew?: boolean;
+}
+
+// Levenshtein distance for fuzzy manager-name matching
+function levenshtein(a: string, b: string): number {
+  const m = a.length, n = b.length;
+  if (!m) return n; if (!n) return m;
+  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
+  for (let i = 0; i <= m; i++) dp[i][0] = i;
+  for (let j = 0; j <= n; j++) dp[0][j] = j;
+  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
+    dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
+  }
+  return dp[m][n];
+}
+function similarity(a: string, b: string): number {
+  const la = a.toLowerCase(), lb = b.toLowerCase();
+  const max = Math.max(la.length, lb.length);
+  if (!max) return 1;
+  return 1 - levenshtein(la, lb) / max;
+}
+/** Whether two yield_units belong to the same "class" (% vs price) */
+function unitClass(u: string): "percent" | "price" {
+  return u === "%" ? "percent" : "price";
 }
 
 const SAMPLE = `Fund TypeFund ManagerCurrencyDaily Yield (%)Annual Rate (%)Money Mkt FundBritamSh9.269.71Money Mkt FundICEASh7.758.06Money Mkt FundCytonnSh11.4512.13Money Mkt FundCytonnUSD5.575.72Fixed Income FundICEASh12.0013.82Fixed Income FundICEAUSD7.007.50Balanced FundBritamSh167.09172.49Equity FundICEASh157.84157.84`;
@@ -65,14 +97,20 @@ const StatusBadge = ({ row, match, edit }: { row: ParsedRow; match?: MatchInfo; 
     return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-destructive"><XCircle className="h-3 w-3" /> UNPARSED</span>;
   }
   const effectiveKind: MatchKind = edit.acceptedFundId ? "matched" : (match?.kind ?? "new");
+  if (effectiveKind === "type-mismatch") {
+    return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-600"><ShieldAlert className="h-3 w-3" /> TYPE MISMATCH</span>;
+  }
   if (effectiveKind === "new") {
-    if (edit.newSetup) {
+    if (edit.newSetup && edit.confirmedNew) {
       return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-500"><Sparkles className="h-3 w-3" /> READY</span>;
+    }
+    if (edit.newSetup) {
+      return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-orange-500"><AlertTriangle className="h-3 w-3" /> CONFIRM</span>;
     }
     return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-red-500"><span className="h-2 w-2 rounded-full bg-red-500" /> NEW</span>;
   }
   if (effectiveKind === "review") {
-    return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-yellow-500"><span className="h-2 w-2 rounded-full bg-yellow-500" /> REVIEW</span>;
+    return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-yellow-500"><span className="h-2 w-2 rounded-full bg-yellow-500" /> POTENTIAL MATCH</span>;
   }
   return <span className="inline-flex items-center gap-1 text-[10px] font-semibold text-emerald-500"><CheckCircle2 className="h-3 w-3" /> MATCHED</span>;
 };
@@ -116,24 +154,27 @@ const EditableNumber = ({ value, onChange, warn }: { value: number; onChange: (v
 };
 
 const NewFundSetupDialog = ({
-  open, onOpenChange, row, edit, onSave,
+  open, onOpenChange, row, edit, similarManagers, onSave,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   row: ParsedRow | null;
   edit: RowEdit | null;
-  onSave: (setup: { minimum_investment: number; management_fee: number; withdrawal_time: string }) => void;
+  similarManagers: string[];
+  onSave: (setup: { minimum_investment: number; management_fee: number; withdrawal_time: string }, confirmed: boolean) => void;
 }) => {
   const [min, setMin] = useState("1000");
   const [fee, setFee] = useState("2");
   const [wd, setWd] = useState("T+1");
+  const [confirmed, setConfirmed] = useState(false);
   useEffect(() => {
     if (open && edit?.newSetup) {
       setMin(String(edit.newSetup.minimum_investment));
       setFee(String(edit.newSetup.management_fee));
       setWd(edit.newSetup.withdrawal_time);
+      setConfirmed(!!edit.confirmedNew);
     } else if (open) {
-      setMin("1000"); setFee("2"); setWd("T+1");
+      setMin("1000"); setFee("2"); setWd("T+1"); setConfirmed(false);
     }
   }, [open, edit]);
   if (!row) return null;
@@ -150,6 +191,16 @@ const NewFundSetupDialog = ({
               {row.fund_type ? FUND_TYPE_LABELS[row.fund_type as FundType] : "—"} · {row.yield_unit}
             </div>
           </div>
+          {similarManagers.length > 0 && (
+            <div className="rounded-md border border-yellow-500/40 bg-yellow-500/10 px-3 py-2 text-xs">
+              <div className="flex items-center gap-1 font-semibold text-yellow-600 dark:text-yellow-400">
+                <AlertTriangle className="h-3 w-3" /> Similar names already exist
+              </div>
+              <div className="mt-1 text-muted-foreground">
+                Make sure this isn't a misspelling of: {similarManagers.map((s) => <b key={s} className="mr-1">{s}</b>)}
+              </div>
+            </div>
+          )}
           <div className="space-y-1.5">
             <Label className="text-xs">Minimum investment ({row.yield_unit === "%" ? "KES" : row.yield_unit})</Label>
             <Input type="number" inputMode="decimal" value={min} onChange={(e) => setMin(e.target.value)} />
@@ -162,6 +213,13 @@ const NewFundSetupDialog = ({
             <Label className="text-xs">Withdrawal time</Label>
             <Input value={wd} onChange={(e) => setWd(e.target.value)} placeholder="e.g. T+1, T+3, Same day" />
           </div>
+          <label className="flex items-start gap-2 rounded-md border border-border bg-card px-3 py-2 text-xs cursor-pointer">
+            <Checkbox checked={confirmed} onCheckedChange={(v) => setConfirmed(!!v)} className="mt-0.5" />
+            <span>
+              <b>I confirm this is a new fund</b> and not a misspelling of an existing one.
+              Without this confirmation, the row will stay in quarantine.
+            </span>
+          </label>
         </div>
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
@@ -171,7 +229,7 @@ const NewFundSetupDialog = ({
                 minimum_investment: parseFloat(min) || 0,
                 management_fee: parseFloat(fee) || 0,
                 withdrawal_time: wd.trim() || "T+1",
-              });
+              }, confirmed);
               onOpenChange(false);
             }}
           >
@@ -195,6 +253,8 @@ const BulkFundPasteVerify = () => {
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ updated: string[]; created: string[] } | null>(null);
+  /** Mapping for unknown headers detected in the input → fund_type */
+  const [headerMap, setHeaderMap] = useState<Record<string, FundType>>({});
 
   const loadExisting = async () => {
     const { data, error } = await supabase
@@ -209,11 +269,15 @@ const BulkFundPasteVerify = () => {
   const handleParse = async () => {
     setRunning(true);
     if (!loadedDb) await loadExisting();
-    setReport(parseBulkFundText(raw));
+    const extras: Array<[string, FundType]> = Object.entries(headerMap).map(([label, ft]) => [label, ft]);
+    setReport(parseBulkFundText(raw, extras));
     setEdits({});
     setSyncResult(null);
     setRunning(false);
   };
+
+  /** Strict match: exact composite OR Levenshtein similarity ≥ 0.85 (NEVER auto-corrects). */
+  const SIMILARITY_THRESHOLD = 0.85;
 
   const matches = useMemo<Record<number, MatchInfo>>(() => {
     if (!report) return {};
@@ -225,6 +289,18 @@ const BulkFundPasteVerify = () => {
         out[r.index] = { kind: "new" };
         continue;
       }
+
+      // Type-consistency check FIRST: same manager exists with a different unit class
+      const conflicting = existing.find(
+        (f) =>
+          f.manager.toLowerCase().trim() === r.manager.toLowerCase().trim() &&
+          unitClass(f.yield_unit) !== unitClass(r.yield_unit!),
+      );
+      if (conflicting) {
+        out[r.index] = { kind: "type-mismatch", conflictingFund: conflicting };
+        continue;
+      }
+
       const exact = byKey.get(compositeKey(r.manager, r.fund_type, r.yield_unit));
       if (exact) {
         const drift = exact.annual_yield > 0
@@ -233,14 +309,20 @@ const BulkFundPasteVerify = () => {
         out[r.index] = { kind: "matched", fund: exact, prevAnnual: exact.annual_yield, drift };
         continue;
       }
-      const fuzzy = existing.find(
-        (f) =>
-          f.fund_type === r.fund_type &&
-          f.yield_unit === r.yield_unit &&
-          (f.manager.toLowerCase().includes(r.manager.toLowerCase()) || r.manager.toLowerCase().includes(f.manager.toLowerCase())),
-      );
-      if (fuzzy) out[r.index] = { kind: "review", fund: fuzzy, prevAnnual: fuzzy.annual_yield };
-      else out[r.index] = { kind: "new" };
+
+      // Strict fuzzy: same fund_type + same unit class, similarity ≥ threshold
+      let best: { fund: ExistingFund; sim: number } | null = null;
+      for (const f of existing) {
+        if (f.fund_type !== r.fund_type) continue;
+        if (unitClass(f.yield_unit) !== unitClass(r.yield_unit)) continue;
+        const sim = similarity(f.manager, r.manager);
+        if (sim >= SIMILARITY_THRESHOLD && (!best || sim > best.sim)) best = { fund: f, sim };
+      }
+      if (best) {
+        out[r.index] = { kind: "review", fund: best.fund, prevAnnual: best.fund.annual_yield, similarity: best.sim };
+      } else {
+        out[r.index] = { kind: "new" };
+      }
     }
     return out;
   }, [report, existing]);
@@ -261,20 +343,42 @@ const BulkFundPasteVerify = () => {
     });
   }, [report, edits, matches, existing]);
 
+  /** For the "is this a misspelling?" warning shown in the new-fund setup dialog. */
+  const similarManagersForRow = (rowIdx: number): string[] => {
+    const r = report?.rows[rowIdx];
+    if (!r) return [];
+    return Array.from(new Set(
+      existing
+        .filter((f) => similarity(f.manager, r.manager) >= 0.6 && f.manager.toLowerCase() !== r.manager.toLowerCase())
+        .map((f) => f.manager),
+    )).slice(0, 5);
+  };
+
+  /** Unknown headers in the parsed input that the user hasn't mapped yet. */
+  const unmappedHeaders = useMemo(() => {
+    if (!report) return [];
+    return report.unknownHeaders.filter((h) => !headerMap[h]);
+  }, [report, headerMap]);
+
   const counts = useMemo(() => {
-    const c = { ok: 0, unparsed: 0, matched: 0, review: 0, new: 0, ready: 0, skipped: 0, blocked: 0 };
+    const c = { ok: 0, unparsed: 0, matched: 0, review: 0, new: 0, ready: 0, skipped: 0, blocked: 0, mismatch: 0 };
     for (const er of effectiveRows) {
       if (er.edit.skipped) { c.skipped++; continue; }
       if (er.row.status !== "ok") { c.unparsed++; c.blocked++; continue; }
       c.ok++;
-      if (er.match?.kind === "matched") c.matched++;
+      if (er.match?.kind === "type-mismatch") { c.mismatch++; c.blocked++; }
+      else if (er.match?.kind === "matched") c.matched++;
       else if (er.match?.kind === "review") { c.review++; c.blocked++; }
-      else { c.new++; if (er.edit.newSetup) c.ready++; else c.blocked++; }
+      else {
+        c.new++;
+        if (er.edit.newSetup && er.edit.confirmedNew) c.ready++;
+        else c.blocked++;
+      }
     }
     return c;
   }, [effectiveRows]);
 
-  const canSync = report && counts.blocked === 0 && (counts.matched + counts.ready) > 0 && !syncing;
+  const canSync = report && counts.blocked === 0 && unmappedHeaders.length === 0 && (counts.matched + counts.ready) > 0 && !syncing;
 
   const setEdit = (idx: number, patch: Partial<RowEdit>) => {
     setEdits((prev) => ({ ...prev, [idx]: { ...prev[idx], ...patch } }));
@@ -286,7 +390,8 @@ const BulkFundPasteVerify = () => {
     setConfirmOpen(false);
     try {
       const payload = effectiveRows
-        .filter((er) => !er.edit.skipped && er.row.status === "ok")
+        .filter((er) => !er.edit.skipped && er.row.status === "ok" && er.match?.kind !== "type-mismatch")
+        .filter((er) => er.match?.kind === "matched" || (er.edit.newSetup && er.edit.confirmedNew))
         .map((er) => {
           const m = er.match;
           if (m?.kind === "matched" && m.fund) {
@@ -368,11 +473,55 @@ const BulkFundPasteVerify = () => {
             <span className="rounded-full border border-border px-2 py-0.5">Total: <b>{report.rows.length}</b></span>
             <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5">Matched: {counts.matched}</span>
             <span className="rounded-full border border-emerald-500/40 bg-emerald-500/10 px-2 py-0.5">Ready: {counts.ready}</span>
-            {counts.review > 0 && <span className="rounded-full border border-yellow-500/40 bg-yellow-500/10 px-2 py-0.5">Review: {counts.review}</span>}
-            {counts.new > 0 && <span className="rounded-full border border-red-500/40 bg-red-500/10 px-2 py-0.5">New (needs setup): {counts.new}</span>}
+            {counts.review > 0 && <span className="rounded-full border border-yellow-500/40 bg-yellow-500/10 px-2 py-0.5">Potential match: {counts.review}</span>}
+            {counts.new > 0 && <span className="rounded-full border border-red-500/40 bg-red-500/10 px-2 py-0.5">New (quarantined): {counts.new}</span>}
+            {counts.mismatch > 0 && <span className="rounded-full border border-red-600/40 bg-red-600/10 px-2 py-0.5 text-red-600">Type mismatch: {counts.mismatch}</span>}
             {counts.skipped > 0 && <span className="rounded-full border border-border px-2 py-0.5">Skipped: {counts.skipped}</span>}
             {counts.unparsed > 0 && <span className="rounded-full border border-destructive/40 bg-destructive/10 px-2 py-0.5">Unparsed: {counts.unparsed}</span>}
           </div>
+
+          {/* Unknown categories panel */}
+          {report.unknownHeaders.length > 0 && (
+            <Card className="p-3 border-zinc-700 bg-zinc-900/40">
+              <div className="flex items-center gap-2 mb-2">
+                <HelpCircle className="h-4 w-4 text-zinc-400" />
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-zinc-300">Unknown categories detected</h4>
+                <span className="text-[10px] text-muted-foreground">({report.unknownHeaders.length})</span>
+              </div>
+              <p className="text-[11px] text-muted-foreground mb-3">
+                These header-like phrases aren't recognized. Map each to an existing fund type then re-run "Parse &amp; verify".
+                Sync is blocked until every unknown header is mapped or removed from the input.
+              </p>
+              <div className="space-y-2">
+                {report.unknownHeaders.map((h) => (
+                  <div key={h} className="flex items-center gap-2 text-xs">
+                    <span className="font-mono text-zinc-300 flex-1 truncate">⚫ {h}</span>
+                    <Select
+                      value={headerMap[h] ?? ""}
+                      onValueChange={(v) => setHeaderMap((prev) => ({ ...prev, [h]: v as FundType }))}
+                    >
+                      <SelectTrigger className="h-7 w-44 text-xs"><SelectValue placeholder="Map to fund type…" /></SelectTrigger>
+                      <SelectContent>
+                        {(Object.keys(FUND_TYPE_LABELS) as FundType[]).map((ft) => (
+                          <SelectItem key={ft} value={ft}>{FUND_TYPE_LABELS[ft]}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    {headerMap[h] && (
+                      <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setHeaderMap((p) => { const n = { ...p }; delete n[h]; return n; })}>
+                        Clear
+                      </Button>
+                    )}
+                  </div>
+                ))}
+              </div>
+              {Object.keys(headerMap).length > 0 && unmappedHeaders.length === 0 && (
+                <Button size="sm" className="mt-3 h-7 text-xs" onClick={handleParse}>
+                  Re-parse with mappings
+                </Button>
+              )}
+            </Card>
+          )}
 
           <Card className="p-0 overflow-hidden">
             <div className="grid grid-cols-12 bg-muted px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
@@ -391,11 +540,13 @@ const BulkFundPasteVerify = () => {
                   ? Math.abs((annual - match.prevAnnual) / match.prevAnnual) * 100
                   : 0;
                 const driftWarn = drift > 20 && match?.kind === "matched";
-                const isNew = match?.kind === "new" || !match;
+                const isMismatch = match?.kind === "type-mismatch";
+                const isNew = (match?.kind === "new" || !match) && !isMismatch;
                 const isReview = match?.kind === "review";
                 const dimmed = edit.skipped ? "opacity-40" : "";
+                const rowBg = isMismatch ? "bg-red-500/5 border-l-2 border-red-500" : "";
                 return (
-                  <div key={r.index} className={`grid grid-cols-12 items-center px-3 py-2 text-xs hover:bg-muted/30 ${dimmed}`}>
+                  <div key={r.index} className={`grid grid-cols-12 items-center px-3 py-2 text-xs hover:bg-muted/30 ${dimmed} ${rowBg}`}>
                     <div className="col-span-1 text-muted-foreground tabular-nums">{r.index + 1}</div>
                     <div className="col-span-3 font-mono text-[10px] text-muted-foreground break-words pr-2 leading-tight">
                       {r.raw}
@@ -418,24 +569,48 @@ const BulkFundPasteVerify = () => {
                       )}
                     </div>
                     <div className="col-span-2 text-right">
+                      {isMismatch && match?.conflictingFund && (
+                        <TooltipProvider>
+                          <Tooltip>
+                            <TooltipTrigger asChild>
+                              <div className="inline-flex items-center gap-1 text-[10px] text-red-600 cursor-help">
+                                <ShieldAlert className="h-3 w-3" />
+                                <span className="truncate">unit conflict</span>
+                              </div>
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs">
+                              <b>Data format mismatch:</b> "{match.conflictingFund.manager}" usually tracks{" "}
+                              {unitClass(match.conflictingFund.yield_unit) === "percent" ? "percentages" : "a unit price"},
+                              but this paste shows {unitClass(r.yield_unit ?? "%") === "percent" ? "a percentage" : "a unit price"}.
+                              Fix the source or skip this row.
+                            </TooltipContent>
+                          </Tooltip>
+                        </TooltipProvider>
+                      )}
                       {isReview && match?.fund && (
                         <div className="space-y-1">
-                          <div className="text-[10px] text-yellow-500 truncate">≈ {match.fund.manager}</div>
+                          <div className="text-[10px] text-yellow-500 truncate">
+                            ≈ {match.fund.manager} ({((match.similarity ?? 0) * 100).toFixed(0)}%)
+                          </div>
                           <div className="flex justify-end gap-1">
-                            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setEdit(r.index, { acceptedFundId: match.fund!.id })}>Accept</Button>
-                            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setEdit(r.index, { acceptedFundId: undefined })}>Treat as new</Button>
+                            <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setEdit(r.index, { acceptedFundId: match.fund!.id })}>
+                              Link to {match.fund.manager.split(" ")[0]}
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setSetupDialogIdx(r.index)}>
+                              Create as new
+                            </Button>
                           </div>
                         </div>
                       )}
                       {isNew && r.status === "ok" && (
                         <Button
                           size="sm"
-                          variant={edit.newSetup ? "outline" : "default"}
+                          variant={edit.newSetup && edit.confirmedNew ? "outline" : "default"}
                           className="h-6 px-2 gap-1 text-[10px]"
                           onClick={() => setSetupDialogIdx(r.index)}
                         >
                           <Settings2 className="h-3 w-3" />
-                          {edit.newSetup ? "Edit setup" : "Setup"}
+                          {edit.newSetup && edit.confirmedNew ? "Edit setup" : edit.newSetup ? "Confirm" : "Setup"}
                         </Button>
                       )}
                       {match?.kind === "matched" && !isReview && (
@@ -457,9 +632,13 @@ const BulkFundPasteVerify = () => {
           {/* Sync action */}
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
             <div className="text-xs text-muted-foreground">
-              {counts.blocked > 0 ? (
+              {unmappedHeaders.length > 0 ? (
+                <span className="text-red-600">
+                  {unmappedHeaders.length} unknown categor{unmappedHeaders.length === 1 ? "y" : "ies"} must be mapped first.
+                </span>
+              ) : counts.blocked > 0 ? (
                 <span className="text-orange-500">
-                  {counts.blocked} row{counts.blocked === 1 ? "" : "s"} need attention before you can sync (set up new funds, accept reviews, or skip).
+                  {counts.blocked} row{counts.blocked === 1 ? "" : "s"} need attention before you can sync (resolve type mismatches, confirm new funds, accept potential matches, or skip).
                 </span>
               ) : (
                 <span>Ready to sync {counts.matched + counts.ready} row{counts.matched + counts.ready === 1 ? "" : "s"}.</span>
@@ -526,7 +705,8 @@ const BulkFundPasteVerify = () => {
         onOpenChange={(v) => { if (!v) setSetupDialogIdx(null); }}
         row={setupDialogRow}
         edit={setupDialogEdit}
-        onSave={(setup) => { if (setupDialogIdx !== null) setEdit(setupDialogIdx, { newSetup: setup }); }}
+        similarManagers={setupDialogIdx !== null ? similarManagersForRow(setupDialogIdx) : []}
+        onSave={(setup, confirmed) => { if (setupDialogIdx !== null) setEdit(setupDialogIdx, { newSetup: setup, confirmedNew: confirmed }); }}
       />
 
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
