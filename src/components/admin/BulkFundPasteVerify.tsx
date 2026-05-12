@@ -557,7 +557,7 @@ const BulkFundPasteVerify = () => {
   const exportCsv = () => {
     if (!report) return;
     const headers = [
-      "row", "status", "category", "fund_type", "manager", "currency",
+      "effective_date", "row", "status", "category", "fund_type", "manager", "currency",
       "yield_unit", "daily_yield", "annual_yield", "match_kind",
       "matched_manager", "similarity_pct", "skipped", "warnings", "raw",
     ];
@@ -568,6 +568,7 @@ const BulkFundPasteVerify = () => {
     const lines = [headers.join(",")];
     for (const er of effectiveRows) {
       lines.push([
+        effectiveDate,
         er.row.index + 1,
         er.row.status,
         er.row.category ?? "",
@@ -588,8 +589,8 @@ const BulkFundPasteVerify = () => {
     const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-    a.href = url; a.download = `parsed-funds-${ts}.csv`;
+    const datePart = effectiveDate || new Date().toISOString().slice(0, 10);
+    a.href = url; a.download = `parsed-funds-${datePart}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     toast.success("CSV downloaded");
