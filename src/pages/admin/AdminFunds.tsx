@@ -14,6 +14,7 @@ import { useToast } from "@/hooks/use-toast";
 import { type FundType, FUND_TYPE_LABELS, YIELD_UNITS } from "@/lib/api";
 import AdminYieldHistory from "./AdminYieldHistory";
 import BulkFundImport from "@/components/admin/BulkFundImport";
+import BulkFundPasteVerify from "@/components/admin/BulkFundPasteVerify";
 
 interface FundRow {
   id: string;
@@ -385,6 +386,15 @@ const AdminFunds = () => {
         </div>
       </div>
       <BulkFundImport open={bulkImportOpen} onOpenChange={setBulkImportOpen} onComplete={load} />
+
+      <details className="mb-4 rounded-lg border border-border bg-card">
+        <summary className="cursor-pointer select-none px-4 py-2 text-sm font-medium hover:bg-muted/40">
+          Bulk Paste — defensive parser (Stage 1: parse &amp; verify)
+        </summary>
+        <div className="p-4 border-t border-border">
+          <BulkFundPasteVerify />
+        </div>
+      </details>
 
       <div className="flex flex-col sm:flex-row gap-3 mb-4">
         <div className="relative flex-1">
