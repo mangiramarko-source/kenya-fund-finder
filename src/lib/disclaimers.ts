@@ -15,6 +15,9 @@ export const FUND_TYPE_DISCLAIMERS: Record<FundType, string> = {
 
   bond:
     "Bond Funds invest primarily in government and corporate bonds. These funds are subject to interest rate risk, credit risk, and liquidity risk. When interest rates rise, bond prices typically fall. The fund's value may fluctuate, and returns are not guaranteed. Yields shown are gross annual rates before the 15% withholding tax. Past performance is not indicative of future results. Capital is not guaranteed. This platform does not offer investment advice. Please consult a licensed financial advisor before making investment decisions.",
+
+  special:
+    "Special Funds include thematic, shariah-compliant, high-yield, and other specialised mandates that may invest across asset classes outside conventional categories. Strategy, risk profile, and liquidity vary widely between funds — read each fund's fact sheet carefully. Past performance is not indicative of future results. Capital is not guaranteed. This platform does not offer investment advice. Please consult a licensed financial advisor before making investment decisions.",
 };
 
 /**
