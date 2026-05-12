@@ -14,7 +14,7 @@ import { FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
-import { CheckCircle2, AlertTriangle, XCircle, Search, FileText, Settings2, Loader2, ExternalLink, Sparkles, ShieldAlert, HelpCircle, Download, FlaskConical } from "lucide-react";
+import { CheckCircle2, AlertTriangle, XCircle, Search, FileText, Settings2, Loader2, ExternalLink, Sparkles, ShieldAlert, HelpCircle, Download, FlaskConical, Clipboard, Calendar } from "lucide-react";
 import { toast } from "sonner";
 
 interface ExistingFund {
@@ -78,6 +78,19 @@ function unitClass(u: string): "percent" | "price" {
 
 const SAMPLE = `Fund TypeFund ManagerCurrencyDaily Yield (%)Annual Rate (%)Money Mkt FundBritamSh9.269.71Money Mkt FundICEASh7.758.06Money Mkt FundCytonnSh11.4512.13Money Mkt FundCytonnUSD5.575.72Fixed Income FundICEASh12.0013.82Fixed Income FundICEAUSD7.007.50Balanced FundBritamSh167.09172.49Equity FundICEASh157.84157.84`;
 
+const PERMA_SKIP_KEY = "kff_admin_perma_skip_v1";
+
+function loadPermaSkips(): Set<string> {
+  try {
+    const raw = localStorage.getItem(PERMA_SKIP_KEY);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw));
+  } catch { return new Set(); }
+}
+function savePermaSkips(set: Set<string>) {
+  try { localStorage.setItem(PERMA_SKIP_KEY, JSON.stringify([...set])); } catch { /* noop */ }
+}
+
 function compositeKey(manager: string, fund_type: string, yield_unit: string) {
   return `${manager.trim().toLowerCase()}|${fund_type}|${yield_unit}`;
 }
@@ -87,6 +100,37 @@ function generateSlug(manager: string, fund_type: string, yield_unit: string) {
   const ftShort = fund_type.replace("_", "-");
   const cur = yield_unit === "%" ? "" : `-${yield_unit.toLowerCase()}`;
   return `${base}-${ftShort}${cur}`;
+}
+
+/**
+ * Try to detect a date in the pasted blob. Supports DD.MM.YYYY, DD/MM/YYYY,
+ * DD-MM-YYYY, and "8 May 2026" / "May 8, 2026". Returns ISO YYYY-MM-DD or null.
+ */
+function detectDate(text: string): string | null {
+  // DD.MM.YYYY or DD/MM/YYYY or DD-MM-YYYY
+  const m1 = /\b(\d{1,2})[./-](\d{1,2})[./-](\d{4})\b/.exec(text);
+  if (m1) {
+    const d = +m1[1], mo = +m1[2], y = +m1[3];
+    if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) {
+      return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+  }
+  // YYYY-MM-DD
+  const m2 = /\b(\d{4})-(\d{2})-(\d{2})\b/.exec(text);
+  if (m2) return `${m2[1]}-${m2[2]}-${m2[3]}`;
+  // "8 May 2026" / "May 8, 2026"
+  const months = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+  const m3 = /\b(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\b/.exec(text);
+  if (m3) {
+    const mi = months.indexOf(m3[2].slice(0, 3).toLowerCase());
+    if (mi >= 0) return `${m3[3]}-${String(mi + 1).padStart(2, "0")}-${String(+m3[1]).padStart(2, "0")}`;
+  }
+  const m4 = /\b([A-Za-z]{3,9})\s+(\d{1,2}),?\s+(\d{4})\b/.exec(text);
+  if (m4) {
+    const mi = months.indexOf(m4[1].slice(0, 3).toLowerCase());
+    if (mi >= 0) return `${m4[3]}-${String(mi + 1).padStart(2, "0")}-${String(+m4[2]).padStart(2, "0")}`;
+  }
+  return null;
 }
 
 const StatusBadge = ({ row, match, edit }: { row: ParsedRow; match?: MatchInfo; edit: RowEdit }) => {
@@ -258,6 +302,9 @@ const BulkFundPasteVerify = () => {
   const [failedMessage, setFailedMessage] = useState<string | null>(null);
   /** Mapping for unknown headers detected in the input → fund_type */
   const [headerMap, setHeaderMap] = useState<Record<string, FundType>>({});
+  const [permaSkips, setPermaSkips] = useState<Set<string>>(() => loadPermaSkips());
+  const [effectiveDate, setEffectiveDate] = useState<string>("");
+  const [detectedDate, setDetectedDate] = useState<string | null>(null);
 
   const loadExisting = async () => {
     const { data, error } = await supabase
@@ -269,14 +316,55 @@ const BulkFundPasteVerify = () => {
     }
   };
 
-  const handleParse = async () => {
+  const handleParse = async (textOverride?: string) => {
     setRunning(true);
+    const text = textOverride ?? raw;
     if (!loadedDb) await loadExisting();
     const extras: Array<[string, FundType]> = Object.entries(headerMap).map(([label, ft]) => [label, ft]);
-    setReport(parseBulkFundText(raw, extras));
-    setEdits({});
+    const rep = parseBulkFundText(text, extras);
+    setReport(rep);
+    // Auto-skip rows whose composite key is in the permanent-skip set
+    const initialEdits: Record<number, RowEdit> = {};
+    for (const r of rep.rows) {
+      if (r.status === "ok" && r.fund_type && r.yield_unit) {
+        const key = compositeKey(r.manager, r.fund_type, r.yield_unit);
+        if (permaSkips.has(key)) initialEdits[r.index] = { skipped: true };
+      }
+    }
+    setEdits(initialEdits);
+    // Date detection
+    const found = detectDate(text);
+    setDetectedDate(found);
+    setEffectiveDate(found ?? new Date().toISOString().slice(0, 10));
     setSyncResult(null);
+    setFailedRowIdx(null);
+    setFailedMessage(null);
     setRunning(false);
+  };
+
+  const togglePermaSkip = (manager: string, fund_type: string, yield_unit: string, on: boolean) => {
+    const key = compositeKey(manager, fund_type, yield_unit);
+    setPermaSkips((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key); else next.delete(key);
+      savePermaSkips(next);
+      return next;
+    });
+  };
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text.trim()) {
+        toast.error("Clipboard is empty");
+        return;
+      }
+      setRaw(text);
+      await handleParse(text);
+      toast.success("Pasted and parsed");
+    } catch {
+      toast.error("Couldn't read clipboard", { description: "Grant permission or paste manually." });
+    }
   };
 
   /** Strict match: exact composite OR Levenshtein similarity ≥ 0.85 (NEVER auto-corrects). */
@@ -469,7 +557,7 @@ const BulkFundPasteVerify = () => {
   const exportCsv = () => {
     if (!report) return;
     const headers = [
-      "row", "status", "category", "fund_type", "manager", "currency",
+      "effective_date", "row", "status", "category", "fund_type", "manager", "currency",
       "yield_unit", "daily_yield", "annual_yield", "match_kind",
       "matched_manager", "similarity_pct", "skipped", "warnings", "raw",
     ];
@@ -480,6 +568,7 @@ const BulkFundPasteVerify = () => {
     const lines = [headers.join(",")];
     for (const er of effectiveRows) {
       lines.push([
+        effectiveDate,
         er.row.index + 1,
         er.row.status,
         er.row.category ?? "",
@@ -500,8 +589,8 @@ const BulkFundPasteVerify = () => {
     const blob = new Blob([lines.join("\n")], { type: "text/csv;charset=utf-8" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
-    const ts = new Date().toISOString().replace(/[:.]/g, "-").slice(0, 19);
-    a.href = url; a.download = `parsed-funds-${ts}.csv`;
+    const datePart = effectiveDate || new Date().toISOString().slice(0, 10);
+    a.href = url; a.download = `parsed-funds-${datePart}.csv`;
     document.body.appendChild(a); a.click(); a.remove();
     URL.revokeObjectURL(url);
     toast.success("CSV downloaded");
@@ -528,12 +617,20 @@ const BulkFundPasteVerify = () => {
           placeholder="Paste raw fund data (no delimiters needed)..."
           className="min-h-[140px] font-mono text-xs"
         />
-        <div className="flex items-center gap-2">
-          <Button size="sm" onClick={handleParse} disabled={running || !raw.trim()} className="gap-2">
+        <div className="flex flex-wrap items-center gap-2">
+          <Button size="sm" onClick={() => handleParse()} disabled={running || !raw.trim()} className="gap-2">
             <Search className="h-4 w-4" /> Parse &amp; verify
+          </Button>
+          <Button size="sm" variant="outline" onClick={handlePasteFromClipboard} disabled={running} className="gap-2">
+            <Clipboard className="h-4 w-4" /> Paste &amp; auto-parse
           </Button>
           <span className="text-[11px] text-muted-foreground">
             {loadedDb ? `${existing.length} existing funds loaded` : "DB will load on parse"}
+            {permaSkips.size > 0 && (
+              <> · <button type="button" className="underline hover:text-foreground" onClick={() => { setPermaSkips(new Set()); savePermaSkips(new Set()); toast.success("Permanent skips cleared"); }}>
+                {permaSkips.size} permanent skip{permaSkips.size === 1 ? "" : "s"} (clear)
+              </button></>
+            )}
           </span>
         </div>
       </Card>
@@ -587,7 +684,7 @@ const BulkFundPasteVerify = () => {
                 ))}
               </div>
               {Object.keys(headerMap).length > 0 && unmappedHeaders.length === 0 && (
-                <Button size="sm" className="mt-3 h-7 text-xs" onClick={handleParse}>
+                <Button size="sm" className="mt-3 h-7 text-xs" onClick={() => handleParse()}>
                   Re-parse with mappings
                 </Button>
               )}
@@ -693,8 +790,21 @@ const BulkFundPasteVerify = () => {
                         <span className="text-[10px] text-muted-foreground">existing fund</span>
                       )}
                     </div>
-                    <div className="col-span-1 flex justify-center">
+                    <div className="col-span-1 flex flex-col items-center gap-1">
                       <Switch checked={!!edit.skipped} onCheckedChange={(v) => setEdit(r.index, { skipped: v })} />
+                      {r.status === "ok" && r.fund_type && r.yield_unit && (
+                        <label className="flex items-center gap-1 text-[9px] text-muted-foreground cursor-pointer leading-none" title="Skip this fund permanently in all future sessions">
+                          <Checkbox
+                            className="h-3 w-3"
+                            checked={permaSkips.has(compositeKey(r.manager, r.fund_type, r.yield_unit))}
+                            onCheckedChange={(v) => {
+                              togglePermaSkip(r.manager, r.fund_type!, r.yield_unit!, !!v);
+                              if (v) setEdit(r.index, { skipped: true });
+                            }}
+                          />
+                          forever
+                        </label>
+                      )}
                     </div>
                     <div className="col-span-1 text-right">
                       <StatusBadge row={r} match={match} edit={edit} />
@@ -730,6 +840,19 @@ const BulkFundPasteVerify = () => {
               )}
             </div>
             <div className="flex items-center gap-3">
+              <label className="flex items-center gap-2 text-xs rounded-md border border-border bg-background px-3 py-1.5">
+                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
+                <span className="text-muted-foreground">Effective</span>
+                <Input
+                  type="date"
+                  value={effectiveDate}
+                  onChange={(e) => setEffectiveDate(e.target.value)}
+                  className="h-6 w-32 px-1 py-0 text-xs border-0 bg-transparent focus-visible:ring-0"
+                />
+                {detectedDate && detectedDate === effectiveDate && (
+                  <span className="text-[9px] text-emerald-500" title="Detected from pasted text">auto</span>
+                )}
+              </label>
               <Button size="sm" variant="outline" onClick={exportCsv} className="gap-2">
                 <Download className="h-3.5 w-3.5" /> Export CSV
               </Button>
@@ -738,15 +861,20 @@ const BulkFundPasteVerify = () => {
                 <span className={dryRun ? "font-medium" : "text-muted-foreground"}>Simulate</span>
                 <Switch checked={dryRun} onCheckedChange={setDryRun} />
               </label>
-              <Button
-                size="lg"
-                disabled={!canSync}
-                onClick={() => setConfirmOpen(true)}
-                className="gap-2"
-              >
-                {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : <CheckCircle2 className="h-4 w-4" />}
-                {dryRun ? "Simulate Sync" : "Sync All Funds"}
-              </Button>
+              {(() => {
+                const isPerfect = !!canSync && !dryRun && counts.review === 0 && counts.unparsed === 0 && counts.mismatch === 0 && counts.new === 0;
+                return (
+                  <Button
+                    size="lg"
+                    disabled={!canSync}
+                    onClick={() => setConfirmOpen(true)}
+                    className={`gap-2 transition-all ${isPerfect ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-400/40 animate-pulse-soft" : ""}`}
+                  >
+                    {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : isPerfect ? <Sparkles className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                    {dryRun ? "Simulate Sync" : isPerfect ? "Perfect batch — Sync now" : "Sync All Funds"}
+                  </Button>
+                );
+              })()}
             </div>
           </div>
 
