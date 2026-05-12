@@ -9,11 +9,11 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, History, Upload, CalendarDays, X, Save, Loader2, Copy } from "lucide-react";
+import { Plus, Pencil, Trash2, Search, AlertTriangle, ArrowDown, ArrowUp, ArrowUpDown, History, CalendarDays, X, Save, Loader2, Copy } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { type FundType, FUND_TYPE_LABELS, YIELD_UNITS } from "@/lib/api";
 import AdminYieldHistory from "./AdminYieldHistory";
-import BulkFundImport from "@/components/admin/BulkFundImport";
+
 import BulkFundPasteVerify from "@/components/admin/BulkFundPasteVerify";
 
 interface FundRow {
@@ -53,7 +53,7 @@ const AdminFunds = () => {
   const [dialogOpen, setDialogOpen] = useState(false);
   const [fundViews, setFundViews] = useState<Record<string, number>>({});
   const [historyFund, setHistoryFund] = useState<{ id: string; name: string; yield_unit: string } | null>(null);
-  const [bulkImportOpen, setBulkImportOpen] = useState(false);
+  
   const [snapshotDate, setSnapshotDate] = useState<string>("");
   const [snapshotYields, setSnapshotYields] = useState<Record<string, { annual_yield: number; daily_yield: number }>>({});
   const [editedYields, setEditedYields] = useState<Record<string, { annual_yield: string; daily_yield: string }>>({});
@@ -273,9 +273,6 @@ const AdminFunds = () => {
       <div className="flex items-center justify-between mb-4">
         <h2 className="text-xl font-bold">Fund Management</h2>
         <div className="flex gap-2">
-          <Button size="sm" variant="outline" onClick={() => setBulkImportOpen(true)}>
-            <Upload className="mr-2 h-4 w-4" /> Bulk Import
-          </Button>
           <Dialog open={dialogOpen} onOpenChange={(o) => { setDialogOpen(o); if (!o) setEditingFund(emptyFund); }}>
             <DialogTrigger asChild>
               <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90">
@@ -385,7 +382,7 @@ const AdminFunds = () => {
           </Dialog>
         </div>
       </div>
-      <BulkFundImport open={bulkImportOpen} onOpenChange={setBulkImportOpen} onComplete={load} />
+      
 
       <details className="mb-4 rounded-lg border border-border bg-card">
         <summary className="cursor-pointer select-none px-4 py-2 text-sm font-medium hover:bg-muted/40">
