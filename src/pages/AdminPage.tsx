@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote, KeyRound } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminFunds from "./admin/AdminFunds";
 import AdminNews from "./admin/AdminNews";
@@ -12,7 +12,6 @@ import AdminMarkets from "./admin/AdminMarkets";
 import AdminSuggestions from "./admin/AdminSuggestions";
 import AdminNewsEnrichment from "./admin/AdminNewsEnrichment";
 import AdminTestimonials from "./admin/AdminTestimonials";
-import AdminApiKeys from "./admin/AdminApiKeys";
 
 const AdminPage = () => {
   const { isAdmin, loading, user } = useAuth();
@@ -37,7 +36,7 @@ const AdminPage = () => {
   return (
     <div className="container py-6">
       <Tabs defaultValue="dashboard" className="space-y-6">
-         <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-11 md:max-w-6xl justify-start md:justify-stretch">
+         <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-10 md:max-w-6xl justify-start md:justify-stretch">
           <TabsTrigger value="dashboard" className="gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -74,10 +73,6 @@ const AdminPage = () => {
             <Quote className="h-4 w-4" />
             <span className="hidden sm:inline">Quotes</span>
           </TabsTrigger>
-          <TabsTrigger value="apikeys" className="gap-1.5">
-            <KeyRound className="h-4 w-4" />
-            <span className="hidden sm:inline">API</span>
-          </TabsTrigger>
           <TabsTrigger value="log" className="gap-1.5">
             <ClipboardList className="h-4 w-4" />
             <span className="hidden sm:inline">Log</span>
@@ -94,7 +89,6 @@ const AdminPage = () => {
         <TabsContent value="markets"><AdminMarkets /></TabsContent>
         <TabsContent value="suggestions"><AdminSuggestions /></TabsContent>
         <TabsContent value="testimonials"><AdminTestimonials /></TabsContent>
-        <TabsContent value="apikeys"><AdminApiKeys /></TabsContent>
         <TabsContent value="log"><AdminChangeLog /></TabsContent>
       </Tabs>
     </div>
