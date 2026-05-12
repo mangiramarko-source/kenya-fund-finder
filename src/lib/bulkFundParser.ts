@@ -54,7 +54,7 @@ const CATEGORY_HEADERS: Array<[string, FundType]> = [
   ["Fixed Income", "fixed_income"],
   ["Balanced Fund", "balanced"],
   ["Equity Fund", "equity"],
-  ["Special Fund", "money_market"],   // Special treated as MMF; UI can override
+  ["Special Fund", "special"],
   ["Bond Fund", "bond"],
   // NOTE: bare "Balanced", "Equity", "Special", "Bond" are intentionally
   // NOT included — they collide with manager names like
@@ -191,7 +191,14 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
     }
 
     const managerRaw = text.slice(segStart, nextRow.currencyIdx);
-    const manager = managerRaw.replace(/[\s\|]+/g, " ").trim();
+    const manager = managerRaw
+      .replace(/[\s\|]+/g, " ")
+      .trim()
+      // Defensive strip: if a stray currency token leaked into the manager
+      // segment (e.g. "Britam Sh", "Cytonn USD"), remove the trailing token
+      // so the name matches existing DB rows.
+      .replace(/\s+(?:Sh|KES|USD|GBP)\s*$/i, "")
+      .trim();
     const rawSegment = text.slice(segStart, nextRow.endIdx).trim();
 
     const fund_type = currentCategory?.fund_type ?? null;

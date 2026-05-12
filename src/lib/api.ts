@@ -1,7 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
 
-export type FundType = "money_market" | "fixed_income" | "balanced" | "equity" | "bond";
+export type FundType = "money_market" | "fixed_income" | "balanced" | "equity" | "bond" | "special";
 
 export const FUND_TYPE_LABELS: Record<FundType, string> = {
   money_market: "Money Market Fund",
@@ -9,6 +9,7 @@ export const FUND_TYPE_LABELS: Record<FundType, string> = {
   balanced: "Balanced Fund",
   equity: "Equity Fund",
   bond: "Bond Fund",
+  special: "Special Fund",
 };
 
 export interface FundFromDB {
