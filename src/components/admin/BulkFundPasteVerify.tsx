@@ -303,8 +303,46 @@ const BulkFundPasteVerify = () => {
   /** Mapping for unknown headers detected in the input → fund_type */
   const [headerMap, setHeaderMap] = useState<Record<string, FundType>>({});
   const [permaSkips, setPermaSkips] = useState<Set<string>>(() => loadPermaSkips());
-  const [effectiveDate, setEffectiveDate] = useState<string>("");
+  const [effectiveDate, setEffectiveDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [detectedDate, setDetectedDate] = useState<string | null>(null);
+  const [weekHealth, setWeekHealth] = useState<{ date: string; label: string; present: boolean }[]>([]);
+
+  /** Compute Monday→Friday of the ISO week containing `ref` (local time). */
+  const getCurrentBusinessWeek = (ref: Date = new Date()) => {
+    const d = new Date(ref);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay(); // 0=Sun..6=Sat
+    const diffToMon = day === 0 ? -6 : 1 - day;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() + diffToMon);
+    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+    return labels.map((label, i) => {
+      const dt = new Date(monday);
+      dt.setDate(monday.getDate() + i);
+      const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+      return { date: iso, label, dayNum: dt.getDate(), monthShort: dt.toLocaleString("en-US", { month: "short" }) };
+    });
+  };
+
+  const loadWeekHealth = async () => {
+    const week = getCurrentBusinessWeek();
+    const start = week[0].date;
+    const end = week[week.length - 1].date;
+    const { data, error } = await supabase.rpc("fund_snapshot_days_in_range", { p_start: start, p_end: end });
+    const present = new Set<string>();
+    if (!error && Array.isArray(data)) {
+      for (const r of data as Array<{ snapshot_date: string }>) present.add(r.snapshot_date);
+    }
+    setWeekHealth(week.map((d) => ({
+      date: d.date,
+      label: `${d.label} ${d.monthShort} ${d.dayNum}`,
+      present: present.has(d.date),
+    })));
+  };
+
+  useEffect(() => { loadWeekHealth(); }, []);
+
+  const firstMissingDay = useMemo(() => weekHealth.find((d) => !d.present && d.date <= new Date().toISOString().slice(0, 10)), [weekHealth]);
 
   const loadExisting = async () => {
     const { data, error } = await supabase
@@ -516,17 +554,18 @@ const BulkFundPasteVerify = () => {
           };
         });
 
-      const { data, error } = await supabase.rpc("bulk_sync_funds", { payload, dry_run: dryRun });
+      const { data, error } = await supabase.rpc("bulk_sync_funds", { payload, dry_run: dryRun, p_effective_date: effectiveDate });
       if (error) throw error;
       const result = data as { updated: string[]; created: string[]; dry_run?: boolean };
       setSyncResult({ updated: result.updated || [], created: result.created || [], dryRun });
       if (dryRun) {
-        toast.success(`Dry-run OK: would update ${result.updated?.length || 0}, create ${result.created?.length || 0}`, {
+        toast.success(`Dry-run OK for ${effectiveDate}: would update ${result.updated?.length || 0}, create ${result.created?.length || 0}`, {
           description: "Triggers fired and rolled back. No changes saved.",
         });
       } else {
-        toast.success(`Synced: ${result.updated?.length || 0} updated, ${result.created?.length || 0} created`);
+        toast.success(`Synced for ${effectiveDate}: ${result.updated?.length || 0} updated, ${result.created?.length || 0} created`);
         await loadExisting();
+        await loadWeekHealth();
       }
     } catch (err: any) {
       const msg: string = err?.message || "Sync failed";
@@ -601,6 +640,57 @@ const BulkFundPasteVerify = () => {
 
   return (
     <div className="space-y-4">
+      {/* Data Health Strip — current business week (Mon-Fri) */}
+      {weekHealth.length > 0 && (
+        <Card className="p-3 shadow-sm">
+          <div className="flex items-center justify-between gap-3 flex-wrap">
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">This week's data</span>
+              <button
+                type="button"
+                onClick={loadWeekHealth}
+                className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                title="Refresh"
+              >
+                refresh
+              </button>
+            </div>
+            <div className="flex items-center gap-1.5">
+              {weekHealth.map((d) => {
+                const isToday = d.date === new Date().toISOString().slice(0, 10);
+                const isFuture = d.date > new Date().toISOString().slice(0, 10);
+                return (
+                  <button
+                    key={d.date}
+                    type="button"
+                    disabled={isFuture}
+                    onClick={() => setEffectiveDate(d.date)}
+                    className={`flex flex-col items-center gap-1 rounded-md px-2.5 py-1.5 text-[10px] font-medium transition-all
+                      ${isFuture ? "opacity-30 cursor-not-allowed" : "hover:scale-105 cursor-pointer"}
+                      ${effectiveDate === d.date ? "ring-2 ring-primary" : ""}
+                      ${d.present ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : isFuture ? "bg-muted text-muted-foreground" : "bg-red-500/10 text-red-600 dark:text-red-400"}`}
+                    title={d.present ? `Data present for ${d.label}` : isFuture ? "Future date" : `No data for ${d.label} — click to backfill`}
+                  >
+                    <span>{d.label}</span>
+                    <span className="text-[12px] leading-none">{d.present ? "🟢" : isFuture ? "⚪" : "🔴"}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          {firstMissingDay && (
+            <div className="mt-2 flex items-center justify-between gap-2 rounded-md border border-amber-500/30 bg-amber-500/10 px-3 py-1.5 text-[11px] text-amber-700 dark:text-amber-400">
+              <span>
+                💡 Missing data for <b>{firstMissingDay.label}</b>. Want to upload it now?
+              </span>
+              <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setEffectiveDate(firstMissingDay.date)}>
+                Use {firstMissingDay.label}
+              </Button>
+            </div>
+          )}
+        </Card>
+      )}
+
       <Card className="p-4 space-y-3">
         <div className="flex items-center justify-between">
           <div>
@@ -840,19 +930,30 @@ const BulkFundPasteVerify = () => {
               )}
             </div>
             <div className="flex items-center gap-3">
-              <label className="flex items-center gap-2 text-xs rounded-md border border-border bg-background px-3 py-1.5">
-                <Calendar className="h-3.5 w-3.5 text-muted-foreground" />
-                <span className="text-muted-foreground">Effective</span>
-                <Input
-                  type="date"
-                  value={effectiveDate}
-                  onChange={(e) => setEffectiveDate(e.target.value)}
-                  className="h-6 w-32 px-1 py-0 text-xs border-0 bg-transparent focus-visible:ring-0"
-                />
-                {detectedDate && detectedDate === effectiveDate && (
-                  <span className="text-[9px] text-emerald-500" title="Detected from pasted text">auto</span>
-                )}
-              </label>
+              {(() => {
+                const isAuto = detectedDate && detectedDate === effectiveDate;
+                const d = effectiveDate ? new Date(effectiveDate + "T00:00:00") : null;
+                const isWeekend = d && (d.getDay() === 0 || d.getDay() === 6);
+                return (
+                  <label
+                    className={`flex items-center gap-2 text-xs rounded-md border px-3 py-1.5 transition-colors
+                      ${isAuto ? "border-blue-500/60 bg-blue-500/10 ring-1 ring-blue-500/30" : "border-border bg-background"}
+                      ${isWeekend ? "border-amber-500/60 bg-amber-500/10" : ""}`}
+                    title={isAuto ? "Auto-detected from pasted text — change if wrong" : "Effective date for this batch"}
+                  >
+                    <Calendar className={`h-3.5 w-3.5 ${isAuto ? "text-blue-500" : isWeekend ? "text-amber-500" : "text-muted-foreground"}`} />
+                    <span className={isAuto ? "text-blue-600 dark:text-blue-400 font-medium" : isWeekend ? "text-amber-600 dark:text-amber-400 font-medium" : "text-muted-foreground"}>
+                      {isAuto ? "Auto-filled" : isWeekend ? "Weekend!" : "Effective"}
+                    </span>
+                    <Input
+                      type="date"
+                      value={effectiveDate}
+                      onChange={(e) => setEffectiveDate(e.target.value)}
+                      className="h-6 w-32 px-1 py-0 text-xs border-0 bg-transparent focus-visible:ring-0"
+                    />
+                  </label>
+                );
+              })()}
               <Button size="sm" variant="outline" onClick={exportCsv} className="gap-2">
                 <Download className="h-3.5 w-3.5" /> Export CSV
               </Button>
@@ -949,7 +1050,21 @@ const BulkFundPasteVerify = () => {
                   <li><b className="text-red-500">Create {counts.ready}</b> new fund{counts.ready === 1 ? "" : "s"} {dryRun ? "(simulated)" : ""}</li>
                   {counts.skipped > 0 && <li className="text-muted-foreground">Skip {counts.skipped} row{counts.skipped === 1 ? "" : "s"}</li>}
                 </ul>
-                <div className={`rounded-md px-3 py-2 text-xs mt-2 ${dryRun ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30" : "bg-muted text-muted-foreground"}`}>
+                <div className="rounded-md px-3 py-2 text-xs mt-2 bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-400">
+                  📅 This data will be recorded for{" "}
+                  <b>
+                    {effectiveDate
+                      ? new Date(effectiveDate + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+                      : "—"}
+                  </b>. Confirm?
+                  {effectiveDate && (() => {
+                    const d = new Date(effectiveDate + "T00:00:00");
+                    return d.getDay() === 0 || d.getDay() === 6 ? (
+                      <div className="mt-1 text-amber-600 dark:text-amber-400">⚠ Selected date is a weekend — Kenyan markets are closed.</div>
+                    ) : null;
+                  })()}
+                </div>
+                <div className={`rounded-md px-3 py-2 text-xs ${dryRun ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30" : "bg-muted text-muted-foreground"}`}>
                   {dryRun
                     ? "Simulation mode: every UPDATE and INSERT will execute (so triggers fire), then the entire transaction is rolled back. Nothing is saved."
                     : "This is atomic — if any single row fails, the whole batch is rolled back and nothing changes."}
