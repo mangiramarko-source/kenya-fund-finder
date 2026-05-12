@@ -1649,6 +1649,7 @@ export type Database = {
       }
     }
     Functions: {
+      bulk_sync_funds: { Args: { payload: Json }; Returns: Json }
       check_rate_limit: {
         Args: {
           p_ip_hash: string
