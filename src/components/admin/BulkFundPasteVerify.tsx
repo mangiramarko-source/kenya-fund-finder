@@ -78,6 +78,19 @@ function unitClass(u: string): "percent" | "price" {
 
 const SAMPLE = `Fund TypeFund ManagerCurrencyDaily Yield (%)Annual Rate (%)Money Mkt FundBritamSh9.269.71Money Mkt FundICEASh7.758.06Money Mkt FundCytonnSh11.4512.13Money Mkt FundCytonnUSD5.575.72Fixed Income FundICEASh12.0013.82Fixed Income FundICEAUSD7.007.50Balanced FundBritamSh167.09172.49Equity FundICEASh157.84157.84`;
 
+const PERMA_SKIP_KEY = "kff_admin_perma_skip_v1";
+
+function loadPermaSkips(): Set<string> {
+  try {
+    const raw = localStorage.getItem(PERMA_SKIP_KEY);
+    if (!raw) return new Set();
+    return new Set(JSON.parse(raw));
+  } catch { return new Set(); }
+}
+function savePermaSkips(set: Set<string>) {
+  try { localStorage.setItem(PERMA_SKIP_KEY, JSON.stringify([...set])); } catch { /* noop */ }
+}
+
 function compositeKey(manager: string, fund_type: string, yield_unit: string) {
   return `${manager.trim().toLowerCase()}|${fund_type}|${yield_unit}`;
 }
@@ -87,6 +100,37 @@ function generateSlug(manager: string, fund_type: string, yield_unit: string) {
   const ftShort = fund_type.replace("_", "-");
   const cur = yield_unit === "%" ? "" : `-${yield_unit.toLowerCase()}`;
   return `${base}-${ftShort}${cur}`;
+}
+
+/**
+ * Try to detect a date in the pasted blob. Supports DD.MM.YYYY, DD/MM/YYYY,
+ * DD-MM-YYYY, and "8 May 2026" / "May 8, 2026". Returns ISO YYYY-MM-DD or null.
+ */
+function detectDate(text: string): string | null {
+  // DD.MM.YYYY or DD/MM/YYYY or DD-MM-YYYY
+  const m1 = /\b(\d{1,2})[./-](\d{1,2})[./-](\d{4})\b/.exec(text);
+  if (m1) {
+    const d = +m1[1], mo = +m1[2], y = +m1[3];
+    if (d >= 1 && d <= 31 && mo >= 1 && mo <= 12) {
+      return `${y}-${String(mo).padStart(2, "0")}-${String(d).padStart(2, "0")}`;
+    }
+  }
+  // YYYY-MM-DD
+  const m2 = /\b(\d{4})-(\d{2})-(\d{2})\b/.exec(text);
+  if (m2) return `${m2[1]}-${m2[2]}-${m2[3]}`;
+  // "8 May 2026" / "May 8, 2026"
+  const months = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
+  const m3 = /\b(\d{1,2})\s+([A-Za-z]{3,9})\s+(\d{4})\b/.exec(text);
+  if (m3) {
+    const mi = months.indexOf(m3[2].slice(0, 3).toLowerCase());
+    if (mi >= 0) return `${m3[3]}-${String(mi + 1).padStart(2, "0")}-${String(+m3[1]).padStart(2, "0")}`;
+  }
+  const m4 = /\b([A-Za-z]{3,9})\s+(\d{1,2}),?\s+(\d{4})\b/.exec(text);
+  if (m4) {
+    const mi = months.indexOf(m4[1].slice(0, 3).toLowerCase());
+    if (mi >= 0) return `${m4[3]}-${String(mi + 1).padStart(2, "0")}-${String(+m4[2]).padStart(2, "0")}`;
+  }
+  return null;
 }
 
 const StatusBadge = ({ row, match, edit }: { row: ParsedRow; match?: MatchInfo; edit: RowEdit }) => {
