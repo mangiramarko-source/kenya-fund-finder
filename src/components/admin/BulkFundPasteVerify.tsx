@@ -1050,7 +1050,21 @@ const BulkFundPasteVerify = () => {
                   <li><b className="text-red-500">Create {counts.ready}</b> new fund{counts.ready === 1 ? "" : "s"} {dryRun ? "(simulated)" : ""}</li>
                   {counts.skipped > 0 && <li className="text-muted-foreground">Skip {counts.skipped} row{counts.skipped === 1 ? "" : "s"}</li>}
                 </ul>
-                <div className={`rounded-md px-3 py-2 text-xs mt-2 ${dryRun ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30" : "bg-muted text-muted-foreground"}`}>
+                <div className="rounded-md px-3 py-2 text-xs mt-2 bg-blue-500/10 border border-blue-500/30 text-blue-700 dark:text-blue-400">
+                  📅 This data will be recorded for{" "}
+                  <b>
+                    {effectiveDate
+                      ? new Date(effectiveDate + "T00:00:00").toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" })
+                      : "—"}
+                  </b>. Confirm?
+                  {effectiveDate && (() => {
+                    const d = new Date(effectiveDate + "T00:00:00");
+                    return d.getDay() === 0 || d.getDay() === 6 ? (
+                      <div className="mt-1 text-amber-600 dark:text-amber-400">⚠ Selected date is a weekend — Kenyan markets are closed.</div>
+                    ) : null;
+                  })()}
+                </div>
+                <div className={`rounded-md px-3 py-2 text-xs ${dryRun ? "bg-amber-500/10 text-amber-700 dark:text-amber-400 border border-amber-500/30" : "bg-muted text-muted-foreground"}`}>
                   {dryRun
                     ? "Simulation mode: every UPDATE and INSERT will execute (so triggers fire), then the entire transaction is rolled back. Nothing is saved."
                     : "This is atomic — if any single row fails, the whole batch is rolled back and nothing changes."}
