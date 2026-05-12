@@ -929,29 +929,48 @@ const BulkFundPasteVerify = () => {
                 <span>Ready to sync {counts.matched + counts.ready} row{counts.matched + counts.ready === 1 ? "" : "s"}.</span>
               )}
             </div>
-            <div className="flex items-center gap-3">
+          <div className="flex items-end gap-3 flex-wrap">
               {(() => {
-                const isAuto = detectedDate && detectedDate === effectiveDate;
+                const isAuto = !!detectedDate && detectedDate === effectiveDate;
+                const today = new Date().toISOString().slice(0, 10);
                 const d = effectiveDate ? new Date(effectiveDate + "T00:00:00") : null;
-                const isWeekend = d && (d.getDay() === 0 || d.getDay() === 6);
+                const isWeekend = !!d && (d.getDay() === 0 || d.getDay() === 6);
+                const borderCls = isAuto
+                  ? "border-blue-500 ring-2 ring-blue-500/30 bg-blue-500/5"
+                  : isWeekend
+                    ? "border-amber-500 ring-2 ring-amber-500/30 bg-amber-500/5"
+                    : "border-border bg-background";
                 return (
-                  <label
-                    className={`flex items-center gap-2 text-xs rounded-md border px-3 py-1.5 transition-colors
-                      ${isAuto ? "border-blue-500/60 bg-blue-500/10 ring-1 ring-blue-500/30" : "border-border bg-background"}
-                      ${isWeekend ? "border-amber-500/60 bg-amber-500/10" : ""}`}
-                    title={isAuto ? "Auto-detected from pasted text — change if wrong" : "Effective date for this batch"}
-                  >
-                    <Calendar className={`h-3.5 w-3.5 ${isAuto ? "text-blue-500" : isWeekend ? "text-amber-500" : "text-muted-foreground"}`} />
-                    <span className={isAuto ? "text-blue-600 dark:text-blue-400 font-medium" : isWeekend ? "text-amber-600 dark:text-amber-400 font-medium" : "text-muted-foreground"}>
-                      {isAuto ? "Auto-filled" : isWeekend ? "Weekend!" : "Effective"}
-                    </span>
-                    <Input
-                      type="date"
-                      value={effectiveDate}
-                      onChange={(e) => setEffectiveDate(e.target.value)}
-                      className="h-6 w-32 px-1 py-0 text-xs border-0 bg-transparent focus-visible:ring-0"
-                    />
-                  </label>
+                  <div className="flex flex-col gap-1">
+                    <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
+                      <Calendar className="h-3 w-3" /> Data Effective Date
+                      {isAuto && <span className="text-blue-500 normal-case font-medium tracking-normal">· auto-filled</span>}
+                    </Label>
+                    <div className={`flex items-center gap-2 rounded-md border px-2.5 py-1 transition-colors ${borderCls}`}>
+                      <Input
+                        type="date"
+                        value={effectiveDate}
+                        max={today}
+                        onChange={(e) => { setEffectiveDate(e.target.value); setDetectedDate(null); }}
+                        className="h-7 w-36 px-1 py-0 text-xs border-0 bg-transparent focus-visible:ring-0"
+                        aria-label="Data effective date"
+                      />
+                      {effectiveDate !== today && (
+                        <button
+                          type="button"
+                          onClick={() => { setEffectiveDate(today); setDetectedDate(null); }}
+                          className="text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
+                        >
+                          today
+                        </button>
+                      )}
+                    </div>
+                    {isWeekend && (
+                      <span className="text-[10px] text-amber-600 dark:text-amber-400">
+                        ⚠ Note: This is a weekend. Markets are usually closed.
+                      </span>
+                    )}
+                  </div>
                 );
               })()}
               <Button size="sm" variant="outline" onClick={exportCsv} className="gap-2">
