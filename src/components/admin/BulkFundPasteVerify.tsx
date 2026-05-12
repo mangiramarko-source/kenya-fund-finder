@@ -303,8 +303,46 @@ const BulkFundPasteVerify = () => {
   /** Mapping for unknown headers detected in the input → fund_type */
   const [headerMap, setHeaderMap] = useState<Record<string, FundType>>({});
   const [permaSkips, setPermaSkips] = useState<Set<string>>(() => loadPermaSkips());
-  const [effectiveDate, setEffectiveDate] = useState<string>("");
+  const [effectiveDate, setEffectiveDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [detectedDate, setDetectedDate] = useState<string | null>(null);
+  const [weekHealth, setWeekHealth] = useState<{ date: string; label: string; present: boolean }[]>([]);
+
+  /** Compute Monday→Friday of the ISO week containing `ref` (local time). */
+  const getCurrentBusinessWeek = (ref: Date = new Date()) => {
+    const d = new Date(ref);
+    d.setHours(0, 0, 0, 0);
+    const day = d.getDay(); // 0=Sun..6=Sat
+    const diffToMon = day === 0 ? -6 : 1 - day;
+    const monday = new Date(d);
+    monday.setDate(d.getDate() + diffToMon);
+    const labels = ["Mon", "Tue", "Wed", "Thu", "Fri"];
+    return labels.map((label, i) => {
+      const dt = new Date(monday);
+      dt.setDate(monday.getDate() + i);
+      const iso = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}-${String(dt.getDate()).padStart(2, "0")}`;
+      return { date: iso, label, dayNum: dt.getDate(), monthShort: dt.toLocaleString("en-US", { month: "short" }) };
+    });
+  };
+
+  const loadWeekHealth = async () => {
+    const week = getCurrentBusinessWeek();
+    const start = week[0].date;
+    const end = week[week.length - 1].date;
+    const { data, error } = await supabase.rpc("fund_snapshot_days_in_range", { p_start: start, p_end: end });
+    const present = new Set<string>();
+    if (!error && Array.isArray(data)) {
+      for (const r of data as Array<{ snapshot_date: string }>) present.add(r.snapshot_date);
+    }
+    setWeekHealth(week.map((d) => ({
+      date: d.date,
+      label: `${d.label} ${d.monthShort} ${d.dayNum}`,
+      present: present.has(d.date),
+    })));
+  };
+
+  useEffect(() => { loadWeekHealth(); }, []);
+
+  const firstMissingDay = useMemo(() => weekHealth.find((d) => !d.present && d.date <= new Date().toISOString().slice(0, 10)), [weekHealth]);
 
   const loadExisting = async () => {
     const { data, error } = await supabase
