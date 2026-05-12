@@ -616,12 +616,20 @@ const BulkFundPasteVerify = () => {
           placeholder="Paste raw fund data (no delimiters needed)..."
           className="min-h-[140px] font-mono text-xs"
         />
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <Button size="sm" onClick={() => handleParse()} disabled={running || !raw.trim()} className="gap-2">
             <Search className="h-4 w-4" /> Parse &amp; verify
           </Button>
+          <Button size="sm" variant="outline" onClick={handlePasteFromClipboard} disabled={running} className="gap-2">
+            <Clipboard className="h-4 w-4" /> Paste &amp; auto-parse
+          </Button>
           <span className="text-[11px] text-muted-foreground">
             {loadedDb ? `${existing.length} existing funds loaded` : "DB will load on parse"}
+            {permaSkips.size > 0 && (
+              <> · <button type="button" className="underline hover:text-foreground" onClick={() => { setPermaSkips(new Set()); savePermaSkips(new Set()); toast.success("Permanent skips cleared"); }}>
+                {permaSkips.size} permanent skip{permaSkips.size === 1 ? "" : "s"} (clear)
+              </button></>
+            )}
           </span>
         </div>
       </Card>
