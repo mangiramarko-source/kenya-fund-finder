@@ -302,6 +302,9 @@ const BulkFundPasteVerify = () => {
   const [failedMessage, setFailedMessage] = useState<string | null>(null);
   /** Mapping for unknown headers detected in the input → fund_type */
   const [headerMap, setHeaderMap] = useState<Record<string, FundType>>({});
+  const [permaSkips, setPermaSkips] = useState<Set<string>>(() => loadPermaSkips());
+  const [effectiveDate, setEffectiveDate] = useState<string>("");
+  const [detectedDate, setDetectedDate] = useState<string | null>(null);
 
   const loadExisting = async () => {
     const { data, error } = await supabase
@@ -313,14 +316,55 @@ const BulkFundPasteVerify = () => {
     }
   };
 
-  const handleParse = async () => {
+  const handleParse = async (textOverride?: string) => {
     setRunning(true);
+    const text = textOverride ?? raw;
     if (!loadedDb) await loadExisting();
     const extras: Array<[string, FundType]> = Object.entries(headerMap).map(([label, ft]) => [label, ft]);
-    setReport(parseBulkFundText(raw, extras));
-    setEdits({});
+    const rep = parseBulkFundText(text, extras);
+    setReport(rep);
+    // Auto-skip rows whose composite key is in the permanent-skip set
+    const initialEdits: Record<number, RowEdit> = {};
+    for (const r of rep.rows) {
+      if (r.status === "ok" && r.fund_type && r.yield_unit) {
+        const key = compositeKey(r.manager, r.fund_type, r.yield_unit);
+        if (permaSkips.has(key)) initialEdits[r.index] = { skipped: true };
+      }
+    }
+    setEdits(initialEdits);
+    // Date detection
+    const found = detectDate(text);
+    setDetectedDate(found);
+    setEffectiveDate(found ?? new Date().toISOString().slice(0, 10));
     setSyncResult(null);
+    setFailedRowIdx(null);
+    setFailedMessage(null);
     setRunning(false);
+  };
+
+  const togglePermaSkip = (manager: string, fund_type: string, yield_unit: string, on: boolean) => {
+    const key = compositeKey(manager, fund_type, yield_unit);
+    setPermaSkips((prev) => {
+      const next = new Set(prev);
+      if (on) next.add(key); else next.delete(key);
+      savePermaSkips(next);
+      return next;
+    });
+  };
+
+  const handlePasteFromClipboard = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      if (!text.trim()) {
+        toast.error("Clipboard is empty");
+        return;
+      }
+      setRaw(text);
+      await handleParse(text);
+      toast.success("Pasted and parsed");
+    } catch {
+      toast.error("Couldn't read clipboard", { description: "Grant permission or paste manually." });
+    }
   };
 
   /** Strict match: exact composite OR Levenshtein similarity ≥ 0.85 (NEVER auto-corrects). */
