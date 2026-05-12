@@ -390,7 +390,8 @@ const BulkFundPasteVerify = () => {
     setConfirmOpen(false);
     try {
       const payload = effectiveRows
-        .filter((er) => !er.edit.skipped && er.row.status === "ok")
+        .filter((er) => !er.edit.skipped && er.row.status === "ok" && er.match?.kind !== "type-mismatch")
+        .filter((er) => er.match?.kind === "matched" || (er.edit.newSetup && er.edit.confirmedNew))
         .map((er) => {
           const m = er.match;
           if (m?.kind === "matched" && m.fund) {
