@@ -62,9 +62,6 @@ function savePermaSkips(set: Set<string>) {
   try { localStorage.setItem(PERMA_SKIP_KEY, JSON.stringify([...set])); } catch { /* noop */ }
 }
 
-function compositeKey(manager: string, fund_type: string, yield_unit: string) {
-  return `${manager.trim().toLowerCase()}|${fund_type}|${yield_unit}`;
-}
 
 function generateSlug(manager: string, fund_type: string, yield_unit: string) {
   const base = manager.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim().replace(/\s+/g, "-");
