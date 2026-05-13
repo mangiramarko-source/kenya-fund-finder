@@ -237,7 +237,7 @@ const RemapDialog = ({
               {row.fund_type ? FUND_TYPE_LABELS[row.fund_type as FundType] : "—"} · {row.yield_unit ?? "?"} · daily {row.daily_yield} / annual {row.annual_yield}
             </div>
           </div>
-          <Input autoFocus placeholder="Search manager or fund type…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input autoFocus placeholder="Search fund name, manager, or type…" value={q} onChange={(e) => setQ(e.target.value)} />
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Fund type</Label>
