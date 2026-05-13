@@ -230,6 +230,86 @@ const EditableNumber = ({ value, onChange, warn }: { value: number; onChange: (v
   );
 };
 
+/** Searchable dialog to remap a parsed row to an existing fund. */
+const RemapDialog = ({
+  open, onOpenChange, row, existing, onPick,
+}: {
+  open: boolean;
+  onOpenChange: (v: boolean) => void;
+  row: ParsedRow | null;
+  existing: ExistingFund[];
+  onPick: (fundId: string) => void;
+}) => {
+  const [q, setQ] = useState("");
+  useEffect(() => { if (open) setQ(""); }, [open]);
+  const ranked = useMemo(() => {
+    if (!row) return [];
+    const sameTypeUnit = (f: ExistingFund) =>
+      f.fund_type === row.fund_type &&
+      (row.yield_unit ? unitClass(f.yield_unit) === unitClass(row.yield_unit) : true);
+    const ql = q.toLowerCase().trim();
+    const matchQ = (f: ExistingFund) =>
+      !ql || f.manager.toLowerCase().includes(ql) || (f.fund_type || "").includes(ql);
+    return [...existing]
+      .filter(matchQ)
+      .map((f) => ({ f, sim: similarity(f.manager, row.manager), pref: sameTypeUnit(f) ? 1 : 0 }))
+      .sort((a, b) => b.pref - a.pref || b.sim - a.sim)
+      .slice(0, 60);
+  }, [existing, row, q]);
+  if (!row) return null;
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-lg">
+        <DialogHeader>
+          <DialogTitle>Remap to existing fund</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          <div className="rounded-lg bg-muted px-3 py-2 text-sm">
+            <div className="font-medium">{row.manager}</div>
+            <div className="text-xs text-muted-foreground">
+              {row.fund_type ? FUND_TYPE_LABELS[row.fund_type as FundType] : "—"} · {row.yield_unit ?? "?"} · daily {row.daily_yield} / annual {row.annual_yield}
+            </div>
+          </div>
+          <Input autoFocus placeholder="Search manager…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <div className="max-h-72 overflow-y-auto divide-y divide-border/50 rounded-md border border-border">
+            {ranked.length === 0 && (
+              <div className="px-3 py-6 text-center text-xs text-muted-foreground">No matches</div>
+            )}
+            {ranked.map(({ f, pref }) => {
+              const unitDiffers = row.yield_unit && unitClass(f.yield_unit) !== unitClass(row.yield_unit);
+              return (
+                <button
+                  key={f.id}
+                  type="button"
+                  onClick={() => { onPick(f.id); onOpenChange(false); }}
+                  className="w-full text-left px-3 py-2 text-xs hover:bg-accent/30 flex items-center justify-between gap-2"
+                >
+                  <div className="min-w-0">
+                    <div className="font-medium truncate">{f.manager}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {FUND_TYPE_LABELS[f.fund_type as FundType] || f.fund_type} · {f.yield_unit} · annual {f.annual_yield}
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    {pref === 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">same type</span>}
+                    {unitDiffers && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">unit differs</span>}
+                  </div>
+                </button>
+              );
+            })}
+          </div>
+          <div className="text-[11px] text-muted-foreground">
+            Picking a fund links this paste row to that existing fund. The next sync will UPDATE its yields instead of creating a duplicate.
+          </div>
+        </div>
+        <DialogFooter>
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>Cancel</Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 const NewFundSetupDialog = ({
   open, onOpenChange, row, edit, similarManagers, onSave,
 }: {
