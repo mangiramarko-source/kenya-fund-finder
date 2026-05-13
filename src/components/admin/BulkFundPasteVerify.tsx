@@ -467,7 +467,7 @@ const BulkFundPasteVerify = () => {
   const loadExisting = async () => {
     const { data, error } = await supabase
       .from("funds")
-      .select("id, manager, fund_type, yield_unit, annual_yield");
+      .select("id, name, manager, fund_type, yield_unit, annual_yield");
     if (!error && data) {
       setExisting(data as ExistingFund[]);
       setLoadedDb(true);
