@@ -1017,23 +1017,24 @@ const BulkFundPasteVerify = () => {
                       )}
                       {isNew && r.status === "ok" && (() => {
                         const cand = bestRemapCandidate(r);
+                        const safeCand = cand && cand.sim >= MIN_AUTO_SIM ? cand : null;
                         return (
                           <div className="space-y-1">
-                            {cand && (
+                            {safeCand && (
                               <div className="text-[10px] text-muted-foreground truncate text-right">
-                                closest: {cand.fund.manager} ({(cand.sim * 100).toFixed(0)}%)
+                                closest: {safeCand.fund.manager} ({(safeCand.sim * 100).toFixed(0)}%)
                               </div>
                             )}
                             <div className="flex justify-end gap-1 flex-wrap">
-                              {cand && (
+                              {safeCand && (
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   className="h-6 px-2 text-[10px]"
-                                  onClick={() => setEdit(r.index, { acceptedFundId: cand.fund.id, newSetup: undefined, confirmedNew: false })}
-                                  title={`Link to ${cand.fund.manager}`}
+                                  onClick={() => setEdit(r.index, { acceptedFundId: safeCand.fund.id, newSetup: undefined, confirmedNew: false })}
+                                  title={`Link to ${safeCand.fund.manager} — same ${FUND_TYPE_LABELS[r.fund_type as FundType]}, same ${r.yield_unit}`}
                                 >
-                                  Link to {cand.fund.manager.split(" ")[0]}
+                                  Link to {safeCand.fund.manager.split(" ")[0]}
                                 </Button>
                               )}
                               <Button
