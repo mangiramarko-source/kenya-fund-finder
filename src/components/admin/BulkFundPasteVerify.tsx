@@ -312,6 +312,8 @@ const BulkFundPasteVerify = () => {
   const [weekHealth, setWeekHealth] = useState<{ date: string; label: string; present: boolean }[]>([]);
   /** True when the user explicitly picked a date (calendar or health pill). Blocks auto-detect override. */
   const [dateLocked, setDateLocked] = useState(false);
+  /** Wizard step: 1 = Paste, 2 = Review & Date, 3 = Confirm & Sync */
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   /** Compute Monday→Friday of the ISO week containing `ref` (local time). */
   const getCurrentBusinessWeek = (ref: Date = new Date()) => {
