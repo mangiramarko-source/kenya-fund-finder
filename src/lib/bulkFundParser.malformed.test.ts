@@ -56,16 +56,13 @@ describe("Parser: malformed inputs are still classified correctly", () => {
     expect(lofty.manager).toBe("Lofty-Corban");
   });
 
-  it("commas in numbers are NOT supported — currency token regex requires plain decimals (documented gap)", () => {
-    // The current regex matches /\d+\.\d{2}|\d+/ — comma-separated values
-    // like "1,234.56" only match the first chunk "1". Document the contract.
+  it("commas in numbers degrade to 'unparsed' (documented gap — values must be plain decimals)", () => {
+    // The currency regex requires plain decimals. Comma-formatted values
+    // like "1,234.56" cause the row to surface as `unparsed`/partial — never
+    // a silently-fabricated "ok" row. Admin must clean the source.
     const r = parseBulkFundText("Equity Fund BritamSh1,234.561,250.00");
     const britam = find(r.rows, "Britam");
-    // The first int "1" is matched as daily; the trailing chunk is consumed
-    // as annual. We only assert this is treated as 'ok' but with values that
-    // come from the regex — NOT silently coerced from comma-form.
-    expect(britam?.status).toBe("ok");
-    expect(britam?.daily_yield).toBe(1);
+    expect(britam?.status).not.toBe("ok");
   });
 
   it("trailing date/timestamp like '13 May 2026' is dropped, not treated as a row", () => {
