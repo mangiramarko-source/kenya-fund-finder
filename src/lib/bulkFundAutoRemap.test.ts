@@ -86,10 +86,10 @@ describe("planAutoRemap — dedupe regression", () => {
 
   it("never crosses fund_type or yield_unit boundaries", () => {
     const rows: PlannerInput[] = [
-      newRow(0, "Britam Asset Managers", "equity", "KES"), // must NOT pick mm-britam
+      newRow(0, "Britam Equity", "equity", "KES"), // must NOT pick mm-britam
       newRow(1, "Cytonn Asset Managers", "money_market", "USD"), // must pick mm-cytusd, not mm-cytonn
     ];
-    const plan = planAutoRemap(rows, existing);
+    const plan = planAutoRemap(rows, existing, 0.2);
     const link0 = plan.links.find((l) => l.rowIndex === 0);
     const link1 = plan.links.find((l) => l.rowIndex === 1);
     expect(link0?.fundId).toBe("eq-britam");
