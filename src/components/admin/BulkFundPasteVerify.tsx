@@ -919,7 +919,7 @@ const BulkFundPasteVerify = () => {
               <div>
                 <b className="text-yellow-600 dark:text-yellow-400">{counts.new} row{counts.new === 1 ? "" : "s"} flagged NEW.</b>{" "}
                 <span className="text-muted-foreground">
-                  Many are likely the same fund stored under a slightly different name. Auto-link them to the closest existing fund (same fund type & unit class) — you can still un-remap any row individually.
+                  Many are aliases of an existing fund. Auto-link only collapses rows with an <b>identical fund type</b>, <b>identical yield unit</b> (% / KES / USD / GBP) and ≥ {(MIN_AUTO_SIM * 100).toFixed(0)}% manager-name similarity — different share classes or fund structures stay NEW.
                 </span>
               </div>
               <Button size="sm" variant="outline" className="gap-2 shrink-0" onClick={() => autoRemapNewRows()}>
