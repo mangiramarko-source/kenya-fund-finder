@@ -484,6 +484,32 @@ const BulkFundPasteVerify = () => {
         continue;
       }
 
+      // Token-prefix match: short pasted name (e.g. "Britam") matches the
+      // start of an existing full name (e.g. "Britam Asset Managers"), within
+      // the same fund_type + unit class.
+      const prefixCandidates = existing.filter(
+        (f) =>
+          f.fund_type === r.fund_type &&
+          unitClass(f.yield_unit) === unitClass(r.yield_unit!) &&
+          (isPrefixTokenMatch(r.manager, f.manager) || isPrefixTokenMatch(f.manager, r.manager)),
+      );
+      if (prefixCandidates.length === 1) {
+        const f = prefixCandidates[0];
+        const drift = f.annual_yield > 0
+          ? Math.abs(((r.annual_yield ?? 0) - f.annual_yield) / f.annual_yield) * 100
+          : 0;
+        out[r.index] = { kind: "matched", fund: f, prevAnnual: f.annual_yield, drift };
+        continue;
+      }
+      if (prefixCandidates.length > 1) {
+        // Ambiguous — surface the closest-by-length one for manual confirmation.
+        const best = prefixCandidates
+          .map((f) => ({ f, sim: similarity(f.manager, r.manager) }))
+          .sort((a, b) => b.sim - a.sim)[0];
+        out[r.index] = { kind: "review", fund: best.f, prevAnnual: best.f.annual_yield, similarity: best.sim };
+        continue;
+      }
+
       // Strict fuzzy: same fund_type + same unit class, similarity ≥ threshold
       let best: { fund: ExistingFund; sim: number } | null = null;
       for (const f of existing) {
