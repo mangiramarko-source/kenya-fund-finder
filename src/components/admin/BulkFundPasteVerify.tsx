@@ -75,6 +75,35 @@ function similarity(a: string, b: string): number {
   if (!max) return 1;
   return 1 - levenshtein(la, lb) / max;
 }
+/** Normalize for token matching: lowercase, strip punctuation, collapse spaces. */
+function normalizeManager(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[_\-/]+/g, " ")
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+/** Generic suffix words that don't disambiguate manager identity. */
+const GENERIC_SUFFIX = new Set([
+  "ltd", "limited", "plc", "llc", "inc", "company", "co",
+  "asset", "assets", "management", "managers", "manager",
+  "investment", "investments", "investing", "capital",
+  "kenya", "group", "services", "bank", "trust",
+]);
+/** Token-prefix match: every token of `short` equals the first tokens of `long`. */
+function isPrefixTokenMatch(short: string, long: string): boolean {
+  const a = normalizeManager(short).split(" ").filter(Boolean);
+  const b = normalizeManager(long).split(" ").filter(Boolean);
+  if (a.length === 0 || a.length > b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  // First non-matching token in the long name must be "generic" — otherwise
+  // we'd match "CIC" to "CIC Wealth" by accident.
+  if (a.length < b.length && !GENERIC_SUFFIX.has(b[a.length])) return false;
+  return true;
+}
 /** Whether two yield_units belong to the same "class" (% vs price) */
 function unitClass(u: string): "percent" | "price" {
   return u === "%" ? "percent" : "price";
@@ -452,6 +481,32 @@ const BulkFundPasteVerify = () => {
           ? Math.abs(((r.annual_yield ?? 0) - exact.annual_yield) / exact.annual_yield) * 100
           : 0;
         out[r.index] = { kind: "matched", fund: exact, prevAnnual: exact.annual_yield, drift };
+        continue;
+      }
+
+      // Token-prefix match: short pasted name (e.g. "Britam") matches the
+      // start of an existing full name (e.g. "Britam Asset Managers"), within
+      // the same fund_type + unit class.
+      const prefixCandidates = existing.filter(
+        (f) =>
+          f.fund_type === r.fund_type &&
+          unitClass(f.yield_unit) === unitClass(r.yield_unit!) &&
+          (isPrefixTokenMatch(r.manager, f.manager) || isPrefixTokenMatch(f.manager, r.manager)),
+      );
+      if (prefixCandidates.length === 1) {
+        const f = prefixCandidates[0];
+        const drift = f.annual_yield > 0
+          ? Math.abs(((r.annual_yield ?? 0) - f.annual_yield) / f.annual_yield) * 100
+          : 0;
+        out[r.index] = { kind: "matched", fund: f, prevAnnual: f.annual_yield, drift };
+        continue;
+      }
+      if (prefixCandidates.length > 1) {
+        // Ambiguous — surface the closest-by-length one for manual confirmation.
+        const best = prefixCandidates
+          .map((f) => ({ f, sim: similarity(f.manager, r.manager) }))
+          .sort((a, b) => b.sim - a.sim)[0];
+        out[r.index] = { kind: "review", fund: best.f, prevAnnual: best.f.annual_yield, similarity: best.sim };
         continue;
       }
 
