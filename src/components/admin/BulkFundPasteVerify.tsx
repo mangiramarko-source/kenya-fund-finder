@@ -897,6 +897,20 @@ const BulkFundPasteVerify = () => {
             </Card>
           )}
 
+          {counts.new > 0 && (
+            <div className="flex items-center justify-between rounded-md border border-yellow-500/30 bg-yellow-500/5 px-3 py-2 text-xs">
+              <div>
+                <b className="text-yellow-600 dark:text-yellow-400">{counts.new} row{counts.new === 1 ? "" : "s"} flagged NEW.</b>{" "}
+                <span className="text-muted-foreground">
+                  Many are likely the same fund stored under a slightly different name. Auto-link them to the closest existing fund (same fund type & unit class) — you can still un-remap any row individually.
+                </span>
+              </div>
+              <Button size="sm" variant="outline" className="gap-2 shrink-0" onClick={() => autoRemapNewRows(0)}>
+                <Link2 className="h-3 w-3" /> Auto-remap NEW rows
+              </Button>
+            </div>
+          )}
+
           <Card className="p-0 overflow-hidden">
             <div className="grid grid-cols-12 bg-muted px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               <div className="col-span-1">#</div>
