@@ -741,102 +741,41 @@ const BulkFundPasteVerify = () => {
         </Card>
       )}
 
-      <Card className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold">Bulk Paste — Sync Funds</h3>
-            <p className="text-xs text-muted-foreground">
-              Paste raw data, verify the green lights, set up any new funds, and hit Sync. All-or-nothing — if any row fails, nothing saves.
-            </p>
+      {step === 1 && (
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold">Step 1 — Paste your data</h3>
+              <p className="text-xs text-muted-foreground">
+                Paste raw fund data below. We'll detect funds, match them to existing records, and let you review on the next screen.
+              </p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => setRaw(SAMPLE)}>Load sample</Button>
           </div>
-          <Button size="sm" variant="ghost" onClick={() => setRaw(SAMPLE)}>Load sample</Button>
-        </div>
-        <Textarea
-          value={raw}
-          onChange={(e) => setRaw(e.target.value)}
-          placeholder="Paste raw fund data (no delimiters needed)..."
-          className="min-h-[140px] font-mono text-xs"
-        />
-        <div className="flex flex-wrap items-end gap-2">
-          <Button size="sm" onClick={() => handleParse()} disabled={running || !raw.trim()} className="gap-2">
-            <Search className="h-4 w-4" /> Parse &amp; verify
-          </Button>
-          <Button size="sm" variant="outline" onClick={handlePasteFromClipboard} disabled={running} className="gap-2">
-            <Clipboard className="h-4 w-4" /> Paste &amp; auto-parse
-          </Button>
-          {(() => {
-            const today = new Date();
-            const todayIso = today.toISOString().slice(0, 10);
-            const dateObj = effectiveDate ? new Date(effectiveDate + "T00:00:00") : undefined;
-            const isWeekend = !!dateObj && (dateObj.getDay() === 0 || dateObj.getDay() === 6);
-            const isAuto = !!detectedDate && detectedDate === effectiveDate && !dateLocked;
-            const borderCls = dateLocked
-              ? "border-blue-600 ring-2 ring-blue-600/40 bg-blue-500/5"
-              : isAuto
-                ? "border-blue-500 ring-2 ring-blue-500/30 bg-blue-500/5"
-                : isWeekend
-                  ? "border-amber-500 ring-2 ring-amber-500/30 bg-amber-500/5"
-                  : "border-border bg-background";
-            return (
-              <div className="flex flex-col gap-1">
-                <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <CalendarIcon className="h-3 w-3" /> Effective Date
-                  {dateLocked && <span className="text-blue-600 normal-case font-medium tracking-normal inline-flex items-center gap-0.5"><Lock className="h-2.5 w-2.5" /> locked</span>}
-                  {!dateLocked && isAuto && <span className="text-blue-500 normal-case font-medium tracking-normal">· auto-filled</span>}
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn("h-9 min-w-[180px] justify-start gap-2 text-xs font-medium transition-colors", borderCls)}
-                    >
-                      <CalendarIcon className={cn("h-3.5 w-3.5", dateLocked ? "text-blue-600" : isAuto ? "text-blue-500" : isWeekend ? "text-amber-500" : "text-muted-foreground")} />
-                      <span>{dateObj ? format(dateObj, "MMM d, yyyy") : "Pick a date"}</span>
-                      {dateLocked && (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setDateLocked(false); setEffectiveDate(detectedDate ?? todayIso); }}
-                          className="ml-auto text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-                          title="Unlock — let auto-detect manage this"
-                        >
-                          unlock
-                        </button>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dateObj}
-                      onSelect={(d) => {
-                        if (!d) return;
-                        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                        setEffectiveDate(iso);
-                        setDateLocked(true);
-                      }}
-                      disabled={(d) => d > today}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-                {isWeekend && (
-                  <span className="text-[10px] text-amber-600 dark:text-amber-400">⚠️ Weekend selected — markets usually closed.</span>
-                )}
-              </div>
-            );
-          })()}
-          <span className="text-[11px] text-muted-foreground ml-auto">
-            {loadedDb ? `${existing.length} existing funds loaded` : "DB will load on parse"}
-            {permaSkips.size > 0 && (
-              <> · <button type="button" className="underline hover:text-foreground" onClick={() => { setPermaSkips(new Set()); savePermaSkips(new Set()); toast.success("Permanent skips cleared"); }}>
-                {permaSkips.size} permanent skip{permaSkips.size === 1 ? "" : "s"} (clear)
-              </button></>
-            )}
-          </span>
-        </div>
-      </Card>
+          <Textarea
+            value={raw}
+            onChange={(e) => setRaw(e.target.value)}
+            placeholder="Paste raw fund data (no delimiters needed)..."
+            className="min-h-[180px] font-mono text-xs"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="outline" onClick={handlePasteFromClipboard} disabled={running} className="gap-2">
+              <Clipboard className="h-4 w-4" /> Paste from clipboard
+            </Button>
+            <span className="text-[11px] text-muted-foreground ml-auto">
+              {loadedDb ? `${existing.length} existing funds loaded` : "Database will load on parse"}
+              {permaSkips.size > 0 && (
+                <> · <button type="button" className="underline hover:text-foreground" onClick={() => { setPermaSkips(new Set()); savePermaSkips(new Set()); toast.success("Permanent skips cleared"); }}>
+                  {permaSkips.size} permanent skip{permaSkips.size === 1 ? "" : "s"} (clear)
+                </button></>
+              )}
+            </span>
+            <Button size="lg" onClick={() => handleParse()} disabled={running || !raw.trim()} className="gap-2">
+              <Search className="h-4 w-4" /> Parse & continue →
+            </Button>
+          </div>
+        </Card>
+      )}
 
       {report && !syncResult && (
         <>
