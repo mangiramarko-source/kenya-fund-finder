@@ -387,6 +387,7 @@ const BulkFundPasteVerify = () => {
     setFailedRowIdx(null);
     setFailedMessage(null);
     setRunning(false);
+    if (rep.rows.length > 0) setStep(2);
   };
 
   const togglePermaSkip = (manager: string, fund_type: string, yield_unit: string, on: boolean) => {
