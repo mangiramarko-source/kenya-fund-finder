@@ -349,6 +349,7 @@ const BulkFundPasteVerify = () => {
   const [edits, setEdits] = useState<Record<number, RowEdit>>({});
   const [setupDialogIdx, setSetupDialogIdx] = useState<number | null>(null);
   const [remapDialogIdx, setRemapDialogIdx] = useState<number | null>(null);
+  const [lastAutoRemapPlan, setLastAutoRemapPlan] = useState<AutoRemapPlan | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ updated: string[]; created: string[]; dryRun?: boolean } | null>(null);
