@@ -19,6 +19,10 @@
 export interface ExistingFund {
   id: string;
   manager: string;
+  /** Specific fund/scheme name (e.g. "Cytonn Money Market Fund"). Optional
+   *  because matcher tests pre-date this column; the bulk-paste UI relies on
+   *  it for the Remap dialog so users can pick the exact unit trust. */
+  name?: string;
   fund_type: string;
   yield_unit: string;
   annual_yield: number;
