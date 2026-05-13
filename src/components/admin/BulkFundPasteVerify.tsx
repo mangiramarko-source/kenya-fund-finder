@@ -502,47 +502,64 @@ const BulkFundPasteVerify = () => {
   }, [report, edits, matches, existing]);
 
   /**
-   * Best remap candidate for a NEW row — looser than the auto-matcher: returns
-   * the highest-similarity existing fund within the same (fund_type, unit_class),
-   * regardless of the strict 0.85 threshold. Powers the inline "Link to X"
-   * suggestion and the bulk auto-remap action so admins can collapse dozens of
-   * NEW rows that are really aliases of existing funds with one click each.
+   * Disambiguation rules for auto-remap candidates. A NEW row may only collapse
+   * onto an existing fund when EVERY structural attribute lines up:
+   *   1. Same `fund_type` (Money Market ≠ Equity ≠ Bond …)
+   *   2. Same `yield_unit` exactly — "%" / "KES" / "USD" / "GBP" are all
+   *      distinct. We deliberately do NOT use the looser unit-class bucket
+   *      ("price") here, because a USD share-class is a different product from
+   *      its KES sibling even when the manager name is identical.
+   *   3. Manager similarity ≥ MIN_AUTO_SIM after normalisation. Below this we
+   *      keep the row NEW so the admin must confirm via the Remap dialog.
+   * The same gate is used by the inline "Link to X" suggestion and the bulk
+   * "Auto-remap NEW rows" action so behaviour is consistent.
    */
+  const MIN_AUTO_SIM = 0.5;
+
   const bestRemapCandidate = (r: ParsedRow): { fund: ExistingFund; sim: number } | null => {
     if (r.status !== "ok" || !r.fund_type || !r.yield_unit) return null;
-    const ru = unitClass(r.yield_unit);
     let best: { fund: ExistingFund; sim: number } | null = null;
     for (const f of existing) {
-      if (f.fund_type !== r.fund_type) continue;
-      if (unitClass(f.yield_unit) !== ru) continue;
+      if (f.fund_type !== r.fund_type) continue;            // rule 1
+      if (f.yield_unit !== r.yield_unit) continue;          // rule 2 (strict, not unit-class)
       const sim = similarity(f.manager, r.manager);
       if (!best || sim > best.sim) best = { fund: f, sim };
     }
     return best;
   };
 
-  /** Auto-link every NEW row that has any same-(type,unit) existing fund. */
-  const autoRemapNewRows = (minSim = 0) => {
+  /**
+   * Auto-link NEW rows that pass the disambiguation gate. Anything with a
+   * weaker similarity stays NEW so duplicates can't sneak in silently.
+   */
+  const autoRemapNewRows = (minSim = MIN_AUTO_SIM) => {
     if (!report) return;
     let linked = 0;
+    let skippedLowSim = 0;
     const patch: Record<number, RowEdit> = {};
     for (const er of effectiveRows) {
       if (er.edit.skipped) continue;
       if (er.edit.acceptedFundId) continue;
       if (er.match?.kind !== "new") continue;
       const cand = bestRemapCandidate(er.row);
-      if (cand && cand.sim >= minSim) {
-        patch[er.row.index] = { ...er.edit, acceptedFundId: cand.fund.id, newSetup: undefined, confirmedNew: false };
-        linked++;
-      }
+      if (!cand) continue;
+      if (cand.sim < minSim) { skippedLowSim++; continue; }
+      patch[er.row.index] = { ...er.edit, acceptedFundId: cand.fund.id, newSetup: undefined, confirmedNew: false };
+      linked++;
     }
     if (linked === 0) {
-      toast.info("No NEW rows had a matching existing fund");
+      toast.info(
+        skippedLowSim > 0
+          ? `No safe matches — ${skippedLowSim} candidate${skippedLowSim === 1 ? "" : "s"} below the ${(minSim * 100).toFixed(0)}% similarity gate. Use Remap to link manually.`
+          : "No NEW rows had a same fund-type + same yield-unit existing fund",
+      );
       return;
     }
     setEdits((prev) => ({ ...prev, ...patch }));
     toast.success(`Auto-linked ${linked} row${linked === 1 ? "" : "s"} to existing funds`, {
-      description: "Review the matches before syncing — click Remap on any row to change.",
+      description: skippedLowSim > 0
+        ? `${skippedLowSim} weaker candidate${skippedLowSim === 1 ? "" : "s"} left as NEW for manual review.`
+        : "Review the matches before syncing — click Remap on any row to change.",
     });
   };
 
@@ -902,10 +919,10 @@ const BulkFundPasteVerify = () => {
               <div>
                 <b className="text-yellow-600 dark:text-yellow-400">{counts.new} row{counts.new === 1 ? "" : "s"} flagged NEW.</b>{" "}
                 <span className="text-muted-foreground">
-                  Many are likely the same fund stored under a slightly different name. Auto-link them to the closest existing fund (same fund type & unit class) — you can still un-remap any row individually.
+                  Many are aliases of an existing fund. Auto-link only collapses rows with an <b>identical fund type</b>, <b>identical yield unit</b> (% / KES / USD / GBP) and ≥ {(MIN_AUTO_SIM * 100).toFixed(0)}% manager-name similarity — different share classes or fund structures stay NEW.
                 </span>
               </div>
-              <Button size="sm" variant="outline" className="gap-2 shrink-0" onClick={() => autoRemapNewRows(0)}>
+              <Button size="sm" variant="outline" className="gap-2 shrink-0" onClick={() => autoRemapNewRows()}>
                 <Link2 className="h-3 w-3" /> Auto-remap NEW rows
               </Button>
             </div>
@@ -1000,23 +1017,24 @@ const BulkFundPasteVerify = () => {
                       )}
                       {isNew && r.status === "ok" && (() => {
                         const cand = bestRemapCandidate(r);
+                        const safeCand = cand && cand.sim >= MIN_AUTO_SIM ? cand : null;
                         return (
                           <div className="space-y-1">
-                            {cand && (
+                            {safeCand && (
                               <div className="text-[10px] text-muted-foreground truncate text-right">
-                                closest: {cand.fund.manager} ({(cand.sim * 100).toFixed(0)}%)
+                                closest: {safeCand.fund.manager} ({(safeCand.sim * 100).toFixed(0)}%)
                               </div>
                             )}
                             <div className="flex justify-end gap-1 flex-wrap">
-                              {cand && (
+                              {safeCand && (
                                 <Button
                                   size="sm"
                                   variant="outline"
                                   className="h-6 px-2 text-[10px]"
-                                  onClick={() => setEdit(r.index, { acceptedFundId: cand.fund.id, newSetup: undefined, confirmedNew: false })}
-                                  title={`Link to ${cand.fund.manager}`}
+                                  onClick={() => setEdit(r.index, { acceptedFundId: safeCand.fund.id, newSetup: undefined, confirmedNew: false })}
+                                  title={`Link to ${safeCand.fund.manager} — same ${FUND_TYPE_LABELS[r.fund_type as FundType]}, same ${r.yield_unit}`}
                                 >
-                                  Link to {cand.fund.manager.split(" ")[0]}
+                                  Link to {safeCand.fund.manager.split(" ")[0]}
                                 </Button>
                               )}
                               <Button
