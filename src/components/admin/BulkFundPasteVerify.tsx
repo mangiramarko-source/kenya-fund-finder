@@ -484,10 +484,6 @@ const BulkFundPasteVerify = () => {
     }
     return out;
   }, [report, existing]);
-      }
-    }
-    return out;
-  }, [report, existing]);
 
   /** Effective per-row state (parsed values overlaid with admin edits and match acceptance) */
   const effectiveRows = useMemo(() => {
