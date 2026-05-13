@@ -30,6 +30,12 @@ import {
   compositeKey,
   matchRow,
 } from "@/lib/bulkFundMatcher";
+import {
+  planAutoRemap,
+  formatAutoRemapToast,
+  detectDuplicateAcceptedFundIds,
+  type AutoRemapPlan,
+} from "@/lib/bulkFundAutoRemap";
 
 /** Per-row admin overrides on top of parsed data */
 interface RowEdit {
