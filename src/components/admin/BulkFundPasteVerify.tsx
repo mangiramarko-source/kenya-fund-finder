@@ -922,7 +922,7 @@ const BulkFundPasteVerify = () => {
                   Many are likely the same fund stored under a slightly different name. Auto-link them to the closest existing fund (same fund type & unit class) — you can still un-remap any row individually.
                 </span>
               </div>
-              <Button size="sm" variant="outline" className="gap-2 shrink-0" onClick={() => autoRemapNewRows(0)}>
+              <Button size="sm" variant="outline" className="gap-2 shrink-0" onClick={() => autoRemapNewRows()}>
                 <Link2 className="h-3 w-3" /> Auto-remap NEW rows
               </Button>
             </div>
