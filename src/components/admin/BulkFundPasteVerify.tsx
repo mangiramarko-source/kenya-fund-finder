@@ -305,10 +305,12 @@ const RemapDialog = ({
                   className="w-full text-left px-3 py-2 text-xs hover:bg-accent/30 flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{f.name || f.manager}</div>
+                    <div className="font-medium truncate">
+                      {f.name?.trim() ? f.name : <span className="italic text-muted-foreground">(no fund name) {f.manager}</span>}
+                    </div>
                     <div className="text-[10px] text-muted-foreground truncate">
-                      {f.name && f.name !== f.manager ? <span className="text-foreground/70">{f.manager} · </span> : null}
-                      {FUND_TYPE_LABELS[f.fund_type as FundType] || f.fund_type} · {f.yield_unit} · annual {f.annual_yield}
+                      <span className="text-foreground/70">{f.manager}</span>
+                      {" · "}{FUND_TYPE_LABELS[f.fund_type as FundType] || f.fund_type} · {f.yield_unit} · annual {f.annual_yield}
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
