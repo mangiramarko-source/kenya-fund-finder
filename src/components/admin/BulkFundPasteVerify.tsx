@@ -501,6 +501,51 @@ const BulkFundPasteVerify = () => {
     });
   }, [report, edits, matches, existing]);
 
+  /**
+   * Best remap candidate for a NEW row — looser than the auto-matcher: returns
+   * the highest-similarity existing fund within the same (fund_type, unit_class),
+   * regardless of the strict 0.85 threshold. Powers the inline "Link to X"
+   * suggestion and the bulk auto-remap action so admins can collapse dozens of
+   * NEW rows that are really aliases of existing funds with one click each.
+   */
+  const bestRemapCandidate = (r: ParsedRow): { fund: ExistingFund; sim: number } | null => {
+    if (r.status !== "ok" || !r.fund_type || !r.yield_unit) return null;
+    const ru = unitClass(r.yield_unit);
+    let best: { fund: ExistingFund; sim: number } | null = null;
+    for (const f of existing) {
+      if (f.fund_type !== r.fund_type) continue;
+      if (unitClass(f.yield_unit) !== ru) continue;
+      const sim = similarity(f.manager, r.manager);
+      if (!best || sim > best.sim) best = { fund: f, sim };
+    }
+    return best;
+  };
+
+  /** Auto-link every NEW row that has any same-(type,unit) existing fund. */
+  const autoRemapNewRows = (minSim = 0) => {
+    if (!report) return;
+    let linked = 0;
+    const patch: Record<number, RowEdit> = {};
+    for (const er of effectiveRows) {
+      if (er.edit.skipped) continue;
+      if (er.edit.acceptedFundId) continue;
+      if (er.match?.kind !== "new") continue;
+      const cand = bestRemapCandidate(er.row);
+      if (cand && cand.sim >= minSim) {
+        patch[er.row.index] = { ...er.edit, acceptedFundId: cand.fund.id, newSetup: undefined, confirmedNew: false };
+        linked++;
+      }
+    }
+    if (linked === 0) {
+      toast.info("No NEW rows had a matching existing fund");
+      return;
+    }
+    setEdits((prev) => ({ ...prev, ...patch }));
+    toast.success(`Auto-linked ${linked} row${linked === 1 ? "" : "s"} to existing funds`, {
+      description: "Review the matches before syncing — click Remap on any row to change.",
+    });
+  };
+
   /** For the "is this a misspelling?" warning shown in the new-fund setup dialog. */
   const similarManagersForRow = (rowIdx: number): string[] => {
     const r = report?.rows[rowIdx];
