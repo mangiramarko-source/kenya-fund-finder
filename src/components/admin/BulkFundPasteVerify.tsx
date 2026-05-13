@@ -21,25 +21,15 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-interface ExistingFund {
-  id: string;
-  manager: string;
-  fund_type: string;
-  yield_unit: string;
-  annual_yield: number;
-}
-
-type MatchKind = "matched" | "review" | "new" | "type-mismatch";
-interface MatchInfo {
-  kind: MatchKind;
-  fund?: ExistingFund;
-  prevAnnual?: number;
-  drift?: number;
-  /** For type-mismatch: the existing fund whose unit class differs */
-  conflictingFund?: ExistingFund;
-  /** For "review": similarity 0..1 */
-  similarity?: number;
-}
+import {
+  type ExistingFund,
+  type MatchKind,
+  type MatchInfo,
+  similarity,
+  unitClass,
+  compositeKey,
+  matchRow,
+} from "@/lib/bulkFundMatcher";
 
 /** Per-row admin overrides on top of parsed data */
 interface RowEdit {
@@ -55,58 +45,6 @@ interface RowEdit {
   acceptedFundId?: string;
   /** Required confirmation before a NEW fund can be synced */
   confirmedNew?: boolean;
-}
-
-// Levenshtein distance for fuzzy manager-name matching
-function levenshtein(a: string, b: string): number {
-  const m = a.length, n = b.length;
-  if (!m) return n; if (!n) return m;
-  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
-    dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
-  }
-  return dp[m][n];
-}
-function similarity(a: string, b: string): number {
-  const la = a.toLowerCase(), lb = b.toLowerCase();
-  const max = Math.max(la.length, lb.length);
-  if (!max) return 1;
-  return 1 - levenshtein(la, lb) / max;
-}
-/** Normalize for token matching: lowercase, strip punctuation, collapse spaces. */
-function normalizeManager(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[_\-/]+/g, " ")
-    .replace(/[^a-z0-9 ]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-/** Generic suffix words that don't disambiguate manager identity. */
-const GENERIC_SUFFIX = new Set([
-  "ltd", "limited", "plc", "llc", "inc", "company", "co",
-  "asset", "assets", "management", "managers", "manager",
-  "investment", "investments", "investing", "capital",
-  "kenya", "group", "services", "bank", "trust",
-]);
-/** Token-prefix match: every token of `short` equals the first tokens of `long`. */
-function isPrefixTokenMatch(short: string, long: string): boolean {
-  const a = normalizeManager(short).split(" ").filter(Boolean);
-  const b = normalizeManager(long).split(" ").filter(Boolean);
-  if (a.length === 0 || a.length > b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  // First non-matching token in the long name must be "generic" — otherwise
-  // we'd match "CIC" to "CIC Wealth" by accident.
-  if (a.length < b.length && !GENERIC_SUFFIX.has(b[a.length])) return false;
-  return true;
-}
-/** Whether two yield_units belong to the same "class" (% vs price) */
-function unitClass(u: string): "percent" | "price" {
-  return u === "%" ? "percent" : "price";
 }
 
 const SAMPLE = `Fund TypeFund ManagerCurrencyDaily Yield (%)Annual Rate (%)Money Mkt FundBritamSh9.269.71Money Mkt FundICEASh7.758.06Money Mkt FundCytonnSh11.4512.13Money Mkt FundCytonnUSD5.575.72Fixed Income FundICEASh12.0013.82Fixed Income FundICEAUSD7.007.50Balanced FundBritamSh167.09172.49Equity FundICEASh157.84157.84`;
