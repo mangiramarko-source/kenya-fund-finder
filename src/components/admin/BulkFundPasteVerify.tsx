@@ -211,7 +211,10 @@ const RemapDialog = ({
       (row.yield_unit ? unitClass(f.yield_unit) === unitClass(row.yield_unit) : true);
     const ql = q.toLowerCase().trim();
     const matchQ = (f: ExistingFund) =>
-      !ql || f.manager.toLowerCase().includes(ql) || (f.fund_type || "").toLowerCase().includes(ql);
+      !ql ||
+      f.manager.toLowerCase().includes(ql) ||
+      (f.name || "").toLowerCase().includes(ql) ||
+      (f.fund_type || "").toLowerCase().includes(ql);
     const matchType = (f: ExistingFund) => typeFilter === "any" || f.fund_type === typeFilter;
     const matchUnit = (f: ExistingFund) => unitFilter === "any" || f.yield_unit === unitFilter;
     return [...existing]
