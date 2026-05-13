@@ -557,7 +557,9 @@ const BulkFundPasteVerify = () => {
       existing,
       minSim,
     );
-    setLastAutoRemapPlan(plan);
+    // Only retain the plan when there are collisions worth reviewing — otherwise
+    // we'd leave a stale "active plan" that disables the Auto-remap button for no reason.
+    setLastAutoRemapPlan(plan.collisions.length > 0 ? plan : null);
 
     if (plan.links.length === 0) {
       const msg = formatAutoRemapToast(plan);
