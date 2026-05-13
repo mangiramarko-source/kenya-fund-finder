@@ -1382,6 +1382,19 @@ const BulkFundPasteVerify = () => {
         onSave={(setup, confirmed) => { if (setupDialogIdx !== null) setEdit(setupDialogIdx, { newSetup: setup, confirmedNew: confirmed }); }}
       />
 
+      <RemapDialog
+        open={remapDialogIdx !== null}
+        onOpenChange={(v) => { if (!v) setRemapDialogIdx(null); }}
+        row={remapDialogIdx !== null ? report?.rows[remapDialogIdx] ?? null : null}
+        existing={existing}
+        onPick={(fundId) => {
+          if (remapDialogIdx !== null) {
+            setEdit(remapDialogIdx, { acceptedFundId: fundId, newSetup: undefined, confirmedNew: false });
+            toast.success("Linked to existing fund");
+          }
+        }}
+      />
+
       <AlertDialog open={confirmOpen} onOpenChange={setConfirmOpen}>
         <AlertDialogContent>
           <AlertDialogHeader>
