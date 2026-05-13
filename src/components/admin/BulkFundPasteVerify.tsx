@@ -623,6 +623,32 @@ const BulkFundPasteVerify = () => {
     setFailedRowIdx(null);
     setFailedMessage(null);
     try {
+      // Sync-time guard: refuse to issue UPDATE statements where two rows
+      // both target the same fund_id. Without this we'd silently overwrite
+      // one row's yields with the other's depending on row order.
+      const dups = detectDuplicateAcceptedFundIds(
+        effectiveRows.map((er) => ({
+          rowIndex: er.row.index,
+          acceptedFundId: er.edit.acceptedFundId
+            ?? (er.match?.kind === "matched" ? er.match.fund?.id : undefined),
+          skipped: er.edit.skipped,
+        })),
+      );
+      if (dups.length > 0) {
+        const first = dups[0];
+        const fundLabel = existing.find((f) => f.id === first.fundId)?.manager ?? first.fundId;
+        const rowList = first.rowIndices.map((i) => `#${i + 1}`).join(", ");
+        setFailedRowIdx(first.rowIndices[0]);
+        setFailedMessage(
+          `Rows ${rowList} all link to "${fundLabel}". Each existing fund can only receive one update per sync — open Remap on the duplicates and pick a different fund (or skip them).`,
+        );
+        toast.error("Sync blocked — duplicate fund assignment", {
+          description: `${dups.length} fund${dups.length === 1 ? "" : "s"} would receive conflicting updates from multiple rows.`,
+        });
+        setSyncing(false);
+        return;
+      }
+
       const eligible = effectiveRows
         .filter((er) => !er.edit.skipped && er.row.status === "ok" && er.match?.kind !== "type-mismatch")
         .filter((er) => er.match?.kind === "matched" || (er.edit.newSetup && er.edit.confirmedNew));
