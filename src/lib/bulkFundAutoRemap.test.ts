@@ -76,6 +76,53 @@ describe("planAutoRemap — dedupe regression", () => {
     expect(plan.collisions[0].reason).toBe("already-exact-matched");
   });
 
+  it("classifies collision as already-exact-matched (not lost-to-higher-similarity) when an unrelated row exact-matches the target", () => {
+    // Row 0 is an exact match for mm-britam (parser already linked it).
+    // Row 1 is a NEW row with a *higher* literal similarity to mm-britam than
+    // anything row 0 produced — but row 0 didn't go through planAutoRemap,
+    // so the collision must still be classified as "already-exact-matched".
+    const rows: PlannerInput[] = [
+      { ...newRow(0, "Totally Unrelated Name"), match: { kind: "matched", fund: existing[0], prevAnnual: 9.5 } },
+      newRow(1, "Britam Asset Managers"), // sim ~1.0 vs mm-britam
+    ];
+    const plan = planAutoRemap(rows, existing, 0.2);
+    expect(plan.links).toHaveLength(0);
+    expect(plan.collisions).toHaveLength(1);
+    expect(plan.collisions[0].rowIndex).toBe(1);
+    expect(plan.collisions[0].targetFund.id).toBe("mm-britam");
+    expect(plan.collisions[0].reason).toBe("already-exact-matched");
+    expect(plan.skippedClaimed).toBe(1);
+  });
+
+  it("multiple NEW rows colliding on a target already exact-matched all report already-exact-matched", () => {
+    const rows: PlannerInput[] = [
+      { ...newRow(0, "Britam"), match: { kind: "matched", fund: existing[0], prevAnnual: 9.5 } },
+      newRow(1, "Britam Asset Managers"),
+      newRow(2, "Britam Capital"),
+    ];
+    const plan = planAutoRemap(rows, existing, 0.2);
+    expect(plan.links).toHaveLength(0);
+    expect(plan.collisions).toHaveLength(2);
+    for (const c of plan.collisions) {
+      expect(c.targetFund.id).toBe("mm-britam");
+      expect(c.reason).toBe("already-exact-matched");
+    }
+  });
+
+  it("exact-match reservation does not block NEW rows targeting a different fund", () => {
+    const rows: PlannerInput[] = [
+      // mm-britam reserved by exact match.
+      { ...newRow(0, "Britam"), match: { kind: "matched", fund: existing[0], prevAnnual: 9.5 } },
+      // This NEW row wants mm-cytonn — must still be linked.
+      newRow(1, "Cytonn Asset Managers"),
+    ];
+    const plan = planAutoRemap(rows, existing, 0.2);
+    expect(plan.links).toHaveLength(1);
+    expect(plan.links[0].rowIndex).toBe(1);
+    expect(plan.links[0].fundId).toBe("mm-cytonn");
+    expect(plan.collisions).toHaveLength(0);
+  });
+
   it("skips below-threshold candidates without producing a collision", () => {
     const rows: PlannerInput[] = [newRow(0, "Zzz Totally Different Manager")];
     const plan = planAutoRemap(rows, existing, DEFAULT_MIN_SIM);
