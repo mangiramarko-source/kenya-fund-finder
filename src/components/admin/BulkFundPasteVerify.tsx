@@ -30,6 +30,12 @@ import {
   compositeKey,
   matchRow,
 } from "@/lib/bulkFundMatcher";
+import {
+  planAutoRemap,
+  formatAutoRemapToast,
+  detectDuplicateAcceptedFundIds,
+  type AutoRemapPlan,
+} from "@/lib/bulkFundAutoRemap";
 
 /** Per-row admin overrides on top of parsed data */
 interface RowEdit {
@@ -343,6 +349,7 @@ const BulkFundPasteVerify = () => {
   const [edits, setEdits] = useState<Record<number, RowEdit>>({});
   const [setupDialogIdx, setSetupDialogIdx] = useState<number | null>(null);
   const [remapDialogIdx, setRemapDialogIdx] = useState<number | null>(null);
+  const [lastAutoRemapPlan, setLastAutoRemapPlan] = useState<AutoRemapPlan | null>(null);
   const [confirmOpen, setConfirmOpen] = useState(false);
   const [syncing, setSyncing] = useState(false);
   const [syncResult, setSyncResult] = useState<{ updated: string[]; created: string[]; dryRun?: boolean } | null>(null);
@@ -534,56 +541,38 @@ const BulkFundPasteVerify = () => {
    */
   const autoRemapNewRows = (minSim = MIN_AUTO_SIM) => {
     if (!report) return;
-    let linked = 0;
-    let skippedLowSim = 0;
-    let skippedClaimed = 0;
-    const patch: Record<number, RowEdit> = {};
+    const plan = planAutoRemap(
+      effectiveRows.map((er) => ({
+        row: {
+          index: er.row.index,
+          status: er.row.status,
+          manager: er.row.manager,
+          fund_type: er.row.fund_type,
+          yield_unit: er.row.yield_unit,
+        },
+        skipped: !!er.edit.skipped,
+        acceptedFundId: er.edit.acceptedFundId,
+        match: er.match,
+      })),
+      existing,
+      minSim,
+    );
+    setLastAutoRemapPlan(plan);
 
-    // Reserve every fund_id that's already spoken for: matcher exact-matches,
-    // prior manual remaps, and (within this batch) other auto-linked rows.
-    // Without this two NEW rows can both grab the same existing fund and the
-    // sync will write conflicting yields to one record.
-    const claimed = new Set<string>();
-    for (const er of effectiveRows) {
-      if (er.edit.acceptedFundId) claimed.add(er.edit.acceptedFundId);
-      else if (er.match?.kind === "matched" && er.match.fund) claimed.add(er.match.fund.id);
-    }
-
-    // Highest similarity wins when multiple NEW rows want the same fund.
-    const candidates = effectiveRows
-      .filter((er) => !er.edit.skipped && !er.edit.acceptedFundId && er.match?.kind === "new")
-      .map((er) => ({ er, cand: bestRemapCandidate(er.row) }))
-      .filter((x): x is { er: typeof x.er; cand: NonNullable<ReturnType<typeof bestRemapCandidate>> } => !!x.cand)
-      .sort((a, b) => b.cand.sim - a.cand.sim);
-
-    for (const { er, cand } of candidates) {
-      if (cand.sim < minSim) { skippedLowSim++; continue; }
-      if (claimed.has(cand.fund.id)) { skippedClaimed++; continue; }
-      patch[er.row.index] = { ...er.edit, acceptedFundId: cand.fund.id, newSetup: undefined, confirmedNew: false };
-      claimed.add(cand.fund.id);
-      linked++;
-    }
-
-    if (linked === 0) {
-      const reasons: string[] = [];
-      if (skippedLowSim > 0) reasons.push(`${skippedLowSim} below ${(minSim * 100).toFixed(0)}% similarity`);
-      if (skippedClaimed > 0) reasons.push(`${skippedClaimed} would collide with an already-linked fund`);
-      toast.info(
-        reasons.length
-          ? `No safe matches — ${reasons.join(", ")}. Use Remap to link manually.`
-          : "No NEW rows had a same fund-type + same yield-unit existing fund",
-      );
+    if (plan.links.length === 0) {
+      const msg = formatAutoRemapToast(plan);
+      toast.info(msg.title);
       return;
     }
-    setEdits((prev) => ({ ...prev, ...patch }));
-    const extras: string[] = [];
-    if (skippedLowSim > 0) extras.push(`${skippedLowSim} below similarity gate`);
-    if (skippedClaimed > 0) extras.push(`${skippedClaimed} duplicate-target rows left as NEW`);
-    toast.success(`Auto-linked ${linked} row${linked === 1 ? "" : "s"} to existing funds`, {
-      description: extras.length
-        ? `${extras.join(" · ")}. Review before syncing — click Remap on any row to change.`
-        : "Review the matches before syncing — click Remap on any row to change.",
+    setEdits((prev) => {
+      const next = { ...prev };
+      for (const link of plan.links) {
+        next[link.rowIndex] = { ...next[link.rowIndex], acceptedFundId: link.fundId, newSetup: undefined, confirmedNew: false };
+      }
+      return next;
     });
+    const msg = formatAutoRemapToast(plan);
+    toast.success(msg.title, msg.description ? { description: msg.description } : undefined);
   };
 
   /** For the "is this a misspelling?" warning shown in the new-fund setup dialog. */
@@ -634,6 +623,32 @@ const BulkFundPasteVerify = () => {
     setFailedRowIdx(null);
     setFailedMessage(null);
     try {
+      // Sync-time guard: refuse to issue UPDATE statements where two rows
+      // both target the same fund_id. Without this we'd silently overwrite
+      // one row's yields with the other's depending on row order.
+      const dups = detectDuplicateAcceptedFundIds(
+        effectiveRows.map((er) => ({
+          rowIndex: er.row.index,
+          acceptedFundId: er.edit.acceptedFundId
+            ?? (er.match?.kind === "matched" ? er.match.fund?.id : undefined),
+          skipped: er.edit.skipped,
+        })),
+      );
+      if (dups.length > 0) {
+        const first = dups[0];
+        const fundLabel = existing.find((f) => f.id === first.fundId)?.manager ?? first.fundId;
+        const rowList = first.rowIndices.map((i) => `#${i + 1}`).join(", ");
+        setFailedRowIdx(first.rowIndices[0]);
+        setFailedMessage(
+          `Rows ${rowList} all link to "${fundLabel}". Each existing fund can only receive one update per sync — open Remap on the duplicates and pick a different fund (or skip them).`,
+        );
+        toast.error("Sync blocked — duplicate fund assignment", {
+          description: `${dups.length} fund${dups.length === 1 ? "" : "s"} would receive conflicting updates from multiple rows.`,
+        });
+        setSyncing(false);
+        return;
+      }
+
       const eligible = effectiveRows
         .filter((er) => !er.edit.skipped && er.row.status === "ok" && er.match?.kind !== "type-mismatch")
         .filter((er) => er.match?.kind === "matched" || (er.edit.newSetup && er.edit.confirmedNew));
@@ -949,6 +964,56 @@ const BulkFundPasteVerify = () => {
                 <Link2 className="h-3 w-3" /> Auto-remap NEW rows
               </Button>
             </div>
+          )}
+
+          {lastAutoRemapPlan && lastAutoRemapPlan.collisions.length > 0 && (
+            <Card className="p-3 border-amber-500/40 bg-amber-500/5">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4 text-amber-500" />
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    Collision report — {lastAutoRemapPlan.collisions.length} row{lastAutoRemapPlan.collisions.length === 1 ? "" : "s"} left as NEW
+                  </h4>
+                </div>
+                <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setLastAutoRemapPlan(null)}>
+                  Dismiss
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mb-2">
+                These NEW rows wanted to link to a fund that was already claimed. Use <b>Remap</b> on the row to choose a different existing fund, or <b>Setup</b> to create it as new.
+              </p>
+              <div className="space-y-1">
+                {lastAutoRemapPlan.collisions.map((c) => (
+                  <button
+                    key={c.rowIndex}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`bulk-row-${c.rowIndex}`);
+                      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      el?.classList.add("ring-2", "ring-amber-500");
+                      setTimeout(() => el?.classList.remove("ring-2", "ring-amber-500"), 1600);
+                    }}
+                    className="w-full text-left flex items-center justify-between gap-2 rounded-md border border-border/50 bg-background/60 px-2 py-1.5 text-xs hover:bg-accent/30"
+                  >
+                    <div className="min-w-0">
+                      <span className="font-mono text-muted-foreground mr-2">#{c.rowIndex + 1}</span>
+                      <b className="truncate">{c.manager}</b>
+                      <span className="text-[10px] text-muted-foreground ml-2">
+                        {FUND_TYPE_LABELS[c.fund_type as FundType] || c.fund_type} · {c.yield_unit}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground shrink-0">
+                      wanted <b className="text-foreground">{c.targetFund.manager}</b> · {(c.similarity * 100).toFixed(0)}%
+                      <span className="ml-2 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                        {c.reason === "lost-to-higher-similarity" && "lost to better match"}
+                        {c.reason === "already-accepted-elsewhere" && "already linked"}
+                        {c.reason === "already-exact-matched" && "already exact match"}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </Card>
           )}
 
           <Card className="p-0 overflow-hidden">
