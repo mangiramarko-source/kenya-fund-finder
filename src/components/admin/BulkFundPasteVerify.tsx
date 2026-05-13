@@ -966,6 +966,98 @@ const BulkFundPasteVerify = () => {
             </div>
           </Card>
 
+          {/* Step 2 nav */}
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3">
+            <Button variant="outline" onClick={() => setStep(1)}>← Back to paste</Button>
+            <div className="text-xs text-muted-foreground flex-1 text-center">
+              {unmappedHeaders.length > 0 ? (
+                <span className="text-red-600">{unmappedHeaders.length} unknown categor{unmappedHeaders.length === 1 ? "y" : "ies"} must be mapped first.</span>
+              ) : counts.blocked > 0 ? (
+                <span className="text-orange-500">{counts.blocked} row{counts.blocked === 1 ? "" : "s"} need attention before you can continue.</span>
+              ) : (
+                <span>Ready: <b>{counts.matched + counts.ready}</b> row{counts.matched + counts.ready === 1 ? "" : "s"} will sync on <b>{format(new Date(effectiveDate + "T00:00:00"), "MMM d, yyyy")}</b>.</span>
+              )}
+            </div>
+            <Button size="lg" onClick={() => setStep(3)} disabled={!canSync} className="gap-2">
+              Continue to sync →
+            </Button>
+          </div>
+
+          {/* Parse log */}
+          <Card className="p-0 overflow-hidden">
+            <div className="flex items-center gap-2 bg-muted px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <FileText className="h-3 w-3" /> Parser log
+            </div>
+            <pre className="max-h-[160px] overflow-y-auto px-3 py-2 text-[11px] font-mono leading-relaxed whitespace-pre-wrap">
+              {report.rows.map((r) => r.log).join("\n")}
+              {report.unparsedSegments.length > 0 && "\n\n--- UNPARSED TAIL ---\n" + report.unparsedSegments.join("\n")}
+            </pre>
+          </Card>
+        </>
+      )}
+
+      {report && !syncResult && step === 3 && (
+        <>
+          {/* Step 3: Confirm & Sync */}
+          <Card className="p-5 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold">Step 3 — Confirm and sync</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Review the summary, pick simulate or live, and hit the big button.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Update</div>
+                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{counts.matched}</div>
+              </div>
+              <div className="rounded-lg border border-blue-500/40 bg-blue-500/10 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Create</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">{counts.ready}</div>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/40 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Skip</div>
+                <div className="text-2xl font-bold text-muted-foreground tabular-nums">{counts.skipped}</div>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/40 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Effective</div>
+                <div className="text-sm font-bold tabular-nums mt-1">{format(new Date(effectiveDate + "T00:00:00"), "MMM d, yyyy")}</div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
+              <Button variant="outline" onClick={() => setStep(2)}>← Back to review</Button>
+              <div className="flex items-center gap-3 flex-wrap ml-auto">
+                <Button size="sm" variant="outline" onClick={exportCsv} className="gap-2">
+                  <Download className="h-3.5 w-3.5" /> Export CSV
+                </Button>
+                <label className="flex items-center gap-2 text-xs cursor-pointer select-none rounded-md border border-border bg-background px-3 py-1.5">
+                  <FlaskConical className={`h-3.5 w-3.5 ${dryRun ? "text-amber-500" : "text-muted-foreground"}`} />
+                  <span className={dryRun ? "font-medium" : "text-muted-foreground"}>Simulate (no changes saved)</span>
+                  <Switch checked={dryRun} onCheckedChange={setDryRun} />
+                </label>
+                {(() => {
+                  const isPerfect = !!canSync && !dryRun && counts.review === 0 && counts.unparsed === 0 && counts.mismatch === 0 && counts.new === 0;
+                  return (
+                    <Button
+                      size="lg"
+                      disabled={!canSync}
+                      onClick={() => setConfirmOpen(true)}
+                      className={`gap-2 transition-all ${isPerfect ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-400/40 animate-pulse-soft" : ""}`}
+                    >
+                      {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : isPerfect ? <Sparkles className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                      {dryRun ? "Simulate Sync" : isPerfect ? "Perfect batch — Sync now" : "Sync All Funds"}
+                    </Button>
+                  );
+                })()}
+              </div>
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* Hidden legacy block (sync action panel) replaced by Step 3 above */}
+      {false && (
+        <>
           {/* Sync action */}
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
             <div className="text-xs text-muted-foreground">
