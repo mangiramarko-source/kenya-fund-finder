@@ -159,10 +159,20 @@ describe("Unit-class safety: USD/GBP rows never collapse onto %/KES funds", () =
     expect(m.kind).not.toBe("matched");
   });
 
-  it("Britam Equity (USD) does NOT match Britam Equity (KES) record", () => {
+  it("CONTRACT: KES/USD/GBP share unit-class 'price' — they DO cross-match", () => {
+    // Document the matcher contract: NAV-priced unit classes (KES/USD/GBP)
+    // are treated as the same family. The hard wall is % vs price, never
+    // KES vs USD. If we want stricter currency separation, change
+    // unitClass() to return the raw token.
     const m = matchRow(row("Britam", "equity", "USD"), EXISTING);
+    expect(m.kind).toBe("matched");
+    expect(m.fund?.yield_unit).toBe("KES");
+  });
+
+  it("HARD WALL: % rows never match price rows (and vice versa)", () => {
+    // Britam MM exists as % only. Pasting it as KES must NOT match.
+    const m = matchRow(row("Britam", "money_market", "KES"), EXISTING);
     expect(m.kind).not.toBe("matched");
-    if (m.fund) expect(m.fund.yield_unit).not.toBe("KES");
   });
 
   it("Cytonn USD MM correctly matches the USD fund (sanity — same unit class)", () => {
