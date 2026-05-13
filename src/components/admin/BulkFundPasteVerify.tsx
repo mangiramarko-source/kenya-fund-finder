@@ -998,28 +998,49 @@ const BulkFundPasteVerify = () => {
                           </div>
                         </div>
                       )}
-                      {isNew && r.status === "ok" && (
-                        <div className="flex justify-end gap-1 flex-wrap">
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-6 px-2 gap-1 text-[10px]"
-                            onClick={() => setRemapDialogIdx(r.index)}
-                            title="Map this row to an existing fund instead of creating a new one"
-                          >
-                            <Link2 className="h-3 w-3" /> Remap
-                          </Button>
-                          <Button
-                            size="sm"
-                            variant={edit.newSetup && edit.confirmedNew ? "outline" : "default"}
-                            className="h-6 px-2 gap-1 text-[10px]"
-                            onClick={() => setSetupDialogIdx(r.index)}
-                          >
-                            <Settings2 className="h-3 w-3" />
-                            {edit.newSetup && edit.confirmedNew ? "Edit setup" : edit.newSetup ? "Confirm" : "Setup"}
-                          </Button>
-                        </div>
-                      )}
+                      {isNew && r.status === "ok" && (() => {
+                        const cand = bestRemapCandidate(r);
+                        return (
+                          <div className="space-y-1">
+                            {cand && (
+                              <div className="text-[10px] text-muted-foreground truncate text-right">
+                                closest: {cand.fund.manager} ({(cand.sim * 100).toFixed(0)}%)
+                              </div>
+                            )}
+                            <div className="flex justify-end gap-1 flex-wrap">
+                              {cand && (
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-6 px-2 text-[10px]"
+                                  onClick={() => setEdit(r.index, { acceptedFundId: cand.fund.id, newSetup: undefined, confirmedNew: false })}
+                                  title={`Link to ${cand.fund.manager}`}
+                                >
+                                  Link to {cand.fund.manager.split(" ")[0]}
+                                </Button>
+                              )}
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                className="h-6 px-2 gap-1 text-[10px]"
+                                onClick={() => setRemapDialogIdx(r.index)}
+                                title="Map this row to an existing fund instead of creating a new one"
+                              >
+                                <Link2 className="h-3 w-3" /> Remap
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant={edit.newSetup && edit.confirmedNew ? "outline" : "default"}
+                                className="h-6 px-2 gap-1 text-[10px]"
+                                onClick={() => setSetupDialogIdx(r.index)}
+                              >
+                                <Settings2 className="h-3 w-3" />
+                                {edit.newSetup && edit.confirmedNew ? "Edit setup" : edit.newSetup ? "Confirm" : "Setup"}
+                              </Button>
+                            </div>
+                          </div>
+                        );
+                      })()}
                       {match?.kind === "matched" && !isReview && (
                         <span className="text-[10px] text-muted-foreground">existing fund</span>
                       )}
