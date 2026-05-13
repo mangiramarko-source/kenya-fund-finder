@@ -5,8 +5,8 @@ on:
     paths:
       - "src/lib/bulkFundParser.ts"
       - "src/lib/bulkFundMatcher.ts"
-      - "src/lib/bulkFundParser*.test.ts"
-      - "src/lib/bulkFundMatcher*.test.ts"
+      - "src/lib/bulkFundAutoRemap.ts"
+      - "src/lib/bulkFund*.test.ts"
       - "src/lib/__fixtures__/bulkFundSample.ts"
       - "src/lib/__snapshots__/**"
       - ".github/workflows/bulk-fund-tests.yml"
@@ -17,8 +17,8 @@ on:
     paths:
       - "src/lib/bulkFundParser.ts"
       - "src/lib/bulkFundMatcher.ts"
-      - "src/lib/bulkFundParser*.test.ts"
-      - "src/lib/bulkFundMatcher*.test.ts"
+      - "src/lib/bulkFundAutoRemap.ts"
+      - "src/lib/bulkFund*.test.ts"
       - "src/lib/__fixtures__/bulkFundSample.ts"
       - "src/lib/__snapshots__/**"
 
