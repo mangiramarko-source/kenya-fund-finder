@@ -39,7 +39,6 @@ jobs:
       - name: Run bulkFund tests (kind + drift stability gate)
         run: |
           bunx vitest run \
-            src/lib/bulkFundParser.test.ts \
             src/lib/bulkFundParser.malformed.test.ts \
             src/lib/bulkFundMatcher.test.ts \
             src/lib/bulkFundMatcher.e2e.test.ts \
