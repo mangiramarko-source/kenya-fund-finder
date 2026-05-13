@@ -211,7 +211,10 @@ const RemapDialog = ({
       (row.yield_unit ? unitClass(f.yield_unit) === unitClass(row.yield_unit) : true);
     const ql = q.toLowerCase().trim();
     const matchQ = (f: ExistingFund) =>
-      !ql || f.manager.toLowerCase().includes(ql) || (f.fund_type || "").toLowerCase().includes(ql);
+      !ql ||
+      f.manager.toLowerCase().includes(ql) ||
+      (f.name || "").toLowerCase().includes(ql) ||
+      (f.fund_type || "").toLowerCase().includes(ql);
     const matchType = (f: ExistingFund) => typeFilter === "any" || f.fund_type === typeFilter;
     const matchUnit = (f: ExistingFund) => unitFilter === "any" || f.yield_unit === unitFilter;
     return [...existing]
@@ -234,7 +237,7 @@ const RemapDialog = ({
               {row.fund_type ? FUND_TYPE_LABELS[row.fund_type as FundType] : "—"} · {row.yield_unit ?? "?"} · daily {row.daily_yield} / annual {row.annual_yield}
             </div>
           </div>
-          <Input autoFocus placeholder="Search manager or fund type…" value={q} onChange={(e) => setQ(e.target.value)} />
+          <Input autoFocus placeholder="Search fund name, manager, or type…" value={q} onChange={(e) => setQ(e.target.value)} />
           <div className="grid grid-cols-2 gap-2">
             <div className="space-y-1">
               <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Fund type</Label>
@@ -285,8 +288,9 @@ const RemapDialog = ({
                   className="w-full text-left px-3 py-2 text-xs hover:bg-accent/30 flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
-                    <div className="font-medium truncate">{f.manager}</div>
-                    <div className="text-[10px] text-muted-foreground">
+                    <div className="font-medium truncate">{f.name || f.manager}</div>
+                    <div className="text-[10px] text-muted-foreground truncate">
+                      {f.name && f.name !== f.manager ? <span className="text-foreground/70">{f.manager} · </span> : null}
                       {FUND_TYPE_LABELS[f.fund_type as FundType] || f.fund_type} · {f.yield_unit} · annual {f.annual_yield}
                     </div>
                   </div>
@@ -467,7 +471,7 @@ const BulkFundPasteVerify = () => {
   const loadExisting = async () => {
     const { data, error } = await supabase
       .from("funds")
-      .select("id, manager, fund_type, yield_unit, annual_yield");
+      .select("id, name, manager, fund_type, yield_unit, annual_yield");
     if (!error && data) {
       setExisting(data as ExistingFund[]);
       setLoadedDb(true);
