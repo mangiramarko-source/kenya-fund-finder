@@ -777,7 +777,7 @@ const BulkFundPasteVerify = () => {
         </Card>
       )}
 
-      {report && !syncResult && (
+      {report && !syncResult && step === 2 && (
         <>
           <div className="flex flex-wrap gap-2 text-[11px]">
             <span className="rounded-full border border-border px-2 py-0.5">Total: <b>{report.rows.length}</b></span>
