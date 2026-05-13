@@ -387,7 +387,13 @@ const BulkFundPasteVerify = () => {
     setFailedRowIdx(null);
     setFailedMessage(null);
     setRunning(false);
-    if (rep.rows.length > 0) setStep(2);
+    if (rep.rows.length === 0) {
+      toast.error("No fund rows detected", {
+        description: "Check that the paste includes a header line like 'Money Market Fund' or 'Equity Fund'.",
+      });
+    }
+    // Always advance so the user sees the parser result (even unknown headers / 0 rows)
+    setStep(2);
   };
 
   const togglePermaSkip = (manager: string, fund_type: string, yield_unit: string, on: boolean) => {
