@@ -217,10 +217,27 @@ const RemapDialog = ({
       (f.fund_type || "").toLowerCase().includes(ql);
     const matchType = (f: ExistingFund) => typeFilter === "any" || f.fund_type === typeFilter;
     const matchUnit = (f: ExistingFund) => unitFilter === "any" || f.yield_unit === unitFilter;
+    // Boost rank when the query hits the fund's specific name — exact > prefix
+    // > substring — so typing "cytonn money market" surfaces that exact scheme
+    // before any other Cytonn fund.
+    const nameBoost = (f: ExistingFund) => {
+      if (!ql) return 0;
+      const nm = (f.name || "").toLowerCase();
+      if (!nm) return 0;
+      if (nm === ql) return 3;
+      if (nm.startsWith(ql)) return 2;
+      if (nm.includes(ql)) return 1;
+      return 0;
+    };
     return [...existing]
       .filter((f) => matchQ(f) && matchType(f) && matchUnit(f))
-      .map((f) => ({ f, sim: similarity(f.manager, row.manager), pref: sameTypeUnit(f) ? 1 : 0 }))
-      .sort((a, b) => b.pref - a.pref || b.sim - a.sim)
+      .map((f) => ({
+        f,
+        sim: similarity(f.manager, row.manager),
+        pref: sameTypeUnit(f) ? 1 : 0,
+        nameRank: nameBoost(f),
+      }))
+      .sort((a, b) => b.nameRank - a.nameRank || b.pref - a.pref || b.sim - a.sim)
       .slice(0, 100);
   }, [existing, row, q, typeFilter, unitFilter]);
   if (!row) return null;
