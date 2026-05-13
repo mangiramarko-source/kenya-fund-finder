@@ -312,6 +312,8 @@ const BulkFundPasteVerify = () => {
   const [weekHealth, setWeekHealth] = useState<{ date: string; label: string; present: boolean }[]>([]);
   /** True when the user explicitly picked a date (calendar or health pill). Blocks auto-detect override. */
   const [dateLocked, setDateLocked] = useState(false);
+  /** Wizard step: 1 = Paste, 2 = Review & Date, 3 = Confirm & Sync */
+  const [step, setStep] = useState<1 | 2 | 3>(1);
 
   /** Compute Monday→Friday of the ISO week containing `ref` (local time). */
   const getCurrentBusinessWeek = (ref: Date = new Date()) => {
@@ -385,6 +387,7 @@ const BulkFundPasteVerify = () => {
     setFailedRowIdx(null);
     setFailedMessage(null);
     setRunning(false);
+    if (rep.rows.length > 0) setStep(2);
   };
 
   const togglePermaSkip = (manager: string, fund_type: string, yield_unit: string, on: boolean) => {
@@ -647,8 +650,48 @@ const BulkFundPasteVerify = () => {
 
   return (
     <div className="space-y-4">
-      {/* Data Health Strip — current business week (Mon-Fri) */}
-      {weekHealth.length > 0 && (
+      {/* Wizard stepper */}
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-4 py-3">
+        {[
+          { n: 1 as const, label: "Paste data" },
+          { n: 2 as const, label: "Review & date" },
+          { n: 3 as const, label: "Confirm & sync" },
+        ].map((s, i, arr) => {
+          const active = step === s.n;
+          const done = step > s.n;
+          const reachable = s.n === 1 || (s.n === 2 && !!report) || (s.n === 3 && !!report);
+          return (
+            <div key={s.n} className="flex items-center gap-2 flex-1">
+              <button
+                type="button"
+                disabled={!reachable}
+                onClick={() => reachable && setStep(s.n)}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                  active && "text-foreground",
+                  !active && done && "text-emerald-600 dark:text-emerald-400 hover:bg-muted",
+                  !active && !done && "text-muted-foreground hover:bg-muted",
+                  !reachable && "opacity-50 cursor-not-allowed",
+                )}
+              >
+                <span className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold",
+                  active && "bg-primary text-primary-foreground",
+                  !active && done && "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+                  !active && !done && "bg-muted text-muted-foreground",
+                )}>
+                  {done ? "✓" : s.n}
+                </span>
+                <span className="hidden sm:inline">{s.label}</span>
+              </button>
+              {i < arr.length - 1 && <div className={cn("h-px flex-1", done ? "bg-emerald-500/40" : "bg-border")} />}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Step 2 only: Data Health Strip */}
+      {step === 2 && weekHealth.length > 0 && (
         <Card className="p-3 shadow-sm">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
@@ -698,104 +741,43 @@ const BulkFundPasteVerify = () => {
         </Card>
       )}
 
-      <Card className="p-4 space-y-3">
-        <div className="flex items-center justify-between">
-          <div>
-            <h3 className="text-sm font-semibold">Bulk Paste — Sync Funds</h3>
-            <p className="text-xs text-muted-foreground">
-              Paste raw data, verify the green lights, set up any new funds, and hit Sync. All-or-nothing — if any row fails, nothing saves.
-            </p>
+      {step === 1 && (
+        <Card className="p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div>
+              <h3 className="text-sm font-semibold">Step 1 — Paste your data</h3>
+              <p className="text-xs text-muted-foreground">
+                Paste raw fund data below. We'll detect funds, match them to existing records, and let you review on the next screen.
+              </p>
+            </div>
+            <Button size="sm" variant="ghost" onClick={() => setRaw(SAMPLE)}>Load sample</Button>
           </div>
-          <Button size="sm" variant="ghost" onClick={() => setRaw(SAMPLE)}>Load sample</Button>
-        </div>
-        <Textarea
-          value={raw}
-          onChange={(e) => setRaw(e.target.value)}
-          placeholder="Paste raw fund data (no delimiters needed)..."
-          className="min-h-[140px] font-mono text-xs"
-        />
-        <div className="flex flex-wrap items-end gap-2">
-          <Button size="sm" onClick={() => handleParse()} disabled={running || !raw.trim()} className="gap-2">
-            <Search className="h-4 w-4" /> Parse &amp; verify
-          </Button>
-          <Button size="sm" variant="outline" onClick={handlePasteFromClipboard} disabled={running} className="gap-2">
-            <Clipboard className="h-4 w-4" /> Paste &amp; auto-parse
-          </Button>
-          {(() => {
-            const today = new Date();
-            const todayIso = today.toISOString().slice(0, 10);
-            const dateObj = effectiveDate ? new Date(effectiveDate + "T00:00:00") : undefined;
-            const isWeekend = !!dateObj && (dateObj.getDay() === 0 || dateObj.getDay() === 6);
-            const isAuto = !!detectedDate && detectedDate === effectiveDate && !dateLocked;
-            const borderCls = dateLocked
-              ? "border-blue-600 ring-2 ring-blue-600/40 bg-blue-500/5"
-              : isAuto
-                ? "border-blue-500 ring-2 ring-blue-500/30 bg-blue-500/5"
-                : isWeekend
-                  ? "border-amber-500 ring-2 ring-amber-500/30 bg-amber-500/5"
-                  : "border-border bg-background";
-            return (
-              <div className="flex flex-col gap-1">
-                <Label className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground flex items-center gap-1.5">
-                  <CalendarIcon className="h-3 w-3" /> Effective Date
-                  {dateLocked && <span className="text-blue-600 normal-case font-medium tracking-normal inline-flex items-center gap-0.5"><Lock className="h-2.5 w-2.5" /> locked</span>}
-                  {!dateLocked && isAuto && <span className="text-blue-500 normal-case font-medium tracking-normal">· auto-filled</span>}
-                </Label>
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      className={cn("h-9 min-w-[180px] justify-start gap-2 text-xs font-medium transition-colors", borderCls)}
-                    >
-                      <CalendarIcon className={cn("h-3.5 w-3.5", dateLocked ? "text-blue-600" : isAuto ? "text-blue-500" : isWeekend ? "text-amber-500" : "text-muted-foreground")} />
-                      <span>{dateObj ? format(dateObj, "MMM d, yyyy") : "Pick a date"}</span>
-                      {dateLocked && (
-                        <button
-                          type="button"
-                          onClick={(e) => { e.stopPropagation(); e.preventDefault(); setDateLocked(false); setEffectiveDate(detectedDate ?? todayIso); }}
-                          className="ml-auto text-[10px] text-muted-foreground hover:text-foreground underline-offset-2 hover:underline"
-                          title="Unlock — let auto-detect manage this"
-                        >
-                          unlock
-                        </button>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="start">
-                    <Calendar
-                      mode="single"
-                      selected={dateObj}
-                      onSelect={(d) => {
-                        if (!d) return;
-                        const iso = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
-                        setEffectiveDate(iso);
-                        setDateLocked(true);
-                      }}
-                      disabled={(d) => d > today}
-                      initialFocus
-                      className={cn("p-3 pointer-events-auto")}
-                    />
-                  </PopoverContent>
-                </Popover>
-                {isWeekend && (
-                  <span className="text-[10px] text-amber-600 dark:text-amber-400">⚠️ Weekend selected — markets usually closed.</span>
-                )}
-              </div>
-            );
-          })()}
-          <span className="text-[11px] text-muted-foreground ml-auto">
-            {loadedDb ? `${existing.length} existing funds loaded` : "DB will load on parse"}
-            {permaSkips.size > 0 && (
-              <> · <button type="button" className="underline hover:text-foreground" onClick={() => { setPermaSkips(new Set()); savePermaSkips(new Set()); toast.success("Permanent skips cleared"); }}>
-                {permaSkips.size} permanent skip{permaSkips.size === 1 ? "" : "s"} (clear)
-              </button></>
-            )}
-          </span>
-        </div>
-      </Card>
+          <Textarea
+            value={raw}
+            onChange={(e) => setRaw(e.target.value)}
+            placeholder="Paste raw fund data (no delimiters needed)..."
+            className="min-h-[180px] font-mono text-xs"
+          />
+          <div className="flex flex-wrap items-center gap-2">
+            <Button size="sm" variant="outline" onClick={handlePasteFromClipboard} disabled={running} className="gap-2">
+              <Clipboard className="h-4 w-4" /> Paste from clipboard
+            </Button>
+            <span className="text-[11px] text-muted-foreground ml-auto">
+              {loadedDb ? `${existing.length} existing funds loaded` : "Database will load on parse"}
+              {permaSkips.size > 0 && (
+                <> · <button type="button" className="underline hover:text-foreground" onClick={() => { setPermaSkips(new Set()); savePermaSkips(new Set()); toast.success("Permanent skips cleared"); }}>
+                  {permaSkips.size} permanent skip{permaSkips.size === 1 ? "" : "s"} (clear)
+                </button></>
+              )}
+            </span>
+            <Button size="lg" onClick={() => handleParse()} disabled={running || !raw.trim()} className="gap-2">
+              <Search className="h-4 w-4" /> Parse & continue →
+            </Button>
+          </div>
+        </Card>
+      )}
 
-      {report && !syncResult && (
+      {report && !syncResult && step === 2 && (
         <>
           <div className="flex flex-wrap gap-2 text-[11px]">
             <span className="rounded-full border border-border px-2 py-0.5">Total: <b>{report.rows.length}</b></span>
@@ -984,6 +966,98 @@ const BulkFundPasteVerify = () => {
             </div>
           </Card>
 
+          {/* Step 2 nav */}
+          <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-3">
+            <Button variant="outline" onClick={() => setStep(1)}>← Back to paste</Button>
+            <div className="text-xs text-muted-foreground flex-1 text-center">
+              {unmappedHeaders.length > 0 ? (
+                <span className="text-red-600">{unmappedHeaders.length} unknown categor{unmappedHeaders.length === 1 ? "y" : "ies"} must be mapped first.</span>
+              ) : counts.blocked > 0 ? (
+                <span className="text-orange-500">{counts.blocked} row{counts.blocked === 1 ? "" : "s"} need attention before you can continue.</span>
+              ) : (
+                <span>Ready: <b>{counts.matched + counts.ready}</b> row{counts.matched + counts.ready === 1 ? "" : "s"} will sync on <b>{format(new Date(effectiveDate + "T00:00:00"), "MMM d, yyyy")}</b>.</span>
+              )}
+            </div>
+            <Button size="lg" onClick={() => setStep(3)} disabled={!canSync} className="gap-2">
+              Continue to sync →
+            </Button>
+          </div>
+
+          {/* Parse log */}
+          <Card className="p-0 overflow-hidden">
+            <div className="flex items-center gap-2 bg-muted px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+              <FileText className="h-3 w-3" /> Parser log
+            </div>
+            <pre className="max-h-[160px] overflow-y-auto px-3 py-2 text-[11px] font-mono leading-relaxed whitespace-pre-wrap">
+              {report.rows.map((r) => r.log).join("\n")}
+              {report.unparsedSegments.length > 0 && "\n\n--- UNPARSED TAIL ---\n" + report.unparsedSegments.join("\n")}
+            </pre>
+          </Card>
+        </>
+      )}
+
+      {report && !syncResult && step === 3 && (
+        <>
+          {/* Step 3: Confirm & Sync */}
+          <Card className="p-5 space-y-4">
+            <div>
+              <h3 className="text-sm font-semibold">Step 3 — Confirm and sync</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Review the summary, pick simulate or live, and hit the big button.
+              </p>
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-center">
+              <div className="rounded-lg border border-emerald-500/40 bg-emerald-500/10 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Update</div>
+                <div className="text-2xl font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">{counts.matched}</div>
+              </div>
+              <div className="rounded-lg border border-blue-500/40 bg-blue-500/10 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Create</div>
+                <div className="text-2xl font-bold text-blue-600 dark:text-blue-400 tabular-nums">{counts.ready}</div>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/40 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Skip</div>
+                <div className="text-2xl font-bold text-muted-foreground tabular-nums">{counts.skipped}</div>
+              </div>
+              <div className="rounded-lg border border-border bg-muted/40 p-3">
+                <div className="text-[10px] uppercase tracking-wider text-muted-foreground">Effective</div>
+                <div className="text-sm font-bold tabular-nums mt-1">{format(new Date(effectiveDate + "T00:00:00"), "MMM d, yyyy")}</div>
+              </div>
+            </div>
+            <div className="flex flex-wrap items-center justify-between gap-3 pt-2 border-t border-border">
+              <Button variant="outline" onClick={() => setStep(2)}>← Back to review</Button>
+              <div className="flex items-center gap-3 flex-wrap ml-auto">
+                <Button size="sm" variant="outline" onClick={exportCsv} className="gap-2">
+                  <Download className="h-3.5 w-3.5" /> Export CSV
+                </Button>
+                <label className="flex items-center gap-2 text-xs cursor-pointer select-none rounded-md border border-border bg-background px-3 py-1.5">
+                  <FlaskConical className={`h-3.5 w-3.5 ${dryRun ? "text-amber-500" : "text-muted-foreground"}`} />
+                  <span className={dryRun ? "font-medium" : "text-muted-foreground"}>Simulate (no changes saved)</span>
+                  <Switch checked={dryRun} onCheckedChange={setDryRun} />
+                </label>
+                {(() => {
+                  const isPerfect = !!canSync && !dryRun && counts.review === 0 && counts.unparsed === 0 && counts.mismatch === 0 && counts.new === 0;
+                  return (
+                    <Button
+                      size="lg"
+                      disabled={!canSync}
+                      onClick={() => setConfirmOpen(true)}
+                      className={`gap-2 transition-all ${isPerfect ? "bg-emerald-500 hover:bg-emerald-600 text-white shadow-lg shadow-emerald-500/30 ring-2 ring-emerald-400/40 animate-pulse-soft" : ""}`}
+                    >
+                      {syncing ? <Loader2 className="h-4 w-4 animate-spin" /> : isPerfect ? <Sparkles className="h-4 w-4" /> : <CheckCircle2 className="h-4 w-4" />}
+                      {dryRun ? "Simulate Sync" : isPerfect ? "Perfect batch — Sync now" : "Sync All Funds"}
+                    </Button>
+                  );
+                })()}
+              </div>
+            </div>
+          </Card>
+        </>
+      )}
+
+      {/* Hidden legacy block (sync action panel) replaced by Step 3 above */}
+      {false && (
+        <>
           {/* Sync action */}
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">
             <div className="text-xs text-muted-foreground">
