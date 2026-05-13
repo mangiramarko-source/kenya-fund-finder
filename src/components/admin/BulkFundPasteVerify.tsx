@@ -534,56 +534,38 @@ const BulkFundPasteVerify = () => {
    */
   const autoRemapNewRows = (minSim = MIN_AUTO_SIM) => {
     if (!report) return;
-    let linked = 0;
-    let skippedLowSim = 0;
-    let skippedClaimed = 0;
-    const patch: Record<number, RowEdit> = {};
+    const plan = planAutoRemap(
+      effectiveRows.map((er) => ({
+        row: {
+          index: er.row.index,
+          status: er.row.status,
+          manager: er.row.manager,
+          fund_type: er.row.fund_type,
+          yield_unit: er.row.yield_unit,
+        },
+        skipped: !!er.edit.skipped,
+        acceptedFundId: er.edit.acceptedFundId,
+        match: er.match,
+      })),
+      existing,
+      minSim,
+    );
+    setLastAutoRemapPlan(plan);
 
-    // Reserve every fund_id that's already spoken for: matcher exact-matches,
-    // prior manual remaps, and (within this batch) other auto-linked rows.
-    // Without this two NEW rows can both grab the same existing fund and the
-    // sync will write conflicting yields to one record.
-    const claimed = new Set<string>();
-    for (const er of effectiveRows) {
-      if (er.edit.acceptedFundId) claimed.add(er.edit.acceptedFundId);
-      else if (er.match?.kind === "matched" && er.match.fund) claimed.add(er.match.fund.id);
-    }
-
-    // Highest similarity wins when multiple NEW rows want the same fund.
-    const candidates = effectiveRows
-      .filter((er) => !er.edit.skipped && !er.edit.acceptedFundId && er.match?.kind === "new")
-      .map((er) => ({ er, cand: bestRemapCandidate(er.row) }))
-      .filter((x): x is { er: typeof x.er; cand: NonNullable<ReturnType<typeof bestRemapCandidate>> } => !!x.cand)
-      .sort((a, b) => b.cand.sim - a.cand.sim);
-
-    for (const { er, cand } of candidates) {
-      if (cand.sim < minSim) { skippedLowSim++; continue; }
-      if (claimed.has(cand.fund.id)) { skippedClaimed++; continue; }
-      patch[er.row.index] = { ...er.edit, acceptedFundId: cand.fund.id, newSetup: undefined, confirmedNew: false };
-      claimed.add(cand.fund.id);
-      linked++;
-    }
-
-    if (linked === 0) {
-      const reasons: string[] = [];
-      if (skippedLowSim > 0) reasons.push(`${skippedLowSim} below ${(minSim * 100).toFixed(0)}% similarity`);
-      if (skippedClaimed > 0) reasons.push(`${skippedClaimed} would collide with an already-linked fund`);
-      toast.info(
-        reasons.length
-          ? `No safe matches — ${reasons.join(", ")}. Use Remap to link manually.`
-          : "No NEW rows had a same fund-type + same yield-unit existing fund",
-      );
+    if (plan.links.length === 0) {
+      const msg = formatAutoRemapToast(plan);
+      toast.info(msg.title);
       return;
     }
-    setEdits((prev) => ({ ...prev, ...patch }));
-    const extras: string[] = [];
-    if (skippedLowSim > 0) extras.push(`${skippedLowSim} below similarity gate`);
-    if (skippedClaimed > 0) extras.push(`${skippedClaimed} duplicate-target rows left as NEW`);
-    toast.success(`Auto-linked ${linked} row${linked === 1 ? "" : "s"} to existing funds`, {
-      description: extras.length
-        ? `${extras.join(" · ")}. Review before syncing — click Remap on any row to change.`
-        : "Review the matches before syncing — click Remap on any row to change.",
+    setEdits((prev) => {
+      const next = { ...prev };
+      for (const link of plan.links) {
+        next[link.rowIndex] = { ...next[link.rowIndex], acceptedFundId: link.fundId, newSetup: undefined, confirmedNew: false };
+      }
+      return next;
     });
+    const msg = formatAutoRemapToast(plan);
+    toast.success(msg.title, msg.description ? { description: msg.description } : undefined);
   };
 
   /** For the "is this a misspelling?" warning shown in the new-fund setup dialog. */
