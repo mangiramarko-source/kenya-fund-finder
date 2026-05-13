@@ -75,6 +75,35 @@ function similarity(a: string, b: string): number {
   if (!max) return 1;
   return 1 - levenshtein(la, lb) / max;
 }
+/** Normalize for token matching: lowercase, strip punctuation, collapse spaces. */
+function normalizeManager(s: string): string {
+  return s
+    .toLowerCase()
+    .replace(/[_\-/]+/g, " ")
+    .replace(/[^a-z0-9 ]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+/** Generic suffix words that don't disambiguate manager identity. */
+const GENERIC_SUFFIX = new Set([
+  "ltd", "limited", "plc", "llc", "inc", "company", "co",
+  "asset", "assets", "management", "managers", "manager",
+  "investment", "investments", "investing", "capital",
+  "kenya", "group", "services", "bank", "trust",
+]);
+/** Token-prefix match: every token of `short` equals the first tokens of `long`. */
+function isPrefixTokenMatch(short: string, long: string): boolean {
+  const a = normalizeManager(short).split(" ").filter(Boolean);
+  const b = normalizeManager(long).split(" ").filter(Boolean);
+  if (a.length === 0 || a.length > b.length) return false;
+  for (let i = 0; i < a.length; i++) {
+    if (a[i] !== b[i]) return false;
+  }
+  // First non-matching token in the long name must be "generic" — otherwise
+  // we'd match "CIC" to "CIC Wealth" by accident.
+  if (a.length < b.length && !GENERIC_SUFFIX.has(b[a.length])) return false;
+  return true;
+}
 /** Whether two yield_units belong to the same "class" (% vs price) */
 function unitClass(u: string): "percent" | "price" {
   return u === "%" ? "percent" : "price";
