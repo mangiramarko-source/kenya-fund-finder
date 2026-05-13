@@ -940,6 +940,56 @@ const BulkFundPasteVerify = () => {
             </div>
           )}
 
+          {lastAutoRemapPlan && lastAutoRemapPlan.collisions.length > 0 && (
+            <Card className="p-3 border-amber-500/40 bg-amber-500/5">
+              <div className="flex items-center justify-between gap-2 mb-2">
+                <div className="flex items-center gap-2">
+                  <ShieldAlert className="h-4 w-4 text-amber-500" />
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-amber-600 dark:text-amber-400">
+                    Collision report — {lastAutoRemapPlan.collisions.length} row{lastAutoRemapPlan.collisions.length === 1 ? "" : "s"} left as NEW
+                  </h4>
+                </div>
+                <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setLastAutoRemapPlan(null)}>
+                  Dismiss
+                </Button>
+              </div>
+              <p className="text-[11px] text-muted-foreground mb-2">
+                These NEW rows wanted to link to a fund that was already claimed. Use <b>Remap</b> on the row to choose a different existing fund, or <b>Setup</b> to create it as new.
+              </p>
+              <div className="space-y-1">
+                {lastAutoRemapPlan.collisions.map((c) => (
+                  <button
+                    key={c.rowIndex}
+                    type="button"
+                    onClick={() => {
+                      const el = document.getElementById(`bulk-row-${c.rowIndex}`);
+                      el?.scrollIntoView({ behavior: "smooth", block: "center" });
+                      el?.classList.add("ring-2", "ring-amber-500");
+                      setTimeout(() => el?.classList.remove("ring-2", "ring-amber-500"), 1600);
+                    }}
+                    className="w-full text-left flex items-center justify-between gap-2 rounded-md border border-border/50 bg-background/60 px-2 py-1.5 text-xs hover:bg-accent/30"
+                  >
+                    <div className="min-w-0">
+                      <span className="font-mono text-muted-foreground mr-2">#{c.rowIndex + 1}</span>
+                      <b className="truncate">{c.manager}</b>
+                      <span className="text-[10px] text-muted-foreground ml-2">
+                        {FUND_TYPE_LABELS[c.fund_type as FundType] || c.fund_type} · {c.yield_unit}
+                      </span>
+                    </div>
+                    <div className="text-[10px] text-muted-foreground shrink-0">
+                      wanted <b className="text-foreground">{c.targetFund.manager}</b> · {(c.similarity * 100).toFixed(0)}%
+                      <span className="ml-2 px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">
+                        {c.reason === "lost-to-higher-similarity" && "lost to better match"}
+                        {c.reason === "already-accepted-elsewhere" && "already linked"}
+                        {c.reason === "already-exact-matched" && "already exact match"}
+                      </span>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </Card>
+          )}
+
           <Card className="p-0 overflow-hidden">
             <div className="grid grid-cols-12 bg-muted px-3 py-2 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
               <div className="col-span-1">#</div>
