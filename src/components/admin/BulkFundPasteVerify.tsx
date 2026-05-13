@@ -650,8 +650,48 @@ const BulkFundPasteVerify = () => {
 
   return (
     <div className="space-y-4">
-      {/* Data Health Strip — current business week (Mon-Fri) */}
-      {weekHealth.length > 0 && (
+      {/* Wizard stepper */}
+      <div className="flex items-center justify-between gap-2 rounded-lg border border-border bg-card px-4 py-3">
+        {[
+          { n: 1 as const, label: "Paste data" },
+          { n: 2 as const, label: "Review & date" },
+          { n: 3 as const, label: "Confirm & sync" },
+        ].map((s, i, arr) => {
+          const active = step === s.n;
+          const done = step > s.n;
+          const reachable = s.n === 1 || (s.n === 2 && !!report) || (s.n === 3 && !!report);
+          return (
+            <div key={s.n} className="flex items-center gap-2 flex-1">
+              <button
+                type="button"
+                disabled={!reachable}
+                onClick={() => reachable && setStep(s.n)}
+                className={cn(
+                  "flex items-center gap-2 rounded-md px-2 py-1 text-xs font-medium transition-colors",
+                  active && "text-foreground",
+                  !active && done && "text-emerald-600 dark:text-emerald-400 hover:bg-muted",
+                  !active && !done && "text-muted-foreground hover:bg-muted",
+                  !reachable && "opacity-50 cursor-not-allowed",
+                )}
+              >
+                <span className={cn(
+                  "flex h-6 w-6 items-center justify-center rounded-full text-[11px] font-semibold",
+                  active && "bg-primary text-primary-foreground",
+                  !active && done && "bg-emerald-500/20 text-emerald-600 dark:text-emerald-400",
+                  !active && !done && "bg-muted text-muted-foreground",
+                )}>
+                  {done ? "✓" : s.n}
+                </span>
+                <span className="hidden sm:inline">{s.label}</span>
+              </button>
+              {i < arr.length - 1 && <div className={cn("h-px flex-1", done ? "bg-emerald-500/40" : "bg-border")} />}
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Step 2 only: Data Health Strip */}
+      {step === 2 && weekHealth.length > 0 && (
         <Card className="p-3 shadow-sm">
           <div className="flex items-center justify-between gap-3 flex-wrap">
             <div className="flex items-center gap-2">
