@@ -21,25 +21,15 @@ import { format } from "date-fns";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 
-interface ExistingFund {
-  id: string;
-  manager: string;
-  fund_type: string;
-  yield_unit: string;
-  annual_yield: number;
-}
-
-type MatchKind = "matched" | "review" | "new" | "type-mismatch";
-interface MatchInfo {
-  kind: MatchKind;
-  fund?: ExistingFund;
-  prevAnnual?: number;
-  drift?: number;
-  /** For type-mismatch: the existing fund whose unit class differs */
-  conflictingFund?: ExistingFund;
-  /** For "review": similarity 0..1 */
-  similarity?: number;
-}
+import {
+  type ExistingFund,
+  type MatchKind,
+  type MatchInfo,
+  similarity,
+  unitClass,
+  compositeKey,
+  matchRow,
+} from "@/lib/bulkFundMatcher";
 
 /** Per-row admin overrides on top of parsed data */
 interface RowEdit {
@@ -57,58 +47,6 @@ interface RowEdit {
   confirmedNew?: boolean;
 }
 
-// Levenshtein distance for fuzzy manager-name matching
-function levenshtein(a: string, b: string): number {
-  const m = a.length, n = b.length;
-  if (!m) return n; if (!n) return m;
-  const dp = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(0));
-  for (let i = 0; i <= m; i++) dp[i][0] = i;
-  for (let j = 0; j <= n; j++) dp[0][j] = j;
-  for (let i = 1; i <= m; i++) for (let j = 1; j <= n; j++) {
-    dp[i][j] = a[i - 1] === b[j - 1] ? dp[i - 1][j - 1] : 1 + Math.min(dp[i - 1][j - 1], dp[i - 1][j], dp[i][j - 1]);
-  }
-  return dp[m][n];
-}
-function similarity(a: string, b: string): number {
-  const la = a.toLowerCase(), lb = b.toLowerCase();
-  const max = Math.max(la.length, lb.length);
-  if (!max) return 1;
-  return 1 - levenshtein(la, lb) / max;
-}
-/** Normalize for token matching: lowercase, strip punctuation, collapse spaces. */
-function normalizeManager(s: string): string {
-  return s
-    .toLowerCase()
-    .replace(/[_\-/]+/g, " ")
-    .replace(/[^a-z0-9 ]/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-/** Generic suffix words that don't disambiguate manager identity. */
-const GENERIC_SUFFIX = new Set([
-  "ltd", "limited", "plc", "llc", "inc", "company", "co",
-  "asset", "assets", "management", "managers", "manager",
-  "investment", "investments", "investing", "capital",
-  "kenya", "group", "services", "bank", "trust",
-]);
-/** Token-prefix match: every token of `short` equals the first tokens of `long`. */
-function isPrefixTokenMatch(short: string, long: string): boolean {
-  const a = normalizeManager(short).split(" ").filter(Boolean);
-  const b = normalizeManager(long).split(" ").filter(Boolean);
-  if (a.length === 0 || a.length > b.length) return false;
-  for (let i = 0; i < a.length; i++) {
-    if (a[i] !== b[i]) return false;
-  }
-  // First non-matching token in the long name must be "generic" — otherwise
-  // we'd match "CIC" to "CIC Wealth" by accident.
-  if (a.length < b.length && !GENERIC_SUFFIX.has(b[a.length])) return false;
-  return true;
-}
-/** Whether two yield_units belong to the same "class" (% vs price) */
-function unitClass(u: string): "percent" | "price" {
-  return u === "%" ? "percent" : "price";
-}
-
 const SAMPLE = `Fund TypeFund ManagerCurrencyDaily Yield (%)Annual Rate (%)Money Mkt FundBritamSh9.269.71Money Mkt FundICEASh7.758.06Money Mkt FundCytonnSh11.4512.13Money Mkt FundCytonnUSD5.575.72Fixed Income FundICEASh12.0013.82Fixed Income FundICEAUSD7.007.50Balanced FundBritamSh167.09172.49Equity FundICEASh157.84157.84`;
 
 const PERMA_SKIP_KEY = "kff_admin_perma_skip_v1";
@@ -124,9 +62,6 @@ function savePermaSkips(set: Set<string>) {
   try { localStorage.setItem(PERMA_SKIP_KEY, JSON.stringify([...set])); } catch { /* noop */ }
 }
 
-function compositeKey(manager: string, fund_type: string, yield_unit: string) {
-  return `${manager.trim().toLowerCase()}|${fund_type}|${yield_unit}`;
-}
 
 function generateSlug(manager: string, fund_type: string, yield_unit: string) {
   const base = manager.toLowerCase().replace(/[^a-z0-9\s]/g, "").trim().replace(/\s+/g, "-");
@@ -531,79 +466,21 @@ const BulkFundPasteVerify = () => {
     }
   };
 
-  /** Strict match: exact composite OR Levenshtein similarity ≥ 0.85 (NEVER auto-corrects). */
-  const SIMILARITY_THRESHOLD = 0.85;
-
   const matches = useMemo<Record<number, MatchInfo>>(() => {
     if (!report) return {};
-    const byKey = new Map<string, ExistingFund>();
-    for (const f of existing) byKey.set(compositeKey(f.manager, f.fund_type, f.yield_unit), f);
     const out: Record<number, MatchInfo> = {};
     for (const r of report.rows) {
-      if (r.status !== "ok" || !r.fund_type || !r.yield_unit) {
-        out[r.index] = { kind: "new" };
-        continue;
-      }
-
-      // Type-consistency check FIRST: same manager exists with a different unit class
-      const conflicting = existing.find(
-        (f) =>
-          f.manager.toLowerCase().trim() === r.manager.toLowerCase().trim() &&
-          unitClass(f.yield_unit) !== unitClass(r.yield_unit!),
+      out[r.index] = matchRow(
+        {
+          index: r.index,
+          status: r.status,
+          manager: r.manager,
+          fund_type: r.fund_type,
+          yield_unit: r.yield_unit,
+          annual_yield: r.annual_yield,
+        },
+        existing,
       );
-      if (conflicting) {
-        out[r.index] = { kind: "type-mismatch", conflictingFund: conflicting };
-        continue;
-      }
-
-      const exact = byKey.get(compositeKey(r.manager, r.fund_type, r.yield_unit));
-      if (exact) {
-        const drift = exact.annual_yield > 0
-          ? Math.abs(((r.annual_yield ?? 0) - exact.annual_yield) / exact.annual_yield) * 100
-          : 0;
-        out[r.index] = { kind: "matched", fund: exact, prevAnnual: exact.annual_yield, drift };
-        continue;
-      }
-
-      // Token-prefix match: short pasted name (e.g. "Britam") matches the
-      // start of an existing full name (e.g. "Britam Asset Managers"), within
-      // the same fund_type + unit class.
-      const prefixCandidates = existing.filter(
-        (f) =>
-          f.fund_type === r.fund_type &&
-          unitClass(f.yield_unit) === unitClass(r.yield_unit!) &&
-          (isPrefixTokenMatch(r.manager, f.manager) || isPrefixTokenMatch(f.manager, r.manager)),
-      );
-      if (prefixCandidates.length === 1) {
-        const f = prefixCandidates[0];
-        const drift = f.annual_yield > 0
-          ? Math.abs(((r.annual_yield ?? 0) - f.annual_yield) / f.annual_yield) * 100
-          : 0;
-        out[r.index] = { kind: "matched", fund: f, prevAnnual: f.annual_yield, drift };
-        continue;
-      }
-      if (prefixCandidates.length > 1) {
-        // Ambiguous — surface the closest-by-length one for manual confirmation.
-        const best = prefixCandidates
-          .map((f) => ({ f, sim: similarity(f.manager, r.manager) }))
-          .sort((a, b) => b.sim - a.sim)[0];
-        out[r.index] = { kind: "review", fund: best.f, prevAnnual: best.f.annual_yield, similarity: best.sim };
-        continue;
-      }
-
-      // Strict fuzzy: same fund_type + same unit class, similarity ≥ threshold
-      let best: { fund: ExistingFund; sim: number } | null = null;
-      for (const f of existing) {
-        if (f.fund_type !== r.fund_type) continue;
-        if (unitClass(f.yield_unit) !== unitClass(r.yield_unit)) continue;
-        const sim = similarity(f.manager, r.manager);
-        if (sim >= SIMILARITY_THRESHOLD && (!best || sim > best.sim)) best = { fund: f, sim };
-      }
-      if (best) {
-        out[r.index] = { kind: "review", fund: best.fund, prevAnnual: best.fund.annual_yield, similarity: best.sim };
-      } else {
-        out[r.index] = { kind: "new" };
-      }
     }
     return out;
   }, [report, existing]);
