@@ -191,13 +191,14 @@ describe("Unit-class safety: USD/GBP rows never collapse onto %/KES funds", () =
     expect(["tm-foo-pct", "tm-foo-usd"]).toContain(m.conflictingFund?.id);
   });
 
-  it("Type-mismatch takes precedence over an otherwise valid exact match", () => {
-    // FooBar Capital % MM exists. Pasting USD MM should NOT silently match the
-    // % record — should be type-mismatch (or matched against the USD record if
-    // one exists). Here USD record exists, so it should match cleanly.
+  it("CONTRACT: type-mismatch fires before exact-match when ANY same-name record has a different unit class", () => {
+    // FooBar Capital exists as both % and USD. Pasting USD finds the % record
+    // as a unit-class conflict and surfaces type-mismatch first — even though
+    // an exact USD match also exists. This is a deliberate hard warning so
+    // the admin must explicitly reconcile classes before saving.
     const m = matchRow(row("FooBar Capital", "money_market", "USD"), EXISTING);
-    expect(m.kind).toBe("matched");
-    expect(m.fund?.id).toBe("tm-foo-usd");
+    expect(m.kind).toBe("type-mismatch");
+    expect(m.conflictingFund?.id).toBe("tm-foo-pct");
   });
 });
 
