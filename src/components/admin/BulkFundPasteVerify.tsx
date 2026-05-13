@@ -1049,9 +1049,12 @@ const BulkFundPasteVerify = () => {
                           <div className="text-[10px] text-yellow-500 truncate">
                             ≈ {match.fund.manager} ({((match.similarity ?? 0) * 100).toFixed(0)}%)
                           </div>
-                          <div className="flex justify-end gap-1">
+                          <div className="flex justify-end gap-1 flex-wrap">
                             <Button size="sm" variant="outline" className="h-6 px-2 text-[10px]" onClick={() => setEdit(r.index, { acceptedFundId: match.fund!.id })}>
                               Link to {match.fund.manager.split(" ")[0]}
+                            </Button>
+                            <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px] gap-1" onClick={() => setRemapDialogIdx(r.index)} title="Pick a different existing fund">
+                              <Link2 className="h-3 w-3" /> Remap
                             </Button>
                             <Button size="sm" variant="ghost" className="h-6 px-2 text-[10px]" onClick={() => setSetupDialogIdx(r.index)}>
                               Create as new
@@ -1060,15 +1063,26 @@ const BulkFundPasteVerify = () => {
                         </div>
                       )}
                       {isNew && r.status === "ok" && (
-                        <Button
-                          size="sm"
-                          variant={edit.newSetup && edit.confirmedNew ? "outline" : "default"}
-                          className="h-6 px-2 gap-1 text-[10px]"
-                          onClick={() => setSetupDialogIdx(r.index)}
-                        >
-                          <Settings2 className="h-3 w-3" />
-                          {edit.newSetup && edit.confirmedNew ? "Edit setup" : edit.newSetup ? "Confirm" : "Setup"}
-                        </Button>
+                        <div className="flex justify-end gap-1 flex-wrap">
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-6 px-2 gap-1 text-[10px]"
+                            onClick={() => setRemapDialogIdx(r.index)}
+                            title="Map this row to an existing fund instead of creating a new one"
+                          >
+                            <Link2 className="h-3 w-3" /> Remap
+                          </Button>
+                          <Button
+                            size="sm"
+                            variant={edit.newSetup && edit.confirmedNew ? "outline" : "default"}
+                            className="h-6 px-2 gap-1 text-[10px]"
+                            onClick={() => setSetupDialogIdx(r.index)}
+                          >
+                            <Settings2 className="h-3 w-3" />
+                            {edit.newSetup && edit.confirmedNew ? "Edit setup" : edit.newSetup ? "Confirm" : "Setup"}
+                          </Button>
+                        </div>
                       )}
                       {match?.kind === "matched" && !isReview && (
                         <span className="text-[10px] text-muted-foreground">existing fund</span>
