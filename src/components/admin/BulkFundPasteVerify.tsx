@@ -960,8 +960,15 @@ const BulkFundPasteVerify = () => {
                   Many are aliases of an existing fund. Auto-link only collapses rows with an <b>identical fund type</b>, <b>identical yield unit</b> (% / KES / USD / GBP) and ≥ {(MIN_AUTO_SIM * 100).toFixed(0)}% manager-name similarity — different share classes or fund structures stay NEW.
                 </span>
               </div>
-              <Button size="sm" variant="outline" className="gap-2 shrink-0" onClick={() => autoRemapNewRows()}>
-                <Link2 className="h-3 w-3" /> Auto-remap NEW rows
+              <Button
+                size="sm"
+                variant="outline"
+                className="gap-2 shrink-0"
+                onClick={() => autoRemapNewRows()}
+                disabled={!!lastAutoRemapPlan}
+                title={lastAutoRemapPlan ? "Dismiss the previous auto-remap result first to avoid stale collision/toast state" : "Link NEW rows to an existing fund when manager + type + yield unit match"}
+              >
+                <Link2 className="h-3 w-3" /> {lastAutoRemapPlan ? "Auto-remap applied" : "Auto-remap NEW rows"}
               </Button>
             </div>
           )}
