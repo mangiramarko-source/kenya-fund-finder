@@ -672,9 +672,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-left">
                       <ChangeCell change={dailyChange} unit={fund.yield_unit} />
                     </td>
-                    <td className="px-3 py-3.5 text-left">
-                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.daily_yield} field="daily_yield" change={dailyChange} />
-                    </td>
                     <td className="px-3 py-3.5 whitespace-nowrap tabular-nums text-left">
                       <span className="font-bold text-foreground text-sm">
                         {fmtYield(fund.annual_yield, fund.yield_unit)}
