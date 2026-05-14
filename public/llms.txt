@@ -1,0 +1,26 @@
+# Kenya Fund Finder
+
+> Independent comparison platform for Kenyan unit trust funds, equities, FX rates, commodities, and market news. Daily-updated yields and prices for Money Market, Fixed Income, Equity, Balanced, and Bond funds regulated by the Capital Markets Authority (CMA) of Kenya.
+
+Kenya Fund Finder helps investors track and compare collective investment schemes in Kenya. The site is informational only — it does not provide investment advice, broker services, or fund transactions. Yields shown are gross annual effective yields before the 15% withholding tax unless stated. All data is sourced from publicly available fund fact sheets and regulatory filings.
+
+## Pages
+
+- [Unit Trusts](/): Live table of Kenyan unit trust funds with annual yields, manager, fund type, and minimum investment.
+- [Funds](/funds): Full unit trust listings.
+- [Stocks](/stocks): Nairobi Securities Exchange (NSE) listed equities with live prices.
+- [FX Rates](/rates): Live foreign exchange rates against the Kenya Shilling (USD, EUR, GBP, etc.).
+- [Commodities](/commodities): Gold, oil, and crypto spot prices.
+- [Markets](/markets): Terminal-style mobile market dashboard.
+- [Overview](/overview): Cross-asset market overview.
+- [Compare](/compare): Side-by-side fund comparison.
+- [Calculator](/calculator): Investment returns, currency, and KRA PAYE calculators.
+- [News](/news): Investment fund and market news for Kenya.
+- [Alerts](/alerts): Personalized price-alert management.
+- [Learn](/learn): Educational guides on unit trusts, risks, returns, and CMA regulation.
+- [Checklist](/checklist): Pre-investment checklist for Kenyan investors.
+
+## Optional
+
+- [Privacy Policy](/privacy): Data handling and cookie policy.
+- [Terms of Use](/terms): Usage terms and disclaimers.
