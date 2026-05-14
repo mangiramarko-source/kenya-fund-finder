@@ -73,27 +73,42 @@ const MiniSparkline = ({ data, currentValue, field = "annual_yield", change }: {
     const last12 = vals.slice(-12);
     const min = Math.min(...last12);
     const max = Math.max(...last12);
-    // Tight padding (5% of range, with a tiny floor) so micro-changes become visible
     const range = max - min;
-    const pad = range > 0 ? range * 0.05 : Math.max(Math.abs(max) * 0.001, 0.01);
+    // Zero padding when there is real movement so sub-0.01 changes fill the box.
+    // Tiny floor keeps a perfectly flat series visible as a centered line.
+    const pad = range > 0 ? 0 : Math.max(Math.abs(max) * 0.0005, 0.005);
+    // Net direction across the window
+    const first = last12[0];
+    const lastV = last12[last12.length - 1];
+    const netDiff = lastV - first;
+    let seriesDir: "up" | "down" | "flat" = "flat";
+    if (netDiff > 1e-6) seriesDir = "up";
+    else if (netDiff < -1e-6) seriesDir = "down";
     return {
       points: last12.map((v, i) => ({ i, value: v })),
-      positive: last12[last12.length - 1] >= last12[0],
+      seriesDir,
       domain: [min - pad, max + pad] as [number, number],
     };
   }, [data, currentValue, field]);
 
   if (!series) return <span className="text-[10px] text-muted-foreground">—</span>;
 
-  // Prefer explicit change (matches ChangeCell) over derived series direction
-  const isUnchanged = change !== undefined && change === 0;
-  const isPositive = change !== undefined ? change > 0 : series.positive;
-  const color = isUnchanged
-    ? "hsl(var(--muted-foreground))"
-    : isPositive
-    ? "hsl(var(--accent))"
-    : "hsl(var(--destructive))";
-  const gradientId = `fund-spark-${isUnchanged ? "flat" : isPositive ? "up" : "down"}`;
+  // Determine direction: prefer the explicit `change` prop, but fall back to the
+  // series net direction so colour still updates when change rounds to 0.
+  const EPS = 1e-6;
+  let dir: "up" | "down" | "flat";
+  if (change !== undefined && Math.abs(change) > EPS) {
+    dir = change > 0 ? "up" : "down";
+  } else {
+    dir = series.seriesDir;
+  }
+  const color =
+    dir === "flat"
+      ? "hsl(var(--muted-foreground))"
+      : dir === "up"
+      ? "hsl(var(--accent))"
+      : "hsl(var(--destructive))";
+  const gradientId = `fund-spark-${dir}`;
 
   return (
     <div className="w-[60px] h-[24px] inline-block">
@@ -101,13 +116,13 @@ const MiniSparkline = ({ data, currentValue, field = "annual_yield", change }: {
         <LineChart data={series.points} margin={{ top: 2, right: 0, bottom: 2, left: 0 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+              <stop offset="0%" stopColor={color} stopOpacity={0.3} />
               <stop offset="100%" stopColor={color} stopOpacity={0} />
             </linearGradient>
           </defs>
           <YAxis hide domain={series.domain} />
-          <Area type="monotone" dataKey="value" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
-          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Area type="natural" dataKey="value" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
+          <Line type="natural" dataKey="value" stroke={color} strokeWidth={1.75} dot={false} isAnimationActive={false} />
         </LineChart>
       </ResponsiveContainer>
     </div>
