@@ -6,6 +6,7 @@ import CurrencyTicker from "./CurrencyTicker";
 import DesktopSidebar from "./DesktopSidebar";
 import DesktopTopBar from "./DesktopTopBar";
 import OfflineBanner from "./OfflineBanner";
+import SeoBreadcrumbs from "./SeoBreadcrumbs";
 import { usePageView } from "@/hooks/usePageView";
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
@@ -18,6 +19,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="flex min-h-screen font-body">
       <SkipToContent />
+      <SeoBreadcrumbs />
 
       {/* Desktop sidebar */}
       <DesktopSidebar />
