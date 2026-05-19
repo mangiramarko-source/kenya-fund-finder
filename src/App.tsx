@@ -19,6 +19,8 @@ const CompareModal = lazy(() => import("./components/compare/CompareModal"));
 
 // Lazy-loaded routes
 const Index = lazy(() => import("./pages/Index"));
+const FundsDirectoryPage = lazy(() => import("./pages/FundsDirectoryPage"));
+const FundReportPage = lazy(() => import("./pages/FundReportPage"));
 const ComparePage = lazy(() => import("./pages/ComparePage"));
 const FundDetailPage = lazy(() => import("./pages/FundDetailPage"));
 
@@ -75,9 +77,11 @@ const App = () => (
                 <Suspense fallback={<PageFallback />}>
                   <Routes>
                     <Route path="/" element={<OverviewPage />} />
-                    <Route path="/funds" element={<Index />} />
+                    <Route path="/funds" element={<FundsDirectoryPage />} />
+                    <Route path="/funds/:slug" element={<FundReportPage />} />
                     <Route path="/compare" element={<ComparePage />} />
-                    <Route path="/compare/:id" element={<FundDetailPage />} />
+                    <Route path="/compare/:id" element={<FundReportPage />} />
+                    
                     
                     <Route path="/news" element={<NewsPage />} />
                     <Route path="/news/:id" element={<NewsArticlePage />} />

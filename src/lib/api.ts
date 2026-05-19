@@ -12,6 +12,8 @@ export const FUND_TYPE_LABELS: Record<FundType, string> = {
   special: "Special Fund",
 };
 
+export type RiskLevel = "low" | "medium" | "high";
+
 export interface FundFromDB {
   id: string;
   slug: string;
@@ -32,6 +34,16 @@ export interface FundFromDB {
   yield_unit: string;
   is_published: boolean;
   updated_at: string;
+  // Premium-redesign metadata
+  is_featured?: boolean;
+  good_for?: string[];
+  not_good_for?: string[];
+  risk_level?: RiskLevel;
+  inception_date?: string | null;
+  aum_kes?: number | null;
+  manager_years_active?: number | null;
+  exit_fee?: number | null;
+  withdrawal_days?: number | null;
 }
 
 export const YIELD_UNITS = ["%", "KES", "USD", "GBP"] as const;
@@ -70,6 +82,9 @@ const FUND_COLUMNS = [
   "fund_type", "minimum_investment", "management_fee", "withdrawal_time",
   "description", "website", "fact_sheet_date", "yield_unit",
   "is_published", "updated_at",
+  "is_featured", "good_for", "not_good_for", "risk_level",
+  "inception_date", "aum_kes", "manager_years_active",
+  "exit_fee", "withdrawal_days",
 ];
 
 const normalizeFund = (f: any): FundFromDB => ({
@@ -82,6 +97,15 @@ const normalizeFund = (f: any): FundFromDB => ({
   thirty_day_yield: Number(f.thirty_day_yield),
   minimum_investment: Number(f.minimum_investment),
   management_fee: Number(f.management_fee),
+  is_featured: !!f.is_featured,
+  good_for: Array.isArray(f.good_for) ? f.good_for : [],
+  not_good_for: Array.isArray(f.not_good_for) ? f.not_good_for : [],
+  risk_level: (f.risk_level || "low") as RiskLevel,
+  inception_date: f.inception_date ?? null,
+  aum_kes: f.aum_kes != null ? Number(f.aum_kes) : null,
+  manager_years_active: f.manager_years_active != null ? Number(f.manager_years_active) : null,
+  exit_fee: f.exit_fee != null ? Number(f.exit_fee) : null,
+  withdrawal_days: f.withdrawal_days != null ? Number(f.withdrawal_days) : null,
 });
 
 export async function fetchFunds(): Promise<FundFromDB[]> {

@@ -595,19 +595,27 @@ export type Database = {
       funds: {
         Row: {
           annual_yield: number
+          aum_kes: number | null
           cma_licensed: boolean
           created_at: string
           created_by: string | null
           daily_yield: number
           description: string
+          exit_fee: number | null
           fact_sheet_date: string | null
           fund_type: string
+          good_for: string[]
           id: string
+          inception_date: string | null
+          is_featured: boolean
           is_published: boolean
           management_fee: number
           manager: string
+          manager_years_active: number | null
           minimum_investment: number
           name: string
+          not_good_for: string[]
+          risk_level: string
           seven_day_yield: number
           slug: string
           source_url: string | null
@@ -615,24 +623,33 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           website: string
+          withdrawal_days: number | null
           withdrawal_time: string
           yield_unit: string
         }
         Insert: {
           annual_yield: number
+          aum_kes?: number | null
           cma_licensed?: boolean
           created_at?: string
           created_by?: string | null
           daily_yield?: number
           description?: string
+          exit_fee?: number | null
           fact_sheet_date?: string | null
           fund_type?: string
+          good_for?: string[]
           id?: string
+          inception_date?: string | null
+          is_featured?: boolean
           is_published?: boolean
           management_fee: number
           manager: string
+          manager_years_active?: number | null
           minimum_investment: number
           name: string
+          not_good_for?: string[]
+          risk_level?: string
           seven_day_yield: number
           slug: string
           source_url?: string | null
@@ -640,24 +657,33 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           website?: string
+          withdrawal_days?: number | null
           withdrawal_time: string
           yield_unit?: string
         }
         Update: {
           annual_yield?: number
+          aum_kes?: number | null
           cma_licensed?: boolean
           created_at?: string
           created_by?: string | null
           daily_yield?: number
           description?: string
+          exit_fee?: number | null
           fact_sheet_date?: string | null
           fund_type?: string
+          good_for?: string[]
           id?: string
+          inception_date?: string | null
+          is_featured?: boolean
           is_published?: boolean
           management_fee?: number
           manager?: string
+          manager_years_active?: number | null
           minimum_investment?: number
           name?: string
+          not_good_for?: string[]
+          risk_level?: string
           seven_day_yield?: number
           slug?: string
           source_url?: string | null
@@ -665,6 +691,7 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           website?: string
+          withdrawal_days?: number | null
           withdrawal_time?: string
           yield_unit?: string
         }
