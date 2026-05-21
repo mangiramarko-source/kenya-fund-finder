@@ -14,7 +14,7 @@ export default {
     },
     extend: {
       fontFamily: {
-        heading: ['"Fraunces"', '"DM Sans"', "Georgia", "serif"],
+        heading: ['"DM Sans"', "system-ui", "sans-serif"],
         body: ['"Inter"', "system-ui", "sans-serif"],
         mono: ['"JetBrains Mono"', "ui-monospace", "SFMono-Regular", "Menlo", "monospace"],
       },
