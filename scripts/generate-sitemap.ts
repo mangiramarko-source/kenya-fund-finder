@@ -70,10 +70,39 @@ async function main() {
     for (const f of funds ?? []) {
       if (!f.slug) continue;
       entries.push({
-        path: `/compare/${f.slug}`,
+        path: `/funds/${f.slug}`,
         changefreq: "daily",
         priority: "0.7",
         lastmod: f.updated_at ? new Date(f.updated_at).toISOString().slice(0, 10) : undefined,
+      });
+    }
+
+    // Stock detail pages (/stocks/:symbol)
+    const { data: stocks } = await supabase
+      .from("stocks")
+      .select("symbol, updated_at")
+      .eq("is_active", true);
+    for (const s of stocks ?? []) {
+      if (!s.symbol) continue;
+      entries.push({
+        path: `/stocks/${s.symbol}`,
+        changefreq: "daily",
+        priority: "0.7",
+        lastmod: s.updated_at ? new Date(s.updated_at).toISOString().slice(0, 10) : undefined,
+      });
+    }
+
+    // CMS site pages (/page/:slug)
+    const { data: sitePages } = await supabase
+      .from("site_pages_public")
+      .select("slug, updated_at");
+    for (const p of sitePages ?? []) {
+      if (!p.slug) continue;
+      entries.push({
+        path: `/page/${p.slug}`,
+        changefreq: "monthly",
+        priority: "0.5",
+        lastmod: p.updated_at ? new Date(p.updated_at).toISOString().slice(0, 10) : undefined,
       });
     }
 
