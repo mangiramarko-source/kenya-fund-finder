@@ -267,15 +267,15 @@ const FundsDirectoryPage = () => {
             ><List className="h-4 w-4" /></button>
           </div>
 
-          {/* Mobile filter sheet */}
+          {/* Filters popup (all breakpoints) */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="outline" size="sm" className="md:hidden h-10 gap-1.5">
+              <Button variant="outline" size="sm" className="h-10 gap-1.5">
                 <Filter className="h-3.5 w-3.5" /> Filters
                 {activeFilterCount > 0 && <span className="ml-1 text-[10px] bg-accent text-accent-foreground rounded-full px-1.5">{activeFilterCount}</span>}
               </Button>
             </SheetTrigger>
-            <SheetContent side="left" className="w-80 overflow-y-auto">
+            <SheetContent side="right" className="w-full sm:max-w-md overflow-y-auto">
               <SheetHeader><SheetTitle>Filters</SheetTitle></SheetHeader>
               <div className="mt-4"><FilterPanel /></div>
             </SheetContent>
