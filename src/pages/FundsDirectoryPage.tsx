@@ -287,11 +287,8 @@ const FundsDirectoryPage = () => {
         Showing <span className="font-semibold text-foreground tabular-nums">{filtered.length}</span> of {totalCount} {cmaOnly ? "CMA-regulated " : ""}funds.
       </p>
 
-      <div className="grid grid-cols-1 md:grid-cols-[240px_minmax(0,1fr)] gap-5">
-        {/* Desktop filters */}
-        <aside className="hidden md:block sticky top-20 self-start">
-          <FilterPanel />
-        </aside>
+      <div>
+
 
         {/* Results */}
         <section className="min-w-0">
