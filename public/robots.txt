@@ -173,4 +173,4 @@ User-agent: https://www.imediaethics.org
 
 Disallow: /
 
-Sitemap: https://kenyafundfinder.com/sitemap.xml
+Sitemap: https://www.kenyafundfinder.com/sitemap.xml

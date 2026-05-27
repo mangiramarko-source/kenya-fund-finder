@@ -69,7 +69,7 @@ Deno.serve(async () => {
   if (funds) {
     for (const fund of funds) {
       xml += `  <url>
-    <loc>${SITE_URL}/funds/${fund.slug}</loc>
+    <loc>${SITE_URL}/compare/${fund.slug}</loc>
     <lastmod>${fund.updated_at?.split("T")[0] || today}</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.7</priority>

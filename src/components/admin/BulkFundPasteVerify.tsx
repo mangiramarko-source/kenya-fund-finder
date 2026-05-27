@@ -182,28 +182,7 @@ const RemapDialog = ({
   onPick: (fundId: string) => void;
 }) => {
   const [q, setQ] = useState("");
-  const [typeFilter, setTypeFilter] = useState<string>("any");
-  const [unitFilter, setUnitFilter] = useState<string>("any");
-  useEffect(() => {
-    if (open) {
-      setQ("");
-      // Pre-seed filters from the row so the user lands on the most likely
-      // candidates, but they can widen to "any" to pick a sibling fund (e.g.
-      // a USD share class or an equity fund under the same manager).
-      setTypeFilter(row?.fund_type || "any");
-      setUnitFilter(row?.yield_unit || "any");
-    }
-  }, [open, row]);
-
-  const availableTypes = useMemo(
-    () => Array.from(new Set(existing.map((f) => f.fund_type).filter(Boolean))).sort() as string[],
-    [existing],
-  );
-  const availableUnits = useMemo(
-    () => Array.from(new Set(existing.map((f) => f.yield_unit).filter(Boolean))).sort() as string[],
-    [existing],
-  );
-
+  useEffect(() => { if (open) setQ(""); }, [open]);
   const ranked = useMemo(() => {
     if (!row) return [];
     const sameTypeUnit = (f: ExistingFund) =>
@@ -211,41 +190,19 @@ const RemapDialog = ({
       (row.yield_unit ? unitClass(f.yield_unit) === unitClass(row.yield_unit) : true);
     const ql = q.toLowerCase().trim();
     const matchQ = (f: ExistingFund) =>
-      !ql ||
-      f.manager.toLowerCase().includes(ql) ||
-      (f.name || "").toLowerCase().includes(ql) ||
-      (f.fund_type || "").toLowerCase().includes(ql);
-    const matchType = (f: ExistingFund) => typeFilter === "any" || f.fund_type === typeFilter;
-    const matchUnit = (f: ExistingFund) => unitFilter === "any" || f.yield_unit === unitFilter;
-    // Boost rank when the query hits the fund's specific name — exact > prefix
-    // > substring — so typing "cytonn money market" surfaces that exact scheme
-    // before any other Cytonn fund.
-    const nameBoost = (f: ExistingFund) => {
-      if (!ql) return 0;
-      const nm = (f.name || "").toLowerCase();
-      if (!nm) return 0;
-      if (nm === ql) return 3;
-      if (nm.startsWith(ql)) return 2;
-      if (nm.includes(ql)) return 1;
-      return 0;
-    };
+      !ql || f.manager.toLowerCase().includes(ql) || (f.fund_type || "").includes(ql);
     return [...existing]
-      .filter((f) => matchQ(f) && matchType(f) && matchUnit(f))
-      .map((f) => ({
-        f,
-        sim: similarity(f.manager, row.manager),
-        pref: sameTypeUnit(f) ? 1 : 0,
-        nameRank: nameBoost(f),
-      }))
-      .sort((a, b) => b.nameRank - a.nameRank || b.pref - a.pref || b.sim - a.sim)
-      .slice(0, 100);
-  }, [existing, row, q, typeFilter, unitFilter]);
+      .filter(matchQ)
+      .map((f) => ({ f, sim: similarity(f.manager, row.manager), pref: sameTypeUnit(f) ? 1 : 0 }))
+      .sort((a, b) => b.pref - a.pref || b.sim - a.sim)
+      .slice(0, 60);
+  }, [existing, row, q]);
   if (!row) return null;
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>Remap to a specific fund</DialogTitle>
+          <DialogTitle>Remap to existing fund</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           <div className="rounded-lg bg-muted px-3 py-2 text-sm">
@@ -254,49 +211,13 @@ const RemapDialog = ({
               {row.fund_type ? FUND_TYPE_LABELS[row.fund_type as FundType] : "—"} · {row.yield_unit ?? "?"} · daily {row.daily_yield} / annual {row.annual_yield}
             </div>
           </div>
-          <Input autoFocus placeholder="Search fund name, manager, or type…" value={q} onChange={(e) => setQ(e.target.value)} />
-          <div className="grid grid-cols-2 gap-2">
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Fund type</Label>
-              <Select value={typeFilter} onValueChange={setTypeFilter}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any type</SelectItem>
-                  {availableTypes.map((t) => (
-                    <SelectItem key={t} value={t}>{FUND_TYPE_LABELS[t as FundType] || t}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-1">
-              <Label className="text-[10px] uppercase tracking-wider text-muted-foreground">Yield unit</Label>
-              <Select value={unitFilter} onValueChange={setUnitFilter}>
-                <SelectTrigger className="h-8 text-xs"><SelectValue /></SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="any">Any unit</SelectItem>
-                  {availableUnits.map((u) => (
-                    <SelectItem key={u} value={u}>{u}</SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          {(typeFilter !== "any" || unitFilter !== "any") && (
-            <button
-              type="button"
-              onClick={() => { setTypeFilter("any"); setUnitFilter("any"); }}
-              className="text-[10px] text-muted-foreground underline-offset-2 hover:underline"
-            >
-              Clear filters to see every fund under any manager
-            </button>
-          )}
+          <Input autoFocus placeholder="Search manager…" value={q} onChange={(e) => setQ(e.target.value)} />
           <div className="max-h-72 overflow-y-auto divide-y divide-border/50 rounded-md border border-border">
             {ranked.length === 0 && (
-              <div className="px-3 py-6 text-center text-xs text-muted-foreground">No matches — try widening the filters above.</div>
+              <div className="px-3 py-6 text-center text-xs text-muted-foreground">No matches</div>
             )}
             {ranked.map(({ f, pref }) => {
               const unitDiffers = row.yield_unit && unitClass(f.yield_unit) !== unitClass(row.yield_unit);
-              const typeDiffers = row.fund_type && f.fund_type !== row.fund_type;
               return (
                 <button
                   key={f.id}
@@ -305,17 +226,13 @@ const RemapDialog = ({
                   className="w-full text-left px-3 py-2 text-xs hover:bg-accent/30 flex items-center justify-between gap-2"
                 >
                   <div className="min-w-0">
-                    <div className="font-medium truncate">
-                      {f.name?.trim() ? f.name : <span className="italic text-muted-foreground">(no fund name) {f.manager}</span>}
-                    </div>
-                    <div className="text-[10px] text-muted-foreground truncate">
-                      <span className="text-foreground/70">{f.manager}</span>
-                      {" · "}{FUND_TYPE_LABELS[f.fund_type as FundType] || f.fund_type} · {f.yield_unit} · annual {f.annual_yield}
+                    <div className="font-medium truncate">{f.manager}</div>
+                    <div className="text-[10px] text-muted-foreground">
+                      {FUND_TYPE_LABELS[f.fund_type as FundType] || f.fund_type} · {f.yield_unit} · annual {f.annual_yield}
                     </div>
                   </div>
                   <div className="flex items-center gap-1 shrink-0">
                     {pref === 1 && <span className="text-[9px] px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-600 dark:text-emerald-400">same type</span>}
-                    {typeDiffers && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">type differs</span>}
                     {unitDiffers && <span className="text-[9px] px-1.5 py-0.5 rounded bg-amber-500/15 text-amber-600 dark:text-amber-400">unit differs</span>}
                   </div>
                 </button>
@@ -323,7 +240,7 @@ const RemapDialog = ({
             })}
           </div>
           <div className="text-[11px] text-muted-foreground">
-            Picking a specific fund links this paste row to that exact unit trust (manager + type + currency). The next sync will UPDATE its yields instead of creating a duplicate.
+            Picking a fund links this paste row to that existing fund. The next sync will UPDATE its yields instead of creating a duplicate.
           </div>
         </div>
         <DialogFooter>
@@ -490,7 +407,7 @@ const BulkFundPasteVerify = () => {
   const loadExisting = async () => {
     const { data, error } = await supabase
       .from("funds")
-      .select("id, name, manager, fund_type, yield_unit, annual_yield");
+      .select("id, manager, fund_type, yield_unit, annual_yield");
     if (!error && data) {
       setExisting(data as ExistingFund[]);
       setLoadedDb(true);
