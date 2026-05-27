@@ -1,0 +1,27 @@
+# Kenya Fund Finder
+
+> Kenya Fund Finder is an open-access market data platform for Kenya — unit trust (money market, fixed income, balanced, equity) yields, NSE stocks, FX rates, commodities, and curated market news. Public data is free; sign-in is only required for personalization (watchlists, mock portfolio, price alerts).
+
+The site aggregates CMA-licensed unit trust yields, NSE stock quotes, CBK-referenced FX rates, and global commodity prices, and presents them in a high-density "Bloomberg-style" dark-mode interface. Yields are sourced from fund managers' published rates; a 15% withholding tax applies to interest income in Kenya.
+
+## Pages
+
+- [Overview](/overview): Market-wide dashboard — top yields, FX, commodities, and news at a glance.
+- [Unit Trusts](/funds): All CMA-licensed unit trust funds with annual and daily yields.
+- [NSE Stocks](/stocks): Nairobi Securities Exchange equities with price, day change, and history.
+- [FX Rates](/rates): Kenya Shilling exchange rates against major currencies.
+- [Commodities](/commodities): Global commodity prices in USD.
+- [Markets Dashboard](/markets): Terminal-style mobile hub for FX and commodities.
+- [Compare Funds](/compare): Side-by-side comparison of unit trust funds.
+- [Investment Calculator](/calculator): Investment, currency, and KRA PAYE (2024/25) calculators.
+- [News](/news): Curated Kenya market and fund news.
+- [Learn](/learn): Educational content on Kenyan investing.
+- [Investor Checklist](/checklist): Pre-investment due diligence checklist.
+- [Privacy Policy](/privacy): Privacy practices.
+- [Terms of Use](/terms): Terms and disclaimers.
+
+## Optional
+
+- [Price Alerts](/alerts): Personal price alerts (requires sign-in).
+- [Mock Portfolio](/portfolio): Simulated portfolio tracking (requires sign-in).
+- [Watchlist](/watchlist): Saved assets (requires sign-in).
