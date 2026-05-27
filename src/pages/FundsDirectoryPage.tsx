@@ -227,7 +227,7 @@ const FundsDirectoryPage = () => {
               )}
             </h1>
             <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
-              Every CMA-regulated fund in Kenya. Updated daily. Each fund has a Kenya Fund Score — a 0–100 visual fingerprint summarising yield, cost, liquidity and trust.
+              Every CMA-regulated fund in Kenya in one place.
             </p>
           </div>
           <SectionLiveStatus section="funds" fallbackDate={new Date()} />
