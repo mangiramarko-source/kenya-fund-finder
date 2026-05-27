@@ -221,7 +221,7 @@ const FundsDirectoryPage = () => {
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
           <div>
             <h1 className="font-heading text-2xl md:text-3xl font-semibold text-foreground">
-              Unit Trusts &amp; Money Market Funds
+              Unit Trusts
               {category && (
                 <span className="text-muted-foreground font-normal"> · <span className="text-accent">{FUND_TYPE_LABELS[category]}</span></span>
               )}
