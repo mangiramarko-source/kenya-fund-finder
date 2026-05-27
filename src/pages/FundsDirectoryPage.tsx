@@ -217,16 +217,58 @@ const FundsDirectoryPage = () => {
   return (
     <div className="px-4 md:px-6 py-4 md:py-6 max-w-[1500px] mx-auto">
       {/* Page header */}
-      <div className="mb-5">
+      <div className="mb-4">
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-3">
           <div>
-            <h1 className="font-heading text-2xl md:text-3xl font-semibold text-foreground">Unit Trusts &amp; Money Market Funds</h1>
+            <h1 className="font-heading text-2xl md:text-3xl font-semibold text-foreground">
+              Unit Trusts &amp; Money Market Funds
+              {category && (
+                <span className="text-muted-foreground font-normal"> · <span className="text-accent">{FUND_TYPE_LABELS[category]}</span></span>
+              )}
+            </h1>
             <p className="text-sm text-muted-foreground mt-1 max-w-2xl">
               Every CMA-regulated fund in Kenya. Updated daily. Each fund has a Kenya Fund Score — a 0–100 visual fingerprint summarising yield, cost, liquidity and trust.
             </p>
           </div>
           <SectionLiveStatus section="funds" fallbackDate={new Date()} />
         </div>
+      </div>
+
+      {/* Category pills — always visible so users know what they're viewing */}
+      <div className="flex items-center gap-1.5 overflow-x-auto scrollbar-hide -mx-1 px-1 pb-3 mb-3">
+        <button
+          onClick={() => setParam({ category: null })}
+          className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap border ${
+            !category
+              ? "bg-accent text-accent-foreground border-accent shadow-sm"
+              : "bg-muted/60 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
+          }`}
+        >
+          All funds
+          <span className={`ml-1.5 tabular-nums ${!category ? "text-accent-foreground/70" : "text-muted-foreground/60"}`}>
+            {funds.filter((f) => (cmaOnly ? f.cma_licensed : true)).length}
+          </span>
+        </button>
+        {(Object.keys(FUND_TYPE_LABELS) as FundType[]).map((c) => {
+          const count = funds.filter((f) => f.fund_type === c && (cmaOnly ? f.cma_licensed : true)).length;
+          const active = category === c;
+          return (
+            <button
+              key={c}
+              onClick={() => setParam({ category: active ? null : c })}
+              className={`shrink-0 px-3.5 py-1.5 rounded-full text-xs font-medium transition-all whitespace-nowrap border ${
+                active
+                  ? "bg-accent text-accent-foreground border-accent shadow-sm"
+                  : "bg-muted/60 text-muted-foreground border-transparent hover:bg-muted hover:text-foreground"
+              }`}
+            >
+              {FUND_TYPE_LABELS[c]}
+              <span className={`ml-1.5 tabular-nums ${active ? "text-accent-foreground/70" : "text-muted-foreground/60"}`}>
+                {count}
+              </span>
+            </button>
+          );
+        })}
       </div>
 
       {/* Toolbar */}
