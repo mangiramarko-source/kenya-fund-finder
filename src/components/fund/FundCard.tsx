@@ -38,7 +38,7 @@ const FundCard = ({ fund, peerMedians = {}, history, isFavourite, onToggleFavour
       <div className="flex items-start gap-3">
         <div className="min-w-0 flex-1">
           <Link to={reportHref} className="block">
-            <h3 className="font-heading text-base sm:text-lg leading-tight text-foreground group-hover:text-accent transition-colors line-clamp-2">
+            <h3 className="font-heading sm:text-lg leading-tight text-foreground group-hover:text-accent transition-colors line-clamp-2 text-2xl font-bold">
               {fund.name}
             </h3>
           </Link>
