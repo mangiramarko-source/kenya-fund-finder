@@ -573,10 +573,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           <table className="w-full text-sm table-fixed min-w-[1000px] lg:min-w-0">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "13%" }} />
+              <col style={{ width: "20%" }} />
               <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
-              <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "7%" }} />
