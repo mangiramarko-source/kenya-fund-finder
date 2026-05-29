@@ -237,27 +237,31 @@ export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
   }));
 }
 
-/** Fetch the most recent yield snapshot for each fund (previous values before last update) */
+/** Fetch the previous yield snapshot per fund (the value before the most recent one).
+ *  bulk_sync writes a snapshot dated today carrying the NEW yields, which matches the
+ *  current fund value and would produce a 0 delta. We skip that and return the prior. */
 export async function fetchLatestSnapshots(): Promise<YieldSnapshot[]> {
-  // Pull the recent window via the gateway, then dedupe to the latest per fund.
   const { data } = await fetchPublicData<any>("fund-snapshots", {
     select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
     order: "snapshot_date.desc",
     days: 90,
-    limit: 1000,
+    limit: 2000,
   });
-  const seen = new Set<string>();
-  const result: YieldSnapshot[] = [];
+  const buckets = new Map<string, any[]>();
   for (const row of data) {
-    if (!seen.has(row.fund_id)) {
-      seen.add(row.fund_id);
-      result.push({
-        fund_id: row.fund_id,
-        annual_yield: Number(row.annual_yield),
-        daily_yield: Number(row.daily_yield),
-        snapshot_date: row.snapshot_date,
-      });
-    }
+    const arr = buckets.get(row.fund_id) ?? [];
+    if (arr.length < 2) arr.push(row);
+    buckets.set(row.fund_id, arr);
+  }
+  const result: YieldSnapshot[] = [];
+  for (const [fund_id, rows] of buckets) {
+    const prev = rows[1] ?? rows[0];
+    result.push({
+      fund_id,
+      annual_yield: Number(prev.annual_yield),
+      daily_yield: Number(prev.daily_yield),
+      snapshot_date: prev.snapshot_date,
+    });
   }
   return result;
 }
