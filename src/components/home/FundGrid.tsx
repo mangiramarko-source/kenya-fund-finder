@@ -145,17 +145,16 @@ const TableSkeleton = () => (
         <Skeleton key={i} className="h-9 w-28 rounded-t-lg" />
       ))}
     </div>
-    <div className="rounded-xl border border-border overflow-hidden bg-card">
-      <div className="bg-muted/70 px-5 py-3">
-        <div className="flex gap-6">
-          <Skeleton className="h-4 w-8" />
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-4 w-14" />
-          <Skeleton className="h-4 w-20 ml-auto" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-16" />
+      <div className="rounded-xl border border-border overflow-hidden bg-card">
+        <div className="bg-muted/70 px-5 py-3">
+          <div className="flex gap-6">
+            <Skeleton className="h-4 w-8" />
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-4 w-14" />
+            <Skeleton className="h-4 w-20 ml-auto" />
+            <Skeleton className="h-4 w-16" />
+          </div>
         </div>
-      </div>
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className={`flex items-center gap-6 px-5 py-3.5 border-t border-border ${i % 2 !== 0 ? "bg-muted/20" : ""}`}>
           <Skeleton className="h-4 w-5" />
