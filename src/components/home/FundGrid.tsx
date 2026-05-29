@@ -604,7 +604,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     </TooltipContent>
                   </Tooltip>
                 </th>
-                <th className="px-3 py-3 font-semibold text-muted-foreground text-left">Trend</th>
                 <th className="px-3 py-3 text-left">
                   <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
