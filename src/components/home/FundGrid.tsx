@@ -1,11 +1,11 @@
-import { useMemo } from "react";
+import { useMemo, useId } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal, ArrowUpRight } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
+import YieldChange from "@/components/YieldChange";
 import FundMobileCards from "./FundMobileCards";
 import FundLogo from "./FundLogo";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
@@ -26,12 +26,6 @@ const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equi
 const fmtYield = (value: number, unit: string) => {
   if (unit === "%") return `${value}%`;
   return value.toFixed(2);
-};
-
-const currencyLabel = (unit: string) => {
-  if (unit === "%") return "%";
-  if (unit === "KES") return "KSh";
-  return unit;
 };
 
 interface FundGridProps {
@@ -65,44 +59,48 @@ const SortHeader = ({
   </button>
 );
 
-/* ─── ChangeCell (matches StocksPage visual) ─── */
-const ChangeCell = ({ change, unit }: { change: number; unit: string }) => {
-  const suffix = unit === "%" ? "%" : "";
-  const formatted = `${Math.abs(change).toFixed(2)}${suffix}`;
-  if (change > 0)
-    return (
-      <span className="inline-flex items-center gap-0.5 text-accent text-sm font-semibold tabular-nums">
-        <TrendingUp className="h-3.5 w-3.5" /> +{formatted}
-      </span>
-    );
-  if (change < 0)
-    return (
-      <span className="inline-flex items-center gap-0.5 text-destructive text-sm font-semibold tabular-nums">
-        <TrendingDown className="h-3.5 w-3.5" /> -{formatted}
-      </span>
-    );
-  return (
-    <span className="inline-flex items-center gap-0.5 text-muted-foreground text-sm">
-      <Minus className="h-3.5 w-3.5" /> 0.00{suffix}
-    </span>
-  );
-};
+/* ─── Sparkline ─── */
+const SPARK_W = 120;
+const SPARK_H = 36;
 
-/* ─── ChangeBadge (hoisted: defining inside map causes React to remount per render) ─── */
-const ChangeBadge = ({ delta, suffix = "" }: { delta: number; suffix?: string }) => {
-  const cls =
-    delta > 0
-      ? "text-accent bg-accent/10"
-      : delta < 0
-      ? "text-destructive bg-destructive/10"
-      : "text-muted-foreground bg-muted/60";
-  const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
-  const sign = delta > 0 ? "+" : delta < 0 ? "−" : "";
+const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
+  const uid = useId();
+  const result = useMemo(() => {
+    const vals = [...data.map((d) => d.annual_yield), currentValue];
+    if (vals.length < 2) return null;
+    const last12 = vals.slice(-12);
+    const min = Math.min(...last12);
+    const max = Math.max(...last12);
+    const range = max - min || 1;
+    const pad = 3;
+    const pts = last12.map((v, i) => ({
+      x: pad + (i / (last12.length - 1)) * (SPARK_W - pad * 2),
+      y: pad + (1 - (v - min) / range) * (SPARK_H - pad * 2),
+    }));
+    const isUp = pts[pts.length - 1].y <= pts[0].y;
+    return { pts, isUp };
+  }, [data, currentValue]);
+
+  if (!result) return <span className="text-[10px] text-muted-foreground">—</span>;
+
+  const { pts, isUp } = result;
+  const color = isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  const areaD = pathD + ` L${pts[pts.length - 1].x.toFixed(1)},${SPARK_H} L${pts[0].x.toFixed(1)},${SPARK_H} Z`;
+  const gradId = `${uid}-${isUp ? "up" : "dn"}`;
+
   return (
-    <span className={`mt-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums ${cls}`}>
-      <Icon className="h-2.5 w-2.5" />
-      {sign}{Math.abs(delta).toFixed(2)}{suffix}
-    </span>
+    <svg width={SPARK_W} height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} className="shrink-0 mx-auto">
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.2" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={areaD} fill={`url(#${gradId})`} />
+      <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
+      <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r="2.5" fill={color} />
+    </svg>
   );
 };
 
@@ -114,41 +112,37 @@ const TableSkeleton = () => (
         <Skeleton key={i} className="h-9 w-28 rounded-t-lg" />
       ))}
     </div>
-      <div className="rounded-xl border border-border overflow-hidden bg-card">
-        <div className="bg-muted/70 px-5 py-3">
-          <div className="flex gap-6">
-            <Skeleton className="h-4 w-8" />
-            <Skeleton className="h-4 w-40" />
-            <Skeleton className="h-4 w-14" />
-            <Skeleton className="h-4 w-20 ml-auto" />
-            <Skeleton className="h-4 w-16" />
-          </div>
-        </div>
-      {Array.from({ length: 8 }).map((_, i) => (
-        <div key={i} className={`flex items-center gap-6 px-5 py-3.5 border-t border-border ${i % 2 !== 0 ? "bg-muted/20" : ""}`}>
-          <Skeleton className="h-4 w-5" />
-          <div className="flex-1">
-            <Skeleton className="h-4 w-44 mb-1" />
-            <Skeleton className="h-3 w-28" />
-          </div>
-          <Skeleton className="h-4 w-10" />
-          <Skeleton className="h-5 w-16" />
+    <div className="rounded-xl border border-border overflow-hidden bg-card">
+      <div className="bg-muted/70 px-5 py-3">
+        <div className="flex gap-4">
+          <Skeleton className="h-4 w-6" />
+          <Skeleton className="h-4 w-36" />
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-4 w-12" />
+          <Skeleton className="h-4 w-20" />
           <Skeleton className="h-4 w-14" />
+          <Skeleton className="h-4 w-10" />
+          <Skeleton className="h-4 w-16" />
+          <Skeleton className="h-4 w-6" />
+        </div>
+      </div>
+      {Array.from({ length: 8 }).map((_, i) => (
+        <div key={i} className={`flex items-center gap-4 px-5 py-3.5 border-t border-border ${i % 2 !== 0 ? "bg-muted/20" : ""}`}>
+          <Skeleton className="h-4 w-5 shrink-0" />
+          <Skeleton className="h-4 w-40 flex-1 min-w-[120px]" />
+          <Skeleton className="h-4 w-12 shrink-0" />
+          <Skeleton className="h-4 w-12 shrink-0" />
+          <Skeleton className="h-4 w-12 shrink-0" />
+          <Skeleton className="h-4 w-12 shrink-0" />
+          <Skeleton className="h-9 w-[120px] shrink-0" />
+          <Skeleton className="h-4 w-14 shrink-0" />
+          <Skeleton className="h-4 w-10 shrink-0" />
+          <Skeleton className="h-4 w-16 shrink-0" />
+          <Skeleton className="h-4 w-5 shrink-0" />
         </div>
       ))}
-    </div>
-  </div>
-);
-
-/* ─── Stat Card ─── */
-const FundStatCard = ({ label, value, icon, valueColor }: { label: string; value: string; icon: React.ReactNode; valueColor?: string }) => (
-  <div className="rounded-xl border border-border bg-card p-3.5 flex items-center gap-3">
-    <div className="w-9 h-9 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">
-      {icon}
-    </div>
-    <div>
-      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-none mb-1">{label}</p>
-      <p className={`text-lg font-bold tabular-nums leading-none ${valueColor || "text-foreground"}`}>{value}</p>
     </div>
   </div>
 );
@@ -161,7 +155,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
-  // Derive state from URL with defaults
   const activeTab = searchParams.get("category") || "money_market";
   const search = searchParams.get("q") || "";
   const sortParam = searchParams.get("sort") as SortKey | null;
@@ -171,7 +164,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
   const movementParam = searchParams.get("movement") as Movement | null;
   const movement: Movement = movementParam && VALID_MOVEMENT.includes(movementParam) ? movementParam : "all";
 
-  /** Update URL params; omits values equal to defaults to keep URLs clean */
   const updateParams = (patch: Partial<{ category: string; q: string; sort: SortKey; dir: SortDir; movement: Movement }>) => {
     const next = new URLSearchParams(searchParams);
     const defaults = { category: "money_market", q: "", sort: "annual_yield", dir: "desc", movement: "all" };
@@ -182,10 +174,8 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
     setSearchParams(next, { replace: true });
   };
 
-  // Convenience setters used by Search input
   const setSearch = (val: string) => updateParams({ q: val });
 
-  /** Compute per-category gainer/loser counts based on annual_yield change vs latest snapshot */
   const movementForFund = (f: FundFromDB): "gainer" | "loser" | "unchanged" => {
     const prev = snapshots[f.id]?.annual_yield;
     if (prev == null) return "unchanged";
@@ -260,12 +250,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
     return Math.max(...catFunds.map((f) => f.annual_yield));
   }, [funds, activeTab]);
 
-  const avgYield = useMemo(() => {
-    const catFunds = funds.filter((f) => f.fund_type === activeTab);
-    if (catFunds.length === 0) return 0;
-    return catFunds.reduce((sum, f) => sum + f.annual_yield, 0) / catFunds.length;
-  }, [funds, activeTab]);
-
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       updateParams({ dir: sortDir === "asc" ? "desc" : "asc" });
@@ -307,7 +291,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
             </SelectContent>
           </Select>
 
-          {/* Movement segmented control */}
           <div className="inline-flex items-center rounded-lg bg-muted/30 border border-border p-0.5">
             {([
               { key: "all", label: "All", count: categoryFunds.length },
@@ -389,7 +372,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
             </SheetHeader>
 
             <div className="mt-4 space-y-5">
-              {/* Category */}
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Category</p>
                 <div className="flex flex-wrap gap-1.5">
@@ -417,7 +399,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 </div>
               </div>
 
-              {/* Movement */}
               <div>
                 <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Movement</p>
                 <div className="grid grid-cols-2 gap-1.5">
@@ -468,7 +449,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         </Sheet>
       </div>
 
-      {/* Mobile movement pills (matches Stocks page UI) */}
+      {/* Mobile movement pills */}
       <div className="md:hidden -mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide rounded">
         {([
           { key: "all", label: "All", count: categoryFunds.length },
@@ -512,7 +493,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         })}
       </div>
 
-      {/* Mobile: active category label */}
       <div className="md:hidden -mt-2 mb-1 px-1">
         <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
           {categoryLabels[activeTab] || activeTab}
@@ -534,146 +514,152 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         />
       </div>
 
-      {/* Desktop/tablet: redesigned symmetric table */}
+      {/* Desktop: simplified column table */}
       <div className="hidden md:block rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm table-fixed min-w-[960px] border-separate border-spacing-0">
+          <table className="w-full text-sm table-fixed min-w-[1100px] border-separate border-spacing-0">
             <colgroup>
-              <col style={{ width: "56px" }} />
-              <col style={{ width: "30%" }} />
-              <col style={{ width: "14%" }} />
-              <col style={{ width: "16%" }} />
-              <col style={{ width: "14%" }} />
-              <col style={{ width: "12%" }} />
-              <col style={{ width: "160px" }} />
-              {onToggleFavourite && <col style={{ width: "44px" }} />}
+              <col style={{ width: "2.5%" }} />
+              <col style={{ width: "18%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "8%" }} />
+              <col style={{ width: "130px" }} />
+              <col style={{ width: "9%" }} />
+              <col style={{ width: "6%" }} />
+              <col style={{ width: "11%" }} />
+              {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
-              <tr className="bg-muted/50 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
-                <th className="text-center px-3 py-3 font-semibold border-b border-border">#</th>
-                <th className="text-left px-4 py-3 font-semibold border-b border-border">
-                  <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
+              <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
+                <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
+                <th className="text-left px-3 py-3">
+                  <SortHeader label="Funds" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-center px-3 py-3 font-semibold border-b border-border">
-                  <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="mx-auto" />
+                <th className="text-right px-3 py-3">
+                  <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-center px-3 py-3 font-semibold border-b border-border">
-                  <SortHeader label="Annual Yield" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="mx-auto" />
+                <th className="text-right px-2 py-3 font-semibold text-muted-foreground" title="vs prior snapshot">
+                  <span className="sr-only">Daily </span>Change
                 </th>
-                <th className="text-center px-3 py-3 font-semibold border-b border-border">
-                  <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="mx-auto" />
+                <th className="text-right px-3 py-3">
+                  <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-center px-3 py-3 font-semibold border-b border-border">Withdrawal</th>
-                <th className="text-center px-3 py-3 font-semibold border-b border-border">Action</th>
-                {onToggleFavourite && <th className="border-b border-border" aria-label="Watch" />}
+                <th className="text-right px-2 py-3 font-semibold text-muted-foreground" title="vs prior snapshot">
+                  <span className="sr-only">Annual </span>Change
+                </th>
+                <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Trend</th>
+                <th className="text-right px-3 py-3">
+                  <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                </th>
+                <th className="text-right px-3 py-3">
+                  <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                </th>
+                <th className="text-right pr-4 pl-2 py-3 font-semibold text-muted-foreground">Withdraw</th>
+                {onToggleFavourite && <th className="w-8 pr-3 py-3" aria-label="Watch" />}
               </tr>
             </thead>
             <tbody>
-              {filtered.map((fund, i) => {
-                const prev = snapshots[fund.id]?.annual_yield;
-                const change = prev != null ? fund.annual_yield - prev : 0;
-                const prevDaily = snapshots[fund.id]?.daily_yield;
-                const dailyChange = prevDaily != null ? fund.daily_yield - prevDaily : 0;
-                const suffix = fund.yield_unit === "%" ? "%" : "";
-
-                return (
-                  <tr
-                    key={fund.id}
-                    onClick={() => navigate(`/compare/${fund.slug}`)}
-                    className="group cursor-pointer hover:bg-muted/30 transition-colors"
-                  >
-                    <td className="px-3 py-4 text-center align-middle border-b border-border/40">
-                      <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-muted text-[11px] font-bold text-muted-foreground tabular-nums">
-                        {i + 1}
-                      </span>
-                    </td>
-                    <td className="px-4 py-4 align-middle border-b border-border/40">
-                      <Link
-                        to={`/compare/${fund.slug}`}
-                        onClick={(e) => e.stopPropagation()}
-                        className="flex items-center gap-3 min-w-0"
-                        title={fund.name}
-                      >
-                        <FundLogo name={fund.name} logoUrl={fund.logo_url} size={36} />
-                        <div className="min-w-0">
-                          <div className="font-semibold text-foreground text-sm leading-tight truncate group-hover:text-accent transition-colors">
-                            {fund.name}
-                          </div>
-                          <div className="text-xs text-muted-foreground leading-tight truncate mt-0.5">
-                            {fund.manager}
-                          </div>
+              {filtered.map((fund, i) => (
+                <tr
+                  key={fund.id}
+                  onClick={() => navigate(`/compare/${fund.slug}`)}
+                  className={`group cursor-pointer hover:bg-muted/30 transition-colors border-b border-border/40 ${
+                    i % 2 !== 0 ? "bg-muted/20" : ""
+                  }`}
+                >
+                  <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums align-middle">{i + 1}</td>
+                  <td className="px-3 py-3.5 align-middle">
+                    <Link
+                      to={`/compare/${fund.slug}`}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-3 min-w-0"
+                      title={fund.name}
+                    >
+                      <FundLogo name={fund.name} logoUrl={fund.logo_url} size={36} />
+                      <div className="min-w-0">
+                        <div className="font-semibold text-foreground group-hover:text-accent transition-colors truncate text-[13px]">
+                          {fund.name}
                         </div>
-                      </Link>
-                    </td>
-                    <td className="px-3 py-4 text-center align-middle border-b border-border/40">
-                      <div className="flex flex-col items-center justify-center leading-none">
-                        <span className="font-semibold text-foreground tabular-nums text-base">
-                          {fmtYield(fund.daily_yield, fund.yield_unit)}
-                        </span>
-                        <ChangeBadge delta={dailyChange} suffix={suffix} />
+                        <div className="text-xs text-muted-foreground truncate mt-0.5">{fund.manager}</div>
                       </div>
-                    </td>
-                    <td className="px-3 py-4 text-center align-middle border-b border-border/40">
-                      <div className="flex flex-col items-center justify-center leading-none">
-                        <span className="font-bold text-foreground text-base tabular-nums">
-                          {fmtYield(fund.annual_yield, fund.yield_unit)}
-                        </span>
-                        <ChangeBadge delta={change} suffix={suffix} />
-                      </div>
-                    </td>
-                    <td className="px-3 py-4 text-center align-middle border-b border-border/40 text-sm tabular-nums text-foreground/80 whitespace-nowrap">
-                      KSh {fund.minimum_investment.toLocaleString()}
-                    </td>
-                    <td className="px-3 py-4 text-center align-middle border-b border-border/40 whitespace-nowrap">
-                      <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-muted/60 text-[11px] font-medium text-muted-foreground">
-                        {fund.withdrawal_time?.replace('business days', 'days')}
-                      </span>
-                    </td>
-                    <td className="px-3 py-4 text-center align-middle border-b border-border/40">
-                      <div className="inline-flex items-center gap-1.5">
-                        <Link
-                          to={`/compare/${fund.slug}`}
-                          onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center justify-center h-8 w-16 rounded-md border border-border bg-card text-[11px] font-semibold uppercase tracking-wider text-foreground hover:bg-muted transition-colors"
-                        >
-                          View
-                        </Link>
-                        {fund.website && (
-                          <a
-                            href={fund.website}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center justify-center gap-1 h-8 w-16 rounded-md bg-accent text-accent-foreground text-[11px] font-semibold uppercase tracking-wider hover:bg-accent/90 transition-colors text-center"
-                          >
-                            VISIT <ArrowUpRight className="h-3 w-3" />
-                          </a>
-                        )}
-                      </div>
-                    </td>
-                    {onToggleFavourite && (
-                      <td className="px-2 py-4 text-center align-middle border-b border-border/40">
-                        <button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            onToggleFavourite(fund.id, fund.name);
-                          }}
-                          className="p-1 rounded-md hover:bg-muted transition-colors"
-                          aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
-                        >
-                          <Star
-                            className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`}
-                          />
-                        </button>
-                      </td>
+                    </Link>
+                  </td>
+                  <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground text-xs align-middle">
+                    {fmtYield(fund.daily_yield, fund.yield_unit)}
+                  </td>
+                  <td className="px-2 py-3.5 text-right whitespace-nowrap align-middle">
+                    <div className="flex justify-end">
+                      {snapshots[fund.id] ? (
+                        <YieldChange
+                          current={fund.daily_yield}
+                          previous={snapshots[fund.id]?.daily_yield}
+                          unit={fund.yield_unit}
+                          className="text-[11px]"
+                        />
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums align-middle">
+                    <span className="font-bold text-accent text-[15px]">
+                      {fmtYield(fund.annual_yield, fund.yield_unit)}
+                    </span>
+                  </td>
+                  <td className="px-2 py-3.5 text-right whitespace-nowrap align-middle">
+                    <div className="flex justify-end">
+                      {snapshots[fund.id] ? (
+                        <YieldChange
+                          current={fund.annual_yield}
+                          previous={snapshots[fund.id]?.annual_yield}
+                          unit={fund.yield_unit}
+                          className="text-[11px]"
+                        />
+                      ) : (
+                        <span className="text-[10px] text-muted-foreground">—</span>
+                      )}
+                    </div>
+                  </td>
+                  <td className="px-2 py-3.5 text-center align-middle">
+                    {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
+                      <Sparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
+                    ) : (
+                      <span className="text-[10px] text-muted-foreground">—</span>
                     )}
-                  </tr>
-                );
-              })}
+                  </td>
+                  <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap align-middle">
+                    KSh {fund.minimum_investment.toLocaleString()}
+                  </td>
+                  <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap align-middle">
+                    {fund.management_fee}%
+                  </td>
+                  <td className="pr-4 pl-2 py-3.5 text-right text-[11px] text-muted-foreground truncate max-w-[120px] align-middle" title={fund.withdrawal_time}>
+                    {fund.withdrawal_time}
+                  </td>
+                  {onToggleFavourite && (
+                    <td className="pr-3 py-3.5 text-center align-middle">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onToggleFavourite(fund.id, fund.name);
+                        }}
+                        className="p-1 rounded-md hover:bg-muted transition-colors"
+                        aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
+                      >
+                        <Star
+                          className={`h-4 w-4 transition-colors ${isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`}
+                        />
+                      </button>
+                    </td>
+                  )}
+                </tr>
+              ))}
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 8 : 7} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 11 : 10} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
@@ -695,9 +681,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           </table>
         </div>
       </div>
-
-
-
 
       {/* Summary footer */}
       <div className="flex items-center text-xs text-muted-foreground px-1">
