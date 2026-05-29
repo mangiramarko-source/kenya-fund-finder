@@ -165,7 +165,6 @@ const TableSkeleton = () => (
           <Skeleton className="h-4 w-10" />
           <Skeleton className="h-5 w-16" />
           <Skeleton className="h-4 w-14" />
-          <Skeleton className="h-4 w-14" />
         </div>
       ))}
     </div>
