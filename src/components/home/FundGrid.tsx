@@ -145,17 +145,16 @@ const TableSkeleton = () => (
         <Skeleton key={i} className="h-9 w-28 rounded-t-lg" />
       ))}
     </div>
-    <div className="rounded-xl border border-border overflow-hidden bg-card">
-      <div className="bg-muted/70 px-5 py-3">
-        <div className="flex gap-6">
-          <Skeleton className="h-4 w-8" />
-          <Skeleton className="h-4 w-40" />
-          <Skeleton className="h-4 w-14" />
-          <Skeleton className="h-4 w-20 ml-auto" />
-          <Skeleton className="h-4 w-20" />
-          <Skeleton className="h-4 w-16" />
+      <div className="rounded-xl border border-border overflow-hidden bg-card">
+        <div className="bg-muted/70 px-5 py-3">
+          <div className="flex gap-6">
+            <Skeleton className="h-4 w-8" />
+            <Skeleton className="h-4 w-40" />
+            <Skeleton className="h-4 w-14" />
+            <Skeleton className="h-4 w-20 ml-auto" />
+            <Skeleton className="h-4 w-16" />
+          </div>
         </div>
-      </div>
       {Array.from({ length: 8 }).map((_, i) => (
         <div key={i} className={`flex items-center gap-6 px-5 py-3.5 border-t border-border ${i % 2 !== 0 ? "bg-muted/20" : ""}`}>
           <Skeleton className="h-4 w-5" />
@@ -165,7 +164,6 @@ const TableSkeleton = () => (
           </div>
           <Skeleton className="h-4 w-10" />
           <Skeleton className="h-5 w-16" />
-          <Skeleton className="h-4 w-14" />
           <Skeleton className="h-4 w-14" />
         </div>
       ))}
@@ -573,10 +571,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           <table className="w-full text-sm table-fixed min-w-[1000px] lg:min-w-0">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "13%" }} />
+              <col style={{ width: "20%" }} />
               <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
-              <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "7%" }} />
@@ -605,7 +602,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     </TooltipContent>
                   </Tooltip>
                 </th>
-                <th className="px-3 py-3 font-semibold text-muted-foreground text-left">Trend</th>
                 <th className="px-3 py-3 text-left">
                   <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
@@ -658,9 +654,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-left">
                       <ChangeCell change={dailyChange} unit={fund.yield_unit} />
                     </td>
-                    <td className="px-3 py-3.5 text-left">
-                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.daily_yield} field="daily_yield" change={dailyChange} />
-                    </td>
                     <td className="px-3 py-3.5 whitespace-nowrap tabular-nums text-left">
                       <span className="font-bold text-foreground text-sm">
                         {fmtYield(fund.annual_yield, fund.yield_unit)}
@@ -706,7 +699,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 13 : 12} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 12 : 11} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
