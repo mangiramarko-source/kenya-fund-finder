@@ -12,7 +12,9 @@
     "lint": "eslint .",
     "preview": "vite preview",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "db:migrate-lovable": "node scripts/migrate-from-lovable.mjs",
+    "db:migrate-lovable:quick": "node scripts/migrate-from-lovable.mjs --skip-news"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",

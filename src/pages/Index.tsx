@@ -12,13 +12,13 @@ import SectionLiveStatus from "@/components/SectionLiveStatus";
 
 const Index = () => {
   useDocumentTitle("Funds – Kenya Fund Finder");
-  // Hydrate immediately from last-known cache so the page is never blank when offline.
   const cachedFunds = fundCache.loadFunds();
   const cachedSnaps = fundCache.loadSnapshots();
   const [funds, setFunds] = useState<FundFromDB[]>(cachedFunds?.funds ?? []);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>(cachedSnaps?.snapshots ?? {});
   const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});
   const [loading, setLoading] = useState(!cachedFunds);
+  const [loadError, setLoadError] = useState<string | null>(null);
   const [usingCache, setUsingCache] = useState(false);
   const [cacheSavedAt, setCacheSavedAt] = useState<number | null>(cachedFunds?.savedAt ?? null);
   const online = useOnlineStatus();
@@ -27,38 +27,57 @@ const Index = () => {
 
   const load = useCallback(async () => {
     if (!cachedFunds) setLoading(true);
+    setLoadError(null);
     try {
-      // Critical path: funds + latest snapshots → renders the table.
-      const [f, s] = await Promise.all([fetchFunds(), fetchLatestSnapshots()]);
+      const f = await fetchFunds();
       setFunds(f);
-      const map: Record<string, YieldSnapshot> = {};
-      s.forEach((snap) => { map[snap.fund_id] = snap; });
-      setSnapshots(map);
+
+      const [snapshotsResult, allSnapshotsResult] = await Promise.allSettled([
+        fetchLatestSnapshots(),
+        fetchAllFundSnapshots(),
+      ]);
+
+      if (snapshotsResult.status === "fulfilled") {
+        const map: Record<string, YieldSnapshot> = {};
+        snapshotsResult.value.forEach((snap) => {
+          map[snap.fund_id] = snap;
+        });
+        setSnapshots(map);
+        fundCache.saveSnapshots(map);
+      } else {
+        console.error("Failed to load yield snapshots", snapshotsResult.reason);
+        if (cachedSnaps) setSnapshots(cachedSnaps.snapshots);
+        else setSnapshots({});
+      }
+
+      if (allSnapshotsResult.status === "fulfilled") {
+        setAllSnapshots(allSnapshotsResult.value);
+      } else {
+        console.error("Failed to load fund history", allSnapshotsResult.reason);
+        setAllSnapshots({});
+      }
+
       setUsingCache(false);
       setCacheSavedAt(Date.now());
-      setLoading(false);
       fundCache.saveFunds(f);
-      fundCache.saveSnapshots(map);
-
-      // Deferred: sparkline history loads in the background after the table is visible.
-      fetchAllFundSnapshots()
-        .then(setAllSnapshots)
-        .catch((e) => console.error("Failed to load sparkline data", e));
     } catch (e) {
       console.error("Failed to load funds", e);
-      // If we have cached data, keep showing it and flag staleness.
-      if (cachedFunds) setUsingCache(true);
+      if (cachedFunds) {
+        setUsingCache(true);
+      } else {
+        setFunds([]);
+        setLoadError(
+          e instanceof Error ? e.message : "Could not load funds. Check Supabase connection and browser console."
+        );
+      }
+    } finally {
       setLoading(false);
     }
-  }, []);
+  }, [cachedFunds, cachedSnaps]);
 
   useEffect(() => { load(); }, [load]);
 
   const published = funds.filter((f) => f.is_published);
-  const bestYield = published.length ? Math.max(...published.map((f) => f.annual_yield)) : 0;
-  const avgYield = published.length
-    ? published.reduce((a, f) => a + f.annual_yield, 0) / published.length
-    : 0;
 
   const lastUpdate = published.length
     ? new Date(Math.max(...published.map((f) => new Date(f.updated_at).getTime())))
@@ -88,6 +107,30 @@ const Index = () => {
           <span className="text-muted-foreground">
             Last synced {new Date(cacheSavedAt).toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" })}.
           </span>
+        </div>
+      )}
+      {loadError && (
+        <div className="rounded-lg border border-destructive/40 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+          <p className="font-medium">Failed to load fund data</p>
+          <p className="mt-1 text-destructive/90">{loadError}</p>
+          <p className="mt-2 text-xs text-muted-foreground">
+            Confirm <code className="text-foreground">VITE_SUPABASE_URL</code> and{" "}
+            <code className="text-foreground">VITE_SUPABASE_PUBLISHABLE_KEY</code> in{" "}
+            <code className="text-foreground">.env</code> match your Supabase project dashboard, then restart{" "}
+            <code className="text-foreground">npm run dev</code>.
+          </p>
+        </div>
+      )}
+      {!loading && !loadError && published.length === 0 && funds.length > 0 && (
+        <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          Funds exist in the database but none are published. Mark funds as published in the admin panel or Supabase
+          dashboard.
+        </div>
+      )}
+      {!loading && !loadError && funds.length === 0 && (
+        <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
+          No funds found in Supabase (<code className="text-foreground">funds_public</code>). Import or add fund rows in
+          your project <code className="text-foreground">caawgzuofnujrznwbuxk</code>.
         </div>
       )}
       {user && favEntries.length > 0 && (

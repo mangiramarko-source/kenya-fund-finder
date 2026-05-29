@@ -1,4 +1,4 @@
-import { useMemo, useId } from "react";
+import { useMemo, useId, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -218,6 +218,14 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
     return c;
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categoryFunds, snapshots]);
+
+  useEffect(() => {
+    if (categories.length === 0) return;
+    if (!categories.includes(activeTab) || (categoryCount[activeTab] ?? 0) === 0) {
+      updateParams({ category: categories[0] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, activeTab, categoryCount]);
 
   const filtered = useMemo(() => {
     let result = categoryFunds;
