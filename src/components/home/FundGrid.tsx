@@ -106,8 +106,8 @@ const MiniSparkline = ({ data, currentValue, field = "annual_yield", change }: {
             </linearGradient>
           </defs>
           <YAxis hide domain={series.domain} />
-          <Area type="monotone" dataKey="value" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
-          <Line type="monotone" dataKey="value" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+          <Area type="linear" dataKey="value" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
+          <Line type="linear" dataKey="value" stroke={color} strokeWidth={1.5} dot={false} isAnimationActive={false} strokeLinejoin="miter" strokeLinecap="butt" />
         </LineChart>
       </ResponsiveContainer>
     </div>
