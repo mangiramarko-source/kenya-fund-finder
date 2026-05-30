@@ -5,9 +5,13 @@
  * Requires in .env:
  *   VITE_SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY (Settings → API → service_role)
  *
+ * Copies: funds, snapshots, stocks, stock history, FX, commodities, commodity
+ * history, site pages, social links; news unless --skip-news.
+ * Safe to re-run (upsert on id). Orphan fund snapshots are filtered out.
+ *
  * Usage:
- *   node scripts/migrate-from-lovable.mjs
- *   node scripts/migrate-from-lovable.mjs --skip-news
+ *   npm run db:migrate-lovable          # full (includes ~8k news rows)
+ *   npm run db:migrate-lovable:quick    # same without news
  */
 
 import { createClient } from "@supabase/supabase-js";
@@ -102,14 +106,17 @@ async function main() {
   console.log("");
 
   const funds = (await fetchAll("funds_public")).map(stripAudit);
+  const fundIds = new Set(funds.map((f) => f.id));
   await upsertBatches("funds", funds);
 
-  await upsertBatches("fund_yield_snapshots", await fetchAll("fund_yield_snapshots"));
+  const snapshots = (await fetchAll("fund_yield_snapshots")).filter((s) => fundIds.has(s.fund_id));
+  await upsertBatches("fund_yield_snapshots", snapshots);
   await upsertBatches("stocks", (await fetchAll("stocks_public")).map(stripAudit));
   await upsertBatches("stock_price_history", await fetchAll("stock_price_history"));
   await upsertBatches("exchange_rates", await fetchAll("exchange_rates"));
   await upsertBatches("exchange_rate_history", await fetchAll("exchange_rate_history"));
   await upsertBatches("commodities", await fetchAll("commodities"));
+  await upsertBatches("commodity_price_history", await fetchAll("commodity_price_history"));
 
   if (!skipNews) {
     await upsertBatches("news_articles", await fetchAll("news_articles"), 50);
@@ -120,8 +127,22 @@ async function main() {
   await upsertBatches("site_pages", await fetchAll("site_pages"));
   await upsertBatches("social_links", await fetchAll("social_links"));
 
-  const { count } = await dest.from("funds").select("id", { count: "exact", head: true });
-  console.log("\nDone. funds count on destination:", count);
+  console.log("\n--- Destination row counts ---");
+  for (const table of [
+    "funds",
+    "fund_yield_snapshots",
+    "stocks",
+    "exchange_rates",
+    "commodities",
+    "commodity_price_history",
+    "news_articles",
+    "site_pages",
+  ]) {
+    const { count, error } = await dest.from(table).select("id", { count: "exact", head: true });
+    if (error) console.log(`  ${table}: error (${error.message})`);
+    else console.log(`  ${table}: ${count ?? 0}`);
+  }
+  console.log("\nDone. Run npm run db:check-counts for a full report.");
 }
 
 main().catch((e) => {
