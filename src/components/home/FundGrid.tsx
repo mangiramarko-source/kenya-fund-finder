@@ -6,7 +6,6 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { LineChart, Line, YAxis, ResponsiveContainer, Area } from "recharts";
 import FundMobileCards from "./FundMobileCards";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
@@ -64,55 +63,6 @@ const SortHeader = ({
     <ArrowUpDown className={`h-3 w-3 ${sortKey === field ? "text-accent" : "text-muted-foreground/50"}`} />
   </button>
 );
-
-/* ─── MiniSparkline (matches StocksPage visual) ─── */
-const MiniSparkline = ({ data, currentValue, field = "annual_yield", change }: { data: YieldSnapshot[]; currentValue: number; field?: "annual_yield" | "daily_yield"; change?: number }) => {
-  const series = useMemo(() => {
-    const vals = [...data.map((d) => d[field]), currentValue];
-    if (vals.length < 2) return null;
-    const last12 = vals.slice(-12);
-    const min = Math.min(...last12);
-    const max = Math.max(...last12);
-    // Tight padding (5% of range, with a tiny floor) so micro-changes become visible
-    const range = max - min;
-    const pad = range > 0 ? range * 0.05 : Math.max(Math.abs(max) * 0.001, 0.01);
-    return {
-      points: last12.map((v, i) => ({ i, value: v })),
-      positive: last12[last12.length - 1] >= last12[0],
-      domain: [min - pad, max + pad] as [number, number],
-    };
-  }, [data, currentValue, field]);
-
-  if (!series) return <span className="text-[10px] text-muted-foreground">—</span>;
-
-  // Prefer explicit change (matches ChangeCell) over derived series direction
-  const isUnchanged = change !== undefined && change === 0;
-  const isPositive = change !== undefined ? change > 0 : series.positive;
-  const color = isUnchanged
-    ? "hsl(var(--muted-foreground))"
-    : isPositive
-    ? "hsl(var(--accent))"
-    : "hsl(var(--destructive))";
-  const gradientId = `fund-spark-${isUnchanged ? "flat" : isPositive ? "up" : "down"}`;
-
-  return (
-    <div className="w-[60px] h-[24px] inline-block">
-      <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={series.points} margin={{ top: 2, right: 0, bottom: 2, left: 0 }}>
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <YAxis hide domain={series.domain} />
-          <Area type="linear" dataKey="value" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
-          <Line type="linear" dataKey="value" stroke={color} strokeWidth={1.5} dot={false} isAnimationActive={false} strokeLinejoin="miter" strokeLinecap="butt" />
-        </LineChart>
-      </ResponsiveContainer>
-    </div>
-  );
-};
 
 /* ─── ChangeCell (matches StocksPage visual) ─── */
 const ChangeCell = ({ change, unit }: { change: number; unit: string }) => {
@@ -571,12 +521,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           <table className="w-full text-sm table-fixed min-w-[1000px] lg:min-w-0">
             <colgroup>
               <col style={{ width: "3%" }} />
-              <col style={{ width: "20%" }} />
+              <col style={{ width: "25%" }} />
               <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "9%" }} />
-              <col style={{ width: "7%" }} />
               <col style={{ width: "13%" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "5%" }} />
@@ -608,7 +557,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Change" field="change" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="px-3 py-3 font-semibold text-muted-foreground text-left">Trend</th>
+                
                 <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
                 <th className="text-left px-3 py-3">
                   <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} />
@@ -662,9 +611,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     <td className="px-3 py-3.5 text-left">
                       <ChangeCell change={change} unit={fund.yield_unit} />
                     </td>
-                    <td className="px-3 py-3.5 text-left">
-                      <MiniSparkline data={allSnapshots[fund.id] || []} currentValue={fund.annual_yield} change={change} />
-                    </td>
                     <td className="px-3 py-3.5 text-foreground text-sm truncate text-left" title={fund.manager}>
                       {fund.manager}
                     </td>
@@ -699,7 +645,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 12 : 11} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 11 : 10} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
