@@ -1432,6 +1432,7 @@ export type Database = {
           fund_type: string | null
           id: string | null
           is_published: boolean | null
+          logo_url: string | null
           management_fee: number | null
           manager: string | null
           minimum_investment: number | null
@@ -1454,6 +1455,7 @@ export type Database = {
           fund_type?: string | null
           id?: string | null
           is_published?: boolean | null
+          logo_url?: string | null
           management_fee?: number | null
           manager?: string | null
           minimum_investment?: number | null
@@ -1476,6 +1478,7 @@ export type Database = {
           fund_type?: string | null
           id?: string | null
           is_published?: boolean | null
+          logo_url?: string | null
           management_fee?: number | null
           manager?: string | null
           minimum_investment?: number | null
