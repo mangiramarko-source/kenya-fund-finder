@@ -34,6 +34,7 @@ interface FundRow {
   source_url: string | null;
   yield_unit: string;
   is_published: boolean;
+  logo_url: string | null;
   updated_at: string;
 }
 
@@ -42,6 +43,7 @@ const emptyFund = {
   annual_yield: 0, daily_yield: 0, fund_type: "money_market" as FundType,
   minimum_investment: 0, management_fee: 0, withdrawal_time: "",
   description: "", website: "", fact_sheet_date: "", source_url: "", yield_unit: "%", is_published: true,
+  logo_url: "",
 };
 
 const AdminFunds = () => {
@@ -216,6 +218,7 @@ const AdminFunds = () => {
       source_url: editingFund.source_url || null,
       is_published: editingFund.is_published,
       yield_unit: editingFund.yield_unit,
+      logo_url: editingFund.logo_url || null,
       updated_by: user?.id,
     };
 
@@ -264,8 +267,25 @@ const AdminFunds = () => {
       source_url: fund.source_url || "",
       yield_unit: fund.yield_unit || "%",
       is_published: fund.is_published,
+      logo_url: fund.logo_url || "",
     });
     setDialogOpen(true);
+  };
+
+  const handleLogoUpload = async (file: File) => {
+    if (!file) return;
+    if (file.size > 2 * 1024 * 1024) {
+      toast({ title: "File too large", description: "Logo must be under 2 MB.", variant: "destructive" });
+      return;
+    }
+    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
+    const slug = editingFund.slug || `tmp-${Date.now()}`;
+    const path = `${slug}-${Date.now()}.${ext}`;
+    const { error } = await supabase.storage.from("fund-logos").upload(path, file, { upsert: true, cacheControl: "3600" });
+    if (error) { toast({ title: "Upload failed", description: error.message, variant: "destructive" }); return; }
+    const { data } = supabase.storage.from("fund-logos").getPublicUrl(path);
+    setEditingFund({ ...editingFund, logo_url: data.publicUrl });
+    toast({ title: "Logo uploaded" });
   };
 
   return (
