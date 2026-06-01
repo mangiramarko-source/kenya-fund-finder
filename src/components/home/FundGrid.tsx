@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal, ArrowUpRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import FundMobileCards from "./FundMobileCards";
+import FundLogo from "./FundLogo";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
 type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee" | "change";
