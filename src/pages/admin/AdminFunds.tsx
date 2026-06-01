@@ -304,6 +304,34 @@ const AdminFunds = () => {
               <DialogTitle>{editingFund.id ? "Edit Fund" : "Add New Fund"}</DialogTitle>
             </DialogHeader>
             <div className="space-y-3">
+              <div className="flex items-center gap-3 rounded-lg border border-border bg-muted/30 p-3">
+                <div className="h-14 w-14 rounded-full border border-border bg-card overflow-hidden flex items-center justify-center shrink-0">
+                  {editingFund.logo_url ? (
+                    <img src={editingFund.logo_url} alt="" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-lg font-bold text-muted-foreground">
+                      {(editingFund.name?.[0] || "?").toUpperCase()}
+                    </span>
+                  )}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <Label className="text-xs">Fund Logo / Profile Picture</Label>
+                  <div className="flex items-center gap-2 mt-1">
+                    <Input
+                      type="file"
+                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); e.target.value = ""; }}
+                      className="text-xs"
+                    />
+                    {editingFund.logo_url && (
+                      <Button type="button" variant="ghost" size="sm" onClick={() => setEditingFund({ ...editingFund, logo_url: "" })}>
+                        Remove
+                      </Button>
+                    )}
+                  </div>
+                  <p className="text-[10px] text-muted-foreground mt-1">PNG, JPG, WebP or SVG, max 2 MB. Square logos look best.</p>
+                </div>
+              </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
                   <Label>Slug (URL ID)</Label>
