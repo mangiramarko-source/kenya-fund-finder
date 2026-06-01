@@ -63,7 +63,7 @@ const RESOURCES: Record<string, ResourceDef> = {
       "annual_yield", "daily_yield", "seven_day_yield", "thirty_day_yield",
       "fund_type", "minimum_investment", "management_fee", "withdrawal_time",
       "description", "website", "fact_sheet_date", "yield_unit",
-      "is_published", "updated_at",
+      "is_published", "logo_url", "updated_at",
     ],
     orderable: ["annual_yield", "daily_yield", "name", "updated_at"],
     defaultOrder: "annual_yield.desc",

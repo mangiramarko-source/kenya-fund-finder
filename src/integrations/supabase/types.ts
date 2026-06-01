@@ -609,6 +609,7 @@ export type Database = {
           inception_date: string | null
           is_featured: boolean
           is_published: boolean
+          logo_url: string | null
           management_fee: number
           manager: string
           manager_years_active: number | null
@@ -643,6 +644,7 @@ export type Database = {
           inception_date?: string | null
           is_featured?: boolean
           is_published?: boolean
+          logo_url?: string | null
           management_fee: number
           manager: string
           manager_years_active?: number | null
@@ -677,6 +679,7 @@ export type Database = {
           inception_date?: string | null
           is_featured?: boolean
           is_published?: boolean
+          logo_url?: string | null
           management_fee?: number
           manager?: string
           manager_years_active?: number | null
@@ -1429,6 +1432,7 @@ export type Database = {
           fund_type: string | null
           id: string | null
           is_published: boolean | null
+          logo_url: string | null
           management_fee: number | null
           manager: string | null
           minimum_investment: number | null
@@ -1451,6 +1455,7 @@ export type Database = {
           fund_type?: string | null
           id?: string | null
           is_published?: boolean | null
+          logo_url?: string | null
           management_fee?: number | null
           manager?: string | null
           minimum_investment?: number | null
@@ -1473,6 +1478,7 @@ export type Database = {
           fund_type?: string | null
           id?: string | null
           is_published?: boolean | null
+          logo_url?: string | null
           management_fee?: number | null
           manager?: string | null
           minimum_investment?: number | null

@@ -1,12 +1,13 @@
 import { useMemo } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal, ArrowUpRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import FundMobileCards from "./FundMobileCards";
+import FundLogo from "./FundLogo";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
 type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee" | "change";
@@ -515,58 +516,40 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         />
       </div>
 
-      {/* Desktop: table view */}
-      <div className="hidden md:block rounded-xl border border-border overflow-hidden bg-card shadow-sm">
+      {/* Desktop/tablet: redesigned table */}
+      <div className="hidden md:block rounded-2xl border border-border overflow-hidden bg-card shadow-sm">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm table-fixed min-w-[1000px] lg:min-w-0">
+          <table className="w-full text-sm table-fixed min-w-[980px]">
             <colgroup>
-              <col style={{ width: "3%" }} />
-              <col style={{ width: "25%" }} />
-              <col style={{ width: "7%" }} />
-              <col style={{ width: "8%" }} />
-              <col style={{ width: "8%" }} />
-              <col style={{ width: "9%" }} />
+              <col style={{ width: "48px" }} />
+              <col style={{ width: "20%" }} />
               <col style={{ width: "13%" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "5%" }} />
-              <col style={{ width: "11%" }} />
-              {onToggleFavourite && <col style={{ width: "32px" }} />}
+              <col style={{ width: "13%" }} />
+              <col style={{ width: "18%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "10%" }} />
+              <col style={{ width: "16%" }} />
+              {onToggleFavourite && <col style={{ width: "36px" }} />}
             </colgroup>
             <thead>
-              <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
-                <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
-                <th className="text-left px-3 py-3">
+              <tr className="bg-muted/40 text-[11px] uppercase tracking-wider border-b border-border">
+                <th className="text-center px-2 py-3.5 font-semibold text-muted-foreground">#</th>
+                <th className="text-left px-3 py-3.5">
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="px-3 py-3 text-left">
-                  <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} />
+                <th className="text-left px-3 py-3.5">
+                  <SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <span className="inline-flex">Change</span>
-                    </TooltipTrigger>
-                    <TooltipContent side="top" className="max-w-[220px] text-xs">
-                      Difference between the current and previous daily yield.
-                    </TooltipContent>
-                  </Tooltip>
+                <th className="text-left px-3 py-3.5">
+                  <SortHeader label="Annual Yield" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="px-3 py-3 text-left">
-                  <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} />
-                </th>
-                <th className="text-left px-3 py-3">
-                  <SortHeader label="Change" field="change" sortKey={sortKey} onToggleSort={toggleSort} />
-                </th>
-                
-                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Manager</th>
-                <th className="text-left px-3 py-3">
+                <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Manager</th>
+                <th className="text-left px-3 py-3.5">
                   <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-left px-3 py-3">
-                  <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} />
-                </th>
-                <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Withdraw</th>
-                {onToggleFavourite && <th className="px-2 py-3 w-8"></th>}
+                <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Withdrawal</th>
+                <th className="px-3 py-3.5"></th>
+                {onToggleFavourite && <th className="px-2 py-3.5"></th>}
               </tr>
             </thead>
             <tbody>
@@ -575,53 +558,94 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 const change = prev != null ? fund.annual_yield - prev : 0;
                 const prevDaily = snapshots[fund.id]?.daily_yield;
                 const dailyChange = prevDaily != null ? fund.daily_yield - prevDaily : 0;
-                
+                const suffix = fund.yield_unit === "%" ? "%" : "";
+                const renderInlineChange = (delta: number) => {
+                  if (delta > 0)
+                    return (
+                      <span className="ml-1.5 inline-flex items-center gap-0.5 text-[11px] font-semibold text-accent tabular-nums">
+                        <TrendingUp className="h-3 w-3" />{Math.abs(delta).toFixed(2)}{suffix}
+                      </span>
+                    );
+                  if (delta < 0)
+                    return (
+                      <span className="ml-1.5 inline-flex items-center gap-0.5 text-[11px] font-semibold text-destructive tabular-nums">
+                        <TrendingDown className="h-3 w-3" />{Math.abs(delta).toFixed(2)}{suffix}
+                      </span>
+                    );
+                  return (
+                    <span className="ml-1.5 inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/70 tabular-nums">
+                      <Minus className="h-3 w-3" />0.00{suffix}
+                    </span>
+                  );
+                };
+
                 return (
                   <tr
                     key={fund.id}
                     onClick={() => navigate(`/compare/${fund.slug}`)}
-                    className={`border-t border-border/40 hover:bg-accent/8 transition-colors cursor-pointer group ${
-                      i % 2 === 0 ? "bg-transparent" : "bg-muted/20"
-                    }`}
+                    className="border-t border-border/40 hover:bg-accent/5 transition-colors cursor-pointer group"
                   >
-                    <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-sm tabular-nums">{i + 1}</td>
+                    <td className="px-2 py-3.5 text-center">
+                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted/70 text-[11px] font-semibold text-muted-foreground tabular-nums">
+                        {i + 1}
+                      </span>
+                    </td>
                     <td className="px-3 py-3.5">
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="block font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight"
+                        className="inline-flex items-center gap-2.5 font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight"
                         title={fund.name}
                       >
-                        {fund.name.length > 17 ? `${fund.name.slice(0, 17)}…` : fund.name}
+                        <FundLogo name={fund.name} logoUrl={fund.logo_url} size={28} />
+                        <span className="truncate">{fund.name.length > 20 ? `${fund.name.slice(0, 20)}…` : fund.name}</span>
                       </Link>
                     </td>
-                    <td className="px-3 py-3.5 tabular-nums whitespace-nowrap text-left">
-                      <span className="font-bold text-foreground text-sm">
+                    <td className="px-3 py-3.5 whitespace-nowrap text-left">
+                      <span className="font-bold text-foreground text-sm tabular-nums">
                         {fmtYield(fund.daily_yield, fund.yield_unit)}
                       </span>
+                      {renderInlineChange(dailyChange)}
                     </td>
-                    <td className="px-3 py-3.5 text-left">
-                      <ChangeCell change={dailyChange} unit={fund.yield_unit} />
-                    </td>
-                    <td className="px-3 py-3.5 whitespace-nowrap tabular-nums text-left">
-                      <span className="font-bold text-foreground text-sm">
+                    <td className="px-3 py-3.5 whitespace-nowrap text-left">
+                      <span className="font-bold text-foreground text-sm tabular-nums">
                         {fmtYield(fund.annual_yield, fund.yield_unit)}
                       </span>
+                      {renderInlineChange(change)}
                     </td>
                     <td className="px-3 py-3.5 text-left">
-                      <ChangeCell change={change} unit={fund.yield_unit} />
-                    </td>
-                    <td className="px-3 py-3.5 text-foreground text-sm truncate text-left" title={fund.manager}>
-                      {fund.manager}
+                      <span className="inline-flex items-center gap-2 text-sm text-foreground/90 truncate" title={fund.manager}>
+                        <FundLogo name={fund.manager} logoUrl={fund.logo_url} size={22} />
+                        <span className="truncate">{fund.manager.length > 18 ? `${fund.manager.slice(0, 18)}…` : fund.manager}</span>
+                      </span>
                     </td>
                     <td className="px-3 py-3.5 text-sm tabular-nums text-muted-foreground whitespace-nowrap text-left">
                       KSh {fund.minimum_investment.toLocaleString()}
                     </td>
-                    <td className="px-3 py-3.5 text-sm tabular-nums text-muted-foreground whitespace-nowrap text-left">
-                      {fund.management_fee}%
-                    </td>
-                    <td className="px-3 py-3.5 text-left text-sm text-muted-foreground truncate" title={fund.withdrawal_time?.replace('business days', 'days')}>
+                    <td className="px-3 py-3.5 text-left text-sm text-muted-foreground whitespace-nowrap" title={fund.withdrawal_time?.replace('business days', 'days')}>
                       {fund.withdrawal_time?.replace('business days', 'days')}
+                    </td>
+                    <td className="px-3 py-3.5 text-right whitespace-nowrap">
+                      <div className="inline-flex items-center gap-1.5">
+                        <Link
+                          to={`/compare/${fund.slug}`}
+                          onClick={(e) => e.stopPropagation()}
+                          className="inline-flex items-center justify-center h-8 px-2.5 rounded-md border border-border bg-card text-[11px] font-semibold uppercase tracking-wider text-foreground hover:bg-muted transition-colors"
+                        >
+                          View
+                        </Link>
+                        {fund.website ? (
+                          <a
+                            href={fund.website}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            onClick={(e) => e.stopPropagation()}
+                            className="inline-flex items-center gap-1 justify-center h-8 px-2.5 rounded-md bg-accent text-accent-foreground text-[11px] font-semibold uppercase tracking-wider hover:bg-accent/90 transition-colors"
+                          >
+                            Invest <ArrowUpRight className="h-3 w-3" />
+                          </a>
+                        ) : null}
+                      </div>
                     </td>
                     {onToggleFavourite && (
                       <td className="pl-1 pr-2 py-3.5 text-left">
@@ -645,7 +669,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 11 : 10} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 9 : 8} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
@@ -667,6 +691,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           </table>
         </div>
       </div>
+
 
       {/* Summary footer */}
       <div className="flex items-center text-xs text-muted-foreground px-1">

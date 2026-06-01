@@ -31,6 +31,7 @@ export interface FundFromDB {
   fact_sheet_date: string | null;
   yield_unit: string;
   is_published: boolean;
+  logo_url: string | null;
   updated_at: string;
 }
 
@@ -69,7 +70,7 @@ const FUND_COLUMNS = [
   "annual_yield", "daily_yield", "seven_day_yield", "thirty_day_yield",
   "fund_type", "minimum_investment", "management_fee", "withdrawal_time",
   "description", "website", "fact_sheet_date", "yield_unit",
-  "is_published", "updated_at",
+  "is_published", "logo_url", "updated_at",
 ];
 
 const normalizeFund = (f: any): FundFromDB => ({
