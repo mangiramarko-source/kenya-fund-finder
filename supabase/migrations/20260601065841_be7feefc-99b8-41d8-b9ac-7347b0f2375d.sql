@@ -1,0 +1,1 @@
+ALTER VIEW public.funds_public SET (security_invoker = true);
