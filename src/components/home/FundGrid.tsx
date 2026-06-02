@@ -643,9 +643,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center justify-center gap-1 h-8 w-16 rounded-md bg-accent text-accent-foreground text-[11px] font-semibold uppercase tracking-wider hover:bg-accent/90 transition-colors"
+                            className="inline-flex items-center justify-center gap-1 h-8 w-16 rounded-md bg-accent text-accent-foreground text-[11px] font-semibold uppercase tracking-wider hover:bg-accent/90 transition-colors text-center"
                           >
-                            Invest <ArrowUpRight className="h-3 w-3" />
+                            VISIT <ArrowUpRight className="h-3 w-3" />
                           </a>
                         )}
                       </div>
