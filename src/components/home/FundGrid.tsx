@@ -516,40 +516,38 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         />
       </div>
 
-      {/* Desktop/tablet: redesigned table */}
-      <div className="hidden md:block rounded-2xl border border-border overflow-hidden bg-card shadow-sm">
+      {/* Desktop/tablet: redesigned symmetric table */}
+      <div className="hidden md:block rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="w-full text-sm table-fixed min-w-[980px]">
+          <table className="w-full text-sm table-fixed min-w-[960px] border-separate border-spacing-0">
             <colgroup>
-              <col style={{ width: "48px" }} />
-              <col style={{ width: "20%" }} />
-              <col style={{ width: "13%" }} />
-              <col style={{ width: "13%" }} />
-              <col style={{ width: "18%" }} />
-              <col style={{ width: "10%" }} />
-              <col style={{ width: "10%" }} />
+              <col style={{ width: "56px" }} />
+              <col style={{ width: "30%" }} />
+              <col style={{ width: "14%" }} />
               <col style={{ width: "16%" }} />
-              {onToggleFavourite && <col style={{ width: "36px" }} />}
+              <col style={{ width: "14%" }} />
+              <col style={{ width: "12%" }} />
+              <col style={{ width: "160px" }} />
+              {onToggleFavourite && <col style={{ width: "44px" }} />}
             </colgroup>
             <thead>
-              <tr className="bg-muted/40 text-[11px] uppercase tracking-wider border-b border-border">
-                <th className="text-center px-2 py-3.5 font-semibold text-muted-foreground">#</th>
-                <th className="text-left px-3 py-3.5">
+              <tr className="bg-muted/50 text-[10px] uppercase tracking-[0.12em] text-muted-foreground">
+                <th className="text-center px-3 py-3 font-semibold border-b border-border">#</th>
+                <th className="text-left px-4 py-3 font-semibold border-b border-border">
                   <SortHeader label="Fund" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-left px-3 py-3.5">
-                  <SortHeader label="Daily Yield" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} />
+                <th className="text-center px-3 py-3 font-semibold border-b border-border">
+                  <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="mx-auto" />
                 </th>
-                <th className="text-left px-3 py-3.5">
-                  <SortHeader label="Annual Yield" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} />
+                <th className="text-center px-3 py-3 font-semibold border-b border-border">
+                  <SortHeader label="Annual Yield" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="mx-auto" />
                 </th>
-                <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Manager</th>
-                <th className="text-left px-3 py-3.5">
-                  <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} />
+                <th className="text-center px-3 py-3 font-semibold border-b border-border">
+                  <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="mx-auto" />
                 </th>
-                <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Withdrawal</th>
-                <th className="px-3 py-3.5"></th>
-                {onToggleFavourite && <th className="px-2 py-3.5"></th>}
+                <th className="text-center px-3 py-3 font-semibold border-b border-border">Withdrawal</th>
+                <th className="text-center px-3 py-3 font-semibold border-b border-border">Action</th>
+                {onToggleFavourite && <th className="border-b border-border" aria-label="Watch" />}
               </tr>
             </thead>
             <tbody>
@@ -559,22 +557,20 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 const prevDaily = snapshots[fund.id]?.daily_yield;
                 const dailyChange = prevDaily != null ? fund.daily_yield - prevDaily : 0;
                 const suffix = fund.yield_unit === "%" ? "%" : "";
-                const renderInlineChange = (delta: number) => {
-                  if (delta > 0)
-                    return (
-                      <span className="ml-1.5 inline-flex items-center gap-0.5 text-[11px] font-semibold text-accent tabular-nums">
-                        <TrendingUp className="h-3 w-3" />{Math.abs(delta).toFixed(2)}{suffix}
-                      </span>
-                    );
-                  if (delta < 0)
-                    return (
-                      <span className="ml-1.5 inline-flex items-center gap-0.5 text-[11px] font-semibold text-destructive tabular-nums">
-                        <TrendingDown className="h-3 w-3" />{Math.abs(delta).toFixed(2)}{suffix}
-                      </span>
-                    );
+
+                const ChangeBadge = ({ delta }: { delta: number }) => {
+                  const cls =
+                    delta > 0
+                      ? "text-accent bg-accent/10"
+                      : delta < 0
+                      ? "text-destructive bg-destructive/10"
+                      : "text-muted-foreground bg-muted/60";
+                  const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
+                  const sign = delta > 0 ? "+" : delta < 0 ? "−" : "";
                   return (
-                    <span className="ml-1.5 inline-flex items-center gap-0.5 text-[11px] text-muted-foreground/70 tabular-nums">
-                      <Minus className="h-3 w-3" />0.00{suffix}
+                    <span className={`mt-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums ${cls}`}>
+                      <Icon className="h-2.5 w-2.5" />
+                      {sign}{Math.abs(delta).toFixed(2)}{suffix}
                     </span>
                   );
                 };
@@ -583,72 +579,79 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   <tr
                     key={fund.id}
                     onClick={() => navigate(`/compare/${fund.slug}`)}
-                    className="border-t border-border/40 hover:bg-accent/5 transition-colors cursor-pointer group"
+                    className="group cursor-pointer hover:bg-muted/30 transition-colors"
                   >
-                    <td className="px-2 py-3.5 text-center">
-                      <span className="inline-flex items-center justify-center h-6 w-6 rounded-full bg-muted/70 text-[11px] font-semibold text-muted-foreground tabular-nums">
+                    <td className="px-3 py-4 text-center align-middle border-b border-border/40">
+                      <span className="inline-flex items-center justify-center h-7 w-7 rounded-full bg-muted text-[11px] font-bold text-muted-foreground tabular-nums">
                         {i + 1}
                       </span>
                     </td>
-                    <td className="px-3 py-3.5">
+                    <td className="px-4 py-4 align-middle border-b border-border/40">
                       <Link
                         to={`/compare/${fund.slug}`}
                         onClick={(e) => e.stopPropagation()}
-                        className="inline-flex items-center gap-2.5 font-bold text-foreground group-hover:text-accent transition-colors text-sm tracking-tight"
+                        className="flex items-center gap-3 min-w-0"
                         title={fund.name}
                       >
-                        <FundLogo name={fund.name} logoUrl={fund.logo_url} size={28} />
-                        <span className="truncate">{fund.name.length > 20 ? `${fund.name.slice(0, 20)}…` : fund.name}</span>
+                        <FundLogo name={fund.name} logoUrl={fund.logo_url} size={36} />
+                        <div className="min-w-0">
+                          <div className="font-semibold text-foreground text-sm leading-tight truncate group-hover:text-accent transition-colors">
+                            {fund.name}
+                          </div>
+                          <div className="text-xs text-muted-foreground leading-tight truncate mt-0.5">
+                            {fund.manager}
+                          </div>
+                        </div>
                       </Link>
                     </td>
-                    <td className="px-3 py-3.5 whitespace-nowrap text-left">
-                      <span className="font-bold text-foreground text-sm tabular-nums">
-                        {fmtYield(fund.daily_yield, fund.yield_unit)}
-                      </span>
-                      {renderInlineChange(dailyChange)}
+                    <td className="px-3 py-4 text-center align-middle border-b border-border/40">
+                      <div className="flex flex-col items-center justify-center leading-none">
+                        <span className="font-semibold text-foreground text-sm tabular-nums">
+                          {fmtYield(fund.daily_yield, fund.yield_unit)}
+                        </span>
+                        <ChangeBadge delta={dailyChange} />
+                      </div>
                     </td>
-                    <td className="px-3 py-3.5 whitespace-nowrap text-left">
-                      <span className="font-bold text-foreground text-sm tabular-nums">
-                        {fmtYield(fund.annual_yield, fund.yield_unit)}
-                      </span>
-                      {renderInlineChange(change)}
+                    <td className="px-3 py-4 text-center align-middle border-b border-border/40">
+                      <div className="flex flex-col items-center justify-center leading-none">
+                        <span className="font-bold text-foreground text-base tabular-nums">
+                          {fmtYield(fund.annual_yield, fund.yield_unit)}
+                        </span>
+                        <ChangeBadge delta={change} />
+                      </div>
                     </td>
-                    <td className="px-3 py-3.5 text-left">
-                      <span className="inline-flex items-center gap-2 text-sm text-foreground/90 truncate" title={fund.manager}>
-                        <FundLogo name={fund.manager} logoUrl={fund.logo_url} size={22} />
-                        <span className="truncate">{fund.manager.length > 18 ? `${fund.manager.slice(0, 18)}…` : fund.manager}</span>
-                      </span>
-                    </td>
-                    <td className="px-3 py-3.5 text-sm tabular-nums text-muted-foreground whitespace-nowrap text-left">
+                    <td className="px-3 py-4 text-center align-middle border-b border-border/40 text-sm tabular-nums text-foreground/80 whitespace-nowrap">
                       KSh {fund.minimum_investment.toLocaleString()}
                     </td>
-                    <td className="px-3 py-3.5 text-left text-sm text-muted-foreground whitespace-nowrap" title={fund.withdrawal_time?.replace('business days', 'days')}>
-                      {fund.withdrawal_time?.replace('business days', 'days')}
+                    <td className="px-3 py-4 text-center align-middle border-b border-border/40 whitespace-nowrap">
+                      <span className="inline-flex items-center justify-center px-2.5 py-1 rounded-full bg-muted/60 text-[11px] font-medium text-muted-foreground">
+                        {fund.withdrawal_time?.replace('business days', 'days')}
+                      </span>
                     </td>
-                    <td className="px-3 py-3.5 text-right whitespace-nowrap">
+                    <td className="px-3 py-4 text-center align-middle border-b border-border/40">
                       <div className="inline-flex items-center gap-1.5">
                         <Link
                           to={`/compare/${fund.slug}`}
                           onClick={(e) => e.stopPropagation()}
-                          className="inline-flex items-center justify-center h-8 px-2.5 rounded-md border border-border bg-card text-[11px] font-semibold uppercase tracking-wider text-foreground hover:bg-muted transition-colors"
+                          className="inline-flex items-center justify-center h-8 w-16 rounded-md border border-border bg-card text-[11px] font-semibold uppercase tracking-wider text-foreground hover:bg-muted transition-colors"
                         >
                           View
                         </Link>
-                        {fund.website ? (
+                        {fund.website && (
                           <a
                             href={fund.website}
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-1 justify-center h-8 px-2.5 rounded-md bg-accent text-accent-foreground text-[11px] font-semibold uppercase tracking-wider hover:bg-accent/90 transition-colors"
+                            className="inline-flex items-center justify-center gap-1 h-8 w-16 rounded-md bg-accent text-accent-foreground text-[11px] font-semibold uppercase tracking-wider hover:bg-accent/90 transition-colors"
                           >
                             Invest <ArrowUpRight className="h-3 w-3" />
                           </a>
-                        ) : null}
+                        )}
                       </div>
                     </td>
                     {onToggleFavourite && (
-                      <td className="pl-1 pr-2 py-3.5 text-left">
+                      <td className="px-2 py-4 text-center align-middle border-b border-border/40">
                         <button
                           onClick={(e) => {
                             e.stopPropagation();
@@ -669,7 +672,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 9 : 8} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 8 : 7} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
@@ -691,6 +694,8 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           </table>
         </div>
       </div>
+
+
 
 
       {/* Summary footer */}
