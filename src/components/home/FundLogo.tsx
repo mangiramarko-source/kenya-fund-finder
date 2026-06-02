@@ -25,6 +25,9 @@ const FundLogo = ({ name, logoUrl, size = 28, className = "" }: FundLogoProps) =
         width={size}
         height={size}
         loading="lazy"
+        decoding="async"
+        // @ts-expect-error - fetchPriority is a valid HTML attribute
+        fetchpriority="low"
         onError={() => setFailed(true)}
         className={`rounded-full object-cover bg-muted border border-border/40 ${className}`}
         style={{ width: size, height: size }}
