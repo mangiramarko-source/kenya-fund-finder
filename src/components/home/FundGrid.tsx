@@ -88,6 +88,24 @@ const ChangeCell = ({ change, unit }: { change: number; unit: string }) => {
   );
 };
 
+/* ─── ChangeBadge (hoisted: defining inside map causes React to remount per render) ─── */
+const ChangeBadge = ({ delta, suffix }: { delta: number; suffix: string }) => {
+  const cls =
+    delta > 0
+      ? "text-accent bg-accent/10"
+      : delta < 0
+      ? "text-destructive bg-destructive/10"
+      : "text-muted-foreground bg-muted/60";
+  const Icon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
+  const sign = delta > 0 ? "+" : delta < 0 ? "−" : "";
+  return (
+    <span className={`mt-1 inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded-full text-[10px] font-semibold tabular-nums ${cls}`}>
+      <Icon className="h-2.5 w-2.5" />
+      {sign}{Math.abs(delta).toFixed(2)}{suffix}
+    </span>
+  );
+};
+
 /* ─── Skeleton ─── */
 const TableSkeleton = () => (
   <div className="space-y-6">
