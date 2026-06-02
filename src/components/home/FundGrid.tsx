@@ -606,7 +606,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     </td>
                     <td className="px-3 py-4 text-center align-middle border-b border-border/40">
                       <div className="flex flex-col items-center justify-center leading-none">
-                        <span className="font-semibold text-foreground text-sm tabular-nums">
+                        <span className="font-semibold text-foreground tabular-nums text-base">
                           {fmtYield(fund.daily_yield, fund.yield_unit)}
                         </span>
                         <ChangeBadge delta={dailyChange} />
