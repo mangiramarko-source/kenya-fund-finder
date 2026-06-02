@@ -610,7 +610,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                         <span className="font-semibold text-foreground tabular-nums text-base">
                           {fmtYield(fund.daily_yield, fund.yield_unit)}
                         </span>
-                        <ChangeBadge delta={dailyChange} />
+                        <ChangeBadge delta={dailyChange} suffix={suffix} />
                       </div>
                     </td>
                     <td className="px-3 py-4 text-center align-middle border-b border-border/40">
@@ -618,7 +618,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                         <span className="font-bold text-foreground text-base tabular-nums">
                           {fmtYield(fund.annual_yield, fund.yield_unit)}
                         </span>
-                        <ChangeBadge delta={change} />
+                        <ChangeBadge delta={change} suffix={suffix} />
                       </div>
                     </td>
                     <td className="px-3 py-4 text-center align-middle border-b border-border/40 text-sm tabular-nums text-foreground/80 whitespace-nowrap">
