@@ -89,7 +89,7 @@ const ChangeCell = ({ change, unit }: { change: number; unit: string }) => {
 };
 
 /* ─── ChangeBadge (hoisted: defining inside map causes React to remount per render) ─── */
-const ChangeBadge = ({ delta, suffix }: { delta: number; suffix: string }) => {
+const ChangeBadge = ({ delta, suffix = "" }: { delta: number; suffix?: string }) => {
   const cls =
     delta > 0
       ? "text-accent bg-accent/10"
