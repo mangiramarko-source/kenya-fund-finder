@@ -7,7 +7,8 @@
  *
  * Copies: funds, snapshots, stocks, stock history, FX, commodities, commodity
  * history, site pages, social links; news unless --skip-news.
- * Safe to re-run (upsert on id). Orphan fund snapshots are filtered out.
+ * Safe to re-run (upsert on id; history tables upsert on natural date keys).
+ * Orphan fund snapshots are filtered out.
  *
  * Usage:
  *   npm run db:migrate-lovable          # full (includes ~8k news rows)
@@ -150,8 +151,26 @@ async function fetchAll(table, select = "*", pageSize = 1000) {
 }
 
 async function copyFromSource(sourceTable, destTable, transform = (row) => row, options = {}) {
-  const rows = (await fetchAll(sourceTable)).map(transform);
+  let rows = (await fetchAll(sourceTable)).map(transform);
+  if (options.dedupeKey) {
+    rows = dedupeByKey(rows, options.dedupeKey, destTable);
+  }
   await upsertBatches(destTable, rows, options.batchSize ?? 100, options.onConflict ?? "id");
+}
+
+function dedupeByKey(rows, keyFn, label) {
+  const seen = new Map();
+  for (const row of rows) {
+    seen.set(keyFn(row), row);
+  }
+  const deduped = [...seen.values()];
+  const removed = rows.length - deduped.length;
+  if (removed > 0) {
+    console.log(
+      `  ${label}: removed ${removed} duplicate row(s) before upsert (kept last per natural key)`
+    );
+  }
+  return deduped;
 }
 
 async function upsertBatches(table, rows, batchSize = 100, onConflict = "id") {
@@ -184,6 +203,60 @@ async function tableMissing(table) {
   return Boolean(error?.message?.includes("Could not find the table"));
 }
 
+async function columnMissing(table, column) {
+  const { error } = await dest.from(table).select(column).limit(0);
+  return Boolean(
+    error?.message?.includes(`Could not find the '${column}' column`) ||
+      error?.message?.includes("column") && error?.message?.includes(column)
+  );
+}
+
+const REPAIR_FUNDS_LOGO_SQL = resolve(
+  root,
+  "supabase/migrations/20260530150000_repair_funds_logo_url.sql"
+);
+
+async function applyRepairSql(sqlPath) {
+  const dbUrl = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
+  if (!dbUrl) return false;
+
+  console.log("Applying repair migration via SUPABASE_DB_URL...\n");
+  const result = spawnSync("node", [resolve(__dirname, "apply-repair-schema.mjs"), sqlPath], {
+    cwd: root,
+    stdio: "inherit",
+    env: process.env,
+  });
+  if (result.status !== 0) process.exit(result.status ?? 1);
+  return true;
+}
+
+async function ensureFundsLogoSchema() {
+  if (!(await columnMissing("funds", "logo_url"))) return;
+
+  console.log("Missing destination column: funds.logo_url");
+
+  const applied = await applyRepairSql(REPAIR_FUNDS_LOGO_SQL);
+  if (!applied) {
+    console.error(
+      "\nCannot import funds until logo_url exists on public.funds.\n\n" +
+        "Option A — SQL Editor (fastest):\n" +
+        "  1. Open https://supabase.com/dashboard/project/caawgzuofnujrznwbuxk/sql/new\n" +
+        "  2. Paste all of scripts/output/repair-funds-logo-url.sql\n" +
+        "  3. Click Run\n\n" +
+        "Option B — CLI apply:\n" +
+        "  Add SUPABASE_DB_URL to .env (Dashboard → Settings → Database → URI)\n" +
+        "  node scripts/apply-repair-schema.mjs supabase/migrations/20260530150000_repair_funds_logo_url.sql\n\n" +
+        "Then re-run: npm run db:migrate-lovable:quick\n"
+    );
+    process.exit(1);
+  }
+
+  if (await columnMissing("funds", "logo_url")) {
+    throw new Error("Repair migration ran but funds.logo_url is still missing.");
+  }
+  console.log("Funds logo_url schema repair complete.\n");
+}
+
 async function ensurePriceHistorySchema() {
   const required = ["stock_price_history", "commodity_price_history"];
   const missing = [];
@@ -194,37 +267,30 @@ async function ensurePriceHistorySchema() {
 
   console.log("Missing destination tables:", missing.join(", "));
 
-  const dbUrl = process.env.SUPABASE_DB_URL || process.env.DATABASE_URL;
-  if (dbUrl) {
-    console.log("Applying repair migration via SUPABASE_DB_URL...\n");
-    const result = spawnSync("node", [resolve(__dirname, "apply-repair-schema.mjs")], {
-      cwd: root,
-      stdio: "inherit",
-      env: process.env,
-    });
-    if (result.status !== 0) process.exit(result.status ?? 1);
-
-    for (const table of required) {
-      if (await tableMissing(table)) {
-        throw new Error(`Repair migration ran but ${table} is still missing.`);
-      }
-    }
-    console.log("Schema repair complete.\n");
-    return;
+  const applied = await applyRepairSql(
+    resolve(root, "supabase/migrations/20260530140000_repair_price_history_tables.sql")
+  );
+  if (!applied) {
+    console.error(
+      "\nCannot import price history until these tables exist.\n\n" +
+        "Option A — SQL Editor (fastest):\n" +
+        "  1. Open https://supabase.com/dashboard/project/caawgzuofnujrznwbuxk/sql/new\n" +
+        "  2. Paste all of scripts/output/repair-price-history-tables.sql\n" +
+        "  3. Click Run\n\n" +
+        "Option B — CLI apply:\n" +
+        "  Add SUPABASE_DB_URL to .env (Dashboard → Settings → Database → URI)\n" +
+        "  npm run db:apply-repair-schema\n\n" +
+        "Then re-run: npm run db:migrate-lovable:quick\n"
+    );
+    process.exit(1);
   }
 
-  console.error(
-    "\nCannot import price history until these tables exist.\n\n" +
-      "Option A — SQL Editor (fastest):\n" +
-      "  1. Open https://supabase.com/dashboard/project/caawgzuofnujrznwbuxk/sql/new\n" +
-      "  2. Paste all of scripts/output/repair-price-history-tables.sql\n" +
-      "  3. Click Run\n\n" +
-      "Option B — CLI apply:\n" +
-      "  Add SUPABASE_DB_URL to .env (Dashboard → Settings → Database → URI)\n" +
-      "  npm run db:apply-repair-schema\n\n" +
-      "Then re-run: npm run db:migrate-lovable:quick\n"
-  );
-  process.exit(1);
+  for (const table of required) {
+    if (await tableMissing(table)) {
+      throw new Error(`Repair migration ran but ${table} is still missing.`);
+    }
+  }
+  console.log("Schema repair complete.\n");
 }
 
 async function main() {
@@ -233,6 +299,7 @@ async function main() {
   console.log("");
 
   await ensurePriceHistorySchema();
+  await ensureFundsLogoSchema();
   await preflightSourceAccess();
 
   const funds = (await fetchAll("funds_public")).map(stripAudit);
@@ -243,20 +310,35 @@ async function main() {
   await upsertBatches("fund_yield_snapshots", snapshots);
 
   await copyFromSource("stocks_public", "stocks", stripAudit);
-  await copyFromSource("stock_price_history", "stock_price_history");
+  await copyFromSource("stock_price_history", "stock_price_history", (row) => row, {
+    onConflict: "stock_id,snapshot_date",
+    dedupeKey: (row) => `${row.stock_id}|${row.snapshot_date}`,
+  });
   await copyFromSource("exchange_rates_public", "exchange_rates", (row) => ({
     ...stripAudit(row),
     is_active: true,
   }));
-  await copyFromSource("exchange_rate_history_public", "exchange_rate_history", (row) =>
-    omitKeys(row, ["currency_code"])
+  await copyFromSource(
+    "exchange_rate_history_public",
+    "exchange_rate_history",
+    (row) => omitKeys(row, ["currency_code"]),
+    {
+      onConflict: "exchange_rate_id,snapshot_date",
+      dedupeKey: (row) => `${row.exchange_rate_id}|${row.snapshot_date}`,
+    }
   );
   await copyFromSource("commodities_public", "commodities", (row) => ({
     ...stripAudit(row),
     is_active: true,
   }));
-  await copyFromSource("commodity_price_history_public", "commodity_price_history", (row) =>
-    omitKeys(row, ["symbol"])
+  await copyFromSource(
+    "commodity_price_history_public",
+    "commodity_price_history",
+    (row) => omitKeys(row, ["symbol"]),
+    {
+      onConflict: "commodity_id,snapshot_date",
+      dedupeKey: (row) => `${row.commodity_id}|${row.snapshot_date}`,
+    }
   );
 
   if (!skipNews) {
