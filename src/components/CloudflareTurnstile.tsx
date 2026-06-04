@@ -1,5 +1,9 @@
 import { useEffect, useRef, useCallback, useState } from "react";
 import { CheckCircle2, Loader2, ShieldAlert } from "lucide-react";
+import {
+  isTurnstileDevBypassEnabled,
+  TURNSTILE_DEV_BYPASS_TOKEN,
+} from "@/lib/turnstile-dev";
 
 declare global {
   interface Window {
@@ -62,6 +66,15 @@ const CloudflareTurnstile = ({ onVerify, onExpire, onBotFields }: Props) => {
   }, [onVerify, onExpire]);
 
   useEffect(() => {
+    if (!isTurnstileDevBypassEnabled()) return;
+    setStatus("verified");
+    onBotFields?.({ honeypot: "", formLoadedAt: formLoadedAtRef.current });
+    onVerify(TURNSTILE_DEV_BYPASS_TOKEN);
+  }, [onVerify, onBotFields]);
+
+  useEffect(() => {
+    if (isTurnstileDevBypassEnabled()) return;
+
     if (window.turnstile) {
       renderWidget();
     } else {
@@ -81,12 +94,16 @@ const CloudflareTurnstile = ({ onVerify, onExpire, onBotFields }: Props) => {
     };
   }, [renderWidget]);
 
-  const statusContent = {
-    loading: { icon: <Loader2 className="h-3 w-3 animate-spin" />, text: "Loading security check…", className: "text-muted-foreground" },
-    verifying: { icon: <Loader2 className="h-3 w-3 animate-spin" />, text: "Verifying you're human…", className: "text-muted-foreground" },
-    verified: { icon: <CheckCircle2 className="h-3 w-3" />, text: "Verified — signing you in", className: "text-accent" },
-    error: { icon: <ShieldAlert className="h-3 w-3" />, text: "Verification failed. Please retry.", className: "text-destructive" },
-  }[status];
+  const devBypass = isTurnstileDevBypassEnabled();
+
+  const statusContent = devBypass && status === "verified"
+    ? { icon: <CheckCircle2 className="h-3 w-3" />, text: "Local dev: security check skipped", className: "text-muted-foreground" }
+    : {
+        loading: { icon: <Loader2 className="h-3 w-3 animate-spin" />, text: "Loading security check…", className: "text-muted-foreground" },
+        verifying: { icon: <Loader2 className="h-3 w-3 animate-spin" />, text: "Verifying you're human…", className: "text-muted-foreground" },
+        verified: { icon: <CheckCircle2 className="h-3 w-3" />, text: "Verified — signing you in", className: "text-accent" },
+        error: { icon: <ShieldAlert className="h-3 w-3" />, text: "Verification failed. Please retry.", className: "text-destructive" },
+      }[status];
 
   return (
     <div className="space-y-2">
@@ -103,7 +120,7 @@ const CloudflareTurnstile = ({ onVerify, onExpire, onBotFields }: Props) => {
           onChange={(e) => setHoneypot(e.target.value)}
         />
       </div>
-      <div ref={containerRef} className="flex justify-center min-h-[65px]" />
+      {!devBypass && <div ref={containerRef} className="flex justify-center min-h-[65px]" />}
       <div className={`flex items-center justify-center gap-1.5 text-[11px] ${statusContent.className}`} aria-live="polite">
         {statusContent.icon}
         <span>{statusContent.text}</span>

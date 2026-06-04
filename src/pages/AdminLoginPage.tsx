@@ -8,6 +8,10 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Lock, TrendingUp } from "lucide-react";
 import CloudflareTurnstile from "@/components/CloudflareTurnstile";
+import {
+  isTurnstileDevBypassEnabled,
+  TURNSTILE_DEV_BYPASS_TOKEN,
+} from "@/lib/turnstile-dev";
 
 const AdminLoginPage = () => {
   const [email, setEmail] = useState("");
@@ -35,25 +39,27 @@ const AdminLoginPage = () => {
     setError("");
     setLoading(true);
 
-    try {
-      const { data, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
-        body: {
-          token,
-          honeypot: botFieldsRef.current.honeypot,
-          formLoadedAt: botFieldsRef.current.formLoadedAt,
-        },
-      });
-      if (verifyError || !data?.success) {
-        setError(data?.error || "Security verification failed. Please try again.");
+    if (!(isTurnstileDevBypassEnabled() && token === TURNSTILE_DEV_BYPASS_TOKEN)) {
+      try {
+        const { data, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {
+          body: {
+            token,
+            honeypot: botFieldsRef.current.honeypot,
+            formLoadedAt: botFieldsRef.current.formLoadedAt,
+          },
+        });
+        if (verifyError || !data?.success) {
+          setError(data?.error || "Security verification failed. Please try again.");
+          setTurnstileToken(null);
+          setLoading(false);
+          return;
+        }
+      } catch {
+        setError("Security verification failed. Please try again.");
         setTurnstileToken(null);
         setLoading(false);
         return;
       }
-    } catch {
-      setError("Security verification failed. Please try again.");
-      setTurnstileToken(null);
-      setLoading(false);
-      return;
     }
 
     const { error } = await signIn(email, password);

@@ -10,6 +10,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Separator } from "@/components/ui/separator";
 import { TrendingUp, Mail, Lock, ArrowLeft, Eye, EyeOff } from "lucide-react";
 import CloudflareTurnstile from "@/components/CloudflareTurnstile";
+import {
+  isTurnstileDevBypassEnabled,
+  TURNSTILE_DEV_BYPASS_TOKEN,
+} from "@/lib/turnstile-dev";
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -38,6 +42,9 @@ const AuthPage = () => {
   }, []);
 
   const verifyTurnstile = async (token: string): Promise<boolean> => {
+    if (isTurnstileDevBypassEnabled() && token === TURNSTILE_DEV_BYPASS_TOKEN) {
+      return true;
+    }
     try {
       const { data, error } = await supabase.functions.invoke("verify-turnstile", {
         body: {
