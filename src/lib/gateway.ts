@@ -6,10 +6,12 @@
 // the *_public views. Existing direct reads still work, but new code should
 // prefer the gateway so we can throttle and monitor scrapers in one place.
 
+import { normalizeSupabaseUrl } from "@/lib/supabase-url";
+
 // Use VITE_SUPABASE_URL as the source of truth. Published builds may omit both
 // VITE_SUPABASE_URL and VITE_SUPABASE_PROJECT_ID, so keep a public, generated
 // project URL fallback instead of ever producing https://undefined.supabase.co.
-const envSupabaseUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+const envSupabaseUrl = normalizeSupabaseUrl(import.meta.env.VITE_SUPABASE_URL as string | undefined);
 const envProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
 const SUPABASE_URL =
   envSupabaseUrl && envSupabaseUrl !== "undefined"

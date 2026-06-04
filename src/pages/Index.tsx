@@ -129,8 +129,8 @@ const Index = () => {
       )}
       {!loading && !loadError && funds.length === 0 && (
         <div className="rounded-lg border border-border bg-muted/40 px-4 py-3 text-sm text-muted-foreground">
-          No funds found in Supabase (<code className="text-foreground">funds_public</code>). Import or add fund rows in
-          your project <code className="text-foreground">caawgzuofnujrznwbuxk</code>.
+          No funds found in Supabase (<code className="text-foreground">funds_public</code>). Check your Supabase project
+          has published fund rows.
         </div>
       )}
       {user && favEntries.length > 0 && (
