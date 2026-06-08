@@ -8,7 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import YieldChange from "@/components/YieldChange";
 import FundMobileCards from "./FundMobileCards";
 import FundLogo from "./FundLogo";
-import type { FundFromDB, YieldSnapshot } from "@/lib/api";
+import type { FundFromDB, FundType, YieldSnapshot } from "@/lib/api";
 
 type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee" | "change";
 type SortDir = "asc" | "desc";
