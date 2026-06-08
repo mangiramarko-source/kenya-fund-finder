@@ -221,7 +221,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
   useEffect(() => {
     if (categories.length === 0) return;
-    if (!categories.includes(activeTab) || (categoryCount[activeTab] ?? 0) === 0) {
+    if (!categories.includes(activeTab as FundType) || (categoryCount[activeTab] ?? 0) === 0) {
       updateParams({ category: categories[0] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
