@@ -77,23 +77,9 @@ const NewsArticlePage = () => {
             .then(setRelated)
             .catch(() => {});
 
-          // Auto-enrich if content is missing/short and source URL exists
-          const needsEnrichment = (!a.content || a.content.trim().length < 200) && a.url && /^https?:\/\//i.test(a.url);
-          if (needsEnrichment) {
-            setEnriching(true);
-            supabase.functions.invoke("enrich-article", { body: { articleId: a.id } })
-              .then(({ data, error }) => {
-                if (error) {
-                  setEnrichError(error.message || "Could not load full article");
-                } else if (data?.content) {
-                  setArticle((prev) => prev ? { ...prev, content: data.content } : prev);
-                } else if (data?.error) {
-                  setEnrichError(data.error);
-                }
-              })
-              .catch((e) => setEnrichError(e?.message || "Could not load full article"))
-              .finally(() => setEnriching(false));
-          }
+          // Auto-enrichment of articles is admin-only and triggered from the
+          // Admin → News Enrichment page. Anonymous visitors no longer call
+          // the enrich-article function to prevent abuse of paid APIs.
         }
       })
       .catch(() => {})
