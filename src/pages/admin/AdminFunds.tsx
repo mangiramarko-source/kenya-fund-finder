@@ -15,6 +15,7 @@ import { type FundType, FUND_TYPE_LABELS, YIELD_UNITS } from "@/lib/api";
 import AdminYieldHistory from "./AdminYieldHistory";
 
 import BulkFundPasteVerify from "@/components/admin/BulkFundPasteVerify";
+import SimpleUnitTrustPaste from "@/components/admin/SimpleUnitTrustPaste";
 
 interface FundRow {
   id: string;
@@ -432,9 +433,18 @@ const AdminFunds = () => {
       </div>
       
 
+      <details className="mb-3 rounded-lg border border-emerald-500/40 bg-emerald-500/5" open>
+        <summary className="cursor-pointer select-none px-4 py-2 text-sm font-medium hover:bg-muted/40">
+          ⚡ Simple Paste — recommended for weekly unit-trust updates (update-only, strict)
+        </summary>
+        <div className="p-4 border-t border-emerald-500/30">
+          <SimpleUnitTrustPaste />
+        </div>
+      </details>
+
       <details className="mb-4 rounded-lg border border-border bg-card">
         <summary className="cursor-pointer select-none px-4 py-2 text-sm font-medium hover:bg-muted/40">
-          Bulk Paste — defensive parser (Stage 1: parse &amp; verify)
+          Advanced Paste — defensive parser (legacy: handles new-fund creation, fuzzy matching)
         </summary>
         <div className="p-4 border-t border-border">
           <BulkFundPasteVerify />
