@@ -3,15 +3,19 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { normalizeSupabaseUrl } from '@/lib/supabase-url';
 
-const SUPABASE_URL = normalizeSupabaseUrl(import.meta.env.VITE_SUPABASE_URL);
-const SUPABASE_PUBLISHABLE_KEY = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
-export const SUPABASE_PROJECT_ID = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+// Hardcoded fallbacks for the Lovable-hosted build (Lovable publish runs without
+// the local .env, which is gitignored). Local dev still uses import.meta.env so
+// you can override against another Supabase project from .env when needed.
+const FALLBACK_SUPABASE_URL = "https://qrmthciurngpzpjhevdj.supabase.co";
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFybXRoY2l1cm5ncHpwamhldmRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNzQ1ODksImV4cCI6MjA4Nzg1MDU4OX0.WeQLthaDLzYdmSjY_tt4_ZClx68aXQe3EOjn314yygs";
+const FALLBACK_SUPABASE_PROJECT_ID = "qrmthciurngpzpjhevdj";
 
-if (!SUPABASE_URL || !SUPABASE_PUBLISHABLE_KEY || !SUPABASE_PROJECT_ID) {
-  throw new Error(
-    "Missing VITE_SUPABASE_URL, VITE_SUPABASE_PUBLISHABLE_KEY, or VITE_SUPABASE_PROJECT_ID. Add them to .env and restart the dev server."
-  );
-}
+const SUPABASE_URL =
+  normalizeSupabaseUrl(import.meta.env.VITE_SUPABASE_URL) ?? FALLBACK_SUPABASE_URL;
+const SUPABASE_PUBLISHABLE_KEY =
+  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? FALLBACK_SUPABASE_PUBLISHABLE_KEY;
+export const SUPABASE_PROJECT_ID =
+  import.meta.env.VITE_SUPABASE_PROJECT_ID ?? FALLBACK_SUPABASE_PROJECT_ID;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";
