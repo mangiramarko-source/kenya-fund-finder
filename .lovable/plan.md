@@ -1,113 +1,125 @@
-## Goal
 
-Add a brand-new, separate **Simple Paste** tab inside Admin → Funds, used **only going forward** for unit trust yield updates. The existing `BulkFundPasteVerify` stays untouched (so historical workflow + past data are not affected). The new tool is intentionally dumb, strict, and predictable.
+# Social Content Automation — Phase 1
 
-## Why the current one is painful (review)
+A new "Social" tab in `/admin` that lets you generate, review, schedule, and manually publish Instagram / Facebook / X posts about KenyaFundFinder data. No live API posting yet — Phase 1 is generate → approve → schedule → copy caption + download image → mark as posted. Phase 2 (Meta + X auto-posting) is deferred.
 
-Looking at `src/lib/bulkFundParser.ts` + `src/components/admin/BulkFundPasteVerify.tsx`:
+## What you get
 
-1. **Token state machine guessing.** Parser sniffs currency tokens (`Sh|USD|GBP`) and infers manager name from "everything between boundaries". Any unexpected header typo (`Markett`), missing currency, or merged columns silently shifts boundaries → wrong manager names like `tBritam`.
-2. **Yield unit is derived, not declared.** `deriveYieldUnit` guesses `%` vs `KES` from fund_type + magnitude (>100 → NAV). Edge cases (e.g. balanced fund quoted at 98.5) get mis-tagged.
-3. **Matcher is fuzzy.** Composite-key → token-prefix → Levenshtein ≥ 0.85 → manual remap dialog. Drift %, auto-remap planning, "type-mismatch", "review", "potential match", "confirm new" — five states per row.
-4. **Auto-create path.** A typo in manager name can become a brand-new fund row unless the admin clicks "confirm new". Most of the reported errors come from this path.
-5. **Date detection** is heuristic and can override an admin-chosen date.
-6. **UX heavy.** 3-step wizard, dialogs, perma-skip cache in localStorage, week-health pills, auto-remap plan toasts.
+1. **Dashboard** – counts for Draft / Review / Approved / Scheduled / Posted / Failed / Manually Posted, recent posts, next 7 days schedule.
+2. **Create Post** – pick a content type, pick funds (or auto-pull top KES/USD MMFs from live `funds` table), generate captions + image with AI, edit, save as draft.
+3. **Queue / Approval** – list with status filters; Approve, Reject, Edit, Reschedule, Delete, Duplicate to another platform.
+4. **Scheduler** – calendar + list view; one-time or recurring (daily/weekly/monthly); default weekly plan pre-seeded (Mon MMF update … Sun website promo).
+5. **Templates** – the named templates A–E plus all 14 content types, editable prompt + caption skeleton.
+6. **Accounts** – stub UI showing "Manual posting mode (Phase 1)". Connect buttons disabled with a "Coming in Phase 2" note. No tokens stored yet.
+7. **Manual publish drawer** – Copy caption, copy hashtags, download image (1080×1080 / 1200×630 / 1200×675), "Open Instagram/Facebook/X" deep links, "Mark as manually posted" button.
+8. **Analytics** – counts by status / platform / content type / template; placeholder for click data (UTM links are generated, click tracking deferred).
 
-For a weekly "just update the yields" task on funds that already exist, this is overkill.
+## Content generation
 
-## What the new "Simple Paste" does
+- All captions, hashtags, image headline/subtext, CTA, and disclaimer are produced by an edge function calling **Lovable AI Gateway** (`google/gemini-2.5-flash` default; `gemini-2.5-pro` for weekly summary).
+- System prompt enforces the brand voice and the **forbidden phrases list** ("best investment", "guaranteed returns", "risk-free", "you should invest", etc.) plus the **safer wording list**.
+- Server-side post-generation regex guard rejects/strips any forbidden phrase before saving.
+- Disclaimer auto-appended per platform (short version for X).
+- UTM link auto-appended: `?utm_source={instagram|facebook|x}&utm_medium=social&utm_campaign={content_type}`.
 
-**Scope:** unit trusts only. Update-only. Never creates funds. Never renames managers. Never guesses units.
+## Image cards
 
-### Input format (strict, documented in UI)
+- Generated via Lovable AI Gateway image endpoint (`google/gemini-2.5-flash-image` default; `gemini-3-pro-image-preview` opt-in for hero cards).
+- Prompt scaffolded from brand rules: dark navy / white background, green accent, clean finance dashboard look, KenyaFundFinder + kenyafundfinder.com, headline, subtext, optional 3-row mini-table of fund/yield/date, disclaimer line.
+- Three sizes per post: 1080×1080 (IG), 1200×630 (FB), 1200×675 (X). Stored in a new `social-images` storage bucket, public read.
+- Regenerate button per post / per platform.
 
-One row per fund, **tab- or comma-separated**, exactly 3 columns:
+## Data source
+
+Funds come live from existing `funds` table (already serves the site). On generate, the edge function pulls:
+- Top N by `annual_yield` filtered by `yield_unit` ('%' for general, 'KES'/'USD' for currency-specific MMF posts), where `fund_type = 'money_market'` and `is_published = true`.
+- Snapshot of (fund name, manager, annual_yield, daily_yield, yield_unit, fact_sheet_date, minimum_investment) is **frozen into the post row** at generation time so reposts use the same numbers shown on the image.
+- A simple "Import funds" admin sub-page accepts CSV paste for ad-hoc posts not tied to live data.
+
+## Workflow & statuses
+
+`draft → in_review → approved → scheduled → posted` plus `failed`, `manually_posted`, `cancelled`. Transitions are explicit buttons; the scheduler does **not** auto-advance in Phase 1 (it just shows "Due now — publish manually" when scheduled_at ≤ now). A pg_cron-driven auto-publish stub is **not** built in Phase 1 per your choice.
+
+## Security
+
+- New tab gated by existing `useAuth().isAdmin` (same pattern as the rest of `/admin`).
+- All new tables: RLS on, `service_role` full access, `authenticated` access only via `has_role(auth.uid(),'admin')`. No `anon` grants.
+- Edge functions validate the JWT and require admin role (same `parseJwtClaims` pattern already used in `enrich-article`).
+- LOVABLE_API_KEY stays server-only.
+
+## Database (new tables)
 
 ```text
-<fund_id_or_slug>	<daily_yield>	<annual_yield>
+social_post_templates    id, key, name, content_type, platform_defaults jsonb,
+                         system_prompt, caption_skeleton, image_prompt,
+                         hashtags_default text[], enabled
+
+social_posts             id, template_id, content_type, platform (ig|fb|x),
+                         status, caption, hashtags text[], image_headline,
+                         image_subtext, cta, disclaimer, utm_url,
+                         image_url, image_size, source_data jsonb,
+                         fund_ids uuid[], fund_names text[], yield_values jsonb,
+                         data_as_of date, scheduled_at, posted_at,
+                         error_message, created_by, created_at, updated_at
+
+social_schedules         id, post_id nullable, template_id nullable, platform,
+                         cadence (one_time|daily|weekly|monthly),
+                         day_of_week, time_of_day, next_run_at, enabled
+
+social_accounts          id, platform, handle, display_name,
+                         connection_status (manual|connected|error),
+                         meta jsonb  -- Phase 2 will store tokens here
+
+social_post_analytics    id, post_id, event (generated|approved|scheduled|
+                         posted|failed|manual_posted|clicked),
+                         platform, content_type, occurred_at, meta jsonb
 ```
 
-Example:
+`social_imported_fund_data` reuses `source_data jsonb` on `social_posts` to keep things simple — separate table only if you later want shared imports.
+
+## Edge functions (new)
+
+- `social-generate-post` — input: `{ content_type, platform[], fund_ids?, custom_data? }`. Pulls live fund data, calls AI Gateway for captions per platform + image prompt, generates images via image endpoint, uploads to `social-images` bucket, inserts a `social_posts` row per platform in `draft`.
+- `social-regenerate-image` — regenerate image only.
+- `social-regenerate-caption` — regenerate caption for one platform.
+
+(No auto-post function in Phase 1.)
+
+## Files touched / added
+
 ```text
-britam-money-market	9.26	9.71
-icea-money-market	7.75	8.06
-cytonn-money-market-usd	5.57	5.72
+supabase/migrations/<ts>_social_automation.sql      (tables, RLS, grants, seed templates)
+supabase/functions/social-generate-post/index.ts
+supabase/functions/social-regenerate-image/index.ts
+supabase/functions/social-regenerate-caption/index.ts
+
+src/pages/admin/social/SocialDashboard.tsx
+src/pages/admin/social/SocialCreatePost.tsx
+src/pages/admin/social/SocialQueue.tsx
+src/pages/admin/social/SocialScheduler.tsx
+src/pages/admin/social/SocialTemplates.tsx
+src/pages/admin/social/SocialAccounts.tsx
+src/pages/admin/social/SocialAnalytics.tsx
+src/pages/admin/social/SocialIndex.tsx           (inner tabs)
+
+src/components/admin/social/PostCard.tsx
+src/components/admin/social/PublishDrawer.tsx
+src/components/admin/social/ImagePreview.tsx
+src/components/admin/social/FundPicker.tsx
+src/components/admin/social/StatusBadge.tsx
+src/lib/social/brandGuards.ts                    (forbidden / safe phrase enforcement)
+src/lib/social/utm.ts
+src/lib/social/contentTypes.ts                   (the 14 types + defaults)
+
+src/pages/AdminPage.tsx                          (add "Social" tab)
+mem://features/social-automation                 (new memory entry + index update)
 ```
 
-- Header row optional (`fund\tdaily\tannual`) — auto-skipped.
-- Blank lines and lines starting with `#` ignored.
-- No currency token, no fund_type, no manager string — the fund_id/slug **is** the identity. Unit is whatever the fund already has in DB.
+## Out of scope (Phase 2)
 
-A one-click **"Copy fund IDs"** button in the UI dumps the current unit-trust IDs/slugs as a TSV template the admin pastes into their spreadsheet, fills in two numbers, and pastes back.
+- Meta Graph API (IG/FB) and X API token storage + auto-publish worker
+- Click tracking pipeline (UTM links are generated now, but no aggregation)
+- Cross-post analytics from Meta/X
+- Multi-account per platform
 
-### Parsing rules (zero guessing)
-
-- Split on `\n`, then on `\t` or `,`.
-- Must have exactly 3 non-empty tokens. Otherwise → row flagged with `BAD_FORMAT`, ignored on sync.
-- Tokens 2/3 must parse as finite numbers ≥ 0 and < 10000. Otherwise → `BAD_NUMBER`.
-- Token 1 must resolve to exactly one existing **unit-trust** fund by `id` OR `slug` (case-insensitive, trimmed). Otherwise → `UNKNOWN_FUND` (the row is shown but cannot be synced — never auto-created).
-
-### Validation surface (the review the user asked for)
-
-For each row, show:
-
-| Column | Source |
-|---|---|
-| Fund | resolved manager + type + unit (from DB) |
-| Daily (new) | pasted, click-to-edit |
-| Annual (new) | pasted, click-to-edit |
-| Prev annual | DB |
-| Drift % | computed |
-| Status | OK / BAD_FORMAT / BAD_NUMBER / UNKNOWN_FUND / DUPLICATE_FUND_ID / HIGH_DRIFT |
-
-Hard blocks before sync:
-- Any `BAD_*` or `UNKNOWN_FUND` row must be removed/fixed (the row is excluded from the sync, not silently dropped — the admin sees the count).
-- Any `DUPLICATE_FUND_ID` (same fund pasted twice) blocks sync until resolved.
-- `HIGH_DRIFT` (> 25% change vs current annual) shows a yellow warning + requires a single top-level checkbox "I reviewed all high-drift rows" to enable Sync.
-
-Date: single `<input type="date">`, defaults to today. No auto-detect.
-
-### Sync action
-
-- Only updates `funds.daily_yield`, `funds.annual_yield`, `funds.updated_at`, and writes one row per fund into `fund_yield_snapshots` (or whichever table the existing flow writes to — confirmed below).
-- Wrapped in a single `Promise.all` batch with per-row toast on failure.
-- Logs one summary row in `change_log` (e.g. `bulk_simple_paste: 12 funds updated, date=2026-06-08`).
-
-### What it explicitly does NOT do
-
-- No auto-create of new funds (use the existing tool for that).
-- No fuzzy manager matching, no Levenshtein, no remap dialog.
-- No `yield_unit` inference — uses whatever the fund row already has.
-- No type-mismatch checks (irrelevant since unit class is fixed by the fund row).
-- No localStorage perma-skip, no auto-remap plan, no week-health pills.
-- Does not touch any past data — only updates the rows you list, only on the date you pick.
-
-## Where it could still fail (honest review)
-
-1. **Admin pastes the wrong fund_id against the right number.** Mitigation: the "Copy fund IDs" button gives a pre-filled template; drift % surfaces obvious swaps.
-2. **Daily/annual columns swapped.** Mitigation: if `daily > annual` by > 20%, flag as `LIKELY_SWAPPED` warning (not a block).
-3. **Spreadsheet exports with thousands separators / `%` sign.** Mitigation: strip `,` `%` `KES` `USD` from numeric tokens before parsing; document that this happens.
-4. **Admin updates only half the funds and forgets the rest.** Mitigation: after sync, show "X of Y unit trusts updated today; Z not updated" with a one-click filter.
-5. **Two funds with the same manager but different unit classes** (e.g. Cytonn KES vs USD). Mitigation: solved by using `id`/`slug` as the key, not manager name.
-6. **Stale fund-id template.** Mitigation: the "Copy fund IDs" button always pulls fresh from DB.
-
-## Files (new, additive — no edits to existing parser/matcher/verify component)
-
-- `src/lib/simpleUnitTrustPaste.ts` — pure parser + validator (≈ 120 LOC, fully unit-testable).
-- `src/lib/simpleUnitTrustPaste.test.ts` — vitest coverage for every failure mode above.
-- `src/components/admin/SimpleUnitTrustPaste.tsx` — one-screen UI: textarea, date, "Copy fund IDs" button, preview table, Sync button.
-- `src/pages/admin/AdminFunds.tsx` — add a sub-tab (or a button) "Simple Paste (new)" alongside the existing bulk tool. Existing tool stays as "Advanced Paste".
-
-## Database
-
-No schema changes. Uses existing `funds` and `fund_yield_snapshots` tables. RLS already enforced by admin role.
-
-## Out of scope (will not touch)
-
-- Existing `BulkFundPasteVerify`, `bulkFundParser`, `bulkFundMatcher`, `bulkFundAutoRemap`, their tests, snapshots, fixtures, and the GitHub workflow.
-- Past `fund_yield_snapshots` / `fund_historical_yields` rows.
-- Stocks, commodities, FX bulk flows.
-
-## Approval
-
-Confirm and I'll build it as a separate tab, leaving the current bulk tool fully intact as a fallback.
+When you're ready for Phase 2 we wire `social_accounts` to OAuth, add a `social-publish` edge function + pg_cron tick, and flip the manual-publish drawer into "Publish now" / auto-publish-on-schedule.

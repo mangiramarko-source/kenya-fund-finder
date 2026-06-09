@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote, Share2 } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminFunds from "./admin/AdminFunds";
 import AdminNews from "./admin/AdminNews";
@@ -12,6 +12,7 @@ import AdminMarkets from "./admin/AdminMarkets";
 import AdminSuggestions from "./admin/AdminSuggestions";
 import AdminNewsEnrichment from "./admin/AdminNewsEnrichment";
 import AdminTestimonials from "./admin/AdminTestimonials";
+import SocialIndex from "./admin/social/SocialIndex";
 
 const AdminPage = () => {
   const { isAdmin, loading, user } = useAuth();
@@ -36,7 +37,7 @@ const AdminPage = () => {
   return (
     <div className="container py-6">
       <Tabs defaultValue="dashboard" className="space-y-6">
-         <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-10 md:max-w-6xl justify-start md:justify-stretch">
+         <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-11 md:max-w-6xl justify-start md:justify-stretch">
           <TabsTrigger value="dashboard" className="gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -52,6 +53,10 @@ const AdminPage = () => {
           <TabsTrigger value="enrichment" className="gap-1.5">
             <Sparkles className="h-4 w-4" />
             <span className="hidden sm:inline">Enrich</span>
+          </TabsTrigger>
+          <TabsTrigger value="social" className="gap-1.5">
+            <Share2 className="h-4 w-4" />
+            <span className="hidden sm:inline">Social</span>
           </TabsTrigger>
           <TabsTrigger value="ads" className="gap-1.5">
             <Megaphone className="h-4 w-4" />
@@ -84,6 +89,7 @@ const AdminPage = () => {
         
         <TabsContent value="news"><AdminNews /></TabsContent>
         <TabsContent value="enrichment"><AdminNewsEnrichment /></TabsContent>
+        <TabsContent value="social"><SocialIndex /></TabsContent>
         <TabsContent value="ads"><AdminAds /></TabsContent>
         <TabsContent value="pages"><AdminPages /></TabsContent>
         <TabsContent value="markets"><AdminMarkets /></TabsContent>

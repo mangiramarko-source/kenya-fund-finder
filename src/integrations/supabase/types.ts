@@ -985,6 +985,39 @@ export type Database = {
         }
         Relationships: []
       }
+      social_accounts: {
+        Row: {
+          connection_status: string
+          created_at: string
+          display_name: string | null
+          handle: string | null
+          id: string
+          meta: Json
+          platform: Database["public"]["Enums"]["social_platform"]
+          updated_at: string
+        }
+        Insert: {
+          connection_status?: string
+          created_at?: string
+          display_name?: string | null
+          handle?: string | null
+          id?: string
+          meta?: Json
+          platform: Database["public"]["Enums"]["social_platform"]
+          updated_at?: string
+        }
+        Update: {
+          connection_status?: string
+          created_at?: string
+          display_name?: string | null
+          handle?: string | null
+          id?: string
+          meta?: Json
+          platform?: Database["public"]["Enums"]["social_platform"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       social_links: {
         Row: {
           created_at: string
@@ -1020,6 +1053,238 @@ export type Database = {
           url?: string
         }
         Relationships: []
+      }
+      social_post_analytics: {
+        Row: {
+          content_type: string | null
+          event: string
+          id: string
+          meta: Json
+          occurred_at: string
+          platform: Database["public"]["Enums"]["social_platform"] | null
+          post_id: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          event: string
+          id?: string
+          meta?: Json
+          occurred_at?: string
+          platform?: Database["public"]["Enums"]["social_platform"] | null
+          post_id?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          event?: string
+          id?: string
+          meta?: Json
+          occurred_at?: string
+          platform?: Database["public"]["Enums"]["social_platform"] | null
+          post_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_post_analytics_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_post_templates: {
+        Row: {
+          caption_skeleton: string | null
+          content_type: string
+          created_at: string
+          enabled: boolean
+          hashtags_default: string[]
+          id: string
+          image_prompt: string
+          key: string
+          name: string
+          platform_defaults: Json
+          system_prompt: string
+          updated_at: string
+        }
+        Insert: {
+          caption_skeleton?: string | null
+          content_type: string
+          created_at?: string
+          enabled?: boolean
+          hashtags_default?: string[]
+          id?: string
+          image_prompt: string
+          key: string
+          name: string
+          platform_defaults?: Json
+          system_prompt: string
+          updated_at?: string
+        }
+        Update: {
+          caption_skeleton?: string | null
+          content_type?: string
+          created_at?: string
+          enabled?: boolean
+          hashtags_default?: string[]
+          id?: string
+          image_prompt?: string
+          key?: string
+          name?: string
+          platform_defaults?: Json
+          system_prompt?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      social_posts: {
+        Row: {
+          caption: string
+          content_type: string
+          created_at: string
+          created_by: string | null
+          cta: string | null
+          data_as_of: string | null
+          disclaimer: string | null
+          error_message: string | null
+          fund_ids: string[]
+          fund_names: string[]
+          hashtags: string[]
+          id: string
+          image_headline: string | null
+          image_size: string | null
+          image_subtext: string | null
+          image_url: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          posted_at: string | null
+          scheduled_at: string | null
+          source_data: Json
+          status: Database["public"]["Enums"]["social_post_status"]
+          template_id: string | null
+          updated_at: string
+          utm_url: string | null
+          yield_values: Json
+        }
+        Insert: {
+          caption?: string
+          content_type: string
+          created_at?: string
+          created_by?: string | null
+          cta?: string | null
+          data_as_of?: string | null
+          disclaimer?: string | null
+          error_message?: string | null
+          fund_ids?: string[]
+          fund_names?: string[]
+          hashtags?: string[]
+          id?: string
+          image_headline?: string | null
+          image_size?: string | null
+          image_subtext?: string | null
+          image_url?: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          posted_at?: string | null
+          scheduled_at?: string | null
+          source_data?: Json
+          status?: Database["public"]["Enums"]["social_post_status"]
+          template_id?: string | null
+          updated_at?: string
+          utm_url?: string | null
+          yield_values?: Json
+        }
+        Update: {
+          caption?: string
+          content_type?: string
+          created_at?: string
+          created_by?: string | null
+          cta?: string | null
+          data_as_of?: string | null
+          disclaimer?: string | null
+          error_message?: string | null
+          fund_ids?: string[]
+          fund_names?: string[]
+          hashtags?: string[]
+          id?: string
+          image_headline?: string | null
+          image_size?: string | null
+          image_subtext?: string | null
+          image_url?: string | null
+          platform?: Database["public"]["Enums"]["social_platform"]
+          posted_at?: string | null
+          scheduled_at?: string | null
+          source_data?: Json
+          status?: Database["public"]["Enums"]["social_post_status"]
+          template_id?: string | null
+          updated_at?: string
+          utm_url?: string | null
+          yield_values?: Json
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_posts_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "social_post_templates"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_schedules: {
+        Row: {
+          cadence: Database["public"]["Enums"]["social_cadence"]
+          created_at: string
+          day_of_week: number | null
+          enabled: boolean
+          id: string
+          next_run_at: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          post_id: string | null
+          template_id: string | null
+          time_of_day: string | null
+          updated_at: string
+        }
+        Insert: {
+          cadence?: Database["public"]["Enums"]["social_cadence"]
+          created_at?: string
+          day_of_week?: number | null
+          enabled?: boolean
+          id?: string
+          next_run_at?: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          post_id?: string | null
+          template_id?: string | null
+          time_of_day?: string | null
+          updated_at?: string
+        }
+        Update: {
+          cadence?: Database["public"]["Enums"]["social_cadence"]
+          created_at?: string
+          day_of_week?: number | null
+          enabled?: boolean
+          id?: string
+          next_run_at?: string | null
+          platform?: Database["public"]["Enums"]["social_platform"]
+          post_id?: string | null
+          template_id?: string | null
+          time_of_day?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_schedules_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "social_posts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "social_schedules_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "social_post_templates"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       stock_price_history: {
         Row: {
@@ -1746,6 +2011,17 @@ export type Database = {
     }
     Enums: {
       app_role: "admin" | "editor" | "reviewer"
+      social_cadence: "one_time" | "daily" | "weekly" | "monthly"
+      social_platform: "instagram" | "facebook" | "x"
+      social_post_status:
+        | "draft"
+        | "in_review"
+        | "approved"
+        | "scheduled"
+        | "posted"
+        | "failed"
+        | "manually_posted"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -1874,6 +2150,18 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "editor", "reviewer"],
+      social_cadence: ["one_time", "daily", "weekly", "monthly"],
+      social_platform: ["instagram", "facebook", "x"],
+      social_post_status: [
+        "draft",
+        "in_review",
+        "approved",
+        "scheduled",
+        "posted",
+        "failed",
+        "manually_posted",
+        "cancelled",
+      ],
     },
   },
 } as const
