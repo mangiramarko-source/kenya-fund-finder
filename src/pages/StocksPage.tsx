@@ -202,10 +202,14 @@ const StocksPage = () => {
     if (stocks.length === 0) return;
     const fetchAllHistory = async () => {
       try {
+        // Use a 90-day window so sparsely-updated stocks (e.g. KPC, BAMB)
+        // still have ≥2 price points to render a sparkline. The snapshot
+        // trigger only records on price change, so low-volume tickers can
+        // go weeks without a new row.
         const { data } = await fetchPublicData<any>("stock-history-bulk", {
           select: ["stock_id", "price", "snapshot_date"],
           order: "snapshot_date.asc",
-          days: 30,
+          days: 90,
           limit: 5000,
         });
         const grouped: Record<string, PriceHistory[]> = {};
