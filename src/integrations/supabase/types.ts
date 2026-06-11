@@ -1035,7 +1035,7 @@ export type Database = {
           {
             foreignKeyName: "social_account_tokens_account_id_fkey"
             columns: ["account_id"]
-            isOneToOne: false
+            isOneToOne: true
             referencedRelation: "social_accounts"
             referencedColumns: ["id"]
           },
