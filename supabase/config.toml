@@ -23,3 +23,6 @@ verify_jwt = false
 
 [functions.update-live-status]
 verify_jwt = false
+
+[functions.social-meta-oauth-callback]
+verify_jwt = false

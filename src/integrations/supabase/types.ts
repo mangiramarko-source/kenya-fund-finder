@@ -985,6 +985,62 @@ export type Database = {
         }
         Relationships: []
       }
+      social_account_tokens: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          ig_business_id: string | null
+          page_access_token: string | null
+          page_id: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          scopes: string[] | null
+          test_mode: boolean
+          token_type: string | null
+          updated_at: string
+          user_access_token: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ig_business_id?: string | null
+          page_access_token?: string | null
+          page_id?: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          scopes?: string[] | null
+          test_mode?: boolean
+          token_type?: string | null
+          updated_at?: string
+          user_access_token?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ig_business_id?: string | null
+          page_access_token?: string | null
+          page_id?: string | null
+          platform?: Database["public"]["Enums"]["social_platform"]
+          scopes?: string[] | null
+          test_mode?: boolean
+          token_type?: string | null
+          updated_at?: string
+          user_access_token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_account_tokens_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: true
+            referencedRelation: "social_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       social_accounts: {
         Row: {
           connection_status: string
@@ -1051,6 +1107,36 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           url?: string
+        }
+        Relationships: []
+      }
+      social_oauth_states: {
+        Row: {
+          consumed_at: string | null
+          created_at: string
+          expires_at: string
+          platform: Database["public"]["Enums"]["social_platform"]
+          redirect_to: string | null
+          state: string
+          user_id: string
+        }
+        Insert: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          platform: Database["public"]["Enums"]["social_platform"]
+          redirect_to?: string | null
+          state: string
+          user_id: string
+        }
+        Update: {
+          consumed_at?: string | null
+          created_at?: string
+          expires_at?: string
+          platform?: Database["public"]["Enums"]["social_platform"]
+          redirect_to?: string | null
+          state?: string
+          user_id?: string
         }
         Relationships: []
       }
