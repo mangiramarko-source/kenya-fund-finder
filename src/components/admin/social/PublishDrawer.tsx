@@ -6,7 +6,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "@/hooks/use-toast";
-import { Copy, Download, ExternalLink, RefreshCw, CheckCircle2, ImageIcon } from "lucide-react";
+import { Copy, Download, ExternalLink, RefreshCw, CheckCircle2, ImageIcon, Send, FlaskConical } from "lucide-react";
 import StatusBadge from "./StatusBadge";
 
 const PLATFORM_URL: Record<string, string> = {
@@ -183,6 +183,64 @@ export default function PublishDrawer({
                 <Button size="sm" variant="default" onClick={() => setStatus("manually_posted")}>
                   <CheckCircle2 className="h-3 w-3 mr-1" />Mark as manually posted
                 </Button>
+                {post.platform === "facebook" && (
+                  <>
+                    <Button
+                      size="sm"
+                      variant="secondary"
+                      disabled={busy === "publish"}
+                      onClick={async () => {
+                        setBusy("publish");
+                        const { data, error } = await supabase.functions.invoke("social-publish", {
+                          body: { post_id: postId },
+                        });
+                        setBusy(null);
+                        if (error) {
+                          toast({ title: "Publish failed", description: error.message, variant: "destructive" });
+                          return;
+                        }
+                        if ((data as any)?.error) {
+                          toast({ title: "Publish failed", description: (data as any).error, variant: "destructive" });
+                          return;
+                        }
+                        const tm = (data as any)?.test_mode;
+                        toast({
+                          title: tm ? "Test publish OK" : "Posted to Facebook",
+                          description: tm ? "No live post — token is in test mode." : `Post ID ${(data as any)?.facebook_post_id}`,
+                        });
+                        const { data: fresh } = await supabase.from("social_posts").select("*").eq("id", postId!).maybeSingle();
+                        setPost(fresh);
+                        onChanged?.();
+                      }}
+                    >
+                      {busy === "publish" ? <RefreshCw className="h-3 w-3 mr-1 animate-spin" /> : <Send className="h-3 w-3 mr-1" />}
+                      Publish to Facebook
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      disabled={busy === "publish-live"}
+                      onClick={async () => {
+                        if (!confirm("Publish LIVE to your Facebook Page now? This bypasses test mode.")) return;
+                        setBusy("publish-live");
+                        const { data, error } = await supabase.functions.invoke("social-publish", {
+                          body: { post_id: postId, force_live: true },
+                        });
+                        setBusy(null);
+                        if (error || (data as any)?.error) {
+                          toast({ title: "Live publish failed", description: error?.message ?? (data as any)?.error, variant: "destructive" });
+                          return;
+                        }
+                        toast({ title: "Posted live", description: `Post ID ${(data as any)?.facebook_post_id}` });
+                        const { data: fresh } = await supabase.from("social_posts").select("*").eq("id", postId!).maybeSingle();
+                        setPost(fresh);
+                        onChanged?.();
+                      }}
+                    >
+                      <FlaskConical className="h-3 w-3 mr-1" /> Publish LIVE
+                    </Button>
+                  </>
+                )}
               </div>
             </div>
           </div>
