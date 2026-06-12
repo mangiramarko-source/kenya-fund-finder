@@ -64,7 +64,7 @@ const WatchCard = ({
       </div>
       {sparkData && sparkData.length >= 2 && (
         <div className="shrink-0">
-          <Sparkline data={sparkData} width={60} height={24} color="auto" trend={trend} />
+          <Sparkline data={sparkData} width={60} height={24} color="auto" trend={trend} strokeWidth={2} />
         </div>
       )}
       <div className="text-right shrink-0">

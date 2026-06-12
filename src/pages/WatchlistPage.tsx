@@ -157,6 +157,7 @@ const WatchlistPage = () => {
       .select("snapshot_date, rate, currency_code")
       .gte("snapshot_date", sinceISO)
       .order("snapshot_date", { ascending: true })
+      .limit(10000)
       .then(({ data }) => setRateHistory((data as RateHistoryRow[]) || []));
 
     supabase
@@ -164,6 +165,7 @@ const WatchlistPage = () => {
       .select("snapshot_date, price, stock_id")
       .gte("snapshot_date", sinceISO)
       .order("snapshot_date", { ascending: true })
+      .limit(10000)
       .then(({ data }) => setStockHistory((data as StockHistoryRow[]) || []));
 
     supabase
@@ -171,6 +173,7 @@ const WatchlistPage = () => {
       .select("snapshot_date, annual_yield, fund_id")
       .gte("snapshot_date", sinceISO)
       .order("snapshot_date", { ascending: true })
+      .limit(10000)
       .then(({ data }) => setFundSnapshots((data as FundSnapshotRow[]) || []));
   }, []);
 
