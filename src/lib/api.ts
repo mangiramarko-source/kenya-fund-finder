@@ -288,8 +288,8 @@ export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnaps
   const { data } = await fetchPublicData<any>("fund-snapshots", {
     select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
     order: "snapshot_date.asc",
-    days: 30,
-    limit: 2000,
+    days: 180,
+    limit: 5000,
   });
   const grouped: Record<string, YieldSnapshot[]> = {};
   for (const row of data) {
