@@ -594,8 +594,10 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       </div>
                     </Link>
                   </td>
-                  <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap text-muted-foreground text-xs align-middle">
-                    {fmtYield(fund.daily_yield, fund.yield_unit)}
+                  <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap align-middle">
+                    <span className="font-bold text-accent text-[15px]">
+                      {fmtYield(fund.daily_yield, fund.yield_unit)}
+                    </span>
                   </td>
                   <td className="px-2 py-3.5 text-right whitespace-nowrap align-middle">
                     <div className="flex justify-end">
