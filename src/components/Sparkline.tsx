@@ -8,13 +8,14 @@ interface SparklineProps {
   className?: string;
   /** Override auto trend detection so stroke matches an external change indicator. */
   trend?: "up" | "down" | "flat";
+  strokeWidth?: number;
 }
 
 /**
  * Lightweight SVG sparkline — no recharts dependency.
  * Renders a simple polyline + gradient fill for trend visualization.
  */
-const Sparkline = ({ data, width = 60, height = 20, color = "hsl(var(--accent))", className, trend }: SparklineProps) => {
+const Sparkline = ({ data, width = 60, height = 20, color = "hsl(var(--accent))", className, trend, strokeWidth = 1.5 }: SparklineProps) => {
   const id = useMemo(() => `spark-${Math.random().toString(36).slice(2, 8)}`, []);
   const isUp = trend
     ? trend === "up"
