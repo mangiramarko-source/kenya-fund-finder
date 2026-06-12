@@ -63,7 +63,7 @@ const Sparkline = ({ data, width = 60, height = 20, color = "hsl(var(--accent))"
         points={path}
         fill="none"
         stroke={strokeColor}
-        strokeWidth={1.5}
+        strokeWidth={strokeWidth}
         strokeLinecap="round"
         strokeLinejoin="round"
       />
