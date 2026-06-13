@@ -563,6 +563,8 @@ Deno.serve(async (req) => {
 
     for (const user of users) {
       const { fundAssets, stockAssets, currencyAssets } = await fetchUserWatchlistAssets(supabase, user.user_id);
+      const { savedFunds, savedStocks, portfolio } = await fetchUserRetentionData(supabase, user.user_id);
+      const retentionHtml = buildRetentionBlock({ savedFunds, savedStocks, portfolio });
 
       const html = buildEmailHtml(
         user.display_name,
@@ -572,6 +574,7 @@ Deno.serve(async (req) => {
         topFunds,
         news,
         siteUrl,
+        retentionHtml,
       );
 
       try {
