@@ -287,4 +287,33 @@ const ChangeLine = ({
   );
 };
 
+const ActivityBlock = ({
+  title,
+  events,
+}: {
+  title: string;
+  events: { id: string; asset_name: string; event_date: string; amount: number | null }[];
+}) => (
+  <div>
+    <p className="text-xs font-semibold text-muted-foreground mb-1">{title}</p>
+    {events.length === 0 ? (
+      <p className="text-[11px] text-muted-foreground">No recent items.</p>
+    ) : (
+      <ul className="text-foreground space-y-0.5">
+        {events.map((e) => (
+          <li key={e.id} className="flex justify-between gap-2 text-xs">
+            <span className="truncate">{e.asset_name}</span>
+            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+              {format(new Date(e.event_date), "d MMM")}
+            </span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
+
+export default PortfolioSummaryPage;
+
+
 export default PortfolioSummaryPage;
