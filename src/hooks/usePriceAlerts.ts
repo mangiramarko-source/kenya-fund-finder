@@ -2,14 +2,20 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
+export type AlertAssetType = "stock" | "currency" | "commodity" | "fund" | "new_fund";
+export type AlertCondition = "above" | "below" | "change_up" | "change_down" | "change_any";
+
 export interface PriceAlert {
   id: string;
   user_id: string;
-  asset_type: "stock" | "currency" | "commodity" | "fund";
+  asset_type: AlertAssetType;
   asset_id: string;
   asset_name: string;
   target_price: number;
-  condition: "above" | "below";
+  condition: AlertCondition;
+  baseline_price: number | null;
+  notify_email: boolean;
+  notify_inapp: boolean;
   is_triggered: boolean;
   is_active: boolean;
   triggered_at: string | null;
@@ -46,14 +52,18 @@ export function usePriceAlerts() {
 
   useEffect(() => {
     fetchAlerts();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const createAlert = async (alert: {
-    asset_type: string;
+    asset_type: AlertAssetType;
     asset_id: string;
     asset_name: string;
     target_price: number;
-    condition: string;
+    condition: AlertCondition;
+    baseline_price?: number | null;
+    notify_email?: boolean;
+    notify_inapp?: boolean;
   }) => {
     if (!user) return { data: null, error: { message: "Not authenticated" } };
     const { data, error } = await supabase
@@ -64,13 +74,14 @@ export function usePriceAlerts() {
         asset_name: alert.asset_name,
         target_price: alert.target_price,
         condition: alert.condition,
+        baseline_price: alert.baseline_price ?? null,
+        notify_email: alert.notify_email ?? true,
+        notify_inapp: alert.notify_inapp ?? true,
         user_id: user.id,
       })
       .select()
       .single();
-    if (!error) {
-      await fetchAlerts();
-    }
+    if (!error) await fetchAlerts();
     return { data, error };
   };
 
@@ -84,7 +95,18 @@ export function usePriceAlerts() {
     await fetchAlerts();
   };
 
-  return { alerts, loading, createAlert, deleteAlert, toggleAlert, refetch: fetchAlerts };
+  const resetAlert = async (id: string, baseline_price?: number | null) => {
+    const patch: Record<string, unknown> = {
+      is_triggered: false,
+      triggered_at: null,
+      triggered_price: null,
+    };
+    if (baseline_price != null) patch.baseline_price = baseline_price;
+    await supabase.from("price_alerts").update(patch).eq("id", id);
+    await fetchAlerts();
+  };
+
+  return { alerts, loading, createAlert, deleteAlert, toggleAlert, resetAlert, refetch: fetchAlerts };
 }
 
 export function useNotifications() {
@@ -107,7 +129,6 @@ export function useNotifications() {
 
   useEffect(() => {
     fetchNotifications();
-
     if (!user) return;
     const channel = supabase
       .channel(`notifications-rt:${user.id}`)
@@ -118,8 +139,8 @@ export function useNotifications() {
         filter: `user_id=eq.${user.id}`,
       }, () => fetchNotifications())
       .subscribe();
-
     return () => { supabase.removeChannel(channel); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
   const markAsRead = async (id: string) => {
