@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/command";
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+import SaveToWatchlistButton from "@/components/watchlist/SaveToWatchlistButton";
 
 interface SearchDialogProps {
   variant?: "default" | "topbar" | "icon";
