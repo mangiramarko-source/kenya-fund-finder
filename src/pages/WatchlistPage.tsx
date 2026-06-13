@@ -479,6 +479,9 @@ const WatchlistPage = () => {
                   trend={trendOf(s.price, s.previous_price)}
                   linkTo={`/stocks/${s.symbol}`}
                   onRemove={() => removeByTypeAndId("stock", s.id)}
+                  onAlert={() => openAlertForStock(s)}
+                  onReset={() => resetStockAlert(s)}
+                  alertState={alertStateOf("stock", s.id)}
                 />
               );
             })}
