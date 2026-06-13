@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
   ArrowRight,
-  GitCompareArrows,
-  Briefcase,
-  Table,
-  Calculator,
-  BarChart3,
+  LayoutDashboard,
+  Search,
+  TrendingUp,
+  CircleDollarSign,
+  Newspaper,
 } from "lucide-react";
 import { useConsent } from "@/hooks/useConsent";
 import { useAuth } from "@/hooks/useAuth";
