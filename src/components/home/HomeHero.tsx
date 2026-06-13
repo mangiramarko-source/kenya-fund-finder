@@ -100,10 +100,10 @@ const HomeHero = () => {
 
           <div className="grid grid-cols-1 gap-2 mt-5 pt-4 border-t border-border/60">
             <HeroTile
-              to="/funds/mmf-yields"
+              to="/funds"
               icon={Table}
-              label="MMF yield table"
-              sub="Money Market Fund yields, sortable"
+              label="Unit Trusts"
+              sub="Browse and compare Kenyan unit trusts"
               onClick={handleNavigate}
             />
             <HeroTile

@@ -47,13 +47,6 @@ const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const DevEmailPreviewPage = lazy(() => import("./pages/DevEmailPreviewPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Phase 1 — neutral fund data views
-const MMFYieldsPage = lazy(() => import("./pages/funds/MMFYieldsPage"));
-const ByYieldPage = lazy(() => import("./pages/funds/ByYieldPage"));
-const ByMinimumPage = lazy(() => import("./pages/funds/ByMinimumPage"));
-const ByWithdrawalPage = lazy(() => import("./pages/funds/ByWithdrawalPage"));
-const MonthlyIncomeDataPage = lazy(() => import("./pages/funds/MonthlyIncomeDataPage"));
-const ByRiskLevelPage = lazy(() => import("./pages/funds/ByRiskLevelPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -90,13 +83,8 @@ const App = () => (
                     <Route path="/compare" element={<ComparePage />} />
                     <Route path="/compare/:id" element={<FundDetailPage />} />
 
-                    {/* Phase 1: neutral fund data views */}
-                    <Route path="/funds/mmf-yields" element={<MMFYieldsPage />} />
-                    <Route path="/funds/by-yield" element={<ByYieldPage />} />
-                    <Route path="/funds/by-minimum-investment" element={<ByMinimumPage />} />
-                    <Route path="/funds/by-withdrawal-period" element={<ByWithdrawalPage />} />
-                    <Route path="/funds/monthly-income-data" element={<MonthlyIncomeDataPage />} />
-                    <Route path="/funds/by-risk-level" element={<ByRiskLevelPage />} />
+
+
                     
                     <Route path="/news" element={<NewsPage />} />
                     <Route path="/news/:id" element={<NewsArticlePage />} />
