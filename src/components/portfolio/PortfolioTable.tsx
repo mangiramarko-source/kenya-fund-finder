@@ -1,7 +1,7 @@
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from "@/components/ui/table";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Trash2, Bell, BellRing, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Trash2, Bell, BellRing, TrendingUp, TrendingDown, Minus, Pencil } from "lucide-react";
 import {
   PortfolioItem, AssetType,
   getCurrentValue, getCostBasis, getPnL, getPnLPercent,
@@ -15,6 +15,7 @@ interface Props {
   items: PortfolioItem[];
   currency: "KES" | "USD";
   onDelete: (id: string) => void;
+  onEdit?: (item: PortfolioItem) => void;
   changes?: ChangeRow[];
   alerts?: MinimalAlert[];
   liquidityByName?: Map<string, number | null>;
@@ -115,7 +116,7 @@ const AlertBadge = ({
 };
 
 const PortfolioTable = ({
-  items, currency, onDelete,
+  items, currency, onDelete, onEdit,
   changes = [], alerts = [],
   liquidityByName, liquidityById,
   onOpenAlert,
@@ -141,7 +142,7 @@ const PortfolioTable = ({
           <TableHead className="text-right">Recent change</TableHead>
           <TableHead>Alert</TableHead>
           <TableHead className="text-right">Last updated</TableHead>
-          <TableHead className="w-10" />
+          <TableHead className="w-20" />
         </TableRow>
       </TableHeader>
       <TableBody>
@@ -222,14 +223,28 @@ const PortfolioTable = ({
                 {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
               </TableCell>
               <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                  onClick={() => onDelete(item.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center justify-end gap-0.5">
+                  {onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      onClick={() => onEdit(item)}
+                      title="Edit holding"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    onClick={() => onDelete(item.id)}
+                    title="Remove holding"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           );

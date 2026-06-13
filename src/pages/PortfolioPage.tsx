@@ -3,15 +3,20 @@ import { Link } from "react-router-dom";
 import { usePortfolio, type PortfolioItem } from "@/hooks/usePortfolio";
 import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
 import { usePortfolioMetrics } from "@/hooks/usePortfolioMetrics";
+import { usePortfolioEvents } from "@/hooks/usePortfolioEvents";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
+import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase, RefreshCw, ShieldCheck, LineChart, Wallet, FileText } from "lucide-react";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Briefcase, RefreshCw, ShieldCheck, LineChart, Wallet, FileText, Wand2 } from "lucide-react";
 import PortfolioKPICards from "@/components/portfolio/PortfolioKPICards";
 import PortfolioCharts from "@/components/portfolio/PortfolioCharts";
 import PortfolioTable from "@/components/portfolio/PortfolioTable";
 import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
+import EditHoldingModal from "@/components/portfolio/EditHoldingModal";
+import PortfolioActivity from "@/components/portfolio/PortfolioActivity";
 import StarterPortfolios from "@/components/portfolio/StarterPortfolios";
 import SaveDemoBanner from "@/components/portfolio/SaveDemoBanner";
 import WeightedYieldCard from "@/components/portfolio/WeightedYieldCard";
@@ -23,6 +28,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useEffect } from "react";
 import { normalizeName } from "@/lib/assetMatch";
 import { formatDistanceToNow } from "date-fns";
+import { toast } from "sonner";
 
 const PortfolioPage = () => {
   useDocumentTitle("Mock Portfolio – Track Investments in Kenya | KenyaFundFinder");
@@ -31,6 +37,7 @@ const PortfolioPage = () => {
     items,
     isLoading,
     addItem,
+    updateItem,
     deleteItem,
     totalValue,
     totalPnL,
@@ -39,9 +46,37 @@ const PortfolioPage = () => {
     isDemo,
   } = usePortfolio();
 
+  const { user } = useAuth();
   const { changes, loading: changesLoading } = usePortfolioChanges(items);
   const metrics = usePortfolioMetrics(items);
   const { alerts } = usePriceAlerts();
+  const { events: activityEvents, isLoading: activityLoading } = usePortfolioEvents(50);
+  const [editItem, setEditItem] = useState<PortfolioItem | null>(null);
+  const [backfillBusy, setBackfillBusy] = useState(false);
+
+  const hasUnlinkedHoldings = useMemo(
+    () => !!user && items.some((i) => !i.asset_id && (i.asset_type === "mmf" || i.asset_type === "stock")),
+    [items, user],
+  );
+
+  const runBackfill = async () => {
+    if (!user) return;
+    setBackfillBusy(true);
+    try {
+      const { data, error } = await supabase.rpc("backfill_my_portfolio_asset_ids" as never);
+      if (error) throw error;
+      const d = (data as { scanned: number; updated: number; skipped: number } | null) ?? null;
+      if (d) {
+        toast.success(`Asset link refresh: ${d.updated} updated, ${d.skipped} skipped of ${d.scanned}.`);
+      } else {
+        toast.success("Asset link refresh complete.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Could not refresh asset links");
+    } finally {
+      setBackfillBusy(false);
+    }
+  };
 
   // Fetch withdrawal_days once for all funds — used by the holdings table for liquidity bucket display.
   const [liquidityByName, setLiquidityByName] = useState<Map<string, number | null>>(new Map());
@@ -219,29 +254,62 @@ const PortfolioPage = () => {
           </div>
 
           <Card className="border-border bg-card">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2 flex-wrap">
               <CardTitle className="text-sm font-semibold text-primary">Your investments</CardTitle>
-              {isDemo && (
-                <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
-                  <Link to="/auth">Save to account</Link>
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {hasUnlinkedHoldings && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1"
+                    onClick={runBackfill}
+                    disabled={backfillBusy}
+                    title="Try to link older holdings to canonical fund/stock data"
+                  >
+                    <Wand2 className="h-3 w-3" />
+                    {backfillBusy ? "Refreshing…" : "Refresh asset links"}
+                  </Button>
+                )}
+                {isDemo && (
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
+                    <Link to="/auth">Save to account</Link>
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
-              ) : (
-                <PortfolioTable
-                  items={items}
-                  currency={currency}
-                  onDelete={(id) => deleteItem.mutate(id)}
-                  changes={changes}
-                  alerts={alerts}
-                  liquidityByName={liquidityByName}
-                  liquidityById={liquidityById}
-                  onOpenAlert={openAlertForHolding}
-                />
-              )}
+              <Tabs defaultValue="holdings">
+                <TabsList className="mb-3">
+                  <TabsTrigger value="holdings" className="text-xs">Holdings</TabsTrigger>
+                  <TabsTrigger value="activity" className="text-xs">
+                    Portfolio activity{activityEvents.length > 0 ? ` (${activityEvents.length})` : ""}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="holdings">
+                  {isLoading ? (
+                    <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
+                  ) : (
+                    <PortfolioTable
+                      items={items}
+                      currency={currency}
+                      onDelete={(id) => deleteItem.mutate(id)}
+                      onEdit={(item) => setEditItem(item)}
+                      changes={changes}
+                      alerts={alerts}
+                      liquidityByName={liquidityByName}
+                      liquidityById={liquidityById}
+                      onOpenAlert={openAlertForHolding}
+                    />
+                  )}
+                </TabsContent>
+                <TabsContent value="activity">
+                  <PortfolioActivity
+                    events={activityEvents}
+                    isLoading={activityLoading}
+                    currency={currency}
+                  />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
@@ -250,6 +318,19 @@ const PortfolioPage = () => {
           </p>
         </>
       )}
+
+      <EditHoldingModal
+        item={editItem}
+        open={!!editItem}
+        onOpenChange={(o) => { if (!o) setEditItem(null); }}
+        onSave={(id, payload) => {
+          updateItem.mutate(
+            { id, patch: payload, note: payload.notes },
+            { onSuccess: () => setEditItem(null) },
+          );
+        }}
+        isPending={updateItem.isPending}
+      />
 
       {alertDialog && (
         <CreateAlertDialog

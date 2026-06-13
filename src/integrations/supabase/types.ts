@@ -2090,6 +2090,7 @@ export type Database = {
       }
     }
     Functions: {
+      backfill_my_portfolio_asset_ids: { Args: never; Returns: Json }
       bulk_sync_funds: {
         Args: { dry_run?: boolean; p_effective_date?: string; payload: Json }
         Returns: Json

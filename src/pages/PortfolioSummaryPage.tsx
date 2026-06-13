@@ -12,6 +12,8 @@ import { ArrowLeft, Printer } from "lucide-react";
 import { buildWeeklyBuckets } from "@/lib/portfolioWeeklyBuckets";
 import { getHoldingAlertState } from "@/lib/portfolioAlertBadge";
 import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
+import { usePortfolioEvents } from "@/hooks/usePortfolioEvents";
+import { format } from "date-fns";
 
 const fmtKES = (val: number) =>
   new Intl.NumberFormat("en-KE", {
@@ -29,6 +31,15 @@ const PortfolioSummaryPage = () => {
   const { alerts } = usePriceAlerts();
   const { entries: savedFunds } = useFundWatchlist();
   const { entries: savedStocks } = useAssetWatchlist("stock");
+  const { events: activityEvents } = usePortfolioEvents(30);
+
+  const recentActivity = useMemo(() => {
+    const added = activityEvents.filter((e) => e.event_type === "add").slice(0, 5);
+    const updated = activityEvents.filter((e) => e.event_type === "update").slice(0, 5);
+    const removed = activityEvents.filter((e) => e.event_type === "remove").slice(0, 5);
+    return { added, updated, removed, total: activityEvents.length };
+  }, [activityEvents]);
+
 
   const allocationRows = useMemo(() => {
     const total = Object.values(allocation).reduce((a, b) => a + b, 0);
@@ -183,7 +194,21 @@ const PortfolioSummaryPage = () => {
               </table>
             </section>
 
-            {/* Watchlist */}
+            {/* Activity summary */}
+            {recentActivity.total > 0 && (
+              <section className="mb-6 print:break-inside-avoid">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity summary</h2>
+                <div className="grid md:grid-cols-3 gap-4 text-sm">
+                  <ActivityBlock title={`Recent added (${recentActivity.added.length})`} events={recentActivity.added} />
+                  <ActivityBlock title={`Recent updated (${recentActivity.updated.length})`} events={recentActivity.updated} />
+                  <ActivityBlock title={`Recent removed (${recentActivity.removed.length})`} events={recentActivity.removed} />
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  Portfolio activity is based on changes you make to your holdings.
+                </p>
+              </section>
+            )}
+
             {hasWatchlist && (
               <section className="mb-6 print:break-inside-avoid">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Watchlist</h2>
@@ -261,5 +286,31 @@ const ChangeLine = ({
     </li>
   );
 };
+
+const ActivityBlock = ({
+  title,
+  events,
+}: {
+  title: string;
+  events: { id: string; asset_name: string; event_date: string; amount: number | null }[];
+}) => (
+  <div>
+    <p className="text-xs font-semibold text-muted-foreground mb-1">{title}</p>
+    {events.length === 0 ? (
+      <p className="text-[11px] text-muted-foreground">No recent items.</p>
+    ) : (
+      <ul className="text-foreground space-y-0.5">
+        {events.map((e) => (
+          <li key={e.id} className="flex justify-between gap-2 text-xs">
+            <span className="truncate">{e.asset_name}</span>
+            <span className="text-[10px] text-muted-foreground whitespace-nowrap">
+              {format(new Date(e.event_date), "d MMM")}
+            </span>
+          </li>
+        ))}
+      </ul>
+    )}
+  </div>
+);
 
 export default PortfolioSummaryPage;
