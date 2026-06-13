@@ -562,6 +562,19 @@ const WatchlistPage = () => {
           </div>
         </section>
       )}
+
+      {/* Controlled alert dialog opened from individual rows */}
+      {alertDialog && (
+        <CreateAlertDialog
+          open
+          onOpenChange={(o) => { if (!o) setAlertDialog(null); }}
+          assetType={alertDialog.assetType}
+          assetId={alertDialog.assetId}
+          assetName={alertDialog.assetName}
+          currentPrice={alertDialog.currentPrice}
+          unit={alertDialog.unit}
+        />
+      )}
     </div>
   );
 };
