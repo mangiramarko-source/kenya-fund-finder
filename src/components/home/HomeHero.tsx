@@ -64,63 +64,73 @@ const HomeHero = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-lg p-0 overflow-hidden border-border bg-card">
+      <DialogContent className="max-w-md p-0 overflow-hidden border-border bg-card">
         <div className="p-5 md:p-6">
-          <p className="text-[10px] font-semibold uppercase tracking-wider text-accent mb-1.5">
+          <p className="text-[10px] font-bold uppercase tracking-widest text-accent mb-3">
             Independent · Built for Kenyan investors
           </p>
-          <h2 className="text-base md:text-lg font-bold leading-snug text-foreground pr-6">
-            Compare Kenyan unit trusts, MMFs, NSE stocks and T-Bills using clear
-            data — independent, simple, and built for Kenyan investors.
+
+          <h2 className="text-lg md:text-xl font-semibold leading-tight text-foreground pr-6">
+            Your personal dashboard for Kenyan markets.
           </h2>
 
-          <div className="flex flex-wrap items-center gap-2 mt-4">
+          <p className="text-sm text-muted-foreground leading-relaxed mt-3">
+            Track your NSE stocks, MMFs, and unit trusts in one view. Monitor
+            T-Bills, FX, commodities and market news with neutral, independent
+            data.
+          </p>
+
+          <div className="flex flex-col gap-2 mt-5">
             <Button
               asChild
-              size="sm"
-              className="rounded-full h-9 px-4 text-xs gap-1.5"
-              onClick={handleNavigate}
-            >
-              <Link to="/compare">
-                <GitCompareArrows className="h-3.5 w-3.5" /> Compare funds
-              </Link>
-            </Button>
-            <Button
-              asChild
-              size="sm"
-              variant="outline"
-              className="rounded-full h-9 px-4 text-xs gap-1.5"
+              className="w-full h-11 rounded-xl gap-2 text-sm font-medium"
               onClick={handleNavigate}
             >
               <Link to="/portfolio">
-                <Briefcase className="h-3.5 w-3.5" /> Track a portfolio
+                <LayoutDashboard className="h-4 w-4" /> Start portfolio tracker
+              </Link>
+            </Button>
+            <Button
+              asChild
+              variant="outline"
+              className="w-full h-11 rounded-xl gap-2 text-sm font-medium"
+              onClick={handleNavigate}
+            >
+              <Link to="/overview">
+                <Search className="h-4 w-4" /> Browse market data
               </Link>
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 gap-2 mt-5 pt-4 border-t border-border/60">
+          <div className="grid grid-cols-1 gap-2.5 mt-6">
             <HeroTile
               to="/funds"
-              icon={Table}
-              label="Unit Trusts"
-              sub="Browse and compare Kenyan unit trusts"
+              icon={TrendingUp}
+              label="Unit Trusts & MMFs"
+              sub="Compare historical rates and fund categories."
               onClick={handleNavigate}
             />
             <HeroTile
-              to="/calculator"
-              icon={Calculator}
-              label="Return calculator"
-              sub="Estimate gross & net returns"
+              to="/overview"
+              icon={CircleDollarSign}
+              label="Stocks, T-Bills & FX"
+              sub="NSE pricing, treasury yields and currency rates."
               onClick={handleNavigate}
             />
             <HeroTile
-              to="/portfolio"
-              icon={BarChart3}
-              label="Portfolio tracker"
-              sub="Track a simulated portfolio"
+              to="/news"
+              icon={Newspaper}
+              label="Commodities & News"
+              sub="Global benchmark pricing and market updates."
               onClick={handleNavigate}
             />
           </div>
+        </div>
+
+        <div className="bg-muted/40 border-t border-border px-5 py-3">
+          <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider">
+            No investment advice · Purely data-driven insights
+          </p>
         </div>
       </DialogContent>
     </Dialog>
