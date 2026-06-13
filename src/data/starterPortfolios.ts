@@ -20,7 +20,7 @@ export type StarterRecipe =
       /** filter by yield_unit. "%" / "USD" etc. */
       currency?: string;
       principal: number;
-      rank?: number; // 1 = best yield, 2 = second, etc.
+      rank?: number; // 1 = highest published yield in pool, 2 = next, etc.
     }
   | {
       kind: "stock_by_symbol";
@@ -45,7 +45,7 @@ export const STARTER_PORTFOLIOS: StarterPortfolio[] = [
     tagline: "Capital-safe, predictable yield",
     emoji: "🛡️",
     description:
-      "Spread KES 100,000 across the top three Kenyan money market funds. Daily compounding, T+1 access.",
+      "Spread KES 100,000 across three Kenyan money market funds with the highest published yields. Daily compounding, T+1 access.",
     recipes: [
       { kind: "mmf_top", currency: "%", principal: 40_000, rank: 1 },
       { kind: "mmf_top", currency: "%", principal: 35_000, rank: 2 },
@@ -58,7 +58,7 @@ export const STARTER_PORTFOLIOS: StarterPortfolio[] = [
     tagline: "Earn in dollars from abroad",
     emoji: "🌍",
     description:
-      "$5,000 split across the top two USD money market funds in Kenya. Hedges shilling risk and earns USD yield.",
+      "$5,000 split across two Kenyan USD money market funds with the highest published yields. Earns USD yield and provides shilling-rate exposure.",
     recipes: [
       { kind: "mmf_top", currency: "USD", principal: 3_000, rank: 1 },
       { kind: "mmf_top", currency: "USD", principal: 2_000, rank: 2 },
@@ -84,7 +84,7 @@ export const STARTER_PORTFOLIOS: StarterPortfolio[] = [
     tagline: "Yield, growth and T-bills",
     emoji: "⚖️",
     description:
-      "60% in top MMF, 30% in NSE bluechips, 10% in 364-day T-Bill. Balanced risk and return.",
+      "60% in the MMF with the highest published yield, 30% in NSE bluechips, 10% in 364-day T-Bill. Mixed allocation across asset classes.",
     recipes: [
       { kind: "mmf_top", currency: "%", principal: 60_000, rank: 1 },
       { kind: "stock_by_symbol", symbol: "SCOM", units: 100 },

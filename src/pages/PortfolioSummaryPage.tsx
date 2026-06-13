@@ -246,13 +246,16 @@ const PortfolioSummaryPage = () => {
       <style>{`
         @media print {
           @page { margin: 16mm 14mm; }
-          body { background: white !important; color: #0f172a !important; }
+          html, body { background: white !important; color: #0f172a !important; }
           nav, header[role="banner"], footer[role="contentinfo"], aside, .print\\:hidden { display: none !important; }
           a { color: inherit !important; text-decoration: none !important; }
-          section { page-break-inside: avoid; }
-          h2 { page-break-after: avoid; }
-          table { page-break-inside: auto; }
+          h1, h2 { color: #0f172a !important; }
+          section { page-break-inside: avoid; break-inside: avoid; }
+          h2 { page-break-after: avoid; break-after: avoid; }
+          table { page-break-inside: auto; width: 100%; }
+          thead { display: table-header-group; }
           tr { page-break-inside: avoid; page-break-after: auto; }
+          footer { page-break-inside: avoid; break-inside: avoid; }
         }
       `}</style>
     </div>
