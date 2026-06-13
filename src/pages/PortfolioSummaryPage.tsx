@@ -31,6 +31,15 @@ const PortfolioSummaryPage = () => {
   const { alerts } = usePriceAlerts();
   const { entries: savedFunds } = useFundWatchlist();
   const { entries: savedStocks } = useAssetWatchlist("stock");
+  const { events: activityEvents } = usePortfolioEvents(30);
+
+  const recentActivity = useMemo(() => {
+    const added = activityEvents.filter((e) => e.event_type === "add").slice(0, 5);
+    const updated = activityEvents.filter((e) => e.event_type === "update").slice(0, 5);
+    const removed = activityEvents.filter((e) => e.event_type === "remove").slice(0, 5);
+    return { added, updated, removed, total: activityEvents.length };
+  }, [activityEvents]);
+
 
   const allocationRows = useMemo(() => {
     const total = Object.values(allocation).reduce((a, b) => a + b, 0);
