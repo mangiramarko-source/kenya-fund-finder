@@ -116,7 +116,7 @@ const AlertBadge = ({
 };
 
 const PortfolioTable = ({
-  items, currency, onDelete,
+  items, currency, onDelete, onEdit,
   changes = [], alerts = [],
   liquidityByName, liquidityById,
   onOpenAlert,
