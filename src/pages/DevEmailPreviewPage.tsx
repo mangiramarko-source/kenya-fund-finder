@@ -5,7 +5,7 @@ import {
   type SavedFundRow,
   type SavedStockRow,
   type PortfolioSummary,
-} from "@/lib/weeklyEmailSections";
+} from "../../supabase/functions/_shared/weekly-email-sections";
 
 /**
  * Dev-only preview for the weekly email retention block.
