@@ -18,6 +18,9 @@ interface Props {
   currentPrice: number;
   unit?: string;
   trigger?: React.ReactNode;
+  /** Controlled open state (omit to use uncontrolled mode with trigger). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 /**
@@ -27,10 +30,17 @@ interface Props {
  */
 export const CreateAlertDialog = ({
   assetType, assetId, assetName, currentPrice, unit = "", trigger,
+  open: openProp, onOpenChange,
 }: Props) => {
   const { user } = useAuth();
   const { createAlert, alerts } = usePriceAlerts();
-  const [open, setOpen] = useState(false);
+  const [openState, setOpenState] = useState(false);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? !!openProp : openState;
+  const setOpen = (v: boolean) => {
+    if (!isControlled) setOpenState(v);
+    onOpenChange?.(v);
+  };
 
   const isFund = assetType === "fund";
   const [condition, setCondition] = useState<AlertCondition>(isFund ? "change_any" : "above");
