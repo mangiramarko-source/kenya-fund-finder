@@ -47,13 +47,6 @@ const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const DevEmailPreviewPage = lazy(() => import("./pages/DevEmailPreviewPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
-// Phase 1 — neutral fund data views
-const MMFYieldsPage = lazy(() => import("./pages/funds/MMFYieldsPage"));
-const ByYieldPage = lazy(() => import("./pages/funds/ByYieldPage"));
-const ByMinimumPage = lazy(() => import("./pages/funds/ByMinimumPage"));
-const ByWithdrawalPage = lazy(() => import("./pages/funds/ByWithdrawalPage"));
-const MonthlyIncomeDataPage = lazy(() => import("./pages/funds/MonthlyIncomeDataPage"));
-const ByRiskLevelPage = lazy(() => import("./pages/funds/ByRiskLevelPage"));
 
 const queryClient = new QueryClient({
   defaultOptions: {
