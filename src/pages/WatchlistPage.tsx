@@ -443,6 +443,9 @@ const WatchlistPage = () => {
                         trend={trend}
                         linkTo={`/compare/${f.slug}`}
                         onRemove={() => removeByTypeAndId("fund", f.id)}
+                        onAlert={() => openAlertForFund(f)}
+                        onReset={() => resetFundAlert(f)}
+                        alertState={alertStateOf("fund", f.id)}
                       />
                     );
                   })}
