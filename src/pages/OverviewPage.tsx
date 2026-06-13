@@ -28,6 +28,8 @@ import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import WatchCard from "@/components/watchlist/WatchCard";
 import TestimonialsSection from "@/components/TestimonialsSection";
+import HomeHero from "@/components/home/HomeHero";
+import DisclaimerBlock from "@/components/DisclaimerBlock";
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
@@ -1043,6 +1045,7 @@ const OverviewPage = () => {
 
   return (
     <>
+    <HomeHero />
     <div className="hidden md:block">
       <CurrencyTicker />
     </div>
