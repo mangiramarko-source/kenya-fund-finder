@@ -182,7 +182,7 @@ const AlertsPage = () => {
             />
             <SettingRow
               title="Weekly Market Summary"
-              description="A digest with watchlist, top funds and news."
+              description="A digest of your saved funds, saved stocks, portfolio summary and news."
               checked={prefs.weekly_summary}
               onChange={(v) => updatePref("weekly_summary", v)}
               disabled={prefsLoading}
