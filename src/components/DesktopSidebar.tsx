@@ -19,7 +19,6 @@ const mainNavItems = [
 const utilityNavItems = [
   { to: "/portfolio", label: "Portfolio", icon: Briefcase },
   { to: "/calculator", label: "Calculator", icon: Calculator },
-  { to: "/funds/mmf-yields", label: "Fund views", icon: Table },
   { to: "/news", label: "News", icon: Newspaper },
   { to: "/learn", label: "Learn", icon: GraduationCap },
   { to: "/alerts", label: "Alerts", icon: Bell },
