@@ -1,5 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import {
+  buildRetentionBlock,
+  NEUTRAL_DISCLAIMER_HTML,
+  type SavedFundRow,
+  type SavedStockRow,
+  type PortfolioSummary,
+} from "../_shared/weekly-email-sections.ts";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 
