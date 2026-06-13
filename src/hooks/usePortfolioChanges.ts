@@ -52,7 +52,7 @@ export function usePortfolioChanges(items: PortfolioItem[]) {
 
         const matched = funds.map((f) => ({
           holding: f,
-          match: resolveAsset({ asset_name: f.asset_name, ticker: f.ticker }, records, idx),
+          match: resolveAsset({ asset_id: f.asset_id ?? null, asset_name: f.asset_name, ticker: f.ticker }, records, idx),
         }));
         const fundIds = matched.map((m) => m.match?.id).filter(Boolean) as string[];
 
