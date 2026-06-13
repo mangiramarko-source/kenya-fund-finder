@@ -254,29 +254,62 @@ const PortfolioPage = () => {
           </div>
 
           <Card className="border-border bg-card">
-            <CardHeader className="pb-2 flex flex-row items-center justify-between">
+            <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2 flex-wrap">
               <CardTitle className="text-sm font-semibold text-primary">Your investments</CardTitle>
-              {isDemo && (
-                <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
-                  <Link to="/auth">Save to account</Link>
-                </Button>
-              )}
+              <div className="flex items-center gap-2">
+                {hasUnlinkedHoldings && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1"
+                    onClick={runBackfill}
+                    disabled={backfillBusy}
+                    title="Try to link older holdings to canonical fund/stock data"
+                  >
+                    <Wand2 className="h-3 w-3" />
+                    {backfillBusy ? "Refreshing…" : "Refresh asset links"}
+                  </Button>
+                )}
+                {isDemo && (
+                  <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
+                    <Link to="/auth">Save to account</Link>
+                  </Button>
+                )}
+              </div>
             </CardHeader>
             <CardContent>
-              {isLoading ? (
-                <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
-              ) : (
-                <PortfolioTable
-                  items={items}
-                  currency={currency}
-                  onDelete={(id) => deleteItem.mutate(id)}
-                  changes={changes}
-                  alerts={alerts}
-                  liquidityByName={liquidityByName}
-                  liquidityById={liquidityById}
-                  onOpenAlert={openAlertForHolding}
-                />
-              )}
+              <Tabs defaultValue="holdings">
+                <TabsList className="mb-3">
+                  <TabsTrigger value="holdings" className="text-xs">Holdings</TabsTrigger>
+                  <TabsTrigger value="activity" className="text-xs">
+                    Portfolio activity{activityEvents.length > 0 ? ` (${activityEvents.length})` : ""}
+                  </TabsTrigger>
+                </TabsList>
+                <TabsContent value="holdings">
+                  {isLoading ? (
+                    <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
+                  ) : (
+                    <PortfolioTable
+                      items={items}
+                      currency={currency}
+                      onDelete={(id) => deleteItem.mutate(id)}
+                      onEdit={(item) => setEditItem(item)}
+                      changes={changes}
+                      alerts={alerts}
+                      liquidityByName={liquidityByName}
+                      liquidityById={liquidityById}
+                      onOpenAlert={openAlertForHolding}
+                    />
+                  )}
+                </TabsContent>
+                <TabsContent value="activity">
+                  <PortfolioActivity
+                    events={activityEvents}
+                    isLoading={activityLoading}
+                    currency={currency}
+                  />
+                </TabsContent>
+              </Tabs>
             </CardContent>
           </Card>
 
@@ -285,6 +318,19 @@ const PortfolioPage = () => {
           </p>
         </>
       )}
+
+      <EditHoldingModal
+        item={editItem}
+        open={!!editItem}
+        onOpenChange={(o) => { if (!o) setEditItem(null); }}
+        onSave={(id, payload) => {
+          updateItem.mutate(
+            { id, patch: payload, note: payload.notes },
+            { onSuccess: () => setEditItem(null) },
+          );
+        }}
+        isPending={updateItem.isPending}
+      />
 
       {alertDialog && (
         <CreateAlertDialog
