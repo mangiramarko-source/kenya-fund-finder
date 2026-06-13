@@ -318,6 +318,26 @@ const WatchlistPage = () => {
     watchedCommodities.length +
     watchedFunds.length;
 
+  // Alert summary across all watched assets
+  const watchedKeys = useMemo(() => {
+    const keys = new Set<string>();
+    watchedFunds.forEach((f) => keys.add(`fund:${f.id}`));
+    watchedStocks.forEach((s) => keys.add(`stock:${s.id}`));
+    return keys;
+  }, [watchedFunds, watchedStocks]);
+
+  const alertSummary = useMemo(() => {
+    let active = 0;
+    let triggered = 0;
+    alerts.forEach((a) => {
+      if (!a.is_active) return;
+      if (!watchedKeys.has(`${a.asset_type}:${a.asset_id}`)) return;
+      if (a.is_triggered) triggered++;
+      else active++;
+    });
+    return { active, triggered };
+  }, [alerts, watchedKeys]);
+
   const loading = marketLoading || fundsLoading || watchlistLoading;
   const isEmpty = !loading && totalCount === 0;
 
