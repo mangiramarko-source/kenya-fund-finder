@@ -41,6 +41,58 @@ const PortfolioPage = () => {
 
   const { changes, loading: changesLoading } = usePortfolioChanges(items);
   const metrics = usePortfolioMetrics(items);
+  const { alerts } = usePriceAlerts();
+
+  // Fetch withdrawal_days once for all funds — used by the holdings table for liquidity bucket display.
+  const [liquidityByName, setLiquidityByName] = useState<Map<string, number | null>>(new Map());
+  const [liquidityById, setLiquidityById] = useState<Map<string, number | null>>(new Map());
+  useEffect(() => {
+    if (!items.some((i) => i.asset_type === "mmf")) return;
+    supabase
+      .from("funds_public")
+      .select("id, name, withdrawal_days")
+      .eq("is_published", true)
+      .then(({ data }) => {
+        const m = new Map<string, number | null>();
+        const idMap = new Map<string, number | null>();
+        (data || []).forEach((r: any) => {
+          const key = normalizeName(r.name);
+          if (key) m.set(key, r.withdrawal_days ?? null);
+          if (r.id) idMap.set(r.id, r.withdrawal_days ?? null);
+        });
+        setLiquidityByName(m);
+        setLiquidityById(idMap);
+      });
+  }, [items.map((i) => i.id).join("|")]);
+
+  const [alertDialog, setAlertDialog] = useState<{
+    assetType: "fund" | "stock";
+    assetId: string;
+    assetName: string;
+    currentPrice: number;
+    unit: string;
+  } | null>(null);
+
+  const openAlertForHolding = (item: PortfolioItem) => {
+    if (!item.asset_id) return; // need a canonical id to create an alert
+    if (item.asset_type === "mmf") {
+      setAlertDialog({
+        assetType: "fund",
+        assetId: item.asset_id,
+        assetName: item.asset_name,
+        currentPrice: item.current_yield || 0,
+        unit: "%",
+      });
+    } else if (item.asset_type === "stock") {
+      setAlertDialog({
+        assetType: "stock",
+        assetId: item.asset_id,
+        assetName: item.asset_name,
+        currentPrice: item.current_price,
+        unit: "KES",
+      });
+    }
+  };
 
   const recentChangePct = useMemo(() => {
     const valid = changes.filter((c) => c.deltaPct != null);
