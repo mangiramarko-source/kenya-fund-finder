@@ -28,7 +28,7 @@ import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import WatchCard from "@/components/watchlist/WatchCard";
 import TestimonialsSection from "@/components/TestimonialsSection";
-import HomeHero from "@/components/home/HomeHero";
+
 import DisclaimerBlock from "@/components/DisclaimerBlock";
 
 /* ─── Types ─── */
