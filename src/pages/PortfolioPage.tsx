@@ -1,16 +1,22 @@
 import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { usePortfolio } from "@/hooks/usePortfolio";
+import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
+import { usePortfolioMetrics } from "@/hooks/usePortfolioMetrics";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Briefcase, RefreshCw, ShieldCheck, LineChart, Wallet } from "lucide-react";
-import { Link } from "react-router-dom";
+import { Briefcase, RefreshCw, ShieldCheck, LineChart, Wallet, FileText } from "lucide-react";
 import PortfolioKPICards from "@/components/portfolio/PortfolioKPICards";
 import PortfolioCharts from "@/components/portfolio/PortfolioCharts";
 import PortfolioTable from "@/components/portfolio/PortfolioTable";
 import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
 import StarterPortfolios from "@/components/portfolio/StarterPortfolios";
 import SaveDemoBanner from "@/components/portfolio/SaveDemoBanner";
+import WeightedYieldCard from "@/components/portfolio/WeightedYieldCard";
+import MonthlyIncomeCard from "@/components/portfolio/MonthlyIncomeCard";
+import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
+import PortfolioWeeklyChanges from "@/components/portfolio/PortfolioWeeklyChanges";
 import { formatDistanceToNow } from "date-fns";
 
 const PortfolioPage = () => {
@@ -27,6 +33,15 @@ const PortfolioPage = () => {
     allocation,
     isDemo,
   } = usePortfolio();
+
+  const { changes, loading: changesLoading } = usePortfolioChanges(items);
+  const metrics = usePortfolioMetrics(items);
+
+  const recentChangePct = useMemo(() => {
+    const valid = changes.filter((c) => c.deltaPct != null);
+    if (!valid.length) return null;
+    return valid.reduce((s, c) => s + (c.deltaPct || 0), 0) / valid.length;
+  }, [changes]);
 
   const lastSynced = useMemo(() => {
     if (!items.length) return null;
@@ -45,7 +60,7 @@ const PortfolioPage = () => {
             <Briefcase className="h-6 w-6" /> Mock Portfolio
           </h1>
           <p className="text-sm text-muted-foreground mt-1">
-            Simulate investments across 5 asset classes with real Kenyan market data.
+            Track your holdings across 5 asset classes with neutral Kenyan market data.
           </p>
           {lastSynced && (
             <p className="text-[11px] text-muted-foreground flex items-center gap-1 mt-0.5">
@@ -69,6 +84,13 @@ const PortfolioPage = () => {
               USD
             </button>
           </div>
+          {!isEmpty && (
+            <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs h-9">
+              <Link to="/portfolio/summary">
+                <FileText className="h-3.5 w-3.5" /> Summary
+              </Link>
+            </Button>
+          )}
           <AddInvestmentModal onAdd={(item) => addItem.mutate(item)} isPending={addItem.isPending} />
         </div>
       </div>
@@ -77,7 +99,6 @@ const PortfolioPage = () => {
 
       {isEmpty ? (
         <>
-          {/* Empty-state hero */}
           <Card className="border-border bg-gradient-to-br from-card to-muted/30 p-6 md:p-8">
             <div className="grid md:grid-cols-2 gap-6 items-center">
               <div className="space-y-3">
@@ -85,7 +106,7 @@ const PortfolioPage = () => {
                   Build your investment portfolio in 30 seconds.
                 </h2>
                 <p className="text-sm text-muted-foreground">
-                  Pick a starter pack below or add real Kenyan unit trusts, NSE stocks, T-Bills, FX and
+                  Pick a starter pack below or add Kenyan unit trusts, NSE stocks, T-Bills, FX and
                   commodities. We track live prices for you — no sign-up needed to try.
                 </p>
                 <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2">
@@ -110,22 +131,39 @@ const PortfolioPage = () => {
         </>
       ) : (
         <>
-          {/* KPI Cards */}
           <PortfolioKPICards
             totalValue={totalValue}
             totalPnL={totalPnL}
             totalPnLPercent={totalPnLPercent}
             currency={currency}
-            fxRate={130}
+            recentChangePct={recentChangePct}
           />
 
-          {/* Charts */}
+          {/* Yield metrics row */}
+          {metrics.hasFunds && (
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <WeightedYieldCard
+                weightedAvgYield={metrics.weightedAvgYield}
+                hasFunds={metrics.hasFunds}
+              />
+              <MonthlyIncomeCard
+                monthlyIncome={metrics.monthlyIncome}
+                currency={currency}
+                hasFunds={metrics.hasFunds}
+              />
+            </div>
+          )}
+
           <PortfolioCharts allocation={allocation} totalValue={totalValue} currency={currency} />
 
-          {/* Asset Table */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <LiquidityBreakdown items={items} />
+            <PortfolioWeeklyChanges changes={changes} loading={changesLoading} />
+          </div>
+
           <Card className="border-border bg-card">
             <CardHeader className="pb-2 flex flex-row items-center justify-between">
-              <CardTitle className="text-sm font-semibold text-primary">Your Investments</CardTitle>
+              <CardTitle className="text-sm font-semibold text-primary">Your investments</CardTitle>
               {isDemo && (
                 <Button asChild size="sm" variant="ghost" className="h-7 text-xs">
                   <Link to="/auth">Save to account</Link>
@@ -140,6 +178,10 @@ const PortfolioPage = () => {
               )}
             </CardContent>
           </Card>
+
+          <p className="text-[11px] text-muted-foreground">
+            Data only. Not personal financial advice. Estimates assume 15% withholding tax where applicable; actual returns may differ.
+          </p>
         </>
       )}
     </div>
