@@ -15,6 +15,7 @@ interface Props {
   items: PortfolioItem[];
   currency: "KES" | "USD";
   onDelete: (id: string) => void;
+  onEdit?: (item: PortfolioItem) => void;
   changes?: ChangeRow[];
   alerts?: MinimalAlert[];
   liquidityByName?: Map<string, number | null>;
