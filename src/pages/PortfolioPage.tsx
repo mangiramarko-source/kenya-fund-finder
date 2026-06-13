@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { usePortfolio } from "@/hooks/usePortfolio";
+import { usePortfolio, type PortfolioItem } from "@/hooks/usePortfolio";
 import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
 import { usePortfolioMetrics } from "@/hooks/usePortfolioMetrics";
+import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,10 @@ import WeightedYieldCard from "@/components/portfolio/WeightedYieldCard";
 import MonthlyIncomeCard from "@/components/portfolio/MonthlyIncomeCard";
 import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
 import PortfolioWeeklyChanges from "@/components/portfolio/PortfolioWeeklyChanges";
+import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
+import { normalizeName } from "@/lib/assetMatch";
 import { formatDistanceToNow } from "date-fns";
 
 const PortfolioPage = () => {
