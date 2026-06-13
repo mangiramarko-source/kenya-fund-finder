@@ -867,11 +867,14 @@ export type Database = {
           asset_id: string
           asset_name: string
           asset_type: string
+          baseline_price: number | null
           condition: string
           created_at: string
           id: string
           is_active: boolean
           is_triggered: boolean
+          notify_email: boolean
+          notify_inapp: boolean
           target_price: number
           triggered_at: string | null
           triggered_price: number | null
@@ -882,11 +885,14 @@ export type Database = {
           asset_id: string
           asset_name: string
           asset_type: string
+          baseline_price?: number | null
           condition: string
           created_at?: string
           id?: string
           is_active?: boolean
           is_triggered?: boolean
+          notify_email?: boolean
+          notify_inapp?: boolean
           target_price: number
           triggered_at?: string | null
           triggered_price?: number | null
@@ -897,11 +903,14 @@ export type Database = {
           asset_id?: string
           asset_name?: string
           asset_type?: string
+          baseline_price?: number | null
           condition?: string
           created_at?: string
           id?: string
           is_active?: boolean
           is_triggered?: boolean
+          notify_email?: boolean
+          notify_inapp?: boolean
           target_price?: number
           triggered_at?: string | null
           triggered_price?: number | null
