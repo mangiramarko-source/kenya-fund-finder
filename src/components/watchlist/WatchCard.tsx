@@ -141,26 +141,31 @@ const WatchCard = ({
         {onAlert && (
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onAlert();
-            }}
-            className="text-muted-foreground hover:text-accent transition-colors p-1"
-            title="Set alert"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAlert(); }}
+            className={`${alertClass} transition-colors p-1`}
+            title={alertTitle}
+            aria-label={alertTitle}
           >
-            <BellPlus className="h-3.5 w-3.5" />
+            <AlertIcon className="h-3.5 w-3.5" />
+          </button>
+        )}
+        {onReset && alertState === "triggered" && (
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onReset(); }}
+            className="text-muted-foreground hover:text-accent transition-colors p-1"
+            title="Reset alert baseline"
+            aria-label="Reset alert baseline"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
           </button>
         )}
         <button
           type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onRemove();
-          }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
           className="text-muted-foreground/60 hover:text-destructive transition-colors p-1"
           title="Remove from watchlist"
+          aria-label="Remove from watchlist"
         >
           <X className="h-3.5 w-3.5" />
         </button>
