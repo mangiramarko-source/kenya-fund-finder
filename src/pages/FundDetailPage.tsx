@@ -465,10 +465,10 @@ const FundDetailPage = () => {
                     </Link>
                   ))}
                 <Link
-                  to={`/funds/by-yield`}
+                  to="/funds"
                   className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs text-accent hover:bg-muted/30 transition-colors"
                 >
-                  See all funds by yield <ChevronRight className="h-3.5 w-3.5" />
+                  See all unit trusts <ChevronRight className="h-3.5 w-3.5" />
                 </Link>
               </div>
             </section>
