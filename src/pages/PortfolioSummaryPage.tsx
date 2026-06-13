@@ -194,7 +194,21 @@ const PortfolioSummaryPage = () => {
               </table>
             </section>
 
-            {/* Watchlist */}
+            {/* Activity summary */}
+            {recentActivity.total > 0 && (
+              <section className="mb-6 print:break-inside-avoid">
+                <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Activity summary</h2>
+                <div className="grid md:grid-cols-3 gap-4 text-sm">
+                  <ActivityBlock title={`Recent added (${recentActivity.added.length})`} events={recentActivity.added} />
+                  <ActivityBlock title={`Recent updated (${recentActivity.updated.length})`} events={recentActivity.updated} />
+                  <ActivityBlock title={`Recent removed (${recentActivity.removed.length})`} events={recentActivity.removed} />
+                </div>
+                <p className="text-[11px] text-muted-foreground mt-2">
+                  Portfolio activity is based on changes you make to your holdings.
+                </p>
+              </section>
+            )}
+
             {hasWatchlist && (
               <section className="mb-6 print:break-inside-avoid">
                 <h2 className="text-sm font-semibold uppercase tracking-wider text-muted-foreground mb-3">Watchlist</h2>
