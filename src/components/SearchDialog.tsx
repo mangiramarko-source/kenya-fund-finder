@@ -286,7 +286,10 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
                   <TrendingUp className="mr-2 h-4 w-4 text-accent" />
                   <span className="flex-1 truncate">{f.name}</span>
                   <span className="text-[10px] text-muted-foreground mr-2 truncate max-w-[120px]">{f.manager}</span>
-                  <span className="text-xs text-accent font-mono font-semibold">{Number(f.annual_yield).toFixed(2)}%</span>
+                  <span className="text-xs text-accent font-mono font-semibold mr-1">{Number(f.annual_yield).toFixed(2)}%</span>
+                  <span onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+                    <SaveToWatchlistButton itemType="fund" itemId={f.id} itemName={f.name} variant="icon" />
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>
