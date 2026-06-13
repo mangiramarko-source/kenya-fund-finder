@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
-import { BellPlus, X } from "lucide-react";
+import { BellPlus, BellRing, RotateCcw, X } from "lucide-react";
 import Sparkline from "@/components/Sparkline";
+
+export type AlertState = "none" | "active" | "triggered";
 
 export interface WatchCardProps {
   title: string;
@@ -12,6 +14,9 @@ export interface WatchCardProps {
   sparkData?: number[];
   trend?: "up" | "down" | "flat";
   onAlert?: () => void;
+  /** When alert exists and has triggered, surface a reset baseline action. */
+  onReset?: () => void;
+  alertState?: AlertState;
   onRemove: () => void;
   linkTo?: string;
 }
