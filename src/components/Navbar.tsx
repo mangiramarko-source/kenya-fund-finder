@@ -18,6 +18,7 @@ const navLinks = [
 
 const mobileNavLinks = [
   { to: "/", label: "Overview" },
+  { to: "/portfolio", label: "Portfolio" },
   { to: "/stocks", label: "Stocks" },
   { to: "/funds", label: "Unit trusts" },
   { to: "/news", label: "News" },
@@ -140,7 +141,6 @@ const Navbar = () => {
     "/calculator",
     "/learn",
     "/alerts",
-    "/portfolio",
     "/profile",
     "/privacy",
     "/terms",
