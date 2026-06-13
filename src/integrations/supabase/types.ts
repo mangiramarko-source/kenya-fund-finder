@@ -702,6 +702,7 @@ export type Database = {
       }
       mock_portfolios: {
         Row: {
+          asset_id: string | null
           asset_name: string
           asset_type: string
           buy_date: string
@@ -717,6 +718,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          asset_id?: string | null
           asset_name: string
           asset_type: string
           buy_date?: string
@@ -732,6 +734,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          asset_id?: string | null
           asset_name?: string
           asset_type?: string
           buy_date?: string

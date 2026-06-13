@@ -44,6 +44,7 @@ const PortfolioSummaryPage = lazy(() => import("./pages/PortfolioSummaryPage"));
 const OverviewPage = lazy(() => import("./pages/OverviewPage"));
 const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
+const DevEmailPreviewPage = lazy(() => import("./pages/DevEmailPreviewPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 // Phase 1 — neutral fund data views
@@ -120,6 +121,9 @@ const App = () => (
                     <Route path="/watchlist" element={<WatchlistPage />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin" element={<AdminPage />} />
+                    {import.meta.env.DEV && (
+                      <Route path="/dev/email-preview" element={<DevEmailPreviewPage />} />
+                    )}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>

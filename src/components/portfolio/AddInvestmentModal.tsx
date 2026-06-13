@@ -69,6 +69,7 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
   const handleSubmit = () => {
     const name = selectedAsset?.name || customName;
     const ticker = selectedAsset?.ticker || customTicker || undefined;
+    const assetId = selectedAsset?.id || undefined;
     const u = parseFloat(units);
     const bp = parseFloat(buyPrice);
     if (!name || isNaN(u) || isNaN(bp) || u <= 0 || bp <= 0) return;
@@ -76,6 +77,7 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
       asset_type: assetType,
       asset_name: name,
       ticker,
+      asset_id: assetId,
       units: u,
       buy_price: bp,
       current_price: bp,

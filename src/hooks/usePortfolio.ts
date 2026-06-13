@@ -13,6 +13,8 @@ export interface PortfolioItem {
   asset_type: AssetType;
   asset_name: string;
   ticker: string | null;
+  /** Canonical id of the underlying fund/stock/fx/commodity. Nullable for legacy rows. */
+  asset_id?: string | null;
   units: number;
   buy_price: number;
   current_price: number;
@@ -27,6 +29,7 @@ export interface NewPortfolioItem {
   asset_type: AssetType;
   asset_name: string;
   ticker?: string;
+  asset_id?: string | null;
   units: number;
   buy_price: number;
   current_price: number;
@@ -205,10 +208,11 @@ export const usePortfolio = () => {
       const { error } = await supabase.from("mock_portfolios").insert({
         user_id: user.id,
         ...item,
+        asset_id: item.asset_id ?? null,
         current_yield: item.current_yield ?? 0,
         buy_date: item.buy_date ?? new Date().toISOString(),
         notes: item.notes ?? "",
-      });
+      } as any);
       if (error) throw error;
     },
     onSuccess: () => {

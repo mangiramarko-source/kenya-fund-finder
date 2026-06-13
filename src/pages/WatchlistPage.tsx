@@ -17,6 +17,7 @@ import SectionLiveStatus from "@/components/SectionLiveStatus";
 import WatchCard, { type AlertState } from "@/components/watchlist/WatchCard";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
+import { computeAlertSummary } from "@/lib/watchlistAlertSummary";
 
 interface WatchlistItem {
   id: string;
@@ -318,6 +319,27 @@ const WatchlistPage = () => {
     watchedCommodities.length +
     watchedFunds.length;
 
+  // Alert summary across all watched assets
+  const watchedKeys = useMemo(() => {
+    const keys = new Set<string>();
+    watchedFunds.forEach((f) => keys.add(`fund:${f.id}`));
+    watchedStocks.forEach((s) => keys.add(`stock:${s.id}`));
+    return keys;
+  }, [watchedFunds, watchedStocks]);
+
+  const alertSummary = useMemo(
+    () => computeAlertSummary(
+      alerts.map((a) => ({
+        asset_type: a.asset_type,
+        asset_id: a.asset_id,
+        is_active: a.is_active,
+        is_triggered: a.is_triggered,
+      })),
+      watchedKeys,
+    ),
+    [alerts, watchedKeys],
+  );
+
   const loading = marketLoading || fundsLoading || watchlistLoading;
   const isEmpty = !loading && totalCount === 0;
 
@@ -365,6 +387,25 @@ const WatchlistPage = () => {
         </div>
         <div className="md:hidden border-b border-border mt-3" />
       </div>
+
+      {/* Summary pills (neutral labels — no recommendations) */}
+      {!loading && totalCount > 0 && (
+        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted/60 border border-border">
+            <Star className="h-3 w-3 text-warning" />
+            <span className="text-muted-foreground">Saved assets</span>
+            <span className="font-semibold text-foreground tabular-nums">{totalCount}</span>
+          </span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted/60 border border-border">
+            <span className="text-muted-foreground">Active alerts</span>
+            <span className="font-semibold text-foreground tabular-nums">{alertSummary.active}</span>
+          </span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-destructive/10 border border-destructive/30">
+            <span className="text-destructive/90">Triggered alerts</span>
+            <span className="font-semibold text-destructive tabular-nums">{alertSummary.triggered}</span>
+          </span>
+        </div>
+      )}
 
       {/* Loading */}
       {loading && (

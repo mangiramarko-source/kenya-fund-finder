@@ -20,32 +20,37 @@ const ORDER = ["Same day / T+0", "1–3 days", "4+ days", "Not available"];
 
 const LiquidityBreakdown = ({ items }: Props) => {
   const [byNormName, setByNormName] = useState<Map<string, number | null>>(new Map());
+  const [byId, setById] = useState<Map<string, number | null>>(new Map());
   const fundItems = items.filter((i) => i.asset_type === "mmf");
 
   useEffect(() => {
     if (!fundItems.length) return;
-    // Fetch all published funds and build normalized-name index — tolerant of renames.
     supabase
       .from("funds_public")
-      .select("name, withdrawal_days")
+      .select("id, name, withdrawal_days")
       .eq("is_published", true)
       .then(({ data }) => {
         const m = new Map<string, number | null>();
+        const idMap = new Map<string, number | null>();
         (data || []).forEach((r: any) => {
           const key = normalizeName(r.name);
           if (key) m.set(key, r.withdrawal_days ?? null);
+          if (r.id) idMap.set(r.id, r.withdrawal_days ?? null);
         });
         setByNormName(m);
+        setById(idMap);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [fundItems.map((f) => f.asset_name).join("|")]);
+  }, [fundItems.map((f) => f.asset_id ?? f.asset_name).join("|")]);
 
   if (!fundItems.length) return null;
 
   const buckets = new Map<string, number>();
   ORDER.forEach((k) => buckets.set(k, 0));
   fundItems.forEach((i) => {
-    const days = byNormName.get(normalizeName(i.asset_name));
+    const days =
+      (i.asset_id ? byId.get(i.asset_id) : undefined) ??
+      byNormName.get(normalizeName(i.asset_name));
     const key = bucketFor(days);
     buckets.set(key, (buckets.get(key) || 0) + getCurrentValue(i));
   });
