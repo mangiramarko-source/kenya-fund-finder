@@ -223,14 +223,28 @@ const PortfolioTable = ({
                 {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
               </TableCell>
               <TableCell>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="h-7 w-7 text-muted-foreground hover:text-destructive"
-                  onClick={() => onDelete(item.id)}
-                >
-                  <Trash2 className="h-3.5 w-3.5" />
-                </Button>
+                <div className="flex items-center justify-end gap-0.5">
+                  {onEdit && (
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-primary"
+                      onClick={() => onEdit(item)}
+                      title="Edit holding"
+                    >
+                      <Pencil className="h-3.5 w-3.5" />
+                    </Button>
+                  )}
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                    onClick={() => onDelete(item.id)}
+                    title="Remove holding"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </Button>
+                </div>
               </TableCell>
             </TableRow>
           );
