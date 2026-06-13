@@ -231,15 +231,36 @@ const PortfolioPage = () => {
               {isLoading ? (
                 <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
               ) : (
-                <PortfolioTable items={items} currency={currency} onDelete={(id) => deleteItem.mutate(id)} />
+                <PortfolioTable
+                  items={items}
+                  currency={currency}
+                  onDelete={(id) => deleteItem.mutate(id)}
+                  changes={changes}
+                  alerts={alerts}
+                  liquidityByName={liquidityByName}
+                  liquidityById={liquidityById}
+                  onOpenAlert={openAlertForHolding}
+                />
               )}
             </CardContent>
           </Card>
 
           <p className="text-[11px] text-muted-foreground">
-            Data only. Not personal financial advice. Estimates assume 15% withholding tax where applicable; actual returns may differ.
+            This portfolio summary is based on user-entered holdings and available market/fund data. It is general information only and is not personal financial advice. Estimates assume 15% withholding tax on yield-bearing fund holdings; actual returns may differ.
           </p>
         </>
+      )}
+
+      {alertDialog && (
+        <CreateAlertDialog
+          open
+          onOpenChange={(o) => { if (!o) setAlertDialog(null); }}
+          assetType={alertDialog.assetType}
+          assetId={alertDialog.assetId}
+          assetName={alertDialog.assetName}
+          currentPrice={alertDialog.currentPrice}
+          unit={alertDialog.unit}
+        />
       )}
     </div>
   );
