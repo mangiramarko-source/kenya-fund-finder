@@ -16,6 +16,7 @@ import CookieConsent from "./components/CookieConsent";
 
 // Defer heavy/non-critical UI to shrink initial JS bundle
 const CompareModal = lazy(() => import("./components/compare/CompareModal"));
+const HomeHero = lazy(() => import("./components/home/HomeHero"));
 
 // Lazy-loaded routes
 const Index = lazy(() => import("./pages/Index"));
@@ -124,6 +125,9 @@ const App = () => (
               <CompareBar />
               <Suspense fallback={null}>
                 <CompareModal />
+              </Suspense>
+              <Suspense fallback={null}>
+                <HomeHero />
               </Suspense>
               <CookieConsent />
             </BrowserRouter>
