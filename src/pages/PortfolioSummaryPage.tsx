@@ -314,6 +314,3 @@ const ActivityBlock = ({
 );
 
 export default PortfolioSummaryPage;
-
-
-export default PortfolioSummaryPage;
