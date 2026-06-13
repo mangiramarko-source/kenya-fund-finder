@@ -9,11 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useMarketData } from "@/components/home/MarketTicker";
+import { usePriceAlerts, type PriceAlert, type AlertAssetType } from "@/hooks/usePriceAlerts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
-import WatchCard from "@/components/watchlist/WatchCard";
+import WatchCard, { type AlertState } from "@/components/watchlist/WatchCard";
+import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
 
 interface WatchlistItem {
