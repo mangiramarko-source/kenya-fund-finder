@@ -19,8 +19,9 @@ import {
   TrendingUp, TrendingDown, Minus, Bell, BellPlus, Plus,
   Settings2, X, Star, Search, Eye, Check, SlidersHorizontal,
   BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
-  Landmark, ArrowRight, Newspaper, Clock,
+  Landmark, ArrowRight, Newspaper, Clock, Briefcase,
 } from "lucide-react";
+import PortfolioSnapshotPanel from "@/components/portfolio/PortfolioSnapshotPanel";
 import { toast } from "sonner";
 import { fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
@@ -864,8 +865,8 @@ const OverviewPage = () => {
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [profileName, setProfileName] = useState("");
-  // Mobile-only top tab: "overview" or "watchlist"
-  const [mobileTab, setMobileTab] = useState<"overview" | "watchlist">("overview");
+  // Top tab: "overview", "watchlist", or "portfolio"
+  const [mobileTab, setMobileTab] = useState<"overview" | "watchlist" | "portfolio">("overview");
   const [watchlistPromptOpen, setWatchlistPromptOpen] = useState(false);
 
   const [alertDialog, setAlertDialog] = useState<{
@@ -1086,8 +1087,8 @@ const OverviewPage = () => {
           </div>
         </div>
 
-        {/* Mobile-only top tabs: Overview / Watchlist */}
-        <div className="md:hidden mt-3 grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
+        {/* Mobile-only top tabs: Overview / Watchlist / Portfolio */}
+        <div className="md:hidden mt-3 grid grid-cols-3 gap-1 p-1 rounded-full border border-border bg-card">
           <button
             type="button"
             onClick={() => setMobileTab("overview")}
@@ -1122,6 +1123,18 @@ const OverviewPage = () => {
               </span>
             )}
           </button>
+          <button
+            type="button"
+            onClick={() => setMobileTab("portfolio")}
+            className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
+              mobileTab === "portfolio"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground"
+            }`}
+            aria-pressed={mobileTab === "portfolio"}
+          >
+            <Briefcase className="h-3.5 w-3.5" /> Portfolio
+          </button>
         </div>
         <div className="hidden md:block">
           <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
@@ -1149,7 +1162,7 @@ const OverviewPage = () => {
             {user ? "Your personalized market overview" : "Live Kenyan market data"}
           </p>
           {/* Desktop tabs: under greeting + subtitle */}
-          <div className="mt-3 inline-grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
+          <div className="mt-3 inline-grid grid-cols-3 gap-1 p-1 rounded-full border border-border bg-card">
             <button
               type="button"
               onClick={() => setMobileTab("overview")}
@@ -1183,6 +1196,18 @@ const OverviewPage = () => {
                   {watchlist.length}
                 </span>
               )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab("portfolio")}
+              className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
+                mobileTab === "portfolio"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-pressed={mobileTab === "portfolio"}
+            >
+              <Briefcase className="h-3.5 w-3.5" /> Portfolio
             </button>
           </div>
         </div>
@@ -1221,9 +1246,17 @@ const OverviewPage = () => {
         </div>
       )}
 
+      {/* ─── Portfolio snapshot tab content ─── */}
+      {mobileTab === "portfolio" && (
+        <div className="block">
+          <PortfolioSnapshotPanel currency="KES" />
+        </div>
+      )}
+
       {/* ─── Overview content (Highlights, news, disclaimer) ───
-          Hidden when "Watchlist" tab is active (mobile + desktop). */}
-      <div className={user && mobileTab === "watchlist" ? "hidden" : "contents"}>
+          Hidden when "Watchlist" or "Portfolio" tab is active. */}
+      <div className={mobileTab !== "overview" ? "hidden" : "contents"}>
+
 
       {/* ─── Market Highlights (always shown) ─── */}
       <div className="md:pt-3">
