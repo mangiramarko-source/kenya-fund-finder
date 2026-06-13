@@ -96,11 +96,11 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
           <Plus className="h-4 w-4" /> Add Investment
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-lg">
-        <DialogHeader>
+      <DialogContent className="max-w-lg max-h-[90vh] p-0 flex flex-col gap-0">
+        <DialogHeader className="px-6 pt-6 pb-3 border-b border-border shrink-0">
           <DialogTitle className="text-primary">Add Mock Investment</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 pt-2">
+        <div className="space-y-4 px-6 py-4 overflow-y-auto flex-1 min-h-0">
           {/* Asset Class Selector */}
           <div>
             <Label className="text-xs">Asset Class</Label>
@@ -219,6 +219,8 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
             </div>
           )}
 
+        </div>
+        <div className="px-6 py-3 border-t border-border bg-background shrink-0">
           <Button onClick={handleSubmit} disabled={isPending} className="w-full">
             {isPending ? "Adding…" : "Add to Portfolio"}
           </Button>
