@@ -229,20 +229,24 @@ export const usePortfolio = () => {
         .from("mock_portfolios")
         .insert({
           user_id: user.id,
-          ...item,
+          asset_type: item.asset_type,
+          asset_name: item.asset_name,
+          ticker: item.ticker ?? null,
           asset_id: item.asset_id ?? null,
+          units: item.units,
+          buy_price: item.buy_price,
+          current_price: item.current_price,
           current_yield: item.current_yield ?? 0,
           buy_date: item.buy_date ?? new Date().toISOString(),
           notes: item.notes ?? "",
-        } as any)
+        })
         .select()
         .single();
       if (error) throw error;
-      // Best-effort event log — failures must not block the add.
       try {
         await supabase.from("portfolio_events").insert({
           user_id: user.id,
-          portfolio_holding_id: (data as any)?.id ?? null,
+          portfolio_holding_id: data?.id ?? null,
           asset_id: item.asset_id ?? null,
           asset_type: item.asset_type,
           asset_name: item.asset_name,
@@ -250,23 +254,79 @@ export const usePortfolio = () => {
           amount: item.units * item.buy_price,
           quantity: item.units,
           note: "",
-        } as any);
+        });
       } catch (e) {
         console.warn("portfolio_events insert failed", e);
       }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolio_events"] });
       toast.success("Holding added");
     },
     onError: () => toast.error("Failed to add holding"),
   });
 
+  const updateItem = useMutation({
+    mutationFn: async ({ id, patch, note }: { id: string; patch: UpdatePortfolioItem; note?: string }) => {
+      const existing = items.find((i) => i.id === id);
+      const nextUnits = patch.units ?? existing?.units ?? 0;
+      const nextBuyPrice = patch.buy_price ?? existing?.buy_price ?? 0;
+      const nextAmount = nextUnits * nextBuyPrice;
+
+      if (!user) {
+        const updated = portfolioStorage.update(id, patch);
+        if (updated) {
+          portfolioEventsStorage.record({
+            portfolio_holding_id: id,
+            asset_id: updated.asset_id ?? null,
+            asset_type: updated.asset_type,
+            asset_name: updated.asset_name,
+            event_type: "update",
+            amount: nextAmount,
+            quantity: nextUnits,
+            note: note ?? patch.notes ?? "",
+          });
+        }
+        return;
+      }
+      const { error } = await supabase
+        .from("mock_portfolios")
+        .update({
+          ...patch,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", id);
+      if (error) throw error;
+      try {
+        await supabase.from("portfolio_events").insert({
+          user_id: user.id,
+          portfolio_holding_id: id,
+          asset_id: existing?.asset_id ?? null,
+          asset_type: existing?.asset_type ?? "mmf",
+          asset_name: patch.asset_name ?? existing?.asset_name ?? "",
+          event_type: "update",
+          amount: nextAmount,
+          quantity: nextUnits,
+          note: note ?? patch.notes ?? "",
+        });
+      } catch (e) {
+        console.warn("portfolio_events insert failed", e);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolio_events"] });
+      toast.success("Holding updated");
+    },
+    onError: () => toast.error("Failed to update holding"),
+  });
+
   const deleteItem = useMutation({
     mutationFn: async (id: string) => {
       const existing = items.find((i) => i.id === id);
+      const lastAmount = existing ? getCurrentValue(existing) : null;
       if (!user) {
-        portfolioStorage.remove(id);
         if (existing) {
           portfolioEventsStorage.record({
             portfolio_holding_id: id,
@@ -274,15 +334,15 @@ export const usePortfolio = () => {
             asset_type: existing.asset_type,
             asset_name: existing.asset_name,
             event_type: "remove",
-            amount: null,
+            amount: lastAmount,
             quantity: existing.units,
             note: "",
           });
         }
+        portfolioStorage.remove(id);
         return;
       }
-      const { error } = await supabase.from("mock_portfolios").delete().eq("id", id);
-      if (error) throw error;
+      // Record event BEFORE delete so we keep last-known asset metadata.
       if (existing) {
         try {
           await supabase.from("portfolio_events").insert({
@@ -292,17 +352,20 @@ export const usePortfolio = () => {
             asset_type: existing.asset_type,
             asset_name: existing.asset_name,
             event_type: "remove",
-            amount: null,
+            amount: lastAmount,
             quantity: existing.units,
             note: "",
-          } as any);
+          });
         } catch (e) {
           console.warn("portfolio_events insert failed", e);
         }
       }
+      const { error } = await supabase.from("mock_portfolios").delete().eq("id", id);
+      if (error) throw error;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
+      queryClient.invalidateQueries({ queryKey: ["portfolio_events"] });
       toast.success("Holding removed");
     },
     onError: () => toast.error("Failed to remove holding"),
