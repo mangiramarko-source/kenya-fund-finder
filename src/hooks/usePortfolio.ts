@@ -39,6 +39,15 @@ export interface NewPortfolioItem {
   notes?: string;
 }
 
+export interface UpdatePortfolioItem {
+  asset_name?: string;
+  units?: number;
+  buy_price?: number;
+  current_yield?: number;
+  notes?: string;
+  buy_date?: string;
+}
+
 export interface LiveAsset {
   name: string;
   ticker?: string;
