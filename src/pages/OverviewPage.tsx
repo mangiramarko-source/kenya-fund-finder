@@ -865,8 +865,8 @@ const OverviewPage = () => {
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
   const [profileName, setProfileName] = useState("");
-  // Mobile-only top tab: "overview" or "watchlist"
-  const [mobileTab, setMobileTab] = useState<"overview" | "watchlist">("overview");
+  // Top tab: "overview", "watchlist", or "portfolio"
+  const [mobileTab, setMobileTab] = useState<"overview" | "watchlist" | "portfolio">("overview");
   const [watchlistPromptOpen, setWatchlistPromptOpen] = useState(false);
 
   const [alertDialog, setAlertDialog] = useState<{
