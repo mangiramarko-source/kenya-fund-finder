@@ -1,7 +1,9 @@
+import { useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { portfolioStorage } from "@/lib/portfolioStorage";
 
 export type AssetType = "mmf" | "stock" | "fx" | "fixed_income" | "commodity";
 
@@ -151,11 +153,25 @@ export const usePortfolio = () => {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const { data: liveAssets } = useLiveAssets();
+  const isDemo = !user;
+
+  // Keep demo data fresh across tabs / programmatic writes (starter packs, etc.)
+  useEffect(() => {
+    if (!isDemo) return;
+    const onChange = () =>
+      queryClient.invalidateQueries({ queryKey: ["mock_portfolios", "demo"] });
+    window.addEventListener("kff:portfolio:changed", onChange);
+    window.addEventListener("storage", onChange);
+    return () => {
+      window.removeEventListener("kff:portfolio:changed", onChange);
+      window.removeEventListener("storage", onChange);
+    };
+  }, [isDemo, queryClient]);
 
   const { data: rawItems = [], isLoading } = useQuery({
-    queryKey: ["mock_portfolios", user?.id],
+    queryKey: ["mock_portfolios", user?.id ?? "demo"],
     queryFn: async () => {
-      if (!user) return [];
+      if (!user) return portfolioStorage.list();
       const { data, error } = await supabase
         .from("mock_portfolios")
         .select("*")
@@ -163,7 +179,6 @@ export const usePortfolio = () => {
       if (error) throw error;
       return (data || []) as PortfolioItem[];
     },
-    enabled: !!user,
   });
 
   // Enrich items with live prices
@@ -183,7 +198,10 @@ export const usePortfolio = () => {
 
   const addItem = useMutation({
     mutationFn: async (item: NewPortfolioItem) => {
-      if (!user) throw new Error("Not authenticated");
+      if (!user) {
+        portfolioStorage.add(item);
+        return;
+      }
       const { error } = await supabase.from("mock_portfolios").insert({
         user_id: user.id,
         ...item,
@@ -202,6 +220,10 @@ export const usePortfolio = () => {
 
   const deleteItem = useMutation({
     mutationFn: async (id: string) => {
+      if (!user) {
+        portfolioStorage.remove(id);
+        return;
+      }
       const { error } = await supabase.from("mock_portfolios").delete().eq("id", id);
       if (error) throw error;
     },
