@@ -3,12 +3,14 @@ import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
-import { Loader2, Sparkles } from "lucide-react";
+import { Loader2, Sparkles, Link2 } from "lucide-react";
 import { CONTENT_TYPES, PLATFORMS, PLATFORM_LABEL } from "@/lib/social/contentTypes";
 
 export default function SocialCreatePost({ onCreated }: { onCreated?: () => void }) {
@@ -17,6 +19,11 @@ export default function SocialCreatePost({ onCreated }: { onCreated?: () => void
   const [fundIds, setFundIds] = useState<string[]>([]);
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
+
+  // URL-extract tab state
+  const [urlInput, setUrlInput] = useState("");
+  const [urlPlatforms, setUrlPlatforms] = useState<string[]>(["facebook"]);
+  const [urlBusy, setUrlBusy] = useState(false);
 
   const def = CONTENT_TYPES.find(c => c.key === contentType);
 
@@ -50,8 +57,50 @@ export default function SocialCreatePost({ onCreated }: { onCreated?: () => void
     onCreated?.();
   };
 
+  const toggleUrlPlatform = (p: string) =>
+    setUrlPlatforms(ps => ps.includes(p) ? ps.filter(x => x !== p) : [...ps, p]);
+
+  const extractFromUrl = async () => {
+    const trimmed = urlInput.trim();
+    if (!/^https?:\/\/.+/i.test(trimmed)) {
+      toast({ title: "Enter a valid URL (starting with http/https)", variant: "destructive" });
+      return;
+    }
+    if (urlPlatforms.length === 0) {
+      toast({ title: "Pick at least one platform", variant: "destructive" });
+      return;
+    }
+    setUrlBusy(true);
+    const { data, error } = await supabase.functions.invoke("social-extract-url", {
+      body: { url: trimmed, platforms: urlPlatforms, content_type: "manual_url" },
+    });
+    setUrlBusy(false);
+    if (error || (data as any)?.error) {
+      toast({
+        title: "Extraction failed",
+        description: error?.message ?? (data as any)?.error,
+        variant: "destructive",
+      });
+      return;
+    }
+    const created = (data as any)?.created_ids?.length ?? 0;
+    toast({
+      title: `Created ${created} draft${created === 1 ? "" : "s"} from URL`,
+      description: "Edit & approve in the Queue tab.",
+    });
+    setUrlInput("");
+    onCreated?.();
+  };
+
   return (
-    <Card className="p-4 space-y-4 max-w-3xl">
+    <Tabs defaultValue="ai" className="max-w-3xl">
+      <TabsList>
+        <TabsTrigger value="ai"><Sparkles className="h-3 w-3 mr-1" />AI-generated</TabsTrigger>
+        <TabsTrigger value="url"><Link2 className="h-3 w-3 mr-1" />From URL (no AI)</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="ai">
+    <Card className="p-4 space-y-4">
       <div>
         <Label>Content type</Label>
         <Select value={contentType} onValueChange={setContentType}>
@@ -103,5 +152,44 @@ export default function SocialCreatePost({ onCreated }: { onCreated?: () => void
         Generated drafts go to the Queue. Captions and image cards are AI-generated through Lovable AI Gateway and pass through a brand-safety filter.
       </p>
     </Card>
+      </TabsContent>
+
+      <TabsContent value="url">
+        <Card className="p-4 space-y-4">
+          <div>
+            <Label>Page URL</Label>
+            <Input
+              type="url"
+              value={urlInput}
+              onChange={e => setUrlInput(e.target.value)}
+              placeholder="https://example.com/article"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              We'll scrape the page and prefill caption + image (title, summary, OG image). No AI credits used.
+            </p>
+          </div>
+
+          <div>
+            <Label>Platforms</Label>
+            <div className="flex gap-3 mt-2">
+              {PLATFORMS.map(p => (
+                <label key={p} className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={urlPlatforms.includes(p)} onCheckedChange={() => toggleUrlPlatform(p)} />
+                  {PLATFORM_LABEL[p]}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <Button onClick={extractFromUrl} disabled={urlBusy}>
+            {urlBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Link2 className="h-4 w-4 mr-2" />}
+            Extract & create draft
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Drafts land in the Queue. You can edit the caption, swap the image, then approve or publish.
+          </p>
+        </Card>
+      </TabsContent>
+    </Tabs>
   );
 }
