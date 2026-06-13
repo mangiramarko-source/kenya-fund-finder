@@ -350,6 +350,8 @@ const NewsPage = () => {
 
   return (
     <div className="px-4 md:px-6 py-6">
+      <h1 className="sr-only">Kenya Investment News &amp; Market Updates</h1>
+
       {/* Desktop: single row — Region segmented + Search + Sort */}
       <div className="hidden md:flex items-center gap-3 mb-5">
         <div className="inline-flex items-center rounded-lg bg-muted/30 border border-border p-0.5 shrink-0">
