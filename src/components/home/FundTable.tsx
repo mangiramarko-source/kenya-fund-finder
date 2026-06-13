@@ -141,9 +141,17 @@ const FundTable = ({ funds, snapshots, bestYield, sortKey, sortDir, onToggleSort
                 )}
               </td>
               <td className="pr-5 pl-2 py-3 text-right">
-                <Link to={`/compare/${fund.slug}`} className="text-accent hover:text-accent/80 transition-colors">
-                  <ArrowRight className="h-4 w-4 inline-block" />
-                </Link>
+                <div className="inline-flex items-center gap-1">
+                  <SaveToWatchlistButton itemType="fund" itemId={fund.id} itemName={fund.name} variant="icon" />
+                  <Link
+                    to={`/compare/${fund.slug}`}
+                    onClick={(e) => e.stopPropagation()}
+                    aria-label={`Open ${fund.name}`}
+                    className="text-accent hover:text-accent/80 transition-colors"
+                  >
+                    <ArrowRight className="h-4 w-4 inline-block" />
+                  </Link>
+                </div>
               </td>
             </tr>
           ))}
