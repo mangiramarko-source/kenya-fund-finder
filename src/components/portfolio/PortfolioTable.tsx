@@ -8,6 +8,7 @@ import {
 } from "@/hooks/usePortfolio";
 import type { ChangeRow } from "@/hooks/usePortfolioChanges";
 import { getHoldingAlertState, type MinimalAlert } from "@/lib/portfolioAlertBadge";
+import { normalizeName } from "@/lib/assetMatch";
 import { formatDistanceToNow } from "date-fns";
 
 interface Props {
