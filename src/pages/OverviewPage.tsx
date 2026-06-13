@@ -1246,9 +1246,17 @@ const OverviewPage = () => {
         </div>
       )}
 
+      {/* ─── Portfolio snapshot tab content ─── */}
+      {mobileTab === "portfolio" && (
+        <div className="block">
+          <PortfolioSnapshotPanel currency="KES" />
+        </div>
+      )}
+
       {/* ─── Overview content (Highlights, news, disclaimer) ───
-          Hidden when "Watchlist" tab is active (mobile + desktop). */}
-      <div className={user && mobileTab === "watchlist" ? "hidden" : "contents"}>
+          Hidden when "Watchlist" or "Portfolio" tab is active. */}
+      <div className={mobileTab !== "overview" ? "hidden" : "contents"}>
+
 
       {/* ─── Market Highlights (always shown) ─── */}
       <div className="md:pt-3">
