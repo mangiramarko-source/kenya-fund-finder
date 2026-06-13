@@ -52,12 +52,18 @@ async function supaSelect<T>(path: string): Promise<T[]> {
 }
 
 async function fetchDynamic(): Promise<SitemapEntry[]> {
-  const [funds, news] = await Promise.all([
+  const [funds, news, pages, stocks] = await Promise.all([
     supaSelect<{ slug: string; updated_at: string }>(
       "funds?select=slug,updated_at&is_published=eq.true&order=name.asc",
     ),
     supaSelect<{ id: string; updated_at: string }>(
       `news_articles?select=id,updated_at&status=eq.published&order=date_published.desc&limit=${NEWS_LIMIT}`,
+    ),
+    supaSelect<{ slug: string; updated_at: string }>(
+      "site_pages?select=slug,updated_at&status=eq.published",
+    ),
+    supaSelect<{ symbol: string; updated_at: string }>(
+      "stocks?select=symbol,updated_at&order=symbol.asc",
     ),
   ]);
 
@@ -73,7 +79,21 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     changefreq: "weekly",
     priority: "0.5",
   }));
-  return [...fundEntries, ...newsEntries];
+  const pageEntries: SitemapEntry[] = pages
+    .filter((p) => p.slug && !["privacy", "terms"].includes(p.slug))
+    .map((p) => ({
+      path: `/page/${p.slug}`,
+      lastmod: p.updated_at?.slice(0, 10),
+      changefreq: "monthly",
+      priority: "0.5",
+    }));
+  const stockEntries: SitemapEntry[] = stocks.map((s) => ({
+    path: `/stocks/${encodeURIComponent(s.symbol)}`,
+    lastmod: s.updated_at?.slice(0, 10),
+    changefreq: "daily",
+    priority: "0.6",
+  }));
+  return [...fundEntries, ...newsEntries, ...pageEntries, ...stockEntries];
 }
 
 function render(entries: SitemapEntry[]) {
