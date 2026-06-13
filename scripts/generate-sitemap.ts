@@ -60,7 +60,7 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
       `news_articles?select=id,updated_at&status=eq.published&order=date_published.desc&limit=${NEWS_LIMIT}`,
     ),
     supaSelect<{ slug: string; updated_at: string }>(
-      "site_pages?select=slug,updated_at&status=eq.published",
+      "site_pages?select=slug,updated_at",
     ),
     supaSelect<{ symbol: string; updated_at: string }>(
       "stocks?select=symbol,updated_at&order=symbol.asc",
