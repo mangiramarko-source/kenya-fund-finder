@@ -3,14 +3,10 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Droplets } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { getCurrentValue, type PortfolioItem } from "@/hooks/usePortfolio";
+import { normalizeName } from "@/lib/assetMatch";
 
 interface Props {
   items: PortfolioItem[];
-}
-
-interface Bucket {
-  label: string;
-  value: number;
 }
 
 const bucketFor = (days: number | null | undefined): string => {
@@ -23,19 +19,23 @@ const bucketFor = (days: number | null | undefined): string => {
 const ORDER = ["Same day / T+0", "1–3 days", "4+ days", "Not available"];
 
 const LiquidityBreakdown = ({ items }: Props) => {
-  const [withdrawalDays, setWithdrawalDays] = useState<Map<string, number | null>>(new Map());
+  const [byNormName, setByNormName] = useState<Map<string, number | null>>(new Map());
   const fundItems = items.filter((i) => i.asset_type === "mmf");
 
   useEffect(() => {
     if (!fundItems.length) return;
+    // Fetch all published funds and build normalized-name index — tolerant of renames.
     supabase
       .from("funds_public")
       .select("name, withdrawal_days")
-      .in("name", fundItems.map((f) => f.asset_name))
+      .eq("is_published", true)
       .then(({ data }) => {
         const m = new Map<string, number | null>();
-        (data || []).forEach((r: any) => m.set(r.name, r.withdrawal_days ?? null));
-        setWithdrawalDays(m);
+        (data || []).forEach((r: any) => {
+          const key = normalizeName(r.name);
+          if (key) m.set(key, r.withdrawal_days ?? null);
+        });
+        setByNormName(m);
       });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [fundItems.map((f) => f.asset_name).join("|")]);
@@ -45,7 +45,7 @@ const LiquidityBreakdown = ({ items }: Props) => {
   const buckets = new Map<string, number>();
   ORDER.forEach((k) => buckets.set(k, 0));
   fundItems.forEach((i) => {
-    const days = withdrawalDays.get(i.asset_name);
+    const days = byNormName.get(normalizeName(i.asset_name));
     const key = bucketFor(days);
     buckets.set(key, (buckets.get(key) || 0) + getCurrentValue(i));
   });
