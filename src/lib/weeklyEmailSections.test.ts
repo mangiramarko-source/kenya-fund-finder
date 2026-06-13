@@ -12,6 +12,22 @@ const FORBIDDEN_WORDS = [
   "should invest", "ideal", "perfect for you",
 ];
 
+/** Strip tags + inline style attrs so we only assert against visible copy. */
+const visible = (html: string): string =>
+  html
+    .replace(/style="[^"]*"/g, "")
+    .replace(/<[^>]+>/g, " ")
+    .replace(/\s+/g, " ")
+    .toLowerCase()
+    .trim();
+
+const assertNeutral = (html: string) => {
+  const text = visible(html);
+  FORBIDDEN_WORDS.forEach((w) => {
+    expect(text, `forbidden word "${w}" found in visible copy`).not.toMatch(new RegExp(`\\b${w}\\b`));
+  });
+};
+
 describe("weekly email sections — saved funds", () => {
   it("renders empty string when no rows", () => {
     expect(buildSavedFundsSection([])).toBe("");
