@@ -1651,6 +1651,9 @@ const OverviewPage = () => {
         </DialogContent>
       </Dialog>
     </div>
+    <div className="px-4 md:px-6 pb-6 max-w-[1600px]">
+      <DisclaimerBlock />
+    </div>
     </div>
     <TestimonialsSection />
     </>
