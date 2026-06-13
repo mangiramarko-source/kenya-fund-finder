@@ -154,7 +154,7 @@ const PortfolioTable = ({
           const liquidityDays =
             item.asset_type === "mmf"
               ? (item.asset_id ? liquidityById?.get(item.asset_id) : undefined) ??
-                liquidityByName?.get(item.asset_name.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim())
+                liquidityByName?.get(normalizeName(item.asset_name))
               : undefined;
 
           const monthlyIncome =
