@@ -11,7 +11,7 @@ export const FREE_PLAN = {
 export type PlanLimits = typeof FREE_PLAN;
 
 export const limitMessages = {
-  alertsAtMax: `Free plan includes ${FREE_PLAN.MAX_ACTIVE_ALERTS} active alerts. Disable one to add another.`,
+  alertsAtMax: `You can create up to ${FREE_PLAN.MAX_ACTIVE_ALERTS} active alerts on the free plan.`,
 };
 
 /** Whether the user can create another active alert. */
