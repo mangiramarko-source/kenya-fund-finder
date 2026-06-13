@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { portfolioStorage } from "@/lib/portfolioStorage";
+import { portfolioEventsStorage } from "@/lib/portfolioEventsStorage";
 
 export type AssetType = "mmf" | "stock" | "fx" | "fixed_income" | "commodity";
 
