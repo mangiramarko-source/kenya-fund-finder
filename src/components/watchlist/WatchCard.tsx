@@ -33,9 +33,20 @@ const WatchCard = ({
   sparkData,
   trend,
   onAlert,
+  onReset,
+  alertState = "none",
   onRemove,
   linkTo,
 }: WatchCardProps) => {
+  const AlertIcon = alertState === "triggered" ? BellRing : BellPlus;
+  const alertTitle =
+    alertState === "triggered" ? "Alert triggered"
+    : alertState === "active" ? "Alert active"
+    : "Create alert";
+  const alertClass =
+    alertState === "triggered" ? "text-warning hover:text-warning"
+    : alertState === "active" ? "text-accent hover:text-accent"
+    : "text-muted-foreground hover:text-accent";
   const mobileMain = (
     <>
       <div className="flex-1 min-w-0">
