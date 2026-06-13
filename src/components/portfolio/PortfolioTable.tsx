@@ -142,7 +142,7 @@ const PortfolioTable = ({
           <TableHead className="text-right">Recent change</TableHead>
           <TableHead>Alert</TableHead>
           <TableHead className="text-right">Last updated</TableHead>
-          <TableHead className="w-10" />
+          <TableHead className="w-20" />
         </TableRow>
       </TableHeader>
       <TableBody>
