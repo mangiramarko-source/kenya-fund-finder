@@ -121,6 +121,9 @@ const App = () => (
                     <Route path="/watchlist" element={<WatchlistPage />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin" element={<AdminPage />} />
+                    {import.meta.env.DEV && (
+                      <Route path="/dev/email-preview" element={<DevEmailPreviewPage />} />
+                    )}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
