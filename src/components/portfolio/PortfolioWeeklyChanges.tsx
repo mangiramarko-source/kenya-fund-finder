@@ -1,14 +1,51 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { TrendingUp, TrendingDown, Minus, Activity } from "lucide-react";
+import { TrendingUp, TrendingDown, Activity, AlertCircle } from "lucide-react";
 import type { ChangeRow } from "@/hooks/usePortfolioChanges";
+import { buildWeeklyBuckets } from "@/lib/portfolioWeeklyBuckets";
 
 interface Props {
   changes: ChangeRow[];
   loading?: boolean;
 }
 
+const fmtDelta = (c: ChangeRow): string => {
+  const v = c.delta ?? 0;
+  const sign = v > 0 ? "+" : "";
+  return c.unit === "%"
+    ? `${sign}${v.toFixed(2)}%`
+    : `${sign}KES ${Math.abs(v).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+};
+
+const Row = ({
+  label,
+  row,
+  positive,
+}: {
+  label: string;
+  row: ChangeRow | null;
+  positive: boolean;
+}) => {
+  if (!row) return null;
+  const Icon = positive ? TrendingUp : TrendingDown;
+  const tone = positive ? "text-accent" : "text-destructive";
+  return (
+    <li className="py-2 flex items-start justify-between gap-3 text-sm">
+      <div className="min-w-0">
+        <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">
+          {label}
+        </p>
+        <p className="truncate font-medium text-foreground mt-0.5">{row.assetName}</p>
+      </div>
+      <span className={`inline-flex items-center gap-1 text-xs font-semibold tabular-nums whitespace-nowrap ${tone}`}>
+        <Icon className="h-3 w-3" />
+        {fmtDelta(row)}
+      </span>
+    </li>
+  );
+};
+
 const PortfolioWeeklyChanges = ({ changes, loading }: Props) => {
-  const withData = changes.filter((c) => c.delta != null);
+  const buckets = buildWeeklyBuckets(changes);
 
   return (
     <Card className="border-border bg-card">
@@ -20,34 +57,32 @@ const PortfolioWeeklyChanges = ({ changes, loading }: Props) => {
       <CardContent>
         {loading ? (
           <p className="text-sm text-muted-foreground py-3">Loading…</p>
-        ) : withData.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-3">
-            No recent snapshot data available for your holdings yet.
-          </p>
+        ) : buckets.isEmpty ? (
+          <p className="text-sm text-muted-foreground py-3">Not enough recent data yet.</p>
         ) : (
-          <ul className="divide-y divide-border">
-            {withData.map((c) => {
-              const up = (c.delta ?? 0) > 0;
-              const flat = (c.delta ?? 0) === 0;
-              const Icon = flat ? Minus : up ? TrendingUp : TrendingDown;
-              const tone = flat ? "text-muted-foreground" : up ? "text-accent" : "text-destructive";
-              return (
-                <li key={c.itemId} className="py-2 flex items-center justify-between text-sm">
-                  <div className="min-w-0">
-                    <p className="truncate font-medium text-foreground">{c.assetName}</p>
-                    <p className="text-[11px] text-muted-foreground">
-                      {c.assetType === "mmf" ? "Yield data changed" : "Price data changed"}
-                    </p>
-                  </div>
-                  <span className={`inline-flex items-center gap-1 text-xs font-semibold tabular-nums ${tone}`}>
-                    <Icon className="h-3 w-3" />
-                    {c.delta != null && (up ? "+" : "")}
-                    {c.delta?.toFixed(c.unit === "%" ? 2 : 2)}{c.unit === "%" ? "%" : ""}
-                  </span>
-                </li>
-              );
-            })}
-          </ul>
+          <>
+            <ul className="divide-y divide-border">
+              <Row label="Largest yield increase" row={buckets.largestYieldIncrease} positive />
+              <Row label="Largest yield decrease" row={buckets.largestYieldDecrease} positive={false} />
+              <Row label="Largest price increase" row={buckets.largestPriceIncrease} positive />
+              <Row label="Largest price decrease" row={buckets.largestPriceDecrease} positive={false} />
+            </ul>
+            <div className="mt-3 flex flex-wrap gap-3 text-[11px] text-muted-foreground">
+              <span className="inline-flex items-center gap-1">
+                <span className="h-1.5 w-1.5 rounded-full bg-accent" />
+                {buckets.withData.length} with new snapshot data
+              </span>
+              {buckets.missingData.length > 0 && (
+                <span className="inline-flex items-center gap-1">
+                  <AlertCircle className="h-3 w-3 text-muted-foreground" />
+                  {buckets.missingData.length} with no recent data
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-muted-foreground mt-2">
+              Data only. Not personal financial advice.
+            </p>
+          </>
         )}
       </CardContent>
     </Card>
