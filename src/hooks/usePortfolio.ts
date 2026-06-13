@@ -4,6 +4,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { portfolioStorage } from "@/lib/portfolioStorage";
+import { portfolioEventsStorage } from "@/lib/portfolioEventsStorage";
 
 export type AssetType = "mmf" | "stock" | "fx" | "fixed_income" | "commodity";
 
@@ -202,40 +203,100 @@ export const usePortfolio = () => {
   const addItem = useMutation({
     mutationFn: async (item: NewPortfolioItem) => {
       if (!user) {
-        portfolioStorage.add(item);
+        const rec = portfolioStorage.add(item);
+        portfolioEventsStorage.record({
+          portfolio_holding_id: rec.id,
+          asset_id: item.asset_id ?? null,
+          asset_type: item.asset_type,
+          asset_name: item.asset_name,
+          event_type: "add",
+          amount: item.units * item.buy_price,
+          quantity: item.units,
+          note: "",
+        });
         return;
       }
-      const { error } = await supabase.from("mock_portfolios").insert({
-        user_id: user.id,
-        ...item,
-        asset_id: item.asset_id ?? null,
-        current_yield: item.current_yield ?? 0,
-        buy_date: item.buy_date ?? new Date().toISOString(),
-        notes: item.notes ?? "",
-      } as any);
+      const { data, error } = await supabase
+        .from("mock_portfolios")
+        .insert({
+          user_id: user.id,
+          ...item,
+          asset_id: item.asset_id ?? null,
+          current_yield: item.current_yield ?? 0,
+          buy_date: item.buy_date ?? new Date().toISOString(),
+          notes: item.notes ?? "",
+        } as any)
+        .select()
+        .single();
       if (error) throw error;
+      // Best-effort event log — failures must not block the add.
+      try {
+        await supabase.from("portfolio_events").insert({
+          user_id: user.id,
+          portfolio_holding_id: (data as any)?.id ?? null,
+          asset_id: item.asset_id ?? null,
+          asset_type: item.asset_type,
+          asset_name: item.asset_name,
+          event_type: "add",
+          amount: item.units * item.buy_price,
+          quantity: item.units,
+          note: "",
+        } as any);
+      } catch (e) {
+        console.warn("portfolio_events insert failed", e);
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
-      toast.success("Investment added");
+      toast.success("Holding added");
     },
-    onError: () => toast.error("Failed to add investment"),
+    onError: () => toast.error("Failed to add holding"),
   });
 
   const deleteItem = useMutation({
     mutationFn: async (id: string) => {
+      const existing = items.find((i) => i.id === id);
       if (!user) {
         portfolioStorage.remove(id);
+        if (existing) {
+          portfolioEventsStorage.record({
+            portfolio_holding_id: id,
+            asset_id: existing.asset_id ?? null,
+            asset_type: existing.asset_type,
+            asset_name: existing.asset_name,
+            event_type: "remove",
+            amount: null,
+            quantity: existing.units,
+            note: "",
+          });
+        }
         return;
       }
       const { error } = await supabase.from("mock_portfolios").delete().eq("id", id);
       if (error) throw error;
+      if (existing) {
+        try {
+          await supabase.from("portfolio_events").insert({
+            user_id: user.id,
+            portfolio_holding_id: id,
+            asset_id: existing.asset_id ?? null,
+            asset_type: existing.asset_type,
+            asset_name: existing.asset_name,
+            event_type: "remove",
+            amount: null,
+            quantity: existing.units,
+            note: "",
+          } as any);
+        } catch (e) {
+          console.warn("portfolio_events insert failed", e);
+        }
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
-      toast.success("Investment removed");
+      toast.success("Holding removed");
     },
-    onError: () => toast.error("Failed to remove investment"),
+    onError: () => toast.error("Failed to remove holding"),
   });
 
   const totalValue = items.reduce((sum, i) => sum + getCurrentValue(i), 0);

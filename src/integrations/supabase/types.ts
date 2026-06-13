@@ -865,6 +865,51 @@ export type Database = {
         }
         Relationships: []
       }
+      portfolio_events: {
+        Row: {
+          amount: number | null
+          asset_id: string | null
+          asset_name: string
+          asset_type: string
+          created_at: string
+          event_date: string
+          event_type: string
+          id: string
+          note: string
+          portfolio_holding_id: string | null
+          quantity: number | null
+          user_id: string
+        }
+        Insert: {
+          amount?: number | null
+          asset_id?: string | null
+          asset_name: string
+          asset_type: string
+          created_at?: string
+          event_date?: string
+          event_type: string
+          id?: string
+          note?: string
+          portfolio_holding_id?: string | null
+          quantity?: number | null
+          user_id: string
+        }
+        Update: {
+          amount?: number | null
+          asset_id?: string | null
+          asset_name?: string
+          asset_type?: string
+          created_at?: string
+          event_date?: string
+          event_type?: string
+          id?: string
+          note?: string
+          portfolio_holding_id?: string | null
+          quantity?: number | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       price_alerts: {
         Row: {
           asset_id: string

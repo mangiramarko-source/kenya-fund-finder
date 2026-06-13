@@ -1,8 +1,9 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { usePortfolio } from "@/hooks/usePortfolio";
+import { usePortfolio, type PortfolioItem } from "@/hooks/usePortfolio";
 import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
 import { usePortfolioMetrics } from "@/hooks/usePortfolioMetrics";
+import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,10 @@ import WeightedYieldCard from "@/components/portfolio/WeightedYieldCard";
 import MonthlyIncomeCard from "@/components/portfolio/MonthlyIncomeCard";
 import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
 import PortfolioWeeklyChanges from "@/components/portfolio/PortfolioWeeklyChanges";
+import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
+import { supabase } from "@/integrations/supabase/client";
+import { useEffect } from "react";
+import { normalizeName } from "@/lib/assetMatch";
 import { formatDistanceToNow } from "date-fns";
 
 const PortfolioPage = () => {
@@ -36,6 +41,58 @@ const PortfolioPage = () => {
 
   const { changes, loading: changesLoading } = usePortfolioChanges(items);
   const metrics = usePortfolioMetrics(items);
+  const { alerts } = usePriceAlerts();
+
+  // Fetch withdrawal_days once for all funds — used by the holdings table for liquidity bucket display.
+  const [liquidityByName, setLiquidityByName] = useState<Map<string, number | null>>(new Map());
+  const [liquidityById, setLiquidityById] = useState<Map<string, number | null>>(new Map());
+  useEffect(() => {
+    if (!items.some((i) => i.asset_type === "mmf")) return;
+    supabase
+      .from("funds_public")
+      .select("id, name, withdrawal_days")
+      .eq("is_published", true)
+      .then(({ data }) => {
+        const m = new Map<string, number | null>();
+        const idMap = new Map<string, number | null>();
+        (data || []).forEach((r: any) => {
+          const key = normalizeName(r.name);
+          if (key) m.set(key, r.withdrawal_days ?? null);
+          if (r.id) idMap.set(r.id, r.withdrawal_days ?? null);
+        });
+        setLiquidityByName(m);
+        setLiquidityById(idMap);
+      });
+  }, [items.map((i) => i.id).join("|")]);
+
+  const [alertDialog, setAlertDialog] = useState<{
+    assetType: "fund" | "stock";
+    assetId: string;
+    assetName: string;
+    currentPrice: number;
+    unit: string;
+  } | null>(null);
+
+  const openAlertForHolding = (item: PortfolioItem) => {
+    if (!item.asset_id) return; // need a canonical id to create an alert
+    if (item.asset_type === "mmf") {
+      setAlertDialog({
+        assetType: "fund",
+        assetId: item.asset_id,
+        assetName: item.asset_name,
+        currentPrice: item.current_yield || 0,
+        unit: "%",
+      });
+    } else if (item.asset_type === "stock") {
+      setAlertDialog({
+        assetType: "stock",
+        assetId: item.asset_id,
+        assetName: item.asset_name,
+        currentPrice: item.current_price,
+        unit: "KES",
+      });
+    }
+  };
 
   const recentChangePct = useMemo(() => {
     const valid = changes.filter((c) => c.deltaPct != null);
@@ -174,15 +231,36 @@ const PortfolioPage = () => {
               {isLoading ? (
                 <div className="py-8 text-center text-sm text-muted-foreground">Loading…</div>
               ) : (
-                <PortfolioTable items={items} currency={currency} onDelete={(id) => deleteItem.mutate(id)} />
+                <PortfolioTable
+                  items={items}
+                  currency={currency}
+                  onDelete={(id) => deleteItem.mutate(id)}
+                  changes={changes}
+                  alerts={alerts}
+                  liquidityByName={liquidityByName}
+                  liquidityById={liquidityById}
+                  onOpenAlert={openAlertForHolding}
+                />
               )}
             </CardContent>
           </Card>
 
           <p className="text-[11px] text-muted-foreground">
-            Data only. Not personal financial advice. Estimates assume 15% withholding tax where applicable; actual returns may differ.
+            This portfolio summary is based on user-entered holdings and available market/fund data. It is general information only and is not personal financial advice. Estimates assume 15% withholding tax on yield-bearing fund holdings; actual returns may differ.
           </p>
         </>
+      )}
+
+      {alertDialog && (
+        <CreateAlertDialog
+          open
+          onOpenChange={(o) => { if (!o) setAlertDialog(null); }}
+          assetType={alertDialog.assetType}
+          assetId={alertDialog.assetId}
+          assetName={alertDialog.assetName}
+          currentPrice={alertDialog.currentPrice}
+          unit={alertDialog.unit}
+        />
       )}
     </div>
   );
