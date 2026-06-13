@@ -40,7 +40,7 @@ describe("weekly email sections — saved funds", () => {
     expect(html).toContain("CIC MMF");
     expect(html).toContain("14.50%");
     expect(html).toContain("0.20%");
-    FORBIDDEN_WORDS.forEach((w) => expect(html.toLowerCase()).not.toContain(w));
+    assertNeutral(html);
   });
   it("omits change badge when change is null", () => {
     const html = buildSavedFundsSection([
@@ -69,7 +69,7 @@ describe("weekly email sections — saved stocks", () => {
     expect(html).toContain("Saved stocks");
     expect(html).toContain("SCOM");
     expect(html).toContain("KES 17.50");
-    FORBIDDEN_WORDS.forEach((w) => expect(html.toLowerCase()).not.toContain(w));
+    assertNeutral(html);
   });
 });
 
@@ -93,7 +93,7 @@ describe("weekly email sections — portfolio summary", () => {
     expect(html).toContain("KES 100,000.00");
     expect(html).toContain("12.50%");
     expect(html).toContain("Unit Trusts");
-    FORBIDDEN_WORDS.forEach((w) => expect(html.toLowerCase()).not.toContain(w));
+    assertNeutral(html);
   });
   it("falls back to neutral wording when data unavailable", () => {
     const html = buildPortfolioSummarySection({
@@ -122,6 +122,6 @@ describe("buildRetentionBlock", () => {
 describe("neutral disclaimer", () => {
   it("does not contain advice language", () => {
     expect(NEUTRAL_DISCLAIMER_HTML).toContain("not personal financial advice");
-    FORBIDDEN_WORDS.forEach((w) => expect(NEUTRAL_DISCLAIMER_HTML.toLowerCase()).not.toContain(w));
+    assertNeutral(NEUTRAL_DISCLAIMER_HTML);
   });
 });
