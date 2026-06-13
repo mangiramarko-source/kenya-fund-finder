@@ -52,6 +52,11 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/learn</loc>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/learn/how-to-invest-in-money-market-funds-kenya</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.8</priority>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>
   </url>

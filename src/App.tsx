@@ -26,6 +26,7 @@ const FundDetailPage = lazy(() => import("./pages/FundDetailPage"));
 const NewsPage = lazy(() => import("./pages/NewsPage"));
 const NewsArticlePage = lazy(() => import("./pages/NewsArticlePage"));
 const LearnPage = lazy(() => import("./pages/LearnPage"));
+const MmfGuidePage = lazy(() => import("./pages/MmfGuidePage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
@@ -89,6 +90,7 @@ const App = () => (
                     <Route path="/news" element={<NewsPage />} />
                     <Route path="/news/:id" element={<NewsArticlePage />} />
                     <Route path="/learn" element={<LearnPage />} />
+                    <Route path="/learn/how-to-invest-in-money-market-funds-kenya" element={<MmfGuidePage />} />
                     <Route path="/privacy" element={<SitePage />} />
                     <Route path="/terms" element={<SitePage />} />
                     <Route path="/auth" element={<AuthPage />} />
