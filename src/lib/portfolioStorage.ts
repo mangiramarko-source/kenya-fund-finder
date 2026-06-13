@@ -73,6 +73,22 @@ export const portfolioStorage = {
     safeWrite(next);
     return records;
   },
+  update(id: string, patch: Partial<PortfolioItem>): PortfolioItem | null {
+    const items = safeRead();
+    const idx = items.findIndex((i) => i.id === id);
+    if (idx === -1) return null;
+    const updated: PortfolioItem = {
+      ...items[idx],
+      ...patch,
+      id: items[idx].id,
+      user_id: items[idx].user_id,
+      created_at: items[idx].created_at,
+      updated_at: new Date().toISOString(),
+    };
+    items[idx] = updated;
+    safeWrite(items);
+    return updated;
+  },
   remove(id: string) {
     safeWrite(safeRead().filter((i) => i.id !== id));
   },
