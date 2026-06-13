@@ -14,6 +14,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import YieldChange, { formatYield } from "@/components/YieldChange";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
+import AddToPortfolioButton from "@/components/portfolio/AddToPortfolioButton";
 
 const FUND_TYPE_LABELS: Record<string, string> = {
   money_market: "Money Market",
@@ -240,17 +241,33 @@ const FundDetailPage = () => {
           <QuickStat label="Withdrawal" value={fund.withdrawal_time} />
         </div>
 
-        <div className="flex items-center justify-between mt-3">
+        <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
           <p className="text-[11px] text-muted-foreground/60 tabular-nums">
             Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
           </p>
-          {fund.website && /^https?:\/\//i.test(fund.website) && (
-            <a href={fund.website} target="_blank" rel="noopener noreferrer">
-              <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1.5 text-xs rounded-full px-4">
-                <ExternalLink className="h-3.5 w-3.5" /> Visit Official Site
-              </Button>
-            </a>
-          )}
+          <div className="flex items-center gap-2">
+            <AddToPortfolioButton
+              asset={{
+                asset_type: "mmf",
+                asset_name: fund.name,
+                ticker: fund.slug,
+                units: 1,
+                buy_price: 10_000,
+                current_price: 10_000,
+                current_yield: Number(fund.annual_yield) || 15,
+              }}
+              variant="outline"
+              size="sm"
+              className="rounded-full text-xs h-8"
+            />
+            {fund.website && /^https?:\/\//i.test(fund.website) && (
+              <a href={fund.website} target="_blank" rel="noopener noreferrer">
+                <Button size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 gap-1.5 text-xs rounded-full px-4">
+                  <ExternalLink className="h-3.5 w-3.5" /> Visit Official Site
+                </Button>
+              </a>
+            )}
+          </div>
         </div>
       </div>
 
