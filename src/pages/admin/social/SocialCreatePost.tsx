@@ -20,6 +20,11 @@ export default function SocialCreatePost({ onCreated }: { onCreated?: () => void
   const [note, setNote] = useState("");
   const [busy, setBusy] = useState(false);
 
+  // URL-extract tab state
+  const [urlInput, setUrlInput] = useState("");
+  const [urlPlatforms, setUrlPlatforms] = useState<string[]>(["facebook"]);
+  const [urlBusy, setUrlBusy] = useState(false);
+
   const def = CONTENT_TYPES.find(c => c.key === contentType);
 
   const funds = useQuery({
@@ -52,8 +57,50 @@ export default function SocialCreatePost({ onCreated }: { onCreated?: () => void
     onCreated?.();
   };
 
+  const toggleUrlPlatform = (p: string) =>
+    setUrlPlatforms(ps => ps.includes(p) ? ps.filter(x => x !== p) : [...ps, p]);
+
+  const extractFromUrl = async () => {
+    const trimmed = urlInput.trim();
+    if (!/^https?:\/\/.+/i.test(trimmed)) {
+      toast({ title: "Enter a valid URL (starting with http/https)", variant: "destructive" });
+      return;
+    }
+    if (urlPlatforms.length === 0) {
+      toast({ title: "Pick at least one platform", variant: "destructive" });
+      return;
+    }
+    setUrlBusy(true);
+    const { data, error } = await supabase.functions.invoke("social-extract-url", {
+      body: { url: trimmed, platforms: urlPlatforms, content_type: "manual_url" },
+    });
+    setUrlBusy(false);
+    if (error || (data as any)?.error) {
+      toast({
+        title: "Extraction failed",
+        description: error?.message ?? (data as any)?.error,
+        variant: "destructive",
+      });
+      return;
+    }
+    const created = (data as any)?.created_ids?.length ?? 0;
+    toast({
+      title: `Created ${created} draft${created === 1 ? "" : "s"} from URL`,
+      description: "Edit & approve in the Queue tab.",
+    });
+    setUrlInput("");
+    onCreated?.();
+  };
+
   return (
-    <Card className="p-4 space-y-4 max-w-3xl">
+    <Tabs defaultValue="ai" className="max-w-3xl">
+      <TabsList>
+        <TabsTrigger value="ai"><Sparkles className="h-3 w-3 mr-1" />AI-generated</TabsTrigger>
+        <TabsTrigger value="url"><Link2 className="h-3 w-3 mr-1" />From URL (no AI)</TabsTrigger>
+      </TabsList>
+
+      <TabsContent value="ai">
+    <Card className="p-4 space-y-4">
       <div>
         <Label>Content type</Label>
         <Select value={contentType} onValueChange={setContentType}>
