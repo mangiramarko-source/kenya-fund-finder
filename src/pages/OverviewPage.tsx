@@ -19,8 +19,9 @@ import {
   TrendingUp, TrendingDown, Minus, Bell, BellPlus, Plus,
   Settings2, X, Star, Search, Eye, Check, SlidersHorizontal,
   BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
-  Landmark, ArrowRight, Newspaper, Clock,
+  Landmark, ArrowRight, Newspaper, Clock, Briefcase,
 } from "lucide-react";
+import PortfolioSnapshotPanel from "@/components/portfolio/PortfolioSnapshotPanel";
 import { toast } from "sonner";
 import { fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
