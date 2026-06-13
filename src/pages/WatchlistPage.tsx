@@ -386,6 +386,25 @@ const WatchlistPage = () => {
         <div className="md:hidden border-b border-border mt-3" />
       </div>
 
+      {/* Summary pills (neutral labels — no recommendations) */}
+      {!loading && totalCount > 0 && (
+        <div className="flex flex-wrap items-center gap-2 text-[11px]">
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted/60 border border-border">
+            <Star className="h-3 w-3 text-warning" />
+            <span className="text-muted-foreground">Saved assets</span>
+            <span className="font-semibold text-foreground tabular-nums">{totalCount}</span>
+          </span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-muted/60 border border-border">
+            <span className="text-muted-foreground">Active alerts</span>
+            <span className="font-semibold text-foreground tabular-nums">{alertSummary.active}</span>
+          </span>
+          <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-destructive/10 border border-destructive/30">
+            <span className="text-destructive/90">Triggered alerts</span>
+            <span className="font-semibold text-destructive tabular-nums">{alertSummary.triggered}</span>
+          </span>
+        </div>
+      )}
+
       {/* Loading */}
       {loading && (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
