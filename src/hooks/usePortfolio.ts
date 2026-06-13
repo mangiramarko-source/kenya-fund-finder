@@ -382,5 +382,5 @@ export const usePortfolio = () => {
     return acc;
   }, {} as Record<AssetType, number>);
 
-  return { items, isLoading, addItem, deleteItem, totalValue, totalCost, totalPnL, totalPnLPercent, allocation, isDemo };
+  return { items, isLoading, addItem, updateItem, deleteItem, totalValue, totalCost, totalPnL, totalPnLPercent, allocation, isDemo };
 };
