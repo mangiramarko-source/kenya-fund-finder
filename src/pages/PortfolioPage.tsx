@@ -37,6 +37,7 @@ const PortfolioPage = () => {
     items,
     isLoading,
     addItem,
+    updateItem,
     deleteItem,
     totalValue,
     totalPnL,
@@ -45,9 +46,37 @@ const PortfolioPage = () => {
     isDemo,
   } = usePortfolio();
 
+  const { user } = useAuth();
   const { changes, loading: changesLoading } = usePortfolioChanges(items);
   const metrics = usePortfolioMetrics(items);
   const { alerts } = usePriceAlerts();
+  const { events: activityEvents, isLoading: activityLoading } = usePortfolioEvents(50);
+  const [editItem, setEditItem] = useState<PortfolioItem | null>(null);
+  const [backfillBusy, setBackfillBusy] = useState(false);
+
+  const hasUnlinkedHoldings = useMemo(
+    () => !!user && items.some((i) => !i.asset_id && (i.asset_type === "mmf" || i.asset_type === "stock")),
+    [items, user],
+  );
+
+  const runBackfill = async () => {
+    if (!user) return;
+    setBackfillBusy(true);
+    try {
+      const { data, error } = await supabase.rpc("backfill_my_portfolio_asset_ids" as never);
+      if (error) throw error;
+      const d = (data as { scanned: number; updated: number; skipped: number } | null) ?? null;
+      if (d) {
+        toast.success(`Asset link refresh: ${d.updated} updated, ${d.skipped} skipped of ${d.scanned}.`);
+      } else {
+        toast.success("Asset link refresh complete.");
+      }
+    } catch (e: any) {
+      toast.error(e?.message || "Could not refresh asset links");
+    } finally {
+      setBackfillBusy(false);
+    }
+  };
 
   // Fetch withdrawal_days once for all funds — used by the holdings table for liquidity bucket display.
   const [liquidityByName, setLiquidityByName] = useState<Map<string, number | null>>(new Map());
