@@ -152,5 +152,44 @@ export default function SocialCreatePost({ onCreated }: { onCreated?: () => void
         Generated drafts go to the Queue. Captions and image cards are AI-generated through Lovable AI Gateway and pass through a brand-safety filter.
       </p>
     </Card>
+      </TabsContent>
+
+      <TabsContent value="url">
+        <Card className="p-4 space-y-4">
+          <div>
+            <Label>Page URL</Label>
+            <Input
+              type="url"
+              value={urlInput}
+              onChange={e => setUrlInput(e.target.value)}
+              placeholder="https://example.com/article"
+            />
+            <p className="text-xs text-muted-foreground mt-1">
+              We'll scrape the page and prefill caption + image (title, summary, OG image). No AI credits used.
+            </p>
+          </div>
+
+          <div>
+            <Label>Platforms</Label>
+            <div className="flex gap-3 mt-2">
+              {PLATFORMS.map(p => (
+                <label key={p} className="flex items-center gap-2 text-sm">
+                  <Checkbox checked={urlPlatforms.includes(p)} onCheckedChange={() => toggleUrlPlatform(p)} />
+                  {PLATFORM_LABEL[p]}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          <Button onClick={extractFromUrl} disabled={urlBusy}>
+            {urlBusy ? <Loader2 className="h-4 w-4 mr-2 animate-spin" /> : <Link2 className="h-4 w-4 mr-2" />}
+            Extract & create draft
+          </Button>
+          <p className="text-xs text-muted-foreground">
+            Drafts land in the Queue. You can edit the caption, swap the image, then approve or publish.
+          </p>
+        </Card>
+      </TabsContent>
+    </Tabs>
   );
 }
