@@ -1,5 +1,12 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import {
+  buildRetentionBlock,
+  NEUTRAL_DISCLAIMER_HTML,
+  type SavedFundRow,
+  type SavedStockRow,
+  type PortfolioSummary,
+} from "../_shared/weekly-email-sections.ts";
 
 const GATEWAY_URL = "https://connector-gateway.lovable.dev/resend";
 
@@ -66,6 +73,7 @@ function buildEmailHtml(
   topFunds: TopFund[],
   news: NewsItem[],
   siteUrl: string,
+  retentionHtml: string,
 ): string {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   const hasWatchlist = fundAssets.length + stockAssets.length + currencyAssets.length > 0;
@@ -146,6 +154,17 @@ function buildEmailHtml(
           </td>
         </tr>
 
+        ${retentionHtml ? `
+        <!-- Divider -->
+        <tr><td style="padding:20px 28px 0;"><hr style="border:none;border-top:1px solid #e2e8f0;margin:0;"></td></tr>
+
+        <!-- Retention block: saved funds + saved stocks + portfolio summary -->
+        <tr>
+          <td style="padding:20px 28px 0;">
+            ${retentionHtml}
+          </td>
+        </tr>` : ""}
+
         <!-- Divider -->
         <tr><td style="padding:20px 28px 0;"><hr style="border:none;border-top:1px solid #e2e8f0;margin:0;"></td></tr>
 
@@ -184,7 +203,8 @@ function buildEmailHtml(
         <!-- Footer -->
         <tr>
           <td style="padding:20px 28px;border-top:1px solid #e2e8f0;margin-top:16px;">
-            <p style="margin:0;font-size:11px;color:#94a3b8;text-align:center;line-height:1.6;">
+            ${NEUTRAL_DISCLAIMER_HTML}
+            <p style="margin:8px 0 0;font-size:11px;color:#94a3b8;text-align:center;line-height:1.6;">
               Kenya Fund Finder — Kenyan investment insights, simplified.<br/>
               Operated by Elyon Innovation LTD. © ${new Date().getFullYear()} All rights reserved.<br/>
               <a href="${siteUrl}/profile" style="color:#64748b;text-decoration:underline;">Manage preferences</a>
@@ -277,6 +297,122 @@ async function fetchUserWatchlistAssets(supabase: any, userId: string) {
   }
 
   return { fundAssets, stockAssets, currencyAssets };
+}
+
+// ── Per-user retention data (saved funds + saved stocks + portfolio) ─
+
+async function fetchUserRetentionData(supabase: any, userId: string): Promise<{
+  savedFunds: SavedFundRow[];
+  savedStocks: SavedStockRow[];
+  portfolio: PortfolioSummary | null;
+}> {
+  const { data: watchlist } = await supabase
+    .from("user_watchlist")
+    .select("item_id, item_type")
+    .eq("user_id", userId);
+
+  const fundIds = (watchlist || []).filter((w: any) => w.item_type === "fund").map((w: any) => w.item_id);
+  const stockIds = (watchlist || []).filter((w: any) => w.item_type === "stock").map((w: any) => w.item_id);
+
+  let savedFunds: SavedFundRow[] = [];
+  if (fundIds.length > 0) {
+    const { data: funds } = await supabase
+      .from("funds")
+      .select("id, name, annual_yield, yield_unit, updated_at")
+      .in("id", fundIds);
+    const fundList = funds || [];
+    const { data: snaps } = await supabase
+      .from("fund_yield_snapshots")
+      .select("fund_id, annual_yield, snapshot_date")
+      .in("fund_id", fundIds)
+      .order("snapshot_date", { ascending: false })
+      .limit(fundList.length * 5);
+    const prevByFund = new Map<string, number>();
+    (snaps || []).forEach((s: any) => {
+      if (!prevByFund.has(s.fund_id)) prevByFund.set(s.fund_id, Number(s.annual_yield));
+    });
+    savedFunds = fundList.map((f: any) => {
+      const prev = prevByFund.get(f.id);
+      const yc = prev != null ? Number(f.annual_yield) - prev : null;
+      return {
+        name: f.name,
+        latest_yield: Number(f.annual_yield) || 0,
+        yield_unit: f.yield_unit || "%",
+        yield_change: yc,
+        last_updated: f.updated_at || null,
+      };
+    });
+  }
+
+  let savedStocks: SavedStockRow[] = [];
+  if (stockIds.length > 0) {
+    const { data: stocks } = await supabase
+      .from("stocks")
+      .select("id, name, symbol, price, day_change, updated_at")
+      .in("id", stockIds);
+    savedStocks = (stocks || []).map((s: any) => ({
+      name: s.name,
+      symbol: s.symbol,
+      price: Number(s.price) || 0,
+      price_change: s.day_change != null ? Number(s.day_change) : null,
+      last_updated: s.updated_at || null,
+    }));
+  }
+
+  const { data: holdings } = await supabase
+    .from("mock_portfolios")
+    .select("asset_type, asset_name, units, buy_price, current_price, current_yield, buy_date")
+    .eq("user_id", userId);
+
+  let portfolio: PortfolioSummary | null = null;
+  const list = holdings || [];
+  if (list.length > 0) {
+    const valueOf = (h: any): number => {
+      if (h.asset_type === "mmf") {
+        const days = Math.max(0, Math.floor((Date.now() - new Date(h.buy_date).getTime()) / 86400000));
+        const principal = Number(h.units) * Number(h.buy_price);
+        const rate = Number(h.current_yield) || 15;
+        return principal * Math.pow(1 + rate / 100 / 365, days);
+      }
+      return Number(h.units) * Number(h.current_price);
+    };
+    const total = list.reduce((s: number, h: any) => s + valueOf(h), 0);
+    if (total > 0) {
+      let yieldSum = 0;
+      let yieldValueSum = 0;
+      list.forEach((h: any) => {
+        if (h.current_yield != null && Number(h.current_yield) > 0) {
+          const v = valueOf(h);
+          yieldSum += v * Number(h.current_yield);
+          yieldValueSum += v;
+        }
+      });
+      const weighted = yieldValueSum > 0 ? yieldSum / yieldValueSum : null;
+      const monthly = weighted != null ? (yieldValueSum * (weighted / 100) * 0.85) / 12 : null;
+
+      const ALLOC_LABELS: Record<string, string> = {
+        mmf: "Unit Trusts", stock: "NSE Stocks", fx: "FX / Cash",
+        fixed_income: "Fixed Income", commodity: "Commodities",
+      };
+      const buckets = new Map<string, number>();
+      list.forEach((h: any) => {
+        const label = ALLOC_LABELS[h.asset_type] || "Other";
+        buckets.set(label, (buckets.get(label) || 0) + valueOf(h));
+      });
+      const allocation = Array.from(buckets.entries()).map(([label, value]) => ({
+        label, value, pct: (value / total) * 100,
+      }));
+
+      portfolio = {
+        totalValue: total,
+        weightedYield: weighted,
+        monthlyIncomeEstimate: monthly,
+        allocation,
+      };
+    }
+  }
+
+  return { savedFunds, savedStocks, portfolio };
 }
 
 // ── Main handler ─────────────────────────────────────────────────────
@@ -427,6 +563,8 @@ Deno.serve(async (req) => {
 
     for (const user of users) {
       const { fundAssets, stockAssets, currencyAssets } = await fetchUserWatchlistAssets(supabase, user.user_id);
+      const { savedFunds, savedStocks, portfolio } = await fetchUserRetentionData(supabase, user.user_id);
+      const retentionHtml = buildRetentionBlock({ savedFunds, savedStocks, portfolio });
 
       const html = buildEmailHtml(
         user.display_name,
@@ -436,6 +574,7 @@ Deno.serve(async (req) => {
         topFunds,
         news,
         siteUrl,
+        retentionHtml,
       );
 
       try {

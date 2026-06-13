@@ -1,6 +1,8 @@
 import { Link } from "react-router-dom";
-import { BellPlus, X } from "lucide-react";
+import { BellPlus, BellRing, RotateCcw, X } from "lucide-react";
 import Sparkline from "@/components/Sparkline";
+
+export type AlertState = "none" | "active" | "triggered";
 
 export interface WatchCardProps {
   title: string;
@@ -12,6 +14,9 @@ export interface WatchCardProps {
   sparkData?: number[];
   trend?: "up" | "down" | "flat";
   onAlert?: () => void;
+  /** When alert exists and has triggered, surface a reset baseline action. */
+  onReset?: () => void;
+  alertState?: AlertState;
   onRemove: () => void;
   linkTo?: string;
 }
@@ -28,9 +33,20 @@ const WatchCard = ({
   sparkData,
   trend,
   onAlert,
+  onReset,
+  alertState = "none",
   onRemove,
   linkTo,
 }: WatchCardProps) => {
+  const AlertIcon = alertState === "triggered" ? BellRing : BellPlus;
+  const alertTitle =
+    alertState === "triggered" ? "Alert triggered"
+    : alertState === "active" ? "Alert active"
+    : "Create alert";
+  const alertClass =
+    alertState === "triggered" ? "text-warning hover:text-warning"
+    : alertState === "active" ? "text-accent hover:text-accent"
+    : "text-muted-foreground hover:text-accent";
   const mobileMain = (
     <>
       <div className="flex-1 min-w-0">
@@ -82,16 +98,30 @@ const WatchCard = ({
           <button
             type="button"
             onClick={onAlert}
-            className="text-muted-foreground hover:text-accent transition-colors p-0.5"
+            className={`${alertClass} transition-colors p-0.5`}
+            title={alertTitle}
+            aria-label={alertTitle}
           >
-            <BellPlus className="h-3 w-3" />
+            <AlertIcon className="h-3 w-3" />
+          </button>
+        )}
+        {onReset && alertState === "triggered" && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-muted-foreground hover:text-accent transition-colors p-0.5"
+            title="Reset alert baseline"
+            aria-label="Reset alert baseline"
+          >
+            <RotateCcw className="h-3 w-3" />
           </button>
         )}
         <button
           type="button"
           onClick={onRemove}
           className="text-muted-foreground/40 hover:text-destructive transition-colors p-0.5"
-          title="Remove"
+          title="Remove from watchlist"
+          aria-label="Remove from watchlist"
         >
           <X className="h-2.5 w-2.5" />
         </button>
@@ -111,26 +141,31 @@ const WatchCard = ({
         {onAlert && (
           <button
             type="button"
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onAlert();
-            }}
-            className="text-muted-foreground hover:text-accent transition-colors p-1"
-            title="Set alert"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onAlert(); }}
+            className={`${alertClass} transition-colors p-1`}
+            title={alertTitle}
+            aria-label={alertTitle}
           >
-            <BellPlus className="h-3.5 w-3.5" />
+            <AlertIcon className="h-3.5 w-3.5" />
+          </button>
+        )}
+        {onReset && alertState === "triggered" && (
+          <button
+            type="button"
+            onClick={(e) => { e.preventDefault(); e.stopPropagation(); onReset(); }}
+            className="text-muted-foreground hover:text-accent transition-colors p-1"
+            title="Reset alert baseline"
+            aria-label="Reset alert baseline"
+          >
+            <RotateCcw className="h-3.5 w-3.5" />
           </button>
         )}
         <button
           type="button"
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onRemove();
-          }}
+          onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove(); }}
           className="text-muted-foreground/60 hover:text-destructive transition-colors p-1"
           title="Remove from watchlist"
+          aria-label="Remove from watchlist"
         >
           <X className="h-3.5 w-3.5" />
         </button>

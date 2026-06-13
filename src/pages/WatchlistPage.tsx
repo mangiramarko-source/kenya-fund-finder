@@ -9,11 +9,13 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useMarketData } from "@/components/home/MarketTicker";
+import { usePriceAlerts, type PriceAlert, type AlertAssetType } from "@/hooks/usePriceAlerts";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
-import WatchCard from "@/components/watchlist/WatchCard";
+import WatchCard, { type AlertState } from "@/components/watchlist/WatchCard";
+import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
 
 interface WatchlistItem {
@@ -102,6 +104,7 @@ const WatchlistPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();
+  const { alerts, resetAlert } = usePriceAlerts();
 
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [fundsLoading, setFundsLoading] = useState(true);
@@ -111,6 +114,78 @@ const WatchlistPage = () => {
   const [rateHistory, setRateHistory] = useState<RateHistoryRow[]>([]);
   const [stockHistory, setStockHistory] = useState<StockHistoryRow[]>([]);
   const [fundSnapshots, setFundSnapshots] = useState<FundSnapshotRow[]>([]);
+
+  /* ─── Alert helpers ─── */
+  const alertFor = useCallback(
+    (type: AlertAssetType, id: string): PriceAlert | undefined =>
+      alerts.find((a) => a.asset_type === type && a.asset_id === id),
+    [alerts]
+  );
+  const alertStateOf = useCallback(
+    (type: AlertAssetType, id: string): AlertState => {
+      const a = alertFor(type, id);
+      if (!a || !a.is_active) return "none";
+      return a.is_triggered ? "triggered" : "active";
+    },
+    [alertFor]
+  );
+
+  /* ─── Create/reset alert dialog state ─── */
+  const [alertDialog, setAlertDialog] = useState<{
+    assetType: Exclude<AlertAssetType, "new_fund">;
+    assetId: string;
+    assetName: string;
+    currentPrice: number;
+    unit: string;
+  } | null>(null);
+
+  const openAlertForFund = (f: FundFromDB) => {
+    const existing = alertFor("fund", f.id);
+    if (existing?.is_triggered) {
+      resetAlert(existing.id, f.annual_yield);
+      toast.success("Alert reset");
+      return;
+    }
+    setAlertDialog({
+      assetType: "fund",
+      assetId: f.id,
+      assetName: f.name,
+      currentPrice: f.annual_yield,
+      unit: f.yield_unit === "%" ? "%" : f.yield_unit,
+    });
+  };
+
+  const openAlertForStock = (s: { id: string; symbol: string; name: string; price: number }) => {
+    const existing = alertFor("stock", s.id);
+    if (existing?.is_triggered) {
+      resetAlert(existing.id, s.price);
+      toast.success("Alert reset");
+      return;
+    }
+    setAlertDialog({
+      assetType: "stock",
+      assetId: s.id,
+      assetName: `${s.name} (${s.symbol})`,
+      currentPrice: s.price,
+      unit: "KES",
+    });
+  };
+
+  const resetFundAlert = (f: FundFromDB) => {
+    const existing = alertFor("fund", f.id);
+    if (existing) {
+      resetAlert(existing.id, f.annual_yield);
+      toast.success("Alert reset");
+    }
+  };
+
+  const resetStockAlert = (s: { id: string; price: number }) => {
+    const existing = alertFor("stock", s.id);
+    if (existing) {
+      resetAlert(existing.id, s.price);
+      toast.success("Alert reset");
+    }
+  };
 
   /* ─── Auth gate ─── */
   useEffect(() => {
@@ -368,6 +443,9 @@ const WatchlistPage = () => {
                         trend={trend}
                         linkTo={`/compare/${f.slug}`}
                         onRemove={() => removeByTypeAndId("fund", f.id)}
+                        onAlert={() => openAlertForFund(f)}
+                        onReset={() => resetFundAlert(f)}
+                        alertState={alertStateOf("fund", f.id)}
                       />
                     );
                   })}
@@ -401,6 +479,9 @@ const WatchlistPage = () => {
                   trend={trendOf(s.price, s.previous_price)}
                   linkTo={`/stocks/${s.symbol}`}
                   onRemove={() => removeByTypeAndId("stock", s.id)}
+                  onAlert={() => openAlertForStock(s)}
+                  onReset={() => resetStockAlert(s)}
+                  alertState={alertStateOf("stock", s.id)}
                 />
               );
             })}
@@ -480,6 +561,19 @@ const WatchlistPage = () => {
             ))}
           </div>
         </section>
+      )}
+
+      {/* Controlled alert dialog opened from individual rows */}
+      {alertDialog && (
+        <CreateAlertDialog
+          open
+          onOpenChange={(o) => { if (!o) setAlertDialog(null); }}
+          assetType={alertDialog.assetType}
+          assetId={alertDialog.assetId}
+          assetName={alertDialog.assetName}
+          currentPrice={alertDialog.currentPrice}
+          unit={alertDialog.unit}
+        />
       )}
     </div>
   );

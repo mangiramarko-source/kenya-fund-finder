@@ -27,6 +27,7 @@ import {
 } from "@/components/ui/command";
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
+import SaveToWatchlistButton from "@/components/watchlist/SaveToWatchlistButton";
 
 interface SearchDialogProps {
   variant?: "default" | "topbar" | "icon";
@@ -285,7 +286,10 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
                   <TrendingUp className="mr-2 h-4 w-4 text-accent" />
                   <span className="flex-1 truncate">{f.name}</span>
                   <span className="text-[10px] text-muted-foreground mr-2 truncate max-w-[120px]">{f.manager}</span>
-                  <span className="text-xs text-accent font-mono font-semibold">{Number(f.annual_yield).toFixed(2)}%</span>
+                  <span className="text-xs text-accent font-mono font-semibold mr-1">{Number(f.annual_yield).toFixed(2)}%</span>
+                  <span onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+                    <SaveToWatchlistButton itemType="fund" itemId={f.id} itemName={f.name} variant="icon" />
+                  </span>
                 </CommandItem>
               ))}
             </CommandGroup>
@@ -301,8 +305,11 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
                     <span className="font-mono font-semibold w-16 shrink-0">{s.symbol}</span>
                     <span className="flex-1 truncate text-muted-foreground text-xs">{s.name}</span>
                     <span className="font-mono text-xs mr-2">{Number(s.price).toFixed(2)}</span>
-                    <span className={`font-mono text-[10px] ${up ? "text-emerald-500" : "text-red-500"}`}>
+                    <span className={`font-mono text-[10px] mr-1 ${up ? "text-emerald-500" : "text-red-500"}`}>
                       {up ? "+" : ""}{Number(s.day_change_percent).toFixed(2)}%
+                    </span>
+                    <span onClick={(e) => e.stopPropagation()} onMouseDown={(e) => e.stopPropagation()}>
+                      <SaveToWatchlistButton itemType="stock" itemId={s.id} itemName={s.name} variant="icon" />
                     </span>
                   </CommandItem>
                 );

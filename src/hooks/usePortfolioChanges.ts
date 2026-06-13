@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { PortfolioItem } from "@/hooks/usePortfolio";
+import { resolveAsset, buildNameIndex } from "@/lib/assetMatch";
 
 export interface ChangeRow {
   itemId: string;
@@ -17,6 +18,9 @@ export interface ChangeRow {
  * Fetches the most recent prior snapshot for each portfolio item from
  * fund_yield_snapshots (funds) and stock_price_history (stocks).
  * Returns honest "delta unavailable" (null) when no prior snapshot exists.
+ *
+ * Asset lookup uses asset_id first, then ticker/symbol, then a normalized
+ * asset_name fallback. Missing matches degrade gracefully — they do not crash.
  */
 export function usePortfolioChanges(items: PortfolioItem[]) {
   const [changes, setChanges] = useState<ChangeRow[]>([]);
@@ -27,93 +31,113 @@ export function usePortfolioChanges(items: PortfolioItem[]) {
     const run = async () => {
       if (!items.length) { setChanges([]); return; }
       setLoading(true);
+      const out: ChangeRow[] = [];
 
       const funds = items.filter((i) => i.asset_type === "mmf");
       const stocks = items.filter((i) => i.asset_type === "stock");
 
-      // Match by asset name via funds_public; fall back to ticker (slug) when available.
-      const out: ChangeRow[] = [];
-
-      // ─── Funds ─────────────────────────────
+      // ─── Funds ────────────────────────────────────────────────
       if (funds.length) {
-        const fundIdsRes = await supabase
+        const { data: fundRows } = await supabase
           .from("funds_public")
           .select("id, name, slug, annual_yield")
-          .in("name", funds.map((f) => f.asset_name));
-        const fundLookup = new Map<string, { id: string; current: number }>();
-        (fundIdsRes.data || []).forEach((r: any) => {
-          fundLookup.set(r.name, { id: r.id, current: Number(r.annual_yield) || 0 });
-        });
+          .eq("is_published", true);
+        const records = (fundRows || []).map((r: any) => ({
+          id: r.id as string,
+          name: r.name as string,
+          ticker: r.slug as string | null,
+          current: Number(r.annual_yield) || 0,
+        }));
+        const idx = buildNameIndex(records, "name");
 
-        const fundIds = Array.from(fundLookup.values()).map((v) => v.id);
+        const matched = funds.map((f) => ({
+          holding: f,
+          match: resolveAsset({ asset_name: f.asset_name, ticker: f.ticker }, records, idx),
+        }));
+        const fundIds = matched.map((m) => m.match?.id).filter(Boolean) as string[];
+
+        const prev = new Map<string, number>();
         if (fundIds.length) {
-          const snapRes = await supabase
+          const { data: snap } = await supabase
             .from("fund_yield_snapshots")
             .select("fund_id, annual_yield, snapshot_date")
             .in("fund_id", fundIds)
             .order("snapshot_date", { ascending: false })
             .limit(fundIds.length * 5);
-          const prev = new Map<string, number>();
-          (snapRes.data || []).forEach((s: any) => {
+          (snap || []).forEach((s: any) => {
             if (!prev.has(s.fund_id)) prev.set(s.fund_id, Number(s.annual_yield));
           });
-
-          funds.forEach((f) => {
-            const meta = fundLookup.get(f.asset_name);
-            if (!meta) {
-              out.push({ itemId: f.id, assetType: "mmf", assetName: f.asset_name, current: f.current_yield || 0, previous: null, delta: null, deltaPct: null, unit: "%" });
-              return;
-            }
-            const previous = prev.get(meta.id);
-            const delta = previous != null ? meta.current - previous : null;
-            const deltaPct = previous != null && previous !== 0 ? ((meta.current - previous) / previous) * 100 : null;
-            out.push({
-              itemId: f.id, assetType: "mmf", assetName: f.asset_name,
-              current: meta.current, previous: previous ?? null, delta, deltaPct, unit: "%",
-            });
-          });
         }
+
+        matched.forEach(({ holding, match }) => {
+          if (!match) {
+            out.push({
+              itemId: holding.id, assetType: "mmf", assetName: holding.asset_name,
+              current: holding.current_yield || 0, previous: null, delta: null, deltaPct: null, unit: "%",
+            });
+            return;
+          }
+          const previous = prev.get(match.id);
+          const delta = previous != null ? match.current - previous : null;
+          const deltaPct = previous != null && previous !== 0
+            ? ((match.current - previous) / previous) * 100 : null;
+          out.push({
+            itemId: holding.id, assetType: "mmf", assetName: holding.asset_name,
+            current: match.current, previous: previous ?? null, delta, deltaPct, unit: "%",
+          });
+        });
       }
 
-      // ─── Stocks ────────────────────────────
+      // ─── Stocks ───────────────────────────────────────────────
       if (stocks.length) {
-        const stockRes = await supabase
+        const { data: stockRows } = await supabase
           .from("stocks_public")
           .select("id, name, symbol, price")
-          .in("name", stocks.map((s) => s.asset_name));
-        const stockLookup = new Map<string, { id: string; current: number }>();
-        (stockRes.data || []).forEach((r: any) => {
-          stockLookup.set(r.name, { id: r.id, current: Number(r.price) || 0 });
-        });
-        const stockIds = Array.from(stockLookup.values()).map((v) => v.id);
+          .eq("is_active", true);
+        const records = (stockRows || []).map((r: any) => ({
+          id: r.id as string,
+          name: r.name as string,
+          symbol: r.symbol as string | null,
+          current: Number(r.price) || 0,
+        }));
+        const idx = buildNameIndex(records, "name");
 
+        const matched = stocks.map((s) => ({
+          holding: s,
+          match: resolveAsset({ asset_name: s.asset_name, ticker: s.ticker }, records, idx),
+        }));
+        const stockIds = matched.map((m) => m.match?.id).filter(Boolean) as string[];
+
+        const prev = new Map<string, number>();
         if (stockIds.length) {
-          const hist = await supabase
+          const { data: hist } = await supabase
             .from("stock_price_history_public")
             .select("stock_id, price, snapshot_date")
             .in("stock_id", stockIds)
             .order("snapshot_date", { ascending: false })
             .limit(stockIds.length * 5);
-          const prev = new Map<string, number>();
-          (hist.data || []).forEach((s: any) => {
+          (hist || []).forEach((s: any) => {
             if (!prev.has(s.stock_id)) prev.set(s.stock_id, Number(s.price));
           });
-
-          stocks.forEach((s) => {
-            const meta = stockLookup.get(s.asset_name);
-            if (!meta) {
-              out.push({ itemId: s.id, assetType: "stock", assetName: s.asset_name, current: s.current_price, previous: null, delta: null, deltaPct: null, unit: "KES" });
-              return;
-            }
-            const previous = prev.get(meta.id);
-            const delta = previous != null ? meta.current - previous : null;
-            const deltaPct = previous != null && previous !== 0 ? ((meta.current - previous) / previous) * 100 : null;
-            out.push({
-              itemId: s.id, assetType: "stock", assetName: s.asset_name,
-              current: meta.current, previous: previous ?? null, delta, deltaPct, unit: "KES",
-            });
-          });
         }
+
+        matched.forEach(({ holding, match }) => {
+          if (!match) {
+            out.push({
+              itemId: holding.id, assetType: "stock", assetName: holding.asset_name,
+              current: holding.current_price, previous: null, delta: null, deltaPct: null, unit: "KES",
+            });
+            return;
+          }
+          const previous = prev.get(match.id);
+          const delta = previous != null ? match.current - previous : null;
+          const deltaPct = previous != null && previous !== 0
+            ? ((match.current - previous) / previous) * 100 : null;
+          out.push({
+            itemId: holding.id, assetType: "stock", assetName: holding.asset_name,
+            current: match.current, previous: previous ?? null, delta, deltaPct, unit: "KES",
+          });
+        });
       }
 
       if (!cancelled) {
@@ -121,9 +145,13 @@ export function usePortfolioChanges(items: PortfolioItem[]) {
         setLoading(false);
       }
     };
-    run();
+    run().catch((e) => {
+      console.error("usePortfolioChanges error", e);
+      if (!cancelled) setLoading(false);
+    });
     return () => { cancelled = true; };
-  }, [items]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [items.map((i) => `${i.id}:${i.asset_name}`).join("|")]);
 
   return { changes, loading };
 }
