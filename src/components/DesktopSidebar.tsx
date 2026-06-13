@@ -61,20 +61,21 @@ const DesktopSidebar = () => {
       <Link
         to={item.to}
         className={`
-          flex items-center gap-2.5 rounded-md font-medium transition-all duration-150 group relative
-          ${isSmall ? "py-1 text-[11.5px]" : "py-1.5 text-[12.5px]"}
-          ${collapsed ? "justify-center px-0 mx-auto w-9 h-9" : "px-2.5"}
+          flex items-center gap-3 rounded-lg font-medium transition-all group relative
+          ${isSmall ? "py-1.5 text-[12px]" : "py-2 text-[13px]"}
+          ${collapsed ? "justify-center px-2" : "px-3"}
           ${active
-            ? "bg-accent/10 text-accent shadow-[inset_0_0_0_1px_hsl(var(--accent)/0.18)]"
-            : "text-sidebar-foreground/65 hover:text-sidebar-foreground hover:bg-sidebar-accent/60"
+            ? "bg-accent/15 text-accent"
+            : "text-sidebar-foreground/60 hover:text-sidebar-foreground hover:bg-sidebar-accent/80"
           }
         `}
       >
+        {/* Active indicator bar */}
         {active && !collapsed && (
-          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[2px] h-3.5 rounded-r-full bg-accent" />
+          <div className="absolute left-0 top-1/2 -translate-y-1/2 w-[3px] h-4 rounded-r-full bg-accent" />
         )}
-        <Icon className={`${isSmall ? "h-3.5 w-3.5" : "h-[15px] w-[15px]"} shrink-0 transition-colors ${active ? "text-accent" : "text-sidebar-foreground/45 group-hover:text-sidebar-foreground/70"}`} strokeWidth={active ? 2.25 : 1.75} />
-        {!collapsed && <span className="truncate tracking-tight">{item.label}</span>}
+        <Icon className={`${isSmall ? "h-3.5 w-3.5" : "h-4 w-4"} shrink-0 transition-colors ${active ? "text-accent" : "text-sidebar-foreground/40 group-hover:text-sidebar-foreground/60"}`} />
+        {!collapsed && <span className="truncate">{item.label}</span>}
       </Link>
     );
 
@@ -93,42 +94,42 @@ const DesktopSidebar = () => {
 
   const SectionLabel = ({ children }: { children: string }) =>
     collapsed ? null : (
-      <p className="px-2.5 pt-2.5 pb-1 text-[9.5px] font-semibold uppercase tracking-[0.14em] text-sidebar-foreground/40">
+      <p className="px-3 pt-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/50">
         {children}
       </p>
     );
 
   return (
     <aside
-      className={`hidden md:flex flex-col h-screen sticky top-0 border-r border-border bg-gradient-to-b from-sidebar via-sidebar to-sidebar/92 transition-[width] duration-200 z-40 ${
-        collapsed ? "w-[56px]" : "w-[188px]"
+      className={`hidden md:flex flex-col h-screen sticky top-0 border-r border-border bg-sidebar transition-all duration-200 z-40 ${
+        collapsed ? "w-[52px]" : "w-[230px]"
       }`}
     >
       {/* Logo */}
-      <div className={`flex items-center gap-2 h-14 border-b border-sidebar-border/70 shrink-0 ${collapsed ? "justify-center px-2" : "px-3"}`}>
-        <div className="flex items-center justify-center h-7 w-7 rounded-md bg-gradient-to-br from-accent to-accent/75 text-accent-foreground shrink-0 shadow-sm ring-1 ring-accent/25">
-          <TrendingUp className="h-3.5 w-3.5" strokeWidth={2.5} />
+      <div className={`flex items-center gap-2.5 h-14 border-b border-sidebar-border shrink-0 ${collapsed ? "justify-center px-2" : "px-3"}`}>
+        <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-accent text-accent-foreground shrink-0">
+          <TrendingUp className="h-3.5 w-3.5" />
         </div>
         {!collapsed && (
-          <span className="font-heading text-[13px] font-bold text-sidebar-foreground truncate tracking-tight">
+          <span className="font-heading text-sm font-bold text-sidebar-foreground truncate">
             KenyaFundFinder
           </span>
         )}
       </div>
 
       {/* Nav links */}
-      <nav className="flex-1 overflow-y-auto px-1.5 py-1.5 space-y-px">
+      <nav className="flex-1 overflow-y-auto px-2 py-2 space-y-0.5">
         {/* Markets section */}
         <SectionLabel>Markets</SectionLabel>
         {mainNavItems.map((item) => renderNavItem(item))}
 
         {/* Tools section */}
-        <div className="my-1.5 mx-2 h-px bg-sidebar-border/60" />
+        <div className="my-2 mx-1 h-px bg-sidebar-border" />
         <SectionLabel>Tools</SectionLabel>
         {utilityNavItems.map((item) => renderNavItem(item))}
 
         {/* Legal section */}
-        <div className="my-1.5 mx-2 h-px bg-sidebar-border/60" />
+        <div className="my-2 mx-1 h-px bg-sidebar-border" />
         <SectionLabel>Legal</SectionLabel>
         {legalNavItems.map((item) => renderNavItem(item, "small"))}
       </nav>
