@@ -14,6 +14,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import YieldChange, { formatYield } from "@/components/YieldChange";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
+import SaveToWatchlistButton from "@/components/watchlist/SaveToWatchlistButton";
 import AddToPortfolioButton from "@/components/portfolio/AddToPortfolioButton";
 import DisclaimerBlock from "@/components/DisclaimerBlock";
 import ReportIssueDialog from "@/components/funds/ReportIssueDialog";
