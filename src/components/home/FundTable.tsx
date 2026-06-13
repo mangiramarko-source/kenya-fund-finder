@@ -2,6 +2,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { ArrowRight, ArrowUpDown } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import YieldChange from "@/components/YieldChange";
+import SaveToWatchlistButton from "@/components/watchlist/SaveToWatchlistButton";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
 type SortKey = "annual_yield" | "daily_yield" | "name";
