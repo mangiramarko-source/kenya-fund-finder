@@ -129,8 +129,8 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
       <DialogTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" /> Add Investment
+        <Button className="gap-1.5 h-9 px-3 text-xs sm:gap-2 sm:h-10 sm:px-4 sm:text-sm">
+          <Plus className="h-3.5 w-3.5 sm:h-4 sm:w-4" /> Add Investment
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-lg max-h-[90vh] p-0 flex flex-col gap-0">
