@@ -98,16 +98,30 @@ const WatchCard = ({
           <button
             type="button"
             onClick={onAlert}
-            className="text-muted-foreground hover:text-accent transition-colors p-0.5"
+            className={`${alertClass} transition-colors p-0.5`}
+            title={alertTitle}
+            aria-label={alertTitle}
           >
-            <BellPlus className="h-3 w-3" />
+            <AlertIcon className="h-3 w-3" />
+          </button>
+        )}
+        {onReset && alertState === "triggered" && (
+          <button
+            type="button"
+            onClick={onReset}
+            className="text-muted-foreground hover:text-accent transition-colors p-0.5"
+            title="Reset alert baseline"
+            aria-label="Reset alert baseline"
+          >
+            <RotateCcw className="h-3 w-3" />
           </button>
         )}
         <button
           type="button"
           onClick={onRemove}
           className="text-muted-foreground/40 hover:text-destructive transition-colors p-0.5"
-          title="Remove"
+          title="Remove from watchlist"
+          aria-label="Remove from watchlist"
         >
           <X className="h-2.5 w-2.5" />
         </button>
