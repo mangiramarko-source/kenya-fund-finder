@@ -1045,7 +1045,6 @@ const OverviewPage = () => {
 
   return (
     <>
-    <HomeHero />
     <div className="hidden md:block">
       <CurrencyTicker />
     </div>
