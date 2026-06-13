@@ -40,6 +40,7 @@ const StockDetailPage = lazy(() => import("./pages/StockDetailPage"));
 const MarketDashboardPage = lazy(() => import("./pages/MarketDashboardPage"));
 const AlertsPage = lazy(() => import("./pages/AlertsPage"));
 const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
+const PortfolioSummaryPage = lazy(() => import("./pages/PortfolioSummaryPage"));
 const OverviewPage = lazy(() => import("./pages/OverviewPage"));
 const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
@@ -114,6 +115,7 @@ const App = () => (
                     <Route path="/overview" element={<OverviewPage />} />
                     <Route path="/alerts" element={<AlertsPage />} />
                     <Route path="/portfolio" element={<PortfolioPage />} />
+                    <Route path="/portfolio/summary" element={<PortfolioSummaryPage />} />
                     <Route path="/calculator" element={<CalculatorPage />} />
                     <Route path="/watchlist" element={<WatchlistPage />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />

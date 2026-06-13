@@ -205,7 +205,10 @@ const FundDetailPage = () => {
                 </Badge>
               )}
             </div>
-            <h1 className="text-lg md:text-xl font-bold leading-tight">{fund.name}</h1>
+            <div className="flex items-start gap-2">
+              <h1 className="text-lg md:text-xl font-bold leading-tight flex-1">{fund.name}</h1>
+              <SaveToWatchlistButton itemType="fund" itemId={fund.id} itemName={fund.name} />
+            </div>
             <p className="text-muted-foreground text-sm">{fund.manager}</p>
           </div>
           <div className="flex items-center gap-2 sm:hidden mt-2">
