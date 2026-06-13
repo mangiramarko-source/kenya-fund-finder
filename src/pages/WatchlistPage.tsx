@@ -17,6 +17,7 @@ import SectionLiveStatus from "@/components/SectionLiveStatus";
 import WatchCard, { type AlertState } from "@/components/watchlist/WatchCard";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
+import { computeAlertSummary } from "@/lib/watchlistAlertSummary";
 
 interface WatchlistItem {
   id: string;
