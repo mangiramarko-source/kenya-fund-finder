@@ -12,6 +12,8 @@ import { ArrowLeft, Printer } from "lucide-react";
 import { buildWeeklyBuckets } from "@/lib/portfolioWeeklyBuckets";
 import { getHoldingAlertState } from "@/lib/portfolioAlertBadge";
 import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
+import { usePortfolioEvents } from "@/hooks/usePortfolioEvents";
+import { format } from "date-fns";
 
 const fmtKES = (val: number) =>
   new Intl.NumberFormat("en-KE", {
