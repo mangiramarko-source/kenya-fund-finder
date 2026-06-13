@@ -73,6 +73,7 @@ function buildEmailHtml(
   topFunds: TopFund[],
   news: NewsItem[],
   siteUrl: string,
+  retentionHtml: string,
 ): string {
   const today = new Date().toLocaleDateString("en-GB", { weekday: "long", day: "numeric", month: "long", year: "numeric" });
   const hasWatchlist = fundAssets.length + stockAssets.length + currencyAssets.length > 0;
