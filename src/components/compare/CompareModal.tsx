@@ -1,48 +1,51 @@
 import { Link } from "react-router-dom";
-import { X, ExternalLink, Trophy, TrendingUp } from "lucide-react";
+import { X, ExternalLink, ArrowUp, ArrowDown, GitCompareArrows } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useCompare } from "@/hooks/useCompare";
 import { formatYield } from "@/components/YieldChange";
+import DisclaimerBlock from "@/components/DisclaimerBlock";
+
+type Extreme = "highest" | "lowest" | null;
 
 const CompareModal = () => {
   const { selected, isOpen, setIsOpen, clear } = useCompare();
 
   if (!isOpen || selected.length < 2) return null;
 
-  const metrics = [
+  const metrics: { label: string; key: keyof typeof selected[0]; format: (f: typeof selected[0]) => string; extreme: Extreme }[] = [
     {
       label: "Annual Rate",
-      key: "annual_yield" as const,
-      format: (f: typeof selected[0]) => formatYield(f.annual_yield, f.yield_unit),
-      best: "highest" as const,
+      key: "annual_yield",
+      format: (f) => formatYield(f.annual_yield, f.yield_unit),
+      extreme: "highest",
     },
     {
       label: "Daily Yield",
-      key: "daily_yield" as const,
-      format: (f: typeof selected[0]) => formatYield(f.daily_yield, f.yield_unit),
-      best: "highest" as const,
+      key: "daily_yield",
+      format: (f) => formatYield(f.daily_yield, f.yield_unit),
+      extreme: "highest",
     },
     {
       label: "Management Fee",
-      key: "management_fee" as const,
-      format: (f: typeof selected[0]) => `${f.management_fee}%`,
-      best: "lowest" as const,
+      key: "management_fee",
+      format: (f) => `${f.management_fee}%`,
+      extreme: "lowest",
     },
     {
       label: "Min. Investment",
-      key: "minimum_investment" as const,
-      format: (f: typeof selected[0]) => `KES ${f.minimum_investment.toLocaleString()}`,
-      best: "lowest" as const,
+      key: "minimum_investment",
+      format: (f) => `KES ${f.minimum_investment.toLocaleString()}`,
+      extreme: "lowest",
     },
     {
       label: "Withdrawal",
-      key: "withdrawal_time" as const,
-      format: (f: typeof selected[0]) => f.withdrawal_time,
-      best: null,
+      key: "withdrawal_time",
+      format: (f) => f.withdrawal_time,
+      extreme: null,
     },
   ];
 
-  const getBestIndex = (key: string, direction: "highest" | "lowest" | null) => {
+  const getExtremeIndex = (key: string, direction: Extreme) => {
     if (!direction) return -1;
     const values = selected.map((f) => Number((f as any)[key]) || 0);
     if (direction === "highest") return values.indexOf(Math.max(...values));
@@ -56,8 +59,8 @@ const CompareModal = () => {
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border">
           <div>
             <h2 className="text-xl font-bold flex items-center gap-2">
-              <TrendingUp className="h-5 w-5 text-accent" />
-              Fund Comparison
+              <GitCompareArrows className="h-5 w-5 text-accent" />
+              Side-by-side data
             </h2>
             <p className="text-sm text-muted-foreground mt-0.5">
               Comparing {selected.length} funds side by side
@@ -92,22 +95,36 @@ const CompareModal = () => {
             </thead>
             <tbody>
               {metrics.map((metric) => {
-                const bestIdx = getBestIndex(metric.key, metric.best);
+                const extremeIdx = getExtremeIndex(metric.key as string, metric.extreme);
+                const extremeLabel =
+                  metric.extreme === "highest"
+                    ? "Highest value in this comparison"
+                    : metric.extreme === "lowest"
+                      ? "Lowest value in this comparison"
+                      : "";
                 return (
-                  <tr key={metric.key} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
+                  <tr key={metric.key as string} className="border-b border-border/50 hover:bg-muted/30 transition-colors">
                     <td className="p-4 text-xs font-medium text-muted-foreground uppercase tracking-wider">
                       {metric.label}
                     </td>
                     {selected.map((fund, idx) => (
                       <td key={fund.id} className="p-4">
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-1.5">
                           <span className={`text-sm font-bold tabular-nums ${
-                            idx === bestIdx ? "text-accent" : "text-foreground"
+                            idx === extremeIdx ? "text-foreground" : "text-muted-foreground"
                           }`}>
                             {metric.format(fund)}
                           </span>
-                          {idx === bestIdx && metric.best && (
-                            <Trophy className="h-3.5 w-3.5 text-accent shrink-0" />
+                          {idx === extremeIdx && metric.extreme && (
+                            <span
+                              className="inline-flex items-center text-muted-foreground/70 shrink-0"
+                              title={extremeLabel}
+                              aria-label={extremeLabel}
+                            >
+                              {metric.extreme === "highest"
+                                ? <ArrowUp className="h-3 w-3" />
+                                : <ArrowDown className="h-3 w-3" />}
+                            </span>
                           )}
                         </div>
                       </td>
@@ -153,14 +170,18 @@ const CompareModal = () => {
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-border flex justify-between items-center">
-          <p className="text-[10px] text-muted-foreground">
-            <Trophy className="inline h-3 w-3 text-accent mr-1" />
-            indicates best value for each metric
-          </p>
-          <Button variant="outline" size="sm" onClick={() => { clear(); setIsOpen(false); }} className="text-xs">
-            Clear & Close
-          </Button>
+        <div className="p-4 border-t border-border space-y-3">
+          <div className="flex justify-between items-center gap-3 flex-wrap">
+            <p className="text-[10px] text-muted-foreground inline-flex items-center gap-2 flex-wrap">
+              <span className="inline-flex items-center gap-1"><ArrowUp className="h-3 w-3" /> Highest value in this comparison</span>
+              <span className="text-muted-foreground/40">·</span>
+              <span className="inline-flex items-center gap-1"><ArrowDown className="h-3 w-3" /> Lowest value in this comparison</span>
+            </p>
+            <Button variant="outline" size="sm" onClick={() => { clear(); setIsOpen(false); }} className="text-xs">
+              Clear & Close
+            </Button>
+          </div>
+          <DisclaimerBlock variant="compact" />
         </div>
       </div>
     </div>
