@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Plus, Search } from "lucide-react";
+import { Plus, Search, ChevronDown, ChevronUp, Check } from "lucide-react";
 import { AssetType, ASSET_TYPE_LABELS, NewPortfolioItem, LiveAsset, useLiveAssets } from "@/hooks/usePortfolio";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -22,21 +22,26 @@ const FUND_TYPE_LABELS: Record<string, string> = {
   bond: "Bond",
 };
 
+const fmtKES = (n: number) =>
+  new Intl.NumberFormat("en-KE", {
+    style: "currency",
+    currency: "KES",
+    minimumFractionDigits: 2,
+    maximumFractionDigits: 2,
+  }).format(n);
+
 const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
   const [open, setOpen] = useState(false);
   const [assetType, setAssetType] = useState<AssetType>("mmf");
   const [fundTypeFilter, setFundTypeFilter] = useState("all");
   const [search, setSearch] = useState("");
   const [selectedAsset, setSelectedAsset] = useState<LiveAsset | null>(null);
-  const [units, setUnits] = useState("1");
-  const [buyPrice, setBuyPrice] = useState("");
-  const [yld, setYld] = useState("15");
-  const [customName, setCustomName] = useState("");
-  const [customTicker, setCustomTicker] = useState("");
+  const [amount, setAmount] = useState("");
+  const [showAdvanced, setShowAdvanced] = useState(false);
+  const [customYield, setCustomYield] = useState("");
 
   const { data: liveAssets } = useLiveAssets();
 
-  // Get unique fund types from data
   const availableFundTypes = useMemo(() => {
     if (assetType !== "mmf") return [];
     const list = liveAssets?.mmf || [];
@@ -46,7 +51,6 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
 
   const filteredAssets = useMemo(() => {
     let list = liveAssets?.[assetType] || [];
-    // Apply fund type filter for unit trusts
     if (assetType === "mmf" && fundTypeFilter !== "all") {
       list = list.filter((a) => a.fundType === fundTypeFilter);
     }
@@ -56,38 +60,71 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
   }, [liveAssets, assetType, search, fundTypeFilter]);
 
   const resetForm = () => {
-    setSearch(""); setSelectedAsset(null); setUnits("1"); setBuyPrice(""); setYld("15");
-    setCustomName(""); setCustomTicker(""); setFundTypeFilter("all");
+    setSearch("");
+    setSelectedAsset(null);
+    setAmount("");
+    setCustomYield("");
+    setShowAdvanced(false);
+    setFundTypeFilter("all");
   };
 
   const handleSelectAsset = (asset: LiveAsset) => {
     setSelectedAsset(asset);
-    setBuyPrice(String(asset.price));
-    if (asset.yld) setYld(String(asset.yld));
+    if (asset.yld) setCustomYield(String(asset.yld));
   };
 
+  const isYieldType = assetType === "mmf" || assetType === "fixed_income";
+  const amountNum = parseFloat(amount);
+  const validAmount = !isNaN(amountNum) && amountNum > 0;
+
+  // Live preview of how the amount maps to units
+  const previewUnits = useMemo(() => {
+    if (!selectedAsset || !validAmount) return null;
+    if (isYieldType) return null; // principal-style, no unit breakdown needed
+    const price = selectedAsset.price || 0;
+    if (price <= 0) return null;
+    return amountNum / price;
+  }, [selectedAsset, validAmount, amountNum, isYieldType]);
+
   const handleSubmit = () => {
-    const name = selectedAsset?.name || customName;
-    const ticker = selectedAsset?.ticker || customTicker || undefined;
-    const assetId = selectedAsset?.id || undefined;
-    const u = parseFloat(units);
-    const bp = parseFloat(buyPrice);
-    if (!name || isNaN(u) || isNaN(bp) || u <= 0 || bp <= 0) return;
+    if (!selectedAsset || !validAmount) return;
+
+    const name = selectedAsset.name;
+    const ticker = selectedAsset.ticker || undefined;
+    const assetId = selectedAsset.id || undefined;
+    const price = selectedAsset.price || 0;
+    const yld = parseFloat(customYield) || selectedAsset.yld || 0;
+
+    let units = 1;
+    let buyPrice = amountNum;
+
+    if (!isYieldType) {
+      // Stock / FX / Commodity → derive units from amount and live price
+      if (price <= 0) return;
+      units = amountNum / price;
+      buyPrice = price;
+    }
+
     onAdd({
       asset_type: assetType,
       asset_name: name,
       ticker,
       asset_id: assetId,
-      units: u,
-      buy_price: bp,
-      current_price: bp,
-      current_yield: parseFloat(yld) || 0,
+      units,
+      buy_price: buyPrice,
+      current_price: buyPrice,
+      current_yield: yld,
     });
     resetForm();
     setOpen(false);
   };
 
-  const isYieldType = assetType === "mmf" || assetType === "fixed_income";
+  const amountLabel = isYieldType ? "How much are you investing?" : "How much are you spending?";
+  const amountHelp = isYieldType
+    ? "Enter the money you want to put into this fund."
+    : selectedAsset
+      ? `At ${fmtKES(selectedAsset.price || 0)} per unit, we'll calculate how many units that buys.`
+      : "Enter how much money you want to spend on this asset.";
 
   return (
     <Dialog open={open} onOpenChange={(v) => { setOpen(v); if (!v) resetForm(); }}>
@@ -99,13 +136,20 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
       <DialogContent className="max-w-lg max-h-[90vh] p-0 flex flex-col gap-0">
         <DialogHeader className="px-6 pt-6 pb-3 border-b border-border shrink-0">
           <DialogTitle className="text-primary">Add Mock Investment</DialogTitle>
+          <p className="text-xs text-muted-foreground">
+            Pick an asset, then enter how much money you're putting in. That's it.
+          </p>
         </DialogHeader>
+
         <div className="space-y-4 px-6 py-4 overflow-y-auto flex-1 min-h-0">
-          {/* Asset Class Selector */}
+          {/* Step 1: Asset Class */}
           <div>
-            <Label className="text-xs">Asset Class</Label>
+            <Label className="text-xs flex items-center gap-1.5">
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">1</span>
+              Asset class
+            </Label>
             <Select value={assetType} onValueChange={(v) => { setAssetType(v as AssetType); resetForm(); }}>
-              <SelectTrigger><SelectValue /></SelectTrigger>
+              <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
               <SelectContent>
                 {(Object.entries(ASSET_TYPE_LABELS) as [AssetType, string][]).map(([k, v]) => (
                   <SelectItem key={k} value={k}>{v}</SelectItem>
@@ -114,12 +158,11 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
             </Select>
           </div>
 
-          {/* Fund Type Sub-category for Unit Trusts */}
           {assetType === "mmf" && availableFundTypes.length > 0 && (
             <div>
-              <Label className="text-xs">Fund Category</Label>
+              <Label className="text-xs text-muted-foreground">Fund category (optional)</Label>
               <Select value={fundTypeFilter} onValueChange={setFundTypeFilter}>
-                <SelectTrigger><SelectValue /></SelectTrigger>
+                <SelectTrigger className="mt-1.5"><SelectValue /></SelectTrigger>
                 <SelectContent>
                   <SelectItem value="all">All Fund Types</SelectItem>
                   {availableFundTypes.map((ft) => (
@@ -132,12 +175,15 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
             </div>
           )}
 
-          {/* Asset Picker with Search */}
+          {/* Step 2: Pick asset */}
           {!selectedAsset ? (
             <div>
-              <Label className="text-xs">Select Asset (live data)</Label>
-              <div className="relative mt-1">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Label className="text-xs flex items-center gap-1.5">
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">2</span>
+                Pick from the list
+              </Label>
+              <div className="relative mt-1.5">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
                 <Input
                   value={search}
                   onChange={(e) => setSearch(e.target.value)}
@@ -145,85 +191,136 @@ const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
                   className="pl-8"
                 />
               </div>
-              <ScrollArea className="mt-2 h-[180px] rounded-lg border border-border">
+              <ScrollArea className="mt-2 h-[200px] rounded-lg border border-border">
                 {filteredAssets.length === 0 ? (
-                  <div className="p-4 text-center text-xs text-muted-foreground">No assets found</div>
+                  <div className="p-4 text-center text-xs text-muted-foreground">No assets found.</div>
                 ) : (
                   <div className="divide-y divide-border">
                     {filteredAssets.map((asset, i) => (
                       <button
                         key={`${asset.name}-${i}`}
                         onClick={() => handleSelectAsset(asset)}
-                        className="w-full flex items-center justify-between px-3 py-2 text-left text-sm hover:bg-accent/5 transition-colors"
+                        className="w-full flex items-center justify-between px-3 py-2.5 text-left text-sm hover:bg-accent/5 transition-colors"
                       >
-                        <div>
-                          <span className="font-medium">{asset.name}</span>
+                        <div className="min-w-0">
+                          <div className="font-medium truncate">{asset.name}</div>
                           {asset.ticker && (
-                            <span className="ml-2 text-[11px] text-muted-foreground">{asset.ticker}</span>
+                            <div className="text-[11px] text-muted-foreground truncate">{asset.ticker}</div>
                           )}
                         </div>
-                        <span className="text-xs tabular-nums text-muted-foreground">
+                        <span className="text-xs tabular-nums text-muted-foreground whitespace-nowrap ml-2">
                           {isYieldType
-                            ? `${asset.yld?.toFixed(1) ?? "—"}% p.a.`
-                            : `KES ${asset.price.toLocaleString()}`}
+                            ? `${asset.yld?.toFixed(2) ?? "—"}% p.a.`
+                            : fmtKES(asset.price || 0)}
                         </span>
                       </button>
                     ))}
                   </div>
                 )}
               </ScrollArea>
-              <p className="text-[10px] text-muted-foreground mt-1">
-                Or enter custom details below
-              </p>
-              <div className="grid grid-cols-2 gap-3 mt-2">
-                <div>
-                  <Label className="text-xs">Custom Name</Label>
-                  <Input value={customName} onChange={(e) => setCustomName(e.target.value)} placeholder="Asset name" />
-                </div>
-                <div>
-                  <Label className="text-xs">Ticker</Label>
-                  <Input value={customTicker} onChange={(e) => setCustomTicker(e.target.value)} placeholder="e.g. SCOM" />
-                </div>
-              </div>
             </div>
           ) : (
-            <div className="flex items-center justify-between rounded-lg border border-accent/30 bg-accent/5 px-3 py-2">
-              <div>
-                <span className="font-medium text-sm">{selectedAsset.name}</span>
-                {selectedAsset.ticker && (
-                  <span className="ml-2 text-[11px] text-muted-foreground">{selectedAsset.ticker}</span>
-                )}
+            <div className="rounded-lg border border-accent/40 bg-accent/5 px-3 py-2.5">
+              <div className="flex items-center justify-between gap-2">
+                <div className="flex items-center gap-2 min-w-0">
+                  <span className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-accent/20 text-accent shrink-0">
+                    <Check className="h-3 w-3" />
+                  </span>
+                  <div className="min-w-0">
+                    <div className="font-medium text-sm truncate">{selectedAsset.name}</div>
+                    <div className="text-[11px] text-muted-foreground tabular-nums">
+                      {isYieldType
+                        ? `${selectedAsset.yld?.toFixed(2) ?? "—"}% per year`
+                        : `${fmtKES(selectedAsset.price || 0)} per unit`}
+                    </div>
+                  </div>
+                </div>
+                <Button variant="ghost" size="sm" className="text-xs h-7 shrink-0" onClick={() => setSelectedAsset(null)}>
+                  Change
+                </Button>
               </div>
-              <Button variant="ghost" size="sm" className="text-xs h-7" onClick={() => setSelectedAsset(null)}>
-                Change
-              </Button>
             </div>
           )}
 
-          {/* Units & Price */}
-          <div className="grid grid-cols-2 gap-3">
+          {/* Step 3: Amount only */}
+          {selectedAsset && (
             <div>
-              <Label className="text-xs">{assetType === "mmf" ? "Principal (KES)" : "Units / Quantity"}</Label>
-              <Input type="number" value={units} onChange={(e) => setUnits(e.target.value)} min="0" />
-            </div>
-            <div>
-              <Label className="text-xs">Buy Price (KES)</Label>
-              <Input type="number" value={buyPrice} onChange={(e) => setBuyPrice(e.target.value)} min="0" />
-            </div>
-          </div>
-
-          {isYieldType && (
-            <div>
-              <Label className="text-xs">Annual Yield (%)</Label>
-              <Input type="number" value={yld} onChange={(e) => setYld(e.target.value)} min="0" step="0.1" />
+              <Label className="text-xs flex items-center gap-1.5">
+                <span className="inline-flex h-4 w-4 items-center justify-center rounded-full bg-primary/15 text-[10px] font-bold text-primary">3</span>
+                {amountLabel}
+              </Label>
+              <div className="relative mt-1.5">
+                <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-muted-foreground pointer-events-none">
+                  KES
+                </span>
+                <Input
+                  type="number"
+                  inputMode="decimal"
+                  value={amount}
+                  onChange={(e) => setAmount(e.target.value)}
+                  placeholder="e.g. 10,000"
+                  min="0"
+                  className="pl-12 text-base font-semibold tabular-nums"
+                  autoFocus
+                />
+              </div>
+              <p className="text-[11px] text-muted-foreground mt-1.5">{amountHelp}</p>
+              {previewUnits != null && (
+                <p className="text-[11px] text-accent mt-1 tabular-nums">
+                  ≈ {previewUnits.toLocaleString("en-KE", { maximumFractionDigits: 4 })} units
+                </p>
+              )}
             </div>
           )}
 
+          {/* Advanced: yield override (MMF/FI only) */}
+          {selectedAsset && isYieldType && (
+            <div>
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((s) => !s)}
+                className="inline-flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
+              >
+                {showAdvanced ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+                Advanced
+              </button>
+              {showAdvanced && (
+                <div className="mt-2">
+                  <Label className="text-xs">Annual yield (%)</Label>
+                  <Input
+                    type="number"
+                    value={customYield}
+                    onChange={(e) => setCustomYield(e.target.value)}
+                    min="0"
+                    step="0.1"
+                    className="mt-1.5"
+                  />
+                  <p className="text-[11px] text-muted-foreground mt-1">
+                    Defaults to the fund's published yield. Override only if you have a different figure.
+                  </p>
+                </div>
+              )}
+            </div>
+          )}
         </div>
-        <div className="px-6 py-3 border-t border-border bg-background shrink-0">
-          <Button onClick={handleSubmit} disabled={isPending} className="w-full">
-            {isPending ? "Adding…" : "Add to Portfolio"}
+
+        <div className="px-6 py-3 border-t border-border bg-background shrink-0 space-y-1">
+          <Button
+            onClick={handleSubmit}
+            disabled={isPending || !selectedAsset || !validAmount}
+            className="w-full"
+          >
+            {isPending
+              ? "Adding…"
+              : !selectedAsset
+                ? "Pick an asset first"
+                : !validAmount
+                  ? "Enter an amount"
+                  : `Add ${fmtKES(amountNum)} to Portfolio`}
           </Button>
+          <p className="text-[10px] text-muted-foreground text-center">
+            Mock portfolio — no real money is invested.
+          </p>
         </div>
       </DialogContent>
     </Dialog>
