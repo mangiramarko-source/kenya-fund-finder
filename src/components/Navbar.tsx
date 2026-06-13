@@ -141,7 +141,6 @@ const Navbar = () => {
     "/calculator",
     "/learn",
     "/alerts",
-    "/portfolio",
     "/profile",
     "/privacy",
     "/terms",
