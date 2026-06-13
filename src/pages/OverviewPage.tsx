@@ -1162,7 +1162,7 @@ const OverviewPage = () => {
             {user ? "Your personalized market overview" : "Live Kenyan market data"}
           </p>
           {/* Desktop tabs: under greeting + subtitle */}
-          <div className="mt-3 inline-grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
+          <div className="mt-3 inline-grid grid-cols-3 gap-1 p-1 rounded-full border border-border bg-card">
             <button
               type="button"
               onClick={() => setMobileTab("overview")}
@@ -1196,6 +1196,18 @@ const OverviewPage = () => {
                   {watchlist.length}
                 </span>
               )}
+            </button>
+            <button
+              type="button"
+              onClick={() => setMobileTab("portfolio")}
+              className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
+                mobileTab === "portfolio"
+                  ? "bg-primary text-primary-foreground shadow-sm"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+              aria-pressed={mobileTab === "portfolio"}
+            >
+              <Briefcase className="h-3.5 w-3.5" /> Portfolio
             </button>
           </div>
         </div>
