@@ -28,6 +28,8 @@ import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import WatchCard from "@/components/watchlist/WatchCard";
 import TestimonialsSection from "@/components/TestimonialsSection";
+import HomeHero from "@/components/home/HomeHero";
+import DisclaimerBlock from "@/components/DisclaimerBlock";
 
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
@@ -1043,6 +1045,7 @@ const OverviewPage = () => {
 
   return (
     <>
+    <HomeHero />
     <div className="hidden md:block">
       <CurrencyTicker />
     </div>
@@ -1058,7 +1061,7 @@ const OverviewPage = () => {
                 {user ? `${greeting} ${displayName}` : "Market overview"}
               </h1>
               <p className="text-xs text-muted-foreground mt-1">
-                {user ? "Your personalized market overview" : "Best performers across Kenyan markets"}
+                {user ? "Your personalized market overview" : "Live Kenyan market data"}
               </p>
               <p className="text-xs text-muted-foreground/70 mt-2">
                 <SectionLiveStatus section="overview" hideLive />
@@ -1144,7 +1147,7 @@ const OverviewPage = () => {
             </div>
           </div>
           <p className="text-sm text-muted-foreground mt-0.5">
-            {user ? "Your personalized market overview" : "Best performers across Kenyan markets"}
+            {user ? "Your personalized market overview" : "Live Kenyan market data"}
           </p>
           {/* Desktop tabs: under greeting + subtitle */}
           <div className="mt-3 inline-grid grid-cols-2 gap-1 p-1 rounded-full border border-border bg-card">
@@ -1234,7 +1237,7 @@ const OverviewPage = () => {
             <div className="flex gap-4 min-w-max min-h-[420px]">
               {/* Top Gainers */}
               <div className="w-[300px] shrink-0">
-                <HighlightColumn icon={TrendingUp} label="Stocks · Top Gainers" link="/stocks">
+                <HighlightColumn icon={TrendingUp} label="Stocks · Day's Gainers" link="/stocks">
                   {topGainers.length === 0 && (
                     <p className="text-[11px] text-muted-foreground">No data available</p>
                   )}
@@ -1255,7 +1258,7 @@ const OverviewPage = () => {
 
               {/* Top Losers */}
               <div className="w-[300px] shrink-0">
-                <HighlightColumn icon={TrendingDown} label="Stocks · Top Losers" link="/stocks">
+                <HighlightColumn icon={TrendingDown} label="Stocks · Day's Losers" link="/stocks">
                   {topLosers.length === 0 && (
                     <p className="text-[11px] text-muted-foreground">No data available</p>
                   )}
@@ -1362,7 +1365,7 @@ const OverviewPage = () => {
         <div className="flex flex-col gap-2 md:hidden">
           {topGainers.length > 0 && (
             <>
-              <MobileGroupHeading icon={TrendingUp} label="Top Gainers" tone="success" />
+              <MobileGroupHeading icon={TrendingUp} label="Day's Gainers" tone="success" />
               {topGainers.map(s => (
                 <MobileStockHighlightCard
                   key={`g-${s.id}`}
@@ -1379,7 +1382,7 @@ const OverviewPage = () => {
           )}
           {topLosers.length > 0 && (
             <>
-              <MobileGroupHeading icon={TrendingDown} label="Top Losers" tone="destructive" />
+              <MobileGroupHeading icon={TrendingDown} label="Day's Losers" tone="destructive" />
               {topLosers.map(s => (
                 <MobileStockHighlightCard
                   key={`l-${s.id}`}
@@ -1647,6 +1650,9 @@ const OverviewPage = () => {
           </div>
         </DialogContent>
       </Dialog>
+    </div>
+    <div className="px-4 md:px-6 pb-6 max-w-[1600px]">
+      <DisclaimerBlock />
     </div>
     </div>
     <TestimonialsSection />

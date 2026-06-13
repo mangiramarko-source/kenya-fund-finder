@@ -15,6 +15,10 @@ import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveCont
 import YieldChange, { formatYield } from "@/components/YieldChange";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import AddToPortfolioButton from "@/components/portfolio/AddToPortfolioButton";
+import DisclaimerBlock from "@/components/DisclaimerBlock";
+import ReportIssueDialog from "@/components/funds/ReportIssueDialog";
+import { getFundExplainer } from "@/lib/fundExplainers";
+import { BookOpen, Layers } from "lucide-react";
 
 const FUND_TYPE_LABELS: Record<string, string> = {
   money_market: "Money Market",
@@ -418,19 +422,64 @@ const FundDetailPage = () => {
             </section>
           </div>
 
-          {/* ━━━ SECTION 5: About ━━━ */}
-          {fund.description && (
-            <div className="rounded-xl border border-border bg-card p-4">
-              <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-2">About This Fund</h3>
-              <p className="text-muted-foreground text-sm leading-relaxed">{fund.description}</p>
+          {/* ━━━ SECTION 5: About / How this fund works ━━━ */}
+          <section>
+            <SectionHeader icon={<BookOpen className="h-4 w-4" />} title="How this fund works" />
+            <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+              <p className="text-sm leading-relaxed text-muted-foreground">{getFundExplainer(fund.fund_type)}</p>
+              {fund.description && (
+                <>
+                  <div className="border-t border-border/40" />
+                  <p className="text-sm leading-relaxed text-muted-foreground">{fund.description}</p>
+                </>
+              )}
             </div>
+          </section>
+
+          {/* ━━━ SECTION 6: Similar / other funds in this category ━━━ */}
+          {peers.length > 0 && (
+            <section>
+              <SectionHeader icon={<Layers className="h-4 w-4" />} title="Other funds in this category" />
+              <div className="rounded-xl border border-border bg-card divide-y divide-border/40">
+                {[...peers]
+                  .sort((a, b) => Math.abs(a.annual_yield - fund.annual_yield) - Math.abs(b.annual_yield - fund.annual_yield))
+                  .slice(0, 4)
+                  .map((p) => (
+                    <Link
+                      key={p.id}
+                      to={`/compare/${p.slug}`}
+                      className="flex items-center justify-between gap-3 px-4 py-2.5 hover:bg-muted/30 transition-colors"
+                    >
+                      <div className="min-w-0">
+                        <p className="text-sm font-semibold text-foreground truncate">{p.name}</p>
+                        <p className="text-[11px] text-muted-foreground truncate">{p.manager}</p>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="text-sm font-bold tabular-nums text-accent">{formatYield(p.annual_yield, p.yield_unit)}</p>
+                        <p className="text-[10px] text-muted-foreground">Annual rate</p>
+                      </div>
+                    </Link>
+                  ))}
+                <Link
+                  to={`/funds/by-yield`}
+                  className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs text-accent hover:bg-muted/30 transition-colors"
+                >
+                  See all funds by yield <ChevronRight className="h-3.5 w-3.5" />
+                </Link>
+              </div>
+            </section>
           )}
 
-      <div className="p-3 rounded-xl bg-muted/30 border border-border/60">
-        <p className="text-[11px] text-muted-foreground/70 leading-relaxed">
-          <strong className="text-muted-foreground">Disclaimer:</strong> {getDisclaimer(fund?.fund_type)}
-        </p>
-      </div>
+          {/* ━━━ Report incorrect data ━━━ */}
+          <div className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 px-4 py-2.5">
+            <p className="text-[11px] text-muted-foreground">
+              Spotted out-of-date or incorrect information on this page?
+            </p>
+            <ReportIssueDialog fundId={fund.id} fundName={fund.name} />
+          </div>
+
+          {/* ━━━ Disclaimers ━━━ */}
+          <DisclaimerBlock extra={getDisclaimer(fund?.fund_type)} />
     </div>
   );
 };
