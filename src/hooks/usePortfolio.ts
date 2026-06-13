@@ -13,6 +13,8 @@ export interface PortfolioItem {
   asset_type: AssetType;
   asset_name: string;
   ticker: string | null;
+  /** Canonical id of the underlying fund/stock/fx/commodity. Nullable for legacy rows. */
+  asset_id?: string | null;
   units: number;
   buy_price: number;
   current_price: number;
@@ -27,6 +29,7 @@ export interface NewPortfolioItem {
   asset_type: AssetType;
   asset_name: string;
   ticker?: string;
+  asset_id?: string | null;
   units: number;
   buy_price: number;
   current_price: number;
