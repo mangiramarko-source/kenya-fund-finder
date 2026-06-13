@@ -100,6 +100,21 @@ const LearnPage = () => {
         </p>
       </div>
 
+      {/* Featured guide */}
+      <a
+        href="/learn/how-to-invest-in-money-market-funds-kenya"
+        className="block mb-5 rounded-xl border border-border bg-card hover:border-accent/40 transition-colors p-4"
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <Banknote className="h-3.5 w-3.5 text-accent" />
+          <span className="text-[10px] uppercase tracking-wide font-semibold text-muted-foreground">Featured guide</span>
+        </div>
+        <p className="text-sm font-semibold text-foreground">How to invest in Money Market Funds in Kenya</p>
+        <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
+          Step-by-step: how MMFs work, opening an account, yields, fees, withholding tax, and how to compare CMA-licensed funds.
+        </p>
+      </a>
+
       {/* Category filter pills */}
       <div className="flex items-center gap-1.5 mb-5 overflow-x-auto scrollbar-hide pb-1">
         {TABS.map(({ key, label, icon: Icon }) => {
