@@ -136,9 +136,101 @@ const PortfolioTable = ({
 
   const changeFor = (itemId: string) => changes.find((c) => c.itemId === itemId);
 
+  // ============== MOBILE CARD LIST ==============
+  const MobileList = (
+    <ul className="md:hidden divide-y divide-border/60 -mx-3">
+      {items.map((item) => {
+        const pnl = getPnL(item);
+        const pnlPct = getPnLPercent(item);
+        const isUp = pnl >= 0;
+        const recent = changeFor(item.id);
+        const alertState = getHoldingAlertState(
+          { asset_type: item.asset_type, asset_id: item.asset_id, asset_name: item.asset_name, ticker: item.ticker },
+          alerts,
+        );
+
+        return (
+          <li key={item.id} className="px-3 py-3">
+            <div className="flex items-start gap-2.5">
+              <span
+                className={`mt-1.5 h-1.5 w-1.5 rounded-full shrink-0 ${TYPE_DOT[item.asset_type]}`}
+                title={TYPE_LABELS[item.asset_type]}
+              />
+              <div className="min-w-0 flex-1">
+                {/* Row 1: name + value */}
+                <div className="flex items-baseline justify-between gap-2">
+                  <span className="font-semibold text-sm text-foreground truncate">
+                    {item.asset_name}
+                  </span>
+                  <span className="text-sm font-semibold tabular-nums text-foreground whitespace-nowrap">
+                    {fmt(getCurrentValue(item), currency)}
+                  </span>
+                </div>
+                {/* Row 2: type/ticker + P&L */}
+                <div className="flex items-baseline justify-between gap-2 mt-0.5">
+                  <span className="text-[10px] uppercase tracking-wider text-muted-foreground truncate">
+                    {TYPE_LABELS[item.asset_type]}
+                    {item.ticker && (
+                      <span className="ml-1.5 font-mono normal-case text-muted-foreground/80">
+                        {item.ticker}
+                      </span>
+                    )}
+                  </span>
+                  <span className={`text-[11px] tabular-nums font-medium whitespace-nowrap ${isUp ? "text-accent" : "text-destructive"}`}>
+                    {isUp ? "+" : ""}{fmt(pnl, currency)}
+                    <span className="ml-1 text-muted-foreground/80 font-normal">
+                      ({isUp ? "+" : ""}{pnlPct.toFixed(2)}%)
+                    </span>
+                  </span>
+                </div>
+                {/* Row 3: recent change + actions */}
+                <div className="flex items-center justify-between gap-2 mt-2">
+                  <div className="flex items-center gap-2 min-w-0">
+                    <RecentChange row={recent} currency={currency} />
+                    <span className="text-[10px] text-muted-foreground/70 truncate">
+                      {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-0.5 shrink-0">
+                    <AlertCell
+                      state={alertState}
+                      onClick={onOpenAlert ? () => onOpenAlert(item) : undefined}
+                    />
+                    {onEdit && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-7 w-7 text-muted-foreground hover:text-primary"
+                        onClick={() => onEdit(item)}
+                        title="Edit holding"
+                      >
+                        <Pencil className="h-3.5 w-3.5" />
+                      </Button>
+                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="h-7 w-7 text-muted-foreground hover:text-destructive"
+                      onClick={() => onDelete(item.id)}
+                      title="Remove holding"
+                    >
+                      <Trash2 className="h-3.5 w-3.5" />
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </li>
+        );
+      })}
+    </ul>
+  );
+
   return (
-    <div className="overflow-x-auto -mx-3 md:mx-0">
-      <Table className="min-w-[760px]">
+    <>
+      {MobileList}
+      <div className="hidden md:block overflow-x-auto">
+        <Table className="min-w-[760px]">
         <TableHeader>
           <TableRow className="border-border/60 hover:bg-transparent">
             <TableHead className="w-[38%] text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Asset</TableHead>
@@ -282,8 +374,9 @@ const PortfolioTable = ({
             );
           })}
         </TableBody>
-      </Table>
-    </div>
+        </Table>
+      </div>
+    </>
   );
 };
 
