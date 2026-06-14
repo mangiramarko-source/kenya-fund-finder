@@ -159,10 +159,10 @@ const HeroTile = ({
       <Icon className="h-4 w-4" />
     </span>
     <span className="min-w-0 flex-1">
-      <span className="block text-xs font-semibold text-foreground truncate">
+      <span className="block text-sm font-semibold text-foreground truncate">
         {label}
       </span>
-      <span className="block text-[10px] text-muted-foreground truncate">
+      <span className="block text-xs text-muted-foreground truncate">
         {sub}
       </span>
     </span>
