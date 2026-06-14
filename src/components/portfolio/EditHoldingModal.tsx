@@ -89,10 +89,10 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, isPending }: Props
             </div>
           )}
 
-          <div className="grid grid-cols-2 gap-3">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div>
               <Label className="text-xs">
-                {item.asset_type === "mmf" ? "Principal (KES)" : "Units / Quantity"}
+                {item.asset_type === "mmf" ? "Amount invested (KES)" : "Units / Quantity"}
               </Label>
               <Input
                 type="number"
@@ -101,9 +101,16 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, isPending }: Props
                 onChange={(e) => setUnits(e.target.value)}
                 min="0"
               />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {item.asset_type === "mmf"
+                  ? "Total money you deposited into this fund."
+                  : "Number of shares or units you hold."}
+              </p>
             </div>
             <div>
-              <Label className="text-xs">Buy price (KES)</Label>
+              <Label className="text-xs">
+                {item.asset_type === "mmf" ? "Reference price (per unit)" : "Buy price per unit (KES)"}
+              </Label>
               <Input
                 type="number"
                 inputMode="decimal"
@@ -111,8 +118,14 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, isPending }: Props
                 onChange={(e) => setBuyPrice(e.target.value)}
                 min="0"
               />
+              <p className="text-[10px] text-muted-foreground mt-1">
+                {item.asset_type === "mmf"
+                  ? "Usually 1.00 for unit trusts — leave as is if unsure."
+                  : "Price you paid per share/unit on the buy date."}
+              </p>
             </div>
           </div>
+
 
           {isYieldType && (
             <div>
