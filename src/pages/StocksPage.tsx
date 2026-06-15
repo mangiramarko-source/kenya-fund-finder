@@ -326,15 +326,15 @@ const StocksPage = () => {
           <div className="flex items-center gap-2">
             {/* Sector dropdown */}
             <Select value={sector} onValueChange={setSector}>
-              <SelectTrigger className="h-9 w-[200px] rounded-lg bg-muted/30 border-border text-xs font-medium">
+              <SelectTrigger className="h-9 w-[200px] rounded-lg bg-accent/10 border-accent/30 text-sm font-medium">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-muted-foreground shrink-0">Sector:</span>
+                  <span className="text-accent font-semibold shrink-0">Sector:</span>
                   <SelectValue />
                 </div>
               </SelectTrigger>
               <SelectContent className="max-h-72">
                 {sectors.map((s) => (
-                  <SelectItem key={s} value={s} className="text-xs">
+                  <SelectItem key={s} value={s} className="text-sm">
                     {s}
                   </SelectItem>
                 ))}
@@ -363,15 +363,15 @@ const StocksPage = () => {
                     <button
                       key={opt.key}
                       onClick={() => setMobileMovement(opt.key)}
-                      className={`inline-flex items-center gap-1 px-2.5 h-8 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
+                      className={`inline-flex items-center gap-1 px-3 h-9 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                         active ? activeColor + " shadow-sm" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
-                      {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
-                      {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
+                      {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5" />}
+                      {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5" />}
+                      {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5" />}
                       {opt.label}
-                      <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+                      <span className={`text-xs tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
                     </button>
                   );
                 })}
@@ -386,7 +386,7 @@ const StocksPage = () => {
               placeholder="Search symbol or company"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 text-xs rounded-lg bg-muted/30 border-border w-full"
+              className="pl-9 h-9 text-sm rounded-lg bg-muted/30 border-border w-full"
             />
           </div>
         </div>
