@@ -279,9 +279,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               updateParams({ category: val, q: "", sort: "annual_yield", dir: "desc", movement: "all" });
             }}
           >
-            <SelectTrigger className="h-9 w-[220px] rounded-lg bg-muted/30 border-border text-xs font-medium">
+            <SelectTrigger className="h-9 w-[240px] rounded-lg bg-accent/10 border-accent/30 text-sm font-medium">
               <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-muted-foreground shrink-0">Category:</span>
+                <span className="text-accent font-semibold shrink-0">Category:</span>
                 <SelectValue />
               </div>
             </SelectTrigger>
