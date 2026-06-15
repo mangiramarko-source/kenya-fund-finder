@@ -326,15 +326,15 @@ const StocksPage = () => {
           <div className="flex items-center gap-2">
             {/* Sector dropdown */}
             <Select value={sector} onValueChange={setSector}>
-              <SelectTrigger className="h-9 w-[200px] rounded-lg bg-muted/30 border-border text-xs font-medium">
+              <SelectTrigger className="h-9 w-[200px] rounded-lg bg-accent/10 border-accent/30 text-sm font-medium">
                 <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-muted-foreground shrink-0">Sector:</span>
+                  <span className="text-accent font-semibold shrink-0">Sector:</span>
                   <SelectValue />
                 </div>
               </SelectTrigger>
               <SelectContent className="max-h-72">
                 {sectors.map((s) => (
-                  <SelectItem key={s} value={s} className="text-xs">
+                  <SelectItem key={s} value={s} className="text-sm">
                     {s}
                   </SelectItem>
                 ))}
