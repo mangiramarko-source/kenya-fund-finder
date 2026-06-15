@@ -30,7 +30,14 @@ interface AssetOption {
 type TabKey = "active" | "triggered" | "paused" | "settings";
 
 const AlertsPage = () => {
-  useDocumentTitle("Price Alerts | Kenya Fund Finder");
+  useDocumentTitle(
+    "Price Alerts – Track Stocks, FX & Commodities | Kenya Fund Finder",
+    "Set custom price alerts for Kenyan stocks, FX rates, and commodities. Get notified when assets cross your target price.",
+    {
+      title: "Price Alerts for Kenyan Stocks, FX & Commodities",
+      description: "Set custom price alerts and get notified when assets cross your target price.",
+    }
+  );
   const { user } = useAuth();
   const navigate = useNavigate();
   const { alerts, loading, deleteAlert, toggleAlert, createAlert } = usePriceAlerts();

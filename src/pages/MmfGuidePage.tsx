@@ -42,7 +42,12 @@ const FAQ: { q: string; a: string }[] = [
 const MmfGuidePage = () => {
   useDocumentTitle(
     "How to Invest in Money Market Funds in Kenya (2026 Guide)",
-    "Step-by-step guide to investing in Kenyan money market funds — how MMFs work, how to open an account, yields, fees, withholding tax, and how to compare CMA-licensed funds."
+    "Step-by-step guide to Kenyan MMFs — how they work, opening an account, yields, fees, withholding tax, and comparing CMA-licensed funds.",
+    {
+      title: "How to Invest in Money Market Funds in Kenya (2026 Guide)",
+      description: "Practical guide to Kenyan money market funds — how MMFs work, fees, yields, tax, and how to compare CMA-licensed funds.",
+      type: "article",
+    }
   );
 
   useJsonLd({

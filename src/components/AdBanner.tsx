@@ -77,7 +77,7 @@ const AdBanner = ({ placement, className = "" }: AdBannerProps) => {
       {ad.media_type === "video" ? (
         <video src={ad.media_url} autoPlay muted loop playsInline className="w-full" />
       ) : (
-        <img src={ad.media_url} alt={ad.title || "Sponsored"} className="w-full" loading="lazy" />
+        <img src={ad.media_url} alt={ad.title || "Sponsored advertisement"} className="w-full" loading="lazy" />
       )}
       <div className="px-3 py-1.5">
         <span className="text-[10px] text-muted-foreground uppercase tracking-wider">Sponsored</span>
