@@ -363,15 +363,15 @@ const StocksPage = () => {
                     <button
                       key={opt.key}
                       onClick={() => setMobileMovement(opt.key)}
-                      className={`inline-flex items-center gap-1 px-2.5 h-8 rounded-md text-xs font-medium transition-all whitespace-nowrap ${
+                      className={`inline-flex items-center gap-1 px-3 h-9 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
                         active ? activeColor + " shadow-sm" : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
-                      {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
-                      {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
-                      {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
+                      {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5" />}
+                      {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5" />}
+                      {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5" />}
                       {opt.label}
-                      <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+                      <span className={`text-xs tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
                     </button>
                   );
                 })}
