@@ -386,7 +386,7 @@ const StocksPage = () => {
               placeholder="Search symbol or company"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 text-xs rounded-lg bg-muted/30 border-border w-full"
+              className="pl-9 h-9 text-sm rounded-lg bg-muted/30 border-border w-full"
             />
           </div>
         </div>
