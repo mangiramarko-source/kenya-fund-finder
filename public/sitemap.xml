@@ -76,6 +76,31 @@
     <priority>0.3</priority>
   </url>
   <url>
+    <loc>https://kenyafundfinder.com/auth</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.4</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/reset-password</loc>
+    <changefreq>yearly</changefreq>
+    <priority>0.2</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/alerts</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/portfolio</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/profile</loc>
+    <changefreq>monthly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
     <loc>https://kenyafundfinder.com/compare/african-alliance-fixed-sh</loc>
     <lastmod>2026-05-19</lastmod>
     <changefreq>daily</changefreq>

@@ -11,7 +11,14 @@ import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 
 const Index = () => {
-  useDocumentTitle("Funds – Kenya Fund Finder");
+  useDocumentTitle(
+    "Unit Trust Funds in Kenya – Compare Yields | Kenya Fund Finder",
+    "Compare CMA-regulated unit trusts and money market funds in Kenya by yield, manager, and minimum investment. Updated daily.",
+    {
+      title: "Unit Trust Funds in Kenya – Compare Yields",
+      description: "Compare CMA-regulated unit trusts and MMFs in Kenya by yield, manager, and minimum investment. Updated daily.",
+    }
+  );
   const cachedFunds = fundCache.loadFunds();
   const cachedSnaps = fundCache.loadSnapshots();
   const [funds, setFunds] = useState<FundFromDB[]>(cachedFunds?.funds ?? []);

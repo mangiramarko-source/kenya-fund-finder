@@ -31,7 +31,14 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
 const PortfolioPage = () => {
-  useDocumentTitle("Mock Portfolio – Track Investments in Kenya | KenyaFundFinder");
+  useDocumentTitle(
+    "Mock Portfolio – Track Investments in Kenya | Kenya Fund Finder",
+    "Simulate and track a Kenyan investment portfolio across unit trusts, stocks, and FX. Compound returns, P&L, and asset allocation.",
+    {
+      title: "Mock Portfolio – Track Investments in Kenya",
+      description: "Simulate and track a Kenyan investment portfolio across unit trusts, stocks, and FX with compounding returns.",
+    }
+  );
   const [currency, setCurrency] = useState<"KES" | "USD">("KES");
   const {
     items,

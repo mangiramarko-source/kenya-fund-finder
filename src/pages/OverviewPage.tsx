@@ -843,11 +843,11 @@ const WatchlistGroupedSection = ({
 /* ─── Main Page ─── */
 const OverviewPage = () => {
   useDocumentTitle(
-    "Kenya Fund Finder – Compare Stocks, Unit Trusts, FX & Commodities",
-    "Kenya's leading platform for comparing CMA-regulated unit trusts, NSE stocks, FX rates, and commodity prices. Daily-updated data, calculators, and alerts.",
+    "Kenya Fund Finder – Stocks, Unit Trusts, FX & Commodities",
+    "Compare CMA-regulated unit trusts, NSE stocks, FX rates, and commodity prices. Daily-updated data, calculators, and price alerts for Kenyan investors.",
     {
-      title: "Kenya Fund Finder – Compare Stocks, Unit Trusts, FX & Commodities",
-      description: "Kenya's leading platform for comparing CMA-regulated unit trusts, NSE stocks, FX rates, and commodity prices.",
+      title: "Kenya Fund Finder – Stocks, Unit Trusts, FX & Commodities",
+      description: "Compare CMA-regulated unit trusts, NSE stocks, FX rates, and commodity prices for Kenyan investors.",
     }
   );
   const navigate = useNavigate();
@@ -1057,9 +1057,9 @@ const OverviewPage = () => {
         <div className="md:hidden rounded-xl border border-border bg-card p-4">
           <div className="flex items-start justify-between gap-3">
             <div className="min-w-0 flex-1">
-              <h1 className="text-lg font-bold text-foreground truncate">
+              <h2 className="text-lg font-bold text-foreground truncate">
                 {user ? `${greeting} ${displayName}` : "Market overview"}
-              </h1>
+              </h2>
               <p className="text-xs text-muted-foreground mt-1">
                 {user ? "Your personalized market overview" : "Live Kenyan market data"}
               </p>

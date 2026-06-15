@@ -1,14 +1,19 @@
-import { useEffect } from "react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import CurrencyConverter from "@/components/calculator/CurrencyConverter";
 import PayeCalculator from "@/components/calculator/PayeCalculator";
 import InvestmentCalculator from "@/components/calculator/InvestmentCalculator";
 import { Calculator as CalcIcon } from "lucide-react";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
 const CalculatorPage = () => {
-  useEffect(() => {
-    document.title = "Calculator | Kenya Fund Finder";
-  }, []);
+  useDocumentTitle(
+    "Investment, Currency & KRA PAYE Calculator | Kenya Fund Finder",
+    "Free Kenyan calculators — estimate unit trust returns, convert KES/USD/GBP, and calculate KRA PAYE tax using the latest tax bands.",
+    {
+      title: "Investment, Currency & KRA PAYE Calculator",
+      description: "Free Kenyan calculators for investment returns, currency conversion, and KRA PAYE tax.",
+    }
+  );
 
   return (
     <div className="container max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-8">
