@@ -45,6 +45,7 @@ const PortfolioSummaryPage = lazy(() => import("./pages/PortfolioSummaryPage"));
 const OverviewPage = lazy(() => import("./pages/OverviewPage"));
 const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
+const AiLabPage = lazy(() => import("./pages/AiLabPage"));
 const DevEmailPreviewPage = lazy(() => import("./pages/DevEmailPreviewPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
