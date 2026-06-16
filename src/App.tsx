@@ -110,6 +110,7 @@ const App = () => (
                     <Route path="/portfolio/summary" element={<PortfolioSummaryPage />} />
                     <Route path="/calculator" element={<CalculatorPage />} />
                     <Route path="/watchlist" element={<WatchlistPage />} />
+                    <Route path="/ai-lab" element={<AiLabPage />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin" element={<AdminPage />} />
                     {import.meta.env.DEV && (
