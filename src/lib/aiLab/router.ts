@@ -20,7 +20,7 @@ export interface UnknownPayload {
 
 export type RouterResult = ScenarioResult | RefusalPayload | UnknownPayload;
 
-const AMOUNT_RE = /(?:kes|ksh|kshs|sh)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(k|m)?/i;
+const AMOUNT_RE = /(?:kes|ksh|kshs|sh)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(k|m)?(?!\s*%)/i;
 const PERCENT_RE = /([0-9]+(?:\.[0-9]+)?)\s*%/;
 const MONTHS_RE = /([0-9]+)\s*(?:months?|mo\b)/i;
 const YEARS_RE = /([0-9]+)\s*(?:years?|yrs?)/i;
