@@ -45,6 +45,7 @@ const PortfolioSummaryPage = lazy(() => import("./pages/PortfolioSummaryPage"));
 const OverviewPage = lazy(() => import("./pages/OverviewPage"));
 const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
+const AiLabPage = lazy(() => import("./pages/AiLabPage"));
 const DevEmailPreviewPage = lazy(() => import("./pages/DevEmailPreviewPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -109,6 +110,7 @@ const App = () => (
                     <Route path="/portfolio/summary" element={<PortfolioSummaryPage />} />
                     <Route path="/calculator" element={<CalculatorPage />} />
                     <Route path="/watchlist" element={<WatchlistPage />} />
+                    <Route path="/ai-lab" element={<AiLabPage />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin" element={<AdminPage />} />
                     {import.meta.env.DEV && (
