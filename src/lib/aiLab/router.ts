@@ -26,7 +26,9 @@ const MONTHS_RE = /([0-9]+)\s*(?:months?|mo\b)/i;
 const YEARS_RE = /([0-9]+)\s*(?:years?|yrs?)/i;
 
 function parseAmount(text: string): number | null {
-  const m = text.match(AMOUNT_RE);
+  // Strip any percentage expressions first so "10%" isn't mistaken for "10".
+  const cleaned = text.replace(/[0-9][0-9,]*(?:\.[0-9]+)?\s*%/g, " ");
+  const m = cleaned.match(AMOUNT_RE);
   if (!m) return null;
   let n = parseFloat(m[1].replace(/,/g, ""));
   if (isNaN(n)) return null;
