@@ -16,11 +16,10 @@ const AiLabPage = () => {
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<RouterResult | null>(null);
 
-  useDocumentTitle({
-    title: "AI Scenario Assistant – KenyaFundFinder",
-    description:
-      "Ask data questions about funds, stocks, and possible outcomes. The assistant shows scenarios using available data — it does not give personal financial advice.",
-  });
+  useDocumentTitle(
+    "AI Scenario Assistant – KenyaFundFinder",
+    "Ask data questions about funds, stocks, and outcomes. Scenarios from available data — not personal financial advice."
+  );
 
   if (loading) {
     return (
