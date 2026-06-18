@@ -9,6 +9,7 @@ const ctx: MarketContext = {
   sampleStockSymbol: "SCOM",
   sampleStockPrice: 15,
   sampleStockChangePct: 2.4,
+  assets: [],
   fetchedAt: new Date().toISOString(),
 };
 
