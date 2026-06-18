@@ -4,11 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 export const SUGGESTED_PROMPTS = [
-  "If I invest KES 100,000 at 11% yield, what happens?",
+  "If I invest KES 100,000 at the current average yield for 12 months",
+  "If I invest KES 250,000 at the top MMF yield for 6 months",
   "What happens if a stock falls 10% on KES 100,000?",
-  "Compare MMF yield vs stock price movement",
-  "Explain money market fund yield",
   "What happens if I add KES 10,000 monthly at 11% for 12 months?",
+  "Explain money market fund yield",
 ];
 
 interface Props {

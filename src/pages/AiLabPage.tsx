@@ -6,7 +6,9 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import PromptCard from "@/components/ai-lab/PromptCard";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import CapabilitiesCard from "@/components/ai-lab/CapabilitiesCard";
+import MarketContextCard from "@/components/ai-lab/MarketContextCard";
 import { routePrompt, type RouterResult } from "@/lib/aiLab/router";
+import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
 
 const MAIN_DISCLAIMER =
   "Data only. Not personal financial advice. Yields, prices, fees, taxes, and market conditions can change. Speak to a licensed adviser before making investment decisions.";
@@ -15,6 +17,8 @@ const AiLabPage = () => {
   const { user, isAdmin, loading } = useAuth();
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<RouterResult | null>(null);
+  const [contextNote, setContextNote] = useState<string | null>(null);
+  const market = useMarketContext();
 
   useDocumentTitle(
     "AI Scenario Assistant – KenyaFundFinder",
@@ -39,20 +43,21 @@ const AiLabPage = () => {
   }
 
   const handleRun = (p: string) => {
+    const { prompt: enriched, note } = applyLiveContext(p, market.data);
     setPrompt(p);
-    setResult(routePrompt(p));
+    setContextNote(note ?? null);
+    setResult(routePrompt(enriched));
   };
 
   return (
     <div className="container py-6 space-y-6 max-w-6xl">
-      {/* Hero */}
       <header className="space-y-2">
         <div className="flex items-center gap-2">
           <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent/15 text-accent">
             <Sparkles className="h-4 w-4" />
           </div>
           <span className="text-[10px] uppercase tracking-widest text-accent font-semibold">
-            Admin preview · Phase 1
+            Admin preview · Phase 2 · Live data
           </span>
         </div>
         <h1 className="text-2xl md:text-3xl font-bold font-heading">AI Scenario Assistant</h1>
@@ -62,16 +67,21 @@ const AiLabPage = () => {
         </p>
       </header>
 
-      {/* Main disclaimer */}
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-2">
         <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
         <p className="text-xs text-foreground/90 leading-relaxed">{MAIN_DISCLAIMER}</p>
       </div>
 
-      {/* Two-column desktop layout */}
+      <MarketContextCard data={market.data} loading={market.loading} error={market.error} />
+
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
         <div className="space-y-4">
           <PromptCard value={prompt} onChange={setPrompt} onSubmit={handleRun} />
+          {contextNote && (
+            <div className="rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs text-accent">
+              {contextNote}
+            </div>
+          )}
           <ScenarioResult result={result} />
         </div>
         <aside className="hidden lg:block">
