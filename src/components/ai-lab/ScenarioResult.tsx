@@ -1,5 +1,6 @@
-import { AlertTriangle, Calculator, FileText, Info, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Calculator, FileText, Info, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
 import type { RouterResult } from "@/lib/aiLab/router";
+import type { ComparableAsset } from "@/lib/aiLab/marketContext";
 import { sanitizeOutput } from "@/lib/aiLab/safety";
 
 const fmtKES = (n: number) =>
