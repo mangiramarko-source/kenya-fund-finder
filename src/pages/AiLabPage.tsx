@@ -46,7 +46,7 @@ const AiLabPage = () => {
     const { prompt: enriched, note } = applyLiveContext(p, market.data);
     setPrompt(p);
     setContextNote(note ?? null);
-    setResult(routePrompt(enriched));
+    setResult(routePrompt(enriched, market.data));
   };
 
   return (
