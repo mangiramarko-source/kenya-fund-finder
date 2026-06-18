@@ -5,10 +5,12 @@ import {
   calculateMmfScenario,
   calculateStockMoveScenario,
   calculateMonthlyContributionScenario,
+  compareAssets,
   EXPLAINERS,
   STANDARD_DISCLAIMER,
   type ScenarioResult,
 } from "./scenarios";
+import { findAsset, type MarketContext } from "./marketContext";
 import { buildRefusal, detectAdviceIntent, type RefusalPayload } from "./safety";
 
 export interface UnknownPayload {
@@ -51,7 +53,9 @@ function parseMonths(text: string): number | null {
   return null;
 }
 
-export function routePrompt(rawPrompt: string): RouterResult {
+const COMPARE_RE = /^\s*compare\s+(.+?)\s+(?:vs\.?|versus|with|to|and|&)\s+(.+?)\s*$/i;
+
+export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): RouterResult {
   const prompt = rawPrompt.trim();
   if (!prompt) {
     return {
@@ -65,6 +69,34 @@ export function routePrompt(rawPrompt: string): RouterResult {
   if (detectAdviceIntent(prompt)) return buildRefusal();
 
   const lower = prompt.toLowerCase();
+
+  // Compare two assets (stocks, funds, commodities, FX)
+  const cmp = prompt.match(COMPARE_RE);
+  if (cmp) {
+    const assets = ctx?.assets ?? [];
+    const a = findAsset(cmp[1], assets);
+    const b = findAsset(cmp[2], assets);
+    if (a && b && a.symbol !== b.symbol) {
+      return compareAssets(a, b);
+    }
+    const missing: string[] = [];
+    if (!a) missing.push(`"${cmp[1].trim()}"`);
+    if (!b) missing.push(`"${cmp[2].trim()}"`);
+    return {
+      kind: "unknown",
+      message:
+        missing.length > 0
+          ? `Couldn't find ${missing.join(" or ")} in the live market data. Try using a ticker (e.g. SCOM, USD, GOLD) or the full fund name.`
+          : "Pick two different assets to compare.",
+      suggestions: [
+        "Compare SCOM vs EQTY",
+        "Compare USD vs EUR",
+        "Compare Gold vs Brent Crude",
+        "Compare CIC Money Market Fund vs Sanlam Money Market Fund",
+      ],
+      disclaimer: STANDARD_DISCLAIMER,
+    };
+  }
 
   // Explainers
   if (/explain|what is|what's|define/.test(lower) && /(yield|mmf|money market)/.test(lower)) {

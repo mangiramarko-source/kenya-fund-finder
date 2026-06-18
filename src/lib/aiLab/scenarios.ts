@@ -132,8 +132,67 @@ export const EXPLAINERS: Record<string, ExplainerResult> = {
   },
 };
 
+import type { ComparableAsset } from "./marketContext";
+
+export interface CompareScenarioResult {
+  kind: "compare";
+  assets: ComparableAsset[];
+  /** Rows describing differences (e.g. price gap, yield gap). */
+  diff: Array<{ label: string; value: string }>;
+  assumptions: string[];
+  disclaimer: string;
+}
+
+const fmtPct = (n: number | null) =>
+  n == null ? "—" : `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
+
+const fmtNumber = (n: number) =>
+  new Intl.NumberFormat("en-KE", { maximumFractionDigits: 2 }).format(n);
+
+export function compareAssets(a: ComparableAsset, b: ComparableAsset): CompareScenarioResult {
+  const diff: Array<{ label: string; value: string }> = [];
+
+  if (a.valueLabel === b.valueLabel) {
+    const delta = b.value - a.value;
+    const pct = a.value !== 0 ? (delta / a.value) * 100 : null;
+    diff.push({
+      label: `${b.symbol} vs ${a.symbol} (${a.valueLabel})`,
+      value: `${delta >= 0 ? "+" : ""}${fmtNumber(delta)}${
+        pct != null ? ` (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)` : ""
+      }`,
+    });
+  } else {
+    diff.push({
+      label: "Note",
+      value: `${a.symbol} and ${b.symbol} use different units (${a.valueLabel} vs ${b.valueLabel}); direct numeric comparison is not meaningful.`,
+    });
+  }
+
+  if (a.changePct != null && b.changePct != null) {
+    diff.push({
+      label: "Recent move gap",
+      value: `${a.symbol} ${fmtPct(a.changePct)} vs ${b.symbol} ${fmtPct(b.changePct)} (gap ${fmtPct(
+        b.changePct - a.changePct,
+      )})`,
+    });
+  }
+
+  return {
+    kind: "compare",
+    assets: [a, b],
+    diff,
+    assumptions: [
+      "Values are point-in-time from the latest available snapshot.",
+      "Percentage changes use the previous published value (intraday for stocks, last update for FX/commodities).",
+      "Cross-category comparisons (e.g. a stock price vs a fund yield) are presented side-by-side for context only — they measure different things.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
 export type ScenarioResult =
   | MmfScenarioResult
   | StockMoveScenarioResult
   | MonthlyContributionScenarioResult
-  | ExplainerResult;
+  | ExplainerResult
+  | CompareScenarioResult;

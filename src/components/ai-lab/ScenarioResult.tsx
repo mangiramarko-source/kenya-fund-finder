@@ -1,5 +1,6 @@
-import { AlertTriangle, Calculator, FileText, Info, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Calculator, FileText, Info, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
 import type { RouterResult } from "@/lib/aiLab/router";
+import type { ComparableAsset } from "@/lib/aiLab/marketContext";
 import { sanitizeOutput } from "@/lib/aiLab/safety";
 
 const fmtKES = (n: number) =>
@@ -114,6 +115,95 @@ const ScenarioResult = ({ result }: { result: RouterResult | null }) => {
           ))}
         </div>
         <Section icon={<FileText className="h-3 w-3" />} title="Important notes">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.assumptions.map((a, i) => (
+              <li key={i}>{sanitizeOutput(a)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Disclaimer text={result.disclaimer} />
+      </div>
+    );
+  }
+
+
+  if (result.kind === "compare") {
+    const fmtVal = (a: ComparableAsset) =>
+      new Intl.NumberFormat("en-KE", { maximumFractionDigits: 4 }).format(a.value);
+    const fmtPct = (n: number | null) => {
+      if (n == null) return "—";
+      const cls = n > 0 ? "text-emerald-500" : n < 0 ? "text-rose-500" : "text-muted-foreground";
+      return <span className={`font-semibold ${cls}`}>{`${n > 0 ? "+" : ""}${n.toFixed(2)}%`}</span>;
+    };
+    const [a, b] = result.assets;
+    // Build full metric list across both assets
+    const metrics = new Set<string>();
+    metrics.add(a.valueLabel);
+    metrics.add(b.valueLabel);
+    const extraLabels = new Set<string>();
+    for (const x of result.assets) for (const e of x.extras ?? []) extraLabels.add(e.label);
+
+    const valueRow = (asset: ComparableAsset, label: string) =>
+      asset.valueLabel === label ? fmtVal(asset) : "—";
+    const extraRow = (asset: ComparableAsset, label: string) =>
+      asset.extras?.find((e) => e.label === label)?.value ?? "—";
+
+    return (
+      <div className="space-y-3">
+        <Section icon={<ArrowLeftRight className="h-3 w-3" />} title="Compare">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm tabular-nums">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <th className="text-left font-medium py-1 pr-3">Metric</th>
+                  <th className="text-right font-medium py-1 px-2">
+                    {a.symbol}
+                    <div className="text-[10px] text-muted-foreground/70 normal-case font-normal">
+                      {a.kind} · {a.name}
+                    </div>
+                  </th>
+                  <th className="text-right font-medium py-1 pl-2">
+                    {b.symbol}
+                    <div className="text-[10px] text-muted-foreground/70 normal-case font-normal">
+                      {b.kind} · {b.name}
+                    </div>
+                  </th>
+                </tr>
+              </thead>
+              <tbody>
+                {[...metrics].map((m) => (
+                  <tr key={m} className="border-t border-border/40">
+                    <td className="py-1.5 pr-3 text-xs text-muted-foreground">{m}</td>
+                    <td className="py-1.5 px-2 text-right font-semibold">{valueRow(a, m)}</td>
+                    <td className="py-1.5 pl-2 text-right font-semibold">{valueRow(b, m)}</td>
+                  </tr>
+                ))}
+                <tr className="border-t border-border/40">
+                  <td className="py-1.5 pr-3 text-xs text-muted-foreground">Recent change</td>
+                  <td className="py-1.5 px-2 text-right">{fmtPct(a.changePct)}</td>
+                  <td className="py-1.5 pl-2 text-right">{fmtPct(b.changePct)}</td>
+                </tr>
+                {[...extraLabels].map((lbl) => (
+                  <tr key={lbl} className="border-t border-border/40">
+                    <td className="py-1.5 pr-3 text-xs text-muted-foreground">{lbl}</td>
+                    <td className="py-1.5 px-2 text-right text-xs">{extraRow(a, lbl)}</td>
+                    <td className="py-1.5 pl-2 text-right text-xs">{extraRow(b, lbl)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+        {result.diff.length > 0 && (
+          <Section icon={<Calculator className="h-3 w-3" />} title="Difference">
+            <div>
+              {result.diff.map((d) => (
+                <KV key={d.label} k={d.label} v={d.value} />
+              ))}
+            </div>
+          </Section>
+        )}
+        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
           <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
