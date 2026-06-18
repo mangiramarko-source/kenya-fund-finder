@@ -5,10 +5,12 @@ import {
   calculateMmfScenario,
   calculateStockMoveScenario,
   calculateMonthlyContributionScenario,
+  compareAssets,
   EXPLAINERS,
   STANDARD_DISCLAIMER,
   type ScenarioResult,
 } from "./scenarios";
+import { findAsset, type MarketContext } from "./marketContext";
 import { buildRefusal, detectAdviceIntent, type RefusalPayload } from "./safety";
 
 export interface UnknownPayload {
