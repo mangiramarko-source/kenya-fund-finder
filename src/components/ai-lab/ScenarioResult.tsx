@@ -1,7 +1,12 @@
 import { AlertTriangle, ArrowLeftRight, Calculator, FileText, Info, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
 import type { RouterResult } from "@/lib/aiLab/router";
 import type { ComparableAsset } from "@/lib/aiLab/marketContext";
-import type { AssetHistory } from "@/lib/aiLab/history";
+import type { AssetHistory, LookbackDays } from "@/lib/aiLab/history";
+import {
+  formatReturnLabel,
+  formatTrendLabel,
+  formatHistoryAssumption,
+} from "@/lib/aiLab/history";
 import Sparkline from "@/components/Sparkline";
 import { sanitizeOutput } from "@/lib/aiLab/safety";
 
@@ -55,9 +60,11 @@ interface ScenarioResultProps {
   result: RouterResult | null;
   history?: Record<string, AssetHistory> | null;
   historyLoading?: boolean;
+  lookbackDays?: LookbackDays;
 }
 
-const ScenarioResult = ({ result, history, historyLoading }: ScenarioResultProps) => {
+const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: ScenarioResultProps) => {
+  const effectiveLookbackDays = lookbackDays ?? 30;
   if (!result) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
@@ -192,7 +199,7 @@ const ScenarioResult = ({ result, history, historyLoading }: ScenarioResultProps
                   <td className="py-1.5 pl-2 text-right">{fmtPct(b.changePct)}</td>
                 </tr>
                 <tr className="border-t border-border/40">
-                  <td className="py-1.5 pr-3 text-xs text-muted-foreground">30-day return</td>
+                  <td className="py-1.5 pr-3 text-xs text-muted-foreground">{formatReturnLabel(effectiveLookbackDays)}</td>
                   <td className="py-1.5 px-2 text-right">
                     {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPct(history?.[a.symbol]?.returnPct ?? null)}
                   </td>
@@ -201,7 +208,7 @@ const ScenarioResult = ({ result, history, historyLoading }: ScenarioResultProps
                   </td>
                 </tr>
                 <tr className="border-t border-border/40">
-                  <td className="py-1.5 pr-3 text-xs text-muted-foreground">30-day trend</td>
+                  <td className="py-1.5 pr-3 text-xs text-muted-foreground">{formatTrendLabel(effectiveLookbackDays)}</td>
                   <td className="py-1.5 px-2 text-right">
                     {history?.[a.symbol]?.points?.length ? (
                       <div className="inline-flex justify-end w-full">
@@ -258,6 +265,7 @@ const ScenarioResult = ({ result, history, historyLoading }: ScenarioResultProps
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
+            <li>{sanitizeOutput(formatHistoryAssumption(effectiveLookbackDays))}</li>
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
