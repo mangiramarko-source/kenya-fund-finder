@@ -10,12 +10,18 @@ import {
   calculateFxConversionScenario,
   calculateFxMoveScenario,
   calculateCommodityMoveScenario,
+  calculateNewsSummaryScenario,
   compareAssets,
   EXPLAINERS,
   STANDARD_DISCLAIMER,
   type ScenarioResult,
 } from "./scenarios";
 import { findAsset, type MarketContext } from "./marketContext";
+import {
+  isNewsLabPrompt,
+  matchNewsForPrompt,
+  type NewsContext,
+} from "./newsContext";
 import { buildRefusal, detectAdviceIntent, hasMmfYieldContext, type RefusalPayload } from "./safety";
 import { buildUnknownFallback } from "./intent";
 import {
@@ -486,6 +492,30 @@ function tryCommodityMoveRoute(
   );
 }
 
+function tryNewsSummaryRoute(
+  prompt: string,
+  lower: string,
+  ctx?: MarketContext | null,
+  newsCtx?: NewsContext | null,
+): RouterResult | null {
+  if (!isNewsLabPrompt(lower)) return null;
+
+  if (!newsCtx?.articles?.length) {
+    return unknownFallback(prompt, ctx);
+  }
+
+  const match = matchNewsForPrompt(prompt, newsCtx, ctx);
+  if (!match || !match.articles.length) {
+    return unknownFallback(prompt, ctx);
+  }
+
+  return calculateNewsSummaryScenario(match.articles, {
+    queryLabel: match.queryLabel,
+    relatedSymbol: match.relatedSymbol,
+    queryKind: match.queryKind,
+  });
+}
+
 function routeExplainer(lower: string): ScenarioResult | null {
   const isExp = /explain|what is|what's|define/.test(lower);
   if (!isExp) return null;
@@ -510,7 +540,11 @@ function routeExplainer(lower: string): ScenarioResult | null {
   return null;
 }
 
-export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): RouterResult {
+export function routePrompt(
+  rawPrompt: string,
+  ctx?: MarketContext | null,
+  newsCtx?: NewsContext | null,
+): RouterResult {
   const prompt = rawPrompt.trim();
   if (!prompt) {
     return {
@@ -554,6 +588,9 @@ export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): Rout
 
   const explainer = routeExplainer(lower);
   if (explainer) return explainer;
+
+  const newsSummary = tryNewsSummaryRoute(prompt, lower, ctx, newsCtx);
+  if (newsSummary) return newsSummary;
 
   const fxConversion = tryFxConversionRoute(prompt, lower, ctx);
   if (fxConversion) return fxConversion;

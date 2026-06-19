@@ -9,6 +9,7 @@ import CapabilitiesCard from "@/components/ai-lab/CapabilitiesCard";
 import MarketContextCard from "@/components/ai-lab/MarketContextCard";
 import { routePrompt, type RouterResult } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
+import { useNewsContext } from "@/lib/aiLab/newsContext";
 import { fetchAssetHistory, type AssetHistory, type LookbackDays, LOOKBACK_OPTIONS } from "@/lib/aiLab/history";
 import { Button } from "@/components/ui/button";
 
@@ -24,6 +25,7 @@ const AiLabPage = () => {
   const [historyLoading, setHistoryLoading] = useState(false);
   const [lookbackDays, setLookbackDays] = useState<LookbackDays>(30);
   const market = useMarketContext();
+  const news = useNewsContext();
 
   useEffect(() => {
     if (!result || result.kind !== "compare") {
@@ -69,7 +71,7 @@ const AiLabPage = () => {
     const { prompt: enriched, note } = applyLiveContext(p, market.data);
     setPrompt(p);
     setContextNote(note ?? null);
-    setResult(routePrompt(enriched, market.data));
+    setResult(routePrompt(enriched, market.data, news.data));
   };
 
   return (
@@ -80,7 +82,7 @@ const AiLabPage = () => {
             <Sparkles className="h-4 w-4" />
           </div>
           <span className="text-[10px] uppercase tracking-widest text-accent font-semibold">
-            Admin preview · Phase 8D · FX + commodity scenarios
+            Admin preview · Phase 8E · news summaries
           </span>
         </div>
         <h1 className="text-2xl md:text-3xl font-bold font-heading">AI Scenario Assistant</h1>

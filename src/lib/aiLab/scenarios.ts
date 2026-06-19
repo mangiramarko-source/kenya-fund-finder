@@ -1,6 +1,8 @@
 // Pure, deterministic scenario calculators for the AI Scenario Assistant.
 // No advice. Results are projections, not guarantees.
 
+import type { NewsArticle, NewsQueryKind } from "./newsContext";
+
 export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";
 
 export const MMF_SCENARIO_SUMMARY =
@@ -298,6 +300,96 @@ export function getFxCommodityUserText(
     parts.push(String(result.estimatedValueAfterMove), String(result.estimatedChange));
   }
   return parts.join(" ");
+}
+
+export const NEWS_SUMMARY_PREFIX =
+  "Based on the available KenyaFundFinder news data, here are matching articles and their stored summaries.";
+
+export const NEWS_SUMMARY_SUFFIX = "It does not predict price movement.";
+
+export const NEWS_IMPORTANT_NOTES = [
+  "News data may be incomplete or delayed.",
+  "This does not predict price movement.",
+  "This is not buy/sell advice.",
+  "Article matching is based on available titles, summaries, symbols, and company names. It may miss relevant articles or include broad mentions.",
+] as const;
+
+export interface NewsSummaryArticle {
+  title: string;
+  source?: string;
+  publishedAt?: string;
+  snippet?: string;
+  url?: string;
+  relatedSymbol?: string;
+}
+
+export interface NewsSummaryScenarioResult {
+  kind: "news-summary";
+  summary: string;
+  articles: NewsSummaryArticle[];
+  possibleRelevance: string[];
+  importantNotes: string[];
+  disclaimer: string;
+}
+
+export function calculateNewsSummaryScenario(
+  matched: NewsArticle[],
+  meta: { queryLabel: string; relatedSymbol?: string; queryKind: NewsQueryKind },
+): NewsSummaryScenarioResult {
+  const articles: NewsSummaryArticle[] = matched.map((a) => ({
+    title: a.title,
+    source: a.source || undefined,
+    publishedAt: a.datePublished || undefined,
+    snippet: a.summary ? a.summary.slice(0, 500) : undefined,
+    url: a.url ?? undefined,
+    relatedSymbol: meta.relatedSymbol,
+  }));
+
+  const summary =
+    meta.queryKind === "explain_news"
+      ? `${NEWS_SUMMARY_PREFIX} This lists stored summaries only — not a full article analysis. ${NEWS_SUMMARY_SUFFIX}`
+      : `${NEWS_SUMMARY_PREFIX} ${NEWS_SUMMARY_SUFFIX}`;
+
+  const possibleRelevance: string[] = [];
+  if (meta.relatedSymbol) {
+    possibleRelevance.push(
+      "This news may be relevant because it mentions the requested company or ticker in the title or summary.",
+    );
+  } else if (meta.queryKind === "market_today" || meta.queryKind === "nse_today") {
+    possibleRelevance.push(
+      "This news may be relevant because it matches today's published articles in the available KenyaFundFinder news data.",
+    );
+  } else {
+    possibleRelevance.push(
+      "This news may be relevant because it matches the requested topic in available article titles or summaries.",
+    );
+  }
+  possibleRelevance.push(
+    "Possible things to watch include company announcements, regulatory updates, or broader market conditions referenced in the articles.",
+  );
+
+  const importantNotes = [...NEWS_IMPORTANT_NOTES];
+  if (meta.queryKind === "explain_news") {
+    importantNotes.push("This lists stored summaries only — not a full article analysis.");
+  }
+
+  return {
+    kind: "news-summary",
+    summary,
+    articles,
+    possibleRelevance,
+    importantNotes,
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
+export function getNewsSummaryUserText(result: NewsSummaryScenarioResult): string {
+  return [
+    result.summary,
+    ...result.possibleRelevance,
+    ...result.importantNotes,
+    ...result.articles.map((a) => [a.title, a.source, a.publishedAt, a.snippet].filter(Boolean).join(" ")),
+  ].join(" ");
 }
 
 export interface MonthlyContributionScenarioResult {
@@ -804,5 +896,6 @@ export type ScenarioResult =
   | FxConversionScenarioResult
   | FxMoveScenarioResult
   | CommodityMoveScenarioResult
+  | NewsSummaryScenarioResult
   | ExplainerResult
   | CompareScenarioResult;

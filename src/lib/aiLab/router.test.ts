@@ -6,6 +6,7 @@ import {
   NEWS_UNKNOWN_MSG,
 } from "./intent";
 import type { MarketContext, ComparableAsset } from "./marketContext";
+import type { NewsArticle, NewsContext } from "./newsContext";
 import { MMF_SCENARIO_SUMMARY } from "./scenarios";
 
 const mkStock = (
@@ -35,6 +36,21 @@ const stockCtx: MarketContext = {
     mkStock("SCOM", "Safaricom", 18.5, 1.2),
     mkStock("EQTY", "Equity Group", 44.1, -0.4),
   ],
+  fetchedAt: new Date().toISOString(),
+};
+
+const safaricomNewsArticle: NewsArticle = {
+  id: "router-1",
+  title: "Safaricom shares in focus",
+  summary: "Safaricom PLC remains in the headlines.",
+  source: "Standard",
+  datePublished: new Date().toISOString(),
+  url: "https://example.com/safaricom-router",
+  category: "Market News",
+};
+
+const newsCtx: NewsContext = {
+  articles: [safaricomNewsArticle],
   fetchedAt: new Date().toISOString(),
 };
 
@@ -308,11 +324,19 @@ describe("routePrompt", () => {
       }
     });
 
-    it("Latest news about Safaricom returns news-aware unknown", () => {
+    it("Latest news about Safaricom returns news-aware unknown without newsCtx", () => {
       const r = routePrompt("Latest news about Safaricom");
       expect(r.kind).toBe("unknown");
       if (r.kind === "unknown") {
         expect(r.message).toBe(NEWS_UNKNOWN_MSG);
+      }
+    });
+
+    it("Latest news about Safaricom returns news-summary with newsCtx", () => {
+      const r = routePrompt("Latest news about Safaricom", stockCtx, newsCtx);
+      expect(r.kind).toBe("news-summary");
+      if (r.kind === "news-summary") {
+        expect(r.summary).toContain("KenyaFundFinder news data");
       }
     });
 
