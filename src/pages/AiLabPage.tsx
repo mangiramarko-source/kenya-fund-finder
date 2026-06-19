@@ -9,7 +9,8 @@ import CapabilitiesCard from "@/components/ai-lab/CapabilitiesCard";
 import MarketContextCard from "@/components/ai-lab/MarketContextCard";
 import { routePrompt, type RouterResult } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
-import { fetchAssetHistory, type AssetHistory } from "@/lib/aiLab/history";
+import { fetchAssetHistory, type AssetHistory, type LookbackDays, LOOKBACK_OPTIONS } from "@/lib/aiLab/history";
+import { Button } from "@/components/ui/button";
 
 const MAIN_DISCLAIMER =
   "Data only. Not personal financial advice. Yields, prices, fees, taxes, and market conditions can change. Speak to a licensed adviser before making investment decisions.";
@@ -21,6 +22,7 @@ const AiLabPage = () => {
   const [contextNote, setContextNote] = useState<string | null>(null);
   const [history, setHistory] = useState<Record<string, AssetHistory> | null>(null);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [lookbackDays, setLookbackDays] = useState<LookbackDays>(30);
   const market = useMarketContext();
 
   useEffect(() => {
@@ -30,7 +32,7 @@ const AiLabPage = () => {
     }
     let cancelled = false;
     setHistoryLoading(true);
-    Promise.all(result.assets.map((a) => fetchAssetHistory(a, 30)))
+    Promise.all(result.assets.map((a) => fetchAssetHistory(a, lookbackDays)))
       .then((rows) => {
         if (cancelled) return;
         const map: Record<string, AssetHistory> = {};
@@ -39,7 +41,7 @@ const AiLabPage = () => {
       })
       .finally(() => !cancelled && setHistoryLoading(false));
     return () => { cancelled = true; };
-  }, [result]);
+  }, [result, lookbackDays]);
 
   useDocumentTitle(
     "AI Scenario Assistant – KenyaFundFinder",
@@ -78,7 +80,7 @@ const AiLabPage = () => {
             <Sparkles className="h-4 w-4" />
           </div>
           <span className="text-[10px] uppercase tracking-widest text-accent font-semibold">
-            Admin preview · Phase 4 · 30-day history
+            Admin preview · Phase 5 · configurable lookback
           </span>
         </div>
         <h1 className="text-2xl md:text-3xl font-bold font-heading">AI Scenario Assistant</h1>
@@ -103,7 +105,36 @@ const AiLabPage = () => {
               {contextNote}
             </div>
           )}
-          <ScenarioResult result={result} history={history} historyLoading={historyLoading} />
+          {result?.kind === "compare" && (
+            <div className="rounded-xl border border-border bg-card/60 px-3 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+              <div>
+                <p className="text-xs font-medium text-foreground">Compare lookback</p>
+                <p className="text-[11px] text-muted-foreground">
+                  Used for historical return and trend rows.
+                </p>
+              </div>
+              <div className="flex gap-1.5">
+                {LOOKBACK_OPTIONS.map((days) => (
+                  <Button
+                    key={days}
+                    type="button"
+                    size="sm"
+                    variant={lookbackDays === days ? "default" : "outline"}
+                    className="h-7 px-2.5 text-[11px] font-semibold tabular-nums"
+                    onClick={() => setLookbackDays(days)}
+                  >
+                    {days}D
+                  </Button>
+                ))}
+              </div>
+            </div>
+          )}
+          <ScenarioResult
+            result={result}
+            history={history}
+            historyLoading={historyLoading}
+            lookbackDays={lookbackDays}
+          />
         </div>
         <aside className="hidden lg:block">
           <CapabilitiesCard />
