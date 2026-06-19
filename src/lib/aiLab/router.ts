@@ -14,26 +14,17 @@ import {
 } from "./scenarios";
 import { findAsset, type MarketContext } from "./marketContext";
 import { buildRefusal, detectAdviceIntent, hasMmfYieldContext, type RefusalPayload } from "./safety";
+import { buildUnknownFallback } from "./intent";
+import {
+  type UnknownPayload,
+  UNKNOWN_FALLBACK_MSG,
+  UNKNOWN_FALLBACK_SUGGESTIONS,
+} from "./routerTypes";
 
-export interface UnknownPayload {
-  kind: "unknown";
-  message: string;
-  suggestions: string[];
-  disclaimer: string;
-}
+export type { UnknownPayload } from "./routerTypes";
+export { UNKNOWN_FALLBACK_MSG, UNKNOWN_FALLBACK_SUGGESTIONS } from "./routerTypes";
 
 export type RouterResult = ScenarioResult | RefusalPayload | UnknownPayload;
-
-export const UNKNOWN_FALLBACK_MSG =
-  "I could not confidently match that question to a supported scenario yet. Try a calculation, comparison, or explainer prompt.";
-
-export const UNKNOWN_FALLBACK_SUGGESTIONS = [
-  "KES 10,000 in SCOM",
-  "If I invest KES 100,000 at 11% yield, what happens?",
-  "Compare SCOM vs EQTY",
-  "Explain liquidity",
-  "Gross return vs net return",
-];
 
 const AMOUNT_RE = /(?:kes|ksh|kshs|sh)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)(?:\s*(k|m)\b)?(?!\s*%)/i;
 const PERCENT_RE = /([0-9]+(?:\.[0-9]+)?)\s*%/;
@@ -115,13 +106,8 @@ export function isReverseGoalPrompt(lower: string): boolean {
   return REVERSE_GOAL_RES.some((re) => re.test(lower));
 }
 
-function unknownFallback(): UnknownPayload {
-  return {
-    kind: "unknown",
-    message: UNKNOWN_FALLBACK_MSG,
-    suggestions: UNKNOWN_FALLBACK_SUGGESTIONS,
-    disclaimer: STANDARD_DISCLAIMER,
-  };
+function unknownFallback(prompt: string, ctx?: MarketContext | null): UnknownPayload {
+  return buildUnknownFallback(prompt, ctx);
 }
 
 function isGoalProjectionIntent(lower: string): boolean {
@@ -380,7 +366,7 @@ export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): Rout
   const mmf = tryMmfRoutes(prompt, lower, ctx);
   if (mmf) return mmf;
 
-  if (isReverseGoalPrompt(lower)) return unknownFallback();
+  if (isReverseGoalPrompt(lower)) return unknownFallback(prompt, ctx);
 
   const goalProjection = tryGoalProjectionRoute(prompt, lower);
   if (goalProjection) return goalProjection;
@@ -410,5 +396,5 @@ export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): Rout
     }
   }
 
-  return unknownFallback();
+  return unknownFallback(prompt, ctx);
 }
