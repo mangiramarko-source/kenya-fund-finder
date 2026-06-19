@@ -103,7 +103,7 @@ const AiLabPage = () => {
               {contextNote}
             </div>
           )}
-          <ScenarioResult result={result} />
+          <ScenarioResult result={result} history={history} historyLoading={historyLoading} />
         </div>
         <aside className="hidden lg:block">
           <CapabilitiesCard />
