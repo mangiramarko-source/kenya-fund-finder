@@ -10,6 +10,7 @@ import MarketContextCard from "@/components/ai-lab/MarketContextCard";
 import { routePrompt, type RouterResult } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
+import { AI_LAB_BETA_BADGE, AI_LAB_BETA_NOTE } from "@/lib/aiLab/readiness";
 import { fetchAssetHistory, type AssetHistory, type LookbackDays, LOOKBACK_OPTIONS } from "@/lib/aiLab/history";
 import { Button } from "@/components/ui/button";
 
@@ -61,7 +62,7 @@ const AiLabPage = () => {
       <div className="container py-20 text-center">
         <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
         <p className="text-muted-foreground">
-          AI Lab is currently available to admins only.
+          AI Lab is in admin-only public beta preview. Sign in with an admin account to continue.
         </p>
       </div>
     );
@@ -82,7 +83,7 @@ const AiLabPage = () => {
             <Sparkles className="h-4 w-4" />
           </div>
           <span className="text-[10px] uppercase tracking-widest text-accent font-semibold">
-            Admin preview · Phase 8F · portfolio split scenarios
+            {AI_LAB_BETA_BADGE}
           </span>
         </div>
         <h1 className="text-2xl md:text-3xl font-bold font-heading">AI Scenario Assistant</h1>
@@ -92,12 +93,28 @@ const AiLabPage = () => {
         </p>
       </header>
 
+      <div className="rounded-xl border border-accent/30 bg-accent/5 p-3 flex items-start gap-2">
+        <Info className="h-4 w-4 text-accent shrink-0 mt-0.5" />
+        <p className="text-xs text-foreground/90 leading-relaxed">{AI_LAB_BETA_NOTE}</p>
+      </div>
+
       <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-2">
         <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
         <p className="text-xs text-foreground/90 leading-relaxed">{MAIN_DISCLAIMER}</p>
       </div>
 
       <MarketContextCard data={market.data} loading={market.loading} error={market.error} />
+
+      {news.loading && (
+        <div className="rounded-lg border border-border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
+          Loading news context for news-summary prompts…
+        </div>
+      )}
+      {news.error && (
+        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
+          News context unavailable. News-summary prompts may return a safe unknown until data loads.
+        </div>
+      )}
 
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
         <div className="space-y-4">
@@ -138,7 +155,7 @@ const AiLabPage = () => {
             lookbackDays={lookbackDays}
           />
         </div>
-        <aside className="hidden lg:block">
+        <aside className="space-y-4">
           <CapabilitiesCard />
         </aside>
       </div>
