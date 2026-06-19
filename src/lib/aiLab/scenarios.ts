@@ -115,6 +115,14 @@ export interface ExplainerResult {
   disclaimer: string;
 }
 
+/** Join explainer fields for safety / content assertions in tests. */
+export function getExplainerText(explainer: ExplainerResult): string {
+  return [explainer.title, ...explainer.paragraphs, ...explainer.assumptions].join(" ");
+}
+
+export const WITHHOLDING_TAX_GUARD =
+  "Tax treatment can change and depends on the product, law, and investor circumstances. Confirm current tax treatment from official sources or a licensed adviser.";
+
 export const EXPLAINERS: Record<string, ExplainerResult> = {
   "mmf-yield": {
     kind: "explainer",
@@ -127,6 +135,94 @@ export const EXPLAINERS: Record<string, ExplainerResult> = {
     assumptions: [
       "Yields change as market interest rates change.",
       "Different funds have different fees, minimums and liquidity terms.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  "t-bills": {
+    kind: "explainer",
+    title: "What are treasury bills (T-bills)?",
+    paragraphs: [
+      "Treasury bills are short-term government-backed debt instruments issued by the Central Bank of Kenya on behalf of the government.",
+      "Investors typically buy T-bills at a discount and receive the face value at maturity — the difference is the return. Tenors are commonly 91, 182 or 364 days.",
+      "Because they are government-backed, T-bills are often used as a reference for short-term interest rates and can appear inside money market fund portfolios.",
+      "They are not the same as holding cash: reinvestment risk, inflation, and liquidity timing still matter even for government-backed instruments.",
+    ],
+    assumptions: [
+      "Auction results and yields change at each issuance.",
+      "Secondary-market access and settlement terms vary by channel.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  "withholding-tax": {
+    kind: "explainer",
+    title: "What is withholding tax on investment income?",
+    paragraphs: [
+      "Withholding tax is tax deducted at source from certain types of income — such as interest from some deposits or distributions — before you receive the net amount.",
+      "For unit trusts and similar products, the yield or return you see may be shown gross (before tax) or net (after tax), depending on the fund and how data is published.",
+      WITHHOLDING_TAX_GUARD,
+    ],
+    assumptions: [
+      "Tax rules differ by product type, investor category, and applicable law.",
+      "Gross figures in calculators and tables may not equal what you keep after tax and fees.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  fees: {
+    kind: "explainer",
+    title: "What are fund fees?",
+    paragraphs: [
+      "Fund fees are charges levied to run and administer an investment product. Common examples include management fees, trustee/custodian fees, and sometimes entry or exit loads.",
+      "Fees reduce your net return: two funds with the same published yield can deliver different outcomes after fees are deducted.",
+      "Always check the fund factsheet or prospectus for the fee schedule that applies to the specific product you are reviewing.",
+    ],
+    assumptions: [
+      "Fee structures vary by fund manager and share class.",
+      "Published yields may be shown before some fees — read the label carefully.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  liquidity: {
+    kind: "explainer",
+    title: "What is liquidity?",
+    paragraphs: [
+      "Liquidity describes how quickly and easily you can access your money without a large price penalty.",
+      "Cash and many money market funds offer high liquidity — you can usually withdraw within a few business days, subject to cut-off times and fund rules.",
+      "Stocks are liquid during market hours but prices move. Some fixed-term deposits or locked instruments trade liquidity for a stated rate.",
+      "Liquidity terms are product-specific: check notice periods, settlement days, and any penalties before committing funds.",
+    ],
+    assumptions: [
+      "Cut-off times and public holidays affect settlement speed.",
+      "During market stress, even liquid assets can gap in price.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  volatility: {
+    kind: "explainer",
+    title: "What is volatility?",
+    paragraphs: [
+      "Volatility measures how much an asset's price or value moves up and down over time. Higher volatility means larger and more frequent swings.",
+      "Stocks and commodities tend to be more volatile than money market funds or short-term government-backed instruments.",
+      "Volatility is not the same as loss: it describes movement. A volatile asset can rise or fall; the range of outcomes is simply wider.",
+      "Past volatility does not predict future volatility, but it helps set expectations about how smooth or bumpy a holding might be.",
+    ],
+    assumptions: [
+      "Different assets use different volatility measures (daily, annualised, etc.).",
+      "Short samples can understate or overstate true variability.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  "gross-vs-net": {
+    kind: "explainer",
+    title: "Gross vs net return",
+    paragraphs: [
+      "Gross return is the return before deductions such as withholding tax, management fees, and other charges.",
+      "Net return is what remains after those deductions — closer to what you actually keep.",
+      "When comparing products, check whether the figure shown is gross or net. A higher gross yield is not automatically a higher net outcome if fees or tax treatment differ.",
+      WITHHOLDING_TAX_GUARD,
+    ],
+    assumptions: [
+      "Labels on tables and factsheets may use different conventions.",
+      "Calculators in this assistant may show gross projections unless stated otherwise.",
     ],
     disclaimer: STANDARD_DISCLAIMER,
   },
