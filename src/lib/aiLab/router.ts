@@ -11,6 +11,7 @@ import {
   calculateFxMoveScenario,
   calculateCommodityMoveScenario,
   calculateNewsSummaryScenario,
+  calculatePortfolioSplitScenario,
   compareAssets,
   EXPLAINERS,
   STANDARD_DISCLAIMER,
@@ -23,7 +24,11 @@ import {
   type NewsContext,
 } from "./newsContext";
 import { buildRefusal, detectAdviceIntent, hasMmfYieldContext, type RefusalPayload } from "./safety";
-import { buildUnknownFallback } from "./intent";
+import { buildUnknownFallback, PORTFOLIO_SPLIT_UNKNOWN_MSG, PORTFOLIO_SPLIT_SUGGESTIONS } from "./intent";
+import {
+  isPortfolioSplitIntent,
+  parsePortfolioSplit,
+} from "./portfolioSplitParse";
 import {
   type UnknownPayload,
   UNKNOWN_FALLBACK_MSG,
@@ -183,6 +188,9 @@ function extractStockQuery(prompt: string): string | null {
 }
 
 function isStockAmountIntent(lower: string, prompt: string): boolean {
+  if (isPortfolioSplitIntent(lower, prompt)) return false;
+  if (/\bsplit\b/.test(lower) && FUND_CONTEXT_RE.test(lower)) return false;
+  if (FUND_CONTEXT_RE.test(lower) && /\d+\s*%\s*.*\band\s*\d+\s*%/.test(lower)) return false;
   if (FUND_CONTEXT_RE.test(lower) && !/\b(scom|eqty|kcb|safaricom|equity)\b/i.test(lower)) {
     return false;
   }
@@ -301,6 +309,39 @@ function tryMmfRoutes(
   }
 
   return null;
+}
+
+function portfolioSplitUnknown(): UnknownPayload {
+  return {
+    kind: "unknown",
+    message: PORTFOLIO_SPLIT_UNKNOWN_MSG,
+    suggestions: PORTFOLIO_SPLIT_SUGGESTIONS,
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
+function tryPortfolioSplitRoute(
+  prompt: string,
+  lower: string,
+  ctx?: MarketContext | null,
+): RouterResult | null {
+  if (!isPortfolioSplitIntent(lower, prompt)) return null;
+
+  const parsed = parsePortfolioSplit(prompt, ctx);
+  if (!parsed) return portfolioSplitUnknown();
+
+  return calculatePortfolioSplitScenario(
+    {
+      totalAmount: parsed.totalAmount,
+      mmfPercent: parsed.mmfPercent,
+      stockPercent: parsed.stockPercent,
+      stockSymbol: parsed.stockAsset.symbol,
+      stockName: parsed.stockAsset.name,
+      stockPrice: parsed.stockAsset.value,
+      annualYieldPct: parsed.annualYieldPct,
+    },
+    parsed.extraAssumptions,
+  );
 }
 
 const CURRENCY_ALIASES: Record<string, string> = {
@@ -600,6 +641,9 @@ export function routePrompt(
 
   const commodityMove = tryCommodityMoveRoute(prompt, lower, ctx);
   if (commodityMove) return commodityMove;
+
+  const portfolioSplit = tryPortfolioSplitRoute(prompt, lower, ctx);
+  if (portfolioSplit) return portfolioSplit;
 
   const mmf = tryMmfRoutes(prompt, lower, ctx);
   if (mmf) return mmf;

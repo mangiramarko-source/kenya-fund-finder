@@ -15,6 +15,7 @@ import {
   UNKNOWN_FALLBACK_MSG,
   UNKNOWN_FALLBACK_SUGGESTIONS,
 } from "./routerTypes";
+import { isPortfolioSplitIntent } from "./portfolioSplitParse";
 
 export type AiLabAssetType =
   | "stock"
@@ -37,6 +38,7 @@ export type AiLabIntentType =
   | "fx-move"
   | "commodity-move"
   | "news-summary"
+  | "portfolio-split"
   | "explainer"
   | "unknown";
 
@@ -258,6 +260,7 @@ function detectIntentType(prompt: string, lower: string): AiLabIntentType {
   if (isCompareIntent(prompt, lower)) return "compare";
   if (/explain|what is|what's|define|meaning of/.test(lower)) return "explainer";
   if (isNewsSummaryIntent(lower)) return "news-summary";
+  if (isPortfolioSplitIntent(lower, prompt)) return "portfolio-split";
   if (/(?:yield\s+)?(?:drops?|falls?|changes?)\s+from\s+\d+(?:\.\d+)?\s*%\s+to\s+\d+(?:\.\d+)?\s*%/i.test(prompt)) {
     return "mmf-yield-change";
   }
@@ -410,6 +413,16 @@ export const FUND_UNKNOWN_SUGGESTIONS = [
   "Explain dividend yield",
 ];
 
+export const PORTFOLIO_SPLIT_UNKNOWN_MSG =
+  "I could not confidently match that portfolio split question to available KenyaFundFinder data yet. Try naming a specific stock ticker, stating a yield assumption, and a clear split amount or percentage.";
+
+export const PORTFOLIO_SPLIT_SUGGESTIONS = [
+  "Split 100k between MMF and SCOM at 11% yield",
+  "70% MMF and 30% SCOM at 11% yield",
+  "50k in MMF and 50k in SCOM at 11% yield",
+  "Compare SCOM vs EQTY",
+];
+
 export function buildUnknownFallback(
   prompt: string,
   ctx?: MarketContext | null,
@@ -440,6 +453,15 @@ export function buildUnknownFallback(
       kind: "unknown",
       message: COMMODITY_UNKNOWN_MSG,
       suggestions: COMMODITY_UNKNOWN_SUGGESTIONS,
+      disclaimer: STANDARD_DISCLAIMER,
+    };
+  }
+
+  if (intentType === "portfolio-split") {
+    return {
+      kind: "unknown",
+      message: PORTFOLIO_SPLIT_UNKNOWN_MSG,
+      suggestions: PORTFOLIO_SPLIT_SUGGESTIONS,
       disclaimer: STANDARD_DISCLAIMER,
     };
   }

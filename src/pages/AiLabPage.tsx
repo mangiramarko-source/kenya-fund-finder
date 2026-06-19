@@ -82,7 +82,7 @@ const AiLabPage = () => {
             <Sparkles className="h-4 w-4" />
           </div>
           <span className="text-[10px] uppercase tracking-widest text-accent font-semibold">
-            Admin preview · Phase 8E · news summaries
+            Admin preview · Phase 8F · portfolio split scenarios
           </span>
         </div>
         <h1 className="text-2xl md:text-3xl font-bold font-heading">AI Scenario Assistant</h1>

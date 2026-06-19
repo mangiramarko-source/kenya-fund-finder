@@ -36,6 +36,18 @@ export const NEWS_ADVICE_PATTERNS: RegExp[] = [
   /\bis this good news for buying\b/i,
 ];
 
+export const PORTFOLIO_ADVICE_PATTERNS: RegExp[] = [
+  /\bshould i split\b/i,
+  /\bwhich split is better\b/i,
+  /\bbest allocation\b/i,
+  /\bbest split\b/i,
+  /\boptimal allocation\b/i,
+  /\bsafest allocation\b/i,
+  /\bdo you recommend\b/i,
+  /\bshould i put more in\b.*\b(mmf|money market|stock)/i,
+  /\bshould i put more in mmf or stock/i,
+];
+
 export const ADVICE_INTENT_PATTERNS: RegExp[] = [
   /\bwhich\b.*\b(fund|stock|share|mmf|etf)\b.*\b(should|buy|pick|choose)\b/i,
   /\bshould i (buy|sell|hold|switch|invest in|put)\b/i,
@@ -77,11 +89,16 @@ export function detectNewsAdviceIntent(prompt: string): boolean {
   return NEWS_ADVICE_PATTERNS.some((re) => re.test(prompt));
 }
 
+export function detectPortfolioAdviceIntent(prompt: string): boolean {
+  return PORTFOLIO_ADVICE_PATTERNS.some((re) => re.test(prompt));
+}
+
 export function detectAdviceIntent(prompt: string): boolean {
   if (STOCK_AMOUNT_MAKE_SCENARIO_RE.test(prompt)) return false;
   if (MMF_MAKE_SCENARIO_RE.test(prompt)) return false;
   if (MMF_GET_SCENARIO_RE.test(prompt) && hasMmfYieldContext(prompt)) return false;
   if (detectNewsAdviceIntent(prompt)) return true;
+  if (detectPortfolioAdviceIntent(prompt)) return true;
   return ADVICE_INTENT_PATTERNS.some((re) => re.test(prompt));
 }
 

@@ -273,6 +273,77 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     );
   }
 
+  if (result.kind === "portfolio-split") {
+    const fmtGainLoss = (n: number) => `${n >= 0 ? "+" : ""}${fmtKES(n)}`;
+    return (
+      <div className="space-y-3">
+        <Section icon={<Info className="h-3 w-3" />} title="Summary">
+          <p>{sanitizeOutput(result.summary)}</p>
+        </Section>
+        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.assumptions.map((a, i) => (
+              <li key={i}>{sanitizeOutput(a)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Section icon={<Calculator className="h-3 w-3" />} title="Allocation breakdown">
+          <KV k="Total amount" v={fmtKES(result.inputs.totalAmount)} />
+          <KV
+            k="MMF allocation"
+            v={`${fmtKES(result.inputs.mmfAmount)} (${result.inputs.mmfPercent}%)`}
+          />
+          <KV
+            k="Stock allocation"
+            v={`${fmtKES(result.inputs.stockAmount)} (${result.inputs.stockPercent}%)`}
+          />
+          <KV k="Stock asset" v={`${result.inputs.stockSymbol} · ${result.inputs.stockName}`} />
+          <KV k="Latest stock price" v={fmtKES2(result.inputs.stockPrice)} />
+          <KV k="MMF yield assumption" v={`${result.inputs.annualYieldPct}%`} />
+          <KV k="Projection period" v={`${result.inputs.projectionMonths} months`} />
+        </Section>
+        <Section icon={<Calculator className="h-3 w-3" />} title="Scenario table">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm tabular-nums">
+              <thead>
+                <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                  <th className="text-left font-medium py-1 pr-3">Stock movement</th>
+                  <th className="text-right font-medium py-1 px-2">MMF est. value</th>
+                  <th className="text-right font-medium py-1 px-2">Stock est. value</th>
+                  <th className="text-right font-medium py-1 px-2">Total est. value</th>
+                  <th className="text-right font-medium py-1 pl-2">Est. gain/loss</th>
+                </tr>
+              </thead>
+              <tbody>
+                {result.rows.map((row) => (
+                  <tr key={row.stockMovementPct} className="border-t border-border/40">
+                    <td className="py-1.5 pr-3 text-xs text-muted-foreground">
+                      {row.stockMovementPct > 0 ? `+${row.stockMovementPct}%` : `${row.stockMovementPct}%`}
+                    </td>
+                    <td className="py-1.5 px-2 text-right">{fmtKES(row.mmfEstimatedValue)}</td>
+                    <td className="py-1.5 px-2 text-right">{fmtKES(row.stockEstimatedValue)}</td>
+                    <td className="py-1.5 px-2 text-right font-semibold">
+                      {fmtKES(row.totalEstimatedValue)}
+                    </td>
+                    <td className="py-1.5 pl-2 text-right">{fmtGainLoss(row.estimatedGainLoss)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </Section>
+        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.importantNotes.map((n, i) => (
+              <li key={i}>{sanitizeOutput(n)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Disclaimer text={result.disclaimer} />
+      </div>
+    );
+  }
+
   if (result.kind === "news-summary") {
     const fmtDate = (iso?: string) => {
       if (!iso) return null;

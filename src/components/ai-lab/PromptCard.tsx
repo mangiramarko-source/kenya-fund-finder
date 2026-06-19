@@ -6,8 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 export const SUGGESTED_PROMPTS = [
   "KES 10,000 in SCOM",
   "KES 100,000 to USD",
-  "Gold rises 5%",
   "Latest news about Safaricom",
+  "Split 100k between MMF and SCOM",
   "Explain dividend yield",
 ];
 
