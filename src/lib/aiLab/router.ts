@@ -7,6 +7,9 @@ import {
   calculateStockMoveScenario,
   calculateGoalProjectionScenario,
   calculateStockAmountScenario,
+  calculateFxConversionScenario,
+  calculateFxMoveScenario,
+  calculateCommodityMoveScenario,
   compareAssets,
   EXPLAINERS,
   STANDARD_DISCLAIMER,
@@ -294,6 +297,195 @@ function tryMmfRoutes(
   return null;
 }
 
+const CURRENCY_ALIASES: Record<string, string> = {
+  kes: "KES",
+  ksh: "KES",
+  kshs: "KES",
+  shilling: "KES",
+  shillings: "KES",
+  usd: "USD",
+  dollar: "USD",
+  dollars: "USD",
+  eur: "EUR",
+  euro: "EUR",
+  euros: "EUR",
+  gbp: "GBP",
+  pound: "GBP",
+  pounds: "GBP",
+};
+
+function normalizeCurrency(token: string): string | null {
+  const key = token.toLowerCase().trim();
+  return CURRENCY_ALIASES[key] ?? (/^[A-Z]{3}$/.test(token.toUpperCase()) ? token.toUpperCase() : null);
+}
+
+function parseFxConversion(prompt: string, lower: string): { amount: number; from: string; to: string } | null {
+  const amount = parseAmount(prompt);
+  if (amount == null) return null;
+
+  const patterns: RegExp[] = [
+    /\b(kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\b[\s,]*([0-9][0-9,]*(?:\.[0-9]+)?(?:\s*(?:k|m))?)\s*(?:kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)?\s+to\s+(kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\b/i,
+    /\b(kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\s+([0-9][0-9,]*(?:\.[0-9]+)?(?:\s*(?:k|m))?)\s+to\s+(kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\b/i,
+    /\bhow much is\s+(kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\s+([0-9][0-9,]*(?:\.[0-9]+)?(?:\s*(?:k|m))?)\s+in\s+(kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\b/i,
+    /\bconvert\s+(kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\s+([0-9][0-9,]*(?:\.[0-9]+)?(?:\s*(?:k|m))?)\s+to\s+(kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\b/i,
+    /\b([0-9][0-9,]*(?:\.[0-9]+)?(?:\s*(?:k|m))?)\s+(kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\s+to\s+(kes|ksh|kshs|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\b/i,
+  ];
+
+  for (const re of patterns) {
+    const m = prompt.match(re);
+    if (!m) continue;
+    let fromRaw: string;
+    let toRaw: string;
+    if (/^\d/.test(m[1])) {
+      fromRaw = m[2];
+      toRaw = m[3];
+    } else {
+      fromRaw = m[1];
+      toRaw = m[3] ?? m[m.length - 1];
+    }
+    const from = normalizeCurrency(fromRaw);
+    const to = normalizeCurrency(toRaw);
+    if (from && to && from !== to) return { amount, from, to };
+  }
+
+  const generic = lower.match(
+    /\b(kes|ksh|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\b.*\bto\b.*\b(kes|ksh|usd|eur|gbp|dollars?|euros?|pounds?|shillings?)\b/,
+  );
+  if (generic && amount != null) {
+    const from = normalizeCurrency(generic[1]);
+    const to = normalizeCurrency(generic[2]);
+    if (from && to && from !== to) return { amount, from, to };
+  }
+
+  return null;
+}
+
+function findFxAsset(currency: string, ctx?: MarketContext | null) {
+  const fxAssets = (ctx?.assets ?? []).filter((a) => a.kind === "fx");
+  return findAsset(currency, fxAssets);
+}
+
+function tryFxConversionRoute(
+  prompt: string,
+  lower: string,
+  ctx?: MarketContext | null,
+): RouterResult | null {
+  const isFxConv =
+    /\bconvert\b/.test(lower) ||
+    /\bhow much is\b/.test(lower) ||
+    /\bto (usd|eur|gbp|kes|dollar|euro|shilling)\b/.test(lower) ||
+    /\b(usd|eur|gbp|kes|dollar|euro|shilling)\b.*\bto\b.*\b(usd|eur|gbp|kes|dollar|euro|shilling)\b/.test(lower);
+
+  if (!isFxConv) return null;
+
+  const parsed = parseFxConversion(prompt, lower);
+  if (!parsed) return null;
+
+  const { amount, from, to } = parsed;
+
+  if (from !== "KES" && to !== "KES") {
+    return unknownFallback(prompt, ctx);
+  }
+
+  const foreignCurrency = from === "KES" ? to : from;
+  const asset = findFxAsset(foreignCurrency, ctx);
+  if (!asset || asset.value <= 0) {
+    return unknownFallback(prompt, ctx);
+  }
+
+  return calculateFxConversionScenario(
+    amount,
+    from,
+    to,
+    asset.value,
+    asset.valueLabel,
+  );
+}
+
+function parseSignedMovementPct(prompt: string, lower: string): number | null {
+  const pct = parsePercent(prompt);
+  if (pct == null) return null;
+  if (/\bshilling strengthens?\b/.test(lower)) return -Math.abs(pct);
+  if (/\bshilling weakens?\b/.test(lower)) return Math.abs(pct);
+  const negative = /(down|fall|falls|drop|drops|lose|loses)\b/.test(lower);
+  if (negative) return -Math.abs(pct);
+  return Math.abs(pct);
+}
+
+function tryFxMoveRoute(
+  prompt: string,
+  lower: string,
+  ctx?: MarketContext | null,
+): RouterResult | null {
+  const isFxMove =
+    (/usd\s*\/\s*kes|kes\s*\/\s*usd|exchange rate/.test(lower) &&
+      /(up|down|rise|rises|fall|falls|drop|drops|weak|strengthen)/.test(lower)) ||
+    /\bshilling (weakens|strengthens|strengthen|falls|rises)\b/.test(lower);
+
+  if (!isFxMove) return null;
+
+  const movementPct = parseSignedMovementPct(prompt, lower);
+  if (movementPct == null) return null;
+
+  const usdAsset = findFxAsset("USD", ctx);
+  if (!usdAsset || usdAsset.value <= 0) {
+    return unknownFallback(prompt, ctx);
+  }
+
+  return calculateFxMoveScenario("USD", "KES", usdAsset.value, movementPct);
+}
+
+const COMMODITY_QUERY_RES: Array<{ re: RegExp; query: string }> = [
+  { re: /\bbrent\b/i, query: "brent" },
+  { re: /\bcrude\b/i, query: "crude" },
+  { re: /\boil\b/i, query: "oil" },
+  { re: /\bgold\b/i, query: "gold" },
+  { re: /\bsilver\b/i, query: "silver" },
+  { re: /\bcoffee\b/i, query: "coffee" },
+  { re: /\btea\b/i, query: "tea" },
+];
+
+function extractCommodityQuery(lower: string): string | null {
+  for (const { re, query } of COMMODITY_QUERY_RES) {
+    if (re.test(lower)) return query;
+  }
+  return null;
+}
+
+function isCommodityMoveIntent(lower: string, prompt: string): boolean {
+  const hasCommodity = COMMODITY_QUERY_RES.some(({ re }) => re.test(lower));
+  const hasMove = /(up|down|rise|rises|fall|falls|drop|drops|goes up|go up)\b/.test(lower);
+  return hasCommodity && (hasMove || /\d+(?:\.\d+)?\s*%/.test(prompt));
+}
+
+function tryCommodityMoveRoute(
+  prompt: string,
+  lower: string,
+  ctx?: MarketContext | null,
+): RouterResult | null {
+  if (!isCommodityMoveIntent(lower, prompt)) return null;
+
+  const query = extractCommodityQuery(lower);
+  if (!query) return null;
+
+  const commodities = (ctx?.assets ?? []).filter((a) => a.kind === "commodity");
+  const asset = findAsset(query, commodities);
+  if (!asset || asset.value <= 0) {
+    return unknownFallback(prompt, ctx);
+  }
+
+  const movementPct = parseSignedMovementPct(prompt, lower);
+  if (movementPct == null) return null;
+
+  return calculateCommodityMoveScenario(
+    asset.symbol,
+    asset.name,
+    asset.value,
+    asset.valueLabel,
+    movementPct,
+  );
+}
+
 function routeExplainer(lower: string): ScenarioResult | null {
   const isExp = /explain|what is|what's|define/.test(lower);
   if (!isExp) return null;
@@ -362,6 +554,15 @@ export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): Rout
 
   const explainer = routeExplainer(lower);
   if (explainer) return explainer;
+
+  const fxConversion = tryFxConversionRoute(prompt, lower, ctx);
+  if (fxConversion) return fxConversion;
+
+  const fxMove = tryFxMoveRoute(prompt, lower, ctx);
+  if (fxMove) return fxMove;
+
+  const commodityMove = tryCommodityMoveRoute(prompt, lower, ctx);
+  if (commodityMove) return commodityMove;
 
   const mmf = tryMmfRoutes(prompt, lower, ctx);
   if (mmf) return mmf;

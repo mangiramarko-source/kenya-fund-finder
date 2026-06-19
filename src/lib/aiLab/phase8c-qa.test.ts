@@ -30,6 +30,16 @@ const mkCommodity = (symbol: string, name: string, price: number): ComparableAss
   aliases: [symbol.toLowerCase(), name.toLowerCase(), name.split(" ")[0].toLowerCase()],
 });
 
+const mkFx = (symbol: string, name: string, rate: number): ComparableAsset => ({
+  kind: "fx",
+  symbol,
+  name,
+  value: rate,
+  valueLabel: "KES per 1 unit",
+  changePct: 0.1,
+  aliases: [symbol.toLowerCase(), name.toLowerCase()],
+});
+
 const ctx: MarketContext = {
   fundCount: 10,
   avgAnnualYieldPct: 11,
@@ -41,6 +51,7 @@ const ctx: MarketContext = {
   assets: [
     mkStock("SCOM", "Safaricom", 18.5),
     mkStock("EQTY", "Equity Group", 44.1),
+    mkFx("USD", "US Dollar", 129.5),
     mkCommodity("GOLD", "Gold", 2650),
     mkCommodity("BRENT", "Brent Crude", 82),
   ],
@@ -61,7 +72,16 @@ describe("Phase 8C manual QA checklist", () => {
     }
   });
 
-  it("TEST 2 — KES 100,000 to USD", () => {
+  it("TEST 2 — KES 100,000 to USD with USD asset", () => {
+    const r = routePrompt("KES 100,000 to USD", ctx);
+    expect(r.kind).toBe("fx-conversion");
+    if (r.kind === "fx-conversion") {
+      expect(r.inputs.toCurrency).toBe("USD");
+      expect(r.disclaimer).toBe(DISCLAIMER);
+    }
+  });
+
+  it("TEST 2b — KES 100,000 to USD without USD returns FX unknown", () => {
     const r = routePrompt("KES 100,000 to USD");
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
@@ -70,7 +90,16 @@ describe("Phase 8C manual QA checklist", () => {
     }
   });
 
-  it("TEST 3 — Gold rises 5%", () => {
+  it("TEST 3 — Gold rises 5% with Gold asset", () => {
+    const r = routePrompt("Gold rises 5%", ctx);
+    expect(r.kind).toBe("commodity-move");
+    if (r.kind === "commodity-move") {
+      expect(r.inputs.symbol).toBe("GOLD");
+      expect(r.disclaimer).toBe(DISCLAIMER);
+    }
+  });
+
+  it("TEST 3b — Gold rises 5% without Gold returns commodity unknown", () => {
     const r = routePrompt("Gold rises 5%");
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {

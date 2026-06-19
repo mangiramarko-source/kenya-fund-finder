@@ -273,8 +273,118 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     );
   }
 
+  const fmtMovement = (n: number) => (n > 0 ? `+${n}%` : `${n}%`);
+  const fmtSigned = (n: number, prefix = "") =>
+    `${n >= 0 ? "+" : ""}${prefix}${n.toLocaleString("en-KE", { maximumFractionDigits: 2 })}`;
+
+  if (result.kind === "fx-conversion") {
+    const { inputs } = result;
+    const amountLabel =
+      inputs.fromCurrency === "KES"
+        ? fmtKES(inputs.amount)
+        : `${inputs.amount.toLocaleString("en-KE")} ${inputs.fromCurrency}`;
+    const convertedLabel =
+      inputs.toCurrency === "KES"
+        ? fmtKES2(result.convertedAmount)
+        : `${result.convertedAmount.toLocaleString("en-KE", { maximumFractionDigits: 2 })} ${inputs.toCurrency}`;
+
+    return (
+      <div className="space-y-3">
+        <Section icon={<Info className="h-3 w-3" />} title="Summary">
+          <p>{sanitizeOutput(result.summary)}</p>
+        </Section>
+        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.assumptions.map((a, i) => (
+              <li key={i}>{sanitizeOutput(a)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
+          <KV k="Amount" v={amountLabel} />
+          <KV k="From currency" v={inputs.fromCurrency} />
+          <KV k="To currency" v={inputs.toCurrency} />
+          <KV k="Rate used" v={`${inputs.rate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} (${inputs.rateLabel})`} />
+          <KV k="Estimated converted amount" v={convertedLabel} />
+        </Section>
+        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.importantNotes.map((n, i) => (
+              <li key={i}>{sanitizeOutput(n)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Disclaimer text={result.disclaimer} />
+      </div>
+    );
+  }
+
+  if (result.kind === "fx-move") {
+    const { inputs } = result;
+    return (
+      <div className="space-y-3">
+        <Section icon={<Info className="h-3 w-3" />} title="Summary">
+          <p>{sanitizeOutput(result.summary)}</p>
+        </Section>
+        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.assumptions.map((a, i) => (
+              <li key={i}>{sanitizeOutput(a)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
+          <KV k="Pair" v={inputs.pair} />
+          <KV k="Current rate" v={inputs.currentRate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} />
+          <KV k="Movement assumption" v={fmtMovement(inputs.movementPct)} />
+          <KV k="Estimated rate after movement" v={result.estimatedRateAfterMove.toLocaleString("en-KE", { maximumFractionDigits: 4 })} />
+        </Section>
+        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.importantNotes.map((n, i) => (
+              <li key={i}>{sanitizeOutput(n)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Disclaimer text={result.disclaimer} />
+      </div>
+    );
+  }
+
+  if (result.kind === "commodity-move") {
+    const { inputs } = result;
+    return (
+      <div className="space-y-3">
+        <Section icon={<Info className="h-3 w-3" />} title="Summary">
+          <p>{sanitizeOutput(result.summary)}</p>
+        </Section>
+        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.assumptions.map((a, i) => (
+              <li key={i}>{sanitizeOutput(a)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
+          <KV k="Commodity" v={`${inputs.symbol} · ${inputs.name}`} />
+          <KV k="Current value" v={`${inputs.currentValue.toLocaleString("en-KE", { maximumFractionDigits: 2 })} (${inputs.valueLabel})`} />
+          <KV k="Movement assumption" v={fmtMovement(inputs.movementPct)} />
+          <KV k="Estimated value after movement" v={result.estimatedValueAfterMove.toLocaleString("en-KE", { maximumFractionDigits: 2 })} />
+          <KV k="Estimated change" v={fmtSigned(result.estimatedChange)} />
+        </Section>
+        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.importantNotes.map((n, i) => (
+              <li key={i}>{sanitizeOutput(n)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Disclaimer text={result.disclaimer} />
+      </div>
+    );
+  }
+
   if (result.kind === "stock-amount") {
-    const fmtMovement = (n: number) => (n > 0 ? `+${n}%` : `${n}%`);
     const fmtGainLoss = (n: number) => `${n >= 0 ? "+" : ""}${fmtKES(n)}`;
     return (
       <div className="space-y-3">
