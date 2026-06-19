@@ -195,6 +195,81 @@ describe("routePrompt", () => {
     });
   });
 
+  describe("Phase 8B goal projection", () => {
+    it("routes start + monthly + yield + months to goal-projection", () => {
+      const r = routePrompt(
+        "If I start with KES 100,000 and add KES 10,000 monthly at 11% for 12 months",
+      );
+      expect(r.kind).toBe("goal-projection");
+      if (r.kind === "goal-projection") {
+        expect(r.inputs.startAmount).toBe(100_000);
+        expect(r.inputs.monthlyContribution).toBe(10_000);
+        expect(r.inputs.annualYieldPct).toBe(11);
+        expect(r.inputs.months).toBe(12);
+      }
+    });
+
+    it("routes compact start/add phrasing to goal-projection", () => {
+      const r = routePrompt("Start with 100k, add 10k monthly, 11% yield, 12 months");
+      expect(r.kind).toBe("goal-projection");
+      if (r.kind === "goal-projection") {
+        expect(r.inputs.startAmount).toBe(100_000);
+        expect(r.inputs.monthlyContribution).toBe(10_000);
+      }
+    });
+
+    it("routes monthly-only save prompt with startAmount 0", () => {
+      const r = routePrompt("If I save KES 10,000 monthly at 11% for 24 months");
+      expect(r.kind).toBe("goal-projection");
+      if (r.kind === "goal-projection") {
+        expect(r.inputs.startAmount).toBe(0);
+        expect(r.inputs.monthlyContribution).toBe(10_000);
+        expect(r.inputs.months).toBe(24);
+      }
+    });
+
+    it("routes year-based time wording to goal-projection", () => {
+      const r = routePrompt("What happens if I add KES 10,000 monthly for 1 year at 11%?");
+      expect(r.kind).toBe("goal-projection");
+      if (r.kind === "goal-projection") {
+        expect(r.inputs.months).toBe(12);
+        expect(r.inputs.monthlyContribution).toBe(10_000);
+      }
+    });
+  });
+
+  describe("Phase 8B reverse-goal vs refusal", () => {
+    it("returns unknown for 'How much do I need monthly to reach 1M?'", () => {
+      const r = routePrompt("How much do I need monthly to reach 1M?");
+      expect(r.kind).toBe("unknown");
+      expect(r.kind).not.toBe("refusal");
+    });
+
+    it("returns unknown for 'How much should I save monthly to reach 1M?'", () => {
+      const r = routePrompt("How much should I save monthly to reach 1M?");
+      expect(r.kind).toBe("unknown");
+      expect(r.kind).not.toBe("refusal");
+    });
+
+    it("returns unknown for 'How long to reach 1M if I save 10k monthly?'", () => {
+      const r = routePrompt("How long to reach 1M if I save 10k monthly?");
+      expect(r.kind).toBe("unknown");
+      expect(r.kind).not.toBe("refusal");
+    });
+
+    it("refuses 'Which fund should I use to reach 1M?'", () => {
+      expect(routePrompt("Which fund should I use to reach 1M?").kind).toBe("refusal");
+    });
+
+    it("refuses 'Where should I save 10k monthly?'", () => {
+      expect(routePrompt("Where should I save 10k monthly?").kind).toBe("refusal");
+    });
+
+    it("refuses 'What should I invest in monthly?'", () => {
+      expect(routePrompt("What should I invest in monthly?").kind).toBe("refusal");
+    });
+  });
+
   describe("Phase 8A explainer routes", () => {
     const phase8ExplainerCases: Array<{ prompt: string; title: string }> = [
       { prompt: "Explain dividend yield", title: "What is dividend yield?" },

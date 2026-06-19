@@ -28,7 +28,8 @@ export const MMF_CONTEXT_RE =
 export const ADVICE_INTENT_PATTERNS: RegExp[] = [
   /\bwhich\b.*\b(fund|stock|share|mmf|etf)\b.*\b(should|buy|pick|choose)\b/i,
   /\bshould i (buy|sell|hold|switch|invest in|put)\b/i,
-  /\bwhere should i (put|invest)\b/i,
+  /\bwhere should i (put|invest|save)\b/i,
+  /\bwhat should i invest in\b/i,
   /\bwhat('?s| is) the (best|top|safest)\b/i,
   /\brecommend (a|the|me)\b/i,
   /\bwill i make (money|profit)\b/i,

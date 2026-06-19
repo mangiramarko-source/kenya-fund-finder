@@ -164,6 +164,94 @@ export function calculateMonthlyContributionScenario(
   };
 }
 
+export const GOAL_PROJECTION_SUMMARY =
+  "This projection estimates a possible future value from the starting amount, monthly contribution, yield, and time assumptions shown. It does not predict future returns.";
+
+export interface GoalProjectionRow {
+  month: number;
+  startingValue: number;
+  contribution: number;
+  estimatedGrowth: number;
+  endingValue: number;
+}
+
+export interface GoalProjectionResult {
+  kind: "goal-projection";
+  summary: string;
+  inputs: {
+    startAmount: number;
+    monthlyContribution: number;
+    annualYieldPct: number;
+    months: number;
+  };
+  totals: {
+    totalContributions: number;
+    estimatedGrossGrowth: number;
+    estimatedGrossValue: number;
+  };
+  rows: GoalProjectionRow[];
+  assumptions: string[];
+  importantNotes: string[];
+  disclaimer: string;
+}
+
+const roundCurrency = (n: number) => Math.round(n * 100) / 100;
+
+export function getGoalProjectionUserText(result: GoalProjectionResult): string {
+  return [result.summary, ...result.assumptions, ...result.importantNotes].join(" ");
+}
+
+export function calculateGoalProjectionScenario(
+  startAmount: number,
+  monthlyContribution: number,
+  annualYieldPct: number,
+  months: number,
+): GoalProjectionResult {
+  const monthlyRate = annualYieldPct / 100 / 12;
+  let startingValue = startAmount;
+  const rows: GoalProjectionRow[] = [];
+
+  for (let month = 1; month <= months; month++) {
+    const estimatedGrowth = roundCurrency(startingValue * monthlyRate);
+    const endingValue = roundCurrency(
+      startingValue + estimatedGrowth + monthlyContribution,
+    );
+    rows.push({
+      month,
+      startingValue: roundCurrency(startingValue),
+      contribution: monthlyContribution,
+      estimatedGrowth,
+      endingValue,
+    });
+    startingValue = endingValue;
+  }
+
+  const totalContributions = startAmount + monthlyContribution * months;
+  const estimatedGrossValue = rows[rows.length - 1]?.endingValue ?? roundCurrency(startAmount);
+  const estimatedGrossGrowth = roundCurrency(estimatedGrossValue - totalContributions);
+
+  return {
+    kind: "goal-projection",
+    summary: GOAL_PROJECTION_SUMMARY,
+    inputs: { startAmount, monthlyContribution, annualYieldPct, months },
+    totals: { totalContributions, estimatedGrossGrowth, estimatedGrossValue },
+    rows,
+    assumptions: [
+      "Uses a simple monthly compounding estimate.",
+      "Monthly contributions are added at the end of each month.",
+      "Yield is assumed to stay constant for the projection period.",
+      "Fees, taxes, withdrawals, and changing market conditions are not included.",
+      "Actual results can differ.",
+    ],
+    importantNotes: [
+      "This is a projection, not a guarantee.",
+      "The calculation does not tell the user where to invest.",
+      "A licensed adviser can help with personal financial planning.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
 import type { ComparableAsset } from "./marketContext";
 
 export const STOCK_AMOUNT_MOVEMENTS = [-10, -5, 0, 5, 10] as const;
@@ -536,6 +624,7 @@ export type ScenarioResult =
   | MmfYieldChangeScenarioResult
   | StockMoveScenarioResult
   | MonthlyContributionScenarioResult
+  | GoalProjectionResult
   | StockAmountScenarioResult
   | ExplainerResult
   | CompareScenarioResult;
