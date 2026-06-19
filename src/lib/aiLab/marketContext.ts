@@ -41,6 +41,7 @@ export interface MarketContext {
 }
 
 interface FundRow {
+  id: string | null;
   name: string | null;
   annual_yield: number | string | null;
   fund_type: string | null;
@@ -48,6 +49,7 @@ interface FundRow {
 }
 
 interface StockRow {
+  id: string | null;
   symbol: string | null;
   name: string | null;
   sector: string | null;
@@ -56,6 +58,7 @@ interface StockRow {
 }
 
 interface CommodityRow {
+  id: string | null;
   symbol: string | null;
   name: string | null;
   price: number | string | null;
@@ -64,6 +67,7 @@ interface CommodityRow {
 }
 
 interface RateRow {
+  id: string | null;
   currency_code: string | null;
   currency_name: string | null;
   rate: number | string | null;
