@@ -191,6 +191,48 @@ const ScenarioResult = ({ result, history, historyLoading }: ScenarioResultProps
                   <td className="py-1.5 px-2 text-right">{fmtPct(a.changePct)}</td>
                   <td className="py-1.5 pl-2 text-right">{fmtPct(b.changePct)}</td>
                 </tr>
+                <tr className="border-t border-border/40">
+                  <td className="py-1.5 pr-3 text-xs text-muted-foreground">30-day return</td>
+                  <td className="py-1.5 px-2 text-right">
+                    {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPct(history?.[a.symbol]?.returnPct ?? null)}
+                  </td>
+                  <td className="py-1.5 pl-2 text-right">
+                    {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPct(history?.[b.symbol]?.returnPct ?? null)}
+                  </td>
+                </tr>
+                <tr className="border-t border-border/40">
+                  <td className="py-1.5 pr-3 text-xs text-muted-foreground">30-day trend</td>
+                  <td className="py-1.5 px-2 text-right">
+                    {history?.[a.symbol]?.points?.length ? (
+                      <div className="inline-flex justify-end w-full">
+                        <Sparkline
+                          data={history[a.symbol].points}
+                          width={90}
+                          height={22}
+                          color="auto"
+                          trend={(history[a.symbol].returnPct ?? 0) > 0 ? "up" : (history[a.symbol].returnPct ?? 0) < 0 ? "down" : "flat"}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">{historyLoading ? "…" : "—"}</span>
+                    )}
+                  </td>
+                  <td className="py-1.5 pl-2 text-right">
+                    {history?.[b.symbol]?.points?.length ? (
+                      <div className="inline-flex justify-end w-full">
+                        <Sparkline
+                          data={history[b.symbol].points}
+                          width={90}
+                          height={22}
+                          color="auto"
+                          trend={(history[b.symbol].returnPct ?? 0) > 0 ? "up" : (history[b.symbol].returnPct ?? 0) < 0 ? "down" : "flat"}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">{historyLoading ? "…" : "—"}</span>
+                    )}
+                  </td>
+                </tr>
                 {[...extraLabels].map((lbl) => (
                   <tr key={lbl} className="border-t border-border/40">
                     <td className="py-1.5 pr-3 text-xs text-muted-foreground">{lbl}</td>
