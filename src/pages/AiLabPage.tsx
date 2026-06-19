@@ -1,13 +1,12 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Sparkles, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import PromptCard from "@/components/ai-lab/PromptCard";
-import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import CapabilitiesCard from "@/components/ai-lab/CapabilitiesCard";
 import MarketContextCard from "@/components/ai-lab/MarketContextCard";
-import { routePrompt, type RouterResult } from "@/lib/aiLab/router";
+import AiLabChat, { type CompareState } from "@/components/ai-lab/AiLabChat";
+import { routePrompt } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
 import { AI_LAB_BETA_BADGE, AI_LAB_BETA_NOTE } from "@/lib/aiLab/readiness";
@@ -16,44 +15,129 @@ import {
   resolveAiLabAccess,
 } from "@/lib/aiLab/accessGate";
 import AiLabAccessCard from "@/components/ai-lab/AiLabAccessCard";
-import { fetchAssetHistory, type AssetHistory, type LookbackDays, LOOKBACK_OPTIONS } from "@/lib/aiLab/history";
-import { Button } from "@/components/ui/button";
+import {
+  fetchAssetHistory,
+  type AssetHistory,
+  type LookbackDays,
+} from "@/lib/aiLab/history";
+import {
+  buildClarifyingResponse,
+  createAssistantMessage,
+  createUserMessage,
+  deriveSessionContext,
+  getAssistantTextFromResult,
+  type AiLabChatMessage,
+} from "@/lib/aiLab/chat";
 
 const MAIN_DISCLAIMER =
   "Data only. Not personal financial advice. Yields, prices, fees, taxes, and market conditions can change. Speak to a licensed adviser before making investment decisions.";
 
+const DEFAULT_LOOKBACK: LookbackDays = 30;
+
 const AiLabPage = () => {
   const { user, isAdmin, loading } = useAuth();
-  const [prompt, setPrompt] = useState("");
-  const [result, setResult] = useState<RouterResult | null>(null);
-  const [contextNote, setContextNote] = useState<string | null>(null);
-  const [history, setHistory] = useState<Record<string, AssetHistory> | null>(null);
-  const [historyLoading, setHistoryLoading] = useState(false);
-  const [lookbackDays, setLookbackDays] = useState<LookbackDays>(30);
+  const [messages, setMessages] = useState<AiLabChatMessage[]>([]);
+  const [compareLookback, setCompareLookback] = useState<Record<string, LookbackDays>>({});
+  const [compareHistory, setCompareHistory] = useState<
+    Record<string, Record<string, AssetHistory> | null>
+  >({});
+  const [compareHistoryLoading, setCompareHistoryLoading] = useState<
+    Record<string, boolean>
+  >({});
   const market = useMarketContext();
   const news = useNewsContext();
 
+  const compareMessageIds = useMemo(
+    () =>
+      messages
+        .filter((m) => m.role === "assistant" && m.result?.kind === "compare")
+        .map((m) => m.id),
+    [messages],
+  );
+
   useEffect(() => {
-    if (!result || result.kind !== "compare") {
-      setHistory(null);
-      return;
+    const cancelled = new Map<string, boolean>();
+
+    for (const messageId of compareMessageIds) {
+      cancelled.set(messageId, false);
+      const msg = messages.find((m) => m.id === messageId);
+      if (!msg?.result || msg.result.kind !== "compare") continue;
+
+      const compareResult = msg.result;
+      const lookbackDays = compareLookback[messageId] ?? DEFAULT_LOOKBACK;
+
+      setCompareHistoryLoading((prev) => ({ ...prev, [messageId]: true }));
+      Promise.all(compareResult.assets.map((a) => fetchAssetHistory(a, lookbackDays)))
+        .then((rows) => {
+          if (cancelled.get(messageId)) return;
+          const map: Record<string, AssetHistory> = {};
+          compareResult.assets.forEach((a, i) => {
+            map[a.symbol] = rows[i];
+          });
+          setCompareHistory((prev) => ({ ...prev, [messageId]: map }));
+        })
+        .finally(() => {
+          if (!cancelled.get(messageId)) {
+            setCompareHistoryLoading((prev) => ({ ...prev, [messageId]: false }));
+          }
+        });
     }
-    let cancelled = false;
-    setHistoryLoading(true);
-    Promise.all(result.assets.map((a) => fetchAssetHistory(a, lookbackDays)))
-      .then((rows) => {
-        if (cancelled) return;
-        const map: Record<string, AssetHistory> = {};
-        result.assets.forEach((a, i) => { map[a.symbol] = rows[i]; });
-        setHistory(map);
-      })
-      .finally(() => !cancelled && setHistoryLoading(false));
-    return () => { cancelled = true; };
-  }, [result, lookbackDays]);
+
+    return () => {
+      for (const messageId of cancelled.keys()) {
+        cancelled.set(messageId, true);
+      }
+    };
+  }, [compareMessageIds, messages, compareLookback]);
+
+  const compareStateByMessageId = useMemo(() => {
+    const state: Record<string, CompareState> = {};
+    for (const messageId of compareMessageIds) {
+      state[messageId] = {
+        lookbackDays: compareLookback[messageId] ?? DEFAULT_LOOKBACK,
+        history: compareHistory[messageId] ?? null,
+        historyLoading: compareHistoryLoading[messageId] ?? false,
+      };
+    }
+    return state;
+  }, [compareMessageIds, compareLookback, compareHistory, compareHistoryLoading]);
 
   useDocumentTitle(
     "AI Scenario Assistant – KenyaFundFinder",
     "Ask data questions about funds, stocks, and outcomes. Scenarios from available data — not personal financial advice."
+  );
+
+  const handleLookbackChange = useCallback((messageId: string, days: LookbackDays) => {
+    setCompareLookback((prev) => ({ ...prev, [messageId]: days }));
+  }, []);
+
+  const handleSubmit = useCallback(
+    (prompt: string) => {
+      const userMessage = createUserMessage(prompt);
+      setMessages((prev) => [...prev, userMessage]);
+
+      const sessionContext = deriveSessionContext(messages);
+      const clarifying = buildClarifyingResponse(prompt, sessionContext);
+
+      if (clarifying) {
+        const assistantMessage = createAssistantMessage({
+          text: clarifying.text,
+          status: "clarifying",
+        });
+        setMessages((prev) => [...prev, assistantMessage]);
+        return;
+      }
+
+      const { prompt: enriched, note } = applyLiveContext(prompt, market.data);
+      const result = routePrompt(enriched, market.data, news.data);
+      const assistantMessage = createAssistantMessage({
+        text: getAssistantTextFromResult(result),
+        result,
+        contextNote: note ?? undefined,
+      });
+      setMessages((prev) => [...prev, assistantMessage]);
+    },
+    [messages, market.data, news.data],
   );
 
   if (loading) {
@@ -75,13 +159,6 @@ const AiLabPage = () => {
       </div>
     );
   }
-
-  const handleRun = (p: string) => {
-    const { prompt: enriched, note } = applyLiveContext(p, market.data);
-    setPrompt(p);
-    setContextNote(note ?? null);
-    setResult(routePrompt(enriched, market.data, news.data));
-  };
 
   return (
     <div className="container py-6 space-y-6 max-w-6xl">
@@ -111,63 +188,43 @@ const AiLabPage = () => {
         <p className="text-xs text-foreground/90 leading-relaxed">{MAIN_DISCLAIMER}</p>
       </div>
 
-      <MarketContextCard data={market.data} loading={market.loading} error={market.error} />
-
-      {news.loading && (
-        <div className="rounded-lg border border-border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
-          Loading news context for news-summary prompts…
-        </div>
-      )}
-      {news.error && (
-        <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
-          News context unavailable. News-summary prompts may return a safe unknown until data loads.
-        </div>
-      )}
-
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
-        <div className="space-y-4">
-          <PromptCard value={prompt} onChange={setPrompt} onSubmit={handleRun} />
-          {contextNote && (
-            <div className="rounded-lg border border-accent/30 bg-accent/5 px-3 py-2 text-xs text-accent">
-              {contextNote}
-            </div>
-          )}
-          {result?.kind === "compare" && (
-            <div className="rounded-xl border border-border bg-card/60 px-3 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-              <div>
-                <p className="text-xs font-medium text-foreground">Compare lookback</p>
-                <p className="text-[11px] text-muted-foreground">
-                  Used for historical return and trend rows.
-                </p>
-              </div>
-              <div className="flex gap-1.5">
-                {LOOKBACK_OPTIONS.map((days) => (
-                  <Button
-                    key={days}
-                    type="button"
-                    size="sm"
-                    variant={lookbackDays === days ? "default" : "outline"}
-                    className="h-7 px-2.5 text-[11px] font-semibold tabular-nums"
-                    onClick={() => setLookbackDays(days)}
-                  >
-                    {days}D
-                  </Button>
-                ))}
-              </div>
-            </div>
-          )}
-          <ScenarioResult
-            result={result}
-            history={history}
-            historyLoading={historyLoading}
-            lookbackDays={lookbackDays}
-          />
-        </div>
+        <AiLabChat
+          messages={messages}
+          onSubmit={handleSubmit}
+          compareStateByMessageId={compareStateByMessageId}
+          onLookbackChange={handleLookbackChange}
+        />
+
         <aside className="space-y-4">
           {user ? <AiLabAccessCard user={user} isAdmin={isAdmin} /> : null}
           <CapabilitiesCard />
+          <MarketContextCard
+            data={market.data}
+            loading={market.loading}
+            error={market.error}
+          />
+          {news.loading && (
+            <div className="rounded-lg border border-border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
+              Loading news context for news-summary prompts…
+            </div>
+          )}
+          {news.error && (
+            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
+              News context unavailable. News-summary prompts may return a safe unknown until
+              data loads.
+            </div>
+          )}
         </aside>
       </div>
+
+      <details className="lg:hidden rounded-xl border border-border bg-card/60 p-3">
+        <summary className="text-sm font-medium cursor-pointer">Access & capabilities</summary>
+        <div className="mt-3 space-y-4">
+          {user ? <AiLabAccessCard user={user} isAdmin={isAdmin} /> : null}
+          <CapabilitiesCard />
+        </div>
+      </details>
     </div>
   );
 };
