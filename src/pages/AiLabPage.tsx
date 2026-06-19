@@ -19,7 +19,27 @@ const AiLabPage = () => {
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<RouterResult | null>(null);
   const [contextNote, setContextNote] = useState<string | null>(null);
+  const [history, setHistory] = useState<Record<string, AssetHistory> | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const market = useMarketContext();
+
+  useEffect(() => {
+    if (!result || result.kind !== "compare") {
+      setHistory(null);
+      return;
+    }
+    let cancelled = false;
+    setHistoryLoading(true);
+    Promise.all(result.assets.map((a) => fetchAssetHistory(a, 30)))
+      .then((rows) => {
+        if (cancelled) return;
+        const map: Record<string, AssetHistory> = {};
+        result.assets.forEach((a, i) => { map[a.symbol] = rows[i]; });
+        setHistory(map);
+      })
+      .finally(() => !cancelled && setHistoryLoading(false));
+    return () => { cancelled = true; };
+  }, [result]);
 
   useDocumentTitle(
     "AI Scenario Assistant – KenyaFundFinder",
