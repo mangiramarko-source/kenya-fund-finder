@@ -10,6 +10,8 @@ export type AssetKind = "stock" | "fund" | "commodity" | "fx";
 
 export interface ComparableAsset {
   kind: AssetKind;
+  /** Underlying row id used for fetching per-asset history (when available). */
+  id?: string;
   /** Display name, e.g. "Safaricom" or "US Dollar" */
   name: string;
   /** Short ticker / code, e.g. "SCOM", "USD", "GOLD" */
@@ -39,6 +41,7 @@ export interface MarketContext {
 }
 
 interface FundRow {
+  id: string | null;
   name: string | null;
   annual_yield: number | string | null;
   fund_type: string | null;
@@ -46,6 +49,7 @@ interface FundRow {
 }
 
 interface StockRow {
+  id: string | null;
   symbol: string | null;
   name: string | null;
   sector: string | null;
@@ -54,6 +58,7 @@ interface StockRow {
 }
 
 interface CommodityRow {
+  id: string | null;
   symbol: string | null;
   name: string | null;
   price: number | string | null;
@@ -62,6 +67,7 @@ interface CommodityRow {
 }
 
 interface RateRow {
+  id: string | null;
   currency_code: string | null;
   currency_name: string | null;
   rate: number | string | null;
@@ -94,22 +100,22 @@ const tokenize = (...parts: Array<string | null | undefined>): string[] => {
 export async function fetchMarketContext(): Promise<MarketContext> {
   const [funds, stocks, commodities, rates] = await Promise.all([
     fetchPublicData<FundRow>("funds", {
-      select: ["name", "annual_yield", "fund_type", "manager"],
+      select: ["id", "name", "annual_yield", "fund_type", "manager"],
       order: "annual_yield.desc",
       limit: 100,
     }),
     fetchPublicData<StockRow>("stocks", {
-      select: ["symbol", "name", "sector", "price", "day_change_percent"],
+      select: ["id", "symbol", "name", "sector", "price", "day_change_percent"],
       order: "sort_order.asc",
       limit: 80,
     }),
     fetchPublicData<CommodityRow>("commodities", {
-      select: ["symbol", "name", "price", "previous_price", "unit"],
+      select: ["id", "symbol", "name", "price", "previous_price", "unit"],
       order: "sort_order.asc",
       limit: 40,
     }),
     fetchPublicData<RateRow>("rates", {
-      select: ["currency_code", "currency_name", "rate", "previous_rate"],
+      select: ["id", "currency_code", "currency_name", "rate", "previous_rate"],
       order: "sort_order.asc",
       limit: 40,
     }),
@@ -131,6 +137,7 @@ export async function fetchMarketContext(): Promise<MarketContext> {
     if (!f.name || y == null) continue;
     assets.push({
       kind: "fund",
+      id: f.id ?? undefined,
       name: f.name,
       symbol: f.name,
       value: y,
@@ -149,6 +156,7 @@ export async function fetchMarketContext(): Promise<MarketContext> {
     if (!s.symbol || p == null) continue;
     assets.push({
       kind: "stock",
+      id: s.id ?? undefined,
       name: s.name ?? s.symbol,
       symbol: s.symbol,
       value: p,
@@ -164,6 +172,7 @@ export async function fetchMarketContext(): Promise<MarketContext> {
     if (!c.symbol || p == null) continue;
     assets.push({
       kind: "commodity",
+      id: c.id ?? undefined,
       name: c.name ?? c.symbol,
       symbol: c.symbol,
       value: p,
@@ -178,6 +187,7 @@ export async function fetchMarketContext(): Promise<MarketContext> {
     if (!r.currency_code || rate == null) continue;
     assets.push({
       kind: "fx",
+      id: r.id ?? undefined,
       name: r.currency_name ?? r.currency_code,
       symbol: r.currency_code,
       value: rate,

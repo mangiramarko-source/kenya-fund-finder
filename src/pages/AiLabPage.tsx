@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Sparkles, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,7 @@ import CapabilitiesCard from "@/components/ai-lab/CapabilitiesCard";
 import MarketContextCard from "@/components/ai-lab/MarketContextCard";
 import { routePrompt, type RouterResult } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
+import { fetchAssetHistory, type AssetHistory } from "@/lib/aiLab/history";
 
 const MAIN_DISCLAIMER =
   "Data only. Not personal financial advice. Yields, prices, fees, taxes, and market conditions can change. Speak to a licensed adviser before making investment decisions.";
@@ -18,7 +19,27 @@ const AiLabPage = () => {
   const [prompt, setPrompt] = useState("");
   const [result, setResult] = useState<RouterResult | null>(null);
   const [contextNote, setContextNote] = useState<string | null>(null);
+  const [history, setHistory] = useState<Record<string, AssetHistory> | null>(null);
+  const [historyLoading, setHistoryLoading] = useState(false);
   const market = useMarketContext();
+
+  useEffect(() => {
+    if (!result || result.kind !== "compare") {
+      setHistory(null);
+      return;
+    }
+    let cancelled = false;
+    setHistoryLoading(true);
+    Promise.all(result.assets.map((a) => fetchAssetHistory(a, 30)))
+      .then((rows) => {
+        if (cancelled) return;
+        const map: Record<string, AssetHistory> = {};
+        result.assets.forEach((a, i) => { map[a.symbol] = rows[i]; });
+        setHistory(map);
+      })
+      .finally(() => !cancelled && setHistoryLoading(false));
+    return () => { cancelled = true; };
+  }, [result]);
 
   useDocumentTitle(
     "AI Scenario Assistant – KenyaFundFinder",
@@ -57,7 +78,7 @@ const AiLabPage = () => {
             <Sparkles className="h-4 w-4" />
           </div>
           <span className="text-[10px] uppercase tracking-widest text-accent font-semibold">
-            Admin preview · Phase 2 · Live data
+            Admin preview · Phase 4 · 30-day history
           </span>
         </div>
         <h1 className="text-2xl md:text-3xl font-bold font-heading">AI Scenario Assistant</h1>
@@ -82,7 +103,7 @@ const AiLabPage = () => {
               {contextNote}
             </div>
           )}
-          <ScenarioResult result={result} />
+          <ScenarioResult result={result} history={history} historyLoading={historyLoading} />
         </div>
         <aside className="hidden lg:block">
           <CapabilitiesCard />

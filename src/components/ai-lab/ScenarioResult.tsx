@@ -1,6 +1,8 @@
 import { AlertTriangle, ArrowLeftRight, Calculator, FileText, Info, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
 import type { RouterResult } from "@/lib/aiLab/router";
 import type { ComparableAsset } from "@/lib/aiLab/marketContext";
+import type { AssetHistory } from "@/lib/aiLab/history";
+import Sparkline from "@/components/Sparkline";
 import { sanitizeOutput } from "@/lib/aiLab/safety";
 
 const fmtKES = (n: number) =>
@@ -49,7 +51,13 @@ const KV = ({ k, v }: { k: string; v: string }) => (
   </div>
 );
 
-const ScenarioResult = ({ result }: { result: RouterResult | null }) => {
+interface ScenarioResultProps {
+  result: RouterResult | null;
+  history?: Record<string, AssetHistory> | null;
+  historyLoading?: boolean;
+}
+
+const ScenarioResult = ({ result, history, historyLoading }: ScenarioResultProps) => {
   if (!result) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
@@ -182,6 +190,48 @@ const ScenarioResult = ({ result }: { result: RouterResult | null }) => {
                   <td className="py-1.5 pr-3 text-xs text-muted-foreground">Recent change</td>
                   <td className="py-1.5 px-2 text-right">{fmtPct(a.changePct)}</td>
                   <td className="py-1.5 pl-2 text-right">{fmtPct(b.changePct)}</td>
+                </tr>
+                <tr className="border-t border-border/40">
+                  <td className="py-1.5 pr-3 text-xs text-muted-foreground">30-day return</td>
+                  <td className="py-1.5 px-2 text-right">
+                    {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPct(history?.[a.symbol]?.returnPct ?? null)}
+                  </td>
+                  <td className="py-1.5 pl-2 text-right">
+                    {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPct(history?.[b.symbol]?.returnPct ?? null)}
+                  </td>
+                </tr>
+                <tr className="border-t border-border/40">
+                  <td className="py-1.5 pr-3 text-xs text-muted-foreground">30-day trend</td>
+                  <td className="py-1.5 px-2 text-right">
+                    {history?.[a.symbol]?.points?.length ? (
+                      <div className="inline-flex justify-end w-full">
+                        <Sparkline
+                          data={history[a.symbol].points}
+                          width={90}
+                          height={22}
+                          color="auto"
+                          trend={(history[a.symbol].returnPct ?? 0) > 0 ? "up" : (history[a.symbol].returnPct ?? 0) < 0 ? "down" : "flat"}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">{historyLoading ? "…" : "—"}</span>
+                    )}
+                  </td>
+                  <td className="py-1.5 pl-2 text-right">
+                    {history?.[b.symbol]?.points?.length ? (
+                      <div className="inline-flex justify-end w-full">
+                        <Sparkline
+                          data={history[b.symbol].points}
+                          width={90}
+                          height={22}
+                          color="auto"
+                          trend={(history[b.symbol].returnPct ?? 0) > 0 ? "up" : (history[b.symbol].returnPct ?? 0) < 0 ? "down" : "flat"}
+                        />
+                      </div>
+                    ) : (
+                      <span className="text-muted-foreground text-xs">{historyLoading ? "…" : "—"}</span>
+                    )}
+                  </td>
                 </tr>
                 {[...extraLabels].map((lbl) => (
                   <tr key={lbl} className="border-t border-border/40">
