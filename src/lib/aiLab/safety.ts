@@ -73,10 +73,10 @@ export const REFUSAL_MESSAGE =
   "I can't tell you what to buy, sell, or invest in. I can help compare scenarios, yields, price movements, fees, liquidity, and recent data so you can understand the trade-offs.";
 
 export const SAFE_ALTERNATIVES = [
-  "Compare fund scenarios",
-  "Run a 100k yield scenario",
-  "Explain yield",
-  "Show price movement impact",
+  "Split 100k between MMF and SCOM at 11% yield",
+  "Compare SCOM vs EQTY",
+  "Latest news about Safaricom",
+  "Explain dividend yield",
 ];
 
 export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";

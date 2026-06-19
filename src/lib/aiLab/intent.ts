@@ -393,7 +393,7 @@ export const COMMODITY_UNKNOWN_SUGGESTIONS = [
 ];
 
 export const NEWS_UNKNOWN_MSG =
-  "News summaries are not fully supported in AI Lab yet. I can still help with calculations, comparisons, and explainers using available data.";
+  "I could not find matching news in available KenyaFundFinder data for that prompt. Try a specific company or ticker, or wait for news data to finish loading.";
 
 export const NEWS_UNKNOWN_SUGGESTIONS = [
   "KES 10,000 in SCOM",

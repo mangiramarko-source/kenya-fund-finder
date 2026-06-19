@@ -67,8 +67,13 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   const effectiveLookbackDays = lookbackDays ?? 30;
   if (!result) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
-        Run a scenario above to see structured results here.
+      <div className="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center space-y-2">
+        <p className="text-sm text-muted-foreground">
+          Run a scenario above to see structured results here.
+        </p>
+        <p className="text-xs text-muted-foreground">
+          Use the prompt chips or ask a data question with amounts, tickers, or yield assumptions.
+        </p>
       </div>
     );
   }
@@ -104,14 +109,19 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
       <div className="rounded-xl border border-border bg-card p-4 space-y-3">
         <div className="flex items-start gap-2">
           <AlertTriangle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-          <p className="text-sm">{result.message}</p>
+          <p className="text-sm">{sanitizeOutput(result.message)}</p>
         </div>
         {result.suggestions.length > 0 && (
-          <ul className="text-xs text-muted-foreground list-disc pl-8 space-y-1">
-            {result.suggestions.map((s) => (
-              <li key={s}>{s}</li>
-            ))}
-          </ul>
+          <div className="pl-6 space-y-2">
+            <p className="text-[10px] uppercase tracking-widest text-muted-foreground">
+              Try instead
+            </p>
+            <ul className="text-xs text-muted-foreground list-disc pl-4 space-y-1">
+              {result.suggestions.map((s) => (
+                <li key={s}>{sanitizeOutput(s)}</li>
+              ))}
+            </ul>
+          </div>
         )}
         <Disclaimer text={result.disclaimer} />
       </div>
