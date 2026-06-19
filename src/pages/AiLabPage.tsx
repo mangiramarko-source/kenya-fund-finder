@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { Navigate } from "react-router-dom";
 import { Sparkles, Info } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
@@ -9,6 +9,7 @@ import CapabilitiesCard from "@/components/ai-lab/CapabilitiesCard";
 import MarketContextCard from "@/components/ai-lab/MarketContextCard";
 import { routePrompt, type RouterResult } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
+import { fetchAssetHistory, type AssetHistory } from "@/lib/aiLab/history";
 
 const MAIN_DISCLAIMER =
   "Data only. Not personal financial advice. Yields, prices, fees, taxes, and market conditions can change. Speak to a licensed adviser before making investment decisions.";
