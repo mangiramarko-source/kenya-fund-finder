@@ -58,6 +58,23 @@ describe("detectAdviceIntent", () => {
   it("flags 'Should I buy Safaricom?'", () => {
     expect(detectAdviceIntent("Should I buy Safaricom?")).toBe(true);
   });
+  it("does not flag forward goal projection prompts", () => {
+    expect(
+      detectAdviceIntent("If I save KES 10,000 monthly at 11% for 24 months"),
+    ).toBe(false);
+  });
+  it("does not flag reverse-goal calculator phrasing as advice", () => {
+    expect(detectAdviceIntent("How much should I save monthly to reach 1M?")).toBe(false);
+  });
+  it("flags 'What should I invest in monthly?'", () => {
+    expect(detectAdviceIntent("What should I invest in monthly?")).toBe(true);
+  });
+  it("flags 'Should I put 10k monthly in SCOM?'", () => {
+    expect(detectAdviceIntent("Should I put 10k monthly in SCOM?")).toBe(true);
+  });
+  it("flags 'Where should I save 10k monthly?'", () => {
+    expect(detectAdviceIntent("Where should I save 10k monthly?")).toBe(true);
+  });
 });
 
 describe("sanitizeOutput", () => {

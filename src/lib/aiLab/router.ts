@@ -5,7 +5,7 @@ import {
   calculateMmfScenario,
   calculateMmfYieldChangeScenario,
   calculateStockMoveScenario,
-  calculateMonthlyContributionScenario,
+  calculateGoalProjectionScenario,
   calculateStockAmountScenario,
   compareAssets,
   EXPLAINERS,
@@ -35,10 +35,8 @@ export const UNKNOWN_FALLBACK_SUGGESTIONS = [
   "Gross return vs net return",
 ];
 
-const AMOUNT_RE = /(?:kes|ksh|kshs|sh)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)\s*(k|m)?(?!\s*%)/i;
+const AMOUNT_RE = /(?:kes|ksh|kshs|sh)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)(?:\s*(k|m)\b)?(?!\s*%)/i;
 const PERCENT_RE = /([0-9]+(?:\.[0-9]+)?)\s*%/;
-const MONTHS_RE = /([0-9]+)\s*(?:months?|mo\b)/i;
-const YEARS_RE = /([0-9]+)\s*(?:years?|yrs?)/i;
 const COMPARE_RE = /^\s*compare\s+(.+?)\s+(?:vs\.?|versus|with|to|and|&)\s+(.+?)\s*$/i;
 
 /** Router-only keyword list — do not surface "mutual fund" in user-facing copy. */
@@ -82,11 +80,86 @@ function parsePercent(text: string): number | null {
 }
 
 function parseMonths(text: string): number | null {
-  const m = text.match(MONTHS_RE);
+  const m = text.match(/\b([0-9]+)\s*months?\b/i);
   if (m) return parseInt(m[1], 10);
-  const y = text.match(YEARS_RE);
+  const mo = text.match(/\b([0-9]+)\s*mo\b/i);
+  if (mo) return parseInt(mo[1], 10);
+  const y = text.match(/\b([0-9]+)\s*(?:years?|yrs?)\b/i);
   if (y) return parseInt(y[1], 10) * 12;
   return null;
+}
+
+function parseAllAmounts(text: string): number[] {
+  const cleaned = text
+    .replace(/[0-9][0-9,]*(?:\.[0-9]+)?\s*%/g, " ")
+    .replace(/\b([0-9]+)\s*(?:months?|mo\b|years?|yrs?)\b/gi, " ");
+  const re = /(?:kes|ksh|kshs|sh)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)(?:\s*(k|m)\b)?/gi;
+  return [...cleaned.matchAll(re)]
+    .map((m) => {
+      let n = parseFloat(m[1].replace(/,/g, ""));
+      if (isNaN(n)) return NaN;
+      if (m[2]?.toLowerCase() === "k") n *= 1_000;
+      if (m[2]?.toLowerCase() === "m") n *= 1_000_000;
+      return n;
+    })
+    .filter((n) => !isNaN(n) && n >= 0);
+}
+
+const REVERSE_GOAL_RES = [
+  /\bhow much (do i )?need\b.*\bmonthly\b.*\breach\b/i,
+  /\bhow much should i (save|contribute|add)\b.*\bmonthly\b.*\breach\b/i,
+  /\bhow long\b.*\breach\b/i,
+];
+
+export function isReverseGoalPrompt(lower: string): boolean {
+  return REVERSE_GOAL_RES.some((re) => re.test(lower));
+}
+
+function unknownFallback(): UnknownPayload {
+  return {
+    kind: "unknown",
+    message: UNKNOWN_FALLBACK_MSG,
+    suggestions: UNKNOWN_FALLBACK_SUGGESTIONS,
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
+function isGoalProjectionIntent(lower: string): boolean {
+  if (/\bmonthly income\b/.test(lower)) return false;
+  return (
+    (/\bstart with\b/.test(lower) && /\bmonthly\b/.test(lower)) ||
+    /\b(add|save)\b.*\bmonthly\b/.test(lower) ||
+    (/\bmonthly\b/.test(lower) && /\bfor\s+\d/.test(lower))
+  );
+}
+
+function tryGoalProjectionRoute(prompt: string, lower: string): RouterResult | null {
+  if (!isGoalProjectionIntent(lower)) return null;
+
+  const annualYieldPct = parsePercent(prompt);
+  const months = parseMonths(prompt);
+  if (annualYieldPct == null || months == null) return null;
+
+  const amounts = parseAllAmounts(prompt);
+  if (amounts.length === 0) return null;
+
+  let startAmount = 0;
+  let monthlyContribution = 0;
+
+  if (/\bstart with\b/.test(lower) && amounts.length >= 2) {
+    [startAmount, monthlyContribution] = amounts.slice(0, 2);
+  } else {
+    monthlyContribution = amounts[0];
+  }
+
+  if (monthlyContribution <= 0) return null;
+
+  return calculateGoalProjectionScenario(
+    startAmount,
+    monthlyContribution,
+    annualYieldPct,
+    months,
+  );
 }
 
 function resolveYieldPct(
@@ -157,6 +230,8 @@ function tryMmfRoutes(
   lower: string,
   ctx?: MarketContext | null,
 ): RouterResult | null {
+  if (isGoalProjectionIntent(lower)) return null;
+
   const months = parseMonths(prompt) ?? 12;
   const extra: string[] = [];
 
@@ -305,31 +380,13 @@ export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): Rout
   const mmf = tryMmfRoutes(prompt, lower, ctx);
   if (mmf) return mmf;
 
+  if (isReverseGoalPrompt(lower)) return unknownFallback();
+
+  const goalProjection = tryGoalProjectionRoute(prompt, lower);
+  if (goalProjection) return goalProjection;
+
   const stockAmount = tryStockAmountRoute(prompt, lower, ctx);
   if (stockAmount) return stockAmount;
-
-  if (/monthly|every month|each month|per month|add.*month|save.*month/.test(lower)) {
-    const amounts = [...prompt.matchAll(/([0-9][0-9,]*(?:\.[0-9]+)?)\s*(k|m)?/gi)]
-      .map((m) => {
-        let n = parseFloat(m[1].replace(/,/g, ""));
-        if (m[2]?.toLowerCase() === "k") n *= 1_000;
-        if (m[2]?.toLowerCase() === "m") n *= 1_000_000;
-        return n;
-      })
-      .filter((n) => !isNaN(n) && n >= 1);
-    const { pct } = resolveYieldPct(prompt, ctx);
-    const monthsParsed = parseMonths(prompt) ?? 12;
-    let start = 0;
-    let monthly = 0;
-    if (amounts.length >= 2) {
-      [start, monthly] = amounts;
-    } else if (amounts.length === 1) {
-      monthly = amounts[0];
-    }
-    if (monthly > 0) {
-      return calculateMonthlyContributionScenario(start, monthly, pct, monthsParsed);
-    }
-  }
 
   if (
     /(stock|share|price|safaricom|equity|equities)/.test(lower) ||
@@ -353,10 +410,5 @@ export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): Rout
     }
   }
 
-  return {
-    kind: "unknown",
-    message: UNKNOWN_FALLBACK_MSG,
-    suggestions: UNKNOWN_FALLBACK_SUGGESTIONS,
-    disclaimer: STANDARD_DISCLAIMER,
-  };
+  return unknownFallback();
 }

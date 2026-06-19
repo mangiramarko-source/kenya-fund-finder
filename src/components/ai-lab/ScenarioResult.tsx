@@ -336,6 +336,90 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     );
   }
 
+  if (result.kind === "goal-projection") {
+    const { rows, inputs, totals } = result;
+    const displayRows =
+      inputs.months <= 12
+        ? rows
+        : [
+            ...rows.slice(0, 3),
+            null,
+            ...rows.slice(-3),
+          ];
+    return (
+      <div className="space-y-3">
+        <Section icon={<Info className="h-3 w-3" />} title="Summary">
+          <p>{sanitizeOutput(result.summary)}</p>
+        </Section>
+        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.assumptions.map((a, i) => (
+              <li key={i}>{sanitizeOutput(a)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
+          <div className="space-y-3">
+            <div>
+              <KV k="Starting amount" v={fmtKES(inputs.startAmount)} />
+              <KV k="Monthly contribution" v={fmtKES(inputs.monthlyContribution)} />
+              <KV k="Annual yield assumption" v={`${inputs.annualYieldPct}%`} />
+              <KV k="Time period" v={`${inputs.months} months`} />
+              <KV k="Total contributed" v={fmtKES2(totals.totalContributions)} />
+              <KV k="Estimated gross growth" v={fmtKES2(totals.estimatedGrossGrowth)} />
+              <KV k="Estimated gross value" v={fmtKES2(totals.estimatedGrossValue)} />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm tabular-nums">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    <th className="text-left font-medium py-1 pr-3">Month</th>
+                    <th className="text-right font-medium py-1 px-2">Starting value</th>
+                    <th className="text-right font-medium py-1 px-2">Contribution</th>
+                    <th className="text-right font-medium py-1 px-2">Estimated growth</th>
+                    <th className="text-right font-medium py-1 pl-2">Ending value</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {displayRows.map((row, i) =>
+                    row == null ? (
+                      <tr key="ellipsis" className="border-t border-border/40">
+                        <td
+                          colSpan={5}
+                          className="py-1.5 text-center text-xs text-muted-foreground"
+                        >
+                          …
+                        </td>
+                      </tr>
+                    ) : (
+                      <tr key={row.month} className="border-t border-border/40">
+                        <td className="py-1.5 pr-3 text-xs text-muted-foreground">{row.month}</td>
+                        <td className="py-1.5 px-2 text-right">{fmtKES2(row.startingValue)}</td>
+                        <td className="py-1.5 px-2 text-right">{fmtKES2(row.contribution)}</td>
+                        <td className="py-1.5 px-2 text-right">{fmtKES2(row.estimatedGrowth)}</td>
+                        <td className="py-1.5 pl-2 text-right font-semibold">
+                          {fmtKES2(row.endingValue)}
+                        </td>
+                      </tr>
+                    ),
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </Section>
+        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.importantNotes.map((n, i) => (
+              <li key={i}>{sanitizeOutput(n)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Disclaimer text={result.disclaimer} />
+      </div>
+    );
+  }
+
   if (result.kind === "mmf-yield-change") {
     return (
       <div className="space-y-3">
