@@ -1,5 +1,10 @@
 import { describe, it, expect } from "vitest";
 import { routePrompt, UNKNOWN_FALLBACK_MSG, UNKNOWN_FALLBACK_SUGGESTIONS } from "./router";
+import {
+  COMMODITY_UNKNOWN_MSG,
+  FX_UNKNOWN_MSG,
+  NEWS_UNKNOWN_MSG,
+} from "./intent";
 import type { MarketContext, ComparableAsset } from "./marketContext";
 import { MMF_SCENARIO_SUMMARY } from "./scenarios";
 
@@ -291,6 +296,57 @@ describe("routePrompt", () => {
         }
       });
     }
+  });
+
+  describe("Phase 8C classified unknown fallback", () => {
+    it("KES 100,000 to USD returns FX-aware unknown", () => {
+      const r = routePrompt("KES 100,000 to USD");
+      expect(r.kind).toBe("unknown");
+      if (r.kind === "unknown") {
+        expect(r.message).toBe(FX_UNKNOWN_MSG);
+        expect(r.message).not.toBe(UNKNOWN_FALLBACK_MSG);
+      }
+    });
+
+    it("Latest news about Safaricom returns news-aware unknown", () => {
+      const r = routePrompt("Latest news about Safaricom");
+      expect(r.kind).toBe("unknown");
+      if (r.kind === "unknown") {
+        expect(r.message).toBe(NEWS_UNKNOWN_MSG);
+      }
+    });
+
+    it("Gold rises 5% returns commodity-aware unknown", () => {
+      const r = routePrompt("Gold rises 5%");
+      expect(r.kind).toBe("unknown");
+      if (r.kind === "unknown") {
+        expect(r.message).toBe(COMMODITY_UNKNOWN_MSG);
+      }
+    });
+
+    it("unknown suggestions are non-advisory", () => {
+      const prompts = ["KES 100,000 to USD", "Latest news about Safaricom", "Gold rises 5%"];
+      const forbidden = ["you should buy", "best fund", "I recommend", "put your money in"];
+      for (const p of prompts) {
+        const r = routePrompt(p);
+        if (r.kind === "unknown") {
+          const joined = [r.message, ...r.suggestions].join(" ").toLowerCase();
+          for (const phrase of forbidden) {
+            expect(joined).not.toContain(phrase);
+          }
+        }
+      }
+    });
+
+    it("every classified unknown fallback includes the standard disclaimer", () => {
+      for (const p of ["KES 100,000 to USD", "Latest news about Safaricom", "Gold rises 5%"]) {
+        const r = routePrompt(p);
+        expect(r.kind).toBe("unknown");
+        expect((r as { disclaimer: string }).disclaimer).toBe(
+          "Data only. Not personal financial advice.",
+        );
+      }
+    });
   });
 
   it("every non-refusal result includes the standard disclaimer", () => {
