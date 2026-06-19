@@ -98,7 +98,28 @@ export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): Rout
     };
   }
 
-  // Explainers
+  // Explainers (check specific topics before generic MMF yield)
+  if (/explain|what is|what's|define/.test(lower) && /(t-?bill|treasury bill)/.test(lower)) {
+    return EXPLAINERS["t-bills"];
+  }
+  if (/explain|what is|what's|define/.test(lower) && /withholding/.test(lower)) {
+    return EXPLAINERS["withholding-tax"];
+  }
+  if (/explain|what is|what's|define/.test(lower) && /(fund fee|management fee|fees)/.test(lower)) {
+    return EXPLAINERS.fees;
+  }
+  if (/explain|what is|what's|define/.test(lower) && /liquidity/.test(lower)) {
+    return EXPLAINERS.liquidity;
+  }
+  if (/explain|what is|what's|define/.test(lower) && /volatil/.test(lower)) {
+    return EXPLAINERS.volatility;
+  }
+  if (
+    /explain|what is|what's|define/.test(lower) &&
+    /(gross vs net|gross versus net|net vs gross|net versus gross)/.test(lower)
+  ) {
+    return EXPLAINERS["gross-vs-net"];
+  }
   if (/explain|what is|what's|define/.test(lower) && /(yield|mmf|money market)/.test(lower)) {
     return EXPLAINERS["mmf-yield"];
   }
@@ -157,6 +178,9 @@ export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): Rout
       "If I invest KES 100,000 at 11% yield, what happens?",
       "What happens if a stock falls 10%?",
       "Explain money market fund yield",
+      "Explain treasury bills",
+      "Explain withholding tax",
+      "Explain gross vs net return",
     ],
     disclaimer: STANDARD_DISCLAIMER,
   };

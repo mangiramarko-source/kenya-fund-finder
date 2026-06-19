@@ -10,6 +10,9 @@ export const SUGGESTED_PROMPTS = [
   "Compare USD vs EUR",
   "Compare Gold vs Brent Crude",
   "Explain money market fund yield",
+  "Explain treasury bills",
+  "Explain withholding tax",
+  "Explain gross vs net return",
 ];
 
 interface Props {
