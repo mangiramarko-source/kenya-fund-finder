@@ -27,6 +27,24 @@ describe("detectAdviceIntent", () => {
     expect(
       detectAdviceIntent("How much will I make if I put KES 10,000 in Safaricom?")
     ).toBe(false);
+    expect(
+      detectAdviceIntent("If I put 100,000 in an MMF, how much do I get?")
+    ).toBe(false);
+    expect(
+      detectAdviceIntent("How much would 500k make in a money market fund?")
+    ).toBe(false);
+  });
+  it("flags 'Which fund will make me the most?'", () => {
+    expect(detectAdviceIntent("Which fund will make me the most?")).toBe(true);
+  });
+  it("flags 'Which fund has the best yield?'", () => {
+    expect(detectAdviceIntent("Which fund has the best yield?")).toBe(true);
+  });
+  it("flags 'What is the top MMF?'", () => {
+    expect(detectAdviceIntent("What is the top MMF?")).toBe(true);
+  });
+  it("flags 'Which ETF should I buy?'", () => {
+    expect(detectAdviceIntent("Which ETF should I buy?")).toBe(true);
   });
   it("flags 'Will I make money in SCOM?'", () => {
     expect(detectAdviceIntent("Will I make money in SCOM?")).toBe(true);

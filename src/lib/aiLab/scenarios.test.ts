@@ -1,9 +1,12 @@
 import { describe, it, expect } from "vitest";
 import {
   calculateMmfScenario,
+  calculateMmfYieldChangeScenario,
   calculateStockMoveScenario,
   calculateMonthlyContributionScenario,
   STANDARD_DISCLAIMER,
+  MMF_SCENARIO_SUMMARY,
+  getMmfUserText,
 } from "./scenarios";
 
 describe("calculateMmfScenario", () => {
@@ -13,6 +16,40 @@ describe("calculateMmfScenario", () => {
     expect(r.monthlyEquivalent).toBeCloseTo(916.6667, 3);
     expect(r.projectedGross).toBe(111_000);
     expect(r.disclaimer).toBe(STANDARD_DISCLAIMER);
+  });
+
+  it("computes dailyEquivalent as grossYearly / 365 rounded to 2dp", () => {
+    const r = calculateMmfScenario(100_000, 11, 12);
+    expect(r.dailyEquivalent).toBeCloseTo(30.14, 2);
+  });
+
+  it("uses the canonical safe MMF summary wording", () => {
+    const r = calculateMmfScenario(100_000, 11, 12);
+    expect(r.summary).toBe(MMF_SCENARIO_SUMMARY);
+    expect(r.summary.toLowerCase()).not.toContain("you will earn");
+    expect(r.summary.toLowerCase()).not.toContain("you will make");
+  });
+
+  it("user-facing MMF text does not contain 'mutual fund'", () => {
+    const r = calculateMmfScenario(100_000, 11, 12);
+    expect(getMmfUserText(r).toLowerCase()).not.toContain("mutual fund");
+  });
+});
+
+describe("calculateMmfYieldChangeScenario", () => {
+  it("computes delta between two yield assumptions", () => {
+    const r = calculateMmfYieldChangeScenario(100_000, 11, 9, 12);
+    expect(r.fromGrossYearly).toBe(11_000);
+    expect(r.toGrossYearly).toBe(9_000);
+    expect(r.deltaYearly).toBe(-2_000);
+    expect(r.fromMonthly).toBeCloseTo(916.67, 1);
+    expect(r.toMonthly).toBeCloseTo(750, 1);
+    expect(r.summary.toLowerCase()).not.toContain("guarantee");
+  });
+
+  it("user-facing yield-change text does not contain 'mutual fund'", () => {
+    const r = calculateMmfYieldChangeScenario(100_000, 11, 9);
+    expect(getMmfUserText(r).toLowerCase()).not.toContain("mutual fund");
   });
 });
 

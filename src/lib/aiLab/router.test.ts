@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
-import { routePrompt } from "./router";
+import { routePrompt, UNKNOWN_FALLBACK_MSG, UNKNOWN_FALLBACK_SUGGESTIONS } from "./router";
 import type { MarketContext, ComparableAsset } from "./marketContext";
+import { MMF_SCENARIO_SUMMARY } from "./scenarios";
 
 const mkStock = (
   symbol: string,
@@ -128,6 +129,93 @@ describe("routePrompt", () => {
         expect(r.suggestions).toContain("KES 10,000 in SCOM");
       }
     });
+  });
+
+  describe("Phase 8A MMF routing", () => {
+    it("routes 'If I put 100,000 in an MMF, how much do I get?' to mmf", () => {
+      const r = routePrompt("If I put 100,000 in an MMF, how much do I get?", stockCtx);
+      expect(r.kind).toBe("mmf");
+    });
+
+    it("routes 'How much would 500k make in a money market fund?' to mmf with safe summary", () => {
+      const r = routePrompt("How much would 500k make in a money market fund?", stockCtx);
+      expect(r.kind).toBe("mmf");
+      if (r.kind === "mmf") {
+        expect(r.inputs.amount).toBe(500_000);
+        expect(r.summary).toBe(MMF_SCENARIO_SUMMARY);
+      }
+    });
+
+    it("routes 'How much monthly income from 100k at 11%?' to mmf", () => {
+      const r = routePrompt("How much monthly income from 100k at 11%?");
+      expect(r.kind).toBe("mmf");
+      if (r.kind === "mmf") {
+        expect(r.inputs.amount).toBe(100_000);
+        expect(r.inputs.annualYieldPct).toBe(11);
+      }
+    });
+
+    it("routes 'How much per day from 100k at 11%?' to mmf with dailyEquivalent", () => {
+      const r = routePrompt("How much per day from 100k at 11%?");
+      expect(r.kind).toBe("mmf");
+      if (r.kind === "mmf") {
+        expect(r.dailyEquivalent).toBeCloseTo(30.14, 2);
+      }
+    });
+
+    it("routes yield drop prompts to mmf-yield-change", () => {
+      const r = routePrompt("If yield drops from 11% to 9% on KES 100,000");
+      expect(r.kind).toBe("mmf-yield-change");
+      if (r.kind === "mmf-yield-change") {
+        expect(r.inputs.fromYieldPct).toBe(11);
+        expect(r.inputs.toYieldPct).toBe(9);
+        expect(r.deltaYearly).toBe(-2_000);
+      }
+    });
+
+    it("refuses 'Which fund will make me the most?'", () => {
+      expect(routePrompt("Which fund will make me the most?", stockCtx).kind).toBe("refusal");
+    });
+
+    it("refuses 'Which fund has the best yield?'", () => {
+      expect(routePrompt("Which fund has the best yield?", stockCtx).kind).toBe("refusal");
+    });
+
+    it("refuses 'What is the top MMF?'", () => {
+      expect(routePrompt("What is the top MMF?", stockCtx).kind).toBe("refusal");
+    });
+
+    it("returns unknown fallback for unsupported prompts", () => {
+      const r = routePrompt("xyzzy plugh");
+      expect(r.kind).toBe("unknown");
+      if (r.kind === "unknown") {
+        expect(r.message).toBe(UNKNOWN_FALLBACK_MSG);
+        expect(r.suggestions).toEqual(UNKNOWN_FALLBACK_SUGGESTIONS);
+      }
+    });
+  });
+
+  describe("Phase 8A explainer routes", () => {
+    const phase8ExplainerCases: Array<{ prompt: string; title: string }> = [
+      { prompt: "Explain dividend yield", title: "What is dividend yield?" },
+      { prompt: "What is NAV?", title: "What is NAV (net asset value)?" },
+      { prompt: "Explain expense ratio", title: "What is an expense ratio?" },
+      { prompt: "Explain compounding", title: "What is compounding?" },
+      { prompt: "What is a unit trust?", title: "What is a unit trust?" },
+      { prompt: "Explain ETF", title: "What is an ETF?" },
+      { prompt: "Explain capital gain", title: "What is a capital gain?" },
+      { prompt: "Explain downside risk", title: "What is downside risk?" },
+    ];
+
+    for (const { prompt, title } of phase8ExplainerCases) {
+      it(`routes explainer for '${prompt}'`, () => {
+        const r = routePrompt(prompt);
+        expect(r.kind).toBe("explainer");
+        if (r.kind === "explainer") {
+          expect(r.title).toBe(title);
+        }
+      });
+    }
   });
 
   it("every non-refusal result includes the standard disclaimer", () => {

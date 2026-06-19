@@ -336,27 +336,74 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     );
   }
 
+  if (result.kind === "mmf-yield-change") {
+    return (
+      <div className="space-y-3">
+        <Section icon={<Info className="h-3 w-3" />} title="Summary">
+          <p>{sanitizeOutput(result.summary)}</p>
+        </Section>
+        <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
+          <div>
+            <KV k="Amount" v={fmtKES(result.inputs.amount)} />
+            <KV k="From yield" v={`${result.inputs.fromYieldPct}%`} />
+            <KV k="To yield" v={`${result.inputs.toYieldPct}%`} />
+            <KV k="Period" v={`${result.inputs.months} months`} />
+            <KV k="From annual gross income" v={fmtKES(result.fromGrossYearly)} />
+            <KV k="To annual gross income" v={fmtKES(result.toGrossYearly)} />
+            <KV k="From monthly equivalent" v={fmtKES2(result.fromMonthly)} />
+            <KV k="To monthly equivalent" v={fmtKES2(result.toMonthly)} />
+            <KV
+              k="Annual income delta"
+              v={`${result.deltaYearly >= 0 ? "+" : ""}${fmtKES(result.deltaYearly)}`}
+            />
+          </div>
+        </Section>
+        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.assumptions.map((a, i) => (
+              <li key={i}>{sanitizeOutput(a)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
+          <p className="text-xs text-muted-foreground">
+            This is a projection comparing two yield assumptions, not a guarantee. Actual outcomes
+            can differ because of fees, taxes, compounding methods, and changing market rates.
+          </p>
+        </Section>
+        <Disclaimer text={result.disclaimer} />
+      </div>
+    );
+  }
+
   // Numeric scenario layout
   let summary: React.ReactNode = null;
   let calcs: React.ReactNode = null;
+  let importantNotes: React.ReactNode = (
+    <p className="text-xs text-muted-foreground">
+      This is a projection, not a guarantee. Possible trade-offs include changing yields, market
+      volatility, fees, and withholding tax on interest income.
+    </p>
+  );
 
   if (result.kind === "mmf") {
-    summary = (
-      <p>
-        Based on the data shown, {fmtKES(result.inputs.amount)} at {result.inputs.annualYieldPct}% over{" "}
-        {result.inputs.months} months projects a gross value of{" "}
-        <span className="font-semibold text-accent">{fmtKES(result.projectedGross)}</span>.
-      </p>
-    );
+    summary = <p>{sanitizeOutput(result.summary)}</p>;
     calcs = (
       <>
         <KV k="Initial amount" v={fmtKES(result.inputs.amount)} />
         <KV k="Annual yield" v={`${result.inputs.annualYieldPct}%`} />
         <KV k="Period" v={`${result.inputs.months} months`} />
-        <KV k="Gross yearly income" v={fmtKES(result.grossYearly)} />
-        <KV k="Monthly equivalent" v={fmtKES2(result.monthlyEquivalent)} />
+        <KV k="Estimated annual gross income" v={fmtKES(result.grossYearly)} />
+        <KV k="Estimated monthly gross equivalent" v={fmtKES2(result.monthlyEquivalent)} />
+        <KV k="Estimated daily gross equivalent (365-day simple estimate)" v={fmtKES2(result.dailyEquivalent)} />
         <KV k="Projected gross value" v={fmtKES(result.projectedGross)} />
       </>
+    );
+    importantNotes = (
+      <p className="text-xs text-muted-foreground">
+        This is a projection, not a guarantee. Actual fund distributions can differ because of
+        fees, taxes, compounding methods, and changing yields.
+      </p>
     );
   } else if (result.kind === "stock-move") {
     const Icon = result.direction === "up" ? TrendingUp : TrendingDown;
@@ -418,10 +465,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
         </ul>
       </Section>
       <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-        <p className="text-xs text-muted-foreground">
-          This is a projection, not a guarantee. Possible trade-offs include changing yields, market
-          volatility, fees, and the 15% withholding tax on interest income.
-        </p>
+        {importantNotes}
       </Section>
       <Disclaimer text={result.disclaimer} />
     </div>

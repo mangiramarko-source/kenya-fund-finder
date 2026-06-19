@@ -16,14 +16,26 @@ export const FORBIDDEN_PATTERNS: RegExp[] = [
 export const STOCK_AMOUNT_MAKE_SCENARIO_RE =
   /\bhow much will i make if i (put|invest|buy)\b/i;
 
+export const MMF_GET_SCENARIO_RE = /\bhow much do i get\b/i;
+
+export const MMF_MAKE_SCENARIO_RE =
+  /\bhow much would .+ make in (an? )?(mmf|money market)\b/i;
+
+/** Router-only: used to detect MMF/yield context without surfacing "mutual fund" in UI copy. */
+export const MMF_CONTEXT_RE =
+  /\b(mmf|money market|unit trust|mutual fund|money market fund|yield)\b/i;
+
 export const ADVICE_INTENT_PATTERNS: RegExp[] = [
-  /\bwhich\b.*\b(fund|stock|share|mmf)\b.*\b(should|buy|pick|choose)\b/i,
+  /\bwhich\b.*\b(fund|stock|share|mmf|etf)\b.*\b(should|buy|pick|choose)\b/i,
   /\bshould i (buy|sell|hold|switch|invest in|put)\b/i,
   /\bwhere should i (put|invest)\b/i,
   /\bwhat('?s| is) the (best|top|safest)\b/i,
   /\brecommend (a|the|me)\b/i,
   /\bwill i make (money|profit)\b/i,
   /\bgood buy\b/i,
+  /\bbest yield\b/i,
+  /\bmake me the most\b/i,
+  /\btop mmf\b/i,
 ];
 
 export interface RefusalPayload {
@@ -45,8 +57,14 @@ export const SAFE_ALTERNATIVES = [
 
 export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";
 
+export function hasMmfYieldContext(prompt: string): boolean {
+  return MMF_CONTEXT_RE.test(prompt);
+}
+
 export function detectAdviceIntent(prompt: string): boolean {
   if (STOCK_AMOUNT_MAKE_SCENARIO_RE.test(prompt)) return false;
+  if (MMF_MAKE_SCENARIO_RE.test(prompt)) return false;
+  if (MMF_GET_SCENARIO_RE.test(prompt) && hasMmfYieldContext(prompt)) return false;
   return ADVICE_INTENT_PATTERNS.some((re) => re.test(prompt));
 }
 
