@@ -137,6 +137,7 @@ export async function fetchMarketContext(): Promise<MarketContext> {
     if (!f.name || y == null) continue;
     assets.push({
       kind: "fund",
+      id: f.id ?? undefined,
       name: f.name,
       symbol: f.name,
       value: y,
@@ -155,6 +156,7 @@ export async function fetchMarketContext(): Promise<MarketContext> {
     if (!s.symbol || p == null) continue;
     assets.push({
       kind: "stock",
+      id: s.id ?? undefined,
       name: s.name ?? s.symbol,
       symbol: s.symbol,
       value: p,
@@ -170,6 +172,7 @@ export async function fetchMarketContext(): Promise<MarketContext> {
     if (!c.symbol || p == null) continue;
     assets.push({
       kind: "commodity",
+      id: c.id ?? undefined,
       name: c.name ?? c.symbol,
       symbol: c.symbol,
       value: p,
@@ -184,6 +187,7 @@ export async function fetchMarketContext(): Promise<MarketContext> {
     if (!r.currency_code || rate == null) continue;
     assets.push({
       kind: "fx",
+      id: r.id ?? undefined,
       name: r.currency_name ?? r.currency_code,
       symbol: r.currency_code,
       value: rate,
