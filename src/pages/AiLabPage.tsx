@@ -1,27 +1,23 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Info, Sparkles } from "lucide-react";
+import { Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import CapabilitiesCard from "@/components/ai-lab/CapabilitiesCard";
-import MarketContextCard from "@/components/ai-lab/MarketContextCard";
+import AiLabAboutRail from "@/components/ai-lab/AiLabAboutRail";
 import AiLabChat, { type CompareState } from "@/components/ai-lab/AiLabChat";
 import {
   AI_LAB_LABEL,
   AI_LAB_PAGE,
   AI_LAB_PAGE_INNER,
-  AI_LAB_RAIL_CARD,
   AI_LAB_SAFETY_LINE,
 } from "@/components/ai-lab/aiLabTheme";
 import { routePrompt } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
-import { AI_LAB_BETA_BADGE, AI_LAB_BETA_NOTE } from "@/lib/aiLab/readiness";
 import {
   getAiLabAccessDeniedMessage,
   resolveAiLabAccess,
 } from "@/lib/aiLab/accessGate";
-import AiLabAccessCard from "@/components/ai-lab/AiLabAccessCard";
 import {
   fetchAssetHistory,
   type AssetHistory,
@@ -38,16 +34,15 @@ import { resolveWebsiteLookup } from "@/lib/aiLab/websiteLookup";
 import {
   composeAssistantResponse,
   composeCapabilitiesGuide,
+  composeFilterUnsupportedResponse,
   isCapabilitiesPrompt,
+  isFilterLookupPrompt,
 } from "@/lib/aiLab/responseComposer";
-
-const MAIN_DISCLAIMER =
-  "Data only. Not personal financial advice. Yields, prices, fees, taxes, and market conditions can change. Speak to a licensed adviser before making investment decisions.";
 
 const DEFAULT_LOOKBACK: LookbackDays = 30;
 
 const AiLabPage = () => {
-  const { user, isAdmin, loading } = useAuth();
+  const { isAdmin, loading } = useAuth();
   const [messages, setMessages] = useState<AiLabChatMessage[]>([]);
   const [compareLookback, setCompareLookback] = useState<Record<string, LookbackDays>>({});
   const [compareHistory, setCompareHistory] = useState<
@@ -141,6 +136,17 @@ const AiLabPage = () => {
         return;
       }
 
+      if (isFilterLookupPrompt(prompt)) {
+        const { text, followUps } = composeFilterUnsupportedResponse();
+        const assistantMessage = createAssistantMessage({
+          text,
+          status: "answered",
+          followUps,
+        });
+        setMessages((prev) => [...prev, assistantMessage]);
+        return;
+      }
+
       const clarifying = buildClarifyingResponse(prompt, sessionContext);
 
       if (clarifying) {
@@ -179,7 +185,7 @@ const AiLabPage = () => {
         });
         const assistantMessage = createAssistantMessage({
           text,
-          result,
+          result: result.kind === "refusal" || result.kind === "unknown" ? undefined : result,
           followUps,
           contextNote: note ?? undefined,
         });
@@ -224,7 +230,7 @@ const AiLabPage = () => {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-5">
           <AiLabChat
             messages={messages}
             onSubmit={handleSubmit}
@@ -232,50 +238,17 @@ const AiLabPage = () => {
             onLookbackChange={handleLookbackChange}
           />
 
-          <aside className="hidden lg:block space-y-3">
-            <div className={`${AI_LAB_RAIL_CARD} space-y-2`}>
-              <p className={AI_LAB_LABEL}>Preview status</p>
-              <p className="text-xs font-medium text-slate-900">{AI_LAB_BETA_BADGE}</p>
-              <p className="text-[11px] text-stone-600 leading-relaxed">{AI_LAB_BETA_NOTE}</p>
-            </div>
-            {user ? <AiLabAccessCard user={user} isAdmin={isAdmin} /> : null}
-            <CapabilitiesCard />
-            <MarketContextCard
-              data={market.data}
-              loading={market.loading}
-              error={market.error}
-            />
-            {news.loading && (
-              <div className={`${AI_LAB_RAIL_CARD} text-xs text-stone-600`}>
-                Loading news context for news-summary prompts…
-              </div>
-            )}
-            {news.error && (
-              <div className={`${AI_LAB_RAIL_CARD} text-xs text-stone-600 border-amber-400/40`}>
-                News context unavailable. News-summary prompts may return a safe unknown until
-                data loads.
-              </div>
-            )}
-            <div className={`${AI_LAB_RAIL_CARD} flex items-start gap-2`}>
-              <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
-              <p className="text-[11px] text-stone-700 leading-relaxed">{MAIN_DISCLAIMER}</p>
-            </div>
+          <aside className="hidden lg:block">
+            <AiLabAboutRail />
           </aside>
         </div>
 
         <details className="lg:hidden rounded-2xl border border-[#D8D0C0] bg-[#FFFDF7] p-3">
           <summary className="text-sm font-medium cursor-pointer text-slate-900">
-            Access, capabilities & data status
+            About AI Lab
           </summary>
-          <div className="mt-3 space-y-3">
-            <div className={`${AI_LAB_RAIL_CARD} space-y-2`}>
-              <p className={AI_LAB_LABEL}>Preview status</p>
-              <p className="text-xs font-medium text-slate-900">{AI_LAB_BETA_BADGE}</p>
-              <p className="text-[11px] text-stone-600 leading-relaxed">{AI_LAB_BETA_NOTE}</p>
-            </div>
-            {user ? <AiLabAccessCard user={user} isAdmin={isAdmin} /> : null}
-            <CapabilitiesCard />
-            <MarketContextCard data={market.data} loading={market.loading} error={market.error} />
+          <div className="mt-3">
+            <AiLabAboutRail />
           </div>
         </details>
       </div>

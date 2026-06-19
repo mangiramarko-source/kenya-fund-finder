@@ -32,7 +32,7 @@ export const ResultShell = ({
   children: React.ReactNode;
   className?: string;
 }) => (
-  <div className={`${AI_LAB_CARD} p-4 md:p-5 space-y-4 ${className}`}>{children}</div>
+  <div className={`rounded-2xl border border-[#D8D0C0]/80 bg-[#FFFDF7]/80 p-3 md:p-4 space-y-3 ${className}`}>{children}</div>
 );
 
 export const SummaryMetricGrid = ({ children }: { children: React.ReactNode }) => (
@@ -75,8 +75,22 @@ export const Section = ({
   </div>
 );
 
+
+export const CollapsibleDetails = ({
+  title,
+  children,
+}: {
+  title: string;
+  children: React.ReactNode;
+}) => (
+  <details className="rounded-xl border border-[#D8D0C0]/70 bg-[#F5EFE2]/20 px-3 py-2 text-xs text-stone-600">
+    <summary className="cursor-pointer font-medium text-stone-700">{title}</summary>
+    <div className="mt-2 space-y-1">{children}</div>
+  </details>
+);
+
 export const Disclaimer = ({ text }: { text: string }) => (
-  <p className="text-[11px] text-stone-500 italic flex items-center gap-1.5 pt-1">
+  <p className="text-[10px] text-stone-500 flex items-center gap-1 pt-1">
     <Info className="h-3 w-3 shrink-0" />
     {text}
   </p>

@@ -87,13 +87,15 @@ describe("buildFollowUpSuggestions", () => {
     const result = routePrompt("KES 10,000 in SCOM", ctx);
     const suggestions = buildFollowUpSuggestions(result);
     expect(suggestions.length).toBeGreaterThan(0);
-    expect(suggestions.some((s) => s.toLowerCase().includes("compare"))).toBe(true);
+    expect(suggestions.some((s) => s.toLowerCase().includes("news") || s.includes("What can I ask?"))).toBe(true);
+    expect(suggestions.length).toBeLessThanOrEqual(3);
   });
 
   it("returns safe suggestions for MMF result", () => {
     const result = routePrompt("If I put 100,000 in an MMF, how much do I get?", ctx);
     const suggestions = buildFollowUpSuggestions(result);
-    expect(suggestions.some((s) => s.toLowerCase().includes("etica"))).toBe(true);
+    expect(suggestions.some((s) => s.toLowerCase().includes("cic") || s.toLowerCase().includes("withholding"))).toBe(true);
+    expect(suggestions.length).toBeLessThanOrEqual(3);
   });
 
   it("returns safe suggestions for unknown result", () => {

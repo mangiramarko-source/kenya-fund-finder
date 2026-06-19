@@ -12,6 +12,7 @@ import Sparkline from "@/components/Sparkline";
 import { sanitizeOutput } from "@/lib/aiLab/safety";
 import {
   BreakdownTable,
+  CollapsibleDetails,
   Disclaimer,
   KV,
   ResultShell,
@@ -114,19 +115,6 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
             ))}
           </Section>
         )}
-        <Section icon={<Info className="h-3 w-3" />} title="Summary">
-          <p>{sanitizeOutput(result.summary)}</p>
-          <p className="text-xs text-stone-500 mt-2">{sanitizeOutput(result.sourceNote)}</p>
-          {result.pagePath && (
-            <Link
-              to={result.pagePath}
-              className="inline-flex items-center gap-1 text-xs text-slate-800 hover:underline mt-2"
-            >
-              View on KenyaFundFinder
-              <ExternalLink className="h-3 w-3" />
-            </Link>
-          )}
-        </Section>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
@@ -272,14 +260,15 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
             </div>
           </Section>
         )}
-        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
+        
+        <CollapsibleDetails title="Assumptions">
+<ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
             <li>{sanitizeOutput(formatHistoryAssumption(effectiveLookbackDays))}</li>
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
@@ -293,16 +282,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <SummaryMetricCard label="MMF allocation" value={fmtKES(result.inputs.mmfAmount)} sublabel={`${result.inputs.mmfPercent}%`} />
           <SummaryMetricCard label="Stock allocation" value={fmtKES(result.inputs.stockAmount)} sublabel={`${result.inputs.stockSymbol} · ${result.inputs.stockPercent}%`} />
         </SummaryMetricGrid>
-        <Section icon={<Info className="h-3 w-3" />} title="Summary">
-          <p>{sanitizeOutput(result.summary)}</p>
-        </Section>
-        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Assumptions">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Section icon={<Calculator className="h-3 w-3" />} title="Allocation breakdown">
           <KV k="Total amount" v={fmtKES(result.inputs.totalAmount)} />
           <KV
@@ -346,13 +333,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
               </tbody>
           </BreakdownTable>
         </Section>
-        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
+        
+        <CollapsibleDetails title="Notes">
+<ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
             {result.importantNotes.map((n, i) => (
               <li key={i}>{sanitizeOutput(n)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
@@ -373,9 +361,9 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
 
     return (
       <ResultShell>
-        <Section icon={<Info className="h-3 w-3" />} title="Summary">
-          <p>{sanitizeOutput(result.summary)}</p>
-        </Section>
+        <SummaryMetricGrid>
+          <SummaryMetricCard label="Articles" value={result.articles.length} sublabel="From KenyaFundFinder news data" />
+        </SummaryMetricGrid>
         <Section icon={<Newspaper className="h-3 w-3" />} title="Articles used">
           <div className="space-y-3">
             {result.articles.map((article, i) => (
@@ -426,13 +414,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
             ))}
           </ul>
         </Section>
-        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Notes">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.importantNotes.map((n, i) => (
               <li key={i}>{sanitizeOutput(n)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
@@ -460,16 +449,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <SummaryMetricCard label="Converted out" value={convertedLabel} />
           <SummaryMetricCard label="Rate used" value={inputs.rate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} sublabel={inputs.rateLabel} />
         </SummaryMetricGrid>
-        <Section icon={<Info className="h-3 w-3" />} title="Summary">
-          <p>{sanitizeOutput(result.summary)}</p>
-        </Section>
-        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
+        
+        <CollapsibleDetails title="Assumptions">
+<ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
           <KV k="Amount" v={amountLabel} />
           <KV k="From currency" v={inputs.fromCurrency} />
@@ -477,13 +464,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <KV k="Rate used" v={`${inputs.rate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} (${inputs.rateLabel})`} />
           <KV k="Estimated converted amount" v={convertedLabel} />
         </Section>
-        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Notes">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.importantNotes.map((n, i) => (
               <li key={i}>{sanitizeOutput(n)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
@@ -493,29 +481,28 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     const { inputs } = result;
     return (
       <ResultShell>
-        <Section icon={<Info className="h-3 w-3" />} title="Summary">
-          <p>{sanitizeOutput(result.summary)}</p>
-        </Section>
-        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Assumptions">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
           <KV k="Pair" v={inputs.pair} />
           <KV k="Current rate" v={inputs.currentRate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} />
           <KV k="Movement assumption" v={fmtMovement(inputs.movementPct)} />
           <KV k="Estimated rate after movement" v={result.estimatedRateAfterMove.toLocaleString("en-KE", { maximumFractionDigits: 4 })} />
         </Section>
-        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Notes">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.importantNotes.map((n, i) => (
               <li key={i}>{sanitizeOutput(n)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
@@ -525,16 +512,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     const { inputs } = result;
     return (
       <ResultShell>
-        <Section icon={<Info className="h-3 w-3" />} title="Summary">
-          <p>{sanitizeOutput(result.summary)}</p>
-        </Section>
-        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Assumptions">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
           <KV k="Commodity" v={`${inputs.symbol} · ${inputs.name}`} />
           <KV k="Current value" v={`${inputs.currentValue.toLocaleString("en-KE", { maximumFractionDigits: 2 })} (${inputs.valueLabel})`} />
@@ -542,13 +527,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <KV k="Estimated value after movement" v={result.estimatedValueAfterMove.toLocaleString("en-KE", { maximumFractionDigits: 2 })} />
           <KV k="Estimated change" v={fmtSigned(result.estimatedChange)} />
         </Section>
-        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Notes">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.importantNotes.map((n, i) => (
               <li key={i}>{sanitizeOutput(n)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
@@ -562,16 +548,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <SummaryMetricCard label="Latest price" value={fmtKES2(result.inputs.latestPrice)} sublabel={result.inputs.symbol} />
           <SummaryMetricCard label="Approx. shares" value={result.approximateShares.toLocaleString("en-KE")} />
         </SummaryMetricGrid>
-        <Section icon={<Info className="h-3 w-3" />} title="Summary">
-          <p>{sanitizeOutput(result.summary)}</p>
-        </Section>
-        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Assumptions">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
           <div className="space-y-3">
             <div>
@@ -602,13 +586,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
             </BreakdownTable>
           </div>
         </Section>
-        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Notes">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.importantNotes.map((n, i) => (
               <li key={i}>{sanitizeOutput(n)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
@@ -631,16 +616,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <SummaryMetricCard label="Total contributed" value={fmtKES2(totals.totalContributions)} />
           <SummaryMetricCard label="Estimated gross growth" value={fmtKES2(totals.estimatedGrossGrowth)} valueClassName={signedColorClass(totals.estimatedGrossGrowth)} />
         </SummaryMetricGrid>
-        <Section icon={<Info className="h-3 w-3" />} title="Summary">
-          <p>{sanitizeOutput(result.summary)}</p>
-        </Section>
-        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
+        
+        <CollapsibleDetails title="Assumptions">
+<ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
           <div className="space-y-3">
             <div>
@@ -686,13 +669,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
             </BreakdownTable>
           </div>
         </Section>
-        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Notes">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.importantNotes.map((n, i) => (
               <li key={i}>{sanitizeOutput(n)}</li>
             ))}
           </ul>
-        </Section>
+        </CollapsibleDetails>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
@@ -706,9 +690,6 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <SummaryMetricCard label="To annual income" value={fmtKES(result.toGrossYearly)} sublabel={`${result.inputs.toYieldPct}% yield`} />
           <SummaryMetricCard label="Annual delta" value={`${result.deltaYearly >= 0 ? "+" : ""}${fmtKES(result.deltaYearly)}`} valueClassName={signedColorClass(result.deltaYearly)} />
         </SummaryMetricGrid>
-        <Section icon={<Info className="h-3 w-3" />} title="Summary">
-          <p>{sanitizeOutput(result.summary)}</p>
-        </Section>
         <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
           <div>
             <KV k="Amount" v={fmtKES(result.inputs.amount)} />
@@ -725,26 +706,27 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
             />
           </div>
         </Section>
-        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        
+        <CollapsibleDetails title="Assumptions">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
           </ul>
-        </Section>
-        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-          <p className="text-xs text-muted-foreground">
+        </CollapsibleDetails>
+        
+        <CollapsibleDetails title="Notes">
+<p className="text-xs text-muted-foreground">
             This is a projection comparing two yield assumptions, not a guarantee. Actual outcomes
             can differ because of fees, taxes, compounding methods, and changing market rates.
           </p>
-        </Section>
+        </CollapsibleDetails>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
   }
 
   // Numeric scenario layout
-  let summary: React.ReactNode = null;
   let calcs: React.ReactNode = null;
   let importantNotes: React.ReactNode = (
     <p className="text-xs text-muted-foreground">
@@ -754,7 +736,6 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   );
 
   if (result.kind === "mmf") {
-    summary = <p>{sanitizeOutput(result.summary)}</p>;
     calcs = (
       <>
         <KV k="Initial amount" v={fmtKES(result.inputs.amount)} />
@@ -775,17 +756,6 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   } else if (result.kind === "stock-move") {
     const Icon = result.direction === "up" ? TrendingUp : TrendingDown;
     const color = result.direction === "up" ? "text-emerald-500" : "text-rose-500";
-    summary = (
-      <p className="flex items-start gap-2">
-        <Icon className={`h-4 w-4 mt-0.5 ${color}`} />
-        <span>
-          A {Math.abs(result.inputs.priceChangePct)}% {result.direction === "up" ? "rise" : "fall"} on{" "}
-          {fmtKES(result.inputs.amount)} brings the position to{" "}
-          <span className={`font-semibold ${color}`}>{fmtKES(result.newValue)}</span> ({result.delta >= 0 ? "+" : ""}
-          {fmtKES(result.delta)}).
-        </span>
-      </p>
-    );
     calcs = (
       <>
         <KV k="Position size" v={fmtKES(result.inputs.amount)} />
@@ -795,14 +765,6 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
       </>
     );
   } else if (result.kind === "monthly-contribution") {
-    summary = (
-      <p>
-        Contributing {fmtKES(result.inputs.monthly)} monthly on top of{" "}
-        {fmtKES(result.inputs.startAmount)} at {result.inputs.annualYieldPct}% for{" "}
-        {result.inputs.months} months projects to{" "}
-        <span className="font-semibold text-accent">{fmtKES(result.projectedGross)}</span>.
-      </p>
-    );
     calcs = (
       <>
         <KV k="Starting amount" v={fmtKES(result.inputs.startAmount)} />
@@ -834,22 +796,21 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   return (
     <ResultShell>
       {metricCards}
-      <Section icon={<Info className="h-3 w-3" />} title="Summary">
-        {summary}
-      </Section>
       <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
         <div>{calcs}</div>
       </Section>
-      <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-        <ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
+      
+        <CollapsibleDetails title="Assumptions">
+<ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
           {result.assumptions.map((a, i) => (
             <li key={i}>{sanitizeOutput(a)}</li>
           ))}
         </ul>
-      </Section>
-      <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-        {importantNotes}
-      </Section>
+        </CollapsibleDetails>
+      
+        <CollapsibleDetails title="Notes">
+{importantNotes}
+        </CollapsibleDetails>
       <Disclaimer text={result.disclaimer} />
     </ResultShell>
   );

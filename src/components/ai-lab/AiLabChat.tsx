@@ -2,7 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { Search } from "lucide-react";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import {
-  AI_LAB_ASSISTANT_CARD,
+  AI_LAB_ASSISTANT_TEXT,
   AI_LAB_CARD,
   AI_LAB_CHIP,
   AI_LAB_HEADLINE,
@@ -11,16 +11,15 @@ import {
   AI_LAB_INPUT,
   AI_LAB_INPUT_FIELD,
   AI_LAB_INPUT_PLACEHOLDER,
-  AI_LAB_LABEL,
   AI_LAB_MUTED,
   AI_LAB_RUN_BTN,
   AI_LAB_SAFE_PROMPT_CHIPS,
-  AI_LAB_SAFETY_LINE,
   AI_LAB_USER_BUBBLE,
 } from "@/components/ai-lab/aiLabTheme";
 import type { AiLabChatMessage } from "@/lib/aiLab/chat";
 import type { AssetHistory, LookbackDays } from "@/lib/aiLab/history";
 import { LOOKBACK_OPTIONS } from "@/lib/aiLab/history";
+import { capFollowUps } from "@/lib/aiLab/responseComposer";
 
 export interface CompareState {
   lookbackDays: LookbackDays;
@@ -68,6 +67,12 @@ const PromptInput = ({
   </div>
 );
 
+const shouldShowResultCard = (msg: AiLabChatMessage): boolean => {
+  if (!msg.result) return false;
+  if (msg.result.kind === "refusal" || msg.result.kind === "unknown") return false;
+  return true;
+};
+
 const AiLabChat = ({
   messages,
   onSubmit,
@@ -103,7 +108,6 @@ const AiLabChat = ({
             <div className="space-y-3">
               <h2 className={AI_LAB_HEADLINE}>{AI_LAB_HERO_HEADLINE}</h2>
               <p className={AI_LAB_MUTED}>{AI_LAB_HERO_SUBTEXT}</p>
-              <p className="text-xs text-stone-500">{AI_LAB_SAFETY_LINE}</p>
             </div>
             <form onSubmit={handleSubmit}>
               <PromptInput
@@ -132,37 +136,30 @@ const AiLabChat = ({
             }
 
             const compareState = compareStateByMessageId[msg.id];
-            const followUps = msg.followUps ?? [];
+            const followUps = capFollowUps(msg.followUps ?? []);
+            const showResult = shouldShowResultCard(msg);
 
             return (
               <div key={msg.id} className="space-y-3 max-w-full">
-                <div className={`${AI_LAB_ASSISTANT_CARD} space-y-2`}>
-                  <p className="text-sm text-slate-900 whitespace-pre-wrap">{msg.text}</p>
+                <div className="max-w-3xl">
+                  <p className={AI_LAB_ASSISTANT_TEXT}>{msg.text}</p>
                   {msg.contextNote && (
-                    <p className="text-xs text-stone-600 border-t border-[#D8D0C0]/60 pt-2">
-                      {msg.contextNote}
-                    </p>
-                  )}
-                  {msg.status === "clarifying" && !msg.text.includes("Data only.") && (
-                    <p className="text-[11px] text-stone-500 italic">{AI_LAB_SAFETY_LINE}</p>
+                    <p className="text-xs text-stone-500 mt-2">{msg.contextNote}</p>
                   )}
                 </div>
 
-                {msg.result && msg.result.kind === "compare" && compareState && (
-                  <div className="rounded-2xl border border-[#D8D0C0] bg-[#FFFDF7] px-3 py-2.5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                    <div>
-                      <p className={AI_LAB_LABEL}>Compare lookback</p>
-                      <p className="text-[11px] text-stone-500 mt-1">
-                        Used for historical return and trend rows.
-                      </p>
-                    </div>
-                    <div className="flex flex-wrap gap-1.5">
+                {showResult && msg.result && msg.result.kind === "compare" && compareState && (
+                  <details className="rounded-xl border border-[#D8D0C0]/80 bg-[#FFFDF7]/60 px-3 py-2 text-xs text-stone-600">
+                    <summary className="cursor-pointer font-medium text-stone-700">
+                      Compare lookback ({compareState.lookbackDays}D)
+                    </summary>
+                    <div className="mt-2 flex flex-wrap gap-1.5">
                       {LOOKBACK_OPTIONS.map((days) => (
                         <button
                           key={days}
                           type="button"
                           onClick={() => onLookbackChange(msg.id, days)}
-                          className={`h-8 px-3 rounded-full text-[11px] font-semibold tabular-nums transition-colors ${
+                          className={`h-7 px-2.5 rounded-full text-[11px] font-semibold tabular-nums transition-colors ${
                             compareState.lookbackDays === days
                               ? "bg-[#EAB308] text-slate-950"
                               : "border border-[#D8D0C0] bg-[#FFFDF7] text-stone-700 hover:bg-[#F5EFE2]"
@@ -172,10 +169,10 @@ const AiLabChat = ({
                         </button>
                       ))}
                     </div>
-                  </div>
+                  </details>
                 )}
 
-                {msg.result && (
+                {showResult && msg.result && (
                   <ScenarioResult
                     result={msg.result}
                     history={compareState?.history}

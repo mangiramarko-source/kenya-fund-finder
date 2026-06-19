@@ -7,6 +7,8 @@ import {
   composeCapabilitiesGuide,
   composedOutputIsSafe,
   isCapabilitiesPrompt,
+  composeFilterUnsupportedResponse,
+  capFollowUps,
   isFilterLookupPrompt,
 } from "./responseComposer";
 import { STANDARD_DISCLAIMER } from "./safety";
@@ -106,6 +108,32 @@ describe("isFilterLookupPrompt", () => {
   });
 });
 
+
+describe("capFollowUps", () => {
+  it("caps at 3 and filters unsupported prompts", () => {
+    const capped = capFollowUps([
+      "Show Etica MMF yield",
+      "Show CIC fund data",
+      "What can I ask?",
+      "Compare SCOM and KCB",
+      "Show MMFs above 10%",
+    ]);
+    expect(capped).toHaveLength(3);
+    expect(capped.join(" ").toLowerCase()).not.toContain("compare scom");
+    expect(capped.join(" ").toLowerCase()).not.toContain("above 10%");
+  });
+});
+
+describe("composeFilterUnsupportedResponse", () => {
+  it("returns filter message without needing router result", () => {
+    const { text, followUps } = composeFilterUnsupportedResponse();
+    expect(text.toLowerCase()).toContain("can't filter");
+    expect(followUps).toHaveLength(3);
+    expect(followUps.some((s) => s.includes("Show Etica MMF yield"))).toBe(true);
+    expect(composedOutputIsSafe(text, followUps)).toBe(true);
+  });
+});
+
 describe("composeAssistantResponse", () => {
   it("returns safe text for stock amount", () => {
     const result = routePrompt("KES 10,000 in SCOM", ctx);
@@ -182,8 +210,8 @@ describe("composeAssistantResponse", () => {
       prompt: "Should I buy Safaricom?",
       result,
     });
-    expect(text.toLowerCase()).toContain("can't tell you what to buy");
-    expect(followUps.some((s) => s.toLowerCase().includes("neutral"))).toBe(true);
+    expect(text.toLowerCase()).toContain("cannot tell you what to buy or sell");
+    expect(followUps.some((s) => s.includes("What can I ask?"))).toBe(true);
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
   });
 
@@ -195,7 +223,7 @@ describe("composeAssistantResponse", () => {
       result,
     });
     expect(text.toLowerCase()).toContain("couldn't find");
-    expect(followUps.some((s) => s.includes("What data do you have?"))).toBe(true);
+    expect(followUps.some((s) => s.includes("What can I ask?"))).toBe(true);
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
   });
 
@@ -228,6 +256,7 @@ describe("composeAssistantResponse", () => {
       for (const forbidden of FORBIDDEN_IN_OUTPUT) {
         expect(joined).not.toContain(forbidden);
       }
+      expect(followUps.length).toBeLessThanOrEqual(3);
     }
   });
 
@@ -242,12 +271,11 @@ describe("composeAssistantResponse", () => {
 describe("composeCapabilitiesGuide", () => {
   it("includes scenarios, lookup, news, explainers, and limits", () => {
     const { text, followUps } = composeCapabilitiesGuide();
+    expect(text.toLowerCase()).toContain("data lookups");
     expect(text.toLowerCase()).toContain("scenarios");
-    expect(text.toLowerCase()).toContain("website data lookup");
-    expect(text.toLowerCase()).toContain("news");
-    expect(text.toLowerCase()).toContain("explainers");
+    expect(text.toLowerCase()).toContain("news and explainers");
+    expect(text.toLowerCase()).toContain("limits");
     expect(text.toLowerCase()).toContain("cannot tell you what to buy or sell");
-    expect(text.toLowerCase()).toContain("not supported yet");
     expect(text).toContain(STANDARD_DISCLAIMER);
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
     expect(followUps.some((s) => s.includes("Show Etica MMF yield"))).toBe(true);

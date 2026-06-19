@@ -283,7 +283,7 @@ export function buildClarifyingResponse(
       followUps: [
         "Split 100k between MMF and SCOM at 11% yield",
         "KES 10,000 in SCOM",
-        "What data do you have?",
+        "What can I ask?",
       ],
     });
     return { ...composed, disclaimer: STANDARD_DISCLAIMER };

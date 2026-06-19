@@ -1,4 +1,4 @@
-// Phase 13 — deterministic safe response composer.
+// Phase 13B — deterministic safe response composer.
 // No LLM. Conversational intros + context-aware follow-ups only.
 
 import type { RouterResult } from "./router";
@@ -17,7 +17,9 @@ const CAPABILITIES_RE =
   /\b(what can i ask|what can you do|what data do you have|what can you search|help me|^\s*help\s*$)\b/i;
 
 const UNSUPPORTED_FOLLOWUP_RE =
-  /\b(show mmfs above|above 10%|rank fund|best fund|top fund|safest fund|filter by)\b/i;
+  /\b(show mmfs above|above 10%|rank fund|best fund|top fund|safest fund|filter by|compare scom and kcb)\b/i;
+
+const MAX_FOLLOW_UPS = 3;
 
 export function isFilterLookupPrompt(prompt: string): boolean {
   return (
@@ -57,37 +59,41 @@ function filterSafeFollowUps(followUps: string[]): string[] {
   return followUps.filter((s) => !UNSUPPORTED_FOLLOWUP_RE.test(s.toLowerCase()));
 }
 
+export function capFollowUps(followUps: string[], max = MAX_FOLLOW_UPS): string[] {
+  return filterSafeFollowUps(followUps).slice(0, max);
+}
+
 function followUpsForWebsiteLookup(entityType: string): string[] {
   switch (entityType) {
     case "stock":
-      return filterSafeFollowUps([
-        "Model KES 10,000 in SCOM",
-        "Compare SCOM and KCB",
+      return capFollowUps([
         "Latest news about Safaricom",
+        "What can I ask?",
+        "KES 10,000 in SCOM",
       ]);
     case "fund":
-      return filterSafeFollowUps([
-        "Model KES 100k in an MMF at 11%",
-        "Show CIC fund data",
+      return capFollowUps([
         "Explain withholding tax",
+        "Show CIC fund data",
+        "What can I ask?",
       ]);
     case "fx":
-      return filterSafeFollowUps([
-        "KES 100,000 to USD",
-        "USD/KES rises 5%",
+      return capFollowUps([
         "What is the USD/KES rate?",
+        "KES 100,000 to USD",
+        "What can I ask?",
       ]);
     case "commodity":
-      return filterSafeFollowUps([
+      return capFollowUps([
         "Gold rises 5%",
-        "What data do you have?",
+        "What can I ask?",
         "KES 100,000 to USD",
       ]);
     default:
-      return filterSafeFollowUps([
+      return capFollowUps([
         "What is SCOM's current price?",
         "Show Etica MMF yield",
-        "What data do you have?",
+        "What can I ask?",
       ]);
   }
 }
@@ -95,7 +101,7 @@ function followUpsForWebsiteLookup(entityType: string): string[] {
 function composeIntro(result: RouterResult, prompt: string): string {
   switch (result.kind) {
     case "stock-amount":
-      return `Here's a neutral stock exposure scenario using the latest available KenyaFundFinder data for ${result.inputs.symbol}. The table shows possible values if the share price moves by the stated percentages. This is a data view, not a recommendation.`;
+      return `Here's a neutral stock exposure scenario using the latest available KenyaFundFinder data for ${result.inputs.symbol}. The table below shows possible values if the share price moves by the stated percentages. This is a data view, not a recommendation.`;
 
     case "stock-move": {
       const dir = result.inputs.priceChangePct >= 0 ? "rises" : "falls";
@@ -114,11 +120,11 @@ function composeIntro(result: RouterResult, prompt: string): string {
 
     case "compare": {
       const names = result.assets.map((a) => a.symbol).join(" and ");
-      return `Here's a side-by-side comparison of ${names} using available KenyaFundFinder data. One neutral way to look at this is to compare the metrics shown — this is not a recommendation.`;
+      return `Here's a side-by-side comparison of ${names} using available KenyaFundFinder data. This is not a recommendation.`;
     }
 
     case "explainer":
-      return `Here's an educational explainer on "${result.title.replace(/\?$/, "")}". This is general information from KenyaFundFinder — not personal financial advice.`;
+      return `Here's an educational explainer on "${result.title.replace(/\?$/, "")}". This is general information — not personal financial advice.`;
 
     case "fx-conversion":
       return `Here's an estimated currency conversion using the latest available FX rate shown in KenyaFundFinder (${result.inputs.rateLabel}). Actual provider rates may differ.`;
@@ -133,17 +139,17 @@ function composeIntro(result: RouterResult, prompt: string): string {
       return `Here are matching stored news items from KenyaFundFinder data${result.articles.length > 0 ? ` (${result.articles.length} article${result.articles.length === 1 ? "" : "s"})` : ""}. This does not predict price movement.`;
 
     case "portfolio-split":
-      return `Here's an allocation scenario based on the stated split and yield assumption. It is not a recommendation — it shows possible outcomes under the assumptions entered.`;
+      return `Here's an allocation scenario based on the stated split and yield assumption. It is not a recommendation.`;
 
     case "website-lookup":
       return `Here are matching records for ${result.entityName} from available KenyaFundFinder data. This is a data lookup, not a recommendation.`;
 
     case "refusal":
-      return `I can't tell you what to buy, sell, or choose. You can ask for a neutral scenario or a named data lookup instead.`;
+      return `AI Lab cannot tell you what to buy or sell. You can ask for a neutral scenario or a named data lookup instead.`;
 
     case "unknown":
       if (isFilterLookupPrompt(prompt)) {
-        return `I can't filter funds by yield threshold yet. You can ask for a named fund's yield or ask what data is available.`;
+        return `I can't filter funds by yield threshold yet. You can ask for a named fund's yield instead.`;
       }
       return `I couldn't find enough matching data or assumptions to answer that safely. Try one of the examples below.`;
 
@@ -155,108 +161,120 @@ function composeIntro(result: RouterResult, prompt: string): string {
 function followUpsForResult(result: RouterResult, prompt: string): string[] {
   switch (result.kind) {
     case "stock-amount":
-      return filterSafeFollowUps([
-        "What happens if a stock falls 10% on KES 100,000?",
-        "Compare SCOM and KCB",
+      return capFollowUps([
         "Latest news about Safaricom",
+        "What can I ask?",
+        "KES 10,000 in SCOM",
       ]);
 
     case "stock-move":
-      return filterSafeFollowUps([
+      return capFollowUps([
         "KES 10,000 in SCOM",
-        "Compare SCOM and KCB",
         "What is SCOM's current price?",
+        "What can I ask?",
       ]);
 
     case "mmf":
     case "mmf-yield-change":
-      return filterSafeFollowUps([
-        "Model KES 100k in an MMF at 11%",
-        "Show Etica MMF yield",
+      return capFollowUps([
         "Explain withholding tax",
+        "Show CIC fund data",
+        "What can I ask?",
       ]);
 
     case "goal-projection":
-      return filterSafeFollowUps([
-        "Model KES 100k in an MMF at 11%",
+      return capFollowUps([
         "KES 10,000 in SCOM",
-        "What data do you have?",
+        "Show Etica MMF yield",
+        "What can I ask?",
       ]);
 
     case "compare":
-      return filterSafeFollowUps([
+      return capFollowUps([
         "KES 10,000 in SCOM",
         "Show Etica MMF yield",
-        "Explain dividend yield",
+        "What can I ask?",
       ]);
 
     case "explainer":
-      return filterSafeFollowUps([
-        "Model KES 100k in an MMF at 11%",
+      return capFollowUps([
         "KES 10,000 in SCOM",
-        "What data do you have?",
+        "Show Etica MMF yield",
+        "What can I ask?",
       ]);
 
     case "fx-conversion":
-      return filterSafeFollowUps([
-        "USD/KES rises 5%",
+      return capFollowUps([
         "What is the USD/KES rate?",
         "KES 100,000 to USD",
+        "What can I ask?",
       ]);
 
     case "fx-move":
-      return filterSafeFollowUps([
+      return capFollowUps([
         "KES 100,000 to USD",
         "What is the USD/KES rate?",
-        "What data do you have?",
+        "What can I ask?",
       ]);
 
     case "commodity-move":
-      return filterSafeFollowUps([
+      return capFollowUps([
         "Gold rises 5%",
-        "What data do you have?",
+        "What can I ask?",
         "KES 100,000 to USD",
       ]);
 
     case "news-summary":
-      return filterSafeFollowUps([
+      return capFollowUps([
         "KES 10,000 in SCOM",
         "What is SCOM's current price?",
-        "Latest news about Safaricom",
+        "What can I ask?",
       ]);
 
     case "portfolio-split":
-      return filterSafeFollowUps([
-        "Compare SCOM and KCB",
+      return capFollowUps([
         "Explain liquidity",
         "Show Etica MMF yield",
+        "What can I ask?",
       ]);
 
     case "website-lookup":
       return followUpsForWebsiteLookup(result.entityType);
 
     case "refusal":
-      return filterSafeFollowUps([
-        "Show me a neutral scenario",
-        "Compare two assets using available data",
-        "What is SCOM's current price?",
+      return capFollowUps([
+        "What can I ask?",
+        "Show Etica MMF yield",
+        "KES 10,000 in SCOM",
       ]);
 
     case "unknown":
-      return filterSafeFollowUps([
-        "What data do you have?",
+      return capFollowUps([
+        "What can I ask?",
         "Show Etica MMF yield",
-        "What is SCOM's current price?",
         "KES 10,000 in SCOM",
       ]);
 
     default:
-      return filterSafeFollowUps([
-        "What data do you have?",
+      return capFollowUps([
+        "What can I ask?",
         "KES 10,000 in SCOM",
         "Show Etica MMF yield",
       ]);
   }
+}
+
+export function composeFilterUnsupportedResponse(): { text: string; followUps: string[] } {
+  const text = withBubbleDisclaimer(
+    "I can't filter funds by yield threshold yet. You can ask for a named fund's yield or see what data is available.",
+    false,
+  );
+  const followUps = capFollowUps([
+    "Show Etica MMF yield",
+    "Show CIC fund data",
+    "What can I ask?",
+  ]);
+  return { text, followUps };
 }
 
 export function composeAssistantResponse(args: {
@@ -267,17 +285,7 @@ export function composeAssistantResponse(args: {
   const { prompt, result } = args;
 
   if (isFilterLookupPrompt(prompt)) {
-    const text = withBubbleDisclaimer(
-      "I can't filter funds by yield threshold yet. You can ask for a named fund's yield or ask what data is available.",
-      false,
-    );
-    const followUps = filterSafeFollowUps([
-      "What data do you have?",
-      "Show Etica MMF yield",
-      "What is SCOM's current price?",
-      "KES 10,000 in SCOM",
-    ]);
-    return { text, followUps };
+    return composeFilterUnsupportedResponse();
   }
 
   const text = withBubbleDisclaimer(composeIntro(result, prompt), false);
@@ -288,25 +296,30 @@ export function composeAssistantResponse(args: {
 export function composeCapabilitiesGuide(): { text: string; followUps: string[] } {
   const text = withBubbleDisclaimer(
     [
-      "Here's what you can ask AI Lab, based on what is implemented today:",
+      "You can ask about:",
       "",
-      "Scenarios — Model MMF income, stock exposure, FX conversion, commodity moves, portfolio splits, and savings goals using stated assumptions.",
+      "1. Data lookups",
+      '• "What is SCOM\'s current price?"',
+      '• "Show Etica MMF yield"',
+      '• "What is the USD/KES rate?"',
       "",
-      "Website data lookup — Look up a named stock price (e.g. SCOM), a named fund's yield (e.g. Etica MMF), an FX rate (e.g. USD/KES), or a commodity value.",
+      "2. Scenarios",
+      '• "KES 10,000 in SCOM"',
+      '• "Split 100k between MMF and SCOM at 11% yield"',
       "",
-      "News — Summarize matching stored news articles from KenyaFundFinder (no price prediction).",
+      "3. News and explainers",
+      '• "Latest news about Safaricom"',
+      '• "Explain dividend yield"',
       "",
-      "Explainers — Ask about yield, fees, liquidity, withholding tax, and similar terms.",
-      "",
-      "Limits — AI Lab cannot tell you what to buy or sell. It does not rank funds, filter by yield threshold, or recommend allocations. List-style queries like \"show all MMFs above 10%\" are not supported yet — ask for a named fund instead.",
+      "4. Limits",
+      "AI Lab cannot tell you what to buy or sell.",
     ].join("\n"),
     true,
   );
 
-  const followUps = filterSafeFollowUps([
+  const followUps = capFollowUps([
     "Show Etica MMF yield",
     "What is SCOM's current price?",
-    "What is the USD/KES rate?",
     "KES 10,000 in SCOM",
   ]);
 
@@ -317,11 +330,11 @@ export function composeClarifyingResponse(args: {
   text: string;
   followUps?: string[];
 }): { text: string; followUps: string[] } {
-  const followUps = filterSafeFollowUps(
+  const followUps = capFollowUps(
     args.followUps ?? [
       "KES 10,000 in SCOM",
       "Model KES 100k in an MMF at 11%",
-      "What data do you have?",
+      "What can I ask?",
     ],
   );
   return {
@@ -330,7 +343,6 @@ export function composeClarifyingResponse(args: {
   };
 }
 
-/** Test helper — scan composed text and follow-ups for forbidden advisory phrases. */
 export function composedOutputIsSafe(text: string, followUps: string[]): boolean {
   const combined = [text, ...followUps].join(" ");
   return !FORBIDDEN_PATTERNS.some((re) => re.test(combined));
