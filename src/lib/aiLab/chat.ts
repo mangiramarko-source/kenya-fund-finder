@@ -47,17 +47,11 @@ export interface WelcomeExampleCategory {
 
 export const WELCOME_EXAMPLE_CATEGORIES: WelcomeExampleCategory[] = [
   { label: "Stocks", prompt: "KES 10,000 in SCOM" },
-  {
-    label: "MMFs",
-    prompt: "If I put 100,000 in an MMF at 11%, what happens?",
-  },
+  { label: "MMFs", prompt: "Model KES 100k in an MMF at 11%" },
   { label: "FX", prompt: "KES 100,000 to USD" },
   { label: "Commodities", prompt: "Gold rises 5%" },
+  { label: "Portfolio", prompt: "Split 100k between MMF and SCOM" },
   { label: "News", prompt: "Latest news about Safaricom" },
-  {
-    label: "Portfolio",
-    prompt: "Split 100k between MMF and SCOM at 11% yield",
-  },
   { label: "Explain", prompt: "Explain dividend yield" },
 ];
 

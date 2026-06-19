@@ -9,52 +9,24 @@ import {
 } from "@/lib/aiLab/history";
 import Sparkline from "@/components/Sparkline";
 import { sanitizeOutput } from "@/lib/aiLab/safety";
-
-const fmtKES = (n: number) =>
-  new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: "KES",
-    maximumFractionDigits: 0,
-  }).format(n);
-
-const fmtKES2 = (n: number) =>
-  new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: "KES",
-    maximumFractionDigits: 2,
-  }).format(n);
-
-const Section = ({
-  icon,
-  title,
-  children,
-}: {
-  icon: React.ReactNode;
-  title: string;
-  children: React.ReactNode;
-}) => (
-  <div className="rounded-lg border border-border bg-muted/20 p-3">
-    <div className="flex items-center gap-1.5 mb-2 text-muted-foreground">
-      {icon}
-      <span className="text-[10px] uppercase tracking-widest font-semibold">{title}</span>
-    </div>
-    <div className="text-sm text-foreground/90 space-y-1">{children}</div>
-  </div>
-);
-
-const Disclaimer = ({ text }: { text: string }) => (
-  <p className="text-[11px] text-muted-foreground italic flex items-center gap-1.5">
-    <Info className="h-3 w-3" />
-    {text}
-  </p>
-);
-
-const KV = ({ k, v }: { k: string; v: string }) => (
-  <div className="flex items-baseline justify-between gap-3 py-1 border-b border-border/40 last:border-0">
-    <span className="text-xs text-muted-foreground">{k}</span>
-    <span className="text-sm font-semibold tabular-nums">{v}</span>
-  </div>
-);
+import {
+  BreakdownTable,
+  Disclaimer,
+  KV,
+  ResultShell,
+  Section,
+  SummaryMetricCard,
+  SummaryMetricGrid,
+  TableCell,
+  TableHeadCell,
+  TableHeadRow,
+  TableRow,
+  fmtGainLoss,
+  fmtKES,
+  fmtKES2,
+  fmtPctColored,
+  signedColorClass,
+} from "@/components/ai-lab/ScenarioResultPrimitives";
 
 interface ScenarioResultProps {
   result: RouterResult | null;
@@ -67,21 +39,16 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   const effectiveLookbackDays = lookbackDays ?? 30;
   if (!result) {
     return (
-      <div className="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center space-y-2">
-        <p className="text-sm text-muted-foreground">
-          Run a scenario above to see structured results here.
-        </p>
-        <p className="text-xs text-muted-foreground">
-          Use the prompt chips or ask a data question with amounts, tickers, or yield assumptions.
-        </p>
-      </div>
+      <ResultShell className="text-center">
+        <p className="text-sm text-stone-600">Run a scenario to see structured results here.</p>
+      </ResultShell>
     );
   }
 
   if (result.kind === "refusal") {
     const msg = sanitizeOutput(result.message);
     return (
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-4 space-y-3">
+      <ResultShell className="border-amber-400/40 bg-amber-50/50 space-y-3">
         <div className="flex items-start gap-2">
           <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
           <div>
@@ -100,16 +67,16 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           ))}
         </div>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
   if (result.kind === "unknown") {
     return (
-      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
+      <ResultShell className="space-y-3">
         <div className="flex items-start gap-2">
-          <AlertTriangle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
-          <p className="text-sm">{sanitizeOutput(result.message)}</p>
+          <AlertTriangle className="h-4 w-4 text-stone-500 shrink-0 mt-0.5" />
+          <p className="text-sm text-slate-900">{sanitizeOutput(result.message)}</p>
         </div>
         {result.suggestions.length > 0 && (
           <div className="pl-6 space-y-2">
@@ -124,14 +91,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </div>
         )}
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
   if (result.kind === "explainer") {
     return (
-      <div className="rounded-xl border border-border bg-card p-4 space-y-3">
-        <h3 className="text-base font-semibold">{sanitizeOutput(result.title)}</h3>
+      <ResultShell className="space-y-3">
+        <h3 className="text-base font-semibold text-slate-950">{sanitizeOutput(result.title)}</h3>
         <div className="space-y-2">
           {result.paragraphs.map((p, i) => (
             <p key={i} className="text-sm text-foreground/90 leading-relaxed">
@@ -147,7 +114,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
@@ -155,11 +122,6 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   if (result.kind === "compare") {
     const fmtVal = (a: ComparableAsset) =>
       new Intl.NumberFormat("en-KE", { maximumFractionDigits: 4 }).format(a.value);
-    const fmtPct = (n: number | null) => {
-      if (n == null) return "—";
-      const cls = n > 0 ? "text-emerald-500" : n < 0 ? "text-rose-500" : "text-muted-foreground";
-      return <span className={`font-semibold ${cls}`}>{`${n > 0 ? "+" : ""}${n.toFixed(2)}%`}</span>;
-    };
     const [a, b] = result.assets;
     // Build full metric list across both assets
     const metrics = new Set<string>();
@@ -174,10 +136,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
       asset.extras?.find((e) => e.label === label)?.value ?? "—";
 
     return (
-      <div className="space-y-3">
-        <Section icon={<ArrowLeftRight className="h-3 w-3" />} title="Compare">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm tabular-nums">
+      <ResultShell>
+        <SummaryMetricGrid>
+          <SummaryMetricCard label={a.symbol} value={fmtVal(a)} sublabel={a.name} />
+          <SummaryMetricCard label={b.symbol} value={fmtVal(b)} sublabel={b.name} />
+          <SummaryMetricCard label={`${a.symbol} recent change`} value={fmtPctColored(a.changePct)} sublabel={`${b.symbol}: see breakdown`} />
+        </SummaryMetricGrid>
+        <Section icon={<ArrowLeftRight className="h-3 w-3" />} title="Compare breakdown">
+          <BreakdownTable>
               <thead>
                 <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   <th className="text-left font-medium py-1 pr-3">Metric</th>
@@ -205,16 +171,16 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
                 ))}
                 <tr className="border-t border-border/40">
                   <td className="py-1.5 pr-3 text-xs text-muted-foreground">Recent change</td>
-                  <td className="py-1.5 px-2 text-right">{fmtPct(a.changePct)}</td>
-                  <td className="py-1.5 pl-2 text-right">{fmtPct(b.changePct)}</td>
+                  <td className="py-1.5 px-2 text-right">{fmtPctColored(a.changePct)}</td>
+                  <td className="py-1.5 pl-2 text-right">{fmtPctColored(b.changePct)}</td>
                 </tr>
                 <tr className="border-t border-border/40">
                   <td className="py-1.5 pr-3 text-xs text-muted-foreground">{formatReturnLabel(effectiveLookbackDays)}</td>
                   <td className="py-1.5 px-2 text-right">
-                    {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPct(history?.[a.symbol]?.returnPct ?? null)}
+                    {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPctColored(history?.[a.symbol]?.returnPct ?? null)}
                   </td>
                   <td className="py-1.5 pl-2 text-right">
-                    {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPct(history?.[b.symbol]?.returnPct ?? null)}
+                    {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPctColored(history?.[b.symbol]?.returnPct ?? null)}
                   </td>
                 </tr>
                 <tr className="border-t border-border/40">
@@ -258,8 +224,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+          </BreakdownTable>
         </Section>
         {result.diff.length > 0 && (
           <Section icon={<Calculator className="h-3 w-3" />} title="Difference">
@@ -271,7 +236,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </Section>
         )}
         <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
@@ -279,14 +244,18 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
   if (result.kind === "portfolio-split") {
-    const fmtGainLoss = (n: number) => `${n >= 0 ? "+" : ""}${fmtKES(n)}`;
     return (
-      <div className="space-y-3">
+      <ResultShell>
+        <SummaryMetricGrid>
+          <SummaryMetricCard label="Total amount" value={fmtKES(result.inputs.totalAmount)} />
+          <SummaryMetricCard label="MMF allocation" value={fmtKES(result.inputs.mmfAmount)} sublabel={`${result.inputs.mmfPercent}%`} />
+          <SummaryMetricCard label="Stock allocation" value={fmtKES(result.inputs.stockAmount)} sublabel={`${result.inputs.stockSymbol} · ${result.inputs.stockPercent}%`} />
+        </SummaryMetricGrid>
         <Section icon={<Info className="h-3 w-3" />} title="Summary">
           <p>{sanitizeOutput(result.summary)}</p>
         </Section>
@@ -313,8 +282,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <KV k="Projection period" v={`${result.inputs.projectionMonths} months`} />
         </Section>
         <Section icon={<Calculator className="h-3 w-3" />} title="Scenario table">
-          <div className="overflow-x-auto">
-            <table className="w-full text-sm tabular-nums">
+          <BreakdownTable>
               <thead>
                 <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   <th className="text-left font-medium py-1 pr-3">Stock movement</th>
@@ -339,18 +307,17 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
                   </tr>
                 ))}
               </tbody>
-            </table>
-          </div>
+          </BreakdownTable>
         </Section>
         <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
             {result.importantNotes.map((n, i) => (
               <li key={i}>{sanitizeOutput(n)}</li>
             ))}
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
@@ -368,7 +335,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     };
 
     return (
-      <div className="space-y-3">
+      <ResultShell>
         <Section icon={<Info className="h-3 w-3" />} title="Summary">
           <p>{sanitizeOutput(result.summary)}</p>
         </Section>
@@ -430,7 +397,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
@@ -450,12 +417,17 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
         : `${result.convertedAmount.toLocaleString("en-KE", { maximumFractionDigits: 2 })} ${inputs.toCurrency}`;
 
     return (
-      <div className="space-y-3">
+      <ResultShell>
+        <SummaryMetricGrid>
+          <SummaryMetricCard label="Amount in" value={amountLabel} />
+          <SummaryMetricCard label="Converted out" value={convertedLabel} />
+          <SummaryMetricCard label="Rate used" value={inputs.rate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} sublabel={inputs.rateLabel} />
+        </SummaryMetricGrid>
         <Section icon={<Info className="h-3 w-3" />} title="Summary">
           <p>{sanitizeOutput(result.summary)}</p>
         </Section>
         <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
@@ -476,14 +448,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
   if (result.kind === "fx-move") {
     const { inputs } = result;
     return (
-      <div className="space-y-3">
+      <ResultShell>
         <Section icon={<Info className="h-3 w-3" />} title="Summary">
           <p>{sanitizeOutput(result.summary)}</p>
         </Section>
@@ -508,14 +480,14 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
   if (result.kind === "commodity-move") {
     const { inputs } = result;
     return (
-      <div className="space-y-3">
+      <ResultShell>
         <Section icon={<Info className="h-3 w-3" />} title="Summary">
           <p>{sanitizeOutput(result.summary)}</p>
         </Section>
@@ -541,14 +513,18 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
   if (result.kind === "stock-amount") {
-    const fmtGainLoss = (n: number) => `${n >= 0 ? "+" : ""}${fmtKES(n)}`;
     return (
-      <div className="space-y-3">
+      <ResultShell>
+        <SummaryMetricGrid>
+          <SummaryMetricCard label="Starting amount" value={fmtKES(result.inputs.amount)} />
+          <SummaryMetricCard label="Latest price" value={fmtKES2(result.inputs.latestPrice)} sublabel={result.inputs.symbol} />
+          <SummaryMetricCard label="Approx. shares" value={result.approximateShares.toLocaleString("en-KE")} />
+        </SummaryMetricGrid>
         <Section icon={<Info className="h-3 w-3" />} title="Summary">
           <p>{sanitizeOutput(result.summary)}</p>
         </Section>
@@ -567,32 +543,26 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
               <KV k="Latest available price" v={fmtKES2(result.inputs.latestPrice)} />
               <KV k="Approximate shares" v={result.approximateShares.toLocaleString("en-KE")} />
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm tabular-nums">
-                <thead>
-                  <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    <th className="text-left font-medium py-1 pr-3">Price movement</th>
-                    <th className="text-right font-medium py-1 px-2">Estimated price</th>
-                    <th className="text-right font-medium py-1 px-2">Estimated value</th>
-                    <th className="text-right font-medium py-1 pl-2">Estimated gain/loss</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {result.rows.map((row) => (
-                    <tr key={row.movementPct} className="border-t border-border/40">
-                      <td className="py-1.5 pr-3 text-xs text-muted-foreground">
-                        {fmtMovement(row.movementPct)}
-                      </td>
-                      <td className="py-1.5 px-2 text-right">{fmtKES2(row.estimatedPrice)}</td>
-                      <td className="py-1.5 px-2 text-right font-semibold">
-                        {fmtKES(row.estimatedValue)}
-                      </td>
-                      <td className="py-1.5 pl-2 text-right">{fmtGainLoss(row.estimatedGainLoss)}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
+            <BreakdownTable>
+              <thead>
+                <TableHeadRow>
+                  <TableHeadCell>Price movement</TableHeadCell>
+                  <TableHeadCell align="right">Estimated price</TableHeadCell>
+                  <TableHeadCell align="right">Estimated value</TableHeadCell>
+                  <TableHeadCell align="right">Est. gain/loss</TableHeadCell>
+                </TableHeadRow>
+              </thead>
+              <tbody>
+                {result.rows.map((row) => (
+                  <TableRow key={row.movementPct}>
+                    <TableCell>{fmtMovement(row.movementPct)}</TableCell>
+                    <TableCell align="right">{fmtKES2(row.estimatedPrice)}</TableCell>
+                    <TableCell align="right" className="font-semibold">{fmtKES(row.estimatedValue)}</TableCell>
+                    <TableCell align="right">{fmtGainLoss(row.estimatedGainLoss)}</TableCell>
+                  </TableRow>
+                ))}
+              </tbody>
+            </BreakdownTable>
           </div>
         </Section>
         <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
@@ -603,7 +573,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
@@ -618,12 +588,17 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
             ...rows.slice(-3),
           ];
     return (
-      <div className="space-y-3">
+      <ResultShell>
+        <SummaryMetricGrid>
+          <SummaryMetricCard label="Estimated gross value" value={fmtKES2(totals.estimatedGrossValue)} />
+          <SummaryMetricCard label="Total contributed" value={fmtKES2(totals.totalContributions)} />
+          <SummaryMetricCard label="Estimated gross growth" value={fmtKES2(totals.estimatedGrossGrowth)} valueClassName={signedColorClass(totals.estimatedGrossGrowth)} />
+        </SummaryMetricGrid>
         <Section icon={<Info className="h-3 w-3" />} title="Summary">
           <p>{sanitizeOutput(result.summary)}</p>
         </Section>
         <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
@@ -640,43 +615,38 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
               <KV k="Estimated gross growth" v={fmtKES2(totals.estimatedGrossGrowth)} />
               <KV k="Estimated gross value" v={fmtKES2(totals.estimatedGrossValue)} />
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm tabular-nums">
-                <thead>
-                  <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
-                    <th className="text-left font-medium py-1 pr-3">Month</th>
-                    <th className="text-right font-medium py-1 px-2">Starting value</th>
-                    <th className="text-right font-medium py-1 px-2">Contribution</th>
-                    <th className="text-right font-medium py-1 px-2">Estimated growth</th>
-                    <th className="text-right font-medium py-1 pl-2">Ending value</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {displayRows.map((row, i) =>
-                    row == null ? (
-                      <tr key="ellipsis" className="border-t border-border/40">
-                        <td
-                          colSpan={5}
-                          className="py-1.5 text-center text-xs text-muted-foreground"
-                        >
-                          …
-                        </td>
-                      </tr>
-                    ) : (
-                      <tr key={row.month} className="border-t border-border/40">
-                        <td className="py-1.5 pr-3 text-xs text-muted-foreground">{row.month}</td>
-                        <td className="py-1.5 px-2 text-right">{fmtKES2(row.startingValue)}</td>
-                        <td className="py-1.5 px-2 text-right">{fmtKES2(row.contribution)}</td>
-                        <td className="py-1.5 px-2 text-right">{fmtKES2(row.estimatedGrowth)}</td>
-                        <td className="py-1.5 pl-2 text-right font-semibold">
-                          {fmtKES2(row.endingValue)}
-                        </td>
-                      </tr>
-                    ),
-                  )}
-                </tbody>
-              </table>
-            </div>
+            <BreakdownTable>
+              <thead>
+                <TableHeadRow>
+                  <TableHeadCell>Month</TableHeadCell>
+                  <TableHeadCell align="right">Starting value</TableHeadCell>
+                  <TableHeadCell align="right">Contribution</TableHeadCell>
+                  <TableHeadCell align="right">Estimated growth</TableHeadCell>
+                  <TableHeadCell align="right">Ending value</TableHeadCell>
+                </TableHeadRow>
+              </thead>
+              <tbody>
+                {displayRows.map((row, i) =>
+                  row == null ? (
+                    <TableRow key={`ellipsis-${i}`}>
+                      <TableCell colSpan={5} className="text-center !text-stone-500">
+                        …
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    <TableRow key={row.month}>
+                      <TableCell>{row.month}</TableCell>
+                      <TableCell align="right">{fmtKES2(row.startingValue)}</TableCell>
+                      <TableCell align="right">{fmtKES2(row.contribution)}</TableCell>
+                      <TableCell align="right">{fmtKES2(row.estimatedGrowth)}</TableCell>
+                      <TableCell align="right" className="font-semibold">
+                        {fmtKES2(row.endingValue)}
+                      </TableCell>
+                    </TableRow>
+                  ),
+                )}
+              </tbody>
+            </BreakdownTable>
           </div>
         </Section>
         <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
@@ -687,13 +657,18 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
   if (result.kind === "mmf-yield-change") {
     return (
-      <div className="space-y-3">
+      <ResultShell>
+        <SummaryMetricGrid>
+          <SummaryMetricCard label="From annual income" value={fmtKES(result.fromGrossYearly)} sublabel={`${result.inputs.fromYieldPct}% yield`} />
+          <SummaryMetricCard label="To annual income" value={fmtKES(result.toGrossYearly)} sublabel={`${result.inputs.toYieldPct}% yield`} />
+          <SummaryMetricCard label="Annual delta" value={`${result.deltaYearly >= 0 ? "+" : ""}${fmtKES(result.deltaYearly)}`} valueClassName={signedColorClass(result.deltaYearly)} />
+        </SummaryMetricGrid>
         <Section icon={<Info className="h-3 w-3" />} title="Summary">
           <p>{sanitizeOutput(result.summary)}</p>
         </Section>
@@ -727,7 +702,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </p>
         </Section>
         <Disclaimer text={result.disclaimer} />
-      </div>
+      </ResultShell>
     );
   }
 
@@ -804,8 +779,24 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     );
   }
 
+  const metricCards =
+    result.kind === "mmf" ? (
+      <SummaryMetricGrid>
+        <SummaryMetricCard label="Projected gross" value={fmtKES(result.projectedGross)} />
+        <SummaryMetricCard label="Monthly equivalent" value={fmtKES2(result.monthlyEquivalent)} />
+        <SummaryMetricCard label="Annual yield" value={`${result.inputs.annualYieldPct}%`} sublabel={fmtKES(result.inputs.amount)} />
+      </SummaryMetricGrid>
+    ) : result.kind === "stock-move" ? (
+      <SummaryMetricGrid>
+        <SummaryMetricCard label="New value" value={fmtKES(result.newValue)} />
+        <SummaryMetricCard label="Profit / loss" value={`${result.delta >= 0 ? "+" : ""}${fmtKES(result.delta)}`} valueClassName={signedColorClass(result.delta)} />
+        <SummaryMetricCard label="Price change" value={`${result.inputs.priceChangePct}%`} sublabel={fmtKES(result.inputs.amount)} />
+      </SummaryMetricGrid>
+    ) : null;
+
   return (
-    <div className="space-y-3">
+    <ResultShell>
+      {metricCards}
       <Section icon={<Info className="h-3 w-3" />} title="Summary">
         {summary}
       </Section>
@@ -813,7 +804,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
         <div>{calcs}</div>
       </Section>
       <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
-        <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+        <ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
           {result.assumptions.map((a, i) => (
             <li key={i}>{sanitizeOutput(a)}</li>
           ))}
@@ -823,7 +814,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
         {importantNotes}
       </Section>
       <Disclaimer text={result.disclaimer} />
-    </div>
+    </ResultShell>
   );
 };
 

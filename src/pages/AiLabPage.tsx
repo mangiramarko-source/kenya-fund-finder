@@ -1,11 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Navigate } from "react-router-dom";
-import { Sparkles, Info } from "lucide-react";
+import { Info, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import CapabilitiesCard from "@/components/ai-lab/CapabilitiesCard";
 import MarketContextCard from "@/components/ai-lab/MarketContextCard";
 import AiLabChat, { type CompareState } from "@/components/ai-lab/AiLabChat";
+import {
+  AI_LAB_LABEL,
+  AI_LAB_PAGE,
+  AI_LAB_PAGE_INNER,
+  AI_LAB_RAIL_CARD,
+  AI_LAB_SAFETY_LINE,
+} from "@/components/ai-lab/aiLabTheme";
 import { routePrompt } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
@@ -142,7 +149,9 @@ const AiLabPage = () => {
 
   if (loading) {
     return (
-      <div className="container py-20 text-center text-muted-foreground">Loading…</div>
+      <div className={`${AI_LAB_PAGE} flex items-center justify-center`}>
+        <p className="text-stone-600">Loading…</p>
+      </div>
     );
   }
 
@@ -153,78 +162,81 @@ const AiLabPage = () => {
       return <Navigate to={access.loginPath} replace />;
     }
     return (
-      <div className="container py-20 text-center">
-        <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">{getAiLabAccessDeniedMessage(access.reason)}</p>
+      <div className={`${AI_LAB_PAGE} container py-20 text-center`}>
+        <h1 className="text-2xl font-bold mb-2 text-slate-950">Access Denied</h1>
+        <p className="text-stone-600">{getAiLabAccessDeniedMessage(access.reason)}</p>
       </div>
     );
   }
 
   return (
-    <div className="container py-6 space-y-6 max-w-6xl">
-      <header className="space-y-2">
-        <div className="flex items-center gap-2">
-          <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent/15 text-accent">
+    <div className={AI_LAB_PAGE}>
+      <div className={`${AI_LAB_PAGE_INNER} space-y-6`}>
+        <header className="flex items-center gap-2">
+          <div className="flex items-center justify-center h-9 w-9 rounded-full bg-[#EAB308] text-slate-950">
             <Sparkles className="h-4 w-4" />
           </div>
-          <span className="text-[10px] uppercase tracking-widest text-accent font-semibold">
-            {AI_LAB_BETA_BADGE}
-          </span>
-        </div>
-        <h1 className="text-2xl md:text-3xl font-bold font-heading">AI Scenario Assistant</h1>
-        <p className="text-sm text-muted-foreground max-w-2xl">
-          Ask data questions about funds, stocks, and possible outcomes. The assistant shows
-          scenarios using available data. It does not give personal financial advice.
-        </p>
-      </header>
+          <div>
+            <p className={AI_LAB_LABEL}>AI Scenario Assistant</p>
+            <p className="text-xs text-stone-500">{AI_LAB_SAFETY_LINE}</p>
+          </div>
+        </header>
 
-      <div className="rounded-xl border border-accent/30 bg-accent/5 p-3 flex items-start gap-2">
-        <Info className="h-4 w-4 text-accent shrink-0 mt-0.5" />
-        <p className="text-xs text-foreground/90 leading-relaxed">{AI_LAB_BETA_NOTE}</p>
-      </div>
-
-      <div className="rounded-xl border border-amber-500/30 bg-amber-500/5 p-3 flex items-start gap-2">
-        <Info className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
-        <p className="text-xs text-foreground/90 leading-relaxed">{MAIN_DISCLAIMER}</p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_300px] gap-4">
-        <AiLabChat
-          messages={messages}
-          onSubmit={handleSubmit}
-          compareStateByMessageId={compareStateByMessageId}
-          onLookbackChange={handleLookbackChange}
-        />
-
-        <aside className="space-y-4">
-          {user ? <AiLabAccessCard user={user} isAdmin={isAdmin} /> : null}
-          <CapabilitiesCard />
-          <MarketContextCard
-            data={market.data}
-            loading={market.loading}
-            error={market.error}
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_280px] gap-5">
+          <AiLabChat
+            messages={messages}
+            onSubmit={handleSubmit}
+            compareStateByMessageId={compareStateByMessageId}
+            onLookbackChange={handleLookbackChange}
           />
-          {news.loading && (
-            <div className="rounded-lg border border-border bg-card/60 px-3 py-2 text-xs text-muted-foreground">
-              Loading news context for news-summary prompts…
-            </div>
-          )}
-          {news.error && (
-            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 px-3 py-2 text-xs text-muted-foreground">
-              News context unavailable. News-summary prompts may return a safe unknown until
-              data loads.
-            </div>
-          )}
-        </aside>
-      </div>
 
-      <details className="lg:hidden rounded-xl border border-border bg-card/60 p-3">
-        <summary className="text-sm font-medium cursor-pointer">Access & capabilities</summary>
-        <div className="mt-3 space-y-4">
-          {user ? <AiLabAccessCard user={user} isAdmin={isAdmin} /> : null}
-          <CapabilitiesCard />
+          <aside className="hidden lg:block space-y-3">
+            <div className={`${AI_LAB_RAIL_CARD} space-y-2`}>
+              <p className={AI_LAB_LABEL}>Preview status</p>
+              <p className="text-xs font-medium text-slate-900">{AI_LAB_BETA_BADGE}</p>
+              <p className="text-[11px] text-stone-600 leading-relaxed">{AI_LAB_BETA_NOTE}</p>
+            </div>
+            {user ? <AiLabAccessCard user={user} isAdmin={isAdmin} /> : null}
+            <CapabilitiesCard />
+            <MarketContextCard
+              data={market.data}
+              loading={market.loading}
+              error={market.error}
+            />
+            {news.loading && (
+              <div className={`${AI_LAB_RAIL_CARD} text-xs text-stone-600`}>
+                Loading news context for news-summary prompts…
+              </div>
+            )}
+            {news.error && (
+              <div className={`${AI_LAB_RAIL_CARD} text-xs text-stone-600 border-amber-400/40`}>
+                News context unavailable. News-summary prompts may return a safe unknown until
+                data loads.
+              </div>
+            )}
+            <div className={`${AI_LAB_RAIL_CARD} flex items-start gap-2`}>
+              <Info className="h-4 w-4 text-amber-600 shrink-0 mt-0.5" />
+              <p className="text-[11px] text-stone-700 leading-relaxed">{MAIN_DISCLAIMER}</p>
+            </div>
+          </aside>
         </div>
-      </details>
+
+        <details className="lg:hidden rounded-2xl border border-[#D8D0C0] bg-[#FFFDF7] p-3">
+          <summary className="text-sm font-medium cursor-pointer text-slate-900">
+            Access, capabilities & data status
+          </summary>
+          <div className="mt-3 space-y-3">
+            <div className={`${AI_LAB_RAIL_CARD} space-y-2`}>
+              <p className={AI_LAB_LABEL}>Preview status</p>
+              <p className="text-xs font-medium text-slate-900">{AI_LAB_BETA_BADGE}</p>
+              <p className="text-[11px] text-stone-600 leading-relaxed">{AI_LAB_BETA_NOTE}</p>
+            </div>
+            {user ? <AiLabAccessCard user={user} isAdmin={isAdmin} /> : null}
+            <CapabilitiesCard />
+            <MarketContextCard data={market.data} loading={market.loading} error={market.error} />
+          </div>
+        </details>
+      </div>
     </div>
   );
 };
