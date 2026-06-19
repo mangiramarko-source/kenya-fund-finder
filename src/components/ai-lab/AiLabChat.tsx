@@ -18,7 +18,7 @@ import {
   AI_LAB_SAFETY_LINE,
   AI_LAB_USER_BUBBLE,
 } from "@/components/ai-lab/aiLabTheme";
-import { buildFollowUpSuggestions, type AiLabChatMessage } from "@/lib/aiLab/chat";
+import type { AiLabChatMessage } from "@/lib/aiLab/chat";
 import type { AssetHistory, LookbackDays } from "@/lib/aiLab/history";
 import { LOOKBACK_OPTIONS } from "@/lib/aiLab/history";
 
@@ -132,7 +132,7 @@ const AiLabChat = ({
             }
 
             const compareState = compareStateByMessageId[msg.id];
-            const followUps = buildFollowUpSuggestions(msg.result);
+            const followUps = msg.followUps ?? [];
 
             return (
               <div key={msg.id} className="space-y-3 max-w-full">
@@ -143,7 +143,7 @@ const AiLabChat = ({
                       {msg.contextNote}
                     </p>
                   )}
-                  {msg.status === "clarifying" && (
+                  {msg.status === "clarifying" && !msg.text.includes("Data only.") && (
                     <p className="text-[11px] text-stone-500 italic">{AI_LAB_SAFETY_LINE}</p>
                   )}
                 </div>

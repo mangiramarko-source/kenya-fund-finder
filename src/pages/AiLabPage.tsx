@@ -32,10 +32,14 @@ import {
   createAssistantMessage,
   createUserMessage,
   deriveSessionContext,
-  getAssistantTextFromResult,
   type AiLabChatMessage,
 } from "@/lib/aiLab/chat";
 import { resolveWebsiteLookup } from "@/lib/aiLab/websiteLookup";
+import {
+  composeAssistantResponse,
+  composeCapabilitiesGuide,
+  isCapabilitiesPrompt,
+} from "@/lib/aiLab/responseComposer";
 
 const MAIN_DISCLAIMER =
   "Data only. Not personal financial advice. Yields, prices, fees, taxes, and market conditions can change. Speak to a licensed adviser before making investment decisions.";
@@ -125,12 +129,25 @@ const AiLabPage = () => {
       setMessages((prev) => [...prev, userMessage]);
 
       const sessionContext = deriveSessionContext(messages);
+
+      if (isCapabilitiesPrompt(prompt)) {
+        const { text, followUps } = composeCapabilitiesGuide();
+        const assistantMessage = createAssistantMessage({
+          text,
+          status: "answered",
+          followUps,
+        });
+        setMessages((prev) => [...prev, assistantMessage]);
+        return;
+      }
+
       const clarifying = buildClarifyingResponse(prompt, sessionContext);
 
       if (clarifying) {
         const assistantMessage = createAssistantMessage({
           text: clarifying.text,
           status: "clarifying",
+          followUps: clarifying.followUps,
         });
         setMessages((prev) => [...prev, assistantMessage]);
         return;
@@ -139,9 +156,15 @@ const AiLabPage = () => {
       void (async () => {
         const lookup = await resolveWebsiteLookup(prompt, market.data);
         if (lookup) {
-          const assistantMessage = createAssistantMessage({
-            text: lookup.summary,
+          const { text, followUps } = composeAssistantResponse({
+            prompt,
             result: lookup,
+            sessionContext,
+          });
+          const assistantMessage = createAssistantMessage({
+            text,
+            result: lookup,
+            followUps,
           });
           setMessages((prev) => [...prev, assistantMessage]);
           return;
@@ -149,9 +172,15 @@ const AiLabPage = () => {
 
         const { prompt: enriched, note } = applyLiveContext(prompt, market.data);
         const result = routePrompt(enriched, market.data, news.data);
-        const assistantMessage = createAssistantMessage({
-          text: getAssistantTextFromResult(result),
+        const { text, followUps } = composeAssistantResponse({
+          prompt,
           result,
+          sessionContext,
+        });
+        const assistantMessage = createAssistantMessage({
+          text,
+          result,
+          followUps,
           contextNote: note ?? undefined,
         });
         setMessages((prev) => [...prev, assistantMessage]);

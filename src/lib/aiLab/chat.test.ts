@@ -93,7 +93,7 @@ describe("buildFollowUpSuggestions", () => {
   it("returns safe suggestions for MMF result", () => {
     const result = routePrompt("If I put 100,000 in an MMF, how much do I get?", ctx);
     const suggestions = buildFollowUpSuggestions(result);
-    expect(suggestions.some((s) => s.toLowerCase().includes("split"))).toBe(true);
+    expect(suggestions.some((s) => s.toLowerCase().includes("etica"))).toBe(true);
   });
 
   it("returns safe suggestions for unknown result", () => {
@@ -109,8 +109,9 @@ describe("buildClarifyingResponse", () => {
   it('asks what scenario to test for "I have 100k"', () => {
     const response = buildClarifyingResponse("I have 100k");
     expect(response).not.toBeNull();
-    expect(response!.text.toLowerCase()).toContain("what would you like to test");
+    expect(response!.text.toLowerCase()).toContain("one more detail");
     expect(response!.text).toContain("100");
+    expect(response!.followUps.length).toBeGreaterThan(0);
   });
 
   it('asks for named stock and yield for "Split between MMF and stocks"', () => {
@@ -123,6 +124,7 @@ describe("buildClarifyingResponse", () => {
   it("includes disclaimer", () => {
     const response = buildClarifyingResponse("I have 100k");
     expect(response!.disclaimer).toBe(STANDARD_DISCLAIMER);
+    expect(response!.text).toContain(STANDARD_DISCLAIMER);
     expect(response!.text).not.toContain("you should");
   });
 

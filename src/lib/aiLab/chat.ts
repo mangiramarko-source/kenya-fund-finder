@@ -1,11 +1,13 @@
-// Phase 11A — in-memory chat message model and deterministic helpers.
+// Phase 11A / 13 — in-memory chat message model and deterministic helpers.
 // No LLM, no persistence, no prompt enrichment from session context.
 
 import type { RouterResult } from "./router";
 import { STANDARD_DISCLAIMER, detectAdviceIntent, FORBIDDEN_PATTERNS } from "./safety";
-import { SAFE_ALTERNATIVES } from "./safety";
-import { UNKNOWN_FALLBACK_SUGGESTIONS } from "./routerTypes";
 import { isGenericStockTerm, isPortfolioSplitIntent } from "./portfolioSplitParse";
+import {
+  composeAssistantResponse,
+  composeClarifyingResponse,
+} from "./responseComposer";
 
 export type AiLabChatRole = "user" | "assistant" | "system";
 
@@ -25,6 +27,7 @@ export interface AiLabChatMessage {
   result?: RouterResult;
   status?: AiLabChatStatus;
   contextNote?: string;
+  followUps?: string[];
 }
 
 export interface AiLabSessionContext {
@@ -38,6 +41,7 @@ export interface AiLabSessionContext {
 export interface ClarifyingResponse {
   text: string;
   disclaimer: string;
+  followUps: string[];
 }
 
 export interface WelcomeExampleCategory {
@@ -204,6 +208,7 @@ export function createAssistantMessage(args: {
   result?: RouterResult;
   status?: AiLabChatStatus;
   contextNote?: string;
+  followUps?: string[];
 }): AiLabChatMessage {
   const status = args.status ?? statusFromResult(args.result);
   return {
@@ -214,6 +219,7 @@ export function createAssistantMessage(args: {
     result: args.result,
     status,
     contextNote: args.contextNote,
+    followUps: args.followUps,
   };
 }
 
@@ -249,10 +255,19 @@ export function deriveSessionContext(
 }
 
 export function getAssistantTextFromResult(result: RouterResult): string {
-  if (result.kind === "refusal" || result.kind === "unknown") {
-    return result.message;
+  return composeAssistantResponse({ prompt: "", result }).text;
+}
+
+function needsMmfYieldClarification(prompt: string): boolean {
+  if (!FUND_CONTEXT_RE.test(prompt)) return false;
+  if (parseYieldPct(prompt) != null) return false;
+  if (/\bhow much\b/i.test(prompt) && /\b(mmf|money market|yield)\b/i.test(prompt)) {
+    return true;
   }
-  return result.summary;
+  if (/\b(at|with)\s+(an?\s+)?(mmf|money market)\b/i.test(prompt) && !YIELD_RE.test(prompt)) {
+    return true;
+  }
+  return false;
 }
 
 export function buildClarifyingResponse(
@@ -262,63 +277,56 @@ export function buildClarifyingResponse(
   if (detectAdviceIntent(prompt)) return null;
 
   if (needsSplitClarification(prompt)) {
-    return {
+    const composed = composeClarifyingResponse({
       text:
-        "I can model a split scenario, but I need a named stock and a yield assumption. Try: \"Split 100k between MMF and SCOM at 11% yield.\"",
-      disclaimer: STANDARD_DISCLAIMER,
-    };
+        'I can model a split scenario, but I need a named stock and a yield assumption. Example: "Split 100k between MMF and SCOM at 11% yield."',
+      followUps: [
+        "Split 100k between MMF and SCOM at 11% yield",
+        "KES 10,000 in SCOM",
+        "What data do you have?",
+      ],
+    });
+    return { ...composed, disclaimer: STANDARD_DISCLAIMER };
+  }
+
+  if (needsMmfYieldClarification(prompt)) {
+    const composed = composeClarifyingResponse({
+      text:
+        "I can model an MMF scenario, but I need a yield assumption. Example: \"Model KES 100k in an MMF at 11%.\"",
+      followUps: [
+        "Model KES 100k in an MMF at 11%",
+        "Show Etica MMF yield",
+        "Explain withholding tax",
+      ],
+    });
+    return { ...composed, disclaimer: STANDARD_DISCLAIMER };
   }
 
   if (isAmountOnlyPrompt(prompt)) {
     const amount = parseAmount(prompt) ?? sessionContext?.lastAmount;
     const amountPhrase = amount != null ? formatKesAmount(amount) : "that amount";
-    return {
-      text: `What would you like to test with ${amountPhrase}? You can ask for an MMF scenario, stock exposure, FX conversion, or split scenario.`,
-      disclaimer: STANDARD_DISCLAIMER,
-    };
+    const composed = composeClarifyingResponse({
+      text: `I can model that, but I need one more detail: which stock, fund, FX pair, or scenario type should I use with ${amountPhrase}?`,
+      followUps: [
+        "KES 10,000 in SCOM",
+        "Model KES 100k in an MMF at 11%",
+        "KES 100,000 to USD",
+      ],
+    });
+    return { ...composed, disclaimer: STANDARD_DISCLAIMER };
   }
 
   return null;
 }
 
-export function buildFollowUpSuggestions(result?: RouterResult): string[] {
+export function buildFollowUpSuggestions(
+  result?: RouterResult,
+  prompt?: string,
+): string[] {
   if (!result) {
     return WELCOME_EXAMPLE_CATEGORIES.slice(0, 4).map((c) => c.prompt);
   }
-
-  if (result.kind === "refusal") {
-    return ["Show me a neutral scenario instead", ...SAFE_ALTERNATIVES.slice(0, 2)];
-  }
-
-  if (result.kind === "unknown") {
-    return UNKNOWN_FALLBACK_SUGGESTIONS.slice(0, 3);
-  }
-
-  switch (result.kind) {
-    case "stock-amount":
-      return [
-        "What happens if a stock falls 10% on KES 100,000?",
-        "Compare SCOM vs EQTY",
-      ];
-    case "mmf":
-    case "mmf-yield-change":
-      return [
-        "Split 100k between MMF and SCOM at 11% yield",
-        "Explain withholding tax",
-      ];
-    case "fx-conversion":
-      return ["What happens if USD/KES rises 5%?"];
-    case "compare":
-      return ["KES 10,000 in SCOM", "Explain dividend yield"];
-    case "portfolio-split":
-      return ["Compare SCOM vs EQTY", "Explain liquidity"];
-    case "news-summary":
-      return ["KES 10,000 in SCOM", "Latest news about Safaricom"];
-    case "website-lookup":
-      return ["KES 10,000 in SCOM", "Compare SCOM vs EQTY", "Model KES 100k in an MMF at 11%"];
-    default:
-      return WELCOME_EXAMPLE_CATEGORIES.slice(0, 3).map((c) => c.prompt);
-  }
+  return composeAssistantResponse({ prompt: prompt ?? "", result }).followUps;
 }
 
 /** Test helper — clarifying text must not contain forbidden advisory phrases. */

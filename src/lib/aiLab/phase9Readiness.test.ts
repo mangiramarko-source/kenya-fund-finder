@@ -100,7 +100,7 @@ const SCENARIO_SMOKE: Array<{ prompt: string; kind: string; needsNews?: boolean 
 describe("Phase 9 readiness copy", () => {
   it("exports beta badge and note", () => {
     expect(AI_LAB_BETA_BADGE.toLowerCase()).toContain("admin");
-    expect(AI_LAB_BETA_BADGE.toLowerCase()).toContain("phase 12");
+    expect(AI_LAB_BETA_BADGE.toLowerCase()).toContain("phase 13");
     expect(AI_LAB_BETA_NOTE).toContain("admin-only");
     expect(AI_LAB_BETA_NOTE).toContain("does not use an LLM");
   });

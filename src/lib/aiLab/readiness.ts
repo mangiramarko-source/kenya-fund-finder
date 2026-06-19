@@ -1,9 +1,9 @@
-// Phase 11B — premium chat redesign copy and scenario inventory.
+// Phase 13 — safe response composer copy and scenario inventory.
 
-export const AI_LAB_BETA_BADGE = "Admin preview · Phase 12 · website data lookup";
+export const AI_LAB_BETA_BADGE = "Admin preview · Phase 13 · safe response composer";
 
 export const AI_LAB_BETA_NOTE =
-  "This is an admin-only preview with a conversational chat interface with website data lookup. Default access remains admin-only. The assistant runs deterministic scenario calculators on available KenyaFundFinder data. It does not use an LLM and does not give personal financial advice.";
+  "AI Lab now uses deterministic response composition to explain KenyaFundFinder data and scenarios conversationally. It remains admin-only and does not use an LLM.";
 
 export const AI_LAB_SCENARIO_INVENTORY = [
   "mmf",
