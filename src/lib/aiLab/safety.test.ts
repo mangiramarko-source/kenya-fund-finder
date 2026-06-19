@@ -75,6 +75,16 @@ describe("detectAdviceIntent", () => {
   it("flags 'Where should I save 10k monthly?'", () => {
     expect(detectAdviceIntent("Where should I save 10k monthly?")).toBe(true);
   });
+  it("flags news advice: Will SCOM rise because of this news?", () => {
+    expect(detectAdviceIntent("Will SCOM rise because of this news?")).toBe(true);
+  });
+  it("flags news advice: because of this news", () => {
+    expect(detectAdviceIntent("Should I sell because of this news?")).toBe(true);
+  });
+  it("does not flag neutral news summary prompts", () => {
+    expect(detectAdviceIntent("Latest news about Safaricom")).toBe(false);
+    expect(detectAdviceIntent("Explain this news in simple terms")).toBe(false);
+  });
 });
 
 describe("sanitizeOutput", () => {

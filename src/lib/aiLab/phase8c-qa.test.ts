@@ -7,6 +7,7 @@ import { routePrompt } from "./router";
 import { COMMODITY_UNKNOWN_MSG, FX_UNKNOWN_MSG, NEWS_UNKNOWN_MSG } from "./intent";
 import { getMmfUserText } from "./scenarios";
 import type { ComparableAsset, MarketContext } from "./marketContext";
+import type { NewsArticle, NewsContext } from "./newsContext";
 
 const DISCLAIMER = "Data only. Not personal financial advice.";
 
@@ -58,10 +59,25 @@ const ctx: MarketContext = {
   fetchedAt: new Date().toISOString(),
 };
 
+const safaricomNewsArticle: NewsArticle = {
+  id: "qa-1",
+  title: "Safaricom earnings update",
+  summary: "Safaricom PLC reported quarterly results.",
+  source: "Nation",
+  datePublished: new Date().toISOString(),
+  url: "https://example.com/safaricom-qa",
+  category: "Market News",
+};
+
+const newsCtx: NewsContext = {
+  articles: [safaricomNewsArticle],
+  fetchedAt: new Date().toISOString(),
+};
+
 const FORBIDDEN = ["you should buy", "i recommend", "put your money in", "you will make", "you will earn"];
 
 describe("Phase 8C manual QA checklist", () => {
-  it("TEST 1 — Latest news about Safaricom", () => {
+  it("TEST 1 — Latest news about Safaricom without news data", () => {
     const r = routePrompt("Latest news about Safaricom");
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
@@ -69,6 +85,16 @@ describe("Phase 8C manual QA checklist", () => {
       expect(r.disclaimer).toBe(DISCLAIMER);
       const joined = [r.message, ...r.suggestions].join(" ").toLowerCase();
       for (const phrase of FORBIDDEN) expect(joined).not.toContain(phrase);
+    }
+  });
+
+  it("TEST 1b — Latest news about Safaricom with mock news", () => {
+    const r = routePrompt("Latest news about Safaricom", ctx, newsCtx);
+    expect(r.kind).toBe("news-summary");
+    if (r.kind === "news-summary") {
+      expect(r.summary).toContain("KenyaFundFinder news data");
+      expect(r.articles.length).toBeGreaterThan(0);
+      expect(r.disclaimer).toBe(DISCLAIMER);
     }
   });
 

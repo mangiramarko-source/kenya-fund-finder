@@ -1,4 +1,4 @@
-import { AlertTriangle, ArrowLeftRight, Calculator, FileText, Info, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { AlertTriangle, ArrowLeftRight, Calculator, ExternalLink, FileText, Info, Newspaper, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
 import type { RouterResult } from "@/lib/aiLab/router";
 import type { ComparableAsset } from "@/lib/aiLab/marketContext";
 import type { AssetHistory, LookbackDays } from "@/lib/aiLab/history";
@@ -266,6 +266,86 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
             <li>{sanitizeOutput(formatHistoryAssumption(effectiveLookbackDays))}</li>
+          </ul>
+        </Section>
+        <Disclaimer text={result.disclaimer} />
+      </div>
+    );
+  }
+
+  if (result.kind === "news-summary") {
+    const fmtDate = (iso?: string) => {
+      if (!iso) return null;
+      const d = new Date(iso);
+      if (isNaN(d.getTime())) return null;
+      return d.toLocaleDateString("en-KE", {
+        timeZone: "Africa/Nairobi",
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      });
+    };
+
+    return (
+      <div className="space-y-3">
+        <Section icon={<Info className="h-3 w-3" />} title="Summary">
+          <p>{sanitizeOutput(result.summary)}</p>
+        </Section>
+        <Section icon={<Newspaper className="h-3 w-3" />} title="Articles used">
+          <div className="space-y-3">
+            {result.articles.map((article, i) => (
+              <div
+                key={`${article.title}-${i}`}
+                className="rounded-lg border border-border bg-muted/20 p-3 space-y-1.5"
+              >
+                <p className="text-sm font-semibold text-foreground">{sanitizeOutput(article.title)}</p>
+                {article.source && (
+                  <p className="text-xs text-muted-foreground">
+                    Source: {sanitizeOutput(article.source)}
+                  </p>
+                )}
+                {article.publishedAt && fmtDate(article.publishedAt) && (
+                  <p className="text-xs text-muted-foreground">
+                    Published: {fmtDate(article.publishedAt)}
+                  </p>
+                )}
+                {article.relatedSymbol && (
+                  <p className="text-xs text-muted-foreground">
+                    Related: {sanitizeOutput(article.relatedSymbol)}
+                  </p>
+                )}
+                {article.snippet && (
+                  <p className="text-xs text-foreground/90 leading-relaxed">
+                    {sanitizeOutput(article.snippet)}
+                  </p>
+                )}
+                {article.url && (
+                  <a
+                    href={article.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-xs text-accent hover:underline"
+                  >
+                    View article
+                    <ExternalLink className="h-3 w-3" />
+                  </a>
+                )}
+              </div>
+            ))}
+          </div>
+        </Section>
+        <Section icon={<FileText className="h-3 w-3" />} title="Possible relevance">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.possibleRelevance.map((item, i) => (
+              <li key={i}>{sanitizeOutput(item)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.importantNotes.map((n, i) => (
+              <li key={i}>{sanitizeOutput(n)}</li>
+            ))}
           </ul>
         </Section>
         <Disclaimer text={result.disclaimer} />
