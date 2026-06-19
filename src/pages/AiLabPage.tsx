@@ -11,6 +11,11 @@ import { routePrompt, type RouterResult } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
 import { AI_LAB_BETA_BADGE, AI_LAB_BETA_NOTE } from "@/lib/aiLab/readiness";
+import {
+  getAiLabAccessDeniedMessage,
+  resolveAiLabAccess,
+} from "@/lib/aiLab/accessGate";
+import AiLabAccessCard from "@/components/ai-lab/AiLabAccessCard";
 import { fetchAssetHistory, type AssetHistory, type LookbackDays, LOOKBACK_OPTIONS } from "@/lib/aiLab/history";
 import { Button } from "@/components/ui/button";
 
@@ -56,14 +61,17 @@ const AiLabPage = () => {
       <div className="container py-20 text-center text-muted-foreground">Loading…</div>
     );
   }
-  if (!user) return <Navigate to="/admin/login" replace />;
-  if (!isAdmin) {
+
+  const access = resolveAiLabAccess({ user, isAdmin });
+
+  if (!access.allowed) {
+    if (access.reason === "logged-out") {
+      return <Navigate to={access.loginPath} replace />;
+    }
     return (
       <div className="container py-20 text-center">
         <h1 className="text-2xl font-bold mb-2">Access Denied</h1>
-        <p className="text-muted-foreground">
-          AI Lab is in admin-only public beta preview. Sign in with an admin account to continue.
-        </p>
+        <p className="text-muted-foreground">{getAiLabAccessDeniedMessage(access.reason)}</p>
       </div>
     );
   }
@@ -156,6 +164,7 @@ const AiLabPage = () => {
           />
         </div>
         <aside className="space-y-4">
+          {user ? <AiLabAccessCard user={user} isAdmin={isAdmin} /> : null}
           <CapabilitiesCard />
         </aside>
       </div>

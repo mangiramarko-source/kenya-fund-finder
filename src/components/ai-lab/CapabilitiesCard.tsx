@@ -20,7 +20,7 @@ const CANT_DO = [
 ];
 
 const LIMITS = [
-  "Admin preview only — not publicly released yet",
+  "Admin-only gate by default — controlled beta not enabled yet",
   "Deterministic routing only — no LLM",
   "Uses available KenyaFundFinder data only",
   "Does not save portfolios or scenario history",
