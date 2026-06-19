@@ -299,7 +299,7 @@ describe("routePrompt", () => {
   });
 
   describe("Phase 8C classified unknown fallback", () => {
-    it("KES 100,000 to USD returns FX-aware unknown", () => {
+    it("KES 100,000 to USD without FX data returns FX-aware unknown", () => {
       const r = routePrompt("KES 100,000 to USD");
       expect(r.kind).toBe("unknown");
       if (r.kind === "unknown") {
@@ -316,7 +316,7 @@ describe("routePrompt", () => {
       }
     });
 
-    it("Gold rises 5% returns commodity-aware unknown", () => {
+    it("Gold rises 5% without commodity data returns commodity-aware unknown", () => {
       const r = routePrompt("Gold rises 5%");
       expect(r.kind).toBe("unknown");
       if (r.kind === "unknown") {

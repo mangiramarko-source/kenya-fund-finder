@@ -6,8 +6,8 @@ import { Textarea } from "@/components/ui/textarea";
 export const SUGGESTED_PROMPTS = [
   "KES 10,000 in SCOM",
   "If I invest KES 100,000 at 11% yield, what happens?",
-  "If I start with KES 100,000 and add KES 10,000 monthly at 11% for 12 months",
-  "Compare Gold vs Brent Crude",
+  "KES 100,000 to USD",
+  "Gold rises 5%",
   "Explain dividend yield",
 ];
 

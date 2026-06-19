@@ -125,6 +125,181 @@ export function calculateStockMoveScenario(
   };
 }
 
+export const FX_CONVERSION_SUMMARY =
+  "This scenario estimates a currency conversion using the latest available rate shown in KenyaFundFinder. Actual conversion amounts can differ.";
+
+export const FX_MOVE_SUMMARY =
+  "This scenario shows how the quoted exchange rate changes under the movement assumption. It does not predict future exchange rates.";
+
+export const COMMODITY_MOVE_SUMMARY =
+  "This scenario shows how the commodity value changes under the movement assumption. It does not predict future commodity prices.";
+
+const FX_CONVERSION_ASSUMPTIONS = [
+  "Uses latest available KenyaFundFinder FX data.",
+  "This is an estimated conversion, not a live quote.",
+  "Actual conversion can differ because of spreads, fees, timing, and provider rates.",
+  "This is not currency trading advice.",
+];
+
+const FX_MOVE_ASSUMPTIONS = [
+  "Uses latest available KenyaFundFinder FX data.",
+  "Movement is applied to the quoted rate shown.",
+  "Does not predict future exchange rates.",
+  "This is not currency trading advice.",
+];
+
+const COMMODITY_MOVE_ASSUMPTIONS = [
+  "Uses latest available KenyaFundFinder commodity data.",
+  "Movement is applied to the published value shown.",
+  "Does not predict future commodity prices.",
+  "This is not commodity trading advice.",
+];
+
+export interface FxConversionScenarioResult {
+  kind: "fx-conversion";
+  summary: string;
+  inputs: {
+    amount: number;
+    fromCurrency: string;
+    toCurrency: string;
+    rate: number;
+    rateLabel: string;
+  };
+  convertedAmount: number;
+  assumptions: string[];
+  importantNotes: string[];
+  disclaimer: string;
+}
+
+export interface FxMoveScenarioResult {
+  kind: "fx-move";
+  summary: string;
+  inputs: {
+    pair: string;
+    baseCurrency: string;
+    quoteCurrency: string;
+    currentRate: number;
+    movementPct: number;
+  };
+  estimatedRateAfterMove: number;
+  assumptions: string[];
+  importantNotes: string[];
+  disclaimer: string;
+}
+
+export interface CommodityMoveScenarioResult {
+  kind: "commodity-move";
+  summary: string;
+  inputs: {
+    symbol: string;
+    name: string;
+    currentValue: number;
+    valueLabel: string;
+    movementPct: number;
+  };
+  estimatedValueAfterMove: number;
+  estimatedChange: number;
+  assumptions: string[];
+  importantNotes: string[];
+  disclaimer: string;
+}
+
+export function calculateFxConversionScenario(
+  amount: number,
+  fromCurrency: string,
+  toCurrency: string,
+  rate: number,
+  rateLabel: string,
+): FxConversionScenarioResult {
+  const from = fromCurrency.toUpperCase();
+  const to = toCurrency.toUpperCase();
+  const convertedAmount =
+    from === "KES"
+      ? Math.round((amount / rate) * 100) / 100
+      : Math.round(amount * rate * 100) / 100;
+
+  return {
+    kind: "fx-conversion",
+    summary: FX_CONVERSION_SUMMARY,
+    inputs: { amount, fromCurrency: from, toCurrency: to, rate, rateLabel },
+    convertedAmount,
+    assumptions: [...FX_CONVERSION_ASSUMPTIONS],
+    importantNotes: [
+      "Mid-rate estimate only — bank, forex bureau, and mobile money rates may differ.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
+export function calculateFxMoveScenario(
+  baseCurrency: string,
+  quoteCurrency: string,
+  currentRate: number,
+  movementPct: number,
+): FxMoveScenarioResult {
+  const pair = `${baseCurrency.toUpperCase()}/${quoteCurrency.toUpperCase()}`;
+  const estimatedRateAfterMove =
+    Math.round(currentRate * (1 + movementPct / 100) * 10000) / 10000;
+
+  return {
+    kind: "fx-move",
+    summary: FX_MOVE_SUMMARY,
+    inputs: {
+      pair,
+      baseCurrency: baseCurrency.toUpperCase(),
+      quoteCurrency: quoteCurrency.toUpperCase(),
+      currentRate,
+      movementPct,
+    },
+    estimatedRateAfterMove,
+    assumptions: [...FX_MOVE_ASSUMPTIONS],
+    importantNotes: [
+      "Rate change is illustrative only — actual market rates can differ.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
+export function calculateCommodityMoveScenario(
+  symbol: string,
+  name: string,
+  currentValue: number,
+  valueLabel: string,
+  movementPct: number,
+): CommodityMoveScenarioResult {
+  const estimatedValueAfterMove =
+    Math.round(currentValue * (1 + movementPct / 100) * 100) / 100;
+  const estimatedChange =
+    Math.round((estimatedValueAfterMove - currentValue) * 100) / 100;
+
+  return {
+    kind: "commodity-move",
+    summary: COMMODITY_MOVE_SUMMARY,
+    inputs: { symbol, name, currentValue, valueLabel, movementPct },
+    estimatedValueAfterMove,
+    estimatedChange,
+    assumptions: [...COMMODITY_MOVE_ASSUMPTIONS],
+    importantNotes: [
+      "Value change is illustrative only — actual commodity prices can differ.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
+export function getFxCommodityUserText(
+  result: FxConversionScenarioResult | FxMoveScenarioResult | CommodityMoveScenarioResult,
+): string {
+  const parts = [result.summary, ...result.assumptions, ...result.importantNotes];
+  if (result.kind === "fx-conversion") {
+    parts.push(String(result.convertedAmount));
+  } else if (result.kind === "fx-move") {
+    parts.push(String(result.estimatedRateAfterMove));
+  } else {
+    parts.push(String(result.estimatedValueAfterMove), String(result.estimatedChange));
+  }
+  return parts.join(" ");
+}
+
 export interface MonthlyContributionScenarioResult {
   kind: "monthly-contribution";
   inputs: { startAmount: number; monthly: number; annualYieldPct: number; months: number };
@@ -626,5 +801,8 @@ export type ScenarioResult =
   | MonthlyContributionScenarioResult
   | GoalProjectionResult
   | StockAmountScenarioResult
+  | FxConversionScenarioResult
+  | FxMoveScenarioResult
+  | CommodityMoveScenarioResult
   | ExplainerResult
   | CompareScenarioResult;
