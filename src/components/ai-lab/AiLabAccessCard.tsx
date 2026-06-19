@@ -18,19 +18,19 @@ const AiLabAccessCard = ({ user, isAdmin }: Props) => {
   return (
     <div className={AI_LAB_RAIL_CARD}>
       <div className="flex items-center gap-2 mb-2">
-        <Shield className="h-3.5 w-3.5 text-stone-600 shrink-0" />
+        <Shield className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
         <h3 className={AI_LAB_LABEL}>Access gate</h3>
       </div>
       <dl className="grid grid-cols-[auto_1fr] gap-x-3 gap-y-1 text-[11px]">
-        <dt className="text-stone-500">Mode</dt>
-        <dd className="font-medium text-slate-900">{access.modeLabel}</dd>
-        <dt className="text-stone-500">Your access</dt>
-        <dd className="font-medium capitalize text-slate-900">{access.reason.replace(/-/g, " ")}</dd>
-        <dt className="text-stone-500">Beta allowlist</dt>
-        <dd className="tabular-nums text-slate-900">{AI_LAB_BETA_ALLOWLIST.length} emails</dd>
+        <dt className="text-muted-foreground">Mode</dt>
+        <dd className="font-medium text-foreground">{access.modeLabel}</dd>
+        <dt className="text-muted-foreground">Your access</dt>
+        <dd className="font-medium capitalize text-foreground">{access.reason.replace(/-/g, " ")}</dd>
+        <dt className="text-muted-foreground">Beta allowlist</dt>
+        <dd className="tabular-nums text-foreground">{AI_LAB_BETA_ALLOWLIST.length} emails</dd>
       </dl>
       {AI_LAB_ACCESS_MODE === "admin-only" && (
-        <p className="text-[11px] text-stone-600 leading-relaxed mt-2">
+        <p className="text-[11px] text-muted-foreground leading-relaxed mt-2">
           Controlled beta is not enabled. AI Lab remains admin-only until access mode is
           changed in a future deploy.
         </p>

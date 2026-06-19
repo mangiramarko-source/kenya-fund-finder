@@ -42,7 +42,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   if (!result) {
     return (
       <ResultShell className="text-center">
-        <p className="text-sm text-stone-600">Run a scenario to see structured results here.</p>
+        <p className="text-sm text-muted-foreground">Run a scenario to see structured results here.</p>
       </ResultShell>
     );
   }
@@ -77,8 +77,8 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     return (
       <ResultShell className="space-y-3">
         <div className="flex items-start gap-2">
-          <AlertTriangle className="h-4 w-4 text-stone-500 shrink-0 mt-0.5" />
-          <p className="text-sm text-slate-900">{sanitizeOutput(result.message)}</p>
+          <AlertTriangle className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
+          <p className="text-sm text-foreground">{sanitizeOutput(result.message)}</p>
         </div>
         {result.suggestions.length > 0 && (
           <div className="pl-6 space-y-2">
@@ -123,7 +123,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   if (result.kind === "explainer") {
     return (
       <ResultShell className="space-y-3">
-        <h3 className="text-base font-semibold text-slate-950">{sanitizeOutput(result.title)}</h3>
+        <h3 className="text-base font-semibold text-foreground">{sanitizeOutput(result.title)}</h3>
         <div className="space-y-2">
           {result.paragraphs.map((p, i) => (
             <p key={i} className="text-sm text-foreground/90 leading-relaxed">
@@ -262,7 +262,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
         )}
         
         <CollapsibleDetails title="Assumptions">
-<ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
@@ -335,7 +335,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
         </Section>
         
         <CollapsibleDetails title="Notes">
-<ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.importantNotes.map((n, i) => (
               <li key={i}>{sanitizeOutput(n)}</li>
             ))}
@@ -451,7 +451,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
         </SummaryMetricGrid>
         
         <CollapsibleDetails title="Assumptions">
-<ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
@@ -618,7 +618,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
         </SummaryMetricGrid>
         
         <CollapsibleDetails title="Assumptions">
-<ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
             {result.assumptions.map((a, i) => (
               <li key={i}>{sanitizeOutput(a)}</li>
             ))}
@@ -649,7 +649,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
                 {displayRows.map((row, i) =>
                   row == null ? (
                     <TableRow key={`ellipsis-${i}`}>
-                      <TableCell colSpan={5} className="text-center !text-stone-500">
+                      <TableCell colSpan={5} className="text-center !text-muted-foreground">
                         …
                       </TableCell>
                     </TableRow>
@@ -801,7 +801,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
       </Section>
       
         <CollapsibleDetails title="Assumptions">
-<ul className="list-disc pl-4 space-y-1 text-xs text-stone-500">
+<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
           {result.assumptions.map((a, i) => (
             <li key={i}>{sanitizeOutput(a)}</li>
           ))}

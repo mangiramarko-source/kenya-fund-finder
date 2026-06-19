@@ -5,10 +5,13 @@ import {
   AI_LAB_ASSISTANT_TEXT,
   AI_LAB_CARD,
   AI_LAB_CHIP,
+  AI_LAB_COLLAPSIBLE,
+  AI_LAB_COMPARE_ACTIVE,
+  AI_LAB_COMPARE_INACTIVE,
   AI_LAB_HEADLINE,
   AI_LAB_HERO_HEADLINE,
   AI_LAB_HERO_SUBTEXT,
-  AI_LAB_INPUT,
+  AI_LAB_INPUT_WRAP,
   AI_LAB_INPUT_FIELD,
   AI_LAB_INPUT_PLACEHOLDER,
   AI_LAB_MUTED,
@@ -51,8 +54,8 @@ const PromptInput = ({
   onSubmit: () => void;
   autoFocus?: boolean;
 }) => (
-  <div className={AI_LAB_INPUT}>
-    <Search className="h-4 w-4 text-stone-400 shrink-0" />
+  <div className={AI_LAB_INPUT_WRAP}>
+    <Search className="h-4 w-4 text-muted-foreground shrink-0" />
     <input
       type="text"
       value={value}
@@ -144,13 +147,13 @@ const AiLabChat = ({
                 <div className="max-w-3xl">
                   <p className={AI_LAB_ASSISTANT_TEXT}>{msg.text}</p>
                   {msg.contextNote && (
-                    <p className="text-xs text-stone-500 mt-2">{msg.contextNote}</p>
+                    <p className="text-xs text-muted-foreground mt-2">{msg.contextNote}</p>
                   )}
                 </div>
 
                 {showResult && msg.result && msg.result.kind === "compare" && compareState && (
-                  <details className="rounded-xl border border-[#D8D0C0]/80 bg-[#FFFDF7]/60 px-3 py-2 text-xs text-stone-600">
-                    <summary className="cursor-pointer font-medium text-stone-700">
+                  <details className={AI_LAB_COLLAPSIBLE}>
+                    <summary className="cursor-pointer font-medium text-foreground">
                       Compare lookback ({compareState.lookbackDays}D)
                     </summary>
                     <div className="mt-2 flex flex-wrap gap-1.5">
@@ -159,10 +162,10 @@ const AiLabChat = ({
                           key={days}
                           type="button"
                           onClick={() => onLookbackChange(msg.id, days)}
-                          className={`h-7 px-2.5 rounded-full text-[11px] font-semibold tabular-nums transition-colors ${
+                          className={`h-7 px-2.5 rounded-lg text-[11px] font-semibold tabular-nums transition-colors ${
                             compareState.lookbackDays === days
-                              ? "bg-[#EAB308] text-slate-950"
-                              : "border border-[#D8D0C0] bg-[#FFFDF7] text-stone-700 hover:bg-[#F5EFE2]"
+                              ? AI_LAB_COMPARE_ACTIVE
+                              : AI_LAB_COMPARE_INACTIVE
                           }`}
                         >
                           {days}D
@@ -195,7 +198,7 @@ const AiLabChat = ({
       </div>
 
       {hasMessages && (
-        <div className="border-t border-[#D8D0C0] p-3 md:p-4 bg-[#FFFDF7]/95 sticky bottom-0">
+        <div className="border-t border-border p-3 md:p-4 bg-card/95 sticky bottom-0">
           <form onSubmit={handleSubmit}>
             <PromptInput value={input} onChange={setInput} onSubmit={() => submitPrompt(input)} />
           </form>

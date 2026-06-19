@@ -9,6 +9,7 @@ import {
   AI_LAB_LABEL,
   AI_LAB_PAGE,
   AI_LAB_PAGE_INNER,
+  AI_LAB_RAIL_CARD,
   AI_LAB_SAFETY_LINE,
 } from "@/components/ai-lab/aiLabTheme";
 import { routePrompt } from "@/lib/aiLab/router";
@@ -42,7 +43,7 @@ import {
 const DEFAULT_LOOKBACK: LookbackDays = 30;
 
 const AiLabPage = () => {
-  const { isAdmin, loading } = useAuth();
+  const { user, isAdmin, loading } = useAuth();
   const [messages, setMessages] = useState<AiLabChatMessage[]>([]);
   const [compareLookback, setCompareLookback] = useState<Record<string, LookbackDays>>({});
   const [compareHistory, setCompareHistory] = useState<
@@ -198,7 +199,7 @@ const AiLabPage = () => {
   if (loading) {
     return (
       <div className={`${AI_LAB_PAGE} flex items-center justify-center`}>
-        <p className="text-stone-600">Loading…</p>
+        <p className="text-muted-foreground">Loading…</p>
       </div>
     );
   }
@@ -211,8 +212,8 @@ const AiLabPage = () => {
     }
     return (
       <div className={`${AI_LAB_PAGE} container py-20 text-center`}>
-        <h1 className="text-2xl font-bold mb-2 text-slate-950">Access Denied</h1>
-        <p className="text-stone-600">{getAiLabAccessDeniedMessage(access.reason)}</p>
+        <h1 className="text-2xl font-bold mb-2 text-foreground">Access Denied</h1>
+        <p className="text-muted-foreground">{getAiLabAccessDeniedMessage(access.reason)}</p>
       </div>
     );
   }
@@ -221,12 +222,12 @@ const AiLabPage = () => {
     <div className={AI_LAB_PAGE}>
       <div className={`${AI_LAB_PAGE_INNER} space-y-6`}>
         <header className="flex items-center gap-2">
-          <div className="flex items-center justify-center h-9 w-9 rounded-full bg-[#EAB308] text-slate-950">
+          <div className="flex items-center justify-center h-9 w-9 rounded-full bg-accent text-accent-foreground">
             <Sparkles className="h-4 w-4" />
           </div>
           <div>
             <p className={AI_LAB_LABEL}>AI Scenario Assistant</p>
-            <p className="text-xs text-stone-500">{AI_LAB_SAFETY_LINE}</p>
+            <p className="text-xs text-muted-foreground">{AI_LAB_SAFETY_LINE}</p>
           </div>
         </header>
 
@@ -243,8 +244,8 @@ const AiLabPage = () => {
           </aside>
         </div>
 
-        <details className="lg:hidden rounded-2xl border border-[#D8D0C0] bg-[#FFFDF7] p-3">
-          <summary className="text-sm font-medium cursor-pointer text-slate-900">
+        <details className={`lg:hidden ${AI_LAB_RAIL_CARD}`}>
+          <summary className="text-sm font-medium cursor-pointer text-foreground">
             About AI Lab
           </summary>
           <div className="mt-3">

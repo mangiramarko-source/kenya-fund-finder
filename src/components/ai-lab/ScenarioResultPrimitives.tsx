@@ -1,11 +1,14 @@
 import { Info } from "lucide-react";
 import {
   AI_LAB_CARD,
+  AI_LAB_COLLAPSIBLE,
   AI_LAB_LABEL,
   AI_LAB_METRIC,
+  AI_LAB_METRIC_CARD,
   AI_LAB_METRIC_LG,
   AI_LAB_NEGATIVE,
   AI_LAB_POSITIVE,
+  AI_LAB_SECTION,
 } from "./aiLabTheme";
 
 export const fmtKES = (n: number) =>
@@ -23,7 +26,7 @@ export const fmtKES2 = (n: number) =>
   }).format(n);
 
 export const signedColorClass = (n: number) =>
-  n > 0 ? AI_LAB_POSITIVE : n < 0 ? AI_LAB_NEGATIVE : "text-stone-500";
+  n > 0 ? AI_LAB_POSITIVE : n < 0 ? AI_LAB_NEGATIVE : "text-muted-foreground";
 
 export const ResultShell = ({
   children,
@@ -32,7 +35,7 @@ export const ResultShell = ({
   children: React.ReactNode;
   className?: string;
 }) => (
-  <div className={`rounded-2xl border border-[#D8D0C0]/80 bg-[#FFFDF7]/80 p-3 md:p-4 space-y-3 ${className}`}>{children}</div>
+  <div className={`${AI_LAB_CARD} p-3 md:p-4 space-y-3 ${className}`}>{children}</div>
 );
 
 export const SummaryMetricGrid = ({ children }: { children: React.ReactNode }) => (
@@ -50,10 +53,10 @@ export const SummaryMetricCard = ({
   valueClassName?: string;
   sublabel?: string;
 }) => (
-  <div className="rounded-2xl border border-[#D8D0C0] bg-[#FFFDF7] p-4 shadow-sm">
+  <div className={AI_LAB_METRIC_CARD}>
     <p className={AI_LAB_LABEL}>{label}</p>
     <p className={`${AI_LAB_METRIC_LG} mt-2 ${valueClassName}`}>{value}</p>
-    {sublabel && <p className="text-xs text-stone-500 mt-1">{sublabel}</p>}
+    {sublabel && <p className="text-xs text-muted-foreground mt-1">{sublabel}</p>}
   </div>
 );
 
@@ -66,15 +69,14 @@ export const Section = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <div className="rounded-2xl border border-[#D8D0C0] bg-[#F5EFE2]/40 p-4">
-    <div className="flex items-center gap-1.5 mb-3 text-stone-500">
+  <div className={AI_LAB_SECTION}>
+    <div className="flex items-center gap-1.5 mb-3 text-muted-foreground">
       {icon}
       <span className={AI_LAB_LABEL}>{title}</span>
     </div>
-    <div className="text-sm text-slate-900 space-y-1">{children}</div>
+    <div className="text-sm text-foreground space-y-1">{children}</div>
   </div>
 );
-
 
 export const CollapsibleDetails = ({
   title,
@@ -83,34 +85,34 @@ export const CollapsibleDetails = ({
   title: string;
   children: React.ReactNode;
 }) => (
-  <details className="rounded-xl border border-[#D8D0C0]/70 bg-[#F5EFE2]/20 px-3 py-2 text-xs text-stone-600">
-    <summary className="cursor-pointer font-medium text-stone-700">{title}</summary>
+  <details className={AI_LAB_COLLAPSIBLE}>
+    <summary className="cursor-pointer font-medium text-foreground">{title}</summary>
     <div className="mt-2 space-y-1">{children}</div>
   </details>
 );
 
 export const Disclaimer = ({ text }: { text: string }) => (
-  <p className="text-[10px] text-stone-500 flex items-center gap-1 pt-1">
+  <p className="text-[10px] text-muted-foreground flex items-center gap-1 pt-1">
     <Info className="h-3 w-3 shrink-0" />
     {text}
   </p>
 );
 
 export const KV = ({ k, v }: { k: string; v: React.ReactNode }) => (
-  <div className="flex items-baseline justify-between gap-3 py-3 border-b border-[#D8D0C0]/60 last:border-0">
-    <span className="text-xs text-stone-500">{k}</span>
+  <div className="flex items-baseline justify-between gap-3 py-3 border-b border-border/60 last:border-0">
+    <span className="text-xs text-muted-foreground">{k}</span>
     <span className={`text-sm font-semibold ${AI_LAB_METRIC}`}>{v}</span>
   </div>
 );
 
 export const BreakdownTable = ({ children }: { children: React.ReactNode }) => (
   <div className="overflow-x-auto -mx-1 px-1">
-    <table className="w-full min-w-[480px] text-sm tabular-nums font-mono">{children}</table>
+    <table className="w-full min-w-[480px] text-sm tabular-nums">{children}</table>
   </div>
 );
 
 export const TableHeadRow = ({ children }: { children: React.ReactNode }) => (
-  <tr className="text-[10px] uppercase tracking-widest text-stone-500">{children}</tr>
+  <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">{children}</tr>
 );
 
 export const TableHeadCell = ({
@@ -128,7 +130,7 @@ export const TableHeadCell = ({
 );
 
 export const TableRow = ({ children }: { children: React.ReactNode }) => (
-  <tr className="border-t border-[#D8D0C0]/60">{children}</tr>
+  <tr className="border-t border-border/60">{children}</tr>
 );
 
 export const TableCell = ({
@@ -144,7 +146,7 @@ export const TableCell = ({
 }) => (
   <td
     colSpan={colSpan}
-    className={`py-3 text-sm ${align === "right" ? "text-right px-2" : "text-left pr-3 text-stone-600"} ${className}`}
+    className={`py-3 text-sm ${align === "right" ? "text-right px-2" : "text-left pr-3 text-muted-foreground"} ${className}`}
   >
     {children}
   </td>

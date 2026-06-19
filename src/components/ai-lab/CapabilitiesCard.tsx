@@ -1,5 +1,5 @@
 import { Check, Info, X } from "lucide-react";
-import { AI_LAB_LABEL, AI_LAB_RAIL_CARD } from "@/components/ai-lab/aiLabTheme";
+import { AI_LAB_DIVIDER, AI_LAB_LABEL, AI_LAB_RAIL_CARD } from "@/components/ai-lab/aiLabTheme";
 
 const CAN_DO = [
   "Calculate MMF yield and income scenarios",
@@ -34,32 +34,32 @@ const CapabilitiesCard = () => (
         <h3 className={`${AI_LAB_LABEL} mb-2`}>What this assistant can do</h3>
         <ul className="space-y-1.5">
           {CAN_DO.map((c) => (
-            <li key={c} className="flex items-start gap-2 text-xs text-slate-800">
-              <Check className="h-3.5 w-3.5 text-emerald-600 shrink-0 mt-0.5" />
+            <li key={c} className="flex items-start gap-2 text-xs text-foreground">
+              <Check className="h-3.5 w-3.5 text-success shrink-0 mt-0.5" />
               <span>{c}</span>
             </li>
           ))}
         </ul>
       </div>
-      <div className="h-px bg-[#D8D0C0]/70" />
+      <div className={AI_LAB_DIVIDER} />
       <div>
         <h3 className={`${AI_LAB_LABEL} mb-2`}>What it can&apos;t do</h3>
         <ul className="space-y-1.5">
           {CANT_DO.map((c) => (
-            <li key={c} className="flex items-start gap-2 text-xs text-stone-600">
-              <X className="h-3.5 w-3.5 text-rose-500 shrink-0 mt-0.5" />
+            <li key={c} className="flex items-start gap-2 text-xs text-muted-foreground">
+              <X className="h-3.5 w-3.5 text-destructive shrink-0 mt-0.5" />
               <span>{c}</span>
             </li>
           ))}
         </ul>
       </div>
-      <div className="h-px bg-[#D8D0C0]/70" />
+      <div className={AI_LAB_DIVIDER} />
       <div>
         <h3 className={`${AI_LAB_LABEL} mb-2`}>Preview limits</h3>
         <ul className="space-y-1.5">
           {LIMITS.map((c) => (
-            <li key={c} className="flex items-start gap-2 text-xs text-stone-600">
-              <Info className="h-3.5 w-3.5 text-stone-500 shrink-0 mt-0.5" />
+            <li key={c} className="flex items-start gap-2 text-xs text-muted-foreground">
+              <Info className="h-3.5 w-3.5 text-muted-foreground shrink-0 mt-0.5" />
               <span>{c}</span>
             </li>
           ))}
