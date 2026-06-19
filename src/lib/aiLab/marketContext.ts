@@ -10,6 +10,8 @@ export type AssetKind = "stock" | "fund" | "commodity" | "fx";
 
 export interface ComparableAsset {
   kind: AssetKind;
+  /** Underlying row id used for fetching per-asset history (when available). */
+  id?: string;
   /** Display name, e.g. "Safaricom" or "US Dollar" */
   name: string;
   /** Short ticker / code, e.g. "SCOM", "USD", "GOLD" */
