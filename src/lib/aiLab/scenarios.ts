@@ -3,34 +3,91 @@
 
 export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";
 
+export const MMF_SCENARIO_SUMMARY =
+  "This projection estimates gross income from the amount and yield assumptions shown. It does not predict future returns.";
+
+export const MMF_DEFAULT_ASSUMPTIONS = [
+  "Simple annualized estimate applied pro-rata over the period.",
+  "Excludes fees, taxes, and compounding differences.",
+  "Actual fund distributions can differ.",
+  "Yields can change.",
+];
+
 export interface MmfScenarioResult {
   kind: "mmf";
+  summary: string;
   inputs: { amount: number; annualYieldPct: number; months: number };
   grossYearly: number;
   monthlyEquivalent: number;
+  dailyEquivalent: number;
   projectedGross: number;
   assumptions: string[];
   disclaimer: string;
 }
 
+export interface MmfYieldChangeScenarioResult {
+  kind: "mmf-yield-change";
+  summary: string;
+  inputs: { amount: number; fromYieldPct: number; toYieldPct: number; months: number };
+  fromGrossYearly: number;
+  toGrossYearly: number;
+  fromMonthly: number;
+  toMonthly: number;
+  deltaYearly: number;
+  assumptions: string[];
+  disclaimer: string;
+}
+
+export function getMmfUserText(result: MmfScenarioResult | MmfYieldChangeScenarioResult): string {
+  return [result.summary, ...result.assumptions].join(" ");
+}
+
 export function calculateMmfScenario(
   amount: number,
   annualYieldPct: number,
-  months: number = 12
+  months: number = 12,
+  extraAssumptions: string[] = [],
 ): MmfScenarioResult {
   const grossYearly = amount * (annualYieldPct / 100);
   const monthlyEquivalent = grossYearly / 12;
+  const dailyEquivalent = Math.round((grossYearly / 365) * 100) / 100;
   const projectedGross = amount + grossYearly * (months / 12);
   return {
     kind: "mmf",
+    summary: MMF_SCENARIO_SUMMARY,
     inputs: { amount, annualYieldPct, months },
     grossYearly,
     monthlyEquivalent,
+    dailyEquivalent,
     projectedGross,
+    assumptions: [...MMF_DEFAULT_ASSUMPTIONS, ...extraAssumptions],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
+export function calculateMmfYieldChangeScenario(
+  amount: number,
+  fromYieldPct: number,
+  toYieldPct: number,
+  months: number = 12,
+): MmfYieldChangeScenarioResult {
+  const fromGrossYearly = amount * (fromYieldPct / 100);
+  const toGrossYearly = amount * (toYieldPct / 100);
+  const fromMonthly = fromGrossYearly / 12;
+  const toMonthly = toGrossYearly / 12;
+  return {
+    kind: "mmf-yield-change",
+    summary:
+      "This projection compares two yield assumptions for the same amount. It does not predict future returns.",
+    inputs: { amount, fromYieldPct, toYieldPct, months },
+    fromGrossYearly,
+    toGrossYearly,
+    fromMonthly,
+    toMonthly,
+    deltaYearly: toGrossYearly - fromGrossYearly,
     assumptions: [
-      "Simple (non-compounded) interest applied pro-rata over the period.",
-      "Yield is gross and shown before the 15% withholding tax and any fund fees.",
-      "Yields, fees and market conditions can change at any time.",
+      ...MMF_DEFAULT_ASSUMPTIONS,
+      `Period: ${months} months at each yield assumption.`,
     ],
     disclaimer: STANDARD_DISCLAIMER,
   };
@@ -206,7 +263,7 @@ export const EXPLAINERS: Record<string, ExplainerResult> = {
     title: "What is money market fund yield?",
     paragraphs: [
       "A money market fund (MMF) pools investor money into short-term, interest-bearing instruments such as treasury bills, fixed deposits and commercial paper.",
-      "The 'yield' you see is usually an annualised effective rate — what your money would earn over a year if the current rate held steady. It is shown gross of the 15% withholding tax and any management fees.",
+      "The yield you see is usually an annualised effective rate based on recent fund data. For example, if a fund shows an annual yield, the monthly equivalent is often estimated by dividing the annual gross income by 12. Actual results can differ because yields, fees, taxes, and compounding methods can change.",
       "Daily yield is simply the annual rate divided across the year and credited to your balance, which is why MMF returns look smooth compared to stocks.",
     ],
     assumptions: [
@@ -303,6 +360,119 @@ export const EXPLAINERS: Record<string, ExplainerResult> = {
     ],
     disclaimer: STANDARD_DISCLAIMER,
   },
+  "dividend-yield": {
+    kind: "explainer",
+    title: "What is dividend yield?",
+    paragraphs: [
+      "Dividend yield shows how much a company pays out in dividends each year relative to its share price, usually expressed as a percentage.",
+      "It is a snapshot: if the share price moves or the dividend changes, the yield changes too.",
+      "Dividend yield is one data point among many — it does not by itself describe total return, growth prospects, or risk.",
+    ],
+    assumptions: [
+      "Not all companies pay dividends.",
+      "Past dividends do not guarantee future payments.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  nav: {
+    kind: "explainer",
+    title: "What is NAV (net asset value)?",
+    paragraphs: [
+      "Net asset value (NAV) is the per-unit value of a fund's assets minus its liabilities, usually calculated at the end of each business day.",
+      "For unit trusts and money market funds, the price you buy or redeem at is often based on the published NAV.",
+      "NAV moves as the underlying holdings change in value and as income accrues inside the fund.",
+    ],
+    assumptions: [
+      "NAV calculation methods can differ slightly between fund managers.",
+      "Published NAV may lag intraday market moves for some products.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  "expense-ratio": {
+    kind: "explainer",
+    title: "What is an expense ratio?",
+    paragraphs: [
+      "An expense ratio is the annual fee charged to run a fund, expressed as a percentage of assets under management.",
+      "It typically covers management, administration, custody, and other operating costs.",
+      "A lower expense ratio leaves more of the fund's return for unit holders, but fees are only one factor when reviewing a fund.",
+    ],
+    assumptions: [
+      "Expense ratios are usually disclosed in factsheets and prospectuses.",
+      "Some products also have entry, exit, or performance-related charges outside the headline ratio.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  compounding: {
+    kind: "explainer",
+    title: "What is compounding?",
+    paragraphs: [
+      "Compounding means earning returns on both your original amount and on returns that have already been added.",
+      "Over time, compounding can grow a balance faster than simple interest, especially over longer periods.",
+      "The effect depends on the rate, how often returns are credited, fees, taxes, and whether you add or withdraw money.",
+    ],
+    assumptions: [
+      "Money market funds may credit income daily while other products compound on different schedules.",
+      "Projections that ignore compounding differences may not match actual fund statements.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  "unit-trust": {
+    kind: "explainer",
+    title: "What is a unit trust?",
+    paragraphs: [
+      "A unit trust pools money from many investors into a portfolio managed by a licensed fund manager.",
+      "Investors hold units whose value is linked to the fund's net asset value (NAV).",
+      "Unit trusts can focus on cash, bonds, equities, or blended strategies — terms, fees, and liquidity vary by fund.",
+    ],
+    assumptions: [
+      "Unit trusts are regulated products but values can still fall.",
+      "Read the prospectus for the specific fund's objectives and risks.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  etf: {
+    kind: "explainer",
+    title: "What is an ETF?",
+    paragraphs: [
+      "An exchange-traded fund (ETF) is a fund whose units trade on a stock exchange, similar to shares.",
+      "ETFs may track an index, commodity, basket of bonds, or other asset classes depending on the product mandate.",
+      "Prices can move during market hours and may differ slightly from the fund's indicative net asset value because of supply and demand.",
+    ],
+    assumptions: [
+      "ETF structures, fees, and tax treatment vary by product and market.",
+      "Trading ETFs involves brokerage costs and market-price risk like other listed securities.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  "capital-gain": {
+    kind: "explainer",
+    title: "What is a capital gain?",
+    paragraphs: [
+      "A capital gain is the profit when you sell an asset for more than you paid for it (before fees and taxes).",
+      "If you sell for less than you paid, that is a capital loss.",
+      "Capital gains are separate from income such as interest or dividends and may be taxed differently depending on the product and law.",
+    ],
+    assumptions: [
+      "Cost basis, holding period, and allowable deductions affect the final gain or loss.",
+      WITHHOLDING_TAX_GUARD,
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  "downside-risk": {
+    kind: "explainer",
+    title: "What is downside risk?",
+    paragraphs: [
+      "Downside risk describes the chance that an investment's value could be lower than expected or fall from your entry point.",
+      "Even income-focused products can see lower-than-expected returns if yields fall, fees rise, or market conditions change.",
+      "Understanding downside risk helps set expectations — outcomes can be lower than projected and values can fall.",
+    ],
+    assumptions: [
+      "Risk measures differ by asset class and time period.",
+      "Past volatility or drawdowns do not cap future losses.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+
 };
 
 export interface CompareScenarioResult {
@@ -363,6 +533,7 @@ export function compareAssets(a: ComparableAsset, b: ComparableAsset): CompareSc
 
 export type ScenarioResult =
   | MmfScenarioResult
+  | MmfYieldChangeScenarioResult
   | StockMoveScenarioResult
   | MonthlyContributionScenarioResult
   | StockAmountScenarioResult
