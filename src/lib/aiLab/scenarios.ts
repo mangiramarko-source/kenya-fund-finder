@@ -184,6 +184,7 @@ export function compareAssets(a: ComparableAsset, b: ComparableAsset): CompareSc
     assumptions: [
       "Values are point-in-time from the latest available snapshot.",
       "Percentage changes use the previous published value (intraday for stocks, last update for FX/commodities).",
+      "30-day return uses the gateway's daily history series and is unavailable for unit trusts (no per-fund history endpoint).",
       "Cross-category comparisons (e.g. a stock price vs a fund yield) are presented side-by-side for context only — they measure different things.",
     ],
     disclaimer: STANDARD_DISCLAIMER,
