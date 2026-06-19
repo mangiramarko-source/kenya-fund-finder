@@ -100,22 +100,22 @@ const tokenize = (...parts: Array<string | null | undefined>): string[] => {
 export async function fetchMarketContext(): Promise<MarketContext> {
   const [funds, stocks, commodities, rates] = await Promise.all([
     fetchPublicData<FundRow>("funds", {
-      select: ["name", "annual_yield", "fund_type", "manager"],
+      select: ["id", "name", "annual_yield", "fund_type", "manager"],
       order: "annual_yield.desc",
       limit: 100,
     }),
     fetchPublicData<StockRow>("stocks", {
-      select: ["symbol", "name", "sector", "price", "day_change_percent"],
+      select: ["id", "symbol", "name", "sector", "price", "day_change_percent"],
       order: "sort_order.asc",
       limit: 80,
     }),
     fetchPublicData<CommodityRow>("commodities", {
-      select: ["symbol", "name", "price", "previous_price", "unit"],
+      select: ["id", "symbol", "name", "price", "previous_price", "unit"],
       order: "sort_order.asc",
       limit: 40,
     }),
     fetchPublicData<RateRow>("rates", {
-      select: ["currency_code", "currency_name", "rate", "previous_rate"],
+      select: ["id", "currency_code", "currency_name", "rate", "previous_rate"],
       order: "sort_order.asc",
       limit: 40,
     }),
