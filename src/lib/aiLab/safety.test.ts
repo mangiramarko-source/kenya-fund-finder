@@ -85,6 +85,19 @@ describe("detectAdviceIntent", () => {
     expect(detectAdviceIntent("Latest news about Safaricom")).toBe(false);
     expect(detectAdviceIntent("Explain this news in simple terms")).toBe(false);
   });
+  it("flags portfolio advice: Should I split 100k between MMF and SCOM?", () => {
+    expect(detectAdviceIntent("Should I split 100k between MMF and SCOM?")).toBe(true);
+  });
+  it("flags portfolio advice: Should I put 70% in MMF and 30% in Safaricom?", () => {
+    expect(detectAdviceIntent("Should I put 70% in MMF and 30% in Safaricom?")).toBe(true);
+  });
+  it("flags portfolio advice: Which split is better?", () => {
+    expect(detectAdviceIntent("Which split is better?")).toBe(true);
+  });
+  it("does not flag neutral portfolio scenario prompts", () => {
+    expect(detectAdviceIntent("What happens if I split 100k between MMF and SCOM?")).toBe(false);
+    expect(detectAdviceIntent("Split 100k between MMF and SCOM at 11% yield")).toBe(false);
+  });
 });
 
 describe("sanitizeOutput", () => {

@@ -552,6 +552,109 @@ export function getStockAmountUserText(result: StockAmountScenarioResult): strin
   return [result.summary, ...result.assumptions, ...result.importantNotes].join(" ");
 }
 
+export const PORTFOLIO_SPLIT_SUMMARY =
+  "This is an allocation scenario, not a recommendation. It shows possible outcomes based on the assumptions entered.";
+
+export const PORTFOLIO_SPLIT_IMPORTANT_NOTES = [
+  "This is not a recommendation.",
+  "Stock values can rise or fall.",
+  "MMF yields can change.",
+  "Fees, taxes, spreads, and transaction costs are not included unless stated.",
+  "This does not predict future returns.",
+] as const;
+
+export interface PortfolioSplitScenarioRow {
+  stockMovementPct: number;
+  mmfEstimatedValue: number;
+  stockEstimatedValue: number;
+  totalEstimatedValue: number;
+  estimatedGainLoss: number;
+}
+
+export interface PortfolioSplitScenarioResult {
+  kind: "portfolio-split";
+  summary: string;
+  inputs: {
+    totalAmount: number;
+    mmfAmount: number;
+    stockAmount: number;
+    mmfPercent: number;
+    stockPercent: number;
+    stockSymbol: string;
+    stockName: string;
+    stockPrice: number;
+    annualYieldPct: number;
+    projectionMonths: number;
+  };
+  rows: PortfolioSplitScenarioRow[];
+  assumptions: string[];
+  importantNotes: string[];
+  disclaimer: string;
+}
+
+export function getPortfolioSplitUserText(result: PortfolioSplitScenarioResult): string {
+  return [result.summary, ...result.assumptions, ...result.importantNotes].join(" ");
+}
+
+export function calculatePortfolioSplitScenario(
+  params: {
+    totalAmount: number;
+    mmfPercent: number;
+    stockPercent: number;
+    stockSymbol: string;
+    stockName: string;
+    stockPrice: number;
+    annualYieldPct: number;
+    projectionMonths?: number;
+  },
+  extraAssumptions: string[] = [],
+): PortfolioSplitScenarioResult {
+  const projectionMonths = params.projectionMonths ?? 12;
+  const mmfAmount = Math.round(params.totalAmount * (params.mmfPercent / 100));
+  const stockAmount = params.totalAmount - mmfAmount;
+  const mmfGrowthFactor = 1 + (params.annualYieldPct / 100) * (projectionMonths / 12);
+  const mmfEstimatedBase = mmfAmount * mmfGrowthFactor;
+
+  const rows: PortfolioSplitScenarioRow[] = STOCK_AMOUNT_MOVEMENTS.map((stockMovementPct) => {
+    const stockEstimatedValue = Math.round(stockAmount * (1 + stockMovementPct / 100));
+    const mmfEstimatedValue = Math.round(mmfEstimatedBase);
+    const totalEstimatedValue = mmfEstimatedValue + stockEstimatedValue;
+    return {
+      stockMovementPct,
+      mmfEstimatedValue,
+      stockEstimatedValue,
+      totalEstimatedValue,
+      estimatedGainLoss: totalEstimatedValue - params.totalAmount,
+    };
+  });
+
+  return {
+    kind: "portfolio-split",
+    summary: PORTFOLIO_SPLIT_SUMMARY,
+    inputs: {
+      totalAmount: params.totalAmount,
+      mmfAmount,
+      stockAmount,
+      mmfPercent: params.mmfPercent,
+      stockPercent: params.stockPercent,
+      stockSymbol: params.stockSymbol,
+      stockName: params.stockName,
+      stockPrice: params.stockPrice,
+      annualYieldPct: params.annualYieldPct,
+      projectionMonths,
+    },
+    rows,
+    assumptions: [
+      "MMF side uses gross simple annual yield over the projection period.",
+      "Stock side uses price movement assumptions only.",
+      "No fees, taxes, spreads, transaction costs, or timing differences are included.",
+      ...extraAssumptions,
+    ],
+    importantNotes: [...PORTFOLIO_SPLIT_IMPORTANT_NOTES],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
 export function calculateStockAmountScenario(
   amount: number,
   asset: ComparableAsset,
@@ -897,5 +1000,6 @@ export type ScenarioResult =
   | FxMoveScenarioResult
   | CommodityMoveScenarioResult
   | NewsSummaryScenarioResult
+  | PortfolioSplitScenarioResult
   | ExplainerResult
   | CompareScenarioResult;
