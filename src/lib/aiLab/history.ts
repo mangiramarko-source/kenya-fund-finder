@@ -1,9 +1,25 @@
 // Historical price/yield helpers for the AI Scenario Assistant compare flow.
-// Pulls a small 30-day window from the public-data gateway and computes a
-// simple period return + a series suitable for an inline sparkline.
+// Pulls a configurable lookback window (7–90 days) from the public-data gateway
+// and computes a simple period return + a series suitable for an inline sparkline.
 
 import { fetchPublicData, type GatewayResource } from "@/lib/gateway";
 import type { ComparableAsset } from "./marketContext";
+
+export type LookbackDays = 7 | 30 | 90;
+
+export const LOOKBACK_OPTIONS: LookbackDays[] = [7, 30, 90];
+
+export function formatReturnLabel(days: LookbackDays): string {
+  return `${days}-day return`;
+}
+
+export function formatTrendLabel(days: LookbackDays): string {
+  return `${days}-day trend`;
+}
+
+export function formatHistoryAssumption(days: LookbackDays): string {
+  return `${days}-day history is based on available price/rate observations. Missing or sparse history can show as —. Unit trusts may show — because no per-fund history endpoint is exposed yet.`;
+}
 
 export interface AssetHistory {
   /** Numeric series in chronological order (oldest -> newest). */

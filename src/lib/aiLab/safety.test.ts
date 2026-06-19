@@ -24,6 +24,79 @@ describe("detectAdviceIntent", () => {
       detectAdviceIntent("If I invest KES 100,000 at 11% yield, what happens?")
     ).toBe(false);
     expect(detectAdviceIntent("What happens if a stock falls 10%?")).toBe(false);
+    expect(
+      detectAdviceIntent("How much will I make if I put KES 10,000 in Safaricom?")
+    ).toBe(false);
+    expect(
+      detectAdviceIntent("If I put 100,000 in an MMF, how much do I get?")
+    ).toBe(false);
+    expect(
+      detectAdviceIntent("How much would 500k make in a money market fund?")
+    ).toBe(false);
+  });
+  it("flags 'Which fund will make me the most?'", () => {
+    expect(detectAdviceIntent("Which fund will make me the most?")).toBe(true);
+  });
+  it("flags 'Which fund has the best yield?'", () => {
+    expect(detectAdviceIntent("Which fund has the best yield?")).toBe(true);
+  });
+  it("flags 'What is the top MMF?'", () => {
+    expect(detectAdviceIntent("What is the top MMF?")).toBe(true);
+  });
+  it("flags 'Which ETF should I buy?'", () => {
+    expect(detectAdviceIntent("Which ETF should I buy?")).toBe(true);
+  });
+  it("flags 'Will I make money in SCOM?'", () => {
+    expect(detectAdviceIntent("Will I make money in SCOM?")).toBe(true);
+  });
+  it("flags 'Is SCOM a good buy?'", () => {
+    expect(detectAdviceIntent("Is SCOM a good buy?")).toBe(true);
+  });
+  it("flags 'Should I put KES 10,000 in SCOM?'", () => {
+    expect(detectAdviceIntent("Should I put KES 10,000 in SCOM?")).toBe(true);
+  });
+  it("flags 'Should I buy Safaricom?'", () => {
+    expect(detectAdviceIntent("Should I buy Safaricom?")).toBe(true);
+  });
+  it("does not flag forward goal projection prompts", () => {
+    expect(
+      detectAdviceIntent("If I save KES 10,000 monthly at 11% for 24 months"),
+    ).toBe(false);
+  });
+  it("does not flag reverse-goal calculator phrasing as advice", () => {
+    expect(detectAdviceIntent("How much should I save monthly to reach 1M?")).toBe(false);
+  });
+  it("flags 'What should I invest in monthly?'", () => {
+    expect(detectAdviceIntent("What should I invest in monthly?")).toBe(true);
+  });
+  it("flags 'Should I put 10k monthly in SCOM?'", () => {
+    expect(detectAdviceIntent("Should I put 10k monthly in SCOM?")).toBe(true);
+  });
+  it("flags 'Where should I save 10k monthly?'", () => {
+    expect(detectAdviceIntent("Where should I save 10k monthly?")).toBe(true);
+  });
+  it("flags news advice: Will SCOM rise because of this news?", () => {
+    expect(detectAdviceIntent("Will SCOM rise because of this news?")).toBe(true);
+  });
+  it("flags news advice: because of this news", () => {
+    expect(detectAdviceIntent("Should I sell because of this news?")).toBe(true);
+  });
+  it("does not flag neutral news summary prompts", () => {
+    expect(detectAdviceIntent("Latest news about Safaricom")).toBe(false);
+    expect(detectAdviceIntent("Explain this news in simple terms")).toBe(false);
+  });
+  it("flags portfolio advice: Should I split 100k between MMF and SCOM?", () => {
+    expect(detectAdviceIntent("Should I split 100k between MMF and SCOM?")).toBe(true);
+  });
+  it("flags portfolio advice: Should I put 70% in MMF and 30% in Safaricom?", () => {
+    expect(detectAdviceIntent("Should I put 70% in MMF and 30% in Safaricom?")).toBe(true);
+  });
+  it("flags portfolio advice: Which split is better?", () => {
+    expect(detectAdviceIntent("Which split is better?")).toBe(true);
+  });
+  it("does not flag neutral portfolio scenario prompts", () => {
+    expect(detectAdviceIntent("What happens if I split 100k between MMF and SCOM?")).toBe(false);
+    expect(detectAdviceIntent("Split 100k between MMF and SCOM at 11% yield")).toBe(false);
   });
 });
 

@@ -13,12 +13,53 @@ export const FORBIDDEN_PATTERNS: RegExp[] = [
   /\bput your money\b/i,
 ];
 
+export const STOCK_AMOUNT_MAKE_SCENARIO_RE =
+  /\bhow much will i make if i (put|invest|buy)\b/i;
+
+export const MMF_GET_SCENARIO_RE = /\bhow much do i get\b/i;
+
+export const MMF_MAKE_SCENARIO_RE =
+  /\bhow much would .+ make in (an? )?(mmf|money market)\b/i;
+
+/** Router-only: used to detect MMF/yield context without surfacing "mutual fund" in UI copy. */
+export const MMF_CONTEXT_RE =
+  /\b(mmf|money market|unit trust|mutual fund|money market fund|yield)\b/i;
+
+export const NEWS_ADVICE_PATTERNS: RegExp[] = [
+  /\bbecause of this news\b/i,
+  /\bwill .* rise because\b/i,
+  /\bgood news for buying\b/i,
+  /\bshould i sell because\b/i,
+  /\bwill nse go up\b/i,
+  /\bwill .* go up today\b/i,
+  /\bwill .* (rise|fall) because\b/i,
+  /\bis this good news for buying\b/i,
+];
+
+export const PORTFOLIO_ADVICE_PATTERNS: RegExp[] = [
+  /\bshould i split\b/i,
+  /\bwhich split is better\b/i,
+  /\bbest allocation\b/i,
+  /\bbest split\b/i,
+  /\boptimal allocation\b/i,
+  /\bsafest allocation\b/i,
+  /\bdo you recommend\b/i,
+  /\bshould i put more in\b.*\b(mmf|money market|stock)/i,
+  /\bshould i put more in mmf or stock/i,
+];
+
 export const ADVICE_INTENT_PATTERNS: RegExp[] = [
-  /\bwhich\b.*\b(fund|stock|share|mmf)\b.*\b(should|buy|pick|choose)\b/i,
+  /\bwhich\b.*\b(fund|stock|share|mmf|etf)\b.*\b(should|buy|pick|choose)\b/i,
   /\bshould i (buy|sell|hold|switch|invest in|put)\b/i,
-  /\bwhere should i (put|invest)\b/i,
+  /\bwhere should i (put|invest|save)\b/i,
+  /\bwhat should i invest in\b/i,
   /\bwhat('?s| is) the (best|top|safest)\b/i,
   /\brecommend (a|the|me)\b/i,
+  /\bwill i make (money|profit)\b/i,
+  /\bgood buy\b/i,
+  /\bbest yield\b/i,
+  /\bmake me the most\b/i,
+  /\btop mmf\b/i,
 ];
 
 export interface RefusalPayload {
@@ -32,15 +73,32 @@ export const REFUSAL_MESSAGE =
   "I can't tell you what to buy, sell, or invest in. I can help compare scenarios, yields, price movements, fees, liquidity, and recent data so you can understand the trade-offs.";
 
 export const SAFE_ALTERNATIVES = [
-  "Compare fund scenarios",
-  "Run a 100k yield scenario",
-  "Explain yield",
-  "Show price movement impact",
+  "Split 100k between MMF and SCOM at 11% yield",
+  "Compare SCOM vs EQTY",
+  "Latest news about Safaricom",
+  "Explain dividend yield",
 ];
 
 export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";
 
+export function hasMmfYieldContext(prompt: string): boolean {
+  return MMF_CONTEXT_RE.test(prompt);
+}
+
+export function detectNewsAdviceIntent(prompt: string): boolean {
+  return NEWS_ADVICE_PATTERNS.some((re) => re.test(prompt));
+}
+
+export function detectPortfolioAdviceIntent(prompt: string): boolean {
+  return PORTFOLIO_ADVICE_PATTERNS.some((re) => re.test(prompt));
+}
+
 export function detectAdviceIntent(prompt: string): boolean {
+  if (STOCK_AMOUNT_MAKE_SCENARIO_RE.test(prompt)) return false;
+  if (MMF_MAKE_SCENARIO_RE.test(prompt)) return false;
+  if (MMF_GET_SCENARIO_RE.test(prompt) && hasMmfYieldContext(prompt)) return false;
+  if (detectNewsAdviceIntent(prompt)) return true;
+  if (detectPortfolioAdviceIntent(prompt)) return true;
   return ADVICE_INTENT_PATTERNS.some((re) => re.test(prompt));
 }
 

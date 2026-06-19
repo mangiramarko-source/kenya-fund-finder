@@ -4,12 +4,11 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
 export const SUGGESTED_PROMPTS = [
-  "If I invest KES 100,000 at the current average yield for 12 months",
-  "What happens if a stock falls 10% on KES 100,000?",
-  "Compare SCOM vs EQTY",
-  "Compare USD vs EUR",
-  "Compare Gold vs Brent Crude",
-  "Explain money market fund yield",
+  "KES 10,000 in SCOM",
+  "KES 100,000 to USD",
+  "Latest news about Safaricom",
+  "Split 100k between MMF and SCOM",
+  "Explain dividend yield",
 ];
 
 interface Props {
