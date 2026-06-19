@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { Search } from "lucide-react";
+import { ArrowRight, Search } from "lucide-react";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import {
   AI_LAB_ASSISTANT_TEXT,
@@ -8,13 +8,14 @@ import {
   AI_LAB_COLLAPSIBLE,
   AI_LAB_COMPARE_ACTIVE,
   AI_LAB_COMPARE_INACTIVE,
+  AI_LAB_EMPTY_SHELL,
   AI_LAB_HEADLINE,
   AI_LAB_HERO_HEADLINE,
   AI_LAB_HERO_SUBTEXT,
+  AI_LAB_HERO_SUBTEXT_CLASS,
   AI_LAB_INPUT_WRAP,
   AI_LAB_INPUT_FIELD,
   AI_LAB_INPUT_PLACEHOLDER,
-  AI_LAB_MUTED,
   AI_LAB_RUN_BTN,
   AI_LAB_SAFE_PROMPT_CHIPS,
   AI_LAB_USER_BUBBLE,
@@ -66,6 +67,7 @@ const PromptInput = ({
     />
     <button type="button" onClick={onSubmit} disabled={!value.trim()} className={AI_LAB_RUN_BTN}>
       Run
+      <ArrowRight className="h-4 w-4" />
     </button>
   </div>
 );
@@ -102,15 +104,16 @@ const AiLabChat = ({
   };
 
   const hasMessages = messages.length > 0;
+  const shellClass = hasMessages ? AI_LAB_CARD : AI_LAB_EMPTY_SHELL;
 
   return (
-    <div className={`flex flex-col min-h-[480px] lg:min-h-[560px] ${AI_LAB_CARD} overflow-hidden`}>
+    <div className={`${shellClass} flex flex-col min-h-[480px] lg:min-h-[560px] overflow-hidden`}>
       <div ref={threadRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 space-y-6">
         {!hasMessages ? (
-          <div className="space-y-6 py-2 md:py-6 max-w-3xl">
-            <div className="space-y-3">
+          <div className="max-w-4xl space-y-8 md:space-y-10 pt-4 md:pt-8 pb-6">
+            <div className="space-y-3 md:space-y-4">
               <h2 className={AI_LAB_HEADLINE}>{AI_LAB_HERO_HEADLINE}</h2>
-              <p className={AI_LAB_MUTED}>{AI_LAB_HERO_SUBTEXT}</p>
+              <p className={AI_LAB_HERO_SUBTEXT_CLASS}>{AI_LAB_HERO_SUBTEXT}</p>
             </div>
             <form onSubmit={handleSubmit}>
               <PromptInput
@@ -120,7 +123,7 @@ const AiLabChat = ({
                 autoFocus
               />
             </form>
-            <div className="flex flex-wrap gap-2">
+            <div className="flex flex-wrap gap-2 md:gap-2.5 justify-start">
               {AI_LAB_SAFE_PROMPT_CHIPS.map((chip) => (
                 <PromptChip key={chip} label={chip} onClick={() => submitPrompt(chip)} />
               ))}
