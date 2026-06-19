@@ -2,6 +2,7 @@ import { useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Search } from "lucide-react";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import {
+  AI_LAB_ACTIVE_SHELL,
   AI_LAB_ASSISTANT_TEXT,
   AI_LAB_CARD,
   AI_LAB_CHIP,
@@ -13,6 +14,7 @@ import {
   AI_LAB_HERO_HEADLINE,
   AI_LAB_HERO_SUBTEXT,
   AI_LAB_HERO_SUBTEXT_CLASS,
+  AI_LAB_INPUT_DOCK,
   AI_LAB_INPUT_WRAP,
   AI_LAB_INPUT_FIELD,
   AI_LAB_INPUT_PLACEHOLDER,
@@ -89,7 +91,7 @@ const AiLabChat = ({
 
   useEffect(() => {
     threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
-  }, [messages.length]);
+  }, [messages]);
 
   const submitPrompt = (text: string) => {
     const trimmed = text.trim();
@@ -104,11 +106,16 @@ const AiLabChat = ({
   };
 
   const hasMessages = messages.length > 0;
-  const shellClass = hasMessages ? AI_LAB_CARD : AI_LAB_EMPTY_SHELL;
+  const shellClass = hasMessages
+    ? `${AI_LAB_CARD} ${AI_LAB_ACTIVE_SHELL}`
+    : AI_LAB_EMPTY_SHELL;
 
   return (
-    <div className={`${shellClass} flex flex-col min-h-[480px] lg:min-h-[560px] overflow-hidden`}>
-      <div ref={threadRef} className="flex-1 overflow-y-auto overflow-x-hidden p-4 md:p-6 space-y-6">
+    <div className={`${shellClass} h-full overflow-hidden`}>
+      <div
+        ref={threadRef}
+        className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-2 space-y-6"
+      >
         {!hasMessages ? (
           <div className="max-w-4xl space-y-8 md:space-y-10 pt-4 md:pt-8 pb-6">
             <div className="space-y-3 md:space-y-4">
@@ -201,7 +208,7 @@ const AiLabChat = ({
       </div>
 
       {hasMessages && (
-        <div className="border-t border-border p-3 md:p-4 bg-card/95 sticky bottom-0">
+        <div className={AI_LAB_INPUT_DOCK}>
           <form onSubmit={handleSubmit}>
             <PromptInput value={input} onChange={setInput} onSubmit={() => submitPrompt(input)} />
           </form>

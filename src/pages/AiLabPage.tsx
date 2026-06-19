@@ -220,8 +220,8 @@ const AiLabPage = () => {
 
   return (
     <div className={AI_LAB_PAGE}>
-      <div className={`${AI_LAB_PAGE_INNER} space-y-6`}>
-        <header className="flex items-center gap-2">
+      <div className={`${AI_LAB_PAGE_INNER} flex flex-col gap-6 min-h-[calc(100dvh-5rem)]`}>
+        <header className="flex items-center gap-2 shrink-0">
           <div className="flex items-center justify-center h-9 w-9 rounded-full bg-accent text-accent-foreground">
             <Sparkles className="h-4 w-4" />
           </div>
@@ -231,7 +231,7 @@ const AiLabPage = () => {
           </div>
         </header>
 
-        <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-5">
+        <div className="grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-5 flex-1 min-h-0 items-stretch">
           <AiLabChat
             messages={messages}
             onSubmit={handleSubmit}

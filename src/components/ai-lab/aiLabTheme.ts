@@ -7,6 +7,10 @@ export const AI_LAB_CARD =
   "rounded-xl border border-border bg-card text-card-foreground shadow-sm";
 export const AI_LAB_EMPTY_SHELL =
   "flex flex-col min-h-[480px] lg:min-h-[560px] border-0 shadow-none bg-transparent overflow-hidden";
+export const AI_LAB_ACTIVE_SHELL =
+  "flex flex-col min-h-[480px] max-h-[calc(100dvh-11rem)] lg:max-h-[calc(100dvh-9rem)] overflow-hidden";
+export const AI_LAB_INPUT_DOCK =
+  "shrink-0 border-t border-border p-3 md:p-4 bg-card/95 backdrop-blur-sm z-10";
 export const AI_LAB_CARD_INNER =
   "rounded-xl border border-border bg-muted/30";
 export const AI_LAB_RAIL_CARD =
