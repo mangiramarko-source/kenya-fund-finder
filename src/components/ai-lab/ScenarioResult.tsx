@@ -51,7 +51,13 @@ const KV = ({ k, v }: { k: string; v: string }) => (
   </div>
 );
 
-const ScenarioResult = ({ result }: { result: RouterResult | null }) => {
+interface ScenarioResultProps {
+  result: RouterResult | null;
+  history?: Record<string, AssetHistory> | null;
+  historyLoading?: boolean;
+}
+
+const ScenarioResult = ({ result, history, historyLoading }: ScenarioResultProps) => {
   if (!result) {
     return (
       <div className="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center text-sm text-muted-foreground">
