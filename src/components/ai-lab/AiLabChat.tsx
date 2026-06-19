@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState, type FormEvent } from "react";
+import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Search } from "lucide-react";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import {
@@ -88,9 +88,30 @@ const AiLabChat = ({
 }: Props) => {
   const [input, setInput] = useState("");
   const threadRef = useRef<HTMLDivElement>(null);
+  const turnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
+
+  const setTurnRef = useCallback((id: string) => (el: HTMLDivElement | null) => {
+    if (el) turnRefs.current.set(id, el);
+    else turnRefs.current.delete(id);
+  }, []);
 
   useEffect(() => {
-    threadRef.current?.scrollTo({ top: threadRef.current.scrollHeight, behavior: "smooth" });
+    if (messages.length === 0) return;
+
+    const last = messages[messages.length - 1];
+    let anchorId = last.id;
+
+    if (last.role === "assistant" && messages.length >= 2) {
+      const prev = messages[messages.length - 2];
+      if (prev.role === "user") anchorId = prev.id;
+    }
+
+    const scrollToTurn = () => {
+      turnRefs.current.get(anchorId)?.scrollIntoView({ block: "start" });
+    };
+
+    scrollToTurn();
+    requestAnimationFrame(scrollToTurn);
   }, [messages]);
 
   const submitPrompt = (text: string) => {
@@ -140,9 +161,11 @@ const AiLabChat = ({
           messages.map((msg) => {
             if (msg.role === "user") {
               return (
-                <div key={msg.id} className="flex justify-end">
-                  <div className={AI_LAB_USER_BUBBLE}>
-                    <p className="whitespace-pre-wrap">{msg.text}</p>
+                <div key={msg.id} ref={setTurnRef(msg.id)} className="scroll-mt-4">
+                  <div className="flex justify-end">
+                    <div className={AI_LAB_USER_BUBBLE}>
+                      <p className="whitespace-pre-wrap">{msg.text}</p>
+                    </div>
                   </div>
                 </div>
               );
@@ -153,7 +176,7 @@ const AiLabChat = ({
             const showResult = shouldShowResultCard(msg);
 
             return (
-              <div key={msg.id} className="space-y-3 max-w-full">
+              <div key={msg.id} ref={setTurnRef(msg.id)} className="scroll-mt-4 space-y-3 max-w-full">
                 <div className="max-w-3xl">
                   <p className={AI_LAB_ASSISTANT_TEXT}>{msg.text}</p>
                   {msg.contextNote && (
