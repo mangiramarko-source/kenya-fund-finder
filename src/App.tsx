@@ -42,6 +42,7 @@ const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
 const OverviewPage = lazy(() => import("./pages/OverviewPage"));
 const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
+const AiLabPage = lazy(() => import("./pages/AiLabPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 const queryClient = new QueryClient({
@@ -99,6 +100,7 @@ const App = () => (
                     <Route path="/portfolio" element={<PortfolioPage />} />
                     <Route path="/calculator" element={<CalculatorPage />} />
                     <Route path="/watchlist" element={<WatchlistPage />} />
+                    <Route path="/ai-lab" element={<AiLabPage />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin" element={<AdminPage />} />
                     <Route path="*" element={<NotFound />} />
