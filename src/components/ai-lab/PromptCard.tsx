@@ -5,14 +5,10 @@ import { Textarea } from "@/components/ui/textarea";
 
 export const SUGGESTED_PROMPTS = [
   "If I invest KES 100,000 at the current average yield for 12 months",
-  "What happens if a stock falls 10% on KES 100,000?",
+  "KES 10,000 in SCOM",
+  "What happens if I put KES 10,000 in Safaricom?",
   "Compare SCOM vs EQTY",
-  "Compare USD vs EUR",
-  "Compare Gold vs Brent Crude",
-  "Explain money market fund yield",
   "Explain treasury bills",
-  "Explain withholding tax",
-  "Explain gross vs net return",
 ];
 
 interface Props {

@@ -13,12 +13,17 @@ export const FORBIDDEN_PATTERNS: RegExp[] = [
   /\bput your money\b/i,
 ];
 
+export const STOCK_AMOUNT_MAKE_SCENARIO_RE =
+  /\bhow much will i make if i (put|invest|buy)\b/i;
+
 export const ADVICE_INTENT_PATTERNS: RegExp[] = [
   /\bwhich\b.*\b(fund|stock|share|mmf)\b.*\b(should|buy|pick|choose)\b/i,
   /\bshould i (buy|sell|hold|switch|invest in|put)\b/i,
   /\bwhere should i (put|invest)\b/i,
   /\bwhat('?s| is) the (best|top|safest)\b/i,
   /\brecommend (a|the|me)\b/i,
+  /\bwill i make (money|profit)\b/i,
+  /\bgood buy\b/i,
 ];
 
 export interface RefusalPayload {
@@ -41,6 +46,7 @@ export const SAFE_ALTERNATIVES = [
 export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";
 
 export function detectAdviceIntent(prompt: string): boolean {
+  if (STOCK_AMOUNT_MAKE_SCENARIO_RE.test(prompt)) return false;
   return ADVICE_INTENT_PATTERNS.some((re) => re.test(prompt));
 }
 

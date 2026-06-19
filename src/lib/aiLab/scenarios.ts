@@ -107,6 +107,83 @@ export function calculateMonthlyContributionScenario(
   };
 }
 
+import type { ComparableAsset } from "./marketContext";
+
+export const STOCK_AMOUNT_MOVEMENTS = [-10, -5, 0, 5, 10] as const;
+
+export interface StockAmountScenarioRow {
+  movementPct: number;
+  estimatedPrice: number;
+  estimatedValue: number;
+  estimatedGainLoss: number;
+}
+
+export interface StockAmountScenarioResult {
+  kind: "stock-amount";
+  summary: string;
+  inputs: { amount: number; symbol: string; name: string; latestPrice: number };
+  approximateShares: number;
+  rows: StockAmountScenarioRow[];
+  assumptions: string[];
+  importantNotes: string[];
+  disclaimer: string;
+}
+
+const fmtKESAmount = (n: number) =>
+  new Intl.NumberFormat("en-KE", {
+    style: "currency",
+    currency: "KES",
+    maximumFractionDigits: 0,
+  }).format(n);
+
+export function getStockAmountUserText(result: StockAmountScenarioResult): string {
+  return [result.summary, ...result.assumptions, ...result.importantNotes].join(" ");
+}
+
+export function calculateStockAmountScenario(
+  amount: number,
+  asset: ComparableAsset,
+): StockAmountScenarioResult {
+  const latestPrice = asset.value;
+  const approximateShares = Math.round((amount / latestPrice) * 100) / 100;
+  const rows: StockAmountScenarioRow[] = STOCK_AMOUNT_MOVEMENTS.map((movementPct) => {
+    const factor = 1 + movementPct / 100;
+    const estimatedPrice = Math.round(latestPrice * factor * 100) / 100;
+    const estimatedValue = Math.round(amount * factor);
+    return {
+      movementPct,
+      estimatedPrice,
+      estimatedValue,
+      estimatedGainLoss: estimatedValue - amount,
+    };
+  });
+
+  return {
+    kind: "stock-amount",
+    summary: `This scenario does not predict profit. It shows what ${fmtKESAmount(amount)} exposure to ${asset.symbol} could look like if the share price rises or falls.`,
+    inputs: {
+      amount,
+      symbol: asset.symbol,
+      name: asset.name,
+      latestPrice,
+    },
+    approximateShares,
+    rows,
+    assumptions: [
+      "Uses the latest available KenyaFundFinder price.",
+      "Fees, taxes, spreads, commissions, and dividends are not included.",
+      "Share prices can rise or fall.",
+      "This is a scenario, not a prediction.",
+      "Actual results can differ because of liquidity, timing, fees, taxes, dividends, and market conditions.",
+    ],
+    importantNotes: [
+      "Approximate shares are illustrative only — fractional lots, board lots, and settlement rules are not modeled.",
+      "This assistant cannot place orders or execute trades.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
 export interface ExplainerResult {
   kind: "explainer";
   title: string;
@@ -228,8 +305,6 @@ export const EXPLAINERS: Record<string, ExplainerResult> = {
   },
 };
 
-import type { ComparableAsset } from "./marketContext";
-
 export interface CompareScenarioResult {
   kind: "compare";
   assets: ComparableAsset[];
@@ -290,5 +365,6 @@ export type ScenarioResult =
   | MmfScenarioResult
   | StockMoveScenarioResult
   | MonthlyContributionScenarioResult
+  | StockAmountScenarioResult
   | ExplainerResult
   | CompareScenarioResult;

@@ -24,6 +24,21 @@ describe("detectAdviceIntent", () => {
       detectAdviceIntent("If I invest KES 100,000 at 11% yield, what happens?")
     ).toBe(false);
     expect(detectAdviceIntent("What happens if a stock falls 10%?")).toBe(false);
+    expect(
+      detectAdviceIntent("How much will I make if I put KES 10,000 in Safaricom?")
+    ).toBe(false);
+  });
+  it("flags 'Will I make money in SCOM?'", () => {
+    expect(detectAdviceIntent("Will I make money in SCOM?")).toBe(true);
+  });
+  it("flags 'Is SCOM a good buy?'", () => {
+    expect(detectAdviceIntent("Is SCOM a good buy?")).toBe(true);
+  });
+  it("flags 'Should I put KES 10,000 in SCOM?'", () => {
+    expect(detectAdviceIntent("Should I put KES 10,000 in SCOM?")).toBe(true);
+  });
+  it("flags 'Should I buy Safaricom?'", () => {
+    expect(detectAdviceIntent("Should I buy Safaricom?")).toBe(true);
   });
 });
 

@@ -5,6 +5,7 @@ import {
   calculateMmfScenario,
   calculateStockMoveScenario,
   calculateMonthlyContributionScenario,
+  calculateStockAmountScenario,
   compareAssets,
   EXPLAINERS,
   STANDARD_DISCLAIMER,
@@ -54,6 +55,67 @@ function parseMonths(text: string): number | null {
 }
 
 const COMPARE_RE = /^\s*compare\s+(.+?)\s+(?:vs\.?|versus|with|to|and|&)\s+(.+?)\s*$/i;
+
+const STOCK_QUERY_RES = [
+  /\b(?:in|into|of)\s+([A-Za-z][A-Za-z0-9\s.'&-]+?)(?:\?|\.|$)/i,
+  /\bworth of\s+([A-Za-z][A-Za-z0-9\s.'&-]+?)(?:\?|\.|$)/i,
+];
+
+const STOCK_AMOUNT_UNKNOWN_MSG =
+  "I could not confidently match that stock to available KenyaFundFinder data yet. Try a ticker or company name shown on the platform.";
+
+const STOCK_AMOUNT_SUGGESTIONS = [
+  "KES 10,000 in SCOM",
+  "KES 10,000 in EQTY",
+  "Compare SCOM vs EQTY",
+];
+
+function extractStockQuery(prompt: string): string | null {
+  for (const re of STOCK_QUERY_RES) {
+    const m = prompt.match(re);
+    if (m?.[1]) {
+      return m[1]
+        .trim()
+        .replace(/\b(what happens|worth|shares?|stock)\b/gi, "")
+        .trim();
+    }
+  }
+  return null;
+}
+
+function isStockAmountIntent(lower: string): boolean {
+  if (/\bshow possible outcomes\b/.test(lower)) return true;
+  if (/\bhow much will i make if i (put|invest|buy)\b/.test(lower)) return true;
+  if (/\bwhat happens if\b/.test(lower) && /\bin\b/.test(lower)) return true;
+  if (/\b(?:put|invest|buy)\b/.test(lower) && /\bin\b/.test(lower)) return true;
+  if (/\bworth of\b/.test(lower)) return true;
+  if (/\bshillings?\b/.test(lower) && /\bin\b/.test(lower)) return true;
+  if (/\bin\b/.test(lower) && !/\bvs\.?\b|\bversus\b/.test(lower)) return true;
+  return false;
+}
+
+function tryStockAmountRoute(
+  prompt: string,
+  lower: string,
+  ctx?: MarketContext | null,
+): RouterResult | null {
+  if (!isStockAmountIntent(lower)) return null;
+  const amount = parseAmount(prompt);
+  const stockQuery = extractStockQuery(prompt);
+  if (amount == null || !stockQuery) return null;
+
+  const stocks = (ctx?.assets ?? []).filter((a) => a.kind === "stock");
+  const asset = findAsset(stockQuery, stocks);
+  if (!asset || asset.value <= 0) {
+    return {
+      kind: "unknown",
+      message: STOCK_AMOUNT_UNKNOWN_MSG,
+      suggestions: STOCK_AMOUNT_SUGGESTIONS,
+      disclaimer: STANDARD_DISCLAIMER,
+    };
+  }
+  return calculateStockAmountScenario(amount, asset);
+}
 
 export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): RouterResult {
   const prompt = rawPrompt.trim();
@@ -123,6 +185,9 @@ export function routePrompt(rawPrompt: string, ctx?: MarketContext | null): Rout
   if (/explain|what is|what's|define/.test(lower) && /(yield|mmf|money market)/.test(lower)) {
     return EXPLAINERS["mmf-yield"];
   }
+
+  const stockAmount = tryStockAmountRoute(prompt, lower, ctx);
+  if (stockAmount) return stockAmount;
 
   // Monthly contribution scenario
   if (/monthly|every month|each month|per month|add.*month/.test(lower)) {

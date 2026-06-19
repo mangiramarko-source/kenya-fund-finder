@@ -273,6 +273,69 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     );
   }
 
+  if (result.kind === "stock-amount") {
+    const fmtMovement = (n: number) => (n > 0 ? `+${n}%` : `${n}%`);
+    const fmtGainLoss = (n: number) => `${n >= 0 ? "+" : ""}${fmtKES(n)}`;
+    return (
+      <div className="space-y-3">
+        <Section icon={<Info className="h-3 w-3" />} title="Summary">
+          <p>{sanitizeOutput(result.summary)}</p>
+        </Section>
+        <Section icon={<FileText className="h-3 w-3" />} title="Assumptions">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.assumptions.map((a, i) => (
+              <li key={i}>{sanitizeOutput(a)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
+          <div className="space-y-3">
+            <div>
+              <KV k="Starting amount" v={fmtKES(result.inputs.amount)} />
+              <KV k="Stock" v={`${result.inputs.symbol} · ${result.inputs.name}`} />
+              <KV k="Latest available price" v={fmtKES2(result.inputs.latestPrice)} />
+              <KV k="Approximate shares" v={result.approximateShares.toLocaleString("en-KE")} />
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm tabular-nums">
+                <thead>
+                  <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
+                    <th className="text-left font-medium py-1 pr-3">Price movement</th>
+                    <th className="text-right font-medium py-1 px-2">Estimated price</th>
+                    <th className="text-right font-medium py-1 px-2">Estimated value</th>
+                    <th className="text-right font-medium py-1 pl-2">Estimated gain/loss</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {result.rows.map((row) => (
+                    <tr key={row.movementPct} className="border-t border-border/40">
+                      <td className="py-1.5 pr-3 text-xs text-muted-foreground">
+                        {fmtMovement(row.movementPct)}
+                      </td>
+                      <td className="py-1.5 px-2 text-right">{fmtKES2(row.estimatedPrice)}</td>
+                      <td className="py-1.5 px-2 text-right font-semibold">
+                        {fmtKES(row.estimatedValue)}
+                      </td>
+                      <td className="py-1.5 pl-2 text-right">{fmtGainLoss(row.estimatedGainLoss)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </Section>
+        <Section icon={<AlertTriangle className="h-3 w-3" />} title="Important notes">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.importantNotes.map((n, i) => (
+              <li key={i}>{sanitizeOutput(n)}</li>
+            ))}
+          </ul>
+        </Section>
+        <Disclaimer text={result.disclaimer} />
+      </div>
+    );
+  }
+
   // Numeric scenario layout
   let summary: React.ReactNode = null;
   let calcs: React.ReactNode = null;
