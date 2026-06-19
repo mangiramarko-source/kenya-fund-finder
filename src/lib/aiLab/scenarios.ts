@@ -989,6 +989,21 @@ export function compareAssets(a: ComparableAsset, b: ComparableAsset): CompareSc
   };
 }
 
+
+export type WebsiteLookupEntityType = "stock" | "fund" | "fx" | "commodity";
+
+export interface WebsiteLookupScenarioResult {
+  kind: "website-lookup";
+  summary: string;
+  entityType: WebsiteLookupEntityType;
+  entityName: string;
+  entitySymbol?: string;
+  fields: Array<{ label: string; value: string }>;
+  sourceNote: string;
+  pagePath?: string;
+  disclaimer: string;
+}
+
 export type ScenarioResult =
   | MmfScenarioResult
   | MmfYieldChangeScenarioResult
@@ -1002,4 +1017,5 @@ export type ScenarioResult =
   | NewsSummaryScenarioResult
   | PortfolioSplitScenarioResult
   | ExplainerResult
-  | CompareScenarioResult;
+  | CompareScenarioResult
+  | WebsiteLookupScenarioResult;

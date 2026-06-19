@@ -1,4 +1,5 @@
-import { AlertTriangle, ArrowLeftRight, Calculator, ExternalLink, FileText, Info, Newspaper, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
+import { Link } from "react-router-dom";
+import { AlertTriangle, ArrowLeftRight, Calculator, Database, ExternalLink, FileText, Info, Newspaper, ShieldAlert, TrendingDown, TrendingUp } from "lucide-react";
 import type { RouterResult } from "@/lib/aiLab/router";
 import type { ComparableAsset } from "@/lib/aiLab/marketContext";
 import type { AssetHistory, LookbackDays } from "@/lib/aiLab/history";
@@ -90,6 +91,42 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
             </ul>
           </div>
         )}
+        <Disclaimer text={result.disclaimer} />
+      </ResultShell>
+    );
+  }
+
+
+  if (result.kind === "website-lookup") {
+    const topFields = result.fields.slice(0, 3);
+    const restFields = result.fields.slice(3);
+    return (
+      <ResultShell>
+        <SummaryMetricGrid>
+          {topFields.map((field) => (
+            <SummaryMetricCard key={field.label} label={field.label} value={field.value} />
+          ))}
+        </SummaryMetricGrid>
+        {restFields.length > 0 && (
+          <Section icon={<Database className="h-3 w-3" />} title="Website data">
+            {restFields.map((field) => (
+              <KV key={field.label} k={field.label} v={field.value} />
+            ))}
+          </Section>
+        )}
+        <Section icon={<Info className="h-3 w-3" />} title="Summary">
+          <p>{sanitizeOutput(result.summary)}</p>
+          <p className="text-xs text-stone-500 mt-2">{sanitizeOutput(result.sourceNote)}</p>
+          {result.pagePath && (
+            <Link
+              to={result.pagePath}
+              className="inline-flex items-center gap-1 text-xs text-slate-800 hover:underline mt-2"
+            >
+              View on KenyaFundFinder
+              <ExternalLink className="h-3 w-3" />
+            </Link>
+          )}
+        </Section>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );

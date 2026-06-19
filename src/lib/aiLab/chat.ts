@@ -314,6 +314,8 @@ export function buildFollowUpSuggestions(result?: RouterResult): string[] {
       return ["Compare SCOM vs EQTY", "Explain liquidity"];
     case "news-summary":
       return ["KES 10,000 in SCOM", "Latest news about Safaricom"];
+    case "website-lookup":
+      return ["KES 10,000 in SCOM", "Compare SCOM vs EQTY", "Model KES 100k in an MMF at 11%"];
     default:
       return WELCOME_EXAMPLE_CATEGORIES.slice(0, 3).map((c) => c.prompt);
   }

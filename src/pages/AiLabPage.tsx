@@ -35,6 +35,7 @@ import {
   getAssistantTextFromResult,
   type AiLabChatMessage,
 } from "@/lib/aiLab/chat";
+import { resolveWebsiteLookup } from "@/lib/aiLab/websiteLookup";
 
 const MAIN_DISCLAIMER =
   "Data only. Not personal financial advice. Yields, prices, fees, taxes, and market conditions can change. Speak to a licensed adviser before making investment decisions.";
@@ -135,14 +136,26 @@ const AiLabPage = () => {
         return;
       }
 
-      const { prompt: enriched, note } = applyLiveContext(prompt, market.data);
-      const result = routePrompt(enriched, market.data, news.data);
-      const assistantMessage = createAssistantMessage({
-        text: getAssistantTextFromResult(result),
-        result,
-        contextNote: note ?? undefined,
-      });
-      setMessages((prev) => [...prev, assistantMessage]);
+      void (async () => {
+        const lookup = await resolveWebsiteLookup(prompt, market.data);
+        if (lookup) {
+          const assistantMessage = createAssistantMessage({
+            text: lookup.summary,
+            result: lookup,
+          });
+          setMessages((prev) => [...prev, assistantMessage]);
+          return;
+        }
+
+        const { prompt: enriched, note } = applyLiveContext(prompt, market.data);
+        const result = routePrompt(enriched, market.data, news.data);
+        const assistantMessage = createAssistantMessage({
+          text: getAssistantTextFromResult(result),
+          result,
+          contextNote: note ?? undefined,
+        });
+        setMessages((prev) => [...prev, assistantMessage]);
+      })();
     },
     [messages, market.data, news.data],
   );
