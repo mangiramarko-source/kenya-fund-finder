@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Navigate } from "react-router-dom";
-import { Sparkles } from "lucide-react";
+import { Link, Navigate } from "react-router-dom";
+import { ArrowLeft, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import AiLabChat, { type CompareState } from "@/components/ai-lab/AiLabChat";
@@ -37,6 +37,19 @@ import {
   isCapabilitiesPrompt,
 } from "@/lib/aiLab/responseComposer";
 import { isUnsupportedFilterLookupPrompt } from "@/lib/aiLab/websiteLookup";
+
+
+function AiLabMobileBack() {
+  return (
+    <Link
+      to="/"
+      className="md:hidden inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors shrink-0 mr-1"
+    >
+      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+      Overview
+    </Link>
+  );
+}
 
 const DEFAULT_LOOKBACK: LookbackDays = 30;
 
@@ -222,9 +235,14 @@ const AiLabPage = () => {
       return <Navigate to={access.loginPath} replace />;
     }
     return (
-      <div className={`${AI_LAB_PAGE} container py-20 text-center`}>
-        <h1 className="text-2xl font-bold mb-2 text-foreground">Access Denied</h1>
-        <p className="text-muted-foreground">{getAiLabAccessDeniedMessage(access.reason)}</p>
+      <div className={`${AI_LAB_PAGE} container py-6 md:py-20`}>
+        <div className="mb-6">
+          <AiLabMobileBack />
+        </div>
+        <div className="text-center">
+          <h1 className="text-2xl font-bold mb-2 text-foreground">Access Denied</h1>
+          <p className="text-muted-foreground">{getAiLabAccessDeniedMessage(access.reason)}</p>
+        </div>
       </div>
     );
   }
@@ -233,10 +251,11 @@ const AiLabPage = () => {
     <div className={AI_LAB_PAGE}>
       <div className={AI_LAB_PAGE_INNER}>
         <header className="flex items-center gap-2 shrink-0">
-          <div className="flex items-center justify-center h-9 w-9 rounded-full bg-accent text-accent-foreground">
+          <AiLabMobileBack />
+          <div className="flex items-center justify-center h-9 w-9 rounded-full bg-accent text-accent-foreground shrink-0">
             <Sparkles className="h-4 w-4" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className={AI_LAB_LABEL}>AI Scenario Assistant</p>
             <p className="text-[10px] text-muted-foreground">{AI_LAB_SAFETY_LINE}</p>
           </div>
