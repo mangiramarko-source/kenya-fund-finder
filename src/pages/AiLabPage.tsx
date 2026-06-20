@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Link, Navigate } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { ArrowLeft, Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -13,10 +13,6 @@ import {
 import { routePrompt } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
-import {
-  getAiLabAccessDeniedMessage,
-  resolveAiLabAccess,
-} from "@/lib/aiLab/accessGate";
 import {
   fetchAssetHistory,
   type AssetHistory,
@@ -54,7 +50,7 @@ function AiLabMobileBack() {
 const DEFAULT_LOOKBACK: LookbackDays = 30;
 
 const AiLabPage = () => {
-  const { user, isAdmin, loading } = useAuth();
+  const { loading } = useAuth();
   const [messages, setMessages] = useState<AiLabChatMessage[]>([]);
   const [compareLookback, setCompareLookback] = useState<Record<string, LookbackDays>>({});
   const [compareHistory, setCompareHistory] = useState<
@@ -249,25 +245,6 @@ const AiLabPage = () => {
     return (
       <div className={`${AI_LAB_PAGE} flex items-center justify-center`}>
         <p className="text-muted-foreground">Loading…</p>
-      </div>
-    );
-  }
-
-  const access = resolveAiLabAccess({ user, isAdmin });
-
-  if (!access.allowed) {
-    if (access.reason === "logged-out") {
-      return <Navigate to={access.loginPath} replace />;
-    }
-    return (
-      <div className={`${AI_LAB_PAGE} container py-6 md:py-20`}>
-        <div className="mb-6">
-          <AiLabMobileBack />
-        </div>
-        <div className="text-center">
-          <h1 className="text-2xl font-bold mb-2 text-foreground">Access Denied</h1>
-          <p className="text-muted-foreground">{getAiLabAccessDeniedMessage(access.reason)}</p>
-        </div>
       </div>
     );
   }

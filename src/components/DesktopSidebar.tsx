@@ -6,11 +6,11 @@ import {
 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { useAuth } from "@/hooks/useAuth";
-import { canShowAiLabNav } from "@/lib/aiLab/accessGate";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 
 const mainNavItems = [
   { to: "/", label: "Overview", icon: LayoutDashboard },
+  { to: "/ai-lab", label: "AI Lab", icon: Sparkles },
   { to: "/stocks", label: "Stocks", icon: TrendingUp },
   { to: "/funds", label: "Unit Trusts", icon: BarChart3 },
   { to: "/rates", label: "FX Rates", icon: DollarSign },
@@ -46,8 +46,7 @@ const DesktopSidebar = () => {
     return () => mql.removeEventListener("change", handler);
   }, []);
   const location = useLocation();
-  const { isAdmin, user } = useAuth();
-  const showAiLabNav = canShowAiLabNav({ user, isAdmin });
+  const { isAdmin } = useAuth();
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -136,59 +135,29 @@ const DesktopSidebar = () => {
         {legalNavItems.map((item) => renderNavItem(item, "small"))}
       </nav>
 
-      {/* Admin / AI Lab links */}
-      {(showAiLabNav || isAdmin) && (
+      {/* Admin link */}
+      {isAdmin && (
         <div className={`px-2 py-1.5 border-t border-sidebar-border space-y-1 ${collapsed ? "flex flex-col items-center" : ""}`}>
           {collapsed ? (
-            <>
-              {showAiLabNav && (
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to="/ai-lab"
-                      className="flex items-center justify-center h-8 w-8 rounded-lg text-accent hover:bg-accent/10 transition-colors"
-                    >
-                      <Sparkles className="h-4 w-4" />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs font-medium">AI Lab</TooltipContent>
-                </Tooltip>
-              )}
-              {isAdmin && (
-                <Tooltip delayDuration={0}>
-                  <TooltipTrigger asChild>
-                    <Link
-                      to="/admin"
-                      className="flex items-center justify-center h-8 w-8 rounded-lg text-accent hover:bg-accent/10 transition-colors"
-                    >
-                      <Shield className="h-4 w-4" />
-                    </Link>
-                  </TooltipTrigger>
-                  <TooltipContent side="right" className="text-xs font-medium">Admin</TooltipContent>
-                </Tooltip>
-              )}
-            </>
-          ) : (
-            <>
-              {showAiLabNav && (
-                <Link
-                  to="/ai-lab"
-                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-accent hover:bg-accent/10 transition-colors"
-                >
-                  <Sparkles className="h-3.5 w-3.5 shrink-0" />
-                  <span>AI Lab</span>
-                </Link>
-              )}
-              {isAdmin && (
+            <Tooltip delayDuration={0}>
+              <TooltipTrigger asChild>
                 <Link
                   to="/admin"
-                  className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-accent hover:bg-accent/10 transition-colors"
+                  className="flex items-center justify-center h-8 w-8 rounded-lg text-accent hover:bg-accent/10 transition-colors"
                 >
-                  <Shield className="h-3.5 w-3.5 shrink-0" />
-                  <span>Admin Panel</span>
+                  <Shield className="h-4 w-4" />
                 </Link>
-              )}
-            </>
+              </TooltipTrigger>
+              <TooltipContent side="right" className="text-xs font-medium">Admin</TooltipContent>
+            </Tooltip>
+          ) : (
+            <Link
+              to="/admin"
+              className="flex items-center gap-2.5 px-3 py-1.5 rounded-lg text-[12px] font-medium text-accent hover:bg-accent/10 transition-colors"
+            >
+              <Shield className="h-3.5 w-3.5 shrink-0" />
+              <span>Admin Panel</span>
+            </Link>
           )}
         </div>
       )}
