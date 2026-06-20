@@ -6,7 +6,16 @@ import CurrencyTicker from "./CurrencyTicker";
 import DesktopSidebar from "./DesktopSidebar";
 import DesktopTopBar from "./DesktopTopBar";
 import OfflineBanner from "./OfflineBanner";
+import MobileAiLabFab from "./MobileAiLabFab";
 import { usePageView } from "@/hooks/usePageView";
+
+function shouldShowMobileAiLabFab(pathname: string): boolean {
+  if (pathname === "/ai-lab" || pathname.startsWith("/ai-lab/")) return false;
+  if (pathname === "/auth") return false;
+  if (pathname === "/admin" || pathname.startsWith("/admin/")) return false;
+  if (pathname === "/alerts") return false;
+  return true;
+}
 
 const Layout = ({ children }: { children: React.ReactNode }) => {
   usePageView();
@@ -16,6 +25,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isNewsArticle = /^\/news\/[^/]+/.test(pathname);
   // AI Lab uses its own floating composer — hide global footer entirely
   const isAiLab = pathname === "/ai-lab" || pathname.startsWith("/ai-lab/");
+  const showMobileAiLabFab = shouldShowMobileAiLabFab(pathname);
 
   return (
     <div className={`flex min-h-screen font-body${isAiLab ? " h-dvh max-h-dvh overflow-hidden" : ""}`}>
@@ -58,6 +68,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <Footer />
           </div>
         )}
+        {showMobileAiLabFab && <MobileAiLabFab />}
       </div>
     </div>
   );
