@@ -79,6 +79,31 @@ const AiLabPage = () => {
     };
   }, []);
 
+  // Keep AI Lab shell aligned with the visible viewport when the mobile keyboard opens.
+  useEffect(() => {
+    const root = document.documentElement;
+    const syncVisualViewport = () => {
+      const vv = window.visualViewport;
+      if (!vv) {
+        root.style.removeProperty("--ai-lab-vvh");
+        root.style.removeProperty("--ai-lab-vv-top");
+        return;
+      }
+      root.style.setProperty("--ai-lab-vvh", `${vv.height}px`);
+      root.style.setProperty("--ai-lab-vv-top", `${vv.offsetTop}px`);
+    };
+
+    syncVisualViewport();
+    window.visualViewport?.addEventListener("resize", syncVisualViewport);
+    window.visualViewport?.addEventListener("scroll", syncVisualViewport);
+    return () => {
+      window.visualViewport?.removeEventListener("resize", syncVisualViewport);
+      window.visualViewport?.removeEventListener("scroll", syncVisualViewport);
+      root.style.removeProperty("--ai-lab-vvh");
+      root.style.removeProperty("--ai-lab-vv-top");
+    };
+  }, []);
+
   const compareMessageIds = useMemo(
     () =>
       messages
