@@ -239,10 +239,10 @@ const AiLabChat = ({
       {hasMessages && (
         <div className={AI_LAB_INPUT_DOCK}>
           <div className={AI_LAB_DOCK_INNER}>
-            <p className={AI_LAB_DOCK_DISCLAIMER}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
             <form onSubmit={handleSubmit}>
               <PromptInput value={input} onChange={setInput} onSubmit={() => submitPrompt(input)} />
             </form>
+            <p className={`${AI_LAB_DOCK_DISCLAIMER} mt-1.5`}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
           </div>
         </div>
       )}
