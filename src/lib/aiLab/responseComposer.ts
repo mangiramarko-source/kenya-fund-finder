@@ -3,7 +3,21 @@
 
 import type { RouterResult } from "./router";
 import type { AiLabSessionContext } from "./chat";
-import { FORBIDDEN_PATTERNS, STANDARD_DISCLAIMER } from "./safety";
+import {
+  FORBIDDEN_PATTERNS,
+  REFUSAL_MESSAGE,
+  SAFE_ALTERNATIVES,
+  STANDARD_DISCLAIMER,
+} from "./safety";
+import {
+  MMF_ILLUSTRATIVE_LIMITATION,
+  STOCK_ILLUSTRATIVE_LIMITATION,
+  type MmfScenarioResult,
+  type MmfYieldChangeScenarioResult,
+  type PortfolioSplitScenarioResult,
+  type StockAmountScenarioResult,
+  type StockMoveScenarioResult,
+} from "./scenarios";
 import { isMmfYieldFilterPrompt, isUnsupportedFilterLookupPrompt } from "./websiteLookup";
 
 const FILTER_LOOKUP_RE =
@@ -96,6 +110,85 @@ function followUpsForWebsiteLookup(entityType: string): string[] {
         "Show Etica MMF yield",
         "What can I ask?",
       ]);
+  }
+}
+
+
+function rowForMovement(
+  rows: StockAmountScenarioResult["rows"],
+  movementPct: number,
+): StockAmountScenarioResult["rows"][number] | undefined {
+  return rows.find((r) => r.movementPct === movementPct);
+}
+
+function composeHypotheticalNarrative(result: RouterResult): string | null {
+  switch (result.kind) {
+    case "stock-amount": {
+      const { inputs, approximateShares, rows } = result;
+      const up5 = rowForMovement(rows, 5);
+      const down5 = rowForMovement(rows, -5);
+      const parts = [
+        `Using an illustrative price of ${fmtKes(inputs.latestPrice)} per ${inputs.symbol} share, ${fmtKes(inputs.amount)} would represent approximately ${approximateShares.toLocaleString("en-KE", { maximumFractionDigits: 2 })} shares before fees and other costs.`,
+      ];
+      if (up5 && down5) {
+        parts.push(
+          `If the share price moved up 5%, the position value would be about ${fmtKes(up5.estimatedValue)}; if it moved down 5%, about ${fmtKes(down5.estimatedValue)}.`,
+        );
+      }
+      parts.push(
+        "Assumptions: " + result.assumptions.slice(0, 2).join(" "),
+        STOCK_ILLUSTRATIVE_LIMITATION,
+        STANDARD_DISCLAIMER,
+      );
+      return parts.join("\n\n");
+    }
+
+    case "stock-move": {
+      const { inputs, newValue, delta } = result;
+      const dir = inputs.priceChangePct >= 0 ? "up" : "down";
+      const pct = Math.abs(inputs.priceChangePct);
+      return [
+        `If a ${fmtKes(inputs.amount)} position moved ${dir} by ${pct}%, the illustrative value would be about ${fmtKes(newValue)} (a ${delta >= 0 ? "gain" : "loss"} of ${fmtKes(Math.abs(delta))} before fees and other costs).`,
+        "Assumptions: " + result.assumptions.join(" "),
+        STOCK_ILLUSTRATIVE_LIMITATION,
+        STANDARD_DISCLAIMER,
+      ].join("\n\n");
+    }
+
+    case "mmf": {
+      const { inputs, grossYearly, monthlyEquivalent } = result as MmfScenarioResult;
+      return [
+        `At an illustrative ${inputs.annualYieldPct}% annual yield, ${fmtKes(inputs.amount)} would imply about ${fmtKes(grossYearly)} per year, or roughly ${fmtKes(Math.round(monthlyEquivalent))} per month before fees, taxes, and changes in yield.`,
+        "Assumptions: " + result.assumptions.slice(0, 2).join(" "),
+        MMF_ILLUSTRATIVE_LIMITATION,
+        STANDARD_DISCLAIMER,
+      ].join("\n\n");
+    }
+
+    case "mmf-yield-change": {
+      const r = result as MmfYieldChangeScenarioResult;
+      return [
+        `If yield changed from ${r.inputs.fromYieldPct}% to ${r.inputs.toYieldPct}% on ${fmtKes(r.inputs.amount)}, gross yearly income would shift from about ${fmtKes(r.fromGrossYearly)} to ${fmtKes(r.toGrossYearly)} (a difference of ${fmtKes(Math.abs(r.deltaYearly))} per year before fees, taxes, and further yield changes).`,
+        "Assumptions: " + r.assumptions.slice(0, 2).join(" "),
+        MMF_ILLUSTRATIVE_LIMITATION,
+        STANDARD_DISCLAIMER,
+      ].join("\n\n");
+    }
+
+    case "portfolio-split": {
+      const r = result as PortfolioSplitScenarioResult;
+      const flat = r.rows.find((row) => row.stockMovementPct === 0);
+      return [
+        `Using an illustrative split of ${r.inputs.mmfPercent}% MMF and ${r.inputs.stockPercent}% ${r.inputs.stockSymbol} on ${fmtKes(r.inputs.totalAmount)} at ${r.inputs.annualYieldPct}% yield, the MMF portion is about ${fmtKes(r.inputs.mmfAmount)} and the stock portion about ${fmtKes(r.inputs.stockAmount)}.${flat ? ` With no stock price movement, total value would be about ${fmtKes(flat.totalEstimatedValue)}.` : ""}`,
+        "Assumptions: " + r.assumptions.slice(0, 2).join(" "),
+        STOCK_ILLUSTRATIVE_LIMITATION,
+        MMF_ILLUSTRATIVE_LIMITATION,
+        STANDARD_DISCLAIMER,
+      ].join("\n\n");
+    }
+
+    default:
+      return null;
   }
 }
 
@@ -252,11 +345,11 @@ function followUpsForResult(result: RouterResult, prompt: string): string[] {
       return followUpsForWebsiteLookup(result.entityType);
 
     case "refusal":
-      return capFollowUps([
-        "What can I ask?",
-        "Show Etica MMF yield",
-        "KES 10,000 in SCOM",
-      ]);
+      return capFollowUps(
+        result.kind === "refusal" && result.safeAlternatives?.length
+          ? result.safeAlternatives
+          : [...SAFE_ALTERNATIVES],
+      );
 
     case "unknown":
       return capFollowUps([
@@ -294,7 +387,14 @@ export function composeAssistantResponse(args: {
 }): { text: string; followUps: string[] } {
   const { prompt, result } = args;
 
-  const text = withBubbleDisclaimer(composeIntro(result, prompt), false);
+  const narrative = composeHypotheticalNarrative(result);
+  const intro =
+    result.kind === "refusal"
+      ? result.message || REFUSAL_MESSAGE
+      : narrative ?? composeIntro(result, prompt);
+  const includeDisclaimer =
+    narrative != null || result.kind === "refusal" ? false : false;
+  const text = withBubbleDisclaimer(intro, includeDisclaimer);
   const followUps = followUpsForResult(result, prompt);
   return { text, followUps };
 }

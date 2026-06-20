@@ -142,8 +142,10 @@ describe("composeAssistantResponse", () => {
       prompt: "KES 10,000 in SCOM",
       result,
     });
-    expect(text.toLowerCase()).toContain("neutral");
+    expect(text.toLowerCase()).toContain("illustrative price");
     expect(text).toContain("SCOM");
+    expect(text).toContain(STANDARD_DISCLAIMER);
+    expect(text).toContain("Approximate shares are illustrative only");
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
   });
 
@@ -154,8 +156,9 @@ describe("composeAssistantResponse", () => {
       prompt: "If I put 100,000 in an MMF, how much do I get?",
       result,
     });
-    expect(text.toLowerCase()).toContain("mmf");
-    expect(text.toLowerCase()).toContain("does not predict future returns");
+    expect(text.toLowerCase()).toContain("illustrative");
+    expect(text).toContain("Yield scenarios are illustrative only");
+    expect(text).toContain(STANDARD_DISCLAIMER);
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
   });
 
@@ -199,7 +202,8 @@ describe("composeAssistantResponse", () => {
       prompt: "Split 100k between MMF and SCOM at 11% yield",
       result,
     });
-    expect(text.toLowerCase()).toContain("not a recommendation");
+    expect(text.toLowerCase()).toContain("illustrative split");
+    expect(text).toContain(STANDARD_DISCLAIMER);
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
   });
 
@@ -210,8 +214,9 @@ describe("composeAssistantResponse", () => {
       prompt: "Should I buy Safaricom?",
       result,
     });
-    expect(text.toLowerCase()).toContain("cannot tell you what to buy or sell");
-    expect(followUps.some((s) => s.includes("What can I ask?"))).toBe(true);
+    expect(text.toLowerCase()).toContain("can't tell you what to buy, sell, or choose");
+    expect(followUps).toContain("KES 100,000 in SCOM");
+    expect(followUps).toContain("What would 100,000 earn at 11%?");
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
   });
 
@@ -318,6 +323,55 @@ describe("composeAssistantResponse", () => {
     }
   });
 });
+
+
+  describe("hypothetical narrative responses", () => {
+    const BANNED_RE = [
+      /\bbest\b/,
+      /\btop\b/,
+      /\bsafest\b/,
+      /\brisk-free\b/,
+      /\brecommended\b/,
+      /\byou should buy\b/,
+      /\byou should sell\b/,
+      /\bput your money in\b/,
+      /\bbetter option\b/,
+      /\bi recommend\b/,
+      /\bguaranteed returns?\b/,
+    ];
+
+    it("stock scenario includes stock limitation and disclaimer", () => {
+      const result = routePrompt("KES 100,000 in SCOM", ctx);
+      const { text } = composeAssistantResponse({ prompt: "KES 100,000 in SCOM", result });
+      expect(text).toContain("Approximate shares are illustrative only");
+      expect(text).toContain(STANDARD_DISCLAIMER);
+    });
+
+    it("MMF scenario includes yield limitation and disclaimer", () => {
+      const result = routePrompt("What would 100,000 earn at 11%?", ctx);
+      const { text } = composeAssistantResponse({ prompt: "What would 100,000 earn at 11%?", result });
+      expect(text).toContain("Yield scenarios are illustrative only");
+      expect(text).toContain(STANDARD_DISCLAIMER);
+    });
+
+    it("scenario responses avoid banned advice language", () => {
+      const prompts = [
+        "KES 100,000 in SCOM",
+        "What would 100,000 earn at 11%?",
+        "What if SCOM goes up 10%?",
+        "What happens if yield drops from 11% to 9%?",
+        "Split 100k between MMF and SCOM at 11% yield",
+      ];
+      for (const prompt of prompts) {
+        const result = routePrompt(prompt, ctx);
+        const { text } = composeAssistantResponse({ prompt, result });
+        const lower = text.toLowerCase();
+        for (const re of BANNED_RE) {
+          expect(lower).not.toMatch(re);
+        }
+      }
+    });
+  });
 
 describe("composeCapabilitiesGuide", () => {
   it("includes scenarios, lookup, news, explainers, and limits", () => {

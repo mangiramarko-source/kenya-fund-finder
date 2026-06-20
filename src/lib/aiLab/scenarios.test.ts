@@ -7,6 +7,9 @@ import {
   STANDARD_DISCLAIMER,
   MMF_SCENARIO_SUMMARY,
   getMmfUserText,
+  STOCK_ILLUSTRATIVE_LIMITATION,
+  MMF_ILLUSTRATIVE_LIMITATION,
+  MISSING_DATA_SCENARIO_MSG,
 } from "./scenarios";
 
 describe("calculateMmfScenario", () => {
@@ -75,5 +78,25 @@ describe("calculateMonthlyContributionScenario", () => {
     expect(b.projectedGross).toBeGreaterThan(a.projectedGross);
     expect(a.totalContributions).toBe(10_000 + 1_000 * 6);
     expect(a.disclaimer).toBe(STANDARD_DISCLAIMER);
+  });
+});
+
+
+describe("hypothetical limitation constants", () => {
+  it("exports stock limitation copy", () => {
+    expect(STOCK_ILLUSTRATIVE_LIMITATION).toContain("Approximate shares are illustrative only");
+  });
+
+  it("exports MMF limitation copy", () => {
+    expect(MMF_ILLUSTRATIVE_LIMITATION).toContain("Yield scenarios are illustrative only");
+  });
+
+  it("exports missing data copy", () => {
+    expect(MISSING_DATA_SCENARIO_MSG).toContain("I do not have enough current data");
+  });
+
+  it("MMF scenario assumptions include MMF limitation", () => {
+    const r = calculateMmfScenario(100_000, 11, 12);
+    expect(r.assumptions.join(" ")).toContain("Yield scenarios are illustrative only");
   });
 });

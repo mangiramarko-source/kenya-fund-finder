@@ -128,6 +128,18 @@ describe("sanitizeOutput", () => {
 });
 
 describe("buildRefusal", () => {
+  it("uses updated refusal message copy", () => {
+    const r = buildRefusal();
+    expect(r.message).toContain("I can't tell you what to buy, sell, or choose");
+    expect(r.message).toContain("licensed adviser");
+  });
+
+  it("safe alternatives include illustrative scenario reframes", () => {
+    const r = buildRefusal();
+    expect(r.safeAlternatives).toContain("KES 100,000 in SCOM");
+    expect(r.safeAlternatives).toContain("What would 100,000 earn at 11%?");
+  });
+
   it("returns the canonical refusal message", () => {
     const r = buildRefusal();
     expect(r.kind).toBe("refusal");

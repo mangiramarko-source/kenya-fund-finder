@@ -12,6 +12,9 @@ const NAMED_STOCK_RE =
 export const PORTFOLIO_ILLUSTRATIVE_AMOUNT = 100_000;
 export const PORTFOLIO_ILLUSTRATIVE_AMOUNT_NOTE =
   "No total amount was stated, so this scenario uses an illustrative KES 100,000.";
+export const DEFAULT_PORTFOLIO_YIELD_PCT = 11;
+export const PORTFOLIO_ASSUMED_YIELD_NOTE =
+  "Illustrative yield used where none was stated — replace with a figure from the fund factsheet.";
 export const PORTFOLIO_AVG_YIELD_NOTE =
   "Average MMF yield from available KenyaFundFinder data used where none was stated.";
 
@@ -196,6 +199,10 @@ export function isPortfolioSplitIntent(lower: string, prompt: string): boolean {
     return true;
   }
 
+  if (/\bwhat if i split\b/.test(lower) && FUND_CONTEXT_RE.test(lower)) {
+    return true;
+  }
+
   if (/\bput\s+\d+(?:\.\d+)?\s*%\s+(?:in|into)\s+(?:mmf|money market)/i.test(lower)) {
     return true;
   }
@@ -247,6 +254,8 @@ export function parsePortfolioSplit(
     return null;
   }
 
+  const extraAssumptions: string[] = [];
+
   let yieldPct = parsePortfolioYieldPct(prompt);
   let yieldAssumedFromContext = false;
   if (yieldPct == null) {
@@ -254,11 +263,11 @@ export function parsePortfolioSplit(
       yieldPct = ctx.avgAnnualYieldPct;
       yieldAssumedFromContext = true;
     } else {
-      return null;
+      yieldPct = DEFAULT_PORTFOLIO_YIELD_PCT;
+      yieldAssumedFromContext = true;
+      extraAssumptions.push(PORTFOLIO_ASSUMED_YIELD_NOTE);
     }
   }
-
-  const extraAssumptions: string[] = [];
   if (yieldAssumedFromContext) extraAssumptions.push(PORTFOLIO_AVG_YIELD_NOTE);
 
   let mmfPercent = 50;

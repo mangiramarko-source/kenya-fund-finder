@@ -287,7 +287,7 @@ function parseHasAmountAndYield(_prompt: string, lower: string): boolean {
   return (
     /(\d[\d,]*(?:\.\d+)?\s*(?:k|m)?)/i.test(lower) &&
     /\d+(?:\.\d+)?\s*%/.test(lower) &&
-    /(yield|mmf|money market|fund)/.test(lower)
+    (/(yield|mmf|money market|fund|earn)/.test(lower) || /\bwhat would\b/.test(lower))
   );
 }
 
@@ -299,7 +299,8 @@ function isStockAmountIntent(lower: string, prompt: string): boolean {
   }
   if (hasMmfYieldContext(prompt) && FUND_CONTEXT_RE.test(lower)) return false;
   if (STOCK_AMOUNT_MAKE_SCENARIO_RE.test(prompt)) return true;
-  if (/\bhow many shares\b/.test(lower)) return true;
+  if (/\bhow many\b.*\bshares\b/.test(lower)) return true;
+  if (/\bi have\b/.test(lower) && /\bput\b/.test(lower) && /\bin\b/.test(lower)) return true;
   if (/\b(?:put|invest|buy)\b/.test(lower) && /\bin\b/.test(lower) && !FUND_CONTEXT_RE.test(lower)) {
     return /\d/.test(prompt);
   }

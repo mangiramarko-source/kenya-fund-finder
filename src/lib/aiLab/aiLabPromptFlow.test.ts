@@ -258,6 +258,22 @@ describe("processAiLabUserPrompt — top-level chat flow", () => {
     expect(out.text.toLowerCase()).toContain("can't filter funds");
   });
 
+  describe("hypothetical scenario E2E", () => {
+    it("answers SCOM amount scenario with illustrative narrative", async () => {
+      const out = await processAiLabUserPrompt("I have 100,000, what happens if I put it in SCOM?", ctx);
+      expect(out.result?.kind).toBe("stock-amount");
+      expect(out.text).toContain("Approximate shares are illustrative only");
+      expect(out.text).toContain("Data only. Not personal financial advice.");
+    });
+
+    it("refuses advice-style allocation question", async () => {
+      const out = await processAiLabUserPrompt("Where should I put 100,000?", ctx);
+      expect(out.result?.kind).toBe("refusal");
+      expect(out.text.toLowerCase()).toContain("can't tell you what to buy, sell, or choose");
+    });
+  });
+
+
   it("Rank funds by yield stays on filter-unsupported path", async () => {
     const out = await processAiLabUserPrompt("Rank funds by yield", ctx);
     expect(out.route).toBe("filter-unsupported");

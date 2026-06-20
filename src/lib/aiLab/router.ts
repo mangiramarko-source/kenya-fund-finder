@@ -17,7 +17,7 @@ import {
   STANDARD_DISCLAIMER,
   type ScenarioResult,
 } from "./scenarios";
-import { findAsset, type MarketContext } from "./marketContext";
+import { findAsset, type ComparableAsset, type MarketContext } from "./marketContext";
 import {
   isNewsLabPrompt,
   matchNewsForPrompt,
@@ -50,6 +50,7 @@ const FUND_CONTEXT_RE = /\b(mmf|money market|unit trust|mutual fund|money market
 const STOCK_QUERY_RES = [
   /\b(?:in|into|of)\s+([A-Za-z][A-Za-z0-9\s.'&-]+?)(?:\?|\.|$)/i,
   /\bworth of\s+([A-Za-z][A-Za-z0-9\s.'&-]+?)(?:\?|\.|$)/i,
+  /\bput(?:ting)?\s+(?:it\s+)?in(?:to)?\s+([A-Za-z][A-Za-z0-9\s.'&-]+?)(?:\?|\.|$)/i,
 ];
 
 const STOCK_AMOUNT_UNKNOWN_MSG =
@@ -173,6 +174,12 @@ function resolveYieldPct(
 }
 
 function extractStockQuery(prompt: string): string | null {
+  if (/\bhow many\b.*\bshares\b/i.test(prompt)) {
+    const named = prompt.match(/\bhow many\s+([A-Za-z][A-Za-z0-9\s.'&-]*?)\s+shares\b/i);
+    if (named?.[1]?.trim()) return named[1].trim();
+    const ticker = prompt.match(/\b(SCOM|EQTY|KCB|NCBA|[A-Z]{2,6})\b/);
+    if (ticker?.[1]) return ticker[1];
+  }
   for (const re of STOCK_QUERY_RES) {
     const m = prompt.match(re);
     if (m?.[1]) {
@@ -195,8 +202,10 @@ function isStockAmountIntent(lower: string, prompt: string): boolean {
     return false;
   }
   if (hasMmfYieldContext(prompt) && FUND_CONTEXT_RE.test(lower)) return false;
+  if (/\bhow many\b.*\bshares\b/.test(lower)) return true;
   if (/\bshow possible outcomes\b/.test(lower)) return true;
   if (/\bhow much will i make if i (put|invest|buy)\b/.test(lower)) return true;
+  if (/\bi have\b/.test(lower) && /\bput\b/.test(lower) && /\bin\b/.test(lower)) return true;
   if (/\bwhat happens if\b/.test(lower) && /\bin\b/.test(lower) && !FUND_CONTEXT_RE.test(lower)) return true;
   if (/\b(?:put|invest|buy)\b/.test(lower) && /\bin\b/.test(lower) && !FUND_CONTEXT_RE.test(lower)) return true;
   if (/\bworth of\b/.test(lower)) return true;
@@ -252,6 +261,24 @@ function tryMmfRoutes(
       parseFloat(yieldChange[2]),
       months,
     );
+  }
+
+  if (/\bearn\b/.test(lower) || /\bwhat would\b/.test(lower)) {
+    const amount = parseAmount(prompt);
+    const pct = parsePercent(prompt);
+    if (amount != null && pct != null) {
+      return calculateMmfScenario(amount, pct, months, extra);
+    }
+  }
+
+  if (/\bwhat does\b.*\byield\b/.test(lower) && /\bmonthly\b/.test(lower)) {
+    const { pct, assumed } = resolveYieldPct(prompt, ctx);
+    if (assumed) extra.push(ASSUMED_YIELD_NOTE);
+    const amount = parseAmount(prompt) ?? ILLUSTRATIVE_AMOUNT;
+    if (amount === ILLUSTRATIVE_AMOUNT && parseAmount(prompt) == null) {
+      extra.push(ILLUSTRATIVE_AMOUNT_NOTE);
+    }
+    return calculateMmfScenario(amount, pct, months, extra);
   }
 
   if (/monthly equivalent of\s+\d/i.test(lower) && /yield/.test(lower)) {
@@ -318,6 +345,52 @@ function portfolioSplitUnknown(): UnknownPayload {
     suggestions: PORTFOLIO_SPLIT_SUGGESTIONS,
     disclaimer: STANDARD_DISCLAIMER,
   };
+}
+
+
+function stockMentionedInPrompt(lower: string, stocks: ComparableAsset[]): ComparableAsset | null {
+  for (const asset of stocks) {
+    const terms = [asset.symbol, asset.name, ...asset.aliases];
+    for (const term of terms) {
+      const t = term.trim().toLowerCase();
+      if (t.length < 2) continue;
+      if (lower.includes(t)) return asset;
+    }
+  }
+  return null;
+}
+
+function tryStockMoveRoute(
+  prompt: string,
+  lower: string,
+  ctx?: MarketContext | null,
+): RouterResult | null {
+  const pct = parsePercent(prompt);
+  if (pct == null) return null;
+  if (
+    !/\b(what if|goes up|goes down|rise|rises|fall|falls|drop|drops|up|down)\b/.test(lower)
+  ) {
+    return null;
+  }
+
+  const stocks = (ctx?.assets ?? []).filter((a) => a.kind === "stock");
+  const matched = stockMentionedInPrompt(lower, stocks);
+  if (!matched && !/(stock|share|scom|eqty|kcb|safaricom)/.test(lower)) return null;
+
+  let amount = parseAmount(prompt);
+  const extraAssumptions: string[] = [];
+  if (amount == null) {
+    amount = ILLUSTRATIVE_AMOUNT;
+    extraAssumptions.push(ILLUSTRATIVE_AMOUNT_NOTE);
+  }
+
+  const negative = /(down|fall|falls|drop|drops|goes down|lose|loses)/.test(lower);
+  const signed = negative && pct > 0 ? -pct : pct;
+  const result = calculateStockMoveScenario(amount, signed);
+  if (extraAssumptions.length > 0) {
+    result.assumptions = [...result.assumptions, ...extraAssumptions];
+  }
+  return result;
 }
 
 function tryPortfolioSplitRoute(
@@ -655,6 +728,9 @@ export function routePrompt(
 
   const stockAmount = tryStockAmountRoute(prompt, lower, ctx);
   if (stockAmount) return stockAmount;
+
+  const stockMove = tryStockMoveRoute(prompt, lower, ctx);
+  if (stockMove) return stockMove;
 
   if (
     /(stock|share|price|safaricom|equity|equities)/.test(lower) ||

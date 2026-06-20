@@ -5,6 +5,15 @@ import type { NewsArticle, NewsQueryKind } from "./newsContext";
 
 export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";
 
+export const STOCK_ILLUSTRATIVE_LIMITATION =
+  "Approximate shares are illustrative only — fractional lots, board lots, fees, taxes, spreads, liquidity, settlement rules, and price movement are not fully modeled.";
+
+export const MMF_ILLUSTRATIVE_LIMITATION =
+  "Yield scenarios are illustrative only — actual returns can change, fees and taxes may apply, and future yields are not guaranteed.";
+
+export const MISSING_DATA_SCENARIO_MSG =
+  "I do not have enough current data for that exact calculation, but I can explain the formula or show the assumptions needed.";
+
 export const MMF_SCENARIO_SUMMARY =
   "This projection estimates gross income from the amount and yield assumptions shown. It does not predict future returns.";
 
@@ -62,7 +71,7 @@ export function calculateMmfScenario(
     monthlyEquivalent,
     dailyEquivalent,
     projectedGross,
-    assumptions: [...MMF_DEFAULT_ASSUMPTIONS, ...extraAssumptions],
+    assumptions: [...MMF_DEFAULT_ASSUMPTIONS, MMF_ILLUSTRATIVE_LIMITATION, ...extraAssumptions],
     disclaimer: STANDARD_DISCLAIMER,
   };
 }
@@ -89,6 +98,7 @@ export function calculateMmfYieldChangeScenario(
     deltaYearly: toGrossYearly - fromGrossYearly,
     assumptions: [
       ...MMF_DEFAULT_ASSUMPTIONS,
+      MMF_ILLUSTRATIVE_LIMITATION,
       `Period: ${months} months at each yield assumption.`,
     ],
     disclaimer: STANDARD_DISCLAIMER,
@@ -693,7 +703,7 @@ export function calculateStockAmountScenario(
       "Actual results can differ because of liquidity, timing, fees, taxes, dividends, and market conditions.",
     ],
     importantNotes: [
-      "Approximate shares are illustrative only — fractional lots, board lots, and settlement rules are not modeled.",
+      STOCK_ILLUSTRATIVE_LIMITATION,
       "This assistant cannot place orders or execute trades.",
     ],
     disclaimer: STANDARD_DISCLAIMER,
