@@ -50,11 +50,11 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   if (result.kind === "refusal") {
     const msg = sanitizeOutput(result.message);
     return (
-      <ResultShell className="border-amber-400/40 bg-amber-50/50 space-y-3">
+      <ResultShell className="border-border bg-muted/40 space-y-3">
         <div className="flex items-start gap-2">
-          <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0 mt-0.5" />
+          <ShieldAlert className="h-4 w-4 text-muted-foreground shrink-0 mt-0.5" />
           <div>
-            <h3 className="text-sm font-semibold text-amber-500">Out of scope</h3>
+            <h3 className="text-sm font-semibold text-foreground">Out of scope</h3>
             <p className="text-sm text-foreground/90 mt-1">{msg}</p>
           </div>
         </div>
@@ -755,7 +755,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     );
   } else if (result.kind === "stock-move") {
     const Icon = result.direction === "up" ? TrendingUp : TrendingDown;
-    const color = result.direction === "up" ? "text-emerald-500" : "text-rose-500";
+    const color = result.direction === "up" ? "text-success" : "text-destructive";
     calcs = (
       <>
         <KV k="Position size" v={fmtKES(result.inputs.amount)} />

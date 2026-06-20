@@ -1,16 +1,20 @@
-// Phase 13C/13D — AI Lab scoped tokens aligned with site CSS variables (no global theme edits).
+// Phase 13C/13D + UI polish — AI Lab scoped tokens aligned with site CSS variables.
 
-export const AI_LAB_PAGE = "h-[100dvh] overflow-hidden bg-muted/30";
-export const AI_LAB_PAGE_INNER = "container py-4 md:py-6 max-w-6xl h-full";
+export const AI_LAB_PAGE =
+  "flex flex-col min-h-0 h-full bg-muted/30 overflow-hidden";
+export const AI_LAB_PAGE_INNER =
+  "flex flex-col flex-1 min-h-0 gap-3 md:gap-4 container py-3 md:py-5 max-w-6xl";
 
 export const AI_LAB_CARD =
   "rounded-2xl border border-border bg-card text-card-foreground shadow-sm";
 export const AI_LAB_EMPTY_SHELL =
-  "flex flex-col min-h-[480px] lg:min-h-[560px] border-0 shadow-none bg-transparent overflow-hidden";
+  "flex flex-col flex-1 min-h-0 border-0 shadow-none bg-transparent overflow-hidden";
 export const AI_LAB_ACTIVE_SHELL =
-  "flex flex-col min-h-[480px] max-h-[calc(100dvh-11rem)] lg:max-h-[calc(100dvh-9rem)] overflow-hidden border-0 shadow-none bg-transparent";
+  "flex-1 min-h-0 flex flex-col overflow-hidden border-0 shadow-none bg-transparent";
 export const AI_LAB_INPUT_DOCK =
-  "shrink-0 px-3 md:px-4 pt-3 pb-3 md:pb-4 bg-gradient-to-t from-background via-background/95 to-background/0 backdrop-blur-sm z-10";
+  "shrink-0 px-3 md:px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-background via-background/95 to-background/0 backdrop-blur-sm z-10";
+export const AI_LAB_THREAD =
+  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 md:px-6 pt-4 space-y-5 scroll-pb-28";
 export const AI_LAB_CARD_INNER =
   "rounded-2xl border border-border bg-muted/30";
 export const AI_LAB_RAIL_CARD =
@@ -20,7 +24,7 @@ export const AI_LAB_LABEL =
   "text-[11px] uppercase tracking-[0.1em] font-bold text-foreground";
 export const AI_LAB_MUTED = "text-sm text-muted-foreground text-center max-w-xl mx-auto";
 export const AI_LAB_HEADLINE =
-  "text-4xl md:text-5xl lg:text-[3.25rem] font-extrabold tracking-tight font-heading text-foreground leading-[1.05]";
+  "text-3xl md:text-4xl lg:text-5xl font-extrabold tracking-tight font-heading text-foreground leading-[1.05]";
 export const AI_LAB_HERO_SUBTEXT_CLASS =
   "text-sm md:text-[15px] text-muted-foreground max-w-lg leading-relaxed font-medium";
 export const AI_LAB_METRIC = "tabular-nums text-foreground";
@@ -34,7 +38,7 @@ export const AI_LAB_CHIP =
 export const AI_LAB_USER_BUBBLE =
   "max-w-[85%] rounded-2xl bg-primary text-primary-foreground px-4 py-2 text-sm shadow-sm";
 export const AI_LAB_ASSISTANT_TEXT =
-  "text-sm md:text-[15px] text-foreground/90 leading-relaxed whitespace-pre-wrap italic";
+  "text-sm md:text-[15px] text-foreground leading-relaxed whitespace-pre-wrap";
 
 export const AI_LAB_INPUT_WRAP =
   "flex items-center gap-2 rounded-full border border-border bg-card pl-4 pr-1.5 py-1.5 shadow-lg focus-within:ring-4 focus-within:ring-accent/15 focus-within:border-accent/40 transition-all";
@@ -45,15 +49,20 @@ export const AI_LAB_INPUT_FIELD =
 export const AI_LAB_RUN_BTN =
   "shrink-0 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-extrabold text-xs tracking-[0.1em] uppercase px-6 md:px-7 py-2.5 min-h-[44px] flex items-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none transition-all active:scale-95 shadow-sm";
 
-export const AI_LAB_SECTION = "rounded-2xl border border-border bg-card p-5 shadow-sm";
+export const AI_LAB_RESULT_SHELL =
+  "rounded-2xl border border-border/80 bg-card/80 p-3 md:p-4 space-y-3";
+export const AI_LAB_SECTION =
+  "rounded-2xl border border-border bg-card p-4 md:p-5 shadow-sm";
 export const AI_LAB_COLLAPSIBLE =
   "rounded-2xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground shadow-sm";
 export const AI_LAB_METRIC_CARD =
-  "rounded-2xl border border-border bg-card p-5 shadow-sm";
+  "rounded-2xl border border-border bg-card p-4 md:p-5 shadow-sm";
 export const AI_LAB_DIVIDER = "h-px bg-border";
 export const AI_LAB_COMPARE_ACTIVE = "bg-accent text-accent-foreground";
 export const AI_LAB_COMPARE_INACTIVE =
   "border border-input bg-background text-foreground hover:bg-muted";
+export const AI_LAB_MOBILE_DISCLAIMER =
+  "lg:hidden text-[10px] text-muted-foreground text-center px-2 pt-2 pb-1 border-t border-border/50";
 
 export const AI_LAB_HERO_HEADLINE = "Investing without guessing.";
 export const AI_LAB_HERO_SUBTEXT =
