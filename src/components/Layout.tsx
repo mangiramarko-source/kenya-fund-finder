@@ -43,10 +43,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         )}
         <main id="main-content" className="flex-1 min-h-[80vh]">{children}</main>
-        {/* Footer hidden on mobile news article pages for immersive view */}
-        <div className={isNewsArticle ? "hidden md:block" : ""}>
-          <Footer />
-        </div>
+        {/* Footer hidden on mobile news article pages and entirely on the AI Lab */}
+        {!isAiLab && (
+          <div className={isNewsArticle ? "hidden md:block" : ""}>
+            <Footer />
+          </div>
+        )}
       </div>
     </div>
   );
