@@ -93,6 +93,10 @@ describe("fetchAssetHistory", () => {
   beforeEach(() => {
     vi.mocked(fetchPublicData).mockReset();
     vi.mocked(fetchPublicData).mockResolvedValue({
+      resource: "history",
+      count: 2,
+      limit: 100,
+      offset: 0,
       data: [
         { snapshot_date: "2026-05-01", price: 100 },
         { snapshot_date: "2026-05-08", price: 110 },
