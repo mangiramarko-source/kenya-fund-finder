@@ -239,19 +239,11 @@ const AiLabPage = () => {
             onLookbackChange={handleLookbackChange}
           />
 
-          <aside className="hidden lg:block">
+          <aside className="hidden lg:block overflow-y-auto min-h-0">
             <AiLabAboutRail />
           </aside>
         </div>
 
-        <details className={`lg:hidden ${AI_LAB_RAIL_CARD}`}>
-          <summary className="text-sm font-medium cursor-pointer text-foreground">
-            About AI Lab
-          </summary>
-          <div className="mt-3">
-            <AiLabAboutRail />
-          </div>
-        </details>
       </div>
     </div>
   );
