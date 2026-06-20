@@ -2,13 +2,12 @@ import { useCallback, useEffect, useRef, useState, type FormEvent } from "react"
 import { ArrowRight, Search } from "lucide-react";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import {
-  AI_LAB_ACTIVE_SHELL,
   AI_LAB_ASSISTANT_TEXT,
+  AI_LAB_CHAT_SHELL,
   AI_LAB_CHIP,
   AI_LAB_COLLAPSIBLE,
   AI_LAB_COMPARE_ACTIVE,
   AI_LAB_COMPARE_INACTIVE,
-  AI_LAB_EMPTY_SHELL,
   AI_LAB_HEADLINE,
   AI_LAB_HERO_HEADLINE,
   AI_LAB_HERO_SUBTEXT,
@@ -135,10 +134,9 @@ const AiLabChat = ({
   };
 
   const hasMessages = messages.length > 0;
-  const shellClass = hasMessages ? AI_LAB_ACTIVE_SHELL : AI_LAB_EMPTY_SHELL;
 
   return (
-    <div className={`${shellClass} h-full min-h-0 overflow-hidden`}>
+    <div className={AI_LAB_CHAT_SHELL}>
       <div ref={threadRef} className={AI_LAB_THREAD}>
         {!hasMessages ? (
           <div className="max-w-2xl mx-auto space-y-10 pt-6 md:pt-12 pb-6">
