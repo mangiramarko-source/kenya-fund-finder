@@ -4,6 +4,8 @@ import {
   sanitizeOutput,
   buildRefusal,
   FORBIDDEN_PATTERNS,
+  STANDARD_DISCLAIMER,
+  RESPONSE_QUALITY_BANNED,
 } from "./safety";
 
 describe("detectAdviceIntent", () => {
@@ -131,7 +133,9 @@ describe("buildRefusal", () => {
   it("uses updated refusal message copy", () => {
     const r = buildRefusal();
     expect(r.message).toContain("I can't tell you what to buy, sell, or choose");
-    expect(r.message).toContain("licensed adviser");
+    expect(r.message).toContain("I can't rank instruments");
+    expect(r.message).toContain("I can show:");
+    expect(r.message).toContain(STANDARD_DISCLAIMER);
   });
 
   it("safe alternatives include illustrative scenario reframes", () => {
@@ -145,6 +149,9 @@ describe("buildRefusal", () => {
     expect(r.kind).toBe("refusal");
     expect(r.message).toMatch(/can't tell you what to buy/i);
     expect(r.safeAlternatives.length).toBeGreaterThan(0);
-    expect(r.disclaimer).toBe("Data only. Not personal financial advice.");
+    expect(r.disclaimer).toBe(STANDARD_DISCLAIMER);
+    for (const re of RESPONSE_QUALITY_BANNED) {
+      expect(r.message).not.toMatch(re);
+    }
   });
 });

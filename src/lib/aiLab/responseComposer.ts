@@ -6,12 +6,11 @@ import type { AiLabSessionContext } from "./chat";
 import {
   FORBIDDEN_PATTERNS,
   REFUSAL_MESSAGE,
+  RESPONSE_QUALITY_BANNED,
   SAFE_ALTERNATIVES,
   STANDARD_DISCLAIMER,
 } from "./safety";
 import {
-  MMF_ILLUSTRATIVE_LIMITATION,
-  STOCK_ILLUSTRATIVE_LIMITATION,
   type MmfScenarioResult,
   type MmfYieldChangeScenarioResult,
   type PortfolioSplitScenarioResult,
@@ -35,6 +34,51 @@ const UNSUPPORTED_FOLLOWUP_RE =
   /\b(show mmfs above|above 10%|rank fund|best fund|top fund|safest fund|filter by|compare scom and kcb)\b/i;
 
 const MAX_FOLLOW_UPS = 3;
+
+const NOT_RECOMMENDATION_LINE =
+  "This is not a recommendation to buy, sell, or choose this instrument.";
+
+const STOCK_WHAT_COULD_CHANGE = [
+  "Share price may change",
+  "Fees, taxes, spreads, liquidity, settlement, or timing may affect the outcome",
+  "Current data may differ from execution data",
+];
+
+const MMF_WHAT_COULD_CHANGE = [
+  "MMF yields can change",
+  "Fees and taxes may apply",
+  "Future returns can vary",
+];
+
+function formatBulletList(items: string[]): string {
+  return items.map((item) => `- ${item}`).join("\n");
+}
+
+function formatSection(title: string, body: string): string {
+  return `${title}\n${body}`;
+}
+
+function composeStructuredAnswer(sections: {
+  result: string;
+  assumptions: string[];
+  whatCouldChange: string[];
+  important?: string;
+}): string {
+  const parts = [
+    formatSection("Result", sections.result),
+    formatSection("Assumptions", formatBulletList(sections.assumptions)),
+    formatSection("What could change", formatBulletList(sections.whatCouldChange)),
+  ];
+  if (sections.important) {
+    parts.push(formatSection("Important", sections.important));
+  }
+  parts.push(STANDARD_DISCLAIMER);
+  const text = parts.join("\n\n");
+  assertSafe(text);
+  return text;
+}
+
+export { RESPONSE_QUALITY_BANNED };
 
 export function isFilterLookupPrompt(prompt: string): boolean {
   return (
@@ -127,64 +171,95 @@ function composeHypotheticalNarrative(result: RouterResult): string | null {
       const { inputs, approximateShares, rows } = result;
       const up5 = rowForMovement(rows, 5);
       const down5 = rowForMovement(rows, -5);
-      const parts = [
-        `Using an illustrative price of ${fmtKes(inputs.latestPrice)} per ${inputs.symbol} share, ${fmtKes(inputs.amount)} would represent approximately ${approximateShares.toLocaleString("en-KE", { maximumFractionDigits: 2 })} shares before fees and other costs.`,
-      ];
+      const shareLabel = approximateShares.toLocaleString("en-KE", {
+        maximumFractionDigits: 2,
+      });
+      let resultBody = `At an illustrative price of ${fmtKes(inputs.latestPrice)} per ${inputs.symbol} share, ${fmtKes(inputs.amount)} would represent approximately ${shareLabel} shares before fees, taxes, spreads, and settlement considerations.`;
       if (up5 && down5) {
-        parts.push(
-          `If the share price moved up 5%, the position value would be about ${fmtKes(up5.estimatedValue)}; if it moved down 5%, about ${fmtKes(down5.estimatedValue)}.`,
-        );
+        resultBody += ` If the share price moved up 5%, the position value would be about ${fmtKes(up5.estimatedValue)}; if it moved down 5%, about ${fmtKes(down5.estimatedValue)}.`;
       }
-      parts.push(
-        "Assumptions: " + result.assumptions.slice(0, 2).join(" "),
-        STOCK_ILLUSTRATIVE_LIMITATION,
-        STANDARD_DISCLAIMER,
-      );
-      return parts.join("\n\n");
+      return composeStructuredAnswer({
+        result: resultBody,
+        assumptions: [
+          `Amount: ${fmtKes(inputs.amount)}`,
+          `Instrument: ${inputs.symbol} (${inputs.name})`,
+          `Price basis: ${fmtKes(inputs.latestPrice)} per share (latest available KenyaFundFinder price)`,
+          "Period: current exposure snapshot (not a holding-period forecast)",
+        ],
+        whatCouldChange: STOCK_WHAT_COULD_CHANGE,
+        important: NOT_RECOMMENDATION_LINE,
+      });
     }
 
     case "stock-move": {
       const { inputs, newValue, delta } = result;
       const dir = inputs.priceChangePct >= 0 ? "up" : "down";
       const pct = Math.abs(inputs.priceChangePct);
-      return [
-        `If a ${fmtKes(inputs.amount)} position moved ${dir} by ${pct}%, the illustrative value would be about ${fmtKes(newValue)} (a ${delta >= 0 ? "gain" : "loss"} of ${fmtKes(Math.abs(delta))} before fees and other costs).`,
-        "Assumptions: " + result.assumptions.join(" "),
-        STOCK_ILLUSTRATIVE_LIMITATION,
-        STANDARD_DISCLAIMER,
-      ].join("\n\n");
+      return composeStructuredAnswer({
+        result: `If a ${fmtKes(inputs.amount)} position moved ${dir} by ${pct}%, the illustrative value would be about ${fmtKes(newValue)} (a ${delta >= 0 ? "gain" : "loss"} of ${fmtKes(Math.abs(delta))} before fees, taxes, spreads, and settlement considerations).`,
+        assumptions: [
+          `Amount: ${fmtKes(inputs.amount)}`,
+          `Price movement: ${inputs.priceChangePct > 0 ? "+" : ""}${inputs.priceChangePct}%`,
+          "Uses a simple percentage move on the stated amount",
+          "Does not predict future prices",
+        ],
+        whatCouldChange: STOCK_WHAT_COULD_CHANGE,
+        important: NOT_RECOMMENDATION_LINE,
+      });
     }
 
     case "mmf": {
       const { inputs, grossYearly, monthlyEquivalent } = result as MmfScenarioResult;
-      return [
-        `At an illustrative ${inputs.annualYieldPct}% annual yield, ${fmtKes(inputs.amount)} would imply about ${fmtKes(grossYearly)} per year, or roughly ${fmtKes(Math.round(monthlyEquivalent))} per month before fees, taxes, and changes in yield.`,
-        "Assumptions: " + result.assumptions.slice(0, 2).join(" "),
-        MMF_ILLUSTRATIVE_LIMITATION,
-        STANDARD_DISCLAIMER,
-      ].join("\n\n");
+      const yieldLabel = inputs.annualYieldPct.toFixed(1);
+      return composeStructuredAnswer({
+        result: `${fmtKes(inputs.amount)} at an illustrative ${yieldLabel}% annual yield equals about ${fmtKes(grossYearly)} per year, or about ${fmtKes(Math.round(monthlyEquivalent))} per month.`,
+        assumptions: [
+          `Amount: ${fmtKes(inputs.amount)}`,
+          `Annual yield: ${yieldLabel}%`,
+          `Period: ${inputs.months} month${inputs.months === 1 ? "" : "s"}`,
+          "Monthly figure is a simple equivalent, not a fixed monthly payout",
+        ],
+        whatCouldChange: MMF_WHAT_COULD_CHANGE,
+      });
     }
 
     case "mmf-yield-change": {
       const r = result as MmfYieldChangeScenarioResult;
-      return [
-        `If yield changed from ${r.inputs.fromYieldPct}% to ${r.inputs.toYieldPct}% on ${fmtKes(r.inputs.amount)}, gross yearly income would shift from about ${fmtKes(r.fromGrossYearly)} to ${fmtKes(r.toGrossYearly)} (a difference of ${fmtKes(Math.abs(r.deltaYearly))} per year before fees, taxes, and further yield changes).`,
-        "Assumptions: " + r.assumptions.slice(0, 2).join(" "),
-        MMF_ILLUSTRATIVE_LIMITATION,
-        STANDARD_DISCLAIMER,
-      ].join("\n\n");
+      return composeStructuredAnswer({
+        result: `If yield changed from ${r.inputs.fromYieldPct}% to ${r.inputs.toYieldPct}% on ${fmtKes(r.inputs.amount)}, gross yearly income would shift from about ${fmtKes(r.fromGrossYearly)} to ${fmtKes(r.toGrossYearly)} (a difference of ${fmtKes(Math.abs(r.deltaYearly))} per year).`,
+        assumptions: [
+          `Amount: ${fmtKes(r.inputs.amount)}`,
+          `From yield: ${r.inputs.fromYieldPct}%`,
+          `To yield: ${r.inputs.toYieldPct}%`,
+          `Period: ${r.inputs.months} month${r.inputs.months === 1 ? "" : "s"} at each yield assumption`,
+        ],
+        whatCouldChange: MMF_WHAT_COULD_CHANGE,
+      });
     }
 
     case "portfolio-split": {
       const r = result as PortfolioSplitScenarioResult;
       const flat = r.rows.find((row) => row.stockMovementPct === 0);
-      return [
-        `Using an illustrative split of ${r.inputs.mmfPercent}% MMF and ${r.inputs.stockPercent}% ${r.inputs.stockSymbol} on ${fmtKes(r.inputs.totalAmount)} at ${r.inputs.annualYieldPct}% yield, the MMF portion is about ${fmtKes(r.inputs.mmfAmount)} and the stock portion about ${fmtKes(r.inputs.stockAmount)}.${flat ? ` With no stock price movement, total value would be about ${fmtKes(flat.totalEstimatedValue)}.` : ""}`,
-        "Assumptions: " + r.assumptions.slice(0, 2).join(" "),
-        STOCK_ILLUSTRATIVE_LIMITATION,
-        MMF_ILLUSTRATIVE_LIMITATION,
-        STANDARD_DISCLAIMER,
-      ].join("\n\n");
+      let resultBody = `Using an illustrative split of ${r.inputs.mmfPercent}% MMF and ${r.inputs.stockPercent}% ${r.inputs.stockSymbol} on ${fmtKes(r.inputs.totalAmount)} at ${r.inputs.annualYieldPct}% yield, the MMF portion is about ${fmtKes(r.inputs.mmfAmount)} and the stock portion about ${fmtKes(r.inputs.stockAmount)}.`;
+      if (flat) {
+        resultBody += ` With no stock price movement, total value would be about ${fmtKes(flat.totalEstimatedValue)}.`;
+      }
+      return composeStructuredAnswer({
+        result: resultBody,
+        assumptions: [
+          `Total amount: ${fmtKes(r.inputs.totalAmount)}`,
+          `Split: ${r.inputs.mmfPercent}% MMF / ${r.inputs.stockPercent}% ${r.inputs.stockSymbol}`,
+          `MMF yield assumption: ${r.inputs.annualYieldPct}%`,
+          `Stock price basis: ${fmtKes(r.inputs.stockPrice)} per ${r.inputs.stockSymbol} share`,
+          `Projection period: ${r.inputs.projectionMonths} month${r.inputs.projectionMonths === 1 ? "" : "s"}`,
+        ],
+        whatCouldChange: [
+          ...MMF_WHAT_COULD_CHANGE,
+          "Stock prices can rise or fall",
+          "Fees, taxes, spreads, and transaction costs are not fully modeled",
+        ],
+        important: NOT_RECOMMENDATION_LINE,
+      });
     }
 
     default:
@@ -265,23 +340,23 @@ function followUpsForResult(result: RouterResult, prompt: string): string[] {
   switch (result.kind) {
     case "stock-amount":
       return capFollowUps([
-        "Latest news about Safaricom",
+        "What if the price changes by 10%?",
+        "Compare this with an MMF scenario using the same amount.",
         "What can I ask?",
-        "KES 10,000 in SCOM",
       ]);
 
     case "stock-move":
       return capFollowUps([
-        "KES 10,000 in SCOM",
-        "What is SCOM's current price?",
+        "What if the price changes by 10%?",
+        "Compare this with an MMF scenario using the same amount.",
         "What can I ask?",
       ]);
 
     case "mmf":
     case "mmf-yield-change":
       return capFollowUps([
+        "What happens if yield drops from 11% to 9%?",
         "Explain withholding tax",
-        "Show CIC fund data",
         "What can I ask?",
       ]);
 
@@ -337,7 +412,7 @@ function followUpsForResult(result: RouterResult, prompt: string): string[] {
     case "portfolio-split":
       return capFollowUps([
         "Explain liquidity",
-        "Show Etica MMF yield",
+        "Compare this with an MMF scenario using the same amount.",
         "What can I ask?",
       ]);
 
@@ -451,7 +526,7 @@ export function composeClarifyingResponse(args: {
 
 export function composedOutputIsSafe(text: string, followUps: string[]): boolean {
   const combined = [text, ...followUps].join(" ");
-  return !FORBIDDEN_PATTERNS.some((re) => re.test(combined));
+  return !RESPONSE_QUALITY_BANNED.some((re) => re.test(combined));
 }
 
 export { isUnsupportedFilterLookupPrompt, isMmfYieldFilterPrompt } from "./websiteLookup";

@@ -10,6 +10,7 @@ import {
   composeFilterUnsupportedResponse,
   capFollowUps,
   isFilterLookupPrompt,
+  RESPONSE_QUALITY_BANNED,
 } from "./responseComposer";
 import { STANDARD_DISCLAIMER } from "./safety";
 import type { WebsiteLookupScenarioResult } from "./scenarios";
@@ -144,8 +145,11 @@ describe("composeAssistantResponse", () => {
     });
     expect(text.toLowerCase()).toContain("illustrative price");
     expect(text).toContain("SCOM");
+    expect(text).toContain("Result");
+    expect(text).toContain("Assumptions");
+    expect(text).toContain("What could change");
     expect(text).toContain(STANDARD_DISCLAIMER);
-    expect(text).toContain("Approximate shares are illustrative only");
+    expect(text).toContain("not a recommendation");
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
   });
 
@@ -157,7 +161,10 @@ describe("composeAssistantResponse", () => {
       result,
     });
     expect(text.toLowerCase()).toContain("illustrative");
-    expect(text).toContain("Yield scenarios are illustrative only");
+    expect(text).toContain("Result");
+    expect(text).toContain("Assumptions");
+    expect(text).toContain("What could change");
+    expect(text).toContain("MMF yields can change");
     expect(text).toContain(STANDARD_DISCLAIMER);
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
   });
@@ -215,6 +222,8 @@ describe("composeAssistantResponse", () => {
       result,
     });
     expect(text.toLowerCase()).toContain("can't tell you what to buy, sell, or choose");
+    expect(text.toLowerCase()).toContain("can't rank instruments");
+    expect(text).toContain(STANDARD_DISCLAIMER);
     expect(followUps).toContain("KES 100,000 in SCOM");
     expect(followUps).toContain("What would 100,000 earn at 11%?");
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
@@ -326,31 +335,22 @@ describe("composeAssistantResponse", () => {
 
 
   describe("hypothetical narrative responses", () => {
-    const BANNED_RE = [
-      /\bbest\b/,
-      /\btop\b/,
-      /\bsafest\b/,
-      /\brisk-free\b/,
-      /\brecommended\b/,
-      /\byou should buy\b/,
-      /\byou should sell\b/,
-      /\bput your money in\b/,
-      /\bbetter option\b/,
-      /\bi recommend\b/,
-      /\bguaranteed returns?\b/,
-    ];
-
-    it("stock scenario includes stock limitation and disclaimer", () => {
+    it("stock scenario uses structured sections", () => {
       const result = routePrompt("KES 100,000 in SCOM", ctx);
       const { text } = composeAssistantResponse({ prompt: "KES 100,000 in SCOM", result });
-      expect(text).toContain("Approximate shares are illustrative only");
+      expect(text).toContain("Result");
+      expect(text).toContain("Assumptions");
+      expect(text).toContain("What could change");
+      expect(text).toContain("Important");
       expect(text).toContain(STANDARD_DISCLAIMER);
     });
 
-    it("MMF scenario includes yield limitation and disclaimer", () => {
+    it("MMF scenario uses structured sections", () => {
       const result = routePrompt("What would 100,000 earn at 11%?", ctx);
       const { text } = composeAssistantResponse({ prompt: "What would 100,000 earn at 11%?", result });
-      expect(text).toContain("Yield scenarios are illustrative only");
+      expect(text).toContain("Result");
+      expect(text).toContain("Assumptions");
+      expect(text).toContain("What could change");
       expect(text).toContain(STANDARD_DISCLAIMER);
     });
 
@@ -364,14 +364,43 @@ describe("composeAssistantResponse", () => {
       ];
       for (const prompt of prompts) {
         const result = routePrompt(prompt, ctx);
-        const { text } = composeAssistantResponse({ prompt, result });
-        const lower = text.toLowerCase();
-        for (const re of BANNED_RE) {
-          expect(lower).not.toMatch(re);
+        const { text, followUps } = composeAssistantResponse({ prompt, result });
+        const combined = [text, ...followUps].join(" ").toLowerCase();
+        for (const re of RESPONSE_QUALITY_BANNED) {
+          expect(combined).not.toMatch(re);
         }
       }
     });
   });
+
+describe("manual QA response quality", () => {
+  const qaPrompts = [
+    { prompt: "KES 10,000 in SCOM", kind: "stock-amount" },
+    { prompt: "What would 100,000 earn at 11%?", kind: "mmf" },
+    { prompt: "Should I buy Safaricom?", kind: "refusal" },
+    { prompt: "What is the best MMF?", kind: "refusal" },
+    { prompt: "What if I split 100,000 between MMF and SCOM?", kind: "portfolio-split" },
+  ] as const;
+
+  for (const { prompt, kind } of qaPrompts) {
+    it(`QA: ${prompt}`, () => {
+      const result = routePrompt(prompt, ctx);
+      expect(result.kind).toBe(kind);
+      const { text, followUps } = composeAssistantResponse({ prompt, result });
+      expect(text).toContain(STANDARD_DISCLAIMER);
+      expect(composedOutputIsSafe(text, followUps)).toBe(true);
+      if (kind === "stock-amount" || kind === "mmf" || kind === "portfolio-split") {
+        expect(text).toContain("Result");
+        expect(text).toContain("Assumptions");
+        expect(text).toContain("What could change");
+      }
+      if (kind === "refusal") {
+        expect(text.toLowerCase()).toContain("can't tell you what to buy");
+        expect(text.toLowerCase()).toContain("can't rank instruments");
+      }
+    });
+  }
+});
 
 describe("composeCapabilitiesGuide", () => {
   it("includes scenarios, lookup, news, explainers, and limits", () => {
