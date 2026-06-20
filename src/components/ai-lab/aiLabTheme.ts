@@ -3,7 +3,7 @@
 export const AI_LAB_PAGE =
   "flex flex-col min-h-0 h-full bg-muted/30 overflow-hidden";
 export const AI_LAB_PAGE_INNER =
-  "flex flex-col flex-1 min-h-0 gap-3 md:gap-4 container py-3 md:py-5 max-w-6xl";
+  "flex flex-col flex-1 min-h-0 w-full gap-3 md:gap-4 container py-3 md:py-5 max-w-6xl overflow-hidden";
 
 export const AI_LAB_CARD =
   "rounded-2xl border border-border bg-card text-card-foreground shadow-sm";
@@ -12,9 +12,12 @@ export const AI_LAB_EMPTY_SHELL =
 export const AI_LAB_ACTIVE_SHELL =
   "flex-1 min-h-0 flex flex-col overflow-hidden border-0 shadow-none bg-transparent";
 export const AI_LAB_INPUT_DOCK =
-  "shrink-0 px-3 md:px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-background via-background/95 to-background/0 backdrop-blur-sm z-10";
+  "shrink-0 border-t border-border/50 px-3 md:px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-background/95 backdrop-blur-md z-10";
+export const AI_LAB_DOCK_INNER = "max-w-3xl mx-auto w-full space-y-1.5";
+export const AI_LAB_DOCK_DISCLAIMER =
+  "text-[10px] leading-snug text-muted-foreground/90 text-center px-1";
 export const AI_LAB_THREAD =
-  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 md:px-6 pt-4 space-y-5 scroll-pb-28";
+  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden px-4 md:px-6 pt-4 space-y-5 scroll-pb-36";
 export const AI_LAB_CARD_INNER =
   "rounded-2xl border border-border bg-muted/30";
 export const AI_LAB_RAIL_CARD =
@@ -61,13 +64,13 @@ export const AI_LAB_DIVIDER = "h-px bg-border";
 export const AI_LAB_COMPARE_ACTIVE = "bg-accent text-accent-foreground";
 export const AI_LAB_COMPARE_INACTIVE =
   "border border-input bg-background text-foreground hover:bg-muted";
-export const AI_LAB_MOBILE_DISCLAIMER =
-  "lg:hidden text-[10px] text-muted-foreground text-center px-2 pt-2 pb-1 border-t border-border/50";
-
 export const AI_LAB_HERO_HEADLINE = "Investing without guessing.";
 export const AI_LAB_HERO_SUBTEXT =
   "Describe your plan in plain English. We'll model returns across Kenya's listed instruments — net of tax, instantly.";
 export const AI_LAB_SAFETY_LINE = "Data only. Not personal financial advice.";
+/** Pinned above the bottom input — short, always visible during chat. */
+export const AI_LAB_DOCK_DISCLAIMER_TEXT =
+  "Not financial advice. Data scenarios only — does not predict returns or recommend products.";
 export const AI_LAB_INPUT_PLACEHOLDER = "Try: Put 100k in Etica MMF for 2 years";
 
 export const AI_LAB_SAFE_PROMPT_CHIPS = [

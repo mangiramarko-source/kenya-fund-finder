@@ -55,6 +55,19 @@ const AiLabPage = () => {
   const market = useMarketContext();
   const news = useNewsContext();
 
+  useEffect(() => {
+    const html = document.documentElement;
+    const body = document.body;
+    const prevHtmlOverflow = html.style.overflow;
+    const prevBodyOverflow = body.style.overflow;
+    html.style.overflow = "hidden";
+    body.style.overflow = "hidden";
+    return () => {
+      html.style.overflow = prevHtmlOverflow;
+      body.style.overflow = prevBodyOverflow;
+    };
+  }, []);
+
   const compareMessageIds = useMemo(
     () =>
       messages
@@ -231,13 +244,15 @@ const AiLabPage = () => {
           </div>
         </header>
 
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[1fr_220px] gap-4 items-stretch">
-          <AiLabChat
-            messages={messages}
-            onSubmit={handleSubmit}
-            compareStateByMessageId={compareStateByMessageId}
-            onLookbackChange={handleLookbackChange}
-          />
+        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] grid-rows-[minmax(0,1fr)] gap-4">
+          <div className="min-h-0 h-full flex flex-col overflow-hidden">
+            <AiLabChat
+              messages={messages}
+              onSubmit={handleSubmit}
+              compareStateByMessageId={compareStateByMessageId}
+              onLookbackChange={handleLookbackChange}
+            />
+          </div>
 
           <aside className="hidden lg:block overflow-y-auto min-h-0">
             <AiLabAboutRail />

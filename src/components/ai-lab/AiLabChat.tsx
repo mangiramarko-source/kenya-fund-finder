@@ -17,10 +17,11 @@ import {
   AI_LAB_INPUT_WRAP,
   AI_LAB_INPUT_FIELD,
   AI_LAB_INPUT_PLACEHOLDER,
-  AI_LAB_MOBILE_DISCLAIMER,
+  AI_LAB_DOCK_DISCLAIMER,
+  AI_LAB_DOCK_DISCLAIMER_TEXT,
+  AI_LAB_DOCK_INNER,
   AI_LAB_RUN_BTN,
   AI_LAB_SAFE_PROMPT_CHIPS,
-  AI_LAB_SAFETY_LINE,
   AI_LAB_THREAD,
   AI_LAB_USER_BUBBLE,
 } from "@/components/ai-lab/aiLabTheme";
@@ -153,6 +154,7 @@ const AiLabChat = ({
                 autoFocus
               />
             </form>
+            <p className={AI_LAB_DOCK_DISCLAIMER}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
             <div className="flex flex-wrap gap-2 justify-start">
               {AI_LAB_SAFE_PROMPT_CHIPS.map((chip) => (
                 <PromptChip key={chip} label={chip} onClick={() => submitPrompt(chip)} />
@@ -230,16 +232,18 @@ const AiLabChat = ({
                 </div>
               );
             })}
-            <p className={AI_LAB_MOBILE_DISCLAIMER}>{AI_LAB_SAFETY_LINE}</p>
           </div>
         )}
       </div>
 
       {hasMessages && (
         <div className={AI_LAB_INPUT_DOCK}>
-          <form onSubmit={handleSubmit}>
-            <PromptInput value={input} onChange={setInput} onSubmit={() => submitPrompt(input)} />
-          </form>
+          <div className={AI_LAB_DOCK_INNER}>
+            <p className={AI_LAB_DOCK_DISCLAIMER}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
+            <form onSubmit={handleSubmit}>
+              <PromptInput value={input} onChange={setInput} onSubmit={() => submitPrompt(input)} />
+            </form>
+          </div>
         </div>
       )}
     </div>
