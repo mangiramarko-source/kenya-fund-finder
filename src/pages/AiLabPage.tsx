@@ -220,7 +220,7 @@ const AiLabPage = () => {
 
   return (
     <div className={AI_LAB_PAGE}>
-      <div className={`${AI_LAB_PAGE_INNER} flex flex-col gap-6 min-h-[calc(100dvh-5rem)]`}>
+      <div className={`${AI_LAB_PAGE_INNER} flex flex-col gap-4 min-h-0`}>
         <header className="flex items-center gap-2 shrink-0">
           <div className="flex items-center justify-center h-9 w-9 rounded-full bg-accent text-accent-foreground">
             <Sparkles className="h-4 w-4" />
