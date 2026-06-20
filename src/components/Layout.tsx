@@ -14,6 +14,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const showTicker = pathname === "/";
   // Immersive mobile view for news article pages: hide mobile navbar & footer
   const isNewsArticle = /^\/news\/[^/]+/.test(pathname);
+  // AI Lab uses its own floating composer — hide global footer entirely
+  const isAiLab = pathname === "/ai-lab" || pathname.startsWith("/ai-lab/");
 
   return (
     <div className="flex min-h-screen font-body">
