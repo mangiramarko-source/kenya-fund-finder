@@ -1,7 +1,7 @@
 // Phase 13C/13D — AI Lab scoped tokens aligned with site CSS variables (no global theme edits).
 
-export const AI_LAB_PAGE = "min-h-screen overflow-x-hidden bg-muted/30";
-export const AI_LAB_PAGE_INNER = "container py-8 md:py-12 max-w-6xl";
+export const AI_LAB_PAGE = "h-[100dvh] overflow-hidden bg-muted/30";
+export const AI_LAB_PAGE_INNER = "container py-4 md:py-6 max-w-6xl h-full";
 
 export const AI_LAB_CARD =
   "rounded-2xl border border-border bg-card text-card-foreground shadow-sm";
