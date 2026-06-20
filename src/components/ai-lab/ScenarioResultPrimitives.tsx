@@ -1,6 +1,5 @@
 import { Info } from "lucide-react";
 import {
-  AI_LAB_CARD,
   AI_LAB_COLLAPSIBLE,
   AI_LAB_LABEL,
   AI_LAB_METRIC,
@@ -8,6 +7,7 @@ import {
   AI_LAB_METRIC_LG,
   AI_LAB_NEGATIVE,
   AI_LAB_POSITIVE,
+  AI_LAB_RESULT_SHELL,
   AI_LAB_SECTION,
 } from "./aiLabTheme";
 
@@ -35,11 +35,11 @@ export const ResultShell = ({
   children: React.ReactNode;
   className?: string;
 }) => (
-  <div className={`${AI_LAB_CARD} p-3 md:p-4 space-y-3 ${className}`}>{children}</div>
+  <div className={`${AI_LAB_RESULT_SHELL} ${className}`}>{children}</div>
 );
 
 export const SummaryMetricGrid = ({ children }: { children: React.ReactNode }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">{children}</div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">{children}</div>
 );
 
 export const SummaryMetricCard = ({
@@ -107,7 +107,7 @@ export const KV = ({ k, v }: { k: string; v: React.ReactNode }) => (
 
 export const BreakdownTable = ({ children }: { children: React.ReactNode }) => (
   <div className="overflow-x-auto -mx-1 px-1">
-    <table className="w-full min-w-[480px] text-sm tabular-nums">{children}</table>
+    <table className="w-full min-w-[320px] text-sm tabular-nums">{children}</table>
   </div>
 );
 
