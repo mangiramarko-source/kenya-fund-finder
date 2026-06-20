@@ -14,6 +14,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const showTicker = pathname === "/";
   // Immersive mobile view for news article pages: hide mobile navbar & footer
   const isNewsArticle = /^\/news\/[^/]+/.test(pathname);
+  // AI Lab uses its own floating composer — hide global footer entirely
+  const isAiLab = pathname === "/ai-lab" || pathname.startsWith("/ai-lab/");
 
   return (
     <div className="flex min-h-screen font-body">
@@ -41,10 +43,12 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         )}
         <main id="main-content" className="flex-1 min-h-[80vh]">{children}</main>
-        {/* Footer hidden on mobile news article pages for immersive view */}
-        <div className={isNewsArticle ? "hidden md:block" : ""}>
-          <Footer />
-        </div>
+        {/* Footer hidden on mobile news article pages and entirely on the AI Lab */}
+        {!isAiLab && (
+          <div className={isNewsArticle ? "hidden md:block" : ""}>
+            <Footer />
+          </div>
+        )}
       </div>
     </div>
   );

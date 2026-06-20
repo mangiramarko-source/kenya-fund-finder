@@ -10,7 +10,7 @@ export const AI_LAB_EMPTY_SHELL =
 export const AI_LAB_ACTIVE_SHELL =
   "flex flex-col min-h-[480px] max-h-[calc(100dvh-11rem)] lg:max-h-[calc(100dvh-9rem)] overflow-hidden border-0 shadow-none bg-transparent";
 export const AI_LAB_INPUT_DOCK =
-  "shrink-0 p-3 md:p-4 bg-transparent z-10";
+  "shrink-0 px-3 md:px-4 pt-3 pb-3 md:pb-4 bg-gradient-to-t from-background via-background/95 to-background/0 backdrop-blur-sm z-10";
 export const AI_LAB_CARD_INNER =
   "rounded-2xl border border-border bg-muted/30";
 export const AI_LAB_RAIL_CARD =
