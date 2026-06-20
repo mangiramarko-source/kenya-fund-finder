@@ -250,7 +250,7 @@ const AiLabPage = () => {
   return (
     <div className={AI_LAB_PAGE}>
       <div className={AI_LAB_PAGE_INNER}>
-        <header className="flex items-center gap-2 shrink-0">
+        <header className="flex shrink-0 items-center gap-2">
           <AiLabMobileBack />
           <div className="hidden md:flex items-center gap-2 min-w-0">
             <div className="flex items-center justify-center h-9 w-9 rounded-full bg-accent text-accent-foreground shrink-0">
@@ -263,15 +263,14 @@ const AiLabPage = () => {
           </div>
         </header>
 
-        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+        <main className="flex flex-1 min-h-0 flex-col overflow-hidden">
           <AiLabChat
             messages={messages}
             onSubmit={handleSubmit}
             compareStateByMessageId={compareStateByMessageId}
             onLookbackChange={handleLookbackChange}
           />
-        </div>
-
+        </main>
       </div>
     </div>
   );
