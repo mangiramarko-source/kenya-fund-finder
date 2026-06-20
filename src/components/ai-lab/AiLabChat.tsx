@@ -107,7 +107,12 @@ const AiLabChat = ({
     }
 
     const scrollToTurn = () => {
-      turnRefs.current.get(anchorId)?.scrollIntoView({ block: "start" });
+      const container = threadRef.current;
+      const target = turnRefs.current.get(anchorId);
+      if (!container || !target) return;
+      // Scroll within the chat container only — never the window.
+      const top = target.offsetTop - container.offsetTop - 8;
+      container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     };
 
     scrollToTurn();
