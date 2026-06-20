@@ -3,13 +3,11 @@ import { Navigate } from "react-router-dom";
 import { Sparkles } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import AiLabAboutRail from "@/components/ai-lab/AiLabAboutRail";
 import AiLabChat, { type CompareState } from "@/components/ai-lab/AiLabChat";
 import {
   AI_LAB_LABEL,
   AI_LAB_PAGE,
   AI_LAB_PAGE_INNER,
-  AI_LAB_RAIL_CARD,
   AI_LAB_SAFETY_LINE,
 } from "@/components/ai-lab/aiLabTheme";
 import { routePrompt } from "@/lib/aiLab/router";
@@ -244,19 +242,13 @@ const AiLabPage = () => {
           </div>
         </header>
 
-        <div className="flex-1 min-h-0 grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_220px] grid-rows-[minmax(0,1fr)] gap-4">
-          <div className="min-h-0 h-full flex flex-col overflow-hidden">
-            <AiLabChat
-              messages={messages}
-              onSubmit={handleSubmit}
-              compareStateByMessageId={compareStateByMessageId}
-              onLookbackChange={handleLookbackChange}
-            />
-          </div>
-
-          <aside className="hidden lg:block overflow-y-auto min-h-0">
-            <AiLabAboutRail />
-          </aside>
+        <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
+          <AiLabChat
+            messages={messages}
+            onSubmit={handleSubmit}
+            compareStateByMessageId={compareStateByMessageId}
+            onLookbackChange={handleLookbackChange}
+          />
         </div>
 
       </div>
