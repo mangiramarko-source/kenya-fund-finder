@@ -8,9 +8,21 @@ export const FORBIDDEN_PATTERNS: RegExp[] = [
   /\bbest fund\b/i,
   /\btop fund\b/i,
   /\bsafest fund\b/i,
+  /\bbetter option\b/i,
+  /\brecommended choice\b/i,
   /\bguaranteed returns?\b/i,
   /\brisk[-\s]?free\b/i,
   /\bput your money\b/i,
+];
+
+/** Used in tests to scan composed assistant output (stricter than runtime guards). */
+export const RESPONSE_QUALITY_BANNED: RegExp[] = [
+  ...FORBIDDEN_PATTERNS,
+  /\bbest\b/i,
+  /\btop\b/i,
+  /\bsafest\b/i,
+  /\b(?<!not )guaranteed\b/i,
+  /\brecommended\b/i,
 ];
 
 export const STOCK_AMOUNT_MAKE_SCENARIO_RE =
@@ -69,8 +81,19 @@ export interface RefusalPayload {
   disclaimer: string;
 }
 
-export const REFUSAL_MESSAGE =
-  "I can't tell you what to buy, sell, or choose. I can show illustrative scenarios, available data, and factors to compare so you can discuss them with a licensed adviser or make your own decision.";
+export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";
+
+export const REFUSAL_MESSAGE = [
+  "I can't tell you what to buy, sell, or choose. I can't rank instruments or tell you what to pick. I can help you compare the available data neutrally.",
+  "",
+  "I can show:",
+  "- recent price or yield movement",
+  "- possible outcomes for a specific amount",
+  "- liquidity, volatility, and fee considerations",
+  "- assumptions behind a calculation",
+  "",
+  STANDARD_DISCLAIMER,
+].join("\n");
 
 export const SAFE_ALTERNATIVES = [
   "KES 100,000 in SCOM",
@@ -78,8 +101,6 @@ export const SAFE_ALTERNATIVES = [
   "Explain stock vs MMF risk factors",
   "Show Etica MMF yield",
 ];
-
-export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";
 
 export function hasMmfYieldContext(prompt: string): boolean {
   return MMF_CONTEXT_RE.test(prompt);

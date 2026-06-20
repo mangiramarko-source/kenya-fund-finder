@@ -259,10 +259,11 @@ describe("processAiLabUserPrompt — top-level chat flow", () => {
   });
 
   describe("hypothetical scenario E2E", () => {
-    it("answers SCOM amount scenario with illustrative narrative", async () => {
+    it("answers SCOM amount scenario with structured narrative", async () => {
       const out = await processAiLabUserPrompt("I have 100,000, what happens if I put it in SCOM?", ctx);
       expect(out.result?.kind).toBe("stock-amount");
-      expect(out.text).toContain("Approximate shares are illustrative only");
+      expect(out.text).toContain("Result");
+      expect(out.text).toContain("Assumptions");
       expect(out.text).toContain("Data only. Not personal financial advice.");
     });
 
@@ -270,6 +271,7 @@ describe("processAiLabUserPrompt — top-level chat flow", () => {
       const out = await processAiLabUserPrompt("Where should I put 100,000?", ctx);
       expect(out.result?.kind).toBe("refusal");
       expect(out.text.toLowerCase()).toContain("can't tell you what to buy, sell, or choose");
+      expect(out.text.toLowerCase()).toContain("can't rank instruments");
     });
   });
 
