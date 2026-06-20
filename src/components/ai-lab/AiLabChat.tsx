@@ -53,11 +53,13 @@ const PromptInput = ({
   onChange,
   onSubmit,
   autoFocus = false,
+  onInputFocus,
 }: {
   value: string;
   onChange: (v: string) => void;
   onSubmit: () => void;
   autoFocus?: boolean;
+  onInputFocus?: (input: HTMLInputElement) => void;
 }) => (
   <div className={AI_LAB_INPUT_WRAP}>
     <Search className="h-4 w-4 text-muted-foreground shrink-0" />
@@ -68,6 +70,7 @@ const PromptInput = ({
       placeholder={AI_LAB_INPUT_PLACEHOLDER}
       className={AI_LAB_INPUT_FIELD}
       autoFocus={autoFocus}
+      onFocus={(e) => onInputFocus?.(e.currentTarget)}
     />
     <button type="button" onClick={onSubmit} disabled={!value.trim()} className={AI_LAB_RUN_BTN}>
       Run
@@ -95,6 +98,16 @@ const AiLabChat = ({
   const setTurnRef = useCallback((id: string) => (el: HTMLDivElement | null) => {
     if (el) turnRefs.current.set(id, el);
     else turnRefs.current.delete(id);
+  }, []);
+
+  const scrollInputIntoThread = useCallback((inputEl: HTMLInputElement) => {
+    const thread = threadRef.current;
+    if (!thread) return;
+    const inputRect = inputEl.getBoundingClientRect();
+    const threadRect = thread.getBoundingClientRect();
+    if (inputRect.bottom > threadRect.bottom || inputRect.top < threadRect.top) {
+      inputEl.scrollIntoView({ block: "nearest", behavior: "smooth" });
+    }
   }, []);
 
   useEffect(() => {
@@ -150,6 +163,7 @@ const AiLabChat = ({
                 onChange={setInput}
                 onSubmit={() => submitPrompt(input)}
                 autoFocus
+                onInputFocus={scrollInputIntoThread}
               />
             </form>
             <p className={AI_LAB_DOCK_DISCLAIMER}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
@@ -238,7 +252,12 @@ const AiLabChat = ({
         <div className={AI_LAB_INPUT_DOCK}>
           <div className={AI_LAB_DOCK_INNER}>
             <form onSubmit={handleSubmit}>
-              <PromptInput value={input} onChange={setInput} onSubmit={() => submitPrompt(input)} />
+              <PromptInput
+                value={input}
+                onChange={setInput}
+                onSubmit={() => submitPrompt(input)}
+                onInputFocus={scrollInputIntoThread}
+              />
             </form>
             <p className={`${AI_LAB_DOCK_DISCLAIMER} mt-1.5`}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
           </div>
