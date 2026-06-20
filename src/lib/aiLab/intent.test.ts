@@ -102,3 +102,26 @@ describe("classifyAiLabPrompt intent type", () => {
     expect(r.assetType).toBe("unknown");
   });
 });
+
+describe("hypothetical answer mode intent", () => {
+  it("classifies stock amount prompts as stock-amount", () => {
+    expect(classifyAiLabPrompt("I have 100,000, what happens if I put it in SCOM?").intentType).toBe(
+      "stock-amount",
+    );
+    expect(classifyAiLabPrompt("How many Safaricom shares can I buy with 100,000?").intentType).toBe(
+      "stock-amount",
+    );
+  });
+
+  it("classifies MMF earn prompts as mmf-yield", () => {
+    expect(classifyAiLabPrompt("What would 100,000 earn at 11%?").intentType).toBe("mmf-yield");
+    expect(classifyAiLabPrompt("What does 11% annual yield mean monthly?").intentType).toBe(
+      "mmf-yield",
+    );
+  });
+
+  it("classifies advice prompts as refusal", () => {
+    expect(classifyAiLabPrompt("Should I buy SCOM?").intentType).toBe("refusal");
+    expect(classifyAiLabPrompt("Where should I put 100,000?").intentType).toBe("refusal");
+  });
+});

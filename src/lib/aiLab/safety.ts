@@ -70,13 +70,13 @@ export interface RefusalPayload {
 }
 
 export const REFUSAL_MESSAGE =
-  "I can't tell you what to buy, sell, or invest in. I can help compare scenarios, yields, price movements, fees, liquidity, and recent data so you can understand the trade-offs.";
+  "I can't tell you what to buy, sell, or choose. I can show illustrative scenarios, available data, and factors to compare so you can discuss them with a licensed adviser or make your own decision.";
 
 export const SAFE_ALTERNATIVES = [
-  "Split 100k between MMF and SCOM at 11% yield",
-  "Compare SCOM vs EQTY",
-  "Latest news about Safaricom",
-  "Explain dividend yield",
+  "KES 100,000 in SCOM",
+  "What would 100,000 earn at 11%?",
+  "Explain stock vs MMF risk factors",
+  "Show Etica MMF yield",
 ];
 
 export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";

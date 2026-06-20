@@ -221,9 +221,13 @@ describe("portfolio-split missing data", () => {
     expect(r.kind).toBe("unknown");
   });
 
-  it("missing yield and no reliable average yield returns safe unknown", () => {
+  it("missing yield and no reliable average yield uses illustrative default yield", () => {
     const r = routePrompt("Split 100k between MMF and SCOM", noYieldCtx);
-    expect(r.kind).toBe("unknown");
+    expect(r.kind).toBe("portfolio-split");
+    if (r.kind === "portfolio-split") {
+      expect(r.inputs.annualYieldPct).toBe(11);
+      expect(r.assumptions.join(" ")).toMatch(/Illustrative yield used/i);
+    }
   });
 
   it("conflicting percentages return safe unknown", () => {

@@ -373,6 +373,60 @@ describe("routePrompt", () => {
     });
   });
 
+
+  describe("hypothetical answer mode routing", () => {
+    it("routes 'I have 100,000, what happens if I put it in SCOM?' to stock-amount", () => {
+      const r = routePrompt("I have 100,000, what happens if I put it in SCOM?", stockCtx);
+      expect(r.kind).toBe("stock-amount");
+    });
+
+    it("routes 'How many Safaricom shares can I buy with 100,000?' to stock-amount", () => {
+      const r = routePrompt("How many Safaricom shares can I buy with 100,000?", stockCtx);
+      expect(r.kind).toBe("stock-amount");
+    });
+
+    it("routes 'What if SCOM goes up 10%?' to stock-move with illustrative amount", () => {
+      const r = routePrompt("What if SCOM goes up 10%?", stockCtx);
+      expect(r.kind).toBe("stock-move");
+      if (r.kind === "stock-move") {
+        expect(r.inputs.amount).toBe(100_000);
+        expect(r.inputs.priceChangePct).toBe(10);
+      }
+    });
+
+    it("routes 'What would 100,000 earn at 11%?' to mmf", () => {
+      const r = routePrompt("What would 100,000 earn at 11%?");
+      expect(r.kind).toBe("mmf");
+      if (r.kind === "mmf") {
+        expect(r.inputs.amount).toBe(100_000);
+        expect(r.inputs.annualYieldPct).toBe(11);
+      }
+    });
+
+    it("routes 'What does 11% annual yield mean monthly?' to mmf", () => {
+      const r = routePrompt("What does 11% annual yield mean monthly?");
+      expect(r.kind).toBe("mmf");
+    });
+
+    it("routes 'What happens if yield drops from 11% to 9%?' to mmf-yield-change", () => {
+      const r = routePrompt("What happens if yield drops from 11% to 9%?");
+      expect(r.kind).toBe("mmf-yield-change");
+    });
+
+    it("routes 'What if I split 100,000 between MMF and SCOM?' to portfolio-split", () => {
+      const r = routePrompt("What if I split 100,000 between MMF and SCOM?", stockCtx);
+      expect(r.kind).toBe("portfolio-split");
+    });
+
+    it("refuses 'Should I buy SCOM?'", () => {
+      expect(routePrompt("Should I buy SCOM?", stockCtx).kind).toBe("refusal");
+    });
+
+    it("refuses 'Where should I put 100,000?'", () => {
+      expect(routePrompt("Where should I put 100,000?").kind).toBe("refusal");
+    });
+  });
+
   it("every non-refusal result includes the standard disclaimer", () => {
     const prompts = [
       "If I invest KES 100,000 at 11% yield, what happens?",
