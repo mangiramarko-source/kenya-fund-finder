@@ -312,6 +312,7 @@ export const NEWS_IMPORTANT_NOTES = [
   "This does not predict price movement.",
   "This is not buy/sell advice.",
   "Article matching is based on available titles, summaries, symbols, and company names. It may miss relevant articles or include broad mentions.",
+  "This lists stored summaries only — not a full article analysis.",
 ] as const;
 
 export interface NewsSummaryArticle {
