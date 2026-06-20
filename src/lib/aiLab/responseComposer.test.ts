@@ -227,11 +227,62 @@ describe("composeAssistantResponse", () => {
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
   });
 
-  it("filter-style unknown returns honest reframe", () => {
-    const result = routePrompt("Show MMFs above 10%", ctx);
-    expect(result.kind).toBe("unknown");
+  it("instrument-family-overview uses neutral intro copy", () => {
+    const familyResult = {
+      kind: "website-lookup" as const,
+      summary: "Matching instruments for Britam from KenyaFundFinder listings.",
+      entityType: "fund" as const,
+      entityName: "Britam",
+      fields: [
+        { label: "Fund: Britam Money Market Fund", value: "10.2% annual yield · money market" },
+        { label: "Fund: Britam Balanced Fund", value: "12.5% annual yield · balanced" },
+      ],
+      sourceNote: "Pulled from KenyaFundFinder public listings via the data gateway.",
+      disclaimer: STANDARD_DISCLAIMER,
+      lookupMode: "instrument-family-overview" as const,
+      totalMatches: 2,
+      shownCount: 2,
+    };
+    const { text, followUps } = composeAssistantResponse({
+      prompt: "Britam",
+      result: familyResult,
+    });
+    expect(text).toContain(
+      "Matching instruments from available KenyaFundFinder data. This is a data lookup, not a recommendation.",
+    );
+    expect(familyResult.disclaimer).toBe(STANDARD_DISCLAIMER);
+    expect(composedOutputIsSafe(text, followUps)).toBe(true);
+  });
+
+    it("MMF yield filter lookup result does not produce unsupported copy", () => {
+    const filterResult = {
+      kind: "website-lookup" as const,
+      summary: "Money market funds matching your yield filter from KenyaFundFinder listings.",
+      entityType: "fund" as const,
+      entityName: "MMFs with annual yield above 10%",
+      fields: [
+        { label: "Etica Money Market Fund", value: "11.5% annual yield · money market" },
+      ],
+      sourceNote: "Filtered from KenyaFundFinder public listings via the data gateway.",
+      disclaimer: STANDARD_DISCLAIMER,
+      lookupMode: "mmf-yield-filter" as const,
+      totalMatches: 1,
+      shownCount: 1,
+    };
     const { text, followUps } = composeAssistantResponse({
       prompt: "Show MMFs above 10%",
+      result: filterResult,
+    });
+    expect(text.toLowerCase()).not.toContain("can't filter");
+    expect(text.toLowerCase()).toContain("money market funds matching your yield filter");
+    expect(composedOutputIsSafe(text, followUps)).toBe(true);
+  });
+
+  it("unsupported generic filter returns honest reframe", () => {
+    const result = routePrompt("Show funds above 10%", ctx);
+    expect(result.kind).toBe("unknown");
+    const { text, followUps } = composeAssistantResponse({
+      prompt: "Show funds above 10%",
       result,
     });
     expect(text.toLowerCase()).toContain("can't filter");

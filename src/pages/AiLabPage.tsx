@@ -37,8 +37,8 @@ import {
   composeCapabilitiesGuide,
   composeFilterUnsupportedResponse,
   isCapabilitiesPrompt,
-  isFilterLookupPrompt,
 } from "@/lib/aiLab/responseComposer";
+import { isUnsupportedFilterLookupPrompt } from "@/lib/aiLab/websiteLookup";
 
 const DEFAULT_LOOKBACK: LookbackDays = 30;
 
@@ -137,7 +137,7 @@ const AiLabPage = () => {
         return;
       }
 
-      if (isFilterLookupPrompt(prompt)) {
+      if (isUnsupportedFilterLookupPrompt(prompt)) {
         const { text, followUps } = composeFilterUnsupportedResponse();
         const assistantMessage = createAssistantMessage({
           text,
