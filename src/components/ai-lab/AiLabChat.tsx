@@ -138,8 +138,8 @@ const AiLabChat = ({
         className="flex-1 min-h-0 overflow-y-auto overflow-x-hidden p-4 md:p-6 pb-2 space-y-6"
       >
         {!hasMessages ? (
-          <div className="max-w-4xl space-y-8 md:space-y-10 pt-4 md:pt-8 pb-6">
-            <div className="space-y-3 md:space-y-4">
+          <div className="max-w-2xl mx-auto space-y-10 pt-6 md:pt-12 pb-6">
+            <div className="space-y-4">
               <h2 className={AI_LAB_HEADLINE}>{AI_LAB_HERO_HEADLINE}</h2>
               <p className={AI_LAB_HERO_SUBTEXT_CLASS}>{AI_LAB_HERO_SUBTEXT}</p>
             </div>
@@ -151,7 +151,7 @@ const AiLabChat = ({
                 autoFocus
               />
             </form>
-            <div className="flex flex-wrap gap-2 md:gap-2.5 justify-start">
+            <div className="flex flex-wrap gap-2 justify-start">
               {AI_LAB_SAFE_PROMPT_CHIPS.map((chip) => (
                 <PromptChip key={chip} label={chip} onClick={() => submitPrompt(chip)} />
               ))}
