@@ -3,6 +3,7 @@
 
 import { fetchPublicData } from "@/lib/gateway";
 import { findAsset, type ComparableAsset, type MarketContext } from "./marketContext";
+import { resolveAssetMatch } from "./nameMatch";
 import { isNewsLabPrompt } from "./newsContext";
 import { detectAdviceIntent } from "./safety";
 import {
@@ -477,23 +478,8 @@ function expandStockQuery(prompt: string): string {
 }
 
 function findAssetInPrompt(prompt: string, assets: ComparableAsset[]): ComparableAsset | null {
-  const lower = expandStockQuery(prompt);
-  const ranked = [...assets].sort((a, b) => {
-    const aLen = Math.max(a.symbol.length, a.name.length);
-    const bLen = Math.max(b.symbol.length, b.name.length);
-    return bLen - aLen;
-  });
-
-  for (const asset of ranked) {
-    const terms = [asset.symbol, asset.name, ...asset.aliases];
-    for (const term of terms) {
-      const t = term.trim();
-      if (t.length < 2) continue;
-      const re = new RegExp(`\\b${escapeRegExp(t.toLowerCase())}\\b`, "i");
-      if (re.test(lower)) return asset;
-    }
-  }
-
+  const result = resolveAssetMatch(prompt, assets);
+  if (result.status === "match") return result.asset ?? null;
   return findAsset(prompt, assets);
 }
 
@@ -535,14 +521,14 @@ export function isBareBrandFundPrompt(prompt: string): boolean {
   if (hasScenarioSignals(prompt) || hasAmountScenario(prompt)) return false;
 
   const trimmed = prompt.trim();
-  if (trimmed.length < 3 || trimmed.length > 40) return false;
+  if (trimmed.length < 2 || trimmed.length > 40) return false;
   if (/\b(mmf|money market|unit trust|fund|stock|share|price|yield|usd|kes|news|compare)\b/i.test(trimmed)) {
     return false;
   }
   if (/\d/.test(trimmed)) return false;
 
   const tokens = tokenizeText(trimmed);
-  return tokens.length === 1;
+  return tokens.length >= 1 && tokens.length <= 2;
 }
 
 

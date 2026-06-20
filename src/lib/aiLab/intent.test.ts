@@ -92,6 +92,31 @@ describe("classifyAiLabPrompt intent type", () => {
     expect(classifyAiLabPrompt("Latest news about SCOM").intentType).toBe("news-summary");
   });
 
+  it("tell me latest news → news-summary intent", () => {
+    expect(classifyAiLabPrompt("tell me latest news").intentType).toBe("news-summary");
+    expect(classifyAiLabPrompt("tell me latest news").assetType).toBe("news");
+  });
+
+  it("market news → news-summary intent", () => {
+    expect(classifyAiLabPrompt("market news").intentType).toBe("news-summary");
+  });
+
+  it("what is happening in the market → news-summary intent", () => {
+    expect(classifyAiLabPrompt("what is happening in the market").intentType).toBe("news-summary");
+  });
+
+  it("news on kcb → news-summary intent", () => {
+    expect(classifyAiLabPrompt("news on kcb").intentType).toBe("news-summary");
+  });
+
+  it("safaricom vs kcb → compare", () => {
+    expect(classifyAiLabPrompt("safaricom vs kcb").intentType).toBe("compare");
+  });
+
+  it("difference between kcb and equity → compare", () => {
+    expect(classifyAiLabPrompt("difference between kcb and equity").intentType).toBe("compare");
+  });
+
   it("Explain dividend yield → explainer", () => {
     expect(classifyAiLabPrompt("Explain dividend yield").intentType).toBe("explainer");
   });

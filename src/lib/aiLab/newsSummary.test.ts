@@ -1,6 +1,9 @@
 import { describe, it, expect } from "vitest";
 import { routePrompt } from "./router";
-import { NEWS_UNKNOWN_MSG } from "./intent";
+import {
+  NEWS_LIMITATION_MSG,
+  NEWS_INSTRUMENT_FOLLOWUPS,
+} from "./newsContext";
 import {
   calculateNewsSummaryScenario,
   getNewsSummaryUserText,
@@ -225,7 +228,7 @@ describe("routePrompt news-summary", () => {
     }
   });
 
-  it("returns NEWS_UNKNOWN_MSG when no articles match", () => {
+  it("returns instrument unavailable message when no articles match", () => {
     const noMatch: NewsContext = {
       articles: [oldMarketArticle],
       fetchedAt: REF_DATE.toISOString(),
@@ -233,24 +236,25 @@ describe("routePrompt news-summary", () => {
     const r = routePrompt("Latest news about Safaricom", marketCtx, noMatch);
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
-      expect(r.message).toBe(NEWS_UNKNOWN_MSG);
+      expect(r.message.toLowerCase()).toContain("could not find matching news");
+      expect(r.suggestions).toEqual(NEWS_INSTRUMENT_FOLLOWUPS);
     }
   });
 
-  it("returns NEWS_UNKNOWN_MSG when newsCtx is empty", () => {
+  it("returns limitation fallback when newsCtx is empty", () => {
     const empty: NewsContext = { articles: [], fetchedAt: REF_DATE.toISOString() };
     const r = routePrompt("Latest news about Safaricom", marketCtx, empty);
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
-      expect(r.message).toBe(NEWS_UNKNOWN_MSG);
+      expect(r.message).toBe(NEWS_LIMITATION_MSG);
     }
   });
 
-  it("returns NEWS_UNKNOWN_MSG without newsCtx", () => {
+  it("returns limitation fallback without newsCtx", () => {
     const r = routePrompt("Latest news about Safaricom", marketCtx);
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
-      expect(r.message).toBe(NEWS_UNKNOWN_MSG);
+      expect(r.message).toBe(NEWS_LIMITATION_MSG);
     }
   });
 });
@@ -297,11 +301,12 @@ describe("routePrompt news today gates", () => {
     expect(r.kind).toBe("news-summary");
   });
 
-  it("G5-2: Summarize today's market news with only old articles → NEWS_UNKNOWN_MSG", () => {
+  it("G5-2: Summarize today's market news with only old articles → helpful unavailable message", () => {
     const r = routePrompt("Summarize today's market news", marketCtx, oldOnlyArticles());
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
-      expect(r.message).toBe(NEWS_UNKNOWN_MSG);
+      expect(r.message.toLowerCase()).toContain("today");
+      expect(r.message.toLowerCase()).not.toContain("searched the internet");
     }
   });
 });

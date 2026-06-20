@@ -5,6 +5,7 @@
 
 import { useEffect, useState } from "react";
 import { fetchPublicData } from "@/lib/gateway";
+import { resolveAssetMatch } from "./nameMatch";
 
 export type AssetKind = "stock" | "fund" | "commodity" | "fx";
 
@@ -218,22 +219,9 @@ export async function fetchMarketContext(): Promise<MarketContext> {
 
 /** Fuzzy lookup of an asset by user-supplied token (symbol / name fragment). */
 export function findAsset(query: string, assets: ComparableAsset[]): ComparableAsset | null {
-  const q = query.toLowerCase().trim();
-  if (!q) return null;
-  // Exact symbol match wins
-  const exact = assets.find((a) => a.symbol.toLowerCase() === q);
-  if (exact) return exact;
-  // Then exact name
-  const nameExact = assets.find((a) => a.name.toLowerCase() === q);
-  if (nameExact) return nameExact;
-  // Alias contains
-  const aliasHit = assets.find((a) => a.aliases.some((t) => t === q));
-  if (aliasHit) return aliasHit;
-  // Substring on name
-  const sub = assets.find(
-    (a) => a.name.toLowerCase().includes(q) || a.symbol.toLowerCase().includes(q),
-  );
-  return sub ?? null;
+  const result = resolveAssetMatch(query, assets);
+  if (result.status === "match") return result.asset ?? null;
+  return null;
 }
 
 export function useMarketContext() {

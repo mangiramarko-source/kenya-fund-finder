@@ -9,7 +9,7 @@ import {
   AI_LAB_BETA_NOTE,
   AI_LAB_SCENARIO_INVENTORY,
 } from "./readiness";
-import { NEWS_UNKNOWN_MSG } from "./intent";
+import { NEWS_LIMITATION_MSG } from "./newsContext";
 import { SAFE_ALTERNATIVES, STANDARD_DISCLAIMER } from "./safety";
 import type { NewsArticle, NewsContext } from "./newsContext";
 import type { ComparableAsset, MarketContext } from "./marketContext";
@@ -112,9 +112,10 @@ describe("Phase 9 readiness copy", () => {
     expect(AI_LAB_SCENARIO_INVENTORY).not.toContain("llm");
   });
 
-  it("NEWS_UNKNOWN_MSG reflects data miss not unsupported feature", () => {
-    expect(NEWS_UNKNOWN_MSG.toLowerCase()).not.toContain("not fully supported");
-    expect(NEWS_UNKNOWN_MSG.toLowerCase()).toContain("matching news");
+  it("NEWS_LIMITATION_MSG does not claim live internet access", () => {
+    expect(NEWS_LIMITATION_MSG.toLowerCase()).toContain("not enabled");
+    expect(NEWS_LIMITATION_MSG.toLowerCase()).not.toContain("searched the internet");
+    expect(NEWS_LIMITATION_MSG.toLowerCase()).toContain("will not create or guess headlines");
   });
 
   it("SAFE_ALTERNATIVES use scenario phrasing only", () => {
@@ -148,7 +149,7 @@ describe("Phase 9 scenario smoke routing", () => {
     const unknown = routePrompt("Latest news about Safaricom", ctx);
     expect(unknown.kind).toBe("unknown");
     if (unknown.kind === "unknown") {
-      expect(unknown.message).toBe(NEWS_UNKNOWN_MSG);
+      expect(unknown.message).toBe(NEWS_LIMITATION_MSG);
       expect(unknown.disclaimer).toBe(STANDARD_DISCLAIMER);
     }
   });
