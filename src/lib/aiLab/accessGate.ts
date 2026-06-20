@@ -1,16 +1,17 @@
-// Phase 10 — controlled public beta access gate (default: admin-only).
+// Phase 10 — controlled public beta access gate (default: public).
 
 import type { User } from "@supabase/supabase-js";
 
-export type AiLabAccessMode = "admin-only" | "controlled-beta";
+export type AiLabAccessMode = "public" | "admin-only" | "controlled-beta";
 
-export const AI_LAB_ACCESS_MODE: AiLabAccessMode = "admin-only";
+export const AI_LAB_ACCESS_MODE: AiLabAccessMode = "public";
 
 export const AI_LAB_BETA_ALLOWLIST: readonly string[] = [];
 
 export const AI_LAB_LOGIN_PATH = "/admin/login" as const;
 
 export type AiLabAccessReason =
+  | "public"
   | "admin"
   | "beta-allowlist"
   | "logged-out"
@@ -33,7 +34,7 @@ export type AiLabAccessResult = {
 };
 
 export const AI_LAB_ACCESS_DENIED_COPY: Record<
-  Exclude<AiLabAccessReason, "admin" | "beta-allowlist">,
+  Exclude<AiLabAccessReason, "admin" | "beta-allowlist" | "public">,
   string
 > = {
   "logged-out":
@@ -45,6 +46,7 @@ export const AI_LAB_ACCESS_DENIED_COPY: Record<
 };
 
 const MODE_LABELS: Record<AiLabAccessMode, string> = {
+  public: "Public",
   "admin-only": "Admin only",
   "controlled-beta": "Controlled beta",
 };
@@ -66,6 +68,16 @@ export function resolveAiLabAccess(input: AiLabAccessInput): AiLabAccessResult {
   const mode = input.mode ?? AI_LAB_ACCESS_MODE;
   const allowlist = input.allowlist ?? AI_LAB_BETA_ALLOWLIST;
   const modeLabel = MODE_LABELS[mode];
+
+  if (mode === "public") {
+    return {
+      allowed: true,
+      reason: input.isAdmin ? "admin" : "public",
+      loginPath: AI_LAB_LOGIN_PATH,
+      mode,
+      modeLabel,
+    };
+  }
 
   if (!input.user) {
     return {
@@ -121,7 +133,7 @@ export function canShowAiLabNav(input: AiLabAccessInput): boolean {
 }
 
 export function getAiLabAccessDeniedMessage(reason: AiLabAccessReason): string {
-  if (reason === "admin" || reason === "beta-allowlist") {
+  if (reason === "admin" || reason === "beta-allowlist" || reason === "public") {
     return "";
   }
   return AI_LAB_ACCESS_DENIED_COPY[reason];

@@ -20,32 +20,65 @@ const mkUser = (email: string): User =>
   ({ id: "u1", email } as User);
 
 describe("Phase 10 access gate", () => {
-  it("default mode is admin-only", () => {
-    expect(AI_LAB_ACCESS_MODE).toBe("admin-only");
+  it("default mode is public", () => {
+    expect(AI_LAB_ACCESS_MODE).toBe("public");
   });
 
-  it("logged-out user in default mode gets /admin/login", () => {
+  it("logged-out user is allowed in default public mode", () => {
     const access = resolveAiLabAccess({ user: null, isAdmin: false });
+    expect(access.allowed).toBe(true);
+    expect(access.reason).toBe("public");
+    expect(access.mode).toBe("public");
+  });
+
+  it("non-admin signed-in user is allowed in default public mode", () => {
+    const access = resolveAiLabAccess({
+      user: mkUser("user@example.com"),
+      isAdmin: false,
+    });
+    expect(access.allowed).toBe(true);
+    expect(access.reason).toBe("public");
+    expect(access.mode).toBe("public");
+  });
+
+  it("admin is allowed in default public mode", () => {
+    const access = resolveAiLabAccess({
+      user: mkUser("admin@example.com"),
+      isAdmin: true,
+    });
+    expect(access.allowed).toBe(true);
+    expect(access.reason).toBe("admin");
+    expect(access.mode).toBe("public");
+  });
+
+  it("logged-out user is denied in admin-only mode", () => {
+    const access = resolveAiLabAccess({
+      user: null,
+      isAdmin: false,
+      mode: "admin-only",
+    });
     expect(access.allowed).toBe(false);
     expect(access.reason).toBe("logged-out");
     expect(access.loginPath).toBe("/admin/login");
     expect(access.loginPath).toBe(AI_LAB_LOGIN_PATH);
   });
 
-  it("non-admin signed-in user is denied in default mode", () => {
+  it("non-admin signed-in user is denied in admin-only mode", () => {
     const access = resolveAiLabAccess({
       user: mkUser("beta@example.com"),
       isAdmin: false,
+      mode: "admin-only",
     });
     expect(access.allowed).toBe(false);
     expect(access.reason).toBe("admin-only-locked");
     expect(access.mode).toBe("admin-only");
   });
 
-  it("admin is allowed in default mode", () => {
+  it("admin is allowed in admin-only mode", () => {
     const access = resolveAiLabAccess({
       user: mkUser("admin@example.com"),
       isAdmin: true,
+      mode: "admin-only",
     });
     expect(access.allowed).toBe(true);
     expect(access.reason).toBe("admin");
@@ -96,17 +129,14 @@ describe("Phase 10 access gate", () => {
     expect(access.reason).toBe("beta-allowlist");
   });
 
-  it("default sidebar visibility remains admin-only", () => {
-    const adminUser = mkUser("admin@example.com");
-    expect(canShowAiLabNav({ user: adminUser, isAdmin: true })).toBe(true);
-    expect(canShowAiLabNav({ user: mkUser("user@example.com"), isAdmin: false })).toBe(
-      false,
-    );
-    expect(canShowAiLabNav({ user: null, isAdmin: false })).toBe(false);
-    expect(canShowAiLabNav({ user: null, isAdmin: true })).toBe(false);
+  it("default sidebar visibility is public for all users", () => {
+    expect(canShowAiLabNav({ user: mkUser("admin@example.com"), isAdmin: true })).toBe(true);
+    expect(canShowAiLabNav({ user: mkUser("user@example.com"), isAdmin: false })).toBe(true);
+    expect(canShowAiLabNav({ user: null, isAdmin: false })).toBe(true);
+    expect(canShowAiLabNav({ user: null, isAdmin: true })).toBe(true);
   });
 
-  it("no public nav link is added", () => {
+  it("no public nav link is added to mobile Navbar", () => {
     const navbarPath = join(__dirname, "../../components/Navbar.tsx");
     const navbarSource = readFileSync(navbarPath, "utf8");
     expect(navbarSource).not.toMatch(/\/ai-lab/);
