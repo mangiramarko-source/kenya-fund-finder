@@ -18,21 +18,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isAiLab = pathname === "/ai-lab" || pathname.startsWith("/ai-lab/");
 
   return (
-    <div className="flex min-h-screen font-body">
+    <div className={`flex min-h-screen font-body${isAiLab ? " h-dvh max-h-dvh overflow-hidden" : ""}`}>
       <SkipToContent />
 
       {/* Desktop sidebar */}
       <DesktopSidebar />
 
       {/* Main column */}
-      <div className="flex-1 flex flex-col min-w-0">
+      <div className={`flex-1 flex flex-col min-w-0${isAiLab ? " min-h-0 overflow-hidden" : ""}`}>
         {/* Desktop top bar */}
         <DesktopTopBar />
 
         <OfflineBanner />
 
-        {/* Mobile-only navbar — hidden on news article pages */}
-        {!isNewsArticle && (
+        {/* Mobile-only navbar — hidden on news article pages and AI Lab (immersive chat) */}
+        {!isNewsArticle && !isAiLab && (
           <div className="md:hidden">
             <Navbar />
           </div>
@@ -42,7 +42,16 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <CurrencyTicker />
           </div>
         )}
-        <main id="main-content" className="flex-1 min-h-[80vh]">{children}</main>
+        <main
+          id="main-content"
+          className={
+            isAiLab
+              ? "flex-1 min-h-0 flex flex-col overflow-hidden"
+              : "flex-1 min-h-[80vh]"
+          }
+        >
+          {children}
+        </main>
         {/* Footer hidden on mobile news article pages and entirely on the AI Lab */}
         {!isAiLab && (
           <div className={isNewsArticle ? "hidden md:block" : ""}>
