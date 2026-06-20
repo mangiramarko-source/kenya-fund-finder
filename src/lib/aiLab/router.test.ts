@@ -3,8 +3,8 @@ import { routePrompt, UNKNOWN_FALLBACK_MSG, UNKNOWN_FALLBACK_SUGGESTIONS } from 
 import {
   COMMODITY_UNKNOWN_MSG,
   FX_UNKNOWN_MSG,
-  NEWS_UNKNOWN_MSG,
 } from "./intent";
+import { NEWS_LIMITATION_MSG } from "./newsContext";
 import type { MarketContext, ComparableAsset } from "./marketContext";
 import type { NewsArticle, NewsContext } from "./newsContext";
 import { MMF_SCENARIO_SUMMARY } from "./scenarios";
@@ -328,7 +328,7 @@ describe("routePrompt", () => {
       const r = routePrompt("Latest news about Safaricom");
       expect(r.kind).toBe("unknown");
       if (r.kind === "unknown") {
-        expect(r.message).toBe(NEWS_UNKNOWN_MSG);
+        expect(r.message).toBe(NEWS_LIMITATION_MSG);
       }
     });
 

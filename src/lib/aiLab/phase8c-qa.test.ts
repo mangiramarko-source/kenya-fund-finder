@@ -4,7 +4,8 @@
  */
 import { describe, it, expect } from "vitest";
 import { routePrompt } from "./router";
-import { COMMODITY_UNKNOWN_MSG, FX_UNKNOWN_MSG, NEWS_UNKNOWN_MSG } from "./intent";
+import { COMMODITY_UNKNOWN_MSG, FX_UNKNOWN_MSG } from "./intent";
+import { NEWS_LIMITATION_MSG } from "./newsContext";
 import { getMmfUserText } from "./scenarios";
 import type { ComparableAsset, MarketContext } from "./marketContext";
 import type { NewsArticle, NewsContext } from "./newsContext";
@@ -81,7 +82,7 @@ describe("Phase 8C manual QA checklist", () => {
     const r = routePrompt("Latest news about Safaricom");
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
-      expect(r.message).toBe(NEWS_UNKNOWN_MSG);
+      expect(r.message).toBe(NEWS_LIMITATION_MSG);
       expect(r.disclaimer).toBe(DISCLAIMER);
       const joined = [r.message, ...r.suggestions].join(" ").toLowerCase();
       for (const phrase of FORBIDDEN) expect(joined).not.toContain(phrase);

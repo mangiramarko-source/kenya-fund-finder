@@ -16,6 +16,8 @@ import {
   UNKNOWN_FALLBACK_SUGGESTIONS,
 } from "./routerTypes";
 import { isPortfolioSplitIntent } from "./portfolioSplitParse";
+import { isComparePrompt, parseCompareSides } from "./nameMatch";
+import { buildNewsLimitationFallback, isNewsLabPrompt as isNewsContextPrompt } from "./newsContext";
 
 export type AiLabAssetType =
   | "stock"
@@ -53,12 +55,20 @@ const COMPARE_RE = /^\s*compare\s+(.+?)\s+(?:vs\.?|versus|with|to|and|&)\s+(.+?)
 
 const STRONG_NEWS_RES: Array<{ re: RegExp; term: string }> = [
   { re: /\blatest news\b/i, term: "latest news" },
+  { re: /\btell me (?:the )?latest news\b/i, term: "tell me latest news" },
+  { re: /\bmarket news\b/i, term: "market news" },
+  { re: /\bwhat is happening in the market\b/i, term: "what is happening in the market" },
+  { re: /\bwhat happened today\b/i, term: "what happened today" },
+  { re: /\bnews today\b/i, term: "news today" },
+  { re: /\bnews on\b/i, term: "news on" },
+  { re: /\blatest news on\b/i, term: "latest news on" },
   { re: /\bnews about\b/i, term: "news about" },
   { re: /\bheadline\b/i, term: "headline" },
   { re: /\barticle\b/i, term: "article" },
   { re: /\bmarket update\b/i, term: "market update" },
   { re: /\bsummarize news\b/i, term: "summarize news" },
   { re: /\bwhat happened to\b/i, term: "what happened to" },
+  { re: /\bwhy is .+ moving\b/i, term: "why is moving" },
 ];
 
 const STOCK_TERMS: Array<{ re: RegExp; term: string }> = [
@@ -206,10 +216,10 @@ function resolveAssetType(
 ): { assetType: AiLabAssetType; matchedTerms: string[] } {
   const { groups, matchedTerms } = detectAssetGroups(prompt, lower, ctx);
 
-  const cmp = prompt.match(COMPARE_RE);
+  const cmp = parseCompareSides(prompt);
   if (intentType === "compare" && cmp) {
-    const left = detectAssetGroupsForSide(cmp[1], ctx);
-    const right = detectAssetGroupsForSide(cmp[2], ctx);
+    const left = detectAssetGroupsForSide(cmp.left, ctx);
+    const right = detectAssetGroupsForSide(cmp.right, ctx);
     const combined = new Set([...left, ...right]);
     if (combined.size === 0) return { assetType: "unknown", matchedTerms };
     if (combined.size === 1) return { assetType: [...combined][0], matchedTerms };
@@ -243,23 +253,27 @@ function isGoalProjectionIntent(lower: string): boolean {
 
 function isCompareIntent(prompt: string, lower: string): boolean {
   return (
+    isComparePrompt(prompt) ||
     COMPARE_RE.test(prompt) ||
     /\bvs\.?\b/.test(lower) ||
     /\bversus\b/.test(lower) ||
     /\bagainst\b/.test(lower) ||
-    /\bdifference between\b/.test(lower)
+    /\bdifference between\b/.test(lower) ||
+    /\bhow does .+ compare (?:to|with)\b/.test(lower)
   );
 }
 
 function isNewsSummaryIntent(lower: string): boolean {
-  return hasStrongNewsIntent(lower) || (hasWeakNewsIntent(lower) && /\bnews\b/.test(lower));
+  return isNewsContextPrompt(lower) || hasStrongNewsIntent(lower) || (hasWeakNewsIntent(lower) && /\bnews\b/.test(lower));
 }
 
 function detectIntentType(prompt: string, lower: string): AiLabIntentType {
   if (detectAdviceIntent(prompt)) return "refusal";
   if (isCompareIntent(prompt, lower)) return "compare";
-  if (/explain|what is|what's|define|meaning of/.test(lower)) return "explainer";
   if (isNewsSummaryIntent(lower)) return "news-summary";
+  if (/explain|what is|what's|define|meaning of/.test(lower) && !isNewsSummaryIntent(lower)) {
+    return "explainer";
+  }
   if (isPortfolioSplitIntent(lower, prompt)) return "portfolio-split";
   if (/(?:yield\s+)?(?:drops?|falls?|changes?)\s+from\s+\d+(?:\.\d+)?\s*%\s+to\s+\d+(?:\.\d+)?\s*%/i.test(prompt)) {
     return "mmf-yield-change";
@@ -432,12 +446,7 @@ export function buildUnknownFallback(
   const { assetType, intentType } = classification;
 
   if (assetType === "news" || intentType === "news-summary") {
-    return {
-      kind: "unknown",
-      message: NEWS_UNKNOWN_MSG,
-      suggestions: NEWS_UNKNOWN_SUGGESTIONS,
-      disclaimer: STANDARD_DISCLAIMER,
-    };
+    return buildNewsLimitationFallback(prompt, prompt.toLowerCase());
   }
 
   if (assetType === "fx" || intentType === "fx-conversion" || intentType === "fx-move") {

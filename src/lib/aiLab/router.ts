@@ -18,11 +18,6 @@ import {
   type ScenarioResult,
 } from "./scenarios";
 import { findAsset, type ComparableAsset, type MarketContext } from "./marketContext";
-import {
-  isNewsLabPrompt,
-  matchNewsForPrompt,
-  type NewsContext,
-} from "./newsContext";
 import { buildRefusal, detectAdviceIntent, hasMmfYieldContext, type RefusalPayload } from "./safety";
 import { buildUnknownFallback, PORTFOLIO_SPLIT_UNKNOWN_MSG, PORTFOLIO_SPLIT_SUGGESTIONS } from "./intent";
 import {
@@ -34,6 +29,19 @@ import {
   UNKNOWN_FALLBACK_MSG,
   UNKNOWN_FALLBACK_SUGGESTIONS,
 } from "./routerTypes";
+import {
+  formatAmbiguousMatchMessage,
+  formatCompareNotFoundMessage,
+  parseCompareSides,
+  resolveAssetMatch,
+} from "./nameMatch";
+import {
+  buildNewsLimitationFallback,
+  buildNewsUnavailableFallback,
+  isNewsLabPrompt,
+  matchNewsForPrompt,
+  type NewsContext,
+} from "./newsContext";
 
 export type { UnknownPayload } from "./routerTypes";
 export { UNKNOWN_FALLBACK_MSG, UNKNOWN_FALLBACK_SUGGESTIONS } from "./routerTypes";
@@ -42,7 +50,6 @@ export type RouterResult = ScenarioResult | RefusalPayload | UnknownPayload;
 
 const AMOUNT_RE = /(?:kes|ksh|kshs|sh)?\s*([0-9][0-9,]*(?:\.[0-9]+)?)(?:\s*(k|m)\b)?(?!\s*%)/i;
 const PERCENT_RE = /([0-9]+(?:\.[0-9]+)?)\s*%/;
-const COMPARE_RE = /^\s*compare\s+(.+?)\s+(?:vs\.?|versus|with|to|and|&)\s+(.+?)\s*$/i;
 
 /** Router-only keyword list — do not surface "mutual fund" in user-facing copy. */
 const FUND_CONTEXT_RE = /\b(mmf|money market|unit trust|mutual fund|money market fund)\b/i;
@@ -606,6 +613,70 @@ function tryCommodityMoveRoute(
   );
 }
 
+function tryCompareRoute(prompt: string, ctx?: MarketContext | null): RouterResult | null {
+  const lower = prompt.toLowerCase();
+  if (/explain|what is|what's|define|meaning of/.test(lower)) return null;
+
+  const sides = parseCompareSides(prompt);
+  if (!sides) return null;
+
+  const assets = ctx?.assets ?? [];
+  const leftMatch = resolveAssetMatch(sides.left, assets);
+  const rightMatch = resolveAssetMatch(sides.right, assets);
+
+  if (leftMatch.status === "ambiguous") {
+    return {
+      kind: "unknown",
+      message: formatAmbiguousMatchMessage("the first item", leftMatch.query, leftMatch.candidates),
+      suggestions: [
+        "Compare SCOM vs KCB",
+        "Compare Britam Money Market Fund vs CIC Money Market Fund",
+        "Compare USD vs EUR",
+      ],
+      disclaimer: STANDARD_DISCLAIMER,
+    };
+  }
+
+  if (rightMatch.status === "ambiguous") {
+    return {
+      kind: "unknown",
+      message: formatAmbiguousMatchMessage("the second item", rightMatch.query, rightMatch.candidates),
+      suggestions: [
+        "Compare SCOM vs KCB",
+        "Compare Britam Money Market Fund vs CIC Money Market Fund",
+        "Compare USD vs EUR",
+      ],
+      disclaimer: STANDARD_DISCLAIMER,
+    };
+  }
+
+  const a = leftMatch.asset;
+  const b = rightMatch.asset;
+
+  if (a && b && a.symbol !== b.symbol) {
+    return compareAssets(a, b);
+  }
+
+  const missing: string[] = [];
+  if (!a) missing.push(`"${sides.left.trim()}"`);
+  if (!b) missing.push(`"${sides.right.trim()}"`);
+
+  return {
+    kind: "unknown",
+    message:
+      missing.length > 0
+        ? formatCompareNotFoundMessage(missing)
+        : "Pick two different assets to compare.",
+    suggestions: [
+      "Compare SCOM vs KCB",
+      "Compare USD vs EUR",
+      "Compare Gold vs Brent Crude",
+      "Compare CIC Money Market Fund vs Sanlam Money Market Fund",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
 function tryNewsSummaryRoute(
   prompt: string,
   lower: string,
@@ -615,12 +686,12 @@ function tryNewsSummaryRoute(
   if (!isNewsLabPrompt(lower)) return null;
 
   if (!newsCtx?.articles?.length) {
-    return unknownFallback(prompt, ctx);
+    return buildNewsLimitationFallback(prompt, lower);
   }
 
   const match = matchNewsForPrompt(prompt, newsCtx, ctx);
   if (!match || !match.articles.length) {
-    return unknownFallback(prompt, ctx);
+    return buildNewsUnavailableFallback(prompt, lower, newsCtx);
   }
 
   return calculateNewsSummaryScenario(match.articles, {
@@ -631,6 +702,7 @@ function tryNewsSummaryRoute(
 }
 
 function routeExplainer(lower: string): ScenarioResult | null {
+  if (isNewsLabPrompt(lower)) return null;
   const isExp = /explain|what is|what's|define/.test(lower);
   if (!isExp) return null;
 
@@ -673,38 +745,14 @@ export function routePrompt(
 
   const lower = prompt.toLowerCase();
 
-  const cmp = prompt.match(COMPARE_RE);
-  if (cmp) {
-    const assets = ctx?.assets ?? [];
-    const a = findAsset(cmp[1], assets);
-    const b = findAsset(cmp[2], assets);
-    if (a && b && a.symbol !== b.symbol) {
-      return compareAssets(a, b);
-    }
-    const missing: string[] = [];
-    if (!a) missing.push(`"${cmp[1].trim()}"`);
-    if (!b) missing.push(`"${cmp[2].trim()}"`);
-    return {
-      kind: "unknown",
-      message:
-        missing.length > 0
-          ? `Couldn't find ${missing.join(" or ")} in the live market data. Try using a ticker (e.g. SCOM, USD, GOLD) or the full fund name.`
-          : "Pick two different assets to compare.",
-      suggestions: [
-        "Compare SCOM vs EQTY",
-        "Compare USD vs EUR",
-        "Compare Gold vs Brent Crude",
-        "Compare CIC Money Market Fund vs Sanlam Money Market Fund",
-      ],
-      disclaimer: STANDARD_DISCLAIMER,
-    };
-  }
-
-  const explainer = routeExplainer(lower);
-  if (explainer) return explainer;
+  const compareResult = tryCompareRoute(prompt, ctx);
+  if (compareResult) return compareResult;
 
   const newsSummary = tryNewsSummaryRoute(prompt, lower, ctx, newsCtx);
   if (newsSummary) return newsSummary;
+
+  const explainer = routeExplainer(lower);
+  if (explainer) return explainer;
 
   const fxConversion = tryFxConversionRoute(prompt, lower, ctx);
   if (fxConversion) return fxConversion;

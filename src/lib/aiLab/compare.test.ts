@@ -32,6 +32,7 @@ const ctx: MarketContext = {
   sampleStockChangePct: null,
   assets: [
     mkStock("SCOM", "Safaricom", 18.5, 1.2),
+    mkStock("KCB", "KCB Group", 42.0, 0.5),
     mkStock("EQTY", "Equity Group", 44.1, -0.4),
     mkFx("USD", "US Dollar", 129.5, 0.1),
     mkFx("EUR", "Euro", 141.2, -0.3),
@@ -56,6 +57,29 @@ describe("routePrompt compare", () => {
 
   it("compares using fuzzy name match", () => {
     const r = routePrompt("compare safaricom and equity", ctx);
+    expect(r.kind).toBe("compare");
+  });
+
+  it("compares safaricom and kcb", () => {
+    const r = routePrompt("compare safaricom and kcb", ctx);
+    expect(r.kind).toBe("compare");
+    if (r.kind === "compare") {
+      expect(r.assets.map((a) => a.symbol).sort()).toEqual(["KCB", "SCOM"]);
+    }
+  });
+
+  it("compares safaricom vs kcb without compare prefix", () => {
+    const r = routePrompt("safaricom vs kcb", ctx);
+    expect(r.kind).toBe("compare");
+  });
+
+  it("compares scom with kcb", () => {
+    const r = routePrompt("compare scom with kcb", ctx);
+    expect(r.kind).toBe("compare");
+  });
+
+  it("parses difference between kcb and equity", () => {
+    const r = routePrompt("difference between kcb and equity", ctx);
     expect(r.kind).toBe("compare");
   });
 

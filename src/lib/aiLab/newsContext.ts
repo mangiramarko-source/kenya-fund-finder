@@ -4,6 +4,9 @@
 import { useEffect, useState } from "react";
 import { fetchPublicData } from "@/lib/gateway";
 import { findAsset, type MarketContext } from "./marketContext";
+import { resolveAssetMatch } from "./nameMatch";
+import { STANDARD_DISCLAIMER } from "./safety";
+import type { UnknownPayload } from "./routerTypes";
 
 export const NEWS_TIMEZONE = "Africa/Nairobi";
 
@@ -26,6 +29,7 @@ export type NewsQueryKind =
   | "asset"
   | "market_today"
   | "nse_today"
+  | "general"
   | "explain_news";
 
 export interface NewsMatchResult {
@@ -125,9 +129,113 @@ export function isNewsLabPrompt(lower: string): boolean {
   if (/\bnews related to\b/.test(lower)) return true;
   if (/\blatest news\b/.test(lower)) return true;
   if (/\bnews about\b/.test(lower)) return true;
+  if (/\bnews on\b/.test(lower)) return true;
+  if (/\blatest news on\b/.test(lower)) return true;
   if (/\bshow news\b/.test(lower)) return true;
   if (/\bsummarize news\b/.test(lower)) return true;
+  if (/\bmarket news\b/.test(lower)) return true;
+  if (/\btell me (?:the )?latest news\b/.test(lower)) return true;
+  if (/\bwhat is happening (?:in the market|with)\b/.test(lower)) return true;
+  if (/\bwhat happened today\b/.test(lower)) return true;
+  if (/\bnews today\b/.test(lower)) return true;
+  if (/\bwhy is .+ moving\b/.test(lower)) return true;
+  if (/^\s*news\s*$/i.test(lower)) return true;
   return false;
+}
+
+export function isInstrumentNewsPrompt(lower: string): boolean {
+  return (
+    /\bnews on\b/.test(lower) ||
+    /\blatest news on\b/.test(lower) ||
+    /\bnews about\b/.test(lower) ||
+    /\bnews related to\b/.test(lower) ||
+    /\bwhat is happening with\b/.test(lower) ||
+    /\bwhy is .+ moving\b/.test(lower)
+  );
+}
+
+export function isGeneralNewsPrompt(lower: string): boolean {
+  if (isInstrumentNewsPrompt(lower)) return false;
+  return (
+    /\blatest news\b/.test(lower) ||
+    /\bmarket news\b/.test(lower) ||
+    /\bwhat is happening in the market\b/.test(lower) ||
+    /\bwhat happened today\b/.test(lower) ||
+    /\bnews today\b/.test(lower) ||
+    /\btell me (?:the )?latest news\b/.test(lower) ||
+    /^\s*news\s*$/i.test(lower)
+  );
+}
+
+export const NEWS_LIMITATION_MSG = [
+  "I can help with news-style questions, but live internet news lookup is not enabled in AI Lab yet.",
+  "",
+  "What I can do now",
+  "- Summarize news already available inside KenyaFundFinder",
+  "- Explain market context from available site data",
+  "- Look up a specific stock, fund, FX rate, or commodity in the current dataset",
+  "- Show neutral scenarios for a specific amount",
+  "",
+  "Important",
+  "I will not create or guess headlines that are not in the dataset.",
+  "",
+  STANDARD_DISCLAIMER,
+].join("\n");
+
+export const NEWS_GENERAL_FOLLOWUPS = [
+  "Show latest available site news",
+  "Summarize market context",
+  "Look up Safaricom",
+];
+
+export const NEWS_INSTRUMENT_FOLLOWUPS = [
+  "Look up this instrument",
+  "Show available site news",
+  "Compare with another instrument",
+];
+
+export function buildNewsLimitationFallback(_prompt: string, lower: string): UnknownPayload {
+  return {
+    kind: "unknown",
+    message: NEWS_LIMITATION_MSG,
+    suggestions: isInstrumentNewsPrompt(lower)
+      ? [...NEWS_INSTRUMENT_FOLLOWUPS]
+      : [...NEWS_GENERAL_FOLLOWUPS],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
+export function buildNewsUnavailableFallback(
+  prompt: string,
+  lower: string,
+  newsCtx: NewsContext,
+): UnknownPayload {
+  if (isGeneralNewsPrompt(lower) && newsCtx.articles.length > 0) {
+    const latest = newsCtx.articles.slice(0, 8);
+    return {
+      kind: "unknown",
+      message:
+        "I could not find today's-only news for that prompt, but KenyaFundFinder has other stored articles. Try a specific company/ticker or ask to summarize available site news.",
+      suggestions: [
+        "Summarize available site news",
+        "Latest news on Safaricom",
+        "Look up Safaricom",
+      ],
+      disclaimer: STANDARD_DISCLAIMER,
+    };
+  }
+
+  if (isInstrumentNewsPrompt(lower)) {
+    return {
+      kind: "unknown",
+      message:
+        "I could not find matching news in available KenyaFundFinder data for that instrument. Try the full company name or ticker, or ask for a data lookup instead.",
+      suggestions: [...NEWS_INSTRUMENT_FOLLOWUPS],
+      disclaimer: STANDARD_DISCLAIMER,
+    };
+  }
+
+  return buildNewsLimitationFallback(prompt, lower);
 }
 
 function articleMatchesTerms(article: NewsArticle, terms: string[]): boolean {
@@ -140,65 +248,42 @@ function resolveAssetTerms(prompt: string, marketCtx?: MarketContext | null): {
   relatedSymbol?: string;
 } {
   const stocks = (marketCtx?.assets ?? []).filter((a) => a.kind === "stock");
-  const hit = findAsset(prompt, stocks);
-  if (hit) {
+  const hit = resolveAssetMatch(prompt, stocks);
+  if (hit.status === "match" && hit.asset) {
     return {
-      terms: [hit.symbol, hit.name, ...hit.aliases].filter(Boolean),
-      relatedSymbol: hit.symbol,
+      terms: [hit.asset.symbol, hit.asset.name, ...hit.asset.aliases].filter(Boolean),
+      relatedSymbol: hit.asset.symbol,
     };
   }
 
-  const tokens = [
-    ...prompt.matchAll(/\b(scom|eqty|kcb|scbk|safaricom|equity group|kcb group)\b/gi),
-  ].map((m) => m[1]);
-  if (tokens.length) {
-    const hitFromToken = findAsset(tokens[0], stocks);
-    if (hitFromToken) {
+  const assetPatterns = [
+    /\bnews on\s+(.+?)(?:\?|\.|$)/i,
+    /\blatest news on\s+(.+?)(?:\?|\.|$)/i,
+    /\bnews about\s+(.+?)(?:\?|\.|$)/i,
+    /\bnews related to\s+(.+?)(?:\?|\.|$)/i,
+    /\bwhat is happening with\s+(.+?)(?:\?|\.|$)/i,
+    /\bwhy is\s+(.+?)\s+moving\b/i,
+  ];
+
+  for (const re of assetPatterns) {
+    const m = prompt.match(re);
+    if (!m?.[1]) continue;
+    const q = m[1].trim();
+    const resolved = resolveAssetMatch(q, stocks);
+    if (resolved.status === "match" && resolved.asset) {
       return {
-        terms: [hitFromToken.symbol, hitFromToken.name, ...hitFromToken.aliases],
-        relatedSymbol: hitFromToken.symbol,
+        terms: [resolved.asset.symbol, resolved.asset.name, ...resolved.asset.aliases],
+        relatedSymbol: resolved.asset.symbol,
       };
     }
-    return { terms: [...new Set(tokens)], relatedSymbol: tokens[0]?.toUpperCase() };
-  }
-
-  const about = prompt.match(/\bnews about\s+(.+?)(?:\?|\.|$)/i);
-  if (about?.[1]) {
-    const q = about[1].trim();
-    const hit2 = findAsset(q, stocks);
-    if (hit2) {
+    const legacy = findAsset(q, stocks);
+    if (legacy) {
       return {
-        terms: [hit2.symbol, hit2.name, ...hit2.aliases],
-        relatedSymbol: hit2.symbol,
-      };
-    }
-    return { terms: [q] };
-  }
-
-  const related = prompt.match(/\bnews related to\s+(.+?)(?:\?|\.|$)/i);
-  if (related?.[1]) {
-    const q = related[1].trim();
-    const hit3 = findAsset(q, stocks);
-    if (hit3) {
-      return {
-        terms: [hit3.symbol, hit3.name, ...hit3.aliases],
-        relatedSymbol: hit3.symbol,
+        terms: [legacy.symbol, legacy.name, ...legacy.aliases],
+        relatedSymbol: legacy.symbol,
       };
     }
     return { terms: [q], relatedSymbol: q.toUpperCase() };
-  }
-
-  const latest = prompt.match(/\blatest news about\s+(.+?)(?:\?|\.|$)/i);
-  if (latest?.[1]) {
-    const q = latest[1].trim();
-    const hit4 = findAsset(q, stocks);
-    if (hit4) {
-      return {
-        terms: [hit4.symbol, hit4.name, ...hit4.aliases],
-        relatedSymbol: hit4.symbol,
-      };
-    }
-    return { terms: [q] };
   }
 
   return { terms: [] };
@@ -222,6 +307,9 @@ function detectQueryKind(lower: string): NewsQueryKind {
   }
   if (/\btoday'?s?\b/.test(lower) && /\b(market news|news)\b/.test(lower)) {
     return "market_today";
+  }
+  if (isGeneralNewsPrompt(lower)) {
+    return "general";
   }
   return "asset";
 }
@@ -272,6 +360,16 @@ export function matchNewsForPrompt(
       articles: matched,
       queryKind,
       queryLabel: "NSE news today",
+    };
+  }
+
+  if (queryKind === "general") {
+    const matched = articles.slice(0, MAX_RESULTS);
+    if (!matched.length) return null;
+    return {
+      articles: matched,
+      queryKind,
+      queryLabel: "Latest available site news",
     };
   }
 
