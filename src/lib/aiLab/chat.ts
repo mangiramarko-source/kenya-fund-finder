@@ -2,12 +2,20 @@
 // No LLM, no persistence, no prompt enrichment from session context.
 
 import type { RouterResult } from "./router";
+import { routePrompt } from "./router";
 import { STANDARD_DISCLAIMER, detectAdviceIntent, FORBIDDEN_PATTERNS } from "./safety";
 import { isGenericStockTerm, isPortfolioSplitIntent } from "./portfolioSplitParse";
 import {
   composeAssistantResponse,
   composeClarifyingResponse,
+  composeCapabilitiesGuide,
+  composeFilterUnsupportedResponse,
+  isCapabilitiesPrompt,
 } from "./responseComposer";
+import { isUnsupportedFilterLookupPrompt } from "./websiteLookup";
+import { applyLiveContext, type MarketContext } from "./marketContext";
+import type { NewsContext } from "./newsContext";
+import { resolveWebsiteLookup } from "./websiteLookup";
 
 export type AiLabChatRole = "user" | "assistant" | "system";
 
@@ -332,4 +340,48 @@ export function buildFollowUpSuggestions(
 /** Test helper — clarifying text must not contain forbidden advisory phrases. */
 export function clarifyingTextIsSafe(text: string): boolean {
   return !FORBIDDEN_PATTERNS.some((re) => re.test(text));
+}
+
+export type AiLabPromptRoute =
+  | "capabilities"
+  | "filter-unsupported"
+  | "clarifying"
+  | "website-lookup"
+  | "router";
+
+/** Mirrors AiLabPage handleSubmit routing for integration tests and debugging. */
+export async function processAiLabUserPrompt(
+  prompt: string,
+  ctx: MarketContext | null,
+  news: NewsContext | null = null,
+): Promise<{
+  route: AiLabPromptRoute;
+  text: string;
+  result?: RouterResult;
+}> {
+  if (isCapabilitiesPrompt(prompt)) {
+    const { text } = composeCapabilitiesGuide();
+    return { route: "capabilities", text };
+  }
+
+  if (isUnsupportedFilterLookupPrompt(prompt)) {
+    const { text } = composeFilterUnsupportedResponse();
+    return { route: "filter-unsupported", text };
+  }
+
+  const clarifying = buildClarifyingResponse(prompt);
+  if (clarifying) {
+    return { route: "clarifying", text: clarifying.text };
+  }
+
+  const lookup = await resolveWebsiteLookup(prompt, ctx);
+  if (lookup) {
+    const { text } = composeAssistantResponse({ prompt, result: lookup });
+    return { route: "website-lookup", text, result: lookup };
+  }
+
+  const { prompt: enriched } = applyLiveContext(prompt, ctx);
+  const result = routePrompt(enriched, ctx, news);
+  const { text } = composeAssistantResponse({ prompt, result });
+  return { route: "router", text, result };
 }

@@ -68,7 +68,148 @@ const STOCK_LOOKUP_SELECT = [
   "updated_at",
 ] as const;
 
-interface FundRow {
+const STOPWORDS = new Set([
+  "a",
+  "an",
+  "the",
+  "on",
+  "of",
+  "for",
+  "to",
+  "in",
+  "at",
+  "me",
+  "my",
+  "is",
+  "are",
+  "what",
+  "whats",
+  "show",
+  "tell",
+  "about",
+  "current",
+  "latest",
+  "listed",
+  "shown",
+  "data",
+  "details",
+  "info",
+  "yield",
+  "price",
+  "rate",
+  "fund",
+  "funds",
+  "unit",
+  "trust",
+]);
+
+const QUERY_ALIASES: Array<{ re: RegExp; replacement: string }> = [
+  { re: /\bsafaricom\b/gi, replacement: "scom" },
+  { re: /\bdollar rate\b/gi, replacement: "usd kes rate" },
+  { re: /\busd\s*\/\s*kes\b/gi, replacement: "usd kes" },
+  { re: /\bmoney market fund\b/gi, replacement: "money market mmf" },
+  { re: /\bmoney market\b/gi, replacement: "money market mmf" },
+  { re: /\bmmf\b/gi, replacement: "money market mmf" },
+];
+
+const STOCK_SYMBOL_ALIASES: Record<string, string> = {
+  safaricom: "SCOM",
+  scom: "SCOM",
+};
+
+const FX_QUERY_ALIASES: Record<string, string> = {
+  dollar: "USD",
+  usd: "USD",
+  euro: "EUR",
+  pound: "GBP",
+};
+
+const MIN_FUND_MATCH_SCORE = 180;
+const AMBIGUITY_SCORE_GAP = 40;
+const MMF_FILTER_LIMIT = 12;
+const FAMILY_OVERVIEW_LIMIT = 12;
+const EQUAL_YIELD_EPSILON = 0.05;
+
+const FAMILY_STRIP_RE =
+  /\b(what is|what's|show me|tell me about|lookup|data for|details for|show|tell|about|current|latest|listed|shown|the|a|an|is|are|me|my|data|details|info|yield|price|rate|for|of|on|trading)\b/gi;
+
+const MMF_CONTEXT_RE = /\b(mmf|mmfs|money market(?:\s+funds?)?)\b/i;
+const MMF_FILTER_RANKING_BANNED_RE =
+  /\b(best|top|safest|recommended|highest quality|rank|sort)\b/i;
+
+const BROAD_FILTER_LOOKUP_RE =
+  /\b(show|list|find|filter|rank|sort)\b.*\b(mmf|mmfs|money market|fund|funds)\b.*\b(above|below|over|under|greater|less|highest|lowest|top|best)\b/i;
+const YIELD_THRESHOLD_RE =
+  /\b(mmf|mmfs|money market|fund|funds)\b.*\b(above|below|over|under)\s+\d+\s*%/i;
+const SHOW_MMFS_ABOVE_RE = /\bshow\s+mmfs?\s+above\b/i;
+
+export type MmfYieldComparison = "above" | "below" | "equal";
+
+export interface MmfYieldFilterIntent {
+  comparison: MmfYieldComparison;
+  thresholdPct: number;
+}
+
+export function parseMmfYieldFilterPrompt(prompt: string): MmfYieldFilterIntent | null {
+  if (detectAdviceIntent(prompt)) return null;
+  if (MMF_FILTER_RANKING_BANNED_RE.test(prompt)) return null;
+  if (!MMF_CONTEXT_RE.test(prompt)) return null;
+
+  let comparison: MmfYieldComparison | null = null;
+  if (/\b(above|over|greater than|more than|>=)\b/i.test(prompt)) comparison = "above";
+  else if (/\b(below|under|less than|<=)\b/i.test(prompt)) comparison = "below";
+  else if (/\b(equal to|equals|at exactly|=)\b/i.test(prompt)) comparison = "equal";
+
+  if (!comparison) return null;
+
+  const thresholdMatch =
+    prompt.match(
+      /\b(?:above|over|greater than|more than|>=|below|under|less than|<=|equal to|equals|at exactly|=)\s*(\d+(?:\.\d+)?)\s*%?/i,
+    ) ?? prompt.match(/(\d+(?:\.\d+)?)\s*%/i);
+
+  if (!thresholdMatch?.[1]) return null;
+
+  const thresholdPct = parseFloat(thresholdMatch[1]);
+  if (!Number.isFinite(thresholdPct)) return null;
+
+  return { comparison, thresholdPct };
+}
+
+export function isMmfYieldFilterPrompt(prompt: string): boolean {
+  return parseMmfYieldFilterPrompt(prompt) != null;
+}
+
+function isBroadFilterLookupPrompt(prompt: string): boolean {
+  return (
+    BROAD_FILTER_LOOKUP_RE.test(prompt) ||
+    YIELD_THRESHOLD_RE.test(prompt) ||
+    SHOW_MMFS_ABOVE_RE.test(prompt)
+  );
+}
+
+export function isUnsupportedFilterLookupPrompt(prompt: string): boolean {
+  if (isMmfYieldFilterPrompt(prompt)) return false;
+  if (isBroadFilterLookupPrompt(prompt)) return true;
+  if (
+    MMF_FILTER_RANKING_BANNED_RE.test(prompt) &&
+    MMF_CONTEXT_RE.test(prompt) &&
+    /\b(show|list|find|filter|rank|sort)\b/i.test(prompt)
+  ) {
+    return true;
+  }
+  if (/\b(rank|sort)\b/i.test(prompt) && /\bfunds?\b/i.test(prompt)) return true;
+  if (
+    /\b(show|list|find|filter)\b/i.test(prompt) &&
+    /\bfunds?\b/i.test(prompt) &&
+    /\b(yield|above|below|over|under)\b/i.test(prompt) &&
+    !MMF_CONTEXT_RE.test(prompt)
+  ) {
+    return true;
+  }
+  return false;
+}
+
+export interface FundRow {
   slug?: string | null;
   name?: string | null;
   manager?: string | null;
@@ -100,6 +241,23 @@ interface StockRow {
   updated_at?: string | null;
 }
 
+export interface FundLookupIntent {
+  wantsMmf: boolean;
+  wantsBalanced: boolean;
+  wantsEquity: boolean;
+  wantsBond: boolean;
+  brandOnly: boolean;
+  queryTokens: string[];
+  normalizedQuery: string;
+}
+
+export interface FundMatchSelection {
+  fund: FundRow | null;
+  ambiguous: boolean;
+  candidates: FundRow[];
+  topScore: number;
+}
+
 const num = (v: unknown): number | null => {
   if (v == null || v === "") return null;
   const n = typeof v === "string" ? parseFloat(v) : (v as number);
@@ -120,13 +278,206 @@ const fmtKES = (n: number | null) =>
 
 const fmtNum = (n: number | null) => (n == null ? null : n.toLocaleString("en-KE"));
 
-
 function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
+export function normalizeLookupQuery(raw: string): string {
+  let q = raw.toLowerCase().trim();
+  for (const { re, replacement } of QUERY_ALIASES) {
+    q = q.replace(re, replacement);
+  }
+  return q.replace(/\s+/g, " ").trim();
+}
+
+function tokenizeText(text: string): string[] {
+  const tokens = text
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 2 && !STOPWORDS.has(t));
+  return [...new Set(tokens)];
+}
+
+export function parseFundLookupIntent(query: string, prompt = query): FundLookupIntent {
+  const normalizedQuery = normalizeLookupQuery(query);
+  const combined = normalizeLookupQuery(`${query} ${prompt}`);
+  const queryTokens = tokenizeText(normalizedQuery).filter((t) => t !== "mmf");
+
+  const wantsMmf =
+    /\b(money market mmf|money market|mmf)\b/.test(combined) ||
+    /\bmoney market fund\b/i.test(`${query} ${prompt}`);
+  const wantsBalanced = /\bbalanced\b/.test(combined);
+  const wantsEquity = /\b(equity|equities)\b/.test(combined);
+  const wantsBond = /\b(bond|fixed income)\b/.test(combined);
+
+  const meaningfulTokens = queryTokens.filter(
+    (t) => !["money", "market", "fund", "unit", "trust"].includes(t),
+  );
+  const brandOnly =
+    meaningfulTokens.length <= 1 &&
+    !wantsMmf &&
+    !wantsBalanced &&
+    !wantsEquity &&
+    !wantsBond;
+
+  return {
+    wantsMmf,
+    wantsBalanced,
+    wantsEquity,
+    wantsBond,
+    brandOnly,
+    queryTokens,
+    normalizedQuery,
+  };
+}
+
+function fundTypeKey(fund: FundRow): string {
+  const ft = (fund.fund_type ?? "").toLowerCase();
+  const name = (fund.name ?? "").toLowerCase();
+  if (ft === "money_market" || isMoneyMarketFund(fund)) return "money_market";
+  if (ft.includes("balanced") || name.includes("balanced")) return "balanced";
+  if (ft.includes("equity") || name.includes("equity")) return "equity";
+  if (ft.includes("bond") || name.includes("bond")) return "bond";
+  return ft || "other";
+}
+
+export function isMoneyMarketFund(fund: FundRow): boolean {
+  const ft = (fund.fund_type ?? "").toLowerCase();
+  const name = (fund.name ?? "").toLowerCase();
+  return (
+    ft === "money_market" ||
+    name.includes("money market") ||
+    /\bmmf\b/.test(name)
+  );
+}
+
+function isNonMmfFund(fund: FundRow): boolean {
+  if (isMoneyMarketFund(fund)) return false;
+  const ft = (fund.fund_type ?? "").toLowerCase();
+  const name = (fund.name ?? "").toLowerCase();
+  return (
+    ft === "balanced" ||
+    ft === "equity" ||
+    ft === "bond" ||
+    ft === "fixed_income" ||
+    name.includes("balanced") ||
+    name.includes("equity") ||
+    name.includes("bond")
+  );
+}
+
+function allTokensPresent(tokens: string[], haystack: string): boolean {
+  if (tokens.length === 0) return false;
+  return tokens.every((t) => haystack.includes(t));
+}
+
+export function scoreFundCandidate(
+  query: string,
+  fund: FundRow,
+  intent: FundLookupIntent,
+): number {
+  if (!fund.name) return -999;
+
+  let score = 0;
+  const qNorm = normalizeLookupQuery(query);
+  const nameNorm = normalizeLookupQuery(fund.name);
+  const managerNorm = normalizeLookupQuery(fund.manager ?? "");
+  const combined = `${nameNorm} ${managerNorm}`;
+
+  if (nameNorm === qNorm) score += 1000;
+  if (managerNorm && qNorm === managerNorm) score += 250;
+
+  const meaningfulTokens = intent.queryTokens.filter(
+    (t) => !["money", "market", "fund"].includes(t),
+  );
+  const matchedMeaningful = meaningfulTokens.filter((t) => combined.includes(t));
+  score += matchedMeaningful.length * 120;
+  if (meaningfulTokens.length > 0 && matchedMeaningful.length === meaningfulTokens.length) {
+    score += 220;
+  }
+
+  if (allTokensPresent(intent.queryTokens, combined)) score += 180;
+
+  if (intent.wantsMmf) {
+    if (isMoneyMarketFund(fund)) score += 420;
+    if (isNonMmfFund(fund)) score -= 650;
+  }
+  if (intent.wantsBalanced && combined.includes("balanced")) score += 350;
+  if (intent.wantsEquity && combined.includes("equity")) score += 350;
+  if (intent.wantsBond && combined.includes("bond")) score += 350;
+
+  if (qNorm.length >= 5 && nameNorm.includes(qNorm)) score += 160;
+  if (nameNorm.length >= 8 && qNorm.includes(nameNorm)) score += 80;
+
+  const hasYield = num(fund.annual_yield) != null;
+  if (!hasYield) score -= 80;
+
+  return score;
+}
+
+export function selectBestFundMatch(
+  funds: FundRow[],
+  query: string,
+  intent: FundLookupIntent,
+): FundMatchSelection {
+  const scored = funds
+    .filter((f) => f.name)
+    .map((fund) => ({ fund, score: scoreFundCandidate(query, fund, intent) }))
+    .filter((x) => x.score >= MIN_FUND_MATCH_SCORE)
+    .sort((a, b) => b.score - a.score || (a.fund.name ?? "").localeCompare(b.fund.name ?? ""));
+
+  if (scored.length === 0) {
+    return { fund: null, ambiguous: false, candidates: [], topScore: 0 };
+  }
+
+  const top = scored[0];
+  const second = scored[1];
+  const gap = second ? top.score - second.score : top.score;
+
+  if (intent.brandOnly) {
+    const typeSet = new Set(scored.slice(0, 5).map((s) => fundTypeKey(s.fund)));
+    if (typeSet.size > 1) {
+      return {
+        fund: null,
+        ambiguous: true,
+        candidates: scored.slice(0, 5).map((s) => s.fund),
+        topScore: top.score,
+      };
+    }
+  }
+
+  if (second && gap < AMBIGUITY_SCORE_GAP) {
+    const topType = fundTypeKey(top.fund);
+    const secondType = fundTypeKey(second.fund);
+    if (topType !== secondType) {
+      return {
+        fund: null,
+        ambiguous: true,
+        candidates: scored.slice(0, 3).map((s) => s.fund),
+        topScore: top.score,
+      };
+    }
+  }
+
+  return {
+    fund: top.fund,
+    ambiguous: false,
+    candidates: scored.slice(0, 3).map((s) => s.fund),
+    topScore: top.score,
+  };
+}
+
+function expandStockQuery(prompt: string): string {
+  let q = prompt.toLowerCase();
+  for (const [alias, symbol] of Object.entries(STOCK_SYMBOL_ALIASES)) {
+    q = q.replace(new RegExp(`\\b${escapeRegExp(alias)}\\b`, "gi"), symbol.toLowerCase());
+  }
+  return q;
+}
+
 function findAssetInPrompt(prompt: string, assets: ComparableAsset[]): ComparableAsset | null {
-  const lower = prompt.toLowerCase();
+  const lower = expandStockQuery(prompt);
   const ranked = [...assets].sort((a, b) => {
     const aLen = Math.max(a.symbol.length, a.name.length);
     const bLen = Math.max(b.symbol.length, b.name.length);
@@ -146,7 +497,6 @@ function findAssetInPrompt(prompt: string, assets: ComparableAsset[]): Comparabl
   return findAsset(prompt, assets);
 }
 
-
 function hasScenarioSignals(prompt: string): boolean {
   return SCENARIO_BLOCKERS.some((re) => re.test(prompt));
 }
@@ -158,6 +508,94 @@ function hasAmountScenario(prompt: string): boolean {
   return /\b(in|into|invest|put|worth of|at \d)\b/i.test(prompt);
 }
 
+/** Bare named fund queries like "Britam MMF" or "Etica Money Market Fund". */
+export function isNamedFundLookupPrompt(prompt: string): boolean {
+  if (detectAdviceIntent(prompt)) return false;
+  if (hasScenarioSignals(prompt) || hasAmountScenario(prompt)) return false;
+
+  const trimmed = prompt.trim();
+  if (trimmed.length < 4) return false;
+  if (!/\b(mmf|money market(?:\s+fund)?|unit trust|fund)\b/i.test(trimmed)) return false;
+  if (/^(an?\s+)?(mmf|money market(?:\s+fund)?|unit trust|fund)$/i.test(trimmed)) return false;
+
+  const namePart = trimmed
+    .replace(
+      /\b(mmf|money market fund|money market|unit trust|fund|the|a|an|show|what is|what's|yield|data|details|info)\b/gi,
+      " ",
+    )
+    .replace(/\s+/g, " ")
+    .trim();
+
+  return namePart.length >= 3;
+}
+
+/** Single-token manager/brand prompts like "Britam" (resolved via fund lookup disambiguation). */
+export function isBareBrandFundPrompt(prompt: string): boolean {
+  if (detectAdviceIntent(prompt)) return false;
+  if (hasScenarioSignals(prompt) || hasAmountScenario(prompt)) return false;
+
+  const trimmed = prompt.trim();
+  if (trimmed.length < 3 || trimmed.length > 40) return false;
+  if (/\b(mmf|money market|unit trust|fund|stock|share|price|yield|usd|kes|news|compare)\b/i.test(trimmed)) {
+    return false;
+  }
+  if (/\d/.test(trimmed)) return false;
+
+  const tokens = tokenizeText(trimmed);
+  return tokens.length === 1;
+}
+
+
+/** Strip lookup signal words to get the core family name, e.g. "Show Britam yield" → "Britam". */
+export function extractFamilyQuery(prompt: string): string {
+  return prompt
+    .replace(FAMILY_STRIP_RE, " ")
+    .replace(/[''?.,!]/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
+}
+
+function getFamilyTokens(query: string): string[] {
+  return query
+    .toLowerCase()
+    .split(/[^a-z]+/)
+    .map((t) => t.trim())
+    .filter((t) => t.length >= 2);
+}
+
+function matchesFamilyTokens(haystack: string, tokens: string[]): boolean {
+  if (tokens.length === 0) return false;
+  const lower = haystack.toLowerCase();
+  return tokens.every((t) => lower.includes(t));
+}
+
+/** Broad single-name or family-level prompts like Britam, Old Mutual, KCB, USD, Gold. */
+export function isInstrumentFamilyPrompt(prompt: string): boolean {
+  if (detectAdviceIntent(prompt)) return false;
+  if (isNewsLabPrompt(prompt.toLowerCase())) return false;
+  if (COMPARE_RE.test(prompt)) return false;
+  if (EXPLAIN_RE.test(prompt)) return false;
+  if (hasScenarioSignals(prompt)) return false;
+  if (hasAmountScenario(prompt)) return false;
+  if (isMmfYieldFilterPrompt(prompt)) return false;
+  if (isNamedFundLookupPrompt(prompt)) return false;
+  if (FX_PAIR_RE.test(prompt)) return false;
+  if (/\d/.test(prompt)) return false;
+
+  const core = extractFamilyQuery(prompt);
+  if (core.length < 2) return false;
+
+  const tokens = getFamilyTokens(core);
+  if (tokens.length === 0 || tokens.length > 3) return false;
+
+  const lower = prompt.toLowerCase();
+  if (/\b(mmf|money market|unit trust)\b/i.test(lower)) return false;
+  if (/\b(stock|share|trading at)\b/i.test(lower)) return false;
+  if (/\b(compare|news|invest|split|convert)\b/i.test(lower)) return false;
+
+  return true;
+}
+
 export function isWebsiteLookupPrompt(prompt: string): boolean {
   if (detectAdviceIntent(prompt)) return false;
   const lower = prompt.toLowerCase();
@@ -166,7 +604,12 @@ export function isWebsiteLookupPrompt(prompt: string): boolean {
   if (EXPLAIN_RE.test(prompt)) return false;
   if (hasScenarioSignals(prompt)) return false;
   if (hasAmountScenario(prompt)) return false;
-  return LOOKUP_SIGNALS.some((re) => re.test(prompt));
+  if (FX_PAIR_RE.test(prompt)) return true;
+  const signalMatch = LOOKUP_SIGNALS.some((re) => re.test(prompt));
+  const namedFundMatch = isNamedFundLookupPrompt(prompt);
+  const bareBrandMatch = isBareBrandFundPrompt(prompt);
+  const familyMatch = isInstrumentFamilyPrompt(prompt);
+  return signalMatch || namedFundMatch || bareBrandMatch || familyMatch;
 }
 
 function addField(
@@ -199,19 +642,73 @@ function buildResult(
   };
 }
 
-async function fetchFundByName(query: string): Promise<FundRow | null> {
+function buildNotFoundResult(
+  entityType: WebsiteLookupEntityType,
+  query: string,
+): WebsiteLookupScenarioResult {
+  const label =
+    entityType === "fund"
+      ? "fund"
+      : entityType === "stock"
+        ? "stock"
+        : entityType === "fx"
+          ? "FX rate"
+          : "asset";
+  const lookupMessage = `I could not find that exact ${label} in the current KenyaFundFinder data.`;
+  return {
+    kind: "website-lookup",
+    summary: lookupMessage,
+    entityType,
+    entityName: query,
+    fields: [
+      {
+        label: "Lookup result",
+        value: "No matching listing found in current KenyaFundFinder data.",
+      },
+    ],
+    sourceNote: "No matching record in KenyaFundFinder public listings.",
+    disclaimer: STANDARD_DISCLAIMER,
+    notFound: true,
+    lookupMessage,
+  };
+}
+
+function buildAmbiguousFundResult(query: string, candidates: FundRow[]): WebsiteLookupScenarioResult {
+  const names = candidates
+    .map((f) => f.name)
+    .filter((n): n is string => Boolean(n))
+    .slice(0, 5);
+  const lookupMessage =
+    names.length > 0
+      ? `I found several matching funds for "${query}". Please specify which one: ${names.join(", ")}.`
+      : `I could not find that exact fund in the current KenyaFundFinder data.`;
+  return {
+    kind: "website-lookup",
+    summary: lookupMessage,
+    entityType: "fund",
+    entityName: query,
+    fields: names.length
+      ? [{ label: "Possible matches", value: names.join("; ") }]
+      : [
+          {
+            label: "Lookup result",
+            value: "No matching listing found in current KenyaFundFinder data.",
+          },
+        ],
+    sourceNote: "Multiple possible matches in KenyaFundFinder public listings.",
+    disclaimer: STANDARD_DISCLAIMER,
+    notFound: true,
+    lookupMessage,
+  };
+}
+
+async function fetchAllFunds(): Promise<FundRow[]> {
   const { data } = await fetchPublicData<FundRow>("funds", {
     select: [...FUND_LOOKUP_SELECT],
     order: "annual_yield.desc",
     limit: 200,
   });
-  const q = query.toLowerCase().trim();
-  const exact = data.find((f) => f.name?.toLowerCase() === q);
-  if (exact) return exact;
-  const contains = data.find((f) => f.name?.toLowerCase().includes(q));
-  if (contains) return contains;
-  const reverse = data.find((f) => q.includes((f.name ?? "").toLowerCase()));
-  return reverse ?? null;
+  return data;
 }
 
 async function fetchStockBySymbol(symbol: string): Promise<StockRow | null> {
@@ -297,7 +794,8 @@ function extractFundQuery(prompt: string): string | null {
     /\b(?:yield|data|details|info|minimum investment|management fee|withdrawal time)\s+(?:on|for|of)\s+(.+?)(?:\?|\.|$)/i,
     /\b(?:fund|mmf|unit trust)\s+(?:called|named)?\s+(.+?)(?:\?|\.|$)/i,
     /\btell me about\s+(.+?)(?:\?|\.|$)/i,
-    /\bshow me\s+(?:data for|details for)\s+(.+?)(?:\?|\.|$)/i,
+    /\bshow me\s+(?:data for|details for|the yield on)\s+(.+?)(?:\?|\.|$)/i,
+    /\bshow\s+(.+?)\s+(?:yield|data|details)\b/i,
   ];
   for (const re of patterns) {
     const m = prompt.match(re);
@@ -313,15 +811,373 @@ function extractFundQuery(prompt: string): string | null {
   return null;
 }
 
+function isFundLookupPrompt(prompt: string): boolean {
+  return (
+    /\b(mmf|money market|unit trust|fund)\b/i.test(prompt) ||
+    Boolean(extractFundQuery(prompt)) ||
+    isBareBrandFundPrompt(prompt)
+  );
+}
+
+function resolveFxAsset(prompt: string, assets: ComparableAsset[]): ComparableAsset | null {
+  const lower = normalizeLookupQuery(prompt);
+  for (const [alias, code] of Object.entries(FX_QUERY_ALIASES)) {
+    if (new RegExp(`\\b${escapeRegExp(alias)}\\b`, "i").test(lower)) {
+      const hit = assets.find((a) => a.kind === "fx" && a.symbol.toUpperCase() === code);
+      if (hit) return hit;
+    }
+  }
+  return findAssetInPrompt(prompt, assets.filter((a) => a.kind === "fx"));
+}
+
+
+function comparisonLabel(comparison: MmfYieldComparison, thresholdPct: number): string {
+  if (comparison === "above") return `MMFs with annual yield above ${thresholdPct}%`;
+  if (comparison === "below") return `MMFs with annual yield below ${thresholdPct}%`;
+  return `MMFs with annual yield equal to ${thresholdPct}%`;
+}
+
+function fundTypeLabel(fund: FundRow): string {
+  return (fund.fund_type ?? "money_market").replace(/_/g, " ");
+}
+
+function matchesYieldFilter(yieldPct: number, intent: MmfYieldFilterIntent): boolean {
+  if (intent.comparison === "above") return yieldPct > intent.thresholdPct;
+  if (intent.comparison === "below") return yieldPct < intent.thresholdPct;
+  return Math.abs(yieldPct - intent.thresholdPct) <= EQUAL_YIELD_EPSILON;
+}
+
+async function resolveMmfYieldFilter(prompt: string): Promise<WebsiteLookupScenarioResult> {
+  const intent = parseMmfYieldFilterPrompt(prompt);
+  if (!intent) {
+    return buildNotFoundResult("fund", prompt);
+  }
+
+  const funds = await fetchAllFunds();
+  const mmfFunds = funds.filter((fund) => fund.name && isMoneyMarketFund(fund));
+
+  let matching = mmfFunds.filter((fund) => {
+    const yieldPct = num(fund.annual_yield);
+    return yieldPct != null && matchesYieldFilter(yieldPct, intent);
+  });
+
+  if (intent.comparison === "below") {
+    matching.sort(
+      (a, b) => (num(a.annual_yield) ?? 0) - (num(b.annual_yield) ?? 0) || (a.name ?? "").localeCompare(b.name ?? ""),
+    );
+  } else {
+    matching.sort(
+      (a, b) => (num(b.annual_yield) ?? 0) - (num(a.annual_yield) ?? 0) || (a.name ?? "").localeCompare(b.name ?? ""),
+    );
+  }
+
+  const totalMatches = matching.length;
+  const shown = matching.slice(0, MMF_FILTER_LIMIT);
+  const shownCount = shown.length;
+  const entityName = comparisonLabel(intent.comparison, intent.thresholdPct);
+
+  if (shownCount === 0) {
+    const lookupMessage =
+      "I could not find MMFs matching that yield filter in the current KenyaFundFinder data.";
+    return {
+      kind: "website-lookup",
+      summary: lookupMessage,
+      entityType: "fund",
+      entityName,
+      fields: [
+        {
+          label: "Lookup result",
+          value: "No MMFs matched this yield filter in current KenyaFundFinder data.",
+        },
+      ],
+      sourceNote: "Filtered from KenyaFundFinder public listings via the data gateway.",
+      disclaimer: STANDARD_DISCLAIMER,
+      notFound: true,
+      lookupMessage,
+      lookupMode: "mmf-yield-filter",
+      totalMatches: 0,
+      shownCount: 0,
+    };
+  }
+
+  const fields: Array<{ label: string; value: string }> = shown.map((fund) => ({
+    label: fund.name!,
+    value: `${fmtPct(num(fund.annual_yield))} annual yield · ${fundTypeLabel(fund)}`,
+  }));
+
+  if (totalMatches > shownCount) {
+    fields.push({
+      label: "Note",
+      value: "Showing the first 12 matching funds available in the current data.",
+    });
+  }
+
+  return {
+    kind: "website-lookup",
+    summary: `Money market funds matching your yield filter from KenyaFundFinder listings.`,
+    entityType: "fund",
+    entityName,
+    fields,
+    sourceNote: "Filtered from KenyaFundFinder public listings via the data gateway.",
+    disclaimer: STANDARD_DISCLAIMER,
+    lookupMode: "mmf-yield-filter",
+    totalMatches,
+    shownCount,
+  };
+}
+
+
+type FamilyMatchKind = "fund" | "stock" | "fx" | "commodity";
+
+interface FamilyMatch {
+  kind: FamilyMatchKind;
+  label: string;
+  value: string;
+  buildSingle: () => Promise<WebsiteLookupScenarioResult | null>;
+}
+
+function assetHaystack(asset: ComparableAsset): string {
+  return [asset.symbol, asset.name, ...asset.aliases].filter(Boolean).join(" ");
+}
+
+function fundHaystack(fund: FundRow): string {
+  return `${fund.name ?? ""} ${fund.manager ?? ""}`;
+}
+
+async function collectFamilyMatches(
+  tokens: string[],
+  ctx: MarketContext,
+): Promise<FamilyMatch[]> {
+  const matches: FamilyMatch[] = [];
+
+  const funds = await fetchAllFunds();
+  for (const fund of funds) {
+    if (!fund.name || !matchesFamilyTokens(fundHaystack(fund), tokens)) continue;
+    const yieldPct = num(fund.annual_yield);
+    const value =
+      yieldPct != null
+        ? `${fmtPct(yieldPct)} annual yield · ${fundTypeLabel(fund)}`
+        : fundTypeLabel(fund);
+    matches.push({
+      kind: "fund",
+      label: `Fund: ${fund.name}`,
+      value,
+      buildSingle: async () => buildFundLookup(fund),
+    });
+  }
+
+  for (const asset of ctx.assets.filter((a) => a.kind === "stock")) {
+    if (!matchesFamilyTokens(assetHaystack(asset), tokens)) continue;
+    matches.push({
+      kind: "stock",
+      label: `Stock: ${asset.symbol}`,
+      value: `${fmtKES(asset.value) ?? asset.value.toLocaleString("en-KE")} latest price`,
+      buildSingle: async () => {
+        const row = await fetchStockBySymbol(asset.symbol);
+        if (row) return buildStockLookup(row);
+        const fields: Array<{ label: string; value: string }> = [];
+        addField(fields, "Latest price", fmtKES(asset.value) ?? undefined);
+        if (asset.changePct != null) {
+          addField(fields, "Day change", fmtPct(asset.changePct) ?? undefined);
+        }
+        return (
+          buildResult("stock", asset.name, asset.symbol, fields, `/stocks/${asset.symbol}`) ??
+          buildNotFoundResult("stock", asset.name)
+        );
+      },
+    });
+  }
+
+  for (const asset of ctx.assets.filter((a) => a.kind === "fx")) {
+    if (!matchesFamilyTokens(assetHaystack(asset), tokens)) continue;
+    matches.push({
+      kind: "fx",
+      label: `FX: ${asset.symbol}/KES`,
+      value: `${asset.value.toLocaleString("en-KE", { maximumFractionDigits: 4 })} KES per 1 unit`,
+      buildSingle: async () => buildFxLookup(asset),
+    });
+  }
+
+  for (const asset of ctx.assets.filter((a) => a.kind === "commodity")) {
+    if (!matchesFamilyTokens(assetHaystack(asset), tokens)) continue;
+    const unitLabel = asset.valueLabel.replace(/^Price\s*/i, "").replace(/[()]/g, "") || "value";
+    matches.push({
+      kind: "commodity",
+      label: `Commodity: ${asset.name}`,
+      value: `${asset.value.toLocaleString("en-KE", { maximumFractionDigits: 2 })} ${unitLabel}`.trim(),
+      buildSingle: async () => buildCommodityLookup(asset),
+    });
+  }
+
+  const kindOrder: Record<FamilyMatchKind, number> = {
+    fund: 0,
+    stock: 1,
+    fx: 2,
+    commodity: 3,
+  };
+
+  return matches.sort(
+    (a, b) => kindOrder[a.kind] - kindOrder[b.kind] || a.label.localeCompare(b.label),
+  );
+}
+
+function buildFamilyNotFoundResult(query: string): WebsiteLookupScenarioResult {
+  const lookupMessage = `I could not find matching instruments for "${query}" in the current KenyaFundFinder data.`;
+  return {
+    kind: "website-lookup",
+    summary: lookupMessage,
+    entityType: "fund",
+    entityName: query,
+    fields: [
+      {
+        label: "Lookup result",
+        value: "No matching instruments found in current KenyaFundFinder data.",
+      },
+    ],
+    sourceNote: "No matching record in KenyaFundFinder public listings.",
+    disclaimer: STANDARD_DISCLAIMER,
+    notFound: true,
+    lookupMessage,
+  };
+}
+
+function familyEntityType(matches: FamilyMatch[]): WebsiteLookupEntityType {
+  const first = matches[0]?.kind;
+  if (first === "stock") return "stock";
+  if (first === "fx") return "fx";
+  if (first === "commodity") return "commodity";
+  return "fund";
+}
+
+function buildInstrumentFamilyOverviewResult(
+  query: string,
+  matches: FamilyMatch[],
+): WebsiteLookupScenarioResult {
+  const totalMatches = matches.length;
+  const shown = matches.slice(0, FAMILY_OVERVIEW_LIMIT);
+  const shownCount = shown.length;
+  const lookupMessage =
+    "Ask for a specific instrument name if you want a single-instrument view.";
+
+  const fields: Array<{ label: string; value: string }> = shown.map((m) => ({
+    label: m.label,
+    value: m.value,
+  }));
+
+  if (totalMatches > shownCount) {
+    fields.push({
+      label: "Note",
+      value: "Showing the first 12 matching instruments available in the current data.",
+    });
+  }
+
+  return {
+    kind: "website-lookup",
+    summary: `Matching instruments for "${query}" from KenyaFundFinder listings.`,
+    entityType: familyEntityType(matches),
+    entityName: query,
+    fields,
+    sourceNote: "Pulled from KenyaFundFinder public listings via the data gateway.",
+    disclaimer: STANDARD_DISCLAIMER,
+    lookupMode: "instrument-family-overview",
+    lookupMessage,
+    totalMatches,
+    shownCount,
+  };
+}
+
+async function resolveInstrumentFamilyOverview(
+  prompt: string,
+  ctx: MarketContext,
+): Promise<WebsiteLookupScenarioResult> {
+  const query = extractFamilyQuery(prompt);
+  const tokens = getFamilyTokens(query);
+  const matches = await collectFamilyMatches(tokens, ctx);
+
+  if (matches.length === 0) {
+    return buildFamilyNotFoundResult(query);
+  }
+
+  if (matches.length === 1) {
+    const single = await matches[0].buildSingle();
+    return single ?? buildFamilyNotFoundResult(query);
+  }
+
+  return buildInstrumentFamilyOverviewResult(query, matches);
+}
+
+
+async function resolveFundLookup(
+  prompt: string,
+): Promise<WebsiteLookupScenarioResult | null> {
+  const rawQuery = extractFundQuery(prompt) ?? prompt;
+  const query = rawQuery.trim();
+  const intent = parseFundLookupIntent(query, prompt);
+  const funds = await fetchAllFunds();
+  const selection = selectBestFundMatch(funds, query, intent);
+
+
+  if (selection.ambiguous) {
+    return buildAmbiguousFundResult(query, selection.candidates);
+  }
+  if (!selection.fund) {
+    return buildNotFoundResult("fund", query);
+  }
+
+  const built = buildFundLookup(selection.fund);
+  return built ?? buildNotFoundResult("fund", query);
+}
+
 export async function resolveWebsiteLookup(
   prompt: string,
   ctx: MarketContext | null,
 ): Promise<WebsiteLookupScenarioResult | null> {
-  if (!isWebsiteLookupPrompt(prompt) || !ctx) return null;
+  if (isMmfYieldFilterPrompt(prompt)) {
+    return resolveMmfYieldFilter(prompt);
+  }
 
+  const isLookup = isWebsiteLookupPrompt(prompt);
+  if (!isLookup || !ctx) return null;
+
+  if (isNamedFundLookupPrompt(prompt)) {
+    return resolveFundLookup(prompt);
+  }
+
+  if (FX_PAIR_RE.test(prompt)) {
+    const fxAssets = ctx.assets.filter((a) => a.kind === "fx");
+    const fxHit = resolveFxAsset(prompt, fxAssets);
+    if (fxHit) return buildFxLookup(fxHit);
+    return buildNotFoundResult("fx", prompt);
+  }
+
+  const stocksForFamily = ctx.assets.filter((a) => a.kind === "stock");
+  const stockHitForFamily = findAssetInPrompt(prompt, stocksForFamily);
+  const stockIntentForFamily = /\b(stock|share|price|trading)\b/i.test(prompt);
+
+  if (
+    isInstrumentFamilyPrompt(prompt) &&
+    !(stockHitForFamily && stockIntentForFamily)
+  ) {
+    return resolveInstrumentFamilyOverview(prompt, ctx);
+  }
+
+  const extractedFundQuery = extractFundQuery(prompt);
+  const hasExplicitFundKeyword =
+    /\b(mmf|money market|unit trust|fund)\b/i.test(prompt) ||
+    Boolean(extractedFundQuery);
+  const bareBrand = isBareBrandFundPrompt(prompt);
   const stocks = ctx.assets.filter((a) => a.kind === "stock");
   const stockHit = findAssetInPrompt(prompt, stocks);
-  if (stockHit) {
+  const stockIntent = /\b(stock|share|price|trading)\b/i.test(prompt);
+
+  if (hasExplicitFundKeyword || (bareBrand && !stockHit)) {
+    return resolveFundLookup(prompt);
+  }
+
+  if (stockHit || stockIntent) {
+    if (!stockHit) {
+      return buildNotFoundResult("stock", prompt);
+    }
     const row = await fetchStockBySymbol(stockHit.symbol);
     if (row) return buildStockLookup(row);
     const fields: Array<{ label: string; value: string }> = [];
@@ -329,20 +1185,15 @@ export async function resolveWebsiteLookup(
     if (stockHit.changePct != null) {
       addField(fields, "Day change", fmtPct(stockHit.changePct) ?? undefined);
     }
-    return buildResult("stock", stockHit.name, stockHit.symbol, fields, `/stocks/${stockHit.symbol}`);
+    const fallback = buildResult("stock", stockHit.name, stockHit.symbol, fields, `/stocks/${stockHit.symbol}`);
+    return fallback ?? buildNotFoundResult("stock", stockHit.name);
   }
 
-  if (/\b(mmf|money market|unit trust|fund)\b/i.test(prompt) || extractFundQuery(prompt)) {
-    const query = extractFundQuery(prompt) ?? prompt;
-    const fundHit = findAssetInPrompt(query, ctx.assets.filter((a) => a.kind === "fund"));
-    const row = await fetchFundByName(fundHit?.name ?? query);
-    if (row) return buildFundLookup(row);
-  }
-
-  if (FX_PAIR_RE.test(prompt) || /\b(usd|eur|gbp|chf|cad|aud|jpy|cny)\b/i.test(prompt)) {
+  if (/\b(usd|eur|gbp|chf|cad|aud|jpy|cny|dollar|euro|pound)\b/i.test(prompt)) {
     const fxAssets = ctx.assets.filter((a) => a.kind === "fx");
-    const fxHit = findAssetInPrompt(prompt, fxAssets);
+    const fxHit = resolveFxAsset(prompt, fxAssets);
     if (fxHit) return buildFxLookup(fxHit);
+    return buildNotFoundResult("fx", prompt);
   }
 
   if (/\b(gold|brent|crude|oil|commodit)/i.test(prompt)) {
@@ -351,6 +1202,7 @@ export async function resolveWebsiteLookup(
       ctx.assets.filter((a) => a.kind === "commodity"),
     );
     if (commodityHit) return buildCommodityLookup(commodityHit);
+    return buildNotFoundResult("commodity", prompt);
   }
 
   return null;

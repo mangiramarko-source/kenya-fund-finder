@@ -4,6 +4,7 @@
 import type { RouterResult } from "./router";
 import type { AiLabSessionContext } from "./chat";
 import { FORBIDDEN_PATTERNS, STANDARD_DISCLAIMER } from "./safety";
+import { isMmfYieldFilterPrompt, isUnsupportedFilterLookupPrompt } from "./websiteLookup";
 
 const FILTER_LOOKUP_RE =
   /\b(show|list|find|filter|rank|sort)\b.*\b(mmf|mmfs|money market|fund|funds)\b.*\b(above|below|over|under|greater|less|highest|lowest|top|best)\b/i;
@@ -142,13 +143,22 @@ function composeIntro(result: RouterResult, prompt: string): string {
       return `Here's an allocation scenario based on the stated split and yield assumption. It is not a recommendation.`;
 
     case "website-lookup":
+      if (result.notFound && result.lookupMessage) {
+        return result.lookupMessage;
+      }
+      if (result.lookupMode === "mmf-yield-filter") {
+        return "Money market funds matching your yield filter from available KenyaFundFinder data. This is a data lookup, not a recommendation.";
+      }
+      if (result.lookupMode === "instrument-family-overview") {
+        return "Matching instruments from available KenyaFundFinder data. This is a data lookup, not a recommendation.";
+      }
       return `Here are matching records for ${result.entityName} from available KenyaFundFinder data. This is a data lookup, not a recommendation.`;
 
     case "refusal":
       return `AI Lab cannot tell you what to buy or sell. You can ask for a neutral scenario or a named data lookup instead.`;
 
     case "unknown":
-      if (isFilterLookupPrompt(prompt)) {
+      if (isUnsupportedFilterLookupPrompt(prompt)) {
         return `I can't filter funds by yield threshold yet. You can ask for a named fund's yield instead.`;
       }
       return `I couldn't find enough matching data or assumptions to answer that safely. Try one of the examples below.`;
@@ -284,10 +294,6 @@ export function composeAssistantResponse(args: {
 }): { text: string; followUps: string[] } {
   const { prompt, result } = args;
 
-  if (isFilterLookupPrompt(prompt)) {
-    return composeFilterUnsupportedResponse();
-  }
-
   const text = withBubbleDisclaimer(composeIntro(result, prompt), false);
   const followUps = followUpsForResult(result, prompt);
   return { text, followUps };
@@ -347,3 +353,5 @@ export function composedOutputIsSafe(text: string, followUps: string[]): boolean
   const combined = [text, ...followUps].join(" ");
   return !FORBIDDEN_PATTERNS.some((re) => re.test(combined));
 }
+
+export { isUnsupportedFilterLookupPrompt, isMmfYieldFilterPrompt } from "./websiteLookup";

@@ -135,6 +135,11 @@ export async function fetchMarketContext(): Promise<MarketContext> {
   for (const f of funds.data) {
     const y = num(f.annual_yield);
     if (!f.name || y == null) continue;
+    const fundType = (f.fund_type ?? "money_market").replace(/_/g, " ");
+    const aliasParts = [f.name, f.manager, fundType];
+    if ((f.fund_type ?? "money_market") === "money_market") {
+      aliasParts.push("mmf", "money market", "money market fund");
+    }
     assets.push({
       kind: "fund",
       id: f.id ?? undefined,
@@ -144,10 +149,10 @@ export async function fetchMarketContext(): Promise<MarketContext> {
       valueLabel: "Annual yield (%)",
       changePct: null,
       extras: [
-        { label: "Fund type", value: (f.fund_type ?? "money_market").replace(/_/g, " ") },
+        { label: "Fund type", value: fundType },
         ...(f.manager ? [{ label: "Manager", value: f.manager }] : []),
       ],
-      aliases: tokenize(f.name, f.manager),
+      aliases: tokenize(...aliasParts),
     });
   }
 
@@ -163,7 +168,7 @@ export async function fetchMarketContext(): Promise<MarketContext> {
       valueLabel: "Price (KES)",
       changePct: num(s.day_change_percent),
       extras: s.sector ? [{ label: "Sector", value: s.sector }] : undefined,
-      aliases: tokenize(s.symbol, s.name, s.sector),
+      aliases: tokenize(s.symbol, s.name, s.sector, s.symbol === "SCOM" ? "safaricom" : null),
     });
   }
 

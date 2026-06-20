@@ -1003,6 +1003,13 @@ export interface WebsiteLookupScenarioResult {
   sourceNote: string;
   pagePath?: string;
   disclaimer: string;
+  /** True when no confident match exists in current listings. */
+  notFound?: boolean;
+  /** User-facing lookup outcome when notFound or ambiguous. */
+  lookupMessage?: string;
+  lookupMode?: "single" | "mmf-yield-filter" | "instrument-family-overview";
+  totalMatches?: number;
+  shownCount?: number;
 }
 
 export type ScenarioResult =
