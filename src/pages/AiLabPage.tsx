@@ -252,12 +252,14 @@ const AiLabPage = () => {
       <div className={AI_LAB_PAGE_INNER}>
         <header className="flex items-center gap-2 shrink-0">
           <AiLabMobileBack />
-          <div className="flex items-center justify-center h-9 w-9 rounded-full bg-accent text-accent-foreground shrink-0">
-            <Sparkles className="h-4 w-4" />
-          </div>
-          <div className="min-w-0">
-            <p className={AI_LAB_LABEL}>AI Scenario Assistant</p>
-            <p className="text-[10px] text-muted-foreground">{AI_LAB_SAFETY_LINE}</p>
+          <div className="hidden md:flex items-center gap-2 min-w-0">
+            <div className="flex items-center justify-center h-9 w-9 rounded-full bg-accent text-accent-foreground shrink-0">
+              <Sparkles className="h-4 w-4" />
+            </div>
+            <div className="min-w-0">
+              <p className={AI_LAB_LABEL}>AI Scenario Assistant</p>
+              <p className="text-[10px] text-muted-foreground">{AI_LAB_SAFETY_LINE}</p>
+            </div>
           </div>
         </header>
 

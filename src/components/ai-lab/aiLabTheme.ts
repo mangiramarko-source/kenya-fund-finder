@@ -12,8 +12,8 @@ export const AI_LAB_EMPTY_SHELL =
 export const AI_LAB_ACTIVE_SHELL =
   "flex-1 min-h-0 flex flex-col overflow-hidden border-0 shadow-none bg-transparent";
 export const AI_LAB_INPUT_DOCK =
-  "shrink-0 border-t border-border/50 px-3 md:px-4 pt-2 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-background/95 backdrop-blur-md z-10";
-export const AI_LAB_DOCK_INNER = "max-w-3xl mx-auto w-full space-y-1.5";
+  "shrink-0 px-3 md:px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-muted/30 via-muted/20 to-transparent z-10";
+export const AI_LAB_DOCK_INNER = "max-w-3xl mx-auto w-full space-y-2";
 export const AI_LAB_DOCK_DISCLAIMER =
   "text-[10px] leading-snug text-muted-foreground/90 text-center px-1";
 export const AI_LAB_THREAD =
@@ -44,7 +44,7 @@ export const AI_LAB_ASSISTANT_TEXT =
   "text-sm md:text-[15px] text-foreground leading-relaxed whitespace-pre-wrap";
 
 export const AI_LAB_INPUT_WRAP =
-  "flex items-center gap-2 rounded-full border border-border bg-card pl-4 pr-1.5 py-1.5 shadow-lg focus-within:ring-4 focus-within:ring-accent/15 focus-within:border-accent/40 transition-all";
+  "flex items-center gap-2 rounded-full border border-border/20 bg-background/90 backdrop-blur-sm pl-4 pr-1.5 py-1.5 shadow-md shadow-black/5 focus-within:ring-4 focus-within:ring-accent/15 focus-within:border-accent/30 transition-all";
 /** @deprecated Use AI_LAB_INPUT_WRAP — kept for imports that still reference AI_LAB_INPUT */
 export const AI_LAB_INPUT = AI_LAB_INPUT_WRAP;
 export const AI_LAB_INPUT_FIELD =
@@ -68,7 +68,7 @@ export const AI_LAB_HERO_HEADLINE = "Investing without guessing.";
 export const AI_LAB_HERO_SUBTEXT =
   "Describe your plan in plain English. We'll model returns across Kenya's listed instruments — net of tax, instantly.";
 export const AI_LAB_SAFETY_LINE = "Data only. Not personal financial advice.";
-/** Pinned above the bottom input — short, always visible during chat. */
+/** Pinned below the bottom input — short, always visible during chat. */
 export const AI_LAB_DOCK_DISCLAIMER_TEXT =
   "Not financial advice. Data scenarios only — does not predict returns or recommend products.";
 export const AI_LAB_INPUT_PLACEHOLDER = "Try: Put 100k in Etica MMF for 2 years";
