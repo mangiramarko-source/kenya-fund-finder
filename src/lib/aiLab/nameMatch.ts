@@ -136,6 +136,47 @@ function assetSearchTerms(asset: ComparableAsset): string[] {
     .filter(Boolean);
 }
 
+/** Damerau-style edit distance, capped for performance. */
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  const m = a.length;
+  const n = b.length;
+  if (Math.abs(m - n) > 3) return 99;
+  if (!m) return n;
+  if (!n) return m;
+  const prev = new Array(n + 1);
+  const curr = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+      curr[j] = Math.min(
+        prev[j] + 1,
+        curr[j - 1] + 1,
+        prev[j - 1] + cost,
+      );
+    }
+    for (let j = 0; j <= n; j++) prev[j] = curr[j];
+  }
+  return prev[n];
+}
+
+/** Return true if `query` is within a small edit distance of `term`
+ *  (≤1 edit for short terms, ≤2 for longer). Allows typos like
+ *  "safarcom" → "safaricom" or "equty" → "equity". */
+function isFuzzyMatch(query: string, term: string): boolean {
+  if (!query || !term) return false;
+  const len = Math.max(query.length, term.length);
+  if (len < 4) return false;
+  const allowed = len <= 5 ? 1 : 2;
+  return editDistance(query, term) <= allowed;
+}
+
+    .map((t) => normalizeInstrumentQuery(t))
+    .filter(Boolean);
+}
+
 function scoreAssetCandidate(query: string, asset: ComparableAsset): number {
   const qNorm = normalizeInstrumentQuery(query);
   if (!qNorm) return -999;
