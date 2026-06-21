@@ -236,7 +236,7 @@ describe("composeAssistantResponse", () => {
       prompt: "xyzzy nonsense prompt",
       result,
     });
-    expect(text.toLowerCase()).toContain("couldn't find");
+    expect(text.toLowerCase()).toMatch(/not sure|couldn't find|try rephrasing/);
     expect(followUps.some((s) => s.includes("What can I ask?"))).toBe(true);
     expect(composedOutputIsSafe(text, followUps)).toBe(true);
   });

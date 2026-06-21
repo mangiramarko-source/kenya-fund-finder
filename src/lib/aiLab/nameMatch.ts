@@ -31,22 +31,58 @@ export const INSTRUMENT_NOISE_WORDS = new Set([
 export const INSTRUMENT_ALIASES: Record<string, string> = {
   safaricom: "scom",
   saf: "scom",
+  safcom: "scom",
   "equity group": "eqty",
+  "equity bank": "eqty",
   equity: "eqty",
+  eq: "eqty",
   kcb: "kcb",
+  "kenya commercial bank": "kcb",
   ncba: "ncba",
   britam: "britam",
   cic: "cic",
   etica: "etica",
   sanlam: "sanlam",
+  "old mutual": "oldmutual",
+  oldmutual: "oldmutual",
+  zimele: "zimele",
+  madison: "madison",
+  jubilee: "jubilee",
+  icea: "icea",
+  "icea lion": "icea",
+  coop: "coop",
+  "co op": "coop",
+  "cooperative bank": "coop",
+  absa: "absa",
+  stanchart: "scbk",
+  "standard chartered": "scbk",
+  stanbic: "sbic",
+  "diamond trust": "dtk",
+  dtb: "dtk",
+  bamburi: "bamb",
+  eabl: "eabl",
+  "east african breweries": "eabl",
+  kengen: "kegn",
+  kplc: "kplc",
+  "kenya power": "kplc",
   dollar: "usd",
+  dollars: "usd",
   euro: "eur",
+  euros: "eur",
   pound: "gbp",
+  pounds: "gbp",
+  sterling: "gbp",
+  shilling: "kes",
+  shillings: "kes",
+  bob: "kes",
 };
 
-const MIN_MATCH_SCORE = 200;
-const AMBIGUITY_SCORE_GAP = 80;
-const MIN_PREFIX_LEN = 3;
+// Lowered thresholds so close/partial wording still resolves to the right asset
+// instead of falling through to the generic "couldn't find" fallback.
+const MIN_MATCH_SCORE = 120;
+const AMBIGUITY_SCORE_GAP = 40;
+const MIN_PREFIX_LEN = 2;
+const TYPO_BONUS = 220;
 
 export type AssetMatchStatus = "match" | "ambiguous" | "none";
 
@@ -100,6 +136,43 @@ function assetSearchTerms(asset: ComparableAsset): string[] {
     .filter(Boolean);
 }
 
+/** Damerau-style edit distance, capped for performance. */
+function editDistance(a: string, b: string): number {
+  if (a === b) return 0;
+  const m = a.length;
+  const n = b.length;
+  if (Math.abs(m - n) > 3) return 99;
+  if (!m) return n;
+  if (!n) return m;
+  const prev = new Array(n + 1);
+  const curr = new Array(n + 1);
+  for (let j = 0; j <= n; j++) prev[j] = j;
+  for (let i = 1; i <= m; i++) {
+    curr[0] = i;
+    for (let j = 1; j <= n; j++) {
+      const cost = a.charCodeAt(i - 1) === b.charCodeAt(j - 1) ? 0 : 1;
+      curr[j] = Math.min(
+        prev[j] + 1,
+        curr[j - 1] + 1,
+        prev[j - 1] + cost,
+      );
+    }
+    for (let j = 0; j <= n; j++) prev[j] = curr[j];
+  }
+  return prev[n];
+}
+
+/** Return true if `query` is within a small edit distance of `term`
+ *  (≤1 edit for short terms, ≤2 for longer). Allows typos like
+ *  "safarcom" → "safaricom" or "equty" → "equity". */
+function isFuzzyMatch(query: string, term: string): boolean {
+  if (!query || !term) return false;
+  const len = Math.max(query.length, term.length);
+  if (len < 4) return false;
+  const allowed = len <= 5 ? 1 : 2;
+  return editDistance(query, term) <= allowed;
+}
+
 function scoreAssetCandidate(query: string, asset: ComparableAsset): number {
   const qNorm = normalizeInstrumentQuery(query);
   if (!qNorm) return -999;
@@ -132,6 +205,21 @@ function scoreAssetCandidate(query: string, asset: ComparableAsset): number {
   for (const term of terms) {
     if (term.length >= MIN_PREFIX_LEN && qNorm.includes(term)) score += 80;
     if (term.length >= MIN_PREFIX_LEN && term.includes(qNorm)) score += 60;
+  }
+
+  // Typo tolerance: reward close edit-distance matches on any term or token.
+  // Lets "safarcom", "equty", "saffaricom" still resolve to the right asset.
+  if (score < TYPO_BONUS) {
+    for (const term of terms) {
+      if (isFuzzyMatch(qNorm, term)) {
+        score += TYPO_BONUS;
+        break;
+      }
+      if (qTokens.some((t) => isFuzzyMatch(t, term))) {
+        score += Math.floor(TYPO_BONUS * 0.7);
+        break;
+      }
+    }
   }
 
   return score;
