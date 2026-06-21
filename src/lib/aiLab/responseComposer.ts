@@ -329,7 +329,7 @@ function composeIntro(result: RouterResult, prompt: string): string {
       if (isUnsupportedFilterLookupPrompt(prompt)) {
         return `I can't filter funds by yield threshold yet. You can ask for a named fund's yield instead.`;
       }
-      return `I couldn't find enough matching data or assumptions to answer that safely. Try one of the examples below.`;
+      return `I'm not sure I caught that. Try rephrasing with a specific amount, fund, or ticker (e.g. "10,000 in Britam MMF" or "SCOM at 5%"). The examples below also work.`;
 
     default:
       return "Based on available KenyaFundFinder data, here is the result below.";
