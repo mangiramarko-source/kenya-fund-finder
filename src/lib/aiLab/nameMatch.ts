@@ -31,22 +31,58 @@ export const INSTRUMENT_NOISE_WORDS = new Set([
 export const INSTRUMENT_ALIASES: Record<string, string> = {
   safaricom: "scom",
   saf: "scom",
+  safcom: "scom",
   "equity group": "eqty",
+  "equity bank": "eqty",
   equity: "eqty",
+  eq: "eqty",
   kcb: "kcb",
+  "kenya commercial bank": "kcb",
   ncba: "ncba",
   britam: "britam",
   cic: "cic",
   etica: "etica",
   sanlam: "sanlam",
+  "old mutual": "oldmutual",
+  oldmutual: "oldmutual",
+  zimele: "zimele",
+  madison: "madison",
+  jubilee: "jubilee",
+  icea: "icea",
+  "icea lion": "icea",
+  coop: "coop",
+  "co op": "coop",
+  "cooperative bank": "coop",
+  absa: "absa",
+  stanchart: "scbk",
+  "standard chartered": "scbk",
+  stanbic: "sbic",
+  "diamond trust": "dtk",
+  dtb: "dtk",
+  bamburi: "bamb",
+  eabl: "eabl",
+  "east african breweries": "eabl",
+  kengen: "kegn",
+  kplc: "kplc",
+  "kenya power": "kplc",
   dollar: "usd",
+  dollars: "usd",
   euro: "eur",
+  euros: "eur",
   pound: "gbp",
+  pounds: "gbp",
+  sterling: "gbp",
+  shilling: "kes",
+  shillings: "kes",
+  bob: "kes",
 };
 
-const MIN_MATCH_SCORE = 200;
-const AMBIGUITY_SCORE_GAP = 80;
-const MIN_PREFIX_LEN = 3;
+// Lowered thresholds so close/partial wording still resolves to the right asset
+// instead of falling through to the generic "couldn't find" fallback.
+const MIN_MATCH_SCORE = 120;
+const AMBIGUITY_SCORE_GAP = 40;
+const MIN_PREFIX_LEN = 2;
+const TYPO_BONUS = 220;
 
 export type AssetMatchStatus = "match" | "ambiguous" | "none";
 
