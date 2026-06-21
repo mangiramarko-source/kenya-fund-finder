@@ -173,10 +173,6 @@ function isFuzzyMatch(query: string, term: string): boolean {
   return editDistance(query, term) <= allowed;
 }
 
-    .map((t) => normalizeInstrumentQuery(t))
-    .filter(Boolean);
-}
-
 function scoreAssetCandidate(query: string, asset: ComparableAsset): number {
   const qNorm = normalizeInstrumentQuery(query);
   if (!qNorm) return -999;
