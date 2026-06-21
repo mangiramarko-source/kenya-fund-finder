@@ -207,6 +207,21 @@ function scoreAssetCandidate(query: string, asset: ComparableAsset): number {
     if (term.length >= MIN_PREFIX_LEN && term.includes(qNorm)) score += 60;
   }
 
+  // Typo tolerance: reward close edit-distance matches on any term or token.
+  // Lets "safarcom", "equty", "saffaricom" still resolve to the right asset.
+  if (score < TYPO_BONUS) {
+    for (const term of terms) {
+      if (isFuzzyMatch(qNorm, term)) {
+        score += TYPO_BONUS;
+        break;
+      }
+      if (qTokens.some((t) => isFuzzyMatch(t, term))) {
+        score += Math.floor(TYPO_BONUS * 0.7);
+        break;
+      }
+    }
+  }
+
   return score;
 }
 
