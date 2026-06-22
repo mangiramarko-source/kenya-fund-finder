@@ -25,6 +25,7 @@ export type AiLabChatStatus =
   | "refused"
   | "unknown"
   | "clarifying"
+  | "pending"
   | "error";
 
 export interface AiLabChatMessage {

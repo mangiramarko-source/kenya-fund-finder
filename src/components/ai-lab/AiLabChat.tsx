@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Search } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import {
   AI_LAB_ASSISTANT_TEXT,
@@ -191,12 +193,26 @@ const AiLabChat = ({
               const compareState = compareStateByMessageId[msg.id];
               const followUps = capFollowUps(msg.followUps ?? []);
               const showResult = shouldShowResultCard(msg);
+              const isPending = msg.status === "pending";
 
               return (
                 <div key={msg.id} ref={setTurnRef(msg.id)} className="scroll-mt-4 space-y-3">
                   <div>
-                    <p className={AI_LAB_ASSISTANT_TEXT}>{msg.text}</p>
-                    {msg.contextNote && (
+                    {isPending ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="inline-flex gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
+                        </span>
+                        <span className="italic">Thinking…</span>
+                      </div>
+                    ) : (
+                      <div className="text-sm md:text-[15px] text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1.5 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:bg-muted prose-code:text-foreground prose-code:before:hidden prose-code:after:hidden prose-a:text-accent">
+                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+                      </div>
+                    )}
+                    {msg.contextNote && !isPending && (
                       <p className="text-xs text-muted-foreground mt-2">{msg.contextNote}</p>
                     )}
                   </div>

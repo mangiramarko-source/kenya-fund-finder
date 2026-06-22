@@ -48,10 +48,28 @@ function AiLabMobileBack() {
 }
 
 const DEFAULT_LOOKBACK: LookbackDays = 30;
+const STORAGE_KEY = "ai-lab-messages-v1";
+
+function loadPersistedMessages(): AiLabChatMessage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Drop any leftover pending placeholders from a previous session.
+    return parsed.filter(
+      (m): m is AiLabChatMessage =>
+        m && typeof m === "object" && m.status !== "pending",
+    );
+  } catch {
+    return [];
+  }
+}
 
 const AiLabPage = () => {
   const { loading } = useAuth();
-  const [messages, setMessages] = useState<AiLabChatMessage[]>([]);
+  const [messages, setMessages] = useState<AiLabChatMessage[]>(loadPersistedMessages);
   const [compareLookback, setCompareLookback] = useState<Record<string, LookbackDays>>({});
   const [compareHistory, setCompareHistory] = useState<
     Record<string, Record<string, AssetHistory> | null>
@@ -61,6 +79,19 @@ const AiLabPage = () => {
   >({});
   const market = useMarketContext();
   const news = useNewsContext();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      // Cap stored messages to keep localStorage bounded.
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(messages.slice(-50)),
+      );
+    } catch {
+      // Ignore quota / serialization errors.
+    }
+  }, [messages]);
 
   useEffect(() => {
     const html = document.documentElement;
@@ -205,37 +236,60 @@ const AiLabPage = () => {
         return;
       }
 
+      const pendingMessage = createAssistantMessage({
+        text: "",
+        status: "pending",
+      });
+      setMessages((prev) => [...prev, pendingMessage]);
+
+      const replacePending = (next: AiLabChatMessage) => {
+        setMessages((prev) =>
+          prev.map((m) => (m.id === pendingMessage.id ? { ...next, id: pendingMessage.id } : m)),
+        );
+      };
+
       void (async () => {
-        const lookup = await resolveWebsiteLookup(prompt, market.data);
-        if (lookup) {
+        try {
+          const lookup = await resolveWebsiteLookup(prompt, market.data);
+          if (lookup) {
+            const { text, followUps } = composeAssistantResponse({
+              prompt,
+              result: lookup,
+              sessionContext,
+            });
+            replacePending(
+              createAssistantMessage({ text, result: lookup, followUps }),
+            );
+            return;
+          }
+
+          const { prompt: enriched, note } = applyLiveContext(prompt, market.data);
+          const result = routePrompt(enriched, market.data, news.data);
           const { text, followUps } = composeAssistantResponse({
             prompt,
-            result: lookup,
+            result,
             sessionContext,
           });
-          const assistantMessage = createAssistantMessage({
-            text,
-            result: lookup,
-            followUps,
-          });
-          setMessages((prev) => [...prev, assistantMessage]);
-          return;
+          replacePending(
+            createAssistantMessage({
+              text,
+              result:
+                result.kind === "refusal" || result.kind === "unknown" ? undefined : result,
+              followUps,
+              contextNote: note ?? undefined,
+            }),
+          );
+        } catch (err) {
+          console.error("[AiLab] handleSubmit failed", err);
+          replacePending(
+            createAssistantMessage({
+              text:
+                "Something went wrong while generating that scenario. Please try again, or try one of the examples below.",
+              status: "error",
+              followUps: ["KES 10,000 in SCOM", "Model KES 100k in an MMF at 11%", "What can I ask?"],
+            }),
+          );
         }
-
-        const { prompt: enriched, note } = applyLiveContext(prompt, market.data);
-        const result = routePrompt(enriched, market.data, news.data);
-        const { text, followUps } = composeAssistantResponse({
-          prompt,
-          result,
-          sessionContext,
-        });
-        const assistantMessage = createAssistantMessage({
-          text,
-          result: result.kind === "refusal" || result.kind === "unknown" ? undefined : result,
-          followUps,
-          contextNote: note ?? undefined,
-        });
-        setMessages((prev) => [...prev, assistantMessage]);
       })();
     },
     [messages, market.data, news.data],
