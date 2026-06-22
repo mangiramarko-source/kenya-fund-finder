@@ -208,7 +208,7 @@ const AiLabChat = ({
                         <span className="italic">Thinking…</span>
                       </div>
                     ) : (
-                      <div className={`${AI_LAB_ASSISTANT_TEXT} ai-lab-markdown`}>
+                      <div className="text-sm md:text-[15px] text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1.5 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:bg-muted prose-code:text-foreground prose-code:before:hidden prose-code:after:hidden prose-a:text-accent">
                         <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
                       </div>
                     )}
