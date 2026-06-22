@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, Search } from "lucide-react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import {
   AI_LAB_ASSISTANT_TEXT,
