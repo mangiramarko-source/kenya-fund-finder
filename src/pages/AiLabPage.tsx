@@ -48,10 +48,28 @@ function AiLabMobileBack() {
 }
 
 const DEFAULT_LOOKBACK: LookbackDays = 30;
+const STORAGE_KEY = "ai-lab-messages-v1";
+
+function loadPersistedMessages(): AiLabChatMessage[] {
+  if (typeof window === "undefined") return [];
+  try {
+    const raw = window.localStorage.getItem(STORAGE_KEY);
+    if (!raw) return [];
+    const parsed = JSON.parse(raw);
+    if (!Array.isArray(parsed)) return [];
+    // Drop any leftover pending placeholders from a previous session.
+    return parsed.filter(
+      (m): m is AiLabChatMessage =>
+        m && typeof m === "object" && m.status !== "pending",
+    );
+  } catch {
+    return [];
+  }
+}
 
 const AiLabPage = () => {
   const { loading } = useAuth();
-  const [messages, setMessages] = useState<AiLabChatMessage[]>([]);
+  const [messages, setMessages] = useState<AiLabChatMessage[]>(loadPersistedMessages);
   const [compareLookback, setCompareLookback] = useState<Record<string, LookbackDays>>({});
   const [compareHistory, setCompareHistory] = useState<
     Record<string, Record<string, AssetHistory> | null>
@@ -61,6 +79,19 @@ const AiLabPage = () => {
   >({});
   const market = useMarketContext();
   const news = useNewsContext();
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    try {
+      // Cap stored messages to keep localStorage bounded.
+      window.localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(messages.slice(-50)),
+      );
+    } catch {
+      // Ignore quota / serialization errors.
+    }
+  }, [messages]);
 
   useEffect(() => {
     const html = document.documentElement;
