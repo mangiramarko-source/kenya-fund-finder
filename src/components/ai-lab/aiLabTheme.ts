@@ -1,9 +1,9 @@
 // Phase 13C/13D + UI polish — AI Lab scoped tokens aligned with site CSS variables.
 
 export const AI_LAB_PAGE =
-  "flex flex-col min-h-0 overflow-hidden bg-muted/30 h-[100dvh] max-h-[100dvh]";
+  "fixed inset-0 flex flex-col min-h-0 overflow-hidden bg-muted/30 h-[100dvh] max-h-[100dvh] overscroll-none";
 export const AI_LAB_PAGE_INNER =
-  "flex flex-col flex-1 min-h-0 h-full w-full gap-3 md:gap-4 container py-3 md:py-5 max-w-6xl overflow-hidden";
+  "flex flex-col flex-1 min-h-0 h-full w-full gap-3 md:gap-4 container pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 md:py-5 max-w-6xl overflow-hidden";
 
 export const AI_LAB_CARD =
   "rounded-2xl border border-border bg-card text-card-foreground shadow-sm";
