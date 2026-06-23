@@ -131,7 +131,28 @@ const AiLabPage = () => {
     body.style.overscrollBehavior = "none";
     resetWindowScroll();
 
-    const scheduleReset = () => requestAnimationFrame(resetWindowScroll);
+    // Track the soft-keyboard inset so the bottom input dock can ride above it.
+    // visualViewport shrinks when the keyboard opens; the difference between
+    // layout viewport height and visualViewport bottom is the keyboard height.
+    const updateKeyboardInset = () => {
+      const vv = window.visualViewport;
+      if (!vv) {
+        html.style.setProperty("--ai-lab-kb", "0px");
+        return;
+      }
+      const inset = Math.max(
+        0,
+        window.innerHeight - vv.height - vv.offsetTop,
+      );
+      html.style.setProperty("--ai-lab-kb", `${Math.round(inset)}px`);
+    };
+    const scheduleReset = () => {
+      requestAnimationFrame(() => {
+        resetWindowScroll();
+        updateKeyboardInset();
+      });
+    };
+    updateKeyboardInset();
     window.addEventListener("scroll", scheduleReset, { passive: true });
     window.addEventListener("orientationchange", scheduleReset);
     window.visualViewport?.addEventListener("resize", scheduleReset);
@@ -141,6 +162,7 @@ const AiLabPage = () => {
       window.removeEventListener("orientationchange", scheduleReset);
       window.visualViewport?.removeEventListener("resize", scheduleReset);
       window.visualViewport?.removeEventListener("scroll", scheduleReset);
+      html.style.removeProperty("--ai-lab-kb");
       html.style.overflow = prevHtmlOverflow;
       body.style.overflow = prevBodyOverflow;
       html.style.position = prevHtmlPosition;
