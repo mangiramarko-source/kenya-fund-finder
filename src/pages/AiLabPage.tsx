@@ -102,6 +102,8 @@ const AiLabPage = () => {
     const prevBodyPosition = body.style.position;
     const prevHtmlHeight = html.style.height;
     const prevBodyHeight = body.style.height;
+    const prevHtmlWidth = html.style.width;
+    const prevBodyWidth = body.style.width;
     const prevHtmlOverscroll = html.style.overscrollBehavior;
     const prevBodyOverscroll = body.style.overscrollBehavior;
     html.style.overflow = "hidden";
@@ -110,6 +112,8 @@ const AiLabPage = () => {
     body.style.position = "fixed";
     html.style.height = "100%";
     body.style.height = "100%";
+    html.style.width = "100%";
+    body.style.width = "100%";
     html.style.overscrollBehavior = "none";
     body.style.overscrollBehavior = "none";
     return () => {
@@ -119,6 +123,8 @@ const AiLabPage = () => {
       body.style.position = prevBodyPosition;
       html.style.height = prevHtmlHeight;
       body.style.height = prevBodyHeight;
+      html.style.width = prevHtmlWidth;
+      body.style.width = prevBodyWidth;
       html.style.overscrollBehavior = prevHtmlOverscroll;
       body.style.overscrollBehavior = prevBodyOverscroll;
     };
