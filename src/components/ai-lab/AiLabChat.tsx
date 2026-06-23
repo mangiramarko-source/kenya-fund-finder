@@ -105,6 +105,11 @@ const AiLabChat = ({
   const scrollInputIntoThread = useCallback((inputEl: HTMLInputElement) => {
     const thread = threadRef.current;
     if (!thread) return;
+    // Only scroll inputs that actually live inside the thread. The bottom dock
+    // input is a sibling of the thread; calling scrollIntoView on it lets iOS
+    // Safari/Chrome scroll the page itself, then the header/dock can remain
+    // offset after the keyboard closes.
+    if (!thread.contains(inputEl)) return;
     const inputRect = inputEl.getBoundingClientRect();
     const threadRect = thread.getBoundingClientRect();
     if (inputRect.bottom > threadRect.bottom || inputRect.top < threadRect.top) {
