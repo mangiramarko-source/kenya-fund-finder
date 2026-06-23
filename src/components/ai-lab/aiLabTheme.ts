@@ -1,7 +1,7 @@
 // Phase 13C/13D + UI polish — AI Lab scoped tokens aligned with site CSS variables.
 
 export const AI_LAB_PAGE =
-  "flex flex-col min-h-0 overflow-hidden bg-muted/30 h-[var(--ai-lab-vvh,100dvh)] max-h-[var(--ai-lab-vvh,100dvh)] translate-y-[var(--ai-lab-vv-top,0px)]";
+  "flex flex-col min-h-0 overflow-hidden bg-muted/30 h-[100dvh] max-h-[100dvh]";
 export const AI_LAB_PAGE_INNER =
   "flex flex-col flex-1 min-h-0 h-full w-full gap-3 md:gap-4 container py-3 md:py-5 max-w-6xl overflow-hidden";
 
