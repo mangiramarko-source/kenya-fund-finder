@@ -140,6 +140,12 @@ const AiLabChat = ({
     const trimmed = text.trim();
     if (!trimmed) return;
     setInput("");
+    // Dismiss the mobile keyboard so the visual viewport snaps back to full
+    // height — otherwise iOS Safari/Chrome can leave the page shifted.
+    if (typeof document !== "undefined") {
+      const active = document.activeElement as HTMLElement | null;
+      if (active && typeof active.blur === "function") active.blur();
+    }
     onSubmit(trimmed);
   };
 
