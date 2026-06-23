@@ -98,11 +98,29 @@ const AiLabPage = () => {
     const body = document.body;
     const prevHtmlOverflow = html.style.overflow;
     const prevBodyOverflow = body.style.overflow;
+    const prevHtmlPosition = html.style.position;
+    const prevBodyPosition = body.style.position;
+    const prevHtmlHeight = html.style.height;
+    const prevBodyHeight = body.style.height;
+    const prevHtmlOverscroll = html.style.overscrollBehavior;
+    const prevBodyOverscroll = body.style.overscrollBehavior;
     html.style.overflow = "hidden";
     body.style.overflow = "hidden";
+    html.style.position = "fixed";
+    body.style.position = "fixed";
+    html.style.height = "100%";
+    body.style.height = "100%";
+    html.style.overscrollBehavior = "none";
+    body.style.overscrollBehavior = "none";
     return () => {
       html.style.overflow = prevHtmlOverflow;
       body.style.overflow = prevBodyOverflow;
+      html.style.position = prevHtmlPosition;
+      body.style.position = prevBodyPosition;
+      html.style.height = prevHtmlHeight;
+      body.style.height = prevBodyHeight;
+      html.style.overscrollBehavior = prevHtmlOverscroll;
+      body.style.overscrollBehavior = prevBodyOverscroll;
     };
   }, []);
 
