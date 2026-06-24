@@ -276,13 +276,7 @@ const AiLabChat = ({
       </div>
 
       {hasMessages && (
-        <div
-          className={AI_LAB_INPUT_DOCK}
-          style={{
-            transform: "translateY(calc(-1 * var(--ai-lab-kb, 0px)))",
-            transition: "transform 150ms ease-out",
-          }}
-        >
+        <div className={AI_LAB_INPUT_DOCK}>
           <div className={AI_LAB_DOCK_INNER}>
             <form onSubmit={handleSubmit}>
               <PromptInput

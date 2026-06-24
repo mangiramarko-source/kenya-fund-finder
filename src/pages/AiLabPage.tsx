@@ -131,38 +131,38 @@ const AiLabPage = () => {
     body.style.overscrollBehavior = "none";
     resetWindowScroll();
 
-    // Track the soft-keyboard inset so the bottom input dock can ride above it.
-    // visualViewport shrinks when the keyboard opens; the difference between
-    // layout viewport height and visualViewport bottom is the keyboard height.
-    const updateKeyboardInset = () => {
+    // Drive the AI Lab height from visualViewport instead of translating the
+    // dock. On iOS Safari/Chrome, a translated/fixed dock can remain floating
+    // after the keyboard closes; resizing the flex shell lets the bottom bar
+    // naturally sit above the keyboard and return to its original position.
+    const updateViewportHeight = () => {
       const vv = window.visualViewport;
-      if (!vv) {
-        html.style.setProperty("--ai-lab-kb", "0px");
-        return;
-      }
-      const inset = Math.max(
-        0,
-        window.innerHeight - vv.height - vv.offsetTop,
-      );
-      html.style.setProperty("--ai-lab-kb", `${Math.round(inset)}px`);
+      const height = vv?.height ?? window.innerHeight;
+      html.style.setProperty("--ai-lab-vvh", `${Math.round(height)}px`);
     };
     const scheduleReset = () => {
       requestAnimationFrame(() => {
+        updateViewportHeight();
         resetWindowScroll();
-        updateKeyboardInset();
       });
     };
-    updateKeyboardInset();
+    updateViewportHeight();
     window.addEventListener("scroll", scheduleReset, { passive: true });
+    window.addEventListener("resize", scheduleReset, { passive: true });
+    window.addEventListener("focusin", scheduleReset);
+    window.addEventListener("focusout", scheduleReset);
     window.addEventListener("orientationchange", scheduleReset);
     window.visualViewport?.addEventListener("resize", scheduleReset);
     window.visualViewport?.addEventListener("scroll", scheduleReset);
     return () => {
       window.removeEventListener("scroll", scheduleReset);
+      window.removeEventListener("resize", scheduleReset);
+      window.removeEventListener("focusin", scheduleReset);
+      window.removeEventListener("focusout", scheduleReset);
       window.removeEventListener("orientationchange", scheduleReset);
       window.visualViewport?.removeEventListener("resize", scheduleReset);
       window.visualViewport?.removeEventListener("scroll", scheduleReset);
-      html.style.removeProperty("--ai-lab-kb");
+      html.style.removeProperty("--ai-lab-vvh");
       html.style.overflow = prevHtmlOverflow;
       body.style.overflow = prevBodyOverflow;
       html.style.position = prevHtmlPosition;
@@ -180,11 +180,10 @@ const AiLabPage = () => {
     };
   }, []);
 
-  // Note: we intentionally do NOT translate the page by visualViewport.offsetTop.
-  // On iOS Safari / Chrome, that value can stay non-zero after the keyboard
-  // dismisses, leaving the page shifted and clipping the top back button while
-  // pushing the bottom dock out of place. 100dvh handles the viewport correctly
-  // on its own across modern mobile browsers.
+  // Note: we intentionally do NOT translate the page or the dock by keyboard
+  // height. iOS Safari/Chrome can leave translated/fixed elements floating
+  // after the keyboard closes. Instead, the locked page height follows the
+  // visual viewport, so the header stays pinned and the dock naturally returns.
 
   const compareMessageIds = useMemo(
     () =>
