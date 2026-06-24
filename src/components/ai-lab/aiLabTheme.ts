@@ -46,7 +46,7 @@ export const AI_LAB_ASSISTANT_TEXT =
   "text-sm md:text-[15px] text-foreground leading-relaxed whitespace-pre-wrap";
 
 export const AI_LAB_INPUT_WRAP =
-  "flex items-center gap-2 rounded-full border border-border bg-background pl-4 pr-1.5 py-1.5 shadow-md shadow-black/5 focus-within:ring-4 focus-within:ring-accent/15 focus-within:border-accent/30 transition-all";
+  "flex items-center gap-2 rounded-full border border-border/60 bg-muted/50 pl-4 pr-1.5 py-1.5 shadow-sm focus-within:ring-4 focus-within:ring-accent/15 focus-within:border-accent/40 focus-within:bg-muted/70 transition-all";
 /** @deprecated Use AI_LAB_INPUT_WRAP — kept for imports that still reference AI_LAB_INPUT */
 export const AI_LAB_INPUT = AI_LAB_INPUT_WRAP;
 export const AI_LAB_INPUT_FIELD =
