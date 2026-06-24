@@ -131,45 +131,24 @@ const AiLabPage = () => {
     body.style.overscrollBehavior = "none";
     resetWindowScroll();
 
-    // Track the soft-keyboard inset so the bottom input dock can ride above it.
-    // visualViewport shrinks when the keyboard opens; the difference between
-    // layout viewport height and visualViewport bottom is the keyboard height.
-    const updateKeyboardInset = () => {
-      const active = document.activeElement as HTMLElement | null;
-      const hasFocusedTextInput = Boolean(
-        active &&
-          (active.tagName === "INPUT" ||
-            active.tagName === "TEXTAREA" ||
-            active.isContentEditable),
-      );
-
-      if (!hasFocusedTextInput) {
-        html.style.setProperty("--ai-lab-kb", "0px");
-        return;
-      }
-
+    // Drive the AI Lab height from visualViewport instead of translating the
+    // dock. On iOS Safari/Chrome, a translated/fixed dock can remain floating
+    // after the keyboard closes; resizing the flex shell lets the bottom bar
+    // naturally sit above the keyboard and return to its original position.
+    const updateViewportHeight = () => {
       const vv = window.visualViewport;
-      if (!vv) {
-        html.style.setProperty("--ai-lab-kb", "0px");
-        return;
-      }
-      const rawInset = Math.max(
-        0,
-        window.innerHeight - vv.height - vv.offsetTop,
-      );
-      // Ignore browser chrome / toolbar deltas. Only a real soft keyboard should
-      // lift the dock; otherwise iOS can leave it floating after the keyboard is dismissed.
-      const inset = rawInset > 80 ? rawInset : 0;
-      html.style.setProperty("--ai-lab-kb", `${Math.round(inset)}px`);
+      const height = vv?.height ?? window.innerHeight;
+      html.style.setProperty("--ai-lab-vvh", `${Math.round(height)}px`);
     };
     const scheduleReset = () => {
       requestAnimationFrame(() => {
+        updateViewportHeight();
         resetWindowScroll();
-        updateKeyboardInset();
       });
     };
-    updateKeyboardInset();
+    updateViewportHeight();
     window.addEventListener("scroll", scheduleReset, { passive: true });
+    window.addEventListener("resize", scheduleReset, { passive: true });
     window.addEventListener("focusin", scheduleReset);
     window.addEventListener("focusout", scheduleReset);
     window.addEventListener("orientationchange", scheduleReset);
@@ -177,12 +156,13 @@ const AiLabPage = () => {
     window.visualViewport?.addEventListener("scroll", scheduleReset);
     return () => {
       window.removeEventListener("scroll", scheduleReset);
+      window.removeEventListener("resize", scheduleReset);
       window.removeEventListener("focusin", scheduleReset);
       window.removeEventListener("focusout", scheduleReset);
       window.removeEventListener("orientationchange", scheduleReset);
       window.visualViewport?.removeEventListener("resize", scheduleReset);
       window.visualViewport?.removeEventListener("scroll", scheduleReset);
-      html.style.removeProperty("--ai-lab-kb");
+      html.style.removeProperty("--ai-lab-vvh");
       html.style.overflow = prevHtmlOverflow;
       body.style.overflow = prevBodyOverflow;
       html.style.position = prevHtmlPosition;
