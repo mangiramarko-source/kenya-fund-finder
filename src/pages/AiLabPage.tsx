@@ -135,15 +135,31 @@ const AiLabPage = () => {
     // visualViewport shrinks when the keyboard opens; the difference between
     // layout viewport height and visualViewport bottom is the keyboard height.
     const updateKeyboardInset = () => {
+      const active = document.activeElement as HTMLElement | null;
+      const hasFocusedTextInput = Boolean(
+        active &&
+          (active.tagName === "INPUT" ||
+            active.tagName === "TEXTAREA" ||
+            active.isContentEditable),
+      );
+
+      if (!hasFocusedTextInput) {
+        html.style.setProperty("--ai-lab-kb", "0px");
+        return;
+      }
+
       const vv = window.visualViewport;
       if (!vv) {
         html.style.setProperty("--ai-lab-kb", "0px");
         return;
       }
-      const inset = Math.max(
+      const rawInset = Math.max(
         0,
         window.innerHeight - vv.height - vv.offsetTop,
       );
+      // Ignore browser chrome / toolbar deltas. Only a real soft keyboard should
+      // lift the dock; otherwise iOS can leave it floating after the keyboard is dismissed.
+      const inset = rawInset > 80 ? rawInset : 0;
       html.style.setProperty("--ai-lab-kb", `${Math.round(inset)}px`);
     };
     const scheduleReset = () => {
@@ -154,11 +170,15 @@ const AiLabPage = () => {
     };
     updateKeyboardInset();
     window.addEventListener("scroll", scheduleReset, { passive: true });
+    window.addEventListener("focusin", scheduleReset);
+    window.addEventListener("focusout", scheduleReset);
     window.addEventListener("orientationchange", scheduleReset);
     window.visualViewport?.addEventListener("resize", scheduleReset);
     window.visualViewport?.addEventListener("scroll", scheduleReset);
     return () => {
       window.removeEventListener("scroll", scheduleReset);
+      window.removeEventListener("focusin", scheduleReset);
+      window.removeEventListener("focusout", scheduleReset);
       window.removeEventListener("orientationchange", scheduleReset);
       window.visualViewport?.removeEventListener("resize", scheduleReset);
       window.visualViewport?.removeEventListener("scroll", scheduleReset);
