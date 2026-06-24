@@ -14,12 +14,12 @@ export const AI_LAB_ACTIVE_SHELL =
 export const AI_LAB_CHAT_SHELL =
   "flex h-full min-h-0 flex-col overflow-hidden";
 export const AI_LAB_INPUT_DOCK =
-  "shrink-0 px-3 md:px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-gradient-to-t from-muted/30 via-muted/20 to-transparent z-10";
+  "fixed inset-x-0 bottom-0 shrink-0 px-3 md:px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-background border-t border-border/70 shadow-[0_-16px_40px_hsl(var(--background))] z-40 will-change-[bottom] md:static md:border-t-0 md:shadow-none";
 export const AI_LAB_DOCK_INNER = "max-w-3xl mx-auto w-full space-y-2";
 export const AI_LAB_DOCK_DISCLAIMER =
   "text-[10px] leading-snug text-muted-foreground/90 text-center px-1";
 export const AI_LAB_THREAD =
-  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 md:px-6 pt-4 space-y-5 scroll-pb-36";
+  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 md:px-6 pt-4 pb-[calc(9rem+var(--ai-lab-kb,0px))] md:pb-4 space-y-5 scroll-pb-[calc(10rem+var(--ai-lab-kb,0px))] md:scroll-pb-8";
 export const AI_LAB_CARD_INNER =
   "rounded-2xl border border-border bg-muted/30";
 export const AI_LAB_RAIL_CARD =
@@ -46,7 +46,7 @@ export const AI_LAB_ASSISTANT_TEXT =
   "text-sm md:text-[15px] text-foreground leading-relaxed whitespace-pre-wrap";
 
 export const AI_LAB_INPUT_WRAP =
-  "flex items-center gap-2 rounded-full border border-border/20 bg-background/90 backdrop-blur-sm pl-4 pr-1.5 py-1.5 shadow-md shadow-black/5 focus-within:ring-4 focus-within:ring-accent/15 focus-within:border-accent/30 transition-all";
+  "flex items-center gap-2 rounded-full border border-border bg-background pl-4 pr-1.5 py-1.5 shadow-md shadow-black/5 focus-within:ring-4 focus-within:ring-accent/15 focus-within:border-accent/30 transition-all";
 /** @deprecated Use AI_LAB_INPUT_WRAP — kept for imports that still reference AI_LAB_INPUT */
 export const AI_LAB_INPUT = AI_LAB_INPUT_WRAP;
 export const AI_LAB_INPUT_FIELD =
