@@ -180,11 +180,10 @@ const AiLabPage = () => {
     };
   }, []);
 
-  // Note: we intentionally do NOT translate the page by visualViewport.offsetTop.
-  // On iOS Safari / Chrome, that value can stay non-zero after the keyboard
-  // dismisses, leaving the page shifted and clipping the top back button while
-  // pushing the bottom dock out of place. 100dvh handles the viewport correctly
-  // on its own across modern mobile browsers.
+  // Note: we intentionally do NOT translate the page or the dock by keyboard
+  // height. iOS Safari/Chrome can leave translated/fixed elements floating
+  // after the keyboard closes. Instead, the locked page height follows the
+  // visual viewport, so the header stays pinned and the dock naturally returns.
 
   const compareMessageIds = useMemo(
     () =>
