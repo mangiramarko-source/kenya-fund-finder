@@ -1,7 +1,7 @@
 // Phase 13C/13D + UI polish — AI Lab scoped tokens aligned with site CSS variables.
 
 export const AI_LAB_PAGE =
-  "fixed inset-0 flex flex-col min-h-0 overflow-hidden bg-muted/30 h-[100dvh] max-h-[100dvh] overscroll-none";
+  "fixed inset-0 flex flex-col min-h-0 overflow-hidden bg-muted/30 h-[var(--ai-lab-vvh,100dvh)] max-h-[var(--ai-lab-vvh,100dvh)] overscroll-none";
 export const AI_LAB_PAGE_INNER =
   "flex flex-col flex-1 min-h-0 h-full w-full gap-3 md:gap-4 container pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 md:py-5 max-w-6xl overflow-hidden";
 
@@ -14,12 +14,12 @@ export const AI_LAB_ACTIVE_SHELL =
 export const AI_LAB_CHAT_SHELL =
   "flex h-full min-h-0 flex-col overflow-hidden";
 export const AI_LAB_INPUT_DOCK =
-  "fixed inset-x-0 bottom-0 shrink-0 px-3 md:px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-background border-t border-border/70 shadow-[0_-16px_40px_hsl(var(--background))] z-40 will-change-[bottom] md:static md:border-t-0 md:shadow-none";
+  "relative shrink-0 px-3 md:px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-background border-t border-border/70 shadow-[0_-16px_40px_hsl(var(--background))] z-40 md:border-t-0 md:shadow-none";
 export const AI_LAB_DOCK_INNER = "max-w-3xl mx-auto w-full space-y-2";
 export const AI_LAB_DOCK_DISCLAIMER =
   "text-[10px] leading-snug text-muted-foreground/90 text-center px-1";
 export const AI_LAB_THREAD =
-  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 md:px-6 pt-4 pb-[calc(9rem+var(--ai-lab-kb,0px))] md:pb-4 space-y-5 scroll-pb-[calc(10rem+var(--ai-lab-kb,0px))] md:scroll-pb-8";
+  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 md:px-6 pt-4 pb-4 space-y-5 scroll-pb-36 md:scroll-pb-8";
 export const AI_LAB_CARD_INNER =
   "rounded-2xl border border-border bg-muted/30";
 export const AI_LAB_RAIL_CARD =
