@@ -94,7 +94,9 @@ const AiLabChat = ({
   onLookbackChange,
 }: Props) => {
   const [input, setInput] = useState("");
+  const [dockOffset, setDockOffset] = useState(0);
   const threadRef = useRef<HTMLDivElement>(null);
+  const dockRef = useRef<HTMLDivElement>(null);
   const turnRefs = useRef<Map<string, HTMLDivElement>>(new Map());
 
   const setTurnRef = useCallback((id: string) => (el: HTMLDivElement | null) => {
@@ -140,6 +142,32 @@ const AiLabChat = ({
     scrollToTurn();
     requestAnimationFrame(scrollToTurn);
   }, [messages]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    let raf = 0;
+    const readKeyboardInset = () => {
+      const raw = window.getComputedStyle(document.documentElement).getPropertyValue("--ai-lab-kb");
+      const next = Number.parseFloat(raw);
+      setDockOffset(Number.isFinite(next) && next > 0 ? next : 0);
+    };
+    const scheduleRead = () => {
+      window.cancelAnimationFrame(raf);
+      raf = window.requestAnimationFrame(readKeyboardInset);
+    };
+
+    readKeyboardInset();
+    window.addEventListener("resize", scheduleRead, { passive: true });
+    window.visualViewport?.addEventListener("resize", scheduleRead);
+    window.visualViewport?.addEventListener("scroll", scheduleRead);
+    return () => {
+      window.cancelAnimationFrame(raf);
+      window.removeEventListener("resize", scheduleRead);
+      window.visualViewport?.removeEventListener("resize", scheduleRead);
+      window.visualViewport?.removeEventListener("scroll", scheduleRead);
+    };
+  }, []);
 
   const submitPrompt = (text: string) => {
     const trimmed = text.trim();
@@ -277,10 +305,11 @@ const AiLabChat = ({
 
       {hasMessages && (
         <div
+          ref={dockRef}
           className={AI_LAB_INPUT_DOCK}
           style={{
-            transform: "translateY(calc(-1 * var(--ai-lab-kb, 0px)))",
-            transition: "transform 150ms ease-out",
+            bottom: dockOffset,
+            transition: "bottom 150ms ease-out",
           }}
         >
           <div className={AI_LAB_DOCK_INNER}>
