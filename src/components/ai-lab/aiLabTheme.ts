@@ -1,9 +1,9 @@
 // Phase 13C/13D + UI polish — AI Lab scoped tokens aligned with site CSS variables.
 
 export const AI_LAB_PAGE =
-  "fixed inset-0 flex flex-col min-h-0 overflow-hidden bg-muted/30 h-[var(--ai-lab-vvh,100dvh)] max-h-[var(--ai-lab-vvh,100dvh)] overscroll-none";
+  "fixed inset-0 flex flex-col min-h-0 overflow-hidden bg-background h-[var(--ai-lab-vvh,100dvh)] max-h-[var(--ai-lab-vvh,100dvh)] overscroll-none";
 export const AI_LAB_PAGE_INNER =
-  "flex flex-col flex-1 min-h-0 h-full w-full gap-3 md:gap-4 container pt-[max(0.75rem,env(safe-area-inset-top))] pb-3 md:py-5 max-w-6xl overflow-hidden";
+  "flex flex-col flex-1 min-h-0 h-full w-full gap-3 md:gap-4 container pt-[max(0.75rem,env(safe-area-inset-top))] pb-0 md:pt-5 max-w-3xl overflow-hidden";
 
 export const AI_LAB_CARD =
   "rounded-2xl border border-border bg-card text-card-foreground shadow-sm";
@@ -11,15 +11,17 @@ export const AI_LAB_EMPTY_SHELL =
   "flex h-full min-h-0 flex-col overflow-hidden border-0 shadow-none bg-transparent";
 export const AI_LAB_ACTIVE_SHELL =
   "flex h-full min-h-0 flex-col overflow-hidden border-0 shadow-none bg-transparent";
+// Flattened: chat is one section on the page background — no nested card.
 export const AI_LAB_CHAT_SHELL =
-  "flex h-full min-h-0 flex-col overflow-hidden rounded-2xl border border-border bg-card shadow-sm";
+  "flex h-full min-h-0 flex-col overflow-hidden bg-transparent";
+// Dock blends with the page; only a subtle hairline separates it from the thread.
 export const AI_LAB_INPUT_DOCK =
-  "relative shrink-0 px-3 md:px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-card border-t border-border/50 rounded-b-2xl z-40";
+  "relative shrink-0 px-0 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-background border-t border-border/40 z-40";
 export const AI_LAB_DOCK_INNER = "max-w-3xl mx-auto w-full space-y-2";
 export const AI_LAB_DOCK_DISCLAIMER =
   "text-[10px] leading-snug text-muted-foreground/90 text-center px-1";
 export const AI_LAB_THREAD =
-  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 md:px-6 pt-4 pb-4 space-y-5 scroll-pb-36 md:scroll-pb-8";
+  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-0 md:px-2 pt-2 pb-6 space-y-5 scroll-pb-8";
 export const AI_LAB_CARD_INNER =
   "rounded-2xl border border-border bg-muted/30";
 export const AI_LAB_RAIL_CARD =
