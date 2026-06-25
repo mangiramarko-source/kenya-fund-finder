@@ -14,7 +14,7 @@ export const AI_LAB_ACTIVE_SHELL =
 export const AI_LAB_CHAT_SHELL =
   "flex h-full min-h-0 flex-col overflow-hidden";
 export const AI_LAB_INPUT_DOCK =
-  "relative shrink-0 w-screen left-1/2 -translate-x-1/2 px-3 md:px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-muted/30 z-40";
+  "relative shrink-0 px-3 md:px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-background border-t border-border/70 shadow-[0_-16px_40px_hsl(var(--background))] z-40 md:border-t-0 md:shadow-none";
 export const AI_LAB_DOCK_INNER = "max-w-3xl mx-auto w-full space-y-2";
 export const AI_LAB_DOCK_DISCLAIMER =
   "text-[10px] leading-snug text-muted-foreground/90 text-center px-1";
