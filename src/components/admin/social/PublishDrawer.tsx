@@ -38,7 +38,7 @@ export default function PublishDrawer({
 
   const save = async (patch: Record<string, unknown>) => {
     if (!postId) return;
-    const { error } = await supabase.from("social_posts").update(patch).eq("id", postId);
+    const { error } = await supabase.from("social_posts").update(patch as any).eq("id", postId);
     if (error) { toast({ title: "Save failed", description: error.message, variant: "destructive" }); return; }
     setPost((p: any) => ({ ...p, ...patch }));
     onChanged?.();
