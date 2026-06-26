@@ -17,7 +17,7 @@ export default function SocialTemplates() {
   });
 
   const save = async (id: string, patch: Record<string, unknown>) => {
-    const { error } = await supabase.from("social_post_templates").update(patch).eq("id", id);
+    const { error } = await supabase.from("social_post_templates").update(patch as any).eq("id", id);
     if (error) toast({ title: "Save failed", description: error.message, variant: "destructive" });
     else toast({ title: "Saved" });
   };
