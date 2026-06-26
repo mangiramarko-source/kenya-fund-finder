@@ -15,15 +15,27 @@ export const FORBIDDEN_PATTERNS: RegExp[] = [
   /\bput your money\b/i,
 ];
 
+// Built via `new RegExp` so iOS Safari < 16.4 (e.g. iPhone 7, max iOS 15) does
+// not throw a SyntaxError at module load on the lookbehind literal. Older
+// WebKit engines fall back to the simpler pattern without lookbehind.
+const GUARANTEED_RE: RegExp = (() => {
+  try {
+    return new RegExp("\\b(?<!not )guaranteed\\b", "i");
+  } catch {
+    return /\bguaranteed\b/i;
+  }
+})();
+
 /** Used in tests to scan composed assistant output (stricter than runtime guards). */
 export const RESPONSE_QUALITY_BANNED: RegExp[] = [
   ...FORBIDDEN_PATTERNS,
   /\bbest\b/i,
   /\btop\b/i,
   /\bsafest\b/i,
-  /\b(?<!not )guaranteed\b/i,
+  GUARANTEED_RE,
   /\brecommended\b/i,
 ];
+
 
 export const STOCK_AMOUNT_MAKE_SCENARIO_RE =
   /\bhow much will i make if i (put|invest|buy)\b/i;
