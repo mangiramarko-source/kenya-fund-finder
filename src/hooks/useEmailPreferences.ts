@@ -34,7 +34,7 @@ export function useEmailPreferences() {
   const updatePref = useCallback(async (key: keyof EmailPreferences, value: boolean) => {
     if (!user) return;
     setPrefs((prev) => ({ ...prev, [key]: value }));
-    await supabase.from("email_preferences").update({ [key]: value } as any).eq("user_id", user.id);
+    await supabase.from("email_preferences").update({ [key]: value }).eq("user_id", user.id);
   }, [user]);
 
   return { prefs, loading, updatePref };

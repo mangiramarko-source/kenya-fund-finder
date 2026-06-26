@@ -102,7 +102,7 @@ export function usePriceAlerts() {
       triggered_price: null,
     };
     if (baseline_price != null) patch.baseline_price = baseline_price;
-    await supabase.from("price_alerts").update(patch as any).eq("id", id);
+    await supabase.from("price_alerts").update(patch).eq("id", id);
     await fetchAlerts();
   };
 

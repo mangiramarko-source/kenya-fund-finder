@@ -48,38 +48,21 @@ function AiLabMobileBack() {
 }
 
 const DEFAULT_LOOKBACK: LookbackDays = 30;
-const STORAGE_KEY = "ai-lab-messages-v2";
-const LEGACY_STORAGE_KEYS = ["ai-lab-messages-v1"];
+const STORAGE_KEY = "ai-lab-messages-v1";
 
 function loadPersistedMessages(): AiLabChatMessage[] {
   if (typeof window === "undefined") return [];
-  // Clear any legacy keys whose shape may crash the current renderer.
-  try {
-    for (const key of LEGACY_STORAGE_KEYS) {
-      window.localStorage.removeItem(key);
-    }
-  } catch {
-    // ignore
-  }
   try {
     const raw = window.localStorage.getItem(STORAGE_KEY);
     if (!raw) return [];
     const parsed = JSON.parse(raw);
     if (!Array.isArray(parsed)) return [];
-    // Drop any leftover pending placeholders or malformed entries.
+    // Drop any leftover pending placeholders from a previous session.
     return parsed.filter(
       (m): m is AiLabChatMessage =>
-        m &&
-        typeof m === "object" &&
-        typeof (m as { id?: unknown }).id === "string" &&
-        (m as { status?: unknown }).status !== "pending",
+        m && typeof m === "object" && m.status !== "pending",
     );
   } catch {
-    try {
-      window.localStorage.removeItem(STORAGE_KEY);
-    } catch {
-      // ignore
-    }
     return [];
   }
 }
