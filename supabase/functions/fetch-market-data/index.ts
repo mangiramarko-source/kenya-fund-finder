@@ -592,21 +592,11 @@ Deno.serve(async (req) => {
     console.log("[fetch-market-data] Cron call authenticated via secret");
   }
 
-  // Method 2: Check JWT role claim (anon/service_role from pg_net)
-  if (!isCronCall) {
-    try {
-      const parts = token.split(".");
-      if (parts.length === 3) {
-        const payload = JSON.parse(atob(parts[1]));
-        if (payload.role === "anon" || payload.role === "service_role") {
-          isCronCall = true;
-          console.log(`[fetch-market-data] Cron call detected (role: ${payload.role})`);
-        }
-      }
-    } catch {
-      // Not a standard JWT
-    }
-  }
+  // Note: Previously accepted any JWT with role=anon/service_role by parsing the
+  // payload without signature verification. Removed — anon key is public and
+  // verify_jwt=false means the gateway does not validate signatures either.
+  // Cron callers must supply the cron_secret in the body (Method 1); manual
+  // admin triggers go through Method 3 below.
 
   // Method 3: Check getUser for authenticated admin user
   if (!isCronCall) {
