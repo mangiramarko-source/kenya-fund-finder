@@ -6,9 +6,32 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
+function parseJwtClaims(token: string): Record<string, unknown> | null {
+  try {
+    const part = token.split(".")[1];
+    if (!part) return null;
+    const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
+    return JSON.parse(atob(padded));
+  } catch { return null; }
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
+  }
+
+  // Require service_role JWT (cron / server invocation only). The signature
+  // itself is not verified in-code, but the service-role JWT is a secret held
+  // only by our backend, so a matching role claim proves the caller has it.
+  const authHeader = req.headers.get("Authorization") ?? "";
+  const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7) : "";
+  const claims = parseJwtClaims(token);
+  if (claims?.role !== "service_role") {
+    return new Response(JSON.stringify({ error: "Forbidden" }), {
+      status: 403,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
   }
 
   try {
