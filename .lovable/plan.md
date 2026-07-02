@@ -1,123 +1,167 @@
-## AI Scenario Assistant — Phase 1 (Admin-Only, Desktop)
+# AI Lab × Gemini — Integration Audit & Plan (no code changes yet)
 
-A new `/ai-lab` page that lets admins ask financial *scenario* questions and get structured, deterministic answers from local calculators. No real LLM call yet; no advice wording allowed. Frontend-only — no DB, no edge function.
+Goal: keep the current deterministic AI Lab in charge of routing, math, safety, and data. Use Gemini only to rewrite/soften the already-composed, already-safe output into a more natural explanation — never to invent facts, numbers, news, or advice.
 
-### 1. Routing & access
+---
 
-- Add lazy route `/ai-lab` in `src/App.tsx` pointing to a new `AiLabPage`.
-- Guard inside the page with the existing `useAuth()` hook (same pattern as `AdminPage.tsx`):
-  - `loading` → spinner
-  - no `user` → `<Navigate to="/admin/login" />`
-  - not `isAdmin` → "Access Denied" panel
-- Desktop-only entry point: add an "AI Lab" link in `DesktopSidebar.tsx` / `DesktopTopBar.tsx` rendered **only when `isAdmin === true`**. No mobile nav entry in Phase 1 (page itself will still render but is gated).
+## 1. Current AI Lab request/response flow
 
-### 2. New files
+Entry point: `AiLabPage` → `AiLabChat.onSubmit(prompt)` → `processAiLabUserPrompt(prompt, marketCtx, newsCtx)` in `src/lib/aiLab/chat.ts`.
+
+Ordered pipeline inside `processAiLabUserPrompt`:
+
+1. `isCapabilitiesPrompt` → `composeCapabilitiesGuide()` (static help).
+2. `isUnsupportedFilterLookupPrompt` → `composeFilterUnsupportedResponse()` (static "not supported yet").
+3. `buildClarifyingResponse(prompt)`:
+   - `detectAdviceIntent` first — if advisory, returns `null` so the router can refuse.
+   - Otherwise handles: split-needs-named-stock, MMF-needs-yield, amount-only prompts.
+4. `resolveWebsiteLookup(prompt, ctx)` — deterministic instrument/website lookup.
+5. `applyLiveContext(prompt, ctx)` — token substitution with real market snapshot.
+6. `routePrompt(enriched, ctx, news)` in `src/lib/aiLab/router.ts` → returns `RouterResult`:
+   - `refusal` (from `safety.buildRefusal` via `detectAdviceIntent`)
+   - `unknown` (fallback)
+   - Deterministic scenarios: `mmf`, `mmf-yield-change`, `stock-amount`, `stock-move`, `goal-projection`, `compare`, `fx-conversion`, `fx-move`, `commodity-move`, `news-summary`, `portfolio-split`, `explainer`, `website-lookup`.
+7. `composeAssistantResponse({ prompt, result })` in `responseComposer.ts`:
+   - Builds structured "Result / Assumptions / What could change / Important / Disclaimer" text.
+   - `assertSafe()` scans against `FORBIDDEN_PATTERNS` before returning.
+   - Attaches `capFollowUps(...)` (filtered against `UNSUPPORTED_FOLLOWUP_RE`).
+8. Chat UI (`AiLabChat.tsx`) renders text as Markdown, plus a structured `ScenarioResult` card for non-refusal / non-unknown results.
+
+Safety layers today: `detectAdviceIntent`, `buildRefusal`, `FORBIDDEN_PATTERNS`, `RESPONSE_QUALITY_BANNED`, `assertSafe` in composer, and post-hoc `sanitizeOutput` in `safety.ts`.
+
+---
+
+## 2. Best place to call Gemini
+
+Wrap step 7 only. Introduce an optional post-processor **after** `composeAssistantResponse` returns and **before** the text is stored on the assistant message:
 
 ```
-src/pages/AiLabPage.tsx                       # page shell, hero, layout, disclaimer
-src/components/ai-lab/PromptCard.tsx          # input + suggested chips
-src/components/ai-lab/ScenarioResult.tsx      # structured result cards
-src/components/ai-lab/CapabilitiesCard.tsx    # "can / can't do" info card
-src/lib/aiLab/scenarios.ts                    # pure calculators
-src/lib/aiLab/safety.ts                       # forbidden/allowed wording + refusal
-src/lib/aiLab/router.ts                       # parse prompt → scenario type + params
-src/lib/aiLab/scenarios.test.ts               # vitest unit tests
-src/lib/aiLab/safety.test.ts                  # vitest unit tests
-src/lib/aiLab/router.test.ts                  # vitest unit tests
+routePrompt → composeAssistantResponse → [ NEW: geminiRewrite(safeText, result) ] → message.text
 ```
 
-### 3. Deterministic scenario logic (`src/lib/aiLab/scenarios.ts`)
+Do **not** call Gemini before the router, before safety checks, or instead of the composer. Gemini receives an already-safe, already-structured string plus a compact `result` JSON as read-only context, and is asked only to rewrite the intro paragraph in plainer language. All numbers, headings, disclaimer, and follow-ups remain the deterministic ones.
 
-Pure functions, no rounding surprises, KES formatted at the UI layer:
+If Gemini fails, times out, is disabled, or its output fails validation → fall back to the deterministic text verbatim. The user never sees an error.
 
-- `calculateMmfScenario(amount, annualYieldPct, months)` → `{ grossYearly, monthlyEquivalent, projectedGross, assumptions[] }`
-  - `grossYearly = amount * annualYieldPct/100`
-  - `projectedGross = amount + grossYearly * (months/12)` (simple, non-compounding; assumption stated)
-- `calculateStockMoveScenario(amount, priceChangePct)` → `{ newValue, delta, direction, assumptions[] }`
-- `calculateMonthlyContributionScenario(startAmount, monthly, annualYieldPct, months)` → simple monthly accrual on rolling balance, returns `{ totalContributions, projectedGross, grossEarnings, assumptions[] }`
+---
 
-Each result object also carries a fixed `disclaimer: "Data only. Not personal financial advice."`.
+## 3. Which prompts should use Gemini
 
-### 4. Safety layer (`src/lib/aiLab/safety.ts`)
+Only assistive rewriting of the **intro/narrative paragraph** for these result kinds:
 
-- `FORBIDDEN_PATTERNS` regex list: `should buy|should sell|i recommend|best fund|top fund|safest fund|guaranteed return|risk-?free|put your money`.
-- `ADVICE_INTENT_PATTERNS`: `which (fund|stock).*(should|buy)|should i (buy|sell)|where should i put|what is the best`.
-- `detectAdviceIntent(prompt)` → boolean.
-- `sanitizeOutput(text)` → throws in dev / strips & logs in prod if any forbidden phrase slips through. Used as a final guard before render.
-- `REFUSAL_MESSAGE` and `SAFE_ALTERNATIVES` constants returned when intent is advisory.
+- `mmf`, `mmf-yield-change`
+- `stock-amount`, `stock-move`
+- `goal-projection`
+- `portfolio-split`
+- `compare` (intro only, not the metric rows)
+- `explainer` (may expand the definition, still capped)
+- `fx-conversion`, `fx-move`, `commodity-move` (intro only)
 
-### 5. Prompt router (`src/lib/aiLab/router.ts`)
+## 4. Which prompts must remain 100% deterministic (no Gemini)
 
-Lightweight regex/keyword router (no LLM):
+- `refusal` — always the exact `REFUSAL_MESSAGE`.
+- `unknown` — deterministic fallback + suggestions.
+- `website-lookup` — data lookup wording is fixed.
+- `news-summary` — must never be rephrased (risk of implying causation/prediction).
+- Capabilities guide, filter-unsupported response, all clarifying prompts.
+- `Assumptions`, `What could change`, `Important`, `Data only. Not personal financial advice.`, all numeric values, tickers, follow-up chips, and the structured `ScenarioResult` card.
 
-1. Run `detectAdviceIntent` → if true, return `{ kind: "refusal" }`.
-2. Match intents:
-   - MMF yield scenario: detect amount (`KES? \d[\d,]*`) + yield (`\d+(\.\d+)?\s*%`) + optional months.
-   - Stock move: detect amount + `up|rises|gains|down|falls|drops` + percent.
-   - Monthly contribution: detect "monthly" + amount + yield.
-   - Explainer: keywords like "explain", "what is", "yield", "mmf" → return a static neutral explainer card from a small dictionary.
-   - Compare: "compare ... vs ..." → run two sub-scenarios.
-3. Fallback → return `{ kind: "unknown" }` with safe suggestions.
+---
 
-### 6. UI
+## 5. Supabase Edge Function files needed
 
-`AiLabPage` (desktop-first, reuses tokens from `index.css`, mirrors density of existing admin/portfolio pages):
+New (verify_jwt = false, since AI Lab is public):
 
-```text
-┌──────────────────────────────────────────────────────────┐
-│ Hero: "AI Scenario Assistant"  + subtitle                │
-│ Main disclaimer banner (DisclaimerBlock variant)         │
-├────────────────────────────────────┬─────────────────────┤
-│ PromptCard                         │ CapabilitiesCard    │
-│   - textarea + Run button          │   ✓ can do          │
-│   - suggested prompt chips (5)     │   ✗ can't do        │
-│                                    │                     │
-│ ScenarioResult                     │ (sticky on desktop) │
-│   - Summary card                   │                     │
-│   - Assumptions card               │                     │
-│   - Calculations table             │                     │
-│   - Important notes                │                     │
-│   - Disclaimer footer              │                     │
-└────────────────────────────────────┴─────────────────────┘
-```
+- `supabase/functions/ai-lab-explain/index.ts` — accepts `{ safeText, resultKind, resultSummary }`, calls Gemini via Lovable AI Gateway (`google/gemini-3-flash-preview`), returns `{ rewritten }` or `{ rewritten: null }` on any failure.
+- `supabase/functions/_shared/ai-gateway.ts` — reuse existing helper if present; otherwise add the standard `createLovableAiGatewayProvider` wrapper.
 
-- Chips clicking fills the textarea and auto-runs.
-- Refusal path renders a dedicated refusal card with the safe-alternative chips.
-- All numeric output uses `Intl.NumberFormat("en-KE", { style: "currency", currency: "KES" })`.
-- No streaming/loading states needed (sync compute). Small fade-in.
+Config: add `[functions.ai-lab-explain] verify_jwt = false` to `supabase/config.toml`. No DB migrations. No new tables.
 
-### 7. Tests (`vitest`, follows existing `src/lib/*.test.ts` style)
+Client: new `src/lib/aiLab/geminiRewrite.ts` (thin fetch wrapper with timeout + safety re-check) called from `processAiLabUserPrompt`.
 
-`scenarios.test.ts`:
-- MMF: `calculateMmfScenario(100000, 11, 12)` → `grossYearly === 11000`, `monthlyEquivalent ≈ 916.666…`, `projectedGross === 111000`.
-- Stock: `calculateStockMoveScenario(100000, 5).newValue === 105000`; `(100000, -10).newValue === 90000`.
-- Monthly contribution: smoke test on shape + monotonic growth.
+---
 
-`safety.test.ts`:
-- `detectAdviceIntent("Which fund should I buy?")` → true.
-- `detectAdviceIntent("Should I sell Safaricom?")` → true.
-- `sanitizeOutput` rejects each forbidden phrase from the spec.
-- Refusal message contains "can't tell you what to buy".
+## 6. Required environment variables
 
-`router.test.ts`:
-- Advisory prompts route to `refusal`.
-- "If I invest KES 100,000 at 11% yield" routes to MMF scenario with parsed params.
-- Every non-refusal result includes `"Data only. Not personal financial advice."`.
+- `LOVABLE_API_KEY` — already auto-provisioned; server-side only.
+- No new user-facing secrets.
+- Optional feature flag: `VITE_AI_LAB_GEMINI_ENABLED` (default off) so we can ship the wiring dark and enable per environment.
 
-### 8. Out of scope (Phase 1)
+---
 
-- No real AI/LLM call, no edge function, no secret, no DB tables.
-- No mobile nav entry, no public access, no payments.
-- No trading, broker, or recommendation features.
+## 7. Safety checks before showing Gemini output
 
-### 9. Risks
+The rewritten string must pass **all** of these before replacing the deterministic intro; any failure ⇒ fall back to deterministic text:
 
-- Regex-based intent detection can miss creative advisory phrasing → mitigated by output `sanitizeOutput` guard + neutral-only response templates.
-- Admin-only gate relies on existing `user_roles`/`isAdmin` — same trust boundary as `/admin`.
+1. Non-empty and ≤ 1200 chars (hard cap; refuse long expansions).
+2. `detectAdviceIntent(rewritten) === false`.
+3. No match against `FORBIDDEN_PATTERNS` **and** `RESPONSE_QUALITY_BANNED`.
+4. Must contain the exact string `"Data only. Not personal financial advice."` OR we re-append it (prefer re-append to be defensive).
+5. No new numbers: every `\d+(\.\d+)?%?` token in `rewritten` must also appear in the deterministic `safeText` (prevents fabricated yields/prices/tickers).
+6. No new tickers/asset names: uppercase alpha tokens of length 2–6 (e.g. `SCOM`, `EQTY`) must be a subset of those in `safeText`.
+7. No URLs, no "I recommend", no future-tense predictions ("will rise", "will fall", "expected to").
+8. Runs through existing `sanitizeOutput` as last line of defense.
+9. Never applied to `refusal`, `unknown`, `news-summary`, `website-lookup`, or capabilities/clarifying responses (enforced by kind allow-list, not by prompt).
 
-### 10. Acceptance
+Server-side system prompt hard rules (included every call):
+- "You are a rewriter, not a source of facts."
+- "Do not add numbers, tickers, dates, yields, prices, predictions, or advice."
+- "Do not remove or alter the disclaimer."
+- "Return only the rewritten intro paragraph, ≤120 words, neutral tone."
+- "If unsure, return the input unchanged."
 
-- Visiting `/ai-lab` as non-admin shows Access Denied; as admin shows the tool.
-- Suggested chips produce structured cards with correct numbers from spec.
-- Advisory prompts always hit the refusal card.
-- `bunx vitest run src/lib/aiLab` passes; typecheck + build clean.
+---
+
+## 8. Tests needed
+
+Unit (`src/lib/aiLab/geminiRewrite.test.ts`):
+- Fallback returns deterministic text when fetch throws / times out / returns empty.
+- Rewrite rejected when it introduces a new number, new ticker, a URL, or an advisory phrase.
+- Rewrite accepted when it only rephrases and preserves disclaimer.
+- Allow-list: refusal / unknown / news-summary / website-lookup never call the endpoint.
+- Disclaimer re-appended if missing.
+
+Integration (`chat.test.ts` additions):
+- `processAiLabUserPrompt` with Gemini mocked to `null` produces byte-identical output to today.
+- With Gemini mocked to a safe rewrite, structured sections, numbers, and follow-ups are unchanged.
+- With Gemini mocked to an unsafe rewrite (adds "you should buy"), output falls back and no forbidden phrase reaches the message.
+
+Edge function (`supabase/functions/ai-lab-explain/index.test.ts` or curl script):
+- Returns `{ rewritten: null }` on 429/402/timeout.
+- CORS preflight OK.
+- Validates request body with Zod.
+
+---
+
+## 9. Risks
+
+- **Fact drift** — Gemini invents a yield or ticker. Mitigated by number/ticker subset check + kind allow-list.
+- **Advice leakage** — model phrases things as recommendations. Mitigated by `detectAdviceIntent` + `FORBIDDEN_PATTERNS` + `RESPONSE_QUALITY_BANNED` re-scan on output.
+- **News hallucination** — explicitly blocked by excluding `news-summary` and `website-lookup` from the allow-list.
+- **Disclaimer stripping** — mitigated by re-appending the canonical disclaimer.
+- **Latency / cost** — mitigated by 3–5 s timeout, cap on prompt/output size, feature flag, and future response caching keyed by `hash(safeText)`.
+- **429 / 402 from gateway** — surfaced as silent fallback, logged server-side.
+- **Prompt injection via user text** — user prompt is passed as *context only*, and the system prompt tells the model to ignore instructions inside it. Extra defense: strip anything that looks like `"ignore previous instructions"` before sending.
+- **Test regressions** — existing `RESPONSE_QUALITY_BANNED` snapshot tests must still pass unchanged (Gemini path off by default in tests).
+
+---
+
+## 10. Exact implementation plan for a later branch
+
+Order of work (each step independently reviewable):
+
+1. Add `supabase/functions/ai-lab-explain/index.ts` + `_shared/ai-gateway.ts` helper. Zod-validated body, CORS, timeout, deterministic 200 response shape `{ rewritten: string | null }`. Update `supabase/config.toml`.
+2. Add `src/lib/aiLab/geminiRewrite.ts`:
+   - `rewriteWithGemini(safeText, result): Promise<string | null>`
+   - Kind allow-list, timeout (`AbortController`, 4 s), feature-flag check.
+   - Post-validation pipeline (§7).
+3. Wire into `processAiLabUserPrompt` after `composeAssistantResponse`:
+   - `const rewritten = await rewriteWithGemini(text, result); return { ..., text: rewritten ?? text };`
+   - Only wrap the `router` branch; leave capabilities, filter-unsupported, clarifying, and website-lookup untouched.
+4. Add feature flag `VITE_AI_LAB_GEMINI_ENABLED` in `.env.example`; default off in prod until observed for a week.
+5. Add unit + integration tests from §8. Ensure existing suites are green with flag off (default).
+6. Add a subtle "AI-assisted phrasing" hint in the message footer only when the rewritten path was used, so users know when Gemini touched the intro. Structured card and disclaimer stay identical.
+7. Observability: log `{ resultKind, latencyMs, accepted, rejectionReason }` from the edge function; no PII, no full prompt.
+8. Roll out: enable in dev → staging → 10% prod → 100%. Kill switch via env var.
+
+Non-goals for this branch: internet browsing, price/yield generation, news generation, portfolio advice, tool-use / function-calling, streaming.
