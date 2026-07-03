@@ -13,12 +13,12 @@ import {
   isGeminiEducationalEnabled,
 } from "./generateGeminiEducationalAnswer";
 
-const originalEnv = { ...import.meta.env };
-
 function setFlag(value: string | undefined) {
-  // vitest exposes import.meta.env as a mutable object
-  (import.meta as unknown as { env: Record<string, unknown> }).env.VITE_AI_LAB_GEMINI_ENABLED =
-    value;
+  if (value === undefined) {
+    vi.unstubAllEnvs();
+  } else {
+    vi.stubEnv("VITE_AI_LAB_GEMINI_ENABLED", value);
+  }
 }
 
 describe("generateGeminiEducationalAnswer", () => {
@@ -27,7 +27,7 @@ describe("generateGeminiEducationalAnswer", () => {
   });
 
   afterEach(() => {
-    Object.assign((import.meta as unknown as { env: Record<string, unknown> }).env, originalEnv);
+    vi.unstubAllEnvs();
   });
 
   it("short-circuits when flag is off (does not invoke)", async () => {
