@@ -33,6 +33,11 @@ import {
   isCapabilitiesPrompt,
 } from "@/lib/aiLab/responseComposer";
 import { isUnsupportedFilterLookupPrompt } from "@/lib/aiLab/websiteLookup";
+import { classifyEducational } from "@/lib/aiLab/educationalClassifier";
+import {
+  generateGeminiEducationalAnswer,
+  isGeminiEducationalEnabled,
+} from "@/lib/aiLab/generateGeminiEducationalAnswer";
 
 
 function AiLabMobileBack() {
@@ -324,6 +329,32 @@ const AiLabPage = () => {
             result,
             sessionContext,
           });
+
+          // Phase-1 Gemini educational fallback: ONLY on unknown results, or on
+          // educational prompts that landed on unknown. Deterministic scenario,
+          // refusal, comparison, MMF, stock, portfolio-split, news, and website
+          // results are never rewritten. Flag defaults off; any failure or safety
+          // rejection silently falls back to the deterministic unknown text above.
+          const geminiEligible =
+            result.kind === "unknown" &&
+            isGeminiEducationalEnabled() &&
+            (classifyEducational(prompt) || true);
+
+          if (geminiEligible) {
+            const gemini = await generateGeminiEducationalAnswer(prompt);
+            if (gemini.ok && gemini.markdown) {
+              replacePending(
+                createAssistantMessage({
+                  text: gemini.markdown,
+                  status: "answered",
+                  followUps,
+                  contextNote: note ?? undefined,
+                }),
+              );
+              return;
+            }
+          }
+
           replacePending(
             createAssistantMessage({
               text,
