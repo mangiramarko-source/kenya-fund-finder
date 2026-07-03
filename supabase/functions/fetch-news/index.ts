@@ -336,6 +336,54 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
+    // Authentication: allow cron jobs (via service-role secret in body) and admin users.
+    // Prevents unauthenticated abuse of paid AI rewrites and auto-publish to news_articles.
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace("Bearer ", "");
+
+    let body: Record<string, unknown> = {};
+    try {
+      body = await req.json();
+    } catch { /* no body is fine */ }
+
+    let isCronCall = false;
+    const cronSecret = serviceKey;
+    if (cronSecret && body?.cron_secret === cronSecret) {
+      isCronCall = true;
+    }
+
+    if (!isCronCall) {
+      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
+      if (!token || !anonKey) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const userClient = createClient(supabaseUrl, anonKey, {
+        global: { headers: { Authorization: authHeader } },
+      });
+      const { data: userData, error: userError } = await userClient.auth.getUser(token);
+      if (userError || !userData?.user?.id) {
+        return new Response(JSON.stringify({ error: "Unauthorized" }), {
+          status: 401,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      const { data: roleData } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userData.user.id)
+        .eq("role", "admin")
+        .maybeSingle();
+      if (!roleData) {
+        return new Response(JSON.stringify({ error: "Forbidden" }), {
+          status: 403,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+    }
+
     const feedResults = await Promise.allSettled(
       RSS_FEEDS.map((f) => fetchFeed(f.url, f.source))
     );
