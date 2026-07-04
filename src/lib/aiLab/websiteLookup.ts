@@ -562,7 +562,7 @@ function matchesFamilyTokens(haystack: string, tokens: string[]): boolean {
 export function isInstrumentFamilyPrompt(prompt: string): boolean {
   if (detectAdviceIntent(prompt)) return false;
   if (isNewsLabPrompt(prompt.toLowerCase())) return false;
-  if (COMPARE_RE.test(prompt)) return false;
+  if (isAnyComparePrompt(prompt)) return false;
   if (EXPLAIN_RE.test(prompt)) return false;
   if (hasScenarioSignals(prompt)) return false;
   if (hasAmountScenario(prompt)) return false;
@@ -589,7 +589,7 @@ export function isWebsiteLookupPrompt(prompt: string): boolean {
   if (detectAdviceIntent(prompt)) return false;
   const lower = prompt.toLowerCase();
   if (isNewsLabPrompt(lower)) return false;
-  if (COMPARE_RE.test(prompt)) return false;
+  if (isAnyComparePrompt(prompt)) return false;
   if (EXPLAIN_RE.test(prompt)) return false;
   if (hasScenarioSignals(prompt)) return false;
   if (hasAmountScenario(prompt)) return false;
