@@ -13,6 +13,9 @@ import {
 } from "./scenarios";
 
 const COMPARE_RE = /^\s*compare\s+(.+?)\s+(?:vs\.?|versus|with|to|and|&)\s+(.+?)\s*$/i;
+function isAnyComparePrompt(prompt: string): boolean {
+  return COMPARE_RE.test(prompt) || parseCompareSides(prompt) != null;
+}
 const EXPLAIN_RE = /\bexplain\b/i;
 
 const SCENARIO_BLOCKERS: RegExp[] = [
