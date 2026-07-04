@@ -4,6 +4,8 @@
 // comparison, portfolio-split, news, and website-lookup prompts are handled
 // upstream and never reach this classifier.
 
+import { parseCompareSides } from "./nameMatch";
+
 const EDUCATIONAL_PATTERNS: RegExp[] = [
   /\bwhat\s+(is|are|does|do)\b/i,
   /\bwhat'?s\b/i,
@@ -29,11 +31,29 @@ const SCENARIO_BLOCKERS: RegExp[] = [
   /\bcompare\b/i,
   /\bnews\b|\bheadline\b|\blatest\b/i,
   /\bshould i\b/i,
+  /\bwhich (is|one) (is )?(better|best|safer|higher)\b/i,
   /\brecommend/i,
+];
+
+const COMPARE_SHAPES: RegExp[] = [
+  /\bvs\.?\b/i,
+  /\bversus\b/i,
+  /\bhow does\b.*\bcompare\b/i,
 ];
 
 export function classifyEducational(prompt: string): boolean {
   if (!prompt || prompt.trim().length < 3) return false;
   if (SCENARIO_BLOCKERS.some((re) => re.test(prompt))) return false;
+  if (COMPARE_SHAPES.some((re) => re.test(prompt))) return false;
+  // "difference between X and Y" and "compare X and Y" are only comparisons
+  // when both sides look like real assets. When they don't (e.g. "difference
+  // between NAV and yield"), let the educational branch handle them.
+  const sides = parseCompareSides(prompt);
+  if (sides) {
+    const lower = prompt.toLowerCase();
+    if (/\bcompare\b/.test(lower)) return false;
+  }
   return EDUCATIONAL_PATTERNS.some((re) => re.test(prompt));
 }
+
+

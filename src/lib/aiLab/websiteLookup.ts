@@ -3,7 +3,7 @@
 
 import { fetchPublicData } from "@/lib/gateway";
 import { findAsset, type ComparableAsset, type MarketContext } from "./marketContext";
-import { resolveAssetMatch } from "./nameMatch";
+import { resolveAssetMatch, parseCompareSides } from "./nameMatch";
 import { isNewsLabPrompt } from "./newsContext";
 import { detectAdviceIntent } from "./safety";
 import {
@@ -13,6 +13,9 @@ import {
 } from "./scenarios";
 
 const COMPARE_RE = /^\s*compare\s+(.+?)\s+(?:vs\.?|versus|with|to|and|&)\s+(.+?)\s*$/i;
+function isAnyComparePrompt(prompt: string): boolean {
+  return COMPARE_RE.test(prompt) || parseCompareSides(prompt) != null;
+}
 const EXPLAIN_RE = /\bexplain\b/i;
 
 const SCENARIO_BLOCKERS: RegExp[] = [
@@ -559,7 +562,7 @@ function matchesFamilyTokens(haystack: string, tokens: string[]): boolean {
 export function isInstrumentFamilyPrompt(prompt: string): boolean {
   if (detectAdviceIntent(prompt)) return false;
   if (isNewsLabPrompt(prompt.toLowerCase())) return false;
-  if (COMPARE_RE.test(prompt)) return false;
+  if (isAnyComparePrompt(prompt)) return false;
   if (EXPLAIN_RE.test(prompt)) return false;
   if (hasScenarioSignals(prompt)) return false;
   if (hasAmountScenario(prompt)) return false;
@@ -586,7 +589,7 @@ export function isWebsiteLookupPrompt(prompt: string): boolean {
   if (detectAdviceIntent(prompt)) return false;
   const lower = prompt.toLowerCase();
   if (isNewsLabPrompt(lower)) return false;
-  if (COMPARE_RE.test(prompt)) return false;
+  if (isAnyComparePrompt(prompt)) return false;
   if (EXPLAIN_RE.test(prompt)) return false;
   if (hasScenarioSignals(prompt)) return false;
   if (hasAmountScenario(prompt)) return false;

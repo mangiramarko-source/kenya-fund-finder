@@ -1,7 +1,7 @@
 // Phase 13B — deterministic safe response composer.
 // No LLM. Conversational intros + context-aware follow-ups only.
 
-import type { RouterResult } from "./router";
+import { UNKNOWN_FALLBACK_MSG, type RouterResult } from "./router";
 import type { AiLabSessionContext } from "./chat";
 import {
   FORBIDDEN_PATTERNS,
@@ -328,6 +328,16 @@ function composeIntro(result: RouterResult, prompt: string): string {
     case "unknown":
       if (isUnsupportedFilterLookupPrompt(prompt)) {
         return `I can't filter funds by yield threshold yet. You can ask for a named fund's yield instead.`;
+      }
+      // Router branches (compare, portfolio-split, stock-amount not-found, etc.)
+      // often return a helpful, prompt-specific unknown message. Preserve it
+      // instead of overwriting with the generic fallback text.
+      if (
+        result.message &&
+        result.message.trim() &&
+        result.message !== UNKNOWN_FALLBACK_MSG
+      ) {
+        return result.message;
       }
       return `I'm not sure I caught that. Try rephrasing with a specific amount, fund, or ticker (e.g. "10,000 in Britam MMF" or "SCOM at 5%"). The examples below also work.`;
 
