@@ -35,13 +35,25 @@ const SCENARIO_BLOCKERS: RegExp[] = [
   /\brecommend/i,
 ];
 
+const COMPARE_SHAPES: RegExp[] = [
+  /\bvs\.?\b/i,
+  /\bversus\b/i,
+  /\bhow does\b.*\bcompare\b/i,
+];
+
 export function classifyEducational(prompt: string): boolean {
   if (!prompt || prompt.trim().length < 3) return false;
   if (SCENARIO_BLOCKERS.some((re) => re.test(prompt))) return false;
-  // Any prompt that looks like an asset comparison ("X vs Y",
-  // "difference between X and Y", "how does X compare to Y") belongs to the
-  // deterministic compare route — never rewrite it via Gemini.
-  if (parseCompareSides(prompt)) return false;
+  if (COMPARE_SHAPES.some((re) => re.test(prompt))) return false;
+  // "difference between X and Y" and "compare X and Y" are only comparisons
+  // when both sides look like real assets. When they don't (e.g. "difference
+  // between NAV and yield"), let the educational branch handle them.
+  const sides = parseCompareSides(prompt);
+  if (sides) {
+    const lower = prompt.toLowerCase();
+    if (/\bcompare\b/.test(lower)) return false;
+  }
   return EDUCATIONAL_PATTERNS.some((re) => re.test(prompt));
 }
+
 
