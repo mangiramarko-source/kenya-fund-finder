@@ -1,7 +1,7 @@
 // Phase 13B — deterministic safe response composer.
 // No LLM. Conversational intros + context-aware follow-ups only.
 
-import type { RouterResult } from "./router";
+import { UNKNOWN_FALLBACK_MSG, type RouterResult } from "./router";
 import type { AiLabSessionContext } from "./chat";
 import {
   FORBIDDEN_PATTERNS,
