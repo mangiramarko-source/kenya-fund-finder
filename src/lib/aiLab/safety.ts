@@ -72,6 +72,7 @@ export const ADVICE_INTENT_PATTERNS: RegExp[] = [
   /\bbest yield\b/i,
   /\bmake me the most\b/i,
   /\btop mmf\b/i,
+  /\bwhich (is|one is)?\s*(better|best|safer|higher)\b/i,
 ];
 
 export interface RefusalPayload {
