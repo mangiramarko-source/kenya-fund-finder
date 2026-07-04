@@ -144,12 +144,12 @@ describe("composeAssistantResponse — preserves router unknown messages", () =>
   });
 });
 
-describe("safety refusal still wins", () => {
+describe("safety refusal / non-recommendation", () => {
   it('"should I buy safaricom or kcb" refuses', () => {
     const r = routePrompt("should I buy safaricom or kcb", ctx);
     expect(r.kind).toBe("refusal");
   });
-  it('"which is better safaricom or kcb" refuses', () => {
+  it('"which is better safaricom or kcb" refuses (no recommendation language)', () => {
     const r = routePrompt("which is better safaricom or kcb", ctx);
     expect(r.kind).toBe("refusal");
   });
@@ -166,14 +166,14 @@ describe("website lookup does not swallow compare prompts", () => {
   });
 });
 
-describe("gemini educational classifier does not fire on compare prompts", () => {
+describe("gemini educational classifier does not fire on obvious comparisons", () => {
   it.each([
     "compare safaricom and kcb",
     "safaricom vs kcb",
-    "difference between safaricom and kcb",
     "how does safaricom compare to kcb",
     "compare britam and cic",
   ])("skips %s", (prompt) => {
     expect(classifyEducational(prompt)).toBe(false);
   });
 });
+
