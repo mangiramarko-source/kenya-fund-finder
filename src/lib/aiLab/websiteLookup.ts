@@ -3,7 +3,7 @@
 
 import { fetchPublicData } from "@/lib/gateway";
 import { findAsset, type ComparableAsset, type MarketContext } from "./marketContext";
-import { resolveAssetMatch } from "./nameMatch";
+import { resolveAssetMatch, parseCompareSides } from "./nameMatch";
 import { isNewsLabPrompt } from "./newsContext";
 import { detectAdviceIntent } from "./safety";
 import {
