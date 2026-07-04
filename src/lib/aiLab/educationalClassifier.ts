@@ -4,6 +4,8 @@
 // comparison, portfolio-split, news, and website-lookup prompts are handled
 // upstream and never reach this classifier.
 
+import { parseCompareSides } from "./nameMatch";
+
 const EDUCATIONAL_PATTERNS: RegExp[] = [
   /\bwhat\s+(is|are|does|do)\b/i,
   /\bwhat'?s\b/i,
@@ -27,10 +29,6 @@ const SCENARIO_BLOCKERS: RegExp[] = [
   /\d+\s*%/,
   /\bhow much\b/i,
   /\bcompare\b/i,
-  /\bvs\.?\b/i,
-  /\bversus\b/i,
-  /\bdifference between\b/i,
-  /\bhow does\b.*\bcompare\b/i,
   /\bnews\b|\bheadline\b|\blatest\b/i,
   /\bshould i\b/i,
   /\bwhich (is|one) (is )?(better|best|safer|higher)\b/i,
@@ -40,5 +38,10 @@ const SCENARIO_BLOCKERS: RegExp[] = [
 export function classifyEducational(prompt: string): boolean {
   if (!prompt || prompt.trim().length < 3) return false;
   if (SCENARIO_BLOCKERS.some((re) => re.test(prompt))) return false;
+  // Any prompt that looks like an asset comparison ("X vs Y",
+  // "difference between X and Y", "how does X compare to Y") belongs to the
+  // deterministic compare route — never rewrite it via Gemini.
+  if (parseCompareSides(prompt)) return false;
   return EDUCATIONAL_PATTERNS.some((re) => re.test(prompt));
 }
+
