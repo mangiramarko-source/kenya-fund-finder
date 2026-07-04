@@ -27,8 +27,13 @@ const SCENARIO_BLOCKERS: RegExp[] = [
   /\d+\s*%/,
   /\bhow much\b/i,
   /\bcompare\b/i,
+  /\bvs\.?\b/i,
+  /\bversus\b/i,
+  /\bdifference between\b/i,
+  /\bhow does\b.*\bcompare\b/i,
   /\bnews\b|\bheadline\b|\blatest\b/i,
   /\bshould i\b/i,
+  /\bwhich (is|one) (is )?(better|best|safer|higher)\b/i,
   /\brecommend/i,
 ];
 
