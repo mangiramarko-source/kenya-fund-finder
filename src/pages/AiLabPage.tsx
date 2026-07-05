@@ -74,7 +74,7 @@ function loadPersistedMessages(): AiLabChatMessage[] {
 }
 
 const AiLabPage = () => {
-  const { loading } = useAuth();
+  const { user, loading } = useAuth();
   const [messages, setMessages] = useState<AiLabChatMessage[]>(loadPersistedMessages);
   const [compareLookback, setCompareLookback] = useState<Record<string, LookbackDays>>({});
   const [compareHistory, setCompareHistory] = useState<
