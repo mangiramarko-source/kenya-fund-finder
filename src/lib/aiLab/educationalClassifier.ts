@@ -33,6 +33,7 @@ const SCENARIO_BLOCKERS: RegExp[] = [
   /\bshould i\b/i,
   /\bwhich (is|one) (is )?(better|best|safer|higher)\b/i,
   /\brecommend/i,
+  /\b(best|top|safest|highest)\b/i,
 ];
 
 const COMPARE_SHAPES: RegExp[] = [
