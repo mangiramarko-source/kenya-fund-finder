@@ -38,6 +38,7 @@ import {
   generateGeminiEducationalAnswer,
   isGeminiEducationalEnabled,
 } from "@/lib/aiLab/generateGeminiEducationalAnswer";
+import { canUseGeminiEducationalAssist } from "@/lib/aiLab/geminiEligibility";
 
 
 function AiLabMobileBack() {
