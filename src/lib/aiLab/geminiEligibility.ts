@@ -3,7 +3,7 @@
 
 import type { User } from "@supabase/supabase-js";
 import { classifyEducational } from "./educationalClassifier";
-import type { RouterResult } from "./routerTypes";
+import type { RouterResult } from "./router";
 
 export type GeminiEligibilityInput = {
   user: User | null;
