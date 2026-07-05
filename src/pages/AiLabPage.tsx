@@ -331,22 +331,25 @@ const AiLabPage = () => {
             sessionContext,
           });
 
-          // Phase-1 Gemini educational fallback: ONLY on unknown results, or on
-          // educational prompts that landed on unknown. Deterministic scenario,
-          // refusal, comparison, MMF, stock, portfolio-split, news, and website
-          // results are never rewritten. Flag defaults off; any failure or safety
-          // rejection silently falls back to the deterministic unknown text above.
-          const geminiEligible =
-            result.kind === "unknown" &&
-            isGeminiEducationalEnabled() &&
-            (classifyEducational(prompt) || true);
+          // Phase-1 Gemini educational assist. Authenticated-only, flag-gated,
+          // educational-only, and only when the deterministic router returned
+          // unknown. Deterministic scenario/refusal/comparison/news/website/
+          // capabilities/clarifying results are never rewritten. Any failure or
+          // validation rejection silently falls back to deterministic text.
+          const geminiEligible = canUseGeminiEducationalAssist({
+            user,
+            prompt,
+            resultKind: result.kind,
+            flagEnabled: isGeminiEducationalEnabled(),
+          });
 
           if (geminiEligible) {
             const gemini = await generateGeminiEducationalAnswer(prompt);
             if (gemini.ok && gemini.markdown) {
+              const labeled = `${gemini.markdown}\n\n<sub>AI-assisted educational explanation</sub>`;
               replacePending(
                 createAssistantMessage({
-                  text: gemini.markdown,
+                  text: labeled,
                   status: "answered",
                   followUps,
                   contextNote: note ?? undefined,
