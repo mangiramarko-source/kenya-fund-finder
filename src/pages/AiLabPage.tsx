@@ -33,7 +33,6 @@ import {
   isCapabilitiesPrompt,
 } from "@/lib/aiLab/responseComposer";
 import { isUnsupportedFilterLookupPrompt } from "@/lib/aiLab/websiteLookup";
-import { classifyEducational } from "@/lib/aiLab/educationalClassifier";
 import {
   generateGeminiEducationalAnswer,
   isGeminiEducationalEnabled,
