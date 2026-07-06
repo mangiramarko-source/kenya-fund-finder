@@ -47,6 +47,10 @@ export function classifyEducational(prompt: string): boolean {
   if (!prompt || prompt.trim().length < 3) return false;
   if (SCENARIO_BLOCKERS.some((re) => re.test(prompt))) return false;
   if (COMPARE_SHAPES.some((re) => re.test(prompt))) return false;
+  // Hypothetical scenario shapes (income goal, rate change, risk preference,
+  // monthly-invest, scenario buffet, live-off-interest) are handled by the
+  // deterministic scenario builder — never let Gemini rewrite them.
+  if (isHypotheticalScenarioPrompt(prompt)) return false;
   // "difference between X and Y" and "compare X and Y" are only comparisons
   // when both sides look like real assets. When they don't (e.g. "difference
   // between NAV and yield"), let the educational branch handle them.
