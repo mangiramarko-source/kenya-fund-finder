@@ -5,6 +5,7 @@
 // upstream and never reach this classifier.
 
 import { parseCompareSides } from "./nameMatch";
+import { isHypotheticalScenarioPrompt } from "./hypotheticalScenarios";
 
 const EDUCATIONAL_PATTERNS: RegExp[] = [
   /\bwhat\s+(is|are|does|do)\b/i,
