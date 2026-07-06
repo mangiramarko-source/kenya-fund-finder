@@ -42,6 +42,7 @@ import {
   matchNewsForPrompt,
   type NewsContext,
 } from "./newsContext";
+import { buildHypotheticalScenarioResponse } from "./hypotheticalScenarios";
 
 export type { UnknownPayload } from "./routerTypes";
 export { UNKNOWN_FALLBACK_MSG, UNKNOWN_FALLBACK_SUGGESTIONS } from "./routerTypes";
@@ -801,6 +802,9 @@ export function routePrompt(
       return calculateMmfScenario(amount, pct, monthsParsed);
     }
   }
+
+  const hypothetical = buildHypotheticalScenarioResponse(prompt);
+  if (hypothetical) return hypothetical;
 
   return unknownFallback(prompt, ctx);
 }
