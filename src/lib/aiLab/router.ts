@@ -803,5 +803,8 @@ export function routePrompt(
     }
   }
 
+  const hypothetical = buildHypotheticalScenarioResponse(prompt);
+  if (hypothetical) return hypothetical;
+
   return unknownFallback(prompt, ctx);
 }
