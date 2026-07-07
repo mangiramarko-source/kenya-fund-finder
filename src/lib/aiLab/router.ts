@@ -692,7 +692,7 @@ function tryNewsSummaryRoute(
 
   const match = matchNewsForPrompt(prompt, newsCtx, ctx);
   if (!match || !match.articles.length) {
-    return buildNewsUnavailableFallback(prompt, lower, newsCtx);
+    return buildNewsUnavailableFallback(prompt, lower, newsCtx, ctx);
   }
 
   return calculateNewsSummaryScenario(match.articles, {

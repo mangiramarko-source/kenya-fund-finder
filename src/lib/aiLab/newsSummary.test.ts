@@ -235,7 +235,7 @@ describe("routePrompt news-summary", () => {
     }
   });
 
-  it("returns required no-data fallback when no articles match", () => {
+  it("returns useful instrument fallback when no matching article exists but site news exists", () => {
     const noMatch: NewsContext = {
       articles: [oldMarketArticle],
       fetchedAt: REF_DATE.toISOString(),
@@ -243,10 +243,19 @@ describe("routePrompt news-summary", () => {
     const r = routePrompt("Latest news about Safaricom", marketCtx, noMatch);
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
-      expect(r.message).toBe(NEWS_LIMITATION_MSG);
+      expect(r.message).toContain(
+        "I do not have recent SCOM-specific site news in the current KenyaFundFinder dataset.",
+      );
+      expect(r.message).toContain("Available context");
+      expect(r.message).toContain(
+        "Available market data can show recent price movement for SCOM, but AI Lab cannot confirm the cause without relevant stored news.",
+      );
+      expect(r.message).toContain("Latest available site news");
+      expect(r.message).toContain(oldMarketArticle.title);
       expect(r.message).toContain("I will not invent headlines or claim live internet access.");
       expect(r.message.toLowerCase()).not.toContain("searched the internet");
       expect(r.message).not.toContain(safaricomArticle.title);
+      expect(r.message).toContain("Data only. Not personal financial advice.");
     }
   });
 
@@ -296,6 +305,32 @@ describe("routePrompt news-summary", () => {
       expect(text).not.toContain("because the price");
       expect(text).not.toContain("will rise");
       expect(text).not.toContain("will fall");
+    }
+  });
+
+  it("why is KCB moving with no KCB article shows latest general site news safely", () => {
+    const noKcbNews: NewsContext = {
+      articles: [safaricomArticle, nseTodayArticle, oldMarketArticle],
+      fetchedAt: REF_DATE.toISOString(),
+    };
+    const r = routePrompt("why is KCB moving", marketCtx, noKcbNews);
+    expect(r.kind).toBe("unknown");
+    if (r.kind === "unknown") {
+      expect(r.message).toContain(
+        "I do not have recent KCB-specific site news in the current KenyaFundFinder dataset.",
+      );
+      expect(r.message).toContain(
+        "Available market data can show recent price movement for KCB, but AI Lab cannot confirm the cause without relevant stored news.",
+      );
+      expect(r.message).toContain("Latest available site news");
+      expect(r.message).toContain(safaricomArticle.title);
+      expect(r.message).toContain(nseTodayArticle.title);
+      expect(r.message).not.toContain(kcbArticle.title);
+      expect(r.message.toLowerCase()).not.toContain("searched the internet");
+      expect(r.message.toLowerCase()).not.toContain("caused the move");
+      expect(r.message.toLowerCase()).not.toContain("because the price");
+      expect(r.message).not.toContain("Breaking:");
+      expect(r.message).toContain("Data only. Not personal financial advice.");
     }
   });
 });

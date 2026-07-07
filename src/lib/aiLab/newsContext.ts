@@ -212,8 +212,63 @@ export function buildNewsUnavailableFallback(
   prompt: string,
   lower: string,
   newsCtx: NewsContext,
+  marketCtx?: MarketContext | null,
 ): UnknownPayload {
+  if (isInstrumentNewsPrompt(lower) && newsCtx.articles.length > 0) {
+    return buildInstrumentNewsUnavailableFallback(prompt, newsCtx, marketCtx);
+  }
+
   return buildNewsLimitationFallback(prompt, lower);
+}
+
+function formatStoredArticleLine(article: NewsArticle): string {
+  const parts = [article.title];
+  if (article.source) parts.push(article.source);
+  if (article.datePublished) parts.push(article.datePublished);
+  return `- ${parts.join(" — ")}`;
+}
+
+function buildInstrumentNewsUnavailableFallback(
+  prompt: string,
+  newsCtx: NewsContext,
+  marketCtx?: MarketContext | null,
+): UnknownPayload {
+  const { terms, relatedSymbol } = resolveAssetTerms(prompt, marketCtx);
+  const instrument = relatedSymbol || terms[0] || "that instrument";
+  const stocks = (marketCtx?.assets ?? []).filter((a) => a.kind === "stock");
+  const asset = relatedSymbol ? findAsset(relatedSymbol, stocks) : null;
+  const latest = newsCtx.articles.slice(0, 3);
+
+  const availableContext = asset
+    ? `Available market data can show recent price movement for ${instrument}, but AI Lab cannot confirm the cause without relevant stored news.`
+    : "The current dataset does not include enough context to explain the move.";
+
+  const latestNews =
+    latest.length > 0
+      ? latest.map(formatStoredArticleLine).join("\n")
+      : "No recent site news is available.";
+
+  return {
+    kind: "unknown",
+    message: [
+      "Result",
+      `I do not have recent ${instrument}-specific site news in the current KenyaFundFinder dataset.`,
+      "",
+      "Available context",
+      availableContext,
+      "",
+      "Latest available site news",
+      latestNews,
+      "",
+      "Important",
+      `I cannot confirm why ${instrument} is moving unless stored news explicitly supports that link.`,
+      "I will not invent headlines or claim live internet access.",
+      "",
+      STANDARD_DISCLAIMER,
+    ].join("\n"),
+    suggestions: [...NEWS_INSTRUMENT_FOLLOWUPS],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
 }
 
 function articleMatchesTerms(article: NewsArticle, terms: string[]): boolean {
