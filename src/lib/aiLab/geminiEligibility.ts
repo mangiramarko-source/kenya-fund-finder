@@ -16,7 +16,6 @@ export function canUseGeminiEducationalAssist(
   input: GeminiEligibilityInput,
 ): boolean {
   if (!input.flagEnabled) return false;
-  if (!input.user) return false;
   if (input.resultKind !== "unknown") return false;
   if (!classifyEducational(input.prompt)) return false;
   return true;

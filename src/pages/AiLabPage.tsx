@@ -330,7 +330,7 @@ const AiLabPage = () => {
             sessionContext,
           });
 
-          // Phase-1 Gemini educational assist. Authenticated-only, flag-gated,
+          // Phase-1 Gemini educational assist. Public but flag-gated,
           // educational-only, and only when the deterministic router returned
           // unknown. Deterministic scenario/refusal/comparison/news/website/
           // capabilities/clarifying results are never rewritten. Any failure or

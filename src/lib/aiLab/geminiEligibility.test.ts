@@ -20,8 +20,14 @@ describe("canUseGeminiEducationalAssist", () => {
     expect(canUseGeminiEducationalAssist({ ...base, flagEnabled: false })).toBe(false);
   });
 
-  it("blocks anonymous users", () => {
-    expect(canUseGeminiEducationalAssist({ ...base, user: null })).toBe(false);
+  it("allows anonymous educational prompts when flag enabled", () => {
+    expect(canUseGeminiEducationalAssist({ ...base, user: null })).toBe(true);
+  });
+
+  it("blocks anonymous educational prompts when flag disabled", () => {
+    expect(
+      canUseGeminiEducationalAssist({ ...base, user: null, flagEnabled: false }),
+    ).toBe(false);
   });
 
   it("blocks non-unknown router results", () => {
@@ -44,6 +50,7 @@ describe("canUseGeminiEducationalAssist", () => {
     ];
     for (const p of cases) {
       expect(canUseGeminiEducationalAssist({ ...base, prompt: p })).toBe(false);
+      expect(canUseGeminiEducationalAssist({ ...base, user: null, prompt: p })).toBe(false);
     }
   });
 
