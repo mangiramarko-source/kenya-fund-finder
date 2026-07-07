@@ -113,9 +113,9 @@ describe("Phase 9 readiness copy", () => {
   });
 
   it("NEWS_LIMITATION_MSG does not claim live internet access", () => {
-    expect(NEWS_LIMITATION_MSG.toLowerCase()).toContain("not enabled");
+    expect(NEWS_LIMITATION_MSG.toLowerCase()).toContain("claim live internet access");
     expect(NEWS_LIMITATION_MSG.toLowerCase()).not.toContain("searched the internet");
-    expect(NEWS_LIMITATION_MSG.toLowerCase()).toContain("will not create or guess headlines");
+    expect(NEWS_LIMITATION_MSG.toLowerCase()).toContain("will not invent headlines");
   });
 
   it("SAFE_ALTERNATIVES use scenario phrasing only", () => {

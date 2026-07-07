@@ -89,7 +89,9 @@ describe("news safety fallback", () => {
     const r = routePrompt("latest news", ctx);
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
-      expect(r.message.toLowerCase()).toContain("will not create or guess headlines");
+      expect(r.message.toLowerCase()).toContain(
+        "will not invent headlines or claim live internet access",
+      );
       const composed = composeAssistantResponse({ prompt: "latest news", result: r });
       expect(composed.text.toLowerCase()).not.toMatch(/\b(headline|breaking news):\s/i);
     }
@@ -99,7 +101,8 @@ describe("news safety fallback", () => {
     const r = routePrompt("market news", ctx);
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
-      expect(r.message.toLowerCase()).toContain("not enabled");
+      expect(r.message.toLowerCase()).toContain("will not invent headlines");
+      expect(r.message.toLowerCase()).toContain("claim live internet access");
       expect(r.message.toLowerCase()).not.toContain("searched the internet");
     }
   });

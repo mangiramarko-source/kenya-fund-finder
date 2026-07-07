@@ -137,6 +137,7 @@ export function isNewsLabPrompt(lower: string): boolean {
   if (/\btell me (?:the )?latest news\b/.test(lower)) return true;
   if (/\bwhat is happening (?:in the market|with)\b/.test(lower)) return true;
   if (/\bwhat happened today\b/.test(lower)) return true;
+  if (/\bwhat changed today\b/.test(lower)) return true;
   if (/\bnews today\b/.test(lower)) return true;
   if (/\bwhy is .+ moving\b/.test(lower)) return true;
   if (/^\s*news\s*$/i.test(lower)) return true;
@@ -161,6 +162,7 @@ export function isGeneralNewsPrompt(lower: string): boolean {
     /\bmarket news\b/.test(lower) ||
     /\bwhat is happening in the market\b/.test(lower) ||
     /\bwhat happened today\b/.test(lower) ||
+    /\bwhat changed today\b/.test(lower) ||
     /\bnews today\b/.test(lower) ||
     /\btell me (?:the )?latest news\b/.test(lower) ||
     /^\s*news\s*$/i.test(lower)
@@ -168,16 +170,17 @@ export function isGeneralNewsPrompt(lower: string): boolean {
 }
 
 export const NEWS_LIMITATION_MSG = [
-  "I can help with news-style questions, but live internet news lookup is not enabled in AI Lab yet.",
+  "Result",
+  "I do not have relevant recent site news for that query in the current KenyaFundFinder dataset.",
   "",
-  "What I can do now",
-  "- Summarize news already available inside KenyaFundFinder",
-  "- Explain market context from available site data",
-  "- Look up a specific stock, fund, FX rate, or commodity in the current dataset",
-  "- Show neutral scenarios for a specific amount",
+  "What I can do",
+  "- Show available site news",
+  "- Explain the instrument using available market data",
+  "- Help model a neutral scenario",
+  "- Compare two instruments using available data",
   "",
   "Important",
-  "I will not create or guess headlines that are not in the dataset.",
+  "I will not invent headlines or claim live internet access.",
   "",
   STANDARD_DISCLAIMER,
 ].join("\n");
@@ -210,31 +213,6 @@ export function buildNewsUnavailableFallback(
   lower: string,
   newsCtx: NewsContext,
 ): UnknownPayload {
-  if (isGeneralNewsPrompt(lower) && newsCtx.articles.length > 0) {
-    const latest = newsCtx.articles.slice(0, 8);
-    return {
-      kind: "unknown",
-      message:
-        "I could not find today's-only news for that prompt, but KenyaFundFinder has other stored articles. Try a specific company/ticker or ask to summarize available site news.",
-      suggestions: [
-        "Summarize available site news",
-        "Latest news on Safaricom",
-        "Look up Safaricom",
-      ],
-      disclaimer: STANDARD_DISCLAIMER,
-    };
-  }
-
-  if (isInstrumentNewsPrompt(lower)) {
-    return {
-      kind: "unknown",
-      message:
-        "I could not find matching news in available KenyaFundFinder data for that instrument. Try the full company name or ticker, or ask for a data lookup instead.",
-      suggestions: [...NEWS_INSTRUMENT_FOLLOWUPS],
-      disclaimer: STANDARD_DISCLAIMER,
-    };
-  }
-
   return buildNewsLimitationFallback(prompt, lower);
 }
 
@@ -306,6 +284,9 @@ function detectQueryKind(lower: string): NewsQueryKind {
     return "market_today";
   }
   if (/\btoday'?s?\b/.test(lower) && /\b(market news|news)\b/.test(lower)) {
+    return "market_today";
+  }
+  if (/\bwhat changed today\b/.test(lower)) {
     return "market_today";
   }
   if (isGeneralNewsPrompt(lower)) {

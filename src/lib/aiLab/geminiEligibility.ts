@@ -3,6 +3,7 @@
 
 import type { User } from "@supabase/supabase-js";
 import { classifyEducational } from "./educationalClassifier";
+import { isNewsLabPrompt } from "./newsContext";
 import type { RouterResult } from "./router";
 
 export type GeminiEligibilityInput = {
@@ -17,6 +18,7 @@ export function canUseGeminiEducationalAssist(
 ): boolean {
   if (!input.flagEnabled) return false;
   if (input.resultKind !== "unknown") return false;
+  if (isNewsLabPrompt(input.prompt.toLowerCase())) return false;
   if (!classifyEducational(input.prompt)) return false;
   return true;
 }

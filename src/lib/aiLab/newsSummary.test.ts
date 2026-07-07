@@ -2,8 +2,8 @@ import { describe, it, expect } from "vitest";
 import { routePrompt } from "./router";
 import {
   NEWS_LIMITATION_MSG,
-  NEWS_INSTRUMENT_FOLLOWUPS,
 } from "./newsContext";
+import { canUseGeminiEducationalAssist } from "./geminiEligibility";
 import {
   calculateNewsSummaryScenario,
   getNewsSummaryUserText,
@@ -52,6 +52,13 @@ const nseTodayArticle = mkArticle({
   category: "Market News",
 });
 
+const kcbArticle = mkArticle({
+  id: "4",
+  title: "KCB Group updates shareholders on regional banking operations",
+  summary: "KCB Group published an update about its banking operations.",
+  url: "https://example.com/kcb",
+});
+
 const oldMarketArticle = mkArticle({
   id: "3",
   title: "Old market recap",
@@ -77,12 +84,12 @@ const marketCtx: MarketContext = {
   sampleStockSymbol: "SCOM",
   sampleStockPrice: 18.5,
   sampleStockChangePct: 1.2,
-  assets: [mkStock("SCOM", "Safaricom")],
+  assets: [mkStock("SCOM", "Safaricom"), mkStock("KCB", "KCB Group")],
   fetchedAt: REF_DATE.toISOString(),
 };
 
 const newsCtx: NewsContext = {
-  articles: [safaricomArticle, nseTodayArticle, oldMarketArticle],
+  articles: [safaricomArticle, nseTodayArticle, kcbArticle, oldMarketArticle],
   fetchedAt: REF_DATE.toISOString(),
 };
 
@@ -228,7 +235,7 @@ describe("routePrompt news-summary", () => {
     }
   });
 
-  it("returns instrument unavailable message when no articles match", () => {
+  it("returns required no-data fallback when no articles match", () => {
     const noMatch: NewsContext = {
       articles: [oldMarketArticle],
       fetchedAt: REF_DATE.toISOString(),
@@ -236,8 +243,10 @@ describe("routePrompt news-summary", () => {
     const r = routePrompt("Latest news about Safaricom", marketCtx, noMatch);
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
-      expect(r.message.toLowerCase()).toContain("could not find matching news");
-      expect(r.suggestions).toEqual(NEWS_INSTRUMENT_FOLLOWUPS);
+      expect(r.message).toBe(NEWS_LIMITATION_MSG);
+      expect(r.message).toContain("I will not invent headlines or claim live internet access.");
+      expect(r.message.toLowerCase()).not.toContain("searched the internet");
+      expect(r.message).not.toContain(safaricomArticle.title);
     }
   });
 
@@ -255,6 +264,38 @@ describe("routePrompt news-summary", () => {
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
       expect(r.message).toBe(NEWS_LIMITATION_MSG);
+    }
+  });
+
+  it.each([
+    "latest news",
+    "tell me latest news",
+    "market news",
+    "what is happening in the market",
+  ])("%s routes to news-summary when site news exists", (prompt) => {
+    const r = routePrompt(prompt, marketCtx, newsCtx);
+    expect(r.kind).toBe("news-summary");
+    if (r.kind === "news-summary") {
+      expect(r.articles.map((a) => a.title)).toContain(safaricomArticle.title);
+      expect(r.articles.every((a) => a.title)).toBe(true);
+    }
+  });
+
+  it.each([
+    ["latest news on Safaricom", safaricomArticle.title],
+    ["news on KCB", kcbArticle.title],
+    ["what is happening with Safaricom", safaricomArticle.title],
+    ["why is KCB moving", kcbArticle.title],
+  ])("%s routes to matching stored instrument news", (prompt, expectedTitle) => {
+    const r = routePrompt(prompt, marketCtx, newsCtx);
+    expect(r.kind).toBe("news-summary");
+    if (r.kind === "news-summary") {
+      expect(r.articles.map((a) => a.title)).toContain(expectedTitle);
+      const text = getNewsSummaryUserText(r).toLowerCase();
+      expect(text).not.toContain("caused the move");
+      expect(text).not.toContain("because the price");
+      expect(text).not.toContain("will rise");
+      expect(text).not.toContain("will fall");
     }
   });
 });
@@ -301,12 +342,23 @@ describe("routePrompt news today gates", () => {
     expect(r.kind).toBe("news-summary");
   });
 
-  it("G5-2: Summarize today's market news with only old articles → helpful unavailable message", () => {
-    const r = routePrompt("Summarize today's market news", marketCtx, oldOnlyArticles());
+  it("what changed today only uses same-day Nairobi-date articles", () => {
+    const r = routePrompt("what changed today?", marketCtx, todayArticles());
+    expect(r.kind).toBe("news-summary");
+    if (r.kind === "news-summary") {
+      expect(r.articles.every((a) => isPublishedToday(a.publishedAt ?? "", new Date()))).toBe(
+        true,
+      );
+    }
+  });
+
+  it("G5-2: today prompt with only old articles → required no-data fallback", () => {
+    const r = routePrompt("what changed today?", marketCtx, oldOnlyArticles());
     expect(r.kind).toBe("unknown");
     if (r.kind === "unknown") {
-      expect(r.message.toLowerCase()).toContain("today");
+      expect(r.message).toBe(NEWS_LIMITATION_MSG);
       expect(r.message.toLowerCase()).not.toContain("searched the internet");
+      expect(r.message).not.toContain("Last week market wrap");
     }
   });
 });
@@ -352,5 +404,26 @@ describe("getNewsSummaryUserText forbidden wording", () => {
     for (const phrase of forbidden) {
       expect(text).not.toContain(phrase);
     }
+  });
+});
+
+describe("news prompts stay out of Gemini", () => {
+  it.each([
+    "latest news",
+    "market news",
+    "latest news on Safaricom",
+    "news on KCB",
+    "what is happening with Safaricom",
+    "why is KCB moving",
+    "what changed today",
+  ])("%s is not Gemini eligible", (prompt) => {
+    expect(
+      canUseGeminiEducationalAssist({
+        user: null,
+        prompt,
+        resultKind: "unknown",
+        flagEnabled: true,
+      }),
+    ).toBe(false);
   });
 });
