@@ -587,8 +587,8 @@ Deno.serve(async (req) => {
     body = await req.json();
   } catch { /* no body is fine */ }
 
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-  if (isCronSecretAuthorized(body, serviceRoleKey)) {
+  const serviceRoleSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (isCronSecretAuthorized(body, serviceRoleSecret)) {
     isCronCall = true;
     console.log("[fetch-market-data] Cron call authenticated via secret");
   }
