@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { isCronSecretAuthorized, isLegacyCronAuthorization } from "./auth.ts";
 
 const allowedOrigins = [
   "https://kenya-fund-finder.lovable.app",
@@ -579,24 +580,25 @@ Deno.serve(async (req) => {
 
   // Check if this is a service-level / cron call
   let isCronCall = false;
-  
+
   // Method 1: Check for cron secret in body
   let body: Record<string, unknown> = {};
   try {
     body = await req.json();
   } catch { /* no body is fine */ }
-  
-  const cronSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-  if (body?.cron_secret === cronSecret && cronSecret) {
+
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+  if (isCronSecretAuthorized(body, serviceRoleKey)) {
     isCronCall = true;
     console.log("[fetch-market-data] Cron call authenticated via secret");
   }
 
-  // Note: Previously accepted any JWT with role=anon/service_role by parsing the
-  // payload without signature verification. Removed — anon key is public and
-  // verify_jwt=false means the gateway does not validate signatures either.
-  // Cron callers must supply the cron_secret in the body (Method 1); manual
-  // admin triggers go through Method 3 below.
+  // Method 2: Accept the legacy bearer-token cron auth used by older scheduled jobs
+  // so existing Supabase cron entries keep working without requiring a body secret.
+  if (!isCronCall && isLegacyCronAuthorization(authHeader)) {
+    isCronCall = true;
+    console.log("[fetch-market-data] Cron call authenticated via legacy bearer token");
+  }
 
   // Method 3: Check getUser for authenticated admin user
   if (!isCronCall) {
