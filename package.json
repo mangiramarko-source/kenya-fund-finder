@@ -16,7 +16,8 @@
     "db:migrate-lovable": "node scripts/migrate-from-lovable.mjs",
     "db:migrate-lovable:quick": "node scripts/migrate-from-lovable.mjs --skip-news",
     "db:check-counts": "node scripts/check-supabase-row-counts.mjs",
-    "db:apply-repair-schema": "node scripts/apply-repair-schema.mjs"
+    "db:apply-repair-schema": "node scripts/apply-repair-schema.mjs",
+    "market:backfill": "node scripts/backfill-market-data.mjs"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
