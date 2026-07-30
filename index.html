@@ -37,7 +37,6 @@
     <meta name="description" content="Compare CMA unit trusts, NSE stocks, FX rates &amp; commodities. Real-time yields, market data &amp; news for Kenyan investors." />
     <meta name="author" content="Kenya Fund Finder" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link rel="preconnect" href="https://qrmthciurngpzpjhevdj.supabase.co" />
     <link rel="preconnect" href="https://caawgzuofnujrznwbuxk.supabase.co" />
     <link rel="dns-prefetch" href="https://images.unsplash.com" />
     <link rel="dns-prefetch" href="https://fastly.picsum.photos" />
@@ -48,8 +47,8 @@
       (function () {
         try {
           if (location.pathname !== "/" && location.pathname !== "/index.html") return;
-          var SUPABASE_URL = "https://qrmthciurngpzpjhevdj.supabase.co";
-          var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFybXRoY2l1cm5ncHpwamhldmRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNzQ1ODksImV4cCI6MjA4Nzg1MDU4OX0.WeQLthaDLzYdmSjY_tt4_ZClx68aXQe3EOjn314yygs";
+          var SUPABASE_URL = "https://caawgzuofnujrznwbuxk.supabase.co";
+          var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhYXdnenVvZm51anJ6bndidXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMjI0ODYsImV4cCI6MjA5MTg5ODQ4Nn0.Ci7AcNBlIa4LhINAEvpmeDjLQfxWUxcROd8q5hNAQnA";
           var url = SUPABASE_URL + "/rest/v1/news_articles_public?select=id,title,summary,source,date_published,url,category,read_time,is_featured,status,image_url&order=date_published.desc&limit=4";
           window.__newsPreviewPromise = fetch(url, {
             headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY },

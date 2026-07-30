@@ -10,7 +10,32 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.1"
+    PostgrestVersion: "14.5"
+  }
+  graphql_public: {
+    Tables: {
+      [_ in never]: never
+    }
+    Views: {
+      [_ in never]: never
+    }
+    Functions: {
+      graphql: {
+        Args: {
+          extensions?: Json
+          operationName?: string
+          query?: string
+          variables?: Json
+        }
+        Returns: Json
+      }
+    }
+    Enums: {
+      [_ in never]: never
+    }
+    CompositeTypes: {
+      [_ in never]: never
+    }
   }
   public: {
     Tables: {
@@ -104,83 +129,6 @@ export type Database = {
           title?: string
           updated_at?: string
           updated_by?: string | null
-        }
-        Relationships: []
-      }
-      api_key_usage: {
-        Row: {
-          api_key_id: string
-          created_at: string
-          endpoint: string
-          id: string
-          ip_hash: string | null
-          status_code: number
-        }
-        Insert: {
-          api_key_id: string
-          created_at?: string
-          endpoint: string
-          id?: string
-          ip_hash?: string | null
-          status_code: number
-        }
-        Update: {
-          api_key_id?: string
-          created_at?: string
-          endpoint?: string
-          id?: string
-          ip_hash?: string | null
-          status_code?: number
-        }
-        Relationships: [
-          {
-            foreignKeyName: "api_key_usage_api_key_id_fkey"
-            columns: ["api_key_id"]
-            isOneToOne: false
-            referencedRelation: "api_keys"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      api_keys: {
-        Row: {
-          created_at: string
-          created_by: string | null
-          expires_at: string | null
-          id: string
-          is_active: boolean
-          key_hash: string
-          key_prefix: string
-          last_used_at: string | null
-          name: string
-          rate_limit_per_minute: number
-          updated_at: string
-        }
-        Insert: {
-          created_at?: string
-          created_by?: string | null
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean
-          key_hash: string
-          key_prefix: string
-          last_used_at?: string | null
-          name: string
-          rate_limit_per_minute?: number
-          updated_at?: string
-        }
-        Update: {
-          created_at?: string
-          created_by?: string | null
-          expires_at?: string | null
-          id?: string
-          is_active?: boolean
-          key_hash?: string
-          key_prefix?: string
-          last_used_at?: string | null
-          name?: string
-          rate_limit_per_minute?: number
-          updated_at?: string
         }
         Relationships: []
       }
@@ -321,123 +269,6 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
-      }
-      email_preferences: {
-        Row: {
-          created_at: string
-          id: string
-          instant_alerts: boolean
-          updated_at: string
-          user_id: string
-          weekly_summary: boolean
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          instant_alerts?: boolean
-          updated_at?: string
-          user_id: string
-          weekly_summary?: boolean
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          instant_alerts?: boolean
-          updated_at?: string
-          user_id?: string
-          weekly_summary?: boolean
-        }
-        Relationships: []
-      }
-      email_send_log: {
-        Row: {
-          created_at: string
-          error_message: string | null
-          id: string
-          message_id: string | null
-          metadata: Json | null
-          recipient_email: string
-          status: string
-          template_name: string
-        }
-        Insert: {
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          message_id?: string | null
-          metadata?: Json | null
-          recipient_email: string
-          status: string
-          template_name: string
-        }
-        Update: {
-          created_at?: string
-          error_message?: string | null
-          id?: string
-          message_id?: string | null
-          metadata?: Json | null
-          recipient_email?: string
-          status?: string
-          template_name?: string
-        }
-        Relationships: []
-      }
-      email_send_state: {
-        Row: {
-          auth_email_ttl_minutes: number
-          batch_size: number
-          id: number
-          retry_after_until: string | null
-          send_delay_ms: number
-          transactional_email_ttl_minutes: number
-          updated_at: string
-        }
-        Insert: {
-          auth_email_ttl_minutes?: number
-          batch_size?: number
-          id?: number
-          retry_after_until?: string | null
-          send_delay_ms?: number
-          transactional_email_ttl_minutes?: number
-          updated_at?: string
-        }
-        Update: {
-          auth_email_ttl_minutes?: number
-          batch_size?: number
-          id?: number
-          retry_after_until?: string | null
-          send_delay_ms?: number
-          transactional_email_ttl_minutes?: number
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      email_unsubscribe_tokens: {
-        Row: {
-          created_at: string
-          email: string
-          expires_at: string
-          id: string
-          token: string
-          used_at: string | null
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          expires_at?: string
-          id?: string
-          token: string
-          used_at?: string | null
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          expires_at?: string
-          id?: string
-          token?: string
-          used_at?: string | null
-        }
-        Relationships: []
       }
       exchange_rate_history: {
         Row: {
@@ -595,28 +426,20 @@ export type Database = {
       funds: {
         Row: {
           annual_yield: number
-          aum_kes: number | null
           cma_licensed: boolean
           created_at: string
           created_by: string | null
           daily_yield: number
           description: string
-          exit_fee: number | null
           fact_sheet_date: string | null
           fund_type: string
-          good_for: string[]
           id: string
-          inception_date: string | null
-          is_featured: boolean
           is_published: boolean
           logo_url: string | null
           management_fee: number
           manager: string
-          manager_years_active: number | null
           minimum_investment: number
           name: string
-          not_good_for: string[]
-          risk_level: string
           seven_day_yield: number
           slug: string
           source_url: string | null
@@ -624,34 +447,25 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           website: string
-          withdrawal_days: number | null
           withdrawal_time: string
           yield_unit: string
         }
         Insert: {
           annual_yield: number
-          aum_kes?: number | null
           cma_licensed?: boolean
           created_at?: string
           created_by?: string | null
           daily_yield?: number
           description?: string
-          exit_fee?: number | null
           fact_sheet_date?: string | null
           fund_type?: string
-          good_for?: string[]
           id?: string
-          inception_date?: string | null
-          is_featured?: boolean
           is_published?: boolean
           logo_url?: string | null
           management_fee: number
           manager: string
-          manager_years_active?: number | null
           minimum_investment: number
           name: string
-          not_good_for?: string[]
-          risk_level?: string
           seven_day_yield: number
           slug: string
           source_url?: string | null
@@ -659,34 +473,25 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           website?: string
-          withdrawal_days?: number | null
           withdrawal_time: string
           yield_unit?: string
         }
         Update: {
           annual_yield?: number
-          aum_kes?: number | null
           cma_licensed?: boolean
           created_at?: string
           created_by?: string | null
           daily_yield?: number
           description?: string
-          exit_fee?: number | null
           fact_sheet_date?: string | null
           fund_type?: string
-          good_for?: string[]
           id?: string
-          inception_date?: string | null
-          is_featured?: boolean
           is_published?: boolean
           logo_url?: string | null
           management_fee?: number
           manager?: string
-          manager_years_active?: number | null
           minimum_investment?: number
           name?: string
-          not_good_for?: string[]
-          risk_level?: string
           seven_day_yield?: number
           slug?: string
           source_url?: string | null
@@ -694,60 +499,8 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           website?: string
-          withdrawal_days?: number | null
           withdrawal_time?: string
           yield_unit?: string
-        }
-        Relationships: []
-      }
-      mock_portfolios: {
-        Row: {
-          asset_id: string | null
-          asset_name: string
-          asset_type: string
-          buy_date: string
-          buy_price: number
-          created_at: string
-          current_price: number
-          current_yield: number | null
-          id: string
-          notes: string | null
-          ticker: string | null
-          units: number
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          asset_id?: string | null
-          asset_name: string
-          asset_type: string
-          buy_date?: string
-          buy_price: number
-          created_at?: string
-          current_price: number
-          current_yield?: number | null
-          id?: string
-          notes?: string | null
-          ticker?: string | null
-          units?: number
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          asset_id?: string | null
-          asset_name?: string
-          asset_type?: string
-          buy_date?: string
-          buy_price?: number
-          created_at?: string
-          current_price?: number
-          current_yield?: number | null
-          id?: string
-          notes?: string | null
-          ticker?: string | null
-          units?: number
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -759,7 +512,6 @@ export type Database = {
           created_by: string | null
           date_published: string
           id: string
-          image_url: string | null
           is_featured: boolean
           read_time: string
           source: string
@@ -777,7 +529,6 @@ export type Database = {
           created_by?: string | null
           date_published?: string
           id?: string
-          image_url?: string | null
           is_featured?: boolean
           read_time?: string
           source?: string
@@ -795,7 +546,6 @@ export type Database = {
           created_by?: string | null
           date_published?: string
           id?: string
-          image_url?: string | null
           is_featured?: boolean
           read_time?: string
           source?: string
@@ -805,39 +555,6 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           url?: string | null
-        }
-        Relationships: []
-      }
-      notifications: {
-        Row: {
-          created_at: string
-          id: string
-          is_read: boolean
-          message: string
-          metadata: Json | null
-          title: string
-          type: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message: string
-          metadata?: Json | null
-          title: string
-          type?: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          is_read?: boolean
-          message?: string
-          metadata?: Json | null
-          title?: string
-          type?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -862,108 +579,6 @@ export type Database = {
           page_path?: string
           session_id?: string | null
           user_id?: string | null
-        }
-        Relationships: []
-      }
-      portfolio_events: {
-        Row: {
-          amount: number | null
-          asset_id: string | null
-          asset_name: string
-          asset_type: string
-          created_at: string
-          event_date: string
-          event_type: string
-          id: string
-          note: string
-          portfolio_holding_id: string | null
-          quantity: number | null
-          user_id: string
-        }
-        Insert: {
-          amount?: number | null
-          asset_id?: string | null
-          asset_name: string
-          asset_type: string
-          created_at?: string
-          event_date?: string
-          event_type: string
-          id?: string
-          note?: string
-          portfolio_holding_id?: string | null
-          quantity?: number | null
-          user_id: string
-        }
-        Update: {
-          amount?: number | null
-          asset_id?: string | null
-          asset_name?: string
-          asset_type?: string
-          created_at?: string
-          event_date?: string
-          event_type?: string
-          id?: string
-          note?: string
-          portfolio_holding_id?: string | null
-          quantity?: number | null
-          user_id?: string
-        }
-        Relationships: []
-      }
-      price_alerts: {
-        Row: {
-          asset_id: string
-          asset_name: string
-          asset_type: string
-          baseline_price: number | null
-          condition: string
-          created_at: string
-          id: string
-          is_active: boolean
-          is_triggered: boolean
-          notify_email: boolean
-          notify_inapp: boolean
-          target_price: number
-          triggered_at: string | null
-          triggered_price: number | null
-          updated_at: string
-          user_id: string
-        }
-        Insert: {
-          asset_id: string
-          asset_name: string
-          asset_type: string
-          baseline_price?: number | null
-          condition: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          is_triggered?: boolean
-          notify_email?: boolean
-          notify_inapp?: boolean
-          target_price: number
-          triggered_at?: string | null
-          triggered_price?: number | null
-          updated_at?: string
-          user_id: string
-        }
-        Update: {
-          asset_id?: string
-          asset_name?: string
-          asset_type?: string
-          baseline_price?: number | null
-          condition?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          is_triggered?: boolean
-          notify_email?: boolean
-          notify_inapp?: boolean
-          target_price?: number
-          triggered_at?: string | null
-          triggered_price?: number | null
-          updated_at?: string
-          user_id?: string
         }
         Relationships: []
       }
@@ -1042,95 +657,6 @@ export type Database = {
         }
         Relationships: []
       }
-      social_account_tokens: {
-        Row: {
-          account_id: string | null
-          created_at: string
-          expires_at: string | null
-          id: string
-          ig_business_id: string | null
-          page_access_token: string | null
-          page_id: string | null
-          platform: Database["public"]["Enums"]["social_platform"]
-          scopes: string[] | null
-          test_mode: boolean
-          token_type: string | null
-          updated_at: string
-          user_access_token: string | null
-        }
-        Insert: {
-          account_id?: string | null
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          ig_business_id?: string | null
-          page_access_token?: string | null
-          page_id?: string | null
-          platform: Database["public"]["Enums"]["social_platform"]
-          scopes?: string[] | null
-          test_mode?: boolean
-          token_type?: string | null
-          updated_at?: string
-          user_access_token?: string | null
-        }
-        Update: {
-          account_id?: string | null
-          created_at?: string
-          expires_at?: string | null
-          id?: string
-          ig_business_id?: string | null
-          page_access_token?: string | null
-          page_id?: string | null
-          platform?: Database["public"]["Enums"]["social_platform"]
-          scopes?: string[] | null
-          test_mode?: boolean
-          token_type?: string | null
-          updated_at?: string
-          user_access_token?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "social_account_tokens_account_id_fkey"
-            columns: ["account_id"]
-            isOneToOne: true
-            referencedRelation: "social_accounts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      social_accounts: {
-        Row: {
-          connection_status: string
-          created_at: string
-          display_name: string | null
-          handle: string | null
-          id: string
-          meta: Json
-          platform: Database["public"]["Enums"]["social_platform"]
-          updated_at: string
-        }
-        Insert: {
-          connection_status?: string
-          created_at?: string
-          display_name?: string | null
-          handle?: string | null
-          id?: string
-          meta?: Json
-          platform: Database["public"]["Enums"]["social_platform"]
-          updated_at?: string
-        }
-        Update: {
-          connection_status?: string
-          created_at?: string
-          display_name?: string | null
-          handle?: string | null
-          id?: string
-          meta?: Json
-          platform?: Database["public"]["Enums"]["social_platform"]
-          updated_at?: string
-        }
-        Relationships: []
-      }
       social_links: {
         Row: {
           created_at: string
@@ -1166,268 +692,6 @@ export type Database = {
           url?: string
         }
         Relationships: []
-      }
-      social_oauth_states: {
-        Row: {
-          consumed_at: string | null
-          created_at: string
-          expires_at: string
-          platform: Database["public"]["Enums"]["social_platform"]
-          redirect_to: string | null
-          state: string
-          user_id: string
-        }
-        Insert: {
-          consumed_at?: string | null
-          created_at?: string
-          expires_at?: string
-          platform: Database["public"]["Enums"]["social_platform"]
-          redirect_to?: string | null
-          state: string
-          user_id: string
-        }
-        Update: {
-          consumed_at?: string | null
-          created_at?: string
-          expires_at?: string
-          platform?: Database["public"]["Enums"]["social_platform"]
-          redirect_to?: string | null
-          state?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      social_post_analytics: {
-        Row: {
-          content_type: string | null
-          event: string
-          id: string
-          meta: Json
-          occurred_at: string
-          platform: Database["public"]["Enums"]["social_platform"] | null
-          post_id: string | null
-        }
-        Insert: {
-          content_type?: string | null
-          event: string
-          id?: string
-          meta?: Json
-          occurred_at?: string
-          platform?: Database["public"]["Enums"]["social_platform"] | null
-          post_id?: string | null
-        }
-        Update: {
-          content_type?: string | null
-          event?: string
-          id?: string
-          meta?: Json
-          occurred_at?: string
-          platform?: Database["public"]["Enums"]["social_platform"] | null
-          post_id?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "social_post_analytics_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "social_posts"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      social_post_templates: {
-        Row: {
-          caption_skeleton: string | null
-          content_type: string
-          created_at: string
-          enabled: boolean
-          hashtags_default: string[]
-          id: string
-          image_prompt: string
-          key: string
-          name: string
-          platform_defaults: Json
-          system_prompt: string
-          updated_at: string
-        }
-        Insert: {
-          caption_skeleton?: string | null
-          content_type: string
-          created_at?: string
-          enabled?: boolean
-          hashtags_default?: string[]
-          id?: string
-          image_prompt: string
-          key: string
-          name: string
-          platform_defaults?: Json
-          system_prompt: string
-          updated_at?: string
-        }
-        Update: {
-          caption_skeleton?: string | null
-          content_type?: string
-          created_at?: string
-          enabled?: boolean
-          hashtags_default?: string[]
-          id?: string
-          image_prompt?: string
-          key?: string
-          name?: string
-          platform_defaults?: Json
-          system_prompt?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
-      social_posts: {
-        Row: {
-          caption: string
-          content_type: string
-          created_at: string
-          created_by: string | null
-          cta: string | null
-          data_as_of: string | null
-          disclaimer: string | null
-          error_message: string | null
-          fund_ids: string[]
-          fund_names: string[]
-          hashtags: string[]
-          id: string
-          image_headline: string | null
-          image_size: string | null
-          image_subtext: string | null
-          image_url: string | null
-          platform: Database["public"]["Enums"]["social_platform"]
-          posted_at: string | null
-          scheduled_at: string | null
-          source_data: Json
-          status: Database["public"]["Enums"]["social_post_status"]
-          template_id: string | null
-          updated_at: string
-          utm_url: string | null
-          yield_values: Json
-        }
-        Insert: {
-          caption?: string
-          content_type: string
-          created_at?: string
-          created_by?: string | null
-          cta?: string | null
-          data_as_of?: string | null
-          disclaimer?: string | null
-          error_message?: string | null
-          fund_ids?: string[]
-          fund_names?: string[]
-          hashtags?: string[]
-          id?: string
-          image_headline?: string | null
-          image_size?: string | null
-          image_subtext?: string | null
-          image_url?: string | null
-          platform: Database["public"]["Enums"]["social_platform"]
-          posted_at?: string | null
-          scheduled_at?: string | null
-          source_data?: Json
-          status?: Database["public"]["Enums"]["social_post_status"]
-          template_id?: string | null
-          updated_at?: string
-          utm_url?: string | null
-          yield_values?: Json
-        }
-        Update: {
-          caption?: string
-          content_type?: string
-          created_at?: string
-          created_by?: string | null
-          cta?: string | null
-          data_as_of?: string | null
-          disclaimer?: string | null
-          error_message?: string | null
-          fund_ids?: string[]
-          fund_names?: string[]
-          hashtags?: string[]
-          id?: string
-          image_headline?: string | null
-          image_size?: string | null
-          image_subtext?: string | null
-          image_url?: string | null
-          platform?: Database["public"]["Enums"]["social_platform"]
-          posted_at?: string | null
-          scheduled_at?: string | null
-          source_data?: Json
-          status?: Database["public"]["Enums"]["social_post_status"]
-          template_id?: string | null
-          updated_at?: string
-          utm_url?: string | null
-          yield_values?: Json
-        }
-        Relationships: [
-          {
-            foreignKeyName: "social_posts_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "social_post_templates"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      social_schedules: {
-        Row: {
-          cadence: Database["public"]["Enums"]["social_cadence"]
-          created_at: string
-          day_of_week: number | null
-          enabled: boolean
-          id: string
-          next_run_at: string | null
-          platform: Database["public"]["Enums"]["social_platform"]
-          post_id: string | null
-          template_id: string | null
-          time_of_day: string | null
-          updated_at: string
-        }
-        Insert: {
-          cadence?: Database["public"]["Enums"]["social_cadence"]
-          created_at?: string
-          day_of_week?: number | null
-          enabled?: boolean
-          id?: string
-          next_run_at?: string | null
-          platform: Database["public"]["Enums"]["social_platform"]
-          post_id?: string | null
-          template_id?: string | null
-          time_of_day?: string | null
-          updated_at?: string
-        }
-        Update: {
-          cadence?: Database["public"]["Enums"]["social_cadence"]
-          created_at?: string
-          day_of_week?: number | null
-          enabled?: boolean
-          id?: string
-          next_run_at?: string | null
-          platform?: Database["public"]["Enums"]["social_platform"]
-          post_id?: string | null
-          template_id?: string | null
-          time_of_day?: string | null
-          updated_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: "social_schedules_post_id_fkey"
-            columns: ["post_id"]
-            isOneToOne: false
-            referencedRelation: "social_posts"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "social_schedules_template_id_fkey"
-            columns: ["template_id"]
-            isOneToOne: false
-            referencedRelation: "social_post_templates"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       stock_price_history: {
         Row: {
@@ -1537,96 +801,6 @@ export type Database = {
         }
         Relationships: []
       }
-      suggestions: {
-        Row: {
-          created_at: string
-          display_name: string
-          id: string
-          is_read: boolean
-          message: string
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          display_name?: string
-          id?: string
-          is_read?: boolean
-          message: string
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          display_name?: string
-          id?: string
-          is_read?: boolean
-          message?: string
-          user_id?: string
-        }
-        Relationships: []
-      }
-      suppressed_emails: {
-        Row: {
-          created_at: string
-          email: string
-          id: string
-          metadata: Json | null
-          reason: string
-        }
-        Insert: {
-          created_at?: string
-          email: string
-          id?: string
-          metadata?: Json | null
-          reason: string
-        }
-        Update: {
-          created_at?: string
-          email?: string
-          id?: string
-          metadata?: Json | null
-          reason?: string
-        }
-        Relationships: []
-      }
-      testimonials: {
-        Row: {
-          author_name: string
-          author_role: string
-          avatar_url: string
-          created_at: string
-          id: string
-          is_active: boolean
-          quote: string
-          sort_order: number
-          updated_at: string
-          updated_by: string | null
-        }
-        Insert: {
-          author_name: string
-          author_role?: string
-          avatar_url?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          quote: string
-          sort_order?: number
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Update: {
-          author_name?: string
-          author_role?: string
-          avatar_url?: string
-          created_at?: string
-          id?: string
-          is_active?: boolean
-          quote?: string
-          sort_order?: number
-          updated_at?: string
-          updated_by?: string | null
-        }
-        Relationships: []
-      }
       user_roles: {
         Row: {
           created_at: string
@@ -1644,36 +818,6 @@ export type Database = {
           created_at?: string
           id?: string
           role?: Database["public"]["Enums"]["app_role"]
-          user_id?: string
-        }
-        Relationships: []
-      }
-      user_watchlist: {
-        Row: {
-          created_at: string
-          id: string
-          item_id: string
-          item_name: string
-          item_type: string
-          sort_order: number
-          user_id: string
-        }
-        Insert: {
-          created_at?: string
-          id?: string
-          item_id: string
-          item_name?: string
-          item_type: string
-          sort_order?: number
-          user_id: string
-        }
-        Update: {
-          created_at?: string
-          id?: string
-          item_id?: string
-          item_name?: string
-          item_type?: string
-          sort_order?: number
           user_id?: string
         }
         Relationships: []
@@ -1908,7 +1052,6 @@ export type Database = {
           created_at: string | null
           date_published: string | null
           id: string | null
-          image_url: string | null
           is_featured: boolean | null
           read_time: string | null
           source: string | null
@@ -1924,7 +1067,6 @@ export type Database = {
           created_at?: string | null
           date_published?: string | null
           id?: string | null
-          image_url?: string | null
           is_featured?: boolean | null
           read_time?: string | null
           source?: string | null
@@ -1940,7 +1082,6 @@ export type Database = {
           created_at?: string | null
           date_published?: string | null
           id?: string | null
-          image_url?: string | null
           is_featured?: boolean | null
           read_time?: string | null
           source?: string | null
@@ -2090,11 +1231,6 @@ export type Database = {
       }
     }
     Functions: {
-      backfill_my_portfolio_asset_ids: { Args: never; Returns: Json }
-      bulk_sync_funds: {
-        Args: { dry_run?: boolean; p_effective_date?: string; payload: Json }
-        Returns: Json
-      }
       check_rate_limit: {
         Args: {
           p_ip_hash: string
@@ -2103,23 +1239,6 @@ export type Database = {
         }
         Returns: boolean
       }
-      cleanup_email_unsubscribe_tokens: { Args: never; Returns: number }
-      delete_email: {
-        Args: { message_id: number; queue_name: string }
-        Returns: boolean
-      }
-      email_queue_dispatch: { Args: never; Returns: undefined }
-      enqueue_email: {
-        Args: { payload: Json; queue_name: string }
-        Returns: number
-      }
-      fund_snapshot_days_in_range: {
-        Args: { p_end: string; p_start: string }
-        Returns: {
-          fund_count: number
-          snapshot_date: string
-        }[]
-      }
       has_role: {
         Args: {
           _role: Database["public"]["Enums"]["app_role"]
@@ -2127,46 +1246,9 @@ export type Database = {
         }
         Returns: boolean
       }
-      move_to_dlq: {
-        Args: {
-          dlq_name: string
-          message_id: number
-          payload: Json
-          source_queue: string
-        }
-        Returns: number
-      }
-      read_email_batch: {
-        Args: { batch_size: number; queue_name: string; vt: number }
-        Returns: {
-          message: Json
-          msg_id: number
-          read_ct: number
-        }[]
-      }
-      revert_last_bulk_sync: { Args: never; Returns: Json }
-      verify_api_key: {
-        Args: { _key_hash: string }
-        Returns: {
-          id: string
-          name: string
-          rate_limit_per_minute: number
-        }[]
-      }
     }
     Enums: {
       app_role: "admin" | "editor" | "reviewer"
-      social_cadence: "one_time" | "daily" | "weekly" | "monthly"
-      social_platform: "instagram" | "facebook" | "x"
-      social_post_status:
-        | "draft"
-        | "in_review"
-        | "approved"
-        | "scheduled"
-        | "posted"
-        | "failed"
-        | "manually_posted"
-        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2292,21 +1374,12 @@ export type CompositeTypes<
     : never
 
 export const Constants = {
+  graphql_public: {
+    Enums: {},
+  },
   public: {
     Enums: {
       app_role: ["admin", "editor", "reviewer"],
-      social_cadence: ["one_time", "daily", "weekly", "monthly"],
-      social_platform: ["instagram", "facebook", "x"],
-      social_post_status: [
-        "draft",
-        "in_review",
-        "approved",
-        "scheduled",
-        "posted",
-        "failed",
-        "manually_posted",
-        "cancelled",
-      ],
     },
   },
 } as const

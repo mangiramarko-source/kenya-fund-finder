@@ -76,9 +76,29 @@ export function useMarketData() {
         .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, updated_at")
         .order("sort_order"),
     ]);
-    setRates((ratesRes.data as any as ExchangeRate[]) || []);
-    setCommodities((commoditiesRes.data as any as Commodity[]) || []);
-    setStocks((stocksRes.data as any as Stock[]) || []);
+    setRates(
+      (((ratesRes.data as any) || []).map((r: any) => ({
+        ...r,
+        rate: Number(r.rate),
+        previous_rate: r.previous_rate != null ? Number(r.previous_rate) : null,
+      })) as ExchangeRate[])
+    );
+    setCommodities(
+      (((commoditiesRes.data as any) || []).map((c: any) => ({
+        ...c,
+        price: Number(c.price),
+        previous_price: c.previous_price != null ? Number(c.previous_price) : null,
+      })) as Commodity[])
+    );
+    setStocks(
+      (((stocksRes.data as any) || []).map((s: any) => ({
+        ...s,
+        price: Number(s.price),
+        previous_price: s.previous_price != null ? Number(s.previous_price) : null,
+        day_change: Number(s.day_change),
+        day_change_percent: Number(s.day_change_percent),
+      })) as Stock[])
+    );
     setLoading(false);
   }, []);
 

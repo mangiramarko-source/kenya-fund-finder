@@ -342,8 +342,8 @@ async function main() {
   );
 
   if (!skipNews) {
-    const news = (await fetchAll("news_articles_public")).map(stripAudit);
-    await upsertBatches("news_articles", news, 50);
+    const news = (await fetchAll("news_articles_public")).map((row) => omitKeys(stripAudit(row), ["image_url"]));
+    await upsertBatches("news_articles", news, 200);
   } else {
     console.log("  news_articles: skipped (--skip-news)");
   }

@@ -109,7 +109,13 @@ const RatesPage = () => {
         .from("exchange_rates_public" as any)
         .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
         .order("sort_order");
-      setRates((data as any as Rate[]) || []);
+      setRates(
+        ((data as any) || []).map((r: any) => ({
+          ...r,
+          rate: Number(r.rate),
+          previous_rate: r.previous_rate != null ? Number(r.previous_rate) : null,
+        }))
+      );
       setLoading(false);
     };
     fetch();
