@@ -336,21 +336,21 @@ Deno.serve(async (req) => {
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
     const supabase = createClient(supabaseUrl, serviceKey);
 
-    // Authentication: allow cron jobs (via service-role secret in body) and admin users.
-    // Prevents unauthenticated abuse of paid AI rewrites and auto-publish to news_articles.
+    // Authentication: allow cron jobs (via CRON_SECRET) and admin users.
     const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.replace("Bearer ", "");
+    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
 
     let body: Record<string, unknown> = {};
     try {
       body = await req.json();
     } catch { /* no body is fine */ }
 
-    let isCronCall = false;
-    const cronSecret = serviceKey;
-    if (cronSecret && body?.cron_secret === cronSecret) {
-      isCronCall = true;
-    }
+    // Check dedicated cron secret (simple string set as Supabase secret)
+    const cronSecret = Deno.env.get("CRON_SECRET") || "";
+    const isCronCall = cronSecret.length > 0 && (
+      body?.cron_secret === cronSecret ||
+      token === cronSecret
+    );
 
     if (!isCronCall) {
       const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
@@ -361,7 +361,7 @@ Deno.serve(async (req) => {
         });
       }
       const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
+        global: { headers: { Authorization: `Bearer ${token}` } },
       });
       const { data: userData, error: userError } = await userClient.auth.getUser(token);
       if (userError || !userData?.user?.id) {
