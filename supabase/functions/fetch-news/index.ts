@@ -178,8 +178,8 @@ function categorize(text: string): string {
 }
 
 // --- AI rewriting (summary + long-form body, in original words) ----------
-const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
-const AI_MODEL = "google/gemini-3-flash-preview";
+const AI_GATEWAY_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
+const AI_MODEL = "gemini-2.5-flash";
 
 interface RewrittenArticle {
   summary: string;
@@ -456,20 +456,20 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Rewrite each new article in original words via Lovable AI (concurrent, with fallback)
-    const lovableKey = Deno.env.get("LOVABLE_API_KEY");
+    // Rewrite each new article in original words via Gemini AI (concurrent, with fallback)
+    const aiKey = Deno.env.get("GEMINI_API_KEY");
     let rewrittenCount = 0;
     let rewrites: Array<RewrittenArticle | null> = new Array(newArticles.length).fill(null);
 
-    if (lovableKey) {
+    if (aiKey) {
       rewrites = await mapWithConcurrency(newArticles, 4, async (a) => {
         const raw = `${a.summary || ""}\n\n${a.content || ""}`.trim();
-        const out = await rewriteArticle(lovableKey, a.title, a.source, raw);
+        const out = await rewriteArticle(aiKey, a.title, a.source, raw);
         if (out) rewrittenCount++;
         return out;
       });
     } else {
-      console.warn("LOVABLE_API_KEY not configured — inserting feed text as-is");
+      console.warn("GEMINI_API_KEY not configured — inserting feed text as-is");
     }
 
     const rows = newArticles.map((a, i) => {

@@ -8,23 +8,23 @@ const corsHeaders = {
 };
 
 const FIRECRAWL_URL = "https://api.firecrawl.dev/v2/scrape";
-const LOVABLE_AI_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
+const GEMINI_AI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
-    const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
+    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
 
     if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY not configured");
-    if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY not configured");
+    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
     // ── Admin gate ──────────────────────────────────────────────
-    // This function calls paid APIs (Firecrawl + Lovable AI) and writes
+    // This function calls paid APIs (Firecrawl + Gemini AI) and writes
     // to news_articles via service-role, bypassing RLS. Restrict to admins.
     const authHeader = req.headers.get("Authorization") ?? "";
     if (!authHeader.toLowerCase().startsWith("bearer ")) {
@@ -134,15 +134,15 @@ Deno.serve(async (req) => {
     // Trim to reasonable size before sending to LLM
     const trimmed = markdown.slice(0, 12000);
 
-    // 2) Summarize with Lovable AI
-    const aiRes = await fetch(LOVABLE_AI_URL, {
+    // 2) Summarize with Gemini AI
+    const aiRes = await fetch(GEMINI_AI_URL, {
       method: "POST",
       headers: {
-        Authorization: `Bearer ${LOVABLE_API_KEY}`,
+        Authorization: `Bearer ${GEMINI_API_KEY}`,
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-3-flash-preview",
+        model: "gemini-2.5-flash",
         messages: [
           {
             role: "system",
@@ -159,7 +159,7 @@ Deno.serve(async (req) => {
 
     if (!aiRes.ok) {
       const errText = await aiRes.text();
-      console.error("Lovable AI error", aiRes.status, errText);
+      console.error("Gemini AI error", aiRes.status, errText);
       if (aiRes.status === 429) {
         return new Response(
           JSON.stringify({ error: "AI rate limit reached, please try again shortly." }),
