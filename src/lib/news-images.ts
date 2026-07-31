@@ -15,15 +15,17 @@ function hashId(id: string): number {
 function getKeywordsForCategory(category: string): string {
   switch (category) {
     case "Yield Updates":
-      return "finance,yield,growth";
+      return "chart,graph";
     case "Market News":
-      return "market,stock,finance";
+      return "stockmarket,trading";
     case "Regulatory Updates":
-      return "law,business,office";
+      return "law,courthouse";
     case "Fund Announcements":
-      return "investment,fund,bank";
+      return "investment,money";
+    case "International":
+      return "economy,global";
     default:
-      return "finance,business,kenya";
+      return "finance,business";
   }
 }
 
