@@ -56,7 +56,7 @@ describe("consent script guard", () => {
 
   it("allows essential scripts (Supabase, Cloudflare Turnstile) without consent", () => {
     clearConsent();
-    const supabase = tryLoadScript("https://qrmthciurngpzpjhevdj.supabase.co/anything.js");
+    const supabase = tryLoadScript("https://caawgzuofnujrznwbuxk.supabase.co/anything.js");
     supabase.el.dataset.testScript = "1";
     const turnstile = tryLoadScript("https://challenges.cloudflare.com/turnstile/v0/api.js");
     turnstile.el.dataset.testScript = "1";

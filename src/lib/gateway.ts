@@ -18,7 +18,7 @@ const SUPABASE_URL =
     ? envSupabaseUrl
     : envProjectId && envProjectId !== "undefined"
       ? `https://${envProjectId}.supabase.co`
-      : "https://qrmthciurngpzpjhevdj.supabase.co";
+      : "https://caawgzuofnujrznwbuxk.supabase.co";
 const BASE = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/public-data`;
 const ANON_KEY =
   (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
