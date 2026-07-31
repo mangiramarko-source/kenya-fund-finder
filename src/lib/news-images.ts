@@ -12,23 +12,6 @@ function hashId(id: string): number {
   return h >>> 0;
 }
 
-function getKeywordsForCategory(category: string): string {
-  switch (category) {
-    case "Yield Updates":
-      return "chart,graph";
-    case "Market News":
-      return "stockmarket,trading";
-    case "Regulatory Updates":
-      return "law,courthouse";
-    case "Fund Announcements":
-      return "investment,money";
-    case "International":
-      return "economy,global";
-    default:
-      return "finance,business";
-  }
-}
-
 /** Final safety-net image, always available, deterministic per article id. */
 function picsumFallback(id: string, large = false): string {
   const w = large ? 1040 : 560;
@@ -41,9 +24,14 @@ function getCategoryImage(category: string, id: string, large = false): string {
   const w = large ? 1040 : 560;
   const h = large ? 650 : 350;
   const seed = hashId(id || "kenya-fund-finder");
-  const keywords = getKeywordsForCategory(category);
   
-  return `https://loremflickr.com/${w}/${h}/${keywords}?lock=${seed}`;
+  const basePrompt = category === "International" 
+    ? "Cinematic photography of global economy and international financial markets" 
+    : `Cinematic photography representing ${category.toLowerCase()} in Kenyan business and finance`;
+    
+  const prompt = encodeURIComponent(`${basePrompt}, highly detailed, professional corporate style`);
+  
+  return `https://image.pollinations.ai/prompt/${prompt}?seed=${seed}&width=${w}&height=${h}&nologo=true`;
 }
 
 /** Rewrite known CDN URLs to request right-sized variants for card thumbnails.
