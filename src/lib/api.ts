@@ -117,7 +117,7 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
 export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status, image_url")
+    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -141,7 +141,7 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
 export async function fetchRelatedNews(category: string, excludeId: string, limit = 3): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status, image_url")
+    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status")
     .eq("category", category)
     .neq("id", excludeId)
     .order("date_published", { ascending: false })
@@ -196,7 +196,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
 
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, source, date_published, url, category, read_time, is_featured, status, image_url")
+    .select("id, title, summary, source, date_published, url, category, read_time, is_featured, status")
     .order("date_published", { ascending: false })
     .limit(limit);
   if (error) throw error;
@@ -219,7 +219,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
 export async function fetchPublishedNews(): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status, image_url")
+    .select("id, title, summary, content, source, date_published, url, category, read_time, is_featured, status")
     .order("date_published", { ascending: false });
   if (error) throw error;
   return (data || []).map((d: any) => ({

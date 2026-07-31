@@ -83,12 +83,18 @@ async function supabaseUpsert(table, rows, conflict) {
   const url = `${SUPABASE_URL}/rest/v1/${table}`;
   const res = await fetch(url, {
     method: "POST",
-    headers: { ...HEADERS, Prefer: `resolution=merge-duplicates,return=minimal` },
+    headers: {
+      ...HEADERS,
+      Prefer: "resolution=merge-duplicates,return=minimal",
+    },
     body: JSON.stringify(rows),
   });
   if (!res.ok) {
     const body = await res.text();
-    console.warn(`  ⚠️  Upsert ${table} HTTP ${res.status}: ${body.slice(0, 200)}`);
+    // 409 on unique constraint means rows already exist - that's fine for backfill
+    if (res.status !== 409) {
+      console.warn(`  ⚠️  Upsert ${table} HTTP ${res.status}: ${body.slice(0, 200)}`);
+    }
   }
 }
 
