@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
 
 const KEYWORDS = [
   // Kenyan / local
@@ -269,6 +270,37 @@ Rewrite this as:
   }
 }
 
+async function fetchArticleContent(url: string): Promise<string | null> {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(url, {
+      headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 KenyaFundFinder/1.0" },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    
+    if (!res.ok) return null;
+    const html = await res.text();
+    const $ = cheerio.load(html);
+    
+    // Remove unwanted noise elements
+    $('script, style, nav, header, footer, iframe, aside, .ads, .sidebar, .comments').remove();
+    
+    const paragraphs: string[] = [];
+    $('p').each((_, el) => {
+      const text = $(el).text().trim();
+      // Skip very short UI text elements
+      if (text.length > 30) paragraphs.push(text);
+    });
+    
+    return paragraphs.join('\n\n');
+  } catch (err) {
+    console.error(`Failed to scrape ${url}:`, err);
+    return null;
+  }
+}
+
 async function mapWithConcurrency<T, R>(
   items: T[],
   limit: number,
@@ -463,7 +495,17 @@ Deno.serve(async (req) => {
 
     if (aiKey) {
       rewrites = await mapWithConcurrency(newArticles, 4, async (a) => {
-        const raw = `${a.summary || ""}\n\n${a.content || ""}`.trim();
+        let raw = `${a.summary || ""}\n\n${a.content || ""}`.trim();
+        
+        // If the RSS feed provided very little content, attempt to scrape the full article
+        if (raw.length < 500 && a.url) {
+          console.log(`Text short (${raw.length} chars), scraping full content for: ${a.title}`);
+          const scraped = await fetchArticleContent(a.url);
+          if (scraped && scraped.length > 200) {
+            raw = `${a.summary || ""}\n\n${scraped}`;
+          }
+        }
+        
         const out = await rewriteArticle(aiKey, a.title, a.source, raw);
         if (out) rewrittenCount++;
         return out;
