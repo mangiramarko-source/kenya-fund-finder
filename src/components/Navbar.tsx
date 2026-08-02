@@ -18,12 +18,12 @@ const navLinks = [
 
 const mobileNavLinks = [
   { to: "/", label: "Overview" },
-  { to: "/portfolio", label: "Portfolio" },
+  { to: "/news", label: "News" },
   { to: "/stocks", label: "Stocks" },
   { to: "/funds", label: "Unit trusts" },
-  { to: "/news", label: "News" },
   { to: "/rates", label: "Fx rates" },
   { to: "/commodities", label: "Commodities" },
+  { to: "/portfolio", label: "Portfolio" },
 ];
 
 const Navbar = () => {
