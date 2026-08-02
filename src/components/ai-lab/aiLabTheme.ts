@@ -3,7 +3,7 @@
 export const AI_LAB_PAGE =
   "fixed inset-0 flex flex-col min-h-0 overflow-hidden bg-background h-[var(--ai-lab-vvh,100dvh)] max-h-[var(--ai-lab-vvh,100dvh)] overscroll-none";
 export const AI_LAB_PAGE_INNER =
-  "flex flex-col flex-1 min-h-0 h-full w-full gap-3 md:gap-4 container pt-[max(0.75rem,env(safe-area-inset-top))] pb-0 md:pt-5 max-w-3xl overflow-hidden";
+  "flex flex-col flex-1 min-h-0 h-full w-full gap-3 md:gap-4 container pt-16 md:pt-20 pb-0 max-w-3xl overflow-hidden";
 
 export const AI_LAB_CARD =
   "rounded-2xl border border-border bg-card text-card-foreground shadow-sm";
