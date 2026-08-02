@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { decodeHtmlEntities } from "@/lib/utils";
+import { decodeHtmlEntities, isKenyanMarketOpen } from "@/lib/utils";
 import Sparkline from "@/components/Sparkline";
 import { Link, useNavigate } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
@@ -920,8 +920,12 @@ const OverviewPage = () => {
 
   useEffect(() => {
     fetchAllData();
-    // Refresh every 5 min — market data realtime already updates live prices
-    const interval = window.setInterval(fetchAllData, 5 * 60_000);
+    // Refresh every 5 min during market hours (Mon-Fri 8am-6pm EAT)
+    const interval = window.setInterval(() => {
+      if (isKenyanMarketOpen()) {
+        fetchAllData();
+      }
+    }, 5 * 60_000);
     return () => window.clearInterval(interval);
   }, [fetchAllData]);
 

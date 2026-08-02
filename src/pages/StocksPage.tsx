@@ -74,8 +74,30 @@ const formatMarketCap = (mc: number | null) => {
 };
 
 /* ─── Mini Sparkline ─── */
-const MiniSparkline = ({ data, trend }: { data: PriceHistory[]; trend: "up" | "down" | "flat" }) => {
-  if (!data?.length || data.length < 2) return null;
+const MiniSparkline = ({
+  data,
+  trend,
+  price,
+  dayChange,
+}: {
+  data: PriceHistory[];
+  trend: "up" | "down" | "flat";
+  price?: number;
+  dayChange?: number;
+}) => {
+  let effectiveData = data;
+  if (!effectiveData || effectiveData.length < 2) {
+    if (price !== undefined) {
+      const prevPrice = price - (dayChange || 0);
+      effectiveData = [
+        { snapshot_date: "1", price: prevPrice },
+        { snapshot_date: "2", price: price },
+      ] as any;
+    } else {
+      return null;
+    }
+  }
+
   const color =
     trend === "flat"
       ? "hsl(var(--muted-foreground))"
@@ -87,7 +109,7 @@ const MiniSparkline = ({ data, trend }: { data: PriceHistory[]; trend: "up" | "d
   return (
     <div className="w-[60px] h-[24px]">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+        <LineChart data={effectiveData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.25} />
@@ -311,7 +333,7 @@ const StocksPage = () => {
             <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} />
           </div>
           <div className="md:hidden flex items-center justify-between w-full">
-            <span className="text-xs text-muted-foreground/70">Updated {latestUpdate?.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
+            <span className="text-xs text-muted-foreground/70">Updated {toLastWeekday(new Date()).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
             <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} hideDate />
           </div>
           <div className="md:hidden border-b border-border mt-3" />
@@ -713,13 +735,13 @@ const StockDetailPanel = ({
           <div className="h-[200px] flex items-center justify-center">
             <Skeleton className="h-full w-full rounded-lg" />
           </div>
-        ) : !history || history.length === 0 ? (
+        ) : !effectiveHistory || effectiveHistory.length === 0 ? (
           <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
             No historical data available yet
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={history}>
+            <LineChart data={effectiveHistory}>
               <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
               <XAxis
                 dataKey="snapshot_date"
@@ -808,7 +830,12 @@ const StockRow = ({
         </span>
       </td>
       <td className="px-2 py-3.5 text-center">
-        <MiniSparkline data={history || []} trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"} />
+        <MiniSparkline
+          data={history || []}
+          trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"}
+          price={s.price}
+          dayChange={s.day_change}
+        />
       </td>
       <td className="px-3 py-3.5 text-right">
         <span className="font-bold text-accent text-[15px] tabular-nums">{formatNumber(s.price)}</span>
@@ -881,7 +908,12 @@ const MobileStockCard = ({
 
       {/* Center: Sparkline */}
       <div className="shrink-0">
-        <MiniSparkline data={history || []} trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"} />
+        <MiniSparkline
+          data={history || []}
+          trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"}
+          price={s.price}
+          dayChange={s.day_change}
+        />
       </div>
 
       {/* Right: Price + Change */}

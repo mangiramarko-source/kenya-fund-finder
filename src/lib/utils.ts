@@ -45,3 +45,22 @@ export function formatMarketDate(
 ): string {
   return toLastWeekday(input).toLocaleDateString(locale, options);
 }
+
+/**
+ * Returns true if the Kenyan Market is currently open.
+ * Schedule: Monday to Friday, 8:00 AM to 6:00 PM (18:00) East Africa Time (UTC+3).
+ */
+export function isKenyanMarketOpen(): boolean {
+  try {
+    const now = new Date();
+    const eatString = now.toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
+    const eatDate = new Date(eatString);
+    const day = eatDate.getDay(); // 0 = Sun, 1 = Mon, ..., 5 = Fri, 6 = Sat
+    if (day < 1 || day > 5) return false;
+    const hours = eatDate.getHours();
+    return hours >= 8 && hours < 18;
+  } catch {
+    return false;
+  }
+}
+

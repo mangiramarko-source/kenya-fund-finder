@@ -209,7 +209,7 @@ const CommoditiesPage = () => {
             <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} />
           </div>
           <div className="md:hidden flex items-center justify-between w-full">
-            <span className="text-xs text-muted-foreground/70">Updated {latestUpdate?.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
+            <span className="text-xs text-muted-foreground/70">Updated {toLastWeekday(new Date()).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
             <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} hideDate />
           </div>
           <div className="md:hidden border-b border-border mt-3" />
