@@ -1508,7 +1508,7 @@ const OverviewPage = () => {
       {/* Reserve vertical space to prevent CLS while news data loads (matches ~4-card row height at lg breakpoint). */}
       {news.length === 0 && <div className="hidden sm:block sm:min-h-[280px]" aria-hidden="true" />}
       {news.length > 0 && (
-        <div>
+        <div className="mt-6 md:mt-8">
           <div className="flex items-center justify-between mb-3">
             <div className="flex items-center gap-2">
               <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-accent/10">
@@ -1616,12 +1616,7 @@ const OverviewPage = () => {
         </div>
       )}
 
-      {/* Disclaimer */}
-      <div className="mt-8 rounded-lg bg-muted/40 border border-border/50 p-3">
-        <p className="text-[10px] leading-relaxed text-muted-foreground">
-          Market data is indicative and may be delayed. {user ? "Click the bell icon to set price alerts on any asset." : "Sign in to set price alerts and customize your dashboard."}
-        </p>
-      </div>
+      {/* Disclaimer removed from here to prevent stacking; merged into the global DisclaimerBlock below */}
 
       </div>{/* end of mobile-tab "overview" content wrapper */}
 
@@ -1688,7 +1683,9 @@ const OverviewPage = () => {
       </Dialog>
     </div>
     <div className="px-4 md:px-6 pb-6 max-w-[1600px]">
-      <DisclaimerBlock />
+      <DisclaimerBlock 
+        extra={`Market data is indicative and may be delayed. ${user ? "Click the bell icon to set price alerts on any asset." : "Sign in to set price alerts and customize your dashboard."}`} 
+      />
     </div>
     </div>
     <TestimonialsSection />
