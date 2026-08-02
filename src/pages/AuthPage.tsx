@@ -1,7 +1,7 @@
 import { useState, useCallback, useRef, useEffect } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
-import { lovable } from "@/integrations/lovable";
+
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -123,19 +123,17 @@ const AuthPage = () => {
     setError("");
     setLoading(true);
     try {
-      const result = await lovable.auth.signInWithOAuth("google", {
-        redirect_uri: window.location.origin,
+      const { error } = await supabase.auth.signInWithOAuth({
+        provider: "google",
+        options: {
+          redirectTo: `${window.location.origin}/`,
+        },
       });
-      if (result.error) {
-        setError(result.error.message || "Google sign-in failed");
+      if (error) {
+        setError(error.message || "Google sign-in failed");
         setLoading(false);
-        return;
       }
-      if (result.redirected) {
-        return; // Browser will redirect to Google
-      }
-      // Session set successfully — redirect to home
-      navigate("/");
+      // On success, Supabase redirects the browser to Google automatically
     } catch {
       setError("Google sign-in failed. Please try again.");
       setLoading(false);
