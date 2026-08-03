@@ -23,12 +23,21 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate }: Sectio
 
   const s = sections[section];
   
-  // Use actual data date (fallbackDate) if provided, otherwise manual override
-  const baseDate = fallbackDate 
-    ? new Date(fallbackDate)
-    : s?.last_update_date
+  // For funds (monthly), prioritize the manual override timestamp from the DB
+  // For global markets (hourly), prioritize the actual data timestamp
+  let baseDate: Date | null = null;
+  
+  if (isFunds) {
+    baseDate = s?.last_update_date
       ? new Date(s.last_update_date + "T00:00:00")
-      : null;
+      : fallbackDate ? new Date(fallbackDate) : null;
+  } else {
+    baseDate = fallbackDate 
+      ? new Date(fallbackDate)
+      : s?.last_update_date
+        ? new Date(s.last_update_date + "T00:00:00")
+        : null;
+  }
     
   const rawDate = baseDate ? new Date(baseDate) : new Date();
 
