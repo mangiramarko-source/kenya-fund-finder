@@ -23,10 +23,12 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate }: Sectio
 
   const s = sections[section];
   
-  // Strictly use the DB timestamp or manual override
-  const baseDate = s?.last_update_date
-    ? new Date(s.last_update_date + "T00:00:00")
-    : fallbackDate ?? null;
+  // Use actual data date (fallbackDate) if provided, otherwise manual override
+  const baseDate = fallbackDate 
+    ? new Date(fallbackDate)
+    : s?.last_update_date
+      ? new Date(s.last_update_date + "T00:00:00")
+      : null;
     
   const rawDate = baseDate ? new Date(baseDate) : new Date();
 

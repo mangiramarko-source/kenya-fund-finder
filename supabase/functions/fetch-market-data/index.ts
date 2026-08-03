@@ -639,7 +639,8 @@ Deno.serve(async (req) => {
   console.log(`[fetch-market-data] Starting data fetch cycle... (type: ${fetchType || "all"})`);
 
   const shouldFetchFx = !fetchType || fetchType === "fx";
-  const shouldFetchCommodities = !fetchType || fetchType === "commodities";
+  // The DB cron schedules 'fx' with the intent of fetching both FX and commodities every hour (lightweight)
+  const shouldFetchCommodities = !fetchType || fetchType === "commodities" || fetchType === "fx";
   const shouldFetchStocks = !fetchType || fetchType === "stocks";
 
   try {
