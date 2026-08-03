@@ -20,7 +20,7 @@ const KEYWORDS = [
 ];
 
 const RSS_FEEDS = [
-  // Kenyan business press
+  // Kenyan business press (Primary Focus)
   { url: "https://www.businessdailyafrica.com/service/search/edp/21010-420078!/feed.rss", source: "Business Daily" },
   { url: "https://www.standardmedia.co.ke/rss/business.php", source: "Standard Media" },
   { url: "https://www.the-star.co.ke/rss/business", source: "The Star" },
@@ -32,24 +32,14 @@ const RSS_FEEDS = [
   { url: "https://www.pd.co.ke/category/business/feed/", source: "People Daily" },
   { url: "https://kenyanwallstreet.com/feed/", source: "Kenyan Wall Street" },
   { url: "https://www.bizna.co.ke/feed/", source: "Bizna Kenya" },
-  // Pan-African / regional
+  // Pan-African / Regional Context
   { url: "https://african.business/feed", source: "African Business" },
   { url: "https://www.theafricareport.com/feed/", source: "The Africa Report" },
   { url: "https://furtherafrica.com/feed/", source: "Further Africa" },
-  // International financial press
-  { url: "https://feeds.reuters.com/reuters/businessNews", source: "Reuters Business" },
-  { url: "https://feeds.reuters.com/news/wealth", source: "Reuters Markets" },
-  { url: "https://feeds.bbci.co.uk/news/business/rss.xml", source: "BBC Business" },
   { url: "https://www.ft.com/world/africa?format=rss", source: "Financial Times Africa" },
-  { url: "https://www.aljazeera.com/xml/rss/all.xml", source: "Al Jazeera" },
-  { url: "https://www.cnbc.com/id/100727362/device/rss/rss.html", source: "CNBC World" },
-  { url: "https://www.investing.com/rss/news_25.rss", source: "Investing.com" },
-  { url: "https://www.marketwatch.com/rss/topstories", source: "MarketWatch" },
-  { url: "https://seekingalpha.com/feed.xml", source: "Seeking Alpha" },
-  // Free, no-key Google News RSS queries (auto-aggregates many sources)
+  // Free Google News RSS queries strictly focused on Kenyan Markets
   { url: "https://news.google.com/rss/search?q=Kenya+economy+OR+NSE+OR+CBK+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
-  { url: "https://news.google.com/rss/search?q=Kenya+shilling+OR+%22unit+trust%22+OR+%22money+market%22+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
-  { url: "https://news.google.com/rss/search?q=Africa+markets+OR+Eurobond+OR+%22emerging+markets%22+when:7d&hl=en&gl=US&ceid=US:en", source: "Google News" },
+  { url: "https://news.google.com/rss/search?q=Kenya+shilling+OR+%22unit+trust%22+OR+%22money+market%22+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" }
 ];
 
 interface ParsedArticle {
@@ -196,10 +186,11 @@ async function rewriteArticle(
   const sourceText = rawText.slice(0, 6000);
   if (!sourceText || sourceText.length < 80) return null;
 
-  const systemPrompt = `You are a financial journalist for "Kenya Fund Finder", a Kenyan markets website.
-Rewrite the provided news item entirely in your own words to avoid plagiarism. Be factual, neutral and accurate.
-Keep all named entities, numbers, dates, currencies and quotes truthful — never invent facts. If something is unclear, omit it.
-Write in clean British/Kenyan English. Do NOT say things like "the article says" or reference the original source inside the body.
+  const systemPrompt = `You are an expert financial journalist for "Kenya Fund Finder", a premium Kenyan markets website.
+Your job is to read raw news text and write a completely original, highly transformative financial analysis of the events. 
+CRITICAL RULE: You MUST write entirely in your own words. Do not copy sentences or phrases from the source text. Synthesize the facts and present them as a new, insightful article. This ensures transformative Fair Use and avoids plagiarism.
+Be factual, neutral and accurate. Keep all named entities, numbers, dates, currencies and quotes truthful — never invent facts. 
+If something is unclear, omit it. Write in clean British/Kenyan English. Do NOT say things like "the article says" or reference the original source inside the body.
 Return ONLY a JSON object that matches the schema — no markdown, no commentary.`;
 
   const userPrompt = `Title: ${title}
@@ -210,9 +201,9 @@ Source text:
 ${sourceText}
 """
 
-Rewrite this as:
+Rewrite this as a completely original article:
 - "summary": a punchy 2-3 sentence standalone summary (max ~320 characters).
-- "content": a richer 3-6 paragraph article (roughly 250-450 words) in your own words covering the key facts, context, numbers and implications for Kenyan investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
+- "content": a rich, insightful 3-6 paragraph analysis (roughly 250-450 words) written entirely in your own words. Synthesize the key facts, context, numbers, and explicitly explain the implications for the Kenyan market and local investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
 
   try {
     const controller = new AbortController();
