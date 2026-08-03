@@ -105,11 +105,8 @@ const Index = () => {
           </div>
           <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
         </div>
-        <div className="md:hidden flex items-center justify-between w-full">
-          <span className="text-xs text-muted-foreground/70">
-            Updated monthly, last updated {lastUpdate ? lastUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" }) : ""}
-          </span>
-          <SectionLiveStatus section="funds" fallbackDate={lastUpdate} hideDate />
+        <div className="md:hidden flex items-center justify-end w-full mt-2">
+          <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
         </div>
         <div className="md:hidden border-b border-border mt-3" />
       </div>

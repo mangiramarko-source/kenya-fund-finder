@@ -48,7 +48,7 @@ export function formatMarketDate(
 
 /**
  * Returns true if the Kenyan Market is currently open.
- * Schedule: Monday to Friday, 8:00 AM to 6:00 PM (18:00) East Africa Time (UTC+3).
+ * Schedule: Monday to Friday, 9:00 AM to 6:00 PM (18:00) East Africa Time (UTC+3).
  */
 export function isKenyanMarketOpen(): boolean {
   try {
@@ -58,7 +58,7 @@ export function isKenyanMarketOpen(): boolean {
     const day = eatDate.getDay(); // 0 = Sun, 1 = Mon, ..., 5 = Fri, 6 = Sat
     if (day < 1 || day > 5) return false;
     const hours = eatDate.getHours();
-    return hours >= 8 && hours < 18;
+    return hours >= 9 && hours < 18;
   } catch {
     return false;
   }

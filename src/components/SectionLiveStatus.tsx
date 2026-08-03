@@ -1,5 +1,5 @@
 import { useLiveStatus, type AssetSection } from "@/hooks/useLiveStatus";
-import { isKenyanMarketOpen, isGlobalMarketOpen } from "@/lib/utils";
+import { isKenyanMarketOpen, isGlobalMarketOpen, toLastWeekday } from "@/lib/utils";
 
 interface SectionLiveStatusProps {
   section: AssetSection;
@@ -16,41 +16,33 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate }: Sectio
   const isStocks = section === "stocks";
   const isGlobal = section === "rates" || section === "commodities";
   
-  let marketOpen = false;
-  if (!isFunds) {
-    marketOpen = isGlobal ? isGlobalMarketOpen() : isKenyanMarketOpen();
-  }
+  const marketOpen = isGlobal ? isGlobalMarketOpen() : isKenyanMarketOpen();
 
   const s = sections[section];
   
-  // For funds (monthly), prioritize the manual override timestamp from the DB
   // For global markets (hourly), prioritize the actual data timestamp
-  let baseDate: Date | null = null;
+  // For Kenyan markets (funds, stocks), dynamically show "today" (snapped to Mon-Fri)
+  let rawDate: Date;
   
-  if (isFunds) {
-    baseDate = s?.last_update_date
-      ? new Date(s.last_update_date + "T00:00:00")
-      : fallbackDate ? new Date(fallbackDate) : null;
-  } else {
-    baseDate = fallbackDate 
+  if (isGlobal) {
+    const baseDate = fallbackDate 
       ? new Date(fallbackDate)
       : s?.last_update_date
         ? new Date(s.last_update_date + "T00:00:00")
         : null;
+    rawDate = baseDate ? new Date(baseDate) : new Date();
+  } else {
+    rawDate = toLastWeekday(new Date());
   }
-    
-  const rawDate = baseDate ? new Date(baseDate) : new Date();
 
   // Live status logic
-  const showLiveDot = !hideLive && !isFunds && marketOpen;
+  const showLiveDot = !hideLive && marketOpen;
 
   const displayDate = rawDate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" });
 
   let textStatus = "";
   
-  if (isFunds) {
-    textStatus = `Updated monthly, last updated ${displayDate}`;
-  } else if (!marketOpen) {
+  if (!marketOpen) {
     if (isGlobal) {
       textStatus = `Global Markets Closed (Opens Mon-Fri, 24 Hours) • Last updated ${displayDate}`;
     } else {
