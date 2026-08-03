@@ -64,3 +64,22 @@ export function isKenyanMarketOpen(): boolean {
   }
 }
 
+/**
+ * Returns true if Global Markets (FX/Commodities) are currently open.
+ * Approx schedule: Sunday 22:00 UTC to Friday 22:00 UTC (24/5).
+ */
+export function isGlobalMarketOpen(): boolean {
+  try {
+    const now = new Date();
+    const day = now.getUTCDay(); // 0 = Sun, 1 = Mon ... 6 = Sat
+    const hour = now.getUTCHours();
+    
+    if (day >= 1 && day <= 4) return true; // Mon-Thu 24h
+    if (day === 5 && hour < 22) return true; // Fri before 10 PM UTC
+    if (day === 0 && hour >= 22) return true; // Sun after 10 PM UTC
+    return false; // Friday late, all Saturday, Sunday early
+  } catch {
+    return false;
+  }
+}
+
