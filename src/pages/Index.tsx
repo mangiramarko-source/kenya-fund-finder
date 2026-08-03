@@ -31,6 +31,7 @@ const Index = () => {
   const online = useOnlineStatus();
   const { user } = useAuth();
   const { entries: favEntries, isFavourite, toggle } = useFundWatchlist();
+  const { lastUpdateDate } = useLiveStatus();
 
   const load = useCallback(async () => {
     if (!cachedFunds) setLoading(true);
@@ -86,9 +87,11 @@ const Index = () => {
 
   const published = funds.filter((f) => f.is_published);
 
-  const lastUpdate = published.length
-    ? new Date(Math.max(...published.map((f) => new Date(f.updated_at).getTime())))
-    : null;
+  const lastUpdate = lastUpdateDate 
+    ? new Date(lastUpdateDate) 
+    : published.length
+      ? new Date(Math.max(...published.map((f) => new Date(f.updated_at).getTime())))
+      : null;
 
   return (
     <div className="space-y-4 px-4 md:px-6 py-4 md:py-6">
