@@ -1,5 +1,5 @@
 import { useLiveStatus, type AssetSection } from "@/hooks/useLiveStatus";
-import { isKenyanMarketOpen, isGlobalMarketOpen, toLastWeekday } from "@/lib/utils";
+import { isKenyanMarketOpen, isGlobalMarketOpen, toLastWeekday, formatMarketDate } from "@/lib/utils";
 
 interface SectionLiveStatusProps {
   section: AssetSection;
