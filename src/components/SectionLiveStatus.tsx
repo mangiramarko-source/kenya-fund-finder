@@ -24,22 +24,20 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
       ? new Date(s.last_update_date + "T00:00:00")
       : null;
       
-  const rawDate = baseDate ? new Date(baseDate) : new Date();
+  const rawDate = baseDate ? new Date(baseDate) : null;
   
-
-
   // All other assets (Stocks, FX, Commodities) follow Kenyan Market Hours
   const marketOpen = isKenyanMarketOpen();
 
   // Live status logic
   const showLiveDot = !hideLive && marketOpen;
-  const displayDate = formatMarketDate(rawDate, "en-KE", { month: "short", day: "numeric", year: "numeric" });
+  const displayDate = rawDate ? formatMarketDate(rawDate, "en-KE", { month: "short", day: "numeric", year: "numeric" }) : null;
 
   let textStatus = "";
   if (!marketOpen) {
-    textStatus = `Markets Closed (Opens Mon-Fri) • Updated ${displayDate}`;
+    textStatus = displayDate ? `Markets Closed (Opens Mon-Fri) • Updated ${displayDate}` : `Markets Closed (Opens Mon-Fri)`;
   } else {
-    textStatus = `Updated ${displayDate}`;
+    textStatus = displayDate ? `Updated ${displayDate}` : `Markets Open`;
   }
 
   return (

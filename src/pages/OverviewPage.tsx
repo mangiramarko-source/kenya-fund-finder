@@ -1390,80 +1390,84 @@ const OverviewPage = () => {
         {/* ─── Column 2 (Center Column - MAIN ATTENTION HERO): Custom Asset Cards & Updates Feed (Independent Scroll) ─── */}
         <div className="lg:col-span-6 col-span-12 space-y-3.5 lg:h-[calc(100vh-105px)] lg:overflow-y-auto hide-scrollbar px-0.5">
           
-          {/* ─── Mobile-only Top Gainers & Top Loser Overview Widget ─── */}
-          <div className="block lg:hidden mb-3.5 px-0.5">
-            <div className="grid grid-cols-2 gap-2.5">
-              {/* Top Gainers Column */}
-              <div className="space-y-1">
-                <h3 className="text-[11px] font-semibold text-muted-foreground/90 px-1">Top gainers</h3>
-                <div className="rounded-xl border border-border/50 bg-card p-2 space-y-1.5 shadow-xs">
-                  {(topGainers.length > 0
-                    ? topGainers.slice(0, 2)
-                    : [
-                        { id: "g1", symbol: "SGL", name: "Standard Group Ltd", price: 6.24, day_change_percent: 305.19 },
-                        { id: "g2", symbol: "CTUM", name: "Centum Investment", price: 19.30, day_change_percent: 100.21 },
-                      ]
-                  ).map((stk, idx) => (
-                    <Link
-                      key={stk.id || idx}
-                      to={`/stocks/${stk.symbol}`}
-                      className="flex items-center justify-between py-1 px-1.5 rounded-lg hover:bg-muted/40 transition-colors"
-                    >
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="w-5 h-5 rounded-full bg-emerald-500/15 text-emerald-500 flex items-center justify-center shrink-0">
-                          <TrendingUp className="w-3 h-3" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[11px] font-bold text-foreground leading-tight truncate">{stk.symbol}</p>
-                          <p className="text-[9px] text-muted-foreground leading-tight truncate max-w-[60px]">{stk.name}</p>
-                        </div>
-                      </div>
-                      <div className="text-right shrink-0 pl-1">
-                        <p className="text-[10px] font-bold text-foreground leading-tight">KES {Number(stk.price).toFixed(2)}</p>
-                        <p className="text-[9px] font-bold text-emerald-500 leading-tight">
-                          +{Number(stk.day_change_percent).toFixed(2)}%
-                        </p>
-                      </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
+          {/* ─── Mobile Page Header ─── */}
+          <div className="lg:hidden mb-4 px-0.5 mt-2">
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Overview</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Your personalized market overview, top movers, and latest news.
+              </p>
+            </div>
+            <div className="flex items-center justify-end w-full mt-3">
+              <SectionLiveStatus section="overview" isLoading={loading} />
+            </div>
+            <div className="border-b border-border mt-3" />
+          </div>
 
-              {/* Top Losers Column */}
-              <div className="space-y-1">
-                <h3 className="text-[11px] font-semibold text-muted-foreground/90 px-1">Top loser</h3>
-                <div className="rounded-xl border border-border/50 bg-card p-2 space-y-1.5 shadow-xs">
-                  {(topLosers.length > 0
-                    ? topLosers.slice(0, 2)
-                    : [
-                        { id: "l1", symbol: "LKL", name: "Longhorn Publishers", price: 2.86, day_change_percent: -48.75 },
-                        { id: "l2", symbol: "UMME", name: "Umeme Limited", price: 6.94, day_change_percent: -22.20 },
-                      ]
-                  ).map((stk, idx) => (
-                    <Link
-                      key={stk.id || idx}
-                      to={`/stocks/${stk.symbol}`}
-                      className="flex items-center justify-between py-1 px-1.5 rounded-lg hover:bg-muted/40 transition-colors"
-                    >
-                      <div className="flex items-center gap-1.5 min-w-0">
-                        <div className="w-5 h-5 rounded-full bg-rose-500/15 text-rose-500 flex items-center justify-center shrink-0">
-                          <TrendingDown className="w-3 h-3" />
-                        </div>
-                        <div className="min-w-0">
-                          <p className="text-[11px] font-bold text-foreground leading-tight truncate">{stk.symbol}</p>
-                          <p className="text-[9px] text-muted-foreground leading-tight truncate max-w-[60px]">{stk.name}</p>
-                        </div>
+          {/* ─── Mobile-only Top Gainers & Top Loser Overview Widget (Horizontal Cards) ─── */}
+          <div className="block lg:hidden mb-5">
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 px-0.5 hide-scrollbar">
+              {(topGainers.length > 0 || topLosers.length > 0
+                ? [
+                    ...topGainers.slice(0, 3).map(s => ({ ...s, type: 'gainer' })),
+                    ...topLosers.slice(0, 3).map(s => ({ ...s, type: 'loser' }))
+                  ]
+                : [
+                    { id: "g1", symbol: "SGL", name: "Standard Group Ltd", price: 6.24, day_change_percent: 305.19, day_change: 4.70, volume: 12000, type: 'gainer' },
+                    { id: "g2", symbol: "CTUM", name: "Centum Investment", price: 19.30, day_change_percent: 100.21, day_change: 9.66, volume: 54000, type: 'gainer' },
+                    { id: "l1", symbol: "LKL", name: "Longhorn Publishers", price: 2.86, day_change_percent: -48.75, day_change: -2.72, volume: 3200, type: 'loser' },
+                  ]
+              ).map((stk, idx) => {
+                const isGainer = stk.type === 'gainer';
+                return (
+                  <Link
+                    key={stk.id || idx}
+                    to={`/stocks/${stk.symbol}`}
+                    className="w-[82vw] max-w-[300px] shrink-0 snap-center flex flex-col justify-between rounded-3xl border border-border/60 bg-card p-5 shadow-sm hover:bg-muted/40 transition-colors"
+                  >
+                    <div className="flex justify-between items-start mb-6">
+                      <div className="flex flex-col">
+                        <span className="text-[15px] font-semibold text-foreground tracking-tight truncate pr-2 max-w-[180px]">
+                          {stk.name}
+                        </span>
+                        <span className="text-[12px] text-muted-foreground mt-0.5">{stk.symbol}</span>
                       </div>
-                      <div className="text-right shrink-0 pl-1">
-                        <p className="text-[10px] font-bold text-foreground leading-tight">KES {Number(stk.price).toFixed(2)}</p>
-                        <p className="text-[9px] font-bold text-rose-500 leading-tight">
-                          {Number(stk.day_change_percent).toFixed(2)}%
-                        </p>
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${isGainer ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500'}`}>
+                        {isGainer ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                       </div>
-                    </Link>
-                  ))}
-                </div>
-              </div>
+                    </div>
+
+                    <div className="flex flex-col gap-1.5">
+                      <div className="flex items-baseline gap-2.5">
+                        <span className="text-3xl font-bold text-foreground tracking-tight">
+                          {Number(stk.price).toFixed(2)}
+                        </span>
+                        <span className={`text-[13px] font-bold flex items-center gap-0.5 ${isGainer ? 'text-emerald-500' : 'text-rose-500'}`}>
+                          {isGainer ? '↗' : '↘'} {Math.abs(Number(stk.day_change_percent)).toFixed(2)}%
+                        </span>
+                      </div>
+                      <div className="flex items-center gap-2 mt-0.5 text-[13px]">
+                         <span className="font-semibold text-muted-foreground/80">1D</span>
+                         <span className={`font-semibold ${isGainer ? 'text-emerald-500/90' : 'text-rose-500/90'}`}>
+                           {isGainer ? '↗' : '↘'} {stk.day_change ? Math.abs(Number(stk.day_change)).toFixed(2) : 'n/a'}
+                         </span>
+                         <span className="text-muted-foreground/60 ml-1">n/a</span>
+                      </div>
+                    </div>
+
+                    <hr className="border-border/60 my-4" />
+
+                    <div className="flex items-center justify-between">
+                       <span className="text-[12px] text-muted-foreground font-semibold">
+                         Vol {stk.volume ? stk.volume.toLocaleString() : 'n/a'}
+                       </span>
+                       <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest ${isGainer ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                         Top {isGainer ? 'Gainer' : 'Loser'}
+                       </span>
+                    </div>
+                  </Link>
+                );
+              })}
             </div>
           </div>
 
