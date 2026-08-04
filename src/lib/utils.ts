@@ -21,7 +21,13 @@ export function decodeHtmlEntities(text: string): string {
  * as the prior Friday (preserving the original time-of-day).
  */
 export function toLastWeekday(input: string | Date): Date {
-  const d = new Date(input);
+  let d: Date;
+  if (typeof input === "string" && input.length === 10) {
+    // If input is "YYYY-MM-DD", append T12:00:00 to prevent UTC timezone shift backwards
+    d = new Date(`${input}T12:00:00`);
+  } else {
+    d = new Date(input);
+  }
   const day = d.getDay(); // 0=Sun, 6=Sat
   if (day === 6) d.setDate(d.getDate() - 1); // Sat → Fri
   else if (day === 0) d.setDate(d.getDate() - 2); // Sun → Fri
@@ -34,7 +40,7 @@ export function formatMarketDateTime(
   locale = "en-KE",
   options?: Intl.DateTimeFormatOptions,
 ): string {
-  return toLastWeekday(input).toLocaleString(locale, options);
+  return toLastWeekday(input).toLocaleString(locale, { ...options, timeZone: "Africa/Nairobi" });
 }
 
 /** Format a market date (no time), snapping weekends back to the prior Friday. */
@@ -43,7 +49,7 @@ export function formatMarketDate(
   locale = "en-KE",
   options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" },
 ): string {
-  return toLastWeekday(input).toLocaleDateString(locale, options);
+  return toLastWeekday(input).toLocaleDateString(locale, { ...options, timeZone: "Africa/Nairobi" });
 }
 
 /**

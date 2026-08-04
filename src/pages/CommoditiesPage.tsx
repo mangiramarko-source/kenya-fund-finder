@@ -221,7 +221,7 @@ const CommoditiesPage = () => {
             </div>
           </div>
           <div className="md:hidden flex items-center justify-between w-full mb-3">
-            <span className="text-xs text-muted-foreground/70">Updated {toLastWeekday(new Date()).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
+            <span className="text-xs text-muted-foreground/70">Updated {formatMarketDate(new Date(), "en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
             <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} hideDate />
           </div>
           <div className="md:hidden border-b border-border mt-3" />
@@ -499,7 +499,7 @@ const MobileCommodityCard = ({
                   <XAxis
                     dataKey="snapshot_date"
                     tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
-                    tickFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                    tickFormatter={(v) => formatMarketDate(v, "en-KE", { month: "short", day: "numeric" })}
                     minTickGap={20}
                   />
                   <YAxis
@@ -515,7 +515,7 @@ const MobileCommodityCard = ({
                       borderRadius: "8px",
                       fontSize: "11px",
                     }}
-                    labelFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
+                    labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
                     formatter={(value: number) => [value.toFixed(2), "Price"]}
                   />
                   <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
@@ -665,7 +665,7 @@ const CommodityRow = ({
                     <XAxis
                       dataKey="snapshot_date"
                       tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                      tickFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                      tickFormatter={(v) => formatMarketDate(v, "en-KE", { month: "short", day: "numeric" })}
                     />
                     <YAxis
                       domain={["auto", "auto"]}
@@ -680,7 +680,7 @@ const CommodityRow = ({
                         borderRadius: "8px",
                         fontSize: "12px",
                       }}
-                      labelFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
+                      labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
                       formatter={(value: number) => [`${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}`, "Price"]}
                     />
                       <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />

@@ -249,7 +249,7 @@ const RatesPage = () => {
             </div>
           </div>
           <div className="md:hidden flex items-center justify-between w-full mb-3">
-            <span className="text-xs text-muted-foreground/70">Updated {toLastWeekday(new Date()).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
+            <span className="text-xs text-muted-foreground/70">Updated {formatMarketDate(new Date(), "en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
             <SectionLiveStatus section="rates" fallbackDate={latestUpdate} hideDate />
           </div>
           <div className="md:hidden border-b border-border mt-2" />
@@ -570,7 +570,7 @@ const MobileRateCard = ({
 
         {/* Center: Sparkline */}
         <div className="shrink-0">
-          <MiniSparkline data={history || []} positive={positive} livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], rate: rate.rate }} />
+          <MiniSparkline data={history || []} positive={positive} livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], rate: r.rate }} />
         </div>
 
         {/* Right: Rate + Change */}
@@ -647,7 +647,7 @@ const MobileRateCard = ({
                   const todayIso = new Date().toISOString().split("T")[0];
                   const effectiveHistory = [...history];
                   if (effectiveHistory.length > 0 && effectiveHistory[effectiveHistory.length - 1].snapshot_date < todayIso) {
-                    effectiveHistory.push({ snapshot_date: todayIso, rate: rate.rate });
+                    effectiveHistory.push({ snapshot_date: todayIso, rate: r.rate });
                   }
                   return (
                     <LineChart data={effectiveHistory}>
@@ -655,7 +655,7 @@ const MobileRateCard = ({
                   <XAxis
                     dataKey="snapshot_date"
                     tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
-                    tickFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                    tickFormatter={(v) => formatMarketDate(v, "en-KE", { month: "short", day: "numeric" })}
                     minTickGap={20}
                   />
                   <YAxis
@@ -671,7 +671,7 @@ const MobileRateCard = ({
                       borderRadius: "8px",
                       fontSize: "11px",
                     }}
-                    labelFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
+                    labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
                     formatter={(value: number) => [`KES ${value.toFixed(4)}`, "Rate"]}
                   />
                   <Line type="monotone" dataKey="rate" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
@@ -818,7 +818,7 @@ const RateRow = ({
                     <XAxis
                       dataKey="snapshot_date"
                       tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                      tickFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                      tickFormatter={(v) => formatMarketDate(v, "en-KE", { month: "short", day: "numeric" })}
                     />
                     <YAxis
                       domain={["auto", "auto"]}
@@ -833,7 +833,7 @@ const RateRow = ({
                         borderRadius: "8px",
                         fontSize: "12px",
                       }}
-                      labelFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
+                      labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
                       formatter={(value: number) => [`KES ${value.toFixed(4)}`, "Rate"]}
                     />
                       <Line type="monotone" dataKey="rate" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />

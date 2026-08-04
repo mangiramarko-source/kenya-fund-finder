@@ -4,7 +4,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
-import { formatMarketDateTime } from "@/lib/utils";
+import { formatMarketDate, formatMarketDateTime } from "@/lib/utils";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -323,7 +323,7 @@ const StockDetailPage = () => {
                   <XAxis
                     dataKey="snapshot_date"
                     tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                    tickFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                    tickFormatter={(v) => formatMarketDate(v, "en-KE", { month: "short", day: "numeric" })}
                   />
                   <YAxis
                     domain={["auto", "auto"]}
@@ -338,7 +338,7 @@ const StockDetailPage = () => {
                       borderRadius: "8px",
                       fontSize: "12px",
                     }}
-                    labelFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
+                    labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
                     formatter={(value: number) => [`KSh ${fmt(value)}`, "Price"]}
                   />
                   <Area type="monotone" dataKey="price" stroke={isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))"} strokeWidth={2} fill="url(#priceGradient)" />

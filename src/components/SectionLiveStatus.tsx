@@ -38,7 +38,7 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate }: Sectio
   // Live status logic
   const showLiveDot = !hideLive && marketOpen;
 
-  const displayDate = rawDate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" });
+  const displayDate = formatMarketDate(rawDate);
 
   let textStatus = "";
   
