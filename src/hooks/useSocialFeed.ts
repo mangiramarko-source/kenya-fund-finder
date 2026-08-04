@@ -135,8 +135,8 @@ export function useSocialFeed(
         mediaUrl: n.image_url || undefined,
         mediaType: n.image_url ? "image" : undefined,
         timestamp: newsDate,
-        likes: getRandomInt(50, 400),
-        comments: getRandomInt(10, 100),
+        likes: n.likes || 0,
+        comments: n.comments || 0,
         url: n.url,
         rawItem: n,
         relatedSymbols: relatedSymbols.length > 0 ? relatedSymbols : undefined,
@@ -254,8 +254,8 @@ ${newsPara}
         title: "Today's Market Wrap-up",
         content: markdownContent,
         timestamp: getPastTime(5), 
-        likes: getRandomInt(100, 500),
-        comments: getRandomInt(10, 80),
+        likes: 0,
+        comments: 0,
         rawItem: null,
       });
     }
@@ -309,8 +309,8 @@ ${newsPara}
       title: `💡 Term of the Day: ${todayTip.title}`,
       content: todayTip.content,
       timestamp: getPastTime(2), 
-      likes: getRandomInt(50, 300),
-      comments: getRandomInt(5, 40),
+      likes: 0,
+      comments: 0,
       rawItem: null,
     });
 
