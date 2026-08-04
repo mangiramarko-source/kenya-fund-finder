@@ -673,6 +673,12 @@ Deno.serve(async (req) => {
                     })
                     .eq("id", row.id);
                   results.push(`FX ${code}: ${row.rate} → ${newRate}`);
+                } else {
+                  // Rate unchanged - still bump updated_at to reflect a successful refresh
+                  await supabase
+                    .from("exchange_rates")
+                    .update({ updated_at: new Date().toISOString() })
+                    .eq("id", row.id);
                 }
               }
             }
@@ -864,9 +870,7 @@ Deno.serve(async (req) => {
           }
 
           const snapshotDate = quote.asOfDate || new Date().toISOString().split("T")[0];
-          const updatedAt = quote.asOfDate
-            ? new Date(`${quote.asOfDate}T17:00:00+03:00`).toISOString()
-            : new Date().toISOString();
+          const updatedAt = new Date().toISOString();
           const updateData: Record<string, unknown> = {
             previous_price: quote.previousPrice,
             price: quote.price,
