@@ -1390,15 +1390,109 @@ const OverviewPage = () => {
         {/* ─── Column 2 (Center Column - MAIN ATTENTION HERO): Custom Asset Cards & Updates Feed (Independent Scroll) ─── */}
         <div className="lg:col-span-6 col-span-12 space-y-3.5 lg:h-[calc(100vh-105px)] lg:overflow-y-auto hide-scrollbar px-0.5">
           
+          {/* ─── Mobile-only Top Gainers & Top Loser Overview Widget ─── */}
+          <div className="block lg:hidden mb-3.5 px-0.5">
+            <div className="grid grid-cols-2 gap-2.5">
+              {/* Top Gainers Column */}
+              <div className="space-y-1">
+                <h3 className="text-[11px] font-semibold text-muted-foreground/90 px-1">Top gainers</h3>
+                <div className="rounded-xl border border-border/50 bg-card p-2 space-y-1.5 shadow-xs">
+                  {(topGainers.length > 0
+                    ? topGainers.slice(0, 2)
+                    : [
+                        { id: "g1", symbol: "SGL", name: "Standard Group Ltd", price: 6.24, day_change_percent: 305.19 },
+                        { id: "g2", symbol: "CTUM", name: "Centum Investment", price: 19.30, day_change_percent: 100.21 },
+                      ]
+                  ).map((stk, idx) => (
+                    <Link
+                      key={stk.id || idx}
+                      to={`/stocks/${stk.symbol}`}
+                      className="flex items-center justify-between py-1 px-1.5 rounded-lg hover:bg-muted/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="w-5 h-5 rounded-full bg-emerald-500/15 text-emerald-500 flex items-center justify-center shrink-0">
+                          <TrendingUp className="w-3 h-3" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-bold text-foreground leading-tight truncate">{stk.symbol}</p>
+                          <p className="text-[9px] text-muted-foreground leading-tight truncate max-w-[60px]">{stk.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0 pl-1">
+                        <p className="text-[10px] font-bold text-foreground leading-tight">KES {Number(stk.price).toFixed(2)}</p>
+                        <p className="text-[9px] font-bold text-emerald-500 leading-tight">
+                          +{Number(stk.day_change_percent).toFixed(2)}%
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+
+              {/* Top Losers Column */}
+              <div className="space-y-1">
+                <h3 className="text-[11px] font-semibold text-muted-foreground/90 px-1">Top loser</h3>
+                <div className="rounded-xl border border-border/50 bg-card p-2 space-y-1.5 shadow-xs">
+                  {(topLosers.length > 0
+                    ? topLosers.slice(0, 2)
+                    : [
+                        { id: "l1", symbol: "LKL", name: "Longhorn Publishers", price: 2.86, day_change_percent: -48.75 },
+                        { id: "l2", symbol: "UMME", name: "Umeme Limited", price: 6.94, day_change_percent: -22.20 },
+                      ]
+                  ).map((stk, idx) => (
+                    <Link
+                      key={stk.id || idx}
+                      to={`/stocks/${stk.symbol}`}
+                      className="flex items-center justify-between py-1 px-1.5 rounded-lg hover:bg-muted/40 transition-colors"
+                    >
+                      <div className="flex items-center gap-1.5 min-w-0">
+                        <div className="w-5 h-5 rounded-full bg-rose-500/15 text-rose-500 flex items-center justify-center shrink-0">
+                          <TrendingDown className="w-3 h-3" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-[11px] font-bold text-foreground leading-tight truncate">{stk.symbol}</p>
+                          <p className="text-[9px] text-muted-foreground leading-tight truncate max-w-[60px]">{stk.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0 pl-1">
+                        <p className="text-[10px] font-bold text-foreground leading-tight">KES {Number(stk.price).toFixed(2)}</p>
+                        <p className="text-[9px] font-bold text-rose-500 leading-tight">
+                          {Number(stk.day_change_percent).toFixed(2)}%
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
           {/* Sticky Market News Header & Tabs */}
           <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md pt-1 pb-1 mb-2">
-            <div className="flex items-center gap-3 mb-2.5 px-0.5">
-              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">Market News</h2>
-              <Badge variant="secondary" className="text-xs bg-muted/80 font-medium">
-                {activeUpdateCategory === "All"
-                  ? (newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredFeedItems.length} articles`)
-                  : `${filteredFeedItems.length} ${activeUpdateCategory.toLowerCase()}`}
-              </Badge>
+            <div className="flex items-center justify-between gap-2 mb-2.5 px-0.5">
+              <div className="flex items-center gap-2">
+                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">Market News</h2>
+                <Badge variant="secondary" className="text-xs bg-muted/80 font-medium px-2 py-0.5 rounded-full">
+                  {activeUpdateCategory === "All"
+                    ? (newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredFeedItems.length} articles`)
+                    : `${filteredFeedItems.length} ${activeUpdateCategory.toLowerCase()}`}
+                </Badge>
+              </div>
+
+              <Button
+                variant="outline"
+                size="sm"
+                className="h-8 rounded-xl gap-1.5 text-xs font-semibold px-3 border-border/80 text-foreground hover:bg-muted"
+                onClick={() => {
+                  // Cycle categories on filter click for quick filter toggle
+                  const categories = ["All", "Kenyan", "International", "Latest", "Oldest"];
+                  const nextIndex = (categories.indexOf(activeUpdateCategory) + 1) % categories.length;
+                  setActiveUpdateCategory(categories[nextIndex]);
+                }}
+              >
+                <SlidersHorizontal className="h-3.5 w-3.5 text-muted-foreground" />
+                Filter
+              </Button>
             </div>
 
             {/* Sector Category Tabs (Minimal underline style matching screenshot) */}
