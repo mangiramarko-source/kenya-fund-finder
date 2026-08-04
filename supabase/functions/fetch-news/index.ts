@@ -186,6 +186,7 @@ async function rewriteArticle(
   title: string,
   source: string,
   rawText: string,
+  retries = 2,
 ): Promise<RewrittenArticle | null> {
   const sourceText = rawText.slice(0, 6000);
   if (!sourceText || sourceText.length < 80) return null;
@@ -249,6 +250,11 @@ Rewrite this as a completely original article:
     clearTimeout(t);
 
     if (!res.ok) {
+      if (res.status === 429 && retries > 0) {
+        console.warn(`AI rate limited (429) for "${title.slice(0, 40)}", retrying in 3s... (${retries} retries left)`);
+        await new Promise((r) => setTimeout(r, 3000));
+        return rewriteArticle(apiKey, title, source, rawText, retries - 1);
+      }
       console.error(`AI rewrite failed [${res.status}] for "${title.slice(0, 60)}"`);
       return null;
     }
@@ -529,12 +535,12 @@ Deno.serve(async (req) => {
 
     const aiKey = Deno.env.get("GEMINI_API_KEY");
     let rewrittenCount = 0;
-    let rewrites: Array<RewrittenArticle | null> = new Array(processingArticles.length).fill(null);
+    let rewrites: Array<RewrittenArticle | null> = [];
 
     if (aiKey) {
-      rewrites = await mapWithConcurrency(processingArticles, 3, async (a) => {
+      for (const a of processingArticles) {
         let raw = `${a.summary || ""}\n\n${a.content || ""}`.trim();
-        
+
         // If the RSS feed provided very little content, attempt to scrape the full article
         if (raw.length < 1000 && a.url) {
           console.log(`Text short (${raw.length} chars), scraping full content for: ${a.title}`);
@@ -543,11 +549,14 @@ Deno.serve(async (req) => {
             raw = `${a.summary || ""}\n\n${scraped}`;
           }
         }
-        
+
         const out = await rewriteArticle(aiKey, a.title, a.source, raw);
         if (out) rewrittenCount++;
-        return out;
-      });
+        rewrites.push(out);
+
+        // Pause 2 seconds between AI calls to avoid Gemini concurrency / rate limits (429)
+        await new Promise((r) => setTimeout(r, 2000));
+      }
     } else {
       console.warn("GEMINI_API_KEY not configured — inserting feed text as-is");
     }
