@@ -1260,7 +1260,7 @@ const OverviewPage = () => {
       <div className={mobileTab !== "overview" ? "hidden" : "contents"}>
 
       {/* Main Grid Container (3-Column Layout with Independent Column Scrolling) */}
-      <div className="lg:grid lg:grid-cols-12 lg:gap-5 max-w-[1600px] mx-auto items-start px-4 md:px-6 py-2">
+      <div className="lg:grid lg:grid-cols-12 lg:gap-5 max-w-[1600px] mx-auto items-start px-0 sm:px-4 md:px-6 py-2">
         
         {/* ─── Column 1 (Left Column): Market Summary & Watchlist Highlights (Independent Scroll) ─── */}
         <div className="lg:col-span-3 hidden lg:block space-y-3.5 lg:h-[calc(100vh-105px)] lg:overflow-y-auto hide-scrollbar pr-1">
@@ -1388,10 +1388,10 @@ const OverviewPage = () => {
         </div>
         
         {/* ─── Column 2 (Center Column - MAIN ATTENTION HERO): Custom Asset Cards & Updates Feed (Independent Scroll) ─── */}
-        <div className="lg:col-span-6 col-span-12 space-y-3.5 lg:h-[calc(100vh-105px)] lg:overflow-y-auto hide-scrollbar px-0.5">
+        <div className="lg:col-span-6 col-span-12 space-y-3.5 lg:h-[calc(100vh-105px)] lg:overflow-y-auto hide-scrollbar px-0 sm:px-0.5">
           
           {/* ─── Mobile Page Header ─── */}
-          <div className="lg:hidden mb-4 px-0.5 mt-2">
+          <div className="lg:hidden mb-4 px-4 sm:px-0.5 mt-2">
             <div>
               <h1 className="text-xl font-bold text-foreground">Overview</h1>
               <p className="text-sm text-muted-foreground mt-1">
@@ -1406,7 +1406,7 @@ const OverviewPage = () => {
 
           {/* ─── Mobile-only Top Gainers & Top Loser Overview Widget (Horizontal Cards) ─── */}
           <div className="block lg:hidden mb-5">
-            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 px-0.5 hide-scrollbar">
+            <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 px-4 hide-scrollbar">
               {(topGainers.length > 0 || topLosers.length > 0
                 ? [
                     ...topGainers.slice(0, 3).map(s => ({ ...s, type: 'gainer' })),
@@ -1423,7 +1423,7 @@ const OverviewPage = () => {
                   <Link
                     key={stk.id || idx}
                     to={`/stocks/${stk.symbol}`}
-                    className="w-[82vw] max-w-[300px] shrink-0 snap-center flex flex-col justify-between rounded-3xl border border-border/60 bg-card p-5 shadow-sm hover:bg-muted/40 transition-colors"
+                    className="w-[92vw] max-w-[340px] shrink-0 snap-center flex flex-col justify-between rounded-3xl border border-border/60 bg-card p-5 shadow-sm hover:bg-muted/40 transition-colors"
                   >
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex flex-col">

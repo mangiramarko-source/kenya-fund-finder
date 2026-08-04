@@ -85,7 +85,7 @@ export const SocialFeedCard = ({ item, onSelect }: { item: FeedItem; onSelect: (
   return (
     <div 
       onClick={() => onSelect(item)}
-      className="relative p-3.5 sm:p-4 rounded-2xl border border-border/60 bg-card shadow-sm hover:border-accent/40 transition-all dark:shadow-md cursor-pointer"
+      className="relative p-4 rounded-none sm:rounded-2xl border-x-0 border-y sm:border sm:border-border/60 bg-card sm:shadow-sm hover:border-accent/40 transition-all dark:shadow-md cursor-pointer"
     >
       <div className="flex gap-3 items-start">
         {/* Avatar / Logo */}
@@ -285,13 +285,15 @@ export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: bo
         ))}
 
         {items.length > displayCount && (
-          <button
-            type="button"
-            onClick={() => setDisplayCount(prev => prev + 15)}
-            className="w-full py-3 rounded-2xl border border-border bg-card/50 text-xs font-semibold text-emerald-500 hover:bg-muted/50 transition-all text-center cursor-pointer"
-          >
-            Load more updates ({items.length - displayCount} remaining)
-          </button>
+          <div className="px-4 sm:px-0">
+            <button
+              type="button"
+              onClick={() => setDisplayCount(prev => prev + 15)}
+              className="w-full py-3 rounded-2xl border border-border bg-card/50 text-xs font-semibold text-emerald-500 hover:bg-muted/50 transition-all text-center cursor-pointer"
+            >
+              Load more updates ({items.length - displayCount} remaining)
+            </button>
+          </div>
         )}
       </div>
 
