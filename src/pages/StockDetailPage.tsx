@@ -161,16 +161,24 @@ const StockDetailPage = () => {
   }, [stock?.id]);
 
   const filteredHistory = useMemo(() => {
-    if (!history.length) return [];
+    if (!history.length || !stock) return [];
+    
+    // Append today's data point if not already present
+    const todayIso = new Date().toISOString().split("T")[0];
+    const fullHistory = [...history];
+    if (fullHistory.length > 0 && fullHistory[fullHistory.length - 1].snapshot_date < todayIso) {
+      fullHistory.push({ snapshot_date: todayIso, price: stock.price });
+    }
+
     const now = new Date();
     let cutoff: Date;
     switch (range) {
       case "1W": cutoff = new Date(now.getTime() - 7 * 86400000); break;
       case "1M": cutoff = new Date(now.getTime() - 30 * 86400000); break;
       case "3M": cutoff = new Date(now.getTime() - 90 * 86400000); break;
-      default: return history;
+      default: return fullHistory;
     }
-    return history.filter((h) => new Date(h.snapshot_date) >= cutoff);
+    return fullHistory.filter((h) => new Date(h.snapshot_date) >= cutoff);
   }, [history, range]);
 
   const priceStats = useMemo(() => {

@@ -106,17 +106,25 @@ const MiniSparkline = ({
   price?: number;
   dayChange?: number;
 }) => {
-  let effectiveData = data;
-  if (!effectiveData || effectiveData.length < 2) {
-    if (price !== undefined) {
+  let effectiveData = [...(data || [])];
+  
+  if (price !== undefined) {
+    const todayIso = new Date().toISOString().split("T")[0];
+    if (effectiveData.length > 0) {
+      if (effectiveData[effectiveData.length - 1].snapshot_date < todayIso) {
+        effectiveData.push({ snapshot_date: todayIso, price });
+      }
+    } else {
       const prevPrice = price - (dayChange || 0);
       effectiveData = [
         { snapshot_date: "1", price: prevPrice },
         { snapshot_date: "2", price: price },
       ] as any;
-    } else {
-      return null;
     }
+  }
+
+  if (!effectiveData || effectiveData.length < 2) {
+    return null;
   }
 
   const color =
@@ -795,39 +803,48 @@ const StockDetailPanel = ({
           <div className="h-[200px] flex items-center justify-center">
             <Skeleton className="h-full w-full rounded-lg" />
           </div>
-        ) : !effectiveHistory || effectiveHistory.length === 0 ? (
+        ) : !history || history.length === 0 ? (
           <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
             No historical data available yet
           </div>
         ) : (
           <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={effectiveHistory}>
-              <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
-              <XAxis
-                dataKey="snapshot_date"
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                tickFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
-              />
-              <YAxis
-                domain={["auto", "auto"]}
-                tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                width={55}
-                tickFormatter={(v) => v.toFixed(1)}
-              />
-              <Tooltip
-                contentStyle={{
-                  backgroundColor: "hsl(var(--card))",
-                  border: "1px solid hsl(var(--border))",
-                  borderRadius: "8px",
-                  fontSize: "12px",
-                }}
-                labelFormatter={(v) =>
-                  new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })
-                }
-                formatter={(value: number) => [`KSh ${formatNumber(value)}`, "Price"]}
-              />
-              <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
-            </LineChart>
+            {(() => {
+              const todayIso = new Date().toISOString().split("T")[0];
+              const effectiveHistory = [...history];
+              if (effectiveHistory.length > 0 && effectiveHistory[effectiveHistory.length - 1].snapshot_date < todayIso) {
+                effectiveHistory.push({ snapshot_date: todayIso, price: s.price });
+              }
+              return (
+                <LineChart data={effectiveHistory}>
+                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  <XAxis
+                    dataKey="snapshot_date"
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                    tickFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                  />
+                  <YAxis
+                    domain={["auto", "auto"]}
+                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                    width={55}
+                    tickFormatter={(v) => v.toFixed(1)}
+                  />
+                  <Tooltip
+                    contentStyle={{
+                      backgroundColor: "hsl(var(--card))",
+                      border: "1px solid hsl(var(--border))",
+                      borderRadius: "8px",
+                      fontSize: "12px",
+                    }}
+                    labelFormatter={(v) =>
+                      new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })
+                    }
+                    formatter={(value: number) => [`KSh ${formatNumber(value)}`, "Price"]}
+                  />
+                  <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+                </LineChart>
+              );
+            })()}
           </ResponsiveContainer>
         )}
       </div>

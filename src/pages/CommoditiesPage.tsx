@@ -53,15 +53,24 @@ const ChangeIndicator = ({ current, previous }: { current: number; previous: num
 };
 
 /* ─── Mini Sparkline (matches Rates / Stocks page) ─── */
-const MiniSparkline = ({ data, positive }: { data: PriceHistory[]; positive: boolean }) => {
-  if (!data?.length || data.length < 2) return null;
+const MiniSparkline = ({ data, positive, livePoint }: { data: PriceHistory[]; positive: boolean; livePoint?: { snapshot_date: string, price: number } }) => {
+  const effectiveData = useMemo(() => {
+    if (!data?.length) return [];
+    const arr = [...data];
+    if (livePoint && arr.length > 0 && arr[arr.length - 1].snapshot_date < livePoint.snapshot_date) {
+      arr.push(livePoint);
+    }
+    return arr;
+  }, [data, livePoint]);
+
+  if (effectiveData.length < 2) return null;
   const color = positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
   const gradientId = `commodity-sparkline-fill-${positive ? "up" : "down"}`;
 
   return (
     <div className="w-[60px] h-[24px]">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={data} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+        <LineChart data={effectiveData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.25} />
@@ -409,7 +418,7 @@ const MobileCommodityCard = ({
         </div>
 
         <div className="shrink-0">
-          <MiniSparkline data={history || []} positive={positive} />
+          <MiniSparkline data={history || []} positive={positive} livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], price: c.price }} />
         </div>
 
         <div className="text-right shrink-0">
@@ -478,8 +487,15 @@ const MobileCommodityCard = ({
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={180}>
-                <LineChart data={history}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                {(() => {
+                  const todayIso = new Date().toISOString().split("T")[0];
+                  const effectiveHistory = [...history];
+                  if (effectiveHistory.length > 0 && effectiveHistory[effectiveHistory.length - 1].snapshot_date < todayIso) {
+                    effectiveHistory.push({ snapshot_date: todayIso, price: c.price });
+                  }
+                  return (
+                    <LineChart data={effectiveHistory}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis
                     dataKey="snapshot_date"
                     tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
@@ -504,6 +520,8 @@ const MobileCommodityCard = ({
                   />
                   <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
                 </LineChart>
+                  );
+                })()}
               </ResponsiveContainer>
             )}
           </div>
@@ -589,7 +607,7 @@ const CommodityRow = ({
         </td>
         <td className="px-3 py-4">
           {history && history.length >= 2 ? (
-            <MiniSparkline data={history} positive={positive} />
+            <MiniSparkline data={history} positive={positive} livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], price: c.price }} />
           ) : (
             <span className="text-xs text-muted-foreground">—</span>
           )}
@@ -635,8 +653,15 @@ const CommodityRow = ({
                 </div>
               ) : (
                 <ResponsiveContainer width="100%" height={200}>
-                  <LineChart data={history}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                  {(() => {
+                    const todayIso = new Date().toISOString().split("T")[0];
+                    const effectiveHistory = [...history];
+                    if (effectiveHistory.length > 0 && effectiveHistory[effectiveHistory.length - 1].snapshot_date < todayIso) {
+                      effectiveHistory.push({ snapshot_date: todayIso, price: c.price });
+                    }
+                    return (
+                      <LineChart data={effectiveHistory}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis
                       dataKey="snapshot_date"
                       tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
@@ -658,8 +683,10 @@ const CommodityRow = ({
                       labelFormatter={(v) => new Date(v).toLocaleDateString("en-KE", { month: "long", day: "numeric", year: "numeric" })}
                       formatter={(value: number) => [`${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}`, "Price"]}
                     />
-                    <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
-                  </LineChart>
+                      <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+                    </LineChart>
+                    );
+                  })()}
                 </ResponsiveContainer>
               )}
             </div>
