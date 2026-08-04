@@ -1,60 +1,54 @@
 import { useLiveStatus, type AssetSection } from "@/hooks/useLiveStatus";
 import { isKenyanMarketOpen, isGlobalMarketOpen, toLastWeekday, formatMarketDate } from "@/lib/utils";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface SectionLiveStatusProps {
   section: AssetSection;
   fallbackDate?: Date | null;
   hideLive?: boolean;
   hideDate?: boolean;
+  isLoading?: boolean;
 }
 
-const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate }: SectionLiveStatusProps) => {
+const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoading }: SectionLiveStatusProps) => {
   const { sections, loading } = useLiveStatus();
-  if (loading) return null;
+  if (loading || isLoading) return <Skeleton className="h-6 w-48 rounded-md" />;
 
   const isFunds = section === "funds";
-  const isStocks = section === "stocks";
-  const isGlobal = section === "rates" || section === "commodities";
-  
-  const marketOpen = isGlobal ? isGlobalMarketOpen() : isKenyanMarketOpen();
-
   const s = sections[section];
+
+  // Base date for the data
+  const baseDate = fallbackDate 
+    ? new Date(fallbackDate)
+    : s?.last_update_date
+      ? new Date(s.last_update_date + "T00:00:00")
+      : null;
+      
+  const rawDate = baseDate ? new Date(baseDate) : new Date();
   
-  // For global markets (hourly), prioritize the actual data timestamp
-  // For Kenyan markets (funds, stocks), dynamically show "today" (snapped to Mon-Fri)
-  let rawDate: Date;
-  
-  if (isGlobal) {
-    const baseDate = fallbackDate 
-      ? new Date(fallbackDate)
-      : s?.last_update_date
-        ? new Date(s.last_update_date + "T00:00:00")
-        : null;
-    rawDate = baseDate ? new Date(baseDate) : new Date();
-  } else {
-    rawDate = toLastWeekday(new Date());
-  }
+
+
+  // All other assets (Stocks, FX, Commodities) follow Kenyan Market Hours
+  const marketOpen = isKenyanMarketOpen();
 
   // Live status logic
   const showLiveDot = !hideLive && marketOpen;
-
-  const displayDate = formatMarketDate(rawDate);
+  const displayDate = formatMarketDate(rawDate, "en-KE", { month: "short", day: "numeric", year: "numeric" });
 
   let textStatus = "";
-  
   if (!marketOpen) {
-    if (isGlobal) {
-      textStatus = `Global Markets Closed (Opens Mon-Fri, 24 Hours) • Last updated ${displayDate}`;
-    } else {
-      textStatus = `NSE Closed (Opens Mon-Fri, 9:00 AM EAT) • Last updated ${displayDate}`;
-    }
+    textStatus = `Markets Closed (Opens Mon-Fri) • Updated ${displayDate}`;
   } else {
-    // Market is open
     textStatus = `Updated ${displayDate}`;
   }
 
   return (
-    <span className="inline-flex items-center gap-2">
+    <span className="inline-flex items-center gap-3">
+      {!hideDate && displayDate && (
+        <span className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
+          {textStatus}
+        </span>
+      )}
       {showLiveDot && (
         <span className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(152,30%,94%)] dark:bg-accent/15 border border-[hsl(152,30%,85%)] dark:border-accent/25 px-3 py-1">
           <span className="relative flex h-2 w-2">
@@ -62,11 +56,6 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate }: Sectio
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[hsl(152,55%,40%)] dark:bg-accent" />
           </span>
           <span className="text-xs font-semibold text-[hsl(152,40%,30%)] dark:text-accent uppercase tracking-wide">LIVE</span>
-        </span>
-      )}
-      {!hideDate && displayDate && (
-        <span className="text-xs text-muted-foreground/70">
-          {textStatus}
         </span>
       )}
     </span>
