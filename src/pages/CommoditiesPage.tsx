@@ -217,12 +217,11 @@ const CommoditiesPage = () => {
               </p>
             </div>
             <div className="hidden md:block">
-              <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} />
+              <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />
             </div>
           </div>
-          <div className="md:hidden flex items-center justify-between w-full mb-3">
-            <span className="text-xs text-muted-foreground/70">Updated {formatMarketDate(new Date(), "en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
-            <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} hideDate />
+          <div className="md:hidden flex items-center justify-end w-full mb-3">
+            <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />
           </div>
           <div className="md:hidden border-b border-border mt-3" />
         </div>

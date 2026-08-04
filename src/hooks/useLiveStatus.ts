@@ -32,32 +32,18 @@ export function useLiveStatus() {
     gcTime: 5 * 60_000,
   });
 
-  const [isLive, setIsLive] = useState<boolean | null>(null);
-  const [lastUpdateDate, setLastUpdateDate] = useState<string | null>(null);
-  const [showDate, setShowDateState] = useState<boolean>(true);
-  const [sections, setSections] = useState<Record<AssetSection, SectionStatus>>({
-    funds: { is_live: false, last_update_date: null },
-    stocks: { is_live: false, last_update_date: null },
-    rates: { is_live: false, last_update_date: null },
-    commodities: { is_live: false, last_update_date: null },
-    overview: { is_live: false, last_update_date: null },
-  });
+  const isLive = meta ? meta.is_live === true : null;
+  const lastUpdateDate = meta ? ((meta.last_update_date as string) ?? null) : null;
+  const showDate = meta ? meta.show_date !== false : true;
 
-  useEffect(() => {
-    if (!meta) return;
-    setIsLive(meta.is_live === true);
-    setLastUpdateDate((meta.last_update_date as string) ?? null);
-    setShowDateState(meta.show_date !== false);
-
-    const secs = (meta.sections as Record<string, SectionStatus>) ?? {};
-    setSections({
-      funds: secs.funds ?? { is_live: meta.is_live === true, last_update_date: (meta.last_update_date as string) ?? null },
-      stocks: secs.stocks ?? { is_live: false, last_update_date: null },
-      rates: secs.rates ?? { is_live: false, last_update_date: null },
-      commodities: secs.commodities ?? { is_live: false, last_update_date: null },
-      overview: secs.overview ?? { is_live: false, last_update_date: null },
-    });
-  }, [meta]);
+  const secs = (meta?.sections as Record<string, SectionStatus>) ?? {};
+  const sections: Record<AssetSection, SectionStatus> = {
+    funds: secs.funds ?? { is_live: meta?.is_live === true, last_update_date: (meta?.last_update_date as string) ?? null },
+    stocks: secs.stocks ?? { is_live: false, last_update_date: null },
+    rates: secs.rates ?? { is_live: false, last_update_date: null },
+    commodities: secs.commodities ?? { is_live: false, last_update_date: null },
+    overview: secs.overview ?? { is_live: false, last_update_date: null },
+  };
 
   const loading = isLoading;
 
@@ -78,19 +64,16 @@ export function useLiveStatus() {
   };
 
   const toggleLive = async (value: boolean) => {
-    setIsLive(value);
     await updateMeta({ is_live: value });
     invalidate();
   };
 
   const setLastUpdate = async (date: string | null) => {
-    setLastUpdateDate(date);
     await updateMeta({ last_update_date: date });
     invalidate();
   };
 
   const setShowDate = async (value: boolean) => {
-    setShowDateState(value);
     await updateMeta({ show_date: value });
     invalidate();
   };
@@ -98,7 +81,6 @@ export function useLiveStatus() {
   const setSectionStatus = async (section: AssetSection, status: Partial<SectionStatus>) => {
     const updated = { ...sections[section], ...status };
     const newSections = { ...sections, [section]: updated };
-    setSections(newSections);
     await updateMeta({ sections: newSections });
     invalidate();
   };

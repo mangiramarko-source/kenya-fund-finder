@@ -20,7 +20,8 @@ export function decodeHtmlEntities(text: string): string {
  * "last updated" date that falls on a weekend should be shown
  * as the prior Friday (preserving the original time-of-day).
  */
-export function toLastWeekday(input: string | Date): Date {
+export function toLastWeekday(input: string | Date | number): Date {
+  if (!input) return new Date("");
   let d: Date;
   if (typeof input === "string" && input.length === 10) {
     // If input is "YYYY-MM-DD", append T12:00:00 to prevent UTC timezone shift backwards
@@ -28,6 +29,9 @@ export function toLastWeekday(input: string | Date): Date {
   } else {
     d = new Date(input);
   }
+  
+  if (isNaN(d.getTime())) return d;
+
   const day = d.getDay(); // 0=Sun, 6=Sat
   if (day === 6) d.setDate(d.getDate() - 1); // Sat → Fri
   else if (day === 0) d.setDate(d.getDate() - 2); // Sun → Fri
@@ -36,20 +40,32 @@ export function toLastWeekday(input: string | Date): Date {
 
 /** Format a market timestamp, snapping weekends back to the prior Friday. */
 export function formatMarketDateTime(
-  input: string | Date,
+  input: string | Date | number,
   locale = "en-KE",
   options?: Intl.DateTimeFormatOptions,
 ): string {
-  return toLastWeekday(input).toLocaleString(locale, { ...options, timeZone: "Africa/Nairobi" });
+  try {
+    const d = toLastWeekday(input);
+    if (isNaN(d.getTime())) return String(input);
+    return d.toLocaleString(locale, { ...options, timeZone: "Africa/Nairobi" });
+  } catch (e) {
+    return String(input);
+  }
 }
 
 /** Format a market date (no time), snapping weekends back to the prior Friday. */
 export function formatMarketDate(
-  input: string | Date,
+  input: string | Date | number,
   locale = "en-KE",
   options: Intl.DateTimeFormatOptions = { month: "short", day: "numeric" },
 ): string {
-  return toLastWeekday(input).toLocaleDateString(locale, { ...options, timeZone: "Africa/Nairobi" });
+  try {
+    const d = toLastWeekday(input);
+    if (isNaN(d.getTime())) return String(input);
+    return d.toLocaleDateString(locale, { ...options, timeZone: "Africa/Nairobi" });
+  } catch (e) {
+    return String(input);
+  }
 }
 
 /**

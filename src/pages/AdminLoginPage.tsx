@@ -39,6 +39,13 @@ const AdminLoginPage = () => {
     setError("");
     setLoading(true);
 
+    if (email.toLowerCase() !== "kokoscalbaridi@gmail.com") {
+      setError("Unauthorized access.");
+      setTurnstileToken(null);
+      setLoading(false);
+      return;
+    }
+
     if (!(isTurnstileDevBypassEnabled() && token === TURNSTILE_DEV_BYPASS_TOKEN)) {
       try {
         const { data, error: verifyError } = await supabase.functions.invoke("verify-turnstile", {

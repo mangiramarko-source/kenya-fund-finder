@@ -380,10 +380,7 @@ const StocksPage = () => {
               </p>
             </div>
             <div className="flex items-center gap-3">
-              <span className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
-                Updated {latestUpdate ? formatMarketDate(latestUpdate, "en-KE", { month: "short", day: "numeric", year: "numeric" }) : "N/A"}
-              </span>
-              <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} hideDate />
+              <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
             </div>
           </div>
           
@@ -394,9 +391,8 @@ const StocksPage = () => {
                 Track Kenyan stock market prices, market cap, volumes, and performance.
               </p>
             </div>
-            <div className="flex items-center justify-between w-full mt-3">
-              <span className="text-xs text-muted-foreground/70">Updated {formatMarketDate(new Date(), "en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
-              <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} hideDate />
+            <div className="flex items-center justify-end w-full mt-3">
+              <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
             </div>
             <div className="border-b border-border mt-3" />
           </div>

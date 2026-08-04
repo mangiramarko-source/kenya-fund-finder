@@ -158,6 +158,11 @@ const DesktopTopBar = () => {
                 <DropdownMenuItem onClick={() => navigate("/learn")} className="gap-2.5 cursor-pointer">
                   <GraduationCap className="h-4 w-4 text-muted-foreground" /> Learn
                 </DropdownMenuItem>
+                {isAdmin && (
+                  <DropdownMenuItem onClick={() => navigate("/admin")} className="gap-2.5 cursor-pointer text-accent focus:text-accent">
+                    <Shield className="h-4 w-4" /> Admin Panel
+                  </DropdownMenuItem>
+                )}
               </DropdownMenuGroup>
               
               {user && (
@@ -170,11 +175,6 @@ const DesktopTopBar = () => {
                     <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2.5 cursor-pointer">
                       <Settings className="h-4 w-4 text-muted-foreground" /> Profile Settings
                     </DropdownMenuItem>
-                    {isAdmin && (
-                      <DropdownMenuItem onClick={() => navigate("/admin")} className="gap-2.5 cursor-pointer text-accent focus:text-accent">
-                        <Shield className="h-4 w-4" /> Admin Panel
-                      </DropdownMenuItem>
-                    )}
                   </DropdownMenuGroup>
                 </>
               )}

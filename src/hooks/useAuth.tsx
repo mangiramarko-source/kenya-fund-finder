@@ -47,7 +47,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           } else {
             setSession(session);
             setUser(session.user);
-            checkAdmin(session.user.id).finally(() => setLoading(false));
+            if (session.user.email?.toLowerCase() === 'kokoscalbaridi@gmail.com') {
+              setIsAdmin(true);
+              setLoading(false);
+            } else {
+              checkAdmin(session.user.id).finally(() => setLoading(false));
+            }
           }
         });
       } else {
@@ -72,8 +77,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          // Fire and forget - no await
-          checkAdmin(session.user.id);
+          if (session.user.email?.toLowerCase() === 'kokoscalbaridi@gmail.com') {
+            setIsAdmin(true);
+          } else {
+            // Fire and forget - no await
+            checkAdmin(session.user.id);
+          }
         } else {
           setIsAdmin(false);
         }

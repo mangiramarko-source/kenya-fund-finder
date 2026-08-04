@@ -90,9 +90,7 @@ const Index = () => {
 
   const lastUpdate = lastUpdateDate 
     ? new Date(lastUpdateDate) 
-    : published.length
-      ? new Date(Math.max(...published.map((f) => new Date(f.updated_at).getTime())))
-      : null;
+    : null;
 
   return (
     <div className="space-y-4 px-4 md:px-6 py-4 md:py-6">
@@ -104,10 +102,12 @@ const Index = () => {
               Track listed unit trust funds in Kenya.
             </p>
           </div>
-          <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
+          <div className="flex items-center gap-3">
+            <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} />
+          </div>
         </div>
         <div className="md:hidden flex items-center justify-end w-full mt-2">
-          <SectionLiveStatus section="funds" fallbackDate={lastUpdate} />
+          <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} />
         </div>
         <div className="md:hidden border-b border-border mt-3" />
       </div>

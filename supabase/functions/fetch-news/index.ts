@@ -1,6 +1,10 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
 import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+};
 
 const KEYWORDS = [
   // Kenyan / local
@@ -202,12 +206,12 @@ ${sourceText}
 """
 
 Rewrite this as a completely original article:
-- "summary": a comprehensive 4-6 sentence standalone summary (up to 800 characters) that gives readers the full picture without forcing them to read the full article.
+- "summary": a comprehensive, highly detailed 5-8 sentence standalone executive summary (up to 1200 characters) that gives readers the full picture and all key facts without forcing them to read the full article. 
 - "content": a rich, insightful 3-6 paragraph analysis (roughly 250-450 words) written entirely in your own words. Synthesize the key facts, context, numbers, and explicitly explain the implications for the Kenyan market and local investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
 
   try {
     const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 25000);
+    const t = setTimeout(() => controller.abort(), 12000);
     const res = await fetch(AI_GATEWAY_URL, {
       method: "POST",
       headers: {
@@ -230,7 +234,7 @@ Rewrite this as a completely original article:
               parameters: {
                 type: "object",
                 properties: {
-                  summary: { type: "string", description: "2-3 sentence standalone summary, max ~320 chars" },
+                  summary: { type: "string", description: "Detailed 5-8 sentence standalone summary, max ~1200 chars" },
                   content: { type: "string", description: "3-6 paragraph rewritten article body, ~250-450 words" },
                 },
                 required: ["summary", "content"],
@@ -268,7 +272,7 @@ async function fetchArticleContent(url: string): Promise<string | null> {
     try {
       console.log(`Using Firecrawl to scrape: ${url}`);
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 15000);
+      const timeout = setTimeout(() => controller.abort(), 8000);
       const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
         method: "POST",
         headers: {
@@ -422,7 +426,7 @@ Deno.serve(async (req) => {
       const userClient = createClient(supabaseUrl, anonKey, {
         global: { headers: { Authorization: `Bearer ${token}` } },
       });
-      const { data: userData, error: userError } = await userClient.auth.getUser(token);
+      const { data: userData, error: userError } = await userClient.auth.getUser();
       if (userError || !userData?.user?.id) {
         return new Response(JSON.stringify({ error: "Unauthorized" }), {
           status: 401,
@@ -516,16 +520,23 @@ Deno.serve(async (req) => {
     }
 
     // Rewrite each new article in original words via Gemini AI (concurrent, with fallback)
+    // Limit batch size to prevent Edge Function timeout (WORKER_RESOURCE_LIMIT)
+    const MAX_BATCH_SIZE = 3;
+    const processingArticles = newArticles.slice(0, MAX_BATCH_SIZE);
+    if (newArticles.length > MAX_BATCH_SIZE) {
+      console.log(`Limiting to ${MAX_BATCH_SIZE} out of ${newArticles.length} new articles to prevent timeout.`);
+    }
+
     const aiKey = Deno.env.get("GEMINI_API_KEY");
     let rewrittenCount = 0;
-    let rewrites: Array<RewrittenArticle | null> = new Array(newArticles.length).fill(null);
+    let rewrites: Array<RewrittenArticle | null> = new Array(processingArticles.length).fill(null);
 
     if (aiKey) {
-      rewrites = await mapWithConcurrency(newArticles, 4, async (a) => {
+      rewrites = await mapWithConcurrency(processingArticles, 3, async (a) => {
         let raw = `${a.summary || ""}\n\n${a.content || ""}`.trim();
         
         // If the RSS feed provided very little content, attempt to scrape the full article
-        if (raw.length < 500 && a.url) {
+        if (raw.length < 1000 && a.url) {
           console.log(`Text short (${raw.length} chars), scraping full content for: ${a.title}`);
           const scraped = await fetchArticleContent(a.url);
           if (scraped && scraped.length > 200) {
@@ -541,7 +552,7 @@ Deno.serve(async (req) => {
       console.warn("GEMINI_API_KEY not configured — inserting feed text as-is");
     }
 
-    const rows = newArticles.map((a, i) => {
+    const rows = processingArticles.map((a, i) => {
       const rw = rewrites[i];
       const summary = rw?.summary || a.summary;
       const content = rw?.content || a.content;

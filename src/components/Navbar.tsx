@@ -240,15 +240,7 @@ const Navbar = () => {
                 </Link>
               )}
 
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  onClick={closeMobile}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
-                >
-                  <Shield className="h-5 w-5" /> Admin Panel
-                </Link>
-              )}
+
 
               <div className="h-px bg-border my-2" />
               <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Tools</p>
@@ -280,6 +272,15 @@ const Navbar = () => {
               >
                 <GraduationCap className="h-5 w-5" /> Learn
               </Link>
+              {isAdmin && (
+                <Link
+                  to="/admin"
+                  onClick={closeMobile}
+                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
+                >
+                  <Shield className="h-5 w-5" /> Admin Panel
+                </Link>
+              )}
 
               <button
                 onClick={() => { setDark(!dark); }}
@@ -527,15 +528,7 @@ const Navbar = () => {
               </Link>
             )}
 
-            {isAdmin && (
-              <Link
-                to="/admin"
-                onClick={closeMobile}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
-              >
-                <Shield className="h-5 w-5" /> Admin Panel
-              </Link>
-            )}
+
 
             <div className="h-px bg-border my-2" />
             <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Tools</p>
@@ -567,6 +560,15 @@ const Navbar = () => {
             >
               <GraduationCap className="h-5 w-5" /> Learn
             </Link>
+            {isAdmin && (
+              <Link
+                to="/admin"
+                onClick={closeMobile}
+                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
+              >
+                <Shield className="h-5 w-5" /> Admin Panel
+              </Link>
+            )}
 
             <button
               onClick={() => { setDark(!dark); }}
