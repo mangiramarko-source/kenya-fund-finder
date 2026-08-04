@@ -3,10 +3,11 @@
  *  images based on the article category and ID. */
 
 /** Strong 32-bit hash so different ids map to different deterministic seeds. */
-function hashId(id: string): number {
+function hashId(id: string | number): number {
+  const idStr = String(id);
   let h = 2166136261 >>> 0; // FNV-1a basis
-  for (let i = 0; i < id.length; i++) {
-    h ^= id.charCodeAt(i);
+  for (let i = 0; i < idStr.length; i++) {
+    h ^= idStr.charCodeAt(i);
     h = Math.imul(h, 16777619);
   }
   return h >>> 0;

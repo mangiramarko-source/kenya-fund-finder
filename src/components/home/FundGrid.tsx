@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import YieldChange from "@/components/YieldChange";
 import FundMobileCards from "./FundMobileCards";
 import FundLogo from "./FundLogo";
+import { FundsSummary } from "./FundsSummary";
 import type { FundFromDB, FundType, YieldSnapshot } from "@/lib/api";
 
 type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee" | "change";
@@ -52,10 +53,10 @@ const SortHeader = ({
 }) => (
   <button
     onClick={() => onToggleSort(field)}
-    className={`inline-flex items-center gap-1 font-semibold uppercase tracking-wider hover:text-accent transition-colors ${className}`}
+    className={`inline-flex items-center gap-1 font-normal hover:text-foreground transition-colors ${className}`}
   >
     {label}
-    <ArrowUpDown className={`h-3 w-3 ${sortKey === field ? "text-accent" : "text-muted-foreground/50"}`} />
+    {sortKey === field && <ArrowUpDown className="h-3 w-3 text-accent" />}
   </button>
 );
 
@@ -270,36 +271,40 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
   return (
     <div className="space-y-4">
-      {/* Desktop toolbar: Category dropdown + Movement segmented + Search */}
-      <div className="hidden md:flex items-center justify-between gap-3">
-        <div className="flex items-center gap-2">
-          <Select
-            value={activeTab}
-            onValueChange={(val) => {
-              updateParams({ category: val, q: "", sort: "annual_yield", dir: "desc", movement: "all" });
-            }}
-          >
-            <SelectTrigger className="h-9 w-[240px] rounded-lg bg-accent/10 border-accent/30 text-sm font-medium">
-              <div className="flex items-center gap-1.5 min-w-0">
-                <span className="text-accent font-semibold shrink-0">Category:</span>
-                <SelectValue />
-              </div>
-            </SelectTrigger>
-            <SelectContent className="max-h-72">
-              {categories.map((cat) => (
-                <SelectItem key={cat} value={cat} className="text-sm">
-                  <span className="inline-flex items-center gap-2">
-                    {categoryLabels[cat] || cat}
-                    <span className="text-[10px] tabular-nums text-muted-foreground/70">
-                      {categoryCount[cat] || 0}
-                    </span>
-                  </span>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+      <FundsSummary 
+        funds={categoryFunds} 
+        snapshots={snapshots} 
+        categoryName={categoryLabels[activeTab] || activeTab} 
+      />
 
-          <div className="inline-flex items-center rounded-lg bg-muted/30 border border-border p-0.5">
+      {/* Horizontal Tabs for Categories */}
+      <div className="w-full overflow-x-auto scrollbar-hide mb-6 border-b border-border">
+        <div className="flex items-center gap-6 min-w-max px-1">
+          {categories.map((cat) => {
+            const active = activeTab === cat;
+            return (
+              <button
+                key={cat}
+                onClick={() => updateParams({ category: cat, q: "", sort: "annual_yield", dir: "desc", movement: "all" })}
+                className={`relative pb-3 text-[14px] font-medium transition-colors ${
+                  active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {categoryLabels[cat] || cat}
+                {active && (
+                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-accent rounded-t-full" />
+                )}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Desktop toolbar: Movement segmented + Search */}
+      <div className="hidden md:flex items-center justify-between gap-4 mb-6 bg-card border border-border/40 p-1.5 rounded-xl shadow-sm">
+        <div className="flex items-center gap-1 pl-1">
+
+          <div className="inline-flex items-center gap-1">
             {([
               { key: "all", label: "All", count: categoryFunds.length },
               { key: "gainers", label: "Gainers", count: movementCounts.gainers },
@@ -307,14 +312,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               { key: "unchanged", label: "Unchanged", count: movementCounts.unchanged },
             ] as const).map((opt) => {
               const active = movement === opt.key;
-              const activeColor =
-                opt.key === "gainers"
-                  ? "bg-accent text-accent-foreground"
-                  : opt.key === "losers"
-                  ? "bg-destructive text-destructive-foreground"
-                  : opt.key === "unchanged"
-                  ? "bg-muted-foreground/80 text-background"
-                  : "bg-foreground text-background";
+              let activeStyle = "bg-muted text-foreground";
+              if (opt.key === "gainers") activeStyle = "bg-accent/15 text-accent shadow-sm";
+              if (opt.key === "losers") activeStyle = "bg-destructive/15 text-destructive shadow-sm";
+              if (opt.key === "unchanged") activeStyle = "bg-muted-foreground/15 text-foreground shadow-sm";
+              
               return (
                 <button
                   key={opt.key}
@@ -323,29 +325,31 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     else if (opt.key === "losers") updateParams({ movement: opt.key, sort: "change", dir: "asc" });
                     else updateParams({ movement: opt.key });
                   }}
-                  className={`inline-flex items-center gap-1.5 px-3 h-9 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
-                    active ? activeColor + " shadow-sm" : "text-muted-foreground hover:text-foreground"
+                  className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-[13px] font-medium transition-all whitespace-nowrap ${
+                    active ? activeStyle : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                   }`}
                 >
-                  {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5" />}
-                  {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5" />}
-                  {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5" />}
+                  {opt.key === "gainers" && <TrendingUp className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                  {opt.key === "losers" && <TrendingDown className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                  {opt.key === "unchanged" && <Minus className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
                   {opt.label}
-                  <span className={`text-xs tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+                  <span className={`text-[11px] tabular-nums ${active ? "opacity-90" : "opacity-50"}`}>{opt.count}</span>
                 </button>
               );
             })}
           </div>
         </div>
 
-        <div className="relative w-72 shrink-0">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder="Search fund or manager"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 text-sm rounded-lg bg-muted/30 border-border w-full"
-          />
+        <div className="flex items-center gap-3 pr-1">
+          <div className="relative w-[220px] shrink-0">
+            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
+            <Input
+              placeholder="Search fund or manager"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-8 h-8 text-[13px] rounded-md bg-transparent border-border/40 w-full placeholder:text-muted-foreground/50 hover:border-border transition-colors focus-visible:ring-1"
+            />
+          </div>
         </div>
       </div>
 
@@ -501,11 +505,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         })}
       </div>
 
-      <div className="md:hidden -mt-2 mb-1 px-1">
-        <span className="text-[10px] uppercase tracking-wider text-muted-foreground/70 font-medium">
-          {categoryLabels[activeTab] || activeTab}
-        </span>
-      </div>
+
 
       {/* Mobile: card view */}
       <div className="md:hidden">
@@ -522,7 +522,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         />
       </div>
 
-      {/* Desktop: simplified column table */}
+
       <div className="hidden md:block rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm table-fixed min-w-[1100px] border-separate border-spacing-0">
@@ -540,32 +540,32 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
-              <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
-                <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
-                <th className="text-left px-3 py-3">
+              <tr className="bg-background text-[12px] text-muted-foreground border-b border-border/40">
+                <th className="text-left pl-4 pr-2 py-3 font-normal">#</th>
+                <th className="text-left px-3 py-3 font-normal">
                   <SortHeader label="Funds" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-right px-3 py-3">
+                <th className="text-right px-3 py-3 font-normal">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-2 py-3 font-semibold text-muted-foreground" title="vs prior snapshot">
+                <th className="text-right px-2 py-3 font-normal" title="vs prior snapshot">
                   <span className="sr-only">Daily </span>Change
                 </th>
-                <th className="text-right px-3 py-3">
+                <th className="text-right px-3 py-3 font-normal">
                   <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-2 py-3 font-semibold text-muted-foreground" title="vs prior snapshot">
+                <th className="text-right px-2 py-3 font-normal" title="vs prior snapshot">
                   <span className="sr-only">Annual </span>Change
                 </th>
-                <th className="text-center px-2 py-3 font-semibold text-muted-foreground">Trend</th>
-                <th className="text-right px-3 py-3">
+                <th className="text-center px-2 py-3 font-normal">Trend</th>
+                <th className="text-right px-3 py-3 font-normal">
                   <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-3">
+                <th className="text-right px-3 py-3 font-normal">
                   <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right pr-4 pl-2 py-3 font-semibold text-muted-foreground">Withdraw</th>
-                {onToggleFavourite && <th className="w-8 pr-3 py-3" aria-label="Watch" />}
+                <th className="text-right pr-4 pl-2 py-3 font-normal">Withdraw</th>
+                {onToggleFavourite && <th className="w-8 pr-3 py-3 font-normal" aria-label="Watch" />}
               </tr>
             </thead>
             <tbody>
@@ -573,9 +573,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <tr
                   key={fund.id}
                   onClick={() => navigate(`/compare/${fund.slug}`)}
-                  className={`group cursor-pointer hover:bg-muted/30 transition-colors border-b border-border/40 ${
-                    i % 2 !== 0 ? "bg-muted/20" : ""
-                  }`}
+                  className="group cursor-pointer hover:bg-accent/5 transition-colors border-b border-border/40"
                 >
                   <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums align-middle">{i + 1}</td>
                   <td className="px-3 py-3.5 align-middle">

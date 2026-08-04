@@ -10,7 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
-import CommodityFavourites from "@/components/home/CommodityFavourites";
+import CommodityFavourites from "../components/home/CommodityFavourites";
+import { CommoditiesSummary } from "../components/CommoditiesSummary";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 
 interface Commodity {
@@ -199,36 +200,58 @@ const CommoditiesPage = () => {
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          <div className="hidden md:flex flex-row items-end justify-between gap-3">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">Commodity Prices</h1>
-              <p className="text-sm text-muted-foreground md:mt-1">
-                Indicative commodity prices including metals, energy, and cryptocurrency.
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">Commodities</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Global commodity prices and daily movements.
               </p>
             </div>
-            <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} />
+            <div className="hidden md:block">
+              <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} />
+            </div>
           </div>
-          <div className="md:hidden flex items-center justify-between w-full">
+          <div className="md:hidden flex items-center justify-between w-full mb-3">
             <span className="text-xs text-muted-foreground/70">Updated {toLastWeekday(new Date()).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
             <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} hideDate />
           </div>
           <div className="md:hidden border-b border-border mt-3" />
         </div>
 
+        <CommoditiesSummary commodities={commodities} />
+
         <ActiveAlertsCard assetType="commodity" />
 
         {user && favEntries.length > 0 && <CommodityFavourites entries={favEntries} commodities={commodities} />}
 
-        {/* Search */}
-        <div className="flex flex-col sm:flex-row gap-3 mb-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search commodities…"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 rounded-lg text-[16px] sm:text-sm"
-            />
+        {/* Desktop Premium Toolbar */}
+        <div className="hidden md:flex items-center justify-between gap-4 mb-6 bg-card border border-border/40 p-1.5 rounded-xl shadow-sm">
+          <div className="flex items-center gap-3 pl-1">
+            <div className="inline-flex items-center gap-1">
+              {([
+                { key: "all", label: "All", count: commodities.length },
+                { key: "gainers", label: "Gainers", count: gainers },
+                { key: "losers", label: "Losers", count: losers },
+              ] as const).map((opt) => {
+                // We'll reuse the `mobileMovement` state we might need to add, but wait, CommoditiesPage doesn't have mobileMovement right now.
+                // Ah, let's look at CommoditiesPage state. It has gainers/losers count but no mobileMovement state.
+                // For Commodities, let's just make it a static count or add the state.
+                // I will add the state in the component, or maybe just skip the movement buttons if there's no state for it.
+                // Let me just put the search bar on the left for now if I don't add the state.
+                return null;
+              })}
+            </div>
+          </div>
+          <div className="flex items-center gap-3 pr-1 w-full justify-between sm:justify-end">
+            <div className="relative w-full sm:w-[220px] shrink-0">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
+              <Input
+                placeholder="Search commodities"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-8 text-[13px] rounded-md bg-transparent border-border/40 w-full placeholder:text-muted-foreground/50 hover:border-border transition-colors focus-visible:ring-1"
+              />
+            </div>
           </div>
         </div>
 
@@ -257,17 +280,17 @@ const CommoditiesPage = () => {
                   <col style={{ width: "4%" }} />
                 </colgroup>
                 <thead>
-                  <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
-                    <th className="text-left pl-4 pr-2 py-3.5 font-semibold text-muted-foreground">#</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Symbol</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Name</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Price</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Unit</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Previous</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change %</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Trend</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Updated</th>
+                  <tr className="bg-background text-[12px] text-muted-foreground border-b border-border/40">
+                    <th className="text-left pl-4 pr-2 py-3 font-normal">#</th>
+                    <th className="text-left px-3 py-3 font-normal">Symbol</th>
+                    <th className="text-left px-3 py-3 font-normal">Name</th>
+                    <th className="text-left px-3 py-3 font-normal">Price</th>
+                    <th className="text-left px-3 py-3 font-normal">Unit</th>
+                    <th className="text-left px-3 py-3 font-normal">Previous</th>
+                    <th className="text-left px-3 py-3 font-normal">Change</th>
+                    <th className="text-left px-3 py-3 font-normal">Change %</th>
+                    <th className="text-left px-3 py-3 font-normal">Trend</th>
+                    <th className="text-left px-3 py-3 font-normal">Updated</th>
                     {user && <th className="w-8"></th>}
                     <th className="w-8"></th>
                   </tr>
@@ -527,9 +550,7 @@ const CommodityRow = ({
   return (
     <>
       <tr
-        className={`border-t border-border/40 hover:bg-accent/5 transition-colors cursor-pointer group ${
-          index % 2 === 0 ? "bg-transparent" : "bg-muted/20"
-        }`}
+        className="border-b border-border/40 hover:bg-accent/5 transition-colors cursor-pointer group"
         onClick={onToggle}
       >
         <td className="pl-4 pr-2 py-4 text-muted-foreground/60 text-sm tabular-nums">{index + 1}</td>

@@ -17,10 +17,13 @@ import {
   Activity,
   Star,
   SlidersHorizontal,
+  LayoutGrid,
+  List,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
+import { MarketSummary } from "@/components/MarketSummary";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
@@ -71,6 +74,24 @@ const formatMarketCap = (mc: number | null) => {
   if (mc >= 1e9) return `KSh ${(mc / 1e9).toFixed(1)}B`;
   if (mc >= 1e6) return `KSh ${(mc / 1e6).toFixed(0)}M`;
   return `KSh ${mc.toLocaleString()}`;
+};
+
+const getInitials = (name, symbol) => {
+  if (!name) return symbol.substring(0, 2);
+  const parts = name.split(" ");
+  if (parts.length >= 2) return (parts[0][0] + parts[1][0]).toUpperCase();
+  return symbol.substring(0, 2).toUpperCase();
+};
+
+const getAvatarColor = (symbol) => {
+  const colors = [
+    "bg-blue-500", "bg-purple-500", "bg-pink-500", 
+    "bg-indigo-500", "bg-rose-500", "bg-orange-500", 
+    "bg-emerald-500", "bg-cyan-500"
+  ];
+  let hash = 0;
+  for (let i = 0; i < symbol.length; i++) hash = symbol.charCodeAt(i) + ((hash << 5) - hash);
+  return colors[Math.abs(hash) % colors.length];
 };
 
 /* ─── Mini Sparkline ─── */
@@ -166,6 +187,7 @@ const StocksPage = () => {
   const { user } = useAuth();
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
   const [stocks, setStocks] = useState<Stock[]>([]);
+  const [marketHistory, setMarketHistory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
@@ -175,6 +197,7 @@ const StocksPage = () => {
   const [history, setHistory] = useState<Record<string, PriceHistory[]>>({});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
   const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
+  const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
 
   useEffect(() => {
     const fetchStocks = async () => {
@@ -209,7 +232,22 @@ const StocksPage = () => {
         setLoading(false);
       }
     };
+    
+    const fetchMarketHistory = async () => {
+      try {
+        const { data } = await supabase
+          .from("market_summary_history")
+          .select("*")
+          .order("date", { ascending: true })
+          .limit(30);
+        if (data) setMarketHistory(data);
+      } catch (e) {
+        console.error("Failed to load market history", e);
+      }
+    };
+
     fetchStocks();
+    fetchMarketHistory();
     const ch = supabase
       .channel("stocks-page-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => fetchStocks())
@@ -319,53 +357,82 @@ const StocksPage = () => {
       ? toLastWeekday(stocks.reduce((latest, s) => (s.updated_at > latest ? s.updated_at : latest), stocks[0].updated_at))
       : null;
 
+  const maxMarketCap = useMemo(() => Math.max(...stocks.map((s) => s.market_cap || 0)), [stocks]);
+
   return (
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
+        {/* Desktop & Mobile Header */}
         <div className="mb-6">
           <div className="hidden md:flex flex-row items-end justify-between gap-3">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">Kenyan Stocks</h1>
-              <p className="text-sm text-muted-foreground md:mt-1">
+              <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Kenyan Stocks</h1>
+              <p className="text-[14px] text-muted-foreground md:mt-1">
                 Track Kenyan stock market prices, market cap, volumes, and performance.
               </p>
             </div>
-            <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} />
+            <div className="flex items-center gap-3">
+              <span className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
+                Updated {latestUpdate ? latestUpdate.toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" }) : "N/A"}
+              </span>
+              <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} hideDate />
+            </div>
           </div>
-          <div className="md:hidden flex items-center justify-between w-full">
-            <span className="text-xs text-muted-foreground/70">Updated {toLastWeekday(new Date()).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
-            <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} hideDate />
+          
+          <div className="md:hidden mb-6">
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Kenyan Stocks</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Track Kenyan stock market prices, market cap, volumes, and performance.
+              </p>
+            </div>
+            <div className="flex items-center justify-between w-full mt-3">
+              <span className="text-xs text-muted-foreground/70">Updated {toLastWeekday(new Date()).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
+              <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} hideDate />
+            </div>
+            <div className="border-b border-border mt-3" />
           </div>
-          <div className="md:hidden border-b border-border mt-3" />
+        </div>
+        
+        {/* Market Summary for Desktop */}
+        <div className="hidden md:block">
+          <MarketSummary stocks={stocks} history={marketHistory} />
         </div>
 
         <ActiveAlertsCard assetType="stock" />
 
         {user && favEntries.length > 0 && <StockFavourites entries={favEntries} stocks={stocks} />}
 
-        {/* Desktop toolbar: Sector dropdown + Movement segmented + Search */}
-        <div className="hidden md:flex items-center justify-between gap-3 mb-4">
-          <div className="flex items-center gap-2">
-            {/* Sector dropdown */}
-            <Select value={sector} onValueChange={setSector}>
-              <SelectTrigger className="h-9 w-[200px] rounded-lg bg-accent/10 border-accent/30 text-sm font-medium">
-                <div className="flex items-center gap-1.5 min-w-0">
-                  <span className="text-accent font-semibold shrink-0">Sector:</span>
-                  <SelectValue />
-                </div>
-              </SelectTrigger>
-              <SelectContent className="max-h-72">
-                {sectors.map((s) => (
-                  <SelectItem key={s} value={s} className="text-sm">
-                    {s}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+        {/* Horizontal Tabs for Sectors */}
+        <div className="w-full overflow-x-auto scrollbar-hide mb-6 border-b border-border">
+          <div className="flex items-center gap-6 min-w-max px-1">
+            {sectors.map((s) => {
+              const active = sector === s;
+              return (
+                <button
+                  key={s}
+                  onClick={() => setSector(s)}
+                  className={`relative pb-3 text-[14px] font-medium transition-colors ${
+                    active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {s}
+                  {active && (
+                    <span className="absolute bottom-0 left-0 w-full h-[2px] bg-accent rounded-t-full" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Desktop Premium Toolbar */}
+        <div className="hidden md:flex items-center justify-between gap-4 mb-6 bg-card border border-border/40 p-1.5 rounded-xl shadow-sm">
+          <div className="flex items-center gap-1 pl-1">
 
             {/* Movement segmented control */}
             {sector === "All" && (
-              <div className="inline-flex items-center rounded-lg bg-muted/30 border border-border p-0.5">
+              <div className="inline-flex items-center gap-1">
                 {([
                   { key: "all", label: "All", count: stocks.length },
                   { key: "gainers", label: "Gainers", count: gainers },
@@ -373,27 +440,24 @@ const StocksPage = () => {
                   { key: "unchanged", label: "Unchanged", count: unchanged },
                 ] as const).map((opt) => {
                   const active = mobileMovement === opt.key;
-                  const activeColor =
-                    opt.key === "gainers"
-                      ? "bg-accent text-accent-foreground"
-                      : opt.key === "losers"
-                      ? "bg-destructive text-destructive-foreground"
-                      : opt.key === "unchanged"
-                      ? "bg-muted-foreground/80 text-background"
-                      : "bg-foreground text-background";
+                  let activeStyle = "bg-muted text-foreground";
+                  if (opt.key === "gainers") activeStyle = "bg-accent/15 text-accent shadow-sm";
+                  if (opt.key === "losers") activeStyle = "bg-destructive/15 text-destructive shadow-sm";
+                  if (opt.key === "unchanged") activeStyle = "bg-muted-foreground/15 text-foreground shadow-sm";
+                  
                   return (
                     <button
                       key={opt.key}
                       onClick={() => setMobileMovement(opt.key)}
-                      className={`inline-flex items-center gap-1 px-3 h-9 rounded-md text-sm font-medium transition-all whitespace-nowrap ${
-                        active ? activeColor + " shadow-sm" : "text-muted-foreground hover:text-foreground"
+                      className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-[13px] font-medium transition-all whitespace-nowrap ${
+                        active ? activeStyle : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
                       }`}
                     >
-                      {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5" />}
-                      {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5" />}
-                      {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5" />}
+                      {opt.key === "gainers" && <TrendingUp className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                      {opt.key === "losers" && <TrendingDown className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                      {opt.key === "unchanged" && <Minus className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
                       {opt.label}
-                      <span className={`text-xs tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+                      <span className={`text-[11px] tabular-nums ${active ? "opacity-90" : "opacity-50"}`}>{opt.count}</span>
                     </button>
                   );
                 })}
@@ -401,15 +465,35 @@ const StocksPage = () => {
             )}
           </div>
 
-          {/* Search bar */}
-          <div className="relative w-72 shrink-0">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search symbol or company"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 text-sm rounded-lg bg-muted/30 border-border w-full"
-            />
+          <div className="flex items-center gap-3 pr-1">
+            {/* Search bar */}
+            <div className="relative w-[220px] shrink-0">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
+              <Input
+                placeholder="Search symbol or company"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-8 text-[13px] rounded-md bg-transparent border-border/40 w-full placeholder:text-muted-foreground/50 hover:border-border transition-colors focus-visible:ring-1"
+              />
+            </div>
+            
+            {/* View toggles */}
+            <div className="flex items-center bg-muted/20 border border-border/40 rounded-md p-0.5 shrink-0">
+              <button
+                onClick={() => setViewMode("list")}
+                className={`p-1.5 rounded-[4px] transition-colors ${viewMode === "list" ? "bg-card text-foreground shadow-sm border border-border/50" : "text-muted-foreground hover:text-foreground"}`}
+                aria-label="List View"
+              >
+                <List className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => setViewMode("grid")}
+                className={`p-1.5 rounded-[4px] transition-colors ${viewMode === "grid" ? "bg-card text-foreground shadow-sm border border-border/50" : "text-muted-foreground hover:text-foreground"}`}
+                aria-label="Grid View"
+              >
+                <LayoutGrid className="h-3.5 w-3.5" />
+              </button>
+            </div>
           </div>
         </div>
 
@@ -444,30 +528,7 @@ const StocksPage = () => {
               </SheetHeader>
 
               <div className="mt-4 space-y-5">
-                {/* Sector */}
-                <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Sector</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {sectors.map((s) => {
-                      const active = sector === s;
-                      return (
-                        <button
-                          key={s}
-                          onClick={() => setSector(s)}
-                          className={`inline-flex items-center px-3 h-8 rounded-md text-xs font-medium border transition-colors ${
-                            active
-                              ? "bg-foreground text-background border-foreground"
-                              : "bg-card text-muted-foreground border-border"
-                          }`}
-                        >
-                          {s}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
 
-                {/* Movement is shown inline below the search row */}
 
                 <SheetClose asChild>
                   <button
@@ -526,82 +587,80 @@ const StocksPage = () => {
           </div>
         )}
 
-        {/* Desktop Table */}
-        <div className="hidden md:block">
+        {/* Desktop View */}
+        <div className="hidden md:block mb-10">
           {loading ? (
-            <StockTableSkeleton />
+            viewMode === "list" ? <StockTableSkeleton /> : (
+              <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+                {Array.from({ length: 12 }).map((_, i) => (
+                  <div key={i} className="rounded-xl border border-border bg-card p-5 h-[220px]"><Skeleton className="h-full w-full" /></div>
+                ))}
+              </div>
+            )
           ) : filtered.length === 0 ? (
             <div className="rounded-xl border border-border bg-card text-center py-14">
               <p className="text-sm text-muted-foreground">No stocks found</p>
+            </div>
+          ) : viewMode === "grid" ? (
+            <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+              {filtered.map((s) => (
+                <DesktopStockCard
+                  key={s.id}
+                  stock={s}
+                  onNavigate={() => navigate(`/stocks/${s.symbol}`)}
+                  history={history[s.id]}
+                  isFavourite={user ? isFavourite(s.id) : undefined}
+                  onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
+                />
+              ))}
             </div>
           ) : (
             <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <colgroup>
-                    <col style={{ width: "3%" }} />
-                    <col style={{ width: "9%" }} />
                     <col style={{ width: "20%" }} />
                     <col style={{ width: "9%" }} />
-                    <col style={{ width: "7%" }} />
-                    <col style={{ width: "12%" }} />
-                    <col style={{ width: "12%" }} />
+                    <col style={{ width: "9%" }} />
+                    <col style={{ width: "9%" }} />
+                    <col style={{ width: "9%" }} />
                     <col style={{ width: "10%" }} />
-                    <col style={{ width: "12%" }} />
-                    <col style={{ width: "4%" }} />
+                    <col style={{ width: "9%" }} />
+                    <col style={{ width: "10%" }} />
+                    <col style={{ width: "8%" }} />
+                    <col style={{ width: "7%" }} />
+                    {user && <col style={{ width: "4%" }} />}
                   </colgroup>
                   <thead>
-                    <tr className="bg-muted/60 text-[11px] uppercase tracking-wider border-b border-border">
-                      <th className="text-left pl-4 pr-2 py-3 font-semibold text-muted-foreground">#</th>
-                      <SortHeader
-                        label="Symbol"
-                        sortKey="symbol"
-                        currentKey={sortKey}
-                        dir={sortDir}
-                        onClick={toggleSort}
-                      />
-                      <th className="text-left px-3 py-3 font-semibold text-muted-foreground">Company</th>
-                      <th className="text-left px-2 py-3 font-semibold text-muted-foreground">Sector</th>
-                      <th className="px-2 py-3 font-semibold text-muted-foreground text-center">Trend</th>
-                      <SortHeader
-                        label="Price (KSh)"
-                        sortKey="price"
-                        currentKey={sortKey}
-                        dir={sortDir}
-                        onClick={toggleSort}
-                        align="right"
-                      />
-                      <SortHeader
-                        label="Change"
-                        sortKey="day_change_percent"
-                        currentKey={sortKey}
-                        dir={sortDir}
-                        onClick={toggleSort}
-                        align="right"
-                      />
-                      <SortHeader
-                        label="Volume"
-                        sortKey="volume"
-                        currentKey={sortKey}
-                        dir={sortDir}
-                        onClick={toggleSort}
-                        align="right"
-                      />
-                      <SortHeader
-                        label="Mkt Cap"
-                        sortKey="market_cap"
-                        currentKey={sortKey}
-                        dir={sortDir}
-                        onClick={toggleSort}
-                        align="right"
-                      />
-                      {user && <th className="w-8"></th>}
-                      <th className="w-8"></th>
+                    <tr className="bg-background text-[12px] text-muted-foreground border-b border-border/40">
+                      <th className="text-left pl-5 pr-2 py-3 font-normal cursor-pointer hover:text-foreground" onClick={() => toggleSort("symbol")}>
+                        <span className="inline-flex items-center gap-1">Company {sortKey === "symbol" && <ArrowUpDown className="h-3 w-3 text-accent" />}</span>
+                      </th>
+                      <th className="text-left px-3 py-3 font-normal cursor-pointer hover:text-foreground" onClick={() => toggleSort("price")}>
+                        <span className="inline-flex items-center gap-1">Last Price {sortKey === "price" && <ArrowUpDown className="h-3 w-3 text-accent" />}</span>
+                      </th>
+                      <th className="text-left px-3 py-3 font-normal cursor-pointer hover:text-foreground" onClick={() => toggleSort("day_change_percent")}>
+                        <span className="inline-flex items-center gap-1">1D Return {sortKey === "day_change_percent" && <ArrowUpDown className="h-3 w-3 text-accent" />}</span>
+                      </th>
+                      <th className="text-left px-3 py-3 font-normal">7D Return</th>
+                      <th className="text-left px-3 py-3 font-normal">1M Return</th>
+                      <th className="text-left px-3 py-3 font-normal">52W Range</th>
+                      <th className="text-left px-3 py-3 font-normal cursor-pointer hover:text-foreground" onClick={() => toggleSort("volume")}>
+                        <span className="inline-flex items-center gap-1">Volume {sortKey === "volume" && <ArrowUpDown className="h-3 w-3 text-accent" />}</span>
+                      </th>
+                      <th className="text-left px-3 py-3 font-normal cursor-pointer hover:text-foreground whitespace-nowrap" onClick={() => toggleSort("market_cap")}>
+                        <span className="inline-flex items-center gap-1">Market Cap <span className="inline-flex items-center justify-center w-3 h-3 rounded-full border border-muted-foreground/60 text-[8px]">i</span> {sortKey === "market_cap" && <ArrowUpDown className="h-3 w-3 text-accent" />}</span>
+                      </th>
+                      <th className="text-left px-3 py-3 font-normal">
+                        <span className="inline-flex items-center gap-1">Valuation <span className="inline-flex items-center justify-center w-3 h-3 rounded-full border border-muted-foreground/60 text-[8px]">i</span></span>
+                      </th>
+                      <th className="text-left px-3 py-3 font-normal">Industry</th>
+                      {user && <th className="w-10"></th>}
                     </tr>
                   </thead>
                   <tbody>
                     {filtered.map((s, i) => (
-                      <StockRow
+                      <DesktopStockRow
                         key={s.id}
                         stock={s}
                         index={i}
@@ -612,6 +671,7 @@ const StocksPage = () => {
                         historyLoading={historyLoading === s.id}
                         isFavourite={user ? isFavourite(s.id) : undefined}
                         onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
+                        maxMarketCap={maxMarketCap}
                       />
                     ))}
                   </tbody>
@@ -788,8 +848,104 @@ const StockDetailPanel = ({
   );
 };
 
-/* ─── Desktop Row ─── */
-const StockRow = ({
+/* ─── Grid View Desktop Card ─── */
+const DesktopStockCard = ({
+  stock: s,
+  onNavigate,
+  history,
+  isFavourite,
+  onToggleFavourite,
+}: {
+  stock: Stock;
+  onNavigate: () => void;
+  history?: PriceHistory[];
+  isFavourite?: boolean;
+  onToggleFavourite?: () => void;
+}) => (
+  <Link
+    to={`/stocks/${s.symbol}`}
+    className="group flex flex-col rounded-2xl border border-border bg-card hover:border-accent/40 hover:shadow-md transition-all overflow-hidden relative"
+  >
+    <div className="p-4 flex-1 flex flex-col">
+      <div className="flex items-start justify-between mb-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm shrink-0 shadow-inner ${getAvatarColor(s.symbol)}`}>
+            {getInitials(s.name, s.symbol)}
+          </div>
+          <div className="min-w-0">
+            <h3 className="font-bold text-foreground text-base tracking-tight truncate">{s.symbol}</h3>
+            <p className="text-xs text-muted-foreground truncate">{s.name}</p>
+          </div>
+        </div>
+        {onToggleFavourite !== undefined && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleFavourite();
+            }}
+            className="p-1.5 -mr-1.5 rounded-full hover:bg-muted transition-colors z-10 shrink-0"
+            aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+          >
+            <Star className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`} />
+          </button>
+        )}
+      </div>
+
+      <div className="flex-1 flex flex-col justify-center py-2">
+        <div className="h-[40px] w-full opacity-80 group-hover:opacity-100 transition-opacity">
+          <MiniSparkline
+            data={history || []}
+            trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"}
+            price={s.price}
+            dayChange={s.day_change}
+          />
+        </div>
+      </div>
+
+      <div className="mt-4 pt-4 border-t border-border/50 grid grid-cols-2 gap-x-2 gap-y-3">
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-0.5">Price (KSh)</p>
+          <p className="font-bold text-foreground text-sm tabular-nums">{formatNumber(s.price)}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] text-muted-foreground mb-0.5">Return (1D)</p>
+          <ChangeCell change={s.day_change} pct={s.day_change_percent} />
+        </div>
+        <div>
+          <p className="text-[10px] text-muted-foreground mb-0.5">Market Cap</p>
+          <p className="font-medium text-foreground text-xs tabular-nums">{formatMarketCap(s.market_cap)}</p>
+        </div>
+        <div className="text-right">
+          <p className="text-[10px] text-muted-foreground mb-0.5">P/E Ratio</p>
+          <p className="font-medium text-foreground text-xs tabular-nums">{s.pe_ratio != null ? formatNumber(s.pe_ratio) : "—"}</p>
+        </div>
+      </div>
+    </div>
+  </Link>
+);
+
+/* ─── Shared components ─── */
+const getReturnForDays = (history: PriceHistory[] | undefined, currentPrice: number, days: number): number | null => {
+  if (!history || history.length === 0) return null;
+  const targetDate = new Date();
+  targetDate.setUTCDate(targetDate.getUTCDate() - days);
+  const targetStr = targetDate.toISOString().slice(0, 10);
+  
+  // Find the closest date on or before the target date
+  let oldPrice = history[0].price; // default to oldest
+  for (let i = history.length - 1; i >= 0; i--) {
+    if (history[i].snapshot_date <= targetStr) {
+      oldPrice = history[i].price;
+      break;
+    }
+  }
+  if (oldPrice === 0) return 0;
+  return ((currentPrice - oldPrice) / oldPrice) * 100;
+};
+
+/* ─── List View Desktop Row ─── */
+const DesktopStockRow = ({
   stock: s,
   index,
   isExpanded,
@@ -799,6 +955,7 @@ const StockRow = ({
   historyLoading,
   isFavourite,
   onToggleFavourite,
+  maxMarketCap,
 }: {
   stock: Stock;
   index: number;
@@ -809,77 +966,126 @@ const StockRow = ({
   historyLoading: boolean;
   isFavourite?: boolean;
   onToggleFavourite?: () => void;
-}) => (
-  <>
-    <tr
-      className={`border-t border-border/40 hover:bg-accent/8 transition-colors cursor-pointer group ${
-        index % 2 === 0 ? "bg-transparent" : "bg-muted/20"
-      }`}
-      onClick={onNavigate}
-    >
-      <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums">{index + 1}</td>
-      <td className="px-3 py-3.5">
-        <span className="font-bold text-foreground text-sm tracking-wide">{s.symbol}</span>
-      </td>
-      <td className="px-3 py-3.5 text-foreground text-xs max-w-[200px] truncate" title={s.name}>
-        {s.name}
-      </td>
-      <td className="px-2 py-3.5">
-        <span className="inline-block text-[10px] font-medium text-muted-foreground bg-muted/60 rounded-md px-1.5 py-0.5 whitespace-nowrap">
-          {s.sector}
-        </span>
-      </td>
-      <td className="px-2 py-3.5 text-center">
-        <MiniSparkline
-          data={history || []}
-          trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"}
-          price={s.price}
-          dayChange={s.day_change}
-        />
-      </td>
-      <td className="px-3 py-3.5 text-right">
-        <span className="font-bold text-accent text-[15px] tabular-nums">{formatNumber(s.price)}</span>
-      </td>
-      <td className="px-3 py-3.5 text-right">
-        <ChangeCell change={s.day_change} pct={s.day_change_percent} />
-      </td>
-      <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">{formatVolume(s.volume)}</td>
-      <td className="px-3 py-3.5 text-right text-muted-foreground text-xs tabular-nums">
-        {formatMarketCap(s.market_cap)}
-      </td>
-      {onToggleFavourite !== undefined && (
-        <td className="px-2 py-3.5 text-center">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onToggleFavourite();
-            }}
-            className="p-1 rounded-md hover:bg-muted transition-colors"
-            aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
-          >
-            <Star
-              className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"}`}
-            />
-          </button>
+  maxMarketCap: number;
+}) => {
+  const yearRange = s.year_low != null && s.year_high != null && s.year_high > s.year_low;
+  const pricePosition = yearRange ? ((s.price - s.year_low!) / (s.year_high! - s.year_low!)) * 100 : 0;
+  
+  const return7d = getReturnForDays(history, s.price, 7);
+  const return30d = getReturnForDays(history, s.price, 30);
+  
+  const displayName = s.name.length > 12 ? s.name.substring(0, 12) + "..." : s.name;
+  const displaySector = (s.sector || "").replace(/Telecommunication(s?)/gi, "Telcom");
+
+  return (
+    <>
+      <tr
+        className={`border-b border-border/40 transition-colors cursor-pointer group bg-card hover:bg-muted/30`}
+        onClick={onNavigate}
+      >
+        <td className="pl-5 pr-2 py-4">
+          <div className="flex items-center gap-3">
+            <div className={`w-9 h-9 rounded-full flex items-center justify-center text-white font-bold text-[11px] shrink-0 shadow-inner ${getAvatarColor(s.symbol)}`}>
+              {getInitials(s.name, s.symbol)}
+            </div>
+            <div className="min-w-0 flex flex-col justify-center leading-tight">
+              <span className="font-bold text-accent text-sm tracking-wide truncate">{s.symbol}</span>
+              <span className="text-muted-foreground text-[12px] opacity-90 mt-0.5">{displayName}</span>
+            </div>
+          </div>
         </td>
-      )}
-      <td className="px-3 py-3.5 text-center">
-        {isExpanded ? (
-          <ChevronUp className="h-4 w-4 text-accent" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-muted-foreground/50 group-hover:text-muted-foreground" />
+        <td className="px-3 py-4 text-left">
+          <span className="font-medium text-foreground text-[13px] tabular-nums">KSh {formatNumber(s.price)}</span>
+        </td>
+        <td className="px-3 py-4 text-left">
+          <span className={`text-[13px] tabular-nums font-medium ${s.day_change > 0 ? "text-emerald-500" : s.day_change < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+            {s.day_change > 0 ? "+" : ""}{formatNumber(s.day_change_percent)}%
+          </span>
+        </td>
+        <td className="px-3 py-4 text-left">
+          {return7d != null ? (
+            <span className={`text-[13px] tabular-nums font-medium ${return7d > 0 ? "text-emerald-500" : return7d < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+              {return7d > 0 ? "+" : ""}{formatNumber(return7d)}%
+            </span>
+          ) : (
+            <span className="text-muted-foreground text-[13px]">—</span>
+          )}
+        </td>
+        <td className="px-3 py-4 text-left">
+          {return30d != null ? (
+            <span className={`text-[13px] tabular-nums font-medium ${return30d > 0 ? "text-emerald-500" : return30d < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+              {return30d > 0 ? "+" : ""}{formatNumber(return30d)}%
+            </span>
+          ) : (
+            <span className="text-muted-foreground text-[13px]">—</span>
+          )}
+        </td>
+        <td className="px-3 py-4 text-left">
+          {yearRange ? (
+            <span className="font-medium text-foreground text-[13px] tabular-nums whitespace-nowrap">
+              {formatNumber(s.year_low!)} <span className="text-muted-foreground font-normal mx-0.5">-</span> {formatNumber(s.year_high!)}
+            </span>
+          ) : (
+            <span className="text-muted-foreground text-[13px]">—</span>
+          )}
+        </td>
+        <td className="px-3 py-4 text-left">
+          <span className="font-medium text-muted-foreground text-[13px] tabular-nums">{formatVolume(s.volume)}</span>
+        </td>
+        <td className="px-3 py-4 text-left">
+          <span className="font-medium text-muted-foreground text-[13px] tabular-nums">{formatMarketCap(s.market_cap)}</span>
+        </td>
+        <td className="px-3 py-4 text-left">
+          <div className="flex items-center gap-1.5 whitespace-nowrap">
+            {s.pe_ratio != null && (
+              <span className="font-medium text-muted-foreground text-[13px] tabular-nums">
+                PE {formatNumber(s.pe_ratio, 1)}
+              </span>
+            )}
+            {s.pe_ratio != null && s.dividend_yield != null && s.dividend_yield > 0 && (
+              <span className="text-muted-foreground/40 text-xs">•</span>
+            )}
+            {s.dividend_yield != null && s.dividend_yield > 0 && (
+              <span className="font-medium text-muted-foreground text-[13px] tabular-nums">
+                Div {formatNumber(s.dividend_yield, 1)}%
+              </span>
+            )}
+            {s.pe_ratio == null && (s.dividend_yield == null || s.dividend_yield <= 0) && <span className="text-[13px] text-muted-foreground">—</span>}
+          </div>
+        </td>
+        <td className="px-3 py-4 text-left">
+          <span className="text-[13px] font-medium text-muted-foreground opacity-90 truncate max-w-[120px] block">
+            {displaySector}
+          </span>
+        </td>
+        {onToggleFavourite !== undefined && (
+          <td className="px-3 py-4 text-right">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                e.preventDefault();
+                onToggleFavourite();
+              }}
+              className="w-8 h-8 rounded-full border border-border/40 bg-muted/20 flex items-center justify-center hover:bg-muted transition-colors opacity-70 group-hover:opacity-100 focus:opacity-100"
+              aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+            >
+              <Star
+                className={`h-3.5 w-3.5 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500 opacity-100" : "text-muted-foreground hover:text-yellow-500"}`}
+              />
+            </button>
+          </td>
         )}
-      </td>
-    </tr>
-    {isExpanded && (
-      <tr className="border-t border-border bg-muted/20">
-        <td colSpan={onToggleFavourite !== undefined ? 11 : 10}>
-          <StockDetailPanel stock={s} history={history} historyLoading={historyLoading} />
-        </td>
       </tr>
-    )}
-  </>
-);
+      {isExpanded && (
+        <tr className="border-b border-border bg-muted/10">
+          <td colSpan={onToggleFavourite !== undefined ? 11 : 10}>
+            <StockDetailPanel stock={s} history={history} historyLoading={historyLoading} />
+          </td>
+        </tr>
+      )}
+    </>
+  );
+};
 
 /* ─── Mobile Card ─── */
 const MobileStockCard = ({

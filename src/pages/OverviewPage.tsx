@@ -20,10 +20,11 @@ import {
   Settings2, X, Star, Search, Eye, Check, SlidersHorizontal,
   BarChart3, DollarSign, Gem, LayoutDashboard, Crown,
   Landmark, ArrowRight, Newspaper, Clock, Briefcase,
+  Home, Zap, Users, Activity, MessageSquare, AlertTriangle, MoreHorizontal, Heart, Calculator
 } from "lucide-react";
 import PortfolioSnapshotPanel from "@/components/portfolio/PortfolioSnapshotPanel";
 import { toast } from "sonner";
-import { fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
+import { fetchPublishedNews, fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
@@ -31,7 +32,35 @@ import WatchCard from "@/components/watchlist/WatchCard";
 import TestimonialsSection from "@/components/TestimonialsSection";
 
 import DisclaimerBlock from "@/components/DisclaimerBlock";
+import { useSocialFeed, type FeedItem } from "@/hooks/useSocialFeed";
+import { SocialFeed, SocialFeedCard } from "@/components/feed/SocialFeed";
+import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 
+const INTERNATIONAL_SOURCES = new Set([
+  "Reuters Business",
+  "Reuters Markets",
+  "Reuters",
+  "BBC Business",
+  "BBC News",
+  "Financial Times Africa",
+  "Financial Times",
+  "Bloomberg",
+  "Al Jazeera",
+  "CNBC World",
+  "CNBC",
+  "Investing.com",
+  "MarketWatch",
+  "Seeking Alpha",
+  "African Business",
+  "The Africa Report",
+  "Further Africa",
+]);
+
+const isInternationalFeedItem = (item: any): boolean => {
+  const src = item.authorName || item.rawItem?.source || "";
+  const cat = item.authorLabel || item.rawItem?.category || "";
+  return INTERNATIONAL_SOURCES.has(src) || cat.toLowerCase().includes("international");
+};
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
 interface FundYieldSnapshot { snapshot_date: string; annual_yield: number; fund_id: string; }
@@ -103,7 +132,66 @@ const QuickAlertDialog = ({
   );
 };
 
+
+/* ─── FxCustomize Dialog ─── */
+const FxCustomizeDialog = ({
+  open, onClose, allRates, selectedRates, onToggleRate
+}: {
+  open: boolean; onClose: () => void;
+  allRates: any[];
+  selectedRates: string[];
+  onToggleRate: (code: string) => void;
+}) => {
+  return (
+    <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
+      <DialogContent className="sm:max-w-[400px]">
+        <DialogHeader>
+          <DialogTitle className="text-base">Select Exchange Rates</DialogTitle>
+          <p className="text-[11px] text-muted-foreground mt-0.5">
+            Choose up to 4 currencies to display. ({selectedRates.length}/4 selected)
+          </p>
+        </DialogHeader>
+        <div className="flex flex-col gap-1 max-h-[300px] overflow-y-auto mt-2 pr-2 hide-scrollbar">
+          {allRates.map(rate => {
+            const isSelected = selectedRates.includes(rate.currency_code);
+            const isDisabled = !isSelected && selectedRates.length >= 4;
+            return (
+              <div 
+                key={rate.currency_code} 
+                className={`flex items-center justify-between p-2 rounded-lg border border-border/40 ${isDisabled ? 'opacity-50' : 'cursor-pointer hover:bg-muted/50'} transition-colors`}
+                onClick={() => !isDisabled && onToggleRate(rate.currency_code)}
+              >
+                <div className="flex items-center gap-3">
+                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[12px] font-bold">
+                    {{
+                        USD: '🇺🇸', GBP: '🇬🇧', EUR: '🇪🇺', JPY: '🇯🇵', ZAR: '🇿🇦', 
+                        AUD: '🇦🇺', CAD: '🇨🇦', CHF: '🇨🇭', CNY: '🇨🇳', INR: '🇮🇳',
+                        AED: '🇦🇪', UGX: '🇺🇬', TZS: '🇹🇿', RWF: '🇷🇼', BIF: '🇧🇮',
+                        SAR: '🇸🇦', SGD: '🇸🇬', KES: '🇰🇪'
+                    }[rate.currency_code] || rate.currency_code.substring(0,2)}
+                  </div>
+                  <div>
+                    <p className="text-[13px] font-bold text-foreground leading-none mb-1">{rate.currency_code}/KES</p>
+                    <p className="text-[11px] text-muted-foreground leading-none">{rate.currency_name || rate.currency_code}</p>
+                  </div>
+                </div>
+                <div className="flex items-center justify-center w-5 h-5 rounded-md border border-border">
+                  {isSelected && <Check className="w-3.5 h-3.5 text-accent" />}
+                </div>
+              </div>
+            )
+          })}
+        </div>
+        <div className="pt-2">
+           <Button className="w-full h-9" onClick={onClose}>Done</Button>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+};
+
 /* ─── Customize Dialog ─── */
+
 type AssetCategory = "all" | "stock" | "currency" | "commodity" | "fund";
 
 const CATEGORY_TABS: { value: AssetCategory; label: string }[] = [
@@ -516,25 +604,29 @@ const DetailedHighlightCard = ({ icon: Icon, label, name, value, sub, change, li
 const HighlightCard = ({ icon: Icon, label, name, value, sub, change, linkTo, color }: {
   icon: any; label?: string; name: string; value: string; sub?: string;
   change?: React.ReactNode; linkTo?: string; color?: string;
-}) => (
-  <Link to={linkTo || "#"} className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 hover:border-accent/30 transition-colors group">
-    <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${color || "bg-primary/10"}`}>
-      <Icon className="h-3.5 w-3.5 text-primary" />
+}) => {
+  const content = (
+    <div className="flex items-center gap-3 rounded-lg border border-border bg-card px-3 py-2 hover:border-accent/30 transition-colors group cursor-pointer">
+      <div className={`h-7 w-7 rounded-lg flex items-center justify-center shrink-0 ${color || "bg-primary/10"}`}>
+        <Icon className="h-3.5 w-3.5 text-primary" />
+      </div>
+      <div className="flex-1 min-w-0">
+        {label && (
+          <div className="flex items-center gap-1.5">
+            <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
+          </div>
+        )}
+        <p className="text-xs font-semibold text-foreground truncate">{name}</p>
+      </div>
+      <div className="text-right shrink-0">
+        <p className="text-sm font-bold tabular-nums text-foreground">{value}</p>
+        <div className="mt-0.5">{change || (sub && <span className="text-[10px] text-muted-foreground">{sub}</span>)}</div>
+      </div>
     </div>
-    <div className="flex-1 min-w-0">
-      {label && (
-        <div className="flex items-center gap-1.5">
-          <span className="text-[10px] font-medium text-muted-foreground uppercase tracking-wider">{label}</span>
-        </div>
-      )}
-      <p className="text-xs font-semibold text-foreground truncate">{name}</p>
-    </div>
-    <div className="text-right shrink-0">
-      <p className="text-sm font-bold tabular-nums text-foreground">{value}</p>
-      <div className="mt-0.5">{change || (sub && <span className="text-[10px] text-muted-foreground">{sub}</span>)}</div>
-    </div>
-  </Link>
-);
+  );
+  if (linkTo) return <Link to={linkTo}>{content}</Link>;
+  return content;
+};
 
 /* ─── Mobile Stock Highlight Card (mirrors StocksPage MobileStockCard) ─── */
 const MobileStockHighlightCard = ({
@@ -649,32 +741,32 @@ const HighlightListCard = ({
   return (
     <Link
       to={linkTo}
-      className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all overflow-hidden"
+      className="block group hover:bg-muted/30 -mx-2 px-2 py-1.5 rounded-md transition-colors"
     >
-      <div className="flex items-center gap-3 p-3.5">
+      <div className="flex items-center gap-2">
         <div className="flex-1 min-w-0">
-          <span className="font-bold text-foreground text-sm truncate block">{title}</span>
-          <p className="text-[11px] text-muted-foreground truncate">{sub}</p>
+          <span className="font-bold text-foreground text-xs truncate block group-hover:text-accent transition-colors">{title}</span>
+          <p className="text-[10px] text-muted-foreground truncate">{sub}</p>
         </div>
         {sparkData && sparkData.length >= 2 && (
           <div className="shrink-0">
-            <Sparkline data={sparkData} width={60} height={24} color="auto" trend={trend} />
+            <Sparkline data={sparkData} width={40} height={16} color="auto" trend={trend} />
           </div>
         )}
         <div className="text-right shrink-0">
-          <p className="font-bold text-foreground text-sm tabular-nums">{value}</p>
+          <p className="font-bold text-foreground text-[11px] tabular-nums">{value}</p>
           {changePct != null ? (
             changePct > 0 ? (
-              <span className="inline-flex items-center gap-0.5 text-accent text-[11px] font-semibold tabular-nums">
-                <TrendingUp className="h-3 w-3" /> +{changePct.toFixed(2)}%
+              <span className="inline-flex items-center gap-0.5 text-accent text-[9px] font-semibold tabular-nums">
+                <TrendingUp className="h-2 w-2" /> +{changePct.toFixed(2)}%
               </span>
             ) : changePct < 0 ? (
-              <span className="inline-flex items-center gap-0.5 text-destructive text-[11px] font-semibold tabular-nums">
-                <TrendingDown className="h-3 w-3" /> {changePct.toFixed(2)}%
+              <span className="inline-flex items-center gap-0.5 text-destructive text-[9px] font-semibold tabular-nums">
+                <TrendingDown className="h-2 w-2" /> {changePct.toFixed(2)}%
               </span>
             ) : (
-              <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[11px]">
-                <Minus className="h-3 w-3" /> 0.00%
+              <span className="inline-flex items-center gap-0.5 text-muted-foreground text-[9px]">
+                <Minus className="h-2 w-2" /> 0.00%
               </span>
             )
           ) : null}
@@ -769,8 +861,8 @@ const WatchlistGroupedSection = ({
                       ? (fHistory[fHistory.length - 1].rate > fHistory[0].rate ? "up" : fHistory[fHistory.length - 1].rate < fHistory[0].rate ? "down" : "flat")
                       : undefined;
                     return (
-                      <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${f.annual_yield.toFixed(2)}%`}
-                        change={<span className="text-[11px] text-muted-foreground">Daily: {f.daily_yield.toFixed(4)}%</span>}
+                      <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${Number(f.annual_yield || 0).toFixed(2)}%`}
+                        change={<span className="text-[11px] text-muted-foreground">Daily: {Number(f.daily_yield || 0).toFixed(4)}%</span>}
                         chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
                         sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}
                         trend={fundTrend}
@@ -790,8 +882,8 @@ const WatchlistGroupedSection = ({
             {watchedStocks.map(s => {
               const sHistory = getStockHistory(s.id);
               return (
-                <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${s.price.toFixed(2)}`}
-                  change={<Change current={s.price} previous={s.previous_price} />}
+                <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${Number(s.price || 0).toFixed(2)}`}
+                  change={<Change current={Number(s.price || 0)} previous={s.previous_price ? Number(s.previous_price) : null} />}
                   chart={sHistory.length > 2 ? <MiniChart data={sHistory} /> : undefined}
                   sparkData={getStockSparkData(s.id)}
                   trend={trendOf(s.price, s.previous_price)}
@@ -862,11 +954,40 @@ const OverviewPage = () => {
   const [fundSnapshots, setFundSnapshots] = useState<FundYieldSnapshot[]>([]);
   const [stockHistory, setStockHistory] = useState<StockPriceHistory[]>([]);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
+
   const [watchlistLoading, setWatchlistLoading] = useState(true);
   const [customizeOpen, setCustomizeOpen] = useState(false);
+  
+  const [fxCustomizeOpen, setFxCustomizeOpen] = useState(false);
+  const [selectedFxRates, setSelectedFxRates] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('kf_selected_fx_rates');
+      return saved ? JSON.parse(saved) : ['USD', 'GBP'];
+    } catch {
+      return ['USD', 'GBP'];
+    }
+  });
+
+  useEffect(() => {
+    localStorage.setItem('kf_selected_fx_rates', JSON.stringify(selectedFxRates));
+  }, [selectedFxRates]);
+
+  const toggleFxRate = (code: string) => {
+    setSelectedFxRates(prev => {
+      if (prev.includes(code)) {
+        return prev.filter(c => c !== code);
+      }
+      if (prev.length >= 4) return prev;
+      return [...prev, code];
+    });
+  };
+
   const [profileName, setProfileName] = useState("");
   // Top tab: "overview", "watchlist", or "portfolio"
   const [mobileTab, setMobileTab] = useState<"overview" | "watchlist" | "portfolio">("overview");
+
+  const feedItems = useSocialFeed(news, stocks, funds, rates, commodities);
+  const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [watchlistPromptOpen, setWatchlistPromptOpen] = useState(false);
 
   const [alertDialog, setAlertDialog] = useState<{
@@ -898,7 +1019,7 @@ const OverviewPage = () => {
       })
       .then(undefined, () => {})
       .then(() => setFundsLoading(false));
-    fetchLatestNewsPreview(4).then(n => setNews(n)).catch(() => {});
+    fetchPublishedNews().then(n => setNews(n)).catch(() => {});
     // 90-day window for history (much smaller payloads than limit=500/1000 unfiltered)
     const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     supabase.from("exchange_rate_history_public" as any)
@@ -992,11 +1113,11 @@ const OverviewPage = () => {
   // Best performers
   const bestStock = useMemo(() => stocks.length ? [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [stocks]);
   const topGainers = useMemo(
-    () => [...stocks].filter(s => s.day_change_percent > 0).sort((a, b) => b.day_change_percent - a.day_change_percent).slice(0, 5),
+    () => [...stocks].filter(s => s.day_change_percent > 0).sort((a, b) => b.day_change_percent - a.day_change_percent).slice(0, 3),
     [stocks]
   );
   const topLosers = useMemo(
-    () => [...stocks].filter(s => s.day_change_percent < 0).sort((a, b) => a.day_change_percent - b.day_change_percent).slice(0, 5),
+    () => [...stocks].filter(s => s.day_change_percent < 0).sort((a, b) => a.day_change_percent - b.day_change_percent).slice(0, 3),
     [stocks]
   );
   const bestMM = useMemo(() => {
@@ -1004,7 +1125,7 @@ const OverviewPage = () => {
     return mm.length ? [...mm].sort((a, b) => b.annual_yield - a.annual_yield)[0] : null;
   }, [funds]);
   const moneyMarketFunds = useMemo(
-    () => funds.filter(f => f.fund_type === "money_market").sort((a, b) => b.annual_yield - a.annual_yield).slice(0, 5),
+    () => funds.filter(f => f.fund_type === "money_market").sort((a, b) => b.annual_yield - a.annual_yield).slice(0, 3),
     [funds]
   );
   const bestFI = useMemo(() => {
@@ -1015,10 +1136,16 @@ const OverviewPage = () => {
   const goldCommodity = useMemo(() => commodities.find(c => c.name.toLowerCase().includes("gold")) || null, [commodities]);
   const silverCommodity = useMemo(() => commodities.find(c => c.name.toLowerCase().includes("silver")) || null, [commodities]);
   const topFXRates = useMemo(
-    () => [...rates].sort((a, b) => Number(b.rate) - Number(a.rate)).slice(0, 5),
+    () => [...rates].filter(r => ["USD", "EUR", "GBP"].includes(r.currency_code)),
     [rates]
   );
-  const topCommodities = useMemo(() => commodities.slice(0, 5), [commodities]);
+  const topCommodities = useMemo(
+    () => commodities.filter(c => {
+      const name = c.name.toLowerCase();
+      return name.includes("gold") || name.includes("silver") || name.includes("oil") || name.includes("brent") || name.includes("wti");
+    }).slice(0, 3), 
+    [commodities]
+  );
 
   const mmFunds = useMemo(() => funds.filter(f => f.fund_type === "money_market"), [funds]);
   const fiFunds = useMemo(() => funds.filter(f => f.fund_type === "fixed_income"), [funds]);
@@ -1032,190 +1159,61 @@ const OverviewPage = () => {
   const displayName = profileName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
 
-  if (loading) {
-    return (
-      <div className="px-4 md:px-6 py-6 min-h-[80vh] space-y-6">
-        <Skeleton className="h-10 w-64" />
-        <Skeleton className="h-6 w-96" />
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">{[1,2,3,4,5,6].map(i => <Skeleton key={i} className="h-36 rounded-xl" />)}</div>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">{[1,2,3].map(i => <Skeleton key={i} className="h-48 rounded-xl" />)}</div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">{[1,2,3].map(i => <Skeleton key={i} className="h-32 rounded-xl" />)}</div>
-        {/* Mobile-only extra placeholders to reserve scroll height (prevents CLS on phones) */}
-        <div className="md:hidden space-y-3">
-          {[1,2,3,4,5].map(i => <Skeleton key={i} className="h-44 rounded-xl" />)}
-        </div>
-      </div>
-    );
-  }
+  const [activeUpdateCategory, setActiveUpdateCategory] = useState("All");
+
+  const sortedStocks = useMemo(() => {
+    if (!stocks) return [];
+    return [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent);
+  }, [stocks]);
+  
+  const topGainer = sortedStocks[0];
+  const topLoser = sortedStocks[sortedStocks.length - 1];
+
+  const scomStock = useMemo(() => {
+    if (!stocks || stocks.length === 0) return null;
+    return stocks.find(s => s.symbol === "SCOM" || s.name.toLowerCase().includes("safaricom")) || stocks[0];
+  }, [stocks]);
+
+  const usdRate = rates?.find(r => r.currency_code === "USD");
+  const gbpRate = rates?.find(r => r.currency_code === "GBP");
+  const eurRate = rates?.find(r => r.currency_code === "EUR");
+
+  const topMoneyMarket = useMemo(() => {
+    if (!funds) return null;
+    return [...funds].filter(f => f.fund_type === "Money Market" || f.fund_type === "money_market").sort((a, b) => b.annual_yield - a.annual_yield)[0];
+  }, [funds]);
+
+  const filteredFeedItems = useMemo(() => {
+    let list = [...feedItems];
+    if (activeUpdateCategory === "Kenyan") {
+      list = list.filter(item => !isInternationalFeedItem(item));
+    } else if (activeUpdateCategory === "International") {
+      list = list.filter(item => isInternationalFeedItem(item));
+    } else if (activeUpdateCategory === "Latest") {
+      list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
+    } else if (activeUpdateCategory === "Oldest") {
+      list.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
+    }
+    return list;
+  }, [feedItems, activeUpdateCategory]);
+
+  const newTodayCount = useMemo(() => {
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    return (news || []).filter(item => {
+      if (!item.date_published) return false;
+      const pubTime = new Date(item.date_published).getTime();
+      return !isNaN(pubTime) && (now - pubTime) <= oneDayMs;
+    }).length;
+  }, [news]);
+
+  // No global loading block - we will handle loading states inside the layout to prevent FCP lag.
 
   return (
     <>
-    <div className="hidden md:block">
-      <CurrencyTicker />
-    </div>
-    <div className="px-4 md:px-6 py-6 max-w-[1600px]">
-    <div className="space-y-5">
-      {/* Header */}
-      <div>
-        {/* Mobile header */}
-        <div className="md:hidden rounded-xl border border-border bg-card p-4">
-          <div className="flex items-start justify-between gap-3">
-            <div className="min-w-0 flex-1">
-              <h2 className="text-lg font-bold text-foreground truncate">
-                {user ? `${greeting} ${displayName}` : "Market overview"}
-              </h2>
-              <p className="text-xs text-muted-foreground mt-1">
-                {user ? "Your personalized market overview" : "Live Kenyan market data"}
-              </p>
-              <p className="text-xs text-muted-foreground/70 mt-2">
-                <SectionLiveStatus section="overview" hideLive />
-              </p>
-            </div>
-            <SectionLiveStatus section="overview" hideDate />
-          </div>
-          <div className="mt-4">
-            {user ? (
-              <div className="flex items-center gap-2">
-                <Button variant="outline" size="sm" className="text-xs h-9 gap-1.5 flex-1 rounded-full" onClick={() => setCustomizeOpen(true)}>
-                  <Settings2 className="h-3.5 w-3.5" /> Customize
-                </Button>
-                <Button asChild variant="outline" size="sm" className="text-xs h-9 gap-1.5 rounded-full px-4">
-                  <Link to="/alerts"><Bell className="h-3.5 w-3.5" />{alerts.length}</Link>
-                </Button>
-              </div>
-            ) : (
-              <Button size="sm" className="text-xs h-9 gap-1.5 w-full rounded-full bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
-                <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
-              </Button>
-            )}
-          </div>
-        </div>
+    <div className="px-4 md:px-6 py-2 max-w-[1600px]">
+    <div className="space-y-3">
 
-        {/* Mobile-only top tabs: Overview / Watchlist / Portfolio */}
-        <div className="md:hidden mt-3 grid grid-cols-3 gap-1 p-1 rounded-full border border-border bg-card">
-          <button
-            type="button"
-            onClick={() => setMobileTab("overview")}
-            className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
-              mobileTab === "overview"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground"
-            }`}
-            aria-pressed={mobileTab === "overview"}
-          >
-            <LayoutDashboard className="h-3.5 w-3.5" /> Overview
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              if (!user) { setWatchlistPromptOpen(true); return; }
-              setMobileTab("watchlist");
-            }}
-            className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
-              mobileTab === "watchlist"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground"
-            }`}
-            aria-pressed={mobileTab === "watchlist"}
-          >
-            <Star className={`h-3.5 w-3.5 ${mobileTab === "watchlist" ? "fill-current" : ""}`} /> Watchlist
-            {user && watchlist.length > 0 && (
-              <span className={`tabular-nums text-[10px] rounded-full px-1.5 ${
-                mobileTab === "watchlist" ? "bg-primary-foreground/20" : "bg-muted text-foreground"
-              }`}>
-                {watchlist.length}
-              </span>
-            )}
-          </button>
-          <button
-            type="button"
-            onClick={() => setMobileTab("portfolio")}
-            className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-full text-xs font-semibold transition-colors ${
-              mobileTab === "portfolio"
-                ? "bg-primary text-primary-foreground shadow-sm"
-                : "text-muted-foreground"
-            }`}
-            aria-pressed={mobileTab === "portfolio"}
-          >
-            <Briefcase className="h-3.5 w-3.5" /> Portfolio
-          </button>
-        </div>
-        <div className="hidden md:block">
-          <div className="flex flex-row items-center justify-between gap-3 flex-wrap">
-            <h1 className="text-2xl font-bold text-foreground min-w-0">{user ? `${greeting}, ${displayName}` : "Market Overview"}</h1>
-            <div className="flex items-center gap-2 shrink-0 ml-auto">
-              {user && (
-                <>
-                  <Button variant="outline" size="sm" className="text-xs h-8 gap-1.5" onClick={() => setCustomizeOpen(true)}>
-                    <Settings2 className="h-3.5 w-3.5" /> Customize
-                  </Button>
-                  <Button asChild variant="outline" size="sm" className="text-xs h-8 gap-1.5">
-                    <Link to="/alerts"><Bell className="h-3.5 w-3.5" />{alerts.length}</Link>
-                  </Button>
-                </>
-              )}
-              {!user && (
-                <Button size="sm" className="text-xs h-8 gap-1.5 bg-accent text-accent-foreground hover:bg-accent/90" onClick={() => navigate("/auth")}>
-                  <Settings2 className="h-3.5 w-3.5" /> Sign in to customize
-                </Button>
-              )}
-              <SectionLiveStatus section="overview" />
-            </div>
-          </div>
-          <p className="text-sm text-muted-foreground mt-0.5">
-            {user ? "Your personalized market overview" : "Live Kenyan market data"}
-          </p>
-          {/* Desktop tabs: under greeting + subtitle */}
-          <div className="mt-3 inline-grid grid-cols-3 gap-1 p-1 rounded-full border border-border bg-card">
-            <button
-              type="button"
-              onClick={() => setMobileTab("overview")}
-              className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
-                mobileTab === "overview"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-pressed={mobileTab === "overview"}
-            >
-              <LayoutDashboard className="h-3.5 w-3.5" /> Overview
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                if (!user) { setWatchlistPromptOpen(true); return; }
-                setMobileTab("watchlist");
-              }}
-              className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
-                mobileTab === "watchlist"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-pressed={mobileTab === "watchlist"}
-            >
-              <Star className={`h-3.5 w-3.5 ${mobileTab === "watchlist" ? "fill-current" : ""}`} /> Watchlist
-              {user && watchlist.length > 0 && (
-                <span className={`tabular-nums text-[10px] rounded-full px-1.5 ${
-                  mobileTab === "watchlist" ? "bg-primary-foreground/20" : "bg-muted text-foreground"
-                }`}>
-                  {watchlist.length}
-                </span>
-              )}
-            </button>
-            <button
-              type="button"
-              onClick={() => setMobileTab("portfolio")}
-              className={`inline-flex items-center justify-center gap-1.5 h-8 px-4 rounded-full text-xs font-semibold transition-colors ${
-                mobileTab === "portfolio"
-                  ? "bg-primary text-primary-foreground shadow-sm"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-              aria-pressed={mobileTab === "portfolio"}
-            >
-              <Briefcase className="h-3.5 w-3.5" /> Portfolio
-            </button>
-          </div>
-        </div>
-      </div>
 
       {/* ─── Watched Individual Assets ───
           Shown only when the "Watchlist" tab is active (mobile + desktop). */}
@@ -1237,7 +1235,7 @@ const OverviewPage = () => {
       )}
 
       {/* Empty state on Watchlist tab when nothing tracked (mobile + desktop) */}
-      {user && !hasWatchlist && mobileTab === "watchlist" && (
+      {user && !hasWatchlist && !loading && mobileTab === "watchlist" && (
         <div className="rounded-xl border border-dashed border-border bg-card/40 p-8 md:p-12 text-center">
           <Star className="h-10 w-10 md:h-12 md:w-12 mx-auto text-muted-foreground/40 mb-3" />
           <h3 className="text-sm md:text-base font-semibold text-foreground mb-1">Your watchlist is empty</h3>
@@ -1261,144 +1259,353 @@ const OverviewPage = () => {
           Hidden when "Watchlist" or "Portfolio" tab is active. */}
       <div className={mobileTab !== "overview" ? "hidden" : "contents"}>
 
-
-      {/* ─── Market Highlights (always shown) ─── */}
-      <div className="md:pt-3">
-
-
-        {/* Desktop: horizontally scrollable row of fixed-width columns */}
-        <div className="hidden md:block -mx-4 md:-mx-6">
-          <div className="overflow-x-auto overscroll-x-contain px-4 md:px-6 pb-2 [scrollbar-width:thin] [&::-webkit-scrollbar]:h-1 [&::-webkit-scrollbar-track]:bg-transparent [&::-webkit-scrollbar-thumb]:bg-border [&::-webkit-scrollbar-thumb]:rounded-full">
-            {/* Reserve vertical space to prevent CLS while highlight data loads */}
-            <div className="flex gap-4 min-w-max min-h-[420px]">
-              {/* Top Gainers */}
-              <div className="w-[300px] shrink-0">
-                <HighlightColumn icon={TrendingUp} label="Stocks · Day's Gainers" link="/stocks">
-                  {topGainers.length === 0 && (
-                    <p className="text-[11px] text-muted-foreground">No data available</p>
-                  )}
-                  {topGainers.map((s) => (
-                    <HighlightListCard
-                      key={`hl-gainer-${s.id}`}
-                      title={s.symbol}
-                      sub={s.name}
-                      value={`KES ${s.price.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      changePct={s.day_change_percent}
-                      sparkData={getStockSparkData(s.id)}
-                      trend={trendOf(s.price, s.previous_price)}
-                      linkTo={`/stocks/${s.symbol}`}
-                    />
-                  ))}
-                </HighlightColumn>
+      {/* Main Grid Container (3-Column Layout with Independent Column Scrolling) */}
+      <div className="lg:grid lg:grid-cols-12 lg:gap-5 max-w-[1600px] mx-auto items-start px-4 md:px-6 py-2">
+        
+        {/* ─── Column 1 (Left Column): Market Summary & Watchlist Highlights (Independent Scroll) ─── */}
+        <div className="lg:col-span-3 hidden lg:block space-y-3.5 lg:h-[calc(100vh-105px)] lg:overflow-y-auto hide-scrollbar pr-1">
+          
+          {/* Market Status Card */}
+          <div className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm dark:shadow-md">
+            <div className="flex items-center justify-between mb-4 pb-0">
+              <div className="flex items-center gap-2.5">
+                <span className="relative flex h-2.5 w-2.5">
+                  <span className="relative inline-flex rounded-full h-2.5 w-2.5 bg-emerald-500"></span>
+                </span>
+                <span className="text-[13px] font-bold text-foreground">NSE Market Status</span>
               </div>
-
-              {/* Top Losers */}
-              <div className="w-[300px] shrink-0">
-                <HighlightColumn icon={TrendingDown} label="Stocks · Day's Losers" link="/stocks">
-                  {topLosers.length === 0 && (
-                    <p className="text-[11px] text-muted-foreground">No data available</p>
-                  )}
-                  {topLosers.map((s) => (
-                    <HighlightListCard
-                      key={`hl-loser-${s.id}`}
-                      title={s.symbol}
-                      sub={s.name}
-                      value={`KES ${s.price.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                      changePct={s.day_change_percent}
-                      sparkData={getStockSparkData(s.id)}
-                      trend={trendOf(s.price, s.previous_price)}
-                      linkTo={`/stocks/${s.symbol}`}
-                    />
-                  ))}
-                </HighlightColumn>
+              <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 dark:text-emerald-400 dark:bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-200 dark:border-emerald-500/20">Open</span>
+            </div>
+            
+            <div className="flex flex-col text-[12px]">
+              <div className="flex justify-between items-center py-2.5 border-b border-border/40">
+                <span className="text-muted-foreground font-medium">NSE 20 Share</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-foreground">1,742.50</span>
+                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">+0.62%</span>
+                </div>
               </div>
-
-              {/* Money Markets */}
-              <div className="w-[320px] shrink-0">
-                <HighlightColumn icon={BarChart3} label="Money Markets" link="/funds">
-                  {moneyMarketFunds.length === 0 && (
-                    <p className="text-[11px] text-muted-foreground">No data available</p>
-                  )}
-                  {moneyMarketFunds.map((f) => {
-                    const snaps = fundSnapshots.filter((s) => s.fund_id === f.id);
-                    const sparkData = snaps.slice(-30).map((s) => s.annual_yield);
-                    const prev = snaps.length > 0 ? snaps[snaps.length - 1].annual_yield : null;
-                    const diff = prev != null ? f.annual_yield - prev : null;
-                    const trend: "up" | "down" | "flat" | undefined =
-                      diff == null ? undefined : diff > 0 ? "up" : diff < 0 ? "down" : "flat";
-                    return (
-                      <HighlightListCard
-                        key={`hl-mm-${f.id}`}
-                        title={f.name}
-                        sub={f.manager}
-                        value={`${f.annual_yield.toFixed(2)}%`}
-                        changePct={diff}
-                        sparkData={sparkData}
-                        trend={trend}
-                        linkTo={`/compare/${f.slug}`}
-                      />
-                    );
-                  })}
-                </HighlightColumn>
+              <div className="flex justify-between items-center py-2.5 border-b border-border/40">
+                <span className="text-muted-foreground font-medium">NASI (All Share)</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-foreground">104.80</span>
+                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">+0.41%</span>
+                </div>
               </div>
-
-              {/* FX Rates */}
-              <div className="w-[300px] shrink-0">
-                <HighlightColumn icon={DollarSign} label="FX Rates" link="/rates">
-                  {topFXRates.length === 0 && (
-                    <p className="text-[11px] text-muted-foreground">No data available</p>
-                  )}
-                  {topFXRates.map((r) => {
-                    const sparkSeries = getHistory(r.currency_code).map((h) => h.rate);
-                    const prev = r.previous_rate != null ? Number(r.previous_rate) : null;
-                    const diff = prev != null && prev !== 0 ? ((Number(r.rate) - prev) / prev) * 100 : null;
-                    return (
-                      <HighlightListCard
-                        key={`hl-fx-${r.id}`}
-                        title={`${r.currency_code}/KES`}
-                        sub={r.currency_name}
-                        value={`KES ${Number(r.rate).toFixed(2)}`}
-                        changePct={diff}
-                        sparkData={sparkSeries}
-                        trend={trendOf(Number(r.rate), prev)}
-                        linkTo="/rates"
-                      />
-                    );
-                  })}
-                </HighlightColumn>
-              </div>
-
-              {/* Commodities */}
-              <div className="w-[300px] shrink-0">
-                <HighlightColumn icon={Gem} label="Commodities" link="/commodities">
-                  {topCommodities.length === 0 && (
-                    <p className="text-[11px] text-muted-foreground">No data available</p>
-                  )}
-                  {topCommodities.map((c) => {
-                    const prev = c.previous_price != null ? Number(c.previous_price) : null;
-                    const diff = prev != null && prev !== 0 ? ((Number(c.price) - prev) / prev) * 100 : null;
-                    return (
-                      <HighlightListCard
-                        key={`hl-cmd-${c.id}`}
-                        title={c.name}
-                        sub={`${c.symbol} · ${c.unit}`}
-                        value={`${Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`}
-                        changePct={diff}
-                        trend={trendOf(Number(c.price), prev)}
-                        linkTo="/commodities"
-                      />
-                    );
-                  })}
-                </HighlightColumn>
+              <div className="flex justify-between items-center py-2.5">
+                <span className="text-muted-foreground font-medium">NSE 25 Index</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-foreground">2,850.10</span>
+                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">+1.15%</span>
+                </div>
               </div>
             </div>
           </div>
+
+          {/* Quick Watchlist Highlights Panel */}
+          {/* Quick Watchlist Highlights Panel */}
+          <div className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm dark:shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[13px] font-bold text-foreground flex items-center gap-2">
+                <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500/20" /> Watchlist Summary
+              </h3>
+              <button onClick={() => setCustomizeOpen(true)} className="text-[11px] font-medium text-muted-foreground hover:text-accent transition-colors flex items-center gap-1">
+                Edit <Settings2 className="w-3 h-3" />
+              </button>
+            </div>
+
+            <div className="flex flex-col">
+              {loading && stocks.length === 0 ? (
+                [1, 2, 3, 4].map((i) => (
+                  <div key={`skel-wl-${i}`} className="flex items-center justify-between py-2.5 border-b border-border/40 last:border-0">
+                    <div className="space-y-1">
+                      <Skeleton className="h-3 w-10" />
+                      <Skeleton className="h-2 w-16" />
+                    </div>
+                    <div className="space-y-1 items-end flex flex-col">
+                      <Skeleton className="h-3 w-12" />
+                      <Skeleton className="h-2 w-8" />
+                    </div>
+                  </div>
+                ))
+              ) : (
+                stocks.slice(0, 4).map((stk) => {
+                  const isPositive = stk.day_change_percent >= 0;
+                  return (
+                    <Link key={stk.id} to={`/stocks/${stk.symbol}`} className="flex justify-between items-center py-2.5 border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-2.5">
+                        <div className={`w-7 h-7 rounded-full flex items-center justify-center ${isPositive ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400' : 'bg-red-500/10 text-red-600 dark:text-red-400'}`}>
+                          {isPositive ? <TrendingUp className="w-3.5 h-3.5" /> : <TrendingDown className="w-3.5 h-3.5" />}
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-bold text-foreground leading-none mb-1">{stk.symbol}</p>
+                          <p className="text-[10px] text-muted-foreground truncate w-[90px] leading-none">{stk.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[12px] font-bold text-foreground leading-none mb-1">KES {Number(stk.price).toFixed(2)}</p>
+                        <p className={`text-[10px] font-semibold leading-none ${isPositive ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}`}>
+                          {isPositive ? '+' : ''}{Number(stk.day_change_percent).toFixed(2)}%
+                        </p>
+                      </div>
+                    </Link>
+                  );
+                })
+              )}
+            </div>
+            
+            <div className="mt-4 text-center">
+              <Link to="/stocks" className="text-[12px] font-semibold text-accent hover:text-accent/80 transition-colors inline-flex items-center gap-1.5">
+                View All Markets <ArrowRight className="w-3.5 h-3.5" />
+              </Link>
+            </div>
+          </div>
+
+          {/* Economic Indicators */}
+          <div className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm dark:shadow-md">
+            <h3 className="text-[13px] font-bold text-foreground flex items-center gap-2 mb-4">
+              <Landmark className="w-3.5 h-3.5 text-blue-500" /> Economic Rates
+            </h3>
+            
+            <div className="flex flex-col text-[12px]">
+              <div className="flex justify-between items-center py-2.5 border-b border-border/40">
+                <span className="text-muted-foreground font-medium">CBR Rate</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-foreground">12.75%</span>
+                  <span className="text-[11px] font-semibold text-muted-foreground">-</span>
+                </div>
+              </div>
+              <div className="flex justify-between items-center py-2.5">
+                <span className="text-muted-foreground font-medium">91D T-Bill</span>
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-foreground">15.82%</span>
+                  <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400">+0.12%</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+        
+        {/* ─── Column 2 (Center Column - MAIN ATTENTION HERO): Custom Asset Cards & Updates Feed (Independent Scroll) ─── */}
+        <div className="lg:col-span-6 col-span-12 space-y-3.5 lg:h-[calc(100vh-105px)] lg:overflow-y-auto hide-scrollbar px-0.5">
+          
+          {/* Sticky Market News Header & Tabs */}
+          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md pt-1 pb-1 mb-2">
+            <div className="flex items-center gap-3 mb-2.5 px-0.5">
+              <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">Market News</h2>
+              <Badge variant="secondary" className="text-xs bg-muted/80 font-medium">
+                {activeUpdateCategory === "All"
+                  ? (newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredFeedItems.length} articles`)
+                  : `${filteredFeedItems.length} ${activeUpdateCategory.toLowerCase()}`}
+              </Badge>
+            </div>
+
+            {/* Sector Category Tabs (Minimal underline style matching screenshot) */}
+            <div className="relative border-b border-border dark:border-white/10">
+              <div className="flex overflow-x-auto gap-6 sm:gap-7 pb-2.5 hide-scrollbar text-sm font-medium">
+                {[
+                  "All",
+                  "Kenyan",
+                  "International",
+                  "Latest",
+                  "Oldest",
+                ].map((cat) => {
+                  const isActive = activeUpdateCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setActiveUpdateCategory(cat)}
+                      className={`whitespace-nowrap transition-colors duration-200 relative pb-1 text-[13px] ${
+                        isActive
+                          ? "text-foreground font-bold dark:text-white"
+                          : "text-muted-foreground hover:text-foreground"
+                      }`}
+                    >
+                      {cat}
+                      {isActive && (
+                        <span className="absolute bottom-[-11px] left-0 right-0 h-[2px] bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          {news.length === 0 && !loading && <div className="hidden sm:block sm:min-h-[280px]" aria-hidden="true" />}
+          <div className="mt-2 pb-8">
+            <SocialFeed items={filteredFeedItems} loading={loading} />
+          </div>
         </div>
 
+        {/* ─── Column 3 (Right Column): Real Featured News & Articles (Twitter/X style feed cards) ─── */}
+        <div className="lg:col-span-3 hidden lg:block space-y-4 lg:h-[calc(100vh-105px)] lg:overflow-y-auto hide-scrollbar pl-1 pb-16">
+          {/* Card 1: FX Rates */}
+          <div className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm dark:shadow-md">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-[13px] font-bold text-foreground flex items-center gap-2">
+                <DollarSign className="w-3.5 h-3.5 text-blue-500" /> Exchange Rates
+              </h3>
+              <button onClick={() => setFxCustomizeOpen(true)} className="text-[11px] font-medium text-muted-foreground hover:text-accent transition-colors flex items-center gap-1">
+                Edit <Settings2 className="w-3 h-3" />
+              </button>
+            </div>
+            
+            <div className="flex flex-col">
+              {selectedFxRates.map(curr => {
+                const rate = rates.find(r => r.currency_code === curr);
+                if (!rate && !loading) return null;
+                if (!rate) return (
+                  <div key={curr} className="flex items-center justify-between py-2.5 border-b border-border/40 last:border-0">
+                    <div className="flex gap-2 items-center">
+                      <Skeleton className="w-6 h-6 rounded-full" />
+                      <div className="space-y-1">
+                        <Skeleton className="h-3 w-12" />
+                        <Skeleton className="h-2 w-16" />
+                      </div>
+                    </div>
+                    <div className="space-y-1 items-end flex flex-col">
+                      <Skeleton className="h-3 w-16" />
+                      <Skeleton className="h-2 w-8" />
+                    </div>
+                  </div>
+                );
+                
+                return (
+                  <div key={curr} className="flex items-center justify-between py-2.5 border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                    <div className="flex items-center gap-2.5">
+                      <div className="w-7 h-7 rounded-full bg-muted flex items-center justify-center text-[11px] font-bold">
+                        {{
+                            USD: '🇺🇸', GBP: '🇬🇧', EUR: '🇪🇺', JPY: '🇯🇵', ZAR: '🇿🇦', 
+                            AUD: '🇦🇺', CAD: '🇨🇦', CHF: '🇨🇭', CNY: '🇨🇳', INR: '🇮🇳',
+                            AED: '🇦🇪', UGX: '🇺🇬', TZS: '🇹🇿', RWF: '🇷🇼', BIF: '🇧🇮',
+                            SAR: '🇸🇦', SGD: '🇸🇬', KES: '🇰🇪'
+                        }[curr] || curr.substring(0,2)}
+                      </div>
+                      <div>
+                        <p className="font-bold text-[12px] text-foreground leading-none mb-1">{curr}/KES</p>
+                        <p className="text-[10px] text-muted-foreground leading-none">{rate.currency_name || curr}</p>
+                      </div>
+                    </div>
+                    <div className="text-right">
+                      <p className="text-[12px] font-bold text-foreground leading-none mb-1">KES {Number(rate.rate || rate.buying_price || 0).toFixed(2)}</p>
+                      {rate.previous_rate && (
+                         <p className={`text-[10px] font-semibold leading-none ${Number(rate.rate) > Number(rate.previous_rate) ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
+                           {Number(rate.rate) > Number(rate.previous_rate) ? "+" : ""}{(((Number(rate.rate) - Number(rate.previous_rate)) / Number(rate.previous_rate)) * 100).toFixed(2)}%
+                         </p>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
 
+          {/* Card 2: Market Movers (Gainers / Losers) */}
+          <div className="rounded-[24px] border border-border/60 bg-card p-5 shadow-sm dark:shadow-md">
+            <h3 className="text-[13px] font-bold text-foreground flex items-center gap-2 mb-4">
+              <TrendingUp className="w-3.5 h-3.5 text-blue-500" /> Market Movers
+            </h3>
+            
+            <div className="space-y-4">
+              <div>
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 block">Top Gainers</span>
+                <div className="flex flex-col">
+                  {loading && stocks.length === 0 ? (
+                    [1,2,3].map(i => (
+                      <div key={`gainer-skel-${i}`} className="flex items-center justify-between py-2.5 border-b border-border/40 last:border-0">
+                        <Skeleton className="h-3 w-10"/>
+                        <Skeleton className="h-3 w-20"/>
+                      </div>
+                    ))
+                  ) : topGainers.slice(0, 3).map(stk => (
+                    <Link key={stk.id} to={`/stocks/${stk.symbol}`} className="flex justify-between items-center py-2.5 border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
+                          <TrendingUp className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-bold text-foreground leading-none mb-1">{stk.symbol}</p>
+                          <p className="text-[10px] text-muted-foreground truncate w-[90px] leading-none">{stk.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[12px] font-bold text-foreground leading-none mb-1">KES {Number(stk.price).toFixed(2)}</p>
+                        <p className="text-[10px] font-semibold leading-none text-emerald-600 dark:text-emerald-400">
+                          +{Number(stk.day_change_percent).toFixed(2)}%
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
 
-        {/* Mobile: grouped single-column cards by category */}
-        <div className="flex flex-col gap-2 md:hidden">
+              <div>
+                <span className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider mb-2 block mt-2">Top Losers</span>
+                <div className="flex flex-col">
+                  {loading && stocks.length === 0 ? (
+                    [1,2,3].map(i => (
+                      <div key={`loser-skel-${i}`} className="flex items-center justify-between py-2.5 border-b border-border/40 last:border-0">
+                        <Skeleton className="h-3 w-10"/>
+                        <Skeleton className="h-3 w-20"/>
+                      </div>
+                    ))
+                  ) : topLosers.slice(0, 3).map(stk => (
+                    <Link key={stk.id} to={`/stocks/${stk.symbol}`} className="flex justify-between items-center py-2.5 border-b border-border/40 last:border-0 hover:bg-muted/30 transition-colors">
+                      <div className="flex items-center gap-2.5">
+                        <div className="w-7 h-7 rounded-full flex items-center justify-center bg-red-500/10 text-red-600 dark:text-red-400">
+                          <TrendingDown className="w-3.5 h-3.5" />
+                        </div>
+                        <div>
+                          <p className="text-[12px] font-bold text-foreground leading-none mb-1">{stk.symbol}</p>
+                          <p className="text-[10px] text-muted-foreground truncate w-[90px] leading-none">{stk.name}</p>
+                        </div>
+                      </div>
+                      <div className="text-right">
+                        <p className="text-[12px] font-bold text-foreground leading-none mb-1">KES {Number(stk.price).toFixed(2)}</p>
+                        <p className="text-[10px] font-semibold leading-none text-red-600 dark:text-red-400">
+                          {Number(stk.day_change_percent).toFixed(2)}%
+                        </p>
+                      </div>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Card 3: Investment Calculator */}
+          <Link to="/calculator" className="block rounded-[24px] border border-border/60 bg-card p-5 shadow-sm hover:border-accent/40 transition-all dark:shadow-md group cursor-pointer">
+            <div className="flex items-start gap-4">
+              <div className="w-10 h-10 rounded-xl bg-blue-500/10 flex items-center justify-center shrink-0">
+                <Calculator className="w-5 h-5 text-blue-500" />
+              </div>
+              <div>
+                <h3 className="text-[13px] font-bold text-foreground mb-1 group-hover:text-blue-500 transition-colors">Investment Calculator</h3>
+                <p className="text-[11px] text-muted-foreground leading-relaxed">
+                  Project your returns across different funds, bonds, and savings accounts to plan your financial future.
+                </p>
+                <div className="mt-2.5 text-[11px] font-bold text-blue-500 flex items-center gap-1.5 opacity-0 group-hover:opacity-100 transition-opacity -translate-x-1 group-hover:translate-x-0">
+                  Calculate Now <ArrowRight className="w-3 h-3" />
+                </div>
+              </div>
+            </div>
+          </Link>
+          
+          {/* Footer Links */}
+          <div className="px-4 text-[13px] text-muted-foreground/80 flex flex-wrap gap-x-3 gap-y-1">
+            <a href="#" className="hover:underline">Terms of Service</a>
+            <a href="#" className="hover:underline">Privacy Policy</a>
+            <a href="#" className="hover:underline">Cookie Policy</a>
+            <a href="#" className="hover:underline">Accessibility</a>
+            <a href="#" className="hover:underline">Ads info</a>
+            <span>© 2026 FundFinder Corp.</span>
+          </div>
+        </div>
+
+          {/* Mobile highlights (group heading) */}
+          <div className="flex flex-col gap-2 md:hidden">
           {topGainers.length > 0 && (
             <>
               <MobileGroupHeading icon={TrendingUp} label="Day's Gainers" tone="success" />
@@ -1486,143 +1693,35 @@ const OverviewPage = () => {
             </>
           )}
         </div>
-      </div>
 
-      {/* ─── Watched Individual Assets (for non-signed-in, keep original position) ─── */}
-      {!user && hasWatchlist && (
-        <WatchlistGroupedSection
-          watchedFunds={watchedFunds}
-          watchedStocks={watchedStocks}
-          watchedRates={watchedRates}
-          watchedCommoditiesList={watchedCommoditiesList}
-          getFundHistory={getFundHistory}
-          getStockHistory={getStockHistory}
-          getStockSparkData={getStockSparkData}
-          getHistory={getHistory}
-          openAlert={openAlert}
-          toggleAsset={toggleAsset}
-        />
-      )}
 
-      {/* ─── Latest News ─── */}
-      {/* Reserve vertical space to prevent CLS while news data loads (matches ~4-card row height at lg breakpoint). */}
-      {news.length === 0 && <div className="hidden sm:block sm:min-h-[280px]" aria-hidden="true" />}
-      {news.length > 0 && (
-        <div className="mt-6 md:mt-8">
-          <div className="flex items-center justify-between mb-3">
-            <div className="flex items-center gap-2">
-              <div className="flex items-center justify-center h-7 w-7 rounded-lg bg-accent/10">
-                <Newspaper className="h-3.5 w-3.5 text-accent" />
-              </div>
-              <h2 className="text-sm font-semibold text-foreground">Latest News</h2>
+          {/* ─── Watched Individual Assets (for non-signed-in) ─── */}
+          {!user && hasWatchlist && (
+            <div className="rounded-xl border border-border bg-card/40 p-4">
+              <WatchlistGroupedSection
+                watchedFunds={watchedFunds}
+                watchedStocks={watchedStocks}
+                watchedRates={watchedRates}
+                watchedCommoditiesList={watchedCommoditiesList}
+                getFundHistory={getFundHistory}
+                getStockHistory={getStockHistory}
+                getStockSparkData={getStockSparkData}
+                getHistory={getHistory}
+                openAlert={openAlert}
+                toggleAsset={toggleAsset}
+              />
             </div>
-            <Link to="/news" className="text-[10px] text-accent hover:underline inline-flex items-center gap-1">All news <ArrowRight className="h-3 w-3" /></Link>
-          </div>
-          {/* Mobile: edge-to-edge stacked rows matching /news page UI */}
-          <div className="sm:hidden -mx-4 border-y border-border">
-            {news.map((article, idx) => (
-              <Link
-                key={article.id}
-                to={`/news/${article.id}`}
-                className="group block px-4 py-3.5 active:bg-muted/30 transition-colors"
-              >
-                {idx > 0 && (
-                  <div className="h-px bg-foreground/30 -mx-4 mb-3.5" role="separator" />
-                )}
-                <div className="flex gap-3">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-1.5">
-                      <span className="text-[11px] font-bold uppercase tracking-wider text-accent truncate">
-                        {article.category}
-                      </span>
-                      <span className="text-[10px] text-muted-foreground inline-flex items-center gap-0.5 shrink-0">
-                        <Clock className="h-2.5 w-2.5" />
-                        {article.read_time}
-                      </span>
-                    </div>
-                    <h3 className="font-heading font-bold text-[17px] leading-snug line-clamp-3 group-hover:text-accent transition-colors mb-2">
-                      {decodeHtmlEntities(article.title)}
-                    </h3>
-                    <div className="flex items-center gap-2">
-                      <div className="h-7 w-7 rounded-full border border-border bg-muted/50 grid place-items-center text-[9px] font-bold text-muted-foreground uppercase shrink-0">
-                        {(article.source || "N").slice(0, 2)}
-                      </div>
-                      <span className="text-[11px] font-medium text-foreground truncate">
-                        {article.source || "News"}
-                      </span>
-                      <span className="text-[11px] text-muted-foreground shrink-0">
-                        · {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
-                      </span>
-                    </div>
-                  </div>
-                  <div className="h-[100px] w-[100px] rounded-lg overflow-hidden bg-muted shrink-0">
-                    <img
-                      src={getNewsImage(article.image_url, article.category, article.id)}
-                      alt={article.title}
-                      className="w-full h-full object-cover"
-                      loading={idx === 0 ? "eager" : "lazy"}
-                      fetchPriority={idx === 0 ? "high" : "auto"}
-                      decoding="async"
-                      width={100}
-                      height={100}
-                      onError={(e) => handleNewsImageError(e, article.category, article.id)}
-                    />
-                  </div>
-                </div>
-              </Link>
-            ))}
-          </div>
-
-          {/* Desktop / tablet: existing card grid */}
-          <div className="hidden sm:grid sm:grid-cols-2 lg:grid-cols-4 gap-3">
-            {news.map((article, idx) => (
-              <Link key={article.id} to={`/news/${article.id}`} className="block group">
-                <article className="rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all h-full flex flex-col overflow-hidden">
-                  <div className="w-full h-28 overflow-hidden bg-muted shrink-0">
-                    <img
-                      src={getNewsImage(article.image_url, article.category, article.id)}
-                      alt={article.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-                      loading={idx < 4 ? "eager" : "lazy"}
-                      fetchPriority={idx < 4 ? "high" : "auto"}
-                      decoding="async"
-                      width={520}
-                      height={325}
-                      onError={(e) => handleNewsImageError(e, article.category, article.id)}
-                    />
-                  </div>
-                  <div className="p-3 flex flex-col flex-1">
-                    <div className="flex items-center gap-1.5 mb-1.5">
-                      <span className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider truncate">{article.category}</span>
-                      <span className="text-[11px] text-muted-foreground ml-auto flex items-center gap-0.5 shrink-0">
-                        <Clock className="h-2.5 w-2.5" />
-                        {article.read_time}
-                      </span>
-                    </div>
-                    <h3 className="font-semibold leading-snug line-clamp-2 mb-1 group-hover:text-accent transition-colors text-base">{decodeHtmlEntities(article.title)}</h3>
-                    <p className="text-muted-foreground line-clamp-2 leading-relaxed flex-1 text-sm">{decodeHtmlEntities(article.summary)}</p>
-                    <div className="flex items-center justify-between mt-2 pt-1.5 border-t border-border/30">
-                      <p className="text-[11px] text-muted-foreground truncate">
-                        {article.source && `${article.source} · `}
-                        {new Date(article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
-                      </p>
-                      <span className="text-[11px] text-accent font-medium group-hover:underline shrink-0">Read →</span>
-                    </div>
-                  </div>
-                </article>
-              </Link>
-            ))}
-          </div>
+          )}
         </div>
-      )}
-
-      {/* Disclaimer removed from here to prevent stacking; merged into the global DisclaimerBlock below */}
+      </div>
 
       </div>{/* end of mobile-tab "overview" content wrapper */}
 
       {/* Dialogs */}
       <QuickAlertDialog open={alertDialog.open} onClose={() => setAlertDialog(prev => ({ ...prev, open: false }))} assetType={alertDialog.assetType} assetId={alertDialog.assetId} assetName={alertDialog.assetName} currentPrice={alertDialog.currentPrice} unit={alertDialog.unit} />
       <CustomizeDialog open={customizeOpen} onClose={() => setCustomizeOpen(false)} watchlist={watchlist} allStocks={stocks} allRates={rates} allCommodities={commodities} allFunds={funds} onToggleAsset={toggleAsset} />
+      
+      <FxCustomizeDialog open={fxCustomizeOpen} onClose={() => setFxCustomizeOpen(false)} allRates={rates} selectedRates={selectedFxRates} onToggleRate={toggleFxRate} />
 
       {/* Watchlist benefits prompt for unauthenticated users */}
       <Dialog open={watchlistPromptOpen} onOpenChange={setWatchlistPromptOpen}>
@@ -1687,8 +1786,14 @@ const OverviewPage = () => {
         extra={`Market data is indicative and may be delayed. ${user ? "Click the bell icon to set price alerts on any asset." : "Sign in to set price alerts and customize your dashboard."}`} 
       />
     </div>
-    </div>
     <TestimonialsSection />
+    <FeedItemDetailModal
+      item={selectedFeedItem}
+      open={!!selectedFeedItem}
+      onOpenChange={(open) => {
+        if (!open) setSelectedFeedItem(null);
+      }}
+    />
     </>
   );
 };

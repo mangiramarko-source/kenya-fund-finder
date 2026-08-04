@@ -3,12 +3,15 @@
 @tailwind utilities;
 
 @layer utilities {
-  .scrollbar-hide {
+  .scrollbar-hide, .hide-scrollbar, .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;
   }
-  .scrollbar-hide::-webkit-scrollbar {
+  .scrollbar-hide::-webkit-scrollbar, .hide-scrollbar::-webkit-scrollbar, .no-scrollbar::-webkit-scrollbar {
     display: none;
+    width: 0px;
+    height: 0px;
+    background: transparent;
   }
   @keyframes shake-row {
     0%, 100% { transform: translateX(0); }
@@ -130,7 +133,7 @@
   }
 
   body {
-    @apply bg-background text-foreground antialiased text-base md:text-base;
+    @apply bg-background text-foreground antialiased hide-scrollbar text-base md:text-base;
     font-feature-settings: "rlig" 1, "calt" 1;
     font-size: 17px;
     font-family: 'DM Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;

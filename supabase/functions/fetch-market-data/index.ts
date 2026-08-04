@@ -893,6 +893,48 @@ Deno.serve(async (req) => {
         }
       }
 
+      // Calculate Market Aggregates for today
+      if (stocksUpdated > 0 || fallbackCount > 0) {
+        let totalMarketCap = 0;
+        let sumPE = 0;
+        let countPE = 0;
+        let advances = 0;
+        let declines = 0;
+        let unchanged = 0;
+
+        for (const row of stockRows) {
+          const sym = (row.symbol || "").toUpperCase();
+          const quote = stockData.quotes.get(sym);
+          const dayChange = quote?.dayChange ?? row.day_change;
+
+          if (dayChange > 0) advances++;
+          else if (dayChange < 0) declines++;
+          else unchanged++;
+
+          if (row.market_cap) totalMarketCap += row.market_cap;
+          if (row.pe_ratio) {
+            sumPE += row.pe_ratio;
+            countPE++;
+          }
+        }
+
+        const averagePE = countPE > 0 ? Number((sumPE / countPE).toFixed(2)) : 0;
+        const snapshotDate = new Date().toISOString().split("T")[0];
+
+        await supabase.from("market_summary_history").upsert(
+          {
+            date: snapshotDate,
+            total_market_cap: totalMarketCap,
+            average_pe: averagePE,
+            advances,
+            declines,
+            unchanged,
+          },
+          { onConflict: "date" }
+        );
+        results.push(`Inserted daily market summary history for ${snapshotDate}`);
+      }
+
       const stillMissing = stockRows
         .map((row) => (row.symbol || "").toUpperCase())
         .filter((symbol) => symbol && !stockData.quotes.has(symbol));

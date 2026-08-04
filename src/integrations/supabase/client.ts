@@ -11,11 +11,11 @@ const FALLBACK_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.
 const FALLBACK_SUPABASE_PROJECT_ID = "caawgzuofnujrznwbuxk";
 
 const SUPABASE_URL =
-  normalizeSupabaseUrl(import.meta.env.VITE_SUPABASE_URL) ?? FALLBACK_SUPABASE_URL;
+  normalizeSupabaseUrl(import.meta?.env?.VITE_SUPABASE_URL) ?? FALLBACK_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY =
-  import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY ?? FALLBACK_SUPABASE_PUBLISHABLE_KEY;
+  import.meta?.env?.VITE_SUPABASE_PUBLISHABLE_KEY ?? FALLBACK_SUPABASE_PUBLISHABLE_KEY;
 export const SUPABASE_PROJECT_ID =
-  import.meta.env.VITE_SUPABASE_PROJECT_ID ?? FALLBACK_SUPABASE_PROJECT_ID;
+  import.meta?.env?.VITE_SUPABASE_PROJECT_ID ?? FALLBACK_SUPABASE_PROJECT_ID;
 
 // Import the supabase client like this:
 // import { supabase } from "@/integrations/supabase/client";

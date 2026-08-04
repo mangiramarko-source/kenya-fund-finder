@@ -11,8 +11,8 @@ import { normalizeSupabaseUrl } from "@/lib/supabase-url";
 // Use VITE_SUPABASE_URL as the source of truth. Published builds may omit both
 // VITE_SUPABASE_URL and VITE_SUPABASE_PROJECT_ID, so keep a public, generated
 // project URL fallback instead of ever producing https://undefined.supabase.co.
-const envSupabaseUrl = normalizeSupabaseUrl(import.meta.env.VITE_SUPABASE_URL as string | undefined);
-const envProjectId = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
+const envSupabaseUrl = normalizeSupabaseUrl(import.meta?.env?.VITE_SUPABASE_URL as string | undefined);
+const envProjectId = import.meta?.env?.VITE_SUPABASE_PROJECT_ID as string | undefined;
 const SUPABASE_URL =
   envSupabaseUrl && envSupabaseUrl !== "undefined"
     ? envSupabaseUrl
@@ -21,7 +21,7 @@ const SUPABASE_URL =
       : "https://caawgzuofnujrznwbuxk.supabase.co";
 const BASE = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/public-data`;
 const ANON_KEY =
-  (import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
+  (import.meta?.env?.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
   "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhYXdnenVvZm51anJ6bndidXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMjI0ODYsImV4cCI6MjA5MTg5ODQ4Nn0.Ci7AcNBlIa4LhINAEvpmeDjLQfxWUxcROd8q5hNAQnA";
 
 export type GatewayResource =

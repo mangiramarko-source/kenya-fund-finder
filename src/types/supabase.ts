@@ -732,6 +732,39 @@ export type Database = {
           },
         ]
       }
+      market_summary_history: {
+        Row: {
+          id: string
+          date: string
+          total_market_cap: number | null
+          average_pe: number | null
+          advances: number | null
+          declines: number | null
+          unchanged: number | null
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          date: string
+          total_market_cap?: number | null
+          average_pe?: number | null
+          advances?: number | null
+          declines?: number | null
+          unchanged?: number | null
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          date?: string
+          total_market_cap?: number | null
+          average_pe?: number | null
+          advances?: number | null
+          declines?: number | null
+          unchanged?: number | null
+          created_at?: string
+        }
+        Relationships: []
+      }
       stocks: {
         Row: {
           created_at: string

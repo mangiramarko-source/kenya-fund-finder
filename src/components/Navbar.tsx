@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Menu, TrendingUp, BarChart3, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark, Calculator, ArrowLeft, GraduationCap } from "lucide-react";
+import { Menu, TrendingUp, BarChart3, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark, Calculator, ArrowLeft, GraduationCap, Sparkles } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -18,7 +18,7 @@ const navLinks = [
 
 const mobileNavLinks = [
   { to: "/", label: "Overview" },
-  { to: "/news", label: "News" },
+  { to: "/ai-lab", label: "AI Lab" },
   { to: "/stocks", label: "Stocks" },
   { to: "/funds", label: "Unit trusts" },
   { to: "/rates", label: "Fx rates" },
@@ -260,11 +260,11 @@ const Navbar = () => {
                 <Calculator className="h-5 w-5" /> Calculator
               </Link>
               <Link
-                to="/news"
+                to="/ai-lab"
                 onClick={closeMobile}
                 className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
               >
-                <Newspaper className="h-5 w-5" /> News
+                <Sparkles className="h-5 w-5 text-emerald-500" /> AI Lab
               </Link>
               <Link
                 to={user ? "/alerts" : "/auth"}
@@ -547,11 +547,11 @@ const Navbar = () => {
               <Calculator className="h-5 w-5" /> Calculator
             </Link>
             <Link
-              to="/news"
+              to="/ai-lab"
               onClick={closeMobile}
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
             >
-              <Newspaper className="h-5 w-5" /> News
+              <Sparkles className="h-5 w-5 text-emerald-500" /> AI Lab
             </Link>
             <Link
               to={user ? "/alerts" : "/auth"}

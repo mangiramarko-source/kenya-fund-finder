@@ -3,7 +3,6 @@ import Navbar from "./Navbar";
 import Footer from "./Footer";
 import SkipToContent from "./SkipToContent";
 import CurrencyTicker from "./CurrencyTicker";
-import DesktopSidebar from "./DesktopSidebar";
 import DesktopTopBar from "./DesktopTopBar";
 import OfflineBanner from "./OfflineBanner";
 import MobileAiLabFab from "./MobileAiLabFab";
@@ -31,9 +30,6 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <div className={`flex min-h-screen font-body${isAiLab ? " h-dvh max-h-dvh overflow-hidden" : ""}`}>
       <SkipToContent />
 
-      {/* Desktop sidebar */}
-      <DesktopSidebar />
-
       {/* Main column */}
       <div className={`flex-1 flex flex-col min-w-0${isAiLab ? " min-h-0 overflow-hidden" : ""}`}>
         {/* Desktop top bar */}
@@ -48,7 +44,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         )}
         {showTicker && (
-          <div className="md:hidden">
+          <div className="sticky top-14 z-20 w-full">
             <CurrencyTicker />
           </div>
         )}

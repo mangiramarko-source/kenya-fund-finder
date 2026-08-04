@@ -95,7 +95,7 @@ const CurrencyTicker = () => {
 
   return (
     <div
-      className="w-full bg-[hsl(220,60%,12%)] overflow-x-auto scrollbar-hide border-b border-border/30 cursor-grab active:cursor-grabbing"
+      className="w-full bg-card/95 text-card-foreground border-b border-border backdrop-blur-md dark:bg-[hsl(220,60%,12%)] dark:border-border/30 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing shadow-sm"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={() => setPaused(true)}
@@ -129,9 +129,9 @@ const CurrencyTicker = () => {
               className="inline-flex items-center gap-2 px-5 py-1.5 text-xs"
             >
               {showSep && (
-                <span className="text-white/20 mr-1 text-sm select-none">│</span>
+                <span className="text-border dark:text-white/20 mr-1 text-sm select-none">│</span>
               )}
-              <span className="font-semibold text-white/70">
+              <span className="font-semibold text-muted-foreground dark:text-white/70">
                 {item.label}
               </span>
               {item.sparkData && item.sparkData.length >= 3 && (
@@ -143,13 +143,13 @@ const CurrencyTicker = () => {
                   className="opacity-80"
                 />
               )}
-              <span className="font-bold text-white tabular-nums">
+              <span className="font-bold text-foreground tabular-nums dark:text-white">
                 {item.value.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
                 {item.unit && (
-                  <span className="text-white/60 font-normal ml-0.5 text-[10px]">
+                  <span className="text-muted-foreground font-normal ml-0.5 text-[10px] dark:text-white/60">
                     {item.unit}
                   </span>
                 )}
@@ -158,10 +158,10 @@ const CurrencyTicker = () => {
                 <span
                   className={`inline-flex items-center gap-0.5 font-semibold tabular-nums ${
                     isUp
-                      ? "text-[hsl(152,70%,55%)]"
+                      ? "text-emerald-600 dark:text-[hsl(152,70%,55%)]"
                       : isDown
-                      ? "text-[hsl(0,85%,65%)]"
-                      : "text-white/60"
+                      ? "text-rose-600 dark:text-[hsl(0,85%,65%)]"
+                      : "text-muted-foreground dark:text-white/60"
                   }`}
                 >
                   {isUp ? (

@@ -11,7 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
-import RateFavourites from "@/components/home/RateFavourites";
+import RateFavourites from "../components/home/RateFavourites";
+import { RatesSummary } from "../components/RatesSummary";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 
 interface Rate {
@@ -227,36 +228,74 @@ const RatesPage = () => {
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          <div className="hidden md:flex flex-row items-end justify-between gap-3">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
             <div>
-              <h1 className="text-xl md:text-2xl font-bold text-foreground">FX Exchange Rates</h1>
-              <p className="text-sm text-muted-foreground md:mt-1">
-                Indicative exchange rates against the Kenya Shilling (KES).
+              <h1 className="text-2xl font-bold text-foreground tracking-tight">FX Rates</h1>
+              <p className="text-sm text-muted-foreground mt-1">
+                Live exchange rates against the Kenyan Shilling (KES).
               </p>
             </div>
-            <SectionLiveStatus section="rates" fallbackDate={latestUpdate} />
+            <div className="hidden md:block">
+              <SectionLiveStatus section="rates" fallbackDate={latestUpdate} />
+            </div>
           </div>
-          <div className="md:hidden flex items-center justify-between w-full">
+          <div className="md:hidden flex items-center justify-between w-full mb-3">
             <span className="text-xs text-muted-foreground/70">Updated {toLastWeekday(new Date()).toLocaleDateString("en-KE", { month: "short", day: "numeric", year: "numeric" })}</span>
             <SectionLiveStatus section="rates" fallbackDate={latestUpdate} hideDate />
           </div>
           <div className="md:hidden border-b border-border mt-2" />
         </div>
 
+        <RatesSummary rates={rates} />
+
         <ActiveAlertsCard assetType="currency" />
 
         {user && favEntries.length > 0 && <RateFavourites entries={favEntries} rates={rates} />}
 
-        {/* Desktop Search */}
-        <div className="hidden md:flex flex-col sm:flex-row gap-3 mb-4">
-          <div className="relative flex-1 max-w-sm">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-            <Input
-              placeholder="Search "
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 rounded-lg text-[16px] sm:text-sm"
-            />
+        {/* Desktop Premium Toolbar */}
+        <div className="hidden md:flex items-center justify-between gap-4 mb-6 bg-card border border-border/40 p-1.5 rounded-xl shadow-sm">
+          <div className="flex items-center gap-3 pl-1">
+            <div className="inline-flex items-center gap-1">
+              {([
+                { key: "all", label: "All", count: rates.length },
+                { key: "gainers", label: "Gainers", count: strengthened },
+                { key: "losers", label: "Losers", count: weakened },
+                { key: "unchanged", label: "Unchanged", count: unchanged },
+              ] as const).map((opt) => {
+                const active = mobileMovement === opt.key;
+                let activeStyle = "bg-muted text-foreground";
+                if (opt.key === "gainers") activeStyle = "bg-accent/15 text-accent shadow-sm";
+                if (opt.key === "losers") activeStyle = "bg-destructive/15 text-destructive shadow-sm";
+                if (opt.key === "unchanged") activeStyle = "bg-muted-foreground/15 text-foreground shadow-sm";
+                
+                return (
+                  <button
+                    key={opt.key}
+                    onClick={() => setMobileMovement(opt.key)}
+                    className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-[13px] font-medium transition-all whitespace-nowrap ${
+                      active ? activeStyle : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                    }`}
+                  >
+                    {opt.key === "gainers" && <TrendingUp className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                    {opt.key === "losers" && <TrendingDown className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                    {opt.key === "unchanged" && <Minus className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                    {opt.label}
+                    <span className={`text-[11px] tabular-nums ${active ? "opacity-90" : "opacity-50"}`}>{opt.count}</span>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+          <div className="flex items-center gap-3 pr-1">
+            <div className="relative w-[220px] shrink-0">
+              <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
+              <Input
+                placeholder="Search currencies"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                className="pl-8 h-8 text-[13px] rounded-md bg-transparent border-border/40 w-full placeholder:text-muted-foreground/50 hover:border-border transition-colors focus-visible:ring-1"
+              />
+            </div>
           </div>
         </div>
 
@@ -358,16 +397,16 @@ const RatesPage = () => {
                   <col style={{ width: "4%" }} />
                 </colgroup>
                 <thead>
-                  <tr className="bg-muted/60 text-xs uppercase tracking-wider border-b border-border">
-                    <th className="text-left pl-4 pr-2 py-3.5 font-semibold text-muted-foreground">#</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Symbol</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Currency</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Rate (KES)</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Previous</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Change %</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Trend</th>
-                    <th className="text-left px-3 py-3.5 font-semibold text-muted-foreground">Updated</th>
+                  <tr className="bg-background text-[12px] text-muted-foreground border-b border-border/40">
+                    <th className="text-left pl-4 pr-2 py-3 font-normal">#</th>
+                    <th className="text-left px-3 py-3 font-normal">Symbol</th>
+                    <th className="text-left px-3 py-3 font-normal">Currency</th>
+                    <th className="text-left px-3 py-3 font-normal">Rate (KES)</th>
+                    <th className="text-left px-3 py-3 font-normal">Previous</th>
+                    <th className="text-left px-3 py-3 font-normal">Change</th>
+                    <th className="text-left px-3 py-3 font-normal">Change %</th>
+                    <th className="text-left px-3 py-3 font-normal">Trend</th>
+                    <th className="text-left px-3 py-3 font-normal">Updated</th>
                     {user && <th className="w-8"></th>}
                     <th className="w-8"></th>
                   </tr>
@@ -667,9 +706,7 @@ const RateRow = ({
   return (
     <>
       <tr
-        className={`border-t border-border/40 hover:bg-accent/5 transition-colors cursor-pointer group ${
-          index % 2 === 0 ? "bg-transparent" : "bg-muted/20"
-        }`}
+        className="border-b border-border/40 hover:bg-accent/5 transition-colors cursor-pointer group"
         onClick={onToggle}
       >
         <td className="pl-4 pr-2 py-4 text-muted-foreground/60 text-sm tabular-nums">{index + 1}</td>
