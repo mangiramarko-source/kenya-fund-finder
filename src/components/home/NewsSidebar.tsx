@@ -72,7 +72,7 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
             <h3 className="font-heading font-semibold text-sm leading-snug line-clamp-2 mb-1.5 group-hover:text-accent transition-colors">
               {article.title}
             </h3>
-            <p className="text-xs text-muted-foreground line-clamp-2 leading-relaxed">{article.summary}</p>
+            <p className="text-xs text-muted-foreground line-clamp-6 leading-relaxed">{article.summary}</p>
             <div className="flex items-center justify-between mt-2.5">
               <p className="text-xs text-muted-foreground">
                 {article.source && `${article.source} · `}

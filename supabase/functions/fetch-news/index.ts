@@ -202,7 +202,7 @@ ${sourceText}
 """
 
 Rewrite this as a completely original article:
-- "summary": a punchy 2-3 sentence standalone summary (max ~320 characters).
+- "summary": a comprehensive 4-6 sentence standalone summary (up to 800 characters) that gives readers the full picture without forcing them to read the full article.
 - "content": a rich, insightful 3-6 paragraph analysis (roughly 250-450 words) written entirely in your own words. Synthesize the key facts, context, numbers, and explicitly explain the implications for the Kenyan market and local investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
 
   try {
@@ -262,7 +262,43 @@ Rewrite this as a completely original article:
 }
 
 async function fetchArticleContent(url: string): Promise<string | null> {
+  const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
+  
+  if (firecrawlKey) {
+    try {
+      console.log(`Using Firecrawl to scrape: ${url}`);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 15000);
+      const res = await fetch("https://api.firecrawl.dev/v1/scrape", {
+        method: "POST",
+        headers: {
+          "Authorization": `Bearer ${firecrawlKey}`,
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          url: url,
+          formats: ["markdown"]
+        }),
+        signal: controller.signal,
+      });
+      clearTimeout(timeout);
+      
+      if (res.ok) {
+        const data = await res.json();
+        if (data.success && data.data && data.data.markdown) {
+          return data.data.markdown;
+        }
+      } else {
+        console.warn(`Firecrawl failed for ${url} with status ${res.status}`);
+      }
+    } catch (err) {
+      console.error(`Firecrawl error for ${url}:`, err);
+    }
+  }
+
+  // Fallback to standard fetch/cheerio
   try {
+    console.log(`Using standard fetch for: ${url}`);
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 10000);
     const res = await fetch(url, {
@@ -331,7 +367,7 @@ async function fetchFeed(feedUrl: string, source: string): Promise<ParsedArticle
       const descriptionRaw = extractTag(item, "description");
       const contentRaw = extractTag(item, "content:encoded") || extractTag(item, "content");
       const pubDate = extractTag(item, "pubDate") || extractTag(item, "dc:date");
-      const summary = stripHtml(descriptionRaw).slice(0, 500);
+      const summary = stripHtml(descriptionRaw).slice(0, 1000);
       const fullText = `${title} ${summary} ${stripHtml(contentRaw)}`;
       if (!matchesKeywords(fullText)) continue;
 

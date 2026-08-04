@@ -8,7 +8,7 @@ import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, ComposedChart } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import CommodityFavourites from "../components/home/CommodityFavourites";
 import { CommoditiesSummary } from "../components/CommoditiesSummary";
@@ -70,7 +70,7 @@ const MiniSparkline = ({ data, positive, livePoint }: { data: PriceHistory[]; po
   return (
     <div className="w-[60px] h-[24px]">
       <ResponsiveContainer width="100%" height="100%">
-        <LineChart data={effectiveData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+        <ComposedChart data={effectiveData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.25} />
@@ -80,7 +80,7 @@ const MiniSparkline = ({ data, positive, livePoint }: { data: PriceHistory[]; po
           <YAxis hide domain={["dataMin", "dataMax"]} />
           <Area type="monotone" dataKey="price" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
           <Line type="monotone" dataKey="price" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
-        </LineChart>
+        </ComposedChart>
       </ResponsiveContainer>
     </div>
   );
