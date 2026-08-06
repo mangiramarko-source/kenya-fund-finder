@@ -1,17 +1,64 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { useEffect, useState, useRef } from "react";
-import { ArrowLeft, ArrowRight, Clock, Calendar, Share2, Link2, Twitter, Facebook, TrendingUp, Landmark, Shield, Megaphone, Sun, Moon, MoreHorizontal } from "lucide-react";
+import { ArrowLeft, ArrowRight, Clock, Calendar, Share2, Link2, Twitter, Facebook, TrendingUp, Landmark, Shield, Megaphone, Sun, Moon, MoreHorizontal, ThumbsUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { fetchNewsById, fetchRelatedNews, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/useAuth";
+import { formatDistanceToNow } from "date-fns";
 import { supabase } from "@/integrations/supabase/client";
 import { Loader2, Sparkles } from "lucide-react";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
+
+interface CommentItem {
+  id: string;
+  authorName: string;
+  authorHandle: string;
+  avatarInitials: string;
+  timestamp: string;
+  content: string;
+  upvotes: number;
+  downvotes: number;
+  userVote?: 'up' | 'down';
+}
+
+const sampleComments: CommentItem[] = [
+  {
+    id: "c1",
+    authorName: "devon_jd150",
+    authorHandle: "devon_jd150",
+    avatarInitials: "D",
+    timestamp: "2h",
+    content: "The gross margin held steady at 16.8%. Everything that shifted happened in opex and lost credits. Market fundamentals sit right above it.",
+    upvotes: 2,
+    downvotes: 0,
+  },
+  {
+    id: "c2",
+    authorName: "frank_ub3n0",
+    authorHandle: "frank_ub3n0",
+    avatarInitials: "F",
+    timestamp: "2h",
+    content: "So essentially the entire market outlook is sitting on execution and tech positioning. What's the realistic competitive advantage here?",
+    upvotes: 1,
+    downvotes: 0,
+  },
+  {
+    id: "c3",
+    authorName: "raj_p1md8",
+    authorHandle: "raj_p1md8",
+    avatarInitials: "R",
+    timestamp: "1h",
+    content: "Different answers for short-term vs long-term. On yields and cashflow, Kenya Money Market Funds offer a genuine risk-adjusted cushion compared to direct equities.",
+    upvotes: 0,
+    downvotes: 0,
+  }
+];
 
 const categoryIcons: Record<string, typeof TrendingUp> = {
   "Yield Updates": TrendingUp,
@@ -30,6 +77,7 @@ const categoryColors: Record<string, string> = {
 const NewsArticlePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { user } = useAuth();
   
   const { toast } = useToast();
   const [article, setArticle] = useState<NewsFromDB | null>(null);
@@ -37,6 +85,52 @@ const NewsArticlePage = () => {
   const [related, setRelated] = useState<NewsFromDB[]>([]);
   const [enriching, setEnriching] = useState(false);
   const [enrichError, setEnrichError] = useState<string | null>(null);
+  const [liked, setLiked] = useState(false);
+  const [likesCount, setLikesCount] = useState(1);
+  const [newCommentInput, setNewCommentInput] = useState("");
+  const [commentsList, setCommentsList] = useState<CommentItem[]>(sampleComments);
+
+  const handleArticleCommentSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!newCommentInput.trim()) return;
+    const authorName = user ? (user.email?.split("@")[0] || "User") : "devon_user";
+    const initials = authorName.substring(0, 1).toUpperCase();
+    const newCmt: CommentItem = {
+      id: `c-${Date.now()}`,
+      authorName,
+      authorHandle: `@${authorName.toLowerCase()}`,
+      avatarInitials: initials,
+      timestamp: "Just now",
+      content: newCommentInput.trim(),
+      upvotes: 0,
+      downvotes: 0,
+    };
+    setCommentsList(prev => [newCmt, ...prev]);
+    setNewCommentInput("");
+    toast({ title: "Comment added" });
+  };
+
+  const handleUpvoteComment = (cmtId: string) => {
+    setCommentsList(prev => prev.map(c => {
+      if (c.id !== cmtId) return c;
+      if (c.userVote === 'up') {
+        return { ...c, upvotes: c.upvotes - 1, userVote: undefined };
+      }
+      const newDown = c.userVote === 'down' ? c.downvotes - 1 : c.downvotes;
+      return { ...c, upvotes: c.upvotes + 1, downvotes: newDown, userVote: 'up' };
+    }));
+  };
+
+  const handleDownvoteComment = (cmtId: string) => {
+    setCommentsList(prev => prev.map(c => {
+      if (c.id !== cmtId) return c;
+      if (c.userVote === 'down') {
+        return { ...c, downvotes: c.downvotes - 1, userVote: undefined };
+      }
+      const newUp = c.userVote === 'up' ? c.upvotes - 1 : c.upvotes;
+      return { ...c, downvotes: c.downvotes + 1, upvotes: newUp, userVote: 'down' };
+    }));
+  };
 
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined") return true;
@@ -222,103 +316,160 @@ const NewsArticlePage = () => {
       </div>
 
       {/* Inner content padding for mobile */}
-      <div className="px-4 pt-5 md:px-0 md:pt-0">
+      <div className="px-4 pt-4 md:px-0 md:pt-0 space-y-5">
 
-      {/* Category & meta */}
-      <div className="flex items-center gap-2.5 mb-4 flex-wrap">
-        <div className={`flex items-center justify-center h-8 w-8 rounded-md ${categoryColors[article.category]?.split(" ")[0] || "bg-muted"}`}>
-          <CatIcon className={`h-4 w-4 ${categoryColors[article.category]?.split(" ")[1] || "text-muted-foreground"}`} />
+      {/* Author Bar & Category Badge (Screenshot 1 Style) */}
+      <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5">
+          <div className="w-10 h-10 rounded-full bg-emerald-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-sm border border-emerald-500/20">
+            {(article.source || "KF").slice(0, 2).toUpperCase()}
+          </div>
+          <div className="flex flex-col">
+            <div className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+              <span>{article.source || "KenyaFundFinder Academy"}</span>
+              <span className="text-muted-foreground font-normal">@{article.category?.toLowerCase().replace(/\s+/g, '') || "dailytip"}</span>
+              <span className="text-muted-foreground font-semibold">·</span>
+              <span className="text-muted-foreground font-normal">
+                {formatDistanceToNow(new Date(article.date_published), { addSuffix: true }).replace("about ", "")}
+              </span>
+            </div>
+          </div>
         </div>
-        <Badge variant="outline" className={`text-sm sm:text-sm ${categoryColors[article.category] || ""}`}>
+
+        <Badge variant="outline" className={`text-xs font-semibold px-2.5 py-1 ${categoryColors[article.category] || "bg-muted text-muted-foreground"}`}>
           {article.category}
         </Badge>
-        <span className="flex items-center gap-1 text-sm text-muted-foreground">
-          <Clock className="h-4 w-4" /> {article.read_time}
-        </span>
       </div>
 
       {/* Title */}
-      <h1 className="sm:text-2xl font-bold leading-tight mb-3 text-3xl text-left md:text-5xl">{decodeHtmlEntities(article.title)}</h1>
+      <h1 className="text-2xl font-bold leading-snug tracking-tight text-foreground md:text-4xl">
+        {decodeHtmlEntities(article.title)}
+      </h1>
 
-      {/* Date & source */}
-      <div className="flex items-center gap-3 text-xs text-muted-foreground mb-6">
-        <span className="flex items-center gap-1 text-sm">
-          <Calendar className="h-3 w-3" />
-          {new Date(article.date_published).toLocaleDateString("en-KE", { year: "numeric", month: "long", day: "numeric" })}
-        </span>
-        {article.source && <span className="text-sm">· {article.source}</span>}
+      {/* Highlighted Callout Sections (Screenshot 1 Style) */}
+      {article.summary && (
+        <div className="rounded-xl bg-amber-500/10 border border-amber-500/20 p-3.5 space-y-2 text-xs leading-relaxed text-foreground">
+          <div className="flex items-start gap-2">
+            <span className="text-base leading-none">🏛️</span>
+            <div>
+              <span className="font-bold text-amber-600 dark:text-amber-400">Key takeaway: </span>
+              <span className="text-foreground/90 font-medium">{decodeHtmlEntities(article.summary)}</span>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Main Content Body */}
+      <div className="prose max-w-none text-foreground leading-relaxed space-y-4">
+        {article.content && article.content.trim().length > 0 ? (
+          article.content.split("\n").filter(Boolean).map((paragraph, i) => (
+            <p key={i} className="text-foreground/90 leading-relaxed font-sans text-[16px] font-normal my-3">
+              {decodeHtmlEntities(paragraph)}
+            </p>
+          ))
+        ) : (
+          <p className="text-[16px] text-foreground/90 leading-relaxed font-sans">
+            {decodeHtmlEntities(article.summary)}
+          </p>
+        )}
       </div>
 
-      {/* Summary */}
-      <p className="sm:text-base text-muted-foreground leading-relaxed mb-6 border-l-2 border-accent/30 pl-4 px-[20px] text-base">
-        {decodeHtmlEntities(article.summary)}
-      </p>
+      {article.url && /^https?:\/\//i.test(article.url) && (
+        <div className="pt-2">
+          <a
+            href={article.url}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all font-semibold text-xs shadow-sm"
+          >
+            <span>Read full story on source website</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </a>
+        </div>
+      )}
 
-      {/* Content */}
-      {(() => {
-        const hasContent = article.content && article.content.trim().length > 0;
-        return (
-          <>
-            {hasContent && (
-              <div className="flex items-center gap-1.5 mb-3 text-[11px] text-muted-foreground">
-                <Sparkles className="h-3 w-3 text-accent" />
-                <span>AI-generated summary based on the original source</span>
+      {/* Reactions Bar (Screenshot 2 Style) */}
+      <div className="pt-4 border-t border-border flex items-center justify-between">
+        <button
+          type="button"
+          onClick={() => {
+            setLiked(!liked);
+            setLikesCount(prev => liked ? prev - 1 : prev + 1);
+            toast({ title: liked ? "Unliked post" : "Liked post" });
+          }}
+          className={`flex items-center justify-center h-10 w-10 rounded-xl border border-border transition-colors ${
+            liked ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-500" : "bg-card hover:bg-muted text-muted-foreground"
+          }`}
+          aria-label="Like post"
+        >
+          <ThumbsUp className={`h-5 w-5 ${liked ? "fill-emerald-500 text-emerald-500" : ""}`} />
+        </button>
+
+        <div className="flex items-center gap-2 text-xs font-semibold text-muted-foreground bg-muted/40 border border-border/60 px-3 py-1.5 rounded-full">
+          <span>👍 {likesCount}</span>
+          <span>🔥 4</span>
+        </div>
+      </div>
+
+      {/* Add Comment Input Bar (Screenshot 2 Style) */}
+      <div className="space-y-4 pt-2">
+        <form onSubmit={handleArticleCommentSubmit} className="flex items-center gap-2.5 bg-card border border-border/80 rounded-full px-3 py-1.5 shadow-sm">
+          <div className="w-7 h-7 rounded-full bg-emerald-600 text-white font-bold text-xs flex items-center justify-center shrink-0">
+            {user ? (user.email || "U").slice(0, 1).toUpperCase() : "M"}
+          </div>
+          <input
+            type="text"
+            placeholder="Add a comment..."
+            value={newCommentInput}
+            onChange={(e) => setNewCommentInput(e.target.value)}
+            className="flex-1 bg-transparent text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none"
+          />
+          <Button type="submit" size="sm" variant="ghost" className="h-7 px-3 text-xs font-bold text-emerald-500 hover:text-emerald-400">
+            Post
+          </Button>
+        </form>
+
+        {/* Comment Threads List (Screenshot 2 Style) */}
+        <div className="space-y-4 pt-2">
+          {commentsList.map((cmt) => (
+            <div key={cmt.id} className="flex gap-3 text-xs">
+              <div className="w-8 h-8 rounded-full bg-muted border border-border flex items-center justify-center shrink-0 font-bold text-muted-foreground">
+                {cmt.avatarInitials}
               </div>
-            )}
-            <div className="prose max-w-none text-foreground leading-relaxed space-y-4">
-              {hasContent ? (
-                article.content!.split("\n").filter(Boolean).map((paragraph, i) => (
-                  <p key={i} className="text-foreground/90 leading-relaxed font-sans text-left text-[16px] font-normal my-3">{decodeHtmlEntities(paragraph)}</p>
-                ))
-              ) : enriching ? (
-                <div className="flex items-center gap-2 text-sm text-muted-foreground italic py-4">
-                  <Loader2 className="h-4 w-4 animate-spin text-accent" />
-                  <span>Generating extended summary from the original source…</span>
+              <div className="flex-1 min-w-0 space-y-1">
+                <div className="flex items-center gap-1.5 font-bold text-foreground">
+                  <span>{cmt.authorName}</span>
+                  <span className="text-muted-foreground font-normal">·</span>
+                  <span className="text-muted-foreground font-normal">{cmt.timestamp}</span>
                 </div>
-              ) : enrichError ? (
-                <p className="text-sm text-muted-foreground italic">
-                  Extended summary unavailable. {article.url ? "You can read the full article at the original source below." : ""}
+                <p className="text-foreground/90 leading-relaxed font-normal">
+                  {cmt.content}
                 </p>
-              ) : (
-                <p className="text-sm text-muted-foreground italic">Full article content is not yet available.</p>
-              )}
-            </div>
-            {article.url && /^https?:\/\//i.test(article.url) && (
-              <div className="mt-6 pt-4 border-t border-border">
-                <Button asChild variant="outline" size="sm" className="gap-1.5 text-xs">
-                  <a href={article.url} target="_blank" rel="noopener noreferrer">
-                    Read Original Source <ArrowRight className="h-3.5 w-3.5" />
-                  </a>
-                </Button>
+                <div className="flex items-center gap-4 text-[11px] text-muted-foreground font-semibold pt-0.5">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => handleUpvoteComment(cmt.id)}
+                      className={`hover:text-foreground ${cmt.userVote === 'up' ? 'text-emerald-500 font-bold' : ''}`}
+                    >
+                      ▲ {cmt.upvotes}
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDownvoteComment(cmt.id)}
+                      className={`hover:text-foreground ${cmt.userVote === 'down' ? 'text-red-500 font-bold' : ''}`}
+                    >
+                      ▼ {cmt.downvotes}
+                    </button>
+                  </div>
+                  <button type="button" className="hover:text-foreground">
+                    Reply
+                  </button>
+                </div>
               </div>
-            )}
-          </>
-        );
-      })()}
-
-      {/* Share & actions */}
-      <div className="flex items-center justify-between mt-8 pt-4 border-t border-border">
-        <Button asChild variant="ghost" size="sm" className="text-xs gap-1.5">
-          <Link to="/news"><ArrowLeft className="h-3.5 w-3.5" /> All News</Link>
-        </Button>
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" size="sm" className="text-xs gap-1.5">
-              <Share2 className="h-3.5 w-3.5" /> Share
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem onClick={handleCopyLink}>
-              <Link2 className="mr-2 h-3.5 w-3.5" /> Copy Link
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(article.title)}&url=${encodeURIComponent(shareUrl)}`, "_blank", "noopener")}>
-              <Twitter className="mr-2 h-3.5 w-3.5" /> Share on X
-            </DropdownMenuItem>
-            <DropdownMenuItem onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank", "noopener")}>
-              <Facebook className="mr-2 h-3.5 w-3.5" /> Share on Facebook
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
+            </div>
+          ))}
+        </div>
       </div>
 
 
