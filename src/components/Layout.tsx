@@ -37,7 +37,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         <OfflineBanner />
 
         {!isNewsArticle && !isAiLab && (
-          <div className="md:hidden">
+          <div className="md:hidden sticky top-0 z-50 bg-background">
             <Navbar />
           </div>
         )}
