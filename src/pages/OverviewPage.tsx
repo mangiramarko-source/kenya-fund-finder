@@ -23,6 +23,7 @@ import {
   Home, Zap, Users, Activity, MessageSquare, AlertTriangle, MoreHorizontal, Heart, Calculator
 } from "lucide-react";
 import PortfolioSnapshotPanel from "@/components/portfolio/PortfolioSnapshotPanel";
+import MobileHomePanels from "@/components/home/MobileHomePanels";
 import { toast } from "sonner";
 import { fetchPublishedNews, fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
