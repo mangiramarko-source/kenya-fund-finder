@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { supabase } from "@/integrations/supabase/client";
+import { safeUUID } from "@/lib/safeUUID";
 
 interface AdBannerProps {
   placement: "sidebar" | "banner" | "in-feed";
@@ -19,7 +20,7 @@ interface Ad {
 const getSessionId = () => {
   let sid = sessionStorage.getItem("ad_sid");
   if (!sid) {
-    sid = crypto.randomUUID();
+    sid = safeUUID();
     sessionStorage.setItem("ad_sid", sid);
   }
   return sid;

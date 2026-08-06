@@ -3,6 +3,7 @@
 
 import type { RouterResult } from "./router";
 import { routePrompt } from "./router";
+import { safeUUID } from "@/lib/safeUUID";
 import { STANDARD_DISCLAIMER, detectAdviceIntent, FORBIDDEN_PATTERNS } from "./safety";
 import { isGenericStockTerm, isPortfolioSplitIntent } from "./portfolioSplitParse";
 import {
@@ -103,10 +104,7 @@ let messageCounter = 0;
 
 function nextMessageId(): string {
   messageCounter += 1;
-  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
-    return crypto.randomUUID();
-  }
-  return `msg-${Date.now()}-${messageCounter}`;
+  return safeUUID();
 }
 
 function parseAmount(text: string): number | null {

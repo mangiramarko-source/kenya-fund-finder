@@ -31,6 +31,7 @@ import { WatchlistSummaryCard } from "@/components/desktop/WatchlistSummaryCard"
 import { ExchangeRatesCard } from "@/components/desktop/ExchangeRatesCard";
 import { MarketMoversCard } from "@/components/desktop/MarketMoversCard";
 import { toast } from "sonner";
+import { safeUUID } from "@/lib/safeUUID";
 import { fetchPublishedNews, fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
@@ -1142,7 +1143,7 @@ const OverviewPage = () => {
       }
     } else {
       const tempItem: WatchlistItem = {
-        id: crypto.randomUUID(),
+        id: safeUUID(),
         user_id: user?.id || "guest",
         item_type: type,
         item_id: id,

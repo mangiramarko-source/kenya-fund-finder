@@ -2,6 +2,7 @@ import { Link, useLocation } from "react-router-dom";
 import { Lock, TrendingUp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
+import { safeUUID } from "@/lib/safeUUID";
 
 interface AuthGateProps {
   title?: string;
@@ -12,7 +13,7 @@ interface AuthGateProps {
 const getSessionId = () => {
   let id = sessionStorage.getItem("pv_session");
   if (!id) {
-    id = crypto.randomUUID();
+    id = safeUUID();
     sessionStorage.setItem("pv_session", id);
   }
   return id;

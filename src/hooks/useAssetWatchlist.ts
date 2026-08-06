@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
+import { safeUUID } from "@/lib/safeUUID";
 
 export interface WatchlistEntry {
   id: string;
@@ -42,7 +43,7 @@ export function useAssetWatchlist(itemType: string) {
         await supabase.from("user_watchlist").delete().eq("id", existing.id);
         toast.success(`Removed ${name} from watchlist`);
       } else {
-        const temp: WatchlistEntry = { id: crypto.randomUUID(), item_id: id, item_name: name };
+        const temp: WatchlistEntry = { id: safeUUID(), item_id: id, item_name: name };
         setEntries((prev) => [temp, ...prev]);
         await supabase.from("user_watchlist").insert({
           user_id: user.id,

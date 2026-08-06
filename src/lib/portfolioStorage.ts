@@ -1,4 +1,5 @@
 import type { NewPortfolioItem, PortfolioItem } from "@/hooks/usePortfolio";
+import { safeUUID } from "@/lib/safeUUID";
 
 const KEY = "kff_demo_portfolio_v1";
 
@@ -32,7 +33,7 @@ export const portfolioStorage = {
   add(item: NewPortfolioItem): PortfolioItem {
     const now = new Date().toISOString();
     const record: PortfolioItem = {
-      id: (crypto.randomUUID?.() ?? `local-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+      id: safeUUID(),
       user_id: "demo",
       asset_type: item.asset_type,
       asset_name: item.asset_name,
@@ -54,7 +55,7 @@ export const portfolioStorage = {
   addMany(items: NewPortfolioItem[]): PortfolioItem[] {
     const now = new Date().toISOString();
     const records: PortfolioItem[] = items.map((item) => ({
-      id: (crypto.randomUUID?.() ?? `local-${Date.now()}-${Math.random().toString(36).slice(2)}`),
+      id: safeUUID(),
       user_id: "demo",
       asset_type: item.asset_type,
       asset_name: item.asset_name,

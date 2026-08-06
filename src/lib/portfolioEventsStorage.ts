@@ -6,6 +6,8 @@
  */
 export type PortfolioEventType = "add" | "update" | "remove";
 
+import { safeUUID } from "@/lib/safeUUID";
+
 export interface PortfolioEvent {
   id: string;
   user_id: string;
@@ -53,7 +55,7 @@ export const portfolioEventsStorage = {
   }): PortfolioEvent {
     const now = new Date().toISOString();
     const record: PortfolioEvent = {
-      id: crypto.randomUUID?.() ?? `evt-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+      id: safeUUID(),
       user_id: "demo",
       portfolio_holding_id: event.portfolio_holding_id ?? null,
       asset_id: event.asset_id ?? null,

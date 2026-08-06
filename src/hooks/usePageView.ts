@@ -1,10 +1,11 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { safeUUID } from "@/lib/safeUUID";
 
 let sessionId = sessionStorage.getItem("pv_session");
 if (!sessionId) {
-  sessionId = crypto.randomUUID();
+  sessionId = safeUUID();
   sessionStorage.setItem("pv_session", sessionId);
 }
 
