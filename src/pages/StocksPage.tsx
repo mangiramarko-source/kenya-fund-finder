@@ -244,7 +244,7 @@ const StocksPage = () => {
     const fetchMarketHistory = async () => {
       try {
         const { data } = await supabase
-          .from("market_summary_history")
+          .from("market_summary_history" as any)
           .select("*")
           .order("date", { ascending: true })
           .limit(30);
