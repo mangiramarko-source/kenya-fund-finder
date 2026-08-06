@@ -155,10 +155,11 @@ export function useSocialFeed(
       const gold = commodities.find(c => c.name.toLowerCase().includes("gold"));
       const oil = commodities.find(c => c.name.toLowerCase().includes("crude") || c.name.toLowerCase().includes("oil"));
 
-      // Seed for stable daily variations
       const today = new Date();
       const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
       const pickStable = (arr: string[], seedOffset: number) => arr[(dateSeed + seedOffset) % arr.length];
+      const summaryTimestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 6, 0, 0);
+      const academyTimestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 7, 0, 0);
 
       // 1. Dynamic Stock Intro
       let stockPara = pickStable([
@@ -253,7 +254,7 @@ ${newsPara}
         authorLabel: "Daily Brief",
         title: "Today's Market Wrap-up",
         content: markdownContent,
-        timestamp: getPastTime(5), 
+        timestamp: summaryTimestamp, 
         likes: 0,
         comments: 0,
         rawItem: null,
@@ -308,7 +309,7 @@ ${newsPara}
       authorLabel: "Daily Tip",
       title: `💡 Term of the Day: ${todayTip.title}`,
       content: todayTip.content,
-      timestamp: getPastTime(2), 
+      timestamp: academyTimestamp, 
       likes: 0,
       comments: 0,
       rawItem: null,
