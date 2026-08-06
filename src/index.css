@@ -132,7 +132,13 @@
     --sidebar-accent-foreground: 210 20% 90%;
     --sidebar-border: 222 25% 14%;
     --sidebar-ring: 152 55% 42%;
+    --up: 152 65% 48%;
+    --down: 0 78% 62%;
+    --surface: 222 28% 13%;
+    --surface-foreground: 210 40% 98%;
+    --shadow-soft: 0 1px 2px hsl(0 0% 0% / 0.35), 0 12px 28px -14px hsl(0 0% 0% / 0.6);
   }
+
 }
 
 @layer base {
