@@ -1,5 +1,5 @@
 import React, { useMemo } from 'react';
-import { FundFromDB, YieldSnapshot } from '../../types';
+import type { FundFromDB, YieldSnapshot } from '@/lib/api';
 import { TrendingUp, TrendingDown, Minus, Activity, Target } from 'lucide-react';
 
 interface FundsSummaryProps {
