@@ -31,6 +31,7 @@ const getAvatarBg = (type: FeedItem["type"]) => {
 };
 
 export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; onSelect: (item: FeedItem) => void; index?: number }) => {
+  const navigate = useNavigate();
   const [liked, setLiked] = useState(false);
   const [likeCount, setLikeCount] = useState(item.likes || 0);
 
@@ -41,6 +42,15 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
   
   const rawLabel = item.authorLabel || "dailytip";
   const authorHandle = rawLabel.startsWith("@") ? rawLabel : `@${rawLabel.toLowerCase().replace(/\s+/g, '')}`;
+
+  const handleCardClick = () => {
+    const rawId = item.rawItem?.id || (item.id.startsWith("news-") ? item.id.replace("news-", "") : item.id);
+    if (rawId && rawId !== "daily-market-summary") {
+      navigate(`/news/${rawId}`);
+    } else {
+      onSelect(item);
+    }
+  };
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -70,7 +80,7 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
 
   return (
     <div
-      onClick={() => onSelect(item)}
+      onClick={handleCardClick}
       className="animate-rise rounded-2xl bg-card p-4 sm:p-5 border border-border/80 shadow-sm cursor-pointer hover:border-border transition-all space-y-3"
       style={{ animationDelay: `${index * 80}ms` }}
     >
@@ -100,7 +110,7 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onSelect(item);
+            handleCardClick();
           }}
           className="text-muted-foreground hover:text-foreground p-1 transition-colors rounded-full hover:bg-muted/30"
           aria-label="More options"
@@ -129,9 +139,9 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
           type="button"
           onClick={(e) => {
             e.stopPropagation();
-            onSelect(item);
+            handleCardClick();
           }}
-          className="text-emerald-500 hover:text-emerald-400 font-semibold text-sm inline-block transition-colors"
+          className="text-emerald-500 hover:text-emerald-400 font-semibold text-sm inline-block transition-colors cursor-pointer"
         >
           See more
         </button>
