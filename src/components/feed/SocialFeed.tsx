@@ -64,7 +64,10 @@ export const SocialFeedCard = ({
 
   const handleCardClick = () => {
     if (isMobile) {
-      navigate(`/news/${item.id}`);
+      // Feed item IDs are prefixed with "news-" (e.g. "news-abc123").
+      // Strip the prefix so the URL matches what fetchNewsById expects.
+      const rawId = item.id.startsWith("news-") ? item.id.slice(5) : item.id;
+      navigate(`/news/${rawId}`);
     } else {
       onSelect(item);
     }
