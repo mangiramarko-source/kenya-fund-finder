@@ -12,6 +12,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
+import { useFeedInteractions, type PostInteraction } from "@/hooks/useFeedInteractions";
+
 const getInitials = (name: string) => {
   if (!name) return "";
   const parts = name.trim().split(/\s+/);
@@ -30,10 +32,25 @@ const getAvatarBg = (type: FeedItem["type"]) => {
   }
 };
 
-export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; onSelect: (item: FeedItem) => void; index?: number }) => {
+export const SocialFeedCard = ({
+  item,
+  onSelect,
+  index = 0,
+  interaction,
+  onLikeToggle,
+}: {
+  item: FeedItem;
+  onSelect: (item: FeedItem) => void;
+  index?: number;
+  interaction?: PostInteraction;
+  onLikeToggle?: (itemId: string, defaultLikes?: number) => void;
+}) => {
+  const { user } = useAuth();
   const navigate = useNavigate();
-  const [liked, setLiked] = useState(false);
-  const [likeCount, setLikeCount] = useState(item.likes || 0);
+
+  const isLiked = interaction?.liked ?? false;
+  const likeCount = interaction?.likeCount ?? (item.likes || 0);
+  const commentsCount = (item.comments || 0) + (interaction?.comments?.length || 0);
 
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
 
@@ -44,18 +61,25 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
   const authorHandle = rawLabel.startsWith("@") ? rawLabel : `@${rawLabel.toLowerCase().replace(/\s+/g, '')}`;
 
   const handleCardClick = () => {
-    const rawId = item.rawItem?.id || (item.id.startsWith("news-") ? item.id.replace("news-", "") : item.id);
-    navigate(`/news/${rawId}`);
+    onSelect(item);
   };
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (liked) {
-      setLiked(false);
-      setLikeCount(prev => Math.max(0, prev - 1));
-    } else {
-      setLiked(true);
-      setLikeCount(prev => prev + 1);
+    if (!user) {
+      toast.error("Sign up to like posts", {
+        description: "Create an account to interact with posts.",
+        action: {
+          label: "Sign Up",
+          onClick: () => navigate("/auth"),
+        },
+      });
+      return;
+    }
+    if (onLikeToggle) {
+      onLikeToggle(item.id, item.likes || 0);
+    }
+    if (!isLiked) {
       toast.success("Liked post");
     }
   };
@@ -122,6 +146,19 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
         </h3>
       )}
 
+      {/* Real Article Image (only shown if real image_url exists in database) */}
+      {(item.mediaUrl || item.rawItem?.image_url) && (
+        <div className="relative overflow-hidden rounded-xl border border-border/80 bg-muted/40 max-h-[260px] aspect-[16/9]">
+          <img
+            src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id) || (item.mediaUrl || item.rawItem?.image_url)}
+            alt=""
+            className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
+            onError={handleNewsImageError}
+            loading="lazy"
+          />
+        </div>
+      )}
+
       {/* Text Body Content */}
       <div className="text-base text-muted-foreground/90 leading-relaxed line-clamp-4 prose dark:prose-invert font-normal">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
@@ -154,7 +191,7 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
           className="flex items-center gap-1.5 hover:text-foreground transition-colors"
         >
           <MessageSquare className="w-4 h-4" />
-          <span>{item.comments || 0}</span>
+          <span>{commentsCount}</span>
         </button>
 
         <button
@@ -169,9 +206,11 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
         <button
           type="button"
           onClick={handleLike}
-          className="flex items-center gap-1.5 hover:text-red-500 transition-colors"
+          className={`flex items-center gap-1.5 transition-colors ${
+            isLiked ? "text-rose-500 font-semibold" : "hover:text-rose-500"
+          }`}
         >
-          <Heart className={`w-4 h-4 ${liked ? "fill-red-500 text-red-500" : ""}`} />
+          <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
           <span>{likeCount}</span>
         </button>
       </div>
@@ -180,6 +219,7 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
 };
 
 export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: boolean }) {
+  const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   const [selectedItem, setSelectedItem] = useState<FeedItem | null>(null);
   const [displayCount, setDisplayCount] = useState(15);
 
@@ -215,7 +255,14 @@ export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: bo
     <>
       <div className="flex flex-col gap-4">
         {visibleItems.map((item, i) => (
-          <SocialFeedCard key={item.id} item={item} onSelect={setSelectedItem} index={i} />
+          <SocialFeedCard
+            key={item.id}
+            item={item}
+            onSelect={setSelectedItem}
+            index={i}
+            interaction={getPostInteraction(item.id, item.likes || 0)}
+            onLikeToggle={toggleLike}
+          />
         ))}
 
         {items.length > displayCount && (
@@ -235,6 +282,9 @@ export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: bo
         onOpenChange={(open) => {
           if (!open) setSelectedItem(null);
         }}
+        interaction={selectedItem ? getPostInteraction(selectedItem.id, selectedItem.likes || 0) : undefined}
+        onLikeToggle={toggleLike}
+        onAddComment={addComment}
       />
     </>
   );

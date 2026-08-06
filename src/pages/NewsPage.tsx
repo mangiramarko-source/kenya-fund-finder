@@ -8,6 +8,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
 import { SocialFeedCard } from "@/components/feed/SocialFeed";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
+import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 
 const INTERNATIONAL_SOURCES = new Set([
@@ -40,6 +41,7 @@ export default function NewsPage() {
     { title: "Market News – Kenya Investment & Global Financial Updates", description: "Up-to-date market news covering Kenya and global financial markets." }
   );
 
+  const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeNavTab, setActiveNavTab] = useState<string>("All");
@@ -189,6 +191,9 @@ export default function NewsPage() {
         onOpenChange={(open) => {
           if (!open) setSelectedFeedItem(null);
         }}
+        interaction={selectedFeedItem ? getPostInteraction(selectedFeedItem.id, selectedFeedItem.likes || 0) : undefined}
+        onLikeToggle={toggleLike}
+        onAddComment={addComment}
       />
     </div>
   );

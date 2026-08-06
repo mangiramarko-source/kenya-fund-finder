@@ -28,10 +28,15 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+import type { PostInteraction } from "@/hooks/useFeedInteractions";
+
 interface FeedItemDetailModalProps {
   item: FeedItem | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  interaction?: PostInteraction;
+  onLikeToggle?: (itemId: string, defaultLikes?: number) => void;
+  onAddComment?: (itemId: string, text: string) => void;
 }
 
 const getInitials = (name: string) => {
@@ -52,15 +57,20 @@ const getAvatarBg = (type: FeedItem["type"]) => {
   }
 };
 
-export function FeedItemDetailModal({ item, open, onOpenChange }: FeedItemDetailModalProps) {
+export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onLikeToggle, onAddComment }: FeedItemDetailModalProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const [liked, setLiked] = useState(false);
-  const [likesCount, setLikesCount] = useState(item?.likes || 0);
+  const [localLiked, setLocalLiked] = useState(false);
+  const [localLikesCount, setLocalLikesCount] = useState(0);
   const [commentText, setCommentText] = useState("");
-  const [commentsList, setCommentsList] = useState<string[]>([]);
+  const [localCommentsList, setLocalCommentsList] = useState<string[]>([]);
 
   if (!item) return null;
+
+  const isLiked = interaction ? interaction.liked : localLiked;
+  const likesCount = interaction ? interaction.likeCount : (item.likes || 0) + localLikesCount;
+  const commentsList = interaction ? interaction.comments : localCommentsList;
+  const totalComments = (item.comments || 0) + commentsList.length;
 
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
 
@@ -78,8 +88,12 @@ export function FeedItemDetailModal({ item, open, onOpenChange }: FeedItemDetail
       });
       return;
     }
-    setLiked(!liked);
-    setLikesCount(prev => liked ? prev - 1 : prev + 1);
+    if (onLikeToggle) {
+      onLikeToggle(item.id, item.likes || 0);
+    } else {
+      setLocalLiked(!localLiked);
+      setLocalLikesCount(prev => localLiked ? prev - 1 : prev + 1);
+    }
   };
 
   const handleAddComment = (e: React.FormEvent) => {
@@ -98,8 +112,14 @@ export function FeedItemDetailModal({ item, open, onOpenChange }: FeedItemDetail
       return;
     }
     if (!commentText.trim()) return;
-    setCommentsList(prev => [...prev, commentText.trim()]);
+    const authorName = user.email?.split("@")[0] || "User";
+    if (onAddComment) {
+      onAddComment(item.id, commentText.trim(), authorName);
+    } else {
+      setLocalCommentsList(prev => [...prev, commentText.trim()]);
+    }
     setCommentText("");
+    toast.success("Comment added!");
   };
 
   return (
@@ -107,7 +127,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange }: FeedItemDetail
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card text-card-foreground border border-border p-0 rounded-2xl shadow-2xl hide-scrollbar dark:bg-neutral-900/95 dark:border-white/10 dark:text-foreground">
         {/* Header bar */}
         <div className="p-6 border-b border-border dark:border-white/10 relative">
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex items-center justify-between gap-4 pr-8">
             <div className="flex items-center gap-3">
               <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${getAvatarBg(item.type)}`}>
                 <span className="text-white font-bold text-sm tracking-wider">{getInitials(item.authorName)}</span>
@@ -157,10 +177,10 @@ export function FeedItemDetailModal({ item, open, onOpenChange }: FeedItemDetail
         {/* Modal Body */}
         <div className="p-6 space-y-6">
             {/* Media Box */}
-            {item.mediaType === "image" && item.rawItem?.image_url && (
+            {(item.mediaUrl || item.rawItem?.image_url) && (
               <div className="relative mt-4 mb-2 rounded-xl overflow-hidden border border-border bg-muted/40 max-h-[350px]">
                 <img
-                  src={getNewsImage(item.rawItem.image_url, item.rawItem.category, item.rawItem.id) || item.rawItem.image_url}
+                  src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id) || (item.mediaUrl || item.rawItem?.image_url)}
                   alt=""
                   className="w-full h-full object-cover"
                   onError={handleNewsImageError}
@@ -227,21 +247,21 @@ export function FeedItemDetailModal({ item, open, onOpenChange }: FeedItemDetail
           })()}
 
           {/* Social Interactions Bar */}
-          <div className="pt-4 border-t border-border dark:border-white/10 flex items-center justify-between">
+          <div className="pt-4 border-t border-border dark:border-white/10 flex items-center justify-end">
             <div className="flex items-center gap-6">
               <button
                 onClick={handleLikeToggle}
                 className={`flex items-center gap-2 transition-colors ${
-                  liked ? "text-rose-500 font-semibold" : "text-muted-foreground hover:text-rose-500"
+                  isLiked ? "text-rose-500 font-semibold" : "text-muted-foreground hover:text-rose-500"
                 }`}
               >
-                <Heart className={`w-4 h-4 ${liked ? "fill-rose-500 text-rose-500" : ""}`} />
+                <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
                 <span className="text-xs font-medium">{likesCount} Likes</span>
               </button>
 
               <div className="flex items-center gap-2 text-muted-foreground">
                 <MessageSquare className="w-4 h-4" />
-                <span className="text-xs font-medium">{item.comments + commentsList.length} Comments</span>
+                <span className="text-xs font-medium">{totalComments} Comments</span>
               </div>
 
               <button className="flex items-center gap-2 text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
@@ -287,8 +307,10 @@ export function FeedItemDetailModal({ item, open, onOpenChange }: FeedItemDetail
               <div className="space-y-2 pt-2">
                 {commentsList.map((cmt, idx) => (
                   <div key={idx} className="p-3 rounded-xl bg-muted/50 border border-border text-xs text-foreground dark:bg-white/5 dark:border-white/5">
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400 block mb-0.5">You</span>
-                    {cmt}
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400 block mb-0.5">
+                      {typeof cmt === "object" && (cmt as any).authorName ? (cmt as any).authorName : "Community Member"}
+                    </span>
+                    {typeof cmt === "object" ? (cmt as any).content : cmt}
                   </div>
                 ))}
               </div>

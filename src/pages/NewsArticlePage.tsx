@@ -33,6 +33,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow, format } from "date-fns";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
+import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 
 interface CommentItem {
   id: string;
@@ -57,15 +58,14 @@ const NewsArticlePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   
   const { toast } = useToast();
   const [article, setArticle] = useState<NewsFromDB | null>(null);
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<NewsFromDB[]>([]);
-  const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [reposted, setReposted] = useState(false);
-  const [likesCount, setLikesCount] = useState(0);
   const [repostsCount, setRepostsCount] = useState(0);
   const [bookmarksCount, setBookmarksCount] = useState(0);
   const [newCommentInput, setNewCommentInput] = useState("");
@@ -226,17 +226,21 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     if (!newCommentInput.trim()) return;
     const authorName = user ? (user.email?.split("@")[0] || "User") : "community_member";
     const initials = authorName.substring(0, 1).toUpperCase();
+    const cmtText = newCommentInput.trim();
     const newCmt: CommentItem = {
       id: `c-${Date.now()}`,
       authorName,
       authorHandle: `@${authorName.toLowerCase()}`,
       avatarInitials: initials,
       timestamp: "Just now",
-      content: newCommentInput.trim(),
+      content: cmtText,
       likes: 0,
       reposts: 0,
     };
     setCommentsList(prev => [newCmt, ...prev]);
+    if (article) {
+      addComment(`news-${article.id}`, cmtText);
+    }
     setNewCommentInput("");
     toast({ title: "Reply posted" });
   };
@@ -435,32 +439,41 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         </div>
 
         {/* ─── 7. Engagement Row ─── */}
-        <div className="py-1.5 flex items-center justify-end gap-6 text-xs text-muted-foreground font-medium">
-          {/* Comment */}
-          <button type="button" className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer">
-            <MessageSquare className="w-4 h-4" />
-            <span>{commentsList.length}</span>
-          </button>
+        {(() => {
+          const itemId = article ? `news-${article.id}` : "";
+          const interaction = itemId ? getPostInteraction(itemId, article?.likes || 0) : { liked: false, likeCount: article?.likes || 0, comments: [] };
+          const totalCommentsCount = commentsList.length + (interaction.comments?.length || 0);
 
-          {/* Share */}
-          <button type="button" onClick={handleCopyLink} className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer">
-            <Share2 className="w-4 h-4" />
-            <span>Share</span>
-          </button>
+          return (
+            <div className="py-1.5 flex items-center justify-end gap-6 text-xs text-muted-foreground font-medium">
+              {/* Comment */}
+              <button type="button" className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer">
+                <MessageSquare className="w-4 h-4" />
+                <span>{totalCommentsCount}</span>
+              </button>
 
-          {/* Like */}
-          <button
-            type="button"
-            onClick={() => {
-              setLiked(!liked);
-              setLikesCount(prev => liked ? prev - 1 : prev + 1);
-            }}
-            className={`flex items-center gap-2 transition-colors cursor-pointer ${liked ? 'text-red-500 font-bold' : 'hover:text-foreground'}`}
-          >
-            <Heart className={`w-4 h-4 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
-            <span>{likesCount}</span>
-          </button>
-        </div>
+              {/* Share */}
+              <button type="button" onClick={handleCopyLink} className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer">
+                <Share2 className="w-4 h-4" />
+                <span>Share</span>
+              </button>
+
+              {/* Like */}
+              <button
+                type="button"
+                onClick={() => {
+                  if (article) {
+                    toggleLike(`news-${article.id}`, article.likes || 0);
+                  }
+                }}
+                className={`flex items-center gap-2 transition-colors cursor-pointer ${interaction.liked ? 'text-rose-500 font-bold' : 'hover:text-foreground'}`}
+              >
+                <Heart className={`w-4 h-4 ${interaction.liked ? 'fill-rose-500 text-rose-500' : ''}`} />
+                <span>{interaction.likeCount}</span>
+              </button>
+            </div>
+          );
+        })()}
 
         {/* ─── 8. Divider ─── */}
         <div className="h-px bg-border/60" />

@@ -4,8 +4,11 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
-import { formatMarketDate, formatMarketDateTime } from "@/lib/utils";
+import { formatMarketDate, formatMarketDateTime, decodeHtmlEntities } from "@/lib/utils";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
+import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
+import { useFeedInteractions } from "@/hooks/useFeedInteractions";
+import { type FeedItem } from "@/hooks/useSocialFeed";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
@@ -541,6 +544,8 @@ const StockDetailPage = () => {
 
 /* ─── News Tab Component ─── */
 const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
+  const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
+  const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -571,10 +576,33 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
     );
   }
 
+  const handleOpenItem = (n: any) => {
+    const item: FeedItem = {
+      id: `news-${n.id}`,
+      type: "NEWS",
+      authorName: n.source || "Market News",
+      authorLabel: n.category || "News",
+      title: decodeHtmlEntities(n.title),
+      content: n.summary || "",
+      mediaUrl: n.image_url || undefined,
+      mediaType: n.image_url ? "image" : undefined,
+      timestamp: new Date(n.date_published || Date.now()),
+      likes: 0,
+      comments: 0,
+      url: "#",
+      rawItem: n,
+    };
+    setSelectedFeedItem(item);
+  };
+
   return (
     <div className="space-y-3">
       {news.map((n) => (
-        <Link key={n.id} to={`/news/${n.id}`} className="block rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors">
+        <div
+          key={n.id}
+          onClick={() => handleOpenItem(n)}
+          className="block rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer"
+        >
           <div className="flex items-start gap-3">
             {n.image_url && (
               <img src={n.image_url} alt="" className="w-16 h-16 rounded-lg object-cover shrink-0" />
@@ -591,9 +619,20 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
               </div>
             </div>
           </div>
-        </Link>
+        </div>
       ))}
       <Link to="/news" className="block text-center text-xs text-primary hover:underline py-2">View all market news →</Link>
+
+      <FeedItemDetailModal
+        item={selectedFeedItem}
+        open={!!selectedFeedItem}
+        onOpenChange={(open) => {
+          if (!open) setSelectedFeedItem(null);
+        }}
+        interaction={selectedFeedItem ? getPostInteraction(selectedFeedItem.id, selectedFeedItem.likes || 0) : undefined}
+        onLikeToggle={toggleLike}
+        onAddComment={addComment}
+      />
     </div>
   );
 };

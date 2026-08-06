@@ -65,10 +65,14 @@ const DesktopTopBar = () => {
     return location.pathname.startsWith(path);
   };
 
-  const navLinkClass = (path: string) => 
-    `text-[13px] font-semibold transition-colors hover:text-foreground py-1.5 px-3 rounded-md ${
-      isActive(path) ? "text-foreground bg-accent/15" : "text-muted-foreground"
-    }`;
+  const NAV_LINKS = [
+    { to: "/", label: "Overview" },
+    { to: "/ai-lab", label: "AI Lab" },
+    { to: "/stocks", label: "Stocks" },
+    { to: "/funds", label: "Unit Trusts" },
+    { to: "/rates", label: "FX Rates" },
+    { to: "/commodities", label: "Commodities" },
+  ];
 
   return (
     <header className="hidden md:flex items-center gap-6 h-14 px-6 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30">
@@ -83,13 +87,26 @@ const DesktopTopBar = () => {
       </Link>
 
       {/* 2. Main Navigation Links */}
-      <nav className="flex items-center gap-1 shrink-0">
-        <Link to="/" className={navLinkClass("/")}>Overview</Link>
-        <Link to="/ai-lab" className={navLinkClass("/ai-lab")}>AI Lab</Link>
-        <Link to="/stocks" className={navLinkClass("/stocks")}>Stocks</Link>
-        <Link to="/funds" className={navLinkClass("/funds")}>Unit Trusts</Link>
-        <Link to="/rates" className={navLinkClass("/rates")}>FX Rates</Link>
-        <Link to="/commodities" className={navLinkClass("/commodities")}>Commodities</Link>
+      <nav className="flex items-center gap-1 shrink-0 h-full">
+        {NAV_LINKS.map(({ to, label }) => {
+          const active = isActive(to);
+          return (
+            <Link
+              key={to}
+              to={to}
+              className={`relative flex items-center h-full px-3.5 text-[13px] font-bold transition-colors ${
+                active
+                  ? "text-emerald-500 dark:text-emerald-400"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span>{label}</span>
+              {active && (
+                <span className="absolute bottom-0 left-2 right-2 h-[2.5px] rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+              )}
+            </Link>
+          );
+        })}
       </nav>
 
       {/* 3. Search and Actions */}

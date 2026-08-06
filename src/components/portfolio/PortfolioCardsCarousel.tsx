@@ -7,6 +7,8 @@ import { TrendingUp, TrendingDown, Plus, PieChart, Briefcase, Landmark, ShieldCh
 
 interface Props {
   currency?: "KES" | "USD";
+  orientation?: "horizontal" | "vertical";
+  className?: string;
 }
 
 const fmtCurrency = (val: number, currency: "KES" | "USD" = "KES") => {
@@ -38,7 +40,7 @@ const getAssetIcon = (type: AssetType) => {
   }
 };
 
-export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES" }) => {
+export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES", orientation = "horizontal", className = "" }) => {
   const { user } = useAuth();
   const { items, totalValue, totalPnL, totalPnLPercent } = usePortfolio();
   const { changes } = usePortfolioChanges(items);
@@ -46,13 +48,20 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES" }) =>
   const isPositiveTotal = totalPnL >= 0;
   const changeLookup = new Map(changes.map(c => [c.itemId, c]));
 
+  const wrapperClass = orientation === "horizontal"
+    ? `no-scrollbar -mx-4 px-4 mb-6 flex gap-3 overflow-x-auto py-1 ${className}`
+    : `flex flex-col gap-3 ${className}`;
+
+  const cardClass = orientation === "horizontal" ? "min-w-[250px] w-[250px] shrink-0" : "w-full";
+  const ctaCardClass = orientation === "horizontal" ? "min-w-[240px] w-[240px] shrink-0" : "w-full py-6";
+
   if (!user || items.length === 0) {
     return (
-      <div className="no-scrollbar -mx-4 px-4 mb-6 flex gap-3 overflow-x-auto py-1">
+      <div className={wrapperClass}>
         {/* ─── Mock Example Card (Shown only when user has no holdings) ─── */}
         <Link
           to={user ? "/portfolio" : "/auth"}
-          className="group relative min-w-[250px] w-[250px] shrink-0 rounded-2xl border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/40 transition-all flex flex-col justify-between cursor-pointer"
+          className={`group relative rounded-2xl border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/40 transition-all flex flex-col justify-between cursor-pointer ${cardClass}`}
         >
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -108,7 +117,7 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES" }) =>
         {/* ─── Add Holding CTA Card ─── */}
         <Link
           to={user ? "/portfolio" : "/auth"}
-          className="group relative min-w-[240px] w-[240px] shrink-0 rounded-2xl border border-dashed border-border/80 bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer"
+          className={`group relative rounded-2xl border border-dashed border-border/80 bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer ${ctaCardClass}`}
         >
           <div className="w-12 h-12 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-800/30 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
             <Plus className="w-6 h-6 stroke-[2.2]" />
@@ -123,11 +132,11 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES" }) =>
   }
 
   return (
-    <div className="no-scrollbar -mx-4 px-4 mb-6 flex gap-3 overflow-x-auto py-1">
-      {/* ─── Card 1: All Portfolios ─── */}
+    <div className={wrapperClass}>
+      {/* ─── Total Portfolio Summary Card ─── */}
       <Link
-        to="/portfolio"
-        className="group relative min-w-[250px] w-[250px] shrink-0 rounded-2xl border border-border/80 bg-card p-4 shadow-sm hover:border-border transition-all flex flex-col justify-between"
+        to="/portfolio/summary"
+        className={`group relative rounded-2xl border border-border/80 bg-card p-4 shadow-sm hover:border-accent/40 transition-all flex flex-col justify-between cursor-pointer ${cardClass}`}
       >
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -180,8 +189,8 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES" }) =>
         return (
           <Link
             key={item.id}
-            to="/portfolio"
-            className="group relative min-w-[250px] w-[250px] shrink-0 rounded-2xl border border-border/80 bg-card p-4 shadow-sm hover:border-border transition-all flex flex-col justify-between"
+            to={`/portfolio?item=${item.id}`}
+            className={`group relative rounded-2xl border border-border/80 bg-card p-4 shadow-sm hover:border-border transition-all flex flex-col justify-between cursor-pointer ${cardClass}`}
           >
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -245,7 +254,7 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES" }) =>
       {/* ─── Add Holding CTA Card ─── */}
       <Link
         to="/portfolio"
-        className="group relative min-w-[240px] w-[240px] shrink-0 rounded-2xl border border-dashed border-border/80 bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer"
+        className={`group relative rounded-2xl border border-dashed border-border/80 bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer ${ctaCardClass}`}
       >
         <div className="w-12 h-12 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-800/30 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
           <Plus className="w-6 h-6 stroke-[2.2]" />
