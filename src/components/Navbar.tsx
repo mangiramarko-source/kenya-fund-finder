@@ -349,9 +349,11 @@ const Navbar = () => {
         {/* Left: Search */}
         <SearchDialog variant="icon" />
 
-        {/* Center: KF Logo */}
-        <Link to="/" className="font-mono text-lg font-bold italic tracking-tighter text-primary">
-          KF
+        {/* Center: Logo */}
+        <Link to="/" aria-label="KenyaFundFinder Home" className="flex items-center justify-center">
+          <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-[#16a34a] text-white shadow-sm transition-transform active:scale-95">
+            <TrendingUp className="h-4 w-4 stroke-[2.5]" />
+          </div>
         </Link>
 
         {/* Right: Hamburger */}
