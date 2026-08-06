@@ -46,39 +46,6 @@ interface CommentItem {
   userLiked?: boolean;
 }
 
-const sampleComments: CommentItem[] = [
-  {
-    id: "c1",
-    authorName: "Devon JD",
-    authorHandle: "@devon_jd150",
-    avatarInitials: "D",
-    timestamp: "2h",
-    content: "The gross margin held steady at 16.8%. Everything that shifted happened in opex and lost credits. Market fundamentals sit right above it.",
-    likes: 2,
-    reposts: 0,
-  },
-  {
-    id: "c2",
-    authorName: "Frank Ub3n",
-    authorHandle: "@frank_ub3n0",
-    avatarInitials: "F",
-    timestamp: "2h",
-    content: "So essentially the entire market outlook is sitting on execution and tech positioning. What's the realistic competitive advantage here?",
-    likes: 1,
-    reposts: 0,
-  },
-  {
-    id: "c3",
-    authorName: "Raj Patel",
-    authorHandle: "@raj_p1md8",
-    avatarInitials: "R",
-    timestamp: "1h",
-    content: "Different answers for short-term vs long-term. On yields and cashflow, Kenya Money Market Funds offer a genuine risk-adjusted cushion compared to direct equities.",
-    likes: 0,
-    reposts: 0,
-  }
-];
-
 const categoryColors: Record<string, string> = {
   "Yield Updates": "bg-emerald-500/10 text-emerald-500 border-emerald-500/20",
   "Market News": "bg-blue-500/10 text-blue-500 border-blue-500/20",
@@ -98,11 +65,11 @@ const NewsArticlePage = () => {
   const [liked, setLiked] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [reposted, setReposted] = useState(false);
-  const [likesCount, setLikesCount] = useState(14);
-  const [repostsCount, setRepostsCount] = useState(2);
-  const [bookmarksCount, setBookmarksCount] = useState(5);
+  const [likesCount, setLikesCount] = useState(0);
+  const [repostsCount, setRepostsCount] = useState(0);
+  const [bookmarksCount, setBookmarksCount] = useState(0);
   const [newCommentInput, setNewCommentInput] = useState("");
-  const [commentsList, setCommentsList] = useState<CommentItem[]>(sampleComments);
+  const [commentsList, setCommentsList] = useState<CommentItem[]>([]);
 
 const educationalTips = [
   { 
@@ -186,10 +153,12 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     if (!id) return;
     setLoading(true);
     setRelated([]);
+    setLiked(false);
 
     const synthetic = getSyntheticArticle(id);
     if (synthetic) {
       setArticle(synthetic);
+      setLikesCount(synthetic.likes || 0);
       setLoading(false);
       return;
     }
@@ -198,15 +167,20 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
       .then((a) => {
         if (a) {
           setArticle(a);
+          setLikesCount(a.likes || 0);
           fetchRelatedNews(a.category, a.id, 3)
             .then(setRelated)
             .catch(() => {});
         } else {
-          setArticle(getSyntheticArticle(id));
+          const syn = getSyntheticArticle(id);
+          setArticle(syn);
+          setLikesCount(syn?.likes || 0);
         }
       })
       .catch(() => {
-        setArticle(getSyntheticArticle(id));
+        const syn = getSyntheticArticle(id);
+        setArticle(syn);
+        setLikesCount(syn?.likes || 0);
       })
       .finally(() => setLoading(false));
   }, [id]);
@@ -411,8 +385,12 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
           <span>{formattedTime}</span>
           <span>•</span>
           <span>{formattedDate}</span>
-          <span>•</span>
-          <span className="font-semibold text-foreground">151K Views</span>
+          {article?.read_time && (
+            <>
+              <span>•</span>
+              <span>{article.read_time}</span>
+            </>
+          )}
         </div>
 
         {/* ─── 7. Engagement Row ─── */}

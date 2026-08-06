@@ -92,8 +92,8 @@ export default function NewsPage() {
       mediaUrl: a.image_url || undefined,
       mediaType: a.image_url ? ("image" as const) : undefined,
       timestamp: new Date(a.date_published || Date.now()),
-      likes: 151,
-      comments: 96,
+      likes: a.likes || 0,
+      comments: a.comments || 0,
       url: a.url || "#",
       rawItem: a,
     }));
