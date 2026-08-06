@@ -431,18 +431,28 @@ const Navbar = () => {
           )}
         </div>
 
-        {/* Mobile: search on left */}
-        <div className="flex md:hidden items-center gap-1">
-          <SearchDialog variant="icon" />
-        </div>
-
-        {/* Mobile: logo centered */}
-        <Link to="/" className="md:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
-          <TrendingUp className="h-5 w-5" />
+        {/* Mobile: brand on left */}
+        <Link to="/" className="md:hidden flex items-center gap-2 min-w-0">
+          <span className="flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground shrink-0">
+            <TrendingUp className="h-5 w-5" />
+          </span>
+          <span className="font-heading text-[15px] font-extrabold tracking-tight text-foreground truncate">
+            Kenya Fund Finder
+          </span>
         </Link>
 
-        {/* Mobile: hamburger on right */}
-        <div className="flex md:hidden items-center">
+        {/* Mobile: actions on right */}
+        <div className="flex md:hidden items-center gap-0.5">
+          {user && <NotificationBell />}
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => setDark(!dark)}
+            className="rounded-full h-9 w-9 text-muted-foreground hover:bg-muted"
+            aria-label={dark ? "Switch to light mode" : "Switch to dark mode"}
+          >
+            {dark ? <Sun className="h-[18px] w-[18px]" /> : <Moon className="h-[18px] w-[18px]" />}
+          </Button>
           <Button
             variant="ghost"
             size="icon"
@@ -455,10 +465,15 @@ const Navbar = () => {
         </div>
       </div>
 
-      {/* Mobile: full-width scrollable tab bar */}
+      {/* Mobile: search row */}
+      <div className="md:hidden px-4 pb-2.5">
+        <SearchDialog variant="topbar" />
+      </div>
+
+      {/* Mobile: full-width scrollable tab bar (pill chips) */}
       <div className="md:hidden relative">
         <div ref={mobileTabsScrollRef} className="overflow-x-auto scrollbar-hide bg-card border-b border-border" style={{ scrollBehavior: "smooth" }}>
-          <nav className="flex min-w-max">
+          <nav className="flex min-w-max items-center gap-2 px-4 py-2.5">
             {mobileNavLinks.map((link) => {
               const isActive = location.pathname === link.to;
               return (
@@ -469,16 +484,13 @@ const Navbar = () => {
                   onClick={(e) => {
                     e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
                   }}
-                  className={`relative shrink-0 px-4 py-3 text-sm whitespace-nowrap transition-colors ${
+                  className={`shrink-0 rounded-full px-3.5 py-1.5 text-[13px] whitespace-nowrap border transition-colors ${
                     isActive
-                      ? "font-bold text-foreground"
-                      : "font-medium text-muted-foreground hover:text-foreground"
+                      ? "bg-accent text-accent-foreground border-accent font-bold"
+                      : "bg-muted/50 text-muted-foreground border-border/60 font-medium hover:text-foreground"
                   }`}
                 >
                   {link.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-4 right-4 h-[3px] rounded-t-full bg-primary" />
-                  )}
                 </Link>
               );
             })}
@@ -486,6 +498,7 @@ const Navbar = () => {
         </div>
         <div className="pointer-events-none absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent" />
       </div>
+
 
 
       {/* Mobile slide-in sheet from right */}
