@@ -326,24 +326,17 @@ const NewsArticlePage = () => {
         </div>
 
         {/* ─── 7. Engagement Row ─── */}
-        <div className="py-2 border-y border-border/80 flex items-center justify-around text-xs text-muted-foreground">
+        <div className="py-2.5 border-y border-border/80 flex items-center justify-end gap-6 text-xs text-muted-foreground font-medium">
           {/* Comment */}
-          <button type="button" className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer">
+          <button type="button" className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer">
             <MessageSquare className="w-4 h-4" />
             <span>{commentsList.length}</span>
           </button>
 
-          {/* Repost */}
-          <button
-            type="button"
-            onClick={() => {
-              setReposted(!reposted);
-              setRepostsCount(prev => reposted ? prev - 1 : prev + 1);
-            }}
-            className={`flex items-center gap-1.5 transition-colors cursor-pointer ${reposted ? 'text-emerald-500 font-bold' : 'hover:text-foreground'}`}
-          >
-            <Repeat className="w-4 h-4" />
-            <span>{repostsCount}</span>
+          {/* Share */}
+          <button type="button" onClick={handleCopyLink} className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer">
+            <Share2 className="w-4 h-4" />
+            <span>Share</span>
           </button>
 
           {/* Like */}
@@ -353,29 +346,10 @@ const NewsArticlePage = () => {
               setLiked(!liked);
               setLikesCount(prev => liked ? prev - 1 : prev + 1);
             }}
-            className={`flex items-center gap-1.5 transition-colors cursor-pointer ${liked ? 'text-red-500 font-bold' : 'hover:text-foreground'}`}
+            className={`flex items-center gap-2 transition-colors cursor-pointer ${liked ? 'text-red-500 font-bold' : 'hover:text-foreground'}`}
           >
             <Heart className={`w-4 h-4 ${liked ? 'fill-red-500 text-red-500' : ''}`} />
             <span>{likesCount}</span>
-          </button>
-
-          {/* Bookmark */}
-          <button
-            type="button"
-            onClick={() => {
-              setBookmarked(!bookmarked);
-              setBookmarksCount(prev => bookmarked ? prev - 1 : prev + 1);
-            }}
-            className={`flex items-center gap-1.5 transition-colors cursor-pointer ${bookmarked ? 'text-blue-500 font-bold' : 'hover:text-foreground'}`}
-          >
-            <Bookmark className={`w-4 h-4 ${bookmarked ? 'fill-blue-500 text-blue-500' : ''}`} />
-            <span>{bookmarksCount}</span>
-          </button>
-
-          {/* Share */}
-          <button type="button" onClick={handleCopyLink} className="flex items-center gap-1.5 hover:text-foreground transition-colors cursor-pointer">
-            <Share2 className="w-4 h-4" />
-            <span>Share</span>
           </button>
         </div>
 
