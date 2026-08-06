@@ -1181,7 +1181,7 @@ const OverviewPage = () => {
 
   const topMoneyMarket = useMemo(() => {
     if (!funds) return null;
-    return [...funds].filter(f => f.fund_type === "Money Market" || f.fund_type === "money_market").sort((a, b) => b.annual_yield - a.annual_yield)[0];
+    return [...funds].filter(f => (f.fund_type as string) === "Money Market" || f.fund_type === "money_market").sort((a, b) => b.annual_yield - a.annual_yield)[0];
   }, [funds]);
 
   const filteredFeedItems = useMemo(() => {
