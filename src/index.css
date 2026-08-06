@@ -94,7 +94,15 @@
 
     --gradient-hero: linear-gradient(135deg, hsl(220 60% 20%), hsl(220 50% 30%));
     --gradient-accent: linear-gradient(135deg, hsl(152 55% 42%), hsl(152 45% 52%));
+
+    /* Market direction + mobile surface tokens */
+    --up: 152 60% 38%;
+    --down: 0 72% 51%;
+    --surface: 210 20% 96%;
+    --surface-foreground: 220 30% 15%;
+    --shadow-soft: 0 1px 2px hsl(220 30% 15% / 0.04), 0 8px 24px -12px hsl(220 30% 15% / 0.12);
   }
+
 
   .dark {
     --background: 222 30% 8%;
