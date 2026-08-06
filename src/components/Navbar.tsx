@@ -530,7 +530,6 @@ const Navbar = () => {
           </nav>
         </SheetContent>
       </Sheet>
-    <div aria-hidden="true" className="md:hidden shrink-0" style={{ height: mobileHeaderHeight }} />
     </>
   );
 };
