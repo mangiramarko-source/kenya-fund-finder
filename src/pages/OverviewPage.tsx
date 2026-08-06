@@ -1408,17 +1408,11 @@ const OverviewPage = () => {
           {/* ─── Mobile-only Top Gainers & Top Loser Overview Widget (Horizontal Cards) ─── */}
           <div className="block lg:hidden mb-5">
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 px-4 hide-scrollbar">
-              {(topGainers.length > 0 || topLosers.length > 0
-                ? [
-                    ...topGainers.slice(0, 3).map(s => ({ ...s, type: 'gainer' })),
-                    ...topLosers.slice(0, 3).map(s => ({ ...s, type: 'loser' }))
-                  ]
-                : [
-                    { id: "g1", symbol: "SGL", name: "Standard Group Ltd", price: 6.24, day_change_percent: 305.19, day_change: 4.70, volume: 12000, type: 'gainer' },
-                    { id: "g2", symbol: "CTUM", name: "Centum Investment", price: 19.30, day_change_percent: 100.21, day_change: 9.66, volume: 54000, type: 'gainer' },
-                    { id: "l1", symbol: "LKL", name: "Longhorn Publishers", price: 2.86, day_change_percent: -48.75, day_change: -2.72, volume: 3200, type: 'loser' },
-                  ]
-              ).map((stk, idx) => {
+              {([
+                ...topGainers.slice(0, 3).map(s => ({ ...s, type: 'gainer' })),
+                ...topLosers.slice(0, 3).map(s => ({ ...s, type: 'loser' })),
+              ]).map((stk, idx) => {
+
                 const isGainer = stk.type === 'gainer';
                 return (
                   <Link
