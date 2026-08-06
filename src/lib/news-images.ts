@@ -82,44 +82,26 @@ function optimizeImageUrl(url: string, large = false): string {
 }
 
 export function getNewsImage(
-  imageUrl: string | null,
-  category: string,
-  id: string,
+  imageUrl?: string | null,
+  category?: string,
+  id?: string,
   large = false
-): string {
-  if (imageUrl) return optimizeImageUrl(imageUrl, large);
-  
-  // Directly get the correct sized image from our generator
-  return getCategoryImage(category, id, large);
+): string | null {
+  if (imageUrl && imageUrl.trim().length > 0) {
+    return optimizeImageUrl(imageUrl, large);
+  }
+  return null;
 }
 
-/** onError handler — tries category fallback, then a guaranteed Picsum image. */
+/** onError handler — hides image container if image fails to load */
 export function handleNewsImageError(
-  e: React.SyntheticEvent<HTMLImageElement>,
-  category: string,
-  id: string
+  e: React.SyntheticEvent<HTMLImageElement>
 ) {
   const img = e.currentTarget;
-  const stage = img.dataset.fallbackStage || "0";
-
-  // Check if it's the hero image by looking at its width (heuristic)
-  const isLarge = img.width > 300;
-
-  if (stage === "0") {
-    // First failure: try the category fallback (covers broken source images).
-    const next = getCategoryImage(category, id, isLarge);
-    if (img.src !== next) {
-      img.dataset.fallbackStage = "1";
-      img.src = next;
-      return;
-    }
-    img.dataset.fallbackStage = "1";
-  }
-
-  if (img.dataset.fallbackStage === "1") {
-    // Second failure: deterministic always-available image.
-    img.dataset.fallbackStage = "2";
-    img.src = picsumFallback(id, isLarge);
+  if (img.parentElement) {
+    img.parentElement.style.display = "none";
+  } else {
+    img.style.display = "none";
   }
 }
 

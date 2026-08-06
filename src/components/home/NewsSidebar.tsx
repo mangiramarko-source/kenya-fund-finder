@@ -46,18 +46,20 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
     return (
       <Link to={`/news/${article.id}`} className="block group">
         <article className="rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all overflow-hidden">
-          <div className="aspect-[16/9] overflow-hidden">
-            <img
-              src={imgSrc}
-              alt={article.title}
-              width={520}
-              height={325}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              fetchPriority="high"
-              decoding="async"
-              onError={(e) => handleNewsImageError(e, article.category, article.id)}
-            />
-          </div>
+          {imgSrc && (
+            <div className="aspect-[16/9] overflow-hidden">
+              <img
+                src={imgSrc}
+                alt={article.title}
+                width={520}
+                height={325}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                fetchPriority="high"
+                decoding="async"
+                onError={handleNewsImageError}
+              />
+            </div>
+          )}
           <div className="p-3.5">
             <div className="flex items-center gap-1.5 mb-2">
               <div className="flex items-center justify-center h-5 w-5 rounded-md bg-accent/10">
@@ -92,18 +94,20 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
     <Link to={`/news/${article.id}`} className="block group">
       <article className="rounded-xl border border-border bg-card hover:border-accent/20 hover:shadow-sm transition-all p-3">
         <div className="flex gap-3">
-          <div className="w-20 h-14 rounded-lg overflow-hidden shrink-0">
-            <img
-              src={imgSrc}
-              alt={article.title}
-              width={280}
-              height={175}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
-              loading="lazy"
-              decoding="async"
-              onError={(e) => handleNewsImageError(e, article.category, article.id)}
-            />
-          </div>
+          {imgSrc && (
+            <div className="w-20 h-14 rounded-lg overflow-hidden shrink-0">
+              <img
+                src={imgSrc}
+                alt={article.title}
+                width={280}
+                height={175}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                loading="lazy"
+                decoding="async"
+                onError={handleNewsImageError}
+              />
+            </div>
+          )}
           <div className="flex-1 min-w-0">
             <div className="flex items-center gap-1 mb-1">
               <CatIcon className="h-3 w-3 text-accent" />

@@ -157,13 +157,13 @@ export function FeedItemDetailModal({ item, open, onOpenChange }: FeedItemDetail
         {/* Modal Body */}
         <div className="p-6 space-y-6">
             {/* Media Box */}
-            {item.mediaType === "image" && item.rawItem && (
+            {item.mediaType === "image" && item.rawItem?.image_url && (
               <div className="relative mt-4 mb-2 rounded-xl overflow-hidden border border-border bg-muted/40 max-h-[350px]">
                 <img
-                  src={getNewsImage(item.rawItem.image_url || "", item.rawItem.category, item.rawItem.id)}
+                  src={getNewsImage(item.rawItem.image_url, item.rawItem.category, item.rawItem.id) || item.rawItem.image_url}
                   alt=""
                   className="w-full h-full object-cover"
-                  onError={(e) => handleNewsImageError(e, item.rawItem.category, item.rawItem.id)}
+                  onError={handleNewsImageError}
                   loading="lazy"
                 />
               </div>

@@ -353,15 +353,17 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         </div>
 
         {/* ─── 4. Main Image ─── */}
-        <div className="rounded-2xl overflow-hidden border border-border/80 bg-muted/30">
-          <img
-            src={heroImage}
-            alt={article.title}
-            className="w-full aspect-[16/9] object-cover"
-            onError={(e) => handleNewsImageError(e, article.category, article.id)}
-            loading="eager"
-          />
-        </div>
+        {heroImage && (
+          <div className="rounded-2xl overflow-hidden border border-border/80 bg-muted/30">
+            <img
+              src={heroImage}
+              alt={article.title}
+              className="w-full aspect-[16/9] object-cover"
+              onError={handleNewsImageError}
+              loading="eager"
+            />
+          </div>
+        )}
 
         {/* ─── 5. Source / Link ─── */}
         <div className="text-xs text-muted-foreground font-medium">
