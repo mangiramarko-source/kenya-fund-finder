@@ -1467,11 +1467,11 @@ const OverviewPage = () => {
           </div>
 
           {/* Sticky Market News Header & Tabs */}
-          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md pt-1 pb-1 mb-2">
-            <div className="flex items-center justify-between gap-2 mb-2.5 px-0.5">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">Market News</h2>
-                <Badge variant="secondary" className="text-xs bg-muted/80 font-medium px-2 py-0.5 rounded-full">
+          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md px-4 lg:px-0.5 pt-2 pb-2 mb-1">
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight text-foreground">Market news</h2>
+                <Badge variant="secondary" className="text-[11px] bg-muted/80 font-medium px-2 py-0.5 rounded-full whitespace-nowrap">
                   {activeUpdateCategory === "All"
                     ? (newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredFeedItems.length} articles`)
                     : `${filteredFeedItems.length} ${activeUpdateCategory.toLowerCase()}`}
@@ -1481,9 +1481,8 @@ const OverviewPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 rounded-xl gap-1.5 text-xs font-semibold px-3 border-border/80 text-foreground hover:bg-muted"
+                className="hidden lg:inline-flex h-8 rounded-xl gap-1.5 text-xs font-semibold px-3 border-border/80 text-foreground hover:bg-muted"
                 onClick={() => {
-                  // Cycle categories on filter click for quick filter toggle
                   const categories = ["All", "Kenyan", "International", "Latest", "Oldest"];
                   const nextIndex = (categories.indexOf(activeUpdateCategory) + 1) % categories.length;
                   setActiveUpdateCategory(categories[nextIndex]);
@@ -1494,37 +1493,27 @@ const OverviewPage = () => {
               </Button>
             </div>
 
-            {/* Sector Category Tabs (Minimal underline style matching screenshot) */}
-            <div className="relative border-b border-border dark:border-white/10">
-              <div className="flex overflow-x-auto gap-6 sm:gap-7 pb-2.5 hide-scrollbar text-sm font-medium">
-                {[
-                  "All",
-                  "Kenyan",
-                  "International",
-                  "Latest",
-                  "Oldest",
-                ].map((cat) => {
-                  const isActive = activeUpdateCategory === cat;
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setActiveUpdateCategory(cat)}
-                      className={`whitespace-nowrap transition-colors duration-200 relative pb-1 text-[13px] ${
-                        isActive
-                          ? "text-foreground font-bold dark:text-white"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {cat}
-                      {isActive && (
-                        <span className="absolute bottom-[-11px] left-0 right-0 h-[2px] bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+            {/* Category filter chips */}
+            <div className="flex overflow-x-auto gap-2 hide-scrollbar -mx-1 px-1">
+              {["All", "Kenyan", "International", "Latest", "Oldest"].map((cat) => {
+                const isActive = activeUpdateCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveUpdateCategory(cat)}
+                    className={`shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[12px] transition-colors ${
+                      isActive
+                        ? "bg-accent text-accent-foreground border-accent font-bold"
+                        : "bg-muted/50 text-muted-foreground border-border/60 font-medium hover:text-foreground"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
             </div>
           </div>
+
 
           {news.length === 0 && !loading && <div className="hidden sm:block sm:min-h-[280px]" aria-hidden="true" />}
           <div className="mt-2 pb-4">
