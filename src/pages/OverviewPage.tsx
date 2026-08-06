@@ -1532,9 +1532,23 @@ const OverviewPage = () => {
           </div>
 
           {news.length === 0 && !loading && <div className="hidden sm:block sm:min-h-[280px]" aria-hidden="true" />}
-          <div className="mt-2 pb-8">
+          <div className="mt-2 pb-4">
             <SocialFeed items={filteredFeedItems} loading={loading} />
           </div>
+
+          {/* ─── Mobile-only market panels ─── */}
+          <MobileHomePanels
+            loading={loading}
+            isSignedIn={!!user}
+            watchedStocks={watchedStocks}
+            rates={rates}
+            selectedFxRates={selectedFxRates}
+            topGainers={topGainers}
+            topLosers={topLosers}
+            moneyMarketFunds={moneyMarketFunds}
+            onCustomize={() => (user ? setCustomizeOpen(true) : setWatchlistPromptOpen(true))}
+          />
+
         </div>
 
         {/* ─── Column 3 (Right Column): Real Featured News & Articles (Twitter/X style feed cards) ─── */}
