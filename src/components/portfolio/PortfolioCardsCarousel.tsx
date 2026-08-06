@@ -1,8 +1,9 @@
 import React from "react";
 import { Link } from "react-router-dom";
+import { useAuth } from "@/hooks/useAuth";
 import { usePortfolio, getCurrentValue, getPnL, getPnLPercent, AssetType } from "@/hooks/usePortfolio";
 import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
-import { TrendingUp, TrendingDown, Plus, AlertCircle, PieChart, Briefcase, Landmark, ShieldCheck } from "lucide-react";
+import { TrendingUp, TrendingDown, Plus, PieChart, Briefcase, Landmark, ShieldCheck } from "lucide-react";
 
 interface Props {
   currency?: "KES" | "USD";
@@ -38,13 +39,31 @@ const getAssetIcon = (type: AssetType) => {
 };
 
 export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES" }) => {
-  const { items, totalValue, totalPnL, totalPnLPercent, isLoading } = usePortfolio();
+  const { user } = useAuth();
+  const { items, totalValue, totalPnL, totalPnLPercent } = usePortfolio();
   const { changes } = usePortfolioChanges(items);
 
   const isPositiveTotal = totalPnL >= 0;
-
-  // Map 1D change lookup from changes hook
   const changeLookup = new Map(changes.map(c => [c.itemId, c]));
+
+  if (!user) {
+    return (
+      <div className="no-scrollbar -mx-4 px-4 mb-6 flex gap-3 overflow-x-auto py-1">
+        <Link
+          to="/auth"
+          className="group relative min-w-[240px] w-[240px] shrink-0 rounded-2xl border border-dashed border-border/80 bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer"
+        >
+          <div className="w-12 h-12 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-800/30 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
+            <Plus className="w-6 h-6 stroke-[2.2]" />
+          </div>
+          <div>
+            <span className="text-base font-bold text-foreground block leading-tight">Add Investment</span>
+            <span className="text-xs text-muted-foreground block mt-1">Track MMFs, Stocks & FX</span>
+          </div>
+        </Link>
+      </div>
+    );
+  }
 
   return (
     <div className="no-scrollbar -mx-4 px-4 mb-6 flex gap-3 overflow-x-auto py-1">
@@ -166,17 +185,17 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES" }) =>
         );
       })}
 
-      {/* ─── Add Holding CTA Card (If empty or extra slot) ─── */}
+      {/* ─── Add Holding CTA Card ─── */}
       <Link
         to="/portfolio"
-        className="group relative min-w-[210px] w-[210px] shrink-0 rounded-2xl border border-dashed border-border/80 bg-card/40 hover:bg-card/70 p-4 shadow-sm hover:border-emerald-500/50 transition-all flex flex-col items-center justify-center text-center space-y-2 cursor-pointer"
+        className="group relative min-w-[240px] w-[240px] shrink-0 rounded-2xl border border-dashed border-border/80 bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer"
       >
-        <div className="w-10 h-10 rounded-full bg-emerald-500/10 text-emerald-500 flex items-center justify-center font-bold">
-          <Plus className="w-5 h-5" />
+        <div className="w-12 h-12 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-800/30 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
+          <Plus className="w-6 h-6 stroke-[2.2]" />
         </div>
         <div>
-          <span className="text-sm font-bold text-foreground block">Add Investment</span>
-          <span className="text-xs text-muted-foreground block mt-0.5">Track MMFs, Stocks & FX</span>
+          <span className="text-base font-bold text-foreground block leading-tight">Add Investment</span>
+          <span className="text-xs text-muted-foreground block mt-1">Track MMFs, Stocks & FX</span>
         </div>
       </Link>
     </div>
