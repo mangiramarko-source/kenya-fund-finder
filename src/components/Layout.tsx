@@ -44,7 +44,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         )}
         {showTicker && (
-          <div className="sticky top-14 z-20 w-full">
+          <div className="sticky z-20 w-full top-14 md:top-14" style={{ top: "var(--kf-mobile-header, 3.5rem)" }}>
             <CurrencyTicker />
           </div>
         )}

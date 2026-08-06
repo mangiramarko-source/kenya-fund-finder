@@ -23,6 +23,7 @@ import {
   Home, Zap, Users, Activity, MessageSquare, AlertTriangle, MoreHorizontal, Heart, Calculator
 } from "lucide-react";
 import PortfolioSnapshotPanel from "@/components/portfolio/PortfolioSnapshotPanel";
+import MobileHomePanels from "@/components/home/MobileHomePanels";
 import { toast } from "sonner";
 import { fetchPublishedNews, fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
 import CurrencyTicker from "@/components/CurrencyTicker";
@@ -1180,7 +1181,7 @@ const OverviewPage = () => {
 
   const topMoneyMarket = useMemo(() => {
     if (!funds) return null;
-    return [...funds].filter(f => f.fund_type === "Money Market" || f.fund_type === "money_market").sort((a, b) => b.annual_yield - a.annual_yield)[0];
+    return [...funds].filter(f => (f.fund_type as string) === "Money Market" || f.fund_type === "money_market").sort((a, b) => b.annual_yield - a.annual_yield)[0];
   }, [funds]);
 
   const filteredFeedItems = useMemo(() => {
@@ -1391,39 +1392,33 @@ const OverviewPage = () => {
         <div className="lg:col-span-6 col-span-12 space-y-3.5 lg:h-[calc(100vh-105px)] lg:overflow-y-auto hide-scrollbar px-0 sm:px-0.5">
           
           {/* ─── Mobile Page Header ─── */}
-          <div className="lg:hidden mb-4 px-4 sm:px-0.5 mt-2">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Overview</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Your personalized market overview, top movers, and latest news.
-              </p>
-            </div>
-            <div className="flex items-center justify-end w-full mt-3">
+          <div className="lg:hidden px-4 pt-3 pb-3 mb-1">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="text-[22px] font-extrabold tracking-tight text-foreground">Overview</h1>
+                <p className="text-[13px] text-muted-foreground mt-0.5">
+                  Movers, rates and news in one feed.
+                </p>
+              </div>
               <SectionLiveStatus section="overview" isLoading={loading} />
             </div>
-            <div className="border-b border-border mt-3" />
           </div>
+
 
           {/* ─── Mobile-only Top Gainers & Top Loser Overview Widget (Horizontal Cards) ─── */}
           <div className="block lg:hidden mb-5">
             <div className="flex overflow-x-auto snap-x snap-mandatory gap-4 pb-4 px-4 hide-scrollbar">
-              {(topGainers.length > 0 || topLosers.length > 0
-                ? [
-                    ...topGainers.slice(0, 3).map(s => ({ ...s, type: 'gainer' })),
-                    ...topLosers.slice(0, 3).map(s => ({ ...s, type: 'loser' }))
-                  ]
-                : [
-                    { id: "g1", symbol: "SGL", name: "Standard Group Ltd", price: 6.24, day_change_percent: 305.19, day_change: 4.70, volume: 12000, type: 'gainer' },
-                    { id: "g2", symbol: "CTUM", name: "Centum Investment", price: 19.30, day_change_percent: 100.21, day_change: 9.66, volume: 54000, type: 'gainer' },
-                    { id: "l1", symbol: "LKL", name: "Longhorn Publishers", price: 2.86, day_change_percent: -48.75, day_change: -2.72, volume: 3200, type: 'loser' },
-                  ]
-              ).map((stk, idx) => {
+              {([
+                ...topGainers.slice(0, 3).map(s => ({ ...s, type: 'gainer' })),
+                ...topLosers.slice(0, 3).map(s => ({ ...s, type: 'loser' })),
+              ]).map((stk, idx) => {
+
                 const isGainer = stk.type === 'gainer';
                 return (
                   <Link
                     key={stk.id || idx}
                     to={`/stocks/${stk.symbol}`}
-                    className="w-[92vw] max-w-[340px] shrink-0 snap-center flex flex-col justify-between rounded-3xl border border-border/60 bg-card p-5 shadow-sm hover:bg-muted/40 transition-colors"
+                    className="w-[92vw] max-w-[340px] shrink-0 snap-center flex flex-col justify-between rounded-3xl border border-border/60 bg-card p-5 shadow-soft hover:bg-muted/40 transition-colors"
                   >
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex flex-col">
@@ -1432,7 +1427,7 @@ const OverviewPage = () => {
                         </span>
                         <span className="text-[12px] text-muted-foreground mt-0.5">{stk.symbol}</span>
                       </div>
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${isGainer ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500'}`}>
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${isGainer ? 'bg-up/15 text-up' : 'bg-down/15 text-down'}`}>
                         {isGainer ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                       </div>
                     </div>
@@ -1442,13 +1437,13 @@ const OverviewPage = () => {
                         <span className="text-3xl font-bold text-foreground tracking-tight">
                           {Number(stk.price).toFixed(2)}
                         </span>
-                        <span className={`text-[13px] font-bold flex items-center gap-0.5 ${isGainer ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        <span className={`text-[13px] font-bold flex items-center gap-0.5 ${isGainer ? 'text-up' : 'text-down'}`}>
                           {isGainer ? '↗' : '↘'} {Math.abs(Number(stk.day_change_percent)).toFixed(2)}%
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5 text-[13px]">
                          <span className="font-semibold text-muted-foreground/80">1D</span>
-                         <span className={`font-semibold ${isGainer ? 'text-emerald-500/90' : 'text-rose-500/90'}`}>
+                         <span className={`font-semibold ${isGainer ? 'text-up/90' : 'text-down/90'}`}>
                            {isGainer ? '↗' : '↘'} {stk.day_change ? Math.abs(Number(stk.day_change)).toFixed(2) : 'n/a'}
                          </span>
                          <span className="text-muted-foreground/60 ml-1">n/a</span>
@@ -1461,7 +1456,7 @@ const OverviewPage = () => {
                        <span className="text-[12px] text-muted-foreground font-semibold">
                          Vol {stk.volume ? stk.volume.toLocaleString() : 'n/a'}
                        </span>
-                       <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest ${isGainer ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                       <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest ${isGainer ? 'bg-up/10 text-up' : 'bg-down/10 text-down'}`}>
                          Top {isGainer ? 'Gainer' : 'Loser'}
                        </span>
                     </div>
@@ -1472,11 +1467,11 @@ const OverviewPage = () => {
           </div>
 
           {/* Sticky Market News Header & Tabs */}
-          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md pt-1 pb-1 mb-2">
-            <div className="flex items-center justify-between gap-2 mb-2.5 px-0.5">
-              <div className="flex items-center gap-2">
-                <h2 className="text-xl sm:text-2xl font-extrabold tracking-tight text-foreground">Market News</h2>
-                <Badge variant="secondary" className="text-xs bg-muted/80 font-medium px-2 py-0.5 rounded-full">
+          <div className="sticky top-0 z-20 bg-background/95 backdrop-blur-md px-4 lg:px-0.5 pt-2 pb-2 mb-1">
+            <div className="flex items-center justify-between gap-2 mb-2.5">
+              <div className="flex items-center gap-2 min-w-0">
+                <h2 className="text-lg sm:text-2xl font-extrabold tracking-tight text-foreground">Market news</h2>
+                <Badge variant="secondary" className="text-[11px] bg-muted/80 font-medium px-2 py-0.5 rounded-full whitespace-nowrap">
                   {activeUpdateCategory === "All"
                     ? (newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredFeedItems.length} articles`)
                     : `${filteredFeedItems.length} ${activeUpdateCategory.toLowerCase()}`}
@@ -1486,9 +1481,8 @@ const OverviewPage = () => {
               <Button
                 variant="outline"
                 size="sm"
-                className="h-8 rounded-xl gap-1.5 text-xs font-semibold px-3 border-border/80 text-foreground hover:bg-muted"
+                className="hidden lg:inline-flex h-8 rounded-xl gap-1.5 text-xs font-semibold px-3 border-border/80 text-foreground hover:bg-muted"
                 onClick={() => {
-                  // Cycle categories on filter click for quick filter toggle
                   const categories = ["All", "Kenyan", "International", "Latest", "Oldest"];
                   const nextIndex = (categories.indexOf(activeUpdateCategory) + 1) % categories.length;
                   setActiveUpdateCategory(categories[nextIndex]);
@@ -1499,42 +1493,46 @@ const OverviewPage = () => {
               </Button>
             </div>
 
-            {/* Sector Category Tabs (Minimal underline style matching screenshot) */}
-            <div className="relative border-b border-border dark:border-white/10">
-              <div className="flex overflow-x-auto gap-6 sm:gap-7 pb-2.5 hide-scrollbar text-sm font-medium">
-                {[
-                  "All",
-                  "Kenyan",
-                  "International",
-                  "Latest",
-                  "Oldest",
-                ].map((cat) => {
-                  const isActive = activeUpdateCategory === cat;
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setActiveUpdateCategory(cat)}
-                      className={`whitespace-nowrap transition-colors duration-200 relative pb-1 text-[13px] ${
-                        isActive
-                          ? "text-foreground font-bold dark:text-white"
-                          : "text-muted-foreground hover:text-foreground"
-                      }`}
-                    >
-                      {cat}
-                      {isActive && (
-                        <span className="absolute bottom-[-11px] left-0 right-0 h-[2px] bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                      )}
-                    </button>
-                  );
-                })}
-              </div>
+            {/* Category filter chips */}
+            <div className="flex overflow-x-auto gap-2 hide-scrollbar -mx-1 px-1">
+              {["All", "Kenyan", "International", "Latest", "Oldest"].map((cat) => {
+                const isActive = activeUpdateCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    onClick={() => setActiveUpdateCategory(cat)}
+                    className={`shrink-0 whitespace-nowrap rounded-full border px-3.5 py-1.5 text-[12px] transition-colors ${
+                      isActive
+                        ? "bg-accent text-accent-foreground border-accent font-bold"
+                        : "bg-muted/50 text-muted-foreground border-border/60 font-medium hover:text-foreground"
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
             </div>
           </div>
 
+
           {news.length === 0 && !loading && <div className="hidden sm:block sm:min-h-[280px]" aria-hidden="true" />}
-          <div className="mt-2 pb-8">
+          <div className="mt-2 pb-4">
             <SocialFeed items={filteredFeedItems} loading={loading} />
           </div>
+
+          {/* ─── Mobile-only market panels ─── */}
+          <MobileHomePanels
+            loading={loading}
+            isSignedIn={!!user}
+            watchedStocks={watchedStocks}
+            rates={rates}
+            selectedFxRates={selectedFxRates}
+            topGainers={topGainers}
+            topLosers={topLosers}
+            moneyMarketFunds={moneyMarketFunds}
+            onCustomize={() => (user ? setCustomizeOpen(true) : setWatchlistPromptOpen(true))}
+          />
+
         </div>
 
         {/* ─── Column 3 (Right Column): Real Featured News & Articles (Twitter/X style feed cards) ─── */}
@@ -1587,7 +1585,7 @@ const OverviewPage = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-[12px] font-bold text-foreground leading-none mb-1">KES {Number(rate.rate || rate.buying_price || 0).toFixed(2)}</p>
+                      <p className="text-[12px] font-bold text-foreground leading-none mb-1">KES {Number(rate.rate || (rate as any).buying_price || 0).toFixed(2)}</p>
                       {rate.previous_rate && (
                          <p className={`text-[10px] font-semibold leading-none ${Number(rate.rate) > Number(rate.previous_rate) ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                            {Number(rate.rate) > Number(rate.previous_rate) ? "+" : ""}{(((Number(rate.rate) - Number(rate.previous_rate)) / Number(rate.previous_rate)) * 100).toFixed(2)}%
