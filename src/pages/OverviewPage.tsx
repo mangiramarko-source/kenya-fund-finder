@@ -1587,7 +1587,7 @@ const OverviewPage = () => {
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-[12px] font-bold text-foreground leading-none mb-1">KES {Number(rate.rate || rate.buying_price || 0).toFixed(2)}</p>
+                      <p className="text-[12px] font-bold text-foreground leading-none mb-1">KES {Number(rate.rate || (rate as any).buying_price || 0).toFixed(2)}</p>
                       {rate.previous_rate && (
                          <p className={`text-[10px] font-semibold leading-none ${Number(rate.rate) > Number(rate.previous_rate) ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}`}>
                            {Number(rate.rate) > Number(rate.previous_rate) ? "+" : ""}{(((Number(rate.rate) - Number(rate.previous_rate)) / Number(rate.previous_rate)) * 100).toFixed(2)}%
