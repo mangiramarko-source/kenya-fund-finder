@@ -30,213 +30,144 @@ const getAvatarBg = (type: FeedItem["type"]) => {
   }
 };
 
-export const SocialFeedCard = ({ item, onSelect }: { item: FeedItem; onSelect: (item: FeedItem) => void }) => {
-  const { user } = useAuth();
-  const navigate = useNavigate();
-  const [likesCount, setLikesCount] = useState(item.likes || 0);
-  const [isLiked, setIsLiked] = useState(false);
+export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; onSelect: (item: FeedItem) => void; index?: number }) => {
+  const [liked, setLiked] = useState(false);
+  const [likeCount, setLikeCount] = useState(item.likes || 0);
+
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
+
+  const authorName = item.authorName || "KenyaFundFinder Academy";
+  const initials = getInitials(authorName);
+  
+  const rawLabel = item.authorLabel || "dailytip";
+  const authorHandle = rawLabel.startsWith("@") ? rawLabel : `@${rawLabel.toLowerCase().replace(/\s+/g, '')}`;
 
   const handleLike = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (!user) {
-      toast.error("Sign up to like posts", {
-        description: "Create a free account to like, comment, and engage.",
-        action: {
-          label: "Sign Up",
-          onClick: () => navigate("/auth"),
-        },
-      });
-      return;
-    }
-    if (isLiked) {
-      setLikesCount(prev => Math.max(0, prev - 1));
-      setIsLiked(false);
+    if (liked) {
+      setLiked(false);
+      setLikeCount(prev => Math.max(0, prev - 1));
     } else {
-      setLikesCount(prev => prev + 1);
-      setIsLiked(true);
-      toast.success("Post liked");
+      setLiked(true);
+      setLikeCount(prev => prev + 1);
+      toast.success("Liked post");
     }
-  };
-
-  const handleComment = (e: React.MouseEvent) => {
-    e.stopPropagation();
-    if (!user) {
-      toast.error("Sign up to comment", {
-        description: "Create a free account to join the discussion.",
-        action: {
-          label: "Sign Up",
-          onClick: () => navigate("/auth"),
-        },
-      });
-      return;
-    }
-    onSelect(item);
   };
 
   const handleShare = (e: React.MouseEvent) => {
     e.stopPropagation();
-    if (navigator.clipboard) {
+    if (navigator.share) {
+      navigator.share({
+        title: item.title,
+        text: item.content,
+        url: window.location.href,
+      }).catch(() => {});
+    } else {
       navigator.clipboard.writeText(window.location.href);
       toast.success("Link copied to clipboard");
     }
   };
 
   return (
-    <div 
+    <div
       onClick={() => onSelect(item)}
-      className="relative p-4 rounded-none sm:rounded-2xl border-x-0 border-y sm:border sm:border-border/60 bg-card sm:shadow-sm hover:border-accent/40 transition-all dark:shadow-md cursor-pointer"
+      className="animate-rise rounded-2xl bg-card p-4 sm:p-5 border border-border/80 shadow-sm cursor-pointer hover:border-border transition-all space-y-3"
+      style={{ animationDelay: `${index * 80}ms` }}
     >
-      <div className="flex gap-3 items-start">
-        {/* Avatar / Logo */}
-        <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 border ${getAvatarBg(item.type)} mt-0.5`}>
-          <span className="text-white font-bold text-[13px] tracking-wider">{getInitials(item.authorName)}</span>
+      {/* Top Author Bar */}
+      <div className="flex items-center gap-3">
+        {/* Avatar Circle */}
+        <div className={`w-9 h-9 rounded-full ${getAvatarBg(item.type)} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm`}>
+          {initials}
         </div>
-        
-        {/* Main Content Area */}
-        <div className="flex-1 min-w-0">
-          {/* Header row: Author, Username, Time */}
-          <div className="flex items-center justify-between mb-1">
-            <div className="flex items-center gap-1.5 overflow-hidden text-xs sm:text-[13px]">
-              <span className="font-bold text-foreground truncate">{item.authorName}</span>
-              {item.authorLabel && (
-                <span className="text-muted-foreground truncate">
-                  @{item.authorLabel.toLowerCase().replace(/\s+/g, '')}
-                </span>
-              )}
-              <span className="text-muted-foreground">·</span>
-              <span className="text-muted-foreground whitespace-nowrap">{timeAgo}</span>
-            </div>
-            
-            <button 
-              type="button"
-              onClick={(e) => e.stopPropagation()}
-              className="text-muted-foreground hover:text-foreground transition-colors p-1 rounded-full hover:bg-muted"
-            >
-              <MoreHorizontal className="w-3.5 h-3.5" />
-            </button>
-          </div>
 
-          {/* Title & Body */}
-          <div className="mb-2">
-            {item.id !== "daily-market-summary" && (
-              <h3 className={`text-lg font-bold leading-snug mb-1 tracking-tight ${
-                item.type === "FX_ALERT" || item.title.includes("USD/KES") ? "text-emerald-600 dark:text-emerald-400" : "text-foreground"
-              }`}>
-                {item.title}
-              </h3>
-            )}
-            {item.content && (
-              <div className="relative">
-                <div className="prose prose-sm dark:prose-invert max-w-none prose-p:mt-0 prose-p:mb-1.5 prose-headings:mt-0 prose-headings:mb-0 line-clamp-6 cursor-pointer" onClick={(e) => { e.stopPropagation(); onSelect(item); }}>
-                  <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                    {item.content}
-                  </ReactMarkdown>
-                </div>
-                {item.content.length > 200 && (
-                  <button 
-                    type="button"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onSelect(item);
-                    }}
-                    className="text-emerald-600 dark:text-emerald-400 hover:underline font-semibold transition-colors mt-1"
-                  >
-                    See more
-                  </button>
-                )}
-              </div>
-            )}
-            
-            {/* Related Symbols Sparklines */}
-            {item.relatedSymbols && item.relatedSymbols.length > 0 && (
-              <div className="flex flex-wrap items-center gap-2 mt-2 pt-1">
-                {item.relatedSymbols.map(sym => (
-                  <Sparkline key={sym} symbol={sym} />
-                ))}
-              </div>
-            )}
-            
-            {/* Optional Ticker Badge */}
-            {item.type === "STOCK_INSIGHT" && item.rawItem && (
-              <div className="inline-flex items-center gap-1.5 text-[11px] font-medium mt-2 bg-muted/60 border border-border/60 px-2 py-0.5 rounded-full">
-                <span className="text-foreground font-semibold">{item.rawItem.symbol}</span>
-                <span className="text-muted-foreground/40">•</span>
-                {item.rawItem.current_price != null ? Number(item.rawItem.current_price).toFixed(2) : "-"}
-                <span className={Number(item.rawItem.change_pct) >= 0 ? "text-emerald-600 dark:text-emerald-400 font-semibold" : "text-rose-600 dark:text-rose-400 font-semibold"}>
-                  {Number(item.rawItem.change_pct) >= 0 ? "+" : ""}{item.rawItem.change_pct != null ? Number(item.rawItem.change_pct).toFixed(1) : "-"}%
-                </span>
-              </div>
-            )}
-          </div>
-
-          {/* Media Box */}
-          {item.mediaType === "image" && item.rawItem && (
-            <div className="relative mt-2 mb-2 rounded-xl overflow-hidden border border-border bg-muted/40 max-h-[260px]">
-              <img
-                src={getNewsImage(item.rawItem.image_url || "", item.rawItem.category, item.rawItem.id)}
-                alt=""
-                className="w-full h-full object-cover"
-                onError={(e) => handleNewsImageError(e, item.rawItem.category, item.rawItem.id)}
-                loading="lazy"
-              />
-            </div>
-          )}
-
-          {/* Video Embed */}
-          {item.mediaType === "video" && item.mediaUrl && (
-            <div className="relative mt-3 mb-2 rounded-xl overflow-hidden border border-border bg-black aspect-video">
-              <iframe
-                src={item.mediaUrl}
-                title="Video player"
-                className="w-full h-full border-0"
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-              ></iframe>
-            </div>
-          )}
-
-          {/* Action Bar (Right-aligned, compact, only Comment, Share, Like) */}
-          <div className="flex items-center justify-end gap-4 text-muted-foreground mt-2.5 pt-1.5 border-t border-border/30">
-            {/* Comment */}
-            <button 
-              type="button"
-              onClick={handleComment}
-              className="flex items-center gap-1 hover:text-blue-500 transition-colors group text-xs font-medium"
-            >
-              <div className="p-1 rounded-full group-hover:bg-blue-500/10 transition-colors">
-                <MessageSquare className="w-3.5 h-3.5" />
-              </div>
-              <span>{item.comments || 0}</span>
-            </button>
-            
-            {/* Retweet/Share */}
-            <button 
-              type="button"
-              onClick={handleShare}
-              className="flex items-center gap-1 hover:text-emerald-500 transition-colors group text-xs font-medium"
-            >
-              <div className="p-1 rounded-full group-hover:bg-emerald-500/10 transition-colors">
-                <Share2 className="w-3.5 h-3.5" />
-              </div>
-              <span>Share</span>
-            </button>
-
-            {/* Like */}
-            <button 
-              type="button"
-              onClick={handleLike}
-              className={`flex items-center gap-1 transition-colors group text-xs font-medium ${
-                isLiked ? "text-rose-500 font-semibold" : "hover:text-rose-500"
-              }`}
-            >
-              <div className="p-1 rounded-full group-hover:bg-rose-500/10 transition-colors">
-                <Heart className={`w-3.5 h-3.5 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
-              </div>
-              <span>{likesCount}</span>
-            </button>
-          </div>
+        {/* Author Details & Timestamp */}
+        <div className="flex-1 min-w-0 flex items-center flex-wrap gap-x-1.5 text-xs">
+          <span className="font-bold text-foreground text-sm truncate">
+            {authorName}
+          </span>
+          <span className="text-muted-foreground truncate">
+            {authorHandle}
+          </span>
+          <span className="text-muted-foreground font-bold">·</span>
+          <span className="text-muted-foreground whitespace-nowrap">
+            {timeAgo}
+          </span>
         </div>
+
+        {/* Options Button */}
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(item);
+          }}
+          className="text-muted-foreground hover:text-foreground p-1 transition-colors rounded-full hover:bg-muted/30"
+          aria-label="More options"
+        >
+          <MoreHorizontal className="w-4 h-4" />
+        </button>
+      </div>
+
+      {/* Main Title / Headline */}
+      {item.id !== "daily-market-summary" && (
+        <h3 className="font-bold text-base text-foreground leading-snug tracking-tight">
+          {item.title}
+        </h3>
+      )}
+
+      {/* Text Body Content */}
+      <div className="text-sm text-muted-foreground/90 leading-relaxed line-clamp-4 prose-sm dark:prose-invert font-normal">
+        <ReactMarkdown remarkPlugins={[remarkGfm]}>
+          {item.content || ""}
+        </ReactMarkdown>
+      </div>
+
+      {/* See more Link */}
+      <div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(item);
+          }}
+          className="text-emerald-500 hover:text-emerald-400 font-semibold text-sm inline-block transition-colors"
+        >
+          See more
+        </button>
+      </div>
+
+      {/* Footer Action Icons */}
+      <div className="flex items-center justify-end gap-6 text-xs text-muted-foreground pt-1">
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            onSelect(item);
+          }}
+          className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+        >
+          <MessageSquare className="w-4 h-4" />
+          <span>{item.comments || 0}</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleShare}
+          className="flex items-center gap-1.5 hover:text-foreground transition-colors"
+        >
+          <Share2 className="w-4 h-4" />
+          <span>Share</span>
+        </button>
+
+        <button
+          type="button"
+          onClick={handleLike}
+          className="flex items-center gap-1.5 hover:text-red-500 transition-colors"
+        >
+          <Heart className={`w-4 h-4 ${liked ? "fill-red-500 text-red-500" : ""}`} />
+          <span>{likeCount}</span>
+        </button>
       </div>
     </div>
   );
@@ -248,19 +179,16 @@ export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: bo
 
   if (loading && items.length === 0) {
     return (
-      <div className="flex flex-col gap-3.5 pb-12">
+      <div className="flex flex-col gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="rounded-2xl border border-border/60 bg-card p-4 space-y-3 dark:shadow-md">
-            <div className="flex items-center gap-3">
-              <Skeleton className="w-9 h-9 rounded-full" />
-              <div className="space-y-2">
-                <Skeleton className="h-3.5 w-32" />
-                <Skeleton className="h-3 w-20" />
-              </div>
+          <div key={i} className="rounded-xl bg-card p-4 ring-1 ring-white/5 space-y-3">
+            <div className="flex justify-between">
+              <Skeleton className="h-3 w-16" />
+              <Skeleton className="h-4 w-12 rounded-full" />
             </div>
+            <Skeleton className="h-5 w-3/4" />
             <Skeleton className="h-4 w-full" />
             <Skeleton className="h-4 w-5/6" />
-            <Skeleton className="h-32 w-full rounded-xl mt-2" />
           </div>
         ))}
       </div>
@@ -279,21 +207,19 @@ export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: bo
 
   return (
     <>
-      <div className="flex flex-col gap-3.5 pb-12">
-        {visibleItems.map((item) => (
-          <SocialFeedCard key={item.id} item={item} onSelect={setSelectedItem} />
+      <div className="flex flex-col gap-4">
+        {visibleItems.map((item, i) => (
+          <SocialFeedCard key={item.id} item={item} onSelect={setSelectedItem} index={i} />
         ))}
 
         {items.length > displayCount && (
-          <div className="px-4 sm:px-0">
-            <button
-              type="button"
-              onClick={() => setDisplayCount(prev => prev + 15)}
-              className="w-full py-3 rounded-2xl border border-border bg-card/50 text-xs font-semibold text-emerald-500 hover:bg-muted/50 transition-all text-center cursor-pointer"
-            >
-              Load more updates ({items.length - displayCount} remaining)
-            </button>
-          </div>
+          <button
+            type="button"
+            onClick={() => setDisplayCount(prev => prev + 15)}
+            className="w-full py-4 rounded-xl border border-border bg-card/50 text-xs font-semibold text-primary hover:bg-muted/50 transition-all text-center cursor-pointer"
+          >
+            Load more updates ({items.length - displayCount} remaining)
+          </button>
         )}
       </div>
 

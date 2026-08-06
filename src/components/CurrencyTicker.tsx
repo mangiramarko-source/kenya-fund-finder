@@ -95,7 +95,7 @@ const CurrencyTicker = () => {
 
   return (
     <div
-      className="w-full bg-card/95 text-card-foreground border-b border-border backdrop-blur-md dark:bg-[hsl(220,60%,12%)] dark:border-border/30 overflow-x-auto scrollbar-hide cursor-grab active:cursor-grabbing shadow-sm"
+      className="flex h-9 items-center overflow-hidden border-b border-border bg-surface px-4"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={() => setPaused(true)}
@@ -103,10 +103,10 @@ const CurrencyTicker = () => {
     >
       <div
         ref={scrollRef}
-        className="flex whitespace-nowrap"
+        className="animate-marquee flex gap-8 whitespace-nowrap"
         style={{
-          animation: `ticker-scroll ${items.length * (isMobile ? 1.2 : 2)}s linear infinite`,
           animationPlayState: paused ? "paused" : "running",
+          animationDuration: `${items.length * (isMobile ? 3.5 : 4.5)}s`
         }}
       >
         {doubled.map((item, i) => {
@@ -126,52 +126,23 @@ const CurrencyTicker = () => {
           return (
             <div
               key={`${item.id}-${i}`}
-              className="inline-flex items-center gap-2 px-5 py-1.5 text-xs"
+              className="flex items-center gap-2 text-xs font-medium"
             >
-              {showSep && (
-                <span className="text-border dark:text-white/20 mr-1 text-sm select-none">│</span>
-              )}
-              <span className="font-semibold text-muted-foreground dark:text-white/70">
+              <span className="text-muted-foreground">
                 {item.label}
               </span>
-              {item.sparkData && item.sparkData.length >= 3 && (
-                <Sparkline
-                  data={item.sparkData}
-                  width={40}
-                  height={14}
-                  color="auto"
-                  className="opacity-80"
-                />
-              )}
-              <span className="font-bold text-foreground tabular-nums dark:text-white">
+              <span className="text-foreground">
                 {item.value.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
-                {item.unit && (
-                  <span className="text-muted-foreground font-normal ml-0.5 text-[10px] dark:text-white/60">
-                    {item.unit}
-                  </span>
-                )}
               </span>
-              {pct != null && (
-                <span
-                  className={`inline-flex items-center gap-0.5 font-semibold tabular-nums ${
-                    isUp
-                      ? "text-emerald-600 dark:text-[hsl(152,70%,55%)]"
-                      : isDown
-                      ? "text-rose-600 dark:text-[hsl(0,85%,65%)]"
-                      : "text-muted-foreground dark:text-white/60"
-                  }`}
-                >
-                  {isUp ? (
-                    <TrendingUp className="h-3 w-3" />
-                  ) : isDown ? (
-                    <TrendingDown className="h-3 w-3" />
-                  ) : null}
-                  {isUp ? "+" : ""}
-                  {pct}%
+              {pct != null ? (
+                <span className={isUp ? "text-primary" : isDown ? "text-red-500" : "text-muted-foreground"}>
+                  {isUp ? "+" : ""}{pct}%
                 </span>
+              ) : (
+                <span className="text-muted-foreground">0.00%</span>
               )}
             </div>
           );

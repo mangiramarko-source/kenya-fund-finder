@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
 import NotificationBell from "@/components/alerts/NotificationBell";
+import CurrencyTicker from "@/components/CurrencyTicker";
 
 const navLinks = [
   { to: "/", label: "Home", icon: BarChart3 },
@@ -340,152 +341,58 @@ const Navbar = () => {
     <>
     <header
       ref={headerRef}
-      className={`fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border transition-shadow duration-200 ${scrolled ? "md:shadow-[0_12px_28px_-18px_hsl(var(--foreground)/0.35)]" : ""}`}
+      className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md"
     >
-      <div className="container flex h-16 items-center justify-between relative">
-        {/* Logo */}
-        <Link to="/" className="hidden md:flex items-center gap-2.5 font-heading text-xl font-extrabold text-primary shrink-0">
-          <div className="flex items-center justify-center h-10 w-10 rounded-xl bg-accent text-accent-foreground">
-            <TrendingUp className="h-5 w-5" />
-          </div>
-          <span>Kenya Fund Finder</span>
+      <nav className="flex h-14 items-center justify-between px-4">
+        {/* Left: Search */}
+        <SearchDialog variant="icon" />
+
+        {/* Center: KF Logo */}
+        <Link to="/" className="font-mono text-lg font-bold italic tracking-tighter text-primary">
+          KF
         </Link>
 
-        {/* Desktop nav */}
-        <nav className="hidden md:flex items-center gap-1 bg-muted/60 rounded-full px-1.5 py-1">
-          {navLinks.map((link) => {
-            const Icon = link.icon;
+        {/* Right: Hamburger */}
+        <button
+          onClick={() => setOpen(true)}
+          className="grid size-9 place-items-center rounded-md"
+          aria-label="Open menu"
+        >
+          <Menu className="size-5 text-muted-foreground" />
+        </button>
+      </nav>
+
+      {/* Full-width scrollable tab bar */}
+      <div className="no-scrollbar flex overflow-x-auto border-b border-border px-4">
+        <div ref={mobileTabsScrollRef} className="flex shrink-0 gap-6 py-3">
+          {mobileNavLinks.map((link) => {
             const isActive = location.pathname === link.to;
             return (
               <Link
                 key={link.to}
                 to={link.to}
-                className={`flex items-center gap-1.5 px-4 py-2 rounded-full text-sm font-medium transition-all ${
+                ref={(el) => { mobileTabRefs.current[link.to] = el; }}
+                onClick={(e) => {
+                  e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                }}
+                className={`relative whitespace-nowrap text-sm font-medium transition-colors ${
                   isActive
-                    ? "bg-primary text-primary-foreground shadow-sm"
-                    : "text-muted-foreground hover:text-foreground hover:bg-background/80"
+                    ? "text-primary"
+                    : "text-muted-foreground"
                 }`}
               >
-                <Icon className="h-4 w-4" />
                 {link.label}
+                {isActive && (
+                  <span className="absolute -bottom-3 left-0 h-0.5 w-full bg-primary" />
+                )}
               </Link>
             );
           })}
-        </nav>
-
-        {/* Desktop right side */}
-        <div className="hidden md:flex items-center gap-2">
-          <SearchDialog />
-          <NotificationBell />
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setDark(!dark)}
-            className="rounded-full"
-            aria-label="Toggle dark mode"
-          >
-            {dark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
-          </Button>
-
-          {user ? (
-            <div className="flex items-center gap-2">
-              {isAdmin && (
-                <Link to="/admin" className="text-xs font-semibold text-accent hover:underline flex items-center gap-1">
-                  <Shield className="h-3.5 w-3.5" /> Admin
-                </Link>
-              )}
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <button className="rounded-full ring-2 ring-border hover:ring-accent transition-all">
-                    <Avatar className="h-8 w-8">
-                      <AvatarImage src={avatarUrl} alt={displayName || user.email || ""} />
-                      <AvatarFallback className="bg-accent text-accent-foreground text-xs">
-                        {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  </button>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end" className="w-48">
-                  <div className="px-2 py-1.5">
-                    <p className="text-sm font-medium truncate">{displayName || "User"}</p>
-                    <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                  </div>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={() => navigate("/alerts")} className="gap-2 cursor-pointer">
-                    <Bell className="h-4 w-4" /> My Alerts
-                  </DropdownMenuItem>
-                  <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2 cursor-pointer">
-                    <Settings className="h-4 w-4" /> Profile Settings
-                  </DropdownMenuItem>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="gap-2 cursor-pointer text-destructive focus:text-destructive">
-                    <LogOut className="h-4 w-4" /> Sign Out
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </div>
-          ) : (
-            <Button asChild size="sm" className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full font-semibold">
-              <Link to="/auth"><User className="mr-1.5 h-3.5 w-3.5" /> Sign In</Link>
-            </Button>
-          )}
-        </div>
-
-        {/* Mobile: search on left */}
-        <div className="flex md:hidden items-center gap-1">
-          <SearchDialog variant="icon" />
-        </div>
-
-        {/* Mobile: logo centered */}
-        <Link to="/" className="md:hidden absolute left-1/2 -translate-x-1/2 flex items-center justify-center h-9 w-9 rounded-xl bg-accent text-accent-foreground">
-          <TrendingUp className="h-5 w-5" />
-        </Link>
-
-        {/* Mobile: hamburger on right */}
-        <div className="flex md:hidden items-center">
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setOpen(true)}
-            className="rounded-full h-9 w-9 text-foreground hover:bg-muted"
-            aria-label="Open menu"
-          >
-            <Menu className="h-5 w-5" />
-          </Button>
         </div>
       </div>
 
-      {/* Mobile: full-width scrollable tab bar */}
-      <div className="md:hidden relative">
-        <div ref={mobileTabsScrollRef} className="overflow-x-auto scrollbar-hide bg-card border-b border-border" style={{ scrollBehavior: "smooth" }}>
-          <nav className="flex min-w-max">
-            {mobileNavLinks.map((link) => {
-              const isActive = location.pathname === link.to;
-              return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  ref={(el) => { mobileTabRefs.current[link.to] = el; }}
-                  onClick={(e) => {
-                    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-                  }}
-                  className={`relative shrink-0 px-4 py-3 text-sm whitespace-nowrap transition-colors ${
-                    isActive
-                      ? "font-bold text-foreground"
-                      : "font-medium text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {link.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-4 right-4 h-[3px] rounded-t-full bg-primary" />
-                  )}
-                </Link>
-              );
-            })}
-          </nav>
-        </div>
-        <div className="pointer-events-none absolute top-0 right-0 bottom-0 w-8 bg-gradient-to-l from-card to-transparent" />
-      </div>
+      {location.pathname === '/' && <CurrencyTicker />}
+    </header>
 
 
       {/* Mobile slide-in sheet from right */}
@@ -620,7 +527,6 @@ const Navbar = () => {
           </nav>
         </SheetContent>
       </Sheet>
-    </header>
     <div aria-hidden="true" className="md:hidden shrink-0" style={{ height: mobileHeaderHeight }} />
     </>
   );

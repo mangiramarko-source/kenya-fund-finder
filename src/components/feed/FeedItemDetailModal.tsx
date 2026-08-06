@@ -183,8 +183,8 @@ export function FeedItemDetailModal({ item, open, onOpenChange }: FeedItemDetail
             )}
 
           {/* Article Text Content */}
-          <div className="text-sm sm:text-base text-muted-foreground leading-relaxed space-y-4 font-light whitespace-pre-line">
-            <div className="prose prose-sm dark:prose-invert max-w-none prose-p:mt-0 prose-p:mb-2 prose-headings:mt-0 prose-headings:mb-1">
+          <div className="text-base text-foreground/90 leading-relaxed font-normal whitespace-pre-line">
+            <div className="prose prose-base dark:prose-invert max-w-none prose-p:my-3 prose-p:text-[16px] prose-p:text-foreground/90 prose-p:leading-relaxed prose-headings:mt-4 prose-headings:mb-2 prose-headings:text-foreground">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {item.content}
               </ReactMarkdown>

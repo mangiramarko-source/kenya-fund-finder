@@ -27,27 +27,18 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const showMobileAiLabFab = shouldShowMobileAiLabFab(pathname);
 
   return (
-    <div className={`flex min-h-screen font-body${isAiLab ? " h-dvh max-h-dvh overflow-hidden" : ""}`}>
+    <div className={`flex min-h-screen font-body bg-background${isAiLab ? " h-dvh max-h-dvh overflow-hidden" : ""}`}>
       <SkipToContent />
 
-      {/* Main column */}
-      <div className={`flex-1 flex flex-col min-w-0${isAiLab ? " min-h-0 overflow-hidden" : ""}`}>
-        {/* Desktop top bar */}
-        <DesktopTopBar />
-
+      {/* Main column with mobile constraints globally applied */}
+      <div className={`flex-1 flex flex-col mx-auto w-full max-w-[430px] shadow-2xl relative bg-background${isAiLab ? " min-h-0 overflow-hidden" : ""}`}>
+        
         <OfflineBanner />
 
-        {/* Mobile-only navbar — hidden on news article pages and AI Lab (immersive chat) */}
         {!isNewsArticle && !isAiLab && (
-          <div className="md:hidden">
-            <Navbar />
-          </div>
+          <Navbar />
         )}
-        {showTicker && (
-          <div className="sticky top-14 z-20 w-full">
-            <CurrencyTicker />
-          </div>
-        )}
+
         <main
           id="main-content"
           className={
