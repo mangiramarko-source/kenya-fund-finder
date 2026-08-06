@@ -374,20 +374,20 @@ const NewsArticlePage = () => {
                   {cmt.content}
                 </p>
 
-                {/* Reply action bar */}
-                <div className="flex items-center gap-6 text-[11px] text-muted-foreground font-semibold pt-1">
-                  <button type="button" className="flex items-center gap-1 hover:text-foreground">
+                {/* Reply action bar matching main engagement row */}
+                <div className="flex items-center justify-end gap-6 text-[11px] text-muted-foreground font-medium pt-1.5">
+                  <button type="button" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
                     <MessageSquare className="w-3.5 h-3.5" />
                     <span>Reply</span>
                   </button>
-                  <button type="button" className="flex items-center gap-1 hover:text-emerald-500">
-                    <Repeat className="w-3.5 h-3.5" />
-                    <span>{cmt.reposts}</span>
+                  <button type="button" onClick={handleCopyLink} className="flex items-center gap-1.5 hover:text-foreground transition-colors">
+                    <Share2 className="w-3.5 h-3.5" />
+                    <span>Share</span>
                   </button>
                   <button
                     type="button"
                     onClick={() => handleToggleLikeComment(cmt.id)}
-                    className={`flex items-center gap-1 transition-colors ${cmt.userLiked ? 'text-red-500 font-bold' : 'hover:text-red-500'}`}
+                    className={`flex items-center gap-1.5 transition-colors ${cmt.userLiked ? 'text-red-500 font-bold' : 'hover:text-foreground'}`}
                   >
                     <Heart className={`w-3.5 h-3.5 ${cmt.userLiked ? 'fill-red-500 text-red-500' : ''}`} />
                     <span>{cmt.likes}</span>
