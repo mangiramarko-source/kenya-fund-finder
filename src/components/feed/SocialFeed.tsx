@@ -123,7 +123,7 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
       )}
 
       {/* Text Body Content */}
-      <div className="text-sm text-muted-foreground/90 leading-relaxed line-clamp-4 prose-sm dark:prose-invert font-normal">
+      <div className="text-base text-muted-foreground/90 leading-relaxed line-clamp-4 prose dark:prose-invert font-normal">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {item.content || ""}
         </ReactMarkdown>

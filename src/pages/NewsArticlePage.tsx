@@ -335,11 +335,11 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
 
         {/* ─── 3. Post Text ─── */}
         <div className="space-y-3">
-          <h2 className="text-lg font-bold text-foreground leading-snug tracking-tight">
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground leading-snug tracking-tight">
             {decodeHtmlEntities(article.title)}
           </h2>
 
-          <div className="text-sm text-foreground/90 leading-relaxed space-y-3 font-normal">
+          <div className="text-base sm:text-lg text-foreground/90 leading-relaxed space-y-4 font-normal">
             {article.content && article.content.trim().length > 0 ? (
               article.content.split("\n").filter(Boolean).map((paragraph, i) => (
                 <p key={i} className="my-2">
