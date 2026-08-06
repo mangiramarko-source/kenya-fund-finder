@@ -77,7 +77,7 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
   return (
     <div
       onClick={handleCardClick}
-      className="animate-rise py-4 sm:py-5 border-b border-border/40 last:border-b-0 cursor-pointer hover:bg-muted/10 transition-all space-y-3 px-1"
+      className="animate-rise rounded-2xl bg-card p-4 sm:p-5 border border-border/80 shadow-sm cursor-pointer hover:border-border transition-all space-y-3"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       {/* Top Author Bar */}
@@ -185,9 +185,9 @@ export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: bo
 
   if (loading && items.length === 0) {
     return (
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-4">
         {[1, 2, 3].map((i) => (
-          <div key={i} className="border-b border-border/40 py-4 space-y-3">
+          <div key={i} className="rounded-xl bg-card p-4 ring-1 ring-white/5 space-y-3">
             <div className="flex justify-between">
               <Skeleton className="h-3 w-16" />
               <Skeleton className="h-4 w-12 rounded-full" />
@@ -203,7 +203,7 @@ export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: bo
 
   if (!items || items.length === 0) {
     return (
-      <div className="py-12 text-center text-muted-foreground/60 border border-dashed border-border/50 rounded-2xl">
+      <div className="py-12 text-center text-muted-foreground/60 border border-dashed border-white/10 rounded-2xl">
         <p className="font-medium text-sm">No updates available in your feed.</p>
       </div>
     );
@@ -213,7 +213,7 @@ export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: bo
 
   return (
     <>
-      <div className="flex flex-col">
+      <div className="flex flex-col gap-4">
         {visibleItems.map((item, i) => (
           <SocialFeedCard key={item.id} item={item} onSelect={setSelectedItem} index={i} />
         ))}

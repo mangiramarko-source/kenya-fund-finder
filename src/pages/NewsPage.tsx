@@ -171,7 +171,7 @@ export default function NewsPage() {
           <p className="text-xs mt-1 text-muted-foreground/60">Try searching for something else or selecting a different tab.</p>
         </div>
       ) : (
-        <div className="flex flex-col pb-20">
+        <div className="flex flex-col gap-4 pb-20">
           {feedItems.map((item) => (
             <SocialFeedCard
               key={item.id}
