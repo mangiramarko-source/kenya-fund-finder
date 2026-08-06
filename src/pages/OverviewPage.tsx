@@ -1392,18 +1392,18 @@ const OverviewPage = () => {
         <div className="lg:col-span-6 col-span-12 space-y-3.5 lg:h-[calc(100vh-105px)] lg:overflow-y-auto hide-scrollbar px-0 sm:px-0.5">
           
           {/* ─── Mobile Page Header ─── */}
-          <div className="lg:hidden mb-4 px-4 sm:px-0.5 mt-2">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Overview</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Your personalized market overview, top movers, and latest news.
-              </p>
-            </div>
-            <div className="flex items-center justify-end w-full mt-3">
+          <div className="lg:hidden px-4 pt-3 pb-3 mb-1">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <h1 className="text-[22px] font-extrabold tracking-tight text-foreground">Overview</h1>
+                <p className="text-[13px] text-muted-foreground mt-0.5">
+                  Movers, rates and news in one feed.
+                </p>
+              </div>
               <SectionLiveStatus section="overview" isLoading={loading} />
             </div>
-            <div className="border-b border-border mt-3" />
           </div>
+
 
           {/* ─── Mobile-only Top Gainers & Top Loser Overview Widget (Horizontal Cards) ─── */}
           <div className="block lg:hidden mb-5">
