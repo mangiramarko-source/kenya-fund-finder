@@ -112,7 +112,9 @@ const Navbar = () => {
     if (!element) return;
 
     const updateHeight = () => {
-      setMobileHeaderHeight(element.getBoundingClientRect().height);
+      const h = element.getBoundingClientRect().height;
+      setMobileHeaderHeight(h);
+      document.documentElement.style.setProperty("--kf-mobile-header", `${Math.round(h)}px`);
     };
 
     updateHeight();
