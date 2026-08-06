@@ -104,20 +104,110 @@ const NewsArticlePage = () => {
   const [newCommentInput, setNewCommentInput] = useState("");
   const [commentsList, setCommentsList] = useState<CommentItem[]>(sampleComments);
 
+const educationalTips = [
+  { 
+    title: "Dividend Yield", 
+    content: "Think of a dividend yield like the interest a bank pays you for keeping money in a savings account, but for stocks. It is a simple percentage that shows how much cash a company pays out to its shareholders each year compared to the price of its stock. For example, if a stock costs $100 and pays $5 a year in dividends, the dividend yield is 5%. It is a useful number for investors who want to earn regular income from their investments." 
+  },
+  { 
+    title: "Bear vs Bull Market", 
+    content: "These terms describe the overall mood of the stock market. A 'Bull' market is when prices are generally going up, and people are feeling confident about the economy. A 'Bear' market is the opposite—prices are falling, and people are more cautious. An easy way to remember this is by how the animals attack: a bull thrusts its horns up into the air, while a bear swipes its paws down." 
+  },
+  { 
+    title: "P/E Ratio", 
+    content: "The Price-to-Earnings (P/E) ratio is a tool used to figure out if a stock is expensive or cheap. It compares the price of a single share of stock to the profit (earnings) the company makes per share. If a stock costs $50 and the company makes $5 per share, the P/E ratio is 10. A high P/E might mean people expect the company to grow a lot in the future, while a low P/E might mean it is currently undervalued by the market." 
+  },
+  { 
+    title: "Compound Interest", 
+    content: "Compound interest is when you earn interest not only on the money you originally saved, but also on the interest you've already earned. Imagine a snowball rolling down a hill, getting bigger and bigger as it picks up more snow. Over a long period of time, compound interest allows your savings to grow much faster than if you were only earning interest on your original starting amount." 
+  },
+  { 
+    title: "Diversification", 
+    content: "Diversification is the financial version of the saying 'don't put all your eggs in one basket.' It means spreading your investments across many different areas—like buying stocks from different industries, or mixing stocks with bonds. Because different types of investments react differently to what's happening in the economy, this strategy helps protect your overall portfolio if one specific area suddenly drops in value." 
+  },
+  { 
+    title: "Liquidity", 
+    content: "Liquidity simply means how quickly and easily you can turn an asset into cold, hard cash without having to sell it at a huge discount. Cash in your wallet is perfectly liquid. Stocks are usually very liquid because you can sell them almost instantly on the market. On the other hand, a house is very illiquid, because it can take months of work to find a buyer and actually get the cash in your hands." 
+  },
+  { 
+    title: "Bonds vs Stocks", 
+    content: "When you buy a stock, you are buying a tiny slice of ownership in a company. If the company does well, your piece becomes more valuable. When you buy a bond, you are not buying ownership; instead, you are lending your money to a company or government for a set amount of time. In return, they promise to pay you back with regular interest payments. Stocks generally offer higher potential rewards, while bonds offer more predictability." 
+  },
+  { 
+    title: "Inflation", 
+    content: "Inflation is the invisible force that makes things more expensive over time. It is the rate at which the general prices for goods and services go up. For example, if inflation is at 3%, a basket of groceries that costs $100 today will cost $103 next year. Because things cost more, the actual purchasing power of your money goes down, which is why keeping cash under a mattress usually loses value over decades." 
+  }
+];
+
+function getSyntheticArticle(id: string): NewsFromDB | null {
+  if (id === "daily-market-summary") {
+    return {
+      id: "daily-market-summary",
+      title: "Today's Market Wrap-up",
+      summary: "Comprehensive daily overview of Kenyan equities, currency exchange rates, commodities, and top economic headlines.",
+      content: `The Kenyan market showed dynamic trading activity today. Key blue-chip equities posted positive momentum on the Nairobi Securities Exchange (NSE), while Money Market Funds (MMFs) continue to deliver steady risk-adjusted yields.\n\n💱 Currency Watch: The US Dollar traded steadily against KES, maintaining balance for import markets while Euro and Sterling pairs held steady.\n\n📦 Commodities: Global Crude Oil and Gold monitored macroeconomic trends, while local agricultural exports remained key economic pillars.`,
+      source: "Market Insights",
+      date_published: new Date().toISOString(),
+      url: null,
+      category: "Market News",
+      read_time: "2 min read",
+      is_featured: true,
+      status: "published",
+      image_url: null,
+    };
+  }
+
+  if (id.startsWith("edu-snack-")) {
+    const today = new Date();
+    const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    const tipIndex = dateSeed % educationalTips.length;
+    const tip = educationalTips[tipIndex];
+
+    return {
+      id: id,
+      title: `💡 Term of the Day: ${tip.title}`,
+      summary: tip.content,
+      content: tip.content,
+      source: "KenyaFundFinder Academy",
+      date_published: new Date().toISOString(),
+      url: null,
+      category: "Yield Updates",
+      read_time: "2 min read",
+      is_featured: false,
+      status: "published",
+      image_url: null,
+    };
+  }
+
+  return null;
+}
+
   useEffect(() => {
     if (!id) return;
     setLoading(true);
     setRelated([]);
+
+    const synthetic = getSyntheticArticle(id);
+    if (synthetic) {
+      setArticle(synthetic);
+      setLoading(false);
+      return;
+    }
+
     fetchNewsById(id)
       .then((a) => {
-        setArticle(a);
         if (a) {
+          setArticle(a);
           fetchRelatedNews(a.category, a.id, 3)
             .then(setRelated)
             .catch(() => {});
+        } else {
+          setArticle(getSyntheticArticle(id));
         }
       })
-      .catch(() => {})
+      .catch(() => {
+        setArticle(getSyntheticArticle(id));
+      })
       .finally(() => setLoading(false));
   }, [id]);
 

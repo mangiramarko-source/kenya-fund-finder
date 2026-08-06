@@ -45,11 +45,7 @@ export const SocialFeedCard = ({ item, onSelect, index = 0 }: { item: FeedItem; 
 
   const handleCardClick = () => {
     const rawId = item.rawItem?.id || (item.id.startsWith("news-") ? item.id.replace("news-", "") : item.id);
-    if (rawId && rawId !== "daily-market-summary") {
-      navigate(`/news/${rawId}`);
-    } else {
-      onSelect(item);
-    }
+    navigate(`/news/${rawId}`);
   };
 
   const handleLike = (e: React.MouseEvent) => {
