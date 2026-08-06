@@ -49,51 +49,6 @@ const safeNum = (val: any) => {
   return isNaN(num) ? 0 : num;
 };
 
-const generateWhyItMatters = (category: string, title: string, seed: number) => {
-  const c = (category || "").toLowerCase();
-  const t = (title || "").toLowerCase();
-  
-  if (c.includes("economy") || t.includes("economy") || t.includes("inflation")) {
-    const options = [
-      "Macroeconomic shifts like this often trickle down to consumer prices and interest rates within 6-12 months.",
-      "Changes in economic policy can directly impact business expansion plans and overall job creation.",
-      "Inflationary pressures typically erode purchasing power, making yield-generating assets more important."
-    ];
-    return options[seed % options.length];
-  }
-  if (c.includes("market") || t.includes("market") || t.includes("stock") || t.includes("shares") || t.includes("nse")) {
-    const options = [
-      "Broad market movements can signal the start of new trends, affecting your portfolio's short-term volatility.",
-      "When major equities move significantly, they often pull the broader index with them, impacting passive index funds.",
-      "Company-specific news can create temporary mispricings—opportunities for observant investors."
-    ];
-    return options[seed % options.length];
-  }
-  if (c.includes("cbk") || t.includes("cbk") || t.includes("rate") || t.includes("shilling") || t.includes("currency")) {
-    const options = [
-      "Changes in central bank rates directly impact how much you pay for variable-rate loans and mortgages.",
-      "Currency fluctuations affect import costs, which eventually changes the price of everyday goods on the shelf.",
-      "Monetary policy tweaks are the government's primary tool for balancing growth and inflation."
-    ];
-    return options[seed % options.length];
-  }
-  if (c.includes("business") || c.includes("corporate") || t.includes("profit") || t.includes("ceo") || t.includes("board")) {
-    const options = [
-      "Corporate restructuring or leadership changes often precede shifts in company strategy and future profitability.",
-      "Earnings reports provide the clearest picture of a company's financial health and dividend potential.",
-      "Strategic business moves can redefine market share and industry dominance in the medium term."
-    ];
-    return options[seed % options.length];
-  }
-  
-  const options = [
-    "Staying informed on these developments helps you anticipate broader economic trends before they fully materialize.",
-    "Market dynamics are interconnected; events in one sector often create ripple effects across the entire economy.",
-    "Understanding the context behind the headlines is key to making level-headed, long-term financial decisions."
-  ];
-  return options[seed % options.length];
-};
-
 export function useSocialFeed(
   news: NewsFromDB[],
   stocks: Stock[],
@@ -105,15 +60,9 @@ export function useSocialFeed(
     const feed: FeedItem[] = [];
 
     // 1. Process News Articles with real summaries
-    (news || []).forEach((n: any, index: number) => {
+    (news || []).forEach((n: any) => {
       const newsDate = n.date_published ? new Date(n.date_published) : new Date();
-      
-      let finalContent = n.summary || n.content || "";
-      const seedNum = (typeof n.id === 'number') ? n.id : index;
-      const whyItMatters = generateWhyItMatters(n.category, n.title, seedNum);
-      if (finalContent.length > 50) {
-        finalContent = `> **Why it matters:** ${whyItMatters}\n\n${finalContent}`;
-      }
+      const finalContent = n.summary || n.content || "";
       
       const knownSymbols = ["SCOM", "EQTY", "KCB", "EABL", "BAT", "COOP", "NCBA", "USD/KES", "EUR/KES", "GBP/KES", "Oil", "Gold"];
       const relatedSymbols: string[] = [];
