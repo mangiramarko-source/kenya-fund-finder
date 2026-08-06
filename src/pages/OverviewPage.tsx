@@ -1418,7 +1418,7 @@ const OverviewPage = () => {
                   <Link
                     key={stk.id || idx}
                     to={`/stocks/${stk.symbol}`}
-                    className="w-[92vw] max-w-[340px] shrink-0 snap-center flex flex-col justify-between rounded-3xl border border-border/60 bg-card p-5 shadow-sm hover:bg-muted/40 transition-colors"
+                    className="w-[92vw] max-w-[340px] shrink-0 snap-center flex flex-col justify-between rounded-3xl border border-border/60 bg-card p-5 shadow-soft hover:bg-muted/40 transition-colors"
                   >
                     <div className="flex justify-between items-start mb-6">
                       <div className="flex flex-col">
@@ -1427,7 +1427,7 @@ const OverviewPage = () => {
                         </span>
                         <span className="text-[12px] text-muted-foreground mt-0.5">{stk.symbol}</span>
                       </div>
-                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${isGainer ? 'bg-emerald-500/15 text-emerald-500' : 'bg-rose-500/15 text-rose-500'}`}>
+                      <div className={`w-9 h-9 rounded-full flex items-center justify-center shrink-0 ${isGainer ? 'bg-up/15 text-up' : 'bg-down/15 text-down'}`}>
                         {isGainer ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
                       </div>
                     </div>
@@ -1437,13 +1437,13 @@ const OverviewPage = () => {
                         <span className="text-3xl font-bold text-foreground tracking-tight">
                           {Number(stk.price).toFixed(2)}
                         </span>
-                        <span className={`text-[13px] font-bold flex items-center gap-0.5 ${isGainer ? 'text-emerald-500' : 'text-rose-500'}`}>
+                        <span className={`text-[13px] font-bold flex items-center gap-0.5 ${isGainer ? 'text-up' : 'text-down'}`}>
                           {isGainer ? '↗' : '↘'} {Math.abs(Number(stk.day_change_percent)).toFixed(2)}%
                         </span>
                       </div>
                       <div className="flex items-center gap-2 mt-0.5 text-[13px]">
                          <span className="font-semibold text-muted-foreground/80">1D</span>
-                         <span className={`font-semibold ${isGainer ? 'text-emerald-500/90' : 'text-rose-500/90'}`}>
+                         <span className={`font-semibold ${isGainer ? 'text-up/90' : 'text-down/90'}`}>
                            {isGainer ? '↗' : '↘'} {stk.day_change ? Math.abs(Number(stk.day_change)).toFixed(2) : 'n/a'}
                          </span>
                          <span className="text-muted-foreground/60 ml-1">n/a</span>
@@ -1456,7 +1456,7 @@ const OverviewPage = () => {
                        <span className="text-[12px] text-muted-foreground font-semibold">
                          Vol {stk.volume ? stk.volume.toLocaleString() : 'n/a'}
                        </span>
-                       <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest ${isGainer ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                       <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase tracking-widest ${isGainer ? 'bg-up/10 text-up' : 'bg-down/10 text-down'}`}>
                          Top {isGainer ? 'Gainer' : 'Loser'}
                        </span>
                     </div>
