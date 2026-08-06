@@ -7,7 +7,7 @@ import { AssetType, ASSET_TYPE_LABELS } from "@/hooks/usePortfolio";
 
 const PIE_COLORS = [
   "hsl(152, 55%, 35%)",  // accent green
-  "hsl(220, 60%, 20%)",  // navy primary
+  "hsl(142, 71%, 45%)",  // emerald green
   "hsl(45, 90%, 50%)",   // gold
   "hsl(200, 70%, 50%)",  // blue
   "hsl(340, 65%, 50%)",  // rose
