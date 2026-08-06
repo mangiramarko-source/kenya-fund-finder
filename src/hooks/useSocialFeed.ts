@@ -144,6 +144,11 @@ export function useSocialFeed(
     });
 
     // 2. Generate Unified Daily Market Summary
+    const today = new Date();
+    const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+    const summaryTimestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 6, 0, 0);
+    const academyTimestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 7, 0, 0);
+
     if (stocks.length > 0 || fxRates.length > 0 || commodities.length > 0) {
       const topGainers = [...stocks].sort((a, b) => safeNum(b.day_change_percent) - safeNum(a.day_change_percent)).slice(0, 3);
       const topLosers = [...stocks].sort((a, b) => safeNum(a.day_change_percent) - safeNum(b.day_change_percent)).slice(0, 3);
@@ -155,11 +160,7 @@ export function useSocialFeed(
       const gold = commodities.find(c => c.name.toLowerCase().includes("gold"));
       const oil = commodities.find(c => c.name.toLowerCase().includes("crude") || c.name.toLowerCase().includes("oil"));
 
-      const today = new Date();
-      const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
       const pickStable = (arr: string[], seedOffset: number) => arr[(dateSeed + seedOffset) % arr.length];
-      const summaryTimestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 6, 0, 0);
-      const academyTimestamp = new Date(today.getFullYear(), today.getMonth(), today.getDate(), 7, 0, 0);
 
       // 1. Dynamic Stock Intro
       let stockPara = pickStable([
@@ -296,9 +297,6 @@ ${newsPara}
         content: "Inflation is the invisible force that makes things more expensive over time. It is the rate at which the general prices for goods and services go up. For example, if inflation is at 3%, a basket of groceries that costs $100 today will cost $103 next year. Because things cost more, the actual purchasing power of your money goes down, which is why keeping cash under a mattress usually loses value over decades." 
       }
     ];
-    
-    const today = new Date();
-    const dateSeed = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
     const tipIndex = dateSeed % educationalTips.length;
     const todayTip = educationalTips[tipIndex];
 
