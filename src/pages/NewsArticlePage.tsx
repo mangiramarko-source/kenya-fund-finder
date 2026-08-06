@@ -154,7 +154,13 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     document.documentElement.scrollTop = 0;
     document.body.scrollTop = 0;
 
-    if (!id) return;
+    const timer = setTimeout(() => {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }, 50);
+
+    if (!id) return () => clearTimeout(timer);
     setLoading(true);
     setRelated([]);
     setLiked(false);
@@ -164,7 +170,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
       setArticle(synthetic);
       setLikesCount(synthetic.likes || 0);
       setLoading(false);
-      return;
+      return () => clearTimeout(timer);
     }
 
     fetchNewsById(id)
@@ -186,8 +192,23 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         setArticle(syn);
         setLikesCount(syn?.likes || 0);
       })
-      .finally(() => setLoading(false));
+      .finally(() => {
+        setLoading(false);
+        window.scrollTo(0, 0);
+        document.documentElement.scrollTop = 0;
+        document.body.scrollTop = 0;
+      });
+
+    return () => clearTimeout(timer);
   }, [id]);
+
+  useEffect(() => {
+    if (!loading && article) {
+      window.scrollTo(0, 0);
+      document.documentElement.scrollTop = 0;
+      document.body.scrollTop = 0;
+    }
+  }, [loading, article]);
 
   useDocumentTitle(
     article ? `${article.title} – Kenya Fund Finder` : "News Article – Kenya Fund Finder",
@@ -234,11 +255,25 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
 
   if (loading) {
     return (
-      <div className="max-w-3xl mx-auto py-6 px-4 sm:px-6 space-y-4">
-        <Skeleton className="h-10 w-full rounded-xl" />
-        <Skeleton className="h-6 w-48" />
-        <Skeleton className="h-8 w-full" />
-        <Skeleton className="h-48 w-full rounded-2xl" />
+      <div className="min-h-screen bg-background text-foreground">
+        <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border px-4 h-12 flex items-center justify-between">
+          <button
+            type="button"
+            onClick={() => navigate(-1)}
+            className="flex items-center justify-center h-9 w-9 rounded-full text-foreground hover:bg-muted/50 transition-colors -ml-2 cursor-pointer"
+            aria-label="Back"
+          >
+            <ArrowLeft className="h-5 w-5" />
+          </button>
+          <h1 className="font-bold text-base text-foreground tracking-tight">Post</h1>
+          <div className="w-9" />
+        </header>
+        <div className="max-w-[430px] mx-auto py-4 px-4 space-y-4">
+          <Skeleton className="h-10 w-full rounded-xl" />
+          <Skeleton className="h-6 w-48" />
+          <Skeleton className="h-8 w-full" />
+          <Skeleton className="h-48 w-full rounded-2xl" />
+        </div>
       </div>
     );
   }
