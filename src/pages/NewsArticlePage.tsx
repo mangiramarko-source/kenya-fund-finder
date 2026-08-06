@@ -163,12 +163,10 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     if (!id) return () => clearTimeout(timer);
     setLoading(true);
     setRelated([]);
-    setLiked(false);
 
     const synthetic = getSyntheticArticle(id);
     if (synthetic) {
       setArticle(synthetic);
-      setLikesCount(synthetic.likes || 0);
       setLoading(false);
       return () => clearTimeout(timer);
     }
@@ -177,20 +175,17 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
       .then((a) => {
         if (a) {
           setArticle(a);
-          setLikesCount(a.likes || 0);
           fetchRelatedNews(a.category, a.id, 3)
             .then(setRelated)
             .catch(() => {});
         } else {
           const syn = getSyntheticArticle(id);
           setArticle(syn);
-          setLikesCount(syn?.likes || 0);
         }
       })
       .catch(() => {
         const syn = getSyntheticArticle(id);
         setArticle(syn);
-        setLikesCount(syn?.likes || 0);
       })
       .finally(() => {
         setLoading(false);
