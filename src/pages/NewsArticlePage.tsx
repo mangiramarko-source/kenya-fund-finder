@@ -326,7 +326,7 @@ const NewsArticlePage = () => {
         </div>
 
         {/* ─── 7. Engagement Row ─── */}
-        <div className="py-2.5 border-y border-border/80 flex items-center justify-end gap-6 text-xs text-muted-foreground font-medium">
+        <div className="py-1.5 flex items-center justify-end gap-6 text-xs text-muted-foreground font-medium">
           {/* Comment */}
           <button type="button" className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer">
             <MessageSquare className="w-4 h-4" />
