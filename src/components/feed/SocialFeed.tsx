@@ -13,6 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
 import { useFeedInteractions, type PostInteraction } from "@/hooks/useFeedInteractions";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const getInitials = (name: string) => {
   if (!name) return "";
@@ -47,6 +48,7 @@ export const SocialFeedCard = ({
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   const isLiked = interaction?.liked ?? false;
   const likeCount = interaction?.likeCount ?? (item.likes || 0);
@@ -61,7 +63,11 @@ export const SocialFeedCard = ({
   const authorHandle = rawLabel.startsWith("@") ? rawLabel : `@${rawLabel.toLowerCase().replace(/\s+/g, '')}`;
 
   const handleCardClick = () => {
-    onSelect(item);
+    if (isMobile) {
+      navigate(`/news/${item.id}`);
+    } else {
+      onSelect(item);
+    }
   };
 
   const handleLike = (e: React.MouseEvent) => {

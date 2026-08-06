@@ -28,6 +28,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
+import { useIsMobile } from "@/hooks/use-mobile";
+
 import type { PostInteraction } from "@/hooks/useFeedInteractions";
 
 interface FeedItemDetailModalProps {
@@ -60,12 +62,13 @@ const getAvatarBg = (type: FeedItem["type"]) => {
 export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onLikeToggle, onAddComment }: FeedItemDetailModalProps) {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   const [localLiked, setLocalLiked] = useState(false);
   const [localLikesCount, setLocalLikesCount] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [localCommentsList, setLocalCommentsList] = useState<string[]>([]);
 
-  if (!item) return null;
+  if (!item || isMobile) return null;
 
   const isLiked = interaction ? interaction.liked : localLiked;
   const likesCount = interaction ? interaction.likeCount : (item.likes || 0) + localLikesCount;
