@@ -30,13 +30,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
     <div className={`flex min-h-screen font-body bg-background${isAiLab ? " h-dvh max-h-dvh overflow-hidden" : ""}`}>
       <SkipToContent />
 
-      {/* Main column with mobile constraints globally applied */}
-      <div className={`flex-1 flex flex-col mx-auto w-full max-w-[430px] shadow-2xl relative bg-background${isAiLab ? " min-h-0 overflow-hidden" : ""}`}>
+      {/* Main column */}
+      <div className={`flex-1 flex flex-col min-w-0 bg-background${isAiLab ? " min-h-0 overflow-hidden" : ""}`}>
+        <DesktopTopBar />
         
         <OfflineBanner />
 
         {!isNewsArticle && !isAiLab && (
-          <Navbar />
+          <div className="md:hidden">
+            <Navbar />
+          </div>
+        )}
+        {showTicker && (
+          <div className="hidden md:block sticky top-14 z-20 w-full">
+            <CurrencyTicker />
+          </div>
         )}
 
         <main
