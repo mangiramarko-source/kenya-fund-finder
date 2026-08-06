@@ -95,7 +95,7 @@ const CurrencyTicker = () => {
 
   return (
     <div
-      className="flex h-9 items-center overflow-hidden border-b border-border bg-surface px-4"
+      className="flex h-9 items-center overflow-hidden border-b border-border/80 bg-card text-card-foreground px-4 shadow-sm"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={() => setPaused(true)}
@@ -118,27 +118,22 @@ const CurrencyTicker = () => {
           const isUp = diff != null && diff > 0;
           const isDown = diff != null && diff < 0;
 
-          const prev = i > 0 ? doubled[i - 1] : null;
-          const prevPrefix = prev ? prev.id.split("-")[0] : null;
-          const curPrefix = item.id.split("-")[0];
-          const showSep = prev && prevPrefix !== curPrefix;
-
           return (
             <div
               key={`${item.id}-${i}`}
               className="flex items-center gap-2 text-xs font-medium"
             >
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground font-semibold">
                 {item.label}
               </span>
-              <span className="text-foreground">
+              <span className="text-foreground font-bold">
                 {item.value.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
               </span>
               {pct != null ? (
-                <span className={isUp ? "text-primary" : isDown ? "text-red-500" : "text-muted-foreground"}>
+                <span className={isUp ? "text-emerald-500 font-bold" : isDown ? "text-red-500 font-bold" : "text-muted-foreground font-medium"}>
                   {isUp ? "+" : ""}{pct}%
                 </span>
               ) : (

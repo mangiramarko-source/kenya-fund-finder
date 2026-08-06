@@ -158,6 +158,9 @@
     --sidebar-accent-foreground: 0 0% 98%;
     --sidebar-border: 240 5% 26%;
     --sidebar-ring: 142 71% 45%;
+
+    --surface: 240 6% 10%;
+    --surface-foreground: 0 0% 98%;
   }
 
 }
