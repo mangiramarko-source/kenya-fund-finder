@@ -150,6 +150,10 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
 }
 
   useEffect(() => {
+    window.scrollTo(0, 0);
+    document.documentElement.scrollTop = 0;
+    document.body.scrollTop = 0;
+
     if (!id) return;
     setLoading(true);
     setRelated([]);
