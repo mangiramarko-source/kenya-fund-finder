@@ -46,11 +46,68 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES" }) =>
   const isPositiveTotal = totalPnL >= 0;
   const changeLookup = new Map(changes.map(c => [c.itemId, c]));
 
-  if (!user) {
+  if (!user || items.length === 0) {
     return (
       <div className="no-scrollbar -mx-4 px-4 mb-6 flex gap-3 overflow-x-auto py-1">
+        {/* ─── Mock Example Card (Shown only when user has no holdings) ─── */}
         <Link
-          to="/auth"
+          to={user ? "/portfolio" : "/auth"}
+          className="group relative min-w-[250px] w-[250px] shrink-0 rounded-2xl border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/40 transition-all flex flex-col justify-between cursor-pointer"
+        >
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <div className="w-7 h-7 rounded-lg border bg-red-500/10 text-red-500 border-red-500/20 flex items-center justify-center">
+                <PieChart className="w-4 h-4" />
+              </div>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-amber-500 bg-amber-500/10 px-2 py-0.5 rounded-full border border-amber-500/20">
+                Example
+              </span>
+            </div>
+
+            <div className="flex items-center gap-1.5 mb-1">
+              <h4 className="text-sm font-bold text-foreground truncate max-w-[170px]" title="Safaricom PLC">
+                Safaricom PLC
+              </h4>
+            </div>
+
+            <div className="flex items-baseline gap-1.5 mb-1">
+              <span className="text-base font-bold text-foreground tracking-tight">
+                {fmtCurrency(15250, currency)}
+              </span>
+              <span className="text-xs font-semibold text-muted-foreground">·</span>
+              <span className="text-xs font-bold text-emerald-500 flex items-center gap-0.5">
+                <TrendingUp className="w-3 h-3" />
+                4.8%
+              </span>
+            </div>
+
+            <div className="text-xs text-muted-foreground flex items-center gap-2 font-medium">
+              <span>1D</span>
+              <span className="font-semibold text-emerald-500 flex items-center gap-0.5">
+                <TrendingUp className="w-3 h-3" />
+                +1.2%
+              </span>
+              <span className="truncate">{fmtCurrency(180, currency)}</span>
+            </div>
+          </div>
+
+          <div className="mt-3">
+            <div className="border-t border-border/50 pt-2.5 flex items-center justify-between text-xs text-muted-foreground font-medium">
+              <span>Overall</span>
+              <div className="flex items-center gap-1.5">
+                <span className="font-semibold text-emerald-500 flex items-center gap-0.5">
+                  <TrendingUp className="w-3 h-3" />
+                  +4.8%
+                </span>
+                <span className="truncate">{fmtCurrency(700, currency)}</span>
+              </div>
+            </div>
+          </div>
+        </Link>
+
+        {/* ─── Add Holding CTA Card ─── */}
+        <Link
+          to={user ? "/portfolio" : "/auth"}
           className="group relative min-w-[240px] w-[240px] shrink-0 rounded-2xl border border-dashed border-border/80 bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer"
         >
           <div className="w-12 h-12 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-800/30 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
