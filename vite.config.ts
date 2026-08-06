@@ -20,6 +20,9 @@ export default defineConfig(({ mode }) => ({
     },
   },
   build: {
+    // Target Safari 14+ to support older iPhones (e.g. iPhone 7 Plus on iOS 15).
+    // Without this, Vite defaults to esnext which iOS 15 Safari cannot run.
+    target: ["es2019", "safari14"],
     cssCodeSplit: true,
     rollupOptions: {
       output: {
