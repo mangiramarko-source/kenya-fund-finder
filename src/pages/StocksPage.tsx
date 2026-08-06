@@ -400,7 +400,7 @@ const StocksPage = () => {
         
         {/* Market Summary for Desktop */}
         <div className="hidden md:block">
-          <MarketSummary stocks={stocks} history={marketHistory} />
+          <MarketSummary stocks={stocks as any} history={marketHistory} />
         </div>
 
         <ActiveAlertsCard assetType="stock" />
