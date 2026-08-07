@@ -169,7 +169,7 @@ export const SocialFeedCard = ({
       )}
 
       {/* Text Body Content */}
-      <div className="text-base text-muted-foreground/90 leading-relaxed line-clamp-4 prose dark:prose-invert font-normal">
+      <div className="text-base text-muted-foreground/90 leading-relaxed line-clamp-4 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']">
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {item.content || ""}
         </ReactMarkdown>
