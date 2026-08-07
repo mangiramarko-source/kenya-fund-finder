@@ -72,17 +72,16 @@ const DesktopTopBar = () => {
     { to: "/funds", label: "Unit Trusts" },
     { to: "/rates", label: "FX Rates" },
     { to: "/commodities", label: "Commodities" },
+    { to: "/portfolio", label: "Portfolio" },
+    { to: "/calculator", label: "Calculator" },
   ];
 
   return (
     <header className="hidden md:flex items-center gap-6 h-14 px-6 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30">
       {/* 1. Logo */}
-      <Link to="/" className="flex items-center gap-2.5 shrink-0 mr-2 group">
-        <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent text-accent-foreground shrink-0 shadow-sm transition-transform group-hover:scale-105">
-          <TrendingUp className="h-4 w-4" />
-        </div>
-        <span className="font-heading text-base font-bold text-foreground tracking-tight">
-          KenyaFundFinder
+      <Link to="/" className="flex items-center shrink-0 mr-2 group" aria-label="KenyaFundFinder Home">
+        <span className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400 transition-transform group-hover:scale-105">
+          KF
         </span>
       </Link>
 
