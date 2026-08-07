@@ -17,7 +17,6 @@ import PortfolioTable from "@/components/portfolio/PortfolioTable";
 import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
 import EditHoldingModal from "@/components/portfolio/EditHoldingModal";
 import PortfolioActivity from "@/components/portfolio/PortfolioActivity";
-import StarterPortfolios from "@/components/portfolio/StarterPortfolios";
 import SaveDemoBanner from "@/components/portfolio/SaveDemoBanner";
 import WeightedYieldCard from "@/components/portfolio/WeightedYieldCard";
 import MonthlyIncomeCard from "@/components/portfolio/MonthlyIncomeCard";
@@ -234,8 +233,6 @@ const PortfolioPage = () => {
               </div>
             </div>
           </Card>
-
-          <StarterPortfolios />
         </>
       ) : (
         <>

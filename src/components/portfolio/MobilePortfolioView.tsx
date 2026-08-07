@@ -5,7 +5,6 @@ import { Plus, ShieldCheck, Sparkles, TrendingUp, TrendingDown, Minus, SlidersHo
 import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
 import EditHoldingModal from "@/components/portfolio/EditHoldingModal";
 import PortfolioSummaryModal from "@/components/portfolio/PortfolioSummaryModal";
-import StarterPortfolios from "@/components/portfolio/StarterPortfolios";
 
 interface MobilePortfolioViewProps {
   currency: "KES" | "USD";
@@ -325,10 +324,7 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
         )}
       </div>
 
-      {/* ─── 3. Ready-made Portfolios Carousel ─── */}
-      <div className="pt-2">
-        <StarterPortfolios />
-      </div>
+
 
       {/* ─── 4. Floating Action Button (FAB) ─── */}
       <button
