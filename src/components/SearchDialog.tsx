@@ -203,11 +203,11 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
       ) : variant === "topbar" ? (
         <button
           onClick={() => setOpen(true)}
-          className="flex items-center gap-3 w-full px-4 py-2 h-10 rounded-xl bg-muted/60 border border-border text-muted-foreground text-sm hover:bg-muted/80 hover:border-accent/30 transition-all shadow-sm"
+          className="flex items-center gap-2 w-full px-3 py-2 h-10 rounded-xl bg-muted/60 border border-border text-muted-foreground text-sm hover:bg-muted/80 hover:border-accent/30 transition-all shadow-sm overflow-hidden"
         >
           <Search className="h-4 w-4 shrink-0" />
-          <span className="flex-1 text-left text-xs">Search funds, stocks, FX, news…</span>
-          <kbd className="hidden sm:inline-flex items-center gap-0.5 rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+          <span className="flex-1 text-left text-xs truncate whitespace-nowrap min-w-0">Search funds, stocks, FX, news…</span>
+          <kbd className="hidden lg:inline-flex shrink-0 items-center gap-0.5 rounded-md border border-border bg-card px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
             ⌘K
           </kbd>
         </button>
