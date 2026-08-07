@@ -164,8 +164,6 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
                     </div>
                   </div>
                 </div>
-          );
-        })()}
 
             {/* Related Symbols Sparklines */}
             {item.relatedSymbols && item.relatedSymbols.length > 0 && (
@@ -198,6 +196,8 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
             </DialogTitle>
           </DialogHeader>
         </div>
+        );
+      })()}
 
         {/* Modal Body */}
         <div className="p-6 space-y-6">
