@@ -1,10 +1,10 @@
 import { useState, useEffect } from "react";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2, Briefcase } from "lucide-react";
+import { Trash2, Briefcase, Calendar, X } from "lucide-react";
 import type { PortfolioItem } from "@/hooks/usePortfolio";
 
 export interface EditHoldingPayload {
@@ -81,49 +81,80 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, onDelete, isPendin
     onOpenChange(false);
   };
 
+  const initials = item.asset_name
+    .split(" ")
+    .filter(Boolean)
+    .slice(0, 2)
+    .map((w) => w[0])
+    .join("")
+    .toUpperCase() || item.asset_name.slice(0, 2).toUpperCase();
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-md max-h-[90vh] overflow-y-auto bg-card text-card-foreground border-border rounded-3xl p-6 shadow-2xl">
-        <DialogHeader className="pb-2 border-b border-border/50">
-          <DialogTitle className="text-lg font-bold text-foreground flex items-center gap-2">
-            <Briefcase className="h-5 w-5 text-[#00A651]" />
-            Edit Holding
-          </DialogTitle>
-        </DialogHeader>
+      <DialogContent className="max-w-md max-h-[92vh] overflow-y-auto bg-card text-card-foreground border-border rounded-3xl p-5 sm:p-6 shadow-2xl [&>button]:hidden">
+        {/* Top Handle Pill */}
+        <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto -mt-1 mb-3" />
 
-        <div className="space-y-4 pt-3">
-          {/* Asset Info Banner */}
-          <div className="rounded-2xl border border-border bg-muted/40 p-3.5 flex items-center justify-between">
-            <div>
-              <div className="font-bold text-sm text-foreground">{item.asset_name}</div>
-              {item.ticker && (
-                <div className="text-xs text-muted-foreground font-mono mt-0.5">{item.ticker}</div>
-              )}
+        {/* Dialog Header with Briefcase Icon and Custom Close X */}
+        <div className="flex items-center justify-between pb-3">
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 rounded-full bg-emerald-950/70 border border-emerald-500/30 flex items-center justify-center shrink-0">
+              <Briefcase className="h-5 w-5 text-emerald-400" />
             </div>
-            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 border border-amber-500/30 text-amber-500">
+            <h2 className="text-lg font-bold text-foreground tracking-tight">Edit Holding</h2>
+          </div>
+          <button
+            onClick={() => onOpenChange(false)}
+            className="w-8 h-8 rounded-full bg-muted/60 hover:bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-4 pt-1">
+          {/* Asset Info Banner */}
+          <div className="rounded-2xl border border-border/80 bg-muted/40 p-3.5 flex items-center justify-between gap-3">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-10 h-10 rounded-full bg-emerald-950/70 border border-emerald-500/30 text-emerald-400 font-bold flex items-center justify-center text-xs shrink-0">
+                {initials}
+              </div>
+              <div className="min-w-0">
+                <div className="font-bold text-sm text-foreground truncate">{item.asset_name}</div>
+                <div className="text-[11px] text-muted-foreground font-mono truncate">
+                  {item.ticker || item.asset_name.toLowerCase().replace(/\s+/g, "-")}
+                </div>
+              </div>
+            </div>
+            <span className="px-2.5 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider bg-amber-500/10 border border-amber-500/30 text-amber-500 shrink-0">
               {item.asset_type === "fixed_income" ? "T-BILLS" : item.asset_type.toUpperCase()}
             </span>
           </div>
 
           {isCustom && (
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">Asset name</Label>
+              <Label className="text-xs font-semibold text-muted-foreground">Asset name</Label>
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="bg-background border-border text-foreground rounded-xl focus:border-[#00A651] focus:ring-[#00A651]"
+                className="h-12 bg-background border-border text-foreground font-medium rounded-2xl px-4 focus:border-emerald-500 focus:ring-emerald-500"
               />
-              <p className="text-[10px] text-muted-foreground">
+              <p className="text-xs text-muted-foreground/80 font-normal">
                 Editable for custom holdings without a linked fund/stock.
               </p>
             </div>
           )}
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">
-                {item.asset_type === "mmf" ? "Amount invested (KES)" : "Units / Quantity"}
-              </Label>
+          {/* Amount invested / Units */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">
+              {item.asset_type === "mmf" ? "Amount invested" : "Units / Quantity"}
+            </Label>
+            <div className="relative flex items-center">
+              {item.asset_type === "mmf" && (
+                <span className="absolute left-4 text-xs font-bold text-muted-foreground pointer-events-none">
+                  KES
+                </span>
+              )}
               <Input
                 type="number"
                 inputMode="decimal"
@@ -131,18 +162,21 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, onDelete, isPendin
                 onChange={(e) => setUnits(e.target.value)}
                 min="0"
                 step="any"
-                className="bg-background border-border text-foreground rounded-xl font-medium focus:border-[#00A651] focus:ring-[#00A651]"
+                className={`h-12 bg-background border-border text-foreground font-bold text-base rounded-2xl ${
+                  item.asset_type === "mmf" ? "pl-14" : "px-4"
+                } focus:border-emerald-500 focus:ring-emerald-500`}
               />
-              <p className="text-[10px] text-muted-foreground leading-tight">
-                {item.asset_type === "mmf"
-                  ? "Total money deposited."
-                  : "Number of shares or units."}
-              </p>
             </div>
+            <p className="text-xs text-muted-foreground/80 font-normal">
+              {item.asset_type === "mmf" ? "Total money deposited." : "Number of shares or units you hold."}
+            </p>
+          </div>
 
+          {/* Reference price + Annual yield */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
             <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">
-                {item.asset_type === "mmf" ? "Reference price (per unit)" : "Buy price per unit (KES)"}
+              <Label className="text-xs font-semibold text-muted-foreground">
+                {item.asset_type === "mmf" ? "Reference price" : "Buy price per unit"}
               </Label>
               <Input
                 type="number"
@@ -151,91 +185,96 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, onDelete, isPendin
                 onChange={(e) => setBuyPrice(e.target.value)}
                 min="0"
                 step="any"
-                className="bg-background border-border text-foreground rounded-xl font-medium focus:border-[#00A651] focus:ring-[#00A651]"
+                className="h-12 bg-background border-border text-foreground font-bold text-sm rounded-2xl px-4 focus:border-emerald-500 focus:ring-emerald-500"
               />
-              <p className="text-[10px] text-muted-foreground leading-tight">
-                {item.asset_type === "mmf"
-                  ? "Usually 1.00 for unit trusts."
-                  : "Price paid per share/unit."}
+              <p className="text-xs text-muted-foreground/80 font-normal">
+                {item.asset_type === "mmf" ? "Per unit, usually 1.00." : "Price paid per share/unit."}
               </p>
             </div>
+
+            {isYieldType && (
+              <div className="space-y-1.5">
+                <Label className="text-xs font-semibold text-muted-foreground">Annual yield</Label>
+                <div className="relative flex items-center">
+                  <Input
+                    type="number"
+                    inputMode="decimal"
+                    value={yld}
+                    onChange={(e) => setYld(e.target.value)}
+                    min="0"
+                    step="0.1"
+                    className="h-12 bg-background border-border text-foreground font-bold text-sm rounded-2xl pl-4 pr-10 focus:border-emerald-500 focus:ring-emerald-500"
+                  />
+                  <span className="absolute right-4 text-xs font-bold text-emerald-500 pointer-events-none">
+                    %
+                  </span>
+                </div>
+                <p className="text-xs text-muted-foreground/80 font-normal">Quoted by the fund.</p>
+              </div>
+            )}
           </div>
 
-          {isYieldType && (
-            <div className="space-y-1.5">
-              <Label className="text-xs font-semibold text-foreground">Annual yield (%)</Label>
+          {/* Event date */}
+          <div className="space-y-1.5">
+            <Label className="text-xs font-semibold text-muted-foreground">Event date</Label>
+            <div className="relative flex items-center">
+              <Calendar className="absolute left-4 h-4 w-4 text-muted-foreground pointer-events-none" />
               <Input
-                type="number"
-                inputMode="decimal"
-                value={yld}
-                onChange={(e) => setYld(e.target.value)}
-                min="0"
-                step="0.1"
-                className="bg-background border-border text-foreground rounded-xl font-medium focus:border-[#00A651] focus:ring-[#00A651]"
+                type="date"
+                value={buyDate}
+                onChange={(e) => setBuyDate(e.target.value)}
+                className="h-12 bg-background border-border text-foreground font-semibold text-sm rounded-2xl pl-11 pr-4 focus:border-emerald-500 focus:ring-emerald-500"
               />
             </div>
-          )}
-
-          <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">Event date</Label>
-            <Input
-              type="date"
-              value={buyDate}
-              onChange={(e) => setBuyDate(e.target.value)}
-              className="bg-background border-border text-foreground rounded-xl font-medium focus:border-[#00A651] focus:ring-[#00A651]"
-            />
           </div>
 
+          {/* Note (optional) */}
           <div className="space-y-1.5">
-            <Label className="text-xs font-semibold text-foreground">Note (optional)</Label>
+            <Label className="text-xs font-semibold text-muted-foreground">Note (optional)</Label>
             <Textarea
               value={notes}
               onChange={(e) => setNotes(e.target.value)}
-              rows={2}
+              rows={2.5}
               placeholder="e.g. Topped up, adjusted units"
-              className="bg-background border-border text-foreground rounded-xl focus:border-[#00A651] focus:ring-[#00A651]"
+              className="bg-background border-border text-foreground text-sm rounded-2xl p-3.5 focus:border-emerald-500 focus:ring-emerald-500 resize-none"
             />
           </div>
 
           {/* Modal Footer Actions */}
-          <div className="flex items-center justify-between pt-3 border-t border-border/60">
-            {onDelete ? (
+          <div className="pt-2 space-y-3">
+            <div className="grid grid-cols-2 gap-3">
               <Button
                 type="button"
-                variant="ghost"
-                size="sm"
-                className="bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/20 gap-1.5 text-xs font-bold px-3.5 py-2 rounded-xl transition-all"
-                onClick={handleDelete}
-                disabled={isPending}
-              >
-                <Trash2 className="h-4 w-4" />
-                Delete holding
-              </Button>
-            ) : (
-              <div />
-            )}
-
-            <div className="flex items-center gap-2">
-              <Button
                 variant="outline"
-                size="sm"
                 onClick={() => onOpenChange(false)}
-                className="rounded-xl border-border text-foreground hover:bg-muted font-medium"
+                className="h-12 rounded-full border-border bg-muted/60 hover:bg-muted text-foreground font-semibold text-sm transition-all"
               >
                 Cancel
               </Button>
               <Button
-                size="sm"
+                type="button"
                 onClick={handleSave}
                 disabled={isPending}
-                className="bg-[#00A651] hover:bg-[#008f45] text-white font-bold rounded-xl shadow-sm px-4"
+                className="h-12 rounded-full bg-[#10B981] hover:bg-emerald-500 text-black font-extrabold text-sm shadow-md shadow-emerald-500/20 transition-all"
               >
                 {isPending ? "Saving…" : "Update holding"}
               </Button>
             </div>
+
+            {onDelete && (
+              <button
+                type="button"
+                onClick={handleDelete}
+                disabled={isPending}
+                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-rose-500 hover:text-rose-400 font-semibold text-xs transition-colors cursor-pointer"
+              >
+                <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                Delete holding
+              </button>
+            )}
           </div>
 
-          <p className="text-[10px] text-muted-foreground text-center">
+          <p className="text-[11px] text-muted-foreground/70 text-center leading-relaxed px-2">
             Edits are recorded in your portfolio activity. General information only.
           </p>
         </div>
