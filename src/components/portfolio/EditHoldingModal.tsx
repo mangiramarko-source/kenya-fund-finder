@@ -136,7 +136,7 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, onDelete, isPendin
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="h-12 bg-background border-border text-foreground font-medium rounded-2xl px-4 focus:border-emerald-500 focus:ring-emerald-500"
+                className="h-12 bg-background border-border text-foreground font-medium text-base rounded-2xl px-4 focus:border-emerald-500 focus:ring-emerald-500"
               />
               <p className="text-xs text-muted-foreground/80 font-normal">
                 Editable for custom holdings without a linked fund/stock.
@@ -185,7 +185,7 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, onDelete, isPendin
                 onChange={(e) => setBuyPrice(e.target.value)}
                 min="0"
                 step="any"
-                className="h-12 bg-background border-border text-foreground font-bold text-sm rounded-2xl px-4 focus:border-emerald-500 focus:ring-emerald-500"
+                className="h-12 bg-background border-border text-foreground font-bold text-base rounded-2xl px-4 focus:border-emerald-500 focus:ring-emerald-500"
               />
               <p className="text-xs text-muted-foreground/80 font-normal">
                 {item.asset_type === "mmf" ? "Per unit, usually 1.00." : "Price paid per share/unit."}
@@ -203,7 +203,7 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, onDelete, isPendin
                     onChange={(e) => setYld(e.target.value)}
                     min="0"
                     step="0.1"
-                    className="h-12 bg-background border-border text-foreground font-bold text-sm rounded-2xl pl-4 pr-10 focus:border-emerald-500 focus:ring-emerald-500"
+                    className="h-12 bg-background border-border text-foreground font-bold text-base rounded-2xl pl-4 pr-10 focus:border-emerald-500 focus:ring-emerald-500"
                   />
                   <span className="absolute right-4 text-xs font-bold text-emerald-500 pointer-events-none">
                     %
@@ -223,7 +223,7 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, onDelete, isPendin
                 type="date"
                 value={buyDate}
                 onChange={(e) => setBuyDate(e.target.value)}
-                className="h-12 bg-background border-border text-foreground font-semibold text-sm rounded-2xl pl-11 pr-4 focus:border-emerald-500 focus:ring-emerald-500"
+                className="h-12 bg-background border-border text-foreground font-semibold text-base rounded-2xl pl-11 pr-4 focus:border-emerald-500 focus:ring-emerald-500"
               />
             </div>
           </div>
@@ -236,7 +236,7 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, onDelete, isPendin
               onChange={(e) => setNotes(e.target.value)}
               rows={2.5}
               placeholder="e.g. Topped up, adjusted units"
-              className="bg-background border-border text-foreground text-sm rounded-2xl p-3.5 focus:border-emerald-500 focus:ring-emerald-500 resize-none"
+              className="bg-background border-border text-foreground text-base rounded-2xl p-3.5 focus:border-emerald-500 focus:ring-emerald-500 resize-none"
             />
           </div>
 

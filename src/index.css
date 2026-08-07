@@ -186,6 +186,13 @@
   h1, h2, h3, h4, h5, h6 {
     @apply font-heading tracking-tight;
   }
+
+  /* Prevent iOS Safari auto-zoom on input focus */
+  @media screen and (max-width: 768px) {
+    input, select, textarea {
+      font-size: 16px !important;
+    }
+  }
 }
 
 @layer utilities {
