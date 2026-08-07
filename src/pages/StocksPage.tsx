@@ -131,7 +131,7 @@ const MiniSparkline = ({
     trend === "flat"
       ? "hsl(var(--muted-foreground))"
       : trend === "up"
-      ? "hsl(var(--accent))"
+      ? "hsl(152 60% 42%)"
       : "hsl(var(--destructive))";
   const gradientId = `sparkline-fill-${trend}`;
 
@@ -157,8 +157,8 @@ const MiniSparkline = ({
 const ChangeCell = ({ change, pct }: { change: number; pct: number }) => {
   if (change > 0)
     return (
-      <span className="inline-flex items-center gap-0.5 text-accent text-[11px] font-semibold tabular-nums">
-        <TrendingUp className="h-3 w-3" /> +{formatNumber(pct)}%
+      <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400 text-[11px] font-semibold tabular-nums">
+        <TrendingUp className="h-3 w-3 shrink-0" /> +{formatNumber(pct)}%
       </span>
     );
   if (change < 0)
@@ -837,7 +837,7 @@ const StockDetailPanel = ({
                     }
                     formatter={(value: number) => [`KSh ${formatNumber(value)}`, "Price"]}
                   />
-                  <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="price" stroke="hsl(152 60% 42%)" strokeWidth={2} dot={false} />
                 </LineChart>
               );
             })()}

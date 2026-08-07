@@ -48,12 +48,12 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
         </span>
       )}
       {showLiveDot && (
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(152,30%,94%)] dark:bg-accent/15 border border-[hsl(152,30%,85%)] dark:border-accent/25 px-3 py-1">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-[hsl(152,30%,94%)] dark:bg-emerald-950/60 border border-[hsl(152,30%,85%)] dark:border-emerald-800/50 px-3 py-1">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(152,55%,40%)] dark:bg-accent opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-[hsl(152,55%,40%)] dark:bg-accent" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-[hsl(152,55%,40%)] dark:bg-emerald-400 opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-[hsl(152,55%,40%)] dark:bg-emerald-400" />
           </span>
-          <span className="text-xs font-semibold text-[hsl(152,40%,30%)] dark:text-accent uppercase tracking-wide">LIVE</span>
+          <span className="text-xs font-semibold text-[hsl(152,40%,30%)] dark:text-emerald-400 uppercase tracking-wide">LIVE</span>
         </span>
       )}
     </span>

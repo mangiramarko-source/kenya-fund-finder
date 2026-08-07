@@ -64,7 +64,7 @@ const MiniSparkline = ({ data, positive, livePoint }: { data: RateHistory[]; pos
   }, [data, livePoint]);
 
   if (effectiveData.length < 2) return null;
-  const color = positive ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  const color = positive ? "hsl(152 60% 42%)" : "hsl(var(--destructive))";
   const gradientId = `rate-sparkline-fill-${positive ? "up" : "down"}`;
 
   return (
