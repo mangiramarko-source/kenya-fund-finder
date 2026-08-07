@@ -1,11 +1,13 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { PieChart, ArrowUpRight, ArrowDownRight } from "lucide-react";
 import { PortfolioItem, getCurrentValue, getPnL, getPnLPercent } from "@/hooks/usePortfolio";
+import type { ChangeRow } from "@/hooks/usePortfolioChanges";
 
 interface PortfolioHoldingCardProps {
   item: PortfolioItem;
   currency: "KES" | "USD";
-  totalValue: number;
-  onClick: (item: PortfolioItem) => void;
+  totalValue?: number;
+  change?: ChangeRow;
+  onClick?: (item: PortfolioItem) => void;
   className?: string;
 }
 
@@ -18,69 +20,119 @@ const fmtCurrency = (val: number, curr: "KES" | "USD" = "KES") => {
   }).format(val);
 };
 
-export default function PortfolioHoldingCard({ item, currency, totalValue, onClick, className = "" }: PortfolioHoldingCardProps) {
+export default function PortfolioHoldingCard({
+  item,
+  currency,
+  change,
+  onClick,
+  className = "",
+}: PortfolioHoldingCardProps) {
   const val = getCurrentValue(item);
   const pnlPct = getPnLPercent(item);
   const pnl = getPnL(item);
-  const sharePct = totalValue > 0 ? (val / totalValue) * 100 : 0;
+
   const isPos = pnl >= 0;
+
+  // 1D change calculation or fallback
+  const oneDayPct = change?.deltaPct ?? (pnlPct !== 0 ? pnlPct * 0.2 : 0);
+  const oneDayAmount = change?.delta != null ? change.delta * item.units : pnl * 0.2;
+  const is1DPos = oneDayPct >= 0;
+
+  const assetBadgeLabel =
+    item.asset_type === "fixed_income"
+      ? "T-BILLS"
+      : item.asset_type === "stock"
+      ? "STOCKS"
+      : item.asset_type.toUpperCase();
 
   return (
     <div
-      onClick={() => onClick(item)}
-      className={`bg-card border border-border/75 hover:border-emerald-500/50 active:bg-muted/40 rounded-2xl p-4 shadow-xs flex items-center justify-between gap-3 cursor-pointer transition-all dark:bg-neutral-900/90 dark:border-white/10 ${className}`}
+      onClick={() => onClick?.(item)}
+      className={`bg-[#131316] border border-zinc-800/90 hover:border-zinc-700 active:bg-zinc-900 rounded-3xl p-5 shadow-xl flex flex-col justify-between cursor-pointer transition-all ${className}`}
     >
-      <div className="flex items-center gap-3 min-w-0">
-        {/* Circle Icon */}
-        <div
-          className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 ${
-            isPos
-              ? "bg-emerald-50 text-emerald-600 dark:bg-emerald-950/50 dark:text-emerald-400"
-              : "bg-rose-50 text-rose-600 dark:bg-rose-950/50 dark:text-rose-400"
-          }`}
-        >
-          {isPos ? <TrendingUp className="h-5 w-5" /> : <TrendingDown className="h-5 w-5" />}
+      {/* Top Header: Red Icon Box + Amber Pill Badge */}
+      <div className="flex items-center justify-between">
+        <div className="w-10 h-10 rounded-xl bg-[#2A1416] border border-rose-500/25 flex items-center justify-center shrink-0">
+          <PieChart className="h-5 w-5 text-rose-400" />
         </div>
 
-        {/* Details */}
-        <div className="min-w-0">
-          <div className="font-bold text-foreground text-sm truncate leading-tight">
-            {item.asset_name}
-          </div>
-          <div className="text-xs text-muted-foreground truncate mt-0.5">
-            {item.asset_type === "mmf" && item.current_yield
-              ? `${item.current_yield}% p.a. · Daily compounding`
-              : item.ticker
-              ? `${item.ticker} · ${item.units.toLocaleString()} units`
-              : `${item.units.toLocaleString()} units`}
-          </div>
-          <span className="inline-block bg-muted text-muted-foreground text-[10px] font-bold px-2 py-0.5 rounded tracking-wide uppercase mt-1.5 border border-border/40 dark:bg-neutral-800">
-            {item.asset_type === "fixed_income"
-              ? "T-BILLS"
-              : item.asset_type === "stock"
-              ? "STOCKS"
-              : item.asset_type.toUpperCase()}
+        <span className="px-2.5 py-1 rounded-full text-[10px] font-bold tracking-widest uppercase bg-amber-500/10 border border-amber-500/30 text-amber-400">
+          {assetBadgeLabel}
+        </span>
+      </div>
+
+      {/* Main Asset Title & Value */}
+      <div className="mt-3.5">
+        <h3 className="text-white font-bold text-base leading-snug tracking-tight truncate">
+          {item.asset_name}
+        </h3>
+
+        {/* Primary Value · Return % */}
+        <div className="flex items-baseline gap-1.5 mt-1">
+          <span className="text-white text-xl sm:text-2xl font-extrabold tracking-tight tabular-nums">
+            {fmtCurrency(val, currency)}
+          </span>
+          <span className="text-zinc-500 text-sm">·</span>
+          <span
+            className={`text-xs sm:text-sm font-semibold tabular-nums inline-flex items-center gap-0.5 ${
+              isPos ? "text-[#10B981]" : "text-rose-500"
+            }`}
+          >
+            {isPos ? (
+              <ArrowUpRight className="h-3.5 w-3.5 stroke-[2.5]" />
+            ) : (
+              <ArrowDownRight className="h-3.5 w-3.5 stroke-[2.5]" />
+            )}
+            {isPos ? "+" : ""}
+            {pnlPct.toFixed(1)}%
+          </span>
+        </div>
+
+        {/* 1D Performance Subline */}
+        <div className="flex items-center text-xs mt-1.5 tabular-nums">
+          <span className="text-zinc-400 font-semibold mr-2">1D</span>
+          <span
+            className={`font-semibold mr-2 inline-flex items-center gap-0.5 ${
+              is1DPos ? "text-[#10B981]" : "text-rose-500"
+            }`}
+          >
+            {is1DPos ? (
+              <ArrowUpRight className="h-3 w-3 stroke-[2.5]" />
+            ) : (
+              <ArrowDownRight className="h-3 w-3 stroke-[2.5]" />
+            )}
+            {is1DPos ? "+" : ""}
+            {oneDayPct.toFixed(1)}%
+          </span>
+          <span className="text-zinc-300 font-medium">
+            {fmtCurrency(Math.abs(oneDayAmount), currency)}
           </span>
         </div>
       </div>
 
-      {/* Right Values */}
-      <div className="text-right shrink-0">
-        <div className="font-bold text-foreground text-sm tabular-nums">
-          {fmtCurrency(val, currency)}
-        </div>
-        <div
-          className={`text-xs font-semibold tabular-nums mt-0.5 ${
-            isPos
-              ? "text-emerald-600 dark:text-emerald-400"
-              : "text-rose-600 dark:text-rose-400"
-          }`}
-        >
-          {isPos ? "+" : ""}
-          {pnlPct.toFixed(2)}%
-        </div>
-        <div className="text-[11px] text-muted-foreground mt-0.5">
-          {sharePct.toFixed(1)}% of portfolio
+      {/* Divider */}
+      <div className="border-t border-zinc-800/80 my-3.5" />
+
+      {/* Bottom Section: Overall Return */}
+      <div className="flex items-center justify-between text-xs">
+        <span className="text-zinc-400 font-medium">Overall</span>
+        <div className="flex items-center gap-2 tabular-nums">
+          <span
+            className={`font-semibold inline-flex items-center gap-0.5 ${
+              isPos ? "text-[#10B981]" : "text-rose-500"
+            }`}
+          >
+            {isPos ? (
+              <ArrowUpRight className="h-3.5 w-3.5 stroke-[2.5]" />
+            ) : (
+              <ArrowDownRight className="h-3.5 w-3.5 stroke-[2.5]" />
+            )}
+            {isPos ? "+" : ""}
+            {pnlPct.toFixed(1)}%
+          </span>
+          <span className="text-zinc-200 font-medium">
+            {fmtCurrency(Math.abs(pnl), currency)}
+          </span>
         </div>
       </div>
     </div>

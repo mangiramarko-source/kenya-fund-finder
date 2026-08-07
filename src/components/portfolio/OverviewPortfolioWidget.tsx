@@ -1,12 +1,12 @@
 import { Link, useNavigate } from "react-router-dom";
 import { usePortfolio } from "@/hooks/usePortfolio";
-import { useAuth } from "@/hooks/useAuth";
+import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
 import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
-import { ArrowRight, Briefcase } from "lucide-react";
+import { ArrowRight, Briefcase, Plus } from "lucide-react";
 
 export default function OverviewPortfolioWidget() {
-  const { user } = useAuth();
   const { items, totalValue } = usePortfolio();
+  const { changes } = usePortfolioChanges(items);
   const navigate = useNavigate();
 
   if (items.length === 0) {
@@ -32,31 +32,41 @@ export default function OverviewPortfolioWidget() {
         </Link>
       </div>
 
-      <div className="flex overflow-x-auto gap-3 pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-none">
-        {displayItems.map((item) => (
-          <PortfolioHoldingCard
-            key={item.id}
-            item={item}
-            currency="KES" // Default to KES for overview widget
-            totalValue={totalValue}
-            onClick={() => navigate("/portfolio")}
-            className="w-[85vw] max-w-[320px] shrink-0 snap-center"
-          />
-        ))}
+      <div className="flex overflow-x-auto gap-3.5 pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-none">
+        {displayItems.map((item) => {
+          const itemChange = changes.find((c) => c.itemId === item.id);
+          return (
+            <PortfolioHoldingCard
+              key={item.id}
+              item={item}
+              currency="KES"
+              totalValue={totalValue}
+              change={itemChange}
+              onClick={() => navigate("/portfolio")}
+              className="w-[85vw] max-w-[310px] shrink-0 snap-center min-h-[200px]"
+            />
+          );
+        })}
 
-        {hasMore && (
-          <div className="w-[150px] shrink-0 snap-center flex items-center justify-center">
-            <Link
-              to="/portfolio"
-              className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[80px] bg-card border border-dashed border-border/75 hover:border-emerald-500/50 hover:text-emerald-500 rounded-2xl py-3 text-sm font-semibold text-muted-foreground transition-all"
-            >
-              <div className="w-8 h-8 rounded-full bg-emerald-500/10 flex items-center justify-center">
-                <ArrowRight className="h-4 w-4 text-emerald-500" />
+        {/* Dashed Add / View All Investment Card (matching screenshot design) */}
+        <div className="w-[180px] shrink-0 snap-center">
+          <Link
+            to="/portfolio"
+            className="flex flex-col items-center justify-center gap-2.5 w-full h-full min-h-[200px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-3xl p-5 text-center transition-all group"
+          >
+            <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+              {hasMore ? <ArrowRight className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+            </div>
+            <div>
+              <div className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">
+                {hasMore ? `View All (${items.length})` : "Add Investment"}
               </div>
-              <span className="text-xs">View all {items.length}</span>
-            </Link>
-          </div>
-        )}
+              <div className="text-[11px] text-zinc-400 mt-0.5">
+                {hasMore ? "Manage full portfolio" : "Track MMF, Stocks & FX"}
+              </div>
+            </div>
+          </Link>
+        </div>
       </div>
     </div>
   );
