@@ -1368,7 +1368,7 @@ const OverviewPage = () => {
         </div>
 
         {/* Right Column - Desktop Only */}
-        <div className="hidden md:flex md:flex-col md:col-span-3 space-y-4 sticky top-20 h-fit">
+        <div className="hidden md:flex md:flex-col md:col-span-3 space-y-4 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto pr-1">
           <ExchangeRatesCard
             rates={displayFxRates}
             onOpenCustomize={() => setFxCustomizeOpen(true)}

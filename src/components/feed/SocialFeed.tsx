@@ -56,8 +56,10 @@ export const SocialFeedCard = ({
 
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
 
-  const authorName = item.authorName || "KenyaFundFinder Academy";
-  const initials = getInitials(authorName);
+  const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
+  const rawAuthor = item.authorName || "KenyaFundFinder Academy";
+  const authorName = isSocialPost ? rawAuthor.replace(/^X\s*-\s*/, '') : rawAuthor;
+  const initials = isSocialPost ? "X" : getInitials(authorName);
   
   const rawLabel = item.authorLabel || "dailytip";
   const authorHandle = rawLabel.startsWith("@") ? rawLabel : `@${rawLabel.toLowerCase().replace(/\s+/g, '')}`;
@@ -116,8 +118,14 @@ export const SocialFeedCard = ({
       {/* Top Author Bar */}
       <div className="flex items-center gap-3">
         {/* Avatar Circle */}
-        <div className={`w-9 h-9 rounded-full ${getAvatarBg(item.type)} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm`}>
-          {initials}
+        <div className={`w-9 h-9 rounded-full ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm`}>
+          {isSocialPost ? (
+            <svg className="w-4 h-4 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
+              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+            </svg>
+          ) : (
+            initials
+          )}
         </div>
 
         {/* Author Details & Timestamp */}
@@ -125,6 +133,14 @@ export const SocialFeedCard = ({
           <span className="font-bold text-foreground text-sm truncate">
             {authorName}
           </span>
+          {isSocialPost && (
+            <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-black/5 dark:bg-white/10 text-foreground dark:text-white px-1.5 py-0.5 rounded-full border border-border/60 shrink-0">
+              <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
+                <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+              </svg>
+              <span>Social</span>
+            </span>
+          )}
           <span className="text-muted-foreground truncate">
             {authorHandle}
           </span>

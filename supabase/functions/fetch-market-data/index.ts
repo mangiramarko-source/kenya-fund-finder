@@ -404,22 +404,30 @@ function parseNseSnapshotDate(html: string) {
 }
 
 function parseNseQuoteRows(html: string) {
-  // deno-lint-ignore no-explicit-any
-  const DOMParserCtor = (globalThis as any).DOMParser;
-  if (!DOMParserCtor) return [] as Array<{ company: string; price: number; changePct: number; volume: number }>;
-  const doc = new DOMParserCtor().parseFromString(html, "text/html");
-  if (!doc) return [] as Array<{ company: string; price: number; changePct: number; volume: number }>;
-
-  return [...doc.querySelectorAll("table tr")]
-    .map((tr) => [...tr.querySelectorAll("td")].map((cell) => cell.textContent?.trim() || ""))
-    .filter((cells) => cells.length >= 5)
-    .map((cells) => ({
-      company: cells[0],
-      volume: parseInteger(cells[2]),
-      price: parseNumber(cells[3]),
-      changePct: parseNumber(cells[4]),
-    }))
-    .filter((row) => row.company && row.price > 0);
+  const rows: Array<{ company: string; price: number; changePct: number; volume: number }> = [];
+  const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
+  let trMatch;
+  while ((trMatch = trRegex.exec(html)) !== null) {
+    const trHtml = trMatch[1];
+    const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
+    const cells: string[] = [];
+    let tdMatch;
+    while ((tdMatch = tdRegex.exec(trHtml)) !== null) {
+      const text = tdMatch[1].replace(/<[^>]+>/g, "").trim();
+      cells.push(text);
+    }
+    
+    if (cells.length >= 5) {
+      const company = cells[0];
+      const volume = parseInteger(cells[2]);
+      const price = parseNumber(cells[3]);
+      const changePct = parseNumber(cells[4]);
+      if (company && price > 0) {
+        rows.push({ company, volume, price, changePct });
+      }
+    }
+  }
+  return rows;
 }
 
 async function fetchNseXhrStockQuotes() {

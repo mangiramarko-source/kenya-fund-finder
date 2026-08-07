@@ -198,7 +198,7 @@ Be factual, neutral and accurate. Keep all named entities, numbers, dates, curre
 If something is unclear, omit it. Write in clean British/Kenyan English. Do NOT say things like "the article says" or reference the original source inside the body.
 Return ONLY a JSON object that matches the schema — no markdown, no commentary.`;
 
-  const userPrompt = `Title: ${title}
+  let userPrompt = `Title: ${title}
 Original source: ${source}
 
 Source text:
@@ -209,6 +209,20 @@ ${sourceText}
 Rewrite this as a completely original article:
 - "summary": a comprehensive, highly detailed 5-8 sentence standalone executive summary (up to 1200 characters) that gives readers the full picture and all key facts without forcing them to read the full article. 
 - "content": a rich, insightful 3-6 paragraph analysis (roughly 250-450 words) written entirely in your own words. Synthesize the key facts, context, numbers, and explicitly explain the implications for the Kenyan market and local investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
+
+  if (source.toLowerCase().includes("tuko")) {
+    userPrompt = `Title: ${title}
+Original source: ${source}
+
+Source text:
+"""
+${sourceText}
+"""
+
+Rewrite this as a completely original, extended article:
+- "summary": a comprehensive, highly detailed 6-10 sentence standalone executive summary (up to 1500 characters) that gives readers the full picture and all key facts.
+- "content": an extensive, rich, and highly detailed 5-8 paragraph analysis (roughly 400-700 words) written entirely in your own words to ensure zero plagiarism. Extract every possible detail, nuance, and piece of extra information from the source text. Synthesize the key facts, deep context, numbers, and explicitly explain the broader implications for the Kenyan market and local investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
+  }
 
   try {
     const controller = new AbortController();

@@ -129,21 +129,43 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card text-card-foreground border border-border p-0 rounded-2xl shadow-2xl hide-scrollbar dark:bg-neutral-900/95 dark:border-white/10 dark:text-foreground">
         {/* Header bar */}
-        <div className="p-6 border-b border-border dark:border-white/10 relative">
-          <div className="flex items-center justify-between gap-4 pr-8">
-            <div className="flex items-center gap-3">
-              <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${getAvatarBg(item.type)}`}>
-                <span className="text-white font-bold text-sm tracking-wider">{getInitials(item.authorName)}</span>
-              </div>
-              <div className="flex flex-col">
-                <span className="font-semibold text-foreground text-base tracking-tight">{item.authorName}</span>
-                <div className="flex items-center text-xs text-muted-foreground gap-2 font-medium">
-                  {item.authorLabel && <span>{item.authorLabel}</span>}
-                  {item.authorLabel && <span className="text-muted-foreground/40 dark:text-white/20">•</span>}
-                  <span>{timeAgo}</span>
+        {(() => {
+          const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
+          const cleanAuthor = isSocialPost ? item.authorName.replace(/^X\s*-\s*/, '') : item.authorName;
+          return (
+            <div className="p-6 border-b border-border dark:border-white/10 relative">
+              <div className="flex items-center justify-between gap-4 pr-8">
+                <div className="flex items-center gap-3">
+                  <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)}`}>
+                    {isSocialPost ? (
+                      <svg className="w-5 h-5 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
+                        <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                      </svg>
+                    ) : (
+                      <span className="text-white font-bold text-sm tracking-wider">{getInitials(cleanAuthor)}</span>
+                    )}
+                  </div>
+                  <div className="flex flex-col">
+                    <div className="flex items-center gap-2">
+                      <span className="font-semibold text-foreground text-base tracking-tight">{cleanAuthor}</span>
+                      {isSocialPost && (
+                        <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-black/5 dark:bg-white/10 text-foreground dark:text-white px-2 py-0.5 rounded-full border border-border/60">
+                          <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
+                            <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                          </svg>
+                          <span>Social Update</span>
+                        </span>
+                      )}
+                    </div>
+                    <div className="flex items-center text-xs text-muted-foreground gap-2 font-medium">
+                      {item.authorLabel && <span>{item.authorLabel}</span>}
+                      {item.authorLabel && <span className="text-muted-foreground/40 dark:text-white/20">•</span>}
+                      <span>{timeAgo}</span>
+                    </div>
+                  </div>
                 </div>
-              </div>
-            </div>
+          );
+        })()}
 
             {/* Related Symbols Sparklines */}
             {item.relatedSymbols && item.relatedSymbols.length > 0 && (
