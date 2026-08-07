@@ -9,6 +9,7 @@ import {
   TrendingUp,
   CircleDollarSign,
   Newspaper,
+  PieChart,
 } from "lucide-react";
 import { useConsent } from "@/hooks/useConsent";
 import { useAuth } from "@/hooks/useAuth";
