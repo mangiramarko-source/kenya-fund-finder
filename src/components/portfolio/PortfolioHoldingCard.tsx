@@ -39,7 +39,9 @@ export default function PortfolioHoldingCard({
   const is1DPos = oneDayPct >= 0;
 
   const assetBadgeLabel =
-    item.asset_type === "fixed_income"
+    item.id === "demo-safaricom"
+      ? "EXAMPLE"
+      : item.asset_type === "fixed_income"
       ? "T-BILLS"
       : item.asset_type === "stock"
       ? "STOCKS"

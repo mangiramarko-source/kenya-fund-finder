@@ -1,20 +1,44 @@
 import { Link, useNavigate } from "react-router-dom";
-import { usePortfolio } from "@/hooks/usePortfolio";
+import { usePortfolio, PortfolioItem } from "@/hooks/usePortfolio";
 import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
 import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
 import { ArrowRight, Briefcase, Plus } from "lucide-react";
+
+const DEMO_ITEM: PortfolioItem = {
+  id: "demo-safaricom",
+  user_id: "demo",
+  asset_type: "stock",
+  asset_name: "Safaricom PLC",
+  ticker: "SCOM",
+  asset_id: null,
+  units: 1000,
+  buy_price: 14.55,
+  current_price: 15.25,
+  current_yield: 0,
+  buy_date: new Date().toISOString(),
+  notes: "Sample holding",
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+};
+
+const DEMO_CHANGE = {
+  itemId: "demo-safaricom",
+  assetType: "stock",
+  assetName: "Safaricom PLC",
+  current: 15.25,
+  previous: 15.07,
+  delta: 0.18,
+  deltaPct: 1.2,
+  unit: "KES" as const,
+};
 
 export default function OverviewPortfolioWidget() {
   const { items, totalValue } = usePortfolio();
   const { changes } = usePortfolioChanges(items);
   const navigate = useNavigate();
 
-  if (items.length === 0) {
-    return null; // hide if empty
-  }
-
-  // Max of 4 items
-  const displayItems = items.slice(0, 4);
+  const isDemoFallback = items.length === 0;
+  const displayItems = isDemoFallback ? [DEMO_ITEM] : items.slice(0, 4);
   const hasMore = items.length > 4;
 
   return (
@@ -22,25 +46,32 @@ export default function OverviewPortfolioWidget() {
       <div className="flex items-center justify-between px-1">
         <h2 className="text-base font-bold text-foreground flex items-center gap-1.5">
           <Briefcase className="h-4 w-4 text-[#00A651]" />
-          Your Portfolio
+          Portfolio
+          {isDemoFallback && (
+            <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold px-1.5 py-0.5 rounded-md">
+              SAMPLE
+            </span>
+          )}
         </h2>
         <Link
           to="/portfolio"
           className="text-xs font-bold text-[#00A651] hover:underline flex items-center gap-0.5"
         >
-          Manage
+          {isDemoFallback ? "Create Portfolio" : "Manage"}
         </Link>
       </div>
 
       <div className="flex overflow-x-auto gap-3 pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-none">
         {displayItems.map((item) => {
-          const itemChange = changes.find((c) => c.itemId === item.id);
+          const itemChange = isDemoFallback
+            ? DEMO_CHANGE
+            : changes.find((c) => c.itemId === item.id);
           return (
             <PortfolioHoldingCard
               key={item.id}
               item={item}
               currency="KES"
-              totalValue={totalValue}
+              totalValue={isDemoFallback ? 15250 : totalValue}
               change={itemChange}
               onClick={() => navigate("/portfolio")}
               className="w-[64vw] max-w-[245px] shrink-0 snap-center min-h-[160px]"
@@ -48,7 +79,7 @@ export default function OverviewPortfolioWidget() {
           );
         })}
 
-        {/* Dashed Add / View All Investment Card (matching screenshot design) */}
+        {/* Dashed Add / View All Investment Card */}
         <div className="w-[140px] shrink-0 snap-center">
           <Link
             to="/portfolio"
