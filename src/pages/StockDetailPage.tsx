@@ -556,7 +556,7 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
         .from("news_articles_public")
         .select("id, title, summary, date_published, created_at, source, category, image_url")
         .or(`title.ilike.%${symbol}%,title.ilike.%${name}%,summary.ilike.%${symbol}%,summary.ilike.%${name}%`)
-        .order("date_published", { ascending: false })
+        .order("created_at", { ascending: false })
         .limit(10);
       setNews(data || []);
       setLoading(false);

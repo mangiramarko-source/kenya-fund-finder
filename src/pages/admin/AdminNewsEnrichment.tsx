@@ -63,7 +63,7 @@ const AdminNewsEnrichment = () => {
       .from("news_articles")
       .select("id, title, summary, url, content, source, status, date_published, updated_at")
       .eq("status", "published")
-      .order("date_published", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(500);
     if (error) {
       toast({ title: "Failed to load articles", description: error.message, variant: "destructive" });

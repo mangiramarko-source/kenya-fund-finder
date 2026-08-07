@@ -79,7 +79,7 @@ const AdminNews = () => {
     const { data } = await supabase
       .from("news_articles")
       .select("*")
-      .order("date_published", { ascending: false });
+      .order("created_at", { ascending: false });
     if (data) setArticles(data.map((d: any) => ({ ...d, content: d.content || null })) as NewsRow[]);
   };
 

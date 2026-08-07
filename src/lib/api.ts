@@ -150,7 +150,7 @@ export async function fetchRelatedNews(category: string, excludeId: string, limi
     .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
     .eq("category", category)
     .neq("id", excludeId)
-    .order("date_published", { ascending: false })
+    .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
   return (data || []).map((d: any) => ({
@@ -204,7 +204,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
     const { data, error } = await supabase
       .from("news_articles_public")
       .select("id, title, summary, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
-      .order("date_published", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(limit);
     if (error) throw error;
     return (data || []).map((d: any) => ({
@@ -261,7 +261,7 @@ export async function fetchPublishedNews(limit: number = 60): Promise<NewsFromDB
     const { data, error } = await supabase
       .from("news_articles_public")
       .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
-      .order("date_published", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(limit);
       
     if (error) throw error;
