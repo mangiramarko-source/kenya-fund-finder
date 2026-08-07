@@ -65,84 +65,83 @@ const HomeHero = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-[380px] p-0 overflow-hidden rounded-3xl border-border bg-card">
-        <div className="p-5">
-          {/* Card head: icon chip + status pill */}
-          <div className="flex items-center justify-between">
-            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/25 text-primary">
-              <PieChart className="h-5 w-5" />
-            </span>
-            <span className="rounded-full border border-warning/40 bg-warning/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-warning">
-              Independent
-            </span>
-          </div>
+      <DialogContent className="max-w-[380px] gap-6 rounded-[2.5rem] border-border/70 bg-card p-6">
+        {/* Header row: icon chip + status pill */}
+        <div className="flex items-start justify-between">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <PieChart className="h-5 w-5" />
+          </span>
+          <span className="rounded-full border border-warning/30 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-warning">
+            Market Data
+          </span>
+        </div>
 
-          <h2 className="mt-4 text-[22px] font-semibold leading-[1.15] tracking-tight text-foreground">
-            Kenyan markets,
-            <br />
-            in one dashboard.
+        {/* Headline */}
+        <div className="space-y-1.5">
+          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+            Kenya Fund Finder
           </h2>
-
-          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
-            NSE stocks, MMFs, unit trusts, T-Bills, FX and commodities — neutral
-            data, no noise.
-          </p>
-
-          {/* Actions */}
-          <div className="mt-5 flex flex-col gap-2">
-            <Button
-              asChild
-              className="h-11 w-full rounded-2xl gap-2 text-sm font-semibold"
-              onClick={handleNavigate}
-            >
-              <Link to="/portfolio">
-                <LayoutDashboard className="h-4 w-4" /> Start portfolio tracker
-              </Link>
-            </Button>
-            <Button
-              asChild
-              variant="ghost"
-              className="h-11 w-full rounded-2xl gap-2 text-sm font-medium bg-muted/40 hover:bg-muted/70"
-              onClick={handleNavigate}
-            >
-              <Link to="/overview">
-                <Search className="h-4 w-4" /> Browse market data
-              </Link>
-            </Button>
-          </div>
-
-          <div className="my-4 h-px bg-border/60" />
-
-          <div className="flex flex-col">
-            <HeroTile
-              to="/funds"
-              icon={TrendingUp}
-              label="Unit Trusts & MMFs"
-              sub="Historical rates & categories"
-              onClick={handleNavigate}
-            />
-            <HeroTile
-              to="/overview"
-              icon={CircleDollarSign}
-              label="Stocks, T-Bills & FX"
-              sub="NSE pricing & treasury yields"
-              onClick={handleNavigate}
-            />
-            <HeroTile
-              to="/news"
-              icon={Newspaper}
-              label="Commodities & News"
-              sub="Global benchmarks & updates"
-              onClick={handleNavigate}
-            />
-          </div>
-        </div>
-
-        <div className="border-t border-border/60 bg-muted/20 px-5 py-3">
-          <p className="text-center text-[9px] font-medium uppercase tracking-[0.18em] text-muted-foreground/70">
-            No investment advice · Purely data-driven
+          <p className="text-sm leading-relaxed text-muted-foreground">
+            Unified access to Kenyan markets. Monitor yields, equities and macro
+            data in one dashboard.
           </p>
         </div>
+
+        {/* Primary actions */}
+        <div className="flex flex-col gap-3">
+          <Button
+            asChild
+            className="h-12 w-full rounded-2xl gap-2 text-sm font-semibold transition-transform active:scale-95"
+            onClick={handleNavigate}
+          >
+            <Link to="/portfolio">
+              <LayoutDashboard className="h-4 w-4" /> Start portfolio tracker
+            </Link>
+          </Button>
+          <Button
+            asChild
+            variant="outline"
+            className="h-12 w-full rounded-2xl gap-2 border-border bg-transparent text-sm font-medium transition-transform active:scale-95"
+            onClick={handleNavigate}
+          >
+            <Link to="/overview">
+              <Search className="h-4 w-4" /> Browse market data
+            </Link>
+          </Button>
+        </div>
+
+        {/* Destination rows */}
+        <div className="flex flex-col">
+          <HeroTile
+            to="/funds"
+            label="Unit Trusts & MMFs"
+            sub="Yield focus"
+            meta="Rates"
+            onClick={handleNavigate}
+            divider
+          />
+          <HeroTile
+            to="/overview"
+            label="Stocks, T-Bills & FX"
+            sub="NSE markets"
+            meta="Prices"
+            onClick={handleNavigate}
+            divider
+          />
+          <HeroTile
+            to="/news"
+            label="Commodities & News"
+            sub="Macro data"
+            meta="Live"
+            onClick={handleNavigate}
+          />
+        </div>
+
+        {/* Footer disclaimer */}
+        <p className="text-center text-[10px] leading-tight text-muted-foreground/80">
+          Data provided for informational purposes only. This platform does not
+          provide financial advice or fund rankings. Investments carry risk.
+        </p>
       </DialogContent>
     </Dialog>
   );
@@ -150,34 +149,40 @@ const HomeHero = () => {
 
 const HeroTile = ({
   to,
-  icon: Icon,
   label,
   sub,
+  meta,
   onClick,
+  divider,
 }: {
   to: string;
-  icon: any;
   label: string;
   sub: string;
+  meta: string;
   onClick?: () => void;
+  divider?: boolean;
 }) => (
   <Link
     to={to}
     onClick={onClick}
-    className="group -mx-1 flex items-center gap-3 rounded-2xl px-1 py-2.5 transition-colors active:bg-muted/50"
+    className={`group flex items-center justify-between py-4 transition-colors active:bg-muted/40 ${
+      divider ? "border-b border-border/40" : ""
+    }`}
   >
-    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-muted/50 text-primary">
-      <Icon className="h-4 w-4" />
-    </span>
-    <span className="min-w-0 flex-1">
-      <span className="block truncate text-[13px] font-semibold text-foreground">
+    <span className="flex min-w-0 flex-col">
+      <span className="truncate text-sm font-medium text-foreground">
         {label}
       </span>
-      <span className="block truncate text-[11px] text-muted-foreground">
+      <span className="truncate text-[11px] uppercase tracking-wider text-muted-foreground">
         {sub}
       </span>
     </span>
-    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-primary" />
+    <span className="flex shrink-0 items-center gap-2">
+      <span className="font-mono text-xs font-medium uppercase text-success">
+        {meta}
+      </span>
+      <ArrowRight className="h-4 w-4 text-muted-foreground/60 transition-colors group-hover:text-primary" />
+    </span>
   </Link>
 );
 

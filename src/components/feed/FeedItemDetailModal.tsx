@@ -38,7 +38,7 @@ interface FeedItemDetailModalProps {
   onOpenChange: (open: boolean) => void;
   interaction?: PostInteraction;
   onLikeToggle?: (itemId: string, defaultLikes?: number) => void;
-  onAddComment?: (itemId: string, text: string) => void;
+  onAddComment?: (itemId: string, text: string, authorName?: string) => void;
 }
 
 const getInitials = (name: string) => {

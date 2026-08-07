@@ -47,6 +47,7 @@ export interface ExchangeRate {
   currency_name: string;
   rate: number;
   previous_rate: number | null;
+  day_change_percent?: number | null;
   updated_at: string;
 }
 
@@ -57,6 +58,7 @@ export interface Commodity {
   price: number;
   previous_price: number | null;
   unit: string;
+  day_change_percent?: number | null;
   updated_at: string;
 }
 

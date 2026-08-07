@@ -1,6 +1,7 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import { Star, TrendingUp, TrendingDown, SlidersHorizontal, ArrowRight } from "lucide-react";
+import type { Stock } from "@/types";
 interface WatchlistSummaryItem {
   id: string;
   symbol: string;

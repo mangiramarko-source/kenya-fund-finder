@@ -9,6 +9,8 @@ export interface WeeklyBuckets {
   largestYieldDecrease: ChangeRow | null;
   largestPriceIncrease: ChangeRow | null;
   largestPriceDecrease: ChangeRow | null;
+  largestStockGain?: ChangeRow | null;
+  largestStockLoss?: ChangeRow | null;
   /** Holdings with at least one new snapshot data point. */
   withData: ChangeRow[];
   /** Holdings where no recent snapshot is available. */
