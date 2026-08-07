@@ -35,7 +35,7 @@ const ChangeIndicator = ({ current, previous }: { current: number; previous: num
   const pct = previous !== 0 ? ((diff / previous) * 100).toFixed(2) : "0.00";
   if (diff > 0)
     return (
-      <span className="inline-flex items-center gap-1 text-accent text-sm font-semibold">
+      <span className="inline-flex items-center gap-1 text-emerald-500 dark:text-emerald-400 text-sm font-semibold">
         <TrendingUp className="h-3.5 w-3.5" /> +{pct}%
       </span>
     );
@@ -275,7 +275,7 @@ const RatesPage = () => {
               ] as const).map((opt) => {
                 const active = mobileMovement === opt.key;
                 let activeStyle = "bg-muted text-foreground";
-                if (opt.key === "gainers") activeStyle = "bg-accent/15 text-accent shadow-sm";
+                if (opt.key === "gainers") activeStyle = "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 shadow-sm";
                 if (opt.key === "losers") activeStyle = "bg-destructive/15 text-destructive shadow-sm";
                 if (opt.key === "unchanged") activeStyle = "bg-muted-foreground/15 text-foreground shadow-sm";
                 
@@ -733,7 +733,7 @@ const RateRow = ({
     change == null || change === 0
       ? { label: "Flat", className: "text-muted-foreground bg-muted/40" }
       : change > 0
-      ? { label: "Up", className: "text-accent bg-accent/10" }
+      ? { label: "Up", className: "text-emerald-500 dark:text-emerald-400 bg-emerald-500/10" }
       : { label: "Down", className: "text-destructive bg-destructive/10" };
   const updatedShort = formatMarketDate(rate.updated_at);
 
@@ -764,7 +764,7 @@ const RateRow = ({
           {change == null ? (
             <span className="text-muted-foreground">—</span>
           ) : change > 0 ? (
-            <span className="text-accent font-semibold">+{change.toFixed(4)}</span>
+            <span className="text-emerald-500 dark:text-emerald-400 font-semibold">+{change.toFixed(4)}</span>
           ) : change < 0 ? (
             <span className="text-destructive font-semibold">{change.toFixed(4)}</span>
           ) : (
@@ -803,8 +803,8 @@ const RateRow = ({
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
               <DetailBox label="Current Rate" value={`KES ${rate.rate.toFixed(2)}`} />
               <DetailBox label="Previous Rate" value={rate.previous_rate != null ? `KES ${rate.previous_rate.toFixed(2)}` : "—"} />
-              <DetailBox label="Change (Abs)" value={change != null ? `${change > 0 ? "+" : ""}${change.toFixed(4)}` : "—"} color={change != null ? (change > 0 ? "text-destructive" : change < 0 ? "text-accent" : undefined) : undefined} />
-              <DetailBox label="Change (%)" value={changePct != null ? `${changePct > 0 ? "+" : ""}${changePct.toFixed(2)}%` : "—"} color={changePct != null ? (changePct > 0 ? "text-destructive" : changePct < 0 ? "text-accent" : undefined) : undefined} />
+              <DetailBox label="Change (Abs)" value={change != null ? `${change > 0 ? "+" : ""}${change.toFixed(4)}` : "—"} color={change != null ? (change > 0 ? "text-destructive" : change < 0 ? "text-emerald-500 dark:text-emerald-400" : undefined) : undefined} />
+              <DetailBox label="Change (%)" value={changePct != null ? `${changePct > 0 ? "+" : ""}${changePct.toFixed(2)}%` : "—"} color={changePct != null ? (changePct > 0 ? "text-destructive" : changePct < 0 ? "text-emerald-500 dark:text-emerald-400" : undefined) : undefined} />
             </div>
 
             <div className="rounded-lg border border-border bg-card p-3">
