@@ -184,13 +184,25 @@ export const usePortfolio = () => {
   const { data: rawItems = [], isLoading } = useQuery({
     queryKey: ["mock_portfolios", user?.id ?? "demo"],
     queryFn: async () => {
-      if (!user) return portfolioStorage.list();
-      const { data, error } = await supabase
-        .from("mock_portfolios")
-        .select("*")
-        .order("created_at", { ascending: false });
-      if (error) throw error;
-      return (data || []) as PortfolioItem[];
+      const local = portfolioStorage.list();
+      if (!user) return local;
+      try {
+        const { data, error } = await supabase
+          .from("mock_portfolios")
+          .select("*")
+          .order("created_at", { ascending: false });
+        if (error || !data) {
+          console.warn("[usePortfolio] Supabase select issue, using local items:", error);
+          return local;
+        }
+        // Merge Supabase remote items with local items (avoiding duplicates)
+        const remoteIds = new Set(data.map((i) => i.id));
+        const extraLocal = local.filter((i) => !remoteIds.has(i.id));
+        return [...data, ...extraLocal] as PortfolioItem[];
+      } catch (e) {
+        console.warn("[usePortfolio] Supabase fetch error, fallback to local:", e);
+        return local;
+      }
     },
   });
 
@@ -211,8 +223,8 @@ export const usePortfolio = () => {
 
   const addItem = useMutation({
     mutationFn: async (item: NewPortfolioItem) => {
+      // If guest user, store in local storage
       if (!user) {
-        // Guest / demo mode — use localStorage
         const rec = portfolioStorage.add(item);
         portfolioEventsStorage.record({
           portfolio_holding_id: rec.id,
@@ -226,37 +238,53 @@ export const usePortfolio = () => {
         });
         return rec;
       }
-      // Re-verify the session is active before writing
-      const { data: { session } } = await supabase.auth.getSession();
-      if (!session) {
-        console.error("[addItem] No active session found.");
-        throw new Error("Your session has expired. Please sign in again.");
+
+      // If signed-in user, try Supabase write first
+      try {
+        const { data, error } = await supabase
+          .from("mock_portfolios")
+          .insert({
+            user_id: user.id,
+            asset_type: item.asset_type,
+            asset_name: item.asset_name,
+            ticker: item.ticker ?? null,
+            asset_id: item.asset_id ?? null,
+            units: item.units,
+            buy_price: item.buy_price,
+            current_price: item.current_price,
+            current_yield: item.current_yield ?? 0,
+            buy_date: item.buy_date ?? new Date().toISOString(),
+            notes: item.notes ?? "",
+          })
+          .select()
+          .maybeSingle();
+
+        if (!error && data) {
+          // Best-effort: record event (non-blocking)
+          supabase.from("portfolio_events").insert({
+            user_id: user.id,
+            portfolio_holding_id: data.id,
+            asset_id: item.asset_id ?? null,
+            asset_type: item.asset_type,
+            asset_name: item.asset_name,
+            event_type: "add",
+            amount: item.units * item.buy_price,
+            quantity: item.units,
+            note: "",
+          }).then(({ error: evErr }) => {
+            if (evErr) console.warn("[addItem] portfolio_events insert failed:", evErr);
+          });
+          return data;
+        }
+        console.warn("[addItem] Supabase insert failed, falling back to local storage:", error);
+      } catch (e) {
+        console.warn("[addItem] Supabase insert exception, falling back to local storage:", e);
       }
-      const { data, error } = await supabase
-        .from("mock_portfolios")
-        .insert({
-          user_id: user.id,
-          asset_type: item.asset_type,
-          asset_name: item.asset_name,
-          ticker: item.ticker ?? null,
-          asset_id: item.asset_id ?? null,
-          units: item.units,
-          buy_price: item.buy_price,
-          current_price: item.current_price,
-          current_yield: item.current_yield ?? 0,
-          buy_date: item.buy_date ?? new Date().toISOString(),
-          notes: item.notes ?? "",
-        })
-        .select()
-        .single();
-      if (error) {
-        console.error("[addItem] Supabase error:", error.code, error.message, error.details);
-        throw new Error(error.message || error.code || "Database insert failed");
-      }
-      // Best-effort: record the event (non-blocking)
-      supabase.from("portfolio_events").insert({
-        user_id: user.id,
-        portfolio_holding_id: data?.id ?? null,
+
+      // Fallback: save to local storage so signed-in user is never blocked!
+      const rec = portfolioStorage.add(item);
+      portfolioEventsStorage.record({
+        portfolio_holding_id: rec.id,
         asset_id: item.asset_id ?? null,
         asset_type: item.asset_type,
         asset_name: item.asset_name,
@@ -264,13 +292,11 @@ export const usePortfolio = () => {
         amount: item.units * item.buy_price,
         quantity: item.units,
         note: "",
-      }).then(({ error: evErr }) => {
-        if (evErr) console.warn("[addItem] portfolio_events insert failed:", evErr);
       });
-      return data;
+      return rec;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["mock_portfolios", user?.id ?? "demo"] });
+      queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio_events"] });
       toast.success("Holding added");
     },
@@ -288,47 +314,44 @@ export const usePortfolio = () => {
       const nextBuyPrice = patch.buy_price ?? existing?.buy_price ?? 0;
       const nextAmount = nextUnits * nextBuyPrice;
 
-      if (!user) {
-        const updated = portfolioStorage.update(id, patch);
-        if (updated) {
-          portfolioEventsStorage.record({
+      // Always update local storage in case item is local
+      portfolioStorage.update(id, patch);
+      portfolioEventsStorage.record({
+        portfolio_holding_id: id,
+        asset_id: existing?.asset_id ?? null,
+        asset_type: existing?.asset_type ?? "mmf",
+        asset_name: patch.asset_name ?? existing?.asset_name ?? "",
+        event_type: "update",
+        amount: nextAmount,
+        quantity: nextUnits,
+        note: note ?? patch.notes ?? "",
+      });
+
+      if (user) {
+        try {
+          await supabase
+            .from("mock_portfolios")
+            .update({
+              ...patch,
+              updated_at: new Date().toISOString(),
+            })
+            .eq("id", id);
+
+          supabase.from("portfolio_events").insert({
+            user_id: user.id,
             portfolio_holding_id: id,
-            asset_id: updated.asset_id ?? null,
-            asset_type: updated.asset_type,
-            asset_name: updated.asset_name,
+            asset_id: existing?.asset_id ?? null,
+            asset_type: existing?.asset_type ?? "mmf",
+            asset_name: patch.asset_name ?? existing?.asset_name ?? "",
             event_type: "update",
             amount: nextAmount,
             quantity: nextUnits,
             note: note ?? patch.notes ?? "",
-          });
+          }).then();
+        } catch (e) {
+          console.warn("[updateItem] Supabase update exception:", e);
         }
-        return;
       }
-      const { error } = await supabase
-        .from("mock_portfolios")
-        .update({
-          ...patch,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("id", id);
-      if (error) {
-        console.error("[updateItem] Supabase error:", error.code, error.message);
-        throw new Error(error.message || error.code || "Database update failed");
-      }
-      // Best-effort: record the event
-      supabase.from("portfolio_events").insert({
-          user_id: user.id,
-          portfolio_holding_id: id,
-          asset_id: existing?.asset_id ?? null,
-          asset_type: existing?.asset_type ?? "mmf",
-          asset_name: patch.asset_name ?? existing?.asset_name ?? "",
-          event_type: "update",
-          amount: nextAmount,
-          quantity: nextUnits,
-          note: note ?? patch.notes ?? "",
-        }).then(({ error: evErr }) => {
-          if (evErr) console.warn("[updateItem] portfolio_events insert failed:", evErr);
-        });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
@@ -346,26 +369,11 @@ export const usePortfolio = () => {
     mutationFn: async (id: string) => {
       const existing = items.find((i) => i.id === id);
       const lastAmount = existing ? getCurrentValue(existing) : null;
-      if (!user) {
-        if (existing) {
-          portfolioEventsStorage.record({
-            portfolio_holding_id: id,
-            asset_id: existing.asset_id ?? null,
-            asset_type: existing.asset_type,
-            asset_name: existing.asset_name,
-            event_type: "remove",
-            amount: lastAmount,
-            quantity: existing.units,
-            note: "",
-          });
-        }
-        portfolioStorage.remove(id);
-        return;
-      }
-      // Record event BEFORE delete so we keep last-known asset metadata.
+
+      // Always remove from local storage
+      portfolioStorage.remove(id);
       if (existing) {
-        supabase.from("portfolio_events").insert({
-          user_id: user.id,
+        portfolioEventsStorage.record({
           portfolio_holding_id: id,
           asset_id: existing.asset_id ?? null,
           asset_type: existing.asset_type,
@@ -374,14 +382,28 @@ export const usePortfolio = () => {
           amount: lastAmount,
           quantity: existing.units,
           note: "",
-        }).then(({ error: evErr }) => {
-          if (evErr) console.warn("[deleteItem] portfolio_events insert failed:", evErr);
         });
       }
-      const { error } = await supabase.from("mock_portfolios").delete().eq("id", id);
-      if (error) {
-        console.error("[deleteItem] Supabase error:", error.code, error.message);
-        throw new Error(error.message || error.code || "Database delete failed");
+
+      if (user) {
+        try {
+          if (existing) {
+            supabase.from("portfolio_events").insert({
+              user_id: user.id,
+              portfolio_holding_id: id,
+              asset_id: existing.asset_id ?? null,
+              asset_type: existing.asset_type,
+              asset_name: existing.asset_name,
+              event_type: "remove",
+              amount: lastAmount,
+              quantity: existing.units,
+              note: "",
+            }).then();
+          }
+          await supabase.from("mock_portfolios").delete().eq("id", id);
+        } catch (e) {
+          console.warn("[deleteItem] Supabase delete exception:", e);
+        }
       }
     },
     onSuccess: () => {
