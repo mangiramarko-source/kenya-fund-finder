@@ -212,6 +212,7 @@ export const usePortfolio = () => {
   const addItem = useMutation({
     mutationFn: async (item: NewPortfolioItem) => {
       if (!user) {
+        // Guest / demo mode — use localStorage
         const rec = portfolioStorage.add(item);
         portfolioEventsStorage.record({
           portfolio_holding_id: rec.id,
@@ -223,7 +224,13 @@ export const usePortfolio = () => {
           quantity: item.units,
           note: "",
         });
-        return;
+        return rec;
+      }
+      // Re-verify the session is active before writing
+      const { data: { session } } = await supabase.auth.getSession();
+      if (!session) {
+        console.error("[addItem] No active session found.");
+        throw new Error("Your session has expired. Please sign in again.");
       }
       const { data, error } = await supabase
         .from("mock_portfolios")
@@ -242,29 +249,36 @@ export const usePortfolio = () => {
         })
         .select()
         .single();
-      if (error) throw error;
-      try {
-        await supabase.from("portfolio_events").insert({
-          user_id: user.id,
-          portfolio_holding_id: data?.id ?? null,
-          asset_id: item.asset_id ?? null,
-          asset_type: item.asset_type,
-          asset_name: item.asset_name,
-          event_type: "add",
-          amount: item.units * item.buy_price,
-          quantity: item.units,
-          note: "",
-        });
-      } catch (e) {
-        console.warn("portfolio_events insert failed", e);
+      if (error) {
+        console.error("[addItem] Supabase error:", error.code, error.message, error.details);
+        throw new Error(error.message || error.code || "Database insert failed");
       }
+      // Best-effort: record the event (non-blocking)
+      supabase.from("portfolio_events").insert({
+        user_id: user.id,
+        portfolio_holding_id: data?.id ?? null,
+        asset_id: item.asset_id ?? null,
+        asset_type: item.asset_type,
+        asset_name: item.asset_name,
+        event_type: "add",
+        amount: item.units * item.buy_price,
+        quantity: item.units,
+        note: "",
+      }).then(({ error: evErr }) => {
+        if (evErr) console.warn("[addItem] portfolio_events insert failed:", evErr);
+      });
+      return data;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
+      queryClient.invalidateQueries({ queryKey: ["mock_portfolios", user?.id ?? "demo"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio_events"] });
       toast.success("Holding added");
     },
-    onError: () => toast.error("Failed to add holding"),
+    onError: (err: unknown) => {
+      console.error("[addItem] error:", err);
+      const msg = err instanceof Error ? err.message : (err as any)?.message ?? "Unknown error";
+      toast.error(`Failed to add holding: ${msg}`);
+    },
   });
 
   const updateItem = useMutation({
@@ -297,9 +311,12 @@ export const usePortfolio = () => {
           updated_at: new Date().toISOString(),
         })
         .eq("id", id);
-      if (error) throw error;
-      try {
-        await supabase.from("portfolio_events").insert({
+      if (error) {
+        console.error("[updateItem] Supabase error:", error.code, error.message);
+        throw new Error(error.message || error.code || "Database update failed");
+      }
+      // Best-effort: record the event
+      supabase.from("portfolio_events").insert({
           user_id: user.id,
           portfolio_holding_id: id,
           asset_id: existing?.asset_id ?? null,
@@ -309,17 +326,20 @@ export const usePortfolio = () => {
           amount: nextAmount,
           quantity: nextUnits,
           note: note ?? patch.notes ?? "",
+        }).then(({ error: evErr }) => {
+          if (evErr) console.warn("[updateItem] portfolio_events insert failed:", evErr);
         });
-      } catch (e) {
-        console.warn("portfolio_events insert failed", e);
-      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio_events"] });
       toast.success("Holding updated");
     },
-    onError: () => toast.error("Failed to update holding"),
+    onError: (err: unknown) => {
+      console.error("[updateItem] error:", err);
+      const msg = err instanceof Error ? err.message : (err as any)?.message ?? "Unknown error";
+      toast.error(`Failed to update holding: ${msg}`);
+    },
   });
 
   const deleteItem = useMutation({
@@ -344,31 +364,36 @@ export const usePortfolio = () => {
       }
       // Record event BEFORE delete so we keep last-known asset metadata.
       if (existing) {
-        try {
-          await supabase.from("portfolio_events").insert({
-            user_id: user.id,
-            portfolio_holding_id: id,
-            asset_id: existing.asset_id ?? null,
-            asset_type: existing.asset_type,
-            asset_name: existing.asset_name,
-            event_type: "remove",
-            amount: lastAmount,
-            quantity: existing.units,
-            note: "",
-          });
-        } catch (e) {
-          console.warn("portfolio_events insert failed", e);
-        }
+        supabase.from("portfolio_events").insert({
+          user_id: user.id,
+          portfolio_holding_id: id,
+          asset_id: existing.asset_id ?? null,
+          asset_type: existing.asset_type,
+          asset_name: existing.asset_name,
+          event_type: "remove",
+          amount: lastAmount,
+          quantity: existing.units,
+          note: "",
+        }).then(({ error: evErr }) => {
+          if (evErr) console.warn("[deleteItem] portfolio_events insert failed:", evErr);
+        });
       }
       const { error } = await supabase.from("mock_portfolios").delete().eq("id", id);
-      if (error) throw error;
+      if (error) {
+        console.error("[deleteItem] Supabase error:", error.code, error.message);
+        throw new Error(error.message || error.code || "Database delete failed");
+      }
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio_events"] });
       toast.success("Holding removed");
     },
-    onError: () => toast.error("Failed to remove holding"),
+    onError: (err: unknown) => {
+      console.error("[deleteItem] error:", err);
+      const msg = err instanceof Error ? err.message : (err as any)?.message ?? "Unknown error";
+      toast.error(`Failed to remove holding: ${msg}`);
+    },
   });
 
   const totalValue = items.reduce((sum, i) => sum + getCurrentValue(i), 0);

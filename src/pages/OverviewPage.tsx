@@ -22,8 +22,7 @@ import {
   Landmark, ArrowRight, Newspaper, Clock, Briefcase,
   Home, Zap, Users, Activity, MessageSquare, AlertTriangle, MoreHorizontal, Heart, Calculator
 } from "lucide-react";
-import PortfolioSnapshotPanel from "@/components/portfolio/PortfolioSnapshotPanel";
-import { PortfolioCardsCarousel } from "@/components/portfolio/PortfolioCardsCarousel";
+import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
 import { MarketSummary } from "@/components/MarketSummary";
 import { YieldCalculator } from "@/components/YieldCalculator";
 import { NseMarketStatusCard } from "@/components/desktop/NseMarketStatusCard";
@@ -1334,9 +1333,9 @@ const OverviewPage = () => {
 
         {/* Middle Column - Feed */}
         <div className="md:col-span-6 flex flex-col w-full max-w-full overflow-hidden">
-          {/* On mobile, PortfolioCardsCarousel stays horizontal here */}
+          {/* On mobile, show portfolio widget */}
           <div className="md:hidden">
-            <PortfolioCardsCarousel orientation="horizontal" />
+            <OverviewPortfolioWidget />
           </div>
 
           <div className="mb-4 flex items-baseline justify-between mt-0 md:mt-0">
