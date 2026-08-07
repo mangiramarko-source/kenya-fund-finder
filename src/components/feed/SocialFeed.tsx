@@ -10,7 +10,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import remarkGfm from '@/lib/remarkGfmSafe';
 
 import { useFeedInteractions, type PostInteraction } from "@/hooks/useFeedInteractions";
 import { useIsMobile } from "@/hooks/use-mobile";

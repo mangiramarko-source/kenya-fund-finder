@@ -1,6 +1,6 @@
 import React, { useState } from "react";
 import ReactMarkdown from 'react-markdown';
-import remarkGfm from 'remark-gfm';
+import remarkGfm from '@/lib/remarkGfmSafe';
 import { useNavigate } from "react-router-dom";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { formatDistanceToNow } from "date-fns";
