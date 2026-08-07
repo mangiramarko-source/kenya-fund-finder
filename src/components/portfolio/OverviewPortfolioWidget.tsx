@@ -73,6 +73,7 @@ export default function OverviewPortfolioWidget() {
               currency="KES"
               totalValue={isDemoFallback ? 15250 : totalValue}
               change={itemChange}
+              compact={true}
               onClick={() => navigate("/portfolio")}
               className="w-[64vw] max-w-[245px] shrink-0 snap-center min-h-[160px]"
             />
