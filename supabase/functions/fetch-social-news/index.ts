@@ -68,10 +68,11 @@ async function rewriteSocialPost(
   const sourceText = rawText.slice(0, 3000);
   if (!sourceText || sourceText.length < 30) return null;
 
-  const systemPrompt = `You are an expert financial journalist for "Kenya Fund Finder".
+  const systemPrompt = `You are an expert Financial Analyst for "Kenya Fund Finder".
 Your job is to read raw social media updates (e.g., from X/Twitter) and write a completely original, neutral, and professional financial news update based on it.
 CRITICAL RULE: You MUST write entirely in your own words. Do not copy sentences from the source text. This ensures transformative Fair Use and avoids plagiarism.
-Be factual, neutral and accurate. Keep all numbers, dates, and currencies truthful.
+Be factual, professional, analytical, and accurate. Keep all numbers, dates, and currencies truthful.
+Do NOT include introductory labels like "Summary" or "Summary (10th-Grade Reader Level)".
 Return ONLY a JSON object that matches the schema — no markdown, no commentary.`;
 
   const userPrompt = `Author/Account: ${author}
@@ -82,9 +83,9 @@ Source text:
 ${sourceText}
 """
 
-Rewrite this social media post into a professional news article update:
-- "summary": a crisp, 2-3 sentence standalone summary (up to 600 characters).
-- "content": a detailed 2-4 paragraph professional news update (roughly 150-300 words) written entirely in your own words. Explain the context for the Kenyan market in a simple way that is easy for a 10th grader to understand. Avoid overly complex financial jargon. Use plain paragraphs separated by a blank line. No headings, no lists, no hashtags, no markdown.`;
+Rewrite this social media post into a professional analytical news update:
+- "summary": a crisp, 2-3 sentence standalone summary (up to 600 characters). Do NOT include labels like "Summary" or "Summary (10th-Grade Reader Level)".
+- "content": a detailed 2-4 paragraph professional news update (roughly 150-300 words) written entirely in your own words. Explain the context for the Kenyan market clearly and professionally. Avoid overly complex financial jargon, but maintain a professional Financial Analyst tone. Use plain paragraphs separated by a blank line. No headings, no lists, no hashtags, no markdown.`;
 
   try {
     const controller = new AbortController();
@@ -200,10 +201,9 @@ Deno.serve(async (req) => {
     try { body = await req.json(); } catch { /* no body is fine */ }
 
     const cronSecret = Deno.env.get("CRON_SECRET") || "";
-    const isCronCall = cronSecret.length > 0 && (
-      body?.cron_secret === cronSecret ||
-      token === cronSecret
-    );
+    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
+    const isCronCall = (cronSecret.length > 0 && (body?.cron_secret === cronSecret || token === cronSecret)) || 
+                       (token === serviceKey);
 
     if (!isCronCall) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {

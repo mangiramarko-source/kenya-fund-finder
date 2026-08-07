@@ -1,8 +1,21 @@
 import { createClient } from "@supabase/supabase-js";
 
 
-const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+import fs from 'fs';
+import path from 'path';
+
+const envPath = path.resolve(process.cwd(), '.env');
+const envFile = fs.readFileSync(envPath, 'utf8');
+const env = {};
+envFile.split('\n').forEach(line => {
+  const [key, ...val] = line.split('=');
+  if (key && val) {
+    env[key.trim()] = val.join('=').trim();
+  }
+});
+
+const supabaseUrl = env['VITE_SUPABASE_URL'] || env['SUPABASE_URL'];
+const supabaseKey = env['SUPABASE_SERVICE_ROLE_KEY'];
 
 if (!supabaseUrl || !supabaseKey) {
   console.error("Missing Supabase credentials in .env");

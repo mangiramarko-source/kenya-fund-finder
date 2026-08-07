@@ -191,11 +191,11 @@ async function rewriteArticle(
   const sourceText = rawText.slice(0, 6000);
   if (!sourceText || sourceText.length < 80) return null;
 
-  const systemPrompt = `You are an expert financial journalist for "Kenya Fund Finder", a premium Kenyan markets website.
+  const systemPrompt = `You are an expert Financial Analyst and journalist for "Kenya Fund Finder", a premium Kenyan markets platform.
 Your job is to read raw news text and write a completely original, highly transformative financial analysis of the events. 
-CRITICAL RULE: You MUST write entirely in your own words. Do not copy sentences or phrases from the source text. Synthesize the facts and present them as a new, insightful article. This ensures transformative Fair Use and avoids plagiarism.
-Be factual, neutral and accurate. Keep all named entities, numbers, dates, currencies and quotes truthful — never invent facts. 
-If something is unclear, omit it. Write in clean British/Kenyan English. Do NOT say things like "the article says" or reference the original source inside the body.
+CRITICAL RULE: You MUST write entirely in your own words. Do not copy sentences or phrases from the source text. Synthesize the facts and present them as a new, insightful analytical article. This ensures transformative Fair Use and avoids plagiarism.
+Be factual, professional, analytical, and accurate. Keep all named entities, numbers, dates, currencies and quotes truthful — never invent facts. 
+If something is unclear, omit it. Write in clean British/Kenyan English. Do NOT say things like "the article says" or reference the original source inside the body. Do not include introductory labels like "Summary" or "Analysis".
 Return ONLY a JSON object that matches the schema — no markdown, no commentary.`;
 
   let userPrompt = `Title: ${title}
@@ -206,8 +206,8 @@ Source text:
 ${sourceText}
 """
 
-Rewrite this as a completely original article:
-- "summary": a comprehensive, highly detailed 5-8 sentence standalone executive summary (up to 1200 characters) that gives readers the full picture and all key facts without forcing them to read the full article. 
+Rewrite this as a completely original professional financial analysis:
+- "summary": a comprehensive, highly detailed 5-8 sentence standalone executive summary (up to 1200 characters) that gives readers the full picture and all key facts without forcing them to read the full article. Do NOT include labels like "Summary" or "Summary (10th-Grade Reader Level)".
 - "content": a rich, insightful 3-6 paragraph analysis (roughly 250-450 words) written entirely in your own words. Synthesize the key facts, context, numbers, and explicitly explain the implications for the Kenyan market and local investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
 
   if (source.toLowerCase().includes("tuko")) {
@@ -219,8 +219,8 @@ Source text:
 ${sourceText}
 """
 
-Rewrite this as a completely original, extended article:
-- "summary": a comprehensive, highly detailed 6-10 sentence standalone executive summary (up to 1500 characters) that gives readers the full picture and all key facts.
+Rewrite this as a completely original, extended professional financial analysis:
+- "summary": a comprehensive, highly detailed 6-10 sentence standalone executive summary (up to 1500 characters) that gives readers the full picture and all key facts. Do NOT include labels like "Summary" or "Summary (10th-Grade Reader Level)".
 - "content": an extensive, rich, and highly detailed 5-8 paragraph analysis (roughly 400-700 words) written entirely in your own words to ensure zero plagiarism. Extract every possible detail, nuance, and piece of extra information from the source text. Synthesize the key facts, deep context, numbers, and explicitly explain the broader implications for the Kenyan market and local investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
   }
 
@@ -430,10 +430,8 @@ Deno.serve(async (req) => {
 
     // Check dedicated cron secret (simple string set as Supabase secret)
     const cronSecret = Deno.env.get("CRON_SECRET") || "";
-    const isCronCall = cronSecret.length > 0 && (
-      body?.cron_secret === cronSecret ||
-      token === cronSecret
-    );
+    const isCronCall = (cronSecret.length > 0 && (body?.cron_secret === cronSecret || token === cronSecret)) || 
+                       (token === serviceKey);
 
     if (!isCronCall) {
       const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";

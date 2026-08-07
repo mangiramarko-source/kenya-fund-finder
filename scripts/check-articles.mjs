@@ -27,14 +27,14 @@ async function main() {
   
   const { data, error } = await supabase
     .from('news_articles')
-    .select('created_at, title')
+    .select('created_at, title, source, summary')
     .order('created_at', { ascending: false })
-    .limit(1);
+    .limit(5);
 
   if (error) {
     console.error("Error fetching articles:", error);
   } else {
-    console.log("Most recent article:", data);
+    console.log("5 Most recent articles:", JSON.stringify(data, null, 2));
   }
 }
 
