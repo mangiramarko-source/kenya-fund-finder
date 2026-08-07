@@ -31,16 +31,23 @@ class ErrorBoundary extends React.Component<Props, State> {
 
   render() {
     if (this.state.hasError) {
+      const errName = this.state.error?.name ?? "Error";
+      const errMsg = this.state.error?.message ?? "Unknown error";
       return (
         <div className="min-h-screen flex items-center justify-center bg-background p-4">
-          <div className="text-center max-w-md">
+          <div className="text-center max-w-md w-full">
             <div className="flex items-center justify-center h-16 w-16 rounded-full bg-destructive/10 mx-auto mb-4">
               <AlertTriangle className="h-8 w-8 text-destructive" />
             </div>
             <h1 className="text-xl font-bold mb-2">Something went wrong</h1>
-            <p className="text-sm text-muted-foreground mb-6">
+            <p className="text-sm text-muted-foreground mb-4">
               We encountered an unexpected error. Please try refreshing the page.
             </p>
+            {/* Diagnostic: shows actual error to help identify browser compat issues */}
+            <div className="text-left bg-muted/50 border border-muted rounded-lg p-3 mb-4 text-xs font-mono break-all select-all">
+              <span className="font-bold text-destructive">{errName}:</span>{" "}
+              {errMsg}
+            </div>
             <Button onClick={this.handleReload} className="gap-2">
               <RefreshCw className="h-4 w-4" /> Refresh Page
             </Button>
