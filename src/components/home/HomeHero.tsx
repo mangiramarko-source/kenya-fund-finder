@@ -64,26 +64,34 @@ const HomeHero = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-md p-0 overflow-hidden border-border bg-card">
-        <div className="p-5 md:p-6">
-          <p className="text-[10px] font-bold uppercase tracking-widest text-accent mb-3">
-            Independent · Built for Kenyan investors
-          </p>
+      <DialogContent className="max-w-[380px] p-0 overflow-hidden rounded-3xl border-border bg-card">
+        <div className="p-5">
+          {/* Card head: icon chip + status pill */}
+          <div className="flex items-center justify-between">
+            <span className="inline-flex h-11 w-11 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/25 text-primary">
+              <PieChart className="h-5 w-5" />
+            </span>
+            <span className="rounded-full border border-warning/40 bg-warning/10 px-3 py-1.5 text-[10px] font-bold uppercase tracking-[0.14em] text-warning">
+              Independent
+            </span>
+          </div>
 
-          <h2 className="text-lg md:text-xl font-semibold leading-tight text-foreground pr-6">
-            Your personal dashboard for Kenyan markets.
+          <h2 className="mt-4 text-[22px] font-semibold leading-[1.15] tracking-tight text-foreground">
+            Kenyan markets,
+            <br />
+            in one dashboard.
           </h2>
 
-          <p className="text-sm text-muted-foreground leading-relaxed mt-3">
-            Track your NSE stocks, MMFs, and unit trusts in one view. Monitor
-            T-Bills, FX, commodities and market news with neutral, independent
-            data.
+          <p className="mt-2 text-[13px] leading-relaxed text-muted-foreground">
+            NSE stocks, MMFs, unit trusts, T-Bills, FX and commodities — neutral
+            data, no noise.
           </p>
 
-          <div className="flex flex-col gap-2 mt-5">
+          {/* Actions */}
+          <div className="mt-5 flex flex-col gap-2">
             <Button
               asChild
-              className="w-full h-11 rounded-xl gap-2 text-sm font-medium"
+              className="h-11 w-full rounded-2xl gap-2 text-sm font-semibold"
               onClick={handleNavigate}
             >
               <Link to="/portfolio">
@@ -92,8 +100,8 @@ const HomeHero = () => {
             </Button>
             <Button
               asChild
-              variant="outline"
-              className="w-full h-11 rounded-xl gap-2 text-sm font-medium"
+              variant="ghost"
+              className="h-11 w-full rounded-2xl gap-2 text-sm font-medium bg-muted/40 hover:bg-muted/70"
               onClick={handleNavigate}
             >
               <Link to="/overview">
@@ -102,34 +110,36 @@ const HomeHero = () => {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 gap-2.5 mt-6">
+          <div className="my-4 h-px bg-border/60" />
+
+          <div className="flex flex-col">
             <HeroTile
               to="/funds"
               icon={TrendingUp}
               label="Unit Trusts & MMFs"
-              sub="Compare historical rates and fund categories."
+              sub="Historical rates & categories"
               onClick={handleNavigate}
             />
             <HeroTile
               to="/overview"
               icon={CircleDollarSign}
               label="Stocks, T-Bills & FX"
-              sub="NSE pricing, treasury yields and currency rates."
+              sub="NSE pricing & treasury yields"
               onClick={handleNavigate}
             />
             <HeroTile
               to="/news"
               icon={Newspaper}
               label="Commodities & News"
-              sub="Global benchmark pricing and market updates."
+              sub="Global benchmarks & updates"
               onClick={handleNavigate}
             />
           </div>
         </div>
 
-        <div className="bg-muted/40 border-t border-border px-5 py-3">
-          <p className="text-[10px] text-center text-muted-foreground uppercase tracking-wider">
-            No investment advice · Purely data-driven insights
+        <div className="border-t border-border/60 bg-muted/20 px-5 py-3">
+          <p className="text-center text-[9px] font-medium uppercase tracking-[0.18em] text-muted-foreground/70">
+            No investment advice · Purely data-driven
           </p>
         </div>
       </DialogContent>
@@ -153,21 +163,22 @@ const HeroTile = ({
   <Link
     to={to}
     onClick={onClick}
-    className="group flex items-center gap-3 rounded-lg border border-border bg-background/40 px-3 py-2.5 hover:border-accent/40 hover:bg-background/70 transition-colors"
+    className="group -mx-1 flex items-center gap-3 rounded-2xl px-1 py-2.5 transition-colors active:bg-muted/50"
   >
-    <span className="inline-flex items-center justify-center h-8 w-8 rounded-md bg-accent/10 text-accent shrink-0">
+    <span className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-muted/50 text-primary">
       <Icon className="h-4 w-4" />
     </span>
     <span className="min-w-0 flex-1">
-      <span className="block text-sm font-semibold text-foreground truncate">
+      <span className="block truncate text-[13px] font-semibold text-foreground">
         {label}
       </span>
-      <span className="block text-xs text-muted-foreground truncate">
+      <span className="block truncate text-[11px] text-muted-foreground">
         {sub}
       </span>
     </span>
-    <ArrowRight className="h-3.5 w-3.5 text-muted-foreground/60 shrink-0 group-hover:text-accent transition-colors" />
+    <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground/50 transition-colors group-hover:text-primary" />
   </Link>
 );
+
 
 export default HomeHero;
