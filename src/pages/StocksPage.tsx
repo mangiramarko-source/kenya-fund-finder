@@ -384,17 +384,10 @@ const StocksPage = () => {
             </div>
           </div>
           
-          <div className="md:hidden mb-6">
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Kenyan Stocks</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Track Kenyan stock market prices, market cap, volumes, and performance.
-              </p>
-            </div>
-            <div className="flex items-center justify-end w-full mt-3">
+          <div className="md:hidden mb-4">
+            <div className="flex items-center justify-between w-full">
               <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
             </div>
-            <div className="border-b border-border mt-3" />
           </div>
         </div>
         
@@ -502,27 +495,27 @@ const StocksPage = () => {
         </div>
 
         {/* Mobile: combined search + filter button */}
-        <div className="md:hidden flex items-center gap-2 mb-4">
+        <div className="md:hidden flex items-center gap-2.5 mb-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/80" />
             <Input
               placeholder="Search stocks..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 rounded-lg bg-muted/30 border-border w-full text-[16px]"
+              className="pl-10 h-11 rounded-full bg-card border-border/80 w-full text-[15px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:ring-1"
             />
           </div>
           <Sheet>
             <SheetTrigger asChild>
               <button
                 type="button"
-                className="relative inline-flex items-center justify-center gap-1.5 h-9 px-3 shrink-0 rounded-md border border-border bg-card text-foreground text-xs font-medium transition-colors"
+                className="relative inline-flex items-center justify-center gap-1.5 h-11 px-4 shrink-0 rounded-full border border-border/80 bg-card text-foreground text-sm font-semibold shadow-sm transition-colors active:scale-95"
                 aria-label="Filters"
               >
-                <SlidersHorizontal className="h-4 w-4" />
+                <SlidersHorizontal className="h-4 w-4 text-foreground/80" />
                 <span>Filter</span>
                 {(sector !== "All" || mobileMovement !== "all") && (
-                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
                 )}
               </button>
             </SheetTrigger>
@@ -549,7 +542,7 @@ const StocksPage = () => {
 
         {/* Mobile movement filter (visible when sector = All) */}
         {sector === "All" && (
-          <div className="md:hidden -mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide rounded">
+          <div className="md:hidden mb-4 flex gap-2 overflow-x-auto no-scrollbar py-0.5">
             {([
               { key: "all", label: "All", count: stocks.length },
               { key: "gainers", label: "Gainers", count: gainers },
@@ -557,14 +550,6 @@ const StocksPage = () => {
               { key: "unchanged", label: "Unchanged", count: unchanged },
             ] as const).map((opt) => {
               const active = mobileMovement === opt.key;
-              const activeColor =
-                opt.key === "gainers"
-                  ? "bg-accent text-accent-foreground"
-                  : opt.key === "losers"
-                  ? "bg-destructive text-destructive-foreground"
-                  : opt.key === "unchanged"
-                  ? "bg-muted-foreground/80 text-background"
-                  : "bg-foreground text-background";
               return (
                 <button
                   key={opt.key}
@@ -576,15 +561,19 @@ const StocksPage = () => {
                       block: "nearest",
                     });
                   }}
-                  className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
-                    active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                  className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                    active
+                      ? "bg-foreground text-background shadow-sm"
+                      : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
-                  {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
-                  {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
-                  {opt.label}
-                  <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+                  {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
+                  {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
+                  {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
+                  <span>{opt.label}</span>
+                  <span className={`text-[11px] tabular-nums font-normal ${active ? "text-background/80" : "text-muted-foreground/80"}`}>
+                    {opt.count}
+                  </span>
                 </button>
               );
             })}
@@ -1116,17 +1105,20 @@ const MobileStockCard = ({
 }) => (
   <Link
     to={`/stocks/${s.symbol}`}
-    className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
+    className="block rounded-[20px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all active:scale-[0.99] overflow-hidden mb-3"
   >
-    <div className="flex items-center gap-3 p-3.5">
-      {/* Left: Symbol + Name */}
-      <div className="flex-1 min-w-0">
-        <span className="font-bold text-foreground text-sm">{s.symbol}</span>
-        <p className="text-[11px] text-muted-foreground truncate">{s.name}</p>
+    {/* Top Row: Symbol/Name (Left), Sparkline (Center), Price/Return (Right) */}
+    <div className="flex items-center justify-between gap-2">
+      {/* Symbol + Name */}
+      <div className="min-w-0 flex-1">
+        <div className="flex items-center gap-1.5">
+          <span className="font-extrabold text-foreground text-base tracking-tight">{s.symbol}</span>
+        </div>
+        <p className="text-xs text-muted-foreground truncate mt-0.5">{s.name}</p>
       </div>
 
-      {/* Center: Sparkline */}
-      <div className="shrink-0">
+      {/* Sparkline in Center */}
+      <div className="shrink-0 px-1">
         <MiniSparkline
           data={history || []}
           trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"}
@@ -1135,28 +1127,54 @@ const MobileStockCard = ({
         />
       </div>
 
-      {/* Right: Price + Change */}
+      {/* Price + Return % */}
       <div className="text-right shrink-0">
-        <p className="font-bold text-foreground text-sm tabular-nums">KES {formatNumber(s.price)}</p>
-        <ChangeCell change={s.day_change} pct={s.day_change_percent} />
+        <p className="font-extrabold text-foreground text-base tabular-nums">KES {formatNumber(s.price)}</p>
+        <div className="mt-0.5 flex justify-end">
+          <ChangeCell change={s.day_change} pct={s.day_change_percent} />
+        </div>
+      </div>
+    </div>
+
+    {/* Thin Divider Line */}
+    <div className="border-t border-border/40 my-3" />
+
+    {/* Bottom Row: Vol, Cap (Left) and Sector Pill (Right) */}
+    <div className="flex items-center justify-between text-xs">
+      <div className="flex items-center gap-3 text-muted-foreground">
+        <span>
+          Vol <strong className="font-semibold text-foreground ml-0.5">{formatVolume(s.volume)}</strong>
+        </span>
+        <span>
+          Cap <strong className="font-semibold text-foreground ml-0.5">{formatMarketCap(s.market_cap)}</strong>
+        </span>
       </div>
 
-      {/* Watchlist button */}
-      {onToggleFavourite !== undefined && (
-        <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            onToggleFavourite();
-          }}
-          className="p-1 shrink-0"
-          aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
-        >
-          <Star
-            className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
-          />
-        </button>
-      )}
+      <div className="flex items-center gap-2">
+        {s.sector && (
+          <span className="px-3 py-1 rounded-full bg-muted/70 text-muted-foreground text-[11px] font-medium tracking-wide">
+            {s.sector.replace(/Telecommunication(s?)/gi, "Telecom")}
+          </span>
+        )}
+
+        {onToggleFavourite !== undefined && (
+          <button
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              onToggleFavourite();
+            }}
+            className="p-1 -mr-1"
+            aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+          >
+            <Star
+              className={`h-4 w-4 transition-colors ${
+                isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30 hover:text-yellow-500"
+              }`}
+            />
+          </button>
+        )}
+      </div>
     </div>
   </Link>
 );
