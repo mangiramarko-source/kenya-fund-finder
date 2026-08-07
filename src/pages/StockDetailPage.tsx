@@ -554,7 +554,7 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
       // Search for news mentioning this stock
       const { data } = await supabase
         .from("news_articles_public")
-        .select("id, title, summary, date_published, source, category, image_url")
+        .select("id, title, summary, date_published, created_at, source, category, image_url")
         .or(`title.ilike.%${symbol}%,title.ilike.%${name}%,summary.ilike.%${symbol}%,summary.ilike.%${name}%`)
         .order("date_published", { ascending: false })
         .limit(10);
@@ -586,7 +586,7 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
       content: n.summary || "",
       mediaUrl: n.image_url || undefined,
       mediaType: n.image_url ? "image" : undefined,
-      timestamp: new Date(n.date_published || Date.now()),
+      timestamp: new Date(n.created_at || n.date_published || Date.now()),
       likes: 0,
       comments: 0,
       url: "#",

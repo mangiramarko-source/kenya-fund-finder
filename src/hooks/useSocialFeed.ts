@@ -61,7 +61,9 @@ export function useSocialFeed(
 
     // 1. Process News Articles with real summaries
     (news || []).forEach((n: any) => {
-      const newsDate = n.date_published ? new Date(n.date_published) : new Date();
+      // Use created_at if available (when it landed on our site), otherwise fallback to date_published
+      const timeSource = n.created_at || n.date_published;
+      const newsDate = timeSource ? new Date(timeSource) : new Date();
       const finalContent = n.summary || n.content || "";
       
       const knownSymbols = ["SCOM", "EQTY", "KCB", "EABL", "BAT", "COOP", "NCBA", "USD/KES", "EUR/KES", "GBP/KES", "Oil", "Gold"];

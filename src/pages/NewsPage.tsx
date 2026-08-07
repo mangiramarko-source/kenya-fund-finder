@@ -72,12 +72,12 @@ export default function NewsPage() {
     } else if (activeNavTab === "International") {
       list = list.filter(a => isInternationalArticle(a));
     } else if (activeNavTab === "Latest") {
-      list.sort((a, b) => new Date(b.date_published).getTime() - new Date(a.date_published).getTime());
+      list.sort((a, b) => new Date(b.created_at || b.date_published).getTime() - new Date(a.created_at || a.date_published).getTime());
     } else if (activeNavTab === "Oldest") {
-      list.sort((a, b) => new Date(a.date_published).getTime() - new Date(a.date_published).getTime());
+      list.sort((a, b) => new Date(a.created_at || a.date_published).getTime() - new Date(b.created_at || b.date_published).getTime());
     } else {
       // "All" defaults to latest first
-      list.sort((a, b) => new Date(b.date_published).getTime() - new Date(a.date_published).getTime());
+      list.sort((a, b) => new Date(b.created_at || b.date_published).getTime() - new Date(a.created_at || a.date_published).getTime());
     }
 
     return list;
@@ -93,7 +93,7 @@ export default function NewsPage() {
       content: a.summary || a.content || "",
       mediaUrl: a.image_url || undefined,
       mediaType: a.image_url ? ("image" as const) : undefined,
-      timestamp: new Date(a.date_published || Date.now()),
+      timestamp: new Date(a.created_at || a.date_published || Date.now()),
       likes: a.likes || 0,
       comments: a.comments || 0,
       url: a.url || "#",

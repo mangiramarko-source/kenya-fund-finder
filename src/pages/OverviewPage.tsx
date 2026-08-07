@@ -1308,8 +1308,9 @@ const OverviewPage = () => {
     const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
     return (news || []).filter(item => {
-      if (!item.date_published) return false;
-      const pubTime = new Date(item.date_published).getTime();
+      const timeSource = item.created_at || item.date_published;
+      if (!timeSource) return false;
+      const pubTime = new Date(timeSource).getTime();
       return !isNaN(pubTime) && (now - pubTime) <= oneDayMs;
     }).length;
   }, [news]);

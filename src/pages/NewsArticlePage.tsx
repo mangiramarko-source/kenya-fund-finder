@@ -302,7 +302,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     }
   };
 
-  const pubDate = new Date(article.date_published);
+  const pubDate = new Date(article.created_at || article.date_published);
   const formattedTime = isNaN(pubDate.getTime()) ? "12:00 PM" : format(pubDate, "h:mm a");
   const formattedDate = isNaN(pubDate.getTime()) ? "Today" : format(pubDate, "d/M/yyyy");
 
