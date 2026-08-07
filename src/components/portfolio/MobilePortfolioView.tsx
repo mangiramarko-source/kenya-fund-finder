@@ -180,18 +180,10 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
         )}
 
         {/* Action Buttons */}
-        <div className="flex items-center gap-3 pt-1">
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="flex-1 bg-[#00A651] hover:bg-[#008f45] active:scale-[0.99] text-white font-semibold rounded-full px-4 py-3 text-xs sm:text-sm flex items-center justify-center gap-2 shadow-sm transition-all"
-          >
-            <Plus className="h-4 w-4 stroke-[3]" />
-            Add investment
-          </button>
-
+        <div className="pt-1">
           <button
             onClick={() => setShowSummaryModal(true)}
-            className="border border-border/90 hover:bg-muted/50 active:scale-[0.99] text-foreground font-semibold rounded-full px-5 py-3 text-xs sm:text-sm flex items-center justify-center transition-all dark:border-white/20"
+            className="w-full border border-border/90 hover:bg-muted/50 active:scale-[0.99] text-foreground font-semibold rounded-full px-5 py-2.5 text-xs sm:text-sm flex items-center justify-center transition-all dark:border-white/20"
           >
             Report
           </button>
