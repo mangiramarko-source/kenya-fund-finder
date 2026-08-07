@@ -400,8 +400,8 @@ const StocksPage = () => {
 
         {user && favEntries.length > 0 && <StockFavourites entries={favEntries} stocks={stocks} />}
 
-        {/* Horizontal Tabs for Sectors */}
-        <div className="w-full overflow-x-auto scrollbar-hide mb-6 border-b border-border">
+        {/* Horizontal Tabs for Sectors (Desktop only) */}
+        <div className="hidden md:block w-full overflow-x-auto scrollbar-hide mb-6 border-b border-border">
           <div className="flex items-center gap-6 min-w-max px-1">
             {sectors.map((s) => {
               const active = sector === s;
@@ -519,20 +519,43 @@ const StocksPage = () => {
                 )}
               </button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle className="text-base">Filters</SheetTitle>
+            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto p-5">
+              <SheetHeader className="text-left pb-2 border-b border-border/50">
+                <SheetTitle className="text-base font-bold">Filters</SheetTitle>
               </SheetHeader>
 
               <div className="mt-4 space-y-5">
-
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                    Sector
+                  </h4>
+                  <div className="flex flex-wrap gap-2">
+                    {sectors.map((s) => {
+                      const active = sector === s;
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          onClick={() => setSector(s)}
+                          className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all ${
+                            active
+                              ? "bg-emerald-600 dark:bg-emerald-600 text-white shadow-sm"
+                              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
                 <SheetClose asChild>
                   <button
                     type="button"
-                    className="w-full h-10 rounded-md bg-accent text-accent-foreground text-sm font-semibold"
+                    className="w-full h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors mt-4"
                   >
-                    Apply filters
+                    Apply Filters
                   </button>
                 </SheetClose>
               </div>
