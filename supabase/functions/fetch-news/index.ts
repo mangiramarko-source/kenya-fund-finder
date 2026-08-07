@@ -173,8 +173,8 @@ function categorize(text: string): string {
 }
 
 // --- AI rewriting (summary + long-form body, in original words) ----------
-const AI_GATEWAY_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-const AI_MODEL = "gemini-2.5-flash";
+const AI_GATEWAY_URL = "https://api.groq.com/openai/v1/chat/completions";
+const AI_MODEL = "llama-3.3-70b-versatile";
 
 interface RewrittenArticle {
   summary: string;
@@ -547,7 +547,7 @@ Deno.serve(async (req) => {
       console.log(`Limiting to ${MAX_BATCH_SIZE} out of ${newArticles.length} new articles to prevent timeout.`);
     }
 
-    const aiKey = Deno.env.get("GEMINI_API_KEY");
+    const aiKey = Deno.env.get("GROQ_API_KEY") || Deno.env.get("GEMINI_API_KEY");
     let rewrittenCount = 0;
     let rewrites: Array<RewrittenArticle | null> = [];
 
@@ -568,11 +568,11 @@ Deno.serve(async (req) => {
         if (out) rewrittenCount++;
         rewrites.push(out);
 
-        // Pause 2 seconds between AI calls to avoid Gemini concurrency / rate limits (429)
-        await new Promise((r) => setTimeout(r, 2000));
+        // Pause 3 seconds between AI calls to avoid Groq concurrency / rate limits (429)
+        await new Promise((resolve) => setTimeout(resolve, 3000));
       }
     } else {
-      console.warn("GEMINI_API_KEY not configured — inserting feed text as-is");
+      console.warn("GROQ_API_KEY not configured — inserting feed text as-is");
     }
 
     const rows = processingArticles.map((a, i) => {

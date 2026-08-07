@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -61,7 +61,15 @@ const HomeHero = () => {
     }
   }, [user?.id]);
 
-  const handleNavigate = () => setOpen(false);
+  const navigate = useNavigate();
+
+  const handleNavigate = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+    e.preventDefault();
+    setOpen(false);
+    setTimeout(() => {
+      navigate(path);
+    }, 100);
+  };
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -92,21 +100,19 @@ const HomeHero = () => {
           <Button
             asChild
             className="h-12 w-full rounded-2xl gap-2 text-sm font-semibold transition-transform active:scale-95"
-            onClick={handleNavigate}
           >
-            <Link to="/portfolio">
+            <a href="/portfolio" onClick={(e) => handleNavigate(e, "/portfolio")}>
               <LayoutDashboard className="h-4 w-4" /> Start portfolio tracker
-            </Link>
+            </a>
           </Button>
           <Button
             asChild
             variant="outline"
             className="h-12 w-full rounded-2xl gap-2 border-border bg-transparent text-sm font-medium transition-transform active:scale-95"
-            onClick={handleNavigate}
           >
-            <Link to="/overview">
+            <a href="/overview" onClick={(e) => handleNavigate(e, "/overview")}>
               <Search className="h-4 w-4" /> Browse market data
-            </Link>
+            </a>
           </Button>
         </div>
 
@@ -117,23 +123,23 @@ const HomeHero = () => {
             label="Unit Trusts & MMFs"
             sub="Yield focus"
             meta="Rates"
-            onClick={handleNavigate}
+            onClick={(e) => handleNavigate(e, "/funds")}
             divider
           />
           <HeroTile
-            to="/overview"
+            to="/stocks"
             label="Stocks, T-Bills & FX"
             sub="NSE markets"
             meta="Prices"
-            onClick={handleNavigate}
+            onClick={(e) => handleNavigate(e, "/stocks")}
             divider
           />
           <HeroTile
-            to="/news"
+            to="/commodities"
             label="Commodities & News"
             sub="Macro data"
             meta="Live"
-            onClick={handleNavigate}
+            onClick={(e) => handleNavigate(e, "/commodities")}
           />
         </div>
 
@@ -159,11 +165,11 @@ const HeroTile = ({
   label: string;
   sub: string;
   meta: string;
-  onClick?: () => void;
+  onClick?: (e: React.MouseEvent<HTMLAnchorElement>) => void;
   divider?: boolean;
 }) => (
-  <Link
-    to={to}
+  <a
+    href={to}
     onClick={onClick}
     className={`group flex items-center justify-between py-4 transition-colors active:bg-muted/40 ${
       divider ? "border-b border-border/40" : ""
@@ -183,7 +189,7 @@ const HeroTile = ({
       </span>
       <ArrowRight className="h-4 w-4 text-muted-foreground/60 transition-colors group-hover:text-primary" />
     </span>
-  </Link>
+  </a>
 );
 
 

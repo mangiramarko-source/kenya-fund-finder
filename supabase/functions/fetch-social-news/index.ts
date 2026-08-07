@@ -50,8 +50,8 @@ function estimateReadTime(text: string): string {
 }
 
 // ─── AI rewriting ────────────────────────────────────────────────────────────
-const AI_GATEWAY_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-const AI_MODEL = "gemini-2.5-flash";
+const AI_GATEWAY_URL = "https://api.groq.com/openai/v1/chat/completions";
+const AI_MODEL = "llama-3.3-70b-versatile";
 
 interface RewrittenPost {
   summary: string;
@@ -84,7 +84,7 @@ ${sourceText}
 
 Rewrite this social media post into a professional news article update:
 - "summary": a crisp, 2-3 sentence standalone summary (up to 600 characters).
-- "content": a detailed 2-4 paragraph professional news update (roughly 150-300 words) written entirely in your own words. Explain the context for the Kenyan market. Use plain paragraphs separated by a blank line. No headings, no lists, no hashtags, no markdown.`;
+- "content": a detailed 2-4 paragraph professional news update (roughly 150-300 words) written entirely in your own words. Explain the context for the Kenyan market in a simple way that is easy for a 10th grader to understand. Avoid overly complex financial jargon. Use plain paragraphs separated by a blank line. No headings, no lists, no hashtags, no markdown.`;
 
   try {
     const controller = new AbortController();
@@ -213,7 +213,7 @@ Deno.serve(async (req) => {
     }
 
     const apifyToken = Deno.env.get("APIFY_API_TOKEN");
-    const aiKey = Deno.env.get("GEMINI_API_KEY");
+    const aiKey = Deno.env.get("GROQ_API_KEY") || Deno.env.get("GEMINI_API_KEY");
 
     if (!apifyToken) {
       return new Response(JSON.stringify({ error: "Missing APIFY_API_TOKEN secret" }), {
@@ -222,7 +222,7 @@ Deno.serve(async (req) => {
       });
     }
     if (!aiKey) {
-      return new Response(JSON.stringify({ error: "Missing GEMINI_API_KEY secret" }), {
+      return new Response(JSON.stringify({ error: "Missing GROQ_API_KEY secret" }), {
         status: 500,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
