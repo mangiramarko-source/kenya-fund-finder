@@ -32,7 +32,7 @@ export default function OverviewPortfolioWidget() {
         </Link>
       </div>
 
-      <div className="flex overflow-x-auto gap-3.5 pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-none">
+      <div className="flex overflow-x-auto gap-3 pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-none">
         {displayItems.map((item) => {
           const itemChange = changes.find((c) => c.itemId === item.id);
           return (
@@ -43,26 +43,26 @@ export default function OverviewPortfolioWidget() {
               totalValue={totalValue}
               change={itemChange}
               onClick={() => navigate("/portfolio")}
-              className="w-[85vw] max-w-[310px] shrink-0 snap-center min-h-[200px]"
+              className="w-[64vw] max-w-[245px] shrink-0 snap-center min-h-[160px]"
             />
           );
         })}
 
         {/* Dashed Add / View All Investment Card (matching screenshot design) */}
-        <div className="w-[180px] shrink-0 snap-center">
+        <div className="w-[140px] shrink-0 snap-center">
           <Link
             to="/portfolio"
-            className="flex flex-col items-center justify-center gap-2.5 w-full h-full min-h-[200px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-3xl p-5 text-center transition-all group"
+            className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[160px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-2xl p-3.5 text-center transition-all group"
           >
-            <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-              {hasMore ? <ArrowRight className="h-5 w-5" /> : <Plus className="h-5 w-5" />}
+            <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+              {hasMore ? <ArrowRight className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             </div>
             <div>
-              <div className="text-sm font-bold text-white group-hover:text-emerald-400 transition-colors">
+              <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
                 {hasMore ? `View All (${items.length})` : "Add Investment"}
               </div>
-              <div className="text-[11px] text-zinc-400 mt-0.5">
-                {hasMore ? "Manage full portfolio" : "Track MMF, Stocks & FX"}
+              <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">
+                {hasMore ? "Manage portfolio" : "Track MMF, Stocks & FX"}
               </div>
             </div>
           </Link>

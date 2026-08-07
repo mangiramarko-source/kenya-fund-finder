@@ -252,15 +252,19 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
           </div>
         ) : (
           <div className="space-y-2.5">
-            {filteredItems.map((item) => (
-              <PortfolioHoldingCard
-                key={item.id}
-                item={item}
-                currency={currency}
-                totalValue={totalValue}
-                onClick={(item) => setEditItem(item)}
-              />
-            ))}
+            {filteredItems.map((item) => {
+              const itemChange = changes.find((c) => c.itemId === item.id);
+              return (
+                <PortfolioHoldingCard
+                  key={item.id}
+                  item={item}
+                  currency={currency}
+                  totalValue={totalValue}
+                  change={itemChange}
+                  onClick={(item) => setEditItem(item)}
+                />
+              );
+            })}
           </div>
         )}
       </div>
