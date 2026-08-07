@@ -21,7 +21,7 @@ export const RESPONSE_QUALITY_BANNED: RegExp[] = [
   /\bbest\b/i,
   /\btop\b/i,
   /\bsafest\b/i,
-  /\b(?<!not )guaranteed\b/i,
+  /\bguaranteed\b/i, // simplified: removed (?<!not ) lookbehind — unsupported on Safari < 16.4 (iOS 15)
   /\brecommended\b/i,
 ];
 
