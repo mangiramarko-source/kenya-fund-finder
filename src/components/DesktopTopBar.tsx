@@ -77,23 +77,23 @@ const DesktopTopBar = () => {
   ];
 
   return (
-    <header className="hidden md:flex items-center gap-6 h-14 px-6 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30">
+    <header className="hidden md:flex items-center gap-2 lg:gap-4 xl:gap-6 h-14 px-4 lg:px-6 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30 max-w-full overflow-x-clip">
       {/* 1. Logo */}
-      <Link to="/" className="flex items-center shrink-0 mr-2 group" aria-label="KenyaFundFinder Home">
+      <Link to="/" className="flex items-center shrink-0 mr-1 lg:mr-2 group" aria-label="KenyaFundFinder Home">
         <span className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400 transition-transform group-hover:scale-105">
           KF
         </span>
       </Link>
 
       {/* 2. Main Navigation Links */}
-      <nav className="flex items-center gap-1 shrink-0 h-full">
+      <nav className="flex items-center gap-0.5 lg:gap-1 shrink-0 h-full">
         {NAV_LINKS.map(({ to, label }) => {
           const active = isActive(to);
           return (
             <Link
               key={to}
               to={to}
-              className={`relative flex items-center h-full px-3.5 text-[13px] font-bold transition-colors ${
+              className={`relative flex items-center h-full px-2 lg:px-3 text-[12px] lg:text-[13px] font-bold transition-colors whitespace-nowrap ${
                 active
                   ? "text-emerald-500 dark:text-emerald-400"
                   : "text-muted-foreground hover:text-foreground"
@@ -101,7 +101,7 @@ const DesktopTopBar = () => {
             >
               <span>{label}</span>
               {active && (
-                <span className="absolute bottom-0 left-2 right-2 h-[2.5px] rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                <span className="absolute bottom-0 left-1.5 right-1.5 h-[2.5px] rounded-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
               )}
             </Link>
           );
@@ -109,8 +109,8 @@ const DesktopTopBar = () => {
       </nav>
 
       {/* 3. Search and Actions */}
-      <div className="flex items-center gap-3 ml-auto shrink-0">
-        <div className="w-[280px] lg:w-[320px]">
+      <div className="flex items-center gap-2 lg:gap-3 ml-auto shrink min-w-0">
+        <div className="w-36 md:w-44 lg:w-60 xl:w-72 shrink min-w-0">
           <SearchDialog variant="topbar" />
         </div>
 
