@@ -33,6 +33,9 @@ export interface FundFromDB {
   is_published: boolean;
   logo_url: string | null;
   updated_at: string;
+  buy_price?: number | null;
+  sell_price?: number | null;
+  effective_yield?: number | null;
 }
 
 export const YIELD_UNITS = ["%", "KES", "USD", "GBP"] as const;
@@ -51,6 +54,8 @@ export interface NewsFromDB {
   is_featured: boolean;
   status: string;
   image_url: string | null;
+  likes?: number | null;
+  comments?: number | null;
 }
 
 export interface HistoricalYield {

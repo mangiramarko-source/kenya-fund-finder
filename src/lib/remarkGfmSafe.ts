@@ -73,9 +73,9 @@ function gfmFromMarkdownSafe() {
 function gfmToMarkdownSafe(options?: { singleTilde?: boolean }) {
   return {
     extensions: [
-      gfmFootnoteToMarkdown(options),
+      gfmFootnoteToMarkdown(options as never),
       gfmStrikethroughToMarkdown(),
-      gfmTableToMarkdown(options),
+      gfmTableToMarkdown(options as never),
       gfmTaskListItemToMarkdown(),
       // gfmAutolinkLiteralToMarkdown() deliberately omitted
     ],
@@ -85,7 +85,7 @@ function gfmToMarkdownSafe(options?: { singleTilde?: boolean }) {
 export default function remarkGfmSafe(options?: { singleTilde?: boolean }) {
   const self = this as unknown as Processor<Root>;
   const settings = options || {};
-  const data = self.data();
+  const data = self.data() as unknown as Record<string, unknown[]>;
 
   const micromarkExtensions =
     data.micromarkExtensions || (data.micromarkExtensions = []);
