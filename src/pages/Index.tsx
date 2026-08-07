@@ -106,10 +106,11 @@ const Index = () => {
             <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} />
           </div>
         </div>
-        <div className="md:hidden flex items-center justify-end w-full mt-2">
-          <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} />
+        <div className="md:hidden mb-2">
+          <div className="flex items-center justify-between w-full">
+            <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} />
+          </div>
         </div>
-        <div className="md:hidden border-b border-border mt-3" />
       </div>
       {(usingCache || !online) && cacheSavedAt && (
         <div className="rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-xs text-foreground">

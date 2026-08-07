@@ -271,14 +271,16 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
   return (
     <div className="space-y-4">
-      <FundsSummary 
-        funds={categoryFunds} 
-        snapshots={snapshots} 
-        categoryName={categoryLabels[activeTab] || activeTab} 
-      />
+      <div className="hidden md:block">
+        <FundsSummary 
+          funds={categoryFunds} 
+          snapshots={snapshots} 
+          categoryName={categoryLabels[activeTab] || activeTab} 
+        />
+      </div>
 
-      {/* Horizontal Tabs for Categories */}
-      <div className="w-full overflow-x-auto scrollbar-hide mb-6 border-b border-border">
+      {/* Horizontal Tabs for Categories (Desktop only) */}
+      <div className="hidden md:block w-full overflow-x-auto scrollbar-hide mb-6 border-b border-border">
         <div className="flex items-center gap-6 min-w-max px-1">
           {categories.map((cat) => {
             const active = activeTab === cat;
@@ -354,57 +356,57 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
       </div>
 
       {/* Mobile: combined search + filter button */}
-      <div className="md:hidden flex items-center gap-2">
+      <div className="md:hidden flex items-center gap-2.5 mb-4">
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/80" />
           <Input
             placeholder="Search funds..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 rounded-lg bg-muted/30 border-border w-full text-[16px]"
+            className="pl-10 h-11 rounded-full bg-card border-border/80 w-full text-[15px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:ring-1"
           />
         </div>
         <Sheet>
           <SheetTrigger asChild>
             <button
               type="button"
-              className="relative inline-flex items-center justify-center gap-1.5 h-9 px-3 shrink-0 rounded-md border border-border bg-card text-foreground text-xs font-medium transition-colors"
+              className="relative inline-flex items-center justify-center gap-1.5 h-11 px-4 shrink-0 rounded-full border border-border/80 bg-card text-foreground text-sm font-semibold shadow-sm transition-colors active:scale-95"
               aria-label="Filters"
             >
-              <SlidersHorizontal className="h-4 w-4" />
+              <SlidersHorizontal className="h-4 w-4 text-foreground/80" />
               <span>Filter</span>
               {(activeTab !== "money_market" || movement !== "all") && (
-                <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
+                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
               )}
             </button>
           </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto">
-            <SheetHeader>
-              <SheetTitle className="text-base">Filters</SheetTitle>
+          <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto p-5">
+            <SheetHeader className="text-left pb-2 border-b border-border/50">
+              <SheetTitle className="text-base font-bold">Filters</SheetTitle>
             </SheetHeader>
 
             <div className="mt-4 space-y-5">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Category</p>
-                <div className="flex flex-wrap gap-1.5">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                  Category
+                </h4>
+                <div className="flex flex-wrap gap-2">
                   {categories.map((cat) => {
                     const active = activeTab === cat;
                     return (
                       <button
                         key={cat}
+                        type="button"
                         onClick={() => {
                           updateParams({ category: cat, q: "", sort: "annual_yield", dir: "desc", movement: "all" });
                         }}
-                        className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-xs font-medium border transition-colors ${
+                        className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all ${
                           active
-                            ? "bg-foreground text-background border-foreground"
-                            : "bg-card text-muted-foreground border-border"
+                            ? "bg-emerald-600 dark:bg-emerald-600 text-white shadow-sm"
+                            : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                         }`}
                       >
                         {categoryLabels[cat] || cat}
-                        <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>
-                          {categoryCount[cat] || 0}
-                        </span>
                       </button>
                     );
                   })}
@@ -412,8 +414,10 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               </div>
 
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Movement</p>
-                <div className="grid grid-cols-2 gap-1.5">
+                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
+                  Movement
+                </h4>
+                <div className="grid grid-cols-2 gap-2">
                   {([
                     { key: "all", label: "All", count: categoryFunds.length },
                     { key: "gainers", label: "Gainers", count: movementCounts.gainers },
@@ -424,22 +428,23 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     return (
                       <button
                         key={opt.key}
+                        type="button"
                         onClick={() => {
                           if (opt.key === "gainers") updateParams({ movement: opt.key, sort: "change", dir: "desc" });
                           else if (opt.key === "losers") updateParams({ movement: opt.key, sort: "change", dir: "asc" });
                           else updateParams({ movement: opt.key });
                         }}
-                        className={`inline-flex items-center justify-center gap-1.5 h-9 rounded-md text-xs font-medium border transition-colors ${
+                        className={`inline-flex items-center justify-center gap-1.5 h-10 rounded-full text-xs font-semibold transition-all ${
                           active
-                            ? "bg-foreground text-background border-foreground"
-                            : "bg-card text-muted-foreground border-border"
+                            ? "bg-foreground text-background shadow-sm"
+                            : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                         }`}
                       >
-                        {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
-                        {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
-                        {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
-                        {opt.label}
-                        <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>
+                        {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
+                        {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
+                        {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
+                        <span>{opt.label}</span>
+                        <span className={`text-[11px] tabular-nums font-normal ${active ? "text-background/80" : "text-muted-foreground/80"}`}>
                           {opt.count}
                         </span>
                       </button>
@@ -451,9 +456,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               <SheetClose asChild>
                 <button
                   type="button"
-                  className="w-full h-10 rounded-md bg-accent text-accent-foreground text-sm font-semibold"
+                  className="w-full h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors mt-4"
                 >
-                  Apply filters
+                  Apply Filters
                 </button>
               </SheetClose>
             </div>
@@ -462,7 +467,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
       </div>
 
       {/* Mobile movement pills */}
-      <div className="md:hidden -mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide rounded">
+      <div className="md:hidden mb-4 flex gap-2 overflow-x-auto no-scrollbar py-0.5">
         {([
           { key: "all", label: "All", count: categoryFunds.length },
           { key: "gainers", label: "Gainers", count: movementCounts.gainers },
@@ -470,14 +475,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           { key: "unchanged", label: "Unchanged", count: movementCounts.unchanged },
         ] as const).map((opt) => {
           const active = movement === opt.key;
-          const activeColor =
-            opt.key === "gainers"
-              ? "bg-accent text-accent-foreground"
-              : opt.key === "losers"
-              ? "bg-destructive text-destructive-foreground"
-              : opt.key === "unchanged"
-              ? "bg-muted-foreground/80 text-background"
-              : "bg-foreground text-background";
           return (
             <button
               key={opt.key}
@@ -491,15 +488,19 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   block: "nearest",
                 });
               }}
-              className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
-                active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+              className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                active
+                  ? "bg-foreground text-background shadow-sm"
+                  : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
               }`}
             >
-              {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
-              {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
-              {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
-              {opt.label}
-              <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+              {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
+              {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
+              {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
+              <span>{opt.label}</span>
+              <span className={`text-[11px] tabular-nums font-normal ${active ? "text-background/80" : "text-muted-foreground/80"}`}>
+                {opt.count}
+              </span>
             </button>
           );
         })}
