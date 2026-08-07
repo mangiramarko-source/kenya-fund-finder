@@ -95,14 +95,14 @@ const Index = () => {
   return (
     <div className="space-y-4 px-4 md:px-6 py-4 md:py-6">
       <div>
-        <div className="hidden md:flex flex-row items-end justify-between gap-3">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4 md:mb-6">
           <div>
-            <h1 className="text-xl md:text-2xl font-bold text-foreground">Unit Trusts</h1>
-            <p className="text-sm text-muted-foreground md:mt-1">
+            <h1 className="text-2xl md:text-2xl font-bold text-foreground tracking-tight">Unit Trusts</h1>
+            <p className="text-sm text-muted-foreground mt-1">
               Track listed unit trust funds in Kenya.
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="hidden md:block">
             <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} />
           </div>
         </div>

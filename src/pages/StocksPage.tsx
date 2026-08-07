@@ -372,14 +372,14 @@ const StocksPage = () => {
       <div className="px-4 md:px-6 py-6">
         {/* Desktop & Mobile Header */}
         <div className="mb-6">
-          <div className="hidden md:flex flex-row items-end justify-between gap-3">
+          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4 md:mb-6">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Kenyan Stocks</h1>
-              <p className="text-[14px] text-muted-foreground md:mt-1">
+              <p className="text-sm md:text-[14px] text-muted-foreground mt-1">
                 Track Kenyan stock market prices, market cap, volumes, and performance.
               </p>
             </div>
-            <div className="flex items-center gap-3">
+            <div className="hidden md:block">
               <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
             </div>
           </div>
