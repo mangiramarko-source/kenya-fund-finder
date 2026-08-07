@@ -19,7 +19,6 @@ const navLinks = [
 
 const mobileNavLinks = [
   { to: "/", label: "Overview" },
-  { to: "/ai-lab", label: "AI Lab" },
   { to: "/stocks", label: "Stocks" },
   { to: "/funds", label: "Unit trusts" },
   { to: "/rates", label: "Fx rates" },
@@ -255,13 +254,6 @@ const Navbar = () => {
                 <Calculator className="h-5 w-5" /> Calculator
               </Link>
               <Link
-                to="/ai-lab"
-                onClick={closeMobile}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-              >
-                <Sparkles className="h-5 w-5 text-emerald-500" /> AI Lab
-              </Link>
-              <Link
                 to={user ? "/alerts" : "/auth"}
                 onClick={closeMobile}
                 className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
@@ -448,13 +440,6 @@ const Navbar = () => {
               className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
             >
               <Calculator className="h-5 w-5" /> Calculator
-            </Link>
-            <Link
-              to="/ai-lab"
-              onClick={closeMobile}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-            >
-              <Sparkles className="h-5 w-5 text-emerald-500" /> AI Lab
             </Link>
             <Link
               to={user ? "/alerts" : "/auth"}
