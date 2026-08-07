@@ -342,7 +342,7 @@ const Navbar = () => {
         <SearchDialog variant="icon" />
 
         {/* Center: KF Logo */}
-        <Link to="/" className="font-mono text-lg font-bold italic tracking-tighter text-primary">
+        <Link to="/" className="font-mono text-xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400">
           KF
         </Link>
 
@@ -371,13 +371,13 @@ const Navbar = () => {
                 }}
                 className={`relative whitespace-nowrap text-sm font-medium transition-colors ${
                   isActive
-                    ? "text-primary"
-                    : "text-muted-foreground"
+                    ? "text-emerald-500 dark:text-emerald-400 font-bold"
+                    : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {link.label}
                 {isActive && (
-                  <span className="absolute -bottom-3 left-0 h-0.5 w-full bg-primary" />
+                  <span className="absolute -bottom-3 left-0 h-0.5 w-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
                 )}
               </Link>
             );
