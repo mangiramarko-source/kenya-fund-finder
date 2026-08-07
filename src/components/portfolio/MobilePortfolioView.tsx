@@ -296,7 +296,10 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
             { onSuccess: () => setEditItem(null) }
           );
         }}
-        isPending={updateItem.isPending}
+        onDelete={(id) => {
+          deleteItem.mutate(id, { onSuccess: () => setEditItem(null) });
+        }}
+        isPending={updateItem.isPending || deleteItem.isPending}
       />
 
       <PortfolioSummaryModal

@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Trash2 } from "lucide-react";
 import type { PortfolioItem } from "@/hooks/usePortfolio";
 
 export interface EditHoldingPayload {
@@ -20,6 +21,7 @@ interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
   onSave: (id: string, payload: EditHoldingPayload) => void;
+  onDelete?: (id: string) => void;
   isPending?: boolean;
 }
 
@@ -31,7 +33,7 @@ const toDateInput = (iso: string) => {
   }
 };
 
-const EditHoldingModal = ({ item, open, onOpenChange, onSave, isPending }: Props) => {
+const EditHoldingModal = ({ item, open, onOpenChange, onSave, onDelete, isPending }: Props) => {
   const [units, setUnits] = useState("");
   const [buyPrice, setBuyPrice] = useState("");
   const [yld, setYld] = useState("");
@@ -65,6 +67,12 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, isPending }: Props
       buy_date: new Date(buyDate).toISOString(),
       asset_name: isCustom && name.trim() ? name.trim() : item.asset_name,
     });
+  };
+
+  const handleDelete = () => {
+    if (!item || !onDelete) return;
+    onDelete(item.id);
+    onOpenChange(false);
   };
 
   return (
@@ -126,7 +134,6 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, isPending }: Props
             </div>
           </div>
 
-
           {isYieldType && (
             <div>
               <Label className="text-xs">Annual yield (%)</Label>
@@ -160,13 +167,36 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, isPending }: Props
             />
           </div>
 
-          <div className="flex justify-end gap-2 pt-1">
-            <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
-              Cancel
-            </Button>
-            <Button size="sm" onClick={handleSave} disabled={isPending}>
-              {isPending ? "Saving…" : "Update holding"}
-            </Button>
+          <div className="flex items-center justify-between pt-2 border-t border-border/50">
+            {onDelete ? (
+              <Button
+                type="button"
+                variant="destructive"
+                size="sm"
+                className="bg-rose-600/90 hover:bg-rose-700 text-white gap-1.5 text-xs font-semibold px-3"
+                onClick={handleDelete}
+                disabled={isPending}
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+                Delete holding
+              </Button>
+            ) : (
+              <div />
+            )}
+
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" onClick={() => onOpenChange(false)}>
+                Cancel
+              </Button>
+              <Button
+                size="sm"
+                onClick={handleSave}
+                disabled={isPending}
+                className="bg-[#00A651] hover:bg-[#008f45] text-white font-semibold"
+              >
+                {isPending ? "Saving…" : "Update holding"}
+              </Button>
+            </div>
           </div>
           <p className="text-[10px] text-muted-foreground">
             Edits are recorded in your portfolio activity. This is general information only and is not personal financial advice.
