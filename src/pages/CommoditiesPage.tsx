@@ -3,11 +3,12 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star, SlidersHorizontal } from "lucide-react";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, ComposedChart } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import CommodityFavourites from "../components/home/CommodityFavourites";
@@ -112,6 +113,9 @@ const CommoditiesPage = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [history, setHistory] = useState<Record<string, PriceHistory[]>>({});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
+  const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
+  type SortKey = "default" | "price_desc" | "price_asc" | "change_desc" | "change_asc" | "name_asc" | "name_desc";
+  const [mobileSort, setMobileSort] = useState<SortKey>("default");
 
   useEffect(() => {
     const fetchData = async () => {
@@ -198,12 +202,32 @@ const CommoditiesPage = () => {
 
   const gainers = useMemo(() => commodities.filter((c) => c.previous_price != null && c.price > c.previous_price).length, [commodities]);
   const losers = useMemo(() => commodities.filter((c) => c.previous_price != null && c.price < c.previous_price).length, [commodities]);
+  const unchanged = useMemo(() => commodities.filter((c) => c.previous_price == null || c.price === c.previous_price).length, [commodities]);
 
   const filtered = useMemo(() => {
-    if (!search.trim()) return commodities;
-    const q = search.toLowerCase();
-    return commodities.filter(c => c.name.toLowerCase().includes(q) || c.symbol.toLowerCase().includes(q));
-  }, [commodities, search]);
+    let result = commodities;
+    if (mobileMovement === "gainers") result = result.filter((c) => c.previous_price != null && c.price > c.previous_price);
+    else if (mobileMovement === "losers") result = result.filter((c) => c.previous_price != null && c.price < c.previous_price);
+    else if (mobileMovement === "unchanged") result = result.filter((c) => c.previous_price == null || c.price === c.previous_price);
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter(c => c.name.toLowerCase().includes(q) || c.symbol.toLowerCase().includes(q));
+    }
+    if (mobileSort !== "default") {
+      const pct = (c: Commodity) => (c.previous_price != null && c.previous_price !== 0 ? ((c.price - c.previous_price) / c.previous_price) * 100 : 0);
+      const arr = [...result];
+      switch (mobileSort) {
+        case "price_desc": arr.sort((a, b) => b.price - a.price); break;
+        case "price_asc": arr.sort((a, b) => a.price - b.price); break;
+        case "change_desc": arr.sort((a, b) => pct(b) - pct(a)); break;
+        case "change_asc": arr.sort((a, b) => pct(a) - pct(b)); break;
+        case "name_asc": arr.sort((a, b) => a.name.localeCompare(b.name)); break;
+        case "name_desc": arr.sort((a, b) => b.name.localeCompare(a.name)); break;
+      }
+      result = arr;
+    }
+    return result;
+  }, [commodities, search, mobileMovement, mobileSort]);
 
   return (
     <div className="min-h-screen">
@@ -220,13 +244,16 @@ const CommoditiesPage = () => {
               <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />
             </div>
           </div>
-          <div className="md:hidden flex items-center justify-end w-full mb-3">
-            <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />
+          <div className="md:hidden mb-2">
+            <div className="flex items-center justify-between w-full">
+              <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />
+            </div>
           </div>
-          <div className="md:hidden border-b border-border mt-3" />
         </div>
 
-        <CommoditiesSummary commodities={commodities} />
+        <div className="hidden md:block">
+          <CommoditiesSummary commodities={commodities} />
+        </div>
 
         <ActiveAlertsCard assetType="commodity" />
 
@@ -240,13 +267,29 @@ const CommoditiesPage = () => {
                 { key: "all", label: "All", count: commodities.length },
                 { key: "gainers", label: "Gainers", count: gainers },
                 { key: "losers", label: "Losers", count: losers },
+                { key: "unchanged", label: "Unchanged", count: unchanged },
               ] as const).map((opt) => {
-                // We'll reuse the `mobileMovement` state we might need to add, but wait, CommoditiesPage doesn't have mobileMovement right now.
-                // Ah, let's look at CommoditiesPage state. It has gainers/losers count but no mobileMovement state.
-                // For Commodities, let's just make it a static count or add the state.
-                // I will add the state in the component, or maybe just skip the movement buttons if there's no state for it.
-                // Let me just put the search bar on the left for now if I don't add the state.
-                return null;
+                const active = mobileMovement === opt.key;
+                let activeStyle = "bg-muted text-foreground";
+                if (opt.key === "gainers") activeStyle = "bg-accent/15 text-accent shadow-sm";
+                if (opt.key === "losers") activeStyle = "bg-destructive/15 text-destructive shadow-sm";
+                if (opt.key === "unchanged") activeStyle = "bg-muted-foreground/15 text-foreground shadow-sm";
+                
+                return (
+                  <button
+                    key={opt.key}
+                    onClick={() => setMobileMovement(opt.key)}
+                    className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-[13px] font-medium transition-all whitespace-nowrap ${
+                      active ? activeStyle : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                    }`}
+                  >
+                    {opt.key === "gainers" && <TrendingUp className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                    {opt.key === "losers" && <TrendingDown className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                    {opt.key === "unchanged" && <Minus className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                    {opt.label}
+                    <span className={`text-[11px] tabular-nums ${active ? "opacity-90" : "opacity-50"}`}>{opt.count}</span>
+                  </button>
+                );
               })}
             </div>
           </div>
@@ -261,6 +304,119 @@ const CommoditiesPage = () => {
               />
             </div>
           </div>
+        </div>
+
+        {/* Mobile: combined search + filter button */}
+        <div className="md:hidden flex items-center gap-2.5 mb-4">
+          <div className="relative flex-1">
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/80" />
+            <Input
+              placeholder="Search commodities..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-10 h-11 rounded-full bg-card border-border/80 w-full text-[15px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:ring-1"
+            />
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="relative inline-flex items-center justify-center gap-1.5 h-11 px-4 shrink-0 rounded-full border border-border/80 bg-card text-foreground text-sm font-semibold shadow-sm transition-colors active:scale-95"
+                aria-label="Filters"
+              >
+                <SlidersHorizontal className="h-4 w-4 text-foreground/80" />
+                <span>Filter</span>
+                {mobileSort !== "default" && (
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
+                )}
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto p-5">
+              <SheetHeader className="text-left pb-2 border-b border-border/50">
+                <SheetTitle className="text-base font-bold">Sort & Filter</SheetTitle>
+              </SheetHeader>
+              <div className="mt-4 space-y-5">
+                <div>
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Sort by</h4>
+                  <div className="grid grid-cols-1 gap-2">
+                    {([
+                      { key: "default", label: "Default order" },
+                      { key: "price_desc", label: "Price: High → Low" },
+                      { key: "price_asc", label: "Price: Low → High" },
+                      { key: "change_desc", label: "Change %: High → Low" },
+                      { key: "change_asc", label: "Change %: Low → High" },
+                      { key: "name_asc", label: "Name: A → Z" },
+                      { key: "name_desc", label: "Name: Z → A" },
+                    ] as const).map((opt) => {
+                      const active = mobileSort === opt.key;
+                      return (
+                        <button
+                          key={opt.key}
+                          type="button"
+                          onClick={() => setMobileSort(opt.key)}
+                          className={`inline-flex items-center justify-between px-4 h-11 rounded-full text-xs font-semibold transition-all ${
+                            active
+                              ? "bg-foreground text-background shadow-sm"
+                              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                          }`}
+                        >
+                          <span>{opt.label}</span>
+                          {active && <span className="text-[10px] opacity-80">Selected</span>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                <SheetClose asChild>
+                  <button
+                    type="button"
+                    className="w-full h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors mt-4"
+                  >
+                    Apply Filters
+                  </button>
+                </SheetClose>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Mobile movement pills */}
+        <div className="md:hidden mb-4 flex gap-2 overflow-x-auto no-scrollbar py-0.5">
+          {([
+            { key: "all", label: "All", count: commodities.length },
+            { key: "gainers", label: "Gainers", count: gainers },
+            { key: "losers", label: "Losers", count: losers },
+            { key: "unchanged", label: "Unchanged", count: unchanged },
+          ] as const).map((opt) => {
+            const active = mobileMovement === opt.key;
+            return (
+              <button
+                key={opt.key}
+                onClick={(e) => {
+                  setMobileMovement(opt.key);
+                  e.currentTarget.scrollIntoView({
+                    behavior: "smooth",
+                    inline: "center",
+                    block: "nearest",
+                  });
+                }}
+                className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                  active
+                    ? "bg-foreground text-background shadow-sm"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
+                {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
+                {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
+                <span>{opt.label}</span>
+                <span className={`text-[11px] tabular-nums font-normal ${active ? "text-background/80" : "text-muted-foreground/80"}`}>
+                  {opt.count}
+                </span>
+              </button>
+            );
+          })}
         </div>
 
         {/* Desktop Table */}
@@ -404,51 +560,76 @@ const MobileCommodityCard = ({
     : null;
 
   return (
-    <div className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all overflow-hidden">
+    <div className="block rounded-[20px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all overflow-hidden mb-3">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-3 p-3.5 text-left"
+        className="w-full text-left"
         aria-expanded={isExpanded}
       >
-        <div className="flex-1 min-w-0">
-          <span className="font-bold text-foreground text-sm">{c.symbol}</span>
-          <p className="text-[11px] text-muted-foreground truncate">{c.name}</p>
+        {/* Top Row: Symbol/Name (Left), Sparkline (Center), Price/Change (Right) */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Symbol + Name */}
+          <div className="min-w-0 flex-1">
+            <span className="font-extrabold text-foreground text-base tracking-tight">{c.symbol}</span>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">{c.name}</p>
+          </div>
+
+          {/* Sparkline in Center */}
+          <div className="shrink-0 px-1">
+            <MiniSparkline data={history || []} positive={positive} livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], price: c.price }} />
+          </div>
+
+          {/* Price + Change % */}
+          <div className="text-right shrink-0">
+            <p className="font-extrabold text-foreground text-base tabular-nums">
+              {c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <span className="text-muted-foreground ml-1 text-[10px]">{c.unit}</span>
+            </p>
+            <div className="mt-0.5 flex justify-end">
+              <ChangeIndicator current={c.price} previous={c.previous_price} />
+            </div>
+          </div>
         </div>
 
-        <div className="shrink-0">
-          <MiniSparkline data={history || []} positive={positive} livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], price: c.price }} />
+        {/* Thin Divider Line */}
+        <div className="border-t border-border/40 my-3" />
+
+        {/* Bottom Row: Unit & Prev Price (Left) and Watchlist / Expand Chevron (Right) */}
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <span>
+              Unit <strong className="font-semibold text-foreground ml-0.5">{c.unit}</strong>
+            </span>
+            <span>
+              Prev <strong className="font-semibold text-foreground ml-0.5">{c.previous_price != null ? c.previous_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}</strong>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {onToggleFavourite !== undefined && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleFavourite();
+                }}
+                className="p-1"
+                aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+              >
+                <Star
+                  className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30 hover:text-yellow-500"}`}
+                />
+              </span>
+            )}
+
+            <span className="text-muted-foreground p-1">
+              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </span>
+          </div>
         </div>
-
-        <div className="text-right shrink-0">
-          <p className="font-bold text-foreground text-sm tabular-nums">
-            {c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-            <span className="text-muted-foreground ml-1 text-[10px]">{c.unit}</span>
-          </p>
-          <ChangeIndicator current={c.price} previous={c.previous_price} />
-        </div>
-
-        {onToggleFavourite !== undefined && (
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleFavourite();
-            }}
-            className="p-1 shrink-0"
-            aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
-          >
-            <Star
-              className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
-            />
-          </span>
-        )}
-
-        <span className="shrink-0 text-muted-foreground">
-          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </span>
       </button>
 
       {isExpanded && (

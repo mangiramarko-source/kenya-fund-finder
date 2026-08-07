@@ -248,13 +248,16 @@ const RatesPage = () => {
               <SectionLiveStatus section="rates" fallbackDate={latestUpdate} isLoading={loading} />
             </div>
           </div>
-          <div className="md:hidden flex items-center justify-end w-full mb-3">
-            <SectionLiveStatus section="rates" fallbackDate={latestUpdate} isLoading={loading} />
+          <div className="md:hidden mb-2">
+            <div className="flex items-center justify-between w-full">
+              <SectionLiveStatus section="rates" fallbackDate={latestUpdate} isLoading={loading} />
+            </div>
           </div>
-          <div className="md:hidden border-b border-border mt-2" />
         </div>
 
-        <RatesSummary rates={rates} />
+        <div className="hidden md:block">
+          <RatesSummary rates={rates} />
+        </div>
 
         <ActiveAlertsCard assetType="currency" />
 
@@ -308,38 +311,38 @@ const RatesPage = () => {
         </div>
 
         {/* Mobile: combined search + filter button */}
-        <div className="md:hidden -mt-2 flex items-center gap-2 mb-4">
+        <div className="md:hidden flex items-center gap-2.5 mb-4">
           <div className="relative flex-1">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/80" />
             <Input
               placeholder="Search currencies..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-9 h-9 rounded-lg bg-muted/30 border-border w-full text-[16px]"
+              className="pl-10 h-11 rounded-full bg-card border-border/80 w-full text-[15px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:ring-1"
             />
           </div>
           <Sheet>
             <SheetTrigger asChild>
               <button
                 type="button"
-                className="relative inline-flex items-center justify-center gap-1.5 h-9 px-3 shrink-0 rounded-md border border-border bg-card text-foreground text-xs font-medium transition-colors"
+                className="relative inline-flex items-center justify-center gap-1.5 h-11 px-4 shrink-0 rounded-full border border-border/80 bg-card text-foreground text-sm font-semibold shadow-sm transition-colors active:scale-95"
                 aria-label="Filters"
               >
-                <SlidersHorizontal className="h-4 w-4" />
+                <SlidersHorizontal className="h-4 w-4 text-foreground/80" />
                 <span>Filter</span>
                 {mobileSort !== "default" && (
-                  <span className="absolute -top-0.5 -right-0.5 h-2 w-2 rounded-full bg-accent" />
+                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
                 )}
               </button>
             </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto">
-              <SheetHeader>
-                <SheetTitle className="text-base">Sort & Filter</SheetTitle>
+            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto p-5">
+              <SheetHeader className="text-left pb-2 border-b border-border/50">
+                <SheetTitle className="text-base font-bold">Sort & Filter</SheetTitle>
               </SheetHeader>
               <div className="mt-4 space-y-5">
                 <div>
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">Sort by</p>
-                  <div className="grid grid-cols-1 gap-1.5">
+                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Sort by</h4>
+                  <div className="grid grid-cols-1 gap-2">
                     {([
                       { key: "default", label: "Default order" },
                       { key: "rate_desc", label: "Rate: High → Low" },
@@ -353,11 +356,12 @@ const RatesPage = () => {
                       return (
                         <button
                           key={opt.key}
+                          type="button"
                           onClick={() => setMobileSort(opt.key)}
-                          className={`inline-flex items-center justify-between px-3 h-10 rounded-md text-xs font-medium border transition-colors ${
+                          className={`inline-flex items-center justify-between px-4 h-11 rounded-full text-xs font-semibold transition-all ${
                             active
-                              ? "bg-foreground text-background border-foreground"
-                              : "bg-card text-muted-foreground border-border"
+                              ? "bg-foreground text-background shadow-sm"
+                              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                           }`}
                         >
                           <span>{opt.label}</span>
@@ -371,9 +375,9 @@ const RatesPage = () => {
                 <SheetClose asChild>
                   <button
                     type="button"
-                    className="w-full h-10 rounded-md bg-accent text-accent-foreground text-sm font-semibold"
+                    className="w-full h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors mt-4"
                   >
-                    Apply
+                    Apply Filters
                   </button>
                 </SheetClose>
               </div>
@@ -441,7 +445,7 @@ const RatesPage = () => {
         </div>
 
         {/* Mobile movement pills */}
-        <div className="md:hidden -mt-1 mb-3 flex gap-1.5 overflow-x-auto scrollbar-hide rounded">
+        <div className="md:hidden mb-4 flex gap-2 overflow-x-auto no-scrollbar py-0.5">
           {([
             { key: "all", label: "All", count: rates.length },
             { key: "gainers", label: "Gainers", count: strengthened },
@@ -449,14 +453,6 @@ const RatesPage = () => {
             { key: "unchanged", label: "Unchanged", count: unchanged },
           ] as const).map((opt) => {
             const active = mobileMovement === opt.key;
-            const activeColor =
-              opt.key === "gainers"
-                ? "bg-accent text-accent-foreground"
-                : opt.key === "losers"
-                ? "bg-destructive text-destructive-foreground"
-                : opt.key === "unchanged"
-                ? "bg-muted-foreground/80 text-background"
-                : "bg-foreground text-background";
             return (
               <button
                 key={opt.key}
@@ -468,15 +464,19 @@ const RatesPage = () => {
                     block: "nearest",
                   });
                 }}
-                className={`shrink-0 inline-flex items-center gap-1 px-3 py-1.5 rounded-xl text-xs font-medium transition-all whitespace-nowrap ${
-                  active ? activeColor + " shadow-sm" : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                  active
+                    ? "bg-foreground text-background shadow-sm"
+                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
                 }`}
               >
-                {opt.key === "gainers" && <TrendingUp className="h-3 w-3" />}
-                {opt.key === "losers" && <TrendingDown className="h-3 w-3" />}
-                {opt.key === "unchanged" && <Minus className="h-3 w-3" />}
-                {opt.label}
-                <span className={`text-[10px] tabular-nums ${active ? "opacity-90" : "opacity-70"}`}>{opt.count}</span>
+                {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
+                {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
+                {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
+                <span>{opt.label}</span>
+                <span className={`text-[11px] tabular-nums font-normal ${active ? "text-background/80" : "text-muted-foreground/80"}`}>
+                  {opt.count}
+                </span>
               </button>
             );
           })}
@@ -554,55 +554,72 @@ const MobileRateCard = ({
   const changePct = r.previous_rate != null && r.previous_rate !== 0 ? ((change! / r.previous_rate) * 100) : null;
 
   return (
-    <div className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all overflow-hidden">
+    <div className="block rounded-[20px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all overflow-hidden mb-3">
       <button
         type="button"
         onClick={onToggle}
-        className="w-full flex items-center gap-3 p-3.5 text-left"
+        className="w-full text-left"
         aria-expanded={isExpanded}
       >
-        {/* Left: Code + Name */}
-        <div className="flex-1 min-w-0">
-          <span className="font-bold text-foreground text-sm">{r.currency_code}</span>
-          <p className="text-[11px] text-muted-foreground truncate">{r.currency_name}</p>
+        {/* Top Row: Symbol/Name (Left), Sparkline (Center), Price/Change (Right) */}
+        <div className="flex items-center justify-between gap-2">
+          {/* Symbol + Name */}
+          <div className="min-w-0 flex-1">
+            <span className="font-extrabold text-foreground text-base tracking-tight">{r.currency_code}</span>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">{r.currency_name}</p>
+          </div>
+
+          {/* Sparkline in Center */}
+          <div className="shrink-0 px-1">
+            <MiniSparkline data={history || []} positive={positive} livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], rate: r.rate }} />
+          </div>
+
+          {/* Rate + Change % */}
+          <div className="text-right shrink-0">
+            <p className="font-extrabold text-foreground text-base tabular-nums">
+              KES {r.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            </p>
+            <div className="mt-0.5 flex justify-end">
+              <ChangeIndicator current={r.rate} previous={r.previous_rate} />
+            </div>
+          </div>
         </div>
 
-        {/* Center: Sparkline */}
-        <div className="shrink-0">
-          <MiniSparkline data={history || []} positive={positive} livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], rate: r.rate }} />
+        {/* Thin Divider Line */}
+        <div className="border-t border-border/40 my-3" />
+
+        {/* Bottom Row: Prev Rate (Left) and Watchlist / Expand Chevron (Right) */}
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <span>
+              Prev <strong className="font-semibold text-foreground ml-0.5">{r.previous_rate != null ? `KES ${r.previous_rate.toFixed(2)}` : "—"}</strong>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            {onToggleFavourite !== undefined && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleFavourite();
+                }}
+                className="p-1"
+                aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+              >
+                <Star
+                  className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30 hover:text-yellow-500"}`}
+                />
+              </span>
+            )}
+
+            <span className="text-muted-foreground p-1">
+              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </span>
+          </div>
         </div>
-
-        {/* Right: Rate + Change */}
-        <div className="text-right shrink-0">
-          <p className="font-bold text-foreground text-sm tabular-nums">
-            KES {r.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
-          </p>
-          <ChangeIndicator current={r.rate} previous={r.previous_rate} />
-        </div>
-
-        {/* Watchlist button */}
-        {onToggleFavourite !== undefined && (
-          <span
-            role="button"
-            tabIndex={0}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleFavourite();
-            }}
-            className="p-1 shrink-0"
-            aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
-          >
-            <Star
-              className={`h-4 w-4 transition-colors ${isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40"}`}
-            />
-          </span>
-        )}
-
-        {/* Expand chevron */}
-        <span className="shrink-0 text-muted-foreground">
-          {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
-        </span>
       </button>
 
       {isExpanded && (
