@@ -11,6 +11,8 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 interface Props {
   onAdd: (item: NewPortfolioItem) => void;
   isPending: boolean;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 const FUND_TYPE_LABELS: Record<string, string> = {
@@ -30,8 +32,15 @@ const fmtKES = (n: number) =>
     maximumFractionDigits: 2,
   }).format(n);
 
-const AddInvestmentModal = ({ onAdd, isPending }: Props) => {
-  const [open, setOpen] = useState(false);
+const AddInvestmentModal = ({ onAdd, isPending, open: controlledOpen, onOpenChange: controlledOnOpenChange }: Props) => {
+  const [internalOpen, setInternalOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const open = isControlled ? controlledOpen : internalOpen;
+
+  const setOpen = (val: boolean) => {
+    if (controlledOnOpenChange) controlledOnOpenChange(val);
+    if (!isControlled) setInternalOpen(val);
+  };
   const [assetType, setAssetType] = useState<AssetType>("mmf");
   const [fundTypeFilter, setFundTypeFilter] = useState("all");
   const [search, setSearch] = useState("");

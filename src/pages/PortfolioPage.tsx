@@ -30,6 +30,8 @@ import { normalizeName } from "@/lib/assetMatch";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
+import MobilePortfolioView from "@/components/portfolio/MobilePortfolioView";
+
 const PortfolioPage = () => {
   useDocumentTitle(
     "Mock Portfolio – Track Investments in Kenya | Kenya Fund Finder",
@@ -151,7 +153,14 @@ const PortfolioPage = () => {
   const isEmpty = !isLoading && items.length === 0;
 
   return (
-    <div className="px-4 md:px-6 py-6 space-y-6 max-w-7xl mx-auto">
+    <>
+      {/* Mobile View Only */}
+      <div className="block md:hidden">
+        <MobilePortfolioView currency={currency} setCurrency={setCurrency} />
+      </div>
+
+      {/* Desktop View Only */}
+      <div className="hidden md:block px-4 md:px-6 py-6 space-y-6 max-w-7xl mx-auto">
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-3">
         <div>
@@ -350,7 +359,8 @@ const PortfolioPage = () => {
           unit={alertDialog.unit}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 };
 
