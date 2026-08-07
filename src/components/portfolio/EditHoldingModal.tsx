@@ -264,11 +264,15 @@ const EditHoldingModal = ({ item, open, onOpenChange, onSave, onDelete, isPendin
             {onDelete && (
               <button
                 type="button"
-                onClick={handleDelete}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  handleDelete();
+                }}
                 disabled={isPending}
-                className="w-full flex items-center justify-center gap-1.5 py-1.5 text-rose-500 hover:text-rose-400 font-semibold text-xs transition-colors cursor-pointer"
+                className="w-full flex items-center justify-center gap-1.5 py-2 text-rose-500 hover:text-rose-400 active:text-rose-600 font-semibold text-xs transition-colors cursor-pointer"
               >
-                <Trash2 className="h-3.5 w-3.5 text-rose-500" />
+                <Trash2 className="h-4 w-4 text-rose-500" />
                 Delete holding
               </button>
             )}

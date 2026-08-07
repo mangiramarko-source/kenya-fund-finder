@@ -372,6 +372,18 @@ export const usePortfolio = () => {
 
       // Always remove from local storage
       portfolioStorage.remove(id);
+
+      // Optimistically update React Query cache immediately
+      queryClient.setQueryData<PortfolioItem[]>(
+        ["mock_portfolios", user?.id ?? "demo"],
+        (old) => (old ? old.filter((i) => i.id !== id) : [])
+      );
+
+      // Notify local listeners
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("kff:portfolio:changed"));
+      }
+
       if (existing) {
         portfolioEventsStorage.record({
           portfolio_holding_id: id,
@@ -400,7 +412,11 @@ export const usePortfolio = () => {
               note: "",
             }).then();
           }
-          await supabase.from("mock_portfolios").delete().eq("id", id);
+
+          const { error } = await supabase.from("mock_portfolios").delete().eq("id", id);
+          if (error) {
+            console.warn("[deleteItem] Supabase delete error (using local removal fallback):", error);
+          }
         } catch (e) {
           console.warn("[deleteItem] Supabase delete exception:", e);
         }
