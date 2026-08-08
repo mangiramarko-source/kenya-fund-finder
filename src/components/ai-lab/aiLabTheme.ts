@@ -16,12 +16,12 @@ export const AI_LAB_CHAT_SHELL =
   "flex h-full min-h-0 flex-col overflow-hidden bg-transparent";
 // Dock blends with the page; only a subtle hairline separates it from the thread.
 export const AI_LAB_INPUT_DOCK =
-  "relative shrink-0 px-0 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-background border-t border-border/40 z-40";
+  "relative shrink-0 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] bg-background/80 backdrop-blur-md border-t border-border/30 z-40";
 export const AI_LAB_DOCK_INNER = "max-w-3xl mx-auto w-full space-y-2";
 export const AI_LAB_DOCK_DISCLAIMER =
-  "text-[10px] leading-snug text-muted-foreground/90 text-center px-1";
+  "text-[10px] leading-snug text-muted-foreground/70 text-center px-1 uppercase tracking-tight";
 export const AI_LAB_THREAD =
-  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-0 md:px-2 pt-2 pb-6 space-y-5 scroll-pb-8";
+  "flex-1 min-h-0 overflow-y-auto overflow-x-hidden overscroll-contain px-4 md:px-2 pt-4 pb-6 space-y-5 scroll-pb-8";
 export const AI_LAB_CARD_INNER =
   "rounded-2xl border border-border bg-muted/30";
 export const AI_LAB_RAIL_CARD =
@@ -42,30 +42,41 @@ export const AI_LAB_NEGATIVE = "text-destructive";
 
 export const AI_LAB_CHIP =
   "text-xs px-3 py-1.5 rounded-full border border-border bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors text-left shadow-sm font-medium";
+
+// User bubble: dark card, rounded-2xl with a flat top-right corner (chat-tail feel).
 export const AI_LAB_USER_BUBBLE =
-  "max-w-[85%] rounded-2xl bg-primary text-primary-foreground px-4 py-2 text-sm shadow-sm";
+  "max-w-[85%] rounded-2xl rounded-tr-none bg-muted border border-border/60 text-foreground px-4 py-3 text-sm shadow-sm";
+
+// Assistant message card: structured, rounded card with subtle border.
+export const AI_LAB_ASSISTANT_CARD =
+  "w-full rounded-2xl border border-border bg-card overflow-hidden shadow-sm";
+export const AI_LAB_ASSISTANT_CARD_HEADER =
+  "px-4 py-3 border-b border-border/60 flex items-center gap-2";
+export const AI_LAB_ASSISTANT_CARD_CONTENT = "p-4 space-y-4";
 export const AI_LAB_ASSISTANT_TEXT =
   "text-sm md:text-[15px] text-foreground leading-relaxed whitespace-pre-wrap";
 
 export const AI_LAB_INPUT_WRAP =
-  "flex items-center gap-2 rounded-full border border-border/60 bg-muted/50 pl-4 pr-1.5 py-1.5 shadow-sm focus-within:ring-4 focus-within:ring-accent/15 focus-within:border-accent/40 focus-within:bg-muted/70 transition-all";
+  "relative flex items-center rounded-full border border-border bg-card pl-12 pr-[4.5rem] py-1.5 shadow-sm focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary/40 transition-all";
+export const AI_LAB_INPUT_ICON =
+  "absolute left-4 text-muted-foreground pointer-events-none";
 /** @deprecated Use AI_LAB_INPUT_WRAP — kept for imports that still reference AI_LAB_INPUT */
 export const AI_LAB_INPUT = AI_LAB_INPUT_WRAP;
 export const AI_LAB_INPUT_FIELD =
-  "flex-1 bg-transparent border-0 outline-none text-base text-foreground placeholder:text-muted-foreground/60 min-w-0 py-2 min-h-[44px] font-medium";
+  "flex-1 bg-transparent border-0 outline-none text-base text-foreground placeholder:text-muted-foreground/50 min-w-0 py-2.5 min-h-[44px] font-medium";
 export const AI_LAB_RUN_BTN =
-  "shrink-0 rounded-full bg-accent text-accent-foreground hover:bg-accent/90 font-extrabold text-xs tracking-[0.1em] uppercase px-6 md:px-7 py-2.5 min-h-[44px] flex items-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none transition-all active:scale-95 shadow-sm";
+  "absolute right-1.5 top-1/2 -translate-y-1/2 shrink-0 rounded-full bg-primary text-primary-foreground hover:bg-primary/90 font-bold text-[10px] tracking-[0.08em] uppercase px-4 py-2 min-h-[36px] flex items-center gap-1 disabled:opacity-40 disabled:pointer-events-none transition-all active:scale-95 shadow-sm";
 
 export const AI_LAB_RESULT_SHELL =
-  "rounded-2xl border border-border/80 bg-card/80 p-3 md:p-4 space-y-3";
+  "rounded-2xl border border-border/80 bg-card/90 p-3 md:p-4 space-y-3";
 export const AI_LAB_SECTION =
-  "rounded-2xl border border-border bg-card p-4 md:p-5 shadow-sm";
+  "rounded-2xl border border-border bg-muted/30 p-4 md:p-5";
 export const AI_LAB_COLLAPSIBLE =
-  "rounded-2xl border border-border bg-card px-4 py-3 text-xs text-muted-foreground shadow-sm";
+  "rounded-2xl border border-border bg-muted/30 px-4 py-3 text-xs text-muted-foreground";
 export const AI_LAB_METRIC_CARD =
-  "rounded-2xl border border-border bg-card p-4 md:p-5 shadow-sm";
+  "rounded-2xl border border-border bg-muted/30 p-4 md:p-5";
 export const AI_LAB_DIVIDER = "h-px bg-border";
-export const AI_LAB_COMPARE_ACTIVE = "bg-accent text-accent-foreground";
+export const AI_LAB_COMPARE_ACTIVE = "bg-primary text-primary-foreground";
 export const AI_LAB_COMPARE_INACTIVE =
   "border border-input bg-background text-foreground hover:bg-muted";
 export const AI_LAB_HERO_HEADLINE = "Investing without guessing.";
