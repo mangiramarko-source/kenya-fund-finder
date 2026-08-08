@@ -39,7 +39,7 @@ export const ResultShell = ({
 );
 
 export const SummaryMetricGrid = ({ children }: { children: React.ReactNode }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">{children}</div>
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">{children}</div>
 );
 
 export const SummaryMetricCard = ({
@@ -54,9 +54,9 @@ export const SummaryMetricCard = ({
   sublabel?: string;
 }) => (
   <div className={AI_LAB_METRIC_CARD}>
-    <p className={AI_LAB_LABEL}>{label}</p>
-    <p className={`${AI_LAB_METRIC_LG} mt-2 ${valueClassName}`}>{value}</p>
-    {sublabel && <p className="text-xs text-muted-foreground mt-1">{sublabel}</p>}
+    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{label}</p>
+    <p className={`text-base font-semibold mt-1.5 ${valueClassName}`}>{value}</p>
+    {sublabel && <p className="text-xs text-muted-foreground/70 mt-1">{sublabel}</p>}
   </div>
 );
 
@@ -72,7 +72,7 @@ export const Section = ({
   <div className={AI_LAB_SECTION}>
     <div className="flex items-center gap-1.5 mb-3 text-muted-foreground">
       {icon}
-      <span className={AI_LAB_LABEL}>{title}</span>
+      <span className="text-[10px] uppercase tracking-widest font-bold">{title}</span>
     </div>
     <div className="text-sm text-foreground space-y-1">{children}</div>
   </div>
@@ -86,7 +86,7 @@ export const CollapsibleDetails = ({
   children: React.ReactNode;
 }) => (
   <details className={AI_LAB_COLLAPSIBLE}>
-    <summary className="cursor-pointer font-medium text-foreground">{title}</summary>
+    <summary className="cursor-pointer font-medium text-foreground text-xs">{title}</summary>
     <div className="mt-2 space-y-1">{children}</div>
   </details>
 );
