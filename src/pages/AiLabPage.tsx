@@ -394,37 +394,36 @@ const AiLabPage = () => {
   return (
     <div className={AI_LAB_PAGE}>
       <div className={AI_LAB_PAGE_INNER}>
-        <header className="flex shrink-0 items-center justify-between gap-2 py-1 md:py-0 border-b border-border/40 md:border-none">
-          {/* Mobile header (matching reference design) */}
-          <div className="flex md:hidden items-center justify-between w-full">
-            <Link
-              to="/"
-              className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-muted/60 text-foreground hover:bg-muted transition-colors shrink-0"
-              aria-label="Back to overview"
-            >
-              <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-            </Link>
+        <header className="flex shrink-0 items-center justify-between gap-2 py-1 md:py-2 border-b border-border/40 pb-2 md:pb-3">
+          {/* Unified header (Mobile & Desktop) */}
+          <div className="flex items-center justify-between w-full">
+            <div className="flex items-center gap-3">
+              <Link
+                to="/"
+                className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-muted/60 text-foreground hover:bg-muted transition-colors shrink-0"
+                aria-label="Back to overview"
+              >
+                <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+              </Link>
 
-            <div className="flex items-center gap-1.5">
-              <div className="flex items-center justify-center h-7 w-7 rounded-full bg-emerald-500/10 text-emerald-600 shrink-0">
-                <Sparkles className="h-4 w-4" />
+              <div className="flex items-center gap-2">
+                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-emerald-500/10 text-emerald-600 shrink-0">
+                  <Sparkles className="h-4 w-4" />
+                </div>
+                <div>
+                  <div className="flex items-center gap-2">
+                    <span className="font-bold text-base md:text-lg text-foreground leading-none">AI Lab</span>
+                    <span className="px-2.5 py-0.5 rounded-full text-[10px] md:text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
+                      BETA
+                    </span>
+                  </div>
+                  <p className="hidden md:block text-[11px] text-muted-foreground mt-0.5">{AI_LAB_SAFETY_LINE}</p>
+                </div>
               </div>
-              <span className="font-bold text-base text-foreground">AI Lab</span>
             </div>
 
-            <span className="px-3 py-0.5 rounded-full text-[11px] font-semibold bg-emerald-500/10 text-emerald-600 border border-emerald-500/20">
-              BETA
-            </span>
-          </div>
-
-          {/* Desktop header - UNTOUCHED */}
-          <div className="hidden md:flex items-center gap-2 min-w-0">
-            <div className="flex items-center justify-center h-9 w-9 rounded-full bg-accent text-accent-foreground shrink-0">
-              <Sparkles className="h-4 w-4" />
-            </div>
-            <div className="min-w-0">
-              <p className={AI_LAB_LABEL}>AI Scenario Assistant</p>
-              <p className="text-[10px] text-muted-foreground">{AI_LAB_SAFETY_LINE}</p>
+            <div className="hidden md:block text-xs text-muted-foreground font-medium">
+              Scenarios only — not financial advice.
             </div>
           </div>
         </header>

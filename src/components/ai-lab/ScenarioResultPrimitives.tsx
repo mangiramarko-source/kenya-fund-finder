@@ -39,7 +39,7 @@ export const ResultShell = ({
 );
 
 export const SummaryMetricGrid = ({ children }: { children: React.ReactNode }) => (
-  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">{children}</div>
+  <div className="grid grid-cols-2 md:grid-cols-3 gap-3">{children}</div>
 );
 
 export const SummaryMetricCard = ({
@@ -47,16 +47,18 @@ export const SummaryMetricCard = ({
   value,
   valueClassName = "",
   sublabel,
+  sublabelClassName = "",
 }: {
   label: string;
   value: React.ReactNode;
   valueClassName?: string;
   sublabel?: string;
+  sublabelClassName?: string;
 }) => (
-  <div className={AI_LAB_METRIC_CARD}>
-    <p className={AI_LAB_LABEL}>{label}</p>
-    <p className={`${AI_LAB_METRIC_LG} mt-2 ${valueClassName}`}>{value}</p>
-    {sublabel && <p className="text-xs text-muted-foreground mt-1">{sublabel}</p>}
+  <div className="rounded-2xl border border-border/70 bg-card p-3.5 md:p-4 shadow-sm space-y-1">
+    <p className="text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-muted-foreground">{label}</p>
+    <p className={`text-lg md:text-xl font-extrabold text-foreground ${valueClassName}`}>{value}</p>
+    {sublabel && <p className={`text-xs font-semibold ${sublabelClassName || "text-muted-foreground"}`}>{sublabel}</p>}
   </div>
 );
 

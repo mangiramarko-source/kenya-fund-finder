@@ -43,18 +43,18 @@ export const AI_LAB_NEGATIVE = "text-destructive";
 export const AI_LAB_CHIP =
   "text-xs px-3.5 py-1.5 rounded-full border border-border/80 bg-card text-foreground/80 hover:text-foreground hover:bg-muted transition-colors text-left shadow-sm font-medium shrink-0";
 export const AI_LAB_USER_BUBBLE =
-  "max-w-[85%] rounded-2xl bg-muted/70 text-foreground md:bg-primary md:text-primary-foreground px-4 py-3 md:py-2 text-sm shadow-none md:shadow-sm font-normal";
+  "max-w-[85%] md:max-w-[80%] rounded-2xl bg-muted/70 text-foreground px-4 py-3 text-sm font-normal shadow-none";
 export const AI_LAB_ASSISTANT_TEXT =
   "text-sm md:text-[15px] text-foreground leading-relaxed whitespace-pre-wrap";
 
 export const AI_LAB_INPUT_WRAP =
-  "flex items-center gap-2 rounded-full border border-border/80 bg-card md:bg-muted/50 p-1 md:pl-4 md:pr-1.5 md:py-1.5 shadow-md md:shadow-sm focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/40 transition-all";
+  "flex items-center gap-2 rounded-full border border-border/80 bg-card p-1.5 md:p-2 shadow-md md:shadow-lg focus-within:ring-2 focus-within:ring-emerald-500/20 focus-within:border-emerald-500/40 transition-all";
 /** @deprecated Use AI_LAB_INPUT_WRAP — kept for imports that still reference AI_LAB_INPUT */
 export const AI_LAB_INPUT = AI_LAB_INPUT_WRAP;
 export const AI_LAB_INPUT_FIELD =
-  "flex-1 bg-transparent border-0 outline-none text-sm md:text-base text-foreground placeholder:text-muted-foreground min-w-0 py-2 min-h-[40px] md:min-h-[44px] font-medium px-2 md:px-0";
+  "flex-1 bg-transparent border-0 outline-none text-sm md:text-base text-foreground placeholder:text-muted-foreground min-w-0 py-2 min-h-[40px] font-medium px-2 md:px-3";
 export const AI_LAB_RUN_BTN =
-  "shrink-0 rounded-full bg-emerald-600 text-white md:bg-accent md:text-accent-foreground hover:bg-emerald-700 md:hover:bg-accent/90 font-extrabold text-xs tracking-[0.1em] uppercase h-9 w-9 p-0 md:px-7 md:py-2.5 min-h-[36px] md:min-h-[44px] flex items-center justify-center gap-1.5 disabled:opacity-40 disabled:pointer-events-none transition-all active:scale-95 shadow-sm";
+  "shrink-0 rounded-full bg-emerald-600 text-white hover:bg-emerald-700 font-extrabold text-xs tracking-[0.1em] uppercase h-9 w-9 md:h-10 md:w-10 p-0 flex items-center justify-center disabled:opacity-40 disabled:pointer-events-none transition-all active:scale-95 shadow-sm";
 
 export const AI_LAB_RESULT_SHELL =
   "rounded-2xl border border-border/80 bg-card/80 p-3 md:p-4 space-y-3";

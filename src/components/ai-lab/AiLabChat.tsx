@@ -66,12 +66,11 @@ const PromptInput = ({
   <div className={AI_LAB_INPUT_WRAP}>
     <button
       type="button"
-      className="md:hidden h-8 w-8 rounded-full bg-muted/60 text-muted-foreground flex items-center justify-center shrink-0 hover:bg-muted transition-colors"
+      className="h-8 w-8 md:h-9 md:w-9 rounded-full bg-muted/60 text-muted-foreground flex items-center justify-center shrink-0 hover:bg-muted transition-colors"
       aria-label="Action options"
     >
       <Plus className="h-4 w-4 text-muted-foreground" />
     </button>
-    <Search className="h-4 w-4 text-muted-foreground shrink-0 hidden md:block" />
     <input
       type="text"
       value={value}
@@ -82,9 +81,7 @@ const PromptInput = ({
       onFocus={(e) => onInputFocus?.(e.currentTarget)}
     />
     <button type="button" onClick={onSubmit} disabled={!value.trim()} className={AI_LAB_RUN_BTN} aria-label="Send prompt">
-      <span className="hidden md:inline">Run</span>
-      <ArrowRight className="hidden md:block h-4 w-4" />
-      <ArrowUp className="md:block h-4 w-4 md:hidden" />
+      <ArrowUp className="h-4 w-4" />
     </button>
   </div>
 );
