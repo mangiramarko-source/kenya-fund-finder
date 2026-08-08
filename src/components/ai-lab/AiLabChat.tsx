@@ -1,9 +1,12 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowRight, Search } from "lucide-react";
+import { ArrowRight, Search, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "@/lib/remarkGfmSafe";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import {
+  AI_LAB_ASSISTANT_CARD,
+  AI_LAB_ASSISTANT_CARD_CONTENT,
+  AI_LAB_ASSISTANT_CARD_HEADER,
   AI_LAB_ASSISTANT_TEXT,
   AI_LAB_CHAT_SHELL,
   AI_LAB_CHIP,
@@ -17,6 +20,7 @@ import {
   AI_LAB_INPUT_DOCK,
   AI_LAB_INPUT_WRAP,
   AI_LAB_INPUT_FIELD,
+  AI_LAB_INPUT_ICON,
   AI_LAB_INPUT_PLACEHOLDER,
   AI_LAB_DOCK_DISCLAIMER,
   AI_LAB_DOCK_DISCLAIMER_TEXT,
@@ -64,7 +68,7 @@ const PromptInput = ({
   onInputFocus?: (input: HTMLInputElement) => void;
 }) => (
   <div className={AI_LAB_INPUT_WRAP}>
-    <Search className="h-4 w-4 text-muted-foreground shrink-0" />
+    <Search className={`h-4 w-4 ${AI_LAB_INPUT_ICON}`} />
     <input
       type="text"
       value={value}
@@ -76,7 +80,7 @@ const PromptInput = ({
     />
     <button type="button" onClick={onSubmit} disabled={!value.trim()} className={AI_LAB_RUN_BTN}>
       Run
-      <ArrowRight className="h-4 w-4" />
+      <ArrowRight className="h-3.5 w-3.5" />
     </button>
   </div>
 );
