@@ -683,44 +683,36 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   }
 
   if (result.kind === "mmf-yield-change") {
+    const isLoss = result.deltaYearly < 0;
     return (
-      <ResultShell>
-        <SummaryMetricGrid>
-          <SummaryMetricCard label="From annual income" value={fmtKES(result.fromGrossYearly)} sublabel={`${result.inputs.fromYieldPct}% yield`} />
-          <SummaryMetricCard label="To annual income" value={fmtKES(result.toGrossYearly)} sublabel={`${result.inputs.toYieldPct}% yield`} />
-          <SummaryMetricCard label="Annual delta" value={`${result.deltaYearly >= 0 ? "+" : ""}${fmtKES(result.deltaYearly)}`} valueClassName={signedColorClass(result.deltaYearly)} />
-        </SummaryMetricGrid>
-        <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
-          <div>
-            <KV k="Amount" v={fmtKES(result.inputs.amount)} />
-            <KV k="From yield" v={`${result.inputs.fromYieldPct}%`} />
-            <KV k="To yield" v={`${result.inputs.toYieldPct}%`} />
-            <KV k="Period" v={`${result.inputs.months} months`} />
-            <KV k="From annual gross income" v={fmtKES(result.fromGrossYearly)} />
-            <KV k="To annual gross income" v={fmtKES(result.toGrossYearly)} />
-            <KV k="From monthly equivalent" v={fmtKES2(result.fromMonthly)} />
-            <KV k="To monthly equivalent" v={fmtKES2(result.toMonthly)} />
-            <KV
-              k="Annual income delta"
-              v={`${result.deltaYearly >= 0 ? "+" : ""}${fmtKES(result.deltaYearly)}`}
-            />
+      <ResultShell className="space-y-4">
+        {/* Dual From/To Cards matching reference design */}
+        <div className="grid grid-cols-2 gap-3">
+          <div className="rounded-2xl border border-border/70 bg-card p-3.5 md:p-4 shadow-sm space-y-1">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">FROM ANNUAL INCOME</p>
+            <p className="text-lg md:text-xl font-extrabold text-foreground">{fmtKES(result.fromGrossYearly)}</p>
+            <p className="text-xs font-semibold text-emerald-600">{result.inputs.fromYieldPct}% yield</p>
           </div>
-        </Section>
-        
-        <CollapsibleDetails title="Assumptions">
-<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+          <div className="rounded-2xl border border-border/70 bg-card p-3.5 md:p-4 shadow-sm space-y-1">
+            <p className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground">TO ANNUAL INCOME</p>
+            <p className="text-lg md:text-xl font-extrabold text-foreground">{fmtKES(result.toGrossYearly)}</p>
+            <p className={`text-xs font-semibold ${isLoss ? "text-rose-500" : "text-emerald-600"}`}>{result.inputs.toYieldPct}% yield</p>
+          </div>
+        </div>
+
+        {/* Assumptions List with Emerald Dots */}
+        <div className="space-y-2 pt-1">
+          <p className="text-sm font-bold text-foreground">Assumptions</p>
+          <ul className="space-y-1.5 text-sm text-muted-foreground">
             {result.assumptions.map((a, i) => (
-              <li key={i}>{sanitizeOutput(a)}</li>
+              <li key={i} className="flex items-center gap-2">
+                <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                <span>{sanitizeOutput(a)}</span>
+              </li>
             ))}
           </ul>
-        </CollapsibleDetails>
-        
-        <CollapsibleDetails title="Notes">
-<p className="text-xs text-muted-foreground">
-            This is a projection comparing two yield assumptions, not a guarantee. Actual outcomes
-            can differ because of fees, taxes, compounding methods, and changing market rates.
-          </p>
-        </CollapsibleDetails>
+        </div>
+
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );

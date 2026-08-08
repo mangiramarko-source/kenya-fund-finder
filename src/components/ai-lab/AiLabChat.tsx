@@ -1,12 +1,9 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowRight, Search, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUp, Plus, Search, Sparkles } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "@/lib/remarkGfmSafe";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import {
-  AI_LAB_ASSISTANT_CARD,
-  AI_LAB_ASSISTANT_CARD_CONTENT,
-  AI_LAB_ASSISTANT_CARD_HEADER,
   AI_LAB_ASSISTANT_TEXT,
   AI_LAB_CHAT_SHELL,
   AI_LAB_CHIP,
@@ -20,7 +17,6 @@ import {
   AI_LAB_INPUT_DOCK,
   AI_LAB_INPUT_WRAP,
   AI_LAB_INPUT_FIELD,
-  AI_LAB_INPUT_ICON,
   AI_LAB_INPUT_PLACEHOLDER,
   AI_LAB_DOCK_DISCLAIMER,
   AI_LAB_DOCK_DISCLAIMER_TEXT,
@@ -68,7 +64,14 @@ const PromptInput = ({
   onInputFocus?: (input: HTMLInputElement) => void;
 }) => (
   <div className={AI_LAB_INPUT_WRAP}>
-    <Search className={`h-4 w-4 ${AI_LAB_INPUT_ICON}`} />
+    <button
+      type="button"
+      className="md:hidden h-8 w-8 rounded-full bg-muted/60 text-muted-foreground flex items-center justify-center shrink-0 hover:bg-muted transition-colors"
+      aria-label="Action options"
+    >
+      <Plus className="h-4 w-4 text-muted-foreground" />
+    </button>
+    <Search className="h-4 w-4 text-muted-foreground shrink-0 hidden md:block" />
     <input
       type="text"
       value={value}
@@ -78,9 +81,10 @@ const PromptInput = ({
       autoFocus={autoFocus}
       onFocus={(e) => onInputFocus?.(e.currentTarget)}
     />
-    <button type="button" onClick={onSubmit} disabled={!value.trim()} className={AI_LAB_RUN_BTN}>
-      Run
-      <ArrowRight className="h-3.5 w-3.5" />
+    <button type="button" onClick={onSubmit} disabled={!value.trim()} className={AI_LAB_RUN_BTN} aria-label="Send prompt">
+      <span className="hidden md:inline">Run</span>
+      <ArrowRight className="hidden md:block h-4 w-4" />
+      <ArrowUp className="md:block h-4 w-4 md:hidden" />
     </button>
   </div>
 );
@@ -109,10 +113,6 @@ const AiLabChat = ({
   const scrollInputIntoThread = useCallback((inputEl: HTMLInputElement) => {
     const thread = threadRef.current;
     if (!thread) return;
-    // Only scroll inputs that actually live inside the thread. The bottom dock
-    // input is a sibling of the thread; calling scrollIntoView on it lets iOS
-    // Safari/Chrome scroll the page itself, then the header/dock can remain
-    // offset after the keyboard closes.
     if (!thread.contains(inputEl)) return;
     const inputRect = inputEl.getBoundingClientRect();
     const threadRect = thread.getBoundingClientRect();
@@ -136,7 +136,6 @@ const AiLabChat = ({
       const container = threadRef.current;
       const target = turnRefs.current.get(anchorId);
       if (!container || !target) return;
-      // Scroll within the chat container only — never the window.
       const top = target.offsetTop - container.offsetTop - 8;
       container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
     };
@@ -149,8 +148,6 @@ const AiLabChat = ({
     const trimmed = text.trim();
     if (!trimmed) return;
     setInput("");
-    // Dismiss the mobile keyboard so the visual viewport snaps back to full
-    // height — otherwise iOS Safari/Chrome can leave the page shifted.
     if (typeof document !== "undefined") {
       const active = document.activeElement as HTMLElement | null;
       if (active && typeof active.blur === "function") active.blur();
@@ -169,8 +166,8 @@ const AiLabChat = ({
     <div className={AI_LAB_CHAT_SHELL}>
       <div ref={threadRef} className={AI_LAB_THREAD}>
         {!hasMessages ? (
-          <div className="max-w-2xl mx-auto space-y-10 pt-6 md:pt-12 pb-6">
-            <div className="space-y-4">
+          <div className="max-w-2xl mx-auto space-y-8 pt-4 md:pt-12 pb-6">
+            <div className="space-y-3">
               <h2 className={AI_LAB_HEADLINE}>{AI_LAB_HERO_HEADLINE}</h2>
               <p className={AI_LAB_HERO_SUBTEXT_CLASS}>{AI_LAB_HERO_SUBTEXT}</p>
             </div>
@@ -183,15 +180,15 @@ const AiLabChat = ({
                 onInputFocus={scrollInputIntoThread}
               />
             </form>
-            <p className={AI_LAB_DOCK_DISCLAIMER}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
             <div className="flex flex-wrap gap-2 justify-start">
               {AI_LAB_SAFE_PROMPT_CHIPS.map((chip) => (
                 <PromptChip key={chip} label={chip} onClick={() => submitPrompt(chip)} />
               ))}
             </div>
+            <p className={AI_LAB_DOCK_DISCLAIMER}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
           </div>
         ) : (
-          <div className="max-w-3xl w-full mx-auto space-y-5">
+          <div className="max-w-3xl w-full mx-auto space-y-6">
             {messages.map((msg) => {
               if (msg.role === "user") {
                 return (
@@ -212,71 +209,67 @@ const AiLabChat = ({
 
               return (
                 <div key={msg.id} ref={setTurnRef(msg.id)} className="scroll-mt-4 space-y-3">
-                  <div className={AI_LAB_ASSISTANT_CARD}>
-                    <div className={AI_LAB_ASSISTANT_CARD_HEADER}>
-                      <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center">
-                        <Sparkles className="h-3 w-3 text-primary" />
+                  <div>
+                    {isPending ? (
+                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                        <span className="inline-flex gap-1">
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
+                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
+                        </span>
+                        <span className="italic">Thinking…</span>
                       </div>
-                      <span className="text-xs font-semibold text-primary uppercase tracking-widest">
-                        AI Scenario
-                      </span>
-                    </div>
-                    <div className={AI_LAB_ASSISTANT_CARD_CONTENT}>
-                      {isPending ? (
-                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                          <span className="inline-flex gap-1">
-                            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
-                            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
-                            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
-                          </span>
-                          <span className="italic">Thinking…</span>
+                    ) : (
+                      <div className="space-y-2">
+                        <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs tracking-wider">
+                          <Sparkles className="h-3.5 w-3.5" />
+                          <span>AI SCENARIO</span>
                         </div>
-                      ) : (
-                        <div className="text-sm md:text-[15px] text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1.5 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:bg-muted prose-code:text-foreground prose-code:before:hidden prose-code:after:hidden prose-a:text-primary">
+                        <div className="text-sm md:text-[15px] text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1.5 prose-strong:text-foreground prose-strong:font-bold prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:bg-muted prose-code:text-foreground prose-code:before:hidden prose-code:after:hidden prose-a:text-accent">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
                         </div>
-                      )}
-                      {msg.contextNote && !isPending && (
-                        <p className="text-xs text-muted-foreground mt-2">{msg.contextNote}</p>
-                      )}
-
-                      {showResult && msg.result && msg.result.kind === "compare" && compareState && (
-                        <details className={AI_LAB_COLLAPSIBLE}>
-                          <summary className="cursor-pointer font-medium text-foreground">
-                            Compare lookback ({compareState.lookbackDays}D)
-                          </summary>
-                          <div className="mt-2 flex flex-wrap gap-1.5">
-                            {LOOKBACK_OPTIONS.map((days) => (
-                              <button
-                                key={days}
-                                type="button"
-                                onClick={() => onLookbackChange(msg.id, days)}
-                                className={`h-7 px-2.5 rounded-full text-[11px] font-semibold tabular-nums transition-colors ${
-                                  compareState.lookbackDays === days
-                                    ? AI_LAB_COMPARE_ACTIVE
-                                    : AI_LAB_COMPARE_INACTIVE
-                                }`}
-                              >
-                                {days}D
-                              </button>
-                            ))}
-                          </div>
-                        </details>
-                      )}
-
-                      {showResult && msg.result && (
-                        <ScenarioResult
-                          result={msg.result}
-                          history={compareState?.history}
-                          historyLoading={compareState?.historyLoading}
-                          lookbackDays={compareState?.lookbackDays}
-                        />
-                      )}
-                    </div>
+                      </div>
+                    )}
+                    {msg.contextNote && !isPending && (
+                      <p className="text-xs text-muted-foreground mt-2">{msg.contextNote}</p>
+                    )}
                   </div>
 
+                  {showResult && msg.result && msg.result.kind === "compare" && compareState && (
+                    <details className={AI_LAB_COLLAPSIBLE}>
+                      <summary className="cursor-pointer font-medium text-foreground">
+                        Compare lookback ({compareState.lookbackDays}D)
+                      </summary>
+                      <div className="mt-2 flex flex-wrap gap-1.5">
+                        {LOOKBACK_OPTIONS.map((days) => (
+                          <button
+                            key={days}
+                            type="button"
+                            onClick={() => onLookbackChange(msg.id, days)}
+                            className={`h-7 px-2.5 rounded-full text-[11px] font-semibold tabular-nums transition-colors ${
+                              compareState.lookbackDays === days
+                                ? AI_LAB_COMPARE_ACTIVE
+                                : AI_LAB_COMPARE_INACTIVE
+                            }`}
+                          >
+                            {days}D
+                          </button>
+                        ))}
+                      </div>
+                    </details>
+                  )}
+
+                  {showResult && msg.result && (
+                    <ScenarioResult
+                      result={msg.result}
+                      history={compareState?.history}
+                      historyLoading={compareState?.historyLoading}
+                      lookbackDays={compareState?.lookbackDays}
+                    />
+                  )}
+
                   {followUps.length > 0 && (
-                    <div className="flex flex-wrap gap-2">
+                    <div className="flex flex-wrap gap-2 pt-1">
                       {followUps.map((s) => (
                         <PromptChip key={s} label={s} onClick={() => submitPrompt(s)} />
                       ))}
@@ -292,6 +285,13 @@ const AiLabChat = ({
       {hasMessages && (
         <div className={AI_LAB_INPUT_DOCK}>
           <div className={AI_LAB_DOCK_INNER}>
+            {/* Horizontal suggestion chips scroll above composer on mobile */}
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-1 px-0.5 max-w-full">
+              {AI_LAB_SAFE_PROMPT_CHIPS.map((chip) => (
+                <PromptChip key={chip} label={chip} onClick={() => submitPrompt(chip)} />
+              ))}
+            </div>
+
             <form onSubmit={handleSubmit}>
               <PromptInput
                 value={input}

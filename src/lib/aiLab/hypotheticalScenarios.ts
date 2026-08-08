@@ -293,7 +293,7 @@ function buildRiskPreference(): UnknownPayload {
       "",
       "Neutral trade-offs",
       "- Money market funds: shorter duration, lower typical volatility, yield can change",
-      "- Individual stocks: prices can rise or fall, dividends are not assured",
+      "- Individual stocks: prices can rise or fall, dividends are not guaranteed",
       "- Fixed income (e.g. T-bills): stated tenor and rate, subject to reinvestment risk",
       "- FX and commodities: exposure to global price and rate movements",
       "",

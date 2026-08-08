@@ -39,7 +39,7 @@ export const ResultShell = ({
 );
 
 export const SummaryMetricGrid = ({ children }: { children: React.ReactNode }) => (
-  <div className="grid grid-cols-2 md:grid-cols-3 gap-2 md:gap-3">{children}</div>
+  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 md:gap-3">{children}</div>
 );
 
 export const SummaryMetricCard = ({
@@ -54,9 +54,9 @@ export const SummaryMetricCard = ({
   sublabel?: string;
 }) => (
   <div className={AI_LAB_METRIC_CARD}>
-    <p className="text-[10px] uppercase tracking-widest text-muted-foreground font-bold">{label}</p>
-    <p className={`text-base font-semibold mt-1.5 ${valueClassName}`}>{value}</p>
-    {sublabel && <p className="text-xs text-muted-foreground/70 mt-1">{sublabel}</p>}
+    <p className={AI_LAB_LABEL}>{label}</p>
+    <p className={`${AI_LAB_METRIC_LG} mt-2 ${valueClassName}`}>{value}</p>
+    {sublabel && <p className="text-xs text-muted-foreground mt-1">{sublabel}</p>}
   </div>
 );
 
@@ -72,7 +72,7 @@ export const Section = ({
   <div className={AI_LAB_SECTION}>
     <div className="flex items-center gap-1.5 mb-3 text-muted-foreground">
       {icon}
-      <span className="text-[10px] uppercase tracking-widest font-bold">{title}</span>
+      <span className={AI_LAB_LABEL}>{title}</span>
     </div>
     <div className="text-sm text-foreground space-y-1">{children}</div>
   </div>
@@ -86,20 +86,20 @@ export const CollapsibleDetails = ({
   children: React.ReactNode;
 }) => (
   <details className={AI_LAB_COLLAPSIBLE}>
-    <summary className="cursor-pointer font-medium text-foreground text-xs">{title}</summary>
+    <summary className="cursor-pointer font-medium text-foreground">{title}</summary>
     <div className="mt-2 space-y-1">{children}</div>
   </details>
 );
 
 export const Disclaimer = ({ text }: { text: string }) => (
-  <p className="text-[10px] text-muted-foreground/80 flex items-center gap-1.5 pt-1">
+  <p className="text-[10px] text-muted-foreground flex items-center gap-1 pt-1">
     <Info className="h-3 w-3 shrink-0" />
     {text}
   </p>
 );
 
 export const KV = ({ k, v }: { k: string; v: React.ReactNode }) => (
-  <div className="flex items-baseline justify-between gap-3 py-2.5 border-b border-border/40 last:border-0">
+  <div className="flex items-baseline justify-between gap-3 py-3 border-b border-border/60 last:border-0">
     <span className="text-xs text-muted-foreground">{k}</span>
     <span className={`text-sm font-semibold ${AI_LAB_METRIC}`}>{v}</span>
   </div>
@@ -130,7 +130,7 @@ export const TableHeadCell = ({
 );
 
 export const TableRow = ({ children }: { children: React.ReactNode }) => (
-  <tr className="border-t border-border/40">{children}</tr>
+  <tr className="border-t border-border/60">{children}</tr>
 );
 
 export const TableCell = ({
@@ -146,7 +146,7 @@ export const TableCell = ({
 }) => (
   <td
     colSpan={colSpan}
-    className={`py-2.5 text-sm ${align === "right" ? "text-right px-2" : "text-left pr-3 text-muted-foreground"} ${className}`}
+    className={`py-3 text-sm ${align === "right" ? "text-right px-2" : "text-left pr-3 text-muted-foreground"} ${className}`}
   >
     {children}
   </td>
