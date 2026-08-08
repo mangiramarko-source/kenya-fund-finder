@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { createClient } from "@supabase/supabase-js";
 import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/useAuth";
 
 export interface PostInteraction {
   liked: boolean;
@@ -16,24 +16,24 @@ interface StoredFeedData {
   };
 }
 
-const SUPABASE_URL = "https://caawgzuofnujrznwbuxk.supabase.co";
-const SERVICE_ROLE_KEY = import.meta?.env?.VITE_SUPABASE_SERVICE_ROLE_KEY || "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhYXdnenVvZm51anJ6bndidXhrIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc3NjMyMjQ4NiwiZXhwIjoyMDkxODk4NDg2fQ.RoY94LVmcCVVjLtIHyOCLb-8UYpE4wEQkPHobGdKkDE";
-
-const supabaseAdmin = createClient(SUPABASE_URL, SERVICE_ROLE_KEY);
-
-const FEED_INTERACTIONS_ID = "a1b2c3d4-e5f6-4a5b-8c7d-9e8f7a6b5c4d";
-const FEED_INTERACTIONS_SLUG = "feed_interactions";
+function getDeviceId() {
+  try {
+    let id = localStorage.getItem("kf_device_id");
+    if (!id) {
+      id = "dev_" + Math.random().toString(36).substring(2, 15);
+      localStorage.setItem("kf_device_id", id);
+    }
+    return id;
+  } catch {
+    return "dev_fallback";
+  }
+}
 
 export function useFeedInteractions() {
-  const [globalStore, setGlobalStore] = useState<StoredFeedData>(() => {
-    try {
-      const saved = localStorage.getItem("kf_global_feed_interactions");
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
-
+  const { user } = useAuth();
+  const [globalStore, setGlobalStore] = useState<StoredFeedData>({});
+  
+  // Track personal likes locally so UI updates instantly and we know if *we* liked it
   const [userLikes, setUserLikes] = useState<Record<string, boolean>>(() => {
     try {
       const saved = localStorage.getItem("kf_user_likes");
@@ -48,128 +48,183 @@ export function useFeedInteractions() {
 
   const userLikesRef = useRef(userLikes);
   userLikesRef.current = userLikes;
+  
+  const deviceId = getDeviceId();
 
-  // 1. Fetch global interactions from Supabase for all users (signed-in & guests)
   useEffect(() => {
     let isMounted = true;
 
-    async function fetchGlobalInteractions() {
-      try {
-        const { data, error } = await supabase
-          .from("site_pages_public")
-          .select("content")
-          .eq("slug", FEED_INTERACTIONS_SLUG)
-          .maybeSingle();
+    async function fetchInitialData() {
+      // Fetch all likes and comments to initialize the global store
+      const [{ data: likesData }, { data: commentsData }] = await Promise.all([
+        supabase.from("post_likes").select("post_id, user_id, device_id"),
+        supabase.from("post_comments").select("*").order("created_at", { ascending: true })
+      ]);
 
-        if (!error && data?.content && isMounted) {
-          try {
-            const parsed: StoredFeedData = typeof data.content === "string" 
-              ? JSON.parse(data.content) 
-              : data.content as any;
+      if (!isMounted) return;
 
-            if (parsed && typeof parsed === "object") {
-              setGlobalStore(prev => ({ ...prev, ...parsed }));
-              localStorage.setItem("kf_global_feed_interactions", JSON.stringify(parsed));
-            }
-          } catch (e) {
-            console.error("Failed to parse global feed interactions:", e);
+      const newStore: StoredFeedData = {};
+      const newUserLikes: Record<string, boolean> = { ...userLikesRef.current };
+
+      if (likesData) {
+        likesData.forEach(like => {
+          if (!newStore[like.post_id]) {
+            newStore[like.post_id] = { likes: 0, comments: [] };
           }
-        }
-      } catch (e) {
-        console.error("Error fetching global feed interactions:", e);
+          newStore[like.post_id].likes = (newStore[like.post_id].likes || 0) + 1;
+          
+          // Detect if current user/device liked it
+          if ((user && like.user_id === user.id) || like.device_id === deviceId) {
+            newUserLikes[like.post_id] = true;
+          }
+        });
       }
+
+      if (commentsData) {
+        commentsData.forEach(comment => {
+          if (!newStore[comment.post_id]) {
+            newStore[comment.post_id] = { likes: 0, comments: [] };
+          }
+          const existingComments = newStore[comment.post_id].comments || [];
+          newStore[comment.post_id].comments = [
+            ...existingComments, 
+            { authorName: comment.author_name || "User", content: comment.content }
+          ];
+        });
+      }
+
+      setGlobalStore(newStore);
+      setUserLikes(newUserLikes);
     }
 
-    fetchGlobalInteractions();
+    fetchInitialData();
 
-    // Poll periodically every 5 seconds so real-time updates flow across devices
-    const interval = setInterval(fetchGlobalInteractions, 5000);
+    // Setup Realtime subscriptions
+    const channel = supabase.channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'post_likes' },
+        (payload) => {
+          const like = payload.new;
+          setGlobalStore(prev => {
+            const currentItem = prev[like.post_id] || { likes: 0, comments: [] };
+            return {
+              ...prev,
+              [like.post_id]: {
+                ...currentItem,
+                likes: (currentItem.likes || 0) + 1
+              }
+            };
+          });
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'DELETE', schema: 'public', table: 'post_likes' },
+        (payload) => {
+          // Decrement not safely possible without replica identity full (post_id usually not in old payload)
+          // But since the frontend optimistically decrements when the user unlikes, it's fine for local state.
+        }
+      )
+      .on(
+        'postgres_changes',
+        { event: 'INSERT', schema: 'public', table: 'post_comments' },
+        (payload) => {
+          const comment = payload.new;
+          setGlobalStore(prev => {
+            const currentItem = prev[comment.post_id] || { likes: 0, comments: [] };
+            const existingComments = currentItem.comments || [];
+            return {
+              ...prev,
+              [comment.post_id]: {
+                ...currentItem,
+                comments: [...existingComments, { authorName: comment.author_name || "User", content: comment.content }]
+              }
+            };
+          });
+        }
+      )
+      .subscribe();
+
     return () => {
       isMounted = false;
-      clearInterval(interval);
+      supabase.removeChannel(channel);
     };
-  }, []);
+  }, [user, deviceId]);
 
-  // Sync user likes to localStorage
+  // Sync user likes to localStorage for persistence across reloads for guests
   useEffect(() => {
     try {
       localStorage.setItem("kf_user_likes", JSON.stringify(userLikes));
     } catch {}
   }, [userLikes]);
 
-  // Helper to persist updated global store to Supabase via admin client
-  const syncToSupabase = async (updatedStore: StoredFeedData) => {
-    try {
-      const { error } = await supabaseAdmin.from("site_pages").upsert({
-        id: FEED_INTERACTIONS_ID,
-        slug: FEED_INTERACTIONS_SLUG,
-        title: "Feed Interactions Global Store",
-        content: JSON.stringify(updatedStore),
-        updated_at: new Date().toISOString(),
-      });
-      if (error) {
-        console.warn("Supabase site_pages write notice:", error.message);
-      }
-    } catch (e) {
-      console.warn("Failed to sync feed interactions to Supabase:", e);
-    }
-  };
-
-  const toggleLike = useCallback((itemId: string, defaultLikes: number = 0) => {
+  const toggleLike = useCallback(async (itemId: string, defaultLikes: number = 0) => {
     const isCurrentlyLiked = !!userLikesRef.current[itemId];
     const newLikedState = !isCurrentlyLiked;
 
-    // Update user's personal liked state
+    // Optimistic UI Update
     setUserLikes(prev => ({ ...prev, [itemId]: newLikedState }));
-
-    // Update global likes count
+    
     setGlobalStore(prev => {
       const currentItem = prev[itemId] || { likes: defaultLikes, comments: [] };
       const currentCount = currentItem.likes != null ? currentItem.likes : defaultLikes;
       const nextCount = newLikedState ? currentCount + 1 : Math.max(0, currentCount - 1);
-
-      const nextStore = {
+      return {
         ...prev,
-        [itemId]: {
-          ...currentItem,
-          likes: nextCount,
-        },
+        [itemId]: { ...currentItem, likes: nextCount }
       };
-
-      try {
-        localStorage.setItem("kf_global_feed_interactions", JSON.stringify(nextStore));
-      } catch {}
-
-      syncToSupabase(nextStore);
-      return nextStore;
     });
-  }, []);
 
-  const addComment = useCallback((itemId: string, text: string, authorName?: string) => {
+    // Network Request
+    if (newLikedState) {
+      const { error } = await supabase.from("post_likes").insert({
+        post_id: itemId,
+        user_id: user?.id || null,
+        device_id: deviceId
+      });
+      if (error) console.error("Error liking post:", error);
+    } else {
+      let query = supabase.from("post_likes").delete().eq("post_id", itemId);
+      if (user?.id) {
+        query = query.eq("user_id", user.id);
+      } else {
+        query = query.eq("device_id", deviceId);
+      }
+      const { error } = await query;
+      if (error) console.error("Error unliking post:", error);
+    }
+  }, [user, deviceId]);
+
+  const addComment = useCallback(async (itemId: string, text: string, authorName?: string) => {
     if (!text.trim()) return;
 
+    const newCommentObj = { authorName: authorName || "User", content: text.trim() };
+
+    // Optimistic UI Update
     setGlobalStore(prev => {
       const currentItem = prev[itemId] || { likes: 0, comments: [] };
       const existingComments = currentItem.comments || [];
-      const newCommentObj = authorName ? { authorName, content: text.trim() } : text.trim();
-      const updatedComments = [...existingComments, newCommentObj];
-
-      const nextStore = {
+      return {
         ...prev,
         [itemId]: {
           ...currentItem,
-          comments: updatedComments,
-        },
+          comments: [...existingComments, newCommentObj]
+        }
       };
-
-      try {
-        localStorage.setItem("kf_global_feed_interactions", JSON.stringify(nextStore));
-      } catch {}
-
-      syncToSupabase(nextStore);
-      return nextStore;
     });
-  }, []);
+
+    // Network Request
+    const { error } = await supabase.from("post_comments").insert({
+      post_id: itemId,
+      content: text.trim(),
+      author_name: authorName || "User",
+      user_id: user?.id || null,
+      device_id: deviceId
+    });
+
+    if (error) console.error("Error adding comment:", error);
+  }, [user, deviceId]);
 
   const getPostInteraction = useCallback((itemId: string, defaultLikes: number = 0): PostInteraction => {
     const currentItem = globalStore[itemId];
