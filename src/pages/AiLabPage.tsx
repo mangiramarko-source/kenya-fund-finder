@@ -395,10 +395,14 @@ const AiLabPage = () => {
   return (
     <div className={AI_LAB_PAGE}>
       <div className={AI_LAB_PAGE_INNER}>
-        <header className="flex shrink-0 items-center gap-2">
+        <header className="flex shrink-0 items-center justify-between px-0 md:px-2 py-2 md:py-3 border-b border-border/30 md:border-transparent">
           <AiLabMobileBack />
+          <div className="flex items-center gap-2 min-w-0 md:hidden">
+            <span className="text-primary font-black italic tracking-tighter text-xl">KF</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-muted-foreground">AI Lab</span>
+          </div>
           <div className="hidden md:flex items-center gap-2 min-w-0">
-            <div className="flex items-center justify-center h-9 w-9 rounded-full bg-accent text-accent-foreground shrink-0">
+            <div className="flex items-center justify-center h-9 w-9 rounded-full bg-primary/15 text-primary shrink-0">
               <Sparkles className="h-4 w-4" />
             </div>
             <div className="min-w-0">
@@ -406,6 +410,7 @@ const AiLabPage = () => {
               <p className="text-[10px] text-muted-foreground">{AI_LAB_SAFETY_LINE}</p>
             </div>
           </div>
+          <div className="w-8 md:w-10" aria-hidden="true" />
         </header>
 
         <main className="flex flex-1 min-h-0 flex-col overflow-hidden">
