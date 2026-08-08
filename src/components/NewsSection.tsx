@@ -1,6 +1,7 @@
 import React from 'react';
 import { NewsArticle } from '../types';
 import { Newspaper, ExternalLink, Calendar, Clock, Bookmark } from 'lucide-react';
+import { decodeHtmlEntities } from '../lib/utils';
 
 interface NewsSectionProps {
   articles: NewsArticle[];
@@ -46,11 +47,11 @@ export const NewsSection: React.FC<NewsSectionProps> = ({ articles, loading }) =
                 </div>
 
                 <h3 style={{ fontSize: '1.1rem', fontWeight: 700, color: '#fff', marginBottom: '10px', lineHeight: 1.4 }}>
-                  {item.title}
+                  {decodeHtmlEntities(item.title)}
                 </h3>
 
                 <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', lineHeight: 1.6, marginBottom: '20px' }}>
-                  {item.summary}
+                  {item.summary ? decodeHtmlEntities(item.summary) : ""}
                 </p>
               </div>
 

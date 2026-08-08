@@ -41,6 +41,9 @@ const RSS_FEEDS = [
   { url: "https://www.theafricareport.com/feed/", source: "The Africa Report" },
   { url: "https://furtherafrica.com/feed/", source: "Further Africa" },
   { url: "https://www.ft.com/world/africa?format=rss", source: "Financial Times Africa" },
+  // Tech & Startups (Silicon Savannah)
+  { url: "https://techcabal.com/category/startups/feed/", source: "TechCabal" },
+  { url: "https://techweez.com/feed/", source: "TechWeez" },
   // Free Google News RSS queries strictly focused on Kenyan Markets
   { url: "https://news.google.com/rss/search?q=Kenya+economy+OR+NSE+OR+CBK+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
   { url: "https://news.google.com/rss/search?q=Kenya+shilling+OR+%22unit+trust%22+OR+%22money+market%22+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" }
@@ -196,7 +199,7 @@ Your job is to read raw news text and write a completely original, highly transf
 CRITICAL RULE: You MUST write entirely in your own words. Do not copy sentences or phrases from the source text. Synthesize the facts and present them as a new, insightful analytical article. This ensures transformative Fair Use and avoids plagiarism.
 Be factual, professional, analytical, and accurate. Keep all named entities, numbers, dates, currencies and quotes truthful — never invent facts. 
 If something is unclear, omit it. Write in clean British/Kenyan English. Do NOT say things like "the article says" or reference the original source inside the body. Do not include introductory labels like "Summary" or "Analysis".
-Return ONLY a JSON object that matches the schema — no markdown, no commentary.`;
+Return ONLY a JSON object that matches the schema.`;
 
   let userPrompt = `Title: ${title}
 Original source: ${source}
@@ -207,8 +210,8 @@ ${sourceText}
 """
 
 Rewrite this as a completely original professional financial analysis:
-- "summary": a comprehensive, highly detailed 5-8 sentence standalone executive summary (up to 1200 characters) that gives readers the full picture and all key facts without forcing them to read the full article. Do NOT include labels like "Summary" or "Summary (10th-Grade Reader Level)".
-- "content": a rich, insightful 3-6 paragraph analysis (roughly 250-450 words) written entirely in your own words. Synthesize the key facts, context, numbers, and explicitly explain the implications for the Kenyan market and local investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
+- "summary": a comprehensive, highly detailed 5-8 sentence standalone executive summary (up to 1200 characters) that gives readers the full picture and all key facts without forcing them to read the full article. Do NOT include labels like "Summary".
+- "content": an engaging, insightful analysis (roughly 250-450 words) written entirely in your own words. Use MARKDOWN formatting to make it highly scannable. Include **bold takeaways**, bullet points for market impact or key numbers, and short paragraphs. Synthesize the facts and explicitly explain the implications for the Kenyan market and local investors. Do NOT include a main heading (like # Title) since the UI provides it.`;
 
   if (source.toLowerCase().includes("tuko")) {
     userPrompt = `Title: ${title}
@@ -220,8 +223,8 @@ ${sourceText}
 """
 
 Rewrite this as a completely original, extended professional financial analysis:
-- "summary": a comprehensive, highly detailed 6-10 sentence standalone executive summary (up to 1500 characters) that gives readers the full picture and all key facts. Do NOT include labels like "Summary" or "Summary (10th-Grade Reader Level)".
-- "content": an extensive, rich, and highly detailed 5-8 paragraph analysis (roughly 400-700 words) written entirely in your own words to ensure zero plagiarism. Extract every possible detail, nuance, and piece of extra information from the source text. Synthesize the key facts, deep context, numbers, and explicitly explain the broader implications for the Kenyan market and local investors. Use plain paragraphs separated by a blank line. No headings, no lists, no markdown.`;
+- "summary": a comprehensive, highly detailed 6-10 sentence standalone executive summary (up to 1500 characters) that gives readers the full picture and all key facts. Do NOT include labels like "Summary".
+- "content": an extensive, rich, and highly detailed analysis (roughly 400-700 words) written entirely in your own words to ensure zero plagiarism. Extract every possible detail, nuance, and piece of extra information from the source text. Synthesize the key facts, deep context, numbers, and explicitly explain the broader implications for the Kenyan market and local investors. Use MARKDOWN formatting to make it highly scannable (e.g., **bolding key metrics**, bulleted lists for implications). Do NOT include a main heading.`;
   }
 
   try {
@@ -539,7 +542,7 @@ Deno.serve(async (req) => {
 
     // Rewrite each new article in original words via Gemini AI (concurrent, with fallback)
     // Limit batch size to prevent Edge Function timeout (WORKER_RESOURCE_LIMIT)
-    const MAX_BATCH_SIZE = 3;
+    const MAX_BATCH_SIZE = 8;
     const processingArticles = newArticles.slice(0, MAX_BATCH_SIZE);
     if (newArticles.length > MAX_BATCH_SIZE) {
       console.log(`Limiting to ${MAX_BATCH_SIZE} out of ${newArticles.length} new articles to prevent timeout.`);
@@ -566,8 +569,8 @@ Deno.serve(async (req) => {
         if (out) rewrittenCount++;
         rewrites.push(out);
 
-        // Pause 3 seconds between AI calls to avoid Groq concurrency / rate limits (429)
-        await new Promise((resolve) => setTimeout(resolve, 3000));
+        // Pause 1.5 seconds between AI calls to avoid Groq concurrency / rate limits while fitting in 60s
+        await new Promise((resolve) => setTimeout(resolve, 1500));
       }
     } else {
       console.warn("GROQ_API_KEY not configured — inserting feed text as-is");

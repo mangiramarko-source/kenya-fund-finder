@@ -5,13 +5,14 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Decode HTML entities (&#8217; &amp; &quot; etc.) into clean text */
-let _textarea: HTMLTextAreaElement | null = null;
+/** Decode HTML entities (&#8217; &amp; &quot; etc.) and strip HTML tags into clean text */
+let _div: HTMLDivElement | null = null;
 export function decodeHtmlEntities(text: string): string {
-  if (!text || (!text.includes("&") && !text.includes("&#"))) return text;
-  if (!_textarea) _textarea = document.createElement("textarea");
-  _textarea.innerHTML = text;
-  return _textarea.value;
+  if (!text || typeof text !== 'string') return text;
+  if (!text.includes("&") && !text.includes("<")) return text;
+  if (!_div) _div = document.createElement("div");
+  _div.innerHTML = text;
+  return _div.textContent || _div.innerText || "";
 }
 
 /**

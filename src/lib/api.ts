@@ -141,6 +141,7 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
     is_featured: data.is_featured!,
     status: data.status!,
     image_url: (data as any).image_url || null,
+    created_at: data.created_at,
   };
 }
 
@@ -160,6 +161,7 @@ export async function fetchRelatedNews(category: string, excludeId: string, limi
     content: d.content || null,
     source: d.source,
     date_published: d.date_published,
+    created_at: d.created_at,
     url: d.url,
     category: d.category,
     read_time: d.read_time,
@@ -189,6 +191,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
           content: null,
           source: d.source,
           date_published: d.date_published,
+          created_at: d.created_at,
           url: d.url,
           category: d.category,
           read_time: d.read_time,
@@ -214,6 +217,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
       content: null,
       source: d.source,
       date_published: d.date_published,
+      created_at: d.created_at,
       url: d.url,
       category: d.category,
       read_time: d.read_time,
@@ -273,6 +277,7 @@ export async function fetchPublishedNews(limit: number = 60): Promise<NewsFromDB
       content: d.content || null,
       source: d.source,
       date_published: d.date_published,
+      created_at: d.created_at,
       url: d.url,
       category: d.category,
       read_time: d.read_time,
