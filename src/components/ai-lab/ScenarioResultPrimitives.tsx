@@ -92,14 +92,14 @@ export const CollapsibleDetails = ({
 );
 
 export const Disclaimer = ({ text }: { text: string }) => (
-  <p className="text-[10px] text-muted-foreground flex items-center gap-1 pt-1">
+  <p className="text-[10px] text-muted-foreground/80 flex items-center gap-1.5 pt-1">
     <Info className="h-3 w-3 shrink-0" />
     {text}
   </p>
 );
 
 export const KV = ({ k, v }: { k: string; v: React.ReactNode }) => (
-  <div className="flex items-baseline justify-between gap-3 py-3 border-b border-border/60 last:border-0">
+  <div className="flex items-baseline justify-between gap-3 py-2.5 border-b border-border/40 last:border-0">
     <span className="text-xs text-muted-foreground">{k}</span>
     <span className={`text-sm font-semibold ${AI_LAB_METRIC}`}>{v}</span>
   </div>
@@ -130,7 +130,7 @@ export const TableHeadCell = ({
 );
 
 export const TableRow = ({ children }: { children: React.ReactNode }) => (
-  <tr className="border-t border-border/60">{children}</tr>
+  <tr className="border-t border-border/40">{children}</tr>
 );
 
 export const TableCell = ({
@@ -146,7 +146,7 @@ export const TableCell = ({
 }) => (
   <td
     colSpan={colSpan}
-    className={`py-3 text-sm ${align === "right" ? "text-right px-2" : "text-left pr-3 text-muted-foreground"} ${className}`}
+    className={`py-2.5 text-sm ${align === "right" ? "text-right px-2" : "text-left pr-3 text-muted-foreground"} ${className}`}
   >
     {children}
   </td>
