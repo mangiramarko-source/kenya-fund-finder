@@ -44,10 +44,11 @@ function AiLabMobileBack() {
   return (
     <Link
       to="/"
-      className="md:hidden inline-flex items-center gap-1 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors shrink-0 mr-1"
+      className="md:hidden inline-flex items-center gap-2 text-sm font-medium text-muted-foreground hover:text-foreground transition-colors shrink-0 mr-1"
     >
-      <ArrowLeft className="h-4 w-4" aria-hidden="true" />
-      Overview
+      <div className="w-8 h-8 flex items-center justify-center rounded-full bg-muted/50 border border-border/50">
+        <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+      </div>
     </Link>
   );
 }
