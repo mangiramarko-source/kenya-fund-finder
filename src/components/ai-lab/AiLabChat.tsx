@@ -212,58 +212,68 @@ const AiLabChat = ({
 
               return (
                 <div key={msg.id} ref={setTurnRef(msg.id)} className="scroll-mt-4 space-y-3">
-                  <div>
-                    {isPending ? (
-                      <div className="flex items-center gap-2 text-sm text-muted-foreground">
-                        <span className="inline-flex gap-1">
-                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
-                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
-                          <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
-                        </span>
-                        <span className="italic">Thinking…</span>
+                  <div className={AI_LAB_ASSISTANT_CARD}>
+                    <div className={AI_LAB_ASSISTANT_CARD_HEADER}>
+                      <div className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center">
+                        <Sparkles className="h-3 w-3 text-primary" />
                       </div>
-                    ) : (
-                      <div className="text-sm md:text-[15px] text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1.5 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:bg-muted prose-code:text-foreground prose-code:before:hidden prose-code:after:hidden prose-a:text-accent">
-                        <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
-                      </div>
-                    )}
-                    {msg.contextNote && !isPending && (
-                      <p className="text-xs text-muted-foreground mt-2">{msg.contextNote}</p>
-                    )}
+                      <span className="text-xs font-semibold text-primary uppercase tracking-widest">
+                        AI Scenario
+                      </span>
+                    </div>
+                    <div className={AI_LAB_ASSISTANT_CARD_CONTENT}>
+                      {isPending ? (
+                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                          <span className="inline-flex gap-1">
+                            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.3s]" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce [animation-delay:-0.15s]" />
+                            <span className="h-1.5 w-1.5 rounded-full bg-muted-foreground/60 animate-bounce" />
+                          </span>
+                          <span className="italic">Thinking…</span>
+                        </div>
+                      ) : (
+                        <div className="text-sm md:text-[15px] text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1.5 prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:bg-muted prose-code:text-foreground prose-code:before:hidden prose-code:after:hidden prose-a:text-primary">
+                          <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
+                        </div>
+                      )}
+                      {msg.contextNote && !isPending && (
+                        <p className="text-xs text-muted-foreground mt-2">{msg.contextNote}</p>
+                      )}
+
+                      {showResult && msg.result && msg.result.kind === "compare" && compareState && (
+                        <details className={AI_LAB_COLLAPSIBLE}>
+                          <summary className="cursor-pointer font-medium text-foreground">
+                            Compare lookback ({compareState.lookbackDays}D)
+                          </summary>
+                          <div className="mt-2 flex flex-wrap gap-1.5">
+                            {LOOKBACK_OPTIONS.map((days) => (
+                              <button
+                                key={days}
+                                type="button"
+                                onClick={() => onLookbackChange(msg.id, days)}
+                                className={`h-7 px-2.5 rounded-full text-[11px] font-semibold tabular-nums transition-colors ${
+                                  compareState.lookbackDays === days
+                                    ? AI_LAB_COMPARE_ACTIVE
+                                    : AI_LAB_COMPARE_INACTIVE
+                                }`}
+                              >
+                                {days}D
+                              </button>
+                            ))}
+                          </div>
+                        </details>
+                      )}
+
+                      {showResult && msg.result && (
+                        <ScenarioResult
+                          result={msg.result}
+                          history={compareState?.history}
+                          historyLoading={compareState?.historyLoading}
+                          lookbackDays={compareState?.lookbackDays}
+                        />
+                      )}
+                    </div>
                   </div>
-
-                  {showResult && msg.result && msg.result.kind === "compare" && compareState && (
-                    <details className={AI_LAB_COLLAPSIBLE}>
-                      <summary className="cursor-pointer font-medium text-foreground">
-                        Compare lookback ({compareState.lookbackDays}D)
-                      </summary>
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {LOOKBACK_OPTIONS.map((days) => (
-                          <button
-                            key={days}
-                            type="button"
-                            onClick={() => onLookbackChange(msg.id, days)}
-                            className={`h-7 px-2.5 rounded-full text-[11px] font-semibold tabular-nums transition-colors ${
-                              compareState.lookbackDays === days
-                                ? AI_LAB_COMPARE_ACTIVE
-                                : AI_LAB_COMPARE_INACTIVE
-                            }`}
-                          >
-                            {days}D
-                          </button>
-                        ))}
-                      </div>
-                    </details>
-                  )}
-
-                  {showResult && msg.result && (
-                    <ScenarioResult
-                      result={msg.result}
-                      history={compareState?.history}
-                      historyLoading={compareState?.historyLoading}
-                      lookbackDays={compareState?.lookbackDays}
-                    />
-                  )}
 
                   {followUps.length > 0 && (
                     <div className="flex flex-wrap gap-2">
