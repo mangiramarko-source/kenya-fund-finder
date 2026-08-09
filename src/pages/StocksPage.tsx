@@ -764,7 +764,7 @@ const StockDetailPanel = ({
         <DetailBox
           label="Day Change"
           value={`${s.day_change > 0 ? "+" : ""}${formatNumber(s.day_change)}`}
-          color={s.day_change > 0 ? "text-accent" : s.day_change < 0 ? "text-destructive" : undefined}
+          color={s.day_change > 0 ? "text-emerald-500" : s.day_change < 0 ? "text-destructive" : undefined}
         />
         <DetailBox label="Volume" value={formatVolume(s.volume)} />
       </div>
@@ -774,7 +774,7 @@ const StockDetailPanel = ({
         <DetailBox
           label="Div Yield"
           value={s.dividend_yield != null ? `${formatNumber(s.dividend_yield)}%` : "—"}
-          color={s.dividend_yield != null ? "text-accent" : undefined}
+          color={s.dividend_yield != null ? "text-emerald-500" : undefined}
         />
         <DetailBox label="Sector" value={s.sector} />
       </div>
@@ -788,7 +788,7 @@ const StockDetailPanel = ({
             </span>
             <div className="flex-1 relative h-2 bg-muted rounded-full">
               <div
-                className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive to-accent rounded-full"
+                className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive to-emerald-500 rounded-full"
                 style={{ width: "100%" }}
               />
               <div

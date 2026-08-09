@@ -262,10 +262,10 @@ const StockDetailPage = () => {
         <div className="text-left md:text-right">
           <p className="text-3xl md:text-4xl font-bold text-foreground tabular-nums">KSh {fmt(s.price)}</p>
           <div className="flex items-center gap-2 md:justify-end mt-1">
-            {isUp && <TrendingUp className="h-4 w-4 text-accent" />}
+            {isUp && <TrendingUp className="h-4 w-4 text-emerald-500" />}
             {isDown && <TrendingDown className="h-4 w-4 text-destructive" />}
             {!isUp && !isDown && <Minus className="h-4 w-4 text-muted-foreground" />}
-            <span className={`text-sm font-semibold tabular-nums ${isUp ? "text-accent" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
+            <span className={`text-sm font-semibold tabular-nums ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
               {isUp ? "+" : ""}{fmt(s.day_change)} ({isUp ? "+" : ""}{fmt(s.day_change_percent)}%)
             </span>
           </div>
@@ -318,8 +318,8 @@ const StockDetailPage = () => {
                 <AreaChart data={filteredHistory}>
                   <defs>
                     <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor={isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))"} stopOpacity={0.3} />
-                      <stop offset="95%" stopColor={isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))"} stopOpacity={0} />
+                      <stop offset="5%" stopColor={isUp ? "hsl(152 60% 42%)" : "hsl(var(--destructive))"} stopOpacity={0.3} />
+                      <stop offset="95%" stopColor={isUp ? "hsl(152 60% 42%)" : "hsl(var(--destructive))"} stopOpacity={0} />
                     </linearGradient>
                   </defs>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
@@ -344,7 +344,7 @@ const StockDetailPage = () => {
                     labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
                     formatter={(value: number) => [`KSh ${fmt(value)}`, "Price"]}
                   />
-                  <Area type="monotone" dataKey="price" stroke={isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))"} strokeWidth={2} fill="url(#priceGradient)" />
+                  <Area type="monotone" dataKey="price" stroke={isUp ? "hsl(152 60% 42%)" : "hsl(var(--destructive))"} strokeWidth={2} fill="url(#priceGradient)" />
                 </AreaChart>
               </ResponsiveContainer>
             )}
@@ -354,18 +354,18 @@ const StockDetailPage = () => {
                 <MiniStat label="Period High" value={`KSh ${fmt(priceStats.high)}`} />
                 <MiniStat label="Period Low" value={`KSh ${fmt(priceStats.low)}`} />
                 <MiniStat label="Average" value={`KSh ${fmt(priceStats.avg)}`} />
-                <MiniStat label="Change" value={`${priceStats.change > 0 ? "+" : ""}${fmt(priceStats.change)}`} color={priceStats.change >= 0 ? "text-accent" : "text-destructive"} />
-                <MiniStat label="Change %" value={`${priceStats.changePct > 0 ? "+" : ""}${fmt(priceStats.changePct)}%`} color={priceStats.changePct >= 0 ? "text-accent" : "text-destructive"} />
+                <MiniStat label="Change" value={`${priceStats.change > 0 ? "+" : ""}${fmt(priceStats.change)}`} color={priceStats.change >= 0 ? "text-emerald-500" : "text-destructive"} />
+                <MiniStat label="Change %" value={`${priceStats.changePct > 0 ? "+" : ""}${fmt(priceStats.changePct)}%`} color={priceStats.changePct >= 0 ? "text-emerald-500" : "text-destructive"} />
               </div>
             )}
           </div>
 
           {/* Key Stats Grid */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-            <StatCard icon={<DollarSign className="h-4 w-4 text-accent" />} label="Price" value={`KSh ${fmt(s.price)}`} />
+            <StatCard icon={<DollarSign className="h-4 w-4 text-emerald-500" />} label="Price" value={`KSh ${fmt(s.price)}`} />
             <StatCard icon={<Activity className="h-4 w-4 text-primary" />} label="Volume" value={fmtVol(s.volume)} />
             <StatCard icon={<Building2 className="h-4 w-4 text-muted-foreground" />} label="Market Cap" value={fmtCap(s.market_cap)} />
-            <StatCard icon={<TrendingUp className="h-4 w-4 text-accent" />} label="Div Yield" value={s.dividend_yield != null ? `${fmt(s.dividend_yield)}%` : "—"} />
+            <StatCard icon={<TrendingUp className="h-4 w-4 text-emerald-500" />} label="Div Yield" value={s.dividend_yield != null ? `${fmt(s.dividend_yield)}%` : "—"} />
           </div>
 
           {/* 52 Week Range */}
@@ -375,7 +375,7 @@ const StockDetailPage = () => {
               <div className="flex items-center gap-4">
                 <span className="text-xs text-muted-foreground tabular-nums w-20 text-right">KSh {fmt(s.year_low!)}</span>
                 <div className="flex-1 relative h-3 bg-muted rounded-full">
-                  <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive via-yellow-500 to-accent rounded-full" style={{ width: "100%" }} />
+                  <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive via-yellow-500 to-emerald-500 rounded-full" style={{ width: "100%" }} />
                   <div
                     className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-foreground rounded-full border-2 border-card shadow-md"
                     style={{ left: `${Math.min(Math.max(pricePos, 0), 100)}%`, transform: "translate(-50%, -50%)" }}
@@ -392,13 +392,13 @@ const StockDetailPage = () => {
         <TabsContent value="financials" className="space-y-4">
           <div className="rounded-xl border border-border bg-card p-4">
             <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
-              <DollarSign className="h-4 w-4 text-accent" /> Key Financial Metrics
+              <DollarSign className="h-4 w-4 text-emerald-500" /> Key Financial Metrics
             </h3>
             <div className="divide-y divide-border">
               <FinRow label="Current Price" value={`KSh ${fmt(s.price)}`} />
               <FinRow label="Previous Close" value={s.previous_price != null ? `KSh ${fmt(s.previous_price)}` : "—"} />
-              <FinRow label="Day Change" value={`${s.day_change > 0 ? "+" : ""}KSh ${fmt(s.day_change)}`} color={isUp ? "text-accent" : isDown ? "text-destructive" : undefined} />
-              <FinRow label="Day Change %" value={`${s.day_change_percent > 0 ? "+" : ""}${fmt(s.day_change_percent)}%`} color={isUp ? "text-accent" : isDown ? "text-destructive" : undefined} />
+              <FinRow label="Day Change" value={`${s.day_change > 0 ? "+" : ""}KSh ${fmt(s.day_change)}`} color={isUp ? "text-emerald-500" : isDown ? "text-destructive" : undefined} />
+              <FinRow label="Day Change %" value={`${s.day_change_percent > 0 ? "+" : ""}${fmt(s.day_change_percent)}%`} color={isUp ? "text-emerald-500" : isDown ? "text-destructive" : undefined} />
               <FinRow label="Volume" value={fmtVol(s.volume)} />
               <FinRow label="Market Capitalization" value={fmtCap(s.market_cap)} />
               <FinRow label="P/E Ratio" value={s.pe_ratio != null ? fmt(s.pe_ratio) : "—"} />
@@ -450,8 +450,8 @@ const StockDetailPage = () => {
               <div className="divide-y divide-border">
                 <FinRow label="Period Start Price" value={filteredHistory.length > 0 ? `KSh ${fmt(filteredHistory[0].price)}` : "—"} />
                 <FinRow label="Period End Price" value={filteredHistory.length > 0 ? `KSh ${fmt(filteredHistory[filteredHistory.length - 1].price)}` : "—"} />
-                <FinRow label="Period Change" value={`${priceStats.change > 0 ? "+" : ""}KSh ${fmt(priceStats.change)}`} color={priceStats.change >= 0 ? "text-accent" : "text-destructive"} />
-                <FinRow label="Period Change %" value={`${priceStats.changePct > 0 ? "+" : ""}${fmt(priceStats.changePct)}%`} color={priceStats.changePct >= 0 ? "text-accent" : "text-destructive"} />
+                <FinRow label="Period Change" value={`${priceStats.change > 0 ? "+" : ""}KSh ${fmt(priceStats.change)}`} color={priceStats.change >= 0 ? "text-emerald-500" : "text-destructive"} />
+                <FinRow label="Period Change %" value={`${priceStats.changePct > 0 ? "+" : ""}${fmt(priceStats.changePct)}%`} color={priceStats.changePct >= 0 ? "text-emerald-500" : "text-destructive"} />
                 <FinRow label="Period High" value={`KSh ${fmt(priceStats.high)}`} />
                 <FinRow label="Period Low" value={`KSh ${fmt(priceStats.low)}`} />
                 <FinRow label="Period Average" value={`KSh ${fmt(priceStats.avg)}`} />
@@ -510,10 +510,10 @@ const StockDetailPage = () => {
                           <td className="px-4 py-2.5 text-right font-semibold tabular-nums text-foreground">
                             {fmt(h.price)}
                           </td>
-                          <td className={`px-4 py-2.5 text-right tabular-nums ${change > 0 ? "text-accent" : change < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                          <td className={`px-4 py-2.5 text-right tabular-nums ${change > 0 ? "text-emerald-500" : change < 0 ? "text-destructive" : "text-muted-foreground"}`}>
                             {change > 0 ? "+" : ""}{fmt(change)}
                           </td>
-                          <td className={`px-4 py-2.5 text-right tabular-nums ${changePct > 0 ? "text-accent" : changePct < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+                          <td className={`px-4 py-2.5 text-right tabular-nums ${changePct > 0 ? "text-emerald-500" : changePct < 0 ? "text-destructive" : "text-muted-foreground"}`}>
                             {changePct > 0 ? "+" : ""}{fmt(changePct)}%
                           </td>
                         </tr>
