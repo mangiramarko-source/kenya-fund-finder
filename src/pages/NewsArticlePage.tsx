@@ -69,7 +69,6 @@ const NewsArticlePage = () => {
   const [repostsCount, setRepostsCount] = useState(0);
   const [bookmarksCount, setBookmarksCount] = useState(0);
   const [newCommentInput, setNewCommentInput] = useState("");
-  const [commentsList, setCommentsList] = useState<CommentItem[]>([]);
 
 const educationalTips = [
   { 
@@ -220,21 +219,9 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     e.preventDefault();
     if (!newCommentInput.trim()) return;
     const authorName = user ? (user.email?.split("@")[0] || "User") : "community_member";
-    const initials = authorName.substring(0, 1).toUpperCase();
     const cmtText = newCommentInput.trim();
-    const newCmt: CommentItem = {
-      id: `c-${Date.now()}`,
-      authorName,
-      authorHandle: `@${authorName.toLowerCase()}`,
-      avatarInitials: initials,
-      timestamp: "Just now",
-      content: cmtText,
-      likes: 0,
-      reposts: 0,
-    };
-    setCommentsList(prev => [newCmt, ...prev]);
     if (article) {
-      addComment(`news-${article.id}`, cmtText);
+      addComment(`news-${article.id}`, cmtText, authorName);
     }
     setNewCommentInput("");
     toast({ title: "Reply posted" });
@@ -437,7 +424,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         {(() => {
           const itemId = article ? `news-${article.id}` : "";
           const interaction = itemId ? getPostInteraction(itemId, article?.likes || 0) : { liked: false, likeCount: article?.likes || 0, comments: [] };
-          const totalCommentsCount = commentsList.length + (interaction.comments?.length || 0);
+          const totalCommentsCount = interaction.comments?.length || 0;
 
           return (
             <div className="py-1.5 flex items-center justify-end gap-6 text-xs text-muted-foreground font-medium">
@@ -475,44 +462,34 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
 
         {/* ─── 9. Replies ─── */}
         <div className="space-y-4 pt-1">
-          {commentsList.map((cmt) => (
-            <div key={cmt.id} className="flex gap-3 text-xs border-b border-border/40 pb-3">
-              <div className="w-9 h-9 rounded-full bg-muted border border-border flex items-center justify-center shrink-0 font-bold text-muted-foreground">
-                {cmt.avatarInitials}
-              </div>
-              <div className="flex-1 min-w-0 space-y-1">
-                <div className="flex items-center gap-1.5">
-                  <span className="font-bold text-foreground">{cmt.authorName}</span>
-                  <span className="text-muted-foreground">{cmt.authorHandle}</span>
-                  <span className="text-muted-foreground">·</span>
-                  <span className="text-muted-foreground">{cmt.timestamp}</span>
+          {(() => {
+            const itemId = article ? `news-${article.id}` : "";
+            const interaction = itemId ? getPostInteraction(itemId, article?.likes || 0) : null;
+            if (!interaction || !interaction.comments) return null;
+            
+            return interaction.comments.map((cmt, idx) => {
+              const authorName = typeof cmt === 'string' ? "User" : (cmt.authorName || "User");
+              const content = typeof cmt === 'string' ? cmt : cmt.content;
+              const initials = authorName.substring(0, 1).toUpperCase();
+              
+              return (
+                <div key={idx} className="flex gap-3 text-xs border-b border-border/40 pb-3">
+                  <div className="w-9 h-9 rounded-full bg-muted border border-border flex items-center justify-center shrink-0 font-bold text-muted-foreground">
+                    {initials}
+                  </div>
+                  <div className="flex-1 min-w-0 space-y-1">
+                    <div className="flex items-center gap-1.5">
+                      <span className="font-bold text-foreground">{authorName}</span>
+                      <span className="text-muted-foreground">@{authorName.toLowerCase().replace(/\s+/g, '')}</span>
+                    </div>
+                    <p className="text-foreground/90 leading-relaxed font-normal">
+                      {content}
+                    </p>
+                  </div>
                 </div>
-                <p className="text-foreground/90 leading-relaxed font-normal">
-                  {cmt.content}
-                </p>
-
-                {/* Reply action bar matching main engagement row */}
-                <div className="flex items-center justify-end gap-6 text-[11px] text-muted-foreground font-medium pt-1.5">
-                  <button type="button" className="flex items-center gap-1.5 hover:text-foreground transition-colors">
-                    <MessageSquare className="w-3.5 h-3.5" />
-                    <span>Reply</span>
-                  </button>
-                  <button type="button" onClick={handleCopyLink} className="flex items-center gap-1.5 hover:text-foreground transition-colors">
-                    <Share2 className="w-3.5 h-3.5" />
-                    <span>Share</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => handleToggleLikeComment(cmt.id)}
-                    className={`flex items-center gap-1.5 transition-colors ${cmt.userLiked ? 'text-red-500 font-bold' : 'hover:text-foreground'}`}
-                  >
-                    <Heart className={`w-3.5 h-3.5 ${cmt.userLiked ? 'fill-red-500 text-red-500' : ''}`} />
-                    <span>{cmt.likes}</span>
-                  </button>
-                </div>
-              </div>
-            </div>
-          ))}
+              );
+            });
+          })()}
         </div>
       </div>
 
