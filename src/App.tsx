@@ -38,6 +38,7 @@ const RatesPage = lazy(() => import("./pages/RatesPage"));
 const CommoditiesPage = lazy(() => import("./pages/CommoditiesPage"));
 const StocksPage = lazy(() => import("./pages/StocksPage"));
 const StocksDemoPage = lazy(() => import("./pages/StocksDemoPage"));
+const DemoStocksPage = lazy(() => import("./pages/DemoStocksPage"));
 const DemoStockFeedPage = lazy(() => import("./pages/DemoStockFeedPage"));
 const StockDetailPage = lazy(() => import("./pages/StockDetailPage"));
 const MarketDashboardPage = lazy(() => import("./pages/MarketDashboardPage"));
@@ -105,6 +106,7 @@ const App = () => (
                     <Route path="/commodities" element={<CommoditiesPage />} />
                     <Route path="/stocks" element={<StocksPage />} />
                     <Route path="/stocks-demo" element={<StocksDemoPage />} />
+                    <Route path="/demo-stocks-feed" element={<DemoStocksPage />} />
                     <Route path="/demo-feed" element={<DemoStockFeedPage />} />
                     <Route path="/stocks/:symbol" element={<StockDetailPage />} />
                     <Route path="/markets" element={<MarketDashboardPage />} />
