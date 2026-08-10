@@ -1350,33 +1350,35 @@ const OverviewPage = () => {
         </div>
 
         {/* Middle Column - Feed */}
-        <div className="md:col-span-6 flex flex-col w-full max-w-full overflow-hidden">
+        <div className="md:col-span-6 flex flex-col w-full max-w-full overflow-hidden md:overflow-visible">
           {/* On mobile, show portfolio widget */}
           <div className="md:hidden">
             <OverviewPortfolioWidget />
           </div>
 
-          <div className="mb-4 flex items-baseline justify-between mt-0 md:mt-0">
-            <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
-            <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-              {newTodayCount} new today
-            </span>
-          </div>
+          <div className="md:sticky md:top-[5.75rem] md:z-10 md:-mx-2 md:bg-background/95 md:px-2 md:pt-1 md:backdrop-blur-md">
+            <div className="mb-4 flex items-baseline justify-between mt-0">
+              <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
+              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                {newTodayCount} new today
+              </span>
+            </div>
 
-          <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto">
-            {["All", "Stocks", "Kenyan", "International", "Latest", "Oldest"].map((f) => (
-              <button
-                key={f}
-                onClick={() => setActiveUpdateCategory(f)}
-                className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-                  activeUpdateCategory === f
-                    ? "bg-foreground text-background"
-                    : "border border-border bg-card text-muted-foreground"
-                }`}
-              >
-                {f}
-              </button>
-            ))}
+            <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto md:pb-1">
+              {["All", "Stocks", "Kenyan", "International", "Latest", "Oldest"].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => setActiveUpdateCategory(f)}
+                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
+                    activeUpdateCategory === f
+                      ? "bg-foreground text-background"
+                      : "border border-border bg-card text-muted-foreground"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
+            </div>
           </div>
 
           <div className="space-y-0 md:space-y-4">
