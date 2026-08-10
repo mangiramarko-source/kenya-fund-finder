@@ -68,11 +68,27 @@ function cleanContentText(title: string, rawContent: string): string {
     const normContent = content.toLowerCase().replace(/[^a-z0-9]/g, '');
 
     if (normTitle.length >= 15 && normContent.startsWith(normTitle)) {
-      const sliceLen = baseTitle.length;
-      let remainder = content.slice(sliceLen).trim();
+      // Find the index in 'content' where the matching alphanumeric characters end
+      let matchCount = 0;
+      let splitIndex = 0;
+      for (let i = 0; i < content.length; i++) {
+        if (/[a-z0-9]/i.test(content[i])) {
+          matchCount++;
+        }
+        if (matchCount === normTitle.length) {
+          splitIndex = i + 1;
+          break;
+        }
+      }
+
+      let remainder = content.slice(splitIndex).trim();
+      remainder = remainder.replace(/^[^a-z0-9]+/i, '').trim(); 
       remainder = remainder.replace(/^[a-z0-9.-]+\.[a-z]{2,}\s*/i, '').trim();
+      
       if (remainder.length > 0) {
         content = remainder;
+      } else {
+        content = "";
       }
     }
   }
