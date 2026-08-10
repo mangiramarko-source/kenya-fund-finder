@@ -19,6 +19,8 @@ Deno.serve(async (req) => {
 
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
+    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+
     // ── Admin / Webhook gate ────────────────────────────────────
     const authHeader = req.headers.get("Authorization") ?? "";
     const bearerToken = authHeader.replace(/^Bearer\s+/i, "");
@@ -47,7 +49,6 @@ Deno.serve(async (req) => {
         });
       }
       
-      const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
       const { data: roleRow } = await adminClient
         .from("user_roles")
         .select("role")
@@ -65,9 +66,11 @@ Deno.serve(async (req) => {
 
     const body = await req.json().catch(() => ({}));
     
-    // Handle either direct `{ articleId: "..." }` or Supabase Webhook payload `{ type: "INSERT", record: { id: "..." } }`
+    // Handle direct `{ articleId: "..." }`, `{ article_id: "..." }`, or Supabase Webhook payload `{ type: "INSERT", record: { id: "..." } }`
     const articleId = typeof body?.articleId === "string" 
       ? body.articleId 
+      : typeof body?.article_id === "string"
+      ? body.article_id
       : (body?.record?.id ? body.record.id : null);
       
     if (!articleId) {
