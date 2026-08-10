@@ -166,7 +166,7 @@ export const SocialFeedCard = ({
   return (
     <div
       onClick={handleCardClick}
-      className="animate-rise -mx-4 space-y-4 border-0 border-b border-border/80 bg-transparent px-4 py-5 shadow-none cursor-pointer transition-all md:mx-0 md:space-y-3 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:hover:border-border"
+      className="animate-rise -mx-4 space-y-3 border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:hover:border-border"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       {/* Top Author Bar */}
