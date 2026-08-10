@@ -1370,7 +1370,7 @@ const OverviewPage = () => {
             ))}
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-0 md:space-y-4">
             {activeUpdateCategory === "Stocks" ? (
               filteredFeedItems.length === 0 && !loading ? (
                 <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
