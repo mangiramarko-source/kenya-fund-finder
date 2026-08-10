@@ -97,16 +97,20 @@ export const SocialFeedCard = ({
 
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
   
-  const isSocialPost = item.type === "social";
-  const authorName = item.authorLabel || "Market News";
-  const initials = getInitials(authorName);
-  const authorHandle = item.authorHandle || (isSocialPost ? `@${authorName.toLowerCase().replace(/\s+/g, '')}` : "@marketnews");
+  const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
+  const rawAuthor = item.authorName || "KenyaFundFinder Academy";
+  const authorName = isSocialPost ? rawAuthor.replace(/^X\s*-\s*/, '') : rawAuthor;
+  const initials = isSocialPost ? "X" : getInitials(authorName);
+  
+  const rawLabel = item.authorLabel || "dailytip";
+  const authorHandle = rawLabel.startsWith("@") ? rawLabel : `@${rawLabel.toLowerCase().replace(/\s+/g, '')}`;
   
   const domain = getDomainFromUrl(item.url || item.rawItem?.link);
   const showFavicon = !isSocialPost && domain && !avatarError;
 
   const handleCardClick = () => {
-    if (item.type === "NEWS") {
+    if (isMobile) {
+      // Feed item IDs are prefixed with "news-" (e.g. "news-abc123").
       // Strip the prefix so the URL matches what fetchNewsById expects.
       const rawId = item.id.startsWith("news-") ? item.id.slice(5) : item.id;
       navigate(`/news/${rawId}`);
