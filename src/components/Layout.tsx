@@ -10,6 +10,7 @@ import { usePageView } from "@/hooks/usePageView";
 
 function shouldShowMobileAiLabFab(pathname: string): boolean {
   if (pathname === "/ai-lab" || pathname.startsWith("/ai-lab/")) return false;
+  if (/^\/news\/[^/]+/.test(pathname)) return false;
   if (pathname === "/auth") return false;
   if (pathname === "/admin" || pathname.startsWith("/admin/")) return false;
   if (pathname === "/alerts") return false;

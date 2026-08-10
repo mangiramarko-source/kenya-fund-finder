@@ -40,7 +40,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 
 import DisclaimerBlock from "@/components/DisclaimerBlock";
 import { useSocialFeed, type FeedItem } from "@/hooks/useSocialFeed";
-import { SocialFeed } from "@/components/feed/SocialFeed";
+import { SocialFeed, SocialFeedCard } from "@/components/feed/SocialFeed";
 import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
@@ -1033,6 +1033,15 @@ const OverviewPage = () => {
     () => buildNewsFeedItems(news, stocks).filter(item => Boolean(item.relatedStock)),
     [news, stocks],
   );
+  const allFeedItems = useMemo(() => {
+    const enrichedById = new Map(buildNewsFeedItems(news, stocks).map(item => [item.id, item]));
+    return feedItems.map(item => {
+      const enriched = enrichedById.get(item.id);
+      return enriched?.relatedStock
+        ? { ...item, aiInsight: enriched.aiInsight, relatedStock: enriched.relatedStock }
+        : item;
+    });
+  }, [feedItems, news, stocks]);
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [watchlistPromptOpen, setWatchlistPromptOpen] = useState(false);
 
@@ -1299,7 +1308,7 @@ const OverviewPage = () => {
   const filteredFeedItems = useMemo(() => {
     if (activeUpdateCategory === "Stocks") return stockNewsFeedItems;
 
-    let list = [...feedItems];
+    let list = [...allFeedItems];
     if (activeUpdateCategory === "Kenyan") {
       list = list.filter(item => !isInternationalFeedItem(item));
     } else if (activeUpdateCategory === "International") {
@@ -1310,7 +1319,7 @@ const OverviewPage = () => {
       list.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     }
     return list;
-  }, [feedItems, stockNewsFeedItems, activeUpdateCategory]);
+  }, [allFeedItems, stockNewsFeedItems, activeUpdateCategory]);
 
   const newTodayCount = useMemo(() => {
     const now = Date.now();
@@ -1388,6 +1397,26 @@ const OverviewPage = () => {
                   />
                 ))
               )
+            ) : activeUpdateCategory === "All" ? (
+              filteredFeedItems.map((item, index) => item.relatedStock ? (
+                <StockFeedCard
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  onSelect={setSelectedFeedItem}
+                  interaction={getPostInteraction(item.id, item.likes || 0)}
+                  onLikeToggle={toggleLike}
+                />
+              ) : (
+                <SocialFeedCard
+                  key={item.id}
+                  item={item}
+                  index={index}
+                  onSelect={setSelectedFeedItem}
+                  interaction={getPostInteraction(item.id, item.likes || 0)}
+                  onLikeToggle={toggleLike}
+                />
+              ))
             ) : (
               <SocialFeed items={filteredFeedItems} loading={loading} />
             )}

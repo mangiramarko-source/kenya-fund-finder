@@ -205,8 +205,8 @@ export const SocialFeedCard = ({
             </span>
           )}
           <div className="mt-0.5 flex items-center gap-1.5 text-[13px] md:mt-0 md:inline-flex md:text-xs">
-            <span className="text-muted-foreground truncate">{authorHandle}</span>
-            <span className="text-muted-foreground font-bold">·</span>
+            <span className="hidden text-muted-foreground truncate md:inline">{authorHandle}</span>
+            <span className="hidden text-muted-foreground font-bold md:inline">·</span>
             <span className="text-muted-foreground whitespace-nowrap">{timeAgo}</span>
           </div>
         </div>

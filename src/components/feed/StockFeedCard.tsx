@@ -111,7 +111,7 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
             <span className="md:hidden h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
             <span className="md:hidden text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Stock</span>
           </div>
-          <p className="text-[13px] md:text-sm text-muted-foreground"><span className="md:hidden">@{stock.symbol.toLowerCase()} <span className="px-1">·</span></span><span className="hidden md:inline">Live News <span className="px-1">·</span></span>{timeAgo}</p>
+          <p className="text-[13px] md:text-sm text-muted-foreground"><span className="hidden md:inline">Live News <span className="px-1">·</span></span>{timeAgo}</p>
         </div>
         <button type="button" onClick={openArticle} className="p-1 text-muted-foreground hover:text-foreground md:hidden" aria-label="More options">
           <MoreHorizontal className="h-5 w-5" />

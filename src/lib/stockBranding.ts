@@ -11,7 +11,17 @@ const STOCK_DOMAINS: Record<string, string> = {
   SCOM: "safaricom.co.ke",
 };
 
+const STOCK_LOGOS: Record<string, string> = {
+  PORT: "/images/stocks/east-african-portland-cement.png",
+  SBIC: "/images/stocks/stanbic-holdings.png",
+  SCOM: "/images/stocks/safaricom.png",
+};
+
 export function getStockLogoUrl(symbol: string) {
-  const domain = STOCK_DOMAINS[symbol.toUpperCase()];
+  const normalizedSymbol = symbol.toUpperCase();
+  const customLogo = STOCK_LOGOS[normalizedSymbol];
+  if (customLogo) return customLogo;
+
+  const domain = STOCK_DOMAINS[normalizedSymbol];
   return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : "";
 }
