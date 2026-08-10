@@ -15,6 +15,53 @@ export function decodeHtmlEntities(text: string): string {
   return _div.textContent || _div.innerText || "";
 }
 
+/** Split long article text into readable paragraphs at sentence boundaries. */
+export function splitReadableParagraphs(text: string, targetLength = 360): string[] {
+  const sourceParagraphs = text.split(/\n+/).map((paragraph) => paragraph.trim()).filter(Boolean);
+  const result: string[] = [];
+
+  const pushWords = (value: string) => {
+    const words = value.split(/\s+/).filter(Boolean);
+    let chunk = "";
+    words.forEach((word) => {
+      const candidate = chunk ? `${chunk} ${word}` : word;
+      if (chunk && candidate.length > targetLength) {
+        result.push(chunk);
+        chunk = word;
+      } else {
+        chunk = candidate;
+      }
+    });
+    if (chunk) result.push(chunk);
+  };
+
+  sourceParagraphs.forEach((paragraph) => {
+    const sentences = paragraph.match(/[^.!?]+(?:[.!?]+(?=\s|$)|$)/g)?.map((sentence) => sentence.trim()).filter(Boolean) || [paragraph];
+    let chunk = "";
+
+    sentences.forEach((sentence) => {
+      if (sentence.length > targetLength) {
+        if (chunk) result.push(chunk);
+        chunk = "";
+        pushWords(sentence);
+        return;
+      }
+
+      const candidate = chunk ? `${chunk} ${sentence}` : sentence;
+      if (chunk && candidate.length > targetLength) {
+        result.push(chunk);
+        chunk = sentence;
+      } else {
+        chunk = candidate;
+      }
+    });
+
+    if (chunk) result.push(chunk);
+  });
+
+  return result;
+}
+
 /**
  * Roll a date back to the most recent weekday (Mon–Fri).
  * Markets are closed on Saturday and Sunday, so any displayed
@@ -105,4 +152,3 @@ export function isGlobalMarketOpen(): boolean {
     return false;
   }
 }
-

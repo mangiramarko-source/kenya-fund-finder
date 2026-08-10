@@ -32,6 +32,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type { PostInteraction } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
+import { splitReadableParagraphs } from "@/lib/utils";
 
 interface FeedItemDetailModalProps {
   item: FeedItem | null;
@@ -85,6 +86,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
   const formattedTime = format(item.timestamp, "h:mm a");
   const formattedDate = format(item.timestamp, "d MMM yyyy");
   const readTime = item.rawItem?.read_time;
+  const readableContent = splitReadableParagraphs(item.content).join("\n\n");
 
   const handleShare = async () => {
     const rawId = item.id.startsWith("news-") ? item.id.slice(5) : item.id;
@@ -279,7 +281,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
           <div className="text-base text-foreground/90 leading-relaxed font-normal whitespace-pre-line">
             <div className="prose prose-base dark:prose-invert max-w-none prose-p:my-3 prose-p:text-[16px] prose-p:text-foreground/90 prose-p:leading-relaxed prose-headings:mt-4 prose-headings:mb-2 prose-headings:text-foreground">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {item.content}
+                {readableContent}
               </ReactMarkdown>
             </div>
           </div>

@@ -1,5 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
-import { decodeHtmlEntities } from "@/lib/utils";
+import { decodeHtmlEntities, splitReadableParagraphs } from "@/lib/utils";
 import { useEffect, useState, useRef } from "react";
 import { 
   ArrowLeft, 
@@ -304,6 +304,8 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     try { return new URL(article.url).hostname; } catch { return ""; }
   })();
   const sourceLogoUrl = sourceDomain ? `https://www.google.com/s2/favicons?domain=${sourceDomain}&sz=128` : "";
+  const articleText = decodeHtmlEntities(article.summary || article.content || "");
+  const articleParagraphs = splitReadableParagraphs(articleText);
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 md:pb-8">
@@ -395,15 +397,11 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
           </h2>
 
           <div className="text-[15px] sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
-            {article.content && article.content.trim().length > 0 ? (
-              article.content.split("\n").filter(Boolean).map((paragraph, i) => (
-                <p key={i} className="my-2">
-                  {decodeHtmlEntities(paragraph)}
-                </p>
-              ))
-            ) : (
-              <p>{decodeHtmlEntities(article.summary)}</p>
-            )}
+            {articleParagraphs.map((paragraph, index) => (
+              <p key={index} className="my-4">
+                {paragraph}
+              </p>
+            ))}
           </div>
         </div>
 
