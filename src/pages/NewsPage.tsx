@@ -6,11 +6,10 @@ import { Search, Megaphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
-import { DemoSocialFeedCard as SocialFeedCard } from "@/components/feed/DemoSocialFeed";
+import { SocialFeedCard } from "@/components/feed/SocialFeed";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
-import { useSocialFeed, type FeedItem } from "@/hooks/useSocialFeed";
-import { supabase } from "@/integrations/supabase/client";
+import { type FeedItem } from "@/hooks/useSocialFeed";
 
 const INTERNATIONAL_SOURCES = new Set([
   "Reuters Business",
@@ -44,50 +43,63 @@ export default function NewsPage() {
 
   const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
-  const [stocks, setStocks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeNavTab, setActiveNavTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
 
   useEffect(() => {
-    Promise.all([
-      fetchPublishedNews(),
-      supabase.from("stocks").select("*").eq("is_active", true)
-    ]).then(([newsData, { data: stocksData }]) => {
-      setArticles(newsData || []);
-      setStocks(stocksData || []);
-      setLoading(false);
-    }).catch(() => setLoading(false));
+    fetchPublishedNews()
+      .then((data) => {
+        setArticles(data);
+        setLoading(false);
+      })
+      .catch(() => setLoading(false));
   }, []);
 
-  const allFeedItems = useSocialFeed(articles, stocks, [], []);
-
-  const feedItems = useMemo(() => {
-    let list = [...allFeedItems];
+  const filteredArticles = useMemo(() => {
+    let list = [...articles];
 
     // Filter by Search Query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      list = list.filter(a => a.title.toLowerCase().includes(q) || (a.content || "").toLowerCase().includes(q));
+      list = list.filter(a => a.title.toLowerCase().includes(q) || (a.summary || "").toLowerCase().includes(q));
     }
 
     // Filter & Sort by Nav Tab
     if (activeNavTab === "Kenyan") {
-      list = list.filter(a => !isInternationalArticle(a.rawItem || {}));
+      list = list.filter(a => !isInternationalArticle(a));
     } else if (activeNavTab === "International") {
-      list = list.filter(a => isInternationalArticle(a.rawItem || {}));
+      list = list.filter(a => isInternationalArticle(a));
     } else if (activeNavTab === "Latest") {
-      list.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      list.sort((a, b) => new Date(b.created_at || b.date_published).getTime() - new Date(a.created_at || a.date_published).getTime());
     } else if (activeNavTab === "Oldest") {
-      list.sort((a, b) => a.timestamp.getTime() - b.timestamp.getTime());
+      list.sort((a, b) => new Date(a.created_at || a.date_published).getTime() - new Date(b.created_at || b.date_published).getTime());
     } else {
       // "All" defaults to latest first
-      list.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      list.sort((a, b) => new Date(b.created_at || b.date_published).getTime() - new Date(a.created_at || a.date_published).getTime());
     }
 
     return list;
-  }, [allFeedItems, activeNavTab, searchQuery]);
+  }, [articles, activeNavTab, searchQuery]);
+
+  const feedItems = useMemo(() => {
+    return filteredArticles.map((a) => ({
+      id: `news-${a.id}`,
+      type: "NEWS" as const,
+      authorName: a.source || "Market News",
+      authorLabel: a.category || "News",
+      title: decodeHtmlEntities(a.title),
+      content: a.summary || a.content || "",
+      mediaUrl: a.image_url || undefined,
+      mediaType: a.image_url ? ("image" as const) : undefined,
+      timestamp: new Date(a.created_at || a.date_published || Date.now()),
+      likes: a.likes || 0,
+      comments: a.comments || 0,
+      url: a.url || "#",
+      rawItem: a,
+    }));
+  }, [filteredArticles]);
 
   if (loading) {
     return (
@@ -107,7 +119,7 @@ export default function NewsPage() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
         <div className="flex items-center gap-3">
           <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">Market News</h1>
-          <Badge variant="secondary" className="text-xs bg-muted/80">{feedItems.length} articles</Badge>
+          <Badge variant="secondary" className="text-xs bg-muted/80">{filteredArticles.length} articles</Badge>
         </div>
 
         {/* Search Input */}
@@ -167,8 +179,6 @@ export default function NewsPage() {
               key={item.id}
               item={item}
               onSelect={setSelectedFeedItem}
-              interaction={getPostInteraction(item.id, item.likes || 0)}
-              onLikeToggle={toggleLike}
             />
           ))}
         </div>

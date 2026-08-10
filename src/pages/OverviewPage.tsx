@@ -40,8 +40,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 
 import DisclaimerBlock from "@/components/DisclaimerBlock";
 import { useSocialFeed, type FeedItem } from "@/hooks/useSocialFeed";
-import { SocialFeedCard } from "@/components/feed/SocialFeed";
-import { DemoSocialFeed as SocialFeed } from "@/components/feed/DemoSocialFeed";
+import { SocialFeed, SocialFeedCard } from "@/components/feed/SocialFeed";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 

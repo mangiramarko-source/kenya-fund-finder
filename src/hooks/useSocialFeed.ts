@@ -23,15 +23,6 @@ export interface FeedItem {
   url?: string;
   rawItem?: any;
   relatedSymbols?: string[];
-  relatedStocks?: Array<{
-    id: string;
-    symbol: string;
-    name: string;
-    price: number | null;
-    change: number | null;
-    changePercent: number | null;
-  }>;
-  aiInsight?: string;
 }
 
 function getHashNumber(id: string, min: number, max: number) {
@@ -129,76 +120,13 @@ export function useSocialFeed(
 
       const knownSymbols = ["SCOM", "EQTY", "KCB", "EABL", "BAT", "COOP", "NCBA", "USD/KES", "EUR/KES", "GBP/KES", "Oil", "Gold"];
       const relatedSymbols: string[] = [];
-      const relatedStocks: any[] = [];
-      
-      // First, check the new backend related_stock_id
-      if (n.related_stock_id && stocks && stocks.length > 0) {
-        const matchingStock = stocks.find((s: any) => s.id === n.related_stock_id);
-        if (matchingStock) {
-          relatedSymbols.push(matchingStock.symbol);
-          relatedStocks.push({
-            id: matchingStock.id,
-            symbol: matchingStock.symbol,
-            name: matchingStock.name,
-            price: matchingStock.price,
-            change: matchingStock.day_change,
-            changePercent: matchingStock.day_change_percent,
-          });
+      const contentUpper = cleanedContent.toUpperCase();
+      const titleUpper = cleanedTitle.toUpperCase();
+      knownSymbols.forEach(sym => {
+        if (titleUpper.includes(sym.toUpperCase()) || contentUpper.includes(sym.toUpperCase())) {
+          relatedSymbols.push(sym);
         }
-      }
-
-      // Fallback extraction if no explicit backend related_stock_id yet
-      if (relatedSymbols.length === 0) {
-        const textUpper = `${cleanedTitle} ${cleanedContent}`.toUpperCase();
-
-        // 1. Check against passed stocks list dynamically (matching symbol or name)
-        if (stocks && stocks.length > 0) {
-          for (const stock of stocks) {
-            const sym = (stock.symbol || "").toUpperCase();
-            const name = (stock.name || "").toUpperCase();
-            
-            // Clean common corporate suffixes for better matching (e.g. "SAFARICOM PLC" -> "SAFARICOM")
-            const cleanName = name.replace(/\s+(PLC|LIMITED|LTD|GROUP|HOLDINGS)$/i, "").trim();
-
-            if (
-              (sym.length >= 3 && textUpper.includes(sym)) ||
-              (cleanName.length >= 4 && textUpper.includes(cleanName)) ||
-              (sym === "SCOM" && textUpper.includes("SAFARICOM"))
-            ) {
-              relatedSymbols.push(stock.symbol);
-              relatedStocks.push({
-                id: stock.id,
-                symbol: stock.symbol,
-                name: stock.name,
-                price: stock.price,
-                change: stock.day_change,
-                changePercent: stock.day_change_percent,
-              });
-              break;
-            }
-          }
-        }
-
-        // 2. Hardcoded fallback dictionary if stocks list is empty or missed
-        if (relatedSymbols.length === 0) {
-          const dict: Record<string, string[]> = {
-            SCOM: ["SAFARICOM", "SCOM", "M-PESA"],
-            EQTY: ["EQUITY BANK", "EQUITY GROUP", "EQTY"],
-            KCB: ["KCB BANK", "KCB GROUP", "KCB"],
-            EABL: ["EABL", "EAST AFRICAN BREWERIES"],
-            BAT: ["BAT KENYA", "BRITISH AMERICAN TOBACCO"],
-            COOP: ["COOP BANK", "CO-OPERATIVE BANK", "CO-OP BANK"],
-            NCBA: ["NCBA BANK", "NCBA GROUP"],
-          };
-
-          for (const [sym, keywords] of Object.entries(dict)) {
-            if (keywords.some((kw) => textUpper.includes(kw))) {
-              relatedSymbols.push(sym);
-              break;
-            }
-          }
-        }
-      }
+      });
       
       feed.push({
         id: `news-${n.id}`,
@@ -215,8 +143,6 @@ export function useSocialFeed(
         url: n.url,
         rawItem: n,
         relatedSymbols: relatedSymbols.length > 0 ? relatedSymbols : undefined,
-        relatedStocks: relatedStocks.length > 0 ? relatedStocks : undefined,
-        aiInsight: n.ai_insight || undefined,
       });
     });
 

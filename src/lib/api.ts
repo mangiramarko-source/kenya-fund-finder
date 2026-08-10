@@ -57,8 +57,6 @@ export interface NewsFromDB {
   likes?: number | null;
   comments?: number | null;
   created_at?: string;
-  related_stock_id?: string | null;
-  ai_insight?: string | null;
 }
 
 export interface HistoricalYield {
@@ -125,7 +123,7 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
 export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+    .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -144,15 +142,13 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
     status: data.status!,
     image_url: (data as any).image_url || null,
     created_at: data.created_at,
-    related_stock_id: data.related_stock_id,
-    ai_insight: data.ai_insight,
   };
 }
 
 export async function fetchRelatedNews(category: string, excludeId: string, limit = 3): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+    .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
     .eq("category", category)
     .neq("id", excludeId)
     .order("created_at", { ascending: false })
@@ -172,8 +168,6 @@ export async function fetchRelatedNews(category: string, excludeId: string, limi
     is_featured: d.is_featured,
     status: d.status,
     image_url: d.image_url || null,
-    related_stock_id: d.related_stock_id,
-    ai_insight: d.ai_insight,
   }));
 }
 
@@ -204,8 +198,6 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
           is_featured: d.is_featured,
           status: d.status,
           image_url: d.image_url || null,
-          related_stock_id: d.related_stock_id,
-          ai_insight: d.ai_insight,
         }));
       }
     } catch { /* fall through to normal fetch */ }
@@ -214,7 +206,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
   try {
     const { data, error } = await supabase
       .from("news_articles_public")
-      .select("id, title, summary, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+      .select("id, title, summary, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) throw error;
@@ -272,7 +264,7 @@ export async function fetchPublishedNews(limit: number = 60): Promise<NewsFromDB
   try {
     const { data, error } = await supabase
       .from("news_articles_public")
-      .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+      .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
       .order("created_at", { ascending: false })
       .limit(limit);
       
