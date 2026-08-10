@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { formatDistanceToNow } from "date-fns";
@@ -49,6 +49,36 @@ export const SocialFeedCard = ({
   const { user } = useAuth();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  const contentRef = useRef<HTMLDivElement>(null);
+  const [isExpandable, setIsExpandable] = useState(false);
+
+  useEffect(() => {
+    const checkOverflow = () => {
+      const el = contentRef.current;
+      if (!el || el.clientHeight === 0) return;
+      // Allow a small buffer for subpixel rendering differences
+      const isOverflowing = el.scrollHeight > el.clientHeight + 4;
+      setIsExpandable(isOverflowing);
+    };
+
+    // Initial check with a slight delay to allow ReactMarkdown and fonts to render
+    const timeoutId = setTimeout(checkOverflow, 150);
+
+    // ResizeObserver catches font loads, window resizes, and layout shifts
+    const resizeObserver = new ResizeObserver(() => {
+      checkOverflow();
+    });
+
+    if (contentRef.current) {
+      resizeObserver.observe(contentRef.current);
+    }
+
+    return () => {
+      clearTimeout(timeoutId);
+      resizeObserver.disconnect();
+    };
+  }, [item.content]);
 
   const isLiked = interaction?.liked ?? false;
   const likeCount = interaction?.likeCount ?? (item.likes || 0);
@@ -185,25 +215,30 @@ export const SocialFeedCard = ({
       )}
 
       {/* Text Body Content */}
-      <div className="text-base text-muted-foreground/90 leading-relaxed line-clamp-4 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']">
+      <div
+        ref={contentRef}
+        className="text-base text-muted-foreground/90 leading-relaxed line-clamp-4 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
+      >
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {item.content || ""}
         </ReactMarkdown>
       </div>
 
-      {/* See more Link */}
-      <div>
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleCardClick();
-          }}
-          className="text-emerald-500 hover:text-emerald-400 font-semibold text-sm inline-block transition-colors cursor-pointer"
-        >
-          See more
-        </button>
-      </div>
+      {/* See more Link (only shown for long articles that don't fit in card) */}
+      {isExpandable && (
+        <div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCardClick();
+            }}
+            className="text-emerald-500 hover:text-emerald-400 font-semibold text-sm inline-block transition-colors cursor-pointer"
+          >
+            See more
+          </button>
+        </div>
+      )}
 
       {/* Footer Action Icons */}
       <div className="flex items-center justify-end gap-6 text-xs text-muted-foreground pt-1">
