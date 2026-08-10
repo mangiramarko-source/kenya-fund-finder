@@ -31,6 +31,8 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 
 import type { PostInteraction } from "@/hooks/useFeedInteractions";
+import { getStockLogoUrl } from "@/lib/stockBranding";
+import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
 
 interface FeedItemDetailModalProps {
   item: FeedItem | null;
@@ -67,6 +69,11 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
   const [localLikesCount, setLocalLikesCount] = useState(0);
   const [commentText, setCommentText] = useState("");
   const [localCommentsList, setLocalCommentsList] = useState<string[]>([]);
+  const [stockLogoError, setStockLogoError] = useState(false);
+
+  React.useEffect(() => {
+    setStockLogoError(false);
+  }, [item?.id]);
 
   if (!item || isMobile) return null;
 
@@ -132,12 +139,23 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
         {(() => {
           const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
           const cleanAuthor = isSocialPost ? item.authorName.replace(/^X\s*-\s*/, '') : item.authorName;
+          const stock = item.relatedStock;
+          const stockLogoUrl = stock ? getStockLogoUrl(stock.symbol) : "";
           return (
             <div className="p-6 border-b border-border dark:border-white/10 relative">
               <div className="flex items-center justify-between gap-4 pr-8">
                 <div className="flex items-center gap-3">
-                  <div className={`w-11 h-11 rounded-full flex items-center justify-center shrink-0 border ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)}`}>
-                    {isSocialPost ? (
+                  <div className={`w-11 h-11 flex items-center justify-center shrink-0 border overflow-hidden ${stock ? "rounded-xl bg-white text-emerald-700 border-border" : `rounded-full ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)}`}`}>
+                    {stock && stockLogoUrl && !stockLogoError ? (
+                      <img
+                        src={stockLogoUrl}
+                        alt={`${stock.name} logo`}
+                        className="h-full w-full object-contain p-1"
+                        onError={() => setStockLogoError(true)}
+                      />
+                    ) : stock ? (
+                      <span className="font-bold text-xs tracking-wider">{stock.symbol.slice(0, 3).toUpperCase()}</span>
+                    ) : isSocialPost ? (
                       <svg className="w-5 h-5 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                       </svg>
@@ -147,7 +165,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground text-base tracking-tight">{cleanAuthor}</span>
+                      <span className="font-semibold text-foreground text-base tracking-tight">{stock?.name || cleanAuthor}</span>
                       {isSocialPost && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-black/5 dark:bg-white/10 text-foreground dark:text-white px-2 py-0.5 rounded-full border border-border/60">
                           <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
@@ -158,8 +176,8 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
                       )}
                     </div>
                     <div className="flex items-center text-xs text-muted-foreground gap-2 font-medium">
-                      {item.authorLabel && <span>{item.authorLabel}</span>}
-                      {item.authorLabel && <span className="text-muted-foreground/40 dark:text-white/20">•</span>}
+                      <span>{stock ? "Live News" : item.authorLabel}</span>
+                      <span className="text-muted-foreground/40 dark:text-white/20">•</span>
                       <span>{timeAgo}</span>
                     </div>
                   </div>
@@ -185,7 +203,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
               </div>
             ) : (
               <Badge variant="secondary" className="bg-muted border border-border text-foreground text-xs px-3 py-1 font-medium dark:bg-white/10 dark:border-white/10 dark:text-white">
-                {item.type === "NEWS" ? "Live Feed" : item.authorLabel}
+                {stock?.symbol || (item.type === "NEWS" ? "Live Feed" : item.authorLabel)}
               </Badge>
             )}
           </div>
@@ -201,6 +219,19 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
 
         {/* Modal Body */}
         <div className="p-6 space-y-6">
+            {item.relatedStock && (
+              <StockArticleMarketCard
+                stock={{
+                  id: item.relatedStock.id,
+                  symbol: item.relatedStock.symbol,
+                  name: item.relatedStock.name,
+                  price: item.relatedStock.price,
+                  previous_price: item.relatedStock.previousPrice,
+                  day_change_percent: item.relatedStock.changePercent,
+                }}
+              />
+            )}
+
             {/* Media Box */}
             {(item.mediaUrl || item.rawItem?.image_url) && (
               <div className="relative mt-4 mb-2 rounded-xl overflow-hidden border border-border bg-muted/40 max-h-[350px]">
