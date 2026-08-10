@@ -1,4 +1,5 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { geminiGenerateText, parseModelJson } from "../_shared/gemini.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,18 +7,14 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-const GEMINI_AI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
     const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
     const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
     const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-
-    if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
+    const ENRICHMENT_WEBHOOK_SECRET = Deno.env.get("ENRICHMENT_WEBHOOK_SECRET") || "";
 
     const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
 
@@ -25,10 +22,12 @@ Deno.serve(async (req) => {
     const authHeader = req.headers.get("Authorization") ?? "";
     const bearerToken = authHeader.replace(/^Bearer\s+/i, "");
     const webhookSecret = req.headers.get("x-webhook-secret");
-    
+
     // Check if it's the Service Role key (for Webhooks or internal cron)
     const isServiceRole = bearerToken === SUPABASE_SERVICE_ROLE_KEY;
-    const isInternalWebhook = webhookSecret === "internal-webhook-trigger";
+    const isInternalWebhook = Boolean(
+      ENRICHMENT_WEBHOOK_SECRET && webhookSecret === ENRICHMENT_WEBHOOK_SECRET
+    );
     
     if (!isServiceRole && !isInternalWebhook) {
       if (!bearerToken) {
@@ -119,38 +118,30 @@ ${stockListText}
 
 IMPORTANT: You MUST respond ONLY with valid JSON. No markdown formatting, no code blocks, no other text.`;
 
-    const aiRes = await fetch(GEMINI_AI_URL, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${GEMINI_API_KEY}`,
-        "Content-Type": "application/json",
-      },
-      body: JSON.stringify({
-        model: "gemini-2.5-flash",
-        response_format: { type: "json_object" },
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: articleText },
-        ],
-      }),
-    });
-
-    if (!aiRes.ok) {
-      console.error("Gemini AI error", aiRes.status, await aiRes.text());
-      return new Response(JSON.stringify({ error: "AI processing failed" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    let generated: Awaited<ReturnType<typeof geminiGenerateText>> | null = null;
+    for (let attempt = 0; attempt < 4; attempt += 1) {
+      try {
+        generated = await geminiGenerateText({
+          system: systemPrompt,
+          user: articleText,
+          model: "gemini-2.5-flash-lite",
+        });
+        break;
+      } catch (error) {
+        const isRateLimited = String(error).includes("Gemini text 429");
+        if (!isRateLimited || attempt === 3) throw error;
+        await new Promise((resolve) => setTimeout(resolve, [5_000, 15_000, 30_000][attempt]));
+      }
     }
 
-    const aiData = await aiRes.json();
-    const rawResult = aiData?.choices?.[0]?.message?.content?.trim() || "{}";
-    
-    let parsedResult;
-    try {
-      parsedResult = JSON.parse(rawResult);
-    } catch (e) {
-      console.error("Failed to parse JSON from AI", rawResult);
+    if (!generated) throw new Error("Gemini generation did not return a result");
+    const parsedResult = parseModelJson<{
+      related_stock_id?: unknown;
+      ai_insight?: unknown;
+    }>(generated.text);
+
+    if (!parsedResult) {
+      console.error("Failed to parse JSON from AI", generated.text.slice(0, 500));
       return new Response(JSON.stringify({ error: "Invalid AI response format" }), {
         status: 502,
         headers: { ...corsHeaders, "Content-Type": "application/json" },
@@ -158,24 +149,41 @@ IMPORTANT: You MUST respond ONLY with valid JSON. No markdown formatting, no cod
     }
 
     // 4) Update database with results
+    const validStockIds = new Set((stocks || []).map((stock) => stock.id));
+    const relatedStockId = typeof parsedResult.related_stock_id === "string"
+      && validStockIds.has(parsedResult.related_stock_id)
+      ? parsedResult.related_stock_id
+      : null;
+    const aiInsight = typeof parsedResult.ai_insight === "string"
+      ? parsedResult.ai_insight.trim().slice(0, 1000) || null
+      : null;
+
     const { error: updateErr } = await supabase
       .from("news_articles")
       .update({
-        related_stock_id: parsedResult.related_stock_id || null,
-        ai_insight: parsedResult.ai_insight || null
+        related_stock_id: relatedStockId,
+        ai_insight: aiInsight
       })
       .eq("id", articleId);
 
     if (updateErr) throw updateErr;
 
-    return new Response(JSON.stringify({ success: true, data: parsedResult }), {
+    return new Response(JSON.stringify({
+      success: true,
+      data: { related_stock_id: relatedStockId, ai_insight: aiInsight },
+    }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (e) {
     console.error("enrich-stock-data error", e);
+    const message = e instanceof Error ? e.message : String(e);
+    const geminiStatus = message.match(/Gemini text (\d{3})/)?.[1];
     return new Response(
-      JSON.stringify({ error: "Internal error" }),
+      JSON.stringify({
+        error: geminiStatus ? "AI processing failed" : "Internal error",
+        code: geminiStatus ? `gemini_${geminiStatus}` : "internal_error",
+      }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

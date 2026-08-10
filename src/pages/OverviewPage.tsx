@@ -40,9 +40,11 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 
 import DisclaimerBlock from "@/components/DisclaimerBlock";
 import { useSocialFeed, type FeedItem } from "@/hooks/useSocialFeed";
-import { SocialFeed, SocialFeedCard } from "@/components/feed/SocialFeed";
+import { SocialFeed } from "@/components/feed/SocialFeed";
+import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
+import { buildNewsFeedItems } from "@/lib/stockNewsFeed";
 
 const INTERNATIONAL_SOURCES = new Set([
   "Reuters Business",
@@ -1027,6 +1029,10 @@ const OverviewPage = () => {
   const [mobileTab, setMobileTab] = useState<"overview" | "watchlist" | "portfolio">("overview");
 
   const feedItems = useSocialFeed(news, stocks, funds, rates, commodities);
+  const stockNewsFeedItems = useMemo(
+    () => buildNewsFeedItems(news, stocks).filter(item => Boolean(item.relatedStock)),
+    [news, stocks],
+  );
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [watchlistPromptOpen, setWatchlistPromptOpen] = useState(false);
 
@@ -1291,6 +1297,8 @@ const OverviewPage = () => {
   }, [funds]);
 
   const filteredFeedItems = useMemo(() => {
+    if (activeUpdateCategory === "Stocks") return stockNewsFeedItems;
+
     let list = [...feedItems];
     if (activeUpdateCategory === "Kenyan") {
       list = list.filter(item => !isInternationalFeedItem(item));
@@ -1302,7 +1310,7 @@ const OverviewPage = () => {
       list.sort((a, b) => new Date(a.timestamp).getTime() - new Date(b.timestamp).getTime());
     }
     return list;
-  }, [feedItems, activeUpdateCategory]);
+  }, [feedItems, stockNewsFeedItems, activeUpdateCategory]);
 
   const newTodayCount = useMemo(() => {
     const now = Date.now();
@@ -1347,7 +1355,7 @@ const OverviewPage = () => {
           </div>
 
           <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto">
-            {["All", "Kenyan", "International", "Latest", "Oldest"].map((f) => (
+            {["All", "Stocks", "Kenyan", "International", "Latest", "Oldest"].map((f) => (
               <button
                 key={f}
                 onClick={() => setActiveUpdateCategory(f)}
@@ -1363,7 +1371,26 @@ const OverviewPage = () => {
           </div>
 
           <div className="space-y-4">
-            <SocialFeed items={filteredFeedItems} loading={loading} />
+            {activeUpdateCategory === "Stocks" ? (
+              filteredFeedItems.length === 0 && !loading ? (
+                <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
+                  No stock-linked news is available yet.
+                </div>
+              ) : (
+                filteredFeedItems.map((item, index) => (
+                  <StockFeedCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onSelect={setSelectedFeedItem}
+                    interaction={getPostInteraction(item.id, item.likes || 0)}
+                    onLikeToggle={toggleLike}
+                  />
+                ))
+              )
+            ) : (
+              <SocialFeed items={filteredFeedItems} loading={loading} />
+            )}
           </div>
         </div>
 

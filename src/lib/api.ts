@@ -57,6 +57,17 @@ export interface NewsFromDB {
   likes?: number | null;
   comments?: number | null;
   created_at?: string;
+  related_stock_id: string | null;
+  ai_insight: string | null;
+}
+
+export interface PublicStock {
+  id: string;
+  symbol: string;
+  name: string;
+  price: number;
+  previous_price: number | null;
+  day_change_percent: number;
 }
 
 export interface HistoricalYield {
@@ -123,7 +134,7 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
 export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
+    .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
@@ -142,6 +153,29 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
     status: data.status!,
     image_url: (data as any).image_url || null,
     created_at: data.created_at,
+    related_stock_id: data.related_stock_id || null,
+    ai_insight: data.ai_insight || null,
+  };
+}
+
+export async function fetchPublicStockById(id: string): Promise<PublicStock | null> {
+  const { data, error } = await supabase
+    .from("stocks_public" as any)
+    .select("id, symbol, name, price, previous_price, day_change_percent")
+    .eq("id", id)
+    .maybeSingle();
+
+  if (error) throw error;
+  if (!data) return null;
+
+  const stock = data as any;
+  return {
+    id: stock.id,
+    symbol: stock.symbol,
+    name: stock.name,
+    price: Number(stock.price) || 0,
+    previous_price: stock.previous_price == null ? null : Number(stock.previous_price),
+    day_change_percent: Number(stock.day_change_percent) || 0,
   };
 }
 
@@ -264,7 +298,7 @@ export async function fetchPublishedNews(limit: number = 60): Promise<NewsFromDB
   try {
     const { data, error } = await supabase
       .from("news_articles_public")
-      .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
+      .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
       .order("created_at", { ascending: false })
       .limit(limit);
       
@@ -284,6 +318,8 @@ export async function fetchPublishedNews(limit: number = 60): Promise<NewsFromDB
       is_featured: d.is_featured,
       status: d.status,
       image_url: d.image_url || null,
+      related_stock_id: d.related_stock_id || null,
+      ai_insight: d.ai_insight || null,
     }));
   } catch (err) {
     console.error("Failed to fetch news from Supabase (likely RLS error), using mock data", err);
@@ -302,6 +338,8 @@ export async function fetchPublishedNews(limit: number = 60): Promise<NewsFromDB
         is_featured: true,
         status: "published",
         image_url: "https://images.unsplash.com/photo-1614064641913-6b71a3061145?auto=format&fit=crop&q=80",
+        related_stock_id: null,
+        ai_insight: null,
       },
       {
         id: "mock-2",
@@ -316,6 +354,8 @@ export async function fetchPublishedNews(limit: number = 60): Promise<NewsFromDB
         is_featured: false,
         status: "published",
         image_url: "https://images.unsplash.com/photo-1611974789855-9c2a0a7236a3?auto=format&fit=crop&q=80",
+        related_stock_id: null,
+        ai_insight: null,
       },
       {
         id: "mock-3",
@@ -330,9 +370,29 @@ export async function fetchPublishedNews(limit: number = 60): Promise<NewsFromDB
         is_featured: false,
         status: "published",
         image_url: "https://images.unsplash.com/photo-1526628953301-3e589a6a8b74?auto=format&fit=crop&q=80",
+        related_stock_id: null,
+        ai_insight: null,
       }
     ];
   }
+}
+
+export async function fetchPublicStocks(): Promise<PublicStock[]> {
+  const { data, error } = await supabase
+    .from("stocks_public" as any)
+    .select("id, symbol, name, price, previous_price, day_change_percent")
+    .order("sort_order");
+
+  if (error) throw error;
+
+  return ((data as any[]) || []).map((stock) => ({
+    id: stock.id,
+    symbol: stock.symbol,
+    name: stock.name,
+    price: Number(stock.price) || 0,
+    previous_price: stock.previous_price == null ? null : Number(stock.previous_price),
+    day_change_percent: Number(stock.day_change_percent) || 0,
+  }));
 }
 
 /** Fetch the previous yield snapshot per fund (the value before the most recent one).
@@ -401,4 +461,3 @@ export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnaps
   }
   return grouped;
 }
-

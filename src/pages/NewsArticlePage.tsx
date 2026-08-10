@@ -26,7 +26,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchNewsById, fetchRelatedNews, type NewsFromDB } from "@/lib/api";
+import { fetchNewsById, fetchPublicStockById, fetchRelatedNews, type NewsFromDB, type PublicStock } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -34,6 +34,8 @@ import { formatDistanceToNow, format } from "date-fns";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
+import { getStockLogoUrl } from "@/lib/stockBranding";
+import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
 
 interface CommentItem {
   id: string;
@@ -64,6 +66,8 @@ const NewsArticlePage = () => {
   const [article, setArticle] = useState<NewsFromDB | null>(null);
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<NewsFromDB[]>([]);
+  const [relatedStock, setRelatedStock] = useState<PublicStock | null>(null);
+  const [stockLogoError, setStockLogoError] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
   const [reposted, setReposted] = useState(false);
   const [repostsCount, setRepostsCount] = useState(0);
@@ -162,6 +166,8 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     if (!id) return () => clearTimeout(timer);
     setLoading(true);
     setRelated([]);
+    setRelatedStock(null);
+    setStockLogoError(false);
 
     const synthetic = getSyntheticArticle(id);
     if (synthetic) {
@@ -174,6 +180,11 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
       .then((a) => {
         if (a) {
           setArticle(a);
+          if (a.related_stock_id) {
+            fetchPublicStockById(a.related_stock_id)
+              .then(setRelatedStock)
+              .catch(() => setRelatedStock(null));
+          }
           fetchRelatedNews(a.category, a.id, 3)
             .then(setRelated)
             .catch(() => {});
@@ -292,6 +303,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
   const pubDate = new Date(article.created_at || article.date_published);
   const formattedTime = isNaN(pubDate.getTime()) ? "12:00 PM" : format(pubDate, "h:mm a");
   const formattedDate = isNaN(pubDate.getTime()) ? "Today" : format(pubDate, "d/M/yyyy");
+  const stockLogoUrl = relatedStock ? getStockLogoUrl(relatedStock.symbol) : "";
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 md:pb-8">
@@ -339,24 +351,39 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
             {/* Avatar */}
-            <div className="w-10 h-10 rounded-full bg-emerald-600 text-white font-bold text-sm flex items-center justify-center shrink-0 shadow-sm">
-              {(article.source || "KF").slice(0, 2).toUpperCase()}
+            <div className={`${relatedStock ? "rounded-xl bg-white text-emerald-700" : "rounded-full bg-emerald-600 text-white"} w-10 h-10 border border-border font-bold text-sm flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
+              {relatedStock && stockLogoUrl && !stockLogoError ? (
+                <img
+                  src={stockLogoUrl}
+                  alt={`${relatedStock.name} logo`}
+                  className="h-full w-full object-contain p-1"
+                  onError={() => setStockLogoError(true)}
+                />
+              ) : relatedStock ? (
+                relatedStock.symbol.slice(0, 3).toUpperCase()
+              ) : (
+                (article.source || "KF").slice(0, 2).toUpperCase()
+              )}
             </div>
             {/* Name + Username */}
             <div className="flex flex-col">
               <div className="flex items-center gap-1">
-                <span className="font-bold text-sm text-foreground">{article.source || "KenyaFundFinder"}</span>
+                <span className="font-bold text-sm text-foreground">{relatedStock?.name || article.source || "KenyaFundFinder"}</span>
                 <CheckCircle2 className="w-3.5 h-3.5 fill-emerald-500 text-background" />
               </div>
-              <span className="text-xs text-muted-foreground">@{article.category?.toLowerCase().replace(/\s+/g, '') || "official"}</span>
+              <span className="text-xs text-muted-foreground">
+                {relatedStock ? `@${relatedStock.symbol.toLowerCase()} · Live News` : `@${article.category?.toLowerCase().replace(/\s+/g, '') || "official"}`}
+              </span>
             </div>
           </div>
 
           {/* Secondary Label (Category Badge) */}
           <Badge variant="outline" className={`text-xs font-semibold px-2.5 py-0.5 ${categoryColors[article.category] || "bg-muted text-muted-foreground"}`}>
-            {article.category}
+            {relatedStock?.symbol || article.category}
           </Badge>
         </div>
+
+        {relatedStock && <StockArticleMarketCard stock={relatedStock} />}
 
         {/* ─── 3. Post Text ─── */}
         <div className="space-y-3">

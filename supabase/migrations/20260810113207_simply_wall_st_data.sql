@@ -8,6 +8,10 @@ ALTER TABLE public.news_articles
 ADD COLUMN IF NOT EXISTS related_stock_id UUID REFERENCES public.stocks(id) ON DELETE SET NULL,
 ADD COLUMN IF NOT EXISTS ai_insight TEXT;
 
+CREATE INDEX IF NOT EXISTS idx_news_articles_related_stock_id
+ON public.news_articles (related_stock_id)
+WHERE related_stock_id IS NOT NULL;
+
 -- 2. Update the news_articles_public view
 DROP VIEW IF EXISTS public.news_articles_public;
 CREATE VIEW public.news_articles_public WITH (security_invoker = on) AS
@@ -16,6 +20,8 @@ SELECT id, title, summary, content, source, url, category, read_time, status,
        related_stock_id, ai_insight
 FROM public.news_articles
 WHERE status = 'published';
+
+GRANT SELECT ON public.news_articles_public TO anon, authenticated, service_role;
 
 -- 3. Create corporate_actions table
 CREATE TABLE IF NOT EXISTS public.corporate_actions (
@@ -31,5 +37,9 @@ CREATE TABLE IF NOT EXISTS public.corporate_actions (
 ALTER TABLE public.corporate_actions ENABLE ROW LEVEL SECURITY;
 
 -- 5. Policies for corporate_actions
+DROP POLICY IF EXISTS "Enable read access for all users" ON public.corporate_actions;
 CREATE POLICY "Enable read access for all users" ON public.corporate_actions
     FOR SELECT USING (true);
+
+GRANT SELECT ON public.corporate_actions TO anon, authenticated;
+GRANT ALL ON public.corporate_actions TO service_role;

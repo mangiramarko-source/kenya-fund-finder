@@ -1,10 +1,27 @@
 import React, { useState, useMemo } from "react";
-import { StockFeedCard, DemoStockArticle } from "@/components/feed/StockFeedCard";
+import { StockFeedCard } from "@/components/feed/StockFeedCard";
+import type { FeedItem } from "@/hooks/useSocialFeed";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Search, Megaphone, ArrowLeft } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Link } from "react-router-dom";
+
+interface DemoStockArticle {
+  id: string;
+  ticker: string;
+  price: number;
+  currency: string;
+  changePercent: number;
+  companyName: string;
+  companyLogo: string;
+  source: string;
+  timeAgo: string;
+  title: string;
+  insight: string;
+  likes: number;
+  comments: number;
+}
 
 const DEMO_ARTICLES: DemoStockArticle[] = [
   {
@@ -95,6 +112,28 @@ export default function DemoStocksPage() {
     return list;
   }, [activeNavTab, searchQuery]);
 
+  const toFeedItem = (article: DemoStockArticle): FeedItem => ({
+    id: `news-${article.id}`,
+    type: "NEWS",
+    authorName: article.source,
+    authorLabel: "Stocks",
+    title: article.title,
+    content: article.insight,
+    timestamp: new Date(Date.now() - Number.parseInt(article.timeAgo, 10) * 60 * 60 * 1000),
+    likes: article.likes,
+    comments: article.comments,
+    url: "#",
+    aiInsight: article.insight,
+    relatedStock: {
+      id: article.id,
+      symbol: article.ticker,
+      name: article.companyName,
+      price: article.price,
+      previousPrice: null,
+      changePercent: article.changePercent,
+    },
+  });
+
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 min-h-screen">
       {/* Demo Notice Banner */}
@@ -169,7 +208,8 @@ export default function DemoStocksPage() {
           {filteredArticles.map((article) => (
             <StockFeedCard
               key={article.id}
-              article={article}
+              item={toFeedItem(article)}
+              onSelect={() => undefined}
             />
           ))}
         </div>

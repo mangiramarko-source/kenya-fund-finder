@@ -23,6 +23,15 @@ export interface FeedItem {
   url?: string;
   rawItem?: any;
   relatedSymbols?: string[];
+  aiInsight?: string | null;
+  relatedStock?: {
+    id: string;
+    symbol: string;
+    name: string;
+    price: number;
+    previousPrice: number | null;
+    changePercent: number;
+  } | null;
 }
 
 function getHashNumber(id: string, min: number, max: number) {
