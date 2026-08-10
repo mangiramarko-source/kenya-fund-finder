@@ -394,7 +394,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
             {decodeHtmlEntities(article.title)}
           </h2>
 
-          <div className="text-sm sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
+          <div className="text-[15px] sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
             {article.content && article.content.trim().length > 0 ? (
               article.content.split("\n").filter(Boolean).map((paragraph, i) => (
                 <p key={i} className="my-2">
