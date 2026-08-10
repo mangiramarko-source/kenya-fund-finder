@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageSquare, Share2, MoreHorizontal, BarChart3, Newspaper, DollarSign, Wallet, ArrowRight } from "lucide-react";
+import { Heart, MoreHorizontal, BarChart3, Newspaper, DollarSign, Wallet, ArrowRight } from "lucide-react";
 import { Sparkline } from "./Sparkline";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { FeedItemDetailModal } from "./FeedItemDetailModal";
@@ -110,9 +110,6 @@ export const SocialFeedCard = ({
   const authorName = isSocialPost ? rawAuthor.replace(/^X\s*-\s*/, '') : rawAuthor;
   const initials = isSocialPost ? "X" : getInitials(authorName);
   
-  const rawLabel = item.authorLabel || "dailytip";
-  const authorHandle = rawLabel.startsWith("@") ? rawLabel : `@${rawLabel.toLowerCase().replace(/\s+/g, '')}`;
-  
   const domain = getDomainFromUrl(item.url || item.rawItem?.link);
   const customLogo = getCustomSourceLogo(authorName, domain);
   const avatarSrc = customLogo || (domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null);
@@ -166,13 +163,13 @@ export const SocialFeedCard = ({
   return (
     <div
       onClick={handleCardClick}
-      className="animate-rise -mx-4 space-y-3 border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:hover:border-border"
+      className="animate-rise -mx-4 space-y-3 overflow-hidden border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:hover:border-border"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       {/* Top Author Bar */}
       <div className="flex items-center gap-3">
         {/* Avatar Circle */}
-        <div className={`w-12 h-12 md:w-9 md:h-9 rounded-full border ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
+        <div className={`w-12 h-12 rounded-full border ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
           {isSocialPost ? (
             <svg className="w-4 h-4 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
@@ -190,11 +187,11 @@ export const SocialFeedCard = ({
         </div>
 
         {/* Author Details & Timestamp */}
-        <div className="flex-1 min-w-0 text-xs md:flex md:items-center md:flex-wrap md:gap-x-1.5">
-          <div className="flex items-center gap-2 min-w-0 md:contents">
+        <div className="flex-1 min-w-0 text-xs">
+          <div className="flex items-center gap-2 min-w-0">
             <span className="font-bold text-foreground text-sm truncate">{authorName}</span>
-            <span className="md:hidden h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
-            <span className="md:hidden text-[10px] uppercase tracking-[0.18em] text-muted-foreground truncate">{item.authorLabel || "Market"}</span>
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
+            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground truncate">{item.authorLabel || "Market"}</span>
           </div>
           {isSocialPost && (
             <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-black/5 dark:bg-white/10 text-foreground dark:text-white px-1.5 py-0.5 rounded-full border border-border/60 shrink-0">
@@ -204,9 +201,7 @@ export const SocialFeedCard = ({
               <span>Social</span>
             </span>
           )}
-          <div className="mt-0.5 flex items-center gap-1.5 text-[13px] md:mt-0 md:inline-flex md:text-xs">
-            <span className="hidden text-muted-foreground truncate md:inline">{authorHandle}</span>
-            <span className="hidden text-muted-foreground font-bold md:inline">·</span>
+          <div className="mt-0.5 flex items-center gap-1.5 text-[13px]">
             <span className="text-muted-foreground whitespace-nowrap">{timeAgo}</span>
           </div>
         </div>
@@ -227,14 +222,14 @@ export const SocialFeedCard = ({
 
       {/* Main Title / Headline */}
       {item.id !== "daily-market-summary" && (
-        <h3 className="max-md:font-heading font-bold max-md:font-extrabold text-base text-foreground leading-snug tracking-tight">
+        <h3 className="font-heading font-extrabold text-base text-foreground leading-snug tracking-tight">
           {item.title}
         </h3>
       )}
 
       {/* Real Article Image (only shown if real image_url exists in database) */}
       {(item.mediaUrl || item.rawItem?.image_url) && (
-        <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden border-y border-border/80 bg-muted/40 aspect-[16/9] md:left-auto md:w-auto md:translate-x-0 md:rounded-xl md:border md:max-h-[260px]">
+        <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden border-y border-border/80 bg-muted/40 aspect-[16/9] md:left-auto md:-mx-5 md:w-[calc(100%+2.5rem)] md:translate-x-0 md:border-x-0 md:max-h-[340px]">
           <img
             src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id) || (item.mediaUrl || item.rawItem?.image_url)}
             alt=""
@@ -248,7 +243,7 @@ export const SocialFeedCard = ({
       {/* Text Body Content */}
       <div
         ref={contentRef}
-        className="max-md:font-body text-sm md:text-base text-muted-foreground/90 leading-relaxed line-clamp-3 md:line-clamp-4 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
+        className="font-body text-sm text-muted-foreground/90 leading-relaxed line-clamp-3 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
       >
         <ReactMarkdown remarkPlugins={[remarkGfm]}>
           {item.content || ""}
@@ -264,16 +259,15 @@ export const SocialFeedCard = ({
               e.stopPropagation();
               handleCardClick();
             }}
-            className="inline-flex items-center gap-1.5 max-md:font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-sm transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-sm transition-colors cursor-pointer"
           >
-            <span className="md:hidden">Continue reading</span>
-            <ArrowRight className="h-4 w-4 md:hidden" />
-            <span className="hidden md:inline">See more</span>
+            <span>Continue reading</span>
+            <ArrowRight className="h-4 w-4" />
           </button>
         </div>
       )}
 
-      <div className="flex md:hidden items-center justify-between gap-3 pt-2 text-muted-foreground">
+      <div className="flex items-center justify-between gap-3 pt-2 text-muted-foreground">
         <div className="flex items-center gap-5">
           <button type="button" onClick={(e) => { e.stopPropagation(); handleCardClick(); }} className="flex items-baseline gap-1.5">
             <span className="text-sm tabular-nums">{commentsCount}</span><span className="text-[10px] uppercase tracking-[0.16em]">Comments</span>
@@ -292,40 +286,6 @@ export const SocialFeedCard = ({
         </div>
       </div>
 
-      {/* Footer Action Icons */}
-      <div className="hidden md:flex items-center justify-end gap-6 text-xs text-muted-foreground pt-1">
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            onSelect(item);
-          }}
-          className="flex items-center gap-1.5 hover:text-foreground transition-colors"
-        >
-          <MessageSquare className="w-4 h-4" />
-          <span>{commentsCount}</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={handleShare}
-          className="flex items-center gap-1.5 hover:text-foreground transition-colors"
-        >
-          <Share2 className="w-4 h-4" />
-          <span>Share</span>
-        </button>
-
-        <button
-          type="button"
-          onClick={handleLike}
-          className={`flex items-center gap-1.5 transition-colors ${
-            isLiked ? "text-rose-500 font-semibold" : "hover:text-rose-500"
-          }`}
-        >
-          <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
-          <span>{likeCount}</span>
-        </button>
-      </div>
     </div>
   );
 };

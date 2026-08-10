@@ -3,7 +3,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from '@/lib/remarkGfmSafe';
 import { useNavigate } from "react-router-dom";
 import { type FeedItem } from "@/hooks/useSocialFeed";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { 
   Dialog, 
   DialogContent, 
@@ -18,8 +18,7 @@ import {
   Newspaper, 
   BarChart3, 
   Wallet, 
-  DollarSign, 
-  Send 
+  DollarSign
 } from "lucide-react";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { Sparkline } from "./Sparkline";
@@ -83,6 +82,24 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
   const totalComments = (item.comments || 0) + commentsList.length;
 
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
+  const formattedTime = format(item.timestamp, "h:mm a");
+  const formattedDate = format(item.timestamp, "d MMM yyyy");
+  const readTime = item.rawItem?.read_time;
+
+  const handleShare = async () => {
+    const rawId = item.id.startsWith("news-") ? item.id.slice(5) : item.id;
+    const shareUrl = `${window.location.origin}/news/${rawId}`;
+    try {
+      if (navigator.share) {
+        await navigator.share({ title: item.title, text: item.content, url: shareUrl });
+      } else {
+        await navigator.clipboard.writeText(shareUrl);
+        toast.success("Link copied to clipboard");
+      }
+    } catch {
+      // Native share dismissal is not an error for the user.
+    }
+  };
 
   const handleLikeToggle = () => {
     if (!user) {
@@ -287,77 +304,70 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
 
             const articleUrl = formatExternalUrl(item.url, item.title, item.authorName);
             return (
-              <div className="pt-2">
+              <div className="border-b border-border/60 pb-5 pt-2">
                 <a
                   href={articleUrl}
                   target="_blank"
                   rel="noopener noreferrer"
                   onClick={(e) => e.stopPropagation()}
-                  className="inline-flex items-center gap-2 px-4 py-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 transition-all font-semibold text-xs shadow-sm"
+                  className="inline-flex items-center gap-2 text-base font-semibold text-emerald-500 hover:text-emerald-400 hover:underline transition-colors"
                 >
-                  <span>Read full story on source website</span>
-                  <ExternalLink className="w-3.5 h-3.5" />
+                  <span>From {item.authorName}</span>
+                  <ExternalLink className="h-4 w-4" />
                 </a>
               </div>
             );
           })()}
 
+          <div className="border-b border-border/60 pb-4 text-[11px] uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2">
+            <span>{formattedTime}</span>
+            <span>•</span>
+            <span>{formattedDate}</span>
+            {readTime && (
+              <>
+                <span>•</span>
+                <span>{readTime}</span>
+              </>
+            )}
+          </div>
+
           {/* Social Interactions Bar */}
-          <div className="pt-4 border-t border-border dark:border-white/10 flex items-center justify-end">
-            <div className="flex items-center gap-6">
-              <button
-                onClick={handleLikeToggle}
-                className={`flex items-center gap-2 transition-colors ${
-                  isLiked ? "text-rose-500 font-semibold" : "text-muted-foreground hover:text-rose-500"
-                }`}
-              >
-                <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
-                <span className="text-xs font-medium">{likesCount} Likes</span>
-              </button>
-
-              <div className="flex items-center gap-2 text-muted-foreground">
-                <MessageSquare className="w-4 h-4" />
-                <span className="text-xs font-medium">{totalComments} Comments</span>
-              </div>
-
-              <button className="flex items-center gap-2 text-muted-foreground hover:text-emerald-600 dark:hover:text-emerald-400 transition-colors">
-                <Share2 className="w-4 h-4" />
-                <span className="text-xs font-medium">Share</span>
-              </button>
-            </div>
+          <div className="flex items-center justify-between py-1 text-sm text-muted-foreground font-medium">
+            <button type="button" className="flex items-center gap-2 hover:text-foreground transition-colors">
+              <MessageSquare className="h-5 w-5" />
+              <span>{totalComments}</span>
+            </button>
+            <button type="button" onClick={handleShare} className="flex items-center gap-2 hover:text-foreground transition-colors">
+              <Share2 className="h-5 w-5" />
+              <span>Share</span>
+            </button>
+            <button
+              type="button"
+              onClick={handleLikeToggle}
+              className={`flex items-center gap-2 transition-colors ${isLiked ? "text-rose-500 font-semibold" : "hover:text-rose-500"}`}
+            >
+              <Heart className={`h-5 w-5 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
+              <span>{likesCount}</span>
+            </button>
           </div>
 
           {/* Comment Section */}
-          <div className="pt-2 space-y-3">
-            <h4 className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">Discussion</h4>
-            {!user ? (
-              <div className="p-4 rounded-xl bg-muted/40 border border-border/60 text-center space-y-2">
-                <p className="text-xs text-muted-foreground font-medium">Want to join the conversation?</p>
-                <Button 
-                  onClick={() => {
-                    onOpenChange(false);
-                    navigate("/auth");
-                  }} 
-                  size="sm" 
-                  className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs rounded-xl px-5"
-                >
-                  Sign Up / Sign In
-                </Button>
+          <div className="space-y-3">
+            <form onSubmit={handleAddComment} className="flex items-center gap-3 rounded-full border border-border bg-background/60 px-2.5 py-2">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-950 text-sm font-bold text-cyan-400">
+                {user ? (user.email || "U").slice(0, 1).toUpperCase() : "M"}
               </div>
-            ) : (
-              <form onSubmit={handleAddComment} className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Write a comment..."
-                  value={commentText}
-                  onChange={(e) => setCommentText(e.target.value)}
-                  className="flex-1 px-3.5 py-2 rounded-xl bg-muted/60 border border-border text-xs text-foreground placeholder:text-muted-foreground/60 focus:outline-none focus:border-emerald-500/50 dark:bg-white/5 dark:border-white/10"
-                />
-                <Button type="submit" size="sm" className="bg-emerald-500 hover:bg-emerald-600 text-white font-semibold text-xs rounded-xl px-4">
-                  <Send className="w-3.5 h-3.5" />
-                </Button>
-              </form>
-            )}
+              <input
+                type="text"
+                placeholder="Post your reply"
+                value={commentText}
+                onChange={(e) => setCommentText(e.target.value)}
+                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+              />
+              <Button type="submit" size="sm" disabled={!commentText.trim()} className="h-9 rounded-full bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100">
+                Reply
+              </Button>
+            </form>
 
             {commentsList.length > 0 && (
               <div className="space-y-2 pt-2">

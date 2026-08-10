@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useState, type MouseEvent } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MessageSquare, Share2, TrendingUp, TrendingDown, Minus, ArrowRight, MoreHorizontal } from "lucide-react";
+import { Heart, TrendingUp, TrendingDown, Minus, ArrowRight, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -72,7 +72,7 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
   return (
     <article
       onClick={openArticle}
-      className="animate-rise -mx-4 space-y-3 border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:hover:border-border"
+      className="animate-rise -mx-4 space-y-3 overflow-hidden border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:hover:border-border"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       <button
@@ -93,7 +93,7 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
       </button>
 
       <header className="flex items-center gap-3">
-        <div className="w-12 h-12 md:w-11 md:h-11 rounded-xl bg-white border border-border text-emerald-700 font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden">
+        <div className="w-12 h-12 rounded-xl bg-white border border-border text-emerald-700 font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden">
           {avatarUrl && !logoError ? (
             <img
               src={avatarUrl}
@@ -107,29 +107,28 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
         </div>
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-2 min-w-0">
-            <p className="font-bold text-foreground text-sm md:text-base truncate">{stock.name}</p>
-            <span className="md:hidden h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
-            <span className="md:hidden text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Stock</span>
+            <p className="font-bold text-foreground text-sm truncate">{stock.name}</p>
+            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
+            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Stock</span>
           </div>
-          <p className="text-[13px] md:text-sm text-muted-foreground"><span className="hidden md:inline">Live News <span className="px-1">·</span></span>{timeAgo}</p>
+          <p className="text-[13px] text-muted-foreground">{timeAgo}</p>
         </div>
-        <button type="button" onClick={openArticle} className="p-1 text-muted-foreground hover:text-foreground md:hidden" aria-label="More options">
+        <button type="button" onClick={openArticle} className="p-1 text-muted-foreground hover:text-foreground" aria-label="More options">
           <MoreHorizontal className="h-5 w-5" />
         </button>
       </header>
 
-      <h2 className="max-md:font-heading font-bold max-md:font-extrabold text-base text-foreground leading-snug tracking-tight">{item.title}</h2>
-      <p className="max-md:font-body text-sm md:text-base text-muted-foreground/90 leading-relaxed line-clamp-3 md:line-clamp-4 font-normal">
+      <h2 className="font-heading font-extrabold text-base text-foreground leading-snug tracking-tight">{item.title}</h2>
+      <p className="font-body text-sm text-muted-foreground/90 leading-relaxed line-clamp-3 font-normal">
         {item.aiInsight || item.content}
       </p>
 
-      <button type="button" onClick={openArticle} className="inline-flex items-center gap-1.5 max-md:font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-sm">
-        <span className="md:hidden">Continue reading</span>
-        <ArrowRight className="h-4 w-4 md:hidden" />
-        <span className="hidden md:inline">See more</span>
+      <button type="button" onClick={openArticle} className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-sm">
+        <span>Continue reading</span>
+        <ArrowRight className="h-4 w-4" />
       </button>
 
-      <footer className="flex md:hidden items-center justify-between gap-3 pt-2 text-muted-foreground">
+      <footer className="flex items-center justify-between gap-3 pt-2 text-muted-foreground">
         <div className="flex items-center gap-5">
           <button type="button" onClick={openArticle} className="flex items-baseline gap-1.5">
             <span className="text-sm tabular-nums">{commentsCount}</span><span className="text-[10px] uppercase tracking-[0.16em]">Comments</span>
@@ -146,17 +145,6 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
         </div>
       </footer>
 
-      <footer className="hidden md:flex items-center justify-end gap-6 text-xs text-muted-foreground pt-1">
-        <button type="button" onClick={(event) => { event.stopPropagation(); onSelect(item); }} className="flex items-center gap-1.5 hover:text-foreground">
-          <MessageSquare className="w-4 h-4" /><span>{commentsCount}</span>
-        </button>
-        <button type="button" onClick={handleShare} className="flex items-center gap-1.5 hover:text-foreground">
-          <Share2 className="w-4 h-4" /><span>Share</span>
-        </button>
-        <button type="button" onClick={handleLike} className={`flex items-center gap-1.5 ${isLiked ? "text-rose-500 font-semibold" : "hover:text-rose-500"}`}>
-          <Heart className={`w-4 h-4 ${isLiked ? "fill-rose-500" : ""}`} /><span>{likeCount}</span>
-        </button>
-      </footer>
     </article>
   );
 }
