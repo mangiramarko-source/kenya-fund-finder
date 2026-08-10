@@ -43,7 +43,7 @@ export interface GatewayQuery {
   offset?: number;
   /** History resources only: parent UUID */
   id?: string;
-  /** History / bulk-recent resources only: lookback window in days (max 90) */
+  /** History resources support up to 7,305 days; bulk-recent remains server-capped. */
   days?: number;
   /** Whitelisted equality filters for list resources (e.g. { slug: "foo" }) */
   filters?: Record<string, string>;

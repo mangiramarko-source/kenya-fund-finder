@@ -26,11 +26,12 @@ const RATE_WINDOW_SECONDS = 60;
 const RATE_MAX_REQUESTS = 300; // 300 req / IP / minute
 const DEFAULT_LIMIT = 50;
 const MAX_LIMIT = 200;
+const MAX_HISTORY_LIMIT = 1500;
 // Bulk feeds (snapshots / recent history without a parent id) are heavier;
 // allow more rows but still cap and force a date window.
 const MAX_BULK_LIMIT = 5000;
 const DEFAULT_BULK_LIMIT = 1000;
-const MAX_HISTORY_DAYS = 90;
+const MAX_HISTORY_DAYS = 7305;
 const DEFAULT_BULK_DAYS = 30;
 
 // --- Resource registry ------------------------------------------------------
@@ -261,7 +262,7 @@ Deno.serve(async (req) => {
     url.searchParams.get("limit"),
     isBulk ? DEFAULT_BULK_LIMIT : DEFAULT_LIMIT,
     1,
-    isBulk ? MAX_BULK_LIMIT : MAX_LIMIT,
+    isBulk ? MAX_BULK_LIMIT : resource.kind === "history" ? MAX_HISTORY_LIMIT : MAX_LIMIT,
   );
   const offset = clampInt(url.searchParams.get("offset"), 0, 0, 10_000);
   const columns = parseColumns(url.searchParams.get("select"), resource.columns);

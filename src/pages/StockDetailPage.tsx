@@ -1,10 +1,18 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
 import { formatMarketDate, formatMarketDateTime, decodeHtmlEntities } from "@/lib/utils";
+import {
+  downsampleStockHistory,
+  fetchAllStockHistoryPages,
+  filterStockHistory,
+  STOCK_HISTORY_DAYS,
+  STOCK_HISTORY_RANGES,
+  type StockHistoryRange,
+} from "@/lib/stockHistory";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
@@ -54,6 +62,10 @@ const fmtVol = (v: number) => {
   return String(v);
 };
 
+const LONG_STOCK_RANGES_ENABLED = import.meta.env.VITE_STOCK_LONG_RANGES_ENABLED !== "false";
+const longHistoryRanges = new Set<StockHistoryRange>(["1Y", "5Y", "10Y", "15Y"]);
+const visibleHistoryRanges = STOCK_HISTORY_RANGES.filter((range) => LONG_STOCK_RANGES_ENABLED || !longHistoryRanges.has(range));
+
 const fmtCap = (mc: number | null) => {
   if (mc == null) return "—";
   if (mc >= 1e12) return `KSh ${(mc / 1e12).toFixed(2)}T`;
@@ -72,7 +84,8 @@ const StockDetailPage = () => {
   const [loading, setLoading] = useState(true);
   const [history, setHistory] = useState<PriceHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [range, setRange] = useState<"1W" | "1M" | "3M" | "ALL">("3M");
+  const [range, setRange] = useState<StockHistoryRange>("3M");
+  const historyCache = useRef(new Map<string, PriceHistory[]>());
 
   useDocumentTitle(
     stock ? `${stock.symbol} – ${stock.name} | Kenya Fund Finder` : "Stock Detail | Kenya Fund Finder",
@@ -137,31 +150,47 @@ const StockDetailPage = () => {
   }, [symbol]);
 
   useEffect(() => {
-    if (!stock) return;
+    if (!stock) return undefined;
+    const cacheKey = `${stock.id}:${range}`;
+    const cached = historyCache.current.get(cacheKey);
+    if (cached) {
+      setHistory(cached);
+      setHistoryLoading(false);
+      return undefined;
+    }
+
+    let cancelled = false;
     const fetchHistory = async () => {
       setHistoryLoading(true);
       try {
-        const { data } = await fetchPublicData<any>("stock-history", {
-          select: ["price", "snapshot_date"],
-          id: stock.id,
-          order: "snapshot_date.asc",
-          days: 90,
-          limit: 200,
+        const normalized = await fetchAllStockHistoryPages(async (offset, limit) => {
+          const response = await fetchPublicData<any>("stock-history", {
+            select: ["id", "price", "snapshot_date"],
+            id: stock.id,
+            order: "snapshot_date.asc",
+            days: STOCK_HISTORY_DAYS[range],
+            limit,
+            offset,
+          });
+          return {
+            count: response.count,
+            data: response.data.map((entry: any) => ({
+              snapshot_date: entry.snapshot_date,
+              price: Number(entry.price),
+            })),
+          };
         });
-        setHistory(
-          data.map((d: any) => ({
-            snapshot_date: d.snapshot_date,
-            price: Number(d.price),
-          }))
-        );
+        historyCache.current.set(cacheKey, normalized);
+        if (!cancelled) setHistory(normalized);
       } catch (e) {
         console.error("Failed to load stock history", e);
       } finally {
-        setHistoryLoading(false);
+        if (!cancelled) setHistoryLoading(false);
       }
     };
     fetchHistory();
-  }, [stock?.id]);
+    return () => { cancelled = true; };
+  }, [stock?.id, range]);
 
   const filteredHistory = useMemo(() => {
     if (!history.length || !stock) return [];
@@ -173,16 +202,10 @@ const StockDetailPage = () => {
       fullHistory.push({ snapshot_date: todayIso, price: stock.price });
     }
 
-    const now = new Date();
-    let cutoff: Date;
-    switch (range) {
-      case "1W": cutoff = new Date(now.getTime() - 7 * 86400000); break;
-      case "1M": cutoff = new Date(now.getTime() - 30 * 86400000); break;
-      case "3M": cutoff = new Date(now.getTime() - 90 * 86400000); break;
-      default: return fullHistory;
-    }
-    return fullHistory.filter((h) => new Date(h.snapshot_date) >= cutoff);
+    return filterStockHistory(fullHistory, range);
   }, [history, range]);
+
+  const chartHistory = useMemo(() => downsampleStockHistory(filteredHistory), [filteredHistory]);
 
   const priceStats = useMemo(() => {
     if (!filteredHistory.length) return null;
@@ -287,17 +310,17 @@ const StockDetailPage = () => {
         <TabsContent value="summary" className="space-y-6">
           {/* Price Chart */}
           <div className="rounded-xl border border-border bg-card p-4">
-            <div className="flex items-center justify-between mb-4">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-4 w-4 text-muted-foreground" />
                 <span className="text-sm font-semibold text-foreground">Price Chart</span>
               </div>
-              <div className="flex gap-1">
-                {(["1W", "1M", "3M", "ALL"] as const).map((r) => (
+              <div className="grid w-full grid-cols-8 gap-0.5 sm:flex sm:w-auto sm:gap-1">
+                {visibleHistoryRanges.map((r) => (
                   <button
                     key={r}
                     onClick={() => setRange(r)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                    className={`rounded-md px-1 py-1 text-[11px] font-medium transition-all sm:px-2.5 sm:text-xs ${
                       range === r ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
                     }`}
                   >
@@ -315,7 +338,7 @@ const StockDetailPage = () => {
               </div>
             ) : (
               <ResponsiveContainer width="100%" height={280}>
-                <AreaChart data={filteredHistory}>
+                <AreaChart data={chartHistory}>
                   <defs>
                     <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={isUp ? "hsl(152 60% 42%)" : "hsl(var(--destructive))"} stopOpacity={0.3} />
@@ -463,16 +486,16 @@ const StockDetailPage = () => {
         {/* Historical Data Tab */}
         <TabsContent value="historical" className="space-y-4">
           <div className="rounded-xl border border-border bg-card overflow-hidden">
-            <div className="flex items-center justify-between p-4 border-b border-border">
+            <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" /> Historical Prices
               </h3>
-              <div className="flex gap-1">
-                {(["1W", "1M", "3M", "ALL"] as const).map((r) => (
+              <div className="grid w-full grid-cols-8 gap-0.5 sm:flex sm:w-auto sm:gap-1">
+                {visibleHistoryRanges.map((r) => (
                   <button
                     key={r}
                     onClick={() => setRange(r)}
-                    className={`px-2.5 py-1 rounded-md text-xs font-medium transition-all ${
+                    className={`rounded-md px-1 py-1 text-[11px] font-medium transition-all sm:px-2.5 sm:text-xs ${
                       range === r ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
                     }`}
                   >
