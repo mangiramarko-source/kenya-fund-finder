@@ -59,12 +59,12 @@ const StockFavourites = ({ entries, stocks }: StockFavouritesProps) => {
                 <p className="text-[10px] text-muted-foreground truncate">{s.name}</p>
               </div>
               <div className="text-right shrink-0">
-                <p className="text-sm font-bold tabular-nums text-accent">
+                <p className="text-sm font-bold tabular-nums text-foreground">
                   {formatNumber(s.price)}
                 </p>
                 <span
                   className={`inline-flex items-center gap-0.5 text-[9px] font-semibold tabular-nums ${
-                    s.day_change > 0 ? "text-accent" : s.day_change < 0 ? "text-destructive" : "text-muted-foreground"
+                    s.day_change > 0 ? "text-emerald-500 dark:text-emerald-400" : s.day_change < 0 ? "text-destructive" : "text-muted-foreground"
                   }`}
                 >
                   {s.day_change > 0 ? (

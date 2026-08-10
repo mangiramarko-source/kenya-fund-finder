@@ -1,4 +1,6 @@
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { isLegacyCronAuthorization } from "../fetch-market-data/auth.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -202,8 +204,13 @@ Deno.serve(async (req) => {
 
     const cronSecret = Deno.env.get("CRON_SECRET") || "";
     const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    const isCronCall = (cronSecret.length > 0 && (body?.cron_secret === cronSecret || token === cronSecret)) || 
+    let isCronCall = (cronSecret.length > 0 && (body?.cron_secret === cronSecret || token === cronSecret)) || 
                        (token === serviceKey);
+
+    if (!isCronCall && isLegacyCronAuthorization(authHeader)) {
+      isCronCall = true;
+      console.log("[fetch-social-news] Cron call authenticated via legacy bearer token");
+    }
 
     if (!isCronCall) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), {

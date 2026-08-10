@@ -438,7 +438,7 @@ const StocksPage = () => {
                 ] as const).map((opt) => {
                   const active = mobileMovement === opt.key;
                   let activeStyle = "bg-muted text-foreground";
-                  if (opt.key === "gainers") activeStyle = "bg-accent/15 text-accent shadow-sm";
+                  if (opt.key === "gainers") activeStyle = "bg-emerald-500/15 text-emerald-500 dark:text-emerald-400 shadow-sm";
                   if (opt.key === "losers") activeStyle = "bg-destructive/15 text-destructive shadow-sm";
                   if (opt.key === "unchanged") activeStyle = "bg-muted-foreground/15 text-foreground shadow-sm";
                   
@@ -1014,7 +1014,7 @@ const DesktopStockRow = ({
               {getInitials(s.name, s.symbol)}
             </div>
             <div className="min-w-0 flex flex-col justify-center leading-tight">
-              <span className="font-bold text-accent text-sm tracking-wide truncate">{s.symbol}</span>
+              <span className="font-bold text-foreground text-sm tracking-wide truncate">{s.symbol}</span>
               <span className="text-muted-foreground text-[12px] opacity-90 mt-0.5">{displayName}</span>
             </div>
           </div>

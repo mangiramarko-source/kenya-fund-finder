@@ -250,7 +250,7 @@ const MarketDashboardPage = () => {
                           </td>
                           <td className="px-3 py-3 text-sm text-muted-foreground">{r.currency_name}</td>
                           <td className="px-3 py-3 text-right">
-                            <span className="font-bold text-accent text-[15px] tabular-nums">{Number(r.rate).toFixed(2)}</span>
+                            <span className="font-bold text-foreground text-[15px] tabular-nums">{Number(r.rate).toFixed(2)}</span>
                           </td>
                           <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
                             {r.previous_rate != null ? Number(r.previous_rate).toFixed(2) : "—"}
@@ -315,7 +315,7 @@ const MarketDashboardPage = () => {
                           <td className="px-3 py-3 text-sm text-muted-foreground">{c.name}</td>
                           <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{c.unit}</td>
                           <td className="px-3 py-3 text-right">
-                            <span className="font-bold text-accent text-[15px] tabular-nums">{Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                            <span className="font-bold text-foreground text-[15px] tabular-nums">{Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
                           </td>
                           <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
                             {c.previous_price != null ? Number(c.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
@@ -368,7 +368,7 @@ const MarketDashboardPage = () => {
                       </td>
                       <td className="px-2 py-3 text-center text-[10px] text-muted-foreground">{s.sector}</td>
                       <td className="px-3 py-3 text-right">
-                        <span className="font-bold text-accent text-base tabular-nums">{s.price.toFixed(2)}</span>
+                        <span className="font-bold text-foreground text-base tabular-nums">{s.price.toFixed(2)}</span>
                       </td>
                       <td className="px-3 py-3 text-right">
                         <ChangeIndicator current={s.price} previous={s.previous_price} />

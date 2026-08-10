@@ -39,6 +39,17 @@
   .animate-marquee {
     animation: marquee 65s linear infinite;
   }
+  @keyframes ticker {
+    0% {
+      transform: translateX(0);
+    }
+    100% {
+      transform: translateX(-50%);
+    }
+  }
+  .animate-ticker {
+    animation: ticker 40s linear infinite;
+  }
   @keyframes shake-row {
     0%, 100% { transform: translateX(0); }
     20% { transform: translateX(-6px); }

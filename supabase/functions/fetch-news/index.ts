@@ -1,4 +1,7 @@
+import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { parseFeed } from "https://deno.land/x/rss@0.5.8/mod.ts";
+import { isLegacyCronAuthorization } from "../fetch-market-data/auth.ts";
 import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
 
 const corsHeaders = {
@@ -25,25 +28,25 @@ const KEYWORDS = [
 
 const RSS_FEEDS = [
   // Kenyan business press (Primary Focus)
-  { url: "https://www.businessdailyafrica.com/service/search/edp/21010-420078!/feed.rss", source: "Business Daily" },
+  { url: "https://news.google.com/rss/search?q=site:businessdailyafrica.com+business+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Business Daily" },
   { url: "https://www.standardmedia.co.ke/rss/business.php", source: "Standard Media" },
-  { url: "https://www.the-star.co.ke/rss/business", source: "The Star" },
-  { url: "https://nation.africa/kenya/rss/business", source: "Nation" },
+  { url: "https://news.google.com/rss/search?q=site:the-star.co.ke+business+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "The Star" },
+  { url: "https://news.google.com/rss/search?q=site:nation.africa/kenya/business+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Nation" },
   { url: "https://www.capitalfm.co.ke/business/feed/", source: "Capital FM" },
   { url: "https://www.tuko.co.ke/rss/business.rss", source: "Tuko News" },
-  { url: "https://citizen.digital/feed/business", source: "Citizen Digital" },
+  { url: "https://news.google.com/rss/search?q=site:citizen.digital+business+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Citizen Digital" },
   { url: "https://www.kbc.co.ke/category/business/feed/", source: "KBC" },
   { url: "https://www.pd.co.ke/category/business/feed/", source: "People Daily" },
-  { url: "https://kenyanwallstreet.com/feed/", source: "Kenyan Wall Street" },
-  { url: "https://www.bizna.co.ke/feed/", source: "Bizna Kenya" },
+  { url: "https://news.google.com/rss/search?q=site:kenyanwallstreet.com+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Kenyan Wall Street" },
+  { url: "https://news.google.com/rss/search?q=site:bizna.co.ke+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Bizna Kenya" },
   // Pan-African / Regional Context
   { url: "https://african.business/feed", source: "African Business" },
   { url: "https://www.theafricareport.com/feed/", source: "The Africa Report" },
   { url: "https://furtherafrica.com/feed/", source: "Further Africa" },
   { url: "https://www.ft.com/world/africa?format=rss", source: "Financial Times Africa" },
   // Tech & Startups (Silicon Savannah)
-  { url: "https://techcabal.com/category/startups/feed/", source: "TechCabal" },
-  { url: "https://techweez.com/feed/", source: "TechWeez" },
+  { url: "https://news.google.com/rss/search?q=site:techcabal.com+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "TechCabal" },
+  { url: "https://news.google.com/rss/search?q=site:techweez.com+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "TechWeez" },
   // Free Google News RSS queries strictly focused on Kenyan Markets
   { url: "https://news.google.com/rss/search?q=Kenya+economy+OR+NSE+OR+CBK+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
   { url: "https://news.google.com/rss/search?q=Kenya+shilling+OR+%22unit+trust%22+OR+%22money+market%22+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" }
@@ -433,8 +436,13 @@ Deno.serve(async (req) => {
 
     // Check dedicated cron secret (simple string set as Supabase secret)
     const cronSecret = Deno.env.get("CRON_SECRET") || "";
-    const isCronCall = (cronSecret.length > 0 && (body?.cron_secret === cronSecret || token === cronSecret)) || 
+    let isCronCall = (cronSecret.length > 0 && (body?.cron_secret === cronSecret || token === cronSecret)) || 
                        (token === serviceKey);
+
+    if (!isCronCall && isLegacyCronAuthorization(authHeader)) {
+      isCronCall = true;
+      console.log("[fetch-news] Cron call authenticated via legacy bearer token");
+    }
 
     if (!isCronCall) {
       const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
