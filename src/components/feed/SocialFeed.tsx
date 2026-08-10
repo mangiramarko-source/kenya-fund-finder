@@ -32,6 +32,14 @@ const getDomainFromUrl = (url?: string) => {
   }
 };
 
+const getCustomSourceLogo = (authorName: string, domain?: string | null) => {
+  const normName = authorName.toLowerCase();
+  if (normName.includes("business daily") || domain?.includes("businessdailyafrica")) {
+    return "/images/sources/business-daily.png";
+  }
+  return null;
+};
+
 const getAvatarBg = (type: FeedItem["type"]) => {
   switch (type) {
     case "NEWS": return "bg-blue-500 border-blue-600";
@@ -106,7 +114,9 @@ export const SocialFeedCard = ({
   const authorHandle = rawLabel.startsWith("@") ? rawLabel : `@${rawLabel.toLowerCase().replace(/\s+/g, '')}`;
   
   const domain = getDomainFromUrl(item.url || item.rawItem?.link);
-  const showFavicon = !isSocialPost && domain && !avatarError;
+  const customLogo = getCustomSourceLogo(authorName, domain);
+  const avatarSrc = customLogo || (domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null);
+  const showFavicon = !isSocialPost && avatarSrc && !avatarError;
 
   const handleCardClick = () => {
     if (isMobile) {
@@ -169,7 +179,7 @@ export const SocialFeedCard = ({
             </svg>
           ) : showFavicon ? (
             <img 
-              src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} 
+              src={avatarSrc!} 
               alt={authorName}
               className="w-full h-full object-cover bg-white"
               onError={() => setAvatarError(true)}
