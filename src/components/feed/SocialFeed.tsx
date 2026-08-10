@@ -22,6 +22,16 @@ const getInitials = (name: string) => {
   return (parts[0].substring(0, 1) + parts[1].substring(0, 1)).toUpperCase();
 };
 
+const getDomainFromUrl = (url?: string) => {
+  if (!url) return null;
+  try {
+    const parsed = new URL(url);
+    return parsed.hostname;
+  } catch {
+    return null;
+  }
+};
+
 const getAvatarBg = (type: FeedItem["type"]) => {
   switch (type) {
     case "NEWS": return "bg-blue-500 border-blue-600";
@@ -52,6 +62,7 @@ export const SocialFeedCard = ({
 
   const contentRef = useRef<HTMLDivElement>(null);
   const [isExpandable, setIsExpandable] = useState(false);
+  const [avatarError, setAvatarError] = useState(false);
 
   useEffect(() => {
     const checkOverflow = () => {
@@ -85,18 +96,17 @@ export const SocialFeedCard = ({
   const commentsCount = (item.comments || 0) + (interaction?.comments?.length || 0);
 
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
-
-  const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
-  const rawAuthor = item.authorName || "KenyaFundFinder Academy";
-  const authorName = isSocialPost ? rawAuthor.replace(/^X\s*-\s*/, '') : rawAuthor;
-  const initials = isSocialPost ? "X" : getInitials(authorName);
   
-  const rawLabel = item.authorLabel || "dailytip";
-  const authorHandle = rawLabel.startsWith("@") ? rawLabel : `@${rawLabel.toLowerCase().replace(/\s+/g, '')}`;
+  const isSocialPost = item.type === "social";
+  const authorName = item.authorLabel || "Market News";
+  const initials = getInitials(authorName);
+  const authorHandle = item.authorHandle || (isSocialPost ? `@${authorName.toLowerCase().replace(/\s+/g, '')}` : "@marketnews");
+  
+  const domain = getDomainFromUrl(item.url || item.rawItem?.link);
+  const showFavicon = !isSocialPost && domain && !avatarError;
 
   const handleCardClick = () => {
-    if (isMobile) {
-      // Feed item IDs are prefixed with "news-" (e.g. "news-abc123").
+    if (item.type === "NEWS") {
       // Strip the prefix so the URL matches what fetchNewsById expects.
       const rawId = item.id.startsWith("news-") ? item.id.slice(5) : item.id;
       navigate(`/news/${rawId}`);
@@ -148,11 +158,18 @@ export const SocialFeedCard = ({
       {/* Top Author Bar */}
       <div className="flex items-center gap-3">
         {/* Avatar Circle */}
-        <div className={`w-9 h-9 rounded-full ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm`}>
+        <div className={`w-9 h-9 rounded-full ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
           {isSocialPost ? (
             <svg className="w-4 h-4 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
               <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
             </svg>
+          ) : showFavicon ? (
+            <img 
+              src={`https://www.google.com/s2/favicons?domain=${domain}&sz=128`} 
+              alt={authorName}
+              className="w-full h-full object-cover bg-white"
+              onError={() => setAvatarError(true)}
+            />
           ) : (
             initials
           )}
