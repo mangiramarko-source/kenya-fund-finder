@@ -394,7 +394,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
             {decodeHtmlEntities(article.title)}
           </h2>
 
-          <div className="text-lg sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
+          <div className="text-sm sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
             {article.content && article.content.trim().length > 0 ? (
               article.content.split("\n").filter(Boolean).map((paragraph, i) => (
                 <p key={i} className="my-2">
@@ -421,7 +421,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         )}
 
         {/* ─── 5. Source / Link ─── */}
-        <div className="border-b border-border/60 pb-5 pt-2 text-base font-semibold text-emerald-500 md:border-0 md:p-0 md:text-xs md:text-muted-foreground md:font-medium">
+        <div className="border-b border-border/60 pb-5 pt-2 text-[10px] font-semibold text-emerald-500 md:border-0 md:p-0 md:text-xs md:text-muted-foreground md:font-medium">
           {article.url && /^https?:\/\//i.test(article.url) ? (
             <a
               href={article.url}
