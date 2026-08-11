@@ -15,6 +15,7 @@ import {
 } from "@/lib/stockHistory";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useToast } from "@/hooks/use-toast";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
@@ -22,11 +23,13 @@ import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { StockDisclosuresTab } from "@/components/stocks/StockDisclosuresTab";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   TrendingUp, TrendingDown, Minus, ArrowLeft, Star, BarChart3, Activity,
   Calendar, Building2, DollarSign, Users, Newspaper, ChevronDown, ChevronUp, MoreHorizontal,
+  Link2, Twitter, Facebook,
 } from "lucide-react";
 import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -82,6 +85,7 @@ const StockDetailPage = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
   const isMobile = useIsMobile();
+  const { toast } = useToast();
   const { isFavourite, toggle: toggleFav } = useAssetWatchlist("stock");
 
   const [stock, setStock] = useState<Stock | null>(null);
@@ -90,6 +94,12 @@ const StockDetailPage = () => {
   const [historyLoading, setHistoryLoading] = useState(true);
   const [range, setRange] = useState<StockHistoryRange>("3M");
   const historyCache = useRef(new Map<string, PriceHistory[]>());
+  const shareUrl = `https://kenyafundfinder.com/stocks/${encodeURIComponent(symbol || "")}`;
+
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(shareUrl);
+    toast({ title: "Link copied to clipboard" });
+  };
 
   useDocumentTitle(
     stock ? `${stock.symbol} – ${stock.name} | Kenya Fund Finder` : "Stock Detail | Kenya Fund Finder",
@@ -268,13 +278,28 @@ const StockDetailPage = () => {
         >
           <ArrowLeft className="h-6 w-6" />
         </button>
-        <button
-          type="button"
-          aria-label="More options"
-          className="-mr-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted/50"
-        >
-          <MoreHorizontal className="h-5 w-5" />
-        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button
+              type="button"
+              aria-label="More options"
+              className="-mr-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted/50"
+            >
+              <MoreHorizontal className="h-5 w-5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer gap-2 text-sm">
+              <Link2 className="h-4 w-4" /> Copy Link
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${s.name} (${s.symbol})`)}&url=${encodeURIComponent(shareUrl)}`, "_blank", "noopener")} className="cursor-pointer gap-2 text-sm">
+              <Twitter className="h-4 w-4" /> Share on X
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank", "noopener")} className="cursor-pointer gap-2 text-sm">
+              <Facebook className="h-4 w-4" /> Share on Facebook
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
 
       <button
@@ -386,7 +411,9 @@ const StockDetailPage = () => {
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                   <XAxis
                     dataKey="snapshot_date"
-                    tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                    tick={{ fontSize: isMobile ? 8 : 10, fill: "hsl(var(--muted-foreground))" }}
+                    minTickGap={isMobile ? 18 : 5}
+                    tickMargin={6}
                     tickFormatter={(v) => formatMarketDate(v, "en-KE", { month: "short", day: "numeric" })}
                   />
                   <YAxis
