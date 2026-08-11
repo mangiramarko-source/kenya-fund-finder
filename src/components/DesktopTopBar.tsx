@@ -69,7 +69,7 @@ const DesktopTopBar = () => {
     { to: "/", label: "Overview" },
     { to: "/ai-lab", label: "AI Lab" },
     { to: "/stocks", label: "Stocks" },
-    { to: "/funds", label: "Unit Trusts" },
+    { to: "/funds", label: "MMF" },
     { to: "/rates", label: "FX Rates" },
     { to: "/commodities", label: "Commodities" },
     { to: "/portfolio", label: "Portfolio" },

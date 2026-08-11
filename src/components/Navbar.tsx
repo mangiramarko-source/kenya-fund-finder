@@ -20,7 +20,7 @@ const navLinks = [
 const mobileNavLinks = [
   { to: "/", label: "Overview" },
   { to: "/stocks", label: "Stocks" },
-  { to: "/funds", label: "Unit trusts" },
+  { to: "/funds", label: "MMF" },
   { to: "/rates", label: "Fx rates" },
   { to: "/commodities", label: "Commodities" },
   { to: "/portfolio", label: "Portfolio" },

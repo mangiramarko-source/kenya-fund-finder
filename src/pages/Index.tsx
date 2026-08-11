@@ -97,9 +97,9 @@ const Index = () => {
       <div>
         <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4 md:mb-6">
           <div>
-            <h1 className="text-2xl md:text-2xl font-bold text-foreground tracking-tight">Unit Trusts</h1>
+            <h1 className="text-2xl md:text-2xl font-bold text-foreground tracking-tight">Money Market Fund</h1>
             <p className="text-sm text-muted-foreground mt-1">
-              Track listed unit trust funds in Kenya.
+              Track listed Money Market, Fixed Income, Bond, Balanced, Equity and Special funds in Kenya.
             </p>
           </div>
           <div className="hidden md:block">

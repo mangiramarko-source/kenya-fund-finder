@@ -45,7 +45,7 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
   return (
     <span className="inline-flex items-center gap-3">
       {!hideDate && displayDate && (
-        <span className="text-[12px] font-medium text-muted-foreground uppercase tracking-wider">
+        <span className={`text-[12px] font-medium uppercase tracking-wider ${isFunds ? "text-emerald-500 dark:text-emerald-400" : "text-muted-foreground"}`}>
           {textStatus}
         </span>
       )}
