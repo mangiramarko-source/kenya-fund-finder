@@ -13,7 +13,6 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import CommodityFavourites from "../components/home/CommodityFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
-import DesktopMarketOverviewStrip from "@/components/desktop/DesktopMarketOverviewStrip";
 
 interface Commodity {
   id: string;
@@ -203,18 +202,6 @@ const CommoditiesPage = () => {
   const gainers = useMemo(() => commodities.filter((c) => c.previous_price != null && c.price > c.previous_price).length, [commodities]);
   const losers = useMemo(() => commodities.filter((c) => c.previous_price != null && c.price < c.previous_price).length, [commodities]);
   const unchanged = useMemo(() => commodities.filter((c) => c.previous_price == null || c.price === c.previous_price).length, [commodities]);
-  const desktopWatchlist = useMemo(() => {
-    const selected = user
-      ? favEntries.map((entry) => commodities.find((commodity) => commodity.id === entry.item_id)).filter((commodity): commodity is Commodity => Boolean(commodity))
-      : commodities.slice(0, 4);
-    return selected.slice(0, 4).map((commodity) => ({
-      id: commodity.id,
-      symbol: commodity.symbol,
-      name: commodity.name,
-      value: `${commodity.price.toFixed(2)} ${commodity.unit}`,
-      change: commodity.previous_price ? ((commodity.price - commodity.previous_price) / commodity.previous_price) * 100 : 0,
-    }));
-  }, [commodities, favEntries, user]);
 
   const filtered = useMemo(() => {
     let result = commodities;
@@ -263,20 +250,6 @@ const CommoditiesPage = () => {
             </div>
           </div>
         </div>
-
-        <DesktopMarketOverviewStrip
-          title="Global Commodities Market"
-          status={<SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />}
-          metrics={[
-            { label: "Tracked", value: String(commodities.length) },
-            { label: "Gainers", value: String(gainers), change: commodities.length ? (gainers / commodities.length) * 100 : 0 },
-            { label: "Losers", value: String(losers), change: commodities.length ? -(losers / commodities.length) * 100 : 0 },
-            { label: "Unchanged", value: String(unchanged) },
-          ]}
-          watchlist={desktopWatchlist}
-          demo={!user}
-          footer="Global commodities trade during their respective market sessions. Prices are indicative and may be delayed."
-        />
 
         <ActiveAlertsCard assetType="commodity" />
 

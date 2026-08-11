@@ -13,7 +13,6 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import RateFavourites from "../components/home/RateFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
-import DesktopMarketOverviewStrip from "@/components/desktop/DesktopMarketOverviewStrip";
 
 interface Rate {
   id: string;
@@ -203,18 +202,6 @@ const RatesPage = () => {
   const strengthened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate < r.previous_rate).length, [rates]);
   const weakened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate > r.previous_rate).length, [rates]);
   const unchanged = useMemo(() => rates.filter((r) => r.previous_rate == null || r.rate === r.previous_rate).length, [rates]);
-  const desktopWatchlist = useMemo(() => {
-    const selected = user
-      ? favEntries.map((entry) => rates.find((rate) => rate.id === entry.item_id)).filter((rate): rate is Rate => Boolean(rate))
-      : ["USD", "EUR", "GBP", "ZAR"].map((code) => rates.find((rate) => rate.currency_code === code)).filter((rate): rate is Rate => Boolean(rate));
-    return selected.slice(0, 4).map((rate) => ({
-      id: rate.id,
-      symbol: `${rate.currency_code}/KES`,
-      name: rate.currency_name,
-      value: `KSh ${rate.rate.toFixed(2)}`,
-      change: rate.previous_rate ? ((rate.rate - rate.previous_rate) / rate.previous_rate) * 100 : 0,
-    }));
-  }, [favEntries, rates, user]);
 
   const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
   type SortKey = "default" | "rate_desc" | "rate_asc" | "change_desc" | "change_asc" | "name_asc" | "name_desc";
@@ -267,20 +254,6 @@ const RatesPage = () => {
             </div>
           </div>
         </div>
-
-        <DesktopMarketOverviewStrip
-          title="Global FX Market"
-          status={<SectionLiveStatus section="rates" fallbackDate={latestUpdate} isLoading={loading} />}
-          metrics={[
-            { label: "Currencies", value: String(rates.length) },
-            { label: "Strengthened", value: String(strengthened), change: rates.length ? (strengthened / rates.length) * 100 : 0 },
-            { label: "Weakened", value: String(weakened), change: rates.length ? -(weakened / rates.length) * 100 : 0 },
-            { label: "Unchanged", value: String(unchanged) },
-          ]}
-          watchlist={desktopWatchlist}
-          demo={!user}
-          footer="Global FX market operates 24 hours a day, five days a week. Rates are indicative against KES."
-        />
 
         <ActiveAlertsCard assetType="currency" />
 

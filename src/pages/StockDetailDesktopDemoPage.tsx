@@ -10,12 +10,9 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
-import { useAuth } from "@/hooks/useAuth";
 import { fetchPublicData } from "@/lib/gateway";
 import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
 import { calculateDemoReturn, filterDemoStocks, findDemoStock, stockProductionPath, type DemoPricePoint } from "@/lib/stockDetailDemo";
-import { isKenyanMarketOpen } from "@/lib/utils";
 
 const formatPrice = (value: number) => value.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -34,8 +31,6 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   const { symbol = "" } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const { user } = useAuth();
-  const { entries: watchlistEntries, loading: watchlistLoading } = useAssetWatchlist("stock");
   const [stocks, setStocks] = useState<CachedStock[]>([]);
   const [history, setHistory] = useState<Record<string, DemoPricePoint[]>>({});
   const [loading, setLoading] = useState(true);
@@ -141,7 +136,6 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
           <DemoState title="Stock not found" detail={`No listed stock matches “${symbol}”.`} />
         ) : (
           <div>
-            <MarketOverviewStrip stocks={stocks} watchlistIds={watchlistEntries.map((entry) => entry.item_id)} watchlistLoading={watchlistLoading} signedIn={Boolean(user)} />
             <section className="min-w-0">
               <div className="mb-7 flex items-end justify-between gap-4">
                 <div>
@@ -227,49 +221,6 @@ function StockTableRow({ stock, points, selected }: { stock: CachedStock; points
 function ReturnValue({ value }: { value: number | null }) {
   if (value == null) return <span className="text-xs text-muted-foreground">—</span>;
   return <span className={`whitespace-nowrap text-sm font-bold tabular-nums ${value > 0 ? "text-emerald-500" : value < 0 ? "text-destructive" : "text-muted-foreground"}`}>{value > 0 ? "+" : ""}{formatPrice(value)}%</span>;
-}
-
-function MarketOverviewStrip({ stocks, watchlistIds, watchlistLoading, signedIn }: { stocks: CachedStock[]; watchlistIds: string[]; watchlistLoading: boolean; signedIn: boolean }) {
-  const navigate = useNavigate();
-  const isOpen = isKenyanMarketOpen();
-  const savedWatchlist = watchlistIds.map((id) => stocks.find((stock) => stock.id === id)).filter((stock): stock is CachedStock => Boolean(stock)).slice(0, 4);
-  const demoSymbols = ["SCOM", "EQTY", "KCB", "COOP"];
-  const demoWatchlist = demoSymbols.map((symbol) => stocks.find((stock) => stock.symbol === symbol)).filter((stock): stock is CachedStock => Boolean(stock));
-  const watchlist = signedIn ? savedWatchlist : demoWatchlist;
-  const turnover = stocks.reduce((total, stock) => total + stock.price * stock.volume, 0);
-  const metrics = [
-    { label: "NSE 20 Share", value: "1,742.50", change: 0.62 },
-    { label: "NASI (All Share)", value: "104.80", change: 0.41 },
-    { label: "NSE 25 Index", value: "2,850.10", change: 1.15 },
-    { label: "Equity Turnover", value: `KSh ${formatCompact(turnover)}`, change: null },
-  ];
-  return (
-    <div className="mb-10 rounded-[22px] border border-border bg-gradient-to-br from-card to-card/80 p-5 shadow-sm">
-      <div className="grid grid-cols-[1.05fr_1fr] gap-8">
-        <div>
-          <div className="flex items-center justify-between"><h2 className="text-sm font-bold">NSE Market Status</h2><span className={`rounded-full border px-3 py-1 text-[10px] font-bold tracking-wider ${isOpen ? "border-emerald-500/25 bg-emerald-500/10 text-emerald-500" : "border-border bg-muted text-muted-foreground"}`}>{isOpen ? "OPEN" : "CLOSED"}</span></div>
-          <div className="mt-5 grid grid-cols-4 gap-5">
-            {metrics.map((metric) => <div key={metric.label}><p className="text-[10px] uppercase tracking-wider text-muted-foreground">{metric.label}</p><p className="mt-2 text-xl font-black tabular-nums">{metric.value}</p>{metric.change != null && <p className={`mt-2 text-xs font-bold ${metric.change >= 0 ? "text-emerald-500" : "text-destructive"}`}>{metric.change >= 0 ? "+" : ""}{metric.change.toFixed(2)}%</p>}</div>)}
-          </div>
-        </div>
-        <div>
-          <div className="flex items-center gap-2"><h2 className="text-sm font-bold">Watchlist</h2>{!signedIn && <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wider text-emerald-500">Demo</span>}</div>
-          {signedIn && watchlistLoading ? (
-            <div className="mt-4 grid grid-cols-2 gap-2.5"><Skeleton className="h-[62px] rounded-xl" /><Skeleton className="h-[62px] rounded-xl" /><Skeleton className="h-[62px] rounded-xl" /><Skeleton className="h-[62px] rounded-xl" /></div>
-          ) : watchlist.length > 0 ? (
-            <div className="mt-4 grid grid-cols-2 gap-2.5">
-              {watchlist.map((stock) => <button key={stock.id} onClick={() => navigate(stockProductionPath(stock.symbol))} className="flex items-center justify-between rounded-xl border border-border bg-background/20 px-3 py-2.5 text-left hover:bg-muted/30"><div className="min-w-0"><p className="text-xs font-black">{stock.symbol}</p><p className="mt-1 truncate text-[10px] text-muted-foreground">{stock.name}</p></div><div className="text-right"><p className="text-xs font-black tabular-nums">{formatPrice(stock.price)}</p><p className={`mt-1 text-[10px] font-bold ${stock.day_change_percent > 0 ? "text-emerald-500" : stock.day_change_percent < 0 ? "text-destructive" : "text-muted-foreground"}`}>{stock.day_change_percent > 0 ? "+" : ""}{formatPrice(stock.day_change_percent)}%</p></div></button>)}
-            </div>
-          ) : (
-            <button onClick={() => navigate("/stocks")} className="mt-4 flex h-[134px] w-full items-center justify-center rounded-xl border border-dashed border-border bg-background/15 px-5 text-center text-xs text-muted-foreground hover:bg-muted/20">
-              Your stock watchlist is empty. Add stocks to see them here.
-            </button>
-          )}
-        </div>
-      </div>
-      <p className="mt-5 border-t border-border pt-3 text-[10px] text-muted-foreground">Closes 5:00 PM EAT · Prices may be delayed up to 15 minutes</p>
-    </div>
-  );
 }
 
 function TrendSparkline({ points, positive }: { points: DemoPricePoint[]; positive: boolean }) {

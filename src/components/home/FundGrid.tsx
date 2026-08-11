@@ -270,29 +270,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
   return (
     <div className="space-y-4">
-      {/* Horizontal Tabs for Categories (Desktop only) */}
-      <div className="hidden md:block w-full overflow-x-auto scrollbar-hide mb-5 rounded-[22px] border border-border bg-card px-6 pt-5 shadow-sm">
-        <div className="flex items-center gap-8 min-w-max">
-          {categories.map((cat) => {
-            const active = activeTab === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => updateParams({ category: cat, q: "", sort: "annual_yield", dir: "desc", movement: "all" })}
-                className={`relative pb-3 text-[14px] font-medium transition-colors ${
-                  active ? "text-emerald-500" : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {categoryLabels[cat] || cat}
-                {active && (
-                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-emerald-500 rounded-t-full" />
-                )}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-
       {/* Desktop toolbar: Movement segmented + Search */}
       <div className="hidden md:flex items-center justify-between gap-4 mb-5">
         <div className="flex items-center gap-1 pl-1">
@@ -516,6 +493,25 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
 
       <div className="hidden md:block rounded-[22px] border border-border bg-card shadow-sm overflow-hidden">
+        <div className="w-full overflow-x-auto border-b border-border bg-gradient-to-b from-muted/30 to-card px-6 pt-5 scrollbar-hide">
+          <div className="flex min-w-max items-center gap-8">
+            {categories.map((cat) => {
+              const active = activeTab === cat;
+              return (
+                <button
+                  key={cat}
+                  onClick={() => updateParams({ category: cat, q: "", sort: "annual_yield", dir: "desc", movement: "all" })}
+                  className={`relative pb-4 text-[14px] font-medium transition-colors ${
+                    active ? "text-emerald-500" : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {categoryLabels[cat] || cat}
+                  {active && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-emerald-500" />}
+                </button>
+              );
+            })}
+          </div>
+        </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm table-fixed min-w-[1100px] border-separate border-spacing-0">
             <colgroup>
