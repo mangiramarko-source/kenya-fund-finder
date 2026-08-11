@@ -256,7 +256,10 @@ const CommoditiesPage = () => {
         {user && favEntries.length > 0 && <CommodityFavourites entries={favEntries} commodities={commodities} />}
 
         {/* Desktop Premium Toolbar */}
-        <div className="hidden md:flex items-center justify-between gap-4 mb-5 mt-7">
+        <div
+          aria-hidden={loading}
+          className={`hidden md:flex items-center justify-between gap-4 mb-5 mt-7 transition-opacity ${loading ? "invisible opacity-0" : "opacity-100"}`}
+        >
           <div className="flex items-center gap-3 pl-1">
             <div className="inline-flex items-center gap-1">
               {([
@@ -298,7 +301,10 @@ const CommoditiesPage = () => {
         </div>
 
         {/* Mobile: combined search + filter button */}
-        <div className="md:hidden flex items-center gap-2.5 mb-4">
+        <div
+          aria-hidden={loading}
+          className={`md:hidden items-center gap-2.5 mb-4 transition-opacity ${loading ? "invisible opacity-0 flex" : "flex opacity-100"}`}
+        >
           <div className="relative flex-1">
             <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/80" />
             <Input
@@ -373,7 +379,10 @@ const CommoditiesPage = () => {
         </div>
 
         {/* Mobile movement pills */}
-        <div className="md:hidden mb-4 flex gap-2 overflow-x-auto no-scrollbar py-0.5">
+        <div
+          aria-hidden={loading}
+          className={`md:hidden mb-4 gap-2 overflow-x-auto no-scrollbar py-0.5 transition-opacity ${loading ? "invisible opacity-0 flex" : "flex opacity-100"}`}
+        >
           {([
             { key: "all", label: "All", count: commodities.length },
             { key: "gainers", label: "Gainers", count: gainers },
@@ -504,7 +513,7 @@ const CommoditiesPage = () => {
         </div>
 
         {/* Summary footer */}
-        <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
+        <div className={`items-center justify-between text-xs text-muted-foreground mt-4 px-1 ${loading ? "hidden" : "flex"}`}>
           <span>Showing {filtered.length} of {commodities.length} commodities</span>
           {!loading && commodities.length > 0 && (
             <span className="hidden sm:inline">

@@ -6,6 +6,7 @@ import {
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
+import { Area, ComposedChart, Line, ResponsiveContainer, YAxis } from "recharts";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
@@ -14,6 +15,7 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchPublicData } from "@/lib/gateway";
 import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
 import { calculateDemoReturn, filterDemoStocks, findDemoStock, stockProductionPath, type DemoPricePoint } from "@/lib/stockDetailDemo";
+import { getStockLogoUrl } from "@/lib/stockBranding";
 
 const formatPrice = (value: number) => value.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -169,9 +171,9 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
               </div>
 
               <div className="overflow-hidden rounded-[22px] border border-border bg-card shadow-sm">
-                <div className="flex gap-8 overflow-x-auto border-b border-border bg-gradient-to-b from-muted/30 to-card px-7 pt-5 scrollbar-hide">
+                <div className="flex gap-8 overflow-x-auto border-b border-border bg-black px-7 pt-3 scrollbar-hide">
                   {sectors.map((item) => (
-                    <button key={item} onClick={() => setSector(item)} className={`relative shrink-0 pb-4 text-sm font-semibold transition-colors ${sector === item ? "text-emerald-500" : "text-muted-foreground hover:text-foreground"}`}>
+                    <button key={item} onClick={() => setSector(item)} className={`relative shrink-0 pb-3 text-[13px] font-semibold transition-colors ${sector === item ? "text-emerald-500" : "text-muted-foreground hover:text-foreground"}`}>
                       {item}
                       {sector === item && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-full bg-emerald-500" />}
                     </button>
@@ -179,20 +181,20 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[1120px] table-fixed text-left">
-                    <thead className="border-b border-border bg-black text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    <thead className="border-b border-border bg-muted/50 text-xs uppercase tracking-[0.18em] text-muted-foreground dark:bg-[#1b1c1f]">
                       <tr>
-                        <th className="w-[23%] px-6 py-4 font-semibold">Company</th>
-                        <th className="w-[11%] px-3 py-4 font-semibold">Last Price</th>
-                        <th className="w-[8%] px-3 py-4 font-semibold">1D</th>
-                        <th className="w-[8%] px-3 py-4 font-semibold">7D</th>
-                        <th className="w-[8%] px-3 py-4 font-semibold">1M</th>
-                        <th className="w-[10%] px-3 py-4 font-semibold">Trend</th>
-                        <th className="w-[14%] px-3 py-4 font-semibold">52W Range</th>
-                        <th className="w-[8%] px-3 py-4 font-semibold">Volume</th>
-                        <th className="w-[10%] px-6 py-4 text-right font-semibold">Mkt Cap</th>
+                        <th className="w-[21%] bg-background/60 px-6 py-3 font-semibold dark:bg-[#151619]">Company</th>
+                        <th className="w-[12%] px-3 py-3 text-center font-semibold">Last Price</th>
+                        <th className="w-[8%] px-3 py-3 text-right font-semibold">1D</th>
+                        <th className="w-[8%] px-3 py-3 text-right font-semibold">7D</th>
+                        <th className="w-[8%] px-3 py-3 text-right font-semibold">1M</th>
+                        <th className="w-[11%] px-3 py-3 text-center font-semibold">Trend</th>
+                        <th className="w-[14%] px-3 py-3 text-left font-semibold">52W Range</th>
+                        <th className="w-[8%] px-3 py-3 text-center font-semibold">Volume</th>
+                        <th className="w-[10%] px-3 py-3 text-center font-semibold">Mkt Cap</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-border bg-card">
+                    <tbody className="divide-y divide-border bg-muted/20 dark:bg-[#191a1d]">
                       {filteredStocks.map((stock) => <StockTableRow key={stock.id} stock={stock} points={history[stock.id] ?? []} selected={stock.id === selectedStock.id} />)}
                     </tbody>
                   </table>
@@ -210,41 +212,55 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
 function StockTableRow({ stock, points, selected }: { stock: CachedStock; points: DemoPricePoint[]; selected: boolean }) {
   const sevenDay = calculateDemoReturn(points, stock.price, 7);
   const oneMonth = calculateDemoReturn(points, stock.price, 30);
+  const logoUrl = getStockLogoUrl(stock.symbol);
   return (
-    <tr onClick={() => window.location.assign(stockProductionPath(stock.symbol))} className={`cursor-pointer bg-card transition-colors hover:bg-muted/35 ${selected ? "ring-1 ring-inset ring-emerald-500/20" : ""}`}>
-      <td className="px-6 py-4"><div className="flex items-center gap-3"><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full border border-border bg-muted/60 text-[10px] font-bold text-muted-foreground">{stock.symbol.slice(0, 2)}</div><div className="min-w-0"><p className="text-sm font-bold">{stock.symbol}</p><p className="max-w-[190px] truncate text-xs text-muted-foreground">{stock.name}</p></div></div></td>
-      <td className="whitespace-nowrap px-3 py-4 text-sm font-bold tabular-nums"><span className="mr-1 text-[10px] font-medium text-muted-foreground">KSh</span>{formatPrice(stock.price)}</td>
-      <td className="px-3 py-4"><ReturnValue value={stock.day_change_percent} /></td>
-      <td className="px-3 py-4"><ReturnValue value={sevenDay} /></td>
-      <td className="px-3 py-4"><ReturnValue value={oneMonth} /></td>
-      <td className="px-3 py-4"><TrendSparkline points={points} positive={(oneMonth ?? stock.day_change_percent) >= 0} /></td>
+    <tr onClick={() => window.location.assign(stockProductionPath(stock.symbol))} className={`cursor-pointer bg-muted/20 transition-colors hover:bg-muted/35 dark:bg-[#191a1d] dark:hover:bg-[#202226] ${selected ? "ring-1 ring-inset ring-emerald-500/20" : ""}`}>
+      <td className="bg-background/60 px-6 py-4 dark:bg-[#151619]"><div className="flex items-center gap-3"><div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted/60 text-[10px] font-bold text-muted-foreground"><span>{stock.symbol.slice(0, 2)}</span>{logoUrl && <img src={logoUrl} alt={`${stock.name} logo`} className="absolute inset-0 h-full w-full bg-white object-contain p-1" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />}</div><div className="min-w-0"><p className="text-sm font-bold">{stock.symbol}</p><p className="max-w-[190px] truncate text-[11px] text-muted-foreground">{stock.name}</p></div></div></td>
+      <td className="whitespace-nowrap px-3 py-4 text-center font-body text-sm font-bold tabular-nums"><span className="mr-1 text-[10px] font-medium text-muted-foreground">KSh</span>{formatPrice(stock.price)}</td>
+      <td className="px-3 py-4 text-right"><ReturnValue value={stock.day_change_percent} /></td>
+      <td className="px-3 py-4 text-right"><ReturnValue value={sevenDay} /></td>
+      <td className="px-3 py-4 text-right"><ReturnValue value={oneMonth} /></td>
+      <td className="px-3 py-4"><div className="flex justify-center"><TrendSparkline points={points} positive={(oneMonth ?? stock.day_change_percent) >= 0} /></div></td>
       <td className="px-3 py-4"><RangeCell stock={stock} /></td>
-      <td className="px-3 py-4 text-xs text-muted-foreground tabular-nums">{formatCompact(stock.volume)}</td>
-      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-bold tabular-nums">KSh {formatCompact(stock.market_cap)}</td>
+      <td className="px-3 py-4 text-center font-body text-xs text-muted-foreground tabular-nums">{formatCompact(stock.volume)}</td>
+      <td className="whitespace-nowrap px-3 py-4 text-center font-body text-sm font-bold tabular-nums">KSh {formatCompact(stock.market_cap)}</td>
     </tr>
   );
 }
 
 function ReturnValue({ value }: { value: number | null }) {
   if (value == null) return <span className="text-xs text-muted-foreground">—</span>;
-  return <span className={`whitespace-nowrap text-sm font-bold tabular-nums ${value > 0 ? "text-emerald-500" : value < 0 ? "text-destructive" : "text-muted-foreground"}`}>{value > 0 ? "+" : ""}{formatPrice(value)}%</span>;
+  return <span className={`whitespace-nowrap font-body text-sm font-bold tabular-nums ${value > 0 ? "text-emerald-500" : value < 0 ? "text-destructive" : "text-muted-foreground"}`}>{value > 0 ? "+" : ""}{formatPrice(value)}%</span>;
 }
 
 function TrendSparkline({ points, positive }: { points: DemoPricePoint[]; positive: boolean }) {
   const recent = points.slice(-12);
   if (recent.length < 2) return <span className="text-xs text-muted-foreground">—</span>;
-  const prices = recent.map((point) => point.price);
-  const min = Math.min(...prices);
-  const max = Math.max(...prices);
-  const spread = max - min || 1;
-  const path = recent.map((point, index) => `${index === 0 ? "M" : "L"}${(index / (recent.length - 1)) * 92},${30 - ((point.price - min) / spread) * 24}`).join(" ");
-  return <svg viewBox="0 0 92 34" className={`h-8 w-24 ${positive ? "text-emerald-500" : "text-destructive"}`} aria-hidden="true"><path d={path} fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" /></svg>;
+  const color = positive ? "hsl(152 60% 42%)" : "hsl(var(--destructive))";
+  const gradientId = `stock-trend-${positive ? "up" : "down"}`;
+  return (
+    <div className="h-[24px] w-[60px]" aria-hidden="true">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={recent} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <YAxis hide domain={["dataMin", "dataMax"]} />
+          <Area type="monotone" dataKey="price" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
+          <Line type="monotone" dataKey="price" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
 }
 
 function RangeCell({ stock }: { stock: CachedStock }) {
   if (stock.year_low == null || stock.year_high == null || stock.year_high <= stock.year_low) return <span className="text-xs text-muted-foreground">—</span>;
   const position = Math.min(100, Math.max(0, ((stock.price - stock.year_low) / (stock.year_high - stock.year_low)) * 100));
-  return <div className="min-w-[130px]"><div className="flex justify-between text-[10px] text-muted-foreground tabular-nums"><span>{formatPrice(stock.year_low)}</span><span>{formatPrice(stock.year_high)}</span></div><div className="relative mt-2 h-1.5 rounded-full bg-muted"><span className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500 shadow-[0_0_8px_hsl(160_84%_39%/0.45)]" style={{ left: `${position}%` }} /></div></div>;
+  return <div className="min-w-[130px]"><div className="flex justify-between font-body text-[10px] text-muted-foreground tabular-nums"><span>{formatPrice(stock.year_low)}</span><span>{formatPrice(stock.year_high)}</span></div><div className="relative mt-2 h-1.5 rounded-full bg-muted"><span className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500 shadow-[0_0_8px_hsl(160_84%_39%/0.45)]" style={{ left: `${position}%` }} /></div></div>;
 }
 
 function MovementButton({ label, count, active, onClick, icon, tone }: { label: string; count: number; active: boolean; onClick: () => void; icon?: ReactNode; tone?: "positive" | "negative" }) {

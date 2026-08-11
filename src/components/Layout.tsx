@@ -20,7 +20,7 @@ function shouldShowMobileAiLabFab(pathname: string): boolean {
 const Layout = ({ children }: { children: React.ReactNode }) => {
   usePageView();
   const { pathname } = useLocation();
-  const showTicker = pathname === "/";
+  const showTicker = pathname === "/" || pathname === "/stocks";
   // Immersive mobile view for news article pages: hide mobile navbar & footer
   const isNewsArticle = /^\/news\/[^/]+/.test(pathname);
   // AI Lab uses its own floating composer — hide global footer entirely
