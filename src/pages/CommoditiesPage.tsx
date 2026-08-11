@@ -686,10 +686,11 @@ const MobileCommodityCard = ({
                       borderRadius: "8px",
                       fontSize: "11px",
                     }}
+                    itemStyle={{ color: "#10b981" }}
                     labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
                     formatter={(value: number) => [value.toFixed(2), "Price"]}
                   />
-                  <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="price" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ fill: "#10b981", stroke: "#10b981" }} />
                 </LineChart>
                   );
                 })()}
@@ -851,10 +852,11 @@ const CommodityRow = ({
                         borderRadius: "8px",
                         fontSize: "12px",
                       }}
+                      itemStyle={{ color: "#10b981" }}
                       labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
                       formatter={(value: number) => [`${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}`, "Price"]}
                     />
-                      <Line type="monotone" dataKey="price" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="price" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ fill: "#10b981", stroke: "#10b981" }} />
                     </LineChart>
                     );
                   })()}

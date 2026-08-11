@@ -678,10 +678,11 @@ const MobileRateCard = ({
                       borderRadius: "8px",
                       fontSize: "11px",
                     }}
+                    itemStyle={{ color: "#10b981" }}
                     labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
                     formatter={(value: number) => [`KES ${value.toFixed(4)}`, "Rate"]}
                   />
-                  <Line type="monotone" dataKey="rate" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+                  <Line type="monotone" dataKey="rate" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ fill: "#10b981", stroke: "#10b981" }} />
                 </LineChart>
                   );
                 })()}
@@ -840,10 +841,11 @@ const RateRow = ({
                         borderRadius: "8px",
                         fontSize: "12px",
                       }}
+                      itemStyle={{ color: "#10b981" }}
                       labelFormatter={(v) => formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
                       formatter={(value: number) => [`KES ${value.toFixed(4)}`, "Rate"]}
                     />
-                      <Line type="monotone" dataKey="rate" stroke="hsl(var(--accent))" strokeWidth={2} dot={false} />
+                      <Line type="monotone" dataKey="rate" stroke="#10b981" strokeWidth={2} dot={false} activeDot={{ fill: "#10b981", stroke: "#10b981" }} />
                     </LineChart>
                     );
                   })()}
