@@ -1,5 +1,4 @@
 import { useEffect, useState, useMemo, useRef } from "react";
-import { formatDistanceToNow } from "date-fns";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
@@ -287,11 +286,6 @@ const StockDetailPage = () => {
 
       <div className="mb-4 md:mb-6">
         <div className="md:hidden">
-          <div className="mb-5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
-            <span>Stocks / {s.sector.replace(/communications/i, "Telecom")}</span>
-            <span>Updated {formatDistanceToNow(new Date(s.updated_at), { addSuffix: true })}</span>
-          </div>
-
           <div className="flex items-center gap-3">
             <StockLogo symbol={s.symbol} name={s.name} />
             <div className="min-w-0">
@@ -301,22 +295,22 @@ const StockDetailPage = () => {
             </div>
           </div>
 
-          <div className="my-5 grid grid-cols-[1.35fr_1fr] gap-2.5">
-            <div className="[&_button]:h-12 [&_button]:w-full [&_button]:rounded-full [&_button]:border-foreground [&_button]:bg-foreground [&_button]:text-sm [&_button]:font-bold [&_button]:text-background">
+          <div className="my-4 grid grid-cols-2 gap-2">
+            <div className="[&_button]:h-10 [&_button]:w-full [&_button]:rounded-full [&_button]:border-foreground [&_button]:bg-foreground [&_button]:px-3 [&_button]:text-xs [&_button]:font-semibold [&_button]:text-background [&_svg]:h-4 [&_svg]:w-4">
               <CreateAlertDialog assetType="stock" assetId={s.id} assetName={`${s.symbol} - ${s.name}`} currentPrice={s.price} unit="KSh" />
             </div>
             {user ? (
-              <button onClick={() => toggleFav(s.id, `${s.symbol} - ${s.name}`)} className="flex h-12 items-center justify-center gap-2 rounded-full border border-border bg-card text-sm font-bold text-foreground">
+              <button onClick={() => toggleFav(s.id, `${s.symbol} - ${s.name}`)} className="flex h-10 items-center justify-center gap-2 rounded-full border border-border bg-card px-3 text-xs font-semibold text-foreground">
                 <Star className={`h-4 w-4 ${isFavourite(s.id) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`} />
                 {isFavourite(s.id) ? "Watching" : "Watch"}
               </button>
             ) : (
-              <Link to="/auth" className="flex h-12 items-center justify-center gap-2 rounded-full border border-border bg-card text-sm font-bold text-foreground"><Star className="h-4 w-4 text-muted-foreground" /> Watch</Link>
+              <Link to="/auth" className="flex h-10 items-center justify-center gap-2 rounded-full border border-border bg-card px-3 text-xs font-semibold text-foreground"><Star className="h-4 w-4 text-muted-foreground" /> Watch</Link>
             )}
           </div>
 
           <div className="py-2">
-            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Last Price · {formatMarketDate(s.updated_at, "en-KE", { day: "numeric", month: "short", year: "numeric" })}</p>
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Last Price · {formatMarketDate(s.updated_at, "en-KE", { day: "numeric", month: "short", year: "numeric" })} · {formatMarketDateTime(s.updated_at, "en-KE", { hour: "numeric", minute: "2-digit", hour12: true })}</p>
             <p className="mt-3 text-[42px] font-black leading-none tracking-tight text-foreground tabular-nums">KSh {fmt(s.price)}</p>
             <div className="mt-1 flex items-center gap-2">
               {isUp && <TrendingUp className="h-4 w-4 text-emerald-500" />}
