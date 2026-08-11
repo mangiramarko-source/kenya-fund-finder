@@ -62,6 +62,9 @@ const DesktopTopBar = () => {
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
+    if (path === "/funds") {
+      return location.pathname.startsWith("/funds") || /^\/compare\/[^/]+\/?$/.test(location.pathname);
+    }
     return location.pathname.startsWith(path);
   };
 

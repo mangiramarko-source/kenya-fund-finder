@@ -286,6 +286,9 @@ const StockDetailPage = () => {
         >
           <ArrowLeft className="h-6 w-6" />
         </button>
+        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[14px] font-medium lowercase tracking-wide text-foreground">
+          stocks
+        </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button
@@ -409,7 +412,10 @@ const StockDetailPage = () => {
             ) : (
               <div className="-mx-3 h-[220px] w-[calc(100%+1.5rem)] md:mx-0 md:h-[280px] md:w-full">
               <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={chartHistory}>
+                <AreaChart
+                  data={chartHistory}
+                  margin={isMobile ? { top: 4, right: 20, bottom: 0, left: -8 } : { top: 4, right: 4, bottom: 0, left: 0 }}
+                >
                   <defs>
                     <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
                       <stop offset="5%" stopColor={isUp ? "hsl(152 60% 42%)" : "hsl(var(--destructive))"} stopOpacity={0.3} />

@@ -232,6 +232,9 @@ const FundDetailPage = () => {
         <button type="button" onClick={() => navigate(-1)} aria-label="Go back" className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted/50">
           <ArrowLeft className="h-6 w-6" />
         </button>
+        <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[14px] font-medium lowercase tracking-wide text-foreground">
+          mmf
+        </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
             <button type="button" aria-label="More options" className="-mr-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted/50">
@@ -252,7 +255,7 @@ const FundDetailPage = () => {
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <h1 className="truncate text-xl font-black tracking-tight text-foreground">{fund.name}</h1>
-              {fund.cma_licensed && <Shield className="h-4 w-4 shrink-0 text-primary" />}
+              {fund.cma_licensed && <Shield className="h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />}
             </div>
             <p className="mt-0.5 truncate text-sm text-muted-foreground">{fund.manager}</p>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type} · {fund.cma_licensed ? "CMA regulated" : "Fund report"}</p>
@@ -370,7 +373,7 @@ const FundDetailPage = () => {
                 {FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type}
               </Badge>
               {fund.cma_licensed && (
-                <Badge variant="outline" className="text-[10px] gap-1 rounded-lg border-accent/30 text-accent">
+                <Badge variant="outline" className="gap-1 rounded-lg border-emerald-500/35 bg-emerald-500/10 text-[10px] text-emerald-600 dark:text-emerald-400">
                   <Shield className="h-3 w-3" /> CMA Regulated
                 </Badge>
               )}
@@ -734,7 +737,7 @@ const MobileRateChart = ({ title, data, dataKey, xKey, emptyText }: { title: str
     {data && data.length > 1 ? (
       <div className="-mx-3 h-[230px] w-[calc(100%+1.5rem)]">
         <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={data} margin={{ top: 5, right: 8, bottom: 0, left: -8 }}>
+          <AreaChart data={data} margin={{ top: 4, right: 20, bottom: 0, left: -8 }}>
             <defs><linearGradient id={`mobile-${dataKey}-gradient`} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.24} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient></defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey={xKey} tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} minTickGap={18} tickMargin={6} />
