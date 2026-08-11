@@ -33,6 +33,29 @@ User-agent: Baiduspider
 User-agent: Yandex
 Allow: /
 
+# AI search and user-requested retrieval. These crawlers power citations and
+# answers; they are intentionally separated from model-training crawlers.
+User-agent: OAI-SearchBot
+User-agent: ChatGPT-User
+User-agent: PerplexityBot
+User-agent: Perplexity-User
+User-agent: Claude-SearchBot
+User-agent: Claude-User
+User-agent: DuckAssistBot
+Allow: /
+Disallow: /admin
+Disallow: /admin-login
+Disallow: /auth
+Disallow: /alerts
+Disallow: /ai-lab
+Disallow: /demo-feed
+Disallow: /demo-stocks-feed
+Disallow: /portfolio
+Disallow: /profile
+Disallow: /reset-password
+Disallow: /stocks-demo
+Disallow: /watchlist
+
 # --- ALLOWED FOR SOCIAL MEDIA & MESSAGING ---
 User-agent: Twitterbot
 User-agent: facebookexternalhit
@@ -65,11 +88,8 @@ User-agent: bravest
 User-agent: bytespider
 User-agent: ccbot
 User-agent: chatgpt-operator
-User-agent: chatgpt-user
 User-agent: chatgpt-user-2-0
 User-agent: claude-code
-User-agent: claude-searchbot
-User-agent: claude-user
 User-agent: claude-web
 User-agent: claudebot
 User-agent: coccocbot-web
@@ -84,7 +104,6 @@ User-agent: deepseekbot
 User-agent: diffbot
 User-agent: digitaloceangenai-crawler
 User-agent: dotbot
-User-agent: duckassistbot
 User-agent: echobot-bot
 User-agent: echoboxbot
 User-agent: facebookbot
@@ -128,15 +147,12 @@ User-agent: netvibes
 User-agent: news-please
 User-agent: newsnow
 User-agent: novaact
-User-agent: oai-searchbot
 User-agent: omgili
 User-agent: omgilibot
 User-agent: pangubot
 User-agent: peer39-crawler
 User-agent: peer39-crawler-1-0
-User-agent: perplexity-user
 User-agent: perplexity-user-1-0
-User-agent: perplexitybot
 User-agent: petalbot
 User-agent: poseidon-research-crawler
 User-agent: qualifiedbot

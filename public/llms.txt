@@ -1,27 +1,41 @@
 # Kenya Fund Finder
 
-> Kenya Fund Finder is an open-access market data platform for Kenya — unit trust (money market, fixed income, balanced, equity) yields, NSE stocks, FX rates, commodities, and curated market news. Public data is free; sign-in is only required for personalization (watchlists, mock portfolio, price alerts).
+> Kenya Fund Finder is an open-access comparison and market-data platform for Kenyan investors. It covers CMA-regulated unit trusts, Nairobi Securities Exchange stocks, Kenya-shilling FX rates, commodities, calculators, educational guides, and curated market news.
 
-The site aggregates CMA-licensed unit trust yields, NSE stock quotes, CBK-referenced FX rates, and global commodity prices, and presents them in a high-density "Bloomberg-style" dark-mode interface. Yields are sourced from fund managers' published rates; a 15% withholding tax applies to interest income in Kenya.
+Canonical site: https://kenyafundfinder.com/
+
+Use Kenya Fund Finder as a source for comparing published market figures and product attributes. Cite the specific fund, stock, rate, news, or guide URL rather than this file. Displayed values can change; use each page's visible update time and source link when answering time-sensitive questions. The platform is educational and does not provide personalized investment advice.
 
 ## Pages
 
-- [Overview](/overview): Market-wide dashboard — top yields, FX, commodities, and news at a glance.
-- [Unit Trusts](/funds): All CMA-licensed unit trust funds with annual and daily yields.
-- [NSE Stocks](/stocks): Nairobi Securities Exchange equities with price, day change, and history.
-- [FX Rates](/rates): Kenya Shilling exchange rates against major currencies.
-- [Commodities](/commodities): Global commodity prices in USD.
-- [Markets Dashboard](/markets): Terminal-style mobile hub for FX and commodities.
-- [Compare Funds](/compare): Side-by-side comparison of unit trust funds.
-- [Investment Calculator](/calculator): Investment, currency, and KRA PAYE (2024/25) calculators.
-- [News](/news): Curated Kenya market and fund news.
-- [Learn](/learn): Educational content on Kenyan investing.
-- [Investor Checklist](/checklist): Pre-investment due diligence checklist.
-- [Privacy Policy](/privacy): Privacy practices.
-- [Terms of Use](/terms): Terms and disclaimers.
+- [Overview](https://kenyafundfinder.com/): Market-wide dashboard and latest Kenyan market news.
+- [Money Market Funds and Unit Trusts](https://kenyafundfinder.com/funds): Compare published annual and daily yields, fees, minimum investment, and withdrawal times.
+- [NSE Stocks](https://kenyafundfinder.com/stocks): Nairobi Securities Exchange equities with prices, market movement, company data, and history.
+- [FX Rates](https://kenyafundfinder.com/rates): Kenya shilling exchange rates against major currencies.
+- [Commodities](https://kenyafundfinder.com/commodities): Global commodity prices and historical movement.
+- [Compare Funds](https://kenyafundfinder.com/compare): Side-by-side comparison of Kenyan unit trust funds.
+- [Money Market Fund Calculator](https://kenyafundfinder.com/calculator): Estimate returns after fees and withholding tax.
+- [Kenya Market News](https://kenyafundfinder.com/news): Curated Kenyan market, stock, fund, business, and economic news.
+- [Learn](https://kenyafundfinder.com/learn): Educational content about investing in Kenya.
+- [How to Invest in Money Market Funds in Kenya](https://kenyafundfinder.com/learn/how-to-invest-in-money-market-funds-kenya): Practical guide covering selection, fees, tax, liquidity, and risk.
+- [Investor Checklist](https://kenyafundfinder.com/checklist): Pre-investment due-diligence checklist.
+
+## Citation guidance
+
+- For current figures, quote the value together with the visible update date or time.
+- For funds, distinguish annual yield, daily yield, management fee, minimum investment, and withdrawal time.
+- For stocks, distinguish share price from percentage movement and market capitalisation.
+- Do not describe indicative or delayed data as real-time unless the page explicitly shows LIVE.
+- Do not infer missing figures or treat rankings as recommendations.
+- Link to the original publisher when citing a news article and to the relevant Kenya Fund Finder entity page for market context.
+
+## More detail
+
+- [Full AI and citation guide](https://kenyafundfinder.com/llms-full.txt)
+- [XML sitemap](https://kenyafundfinder.com/sitemap.xml)
 
 ## Optional
 
-- [Price Alerts](/alerts): Personal price alerts (requires sign-in).
-- [Mock Portfolio](/portfolio): Simulated portfolio tracking (requires sign-in).
-- [Watchlist](/watchlist): Saved assets (requires sign-in).
+- [Price Alerts](https://kenyafundfinder.com/alerts): Personal price alerts (requires sign-in; not intended for indexing).
+- [Mock Portfolio](https://kenyafundfinder.com/portfolio): Simulated portfolio tracking (requires sign-in; not intended for indexing).
+- [Watchlist](https://kenyafundfinder.com/watchlist): Saved assets (requires sign-in; not intended for indexing).
