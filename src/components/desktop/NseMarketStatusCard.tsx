@@ -5,12 +5,14 @@ interface NseMarketStatusCardProps {
   n20?: { value: number; changePct: number };
   nasi?: { value: number; changePct: number };
   n25?: { value: number; changePct: number };
+  compact?: boolean;
 }
 
 export const NseMarketStatusCard: React.FC<NseMarketStatusCardProps> = ({
   n20 = { value: 1742.5, changePct: 0.62 },
   nasi = { value: 104.8, changePct: 0.41 },
   n25 = { value: 2850.1, changePct: 1.15 },
+  compact = false,
 }) => {
   const isOpen = isKenyanMarketOpen();
 
@@ -30,7 +32,7 @@ export const NseMarketStatusCard: React.FC<NseMarketStatusCardProps> = ({
         </span>
       </div>
 
-      <div className="space-y-2.5 pt-1 text-xs">
+      <div className={`${compact ? "grid grid-cols-3 gap-4" : "space-y-2.5"} pt-1 text-xs`}>
         <div className="flex items-center justify-between">
           <span className="font-medium text-muted-foreground">NSE 20 Share</span>
           <div className="flex items-center gap-1.5 font-semibold">

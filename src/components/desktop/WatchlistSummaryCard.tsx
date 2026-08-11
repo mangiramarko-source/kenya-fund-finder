@@ -14,12 +14,14 @@ interface WatchlistSummaryCardProps {
   items?: WatchlistSummaryItem[];
   stocks?: Stock[];
   onOpenCustomize?: () => void;
+  compact?: boolean;
 }
 
 export const WatchlistSummaryCard: React.FC<WatchlistSummaryCardProps> = ({
   items,
   stocks = [],
   onOpenCustomize,
+  compact = false,
 }) => {
   // Use passed watchlist items or fallback to top stocks
   const displayItems = (items && items.length > 0)
@@ -47,7 +49,7 @@ export const WatchlistSummaryCard: React.FC<WatchlistSummaryCardProps> = ({
         </button>
       </div>
 
-      <div className="space-y-3 pt-1">
+      <div className={`${compact ? "grid grid-cols-4 gap-3" : "space-y-3"} pt-1`}>
         {displayItems.map((item) => {
           const isPos = (item.day_change_percent || 0) >= 0;
           return (
@@ -77,7 +79,7 @@ export const WatchlistSummaryCard: React.FC<WatchlistSummaryCardProps> = ({
         })}
       </div>
 
-      <div className="pt-2 border-t border-border/50 text-center">
+      <div className={`${compact ? "hidden" : "block"} pt-2 border-t border-border/50 text-center`}>
         <Link
           to="/watchlist"
           className="text-xs font-bold text-emerald-500 hover:text-emerald-400 inline-flex items-center gap-1 transition-colors"

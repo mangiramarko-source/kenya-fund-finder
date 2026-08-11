@@ -15,6 +15,10 @@ const INDEXABLE_PATHS = [
   /^\/page\/[A-Za-z0-9_-]+\/?$/,
 ];
 
+const NON_INDEXABLE_DEMO_PATHS = [
+  /^\/stocks\/demo-2\/?$/,
+];
+
 export default function SeoRoutePolicy() {
   const { pathname } = useLocation();
 
@@ -25,7 +29,8 @@ export default function SeoRoutePolicy() {
       meta.name = "robots";
       document.head.appendChild(meta);
     }
-    const indexable = INDEXABLE_PATHS.some((pattern) => pattern.test(pathname));
+    const indexable = !NON_INDEXABLE_DEMO_PATHS.some((pattern) => pattern.test(pathname))
+      && INDEXABLE_PATHS.some((pattern) => pattern.test(pathname));
     meta.content = indexable
       ? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
       : "noindex, nofollow, noarchive";

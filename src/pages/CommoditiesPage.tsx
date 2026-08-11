@@ -404,7 +404,7 @@ const CommoditiesPage = () => {
                 className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
                   active
                     ? "bg-foreground text-background shadow-sm"
-                    : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                    : "border border-border bg-background text-muted-foreground hover:bg-muted/30 hover:text-foreground"
                 }`}
               >
                 {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}

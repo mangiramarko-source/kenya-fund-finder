@@ -1,6 +1,7 @@
 import { useEffect, useState, useMemo } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
+import StockDetailDesktopDemoPage from "@/pages/StockDetailDesktopDemoPage";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
@@ -31,7 +32,8 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import StockFavourites from "@/components/home/StockFavourites";
-import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
+import { useAssetWatchlist, type WatchlistEntry } from "@/hooks/useAssetWatchlist";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, ComposedChart } from "recharts";
 
 type Stock = CachedStock;
@@ -159,8 +161,9 @@ const ChangeCell = ({ change, pct }: { change: number; pct: number }) => {
   );
 };
 
-const StocksPage = () => {
+export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) => {
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
   useDocumentTitle(
     "Kenyan Stocks – Stock Market | Kenya Fund Finder",
     "Track Kenyan stock market prices, market cap, volumes, and performance.",
@@ -192,6 +195,10 @@ const StocksPage = () => {
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
   const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
+
+  useEffect(() => {
+    if (desktopDemo && isMobile) navigate("/stocks", { replace: true });
+  }, [desktopDemo, isMobile, navigate]);
 
   useEffect(() => {
     const fetchStocks = async () => {
@@ -342,6 +349,37 @@ const StocksPage = () => {
       : null;
 
   const maxMarketCap = useMemo(() => Math.max(...stocks.map((s) => s.market_cap || 0)), [stocks]);
+
+  if (desktopDemo) {
+    if (isMobile) return null;
+    return (
+      <MobileInspiredDesktopDemo
+        stocks={stocks}
+        filtered={filtered}
+        history={history}
+        loading={loading}
+        latestUpdate={latestUpdate}
+        search={search}
+        setSearch={setSearch}
+        sector={sector}
+        setSector={setSector}
+        sectors={sectors}
+        movement={mobileMovement}
+        setMovement={setMobileMovement}
+        gainers={gainers}
+        losers={losers}
+        unchanged={unchanged}
+        sortKey={sortKey}
+        toggleSort={toggleSort}
+        maxMarketCap={maxMarketCap}
+        signedIn={Boolean(user)}
+        favouriteEntries={favEntries}
+        isFavourite={isFavourite}
+        toggleFavourite={toggleFavourite}
+        navigate={navigate}
+      />
+    );
+  }
 
   return (
     <div className="min-h-screen">
@@ -563,7 +601,7 @@ const StocksPage = () => {
                   className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
                     active
                       ? "bg-foreground text-background shadow-sm"
-                      : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
+                      : "border border-border bg-background text-muted-foreground hover:bg-muted/30 hover:text-foreground"
                   }`}
                 >
                   {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
@@ -714,6 +752,141 @@ const StocksPage = () => {
             any stock to view price history and detailed metrics. This information is for educational purposes only.
           </p>
         </div>
+      </div>
+    </div>
+  );
+};
+
+const MobileInspiredDesktopDemo = ({
+  stocks,
+  filtered,
+  history,
+  loading,
+  latestUpdate,
+  search,
+  setSearch,
+  sector,
+  setSector,
+  sectors,
+  movement,
+  setMovement,
+  gainers,
+  losers,
+  unchanged,
+  sortKey,
+  toggleSort,
+  maxMarketCap,
+  signedIn,
+  favouriteEntries,
+  isFavourite,
+  toggleFavourite,
+  navigate,
+}: {
+  stocks: Stock[];
+  filtered: Stock[];
+  history: Record<string, PriceHistory[]>;
+  loading: boolean;
+  latestUpdate: string | null;
+  search: string;
+  setSearch: (value: string) => void;
+  sector: string;
+  setSector: (value: string) => void;
+  sectors: string[];
+  movement: "all" | "gainers" | "losers" | "unchanged";
+  setMovement: (value: "all" | "gainers" | "losers" | "unchanged") => void;
+  gainers: number;
+  losers: number;
+  unchanged: number;
+  sortKey: SortKey;
+  toggleSort: (key: SortKey) => void;
+  maxMarketCap: number;
+  signedIn: boolean;
+  favouriteEntries: WatchlistEntry[];
+  isFavourite: (id: string) => boolean;
+  toggleFavourite: (id: string, name: string) => Promise<void>;
+  navigate: (path: string) => void;
+}) => {
+  const movementOptions = [
+    { key: "all", label: "All", count: stocks.length },
+    { key: "gainers", label: "Gainers", count: gainers },
+    { key: "losers", label: "Losers", count: losers },
+    { key: "unchanged", label: "Unchanged", count: unchanged },
+  ] as const;
+
+  return (
+    <div className="min-h-screen bg-background px-6 py-7 text-foreground">
+      <div className="mx-auto max-w-[1500px]">
+        <div className="mb-5 flex items-start justify-between gap-6">
+          <div>
+            <h1 className="text-3xl font-bold tracking-tight">Kenyan Stocks</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Track Kenyan stock market prices, market cap, volumes, and performance.</p>
+          </div>
+          <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
+        </div>
+
+        <ActiveAlertsCard assetType="stock" />
+        {signedIn && favouriteEntries.length > 0 && <StockFavourites entries={favouriteEntries} stocks={stocks} />}
+
+        <div className="mb-4 mt-5 flex items-center gap-3">
+          <div className="relative min-w-0 flex-1">
+            <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/80" />
+            <Input placeholder="Search stocks..." value={search} onChange={(event) => setSearch(event.target.value)} className="h-11 w-full rounded-full border-border/80 bg-card pl-11 text-[15px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:ring-1" />
+          </div>
+          <Sheet>
+            <SheetTrigger asChild>
+              <button type="button" className="relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-border/80 bg-card px-5 text-sm font-semibold shadow-sm transition-colors hover:bg-muted/40">
+                <SlidersHorizontal className="h-4 w-4" /> Filter
+                {sector !== "All" && <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-500" />}
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="max-h-[70vh] rounded-t-2xl border-border p-5">
+              <SheetHeader className="border-b border-border/50 pb-3 text-left"><SheetTitle className="text-base font-bold">Filters</SheetTitle></SheetHeader>
+              <div className="mt-4">
+                <h4 className="mb-3 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sector</h4>
+                <div className="flex flex-wrap gap-2">
+                  {sectors.map((item) => <button key={item} type="button" onClick={() => setSector(item)} className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors ${sector === item ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground hover:text-foreground"}`}>{item}</button>)}
+                </div>
+                <SheetClose asChild><button type="button" className="mt-5 h-11 w-full rounded-full bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">Apply Filters</button></SheetClose>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        <div className="mb-5 flex gap-2 overflow-x-auto py-0.5 scrollbar-hide">
+          {movementOptions.map((option) => (
+            <button key={option.key} onClick={() => setMovement(option.key)} className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-colors ${movement === option.key ? "bg-foreground text-background shadow-sm" : "bg-muted/60 text-muted-foreground hover:text-foreground"}`}>
+              {option.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
+              {option.key === "losers" && <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
+              {option.key === "unchanged" && <Minus className="h-3.5 w-3.5" />}
+              <span>{option.label}</span><span className="font-normal opacity-75">{option.count}</span>
+            </button>
+          ))}
+        </div>
+
+        {loading ? <StockTableSkeleton /> : filtered.length === 0 ? (
+          <div className="rounded-2xl border border-border bg-card py-16 text-center text-sm text-muted-foreground">No stocks found</div>
+        ) : (
+          <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+            <div className="overflow-x-auto">
+              <table className="w-full min-w-[1180px] text-sm">
+                <colgroup><col style={{ width: "20%" }} /><col style={{ width: "9%" }} /><col style={{ width: "9%" }} /><col style={{ width: "9%" }} /><col style={{ width: "9%" }} /><col style={{ width: "10%" }} /><col style={{ width: "9%" }} /><col style={{ width: "10%" }} /><col style={{ width: "8%" }} /><col style={{ width: "7%" }} />{signedIn && <col style={{ width: "4%" }} />}</colgroup>
+                <thead><tr className="border-b border-border/40 bg-background text-[12px] text-muted-foreground">
+                  <th className="cursor-pointer py-3 pl-5 pr-2 text-left font-normal hover:text-foreground" onClick={() => toggleSort("symbol")}>Company {sortKey === "symbol" && <ArrowUpDown className="ml-1 inline h-3 w-3 text-accent" />}</th>
+                  <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("price")}>Last Price</th>
+                  <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("day_change_percent")}>1D Return</th>
+                  <th className="px-3 py-3 text-left font-normal">7D Return</th><th className="px-3 py-3 text-left font-normal">1M Return</th><th className="px-3 py-3 text-left font-normal">52W Range</th>
+                  <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("volume")}>Volume</th>
+                  <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("market_cap")}>Market Cap</th>
+                  <th className="px-3 py-3 text-left font-normal">Valuation</th><th className="px-3 py-3 text-left font-normal">Industry</th>{signedIn && <th />}
+                </tr></thead>
+                <tbody>{filtered.map((stock, index) => <DesktopStockRow key={stock.id} stock={stock} index={index} isExpanded={false} onToggle={() => undefined} onNavigate={() => navigate(`/stocks/${stock.symbol}`)} history={history[stock.id]} historyLoading={false} isFavourite={signedIn ? isFavourite(stock.id) : undefined} onToggleFavourite={signedIn ? () => toggleFavourite(stock.id, `${stock.symbol} - ${stock.name}`) : undefined} maxMarketCap={maxMarketCap} />)}</tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        <div className="mt-4 flex items-center justify-between px-1 text-xs text-muted-foreground"><span>Showing {filtered.length} of {stocks.length} stocks</span></div>
+        <div className="mt-4 rounded-xl border border-border/50 bg-muted/40 p-3"><p className="text-[10px] leading-relaxed text-muted-foreground">Stock prices shown are indicative and may be delayed. Data is sourced from the Kenyan stock market. Click any stock to view price history and detailed metrics. This information is for educational purposes only.</p></div>
       </div>
     </div>
   );
@@ -1258,4 +1431,9 @@ const StockTableSkeleton = () => (
   </div>
 );
 
-export default StocksPage;
+const StocksRoutePage = () => {
+  const isMobile = useIsMobile();
+  return isMobile ? <StocksPage /> : <StockDetailDesktopDemoPage production />;
+};
+
+export default StocksRoutePage;
