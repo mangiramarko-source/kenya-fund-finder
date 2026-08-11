@@ -282,11 +282,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               { key: "unchanged", label: "Unchanged", count: movementCounts.unchanged },
             ] as const).map((opt) => {
               const active = movement === opt.key;
-              let activeStyle = "bg-muted text-foreground";
-              if (opt.key === "gainers") activeStyle = "bg-accent/15 text-accent shadow-sm";
-              if (opt.key === "losers") activeStyle = "bg-destructive/15 text-destructive shadow-sm";
-              if (opt.key === "unchanged") activeStyle = "bg-muted-foreground/15 text-foreground shadow-sm";
-              
               return (
                 <button
                   key={opt.key}
@@ -295,15 +290,15 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     else if (opt.key === "losers") updateParams({ movement: opt.key, sort: "change", dir: "asc" });
                     else updateParams({ movement: opt.key });
                   }}
-                  className={`inline-flex items-center gap-1.5 px-4 h-10 rounded-full border text-[12px] font-semibold transition-all whitespace-nowrap ${
-                    active ? `${activeStyle} border-transparent` : "border-border bg-background text-muted-foreground hover:text-foreground"
+                  className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-colors whitespace-nowrap ${
+                    active ? "border-foreground bg-foreground text-background" : "border-border bg-transparent text-muted-foreground hover:text-foreground"
                   }`}
                 >
-                  {opt.key === "gainers" && <TrendingUp className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
-                  {opt.key === "losers" && <TrendingDown className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
-                  {opt.key === "unchanged" && <Minus className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
+                  {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
+                  {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
+                  {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5" />}
                   {opt.label}
-                  <span className={`text-[11px] tabular-nums ${active ? "opacity-90" : "opacity-50"}`}>{opt.count}</span>
+                  <span className={`font-normal tabular-nums ${active ? "text-background/70" : "text-muted-foreground"}`}>{opt.count}</span>
                 </button>
               );
             })}
@@ -311,13 +306,13 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         </div>
 
         <div className="flex items-center gap-3 pr-1">
-          <div className="relative w-[320px] shrink-0">
-            <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
+          <div className="relative w-80 shrink-0">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search fund or manager"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-10 text-[13px] rounded-full bg-background border-border w-full placeholder:text-muted-foreground/60 focus-visible:ring-1"
+              className="h-11 rounded-full border-border bg-card pl-11 text-sm shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-1"
             />
           </div>
         </div>
