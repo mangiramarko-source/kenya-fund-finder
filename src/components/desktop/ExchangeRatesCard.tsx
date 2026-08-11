@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import { DollarSign, SlidersHorizontal } from "lucide-react";
 import type { ExchangeRate } from "@/components/home/MarketTicker";
+import { getCurrencyFlag } from "@/lib/currencyFlags";
 
 interface ExchangeRatesCardProps {
   rates?: ExchangeRate[];
@@ -41,7 +42,7 @@ export const ExchangeRatesCard: React.FC<ExchangeRatesCardProps> = ({
             <div key={r.currency_code} className="flex items-center justify-between text-xs">
               <div className="flex items-center gap-2.5">
                 <div className="w-7 h-7 rounded-full bg-muted/60 flex items-center justify-center text-sm">
-                  {r.flag || "💱"}
+                  {r.flag || getCurrencyFlag(r.currency_code)}
                 </div>
                 <div>
                   <div className="font-bold text-foreground tracking-tight">{r.currency_code}/KES</div>

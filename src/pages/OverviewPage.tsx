@@ -45,6 +45,7 @@ import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { buildNewsFeedItems } from "@/lib/stockNewsFeed";
+import { getCurrencyFlag } from "@/lib/currencyFlags";
 
 const INTERNATIONAL_SOURCES = new Set([
   "Reuters Business",
@@ -173,12 +174,7 @@ const FxCustomizeDialog = ({
               >
                 <div className="flex items-center gap-3">
                   <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-[12px] font-bold">
-                    {{
-                        USD: '🇺🇸', GBP: '🇬🇧', EUR: '🇪🇺', JPY: '🇯🇵', ZAR: '🇿🇦', 
-                        AUD: '🇦🇺', CAD: '🇨🇦', CHF: '🇨🇭', CNY: '🇨🇳', INR: '🇮🇳',
-                        AED: '🇦🇪', UGX: '🇺🇬', TZS: '🇹🇿', RWF: '🇷🇼', BIF: '🇧🇮',
-                        SAR: '🇸🇦', SGD: '🇸🇬', KES: '🇰🇪'
-                    }[rate.currency_code] || rate.currency_code.substring(0,2)}
+                    {getCurrencyFlag(rate.currency_code)}
                   </div>
                   <div>
                     <p className="text-[13px] font-bold text-foreground leading-none mb-1">{rate.currency_code}/KES</p>
