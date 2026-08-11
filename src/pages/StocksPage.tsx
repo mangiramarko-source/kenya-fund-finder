@@ -4,6 +4,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
+import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import {
   TrendingUp,
@@ -33,23 +34,7 @@ import StockFavourites from "@/components/home/StockFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, ComposedChart } from "recharts";
 
-interface Stock {
-  id: string;
-  symbol: string;
-  name: string;
-  sector: string;
-  price: number;
-  previous_price: number | null;
-  day_change: number;
-  day_change_percent: number;
-  volume: number;
-  market_cap: number | null;
-  year_high: number | null;
-  year_low: number | null;
-  pe_ratio: number | null;
-  dividend_yield: number | null;
-  updated_at: string;
-}
+type Stock = CachedStock;
 
 interface PriceHistory {
   snapshot_date: string;
@@ -194,9 +179,10 @@ const StocksPage = () => {
 
   const { user } = useAuth();
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
-  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [cachedStocks] = useState(() => stockCache.loadStocks());
+  const [stocks, setStocks] = useState<Stock[]>(cachedStocks?.stocks ?? []);
   const [marketHistory, setMarketHistory] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(!cachedStocks);
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
   const [sortKey, setSortKey] = useState<SortKey>("market_cap");
@@ -219,23 +205,13 @@ const StocksPage = () => {
           order: "sort_order.asc",
           limit: 200,
         });
-        setStocks(
-          data.map((s: any) => ({
-            ...s,
-            price: Number(s.price),
-            previous_price: s.previous_price != null ? Number(s.previous_price) : null,
-            day_change: Number(s.day_change),
-            day_change_percent: Number(s.day_change_percent),
-            volume: Number(s.volume),
-            market_cap: s.market_cap != null ? Number(s.market_cap) : null,
-            year_high: s.year_high != null ? Number(s.year_high) : null,
-            year_low: s.year_low != null ? Number(s.year_low) : null,
-            pe_ratio: s.pe_ratio != null ? Number(s.pe_ratio) : null,
-            dividend_yield: s.dividend_yield != null ? Number(s.dividend_yield) : null,
-          })),
-        );
+        const normalized = data.map(normalizeStock);
+        if (normalized.length === 0) throw new Error("No stock data returned");
+        setStocks(normalized);
+        stockCache.saveStocks(normalized);
       } catch (e) {
         console.error("Failed to load stocks", e);
+        if (cachedStocks) setStocks(cachedStocks.stocks);
       } finally {
         setLoading(false);
       }
@@ -263,7 +239,7 @@ const StocksPage = () => {
     return () => {
       supabase.removeChannel(ch);
     };
-  }, []);
+  }, [cachedStocks]);
 
   // Preload sparkline data for all stocks (recent window via gateway).
   useEffect(() => {

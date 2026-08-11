@@ -4,6 +4,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
+import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
 import { formatMarketDate, formatMarketDateTime, decodeHtmlEntities } from "@/lib/utils";
 import {
   downsampleStockHistory,
@@ -36,23 +37,7 @@ import {
   AreaChart, Area, BarChart, Bar,
 } from "recharts";
 
-interface Stock {
-  id: string;
-  symbol: string;
-  name: string;
-  sector: string;
-  price: number;
-  previous_price: number | null;
-  day_change: number;
-  day_change_percent: number;
-  volume: number;
-  market_cap: number | null;
-  year_high: number | null;
-  year_low: number | null;
-  pe_ratio: number | null;
-  dividend_yield: number | null;
-  updated_at: string;
-}
+type Stock = CachedStock;
 
 interface PriceHistory {
   snapshot_date: string;
@@ -90,6 +75,7 @@ const StockDetailPage = () => {
 
   const [stock, setStock] = useState<Stock | null>(null);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
   const [history, setHistory] = useState<PriceHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [range, setRange] = useState<StockHistoryRange>("3M");
@@ -129,6 +115,9 @@ const StockDetailPage = () => {
   useEffect(() => {
     if (!symbol) return;
     const fetchStock = async () => {
+      setLoading(true);
+      setLoadError(false);
+      setStock(null);
       try {
         const { data } = await fetchPublicData<any>("stocks", {
           select: [
@@ -141,21 +130,16 @@ const StockDetailPage = () => {
         });
         const row = data[0];
         if (!row) { setLoading(false); return; }
-        setStock({
-          ...row,
-          price: Number(row.price),
-          previous_price: row.previous_price != null ? Number(row.previous_price) : null,
-          day_change: Number(row.day_change),
-          day_change_percent: Number(row.day_change_percent),
-          volume: Number(row.volume),
-          market_cap: row.market_cap != null ? Number(row.market_cap) : null,
-          year_high: row.year_high != null ? Number(row.year_high) : null,
-          year_low: row.year_low != null ? Number(row.year_low) : null,
-          pe_ratio: row.pe_ratio != null ? Number(row.pe_ratio) : null,
-          dividend_yield: row.dividend_yield != null ? Number(row.dividend_yield) : null,
-        } as Stock);
+        const normalized = normalizeStock(row);
+        setStock(normalized);
+        stockCache.upsertStock(normalized);
       } catch (e) {
         console.error("Failed to load stock", e);
+        const cached = stockCache.loadStocks()?.stocks.find(
+          (item) => item.symbol.toUpperCase() === symbol.toUpperCase(),
+        );
+        if (cached) setStock(cached);
+        else setLoadError(true);
       } finally {
         setLoading(false);
       }
@@ -240,6 +224,23 @@ const StockDetailPage = () => {
         <Skeleton className="h-64 w-full rounded-xl mb-4" />
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
           {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
+        </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="min-h-screen px-4 md:px-6 py-6">
+        <button onClick={() => navigate("/stocks")} className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground mb-4">
+          <ArrowLeft className="h-4 w-4" /> Back to Stocks
+        </button>
+        <div className="text-center py-20">
+          <h2 className="text-lg font-semibold text-foreground mb-2">Stock temporarily unavailable</h2>
+          <p className="text-sm text-muted-foreground">Please check your connection and try again.</p>
+          <button type="button" onClick={() => window.location.reload()} className="mt-4 rounded-full bg-foreground px-5 py-2 text-sm font-semibold text-background">
+            Try again
+          </button>
         </div>
       </div>
     );

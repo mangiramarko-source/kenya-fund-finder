@@ -35,7 +35,7 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
 
   let textStatus = "";
   if (isFunds) {
-    textStatus = displayDate ? `Updated ${displayDate}` : "";
+    textStatus = displayDate ? `Updated ${displayDate} · Updated monthly` : "Updated monthly";
   } else if (!marketOpen) {
     textStatus = displayDate ? `Markets Closed (Opens Mon-Fri) • Updated ${displayDate}` : `Markets Closed (Opens Mon-Fri)`;
   } else {

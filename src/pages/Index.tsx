@@ -20,8 +20,8 @@ const Index = () => {
       description: "Compare CMA-regulated unit trusts and MMFs in Kenya by yield, manager, and minimum investment. Updated daily.",
     }
   );
-  const cachedFunds = fundCache.loadFunds();
-  const cachedSnaps = fundCache.loadSnapshots();
+  const [cachedFunds] = useState(() => fundCache.loadFunds());
+  const [cachedSnaps] = useState(() => fundCache.loadSnapshots());
   const [funds, setFunds] = useState<FundFromDB[]>(cachedFunds?.funds ?? []);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>(cachedSnaps?.snapshots ?? {});
   const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});

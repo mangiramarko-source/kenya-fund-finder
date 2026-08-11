@@ -65,6 +65,10 @@ export class GatewayError extends Error {
   }
 }
 
+const isRetryableStatus = (status: number) => status === 408 || status === 425 || status === 429 || status >= 500;
+
+const wait = (milliseconds: number) => new Promise((resolve) => globalThis.setTimeout(resolve, milliseconds));
+
 export async function fetchPublicData<T = Record<string, unknown>>(
   resource: GatewayResource,
   query: GatewayQuery = {},
@@ -83,20 +87,33 @@ export async function fetchPublicData<T = Record<string, unknown>>(
   }
 
   const url = `${BASE}/${resource}${params.toString() ? `?${params}` : ""}`;
-  const res = await fetch(url, {
-    headers: {
-      apikey: ANON_KEY,
-      Authorization: `Bearer ${ANON_KEY}`,
-    },
-  });
-
-  if (!res.ok) {
-    let msg = `Gateway request failed (${res.status})`;
+  const delays = [250, 700];
+  for (let attempt = 0; attempt <= delays.length; attempt += 1) {
     try {
-      const body = await res.json();
-      if (body?.error) msg = body.error;
-    } catch { /* ignore */ }
-    throw new GatewayError(res.status, msg);
+      const res = await fetch(url, {
+        headers: {
+          apikey: ANON_KEY,
+          Authorization: `Bearer ${ANON_KEY}`,
+        },
+      });
+
+      if (res.ok) return res.json();
+
+      let msg = `Gateway request failed (${res.status})`;
+      try {
+        const body = await res.json();
+        if (body?.error) msg = body.error;
+      } catch { /* ignore */ }
+
+      const error = new GatewayError(res.status, msg);
+      if (!isRetryableStatus(res.status) || attempt === delays.length) throw error;
+    } catch (error) {
+      if (error instanceof GatewayError && !isRetryableStatus(error.status)) throw error;
+      if (attempt === delays.length) throw error;
+    }
+
+    await wait(delays[attempt]);
   }
-  return res.json();
+
+  throw new Error("Gateway request failed");
 }
