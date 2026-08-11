@@ -2,6 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { parseFeed } from "https://deno.land/x/rss@0.5.8/mod.ts";
 import { isLegacyCronAuthorization } from "../fetch-market-data/auth.ts";
+import { sanitizeNewsText } from "../_shared/news-text.ts";
 import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
 
 const corsHeaders = {
@@ -63,9 +64,7 @@ interface ParsedArticle {
 }
 
 function stripHtml(html: string): string {
-  return html.replace(/<[^>]*>/g, "").replace(/&amp;/g, "&").replace(/&lt;/g, "<")
-    .replace(/&gt;/g, ">").replace(/&quot;/g, '"').replace(/&#039;/g, "'")
-    .replace(/&nbsp;/g, " ").replace(/\s+/g, " ").trim();
+  return sanitizeNewsText(html);
 }
 
 function extractImageUrl(item: string): string | null {

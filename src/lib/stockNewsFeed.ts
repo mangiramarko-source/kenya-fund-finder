@@ -45,7 +45,7 @@ export function buildNewsFeedItems(articles: NewsFromDB[], stocks: PublicStock[]
       authorName: article.source || "Market News",
       authorLabel: article.category || "News",
       title: decodeHtmlEntities(article.title),
-      content: article.ai_insight || article.summary || article.content || "",
+      content: decodeHtmlEntities(article.ai_insight || article.summary || article.content || ""),
       mediaUrl: article.image_url || undefined,
       mediaType: article.image_url ? ("image" as const) : undefined,
       timestamp: new Date(article.created_at || article.date_published || Date.now()),
@@ -53,7 +53,7 @@ export function buildNewsFeedItems(articles: NewsFromDB[], stocks: PublicStock[]
       comments: article.comments || 0,
       url: article.url || "#",
       rawItem: article,
-      aiInsight: article.ai_insight,
+      aiInsight: article.ai_insight ? decodeHtmlEntities(article.ai_insight) : null,
       relatedStock: stock ? {
         id: stock.id,
         symbol: stock.symbol,

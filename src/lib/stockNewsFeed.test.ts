@@ -49,6 +49,12 @@ describe("stock news feed", () => {
     expect(item.content).toBe("Summary fallback");
   });
 
+  it("does not render legacy RSS markup in a summary", () => {
+    const summary = '<a href="https://news.google.com">EABL stake sale</a> <font>Business Daily</font>';
+    const [item] = buildNewsFeedItems([article({ ai_insight: null, summary })], [stock]);
+    expect(item.content).toBe("EABL stake sale Business Daily");
+  });
+
   it("does not fabricate a relation when the stock is missing", () => {
     const [item] = buildNewsFeedItems([article()], []);
     expect(item.relatedStock).toBeNull();
