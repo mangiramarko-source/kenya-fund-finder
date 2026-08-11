@@ -457,15 +457,15 @@ const FundDetailPage = () => {
                   <AreaChart data={chartData}>
                     <defs>
                       <linearGradient id="rateGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.2} />
-                        <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.2} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="date" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                     <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={["dataMin - 0.2", "dataMax + 0.2"]} />
-                    <RechartsTooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "11px", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }} />
-                    <Area type="monotone" dataKey="rate" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#rateGrad)" dot={{ fill: "hsl(var(--accent))", r: 2.5 }} name="Annual Rate" />
+                    <RechartsTooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", fontSize: "11px", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }} itemStyle={{ color: "#10b981" }} labelStyle={{ color: "hsl(var(--foreground))" }} />
+                    <Area type="monotone" dataKey="rate" stroke="#10b981" strokeWidth={2} fill="url(#rateGrad)" dot={{ fill: "#10b981", stroke: "#10b981", r: 2.5 }} activeDot={{ fill: "#10b981", stroke: "#10b981" }} name="Annual Rate" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -483,15 +483,15 @@ const FundDetailPage = () => {
                   <AreaChart data={yields}>
                     <defs>
                       <linearGradient id="yieldGrad" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="hsl(var(--accent))" stopOpacity={0.15} />
-                        <stop offset="95%" stopColor="hsl(var(--accent))" stopOpacity={0} />
+                        <stop offset="5%" stopColor="#10b981" stopOpacity={0.15} />
+                        <stop offset="95%" stopColor="#10b981" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
                     <XAxis dataKey="month" tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" />
                     <YAxis tick={{ fontSize: 10 }} stroke="hsl(var(--muted-foreground))" domain={["dataMin - 0.5", "dataMax + 0.5"]} />
-                    <RechartsTooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }} />
-                    <Area type="monotone" dataKey="yield" stroke="hsl(var(--accent))" strokeWidth={2} fill="url(#yieldGrad)" dot={{ fill: "hsl(var(--accent))", r: 2.5 }} name="Yield (%)" />
+                    <RechartsTooltip contentStyle={{ borderRadius: "8px", border: "1px solid hsl(var(--border))", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }} itemStyle={{ color: "#10b981" }} labelStyle={{ color: "hsl(var(--foreground))" }} />
+                    <Area type="monotone" dataKey="yield" stroke="#10b981" strokeWidth={2} fill="url(#yieldGrad)" dot={{ fill: "#10b981", stroke: "#10b981", r: 2.5 }} activeDot={{ fill: "#10b981", stroke: "#10b981" }} name="Yield (%)" />
                   </AreaChart>
                 </ResponsiveContainer>
               </div>
@@ -735,12 +735,12 @@ const MobileRateChart = ({ title, data, dataKey, xKey, emptyText }: { title: str
       <div className="-mx-3 h-[230px] w-[calc(100%+1.5rem)]">
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={data} margin={{ top: 5, right: 8, bottom: 0, left: -8 }}>
-            <defs><linearGradient id={`mobile-${dataKey}-gradient`} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.24} /><stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} /></linearGradient></defs>
+            <defs><linearGradient id={`mobile-${dataKey}-gradient`} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="#10b981" stopOpacity={0.24} /><stop offset="95%" stopColor="#10b981" stopOpacity={0} /></linearGradient></defs>
             <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
             <XAxis dataKey={xKey} tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} minTickGap={18} tickMargin={6} />
             <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} width={42} domain={["dataMin - 0.5", "dataMax + 0.5"]} />
-            <RechartsTooltip contentStyle={{ borderRadius: "10px", border: "1px solid hsl(var(--border))", fontSize: "11px", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }} />
-            <Area type="monotone" dataKey={dataKey} stroke="hsl(var(--primary))" strokeWidth={2} fill={`url(#mobile-${dataKey}-gradient)`} dot={false} />
+            <RechartsTooltip contentStyle={{ borderRadius: "10px", border: "1px solid hsl(var(--border))", fontSize: "11px", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }} itemStyle={{ color: "#10b981" }} labelStyle={{ color: "hsl(var(--foreground))" }} />
+            <Area type="monotone" dataKey={dataKey} stroke="#10b981" strokeWidth={2} fill={`url(#mobile-${dataKey}-gradient)`} dot={false} activeDot={{ fill: "#10b981", stroke: "#10b981" }} />
           </AreaChart>
         </ResponsiveContainer>
       </div>
