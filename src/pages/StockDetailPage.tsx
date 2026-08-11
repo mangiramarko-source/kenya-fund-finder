@@ -73,8 +73,12 @@ const StockDetailPage = () => {
   const { toast } = useToast();
   const { isFavourite, toggle: toggleFav } = useAssetWatchlist("stock");
 
-  const [stock, setStock] = useState<Stock | null>(null);
-  const [loading, setLoading] = useState(true);
+  const [stock, setStock] = useState<Stock | null>(() => stockCache.loadStocks()?.stocks.find(
+    (item) => item.symbol.toUpperCase() === symbol?.toUpperCase(),
+  ) ?? null);
+  const [loading, setLoading] = useState(() => !stockCache.loadStocks()?.stocks.some(
+    (item) => item.symbol.toUpperCase() === symbol?.toUpperCase(),
+  ));
   const [loadError, setLoadError] = useState(false);
   const [history, setHistory] = useState<PriceHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
@@ -114,10 +118,13 @@ const StockDetailPage = () => {
 
   useEffect(() => {
     if (!symbol) return;
+    const cached = stockCache.loadStocks()?.stocks.find(
+      (item) => item.symbol.toUpperCase() === symbol.toUpperCase(),
+    );
     const fetchStock = async () => {
-      setLoading(true);
+      setLoading(!cached);
       setLoadError(false);
-      setStock(null);
+      setStock(cached ?? null);
       try {
         const { data } = await fetchPublicData<any>("stocks", {
           select: [
@@ -129,15 +136,15 @@ const StockDetailPage = () => {
           limit: 1,
         });
         const row = data[0];
-        if (!row) { setLoading(false); return; }
+        if (!row) {
+          if (!cached) setStock(null);
+          return;
+        }
         const normalized = normalizeStock(row);
         setStock(normalized);
         stockCache.upsertStock(normalized);
       } catch (e) {
         console.error("Failed to load stock", e);
-        const cached = stockCache.loadStocks()?.stocks.find(
-          (item) => item.symbol.toUpperCase() === symbol.toUpperCase(),
-        );
         if (cached) setStock(cached);
         else setLoadError(true);
       } finally {

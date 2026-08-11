@@ -32,9 +32,10 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   const { symbol = "" } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
-  const [stocks, setStocks] = useState<CachedStock[]>([]);
+  const [cachedStocks] = useState(() => stockCache.loadStocks()?.stocks ?? []);
+  const [stocks, setStocks] = useState<CachedStock[]>(cachedStocks);
   const [history, setHistory] = useState<Record<string, DemoPricePoint[]>>({});
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(cachedStocks.length === 0);
   const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
@@ -52,7 +53,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   useEffect(() => {
     let cancelled = false;
     const loadStocks = async () => {
-      setLoading(true);
+      if (cachedStocks.length === 0) setLoading(true);
       setLoadError(false);
       try {
         const response = await fetchPublicData<CachedStock>("stocks", {
@@ -67,37 +68,39 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
         if (!cancelled) {
           setStocks(normalized);
           stockCache.saveStocks(normalized);
-        }
-        try {
-          const historyResponse = await fetchPublicData<RawHistoryPoint>("stock-history-bulk", {
-            select: ["stock_id", "snapshot_date", "price"],
-            order: "snapshot_date.asc",
-            days: 90,
-            limit: 5000,
-          });
-          const grouped: Record<string, DemoPricePoint[]> = {};
-          historyResponse.data.forEach((point) => {
-            if (!grouped[point.stock_id]) grouped[point.stock_id] = [];
-            grouped[point.stock_id].push({ snapshot_date: point.snapshot_date, price: Number(point.price) });
-          });
-          if (!cancelled) setHistory(grouped);
-        } catch (historyError) {
-          console.error("Failed to load demo stock returns", historyError);
+          setLoading(false);
         }
       } catch (error) {
         console.error("Failed to load desktop stock demo", error);
-        const cached = stockCache.loadStocks()?.stocks ?? [];
         if (!cancelled) {
-          setStocks(cached);
-          setLoadError(cached.length === 0);
+          setLoadError(cachedStocks.length === 0);
         }
       } finally {
         if (!cancelled) setLoading(false);
       }
     };
+    const loadHistory = async () => {
+      try {
+        const historyResponse = await fetchPublicData<RawHistoryPoint>("stock-history-bulk", {
+          select: ["stock_id", "snapshot_date", "price"],
+          order: "snapshot_date.asc",
+          days: 90,
+          limit: 5000,
+        });
+        const grouped: Record<string, DemoPricePoint[]> = {};
+        historyResponse.data.forEach((point) => {
+          if (!grouped[point.stock_id]) grouped[point.stock_id] = [];
+          grouped[point.stock_id].push({ snapshot_date: point.snapshot_date, price: Number(point.price) });
+        });
+        if (!cancelled) setHistory(grouped);
+      } catch (historyError) {
+        console.error("Failed to load stock returns", historyError);
+      }
+    };
     loadStocks();
+    loadHistory();
     return () => { cancelled = true; };
-  }, []);
+  }, [cachedStocks]);
 
   const selectedStock = useMemo(
     () => symbol ? findDemoStock(stocks, symbol) : stocks[0] ?? null,
