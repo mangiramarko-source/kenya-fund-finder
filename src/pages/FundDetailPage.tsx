@@ -267,7 +267,7 @@ const FundDetailPage = () => {
         </div>
 
         <div className="mt-3">
-          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Annual yield · Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</p>
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Annual yield · Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })} · Updated monthly</p>
           <p className="mt-1 text-[38px] font-black leading-none tabular-nums text-foreground">{formatYield(fund.annual_yield, fund.yield_unit)}</p>
           <div className="mt-1.5 flex items-center gap-3">
             {prevSnap && <YieldChange current={fund.annual_yield} previous={prevSnap.annual_yield} unit={fund.yield_unit} className="text-xs font-bold" />}
@@ -420,7 +420,7 @@ const FundDetailPage = () => {
 
         <div className="flex items-center justify-between mt-3 flex-wrap gap-2">
           <p className="text-[11px] text-muted-foreground/60 tabular-nums">
-            Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}
+            Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })} · Updated monthly
           </p>
           <div className="flex items-center gap-2">
             <AddToPortfolioButton
