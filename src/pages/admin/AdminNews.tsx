@@ -54,9 +54,26 @@ const AdminNews = () => {
   const handleFetchNewsNow = async () => {
     setIsFetchingNews(true);
     try {
-      const { data, error } = await supabase.functions.invoke("fetch-news", { body: {} });
-      if (error) throw error;
-      const inserted = (data as any)?.inserted ?? (data as any)?.count ?? 0;
+      const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
+      const baseUrl = envUrl && envUrl !== "undefined"
+        ? envUrl.replace(/\/$/, "")
+        : projectId && projectId !== "undefined"
+          ? `https://${projectId}.supabase.co`
+          : "https://qrmthciurngpzpjhevdj.supabase.co";
+      const { data: { session } } = await supabase.auth.getSession();
+      const headers: Record<string, string> = { "Content-Type": "application/json" };
+      if (session?.access_token) {
+        headers["Authorization"] = `Bearer ${session.access_token}`;
+      }
+      const res = await fetch(`${baseUrl}/functions/v1/fetch-news`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify({}),
+      });
+      const result = await res.json();
+      if (!res.ok) throw new Error(result?.error || "Fetch failed");
+      const inserted = result?.inserted ?? result?.count ?? 0;
       toast({
         title: "News fetch complete",
         description: typeof inserted === "number"

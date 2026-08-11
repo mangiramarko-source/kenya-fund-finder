@@ -161,7 +161,13 @@ const AdminMarkets = () => {
   const callFetchFunction = async (fetchType?: string) => {
     setSaving(true);
     try {
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
+      const baseUrl = envUrl && envUrl !== "undefined"
+        ? envUrl.replace(/\/$/, "")
+        : projectId && projectId !== "undefined"
+          ? `https://${projectId}.supabase.co`
+          : "https://qrmthciurngpzpjhevdj.supabase.co";
       const body: Record<string, unknown> = {};
       if (fetchType) body.fetch_type = fetchType;
       const { data: { session } } = await supabase.auth.getSession();
@@ -169,12 +175,13 @@ const AdminMarkets = () => {
       if (session?.access_token) {
         headers["Authorization"] = `Bearer ${session.access_token}`;
       }
-      const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/fetch-market-data`,
-        { method: "POST", headers, body: JSON.stringify(body) }
-      );
+      const res = await fetch(`${baseUrl}/functions/v1/fetch-market-data`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body),
+      });
       const result = await res.json();
-      if (result.success) {
+      if (res.ok && result.success) {
         toast.success(`Fetch complete! ${(result.results || []).join(', ')}`);
         fetchData();
       } else {

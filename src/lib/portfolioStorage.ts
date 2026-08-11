@@ -78,13 +78,18 @@ export const portfolioStorage = {
     const items = safeRead();
     const idx = items.findIndex((i) => i.id === id);
     if (idx === -1) return null;
+    const previousUpdatedAt = Date.parse(items[idx].updated_at);
+    const currentTime = Date.now();
+    const updatedAt = new Date(
+      Number.isNaN(previousUpdatedAt) ? currentTime : Math.max(currentTime, previousUpdatedAt + 1),
+    ).toISOString();
     const updated: PortfolioItem = {
       ...items[idx],
       ...patch,
       id: items[idx].id,
       user_id: items[idx].user_id,
       created_at: items[idx].created_at,
-      updated_at: new Date().toISOString(),
+      updated_at: updatedAt,
     };
     items[idx] = updated;
     safeWrite(items);

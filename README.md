@@ -1,73 +1,71 @@
-# Welcome to your Lovable project
+# Kenya Fund Finder
 
-## Project info
+Kenya Fund Finder is a financial education and market-comparison platform for Kenyan investors. It brings unit trusts, NSE stocks, exchange rates, commodities, market news, watchlists, portfolio tools, alerts, calculators, and an educational AI Lab into one responsive web application.
 
-**URL**: https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID
+## Stack
 
-## How can I edit this code?
+- React 18, TypeScript, and Vite
+- Tailwind CSS and shadcn/ui
+- Supabase Auth, Postgres, Storage, and Edge Functions
+- Vitest and Testing Library
 
-There are several ways of editing your application.
+## Local development
 
-**Use Lovable**
-
-Simply visit the [Lovable Project](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and start prompting.
-
-Changes made via Lovable will be committed automatically to this repo.
-
-**Use your preferred IDE**
-
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
-
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
-
-Follow these steps:
+Requirements: Node.js 22 or newer and npm.
 
 ```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
-
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
-
-# Step 3: Install the necessary dependencies.
-npm i
-
-# Step 4: Start the development server with auto-reloading and an instant preview.
+git clone <repository-url>
+cd kenya-fund-finder
+npm install
+cp .env.example .env
 npm run dev
 ```
 
-**Edit a file directly in GitHub**
+At minimum, configure these browser-safe values in `.env`:
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+```dotenv
+VITE_SUPABASE_URL=https://<project-ref>.supabase.co
+VITE_SUPABASE_PUBLISHABLE_KEY=<publishable-key>
+VITE_SUPABASE_PROJECT_ID=<project-ref>
+```
 
-**Use GitHub Codespaces**
+Do not expose `SUPABASE_SERVICE_ROLE_KEY` in frontend code or commit it to Git.
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## Commands
 
-## What technologies are used for this project?
+| Command | Purpose |
+| --- | --- |
+| `npm run dev` | Generate the sitemap and start Vite |
+| `npm test` | Run the complete Vitest suite |
+| `npm run test:watch` | Run tests in watch mode |
+| `npm run build` | Generate the sitemap and create a production build |
+| `npm run check` | Run tests and a production build |
+| `npm run lint` | Run ESLint across the repository |
+| `npm run preview` | Preview the production build locally |
 
-This project is built with:
+The test commands disable Node's experimental web-storage global so jsdom owns `localStorage` consistently, including on Node 26.
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+## Supabase
 
-## How can I deploy this project?
+- Database changes live in `supabase/migrations/`.
+- Edge Functions live in `supabase/functions/`.
+- Script-only and Edge Function secrets are documented in `.env.example`.
+- Administrative helper scripts require a service-role key for the same project configured by `VITE_SUPABASE_URL`.
 
-Simply open [Lovable](https://lovable.dev/projects/REPLACE_WITH_PROJECT_ID) and click on Share -> Publish.
+Useful data-maintenance commands:
 
-## Can I connect a custom domain to my Lovable project?
+```sh
+npm run db:check-counts
+npm run db:migrate-lovable
+npm run db:apply-repair-schema
+```
 
-Yes, you can!
+Review each script's prerequisites before running it against a hosted project.
 
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
+## Deployment
 
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
+Build with `npm run build` and deploy the generated `dist/` directory. Configure the `VITE_*` values at build time and configure backend secrets in Supabase rather than the frontend environment.
+
+## Project status
+
+The automated suite covers the AI Lab routing and guardrails, fund imports and matching, guest portfolio storage, alerts, watchlists, and email-section generation. Run `npm run check` before shipping changes.

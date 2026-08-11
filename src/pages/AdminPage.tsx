@@ -1,7 +1,7 @@
 import { Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote, Share2 } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote, Share2, Landmark } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminFunds from "./admin/AdminFunds";
 import AdminNews from "./admin/AdminNews";
@@ -13,6 +13,7 @@ import AdminSuggestions from "./admin/AdminSuggestions";
 import AdminNewsEnrichment from "./admin/AdminNewsEnrichment";
 import AdminTestimonials from "./admin/AdminTestimonials";
 import SocialIndex from "./admin/social/SocialIndex";
+import AdminStockDisclosures from "./admin/AdminStockDisclosures";
 
 const AdminPage = () => {
   const { isAdmin, loading, user } = useAuth();
@@ -37,7 +38,7 @@ const AdminPage = () => {
   return (
     <div className="container py-6">
       <Tabs defaultValue="dashboard" className="space-y-6">
-         <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-11 md:max-w-6xl justify-start md:justify-stretch">
+         <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-12 md:max-w-7xl justify-start md:justify-stretch">
           <TabsTrigger value="dashboard" className="gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -70,6 +71,10 @@ const AdminPage = () => {
             <Globe className="h-4 w-4" />
             <span className="hidden sm:inline">Markets</span>
           </TabsTrigger>
+          <TabsTrigger value="disclosures" className="gap-1.5">
+            <Landmark className="h-4 w-4" />
+            <span className="hidden sm:inline">Disclosures</span>
+          </TabsTrigger>
           <TabsTrigger value="suggestions" className="gap-1.5">
             <MessageSquare className="h-4 w-4" />
             <span className="hidden sm:inline">Inbox</span>
@@ -93,6 +98,7 @@ const AdminPage = () => {
         <TabsContent value="ads"><AdminAds /></TabsContent>
         <TabsContent value="pages"><AdminPages /></TabsContent>
         <TabsContent value="markets"><AdminMarkets /></TabsContent>
+        <TabsContent value="disclosures"><AdminStockDisclosures /></TabsContent>
         <TabsContent value="suggestions"><AdminSuggestions /></TabsContent>
         <TabsContent value="testimonials"><AdminTestimonials /></TabsContent>
         <TabsContent value="log"><AdminChangeLog /></TabsContent>

@@ -35,7 +35,7 @@ const MAX_HISTORY_DAYS = 7305;
 const DEFAULT_BULK_DAYS = 30;
 
 // --- Resource registry ------------------------------------------------------
-type ResourceKind = "list" | "history" | "bulk-recent";
+type ResourceKind = "list" | "history" | "related" | "bulk-recent";
 
 interface ResourceDef {
   kind: ResourceKind;
@@ -145,6 +145,30 @@ const RESOURCES: Record<string, ResourceDef> = {
     defaultOrder: "snapshot_date.asc",
     parentIdColumn: "commodity_id",
     cacheSeconds: 600,
+  },
+  "stock-disclosures": {
+    kind: "related",
+    view: "stock_disclosures_public",
+    columns: [
+      "id", "stock_id", "title", "disclosure_type", "published_at",
+      "summary", "key_facts", "source_url", "source_domain",
+    ],
+    orderable: ["published_at"],
+    defaultOrder: "published_at.desc",
+    parentIdColumn: "stock_id",
+    cacheSeconds: 300,
+  },
+  "stock-actions": {
+    kind: "related",
+    view: "stock_corporate_actions_public",
+    columns: [
+      "id", "stock_id", "action_type", "announcement_date", "ex_date",
+      "book_closure_date", "payment_date", "amount", "currency", "ratio", "source_url",
+    ],
+    orderable: ["announcement_date", "ex_date", "payment_date"],
+    defaultOrder: "announcement_date.desc",
+    parentIdColumn: "stock_id",
+    cacheSeconds: 300,
   },
 
   // Bulk feeds: cross-entity recent windows used to render sparklines on list
@@ -274,22 +298,21 @@ Deno.serve(async (req) => {
     .order(order.col, { ascending: order.asc })
     .range(offset, offset + limit - 1);
 
-  if (resource.kind === "history") {
+  if (resource.kind === "history" || resource.kind === "related") {
     const parentId = url.searchParams.get("id");
     if (!parentId || !UUID_RE.test(parentId)) {
       return json(
-        { error: `History resource requires ?id=<uuid> on column ${resource.parentIdColumn}` },
+        { error: `Resource requires ?id=<uuid> on column ${resource.parentIdColumn}` },
         400,
       );
     }
-    const days = clampInt(url.searchParams.get("days"), MAX_HISTORY_DAYS, 1, MAX_HISTORY_DAYS);
-    const since = new Date();
-    since.setUTCDate(since.getUTCDate() - days);
-    const sinceStr = since.toISOString().slice(0, 10);
-
-    query = query
-      .eq(resource.parentIdColumn!, parentId)
-      .gte("snapshot_date", sinceStr);
+    query = query.eq(resource.parentIdColumn!, parentId);
+    if (resource.kind === "history") {
+      const days = clampInt(url.searchParams.get("days"), MAX_HISTORY_DAYS, 1, MAX_HISTORY_DAYS);
+      const since = new Date();
+      since.setUTCDate(since.getUTCDate() - days);
+      query = query.gte("snapshot_date", since.toISOString().slice(0, 10));
+    }
   } else if (resource.kind === "bulk-recent") {
     const days = clampInt(url.searchParams.get("days"), DEFAULT_BULK_DAYS, 1, MAX_HISTORY_DAYS);
     const since = new Date();

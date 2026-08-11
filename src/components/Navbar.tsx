@@ -156,7 +156,10 @@ const Navbar = () => {
     /^\/funds\/[^/]+/,
   ];
   const isDetailPage = detailRoutePatterns.some((re) => re.test(location.pathname));
+  const isStockDetailPage = /^\/stocks\/[^/]+/.test(location.pathname);
   const isMinimal = isDetailPage || minimalRoutes.some((p) => location.pathname.startsWith(p));
+
+  if (isStockDetailPage) return null;
 
   if (isMinimal) {
     return (

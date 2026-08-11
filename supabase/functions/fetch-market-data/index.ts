@@ -598,7 +598,7 @@ Deno.serve(async (req) => {
   const serviceRoleSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
   if (isCronSecretAuthorized(body, serviceRoleSecret)) {
     isCronCall = true;
-    console.log("[fetch-market-data] Cron call authenticated via secret");
+    console.log("[fetch-market-data] Cron call authenticated via secret or service-role header");
   }
 
   // Method 2: Accept the legacy bearer-token cron auth used by older scheduled jobs

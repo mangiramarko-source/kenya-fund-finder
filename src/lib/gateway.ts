@@ -33,6 +33,8 @@ export type GatewayResource =
   | "stock-history"
   | "rate-history"
   | "commodity-history"
+  | "stock-disclosures"
+  | "stock-actions"
   | "fund-snapshots"
   | "stock-history-bulk";
 

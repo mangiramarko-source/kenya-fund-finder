@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
+import { formatDistanceToNow } from "date-fns";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
@@ -14,19 +15,22 @@ import {
   type StockHistoryRange,
 } from "@/lib/stockHistory";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
+import { StockDisclosuresTab } from "@/components/stocks/StockDisclosuresTab";
+import { getStockLogoUrl } from "@/lib/stockBranding";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   TrendingUp, TrendingDown, Minus, ArrowLeft, Star, BarChart3, Activity,
-  Calendar, Building2, DollarSign, Users, Newspaper, ChevronDown, ChevronUp,
+  Calendar, Building2, DollarSign, Users, Newspaper, ChevronDown, ChevronUp, MoreHorizontal,
 } from "lucide-react";
 import {
-  LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
+  XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
   AreaChart, Area, BarChart, Bar,
 } from "recharts";
 
@@ -78,6 +82,7 @@ const StockDetailPage = () => {
   const { symbol } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const { isFavourite, toggle: toggleFav } = useAssetWatchlist("stock");
 
   const [stock, setStock] = useState<Stock | null>(null);
@@ -252,8 +257,26 @@ const StockDetailPage = () => {
   const isDown = s.day_change < 0;
 
   return (
-    <div className="min-h-screen px-4 md:px-6 py-6 max-w-6xl mx-auto">
+    <div className="min-h-screen px-3 pb-6 pt-3 md:px-6 md:py-6 max-w-6xl mx-auto">
       {/* Header */}
+
+      <div className="sticky top-0 z-40 -mx-3 -mt-3 mb-5 flex h-[58px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md md:hidden">
+        <button
+          type="button"
+          onClick={() => navigate(-1)}
+          aria-label="Go back"
+          className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted/50"
+        >
+          <ArrowLeft className="h-6 w-6" />
+        </button>
+        <button
+          type="button"
+          aria-label="More options"
+          className="-mr-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground transition-colors hover:bg-muted/50"
+        >
+          <MoreHorizontal className="h-5 w-5" />
+        </button>
+      </div>
 
       <button
         onClick={() => navigate("/stocks")}
@@ -262,65 +285,85 @@ const StockDetailPage = () => {
         <ArrowLeft className="h-4 w-4" /> Back
       </button>
 
-      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4 mb-6">
-        <div>
-          <div className="flex items-center gap-3 mb-1">
-            <h1 className="text-2xl md:text-3xl font-bold text-foreground">{s.symbol}</h1>
-            <Badge variant="secondary" className="text-xs">{s.sector}</Badge>
-            {user && (
-              <button
-                onClick={() => toggleFav(s.id, `${s.symbol} - ${s.name}`)}
-                className="p-1.5 rounded-lg hover:bg-muted transition-colors"
-              >
-                <Star className={`h-5 w-5 ${isFavourite(s.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground"}`} />
+      <div className="mb-4 md:mb-6">
+        <div className="md:hidden">
+          <div className="mb-5 flex items-center justify-between text-[10px] font-semibold uppercase tracking-[0.2em] text-muted-foreground">
+            <span>Stocks / {s.sector.replace(/communications/i, "Telecom")}</span>
+            <span>Updated {formatDistanceToNow(new Date(s.updated_at), { addSuffix: true })}</span>
+          </div>
+
+          <div className="flex items-center gap-3">
+            <StockLogo symbol={s.symbol} name={s.name} />
+            <div className="min-w-0">
+              <h1 className="truncate text-2xl font-black tracking-tight text-foreground">{s.name}</h1>
+              <p className="mt-0.5 text-sm text-muted-foreground">NASE:{s.symbol} · Stock Report</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">Market Cap {fmtCap(s.market_cap)}</p>
+            </div>
+          </div>
+
+          <div className="my-5 grid grid-cols-[1.35fr_1fr] gap-2.5">
+            <div className="[&_button]:h-12 [&_button]:w-full [&_button]:rounded-full [&_button]:border-foreground [&_button]:bg-foreground [&_button]:text-sm [&_button]:font-bold [&_button]:text-background">
+              <CreateAlertDialog assetType="stock" assetId={s.id} assetName={`${s.symbol} - ${s.name}`} currentPrice={s.price} unit="KSh" />
+            </div>
+            {user ? (
+              <button onClick={() => toggleFav(s.id, `${s.symbol} - ${s.name}`)} className="flex h-12 items-center justify-center gap-2 rounded-full border border-border bg-card text-sm font-bold text-foreground">
+                <Star className={`h-4 w-4 ${isFavourite(s.id) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`} />
+                {isFavourite(s.id) ? "Watching" : "Watch"}
               </button>
+            ) : (
+              <Link to="/auth" className="flex h-12 items-center justify-center gap-2 rounded-full border border-border bg-card text-sm font-bold text-foreground"><Star className="h-4 w-4 text-muted-foreground" /> Watch</Link>
             )}
           </div>
-          <p className="text-sm text-muted-foreground">{s.name}</p>
-          <p className="text-xs text-muted-foreground mt-1">
-            Nairobi Securities Exchange · Last updated: {formatMarketDateTime(s.updated_at)}
-          </p>
+
+          <div className="py-2">
+            <p className="text-xs font-semibold uppercase tracking-[0.18em] text-muted-foreground">Last Price · {formatMarketDate(s.updated_at, "en-KE", { day: "numeric", month: "short", year: "numeric" })}</p>
+            <p className="mt-3 text-[42px] font-black leading-none tracking-tight text-foreground tabular-nums">KSh {fmt(s.price)}</p>
+            <div className="mt-1 flex items-center gap-2">
+              {isUp && <TrendingUp className="h-4 w-4 text-emerald-500" />}
+              {isDown && <TrendingDown className="h-4 w-4 text-destructive" />}
+              {!isUp && !isDown && <Minus className="h-4 w-4 text-muted-foreground" />}
+              <span className={`text-sm font-bold tabular-nums ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>{isUp ? "+" : ""}{fmt(s.day_change)} ({isUp ? "+" : ""}{fmt(s.day_change_percent)}%)</span>
+            </div>
+          </div>
+          <p className="mt-4 text-xs text-muted-foreground">Nairobi Securities Exchange · Company financials</p>
         </div>
 
-        <div className="text-left md:text-right">
-          <p className="text-3xl md:text-4xl font-bold text-foreground tabular-nums">KSh {fmt(s.price)}</p>
-          <div className="flex items-center gap-2 md:justify-end mt-1">
-            {isUp && <TrendingUp className="h-4 w-4 text-emerald-500" />}
-            {isDown && <TrendingDown className="h-4 w-4 text-destructive" />}
-            {!isUp && !isDown && <Minus className="h-4 w-4 text-muted-foreground" />}
-            <span className={`text-sm font-semibold tabular-nums ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
-              {isUp ? "+" : ""}{fmt(s.day_change)} ({isUp ? "+" : ""}{fmt(s.day_change_percent)}%)
-            </span>
+        <div className="hidden md:flex md:items-start md:justify-between md:gap-4">
+          <div>
+            <div className="mb-1 flex items-center gap-3"><h1 className="text-3xl font-bold text-foreground">{s.symbol}</h1><Badge variant="secondary" className="text-xs">{s.sector}</Badge>{user && <button onClick={() => toggleFav(s.id, `${s.symbol} - ${s.name}`)} className="rounded-lg p-1.5 transition-colors hover:bg-muted"><Star className={`h-5 w-5 ${isFavourite(s.id) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`} /></button>}</div>
+            <p className="text-sm text-muted-foreground">{s.name}</p>
+            <p className="mt-1 text-xs text-muted-foreground">Nairobi Securities Exchange · Last updated: {formatMarketDateTime(s.updated_at)}</p>
           </div>
-          <CreateAlertDialog assetType="stock" assetId={s.id} assetName={`${s.symbol} - ${s.name}`} currentPrice={s.price} unit="KSh" />
+          <div className="text-right"><p className="text-4xl font-bold text-foreground tabular-nums">KSh {fmt(s.price)}</p><div className="mt-1 flex items-center justify-end gap-2">{isUp ? <TrendingUp className="h-4 w-4 text-emerald-500" /> : isDown ? <TrendingDown className="h-4 w-4 text-destructive" /> : <Minus className="h-4 w-4 text-muted-foreground" />}<span className={`text-sm font-semibold tabular-nums ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>{isUp ? "+" : ""}{fmt(s.day_change)} ({isUp ? "+" : ""}{fmt(s.day_change_percent)}%)</span></div><CreateAlertDialog assetType="stock" assetId={s.id} assetName={`${s.symbol} - ${s.name}`} currentPrice={s.price} unit="KSh" /></div>
         </div>
       </div>
 
       {/* Tabs */}
       <Tabs defaultValue="summary" className="w-full">
-        <TabsList className="w-full flex overflow-x-auto gap-0 mb-6 bg-muted/40 p-1 rounded-xl">
-          <TabsTrigger value="summary" className="flex-1 text-xs md:text-sm">Summary</TabsTrigger>
-          <TabsTrigger value="financials" className="flex-1 text-xs md:text-sm">Financials</TabsTrigger>
-          <TabsTrigger value="statistics" className="flex-1 text-xs md:text-sm">Statistics</TabsTrigger>
-          <TabsTrigger value="historical" className="flex-1 text-xs md:text-sm">Historical</TabsTrigger>
-          <TabsTrigger value="news" className="flex-1 text-xs md:text-sm">News</TabsTrigger>
+        <TabsList className="-mx-3 mb-5 flex h-auto w-[calc(100%+1.5rem)] justify-start gap-0 overflow-x-auto rounded-none border-b border-border bg-transparent p-0 md:mx-0 md:mb-6 md:h-10 md:w-full md:justify-center md:rounded-xl md:border-0 md:bg-muted/40 md:p-1">
+          <TabsTrigger value="summary" className="shrink-0 rounded-none border-b-2 border-transparent px-5 py-3 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none md:flex-1 md:rounded-sm md:border-0 md:px-3 md:py-1.5 md:text-sm md:data-[state=active]:bg-background md:data-[state=active]:shadow-sm">Summary</TabsTrigger>
+          <TabsTrigger value="financials" className="shrink-0 rounded-none border-b-2 border-transparent px-5 py-3 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none md:flex-1 md:rounded-sm md:border-0 md:px-3 md:py-1.5 md:text-sm md:data-[state=active]:bg-background md:data-[state=active]:shadow-sm">Financials</TabsTrigger>
+          <TabsTrigger value="statistics" className="shrink-0 rounded-none border-b-2 border-transparent px-5 py-3 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none md:flex-1 md:rounded-sm md:border-0 md:px-3 md:py-1.5 md:text-sm md:data-[state=active]:bg-background md:data-[state=active]:shadow-sm">Statistics</TabsTrigger>
+          <TabsTrigger value="historical" className="shrink-0 rounded-none border-b-2 border-transparent px-5 py-3 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none md:flex-1 md:rounded-sm md:border-0 md:px-3 md:py-1.5 md:text-sm md:data-[state=active]:bg-background md:data-[state=active]:shadow-sm">Historical</TabsTrigger>
+          <TabsTrigger value="news" className="shrink-0 rounded-none border-b-2 border-transparent px-5 py-3 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none md:flex-1 md:rounded-sm md:border-0 md:px-3 md:py-1.5 md:text-sm md:data-[state=active]:bg-background md:data-[state=active]:shadow-sm">News</TabsTrigger>
+          <TabsTrigger value="disclosures" className="shrink-0 rounded-none border-b-2 border-transparent px-5 py-3 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none md:flex-1 md:rounded-sm md:border-0 md:px-3 md:py-1.5 md:text-sm md:data-[state=active]:bg-background md:data-[state=active]:shadow-sm">Disclosures</TabsTrigger>
         </TabsList>
 
         {/* Summary Tab */}
-        <TabsContent value="summary" className="space-y-6">
+        <TabsContent value="summary" className="space-y-4 md:space-y-6">
           {/* Price Chart */}
-          <div className="rounded-xl border border-border bg-card p-4">
+          <div className="border-0 bg-transparent p-0 shadow-none md:rounded-xl md:border md:border-border md:bg-card md:p-4">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
-                <BarChart3 className="h-4 w-4 text-muted-foreground" />
-                <span className="text-sm font-semibold text-foreground">Price Chart</span>
+                <BarChart3 className="h-5 w-5 text-primary md:h-4 md:w-4 md:text-muted-foreground" />
+                <span className="text-base font-bold text-foreground md:text-sm md:font-semibold">Price Chart</span>
               </div>
-              <div className="grid w-full grid-cols-8 gap-0.5 sm:flex sm:w-auto sm:gap-1">
+              <div className="-mx-1 flex w-[calc(100%+0.5rem)] gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:w-auto sm:gap-1 sm:px-0 sm:pb-0">
                 {visibleHistoryRanges.map((r) => (
                   <button
                     key={r}
                     onClick={() => setRange(r)}
-                    className={`rounded-md px-1 py-1 text-[11px] font-medium transition-all sm:px-2.5 sm:text-xs ${
+                    className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all sm:rounded-md sm:px-2.5 sm:py-1 sm:font-medium ${
                       range === r ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
                     }`}
                   >
@@ -331,13 +374,14 @@ const StockDetailPage = () => {
             </div>
 
             {historyLoading ? (
-              <Skeleton className="h-[280px] w-full rounded-lg" />
+              <Skeleton className="h-[220px] w-full rounded-2xl md:h-[280px] md:rounded-lg" />
             ) : filteredHistory.length < 2 ? (
-              <div className="h-[280px] flex items-center justify-center text-sm text-muted-foreground">
+              <div className="flex h-[220px] items-center justify-center text-sm text-muted-foreground md:h-[280px]">
                 No historical data for this range
               </div>
             ) : (
-              <ResponsiveContainer width="100%" height={280}>
+              <div className="-mx-3 h-[220px] w-[calc(100%+1.5rem)] md:mx-0 md:h-[280px] md:w-full">
+              <ResponsiveContainer width="100%" height="100%">
                 <AreaChart data={chartHistory}>
                   <defs>
                     <linearGradient id="priceGradient" x1="0" y1="0" x2="0" y2="1">
@@ -354,7 +398,7 @@ const StockDetailPage = () => {
                   <YAxis
                     domain={["auto", "auto"]}
                     tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
-                    width={55}
+                    width={isMobile ? 44 : 55}
                     tickFormatter={(v) => v.toFixed(1)}
                   />
                   <Tooltip
@@ -370,21 +414,22 @@ const StockDetailPage = () => {
                   <Area type="monotone" dataKey="price" stroke={isUp ? "hsl(152 60% 42%)" : "hsl(var(--destructive))"} strokeWidth={2} fill="url(#priceGradient)" />
                 </AreaChart>
               </ResponsiveContainer>
+              </div>
             )}
 
             {priceStats && (
-              <div className="grid grid-cols-2 md:grid-cols-5 gap-3 mt-4">
+              <div className="mt-4 grid grid-cols-2 gap-3 md:grid-cols-5">
                 <MiniStat label="Period High" value={`KSh ${fmt(priceStats.high)}`} />
                 <MiniStat label="Period Low" value={`KSh ${fmt(priceStats.low)}`} />
-                <MiniStat label="Average" value={`KSh ${fmt(priceStats.avg)}`} />
-                <MiniStat label="Change" value={`${priceStats.change > 0 ? "+" : ""}${fmt(priceStats.change)}`} color={priceStats.change >= 0 ? "text-emerald-500" : "text-destructive"} />
-                <MiniStat label="Change %" value={`${priceStats.changePct > 0 ? "+" : ""}${fmt(priceStats.changePct)}%`} color={priceStats.changePct >= 0 ? "text-emerald-500" : "text-destructive"} />
+                <MiniStat label="Average" value={`KSh ${fmt(priceStats.avg)}`} desktopOnly />
+                <MiniStat label="Change" value={`${priceStats.change > 0 ? "+" : ""}${fmt(priceStats.change)}`} color={priceStats.change >= 0 ? "text-emerald-500" : "text-destructive"} desktopOnly />
+                <MiniStat label="Change %" value={`${priceStats.changePct > 0 ? "+" : ""}${fmt(priceStats.changePct)}%`} color={priceStats.changePct >= 0 ? "text-emerald-500" : "text-destructive"} desktopOnly />
               </div>
             )}
           </div>
 
           {/* Key Stats Grid */}
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
             <StatCard icon={<DollarSign className="h-4 w-4 text-emerald-500" />} label="Price" value={`KSh ${fmt(s.price)}`} />
             <StatCard icon={<Activity className="h-4 w-4 text-primary" />} label="Volume" value={fmtVol(s.volume)} />
             <StatCard icon={<Building2 className="h-4 w-4 text-muted-foreground" />} label="Market Cap" value={fmtCap(s.market_cap)} />
@@ -393,8 +438,8 @@ const StockDetailPage = () => {
 
           {/* 52 Week Range */}
           {yearRange && (
-            <div className="rounded-xl border border-border bg-card p-4">
-              <p className="text-sm font-semibold text-foreground mb-3">52-Week Range</p>
+            <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
+              <p className="mb-5 text-base font-bold text-foreground md:mb-3 md:text-sm md:font-semibold">52-Week Range</p>
               <div className="flex items-center gap-4">
                 <span className="text-xs text-muted-foreground tabular-nums w-20 text-right">KSh {fmt(s.year_low!)}</span>
                 <div className="flex-1 relative h-3 bg-muted rounded-full">
@@ -406,14 +451,14 @@ const StockDetailPage = () => {
                 </div>
                 <span className="text-xs text-muted-foreground tabular-nums w-20">KSh {fmt(s.year_high!)}</span>
               </div>
-              <p className="text-center text-xs text-muted-foreground mt-2">Current: KSh {fmt(s.price)}</p>
+              <p className="mt-4 text-center text-sm text-muted-foreground md:mt-2 md:text-xs">Current: KSh {fmt(s.price)} · <strong className="text-foreground">{fmt(((s.price - s.year_low!) / s.year_low!) * 100, 1)}%</strong> above the 52-week low</p>
             </div>
           )}
         </TabsContent>
 
         {/* Financials Tab */}
         <TabsContent value="financials" className="space-y-4">
-          <div className="rounded-xl border border-border bg-card p-4">
+          <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
             <h3 className="text-sm font-semibold text-foreground mb-4 flex items-center gap-2">
               <DollarSign className="h-4 w-4 text-emerald-500" /> Key Financial Metrics
             </h3>
@@ -431,7 +476,7 @@ const StockDetailPage = () => {
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-4">
+          <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
               <Building2 className="h-4 w-4 text-muted-foreground" /> Company Info
             </h3>
@@ -446,7 +491,7 @@ const StockDetailPage = () => {
 
         {/* Statistics Tab */}
         <TabsContent value="statistics" className="space-y-4">
-          <div className="rounded-xl border border-border bg-card p-4">
+          <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
             <h3 className="text-sm font-semibold text-foreground mb-4">Trading Statistics</h3>
             <div className="divide-y divide-border">
               <FinRow label="Current Price" value={`KSh ${fmt(s.price)}`} />
@@ -457,7 +502,7 @@ const StockDetailPage = () => {
             </div>
           </div>
 
-          <div className="rounded-xl border border-border bg-card p-4">
+          <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
             <h3 className="text-sm font-semibold text-foreground mb-4">Valuation Ratios</h3>
             <div className="divide-y divide-border">
               <FinRow label="P/E Ratio (TTM)" value={s.pe_ratio != null ? fmt(s.pe_ratio) : "N/A"} />
@@ -468,7 +513,7 @@ const StockDetailPage = () => {
           </div>
 
           {priceStats && (
-            <div className="rounded-xl border border-border bg-card p-4">
+            <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
               <h3 className="text-sm font-semibold text-foreground mb-4">Historical Performance ({range})</h3>
               <div className="divide-y divide-border">
                 <FinRow label="Period Start Price" value={filteredHistory.length > 0 ? `KSh ${fmt(filteredHistory[0].price)}` : "—"} />
@@ -485,17 +530,17 @@ const StockDetailPage = () => {
 
         {/* Historical Data Tab */}
         <TabsContent value="historical" className="space-y-4">
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="overflow-hidden border-0 bg-transparent shadow-none md:rounded-xl md:border md:border-border md:bg-card">
             <div className="flex flex-col gap-3 border-b border-border p-4 sm:flex-row sm:items-center sm:justify-between">
               <h3 className="text-sm font-semibold text-foreground flex items-center gap-2">
                 <Calendar className="h-4 w-4 text-muted-foreground" /> Historical Prices
               </h3>
-              <div className="grid w-full grid-cols-8 gap-0.5 sm:flex sm:w-auto sm:gap-1">
+              <div className="flex w-full gap-2 overflow-x-auto pb-1 sm:w-auto sm:gap-1 sm:pb-0">
                 {visibleHistoryRanges.map((r) => (
                   <button
                     key={r}
                     onClick={() => setRange(r)}
-                    className={`rounded-md px-1 py-1 text-[11px] font-medium transition-all sm:px-2.5 sm:text-xs ${
+                    className={`shrink-0 rounded-full px-4 py-2 text-xs font-bold transition-all sm:rounded-md sm:px-2.5 sm:py-1 sm:font-medium ${
                       range === r ? "bg-primary text-primary-foreground" : "text-muted-foreground hover:bg-muted"
                     }`}
                   >
@@ -553,10 +598,13 @@ const StockDetailPage = () => {
         <TabsContent value="news">
           <StockNewsTab symbol={s.symbol} name={s.name} />
         </TabsContent>
+        <TabsContent value="disclosures">
+          <StockDisclosuresTab stockId={s.id} />
+        </TabsContent>
       </Tabs>
 
-      <div className="mt-6 rounded-lg bg-muted/40 border border-border/50 p-3">
-        <p className="text-[10px] leading-relaxed text-muted-foreground">
+      <div className="mt-4 rounded-[24px] border border-dashed border-border bg-muted/30 p-5 md:mt-6 md:rounded-lg md:border-solid md:border-border/50 md:p-3">
+        <p className="text-xs leading-relaxed text-muted-foreground md:text-[10px]">
           Stock prices shown are indicative and may be delayed. Data is sourced from the Kenyan stock market.
           This information is for educational purposes only and should not be considered financial advice.
         </p>
@@ -591,7 +639,7 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
 
   if (news.length === 0) {
     return (
-      <div className="rounded-xl border border-border bg-card p-8 text-center">
+      <div className="rounded-[28px] border border-border bg-card p-8 text-center shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:shadow-none">
         <Newspaper className="h-8 w-8 text-muted-foreground mx-auto mb-3" />
         <p className="text-sm text-muted-foreground">No recent news articles found for {symbol}.</p>
         <Link to="/news" className="text-xs text-primary hover:underline mt-2 inline-block">Browse all market news →</Link>
@@ -624,7 +672,7 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
         <div
           key={n.id}
           onClick={() => handleOpenItem(n)}
-          className="block rounded-xl border border-border bg-card p-4 hover:border-primary/30 transition-colors cursor-pointer"
+          className="block cursor-pointer rounded-[24px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] transition-colors hover:border-primary/30 md:rounded-xl md:p-4 md:shadow-none"
         >
           <div className="flex items-start gap-3">
             {n.image_url && (
@@ -662,19 +710,19 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
 
 /* ─── Shared Components ─── */
 const StatCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
-  <div className="rounded-xl border border-border bg-card p-3.5 flex items-center gap-3">
-    <div className="w-9 h-9 rounded-lg bg-muted/60 flex items-center justify-center shrink-0">{icon}</div>
+  <div className="flex min-h-[96px] items-center gap-3 rounded-[24px] border border-border bg-card p-4 shadow-[0_8px_22px_hsl(var(--foreground)/0.06)] md:min-h-0 md:rounded-xl md:p-3.5 md:shadow-none">
+    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 md:h-9 md:w-9 md:rounded-lg md:bg-muted/60">{icon}</div>
     <div>
-      <p className="text-[10px] text-muted-foreground uppercase tracking-wider font-medium leading-none mb-1">{label}</p>
-      <p className="text-base font-bold tabular-nums leading-none text-foreground">{value}</p>
+      <p className="mb-2 text-[11px] font-semibold uppercase leading-none tracking-wider text-muted-foreground md:mb-1 md:text-[10px] md:font-medium">{label}</p>
+      <p className="text-lg font-bold leading-none tabular-nums text-foreground md:text-base">{value}</p>
     </div>
   </div>
 );
 
-const MiniStat = ({ label, value, color }: { label: string; value: string; color?: string }) => (
-  <div className="bg-muted/40 rounded-lg px-3 py-2 text-center">
-    <p className="text-[10px] text-muted-foreground">{label}</p>
-    <p className={`font-semibold text-sm tabular-nums ${color || "text-foreground"}`}>{value}</p>
+const MiniStat = ({ label, value, color, desktopOnly = false }: { label: string; value: string; color?: string; desktopOnly?: boolean }) => (
+  <div className={`rounded-[18px] border border-border bg-muted/25 px-3 py-4 text-left md:rounded-lg md:border-0 md:bg-muted/40 md:py-2 md:text-center ${desktopOnly ? "hidden md:block" : ""}`}>
+    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground md:text-[10px] md:font-normal md:normal-case md:tracking-normal">{label}</p>
+    <p className={`mt-2 text-base font-bold tabular-nums md:mt-0 md:text-sm md:font-semibold ${color || "text-foreground"}`}>{value}</p>
   </div>
 );
 
@@ -684,5 +732,20 @@ const FinRow = ({ label, value, color }: { label: string; value: string; color?:
     <span className={`text-sm font-semibold tabular-nums ${color || "text-foreground"}`}>{value}</span>
   </div>
 );
+
+const StockLogo = ({ symbol, name }: { symbol: string; name: string }) => {
+  const [failed, setFailed] = useState(false);
+  const logoUrl = getStockLogoUrl(symbol);
+
+  return (
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted/40 md:hidden">
+      {logoUrl && !failed ? (
+        <img src={logoUrl} alt={`${name} logo`} className="h-full w-full object-cover" onError={() => setFailed(true)} />
+      ) : (
+        <span className="text-sm font-black text-primary">{symbol.slice(0, 2)}</span>
+      )}
+    </div>
+  );
+};
 
 export default StockDetailPage;
