@@ -15,6 +15,7 @@ import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Switch } from "@/components/ui/switch";
 import { Label } from "@/components/ui/label";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
+import { formatMarketDate, getNairobiMarketDate, isGlobalMarketOpen, isKenyanMarketOpen } from "@/lib/utils";
 import { toast } from "sonner";
 import {
   AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent,
@@ -469,28 +470,43 @@ const AdminDashboard = () => {
         <CardContent>
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
             {(["overview", "stocks", "funds", "rates", "commodities"] as const).map((section) => {
-              const sectionLabels: Record<string, string> = { overview: "Market Overview", stocks: "Stocks", funds: "Unit Trusts", rates: "FX Rates", commodities: "Commodities" };
+              const sectionLabels: Record<string, string> = { overview: "Market Overview", stocks: "Stocks", funds: "MMF", rates: "FX Rates", commodities: "Commodities" };
               const s = sections[section];
+              const isAutomatic = section !== "funds";
+              const isGlobal = section === "rates" || section === "commodities";
+              const displayedLive = isAutomatic ? (isGlobal ? isGlobalMarketOpen() : isKenyanMarketOpen()) : s.is_live;
+              const automaticSchedule = isGlobal ? "Global 24/5" : "Mon-Fri, 9 AM-5 PM EAT";
               return (
                 <div key={section} className="border rounded-lg p-3 space-y-2">
                   <div className="flex items-center justify-between">
                     <span className="text-xs font-semibold">{sectionLabels[section]}</span>
-                    <Switch
-                      checked={s.is_live}
-                      onCheckedChange={(v) => setSectionStatus(section, { is_live: v })}
-                      className="scale-75"
-                    />
+                    {isAutomatic ? (
+                      <span className="rounded-full bg-emerald-500/10 px-2 py-0.5 text-[9px] font-semibold uppercase tracking-wider text-emerald-500">Auto</span>
+                    ) : (
+                      <Switch
+                        checked={s.is_live}
+                        onCheckedChange={(v) => setSectionStatus(section, { is_live: v })}
+                        className="scale-75"
+                      />
+                    )}
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <Radio className={`h-3 w-3 ${s.is_live ? "text-emerald-500 animate-pulse" : "text-muted-foreground"}`} />
-                    <span className="text-[10px] text-muted-foreground">{s.is_live ? "Live" : "Offline"}</span>
+                    <Radio className={`h-3 w-3 ${displayedLive ? "text-emerald-500 animate-pulse" : "text-muted-foreground"}`} />
+                    <span className="text-[10px] text-muted-foreground">{displayedLive ? "Live" : "Offline"}</span>
                   </div>
-                  <input
-                    type="date"
-                    value={s.last_update_date ?? ""}
-                    onChange={(e) => setSectionStatus(section, { last_update_date: e.target.value || null })}
-                    className="text-xs bg-transparent border border-border rounded px-2 py-1 w-full text-foreground"
-                  />
+                  {isAutomatic ? (
+                    <div className="rounded border border-border bg-muted/30 px-2 py-1.5 text-[10px] text-muted-foreground">
+                      <p>{automaticSchedule}</p>
+                      <p className="mt-0.5 text-emerald-500">Updated {formatMarketDate(getNairobiMarketDate(), "en-KE", { month: "short", day: "numeric", year: "numeric" })}</p>
+                    </div>
+                  ) : (
+                    <input
+                      type="date"
+                      value={s.last_update_date ?? ""}
+                      onChange={(e) => setSectionStatus(section, { last_update_date: e.target.value || null })}
+                      className="text-xs bg-transparent border border-border rounded px-2 py-1 w-full text-foreground"
+                    />
+                  )}
                 </div>
               );
             })}

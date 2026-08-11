@@ -1,5 +1,5 @@
 import { useLiveStatus, type AssetSection } from "@/hooks/useLiveStatus";
-import { isKenyanMarketOpen, isGlobalMarketOpen, toLastWeekday, formatMarketDate } from "@/lib/utils";
+import { getNairobiMarketDate, isKenyanMarketOpen, isGlobalMarketOpen, formatMarketDate } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface SectionLiveStatusProps {
@@ -12,41 +12,39 @@ interface SectionLiveStatusProps {
 
 const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoading }: SectionLiveStatusProps) => {
   const { sections, loading } = useLiveStatus();
-  if (loading || isLoading) return <Skeleton className="h-6 w-48 rounded-md" />;
-
   const isFunds = section === "funds";
+  if ((isFunds && loading) || isLoading) return <Skeleton className="h-6 w-48 rounded-md" />;
+
+  const isGlobal = section === "rates" || section === "commodities";
   const s = sections[section];
 
-  // Base date for the data
-  const baseDate = s?.last_update_date
-    ? new Date(s.last_update_date + "T00:00:00")
+  const rawDate = isFunds
+    ? s?.last_update_date
+      ? new Date(`${s.last_update_date}T12:00:00+03:00`)
+      : fallbackDate
+        ? new Date(fallbackDate)
+        : null
     : fallbackDate
       ? new Date(fallbackDate)
-      : null;
-      
-  const rawDate = baseDate ? new Date(baseDate) : null;
-  
-  // All other assets (Stocks, FX, Commodities) follow Kenyan Market Hours
-  const marketOpen = isKenyanMarketOpen();
+      : getNairobiMarketDate();
 
-  // Live status logic
-  const showLiveDot = !hideLive && s?.is_live === true;
+  const marketOpen = isFunds ? s?.is_live === true : isGlobal ? isGlobalMarketOpen() : isKenyanMarketOpen();
+
+  const showLiveDot = !hideLive && marketOpen;
   const displayDate = rawDate ? formatMarketDate(rawDate, "en-KE", { month: "short", day: "numeric", year: "numeric" }) : null;
-
-  let textStatus = "";
-  if (isFunds) {
-    textStatus = displayDate ? `Updated ${displayDate} · Updated monthly` : "Updated monthly";
-  } else if (!marketOpen) {
-    textStatus = displayDate ? `Markets Closed (Opens Mon-Fri) • Updated ${displayDate}` : `Markets Closed (Opens Mon-Fri)`;
-  } else {
-    textStatus = displayDate ? `Updated ${displayDate}` : `Markets Open`;
-  }
+  const updateText = isFunds
+    ? displayDate ? `Updated ${displayDate} · Updated monthly` : "Updated monthly"
+    : displayDate ? `Updated ${displayDate}` : "Updated automatically";
+  const closedText = isGlobal
+    ? "Global Markets Closed (24/5)"
+    : "NSE Closed (Mon-Fri, 9 AM-5 PM EAT)";
 
   return (
     <span className="inline-flex items-center gap-3">
-      {!hideDate && displayDate && (
-        <span className={`text-[12px] font-medium uppercase tracking-wider ${isFunds ? "text-emerald-500 dark:text-emerald-400" : "text-muted-foreground"}`}>
-          {textStatus}
+      {!hideDate && (
+        <span className="text-[12px] font-medium uppercase tracking-wider">
+          {!isFunds && !marketOpen && <span className="text-muted-foreground">{closedText} · </span>}
+          <span className="text-emerald-500 dark:text-emerald-400">{updateText}</span>
         </span>
       )}
       {showLiveDot && (

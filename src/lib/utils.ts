@@ -116,19 +116,53 @@ export function formatMarketDate(
   }
 }
 
+interface NairobiDateParts {
+  year: number;
+  month: number;
+  day: number;
+  weekday: string;
+  hour: number;
+}
+
+function getNairobiDateParts(input: Date): NairobiDateParts {
+  const parts = new Intl.DateTimeFormat("en-US", {
+    timeZone: "Africa/Nairobi",
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+    hour: "numeric",
+    hourCycle: "h23",
+  }).formatToParts(input);
+  const value = (type: Intl.DateTimeFormatPartTypes) => parts.find((part) => part.type === type)?.value ?? "";
+  return {
+    year: Number(value("year")),
+    month: Number(value("month")),
+    day: Number(value("day")),
+    weekday: value("weekday"),
+    hour: Number(value("hour")),
+  };
+}
+
+/** Return the current Nairobi market date, rolling weekends back to Friday. */
+export function getNairobiMarketDate(input: Date = new Date()): Date {
+  const { year, month, day } = getNairobiDateParts(input);
+  const marketDate = new Date(Date.UTC(year, month - 1, day, 9));
+  const weekday = marketDate.getUTCDay();
+  if (weekday === 6) marketDate.setUTCDate(marketDate.getUTCDate() - 1);
+  else if (weekday === 0) marketDate.setUTCDate(marketDate.getUTCDate() - 2);
+  return marketDate;
+}
+
 /**
- * Returns true if the Kenyan Market is currently open.
- * Schedule: Monday to Friday, 9:00 AM to 6:00 PM (18:00) East Africa Time (UTC+3).
+ * Returns true if the Kenyan stock market is currently open.
+ * Schedule: Monday to Friday, 9:00 AM to 5:00 PM East Africa Time (UTC+3).
  */
-export function isKenyanMarketOpen(): boolean {
+export function isKenyanMarketOpen(input: Date = new Date()): boolean {
   try {
-    const now = new Date();
-    const eatString = now.toLocaleString("en-US", { timeZone: "Africa/Nairobi" });
-    const eatDate = new Date(eatString);
-    const day = eatDate.getDay(); // 0 = Sun, 1 = Mon, ..., 5 = Fri, 6 = Sat
-    if (day < 1 || day > 5) return false;
-    const hours = eatDate.getHours();
-    return hours >= 9 && hours < 18;
+    const { weekday, hour } = getNairobiDateParts(input);
+    if (weekday === "Sat" || weekday === "Sun") return false;
+    return hour >= 9 && hour < 17;
   } catch {
     return false;
   }
@@ -138,11 +172,10 @@ export function isKenyanMarketOpen(): boolean {
  * Returns true if Global Markets (FX/Commodities) are currently open.
  * Approx schedule: Sunday 22:00 UTC to Friday 22:00 UTC (24/5).
  */
-export function isGlobalMarketOpen(): boolean {
+export function isGlobalMarketOpen(input: Date = new Date()): boolean {
   try {
-    const now = new Date();
-    const day = now.getUTCDay(); // 0 = Sun, 1 = Mon ... 6 = Sat
-    const hour = now.getUTCHours();
+    const day = input.getUTCDay(); // 0 = Sun, 1 = Mon ... 6 = Sat
+    const hour = input.getUTCHours();
     
     if (day >= 1 && day <= 4) return true; // Mon-Thu 24h
     if (day === 5 && hour < 22) return true; // Fri before 10 PM UTC
