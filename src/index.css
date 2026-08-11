@@ -207,6 +207,16 @@
 }
 
 @layer utilities {
+  .dark .text-accent {
+    color: hsl(var(--foreground));
+  }
+  .dark .text-accent\/70 {
+    color: hsl(var(--foreground) / 0.7);
+  }
+  .dark .text-accent\/80 {
+    color: hsl(var(--foreground) / 0.8);
+  }
+
   .shadow-soft {
     box-shadow: var(--shadow-soft);
   }

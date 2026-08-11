@@ -71,6 +71,8 @@ const FundDetailPage = () => {
   const [yields, setYields] = useState<HistoricalYield[]>([]);
   const [snapshots, setSnapshots] = useState<YieldSnapshot[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadError, setLoadError] = useState(false);
+  const [loadAttempt, setLoadAttempt] = useState(0);
   
 
   const [calcAmount, setCalcAmount] = useState(100000);
@@ -117,20 +119,40 @@ const FundDetailPage = () => {
 
   useEffect(() => {
     if (!id) return;
+    let cancelled = false;
     setLoading(true);
-    Promise.all([fetchFundBySlug(id), fetchFunds()])
-      .then(async ([f, allFunds]) => {
+    setLoadError(false);
+
+    Promise.allSettled([fetchFundBySlug(id), fetchFunds()])
+      .then(async ([fundResult, fundsResult]) => {
+        if (cancelled) return;
+        const allFunds = fundsResult.status === "fulfilled" ? fundsResult.value : [];
+        const normalizedSlug = decodeURIComponent(id).toLowerCase();
+        const directFund = fundResult.status === "fulfilled" ? fundResult.value : null;
+        const f = directFund ?? allFunds.find((candidate) => candidate.slug.toLowerCase() === normalizedSlug) ?? null;
+
+        if (fundResult.status === "rejected" && fundsResult.status === "rejected") {
+          throw new Error("Fund data is temporarily unavailable");
+        }
+
         setFund(f);
         if (f) {
           setPeers(allFunds.filter((p) => p.fund_type === f.fund_type && p.id !== f.id));
-          const [y, s] = await Promise.all([fetchHistoricalYields(f.id), fetchFundSnapshots(f.id)]);
-          setYields(y);
-          setSnapshots(s);
+          const historyResults = await Promise.allSettled([fetchHistoricalYields(f.id), fetchFundSnapshots(f.id)]);
+          if (cancelled) return;
+          setYields(historyResults[0].status === "fulfilled" ? historyResults[0].value : []);
+          setSnapshots(historyResults[1].status === "fulfilled" ? historyResults[1].value : []);
         }
         setLoading(false);
       })
-      .catch(() => setLoading(false));
-  }, [id]);
+      .catch(() => {
+        if (cancelled) return;
+        setLoadError(true);
+        setLoading(false);
+      });
+
+    return () => { cancelled = true; };
+  }, [id, loadAttempt]);
 
   const peerStats = useMemo(() => {
     if (!fund || peers.length === 0) return null;
@@ -164,6 +186,16 @@ const FundDetailPage = () => {
             {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-muted rounded-xl" />)}
           </div>
         </div>
+      </div>
+    );
+  }
+
+  if (loadError) {
+    return (
+      <div className="container py-20 text-center">
+        <h1 className="mb-2 text-xl font-bold">Unable to load this fund</h1>
+        <p className="mb-4 text-sm text-muted-foreground">The fund service is temporarily unavailable.</p>
+        <Button variant="outline" onClick={() => setLoadAttempt((attempt) => attempt + 1)}>Try again</Button>
       </div>
     );
   }
