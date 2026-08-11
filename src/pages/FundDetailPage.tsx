@@ -222,8 +222,8 @@ const FundDetailPage = () => {
               <h1 className="truncate text-xl font-black tracking-tight text-foreground">{fund.name}</h1>
               {fund.cma_licensed && <Shield className="h-4 w-4 shrink-0 text-primary" />}
             </div>
-            <p className="truncate text-sm text-muted-foreground">{fund.manager}</p>
-            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type} · {fund.cma_licensed ? "CMA regulated" : "Fund report"}</p>
+            <p className="mt-0.5 truncate text-sm text-muted-foreground">{fund.manager}</p>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type} · {fund.cma_licensed ? "CMA regulated" : "Fund report"}</p>
           </div>
         </div>
 

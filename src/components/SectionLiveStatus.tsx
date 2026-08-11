@@ -18,10 +18,10 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
   const s = sections[section];
 
   // Base date for the data
-  const baseDate = fallbackDate 
-    ? new Date(fallbackDate)
-    : s?.last_update_date
-      ? new Date(s.last_update_date + "T00:00:00")
+  const baseDate = s?.last_update_date
+    ? new Date(s.last_update_date + "T00:00:00")
+    : fallbackDate
+      ? new Date(fallbackDate)
       : null;
       
   const rawDate = baseDate ? new Date(baseDate) : null;
@@ -30,11 +30,13 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
   const marketOpen = isKenyanMarketOpen();
 
   // Live status logic
-  const showLiveDot = !hideLive && marketOpen;
+  const showLiveDot = !hideLive && s?.is_live === true;
   const displayDate = rawDate ? formatMarketDate(rawDate, "en-KE", { month: "short", day: "numeric", year: "numeric" }) : null;
 
   let textStatus = "";
-  if (!marketOpen) {
+  if (isFunds) {
+    textStatus = displayDate ? `Updated ${displayDate}` : "";
+  } else if (!marketOpen) {
     textStatus = displayDate ? `Markets Closed (Opens Mon-Fri) • Updated ${displayDate}` : `Markets Closed (Opens Mon-Fri)`;
   } else {
     textStatus = displayDate ? `Updated ${displayDate}` : `Markets Open`;
@@ -61,4 +63,3 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
 };
 
 export default SectionLiveStatus;
-

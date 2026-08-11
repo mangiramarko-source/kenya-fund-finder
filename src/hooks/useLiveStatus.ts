@@ -38,7 +38,7 @@ export function useLiveStatus() {
 
   const secs = (meta?.sections as Record<string, SectionStatus>) ?? {};
   const sections: Record<AssetSection, SectionStatus> = {
-    funds: secs.funds ?? { is_live: meta?.is_live === true, last_update_date: (meta?.last_update_date as string) ?? null },
+    funds: secs.funds ?? { is_live: false, last_update_date: (meta?.last_update_date as string) ?? null },
     stocks: secs.stocks ?? { is_live: false, last_update_date: null },
     rates: secs.rates ?? { is_live: false, last_update_date: null },
     commodities: secs.commodities ?? { is_live: false, last_update_date: null },
