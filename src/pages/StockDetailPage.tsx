@@ -423,7 +423,7 @@ const StockDetailPage = () => {
           </div>
 
           {/* Key Stats Grid */}
-          <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
+          <div className="grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
             <StatCard icon={<DollarSign className="h-4 w-4 text-emerald-500" />} label="Price" value={`KSh ${fmt(s.price)}`} />
             <StatCard icon={<Activity className="h-4 w-4 text-primary" />} label="Volume" value={fmtVol(s.volume)} />
             <StatCard icon={<Building2 className="h-4 w-4 text-muted-foreground" />} label="Market Cap" value={fmtCap(s.market_cap)} />
@@ -432,20 +432,20 @@ const StockDetailPage = () => {
 
           {/* 52 Week Range */}
           {yearRange && (
-            <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
-              <p className="mb-5 text-base font-bold text-foreground md:mb-3 md:text-sm md:font-semibold">52-Week Range</p>
-              <div className="flex items-center gap-4">
-                <span className="text-xs text-muted-foreground tabular-nums w-20 text-right">KSh {fmt(s.year_low!)}</span>
-                <div className="flex-1 relative h-3 bg-muted rounded-full">
+            <div className="rounded-[18px] border border-border bg-card p-4 shadow-[0_6px_18px_hsl(var(--foreground)/0.05)] md:rounded-xl md:shadow-none">
+              <p className="mb-3 text-sm font-bold text-foreground md:text-sm md:font-semibold">52-Week Range</p>
+              <div className="flex items-center gap-2.5">
+                <span className="w-16 text-right text-[11px] tabular-nums text-muted-foreground md:w-20 md:text-xs">KSh {fmt(s.year_low!)}</span>
+                <div className="relative h-2 flex-1 rounded-full bg-muted md:h-3">
                   <div className="absolute top-0 left-0 h-full bg-gradient-to-r from-destructive via-yellow-500 to-emerald-500 rounded-full" style={{ width: "100%" }} />
                   <div
-                    className="absolute top-1/2 -translate-y-1/2 w-4 h-4 bg-foreground rounded-full border-2 border-card shadow-md"
+                    className="absolute top-1/2 h-3.5 w-3.5 -translate-y-1/2 rounded-full border-2 border-card bg-foreground shadow-md md:h-4 md:w-4"
                     style={{ left: `${Math.min(Math.max(pricePos, 0), 100)}%`, transform: "translate(-50%, -50%)" }}
                   />
                 </div>
-                <span className="text-xs text-muted-foreground tabular-nums w-20">KSh {fmt(s.year_high!)}</span>
+                <span className="w-16 text-[11px] tabular-nums text-muted-foreground md:w-20 md:text-xs">KSh {fmt(s.year_high!)}</span>
               </div>
-              <p className="mt-4 text-center text-sm text-muted-foreground md:mt-2 md:text-xs">Current: KSh {fmt(s.price)} · <strong className="text-foreground">{fmt(((s.price - s.year_low!) / s.year_low!) * 100, 1)}%</strong> above the 52-week low</p>
+              <p className="mt-3 text-center text-xs text-muted-foreground md:mt-2">Current: KSh {fmt(s.price)} · <strong className="text-foreground">{fmt(((s.price - s.year_low!) / s.year_low!) * 100, 1)}%</strong> above the 52-week low</p>
             </div>
           )}
         </TabsContent>
@@ -704,19 +704,19 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
 
 /* ─── Shared Components ─── */
 const StatCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
-  <div className="flex min-h-[96px] items-center gap-3 rounded-[24px] border border-border bg-card p-4 shadow-[0_8px_22px_hsl(var(--foreground)/0.06)] md:min-h-0 md:rounded-xl md:p-3.5 md:shadow-none">
-    <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-primary/10 md:h-9 md:w-9 md:rounded-lg md:bg-muted/60">{icon}</div>
-    <div>
-      <p className="mb-2 text-[11px] font-semibold uppercase leading-none tracking-wider text-muted-foreground md:mb-1 md:text-[10px] md:font-medium">{label}</p>
-      <p className="text-lg font-bold leading-none tabular-nums text-foreground md:text-base">{value}</p>
+  <div className="flex min-h-[72px] items-center gap-2.5 rounded-[16px] border border-border bg-card p-3 shadow-[0_5px_16px_hsl(var(--foreground)/0.05)] md:min-h-0 md:gap-3 md:rounded-xl md:p-3.5 md:shadow-none">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 md:rounded-lg md:bg-muted/60">{icon}</div>
+    <div className="min-w-0">
+      <p className="mb-1 truncate text-[10px] font-semibold uppercase leading-none tracking-wider text-muted-foreground md:font-medium">{label}</p>
+      <p className="truncate text-base font-bold leading-tight tabular-nums text-foreground">{value}</p>
     </div>
   </div>
 );
 
 const MiniStat = ({ label, value, color, desktopOnly = false }: { label: string; value: string; color?: string; desktopOnly?: boolean }) => (
-  <div className={`rounded-[18px] border border-border bg-muted/25 px-3 py-4 text-left md:rounded-lg md:border-0 md:bg-muted/40 md:py-2 md:text-center ${desktopOnly ? "hidden md:block" : ""}`}>
-    <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground md:text-[10px] md:font-normal md:normal-case md:tracking-normal">{label}</p>
-    <p className={`mt-2 text-base font-bold tabular-nums md:mt-0 md:text-sm md:font-semibold ${color || "text-foreground"}`}>{value}</p>
+  <div className={`rounded-[14px] border border-border bg-muted/20 px-3 py-2.5 text-left md:rounded-lg md:border-0 md:bg-muted/40 md:py-2 md:text-center ${desktopOnly ? "hidden md:block" : ""}`}>
+    <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:font-normal md:normal-case md:tracking-normal">{label}</p>
+    <p className={`mt-1 text-sm font-bold tabular-nums md:mt-0 md:font-semibold ${color || "text-foreground"}`}>{value}</p>
   </div>
 );
 
