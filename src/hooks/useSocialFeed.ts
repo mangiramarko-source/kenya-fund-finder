@@ -2,6 +2,7 @@ import { useMemo } from "react";
 import { type NewsFromDB, type FundFromDB } from "@/lib/api";
 import { type Stock, type ExchangeRate } from "@/components/home/MarketTicker";
 import { decodeHtmlEntities } from "@/lib/utils";
+import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
 
 export type FeedItemType = "NEWS" | "STOCK_INSIGHT" | "FUND_MILESTONE" | "FX_ALERT" | "EDUCATION";
 
@@ -24,6 +25,7 @@ export interface FeedItem {
   rawItem?: any;
   relatedSymbols?: string[];
   aiInsight?: string | null;
+  isHeadlineOnly?: boolean;
   relatedStock?: {
     id: string;
     symbol: string;
@@ -59,53 +61,6 @@ const safeNum = (val: any) => {
   return isNaN(num) ? 0 : num;
 };
 
-function cleanTitleText(rawTitle: string): string {
-  if (!rawTitle) return "";
-  return rawTitle
-    .replace(/\s*[-–|]\s*[a-z0-9.-]+\.[a-z]{2,}$/i, '')
-    .replace(/\s*[-–|]\s*(Business Daily|Nation|The Star|Standard|Capital FM|TechCabal|TechWeez|Kenyan Wall Street|Citizen Digital|KBC|People Daily)\s*$/i, '')
-    .trim();
-}
-
-function cleanContentText(title: string, rawContent: string): string {
-  if (!rawContent) return "";
-  let content = rawContent.trim();
-  
-  const baseTitle = cleanTitleText(title);
-  if (baseTitle) {
-    const normTitle = baseTitle.toLowerCase().replace(/[^a-z0-9]/g, '');
-    const normContent = content.toLowerCase().replace(/[^a-z0-9]/g, '');
-
-    if (normTitle.length >= 15 && normContent.startsWith(normTitle)) {
-      // Find the index in 'content' where the matching alphanumeric characters end
-      let matchCount = 0;
-      let splitIndex = 0;
-      for (let i = 0; i < content.length; i++) {
-        if (/[a-z0-9]/i.test(content[i])) {
-          matchCount++;
-        }
-        if (matchCount === normTitle.length) {
-          splitIndex = i + 1;
-          break;
-        }
-      }
-
-      let remainder = content.slice(splitIndex).trim();
-      remainder = remainder.replace(/^[^a-z0-9]+/i, '').trim(); 
-      remainder = remainder.replace(/^[a-z0-9.-]+\.[a-z]{2,}\s*/i, '').trim();
-      
-      if (remainder.length > 0) {
-        content = remainder;
-      } else {
-        content = "";
-      }
-    }
-  }
-
-  content = content.replace(/^[a-z0-9.-]+\.[a-z]{2,}\s*[-–|]?\s*/i, '').trim();
-  return content;
-}
-
 export function useSocialFeed(
   news: NewsFromDB[],
   stocks: Stock[],
@@ -121,11 +76,14 @@ export function useSocialFeed(
       // Use created_at if available (when it landed on our site), otherwise fallback to date_published
       const timeSource = n.created_at || n.date_published;
       const newsDate = timeSource ? new Date(timeSource) : new Date();
-      const rawTitle = decodeHtmlEntities(n.title || "");
-      const rawContent = decodeHtmlEntities(n.summary || n.content || "");
-      
-      const cleanedTitle = cleanTitleText(rawTitle);
-      const cleanedContent = cleanContentText(rawTitle, rawContent);
+      const presentation = getNewsPresentation({
+        title: decodeHtmlEntities(n.title || ""),
+        summary: decodeHtmlEntities(n.summary || ""),
+        content: decodeHtmlEntities(n.content || ""),
+        source: n.source,
+      });
+      const cleanedTitle = presentation.title;
+      const cleanedContent = presentation.body;
 
       const knownSymbols = ["SCOM", "EQTY", "KCB", "EABL", "BAT", "COOP", "NCBA", "USD/KES", "EUR/KES", "GBP/KES", "Oil", "Gold"];
       const relatedSymbols: string[] = [];
@@ -144,6 +102,7 @@ export function useSocialFeed(
         authorLabel: n.category || "News",
         title: cleanedTitle,
         content: cleanedContent,
+        isHeadlineOnly: presentation.isHeadlineOnly,
         mediaUrl: n.image_url || undefined,
         mediaType: n.image_url ? "image" : undefined,
         timestamp: newsDate,

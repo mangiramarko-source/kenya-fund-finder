@@ -55,6 +55,14 @@ describe("stock news feed", () => {
     expect(item.content).toBe("EABL stake sale Business Daily");
   });
 
+  it("uses one cleaned headline when the summary only repeats the title", () => {
+    const title = "MPs seek safeguards in Diageo’s EABL stake sale - Business Daily";
+    const [item] = buildNewsFeedItems([article({ title, summary: title, ai_insight: null })], [stock]);
+    expect(item.title).toBe("MPs seek safeguards in Diageo’s EABL stake sale");
+    expect(item.content).toBe("");
+    expect(item.isHeadlineOnly).toBe(true);
+  });
+
   it("does not fabricate a relation when the stock is missing", () => {
     const [item] = buildNewsFeedItems([article()], []);
     expect(item.relatedStock).toBeNull();

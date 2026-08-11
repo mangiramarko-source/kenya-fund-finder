@@ -118,10 +118,18 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
         </button>
       </header>
 
-      <h2 className="font-heading font-extrabold text-base text-foreground leading-snug tracking-tight">{item.title}</h2>
-      <p className="font-body text-sm text-muted-foreground/90 leading-relaxed line-clamp-3 font-normal">
-        {item.aiInsight || item.content}
-      </p>
+      {item.isHeadlineOnly ? (
+        <h2 className="font-body text-sm font-normal text-foreground/90 leading-relaxed">
+          {item.title}
+        </h2>
+      ) : (
+        <>
+          <h2 className="font-heading font-extrabold text-base text-foreground leading-snug tracking-tight">{item.title}</h2>
+          <p className="font-body text-sm text-muted-foreground/90 leading-relaxed line-clamp-3 font-normal">
+            {item.aiInsight || item.content}
+          </p>
+        </>
+      )}
 
       <button type="button" onClick={openArticle} className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-sm">
         <span>Continue reading</span>

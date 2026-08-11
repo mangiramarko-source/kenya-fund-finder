@@ -1,6 +1,7 @@
 import type { NewsFromDB, PublicStock } from "@/lib/api";
 import type { FeedItem } from "@/hooks/useSocialFeed";
 import { decodeHtmlEntities } from "@/lib/utils";
+import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
 
 export type NewsTab = "All" | "Stocks" | "Kenyan" | "International" | "Latest" | "Oldest";
 
@@ -39,13 +40,20 @@ export function buildNewsFeedItems(articles: NewsFromDB[], stocks: PublicStock[]
 
   return articles.map((article) => {
     const stock = article.related_stock_id ? stocksById.get(article.related_stock_id) : undefined;
+    const presentation = getNewsPresentation({
+      title: decodeHtmlEntities(article.title),
+      summary: decodeHtmlEntities(article.summary || ""),
+      content: decodeHtmlEntities(article.content || ""),
+      source: article.source,
+    });
+    const aiInsight = article.ai_insight ? decodeHtmlEntities(article.ai_insight) : null;
     return {
       id: `news-${article.id}`,
       type: "NEWS" as const,
       authorName: article.source || "Market News",
       authorLabel: article.category || "News",
-      title: decodeHtmlEntities(article.title),
-      content: decodeHtmlEntities(article.ai_insight || article.summary || article.content || ""),
+      title: presentation.title,
+      content: aiInsight || presentation.body,
       mediaUrl: article.image_url || undefined,
       mediaType: article.image_url ? ("image" as const) : undefined,
       timestamp: new Date(article.created_at || article.date_published || Date.now()),
@@ -53,7 +61,8 @@ export function buildNewsFeedItems(articles: NewsFromDB[], stocks: PublicStock[]
       comments: article.comments || 0,
       url: article.url || "#",
       rawItem: article,
-      aiInsight: article.ai_insight ? decodeHtmlEntities(article.ai_insight) : null,
+      aiInsight,
+      isHeadlineOnly: !aiInsight && presentation.isHeadlineOnly,
       relatedStock: stock ? {
         id: stock.id,
         symbol: stock.symbol,

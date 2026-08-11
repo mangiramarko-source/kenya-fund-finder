@@ -222,7 +222,10 @@ export const SocialFeedCard = ({
 
       {/* Main Title / Headline */}
       {item.id !== "daily-market-summary" && (
-        <h3 className="font-heading font-extrabold text-base text-foreground leading-snug tracking-tight">
+        <h3 className={item.isHeadlineOnly
+          ? "font-body text-sm font-normal text-foreground/90 leading-relaxed"
+          : "font-heading font-extrabold text-base text-foreground leading-snug tracking-tight"
+        }>
           {item.title}
         </h3>
       )}
@@ -241,14 +244,16 @@ export const SocialFeedCard = ({
       )}
 
       {/* Text Body Content */}
-      <div
-        ref={contentRef}
-        className="font-body text-sm text-muted-foreground/90 leading-relaxed line-clamp-3 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
-      >
-        <ReactMarkdown remarkPlugins={[remarkGfm]}>
-          {item.content || ""}
-        </ReactMarkdown>
-      </div>
+      {!item.isHeadlineOnly && (
+        <div
+          ref={contentRef}
+          className="font-body text-sm text-muted-foreground/90 leading-relaxed line-clamp-3 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
+        >
+          <ReactMarkdown remarkPlugins={[remarkGfm]}>
+            {item.content || ""}
+          </ReactMarkdown>
+        </div>
+      )}
 
       {/* See more Link (only shown for long articles that don't fit in card) */}
       {isExpandable && (

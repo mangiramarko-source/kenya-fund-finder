@@ -2,7 +2,7 @@ import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { parseFeed } from "https://deno.land/x/rss@0.5.8/mod.ts";
 import { isLegacyCronAuthorization } from "../fetch-market-data/auth.ts";
-import { sanitizeNewsText } from "../_shared/news-text.ts";
+import { cleanNewsTitle, isDuplicateNewsText, sanitizeNewsText } from "../_shared/news-text.ts";
 import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
 
 const corsHeaders = {
@@ -390,21 +390,27 @@ async function fetchFeed(feedUrl: string, source: string): Promise<ParsedArticle
     const items = xml.split(/<item[\s>]/i).slice(1);
 
     for (const item of items) {
-      const title = stripHtml(extractTag(item, "title"));
-      if (!title) continue;
+      const rawTitle = stripHtml(extractTag(item, "title"));
+      if (!rawTitle) continue;
+      const title = cleanNewsTitle(rawTitle, source);
       const link = extractTag(item, "link").trim();
       const descriptionRaw = extractTag(item, "description");
       const contentRaw = extractTag(item, "content:encoded") || extractTag(item, "content");
       const pubDate = extractTag(item, "pubDate") || extractTag(item, "dc:date");
-      const summary = stripHtml(descriptionRaw).slice(0, 1000);
-      const fullText = `${title} ${summary} ${stripHtml(contentRaw)}`;
+      const summary = isDuplicateNewsText(rawTitle, descriptionRaw, source)
+        ? ""
+        : stripHtml(descriptionRaw).slice(0, 1000);
+      const sanitizedContent = isDuplicateNewsText(rawTitle, contentRaw, source)
+        ? ""
+        : stripHtml(contentRaw).slice(0, 5000);
+      const fullText = `${title} ${summary} ${sanitizedContent}`;
       if (!matchesKeywords(fullText)) continue;
 
       articles.push({
         title,
         url: link || null,
-        summary: summary || title,
-        content: contentRaw ? stripHtml(contentRaw).slice(0, 5000) : null,
+        summary,
+        content: sanitizedContent || null,
         date_published: parseDate(pubDate),
         source,
         image_url: extractImageUrl(item),
@@ -585,8 +591,14 @@ Deno.serve(async (req) => {
 
     const rows = processingArticles.map((a, i) => {
       const rw = rewrites[i];
-      const summary = rw?.summary || a.summary;
-      const content = rw?.content || a.content;
+      const summaryCandidate = rw?.summary || a.summary;
+      const contentCandidate = rw?.content || a.content;
+      const summary = isDuplicateNewsText(a.title, summaryCandidate, a.source)
+        ? ""
+        : sanitizeNewsText(summaryCandidate || "");
+      const content = isDuplicateNewsText(a.title, contentCandidate, a.source)
+        ? null
+        : contentCandidate;
       return {
         title: a.title,
         url: a.url,

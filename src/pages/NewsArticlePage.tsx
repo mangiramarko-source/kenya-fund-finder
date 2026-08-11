@@ -34,6 +34,7 @@ import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
+import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
 
 interface CommentItem {
   id: string;
@@ -208,12 +209,14 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     }
   }, [loading, article]);
 
+  const articlePresentation = article ? getNewsPresentation(article) : null;
+
   useDocumentTitle(
-    article ? `${article.title} – Kenya Fund Finder` : "News Article – Kenya Fund Finder",
-    article?.summary,
+    articlePresentation ? `${articlePresentation.title} – Kenya Fund Finder` : "News Article – Kenya Fund Finder",
+    articlePresentation?.body,
     article ? {
-      title: article.title,
-      description: article.summary,
+      title: articlePresentation?.title || article.title,
+      description: articlePresentation?.body || articlePresentation?.title || article.summary,
       image: article.image_url || undefined,
       type: "article",
     } : undefined,
@@ -223,8 +226,8 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     "@graph": [
       {
         "@type": "NewsArticle",
-        headline: article.title,
-        description: article.summary,
+        headline: articlePresentation?.title || article.title,
+        description: articlePresentation?.body || articlePresentation?.title || article.summary,
         mainEntityOfPage: `https://kenyafundfinder.com/news/${article.id}`,
         datePublished: article.date_published || article.created_at,
         dateModified: article.created_at || article.date_published,
@@ -241,7 +244,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         itemListElement: [
           { "@type": "ListItem", position: 1, name: "Home", item: "https://kenyafundfinder.com/" },
           { "@type": "ListItem", position: 2, name: "Market News", item: "https://kenyafundfinder.com/news" },
-          { "@type": "ListItem", position: 3, name: article.title, item: `https://kenyafundfinder.com/news/${article.id}` },
+          { "@type": "ListItem", position: 3, name: articlePresentation?.title || article.title, item: `https://kenyafundfinder.com/news/${article.id}` },
         ],
       },
     ],
@@ -338,7 +341,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     try { return new URL(article.url).hostname; } catch { return ""; }
   })();
   const sourceLogoUrl = sourceDomain ? `https://www.google.com/s2/favicons?domain=${sourceDomain}&sz=128` : "";
-  const articleText = decodeHtmlEntities(article.summary || article.content || "");
+  const articleText = decodeHtmlEntities(articlePresentation?.body || "");
   const articleParagraphs = splitReadableParagraphs(articleText);
 
   return (
@@ -426,17 +429,20 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
 
         {/* ─── 3. Post Text ─── */}
         <div className="space-y-3">
-          <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug tracking-tight">
-            {decodeHtmlEntities(article.title)}
+          <h1 className={articlePresentation?.isHeadlineOnly
+            ? "text-[15px] font-normal text-foreground/90 leading-relaxed"
+            : "text-base sm:text-lg font-bold text-foreground leading-snug tracking-tight"
+          }>
+            {articlePresentation?.title || decodeHtmlEntities(article.title)}
           </h1>
 
-          <div className="text-[15px] sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
+          {!articlePresentation?.isHeadlineOnly && <div className="text-[15px] sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
             {articleParagraphs.map((paragraph, index) => (
               <p key={index} className="my-4">
                 {paragraph}
               </p>
             ))}
-          </div>
+          </div>}
         </div>
 
         {/* ─── 4. Main Image ─── */}

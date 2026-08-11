@@ -228,7 +228,10 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
           </div>
 
           <DialogHeader className="mt-4 text-left">
-            <DialogTitle className="text-xl sm:text-2xl font-bold text-foreground leading-snug tracking-tight">
+            <DialogTitle className={item.isHeadlineOnly
+              ? "text-base font-normal text-foreground/90 leading-relaxed"
+              : "text-xl sm:text-2xl font-bold text-foreground leading-snug tracking-tight"
+            }>
               {item.title}
             </DialogTitle>
           </DialogHeader>
@@ -278,13 +281,13 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
             )}
 
           {/* Article Text Content */}
-          <div className="text-base text-foreground/90 leading-relaxed font-normal whitespace-pre-line">
+          {!item.isHeadlineOnly && <div className="text-base text-foreground/90 leading-relaxed font-normal whitespace-pre-line">
             <div className="prose prose-base dark:prose-invert max-w-none prose-p:my-3 prose-p:text-[16px] prose-p:text-foreground/90 prose-p:leading-relaxed prose-headings:mt-4 prose-headings:mb-2 prose-headings:text-foreground">
               <ReactMarkdown remarkPlugins={[remarkGfm]}>
                 {readableContent}
               </ReactMarkdown>
             </div>
-          </div>
+          </div>}
 
           {/* External Source Link */}
           {(() => {
