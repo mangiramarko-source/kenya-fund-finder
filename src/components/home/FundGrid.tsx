@@ -81,7 +81,7 @@ const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue
     return { pts, isUp };
   }, [data, currentValue]);
 
-  if (!result) return <span className="text-[10px] text-muted-foreground">—</span>;
+  if (!result) return <span className="text-[13px] text-muted-foreground">—</span>;
 
   const { pts, isUp } = result;
   const color = isUp ? "#10b981" : "hsl(var(--destructive))";
@@ -488,7 +488,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
 
       <div className="hidden md:block rounded-[22px] border border-border bg-card shadow-sm overflow-hidden">
-        <div className="w-full overflow-x-auto border-b border-border bg-gradient-to-b from-muted/30 to-card px-6 pt-5 scrollbar-hide">
+        <div className="w-full overflow-x-auto border-b border-border bg-black px-7 pt-3 scrollbar-hide">
           <div className="flex min-w-max items-center gap-8">
             {categories.map((cat) => {
               const active = activeTab === cat;
@@ -496,7 +496,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 <button
                   key={cat}
                   onClick={() => updateParams({ category: cat, q: "", sort: "annual_yield", dir: "desc", movement: "all" })}
-                  className={`relative pb-4 text-[14px] font-medium transition-colors ${
+                  className={`relative pb-3 text-[13px] font-semibold transition-colors ${
                     active ? "text-emerald-500" : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
@@ -510,43 +510,43 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         <div className="overflow-x-auto">
           <table className="w-full table-fixed min-w-[1100px] text-left text-sm">
             <colgroup>
-              <col style={{ width: "20.5%" }} />
+              <col style={{ width: "24%" }} />
               <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "8%" }} />
-              <col style={{ width: "130px" }} />
+              <col style={{ width: "110px" }} />
               <col style={{ width: "9%" }} />
               <col style={{ width: "6%" }} />
               <col style={{ width: "11%" }} />
               {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
-              <tr className="border-b border-border bg-black text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
-                <th className="text-left px-6 py-4 font-semibold">
-                  <SortHeader label="Funds" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
+              <tr className="border-b border-border bg-muted/50 text-[10px] uppercase tracking-[0.16em] text-muted-foreground dark:bg-[#1b1c1f]">
+                <th className="bg-background/60 text-left px-6 py-3 font-semibold dark:bg-[#151619]">
+                  <SortHeader label="FUNDS" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-right px-3 py-4 font-semibold">
-                  <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-right px-3 py-3 font-semibold">
+                  <SortHeader label="DAILY" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-2 py-4 font-semibold" title="vs prior snapshot">
+                <th className="text-right px-2 py-3 font-semibold" title="vs prior snapshot">
                   <span className="sr-only">Daily </span>Change
                 </th>
-                <th className="text-right px-3 py-4 font-semibold">
-                  <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-right px-3 py-3 font-semibold">
+                  <SortHeader label="ANNUAL" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-2 py-4 font-semibold" title="vs prior snapshot">
+                <th className="text-right px-2 py-3 font-semibold" title="vs prior snapshot">
                   <span className="sr-only">Annual </span>Change
                 </th>
-                <th className="text-center px-2 py-4 font-semibold">Trend</th>
-                <th className="text-right px-3 py-4 font-semibold">
-                  <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-center px-2 py-3 font-semibold">Trend</th>
+                <th className="text-right px-3 py-3 font-semibold">
+                  <SortHeader label="MIN INVEST" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-4 font-semibold">
-                  <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
+                <th className="text-right px-3 py-3 font-semibold">
+                  <SortHeader label="FEE" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right pr-5 pl-2 py-4 font-semibold">Withdraw</th>
-                {onToggleFavourite && <th className="w-8 pr-3 py-4 font-semibold" aria-label="Watch" />}
+                <th className="text-right pr-5 pl-2 py-3 font-semibold">WITHDRAW</th>
+                {onToggleFavourite && <th className="w-8 pr-3 py-3 font-semibold" aria-label="Watch" />}
               </tr>
             </thead>
             <tbody className="divide-y divide-border bg-card">
@@ -556,7 +556,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                   onClick={() => navigate(`/compare/${fund.slug}`)}
                   className="group cursor-pointer bg-card transition-colors hover:bg-muted/35"
                 >
-                  <td className="px-6 py-4 align-middle">
+                  <td className="bg-muted/35 px-6 py-4 align-middle dark:bg-[#151619]">
                     <Link
                       to={`/compare/${fund.slug}`}
                       onClick={(e) => e.stopPropagation()}
@@ -573,7 +573,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     </Link>
                   </td>
                   <td className="px-3 py-4 text-right tabular-nums whitespace-nowrap align-middle">
-                    <span className="font-black text-foreground text-[14px]">
+                    <span className="font-black text-foreground text-[13px]">
                       {fmtYield(fund.daily_yield, fund.yield_unit)}
                     </span>
                   </td>
@@ -584,15 +584,15 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                           current={fund.daily_yield}
                           previous={snapshots[fund.id]?.daily_yield}
                           unit={fund.yield_unit}
-                          className="text-[11px]"
+                          className="text-[13px]"
                         />
                       ) : (
-                        <span className="text-[10px] text-muted-foreground">—</span>
+                        <span className="text-[13px] text-muted-foreground">—</span>
                       )}
                     </div>
                   </td>
                   <td className="px-3 py-4 text-right whitespace-nowrap tabular-nums align-middle">
-                    <span className="font-black text-foreground text-[14px]">
+                    <span className="font-black text-foreground text-[13px]">
                       {fmtYield(fund.annual_yield, fund.yield_unit)}
                     </span>
                   </td>
@@ -603,10 +603,10 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                           current={fund.annual_yield}
                           previous={snapshots[fund.id]?.annual_yield}
                           unit={fund.yield_unit}
-                          className="text-[11px]"
+                          className="text-[13px]"
                         />
                       ) : (
-                        <span className="text-[10px] text-muted-foreground">—</span>
+                        <span className="text-[13px] text-muted-foreground">—</span>
                       )}
                     </div>
                   </td>
@@ -614,16 +614,16 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
                       <Sparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
                     ) : (
-                      <span className="text-[10px] text-muted-foreground">—</span>
+                      <span className="text-[13px] text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-4 text-right text-[12px] font-semibold tabular-nums text-foreground whitespace-nowrap align-middle">
-                    <span className="mr-1 text-[9px] font-medium text-muted-foreground">KSh</span>{fund.minimum_investment.toLocaleString()}
+                  <td className="px-3 py-4 text-right text-[13px] font-semibold tabular-nums text-foreground whitespace-nowrap align-middle">
+                    <span className="mr-1 text-[13px] font-medium text-muted-foreground">KSh</span>{fund.minimum_investment.toLocaleString()}
                   </td>
-                  <td className="px-3 py-4 text-right text-[12px] font-semibold tabular-nums text-foreground whitespace-nowrap align-middle">
+                  <td className="px-3 py-4 text-right text-[13px] font-semibold tabular-nums text-foreground whitespace-nowrap align-middle">
                     {fund.management_fee}%
                   </td>
-                  <td className="pr-5 pl-2 py-4 text-right text-[11px] font-semibold text-foreground truncate max-w-[120px] align-middle" title={fund.withdrawal_time}>
+                  <td className="pr-5 pl-2 py-4 text-right text-[13px] font-semibold text-foreground truncate max-w-[120px] align-middle" title={fund.withdrawal_time}>
                     {fund.withdrawal_time}
                   </td>
                   {onToggleFavourite && (
