@@ -12,6 +12,8 @@ interface Props {
   itemName: string;
   variant?: "icon" | "button";
   className?: string;
+  buttonLabel?: string;
+  savedButtonLabel?: string;
 }
 
 const ANON_KEY = "kff_anon_save_clicks";
@@ -21,7 +23,7 @@ const ANON_KEY = "kff_anon_save_clicks";
  * Anonymous users see a sign-up nudge after 2 attempts.
  */
 const SaveToWatchlistButton = ({
-  itemType, itemId, itemName, variant = "icon", className,
+  itemType, itemId, itemName, variant = "icon", className, buttonLabel = "Save", savedButtonLabel = "Saved",
 }: Props) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -61,7 +63,7 @@ const SaveToWatchlistButton = ({
         aria-label={label}
       >
         <Icon className="h-3.5 w-3.5" />
-        {saved ? "Saved" : "Save"}
+        {saved ? savedButtonLabel : buttonLabel}
       </Button>
     );
   }

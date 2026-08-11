@@ -1,6 +1,6 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
 import { useEffect, useState, useMemo } from "react";
-import { ArrowLeft, ExternalLink, BarChart3, Shield, Clock, Wallet, TrendingUp, ChevronRight, PiggyBank, GitCompareArrows, Bell } from "lucide-react";
+import { ArrowLeft, ExternalLink, BarChart3, Shield, Clock, Wallet, TrendingUp, ChevronRight, PiggyBank, GitCompareArrows, Bell, MoreHorizontal, Link2, Twitter, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -8,6 +8,8 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { Slider } from "@/components/ui/slider";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { fetchFundBySlug, fetchFunds, fetchHistoricalYields, fetchFundSnapshots, type FundFromDB, type HistoricalYield, type YieldSnapshot } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
@@ -20,6 +22,7 @@ import DisclaimerBlock from "@/components/DisclaimerBlock";
 import ReportIssueDialog from "@/components/funds/ReportIssueDialog";
 import { getFundExplainer } from "@/lib/fundExplainers";
 import { BookOpen, Layers } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 const FUND_TYPE_LABELS: Record<string, string> = {
   money_market: "Money Market",
@@ -60,6 +63,7 @@ const formatKES = (n: number) => `KES ${n.toLocaleString()}`;
 const FundDetailPage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const { toast } = useToast();
   
   const [fund, setFund] = useState<FundFromDB | null>(null);
   const [peers, setPeers] = useState<FundFromDB[]>([]);
@@ -73,6 +77,12 @@ const FundDetailPage = () => {
   const [calcMonths, setCalcMonths] = useState(12);
   const [calcMonthly, setCalcMonthly] = useState(0);
   const [calcCompound, setCalcCompound] = useState(true);
+
+  const shareUrl = `https://kenyafundfinder.com/compare/${encodeURIComponent(id || "")}`;
+  const handleCopyLink = async () => {
+    await navigator.clipboard.writeText(shareUrl);
+    toast({ title: "Link copied to clipboard" });
+  };
 
   useDocumentTitle(
     fund ? `${fund.name} – Fund Details` : "Fund Details",
@@ -184,7 +194,134 @@ const FundDetailPage = () => {
     : null;
 
   return (
-    <div className="container py-4 sm:py-8 max-w-5xl space-y-5">
+    <>
+    <div className="min-h-screen px-3 pb-6 pt-3 md:hidden">
+      <div className="sticky top-0 z-40 -mx-3 -mt-3 mb-4 flex h-[58px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md">
+        <button type="button" onClick={() => navigate(-1)} aria-label="Go back" className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted/50">
+          <ArrowLeft className="h-6 w-6" />
+        </button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <button type="button" aria-label="More options" className="-mr-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted/50">
+              <MoreHorizontal className="h-5 w-5" />
+            </button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end" className="w-48">
+            <DropdownMenuItem onClick={handleCopyLink} className="cursor-pointer gap-2 text-sm"><Link2 className="h-4 w-4" /> Copy Link</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.open(`https://twitter.com/intent/tweet?text=${encodeURIComponent(`${fund.name} by ${fund.manager}`)}&url=${encodeURIComponent(shareUrl)}`, "_blank", "noopener")} className="cursor-pointer gap-2 text-sm"><Twitter className="h-4 w-4" /> Share on X</DropdownMenuItem>
+            <DropdownMenuItem onClick={() => window.open(`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`, "_blank", "noopener")} className="cursor-pointer gap-2 text-sm"><Facebook className="h-4 w-4" /> Share on Facebook</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </div>
+
+      <div className="mb-1">
+        <div className="flex items-center gap-3">
+          <FundMobileLogo name={fund.name} logoUrl={fund.logo_url} />
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h1 className="truncate text-xl font-black tracking-tight text-foreground">{fund.name}</h1>
+              {fund.cma_licensed && <Shield className="h-4 w-4 shrink-0 text-primary" />}
+            </div>
+            <p className="truncate text-sm text-muted-foreground">{fund.manager}</p>
+            <p className="mt-0.5 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">{FUND_TYPE_LABELS[fund.fund_type] || fund.fund_type} · {fund.cma_licensed ? "CMA regulated" : "Fund report"}</p>
+          </div>
+        </div>
+
+        <div className="my-4 grid grid-cols-2 gap-2">
+          <div className="[&_button]:h-10 [&_button]:w-full [&_button]:rounded-full [&_button]:border-foreground [&_button]:bg-foreground [&_button]:px-3 [&_button]:text-xs [&_button]:font-semibold [&_button]:text-background [&_svg]:h-4 [&_svg]:w-4">
+            <CreateAlertDialog assetType="fund" assetId={fund.id} assetName={fund.name} currentPrice={fund.annual_yield} unit="%" />
+          </div>
+          <SaveToWatchlistButton itemType="fund" itemId={fund.id} itemName={fund.name} variant="button" buttonLabel="Watch" savedButtonLabel="Watching" className="h-10 w-full rounded-full px-3 text-xs font-semibold" />
+        </div>
+
+        <div className="mt-3">
+          <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Annual yield · Updated {new Date(fund.updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })}</p>
+          <p className="mt-1 text-[38px] font-black leading-none tabular-nums text-foreground">{formatYield(fund.annual_yield, fund.yield_unit)}</p>
+          <div className="mt-1.5 flex items-center gap-3">
+            {prevSnap && <YieldChange current={fund.annual_yield} previous={prevSnap.annual_yield} unit={fund.yield_unit} className="text-xs font-bold" />}
+            {peerStats && <p className="text-[10px] text-muted-foreground">#{peerStats.rank} of {peerStats.total} similar funds</p>}
+          </div>
+        </div>
+      </div>
+
+      <Tabs defaultValue="overview" className="w-full">
+        <TabsList className="-mx-3 mb-3 flex h-auto w-[calc(100%+1.5rem)] justify-start overflow-x-auto rounded-none border-b border-border bg-transparent p-0">
+          {[["overview", "Overview"], ["compare", "Compare"], ["calculator", "Calculator"], ["about", "About"]].map(([value, label]) => (
+            <TabsTrigger key={value} value={value} className="shrink-0 rounded-none border-b-2 border-transparent px-5 py-3 text-sm font-semibold data-[state=active]:border-primary data-[state=active]:bg-transparent data-[state=active]:shadow-none">{label}</TabsTrigger>
+          ))}
+        </TabsList>
+
+        <TabsContent value="overview" className="space-y-5">
+          <MobileRateChart title="Rate History" data={chartData} dataKey="rate" xKey="date" emptyText="No rate history available yet." />
+          {yields.length > 0 && <MobileRateChart title="Monthly Performance" data={yields} dataKey="yield" xKey="month" emptyText="No monthly performance available yet." />}
+          <div className="grid grid-cols-2 gap-2">
+            <FundMetric label="Daily Yield" value={formatYield(fund.daily_yield, fund.yield_unit)} icon={<TrendingUp className="h-4 w-4" />} />
+            <FundMetric label="Min. Investment" value={`KES ${fund.minimum_investment.toLocaleString()}`} icon={<Wallet className="h-4 w-4" />} />
+            <FundMetric label="Management Fee" value={`${fund.management_fee}%`} sub={peerStats ? `Category avg ${peerStats.avgFee.toFixed(2)}%` : undefined} icon={<BarChart3 className="h-4 w-4" />} />
+            <FundMetric label="Withdrawal" value={fund.withdrawal_time || "—"} icon={<Clock className="h-4 w-4" />} />
+          </div>
+          <div className="rounded-[16px] border border-border bg-card p-3">
+            <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">CMA status</span><span className="text-xs font-bold text-foreground">{fund.cma_licensed ? "Regulated" : "Not confirmed"}</span></div>
+            <div className="my-2 h-px bg-border/60" />
+            <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">Yield unit</span><span className="text-xs font-bold text-foreground">{fund.yield_unit || "%"}</span></div>
+          </div>
+        </TabsContent>
+
+        <TabsContent value="compare">
+          {peers.length > 0 ? (
+            <div className="overflow-hidden rounded-[18px] border border-border bg-card">
+              <div className="border-b border-border/60 p-3">
+                <Label className="mb-1.5 block text-xs text-muted-foreground">Compare {fund.name} with</Label>
+                <Select value={comparePeerId} onValueChange={setComparePeerId}>
+                  <SelectTrigger className="h-10 text-sm"><SelectValue placeholder="Choose a similar fund…" /></SelectTrigger>
+                  <SelectContent>{peers.map((p) => <SelectItem key={p.id} value={p.id}>{p.name} — {formatYield(p.annual_yield, p.yield_unit)}</SelectItem>)}</SelectContent>
+                </Select>
+              </div>
+              {comparePeer ? <div className="divide-y divide-border/40">
+                <div className="grid grid-cols-3 bg-muted/30 px-3 py-2.5 text-[11px] font-semibold"><span className="truncate">{fund.name}</span><span className="text-center text-muted-foreground">Metric</span><span className="truncate text-right">{comparePeer.name}</span></div>
+                <CmpRow label="Annual Rate" a={formatYield(fund.annual_yield, fund.yield_unit)} b={formatYield(comparePeer.annual_yield, comparePeer.yield_unit)} aWins={fund.annual_yield >= comparePeer.annual_yield} />
+                <CmpRow label="Daily Yield" a={formatYield(fund.daily_yield, fund.yield_unit)} b={formatYield(comparePeer.daily_yield, comparePeer.yield_unit)} aWins={fund.daily_yield >= comparePeer.daily_yield} />
+                <CmpRow label="Mgmt Fee" a={`${fund.management_fee}%`} b={`${comparePeer.management_fee}%`} aWins={fund.management_fee <= comparePeer.management_fee} />
+                <CmpRow label="Min. Invest" a={`KES ${fund.minimum_investment.toLocaleString()}`} b={`KES ${comparePeer.minimum_investment.toLocaleString()}`} aWins={fund.minimum_investment <= comparePeer.minimum_investment} />
+                <CmpRow label="Withdrawal" a={fund.withdrawal_time} b={comparePeer.withdrawal_time} />
+              </div> : <div className="p-8 text-center text-sm text-muted-foreground">Select a similar fund to compare.</div>}
+            </div>
+          ) : <div className="py-10 text-center text-sm text-muted-foreground">No similar funds available.</div>}
+        </TabsContent>
+
+        <TabsContent value="calculator">
+          <div className="space-y-4 rounded-[18px] border border-border bg-card p-4">
+            <p className="text-xs leading-relaxed text-muted-foreground">Estimate returns using {fund.name}'s current rate of {fund.annual_yield}% p.a.</p>
+            <CalcInput label="Initial Investment" value={calcAmount} onChange={setCalcAmount} min={1000} max={10000000} step={1000} prefix="KES " />
+            <CalcInput label="Period" value={calcMonths} onChange={setCalcMonths} min={1} max={120} step={1} suffix=" months" />
+            <CalcInput label="Monthly Top-up" value={calcMonthly} onChange={setCalcMonthly} min={0} max={1000000} step={500} prefix="KES " />
+            <div className="flex items-center justify-between"><Label className="text-xs font-medium">Compound Interest</Label><Switch checked={calcCompound} onCheckedChange={setCalcCompound} /></div>
+            {calcResults && <div className="space-y-2 border-t border-border/60 pt-3 text-sm">
+              <div className="rounded-[14px] bg-primary/10 p-3 text-center"><p className="text-[10px] uppercase tracking-wider text-muted-foreground">Estimated Final Value</p><p className="mt-1 text-xl font-black tabular-nums text-primary">{formatKES(calcResults.finalValue)}</p></div>
+              <CalcLine label="Total Contributions" value={formatKES(calcResults.totalContributions)} />
+              <CalcLine label="Gross Interest" value={formatKES(calcResults.grossEarnings)} />
+              <CalcLine label="Withholding Tax (15%)" value={`- ${formatKES(calcResults.totalTax)}`} destructive />
+              {calcResults.managementFeeCost > 0 && <CalcLine label={`Mgmt Fee (${fund.management_fee}%)`} value={`- ${formatKES(calcResults.managementFeeCost)}`} destructive />}
+              <div className="flex justify-between border-t border-border pt-2 text-xs font-bold text-primary"><span>Net Earnings</span><span>{formatKES(calcResults.netEarnings)}</span></div>
+            </div>}
+          </div>
+        </TabsContent>
+
+        <TabsContent value="about" className="space-y-3">
+          <div className="rounded-[18px] border border-border bg-card p-4 text-sm leading-relaxed text-muted-foreground">
+            <p>{getFundExplainer(fund.fund_type)}</p>
+            {fund.description && <><div className="my-3 h-px bg-border/60" /><p>{fund.description}</p></>}
+          </div>
+          {peers.length > 0 && <div className="overflow-hidden rounded-[18px] border border-border bg-card divide-y divide-border/40">
+            {[...peers].sort((a, b) => Math.abs(a.annual_yield - fund.annual_yield) - Math.abs(b.annual_yield - fund.annual_yield)).slice(0, 4).map((p) => <Link key={p.id} to={`/compare/${p.slug}`} className="flex items-center justify-between gap-3 px-3 py-3"><div className="min-w-0"><p className="truncate text-sm font-semibold">{p.name}</p><p className="truncate text-[11px] text-muted-foreground">{p.manager}</p></div><p className="shrink-0 text-sm font-bold text-primary">{formatYield(p.annual_yield, p.yield_unit)}</p></Link>)}
+          </div>}
+          <div className="flex items-center justify-between rounded-[14px] border border-border/60 bg-muted/20 px-3 py-2.5"><p className="pr-3 text-[11px] text-muted-foreground">Spotted incorrect information?</p><ReportIssueDialog fundId={fund.id} fundName={fund.name} /></div>
+          <DisclaimerBlock extra={getDisclaimer(fund.fund_type)} />
+        </TabsContent>
+      </Tabs>
+    </div>
+
+    <div className="container hidden max-w-5xl space-y-5 py-8 md:block">
       {/* Breadcrumb */}
       <nav className="flex items-center gap-3 py-1">
         <Link to="/" className="hidden md:inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors">
@@ -485,6 +622,7 @@ const FundDetailPage = () => {
           {/* ━━━ Disclaimers ━━━ */}
           <DisclaimerBlock extra={getDisclaimer(fund?.fund_type)} />
     </div>
+    </>
   );
 };
 
@@ -507,9 +645,9 @@ const QuickStat = ({ label, value, sub }: { label: string; value: string; sub?: 
 
 const CmpRow = ({ label, a, b, aWins }: { label: string; a: string; b: string; aWins?: boolean }) => (
   <div className="grid grid-cols-3 px-4 py-2.5 text-sm items-center">
-    <span className={`font-semibold tabular-nums ${aWins === true ? "text-accent" : "text-foreground"}`}>{a}</span>
+    <span className={`font-semibold tabular-nums ${aWins === true ? "text-primary" : "text-foreground"}`}>{a}</span>
     <span className="text-center text-[10px] text-muted-foreground uppercase tracking-wider">{label}</span>
-    <span className={`text-right font-semibold tabular-nums ${aWins === false ? "text-accent" : "text-foreground"}`}>{b}</span>
+    <span className={`text-right font-semibold tabular-nums ${aWins === false ? "text-primary" : "text-foreground"}`}>{b}</span>
   </div>
 );
 
@@ -532,6 +670,50 @@ const CalcLine = ({ label, value, destructive }: { label: string; value: string;
     <span className="text-muted-foreground">{label}</span>
     <span className={`font-medium ${destructive ? "text-destructive" : "text-foreground"}`}>{value}</span>
   </div>
+);
+
+const FundMobileLogo = ({ name, logoUrl }: { name: string; logoUrl: string | null }) => {
+  const [failed, setFailed] = useState(false);
+  return (
+    <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted/40">
+      {logoUrl && !failed ? (
+        <img src={logoUrl} alt={`${name} logo`} className="h-full w-full object-cover" onError={() => setFailed(true)} />
+      ) : (
+        <span className="text-sm font-black text-primary">{name.split(/\s+/).map((word) => word[0]).join("").slice(0, 2).toUpperCase()}</span>
+      )}
+    </div>
+  );
+};
+
+const FundMetric = ({ label, value, sub, icon }: { label: string; value: string; sub?: string; icon: React.ReactNode }) => (
+  <div className="flex min-h-[72px] items-center gap-2.5 rounded-[16px] border border-border bg-card p-3 shadow-[0_5px_16px_hsl(var(--foreground)/0.05)]">
+    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">{icon}</div>
+    <div className="min-w-0">
+      <p className="truncate text-[10px] font-semibold uppercase leading-none tracking-wider text-muted-foreground">{label}</p>
+      <p className="mt-1 truncate text-sm font-bold leading-tight tabular-nums text-foreground">{value || "—"}</p>
+      {sub && <p className="mt-0.5 truncate text-[9px] text-muted-foreground">{sub}</p>}
+    </div>
+  </div>
+);
+
+const MobileRateChart = ({ title, data, dataKey, xKey, emptyText }: { title: string; data: any[] | null; dataKey: string; xKey: string; emptyText: string }) => (
+  <section>
+    <div className="mb-3 flex items-center gap-2"><BarChart3 className="h-5 w-5 text-primary" /><h2 className="text-base font-bold text-foreground">{title}</h2></div>
+    {data && data.length > 1 ? (
+      <div className="-mx-3 h-[230px] w-[calc(100%+1.5rem)]">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 5, right: 8, bottom: 0, left: -8 }}>
+            <defs><linearGradient id={`mobile-${dataKey}-gradient`} x1="0" y1="0" x2="0" y2="1"><stop offset="5%" stopColor="hsl(var(--primary))" stopOpacity={0.24} /><stop offset="95%" stopColor="hsl(var(--primary))" stopOpacity={0} /></linearGradient></defs>
+            <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+            <XAxis dataKey={xKey} tick={{ fontSize: 8, fill: "hsl(var(--muted-foreground))" }} minTickGap={18} tickMargin={6} />
+            <YAxis tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }} width={42} domain={["dataMin - 0.5", "dataMax + 0.5"]} />
+            <RechartsTooltip contentStyle={{ borderRadius: "10px", border: "1px solid hsl(var(--border))", fontSize: "11px", background: "hsl(var(--card))", color: "hsl(var(--foreground))" }} />
+            <Area type="monotone" dataKey={dataKey} stroke="hsl(var(--primary))" strokeWidth={2} fill={`url(#mobile-${dataKey}-gradient)`} dot={false} />
+          </AreaChart>
+        </ResponsiveContainer>
+      </div>
+    ) : <div className="py-12 text-center text-sm text-muted-foreground">{emptyText}</div>}
+  </section>
 );
 
 export default FundDetailPage;

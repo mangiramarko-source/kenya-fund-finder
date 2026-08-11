@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent } from "@/components/ui/dialog";
 import {
@@ -26,12 +26,19 @@ const SIGNIN_SHOWN_PREFIX = "kff_intro_signin_shown_";
 const HomeHero = () => {
   const { choice } = useConsent();
   const { user } = useAuth();
+  const location = useLocation();
   const [open, setOpen] = useState(false);
   const lastUserIdRef = useRef<string | null>(null);
+  const isIntroRoute = location.pathname === "/" || location.pathname === "/overview";
+
+  useEffect(() => {
+    if (!isIntroRoute) setOpen(false);
+  }, [isIntroRoute]);
 
   // Open after cookie consent answered (once per session)
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!isIntroRoute) return;
     if (!choice) return; // wait for cookie banner action
     try {
       if (sessionStorage.getItem(SESSION_SHOWN_KEY) === "1") return;
@@ -42,11 +49,12 @@ const HomeHero = () => {
     } catch {
       setOpen(true);
     }
-  }, [choice]);
+  }, [choice, isIntroRoute]);
 
   // Open on sign-in (once per user per session)
   useEffect(() => {
     if (typeof window === "undefined") return;
+    if (!isIntroRoute) return;
     const uid = user?.id ?? null;
     const prev = lastUserIdRef.current;
     lastUserIdRef.current = uid;
@@ -59,7 +67,7 @@ const HomeHero = () => {
     } catch {
       setOpen(true);
     }
-  }, [user?.id]);
+  }, [user?.id, isIntroRoute]);
 
   const navigate = useNavigate();
 
