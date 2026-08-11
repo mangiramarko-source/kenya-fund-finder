@@ -84,7 +84,7 @@ const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue
   if (!result) return <span className="text-[10px] text-muted-foreground">—</span>;
 
   const { pts, isUp } = result;
-  const color = isUp ? "hsl(var(--accent))" : "hsl(var(--destructive))";
+  const color = isUp ? "#10b981" : "hsl(var(--destructive))";
   const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
   const areaD = pathD + ` L${pts[pts.length - 1].x.toFixed(1)},${SPARK_H} L${pts[0].x.toFixed(1)},${SPARK_H} Z`;
   const gradId = `${uid}-${isUp ? "up" : "dn"}`;
@@ -513,10 +513,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
           </div>
         </div>
         <div className="overflow-x-auto">
-          <table className="w-full text-sm table-fixed min-w-[1100px] border-separate border-spacing-0">
+          <table className="w-full table-fixed min-w-[1100px] text-left text-sm">
             <colgroup>
-              <col style={{ width: "2.5%" }} />
-              <col style={{ width: "18%" }} />
+              <col style={{ width: "20.5%" }} />
               <col style={{ width: "7%" }} />
               <col style={{ width: "8%" }} />
               <col style={{ width: "8%" }} />
@@ -528,64 +527,62 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
               {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
-              <tr className="bg-background text-[12px] text-muted-foreground border-b border-border/40">
-                <th className="text-left pl-4 pr-2 py-3 font-normal">#</th>
-                <th className="text-left px-3 py-3 font-normal">
+              <tr className="border-b border-border bg-black text-[10px] uppercase tracking-[0.16em] text-muted-foreground">
+                <th className="text-left px-6 py-4 font-semibold">
                   <SortHeader label="Funds" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
-                <th className="text-right px-3 py-3 font-normal">
+                <th className="text-right px-3 py-4 font-semibold">
                   <SortHeader label="Daily" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-2 py-3 font-normal" title="vs prior snapshot">
+                <th className="text-right px-2 py-4 font-semibold" title="vs prior snapshot">
                   <span className="sr-only">Daily </span>Change
                 </th>
-                <th className="text-right px-3 py-3 font-normal">
+                <th className="text-right px-3 py-4 font-semibold">
                   <SortHeader label="Annual" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-2 py-3 font-normal" title="vs prior snapshot">
+                <th className="text-right px-2 py-4 font-semibold" title="vs prior snapshot">
                   <span className="sr-only">Annual </span>Change
                 </th>
-                <th className="text-center px-2 py-3 font-normal">Trend</th>
-                <th className="text-right px-3 py-3 font-normal">
+                <th className="text-center px-2 py-4 font-semibold">Trend</th>
+                <th className="text-right px-3 py-4 font-semibold">
                   <SortHeader label="Min Invest" field="minimum_investment" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right px-3 py-3 font-normal">
+                <th className="text-right px-3 py-4 font-semibold">
                   <SortHeader label="Fee" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
-                <th className="text-right pr-4 pl-2 py-3 font-normal">Withdraw</th>
-                {onToggleFavourite && <th className="w-8 pr-3 py-3 font-normal" aria-label="Watch" />}
+                <th className="text-right pr-5 pl-2 py-4 font-semibold">Withdraw</th>
+                {onToggleFavourite && <th className="w-8 pr-3 py-4 font-semibold" aria-label="Watch" />}
               </tr>
             </thead>
-            <tbody>
-              {filtered.map((fund, i) => (
+            <tbody className="divide-y divide-border bg-card">
+              {filtered.map((fund) => (
                 <tr
                   key={fund.id}
                   onClick={() => navigate(`/compare/${fund.slug}`)}
-                  className="group cursor-pointer hover:bg-accent/5 transition-colors border-b border-border/40"
+                  className="group cursor-pointer bg-card transition-colors hover:bg-muted/35"
                 >
-                  <td className="pl-4 pr-2 py-3.5 text-muted-foreground/60 text-xs tabular-nums align-middle">{i + 1}</td>
-                  <td className="px-3 py-3.5 align-middle">
+                  <td className="px-6 py-4 align-middle">
                     <Link
                       to={`/compare/${fund.slug}`}
                       onClick={(e) => e.stopPropagation()}
                       className="flex items-center gap-3 min-w-0"
                       title={fund.name}
                     >
-                      <FundLogo name={fund.name} logoUrl={fund.logo_url} size={36} />
+                      <FundLogo name={fund.name} logoUrl={fund.logo_url} size={44} />
                       <div className="min-w-0">
-                        <div className="font-semibold text-foreground group-hover:text-accent transition-colors truncate text-[13px]">
+                        <div className="font-bold text-foreground group-hover:text-emerald-500 transition-colors truncate text-[14px]">
                           {fund.name}
                         </div>
-                        <div className="text-xs text-muted-foreground truncate mt-0.5">{fund.manager}</div>
+                        <div className="text-[11px] text-muted-foreground truncate mt-1">{fund.manager}</div>
                       </div>
                     </Link>
                   </td>
-                  <td className="px-3 py-3.5 text-right tabular-nums whitespace-nowrap align-middle">
-                    <span className="font-bold text-foreground text-[15px]">
+                  <td className="px-3 py-4 text-right tabular-nums whitespace-nowrap align-middle">
+                    <span className="font-black text-foreground text-[14px]">
                       {fmtYield(fund.daily_yield, fund.yield_unit)}
                     </span>
                   </td>
-                  <td className="px-2 py-3.5 text-right whitespace-nowrap align-middle">
+                  <td className="px-2 py-4 text-right whitespace-nowrap align-middle">
                     <div className="flex justify-end">
                       {snapshots[fund.id] ? (
                         <YieldChange
@@ -599,12 +596,12 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       )}
                     </div>
                   </td>
-                  <td className="px-3 py-3.5 text-right whitespace-nowrap tabular-nums align-middle">
-                    <span className="font-bold text-foreground text-[15px]">
+                  <td className="px-3 py-4 text-right whitespace-nowrap tabular-nums align-middle">
+                    <span className="font-black text-foreground text-[14px]">
                       {fmtYield(fund.annual_yield, fund.yield_unit)}
                     </span>
                   </td>
-                  <td className="px-2 py-3.5 text-right whitespace-nowrap align-middle">
+                  <td className="px-2 py-4 text-right whitespace-nowrap align-middle">
                     <div className="flex justify-end">
                       {snapshots[fund.id] ? (
                         <YieldChange
@@ -618,24 +615,24 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                       )}
                     </div>
                   </td>
-                  <td className="px-2 py-3.5 text-center align-middle">
+                  <td className="px-2 py-4 text-center align-middle">
                     {allSnapshots[fund.id] && allSnapshots[fund.id].length > 0 ? (
                       <Sparkline data={allSnapshots[fund.id]} currentValue={fund.annual_yield} />
                     ) : (
                       <span className="text-[10px] text-muted-foreground">—</span>
                     )}
                   </td>
-                  <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap align-middle">
-                    KSh {fund.minimum_investment.toLocaleString()}
+                  <td className="px-3 py-4 text-right text-[12px] font-semibold tabular-nums text-foreground whitespace-nowrap align-middle">
+                    <span className="mr-1 text-[9px] font-medium text-muted-foreground">KSh</span>{fund.minimum_investment.toLocaleString()}
                   </td>
-                  <td className="px-3 py-3.5 text-right text-xs tabular-nums text-muted-foreground whitespace-nowrap align-middle">
+                  <td className="px-3 py-4 text-right text-[12px] font-semibold tabular-nums text-foreground whitespace-nowrap align-middle">
                     {fund.management_fee}%
                   </td>
-                  <td className="pr-4 pl-2 py-3.5 text-right text-[11px] text-muted-foreground truncate max-w-[120px] align-middle" title={fund.withdrawal_time}>
+                  <td className="pr-5 pl-2 py-4 text-right text-[11px] font-semibold text-foreground truncate max-w-[120px] align-middle" title={fund.withdrawal_time}>
                     {fund.withdrawal_time}
                   </td>
                   {onToggleFavourite && (
-                    <td className="pr-3 py-3.5 text-center align-middle">
+                    <td className="pr-3 py-4 text-center align-middle">
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
@@ -655,7 +652,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 11 : 10} className="text-center py-14">
+                  <td colSpan={onToggleFavourite ? 10 : 9} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>

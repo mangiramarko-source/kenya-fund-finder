@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
+import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchPublicData } from "@/lib/gateway";
@@ -120,6 +121,9 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
     losers: sectorStocks.filter((stock) => stock.day_change_percent < 0).length,
     unchanged: sectorStocks.filter((stock) => stock.day_change_percent === 0).length,
   }), [sectorStocks]);
+  const latestUpdate = useMemo(() => stocks.length > 0
+    ? stocks.reduce((latest, stock) => stock.updated_at > latest ? stock.updated_at : latest, stocks[0].updated_at)
+    : null, [stocks]);
 
   if (isMobile) return null;
 
@@ -143,7 +147,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
                   <h1 className="mt-2 text-5xl font-black tracking-tight">Stocks</h1>
                   <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">Browse current market prices, momentum across timeframes and open full stock reports.</p>
                 </div>
-                <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-xs font-bold tracking-[0.16em] text-emerald-500">{stocks.length} LISTED</span>
+                <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
               </div>
 
               <div className="mb-5 overflow-hidden">
@@ -172,7 +176,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
                 </div>
                 <div className="overflow-x-auto">
                   <table className="w-full min-w-[1120px] table-fixed text-left">
-                    <thead className="border-b border-border bg-background/35 text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                    <thead className="border-b border-border bg-black text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
                       <tr>
                         <th className="w-[23%] px-6 py-4 font-semibold">Company</th>
                         <th className="w-[11%] px-3 py-4 font-semibold">Last Price</th>

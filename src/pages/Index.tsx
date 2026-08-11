@@ -101,7 +101,7 @@ const Index = () => {
             <h1 className="mt-2 text-5xl font-black tracking-tight">Money Market Funds</h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">Track listed Money Market, Fixed Income, Bond, Balanced, Equity and Special funds in Kenya.</p>
           </div>
-          <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-xs font-bold tracking-[0.16em] text-emerald-500">{published.length} LISTED</span>
+          <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} />
         </div>
         <div className="md:hidden">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Money Market Fund</h1>

@@ -242,7 +242,7 @@ const RatesPage = () => {
               <h1 className="mt-2 text-5xl font-black tracking-tight">FX Rates</h1>
               <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">Live exchange rates against the Kenyan Shilling (KES).</p>
             </div>
-            <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-xs font-bold tracking-[0.16em] text-emerald-500">{rates.length} TRACKED</span>
+            <SectionLiveStatus section="rates" fallbackDate={latestUpdate} isLoading={loading} />
           </div>
           <div className="md:hidden">
             <h1 className="text-2xl font-bold text-foreground tracking-tight">FX Rates</h1>
