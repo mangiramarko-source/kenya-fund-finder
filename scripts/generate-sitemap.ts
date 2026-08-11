@@ -30,7 +30,6 @@ const staticEntries: SitemapEntry[] = [
   { path: "/commodities", changefreq: "daily", priority: "0.8" },
   { path: "/markets", changefreq: "daily", priority: "0.8" },
   { path: "/news", changefreq: "daily", priority: "0.8" },
-  { path: "/overview", changefreq: "daily", priority: "0.8" },
   { path: "/calculator", changefreq: "monthly", priority: "0.8" },
   { path: "/learn", changefreq: "monthly", priority: "0.7" },
   { path: "/learn/how-to-invest-in-money-market-funds-kenya", changefreq: "monthly", priority: "0.8" },
@@ -56,16 +55,16 @@ async function supaSelect<T>(path: string): Promise<T[]> {
 async function fetchDynamic(): Promise<SitemapEntry[]> {
   const [funds, news, pages, stocks] = await Promise.all([
     supaSelect<{ slug: string; updated_at: string }>(
-      "funds?select=slug,updated_at&is_published=eq.true&order=name.asc",
+      "funds_public?select=slug,updated_at&is_published=eq.true&order=name.asc",
     ),
     supaSelect<{ id: string; updated_at: string }>(
-      `news_articles?select=id,updated_at&status=eq.published&order=date_published.desc&limit=${NEWS_LIMIT}`,
+      `news_articles_public?select=id,updated_at&status=eq.published&order=date_published.desc&limit=${NEWS_LIMIT}`,
     ),
     supaSelect<{ slug: string; updated_at: string }>(
-      "site_pages?select=slug,updated_at",
+      "site_pages_public?select=slug,updated_at",
     ),
     supaSelect<{ symbol: string; updated_at: string }>(
-      "stocks?select=symbol,updated_at&order=symbol.asc",
+      "stocks_public?select=symbol,updated_at&is_active=eq.true&order=symbol.asc",
     ),
   ]);
 
@@ -126,7 +125,7 @@ async function main() {
   } catch (err) {
     console.warn("[sitemap] dynamic fetch failed; writing static-only sitemap", err);
   }
-  const all = [...staticEntries, ...dynamic];
+  const all = Array.from(new Map([...staticEntries, ...dynamic].map((entry) => [entry.path, entry])).values());
   writeFileSync(resolve("public/sitemap.xml"), render(all));
   console.log(
     `sitemap.xml written (${all.length} entries: ${staticEntries.length} static, ${dynamic.length} dynamic)`,

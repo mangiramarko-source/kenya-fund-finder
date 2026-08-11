@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CompareProvider } from "@/hooks/useCompare";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -14,6 +14,7 @@ import { Analytics } from "@vercel/analytics/react";
 // CookieConsent loaded eagerly: it's the LCP element on first visit;
 // lazy-loading it delays paint and tanks the LCP score.
 import CookieConsent from "./components/CookieConsent";
+import SeoRoutePolicy from "./components/SeoRoutePolicy";
 
 // Defer heavy/non-critical UI to shrink initial JS bundle
 const CompareModal = lazy(() => import("./components/compare/CompareModal"));
@@ -81,6 +82,7 @@ const App = () => (
             <Sonner />
             <BrowserRouter>
               <ScrollToTop />
+              <SeoRoutePolicy />
               <Layout>
                 <Suspense fallback={<PageFallback />}>
                   <Routes>
@@ -111,7 +113,7 @@ const App = () => (
                     <Route path="/demo-feed" element={<DemoStockFeedPage />} />
                     <Route path="/stocks/:symbol" element={<StockDetailPage />} />
                     <Route path="/markets" element={<MarketDashboardPage />} />
-                    <Route path="/overview" element={<OverviewPage />} />
+                    <Route path="/overview" element={<Navigate to="/" replace />} />
                     <Route path="/alerts" element={<AlertsPage />} />
                     <Route path="/portfolio" element={<PortfolioPage />} />
                     <Route path="/portfolio/summary" element={<PortfolioSummaryPage />} />

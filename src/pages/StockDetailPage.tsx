@@ -350,7 +350,7 @@ const StockDetailPage = () => {
 
         <div className="hidden md:flex md:items-start md:justify-between md:gap-4">
           <div>
-            <div className="mb-1 flex items-center gap-3"><h1 className="text-3xl font-bold text-foreground">{s.symbol}</h1><Badge variant="secondary" className="text-xs">{s.sector}</Badge>{user && <button onClick={() => toggleFav(s.id, `${s.symbol} - ${s.name}`)} className="rounded-lg p-1.5 transition-colors hover:bg-muted"><Star className={`h-5 w-5 ${isFavourite(s.id) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`} /></button>}</div>
+            <div className="mb-1 flex items-center gap-3"><div className="text-3xl font-bold text-foreground">{s.symbol}</div><Badge variant="secondary" className="text-xs">{s.sector}</Badge>{user && <button onClick={() => toggleFav(s.id, `${s.symbol} - ${s.name}`)} className="rounded-lg p-1.5 transition-colors hover:bg-muted"><Star className={`h-5 w-5 ${isFavourite(s.id) ? "fill-yellow-500 text-yellow-500" : "text-muted-foreground"}`} /></button>}</div>
             <p className="text-sm text-muted-foreground">{s.name}</p>
             <p className="mt-1 text-xs text-muted-foreground">Nairobi Securities Exchange · Last updated: {formatMarketDateTime(s.updated_at)}</p>
           </div>

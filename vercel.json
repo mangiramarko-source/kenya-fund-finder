@@ -1,9 +1,23 @@
 {
-  "rewrites": [
+  "cleanUrls": true,
+  "trailingSlash": false,
+  "redirects": [
     {
-      "source": "/(.*)",
-      "destination": "/index.html"
+      "source": "/index.html",
+      "destination": "/",
+      "permanent": true
+    },
+    {
+      "source": "/overview",
+      "destination": "/",
+      "permanent": true
     }
+  ],
+  "rewrites": [
+    { "source": "/stocks/:symbol", "destination": "/index.html" },
+    { "source": "/compare/:slug", "destination": "/index.html" },
+    { "source": "/news/:id", "destination": "/index.html" },
+    { "source": "/page/:slug", "destination": "/index.html" }
   ],
   "headers": [
     {
@@ -14,6 +28,50 @@
           "value": "public, max-age=31536000, immutable"
         }
       ]
+    },
+    {
+      "source": "/auth",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/reset-password",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/profile",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/alerts",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/portfolio/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/watchlist",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/ai-lab",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/admin/:path*",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/stocks-demo",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/demo-feed",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
+    },
+    {
+      "source": "/demo-stocks-feed",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow, noarchive" }]
     }
   ]
 }

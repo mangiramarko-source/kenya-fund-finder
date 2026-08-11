@@ -376,7 +376,7 @@ const FundDetailPage = () => {
               )}
             </div>
             <div className="flex items-start gap-2">
-              <h1 className="text-lg md:text-xl font-bold leading-tight flex-1">{fund.name}</h1>
+              <h2 className="text-lg md:text-xl font-bold leading-tight flex-1">{fund.name}</h2>
               <SaveToWatchlistButton itemType="fund" itemId={fund.id} itemName={fund.name} />
             </div>
             <p className="text-muted-foreground text-sm">{fund.manager}</p>

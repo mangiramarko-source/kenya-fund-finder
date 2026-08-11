@@ -14,8 +14,16 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin-login
+Disallow: /auth
+Disallow: /alerts
+Disallow: /ai-lab
+Disallow: /demo-feed
+Disallow: /demo-stocks-feed
+Disallow: /portfolio
 Disallow: /profile
 Disallow: /reset-password
+Disallow: /stocks-demo
+Disallow: /watchlist
 
 # --- ALLOWED FOR SEARCH & DISCOVERY ---
 User-agent: Bingbot

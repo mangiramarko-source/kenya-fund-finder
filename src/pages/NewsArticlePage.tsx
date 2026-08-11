@@ -210,8 +210,42 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
 
   useDocumentTitle(
     article ? `${article.title} – Kenya Fund Finder` : "News Article – Kenya Fund Finder",
-    article?.summary
+    article?.summary,
+    article ? {
+      title: article.title,
+      description: article.summary,
+      image: article.image_url || undefined,
+      type: "article",
+    } : undefined,
   );
+  useJsonLd(article ? {
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "NewsArticle",
+        headline: article.title,
+        description: article.summary,
+        mainEntityOfPage: `https://kenyafundfinder.com/news/${article.id}`,
+        datePublished: article.date_published || article.created_at,
+        dateModified: article.created_at || article.date_published,
+        ...(article.image_url ? { image: [article.image_url] } : {}),
+        author: { "@type": "Organization", name: article.source || "Kenya Fund Finder" },
+        publisher: {
+          "@type": "Organization",
+          name: "Kenya Fund Finder",
+          logo: { "@type": "ImageObject", url: "https://kenyafundfinder.com/apple-touch-icon.png" },
+        },
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://kenyafundfinder.com/" },
+          { "@type": "ListItem", position: 2, name: "Market News", item: "https://kenyafundfinder.com/news" },
+          { "@type": "ListItem", position: 3, name: article.title, item: `https://kenyafundfinder.com/news/${article.id}` },
+        ],
+      },
+    ],
+  } : null);
 
   const shareUrl = article ? `https://kenyafundfinder.com/news/${article.id}` : "";
   const handleCopyLink = async () => {
@@ -255,7 +289,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="font-bold text-base text-foreground tracking-tight">Post</h1>
+          <div className="font-bold text-base text-foreground tracking-tight">Post</div>
           <div className="w-9" />
         </header>
         <div className="max-w-[430px] mx-auto py-4 px-4 space-y-4">
@@ -320,9 +354,9 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
           <ArrowLeft className="h-6 w-6 md:h-5 md:w-5" />
         </button>
 
-        <h1 className="font-bold text-sm text-foreground uppercase tracking-[0.3em] md:text-base md:normal-case md:tracking-tight">
+        <div className="font-bold text-sm text-foreground uppercase tracking-[0.3em] md:text-base md:normal-case md:tracking-tight">
           Post
-        </h1>
+        </div>
 
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -392,9 +426,9 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
 
         {/* ─── 3. Post Text ─── */}
         <div className="space-y-3">
-          <h2 className="text-base sm:text-lg font-bold text-foreground leading-snug tracking-tight">
+          <h1 className="text-base sm:text-lg font-bold text-foreground leading-snug tracking-tight">
             {decodeHtmlEntities(article.title)}
-          </h2>
+          </h1>
 
           <div className="text-[15px] sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
             {articleParagraphs.map((paragraph, index) => (
