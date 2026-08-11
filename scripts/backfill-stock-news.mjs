@@ -19,7 +19,7 @@ const url = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
 const serviceKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 const webhookSecret = process.env.ENRICHMENT_WEBHOOK_SECRET;
 
-if (!url || !serviceKey || !webhookSecret) {
+if (!url || !serviceKey || (!linkOnly && !webhookSecret)) {
   console.error("Missing Supabase URL, SUPABASE_SERVICE_ROLE_KEY, or ENRICHMENT_WEBHOOK_SECRET");
   process.exit(1);
 }
@@ -54,7 +54,7 @@ if (linkOnly) {
   if (stocksError) throw stocksError;
 
   const normalize = (value) => value.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
-  const suffixes = /\b(plc|limited|ltd|group|holdings|company|co|kenya)\b/g;
+  const suffixes = /\b(plc|limited|ltd|company|co)\b/g;
   for (const article of queue) {
     if (article.related_stock_id) continue;
     const haystack = ` ${normalize(`${article.title} ${article.summary || ""}`)} `;

@@ -1,5 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
 import { geminiGenerateText, parseModelJson } from "../_shared/gemini.ts";
+import { matchStockDeterministically } from "../_shared/stock-match.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -103,6 +104,11 @@ Deno.serve(async (req) => {
       
     if (stocksErr) throw stocksErr;
 
+    const deterministicStock = matchStockDeterministically(
+      `${article.title}\n${article.summary || ""}\n${article.content || ""}`,
+      stocks || [],
+    );
+
     // Build context for the AI
     const stockListText = stocks?.map(s => `ID: ${s.id} | Symbol: ${s.symbol} | Name: ${s.name}`).join("\n");
     const articleText = `Title: ${article.title}\nSummary: ${article.summary}\nContent: ${article.content?.substring(0, 5000) || ""}`;
@@ -119,42 +125,42 @@ ${stockListText}
 IMPORTANT: You MUST respond ONLY with valid JSON. No markdown formatting, no code blocks, no other text.`;
 
     let generated: Awaited<ReturnType<typeof geminiGenerateText>> | null = null;
+    let aiError: unknown = null;
     for (let attempt = 0; attempt < 4; attempt += 1) {
       try {
         generated = await geminiGenerateText({
           system: systemPrompt,
           user: articleText,
-          model: "gemini-2.5-flash-lite",
+          model: "gemini-2.5-flash",
         });
         break;
       } catch (error) {
+        aiError = error;
         const isRateLimited = String(error).includes("Gemini text 429");
-        if (!isRateLimited || attempt === 3) throw error;
+        if (!isRateLimited || attempt === 3) break;
         await new Promise((resolve) => setTimeout(resolve, [5_000, 15_000, 30_000][attempt]));
       }
     }
 
-    if (!generated) throw new Error("Gemini generation did not return a result");
-    const parsedResult = parseModelJson<{
+    const parsedResult = generated ? parseModelJson<{
       related_stock_id?: unknown;
       ai_insight?: unknown;
-    }>(generated.text);
+    }>(generated.text) : null;
 
-    if (!parsedResult) {
+    if (generated && !parsedResult) {
       console.error("Failed to parse JSON from AI", generated.text.slice(0, 500));
-      return new Response(JSON.stringify({ error: "Invalid AI response format" }), {
-        status: 502,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    } else if (aiError) {
+      console.warn("AI insight unavailable; using deterministic stock match", String(aiError).slice(0, 500));
     }
 
     // 4) Update database with results
     const validStockIds = new Set((stocks || []).map((stock) => stock.id));
-    const relatedStockId = typeof parsedResult.related_stock_id === "string"
+    const aiRelatedStockId = typeof parsedResult?.related_stock_id === "string"
       && validStockIds.has(parsedResult.related_stock_id)
       ? parsedResult.related_stock_id
       : null;
-    const aiInsight = typeof parsedResult.ai_insight === "string"
+    const relatedStockId = deterministicStock?.id || aiRelatedStockId;
+    const aiInsight = typeof parsedResult?.ai_insight === "string"
       ? parsedResult.ai_insight.trim().slice(0, 1000) || null
       : null;
 
@@ -170,7 +176,12 @@ IMPORTANT: You MUST respond ONLY with valid JSON. No markdown formatting, no cod
 
     return new Response(JSON.stringify({
       success: true,
-      data: { related_stock_id: relatedStockId, ai_insight: aiInsight },
+      data: {
+        related_stock_id: relatedStockId,
+        ai_insight: aiInsight,
+        match_source: deterministicStock ? "deterministic" : aiRelatedStockId ? "ai" : null,
+        insight_status: aiInsight ? "generated" : "summary_fallback",
+      },
     }), {
       status: 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
