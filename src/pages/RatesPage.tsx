@@ -12,8 +12,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, ComposedChart } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import RateFavourites from "../components/home/RateFavourites";
-import { RatesSummary } from "../components/RatesSummary";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
+import DesktopMarketOverviewStrip from "@/components/desktop/DesktopMarketOverviewStrip";
 
 interface Rate {
   id: string;
@@ -203,6 +203,18 @@ const RatesPage = () => {
   const strengthened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate < r.previous_rate).length, [rates]);
   const weakened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate > r.previous_rate).length, [rates]);
   const unchanged = useMemo(() => rates.filter((r) => r.previous_rate == null || r.rate === r.previous_rate).length, [rates]);
+  const desktopWatchlist = useMemo(() => {
+    const selected = user
+      ? favEntries.map((entry) => rates.find((rate) => rate.id === entry.item_id)).filter((rate): rate is Rate => Boolean(rate))
+      : ["USD", "EUR", "GBP", "ZAR"].map((code) => rates.find((rate) => rate.currency_code === code)).filter((rate): rate is Rate => Boolean(rate));
+    return selected.slice(0, 4).map((rate) => ({
+      id: rate.id,
+      symbol: `${rate.currency_code}/KES`,
+      name: rate.currency_name,
+      value: `KSh ${rate.rate.toFixed(2)}`,
+      change: rate.previous_rate ? ((rate.rate - rate.previous_rate) / rate.previous_rate) * 100 : 0,
+    }));
+  }, [favEntries, rates, user]);
 
   const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
   type SortKey = "default" | "rate_desc" | "rate_asc" | "change_desc" | "change_asc" | "name_asc" | "name_desc";
@@ -237,16 +249,17 @@ const RatesPage = () => {
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+          <div className="hidden md:flex items-end justify-between gap-6 mb-7">
             <div>
-              <h1 className="text-2xl font-bold text-foreground tracking-tight">FX Rates</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Live exchange rates against the Kenyan Shilling (KES).
-              </p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">Global Currency Market</p>
+              <h1 className="mt-2 text-5xl font-black tracking-tight">FX Rates</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">Live exchange rates against the Kenyan Shilling (KES).</p>
             </div>
-            <div className="hidden md:block">
-              <SectionLiveStatus section="rates" fallbackDate={latestUpdate} isLoading={loading} />
-            </div>
+            <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-xs font-bold tracking-[0.16em] text-emerald-500">{rates.length} TRACKED</span>
+          </div>
+          <div className="md:hidden">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">FX Rates</h1>
+            <p className="text-sm text-muted-foreground mt-1">Live exchange rates against the Kenyan Shilling (KES).</p>
           </div>
           <div className="md:hidden mb-2">
             <div className="flex items-center justify-between w-full">
@@ -255,16 +268,26 @@ const RatesPage = () => {
           </div>
         </div>
 
-        <div className="hidden md:block">
-          <RatesSummary rates={rates} />
-        </div>
+        <DesktopMarketOverviewStrip
+          title="Global FX Market"
+          status={<SectionLiveStatus section="rates" fallbackDate={latestUpdate} isLoading={loading} />}
+          metrics={[
+            { label: "Currencies", value: String(rates.length) },
+            { label: "Strengthened", value: String(strengthened), change: rates.length ? (strengthened / rates.length) * 100 : 0 },
+            { label: "Weakened", value: String(weakened), change: rates.length ? -(weakened / rates.length) * 100 : 0 },
+            { label: "Unchanged", value: String(unchanged) },
+          ]}
+          watchlist={desktopWatchlist}
+          demo={!user}
+          footer="Global FX market operates 24 hours a day, five days a week. Rates are indicative against KES."
+        />
 
         <ActiveAlertsCard assetType="currency" />
 
         {user && favEntries.length > 0 && <RateFavourites entries={favEntries} rates={rates} />}
 
         {/* Desktop Premium Toolbar */}
-        <div className="hidden md:flex items-center justify-between gap-4 mb-6 bg-card border border-border/40 p-1.5 rounded-xl shadow-sm">
+        <div className="hidden md:flex items-center justify-between gap-4 mb-5 mt-7">
           <div className="flex items-center gap-3 pl-1">
             <div className="inline-flex items-center gap-1">
               {([
@@ -283,8 +306,8 @@ const RatesPage = () => {
                   <button
                     key={opt.key}
                     onClick={() => setMobileMovement(opt.key)}
-                    className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-[13px] font-medium transition-all whitespace-nowrap ${
-                      active ? activeStyle : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                    className={`inline-flex items-center gap-1.5 px-4 h-10 rounded-full border text-[12px] font-semibold transition-all whitespace-nowrap ${
+                      active ? `${activeStyle} border-transparent` : "border-border bg-background text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {opt.key === "gainers" && <TrendingUp className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
@@ -298,13 +321,13 @@ const RatesPage = () => {
             </div>
           </div>
           <div className="flex items-center gap-3 pr-1">
-            <div className="relative w-[220px] shrink-0">
+            <div className="relative w-[320px] shrink-0">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
               <Input
                 placeholder="Search currencies"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-8 text-[13px] rounded-md bg-transparent border-border/40 w-full placeholder:text-muted-foreground/50 hover:border-border transition-colors focus-visible:ring-1"
+                className="pl-10 h-10 text-[13px] rounded-full bg-background border-border w-full placeholder:text-muted-foreground/60 focus-visible:ring-1"
               />
             </div>
           </div>
@@ -392,7 +415,7 @@ const RatesPage = () => {
           ) : filtered.length === 0 ? (
             <EmptyState label="exchange rates" />
           ) : (
-            <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
+            <div className="rounded-[22px] border border-border overflow-hidden bg-card shadow-sm">
               <div className="overflow-x-auto">
               <table className="w-full text-sm table-fixed min-w-[900px] lg:min-w-0">
                 <colgroup>

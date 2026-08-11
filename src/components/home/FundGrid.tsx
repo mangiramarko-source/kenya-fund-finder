@@ -8,7 +8,6 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import YieldChange from "@/components/YieldChange";
 import FundMobileCards from "./FundMobileCards";
 import FundLogo from "./FundLogo";
-import { FundsSummary } from "./FundsSummary";
 import type { FundFromDB, FundType, YieldSnapshot } from "@/lib/api";
 
 type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee" | "change";
@@ -271,17 +270,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
 
   return (
     <div className="space-y-4">
-      <div className="hidden md:block">
-        <FundsSummary 
-          funds={categoryFunds} 
-          snapshots={snapshots} 
-          categoryName={categoryLabels[activeTab] || activeTab} 
-        />
-      </div>
-
       {/* Horizontal Tabs for Categories (Desktop only) */}
-      <div className="hidden md:block w-full overflow-x-auto scrollbar-hide mb-6 border-b border-border">
-        <div className="flex items-center gap-6 min-w-max px-1">
+      <div className="hidden md:block w-full overflow-x-auto scrollbar-hide mb-5 rounded-[22px] border border-border bg-card px-6 pt-5 shadow-sm">
+        <div className="flex items-center gap-8 min-w-max">
           {categories.map((cat) => {
             const active = activeTab === cat;
             return (
@@ -289,12 +280,12 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                 key={cat}
                 onClick={() => updateParams({ category: cat, q: "", sort: "annual_yield", dir: "desc", movement: "all" })}
                 className={`relative pb-3 text-[14px] font-medium transition-colors ${
-                  active ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+                  active ? "text-emerald-500" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 {categoryLabels[cat] || cat}
                 {active && (
-                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-accent rounded-t-full" />
+                  <span className="absolute bottom-0 left-0 w-full h-[2px] bg-emerald-500 rounded-t-full" />
                 )}
               </button>
             );
@@ -303,7 +294,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
       </div>
 
       {/* Desktop toolbar: Movement segmented + Search */}
-      <div className="hidden md:flex items-center justify-between gap-4 mb-6 bg-card border border-border/40 p-1.5 rounded-xl shadow-sm">
+      <div className="hidden md:flex items-center justify-between gap-4 mb-5">
         <div className="flex items-center gap-1 pl-1">
 
           <div className="inline-flex items-center gap-1">
@@ -327,8 +318,8 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
                     else if (opt.key === "losers") updateParams({ movement: opt.key, sort: "change", dir: "asc" });
                     else updateParams({ movement: opt.key });
                   }}
-                  className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-[13px] font-medium transition-all whitespace-nowrap ${
-                    active ? activeStyle : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                  className={`inline-flex items-center gap-1.5 px-4 h-10 rounded-full border text-[12px] font-semibold transition-all whitespace-nowrap ${
+                    active ? `${activeStyle} border-transparent` : "border-border bg-background text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   {opt.key === "gainers" && <TrendingUp className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
@@ -343,13 +334,13 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         </div>
 
         <div className="flex items-center gap-3 pr-1">
-          <div className="relative w-[220px] shrink-0">
+          <div className="relative w-[320px] shrink-0">
             <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
             <Input
               placeholder="Search fund or manager"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="pl-8 h-8 text-[13px] rounded-md bg-transparent border-border/40 w-full placeholder:text-muted-foreground/50 hover:border-border transition-colors focus-visible:ring-1"
+              className="pl-10 h-10 text-[13px] rounded-full bg-background border-border w-full placeholder:text-muted-foreground/60 focus-visible:ring-1"
             />
           </div>
         </div>
@@ -524,7 +515,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
       </div>
 
 
-      <div className="hidden md:block rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="hidden md:block rounded-[22px] border border-border bg-card shadow-sm overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm table-fixed min-w-[1100px] border-separate border-spacing-0">
             <colgroup>

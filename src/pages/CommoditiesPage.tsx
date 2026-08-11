@@ -12,8 +12,8 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, ComposedChart } from "recharts";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import CommodityFavourites from "../components/home/CommodityFavourites";
-import { CommoditiesSummary } from "../components/CommoditiesSummary";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
+import DesktopMarketOverviewStrip from "@/components/desktop/DesktopMarketOverviewStrip";
 
 interface Commodity {
   id: string;
@@ -203,6 +203,18 @@ const CommoditiesPage = () => {
   const gainers = useMemo(() => commodities.filter((c) => c.previous_price != null && c.price > c.previous_price).length, [commodities]);
   const losers = useMemo(() => commodities.filter((c) => c.previous_price != null && c.price < c.previous_price).length, [commodities]);
   const unchanged = useMemo(() => commodities.filter((c) => c.previous_price == null || c.price === c.previous_price).length, [commodities]);
+  const desktopWatchlist = useMemo(() => {
+    const selected = user
+      ? favEntries.map((entry) => commodities.find((commodity) => commodity.id === entry.item_id)).filter((commodity): commodity is Commodity => Boolean(commodity))
+      : commodities.slice(0, 4);
+    return selected.slice(0, 4).map((commodity) => ({
+      id: commodity.id,
+      symbol: commodity.symbol,
+      name: commodity.name,
+      value: `${commodity.price.toFixed(2)} ${commodity.unit}`,
+      change: commodity.previous_price ? ((commodity.price - commodity.previous_price) / commodity.previous_price) * 100 : 0,
+    }));
+  }, [commodities, favEntries, user]);
 
   const filtered = useMemo(() => {
     let result = commodities;
@@ -233,16 +245,17 @@ const CommoditiesPage = () => {
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
         <div className="mb-6">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-6">
+          <div className="hidden md:flex items-end justify-between gap-6 mb-7">
             <div>
-              <h1 className="text-2xl font-bold text-foreground tracking-tight">Commodities</h1>
-              <p className="text-sm text-muted-foreground mt-1">
-                Global commodity prices and daily movements.
-              </p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">Global Markets</p>
+              <h1 className="mt-2 text-5xl font-black tracking-tight">Commodities</h1>
+              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">Global commodity prices and daily movements.</p>
             </div>
-            <div className="hidden md:block">
-              <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />
-            </div>
+            <span className="rounded-full border border-emerald-500/25 bg-emerald-500/10 px-4 py-2 text-xs font-bold tracking-[0.16em] text-emerald-500">{commodities.length} TRACKED</span>
+          </div>
+          <div className="md:hidden">
+            <h1 className="text-2xl font-bold text-foreground tracking-tight">Commodities</h1>
+            <p className="text-sm text-muted-foreground mt-1">Global commodity prices and daily movements.</p>
           </div>
           <div className="md:hidden mb-2">
             <div className="flex items-center justify-between w-full">
@@ -251,16 +264,26 @@ const CommoditiesPage = () => {
           </div>
         </div>
 
-        <div className="hidden md:block">
-          <CommoditiesSummary commodities={commodities} />
-        </div>
+        <DesktopMarketOverviewStrip
+          title="Global Commodities Market"
+          status={<SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />}
+          metrics={[
+            { label: "Tracked", value: String(commodities.length) },
+            { label: "Gainers", value: String(gainers), change: commodities.length ? (gainers / commodities.length) * 100 : 0 },
+            { label: "Losers", value: String(losers), change: commodities.length ? -(losers / commodities.length) * 100 : 0 },
+            { label: "Unchanged", value: String(unchanged) },
+          ]}
+          watchlist={desktopWatchlist}
+          demo={!user}
+          footer="Global commodities trade during their respective market sessions. Prices are indicative and may be delayed."
+        />
 
         <ActiveAlertsCard assetType="commodity" />
 
         {user && favEntries.length > 0 && <CommodityFavourites entries={favEntries} commodities={commodities} />}
 
         {/* Desktop Premium Toolbar */}
-        <div className="hidden md:flex items-center justify-between gap-4 mb-6 bg-card border border-border/40 p-1.5 rounded-xl shadow-sm">
+        <div className="hidden md:flex items-center justify-between gap-4 mb-5 mt-7">
           <div className="flex items-center gap-3 pl-1">
             <div className="inline-flex items-center gap-1">
               {([
@@ -279,8 +302,8 @@ const CommoditiesPage = () => {
                   <button
                     key={opt.key}
                     onClick={() => setMobileMovement(opt.key)}
-                    className={`inline-flex items-center gap-1.5 px-3 h-8 rounded-md text-[13px] font-medium transition-all whitespace-nowrap ${
-                      active ? activeStyle : "text-muted-foreground hover:text-foreground hover:bg-muted/30"
+                    className={`inline-flex items-center gap-1.5 px-4 h-10 rounded-full border text-[12px] font-semibold transition-all whitespace-nowrap ${
+                      active ? `${activeStyle} border-transparent` : "border-border bg-background text-muted-foreground hover:text-foreground"
                     }`}
                   >
                     {opt.key === "gainers" && <TrendingUp className={`h-3.5 w-3.5 ${active ? "opacity-100" : "opacity-60"}`} />}
@@ -294,13 +317,13 @@ const CommoditiesPage = () => {
             </div>
           </div>
           <div className="flex items-center gap-3 pr-1 w-full justify-between sm:justify-end">
-            <div className="relative w-full sm:w-[220px] shrink-0">
+            <div className="relative w-full sm:w-[320px] shrink-0">
               <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground/70" />
               <Input
                 placeholder="Search commodities"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="pl-8 h-8 text-[13px] rounded-md bg-transparent border-border/40 w-full placeholder:text-muted-foreground/50 hover:border-border transition-colors focus-visible:ring-1"
+                className="pl-10 h-10 text-[13px] rounded-full bg-background border-border w-full placeholder:text-muted-foreground/60 focus-visible:ring-1"
               />
             </div>
           </div>
@@ -426,7 +449,7 @@ const CommoditiesPage = () => {
           ) : filtered.length === 0 ? (
             <EmptyState label="commodities" />
           ) : (
-            <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
+            <div className="rounded-[22px] border border-border overflow-hidden bg-card shadow-sm">
               <div className="overflow-x-auto">
               <table className="w-full text-sm table-fixed min-w-[960px] lg:min-w-0">
                 <colgroup>
