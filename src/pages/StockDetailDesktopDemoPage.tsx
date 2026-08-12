@@ -14,7 +14,7 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { fetchPublicData } from "@/lib/gateway";
 import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
-import { calculateDemoReturn, filterDemoStocks, findDemoStock, stockProductionPath, type DemoPricePoint } from "@/lib/stockDetailDemo";
+import { calculateDemoReturn, fetchCompleteDemoHistory, filterDemoStocks, findDemoStock, stockProductionPath, type DemoHistoryRow, type DemoPricePoint } from "@/lib/stockDetailDemo";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 
 const formatPrice = (value: number) => value.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
@@ -23,12 +23,6 @@ const formatCompact = (value: number | null) => {
   if (value == null) return "—";
   return new Intl.NumberFormat("en-KE", { notation: "compact", maximumFractionDigits: 1 }).format(value);
 };
-
-interface RawHistoryPoint {
-  stock_id: string;
-  snapshot_date: string;
-  price: number | string;
-}
 
 export default function StockDetailDesktopDemoPage({ production = false }: { production?: boolean }) {
   const { symbol = "" } = useParams<{ symbol: string }>();
@@ -83,16 +77,15 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
     };
     const loadHistory = async () => {
       try {
-        const historyResponse = await fetchPublicData<RawHistoryPoint>("stock-history-bulk", {
-          select: ["stock_id", "snapshot_date", "price"],
-          order: "snapshot_date.asc",
-          days: 90,
-          limit: 5000,
-        });
-        const grouped: Record<string, DemoPricePoint[]> = {};
-        historyResponse.data.forEach((point) => {
-          if (!grouped[point.stock_id]) grouped[point.stock_id] = [];
-          grouped[point.stock_id].push({ snapshot_date: point.snapshot_date, price: Number(point.price) });
+        const grouped = await fetchCompleteDemoHistory(async (offset, limit) => {
+          const response = await fetchPublicData<DemoHistoryRow>("stock-history-bulk", {
+            select: ["stock_id", "snapshot_date", "price"],
+            order: "snapshot_date.asc",
+            days: 365,
+            offset,
+            limit,
+          });
+          return { count: response.count, data: response.data };
         });
         if (!cancelled) setHistory(grouped);
       } catch (historyError) {
@@ -180,18 +173,20 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
                   ))}
                 </div>
                 <div className="overflow-x-auto">
-                  <table className="w-full min-w-[1120px] table-fixed text-left">
+                  <table className="w-full min-w-[1380px] table-fixed text-left">
                     <thead className="border-b border-border bg-muted/50 text-xs uppercase tracking-[0.18em] text-muted-foreground dark:bg-[#1b1c1f]">
                       <tr>
-                        <th className="w-[21%] bg-background/60 px-6 py-3 font-semibold dark:bg-[#151619]">Company</th>
-                        <th className="w-[12%] px-3 py-3 text-center font-semibold">Last Price</th>
-                        <th className="w-[8%] px-3 py-3 text-right font-semibold">1D</th>
-                        <th className="w-[8%] px-3 py-3 text-right font-semibold">7D</th>
-                        <th className="w-[8%] px-3 py-3 text-right font-semibold">1M</th>
-                        <th className="w-[11%] px-3 py-3 text-center font-semibold">Trend</th>
-                        <th className="w-[14%] px-3 py-3 text-left font-semibold">52W Range</th>
-                        <th className="w-[8%] px-3 py-3 text-center font-semibold">Volume</th>
-                        <th className="w-[10%] px-3 py-3 text-center font-semibold">Mkt Cap</th>
+                        <th className="w-[18%] bg-background/60 px-6 py-3 font-semibold dark:bg-[#151619]">Company</th>
+                        <th className="w-[10%] px-3 py-3 text-center font-semibold">Last Price</th>
+                        <th className="w-[7%] px-3 py-3 text-right font-semibold">1D</th>
+                        <th className="w-[7%] px-3 py-3 text-right font-semibold">7D</th>
+                        <th className="w-[7%] px-3 py-3 text-right font-semibold">1M</th>
+                        <th className="w-[7%] px-3 py-3 text-right font-semibold">3M</th>
+                        <th className="w-[7%] px-3 py-3 text-right font-semibold">1Y</th>
+                        <th className="w-[9%] px-3 py-3 text-center font-semibold">Trend</th>
+                        <th className="w-[12%] px-3 py-3 text-left font-semibold">52W Range</th>
+                        <th className="w-[7%] px-3 py-3 text-center font-semibold">Volume</th>
+                        <th className="w-[9%] px-3 py-3 text-center font-semibold">Mkt Cap</th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border bg-muted/20 dark:bg-[#191a1d]">
@@ -212,6 +207,8 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
 function StockTableRow({ stock, points, selected }: { stock: CachedStock; points: DemoPricePoint[]; selected: boolean }) {
   const sevenDay = calculateDemoReturn(points, stock.price, 7);
   const oneMonth = calculateDemoReturn(points, stock.price, 30);
+  const threeMonth = calculateDemoReturn(points, stock.price, 90);
+  const oneYear = calculateDemoReturn(points, stock.price, 365);
   const logoUrl = getStockLogoUrl(stock.symbol);
   return (
     <tr onClick={() => window.location.assign(stockProductionPath(stock.symbol))} className={`cursor-pointer bg-muted/20 transition-colors hover:bg-muted/35 dark:bg-[#191a1d] dark:hover:bg-[#202226] ${selected ? "ring-1 ring-inset ring-emerald-500/20" : ""}`}>
@@ -220,6 +217,8 @@ function StockTableRow({ stock, points, selected }: { stock: CachedStock; points
       <td className="px-3 py-4 text-right"><ReturnValue value={stock.day_change_percent} /></td>
       <td className="px-3 py-4 text-right"><ReturnValue value={sevenDay} /></td>
       <td className="px-3 py-4 text-right"><ReturnValue value={oneMonth} /></td>
+      <td className="px-3 py-4 text-right"><ReturnValue value={threeMonth} /></td>
+      <td className="px-3 py-4 text-right"><ReturnValue value={oneYear} /></td>
       <td className="px-3 py-4"><div className="flex justify-center"><TrendSparkline points={points} positive={(oneMonth ?? stock.day_change_percent) >= 0} /></div></td>
       <td className="px-3 py-4"><RangeCell stock={stock} /></td>
       <td className="px-3 py-4 text-center font-body text-xs text-muted-foreground tabular-nums">{formatCompact(stock.volume)}</td>

@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 import type { CachedStock } from "@/lib/stockCache";
-import { calculateDemoReturn, filterDemoStocks, findDemoStock, stockProductionPath } from "@/lib/stockDetailDemo";
+import { calculateDemoReturn, fetchCompleteDemoHistory, filterDemoStocks, findDemoStock, stockProductionPath } from "@/lib/stockDetailDemo";
 
 const stocks: CachedStock[] = [
   {
@@ -58,5 +58,44 @@ describe("stock detail desktop demo helpers", () => {
     expect(calculateDemoReturn(history, 15, 7)).toBeCloseTo(25);
     expect(calculateDemoReturn(history, 15, 30)).toBeCloseTo(50);
     expect(calculateDemoReturn([], 110, 7)).toBeNull();
+  });
+
+  it("does not label incomplete history as a full-period return", () => {
+    const history = [
+      { snapshot_date: "2026-08-01", price: 30 },
+      { snapshot_date: "2026-08-11", price: 35 },
+    ];
+
+    expect(calculateDemoReturn(history, 35, 7)).toBeCloseTo(16.6667);
+    expect(calculateDemoReturn(history, 35, 30)).toBeNull();
+    expect(calculateDemoReturn(history, 35, 365)).toBeNull();
+  });
+
+  it("paginates and deduplicates a complete one-year bulk history", async () => {
+    const offsets: number[] = [];
+    const grouped = await fetchCompleteDemoHistory(async (offset) => {
+      offsets.push(offset);
+      if (offset === 0) return {
+        count: 4,
+        data: [
+          { stock_id: "scom-id", snapshot_date: "2026-08-10", price: 34 },
+          { stock_id: "kcb-id", snapshot_date: "2026-08-10", price: 84 },
+        ],
+      };
+      return {
+        count: 4,
+        data: [
+          { stock_id: "scom-id", snapshot_date: "2026-08-10", price: 35 },
+          { stock_id: "scom-id", snapshot_date: "2026-08-11", price: 36 },
+        ],
+      };
+    }, 2);
+
+    expect(offsets).toEqual([0, 2]);
+    expect(grouped["scom-id"]).toEqual([
+      { snapshot_date: "2026-08-10", price: 35 },
+      { snapshot_date: "2026-08-11", price: 36 },
+    ]);
+    expect(grouped["kcb-id"]).toEqual([{ snapshot_date: "2026-08-10", price: 84 }]);
   });
 });

@@ -21,6 +21,40 @@ export interface DemoPricePoint {
   price: number;
 }
 
+export interface DemoHistoryRow extends DemoPricePoint {
+  stock_id: string;
+}
+
+export interface DemoHistoryPage {
+  count: number;
+  data: DemoHistoryRow[];
+}
+
+export async function fetchCompleteDemoHistory(
+  fetchPage: (offset: number, limit: number) => Promise<DemoHistoryPage>,
+  pageSize = 5000,
+): Promise<Record<string, DemoPricePoint[]>> {
+  const rows = new Map<string, DemoHistoryRow>();
+  let offset = 0;
+  let count = 0;
+
+  do {
+    const page = await fetchPage(offset, pageSize);
+    count = page.count;
+    page.data.forEach((point) => rows.set(`${point.stock_id}:${point.snapshot_date}`, point));
+    if (page.data.length === 0) break;
+    offset += page.data.length;
+  } while (offset < count);
+
+  const grouped: Record<string, DemoPricePoint[]> = {};
+  rows.forEach((point) => {
+    if (!grouped[point.stock_id]) grouped[point.stock_id] = [];
+    grouped[point.stock_id].push({ snapshot_date: point.snapshot_date, price: Number(point.price) });
+  });
+  Object.values(grouped).forEach((points) => points.sort((left, right) => left.snapshot_date.localeCompare(right.snapshot_date)));
+  return grouped;
+}
+
 export function calculateDemoReturn(points: DemoPricePoint[], currentPrice: number, days: number): number | null {
   if (points.length === 0 || currentPrice <= 0) return null;
   const eligible = points
@@ -30,10 +64,11 @@ export function calculateDemoReturn(points: DemoPricePoint[], currentPrice: numb
 
   const latestObservationTime = new Date(eligible[eligible.length - 1].snapshot_date).getTime();
   const cutoff = latestObservationTime - days * 24 * 60 * 60 * 1000;
-  let baseline = eligible[0];
+  let baseline: DemoPricePoint | null = null;
   for (const point of eligible) {
     if (new Date(point.snapshot_date).getTime() > cutoff) break;
     baseline = point;
   }
+  if (!baseline) return null;
   return ((currentPrice - baseline.price) / baseline.price) * 100;
 }
