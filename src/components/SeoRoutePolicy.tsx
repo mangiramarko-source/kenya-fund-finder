@@ -17,6 +17,7 @@ const INDEXABLE_PATHS = [
 
 const NON_INDEXABLE_DEMO_PATHS = [
   /^\/stocks\/demo-2\/?$/,
+  /^\/demo-stock-insights\/?$/,
 ];
 
 export default function SeoRoutePolicy() {

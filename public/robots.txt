@@ -18,6 +18,7 @@ Disallow: /auth
 Disallow: /alerts
 Disallow: /ai-lab
 Disallow: /demo-feed
+Disallow: /demo-stock-insights
 Disallow: /demo-stocks-feed
 Disallow: /portfolio
 Disallow: /profile
@@ -49,6 +50,7 @@ Disallow: /auth
 Disallow: /alerts
 Disallow: /ai-lab
 Disallow: /demo-feed
+Disallow: /demo-stock-insights
 Disallow: /demo-stocks-feed
 Disallow: /portfolio
 Disallow: /profile
