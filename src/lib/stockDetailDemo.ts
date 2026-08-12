@@ -23,11 +23,17 @@ export interface DemoPricePoint {
 
 export function calculateDemoReturn(points: DemoPricePoint[], currentPrice: number, days: number): number | null {
   if (points.length === 0 || currentPrice <= 0) return null;
-  const cutoff = Date.now() - days * 24 * 60 * 60 * 1000;
   const eligible = points
-    .filter((point) => Number.isFinite(point.price) && point.price > 0)
+    .filter((point) => Number.isFinite(point.price) && point.price > 0 && Number.isFinite(new Date(point.snapshot_date).getTime()))
     .sort((a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime());
-  const baseline = eligible.find((point) => new Date(point.snapshot_date).getTime() >= cutoff) ?? eligible[0];
-  if (!baseline) return null;
+  if (eligible.length === 0) return null;
+
+  const latestObservationTime = new Date(eligible[eligible.length - 1].snapshot_date).getTime();
+  const cutoff = latestObservationTime - days * 24 * 60 * 60 * 1000;
+  let baseline = eligible[0];
+  for (const point of eligible) {
+    if (new Date(point.snapshot_date).getTime() > cutoff) break;
+    baseline = point;
+  }
   return ((currentPrice - baseline.price) / baseline.price) * 100;
 }

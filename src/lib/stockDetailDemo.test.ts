@@ -35,14 +35,28 @@ describe("stock detail desktop demo helpers", () => {
     expect(stockProductionPath("A B")).toBe("/stocks/A%20B");
   });
 
-  it("calculates period returns from the first available point in range", () => {
-    const now = new Date();
-    const fiveDaysAgo = new Date(now.getTime() - 5 * 86400000).toISOString();
-    const twentyDaysAgo = new Date(now.getTime() - 20 * 86400000).toISOString();
-    expect(calculateDemoReturn([
-      { snapshot_date: twentyDaysAgo, price: 80 },
-      { snapshot_date: fiveDaysAgo, price: 100 },
-    ], 110, 7)).toBeCloseTo(10);
+  it("uses distinct period boundaries for sparse stock history", () => {
+    const history = [
+      { snapshot_date: "2026-05-11", price: 20 },
+      { snapshot_date: "2026-07-10", price: 25 },
+      { snapshot_date: "2026-08-01", price: 30 },
+      { snapshot_date: "2026-08-11", price: 35 },
+    ];
+
+    expect(calculateDemoReturn(history, 36, 7)).toBeCloseTo(20);
+    expect(calculateDemoReturn(history, 36, 30)).toBeCloseTo(44);
+    expect(calculateDemoReturn(history, 36, 90)).toBeCloseTo(80);
+  });
+
+  it("anchors returns to the latest stored observation instead of wall-clock time", () => {
+    const history = [
+      { snapshot_date: "2024-01-01", price: 10 },
+      { snapshot_date: "2024-01-24", price: 12 },
+      { snapshot_date: "2024-01-31", price: 15 },
+    ];
+
+    expect(calculateDemoReturn(history, 15, 7)).toBeCloseTo(25);
+    expect(calculateDemoReturn(history, 15, 30)).toBeCloseTo(50);
     expect(calculateDemoReturn([], 110, 7)).toBeNull();
   });
 });
