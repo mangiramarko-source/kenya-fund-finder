@@ -10,45 +10,25 @@ interface StockDecisionContextProps {
 }
 
 export function StockDecisionContext({ article, stock, inlineTransparent, onReadMore }: StockDecisionContextProps) {
-  // Use real analysis if provided, otherwise fallback to the demo analysis for the screenshot
-  const analysis = article.parsed_ai_analysis || {
-    event_label: "Product pricing",
-    impact_horizon: "Short-term relevance",
-    factors_positive: [
-      "The pricing change may improve revenue earned per data customer.",
-      "Time-based availability may help manage peak network demand."
-    ],
-    factors_negative: [
-      "Price-sensitive customers could reduce usage or switch bundles.",
-      "Customer dissatisfaction may create short-term brand pressure."
-    ],
-    what_happened: "Safaricom PLC changed a KSh 20 data bundle. This is classified as a pricing change based on the linked publisher article.",
-    verified_figures: []
-  };
-
-  const performance = [
-    { label: "1D", value: 1.19 },
-    { label: "7D", value: 4.20 },
-    { label: "1M", value: 8.60 },
-    { label: "3M", value: 14.30 },
-  ];
+  const analysis = article.parsed_ai_analysis;
 
   return (
     <div className="mt-4 space-y-4 font-sans text-foreground">
       <div className="space-y-4">
         
-        {/* Header Title & Tags */}
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/90">
-            Market Impact & Key Facts
-          </h3>
-          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
-            {[analysis.event_label, analysis.impact_horizon].filter(Boolean).join(" · ")}
-          </span>
-        </div>
+        {analysis && (analysis.event_label || analysis.impact_horizon || analysis.factors_positive?.length || analysis.factors_negative?.length || analysis.what_happened) && (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/90">
+              Market Impact & Key Facts
+            </h3>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              {[analysis.event_label, analysis.impact_horizon].filter(Boolean).join(" · ")}
+            </span>
+          </div>
+        )}
 
         {/* Factors (Bullish/Bearish) */}
-        {(analysis.factors_positive?.length || analysis.factors_negative?.length) ? (
+        {(analysis?.factors_positive?.length || analysis?.factors_negative?.length) ? (
           <section className="grid gap-5 border-y border-border py-4 md:grid-cols-2">
             {analysis.factors_positive && analysis.factors_positive.length > 0 && (
               <FactorList title="What could help" tone="positive" items={analysis.factors_positive} />
@@ -59,34 +39,14 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
           </section>
         ) : null}
 
-        {/* Price Context */}
-        <section>
-          <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-bold text-foreground">Price context</h3>
-            <span className="text-[10px] uppercase tracking-[0.14em] text-foreground/60">Demo data</span>
-          </div>
-          <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
-            {/* The screenshot only has the 1D, 7D, 1M, 3M metrics, not the current price line */}
-            {performance.map((period) => (
-              <Performance key={period.label} label={period.label} value={period.value} />
-            ))}
-          </div>
-          <p className="mt-3 text-[15px] leading-relaxed text-foreground/90 line-clamp-1">
-            The price increased during the same period, but the available data does not prove this story caused the movement.
-          </p>
-        </section>
+
 
         {/* Source facts / What happened */}
-        {analysis.what_happened && (
+        {analysis?.what_happened && (
           <section className="border-t border-border pt-4">
             <h3 className="text-sm font-bold text-foreground">Source facts</h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-foreground/90 line-clamp-1">
-              {/* If it's the demo data, we inject the strong tags to match screenshot exactly */}
-              {article.parsed_ai_analysis ? analysis.what_happened : (
-                <>
-                  <strong className="font-bold text-foreground">Safaricom PLC</strong> changed a <strong className="font-bold text-foreground">KSh 20</strong> data bundle. This is classified as a <strong className="font-bold text-foreground">pricing change</strong> based on the linked publisher article.
-                </>
-              )}
+            <p className="mt-2 text-[15px] leading-relaxed text-foreground/90">
+              {analysis.what_happened}
             </p>
             {analysis.verified_figures && analysis.verified_figures.length > 0 && (
               <ul className="mt-3 space-y-1">
