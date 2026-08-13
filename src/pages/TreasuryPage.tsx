@@ -707,7 +707,7 @@ export default function TreasuryPage() {
           {/* TAB 2: TREASURY BONDS                                         */}
           {/* ───────────────────────────────────────────────────────────── */}
           {activeTab === "bonds" && (
-            <div className="space-y-8 animate-in fade-in-50 duration-300">
+            <div className="space-y-3 animate-in fade-in-50 duration-300">
               {/* Search & Filter Bar (Matches Mobile Stocks UI) */}
               <div className="flex items-center gap-3">
                 <div className="relative min-w-0 flex-1">
@@ -810,7 +810,7 @@ export default function TreasuryPage() {
               </div>
 
               {/* Maturity Filter Pill Buttons (Exact Match to Stocks Page Top Gainers UI) */}
-              <div className="flex gap-2 overflow-x-auto py-0.5 no-scrollbar -mt-3">
+              <div className="flex gap-2 overflow-x-auto py-0.5 no-scrollbar">
                 {[
                   { label: "All", key: "All", count: mockBonds.length },
                   { label: "< 2 Yrs", key: "< 2 Yrs", count: mockBonds.filter((b) => b.yearsRemaining < 2).length },
@@ -836,8 +836,8 @@ export default function TreasuryPage() {
                 })}
               </div>
 
-              {/* Updated Date Row for Bonds (Below Maturity Bar) */}
-              <div className="text-[11px] font-bold tracking-wider uppercase px-0.5 -mt-4">
+              {/* Updated Date Row for Bonds */}
+              <div className="text-[11px] font-bold tracking-wider uppercase px-0.5 pt-0.5">
                 <span className="text-emerald-500">UPDATED 01 AUG 2026</span>
               </div>
 
