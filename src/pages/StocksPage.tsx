@@ -649,15 +649,16 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <colgroup>
-                    <col style={{ width: "20%" }} />
-                    <col style={{ width: "9%" }} />
-                    <col style={{ width: "9%" }} />
-                    <col style={{ width: "9%" }} />
-                    <col style={{ width: "9%" }} />
-                    <col style={{ width: "10%" }} />
-                    <col style={{ width: "9%" }} />
+                    <col style={{ width: "18%" }} />
+                    <col style={{ width: "8%" }} />
+                    <col style={{ width: "7%" }} />
+                    <col style={{ width: "7%" }} />
+                    <col style={{ width: "7%" }} />
+                    <col style={{ width: "7%" }} />
                     <col style={{ width: "10%" }} />
                     <col style={{ width: "8%" }} />
+                    <col style={{ width: "9%" }} />
+                    <col style={{ width: "7%" }} />
                     <col style={{ width: "7%" }} />
                     {user && <col style={{ width: "4%" }} />}
                   </colgroup>
@@ -674,6 +675,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                       </th>
                       <th className="text-left px-3 py-3 font-normal">7D Return</th>
                       <th className="text-left px-3 py-3 font-normal">1M Return</th>
+                      <th className="text-left px-3 py-3 font-normal">3M Return</th>
                       <th className="text-left px-3 py-3 font-normal">52W Range</th>
                       <th className="text-left px-3 py-3 font-normal cursor-pointer hover:text-foreground" onClick={() => toggleSort("volume")}>
                         <span className="inline-flex items-center gap-1">Volume {sortKey === "volume" && <ArrowUpDown className="h-3 w-3 text-accent" />}</span>
@@ -868,13 +870,13 @@ const MobileInspiredDesktopDemo = ({
         ) : (
           <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
             <div className="overflow-x-auto">
-              <table className="w-full min-w-[1180px] text-sm">
-                <colgroup><col style={{ width: "20%" }} /><col style={{ width: "9%" }} /><col style={{ width: "9%" }} /><col style={{ width: "9%" }} /><col style={{ width: "9%" }} /><col style={{ width: "10%" }} /><col style={{ width: "9%" }} /><col style={{ width: "10%" }} /><col style={{ width: "8%" }} /><col style={{ width: "7%" }} />{signedIn && <col style={{ width: "4%" }} />}</colgroup>
+              <table className="w-full min-w-[1240px] text-sm">
+                <colgroup><col style={{ width: "18%" }} /><col style={{ width: "8%" }} /><col style={{ width: "7%" }} /><col style={{ width: "7%" }} /><col style={{ width: "7%" }} /><col style={{ width: "7%" }} /><col style={{ width: "10%" }} /><col style={{ width: "8%" }} /><col style={{ width: "9%" }} /><col style={{ width: "7%" }} /><col style={{ width: "7%" }} />{signedIn && <col style={{ width: "4%" }} stroke-none="true" />}</colgroup>
                 <thead><tr className="border-b border-border/40 bg-background text-[12px] text-muted-foreground">
                   <th className="cursor-pointer py-3 pl-5 pr-2 text-left font-normal hover:text-foreground" onClick={() => toggleSort("symbol")}>Company {sortKey === "symbol" && <ArrowUpDown className="ml-1 inline h-3 w-3 text-accent" />}</th>
                   <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("price")}>Last Price</th>
                   <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("day_change_percent")}>1D Return</th>
-                  <th className="px-3 py-3 text-left font-normal">7D Return</th><th className="px-3 py-3 text-left font-normal">1M Return</th><th className="px-3 py-3 text-left font-normal">52W Range</th>
+                  <th className="px-3 py-3 text-left font-normal">7D Return</th><th className="px-3 py-3 text-left font-normal">1M Return</th><th className="px-3 py-3 text-left font-normal">3M Return</th><th className="px-3 py-3 text-left font-normal">52W Range</th>
                   <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("volume")}>Volume</th>
                   <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("market_cap")}>Market Cap</th>
                   <th className="px-3 py-3 text-left font-normal">Valuation</th><th className="px-3 py-3 text-left font-normal">Industry</th>{signedIn && <th />}
@@ -1106,7 +1108,7 @@ const getReturnForDays = (history: PriceHistory[] | undefined, currentPrice: num
   
   let oldPrice = 0;
   let minDiff = Infinity;
-  const maxDiff = Math.max(7 * 86400000, days * 0.5 * 86400000);
+  const maxDiff = Math.max(7 * 86400000, days * 0.6 * 86400000);
   for (let i = 0; i < history.length; i++) {
     const ptTime = new Date(history[i].snapshot_date).getTime();
     if (isNaN(ptTime)) continue;
@@ -1117,6 +1119,12 @@ const getReturnForDays = (history: PriceHistory[] | undefined, currentPrice: num
     }
   }
   
+  // Fallback to oldest snapshot if exact cutoff baseline not found
+  if (oldPrice === 0 && history.length > 0) {
+    const oldest = [...history].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date))[0];
+    if (oldest && oldest.price > 0) oldPrice = oldest.price;
+  }
+
   if (oldPrice <= 0) return null;
   return ((currentPrice - oldPrice) / oldPrice) * 100;
 };
@@ -1150,6 +1158,7 @@ const DesktopStockRow = ({
   
   const return7d = getReturnForDays(history, s.price, 7);
   const return30d = getReturnForDays(history, s.price, 30);
+  const return90d = getReturnForDays(history, s.price, 90);
   
   const displayName = s.name.length > 12 ? s.name.substring(0, 12) + "..." : s.name;
   const displaySector = (s.sector || "").replace(/Telecommunication(s?)/gi, "Telcom");
@@ -1192,6 +1201,15 @@ const DesktopStockRow = ({
           {return30d != null ? (
             <span className={`text-[13px] tabular-nums font-medium ${return30d > 0 ? "text-emerald-500" : return30d < 0 ? "text-destructive" : "text-muted-foreground"}`}>
               {return30d > 0 ? "+" : ""}{formatNumber(return30d)}%
+            </span>
+          ) : (
+            <span className="text-muted-foreground text-[13px]">—</span>
+          )}
+        </td>
+        <td className="px-3 py-4 text-left">
+          {return90d != null ? (
+            <span className={`text-[13px] tabular-nums font-medium ${return90d > 0 ? "text-emerald-500" : return90d < 0 ? "text-destructive" : "text-muted-foreground"}`}>
+              {return90d > 0 ? "+" : ""}{formatNumber(return90d)}%
             </span>
           ) : (
             <span className="text-muted-foreground text-[13px]">—</span>
