@@ -315,7 +315,7 @@ const PortfolioPage = () => {
 
               {/* Holdings Cards Horizontal Scroll or Table */}
               {viewMode === "cards" ? (
-                <div className="flex overflow-x-auto gap-4 pb-3 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent snap-x snap-mandatory -mx-1 px-1">
+                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent snap-x snap-mandatory -mx-1 px-1">
                   {filteredItems.slice(0, 5).map((item) => {
                     const itemChange = changes.find((c) => c.itemId === item.id);
                     return (
@@ -327,7 +327,7 @@ const PortfolioPage = () => {
                         change={itemChange}
                         compact={true}
                         onClick={(item) => setEditItem(item)}
-                        className="w-[280px] sm:w-[290px] shrink-0 snap-start min-h-[160px]"
+                        className="w-[215px] sm:w-[225px] shrink-0 snap-start min-h-[135px]"
                       />
                     );
                   })}
@@ -336,16 +336,16 @@ const PortfolioPage = () => {
                   {filteredItems.length > 5 ? (
                     <div
                       onClick={() => setViewMode("table")}
-                      className="flex flex-col items-center justify-center gap-2.5 w-[200px] shrink-0 snap-start min-h-[160px] bg-[#131316] border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-2xl p-4 text-center transition-all cursor-pointer group"
+                      className="flex flex-col items-center justify-center gap-2 w-[160px] shrink-0 snap-start min-h-[135px] bg-[#131316] border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all cursor-pointer group"
                     >
-                      <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-                        <ArrowRight className="h-5 w-5" />
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                        <ArrowRight className="h-4 w-4" />
                       </div>
                       <div>
                         <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
                           See More ({filteredItems.length - 5} more)
                         </div>
-                        <div className="text-[11px] text-zinc-400 mt-0.5">
+                        <div className="text-[10px] text-zinc-400 mt-0.5">
                           View all in table
                         </div>
                       </div>
@@ -353,16 +353,16 @@ const PortfolioPage = () => {
                   ) : (
                     <div
                       onClick={() => setShowAddModal(true)}
-                      className="flex flex-col items-center justify-center gap-2 w-[200px] shrink-0 snap-start min-h-[160px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-2xl p-4 text-center transition-all cursor-pointer group"
+                      className="flex flex-col items-center justify-center gap-2 w-[160px] shrink-0 snap-start min-h-[135px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-xl p-3 text-center transition-all cursor-pointer group"
                     >
-                      <div className="w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-                        <Plus className="h-5 w-5 stroke-[2.5]" />
+                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                        <Plus className="h-4 w-4 stroke-[2.5]" />
                       </div>
                       <div>
                         <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
                           Add Investment
                         </div>
-                        <div className="text-[11px] text-zinc-400 mt-0.5">
+                        <div className="text-[10px] text-zinc-400 mt-0.5">
                           Track MMF, Stocks & FX
                         </div>
                       </div>

@@ -75,16 +75,16 @@ export default function OverviewPortfolioWidget() {
               change={itemChange}
               compact={true}
               onClick={() => navigate("/portfolio")}
-              className="w-[270px] sm:w-[280px] shrink-0 snap-start min-h-[160px]"
+              className="w-[215px] sm:w-[225px] shrink-0 snap-start min-h-[135px]"
             />
           );
         })}
 
         {/* Dashed Add / See More Investment Card */}
-        <div className="w-[180px] shrink-0 snap-start min-h-[160px]">
+        <div className="w-[160px] shrink-0 snap-start min-h-[135px]">
           <Link
             to="/portfolio"
-            className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[160px] bg-[#131316]/80 border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-2xl p-3.5 text-center transition-all group"
+            className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[135px] bg-[#131316]/80 border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all group"
           >
             <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
               {hasMore ? <ArrowRight className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
