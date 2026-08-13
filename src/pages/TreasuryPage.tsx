@@ -5,7 +5,7 @@ import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import {
   Tooltip,
   TooltipContent,
@@ -711,71 +711,105 @@ export default function TreasuryPage() {
           {/* ───────────────────────────────────────────────────────────── */}
           {activeTab === "bonds" && (
             <div className="space-y-8 animate-in fade-in-50 duration-300">
-              <div className="flex justify-end gap-4">
-                <div className="flex items-center gap-2">
-                  <span className="text-xs font-semibold text-muted-foreground">Sort by:</span>
-                  <select
-                    value={bondSortBy}
-                    onChange={(e) => setBondSortBy(e.target.value as any)}
-                    className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
-                  >
-                    <option value="yield">Yield (High to Low)</option>
-                    <option value="coupon">Coupon (High to Low)</option>
-                    <option value="maturity">Maturity (Shortest first)</option>
-                  </select>
-                </div>
-              </div>
-
-              {/* Section 6: Filters */}
-              <div className="rounded-2xl border border-border bg-card p-4 space-y-4 shadow-sm">
-                <div className="relative">
-                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              {/* Search & Filter Bar (Matches Mobile Stocks UI) */}
+              <div className="flex items-center gap-3">
+                <div className="relative min-w-0 flex-1">
+                  <Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/80" />
                   <Input
-                    type="text"
-                    placeholder="Search bonds by code (e.g. FXD1, IFB)..."
+                    placeholder="Search bonds..."
                     value={bondSearch}
                     onChange={(e) => setBondSearch(e.target.value)}
-                    className="pl-9 rounded-xl border-border bg-background text-sm"
+                    className="h-11 w-full rounded-full border-border/80 bg-card pl-11 text-[15px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:ring-1"
                   />
                 </div>
 
-                <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
-                  {/* Maturity Category Buttons */}
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="font-bold text-muted-foreground mr-1">Maturity:</span>
-                    {["All", "< 2 Years", "2–5 Years", "5–10 Years", "10+ Years"].map((mat) => (
-                      <button
-                        key={mat}
-                        onClick={() => setBondMaturityFilter(mat)}
-                        className={`px-3 py-1 rounded-lg font-bold transition-all ${
-                          bondMaturityFilter === mat
-                            ? "bg-emerald-500 text-white shadow-sm"
-                            : "bg-muted text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {mat}
-                      </button>
-                    ))}
-                  </div>
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <button
+                      type="button"
+                      className="relative inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full border border-border/80 bg-card px-5 text-sm font-semibold shadow-sm transition-colors hover:bg-muted/40"
+                    >
+                      <SlidersHorizontal className="h-4 w-4" /> Filter
+                      {(bondMaturityFilter !== "All" || bondCouponFilter !== "All" || bondSortBy !== "yield") && (
+                        <span className="absolute right-1.5 top-1.5 h-2 w-2 rounded-full bg-emerald-500" />
+                      )}
+                    </button>
+                  </SheetTrigger>
+                  <SheetContent side="bottom" className="max-h-[85vh] rounded-t-2xl border-border p-5 space-y-5 bg-background">
+                    <SheetHeader className="border-b border-border/50 pb-3 text-left">
+                      <SheetTitle className="text-base font-bold">Sort & Filter Bonds</SheetTitle>
+                    </SheetHeader>
 
-                  {/* Coupon Filter */}
-                  <div className="flex items-center gap-1.5">
-                    <span className="font-bold text-muted-foreground">Coupon:</span>
-                    {["All", "Fixed", "Tax-Free"].map((type) => (
-                      <button
-                        key={type}
-                        onClick={() => setBondCouponFilter(type)}
-                        className={`px-3 py-1 rounded-lg font-bold transition-all ${
-                          bondCouponFilter === type
-                            ? "bg-emerald-500 text-white shadow-sm"
-                            : "bg-muted text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {type}
-                      </button>
-                    ))}
-                  </div>
-                </div>
+                    <div className="space-y-4">
+                      {/* Sort By Section */}
+                      <div>
+                        <h4 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Sort By</h4>
+                        <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
+                          {[
+                            { id: "yield", label: "Yield (High to Low)" },
+                            { id: "coupon", label: "Coupon (High to Low)" },
+                            { id: "maturity", label: "Maturity Date" },
+                          ].map((item) => (
+                            <button
+                              key={item.id}
+                              type="button"
+                              onClick={() => setBondSortBy(item.id as any)}
+                              className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors ${
+                                bondSortBy === item.id ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              {item.label}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Maturity Section */}
+                      <div>
+                        <h4 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Maturity Remaining</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {["All", "< 2 Yrs", "2–5 Yrs", "5–10 Yrs", "10+ Yrs"].map((item) => (
+                            <button
+                              key={item}
+                              type="button"
+                              onClick={() => setBondMaturityFilter(item)}
+                              className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors ${
+                                bondMaturityFilter === item ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              {item}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Coupon Type Section */}
+                      <div>
+                        <h4 className="mb-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Coupon Type</h4>
+                        <div className="flex flex-wrap gap-2">
+                          {["All", "Tax-Free", "Fixed"].map((item) => (
+                            <button
+                              key={item}
+                              type="button"
+                              onClick={() => setBondCouponFilter(item)}
+                              className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors ${
+                                bondCouponFilter === item ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                              }`}
+                            >
+                              {item}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      <SheetClose asChild>
+                        <button type="button" className="mt-4 h-11 w-full rounded-full bg-emerald-600 text-sm font-semibold text-white hover:bg-emerald-700">
+                          Apply Filters
+                        </button>
+                      </SheetClose>
+                    </div>
+                  </SheetContent>
+                </Sheet>
               </div>
 
               {/* Bond List Table / Cards */}
