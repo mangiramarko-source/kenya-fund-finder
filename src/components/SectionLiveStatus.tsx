@@ -38,7 +38,9 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
     : displayDate ? `Updated ${displayDate}` : "Updated automatically";
   const closedText = isGlobal
     ? "Global Markets Closed (24/5)"
-    : "Closed (Mon-Fri, 9 AM-5 PM EAT)";
+    : section === "stocks"
+      ? "Market Closed"
+      : "Closed (Mon-Fri, 9 AM-5 PM EAT)";
 
   return (
     <span className={`inline-flex items-center gap-3 ${className || ""}`}>
