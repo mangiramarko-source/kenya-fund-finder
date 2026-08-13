@@ -30,6 +30,7 @@ import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 
 import MobilePortfolioView from "@/components/portfolio/MobilePortfolioView";
+import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
 
 const PortfolioPage = () => {
   useDocumentTitle(
@@ -236,6 +237,8 @@ const PortfolioPage = () => {
         </>
       ) : (
         <>
+          <OverviewPortfolioWidget />
+
           <PortfolioKPICards
             totalValue={totalValue}
             totalPnL={totalPnL}

@@ -52,7 +52,7 @@ export default function PortfolioHoldingCard({
   return (
     <div
       onClick={() => onClick?.(item)}
-      className={`bg-[#131316] border border-zinc-800/90 hover:border-zinc-700 active:bg-zinc-900 rounded-2xl shadow-md flex flex-col justify-between cursor-pointer transition-all ${
+      className={`bg-[#131316] border border-zinc-800/90 hover:border-zinc-700/90 hover:shadow-lg active:bg-zinc-900 rounded-2xl shadow-md flex flex-col justify-between cursor-pointer transition-all duration-200 ${
         compact ? "p-3.5" : "p-4 sm:p-4.5"
       } ${className}`}
     >
