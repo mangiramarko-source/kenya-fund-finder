@@ -1101,24 +1101,23 @@ const DesktopStockCard = ({
 
 /* ─── Shared components ─── */
 const getReturnForDays = (history: PriceHistory[] | undefined, currentPrice: number, days: number): number | null => {
-  if (!history || history.length === 0) return null;
-  const targetDate = new Date();
-  targetDate.setUTCDate(targetDate.getUTCDate() - days);
-  const targetTime = targetDate.getTime();
+  if (!history || history.length === 0 || currentPrice <= 0) return null;
+  const targetTime = Date.now() - days * 86400000;
   
   let oldPrice = 0;
   let minDiff = Infinity;
+  const maxDiff = Math.max(7 * 86400000, days * 0.5 * 86400000);
   for (let i = 0; i < history.length; i++) {
     const ptTime = new Date(history[i].snapshot_date).getTime();
+    if (isNaN(ptTime)) continue;
     const diff = Math.abs(ptTime - targetTime);
-    const maxDiff = Math.max(3 * 24 * 60 * 60 * 1000, Math.min(14 * 24 * 60 * 60 * 1000, days * 0.3 * 24 * 60 * 60 * 1000));
     if (diff < minDiff && diff <= maxDiff) {
       minDiff = diff;
       oldPrice = history[i].price;
     }
   }
   
-  if (oldPrice === 0) return null;
+  if (oldPrice <= 0) return null;
   return ((currentPrice - oldPrice) / oldPrice) * 100;
 };
 

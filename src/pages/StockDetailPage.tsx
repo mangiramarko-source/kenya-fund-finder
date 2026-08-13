@@ -156,7 +156,7 @@ const StockDetailPage = () => {
 
   useEffect(() => {
     if (!stock) return undefined;
-    const cacheKey = `${stock.id}:${range}`;
+    const cacheKey = stock.id;
     const cached = historyCache.current.get(cacheKey);
     if (cached) {
       setHistory(cached);
@@ -173,20 +173,21 @@ const StockDetailPage = () => {
             select: ["id", "price", "snapshot_date"],
             id: stock.id,
             order: "snapshot_date.asc",
-            days: STOCK_HISTORY_DAYS[range],
             limit,
             offset,
           });
           return {
-            count: response.count,
-            data: response.data.map((entry: any) => ({
-              snapshot_date: entry.snapshot_date,
-              price: Number(entry.price),
+            count: Number(response.count || response.data?.length || 0),
+            data: (response.data || []).map((entry: any) => ({
+              snapshot_date: String(entry.snapshot_date),
+              price: Number(entry.price) || 0,
             })),
           };
         });
-        historyCache.current.set(cacheKey, normalized);
-        if (!cancelled) setHistory(normalized);
+        if (!cancelled) {
+          historyCache.current.set(cacheKey, normalized);
+          setHistory(normalized);
+        }
       } catch (e) {
         console.error("Failed to load stock history", e);
       } finally {
@@ -195,10 +196,10 @@ const StockDetailPage = () => {
     };
     fetchHistory();
     return () => { cancelled = true; };
-  }, [stock?.id, range]);
+  }, [stock?.id]);
 
   const filteredHistory = useMemo(() => {
-    if (!history.length || !stock) return [];
+    if (!stock || !history.length) return [];
     
     // Append today's data point if not already present
     const todayIso = new Date().toISOString().split("T")[0];
@@ -206,9 +207,13 @@ const StockDetailPage = () => {
     if (fullHistory.length > 0 && fullHistory[fullHistory.length - 1].snapshot_date < todayIso) {
       fullHistory.push({ snapshot_date: todayIso, price: stock.price });
     }
+    if (fullHistory.length === 1 && stock.previous_price) {
+      const prevDate = new Date(new Date(fullHistory[0].snapshot_date).getTime() - 86400000).toISOString().split("T")[0];
+      fullHistory.unshift({ snapshot_date: prevDate, price: stock.previous_price });
+    }
 
     return filterStockHistory(fullHistory, range);
-  }, [history, range]);
+  }, [history, range, stock]);
 
   const chartHistory = useMemo(() => downsampleStockHistory(filteredHistory), [filteredHistory]);
 

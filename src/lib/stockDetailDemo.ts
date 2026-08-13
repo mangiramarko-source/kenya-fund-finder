@@ -88,14 +88,15 @@ export function calculateDemoReturn(points: DemoPricePoint[], currentPrice: numb
   
   let baseline: DemoPricePoint | null = null;
   let minDiff = Infinity;
+  // Allow tolerance proportional to timeframe: e.g. 7d for 1W/7D, 15d for 1M, 45d for 3M, 120d for 1Y
+  const maxDiff = Math.max(7 * 24 * 60 * 60 * 1000, days * 0.5 * 24 * 60 * 60 * 1000);
+
   for (let i = 0; i <= latestIndex; i++) {
     const point = points[i];
     if (Number.isFinite(point.price) && point.price > 0) {
       const t = point.timestamp || new Date(point.snapshot_date).getTime();
       if (Number.isFinite(t)) {
         const diff = Math.abs(t - cutoff);
-        // Only accept the baseline if it's reasonably close (within 30% of the requested timeframe, or max 14 days)
-        const maxDiff = Math.max(3 * 24 * 60 * 60 * 1000, Math.min(14 * 24 * 60 * 60 * 1000, days * 0.3 * 24 * 60 * 60 * 1000));
         if (diff < minDiff && diff <= maxDiff) {
           minDiff = diff;
           baseline = point;

@@ -49,8 +49,10 @@ export function filterStockHistory(
   range: StockHistoryRange,
   now = new Date(),
 ) {
-  if (range === "ALL") return [...history];
-  const cutoff = new Date(now.getTime() - STOCK_HISTORY_DAYS[range] * 86400000);
+  if (range === "ALL" || !history.length) return [...history];
+  const latestDate = new Date(history[history.length - 1].snapshot_date);
+  const baseTime = isNaN(latestDate.getTime()) ? now.getTime() : Math.max(now.getTime(), latestDate.getTime());
+  const cutoff = new Date(baseTime - STOCK_HISTORY_DAYS[range] * 86400000);
   return history.filter((point) => new Date(point.snapshot_date) >= cutoff);
 }
 
