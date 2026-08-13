@@ -1,10 +1,9 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Menu, TrendingUp, BarChart3, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark, Calculator, ArrowLeft, GraduationCap, Sparkles } from "lucide-react";
+import { Menu, TrendingUp, BarChart3, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark, Calculator, ArrowLeft, GraduationCap, Sparkles, X, ChevronRight, Star, Wallet, BarChart2, DollarSign, Tag, BookOpen, CalendarDays, HelpCircle, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuSeparator, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
@@ -26,6 +25,281 @@ const mobileNavLinks = [
   { to: "/portfolio", label: "Portfolio" },
 ];
 
+// ─── NSE Live Widget ────────────────────────────────────────────────────────
+interface IndexItem {
+  label: string;
+  value: number;
+  change: number; // percent
+}
+
+function useNseIndices(): { indices: IndexItem[]; isOpen: boolean } {
+  const [indices, setIndices] = useState<IndexItem[]>([
+    { label: "NSE 20 Share", value: 1742.5, change: 0.62 },
+    { label: "NASI (All Share)", value: 104.8, change: 0.41 },
+    { label: "NSE 25 Index", value: 2850.1, change: 1.15 },
+  ]);
+
+  // Derive market open: Mon–Fri 09:00–15:00 EAT (UTC+3)
+  const isOpen = (() => {
+    const now = new Date();
+    const eat = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Nairobi" }));
+    const day = eat.getDay();
+    const h = eat.getHours();
+    return day >= 1 && day <= 5 && h >= 9 && h < 15;
+  })();
+
+  return { indices, isOpen };
+}
+
+function NseLiveWidget() {
+  const { indices, isOpen } = useNseIndices();
+  return (
+    <div className="px-4 py-3 border-b border-border">
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-1.5">
+          <span className={`h-2 w-2 rounded-full ${isOpen ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground"}`} />
+          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">NSE LIVE</span>
+        </div>
+        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+          isOpen
+            ? "text-emerald-600 border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400"
+            : "text-muted-foreground border-border bg-muted/40"
+        }`}>{isOpen ? "Open" : "Closed"}</span>
+      </div>
+      <div className="grid grid-cols-3 gap-1.5">
+        {indices.map((idx) => (
+          <div key={idx.label} className="rounded-lg bg-muted/50 px-2 py-2">
+            <p className="text-[9px] text-muted-foreground font-medium leading-tight mb-0.5">{idx.label}</p>
+            <p className="text-[12px] font-bold tabular-nums text-foreground">{idx.value.toLocaleString()}</p>
+            <p className={`text-[10px] font-semibold ${
+              idx.change > 0 ? "text-emerald-500" : idx.change < 0 ? "text-destructive" : "text-muted-foreground"
+            }`}>{idx.change >= 0 ? "+" : ""}{idx.change.toFixed(2)}%</p>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ─── Sidebar Row ─────────────────────────────────────────────────────────────
+function SidebarRow({
+  icon: Icon,
+  label,
+  to,
+  onClick,
+  badge,
+  isNew,
+  isDestructive,
+}: {
+  icon: React.ElementType;
+  label: string;
+  to?: string;
+  onClick?: () => void;
+  badge?: number | null;
+  isNew?: boolean;
+  isDestructive?: boolean;
+}) {
+  const inner = (
+    <>
+      <span className={`flex items-center justify-center h-8 w-8 rounded-lg shrink-0 ${
+        isDestructive ? "bg-destructive/10" : "bg-muted"
+      }`}>
+        <Icon className={`h-4 w-4 ${isDestructive ? "text-destructive" : "text-foreground/70"}`} />
+      </span>
+      <span className={`flex-1 text-sm font-medium ${
+        isDestructive ? "text-destructive" : "text-foreground"
+      }`}>{label}</span>
+      {isNew && (
+        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">New</span>
+      )}
+      {badge != null && badge > 0 && (
+        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">{badge}</span>
+      )}
+      <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+    </>
+  );
+
+  const cls = "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-muted/70 active:bg-muted transition-colors";
+
+  if (to) {
+    return <Link to={to} onClick={onClick} className={cls}>{inner}</Link>;
+  }
+  return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
+}
+
+function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return (
+    <div className="pt-3 pb-1">
+      <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">{title}</p>
+      <div className="space-y-0.5">{children}</div>
+    </div>
+  );
+}
+
+// ─── Main Mobile Sidebar Drawer ──────────────────────────────────────────────
+function MobileSidebarDrawer({
+  open,
+  onClose,
+  user,
+  displayName,
+  avatarUrl,
+  isAdmin,
+  dark,
+  setDark,
+  signOut,
+  navigate,
+}: {
+  open: boolean;
+  onClose: () => void;
+  user: any;
+  displayName: string;
+  avatarUrl: string;
+  isAdmin: boolean;
+  dark: boolean;
+  setDark: (v: boolean) => void;
+  signOut: () => Promise<void>;
+  navigate: (to: string) => void;
+}) {
+  // Watchlist count from localStorage
+  const [watchlistCount, setWatchlistCount] = useState(0);
+  useEffect(() => {
+    const refresh = () => {
+      try {
+        const raw = localStorage.getItem("kf_local_watchlist");
+        if (!raw) { setWatchlistCount(0); return; }
+        const parsed = JSON.parse(raw);
+        setWatchlistCount(Array.isArray(parsed) ? parsed.length : 0);
+      } catch { setWatchlistCount(0); }
+    };
+    refresh();
+    window.addEventListener("storage", refresh);
+    window.addEventListener("kff:portfolio:changed", refresh);
+    return () => {
+      window.removeEventListener("storage", refresh);
+      window.removeEventListener("kff:portfolio:changed", refresh);
+    };
+  }, []);
+
+  const close = () => onClose();
+
+  const initials = user
+    ? (displayName || user.email || "U").slice(0, 2).toUpperCase()
+    : "";
+
+  return (
+    <Sheet open={open} onOpenChange={(v) => !v && close()}>
+      <SheetContent
+        side="right"
+        className="w-[300px] p-0 flex flex-col bg-background border-l border-border"
+        aria-label="Navigation menu"
+      >
+        {/* ── Header ── */}
+        <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
+          {user ? (
+            <>
+              <Avatar className="h-11 w-11 shrink-0">
+                <AvatarImage src={avatarUrl} alt={displayName} />
+                <AvatarFallback className="bg-emerald-500 text-white font-bold text-sm">{initials}</AvatarFallback>
+              </Avatar>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold truncate text-foreground">{displayName || "User"}</p>
+                <p className="text-[11px] text-muted-foreground truncate">Free plan · Nairobi</p>
+              </div>
+            </>
+          ) : (
+            <>
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted">
+                <User className="h-5 w-5 text-muted-foreground" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-semibold text-foreground">Guest</p>
+                <p className="text-[11px] text-muted-foreground">Sign in to unlock all features</p>
+              </div>
+            </>
+          )}
+          <button
+            onClick={close}
+            aria-label="Close menu"
+            className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted hover:bg-muted/70 transition-colors"
+          >
+            <X className="h-4 w-4 text-muted-foreground" />
+          </button>
+        </div>
+
+        {/* ── NSE Live Widget ── */}
+        <NseLiveWidget />
+
+        {/* ── Scrollable Content ── */}
+        <nav className="flex-1 overflow-y-auto px-2 pb-2">
+
+          <SidebarSection title="Markets">
+            <SidebarRow icon={TrendingUp}  label="NSE Stocks"  to="/stocks"      onClick={close} />
+            <SidebarRow icon={BarChart2}   label="Unit Trusts" to="/funds"       onClick={close} />
+            <SidebarRow icon={DollarSign}  label="FX Rates"    to="/rates"       onClick={close} />
+            <SidebarRow icon={Package}     label="Commodities" to="/commodities" onClick={close} />
+          </SidebarSection>
+
+          <div className="h-px bg-border mx-3 my-1" />
+
+          <SidebarSection title="My Space">
+            <SidebarRow icon={Wallet}      label="Portfolio"  to="/portfolio"   onClick={close} />
+            <SidebarRow icon={Star}        label="Watchlist"  to="/watchlist"   onClick={close} badge={watchlistCount || null} />
+          </SidebarSection>
+
+          <div className="h-px bg-border mx-3 my-1" />
+
+          <SidebarSection title="Discover">
+            <SidebarRow icon={Sparkles}    label="AI Lab"          to="/ai-lab"    onClick={close} isNew />
+            <SidebarRow icon={Newspaper}   label="Market News"     to="/news"      onClick={close} />
+            <SidebarRow icon={BookOpen}    label="Learn & Academy" to="/learn"     onClick={close} />
+            <SidebarRow icon={Calculator}  label="Calculators"     to="/calculator" onClick={close} />
+            <SidebarRow icon={CalendarDays} label="Alerts"         to={user ? "/alerts" : "/auth"} onClick={close} />
+          </SidebarSection>
+
+          <div className="h-px bg-border mx-3 my-1" />
+
+          <SidebarSection title="Account">
+            {user && (
+              <SidebarRow icon={Settings} label="Settings" to="/profile" onClick={close} />
+            )}
+            <SidebarRow
+              icon={dark ? Sun : Moon}
+              label={dark ? "Light Mode" : "Dark Mode"}
+              onClick={() => setDark(!dark)}
+            />
+            <SidebarRow icon={HelpCircle} label="Help & Support" to="/page/contact" onClick={close} />
+            {isAdmin && (
+              <SidebarRow icon={Shield} label="Admin Panel" to="/admin" onClick={close} />
+            )}
+          </SidebarSection>
+
+        </nav>
+
+        {/* ── Fixed Bottom CTA ── */}
+        <div className="p-4 border-t border-border shrink-0">
+          {user ? (
+            <button
+              onClick={async () => { await signOut(); close(); navigate("/"); }}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-destructive/10 py-3.5 text-sm font-bold text-destructive hover:bg-destructive/20 transition-colors"
+            >
+              <LogOut className="h-4 w-4" /> Sign Out
+            </button>
+          ) : (
+            <Link
+              to="/auth"
+              onClick={close}
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3.5 text-sm font-bold text-white hover:bg-emerald-600 transition-colors"
+            >
+              <User className="h-4 w-4" /> Sign In / Sign Up
+            </Link>
+          )}
+        </div>
+      </SheetContent>
+    </Sheet>
+  );
+}
+
+// ─── Navbar ───────────────────────────────────────────────────────────────────
 const Navbar = () => {
   const [open, setOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
@@ -73,7 +347,7 @@ const Navbar = () => {
     }
     if (themeInitial.current) {
       themeInitial.current = false;
-      return; // Preserve system-preference following until user toggles
+      return;
     }
     localStorage.setItem("theme", dark ? "dark" : "light");
   }, [dark]);
@@ -81,7 +355,6 @@ const Navbar = () => {
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => {
-      // Only follow system if user hasn't explicitly chosen
       if (!localStorage.getItem("theme")) setDark(e.matches);
     };
     mq.addEventListener?.("change", handler);
@@ -95,7 +368,6 @@ const Navbar = () => {
     return () => window.removeEventListener("scroll", handleScroll);
   }, []);
 
-  // Auto-scroll active mobile tab into center on route change
   useEffect(() => {
     const activeEl = mobileTabRefs.current[location.pathname];
     const container = mobileTabsScrollRef.current;
@@ -110,32 +382,22 @@ const Navbar = () => {
   useEffect(() => {
     const element = headerRef.current;
     if (!element) return;
-
     const updateHeight = () => {
       const h = element.getBoundingClientRect().height;
       setMobileHeaderHeight(h);
       document.documentElement.style.setProperty("--kf-mobile-header", `${Math.round(h)}px`);
     };
-
     updateHeight();
-
     const observer = typeof ResizeObserver !== "undefined"
       ? new ResizeObserver(updateHeight)
       : null;
-
     observer?.observe(element);
     window.addEventListener("resize", updateHeight);
-
     return () => {
       observer?.disconnect();
       window.removeEventListener("resize", updateHeight);
     };
   }, []);
-
-  const handleSignOut = async () => {
-    await signOut();
-    navigate("/");
-  };
 
   const closeMobile = () => setOpen(false);
 
@@ -149,7 +411,6 @@ const Navbar = () => {
     "/admin",
     "/page/",
   ];
-  // Detail pages get a Back button instead of Home
   const detailRoutePatterns = [
     /^\/stocks\/[^/]+/,
     /^\/compare\/[^/]+/,
@@ -160,6 +421,19 @@ const Navbar = () => {
   const isMinimal = isDetailPage || minimalRoutes.some((p) => location.pathname.startsWith(p));
 
   if (hasCustomDetailHeader) return null;
+
+  const sidebarProps = {
+    open,
+    onClose: closeMobile,
+    user,
+    displayName,
+    avatarUrl,
+    isAdmin,
+    dark,
+    setDark,
+    signOut,
+    navigate,
+  };
 
   if (isMinimal) {
     return (
@@ -204,132 +478,7 @@ const Navbar = () => {
           </div>
         </header>
         <div className="md:hidden h-16" aria-hidden="true" />
-
-        {/* Mobile slide-in sheet from right (shared with full navbar) */}
-        <Sheet open={open} onOpenChange={setOpen}>
-          <SheetContent side="right" className="w-[280px] p-0 flex flex-col">
-            <SheetHeader className="p-5 pb-3 border-b border-border">
-              <SheetTitle className="flex items-center gap-2 text-base">
-                <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent text-accent-foreground">
-                  <TrendingUp className="h-4 w-4" />
-                </div>
-                Menu
-              </SheetTitle>
-            </SheetHeader>
-
-            <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-              {/* User info */}
-              {user && (
-                <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl bg-muted/50">
-                  <Avatar className="h-9 w-9">
-                    <AvatarImage src={avatarUrl} alt={displayName} />
-                    <AvatarFallback className="bg-accent text-accent-foreground text-xs">
-                      {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
-                    </AvatarFallback>
-                  </Avatar>
-                  <div className="min-w-0">
-                    <p className="text-sm font-medium truncate">{displayName || "User"}</p>
-                    <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
-                  </div>
-                </div>
-              )}
-
-              {/* Sign In CTA — priority for non-authenticated */}
-              {!user && (
-                <Link
-                  to="/auth"
-                  onClick={closeMobile}
-                  className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-colors mb-2"
-                >
-                  <User className="h-5 w-5" /> Sign In / Sign Up
-                </Link>
-              )}
-
-
-
-              <div className="h-px bg-border my-2" />
-              <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Tools</p>
-              <Link
-                to="/calculator"
-                onClick={closeMobile}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-              >
-                <Calculator className="h-5 w-5" /> Calculator
-              </Link>
-              <Link
-                to={user ? "/alerts" : "/auth"}
-                onClick={closeMobile}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-              >
-                <Bell className="h-5 w-5" /> Alerts
-              </Link>
-              <Link
-                to="/learn"
-                onClick={closeMobile}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-              >
-                <GraduationCap className="h-5 w-5" /> Learn
-              </Link>
-              {isAdmin && (
-                <Link
-                  to="/admin"
-                  onClick={closeMobile}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
-                >
-                  <Shield className="h-5 w-5" /> Admin Panel
-                </Link>
-              )}
-
-              <button
-                onClick={() => { setDark(!dark); }}
-                className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-              >
-                {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-                {dark ? "Light Mode" : "Dark Mode"}
-              </button>
-
-              <div className="h-px bg-border my-2" />
-              <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Info</p>
-              {[
-                { to: "/page/about", label: "About", icon: Info },
-                { to: "/page/contact", label: "Contact", icon: Mail },
-                { to: "/page/legal", label: "Legal", icon: Scale },
-                { to: "/privacy", label: "Privacy Policy", icon: FileText },
-                { to: "/terms", label: "Terms of Use", icon: FileText },
-              ].map((link) => {
-                const Icon = link.icon;
-                return (
-                  <Link
-                    key={link.to}
-                    to={link.to}
-                    onClick={closeMobile}
-                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-                  >
-                    <Icon className="h-5 w-5" /> {link.label}
-                  </Link>
-                );
-              })}
-              {user && (
-                <>
-                  <div className="h-px bg-border my-2" />
-                  <Link
-                    to="/profile"
-                    onClick={closeMobile}
-                    className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-                  >
-                    <Settings className="h-5 w-5" /> Profile Settings
-                  </Link>
-                  <button
-                    onClick={async () => { await signOut(); closeMobile(); navigate("/"); }}
-                    className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
-                  >
-                    <LogOut className="h-5 w-5" /> Sign Out
-                  </button>
-                </>
-              )}
-            </nav>
-          </SheetContent>
-        </Sheet>
+        <MobileSidebarDrawer {...sidebarProps} />
       </>
     );
   }
@@ -391,133 +540,7 @@ const Navbar = () => {
       {location.pathname === '/' && <CurrencyTicker />}
     </header>
 
-
-
-      {/* Mobile slide-in sheet from right */}
-      <Sheet open={open} onOpenChange={setOpen}>
-        <SheetContent side="right" className="w-[280px] p-0 flex flex-col">
-          <SheetHeader className="p-5 pb-3 border-b border-border">
-            <SheetTitle className="flex items-center gap-2 text-base">
-              <div className="flex items-center justify-center h-8 w-8 rounded-lg bg-accent text-accent-foreground">
-                <TrendingUp className="h-4 w-4" />
-              </div>
-              Menu
-            </SheetTitle>
-          </SheetHeader>
-
-          <nav className="flex-1 overflow-y-auto p-4 space-y-1">
-            {/* User info */}
-            {user && (
-              <div className="flex items-center gap-3 px-3 py-3 mb-2 rounded-xl bg-muted/50">
-                <Avatar className="h-9 w-9">
-                  <AvatarImage src={avatarUrl} alt={displayName} />
-                  <AvatarFallback className="bg-accent text-accent-foreground text-xs">
-                    {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0">
-                  <p className="text-sm font-medium truncate">{displayName || "User"}</p>
-                  <p className="text-[11px] text-muted-foreground truncate">{user.email}</p>
-                </div>
-              </div>
-            )}
-
-            {/* Sign In CTA — priority for non-authenticated */}
-            {!user && (
-              <Link
-                to="/auth"
-                onClick={closeMobile}
-                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl text-sm font-semibold bg-accent text-accent-foreground hover:bg-accent/90 transition-colors mb-2"
-              >
-                <User className="h-5 w-5" /> Sign In / Sign Up
-              </Link>
-            )}
-
-
-
-            <div className="h-px bg-border my-2" />
-            <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Tools</p>
-            <Link
-              to="/calculator"
-              onClick={closeMobile}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-            >
-              <Calculator className="h-5 w-5" /> Calculator
-            </Link>
-            <Link
-              to={user ? "/alerts" : "/auth"}
-              onClick={closeMobile}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-            >
-              <Bell className="h-5 w-5" /> Alerts
-            </Link>
-            <Link
-              to="/learn"
-              onClick={closeMobile}
-              className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-            >
-              <GraduationCap className="h-5 w-5" /> Learn
-            </Link>
-            {isAdmin && (
-              <Link
-                to="/admin"
-                onClick={closeMobile}
-                className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-accent hover:bg-accent/10 transition-colors"
-              >
-                <Shield className="h-5 w-5" /> Admin Panel
-              </Link>
-            )}
-
-            <button
-              onClick={() => { setDark(!dark); }}
-              className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-            >
-              {dark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
-              {dark ? "Light Mode" : "Dark Mode"}
-            </button>
-
-            <div className="h-px bg-border my-2" />
-            <p className="px-3 py-1 text-[10px] font-medium uppercase tracking-wider text-muted-foreground/60">Info</p>
-            {[
-              { to: "/page/about", label: "About", icon: Info },
-              { to: "/page/contact", label: "Contact", icon: Mail },
-              { to: "/page/legal", label: "Legal", icon: Scale },
-              { to: "/privacy", label: "Privacy Policy", icon: FileText },
-              { to: "/terms", label: "Terms of Use", icon: FileText },
-            ].map((link) => {
-              const Icon = link.icon;
-              return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  onClick={closeMobile}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-                >
-                  <Icon className="h-5 w-5" /> {link.label}
-                </Link>
-              );
-            })}
-            {user && (
-              <>
-                <div className="h-px bg-border my-2" />
-                <Link
-                  to="/profile"
-                  onClick={closeMobile}
-                  className="flex items-center gap-3 px-3 py-3 rounded-xl text-sm font-medium text-foreground/70 hover:bg-muted transition-colors"
-                >
-                  <Settings className="h-5 w-5" /> Profile Settings
-                </Link>
-                <button
-                  onClick={async () => { await signOut(); closeMobile(); navigate("/"); }}
-                  className="flex items-center gap-3 w-full px-3 py-3 rounded-xl text-sm font-medium text-destructive hover:bg-destructive/10 transition-colors"
-                >
-                  <LogOut className="h-5 w-5" /> Sign Out
-                </button>
-              </>
-            )}
-          </nav>
-        </SheetContent>
-      </Sheet>
+    <MobileSidebarDrawer {...sidebarProps} />
     </>
   );
 };
