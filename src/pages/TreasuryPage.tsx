@@ -255,8 +255,8 @@ const mockBonds: BondItem[] = [
 export default function TreasuryPage() {
   useDocumentTitle("Treasury Bills & Bonds | Rates, Auction & Return Calculator | KenyaFundFinder");
 
-  // Top tab selection: "tbills" | "bonds" | "calculator"
-  const [activeTab, setActiveTab] = useState<"tbills" | "bonds" | "calculator">("tbills");
+  // Top tab selection: "tbills" | "bonds"
+  const [activeTab, setActiveTab] = useState<"tbills" | "bonds">("tbills");
 
   // T-Bill Chart Period
   const [chartPeriod, setChartPeriod] = useState<string>("6M");
@@ -360,7 +360,6 @@ export default function TreasuryPage() {
             {[
               { id: "tbills", label: "Treasury Bills" },
               { id: "bonds", label: "Treasury Bonds" },
-              { id: "calculator", label: "Calculator" },
             ].map((tab) => {
               const isActive = activeTab === tab.id;
               return (
