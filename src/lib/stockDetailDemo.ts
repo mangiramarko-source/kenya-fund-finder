@@ -94,7 +94,9 @@ export function calculateDemoReturn(points: DemoPricePoint[], currentPrice: numb
       const t = point.timestamp || new Date(point.snapshot_date).getTime();
       if (Number.isFinite(t)) {
         const diff = Math.abs(t - cutoff);
-        if (diff < minDiff) {
+        // Only accept the baseline if it's reasonably close (within 30% of the requested timeframe, or max 14 days)
+        const maxDiff = Math.max(3 * 24 * 60 * 60 * 1000, Math.min(14 * 24 * 60 * 60 * 1000, days * 0.3 * 24 * 60 * 60 * 1000));
+        if (diff < minDiff && diff <= maxDiff) {
           minDiff = diff;
           baseline = point;
         }

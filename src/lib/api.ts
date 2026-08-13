@@ -41,6 +41,14 @@ export interface FundFromDB {
 export const YIELD_UNITS = ["%", "KES", "USD", "GBP"] as const;
 export type YieldUnit = typeof YIELD_UNITS[number];
 
+export interface NewsAiAnalysis {
+  content?: string;
+  tags?: string[];
+  factors_positive?: string[];
+  factors_negative?: string[];
+  source_facts?: string;
+}
+
 export interface NewsFromDB {
   id: string;
   title: string;
@@ -59,6 +67,7 @@ export interface NewsFromDB {
   created_at?: string;
   related_stock_id: string | null;
   ai_insight: string | null;
+  parsed_ai_analysis?: NewsAiAnalysis | null;
 }
 
 export interface PublicStock {
@@ -139,6 +148,18 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
+  let parsed_ai_analysis: NewsAiAnalysis | null = null;
+  if (data.ai_insight) {
+    try {
+      const parsed = JSON.parse(data.ai_insight);
+      if (typeof parsed === 'object' && parsed !== null) {
+        parsed_ai_analysis = parsed;
+      }
+    } catch (e) {
+      parsed_ai_analysis = { content: data.ai_insight };
+    }
+  }
+
   return {
     id: data.id!,
     title: data.title!,
@@ -155,6 +176,7 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
     created_at: data.created_at,
     related_stock_id: data.related_stock_id || null,
     ai_insight: data.ai_insight || null,
+    parsed_ai_analysis,
   };
 }
 
@@ -179,30 +201,55 @@ export async function fetchPublicStockById(id: string): Promise<PublicStock | nu
   };
 }
 
+export async function enrichArticleLive(articleId: string): Promise<string> {
+  const { data, error } = await supabase.functions.invoke("enrich-article", {
+    body: { articleId }
+  });
+  if (error) throw error;
+  return data?.ai_insight || null;
+}
+
 export async function fetchRelatedNews(category: string, excludeId: string, limit = 3): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
+    .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, ai_insight")
     .eq("category", category)
     .neq("id", excludeId)
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
-  return (data || []).map((d: any) => ({
-    id: d.id,
-    title: d.title,
-    summary: d.summary,
-    content: d.content || null,
-    source: d.source,
-    date_published: d.date_published,
-    created_at: d.created_at,
-    url: d.url,
-    category: d.category,
-    read_time: d.read_time,
-    is_featured: d.is_featured,
-    status: d.status,
-    image_url: d.image_url || null,
-  }));
+  return (data || []).map((d: any) => {
+    let parsed_ai_analysis: NewsAiAnalysis | null = null;
+    if (d.ai_insight) {
+      try {
+        const parsed = JSON.parse(d.ai_insight);
+        if (typeof parsed === 'object' && parsed !== null) {
+          parsed_ai_analysis = parsed;
+        }
+      } catch (e) {
+        parsed_ai_analysis = { content: d.ai_insight };
+      }
+    }
+    
+    return {
+      id: d.id,
+      title: d.title,
+      summary: d.summary,
+      content: d.content || null,
+      source: d.source,
+      date_published: d.date_published,
+      created_at: d.created_at,
+      url: d.url,
+      category: d.category,
+      read_time: d.read_time,
+      is_featured: d.is_featured,
+      status: d.status,
+      image_url: d.image_url || null,
+      related_stock_id: d.related_stock_id || null,
+      ai_insight: d.ai_insight || null,
+      parsed_ai_analysis,
+    };
+  });
 }
 
 /** Lightweight news preview fetch (no `content` body) for homepage/sidebar lists. */

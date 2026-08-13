@@ -82,7 +82,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
         const grouped = await fetchCompleteDemoHistory(async (offset, limit) => {
           const response = await fetchPublicData<DemoHistoryRow>("stock-history-bulk", {
             select: ["stock_id", "snapshot_date", "price"],
-            order: "snapshot_date.asc",
+            order: "snapshot_date.desc",
             days: 365,
             offset,
             limit,

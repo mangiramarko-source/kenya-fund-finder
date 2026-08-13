@@ -259,7 +259,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
         // go weeks without a new row.
         const { data } = await fetchPublicData<any>("stock-history-bulk", {
           select: ["stock_id", "price", "snapshot_date"],
-          order: "snapshot_date.asc",
+          order: "snapshot_date.desc",
           days: 90,
           limit: 5000,
         });
@@ -1106,18 +1106,19 @@ const getReturnForDays = (history: PriceHistory[] | undefined, currentPrice: num
   targetDate.setUTCDate(targetDate.getUTCDate() - days);
   const targetTime = targetDate.getTime();
   
-  let oldPrice = history[0].price;
+  let oldPrice = 0;
   let minDiff = Infinity;
   for (let i = 0; i < history.length; i++) {
     const ptTime = new Date(history[i].snapshot_date).getTime();
     const diff = Math.abs(ptTime - targetTime);
-    if (diff < minDiff) {
+    const maxDiff = Math.max(3 * 24 * 60 * 60 * 1000, Math.min(14 * 24 * 60 * 60 * 1000, days * 0.3 * 24 * 60 * 60 * 1000));
+    if (diff < minDiff && diff <= maxDiff) {
       minDiff = diff;
       oldPrice = history[i].price;
     }
   }
   
-  if (oldPrice === 0) return 0;
+  if (oldPrice === 0) return null;
   return ((currentPrice - oldPrice) / oldPrice) * 100;
 };
 

@@ -35,6 +35,7 @@ import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
+import { StockDecisionContext } from "@/components/news/StockDecisionContext";
 
 interface CommentItem {
   id: string;
@@ -474,6 +475,15 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
             <span>From {getSourceDomain(null, article.source)}</span>
           )}
         </div>
+
+        {/* ─── AI Decision Support ─── */}
+        {relatedStock && (
+          <StockDecisionContext 
+            article={article} 
+            stock={relatedStock} 
+            onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
+          />
+        )}
 
         {/* ─── 6. Metadata ─── */}
         <div className="border-b border-border/60 pb-4 pt-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 md:border-t md:border-b-0 md:pb-0 md:text-xs md:normal-case md:tracking-normal">
