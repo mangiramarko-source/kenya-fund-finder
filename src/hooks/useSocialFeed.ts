@@ -3,6 +3,7 @@ import { type NewsFromDB, type FundFromDB } from "@/lib/api";
 import { type Stock, type ExchangeRate } from "@/components/home/MarketTicker";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
+import { getDemoArticles } from "@/lib/demo-data";
 
 export type FeedItemType = "NEWS" | "STOCK_INSIGHT" | "FUND_MILESTONE" | "FX_ALERT" | "EDUCATION";
 
@@ -135,52 +136,8 @@ export function useSocialFeed(
       changePercent: 1.2
     };
 
-    const demoArticle: FeedItem = {
-      id: "demo-safaricom-article",
-      type: "NEWS",
-      authorName: "Tuko News",
-      authorLabel: "Telecommunications",
-      title: "Safaricom changes availability of its KSh 20 one-hour data bundle",
-      content: "Safaricom limited the bundle to specific hours and introduced alternative Pata More options. The move is aimed at managing network congestion during peak hours while ensuring customers still have affordable access to internet services.",
-      isHeadlineOnly: false,
-      timestamp: new Date(),
-      likes: 124,
-      comments: 12,
-      rawItem: {
-        id: "demo-safaricom-article",
-        title: "Safaricom changes availability of its KSh 20 one-hour data bundle",
-        source: "Tuko News",
-        parsed_ai_analysis: {
-          event_label: "Product Update",
-          impact_horizon: "Short-term relevance",
-          factors_positive: [
-            "Introduced 'Pata More' alternative for better user segmentation.",
-            "May improve network reliability during peak congestion periods."
-          ],
-          factors_negative: [
-            "Potential backlash from low-income users relying on the KSh 20 bundle.",
-            "Risk of losing market share to competitors offering cheaper hourly data."
-          ],
-          what_happened: "Safaricom has restructured its highly popular KSh 20 one-hour internet bundle, restricting its availability to off-peak hours to manage network strain.",
-          verified_figures: ["KSh 20 per hour", "1-hour validity limit"],
-          price_reaction_context: {
-            "1D": "-1.5%",
-            "7D": "+0.4%",
-            "1M": "+2.1%",
-            "3M": "+5.8%",
-            context: "SCOM shares dipped slightly today on fears of consumer pushback, though the overall trend remains positive for the quarter."
-          },
-          related_disclosures: [
-            { title: "Network Optimization Strategy 2026", url: "#" },
-            { title: "Press Release: Pata More Bundles", url: "#" }
-          ],
-          source_quality: "Tier 1 Media",
-          clustered_count: 3
-        }
-      },
-      relatedStock: scomStock as any
-    };
+    const demoArticles = getDemoArticles(scomStock as any);
 
-    return [demoArticle, ...sortedFeed];
+    return [...demoArticles, ...sortedFeed];
   }, [news, stocks, funds, fxRates, commodities]);
 }

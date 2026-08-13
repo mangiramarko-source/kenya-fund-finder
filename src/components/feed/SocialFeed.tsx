@@ -79,6 +79,9 @@ export const SocialFeedCard = ({
   const [avatarError, setAvatarError] = useState(false);
 
   const isStockNews = item.type === "NEWS" && !!item.relatedStock;
+  const isMmfNews = item.type === "NEWS" && !!item.relatedMmf;
+  const isFxNews = item.type === "NEWS" && !!item.relatedFx;
+  const isCommodityNews = item.type === "NEWS" && !!item.relatedCommodity;
   const isStockBranded = isStockNews;
 
   useEffect(() => {
@@ -191,6 +194,63 @@ export const SocialFeedCard = ({
               {Math.abs(item.relatedStock!.changePercent).toFixed(1)}%
             </span>
           </Link>
+        </div>
+      )}
+
+      {isMmfNews && (
+        <div className="flex items-center">
+          <div
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-sans"
+          >
+            <strong className="font-bold text-foreground">{item.relatedMmf!.name}</strong>
+            <span className="text-muted-foreground">{item.relatedMmf!.yield.toFixed(2)}% Yield</span>
+            <span className={`inline-flex items-center font-semibold ${item.relatedMmf!.changePercent >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+              {item.relatedMmf!.changePercent >= 0 ? (
+                <TrendingUp className="mr-0.5 h-3 w-3" />
+              ) : (
+                <TrendingDown className="mr-0.5 h-3 w-3" />
+              )}
+              {Math.abs(item.relatedMmf!.changePercent).toFixed(2)}%
+            </span>
+          </div>
+        </div>
+      )}
+
+      {isFxNews && (
+        <div className="flex items-center">
+          <div
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-sans"
+          >
+            <strong className="font-bold text-foreground">{item.relatedFx!.pair}</strong>
+            <span className="text-muted-foreground">{item.relatedFx!.rate.toFixed(2)}</span>
+            <span className={`inline-flex items-center font-semibold ${item.relatedFx!.changePercent >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+              {item.relatedFx!.changePercent >= 0 ? (
+                <TrendingUp className="mr-0.5 h-3 w-3" />
+              ) : (
+                <TrendingDown className="mr-0.5 h-3 w-3" />
+              )}
+              {Math.abs(item.relatedFx!.changePercent).toFixed(2)}%
+            </span>
+          </div>
+        </div>
+      )}
+
+      {isCommodityNews && (
+        <div className="flex items-center">
+          <div
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-sans"
+          >
+            <strong className="font-bold text-foreground">{item.relatedCommodity!.name}</strong>
+            <span className="text-muted-foreground">{item.relatedCommodity!.price.toFixed(2)} {item.relatedCommodity!.unit}</span>
+            <span className={`inline-flex items-center font-semibold ${item.relatedCommodity!.changePercent >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+              {item.relatedCommodity!.changePercent >= 0 ? (
+                <TrendingUp className="mr-0.5 h-3 w-3" />
+              ) : (
+                <TrendingDown className="mr-0.5 h-3 w-3" />
+              )}
+              {Math.abs(item.relatedCommodity!.changePercent).toFixed(2)}%
+            </span>
+          </div>
         </div>
       )}
 

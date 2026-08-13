@@ -36,6 +36,10 @@ import { getStockLogoUrl } from "@/lib/stockBranding";
 import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
 import { StockDecisionContext } from "@/components/news/StockDecisionContext";
+import { MmfDecisionContext } from "@/components/news/MmfDecisionContext";
+import { FxDecisionContext } from "@/components/news/FxDecisionContext";
+import { CommodityDecisionContext } from "@/components/news/CommodityDecisionContext";
+import { getDemoArticles } from "@/lib/demo-data";
 
 interface CommentItem {
   id: string;
@@ -60,6 +64,9 @@ const NewsArticlePage = () => {
   const [loading, setLoading] = useState(true);
   const [related, setRelated] = useState<NewsFromDB[]>([]);
   const [relatedStock, setRelatedStock] = useState<PublicStock | null>(null);
+  const [relatedMmf, setRelatedMmf] = useState<any | null>(null);
+  const [relatedFx, setRelatedFx] = useState<any | null>(null);
+  const [relatedCommodity, setRelatedCommodity] = useState<any | null>(null);
   const [stockLogoError, setStockLogoError] = useState(false);
   const [sourceLogoError, setSourceLogoError] = useState(false);
   const [bookmarked, setBookmarked] = useState(false);
@@ -283,8 +290,24 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     setLoading(true);
     setRelated([]);
     setRelatedStock(null);
+    setRelatedMmf(null);
+    setRelatedFx(null);
+    setRelatedCommodity(null);
     setStockLogoError(false);
     setSourceLogoError(false);
+
+    const demoArticles = getDemoArticles();
+    const demoMatch = demoArticles.find(a => a.id === id);
+
+    if (demoMatch) {
+      setArticle(demoMatch.rawItem);
+      setRelatedStock(demoMatch.relatedStock || null);
+      setRelatedMmf(demoMatch.relatedMmf || null);
+      setRelatedFx(demoMatch.relatedFx || null);
+      setRelatedCommodity(demoMatch.relatedCommodity || null);
+      setLoading(false);
+      return () => clearTimeout(timer);
+    }
 
     const synthetic = getSyntheticArticle(id);
     if (synthetic) {
@@ -517,7 +540,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         {/* ─── 2. Author Header ─── */}
         <div className="flex items-center gap-3">
             {/* Avatar */}
-            <div className={`${relatedStock ? "rounded-xl bg-white text-emerald-700" : "rounded-full bg-emerald-600 text-white"} w-10 h-10 border border-border font-bold text-sm flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
+            <div className={`${(relatedStock || relatedMmf || relatedFx || relatedCommodity) ? "rounded-xl bg-white text-emerald-700" : "rounded-full bg-emerald-600 text-white"} w-10 h-10 border border-border font-bold text-sm flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
               {relatedStock && stockLogoUrl && !stockLogoError ? (
                 <img
                   src={stockLogoUrl}
@@ -525,7 +548,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
                   className="h-full w-full object-contain p-1"
                   onError={() => setStockLogoError(true)}
                 />
-              ) : !relatedStock && sourceLogoUrl && !sourceLogoError ? (
+              ) : !(relatedStock || relatedMmf || relatedFx || relatedCommodity) && sourceLogoUrl && !sourceLogoError ? (
                 <img
                   src={sourceLogoUrl}
                   alt={`${article.source} logo`}
@@ -534,18 +557,43 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
                 />
               ) : relatedStock ? (
                 relatedStock.symbol.slice(0, 3).toUpperCase()
+              ) : relatedMmf ? (
+                <Landmark className="h-5 w-5 text-emerald-600" />
+              ) : relatedFx ? (
+                <TrendingUp className="h-5 w-5 text-emerald-600" />
+              ) : relatedCommodity ? (
+                <Shield className="h-5 w-5 text-emerald-600" />
               ) : (
                 (article.source || "KF").slice(0, 2).toUpperCase()
               )}
             </div>
             {/* Name + Username */}
             <div className="flex min-w-0 flex-1 flex-col">
-              <div className="flex items-center gap-2 min-w-0">
-                <span className="font-bold text-sm text-foreground">{relatedStock?.name || article.source || "KenyaFundFinder"}</span>
+              <div className="flex items-center gap-2 min-w-0 flex-wrap">
+                <span className="font-bold text-sm text-foreground">
+                  {relatedStock?.name || relatedMmf?.name || relatedFx?.pair || relatedCommodity?.name || article.source || "KenyaFundFinder"}
+                </span>
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
                 <span className="truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
-                  {relatedStock ? "Stock" : article.category || "Market News"}
+                  {relatedStock ? "Stock" : relatedMmf ? "MMF" : relatedFx ? "FX Rate" : relatedCommodity ? "Commodity" : article.category || "Market News"}
                 </span>
+                
+                {/* Related Asset Metrics Pill */}
+                {relatedMmf && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${relatedMmf.changePercent >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                    {relatedMmf.yield.toFixed(2)}%
+                  </span>
+                )}
+                {relatedFx && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${relatedFx.changePercent >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                    KES {relatedFx.rate.toFixed(2)}
+                  </span>
+                )}
+                {relatedCommodity && (
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${relatedCommodity.changePercent >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                    ${relatedCommodity.price.toFixed(2)}
+                  </span>
+                )}
               </div>
               <span className="text-[13px] text-muted-foreground">
                 {relativeTime}
@@ -610,6 +658,27 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
           <StockDecisionContext 
             article={article} 
             stock={relatedStock} 
+            onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
+          />
+        )}
+        {relatedMmf && (
+          <MmfDecisionContext 
+            article={article} 
+            mmf={relatedMmf} 
+            onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
+          />
+        )}
+        {relatedFx && (
+          <FxDecisionContext 
+            article={article} 
+            fx={relatedFx} 
+            onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
+          />
+        )}
+        {relatedCommodity && (
+          <CommodityDecisionContext 
+            article={article} 
+            commodity={relatedCommodity} 
             onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
           />
         )}

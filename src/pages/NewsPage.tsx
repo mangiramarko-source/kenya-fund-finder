@@ -70,18 +70,11 @@ export default function NewsPage() {
       list = list.filter(a => a.title.toLowerCase().includes(q) || (a.summary || "").toLowerCase().includes(q));
     }
 
-    // Filter & Sort by Nav Tab
-    if (activeNavTab === "Kenyan") {
-      list = list.filter(a => !isInternationalArticle(a));
-    } else if (activeNavTab === "International") {
-      list = list.filter(a => isInternationalArticle(a));
-    } else if (activeNavTab === "Latest") {
+    // Sort by Nav Tab (latest/oldest)
+    if (activeNavTab === "Latest" || activeNavTab === "All" || ["Kenyan", "International", "Stocks", "MMFs", "FX Rates", "Commodities"].includes(activeNavTab)) {
       list.sort((a, b) => new Date(b.created_at || b.date_published).getTime() - new Date(a.created_at || a.date_published).getTime());
     } else if (activeNavTab === "Oldest") {
       list.sort((a, b) => new Date(a.created_at || a.date_published).getTime() - new Date(b.created_at || b.date_published).getTime());
-    } else {
-      // "All" defaults to latest first
-      list.sort((a, b) => new Date(b.created_at || b.date_published).getTime() - new Date(a.created_at || a.date_published).getTime());
     }
 
     return list;
@@ -251,8 +244,179 @@ export default function NewsPage() {
       }
     };
 
-    return [demoArticleEqty, demoArticleKcb, ...items];
-  }, [filteredArticles, stocks]);
+    const demoMmfArticle: FeedItem = {
+      id: "demo-mmf-article",
+      type: "NEWS",
+      authorName: "Business Daily",
+      authorLabel: "Unit Trusts",
+      title: "Sanlam Money Market Fund yields cross 14% as T-bill rates climb",
+      content: "Sanlam has announced a record high yield on its flagship money market fund, attracting significant retail inflows as investors seek to beat inflation amidst rising 91-day T-bill rates.",
+      isHeadlineOnly: false,
+      timestamp: new Date(Date.now() - 45 * 60 * 1000),
+      likes: 88,
+      comments: 15,
+      rawItem: {
+        id: "demo-mmf-article",
+        title: "Sanlam Money Market Fund yields cross 14% as T-bill rates climb",
+        source: "Business Daily",
+        parsed_ai_analysis: {
+          event_label: "Yield Update",
+          impact_horizon: "Immediate relevance",
+          factors_positive: [
+            "Current yield of 14.2% effectively beats the 6.7% inflation rate.",
+            "High liquidity allows T+1 day withdrawals for retail investors."
+          ],
+          factors_negative: [
+            "Expected rate cuts by the CBK could lower yields in the medium term.",
+            "Increased AUM might dilute future returns if high-yield assets are scarce."
+          ],
+          what_happened: "Sanlam MMF reported an annualized yield exceeding 14%, directly correlated with recent central bank monetary tightening.",
+          verified_figures: ["14.2% Annualized Yield", "6.7% Inflation Rate"],
+          price_reaction_context: {
+            "1D": "+0.1%",
+            "7D": "+0.4%",
+            "1M": "+1.2%",
+            "3M": "+3.4%",
+            context: "The fund has maintained a steady upward trajectory in daily compounding interest."
+          },
+          related_disclosures: [
+            { title: "Fund Fact Sheet", url: "#" }
+          ],
+          source_quality: "Verified Reporting",
+          clustered_count: 2
+        }
+      },
+      relatedMmf: {
+        id: "mmf-sanlam",
+        name: "Sanlam Pesa Market Fund",
+        yield: 14.2,
+        previousYield: 13.9,
+        changePercent: 2.1
+      }
+    };
+
+    const demoFxArticle: FeedItem = {
+      id: "demo-fx-article",
+      type: "NEWS",
+      authorName: "Central Bank Watch",
+      authorLabel: "Forex Updates",
+      title: "Kenya Shilling gains against the Dollar following Eurobond buyback",
+      content: "The Kenyan Shilling (KES) demonstrated significant strengthening against the US Dollar (USD), dropping below the 130 mark for the first time in months following the successful buyback of the 2024 Eurobond.",
+      isHeadlineOnly: false,
+      timestamp: new Date(Date.now() - 3 * 3600 * 1000),
+      likes: 215,
+      comments: 42,
+      rawItem: {
+        id: "demo-fx-article",
+        title: "Kenya Shilling gains against the Dollar following Eurobond buyback",
+        source: "Central Bank Watch",
+        parsed_ai_analysis: {
+          event_label: "Currency Rally",
+          impact_horizon: "Medium-term relevance",
+          factors_positive: [
+            "Reduced sovereign default risk boosts investor confidence.",
+            "Lower import costs for fuel and machinery expected."
+          ],
+          factors_negative: [
+            "Export competitiveness may take a slight hit in the agricultural sector.",
+            "Diaspora remittances fetch fewer shillings locally."
+          ],
+          what_happened: "The KES rallied sharply against the USD after the Treasury successfully managed the impending Eurobond maturity.",
+          verified_figures: ["USD/KES at 129.50", "Buyback over $1.5B"],
+          price_reaction_context: {
+            "1D": "-1.5%",
+            "7D": "-3.2%",
+            "1M": "-5.8%",
+            "3M": "-12.4%",
+            context: "The USD/KES pair has been on a downward trend (KES strengthening) consistently over the past quarter."
+          },
+          related_disclosures: [
+            { title: "CBK Weekly Bulletin", url: "#" }
+          ],
+          source_quality: "Official",
+          clustered_count: 8
+        }
+      },
+      relatedFx: {
+        id: "fx-usdkes",
+        pair: "USD/KES",
+        rate: 129.50,
+        previousRate: 131.45,
+        changePercent: -1.48
+      }
+    };
+
+    const demoCommodityArticle: FeedItem = {
+      id: "demo-commodity-article",
+      type: "NEWS",
+      authorName: "Agri-Market Trends",
+      authorLabel: "Commodities",
+      title: "Tea auction prices hit record highs amidst global supply shortages",
+      content: "Premium Kenyan black tea prices soared at the Mombasa auction this week, driven by reduced outputs from rival Asian producers and heightened demand from Middle Eastern buyers.",
+      isHeadlineOnly: false,
+      timestamp: new Date(Date.now() - 5 * 3600 * 1000),
+      likes: 110,
+      comments: 8,
+      rawItem: {
+        id: "demo-commodity-article",
+        title: "Tea auction prices hit record highs amidst global supply shortages",
+        source: "Agri-Market Trends",
+        parsed_ai_analysis: {
+          event_label: "Price Surge",
+          impact_horizon: "Short-term relevance",
+          factors_positive: [
+            "Higher foreign exchange earnings for the national exchequer.",
+            "Increased bonus payouts expected for smallholder farmers."
+          ],
+          factors_negative: [
+            "Adverse weather (El Niño) disrupting local logistics and plucking schedules.",
+            "Potential pushback from price-sensitive bulk buyers."
+          ],
+          what_happened: "Average tea prices breached the $2.50 per kilo mark at the latest Mombasa auction, a 2-year high.",
+          verified_figures: ["$2.52 per kilo average", "15% volume drop from competitors"],
+          price_reaction_context: {
+            "1D": "+2.1%",
+            "7D": "+4.5%",
+            "1M": "+8.9%",
+            "3M": "+11.2%",
+            context: "KTDA-managed factory teas have seen the highest premium, consistently outperforming the base auction average."
+          },
+          related_disclosures: [
+            { title: "Mombasa Tea Auction Weekly Report", url: "#" }
+          ],
+          source_quality: "Tier 2 Media",
+          clustered_count: 4
+        }
+      },
+      relatedCommodity: {
+        id: "comm-tea",
+        name: "Kenyan Tea (KTDA Avg)",
+        price: 2.52,
+        previousPrice: 2.41,
+        changePercent: 4.56,
+        unit: "USD/kg"
+      }
+    };
+
+    let allItems = [demoArticleEqty, demoArticleKcb, demoMmfArticle, demoFxArticle, demoCommodityArticle, ...items];
+    
+    // Now perform filtering on allItems based on activeNavTab
+    if (activeNavTab === "Kenyan") {
+      allItems = allItems.filter(a => !isInternationalArticle(a.rawItem || {}));
+    } else if (activeNavTab === "International") {
+      allItems = allItems.filter(a => isInternationalArticle(a.rawItem || {}));
+    } else if (activeNavTab === "Stocks") {
+      allItems = allItems.filter(a => !!a.relatedStock);
+    } else if (activeNavTab === "MMFs") {
+      allItems = allItems.filter(a => !!a.relatedMmf);
+    } else if (activeNavTab === "FX Rates") {
+      allItems = allItems.filter(a => !!a.relatedFx);
+    } else if (activeNavTab === "Commodities") {
+      allItems = allItems.filter(a => !!a.relatedCommodity);
+    }
+
+    return allItems;
+  }, [filteredArticles, stocks, activeNavTab]);
 
   if (loading) {
     return (
@@ -312,6 +476,10 @@ export default function NewsPage() {
             "All",
             "Kenyan",
             "International",
+            "Stocks",
+            "MMFs",
+            "FX Rates",
+            "Commodities",
             "Latest",
             "Oldest",
           ].map((cat) => {

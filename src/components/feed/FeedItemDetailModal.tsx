@@ -33,6 +33,9 @@ import { getStockLogoUrl } from "@/lib/stockBranding";
 import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
 import { splitReadableParagraphs } from "@/lib/utils";
 import { StockDecisionContext } from "@/components/news/StockDecisionContext";
+import { MmfDecisionContext } from "@/components/news/MmfDecisionContext";
+import { FxDecisionContext } from "@/components/news/FxDecisionContext";
+import { CommodityDecisionContext } from "@/components/news/CommodityDecisionContext";
 import { type NewsFromDB, type PublicStock } from "@/lib/api";
 
 interface FeedItemDetailModalProps {
@@ -266,6 +269,18 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
                 } as PublicStock}
                 inlineTransparent={false}
               />
+            )}
+            
+            {item.relatedMmf && (
+              <MmfDecisionContext item={item} />
+            )}
+
+            {item.relatedFx && (
+              <FxDecisionContext item={item} />
+            )}
+
+            {item.relatedCommodity && (
+              <CommodityDecisionContext item={item} />
             )}
 
             {/* Media Box */}

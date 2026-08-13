@@ -1,0 +1,158 @@
+import { ExternalLink, Sparkles } from "lucide-react";
+import { type FeedItem } from "@/hooks/useSocialFeed";
+
+interface CommodityDecisionContextProps {
+  item?: FeedItem;
+  article?: any;
+  commodity?: any;
+  onEnrichmentComplete?: (updatedArticle: any) => void;
+  onReadMore?: () => void;
+}
+
+const FactorList = ({ title, tone, items }: { title: string, tone: 'positive' | 'negative', items: string[] }) => (
+  <div className="space-y-3">
+    <h4 className={`text-[11px] font-bold uppercase tracking-[0.14em] ${tone === 'positive' ? 'text-emerald-500' : 'text-rose-500'}`}>
+      {title}
+    </h4>
+    <ul className="space-y-2.5">
+      {items.map((item, i) => (
+        <li key={i} className="flex gap-2.5 text-[14px] leading-relaxed text-foreground/80">
+          <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${tone === 'positive' ? 'bg-emerald-500' : 'bg-rose-500'}`} />
+          {item}
+        </li>
+      ))}
+    </ul>
+  </div>
+);
+
+export function CommodityDecisionContext({ item, article, commodity, onEnrichmentComplete, onReadMore }: CommodityDecisionContextProps) {
+  const analysis = item?.rawItem?.parsed_ai_analysis || article?.parsed_ai_analysis;
+  
+  if (!analysis) return null;
+
+  return (
+    <div className="mt-4 space-y-4 font-sans text-foreground">
+      <div className="space-y-4">
+        
+        {(analysis.event_label || analysis.impact_horizon) && (
+          <div className="flex flex-wrap items-center justify-between gap-2">
+            <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/90">
+              Market Impact & Key Facts
+            </h3>
+            <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+              {[analysis.event_label, analysis.impact_horizon].filter(Boolean).join(" · ")}
+            </span>
+          </div>
+        )}
+
+        {/* Price Reaction Context */}
+        {analysis.price_reaction_context && (
+          <section className="border-y border-border py-4">
+            <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-foreground/90 mb-3">
+              Global Spot Price Context
+            </h3>
+            <div className="flex flex-wrap gap-2 mb-3">
+              {Object.entries(analysis.price_reaction_context).map(([period, val]) => {
+                if (period === 'context') return null;
+                const isPositive = String(val).startsWith('+');
+                const isNegative = String(val).startsWith('-');
+                return (
+                  <div key={period} className="flex flex-col rounded-md border border-border bg-muted/30 px-3 py-1.5">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">{period}</span>
+                    <span className={`text-sm font-bold tabular-nums ${isPositive ? 'text-emerald-500' : isNegative ? 'text-rose-500' : 'text-foreground'}`}>
+                      {String(val)}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {analysis.price_reaction_context.context && (
+              <p className="text-[13px] leading-relaxed text-muted-foreground/90 italic border-l-2 border-muted-foreground/30 pl-3">
+                {analysis.price_reaction_context.context}
+              </p>
+            )}
+          </section>
+        )}
+
+        {/* Factors */}
+        {(analysis.factors_positive?.length || analysis.factors_negative?.length) ? (
+          <section className="grid gap-5 border-b border-border pb-4 md:grid-cols-2">
+            {analysis.factors_positive && analysis.factors_positive.length > 0 && (
+              <FactorList title="What could help" tone="positive" items={analysis.factors_positive} />
+            )}
+            {analysis.factors_negative && analysis.factors_negative.length > 0 && (
+              <FactorList title="What to watch" tone="negative" items={analysis.factors_negative} />
+            )}
+          </section>
+        ) : null}
+
+        {/* Source facts */}
+        {analysis.what_happened && (
+          <section className="pt-2">
+            <div className="flex items-center justify-between mb-2">
+              <h3 className="text-sm font-bold text-foreground">Source facts</h3>
+              {analysis.source_quality && (
+                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                  <Sparkles className="h-3 w-3" />
+                  {analysis.source_quality}
+                </span>
+              )}
+            </div>
+            <p className="mt-2 text-[15px] leading-relaxed text-foreground/90">
+              {analysis.what_happened}
+            </p>
+            {analysis.verified_figures && analysis.verified_figures.length > 0 && (
+              <ul className="mt-3 space-y-1">
+                {analysis.verified_figures.map((figure: string, i: number) => (
+                  <li key={i} className="flex gap-2 text-[15px] leading-relaxed text-foreground/90">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/60" />
+                    {figure}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </section>
+        )}
+
+        {/* Related Information / Disclosures */}
+        <div className="border-t border-border pt-4">
+          {analysis.related_disclosures && analysis.related_disclosures.length > 0 && (
+            <div className="mb-4 space-y-2">
+              <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-foreground/90 mb-2">
+                Related Disclosures
+              </h3>
+              {analysis.related_disclosures.map((disc: any, i: number) => (
+                <a
+                  key={i}
+                  href={disc.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-500 hover:underline transition-colors w-fit"
+                >
+                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                  {disc.title}
+                </a>
+              ))}
+            </div>
+          )}
+
+          <div className="flex flex-wrap items-center gap-4 text-sm font-semibold">
+            {onReadMore && (
+              <button 
+                type="button" 
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onReadMore();
+                }}
+                className="inline-flex items-center gap-1.5 text-emerald-500 hover:text-emerald-400 transition-colors"
+              >
+                Continue reading <span className="text-lg leading-none">&rarr;</span>
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
