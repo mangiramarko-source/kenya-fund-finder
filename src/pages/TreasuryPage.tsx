@@ -870,50 +870,73 @@ export default function TreasuryPage() {
                   </table>
                 </div>
 
-                {/* Mobile Cards */}
-                <div className="md:hidden space-y-3">
+                {/* Stock-style Treasury Bond Cards */}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                   {filteredBonds.map((bond) => (
                     <div
                       key={bond.code}
                       onClick={() => setSelectedBond(bond)}
-                      className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-sm hover:border-emerald-500/40 transition-colors cursor-pointer"
+                      className="rounded-2xl border border-border/80 bg-card p-4 space-y-2.5 shadow-sm hover:border-emerald-500/40 transition-all cursor-pointer group"
                     >
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <span className="font-black text-foreground text-base block">{bond.code}</span>
-                          <span className="text-xs text-muted-foreground">{bond.name}</span>
+                      {/* Top Row: Symbol/Name + Sparkline + Yield Rate */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-black text-foreground text-base tracking-tight block truncate group-hover:text-emerald-500 transition-colors">
+                            {bond.code}
+                          </span>
+                          <span className="text-xs text-muted-foreground truncate block">
+                            {bond.name}
+                          </span>
                         </div>
-                        <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
-                          {bond.yieldRate.toFixed(2)}%
+
+                        {/* Mini Sparkline Graphic */}
+                        <div className="hidden sm:block shrink-0 px-2">
+                          <svg className="h-6 w-14 text-emerald-500/70" viewBox="0 0 60 20" fill="none">
+                            <path
+                              d="M2 15 L14 12 L26 14 L38 7 L50 9 L58 3"
+                              stroke="currentColor"
+                              strokeWidth="2"
+                              strokeLinecap="round"
+                              strokeLinejoin="round"
+                            />
+                          </svg>
+                        </div>
+
+                        {/* Yield / Rate */}
+                        <div className="text-right shrink-0">
+                          <span className="text-base sm:text-lg font-black text-foreground tabular-nums block">
+                            {bond.yieldRate.toFixed(2)}%
+                          </span>
+                          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 block">
+                            Yield p.a.
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Divider */}
+                      <div className="border-t border-border/60 pt-2.5 flex items-center justify-between gap-2 text-xs">
+                        {/* Key Attributes */}
+                        <div className="flex items-center gap-3 text-muted-foreground truncate text-[11px] sm:text-xs">
+                          <span>
+                            Coupon <strong className="text-foreground font-bold">{bond.coupon.toFixed(2)}%</strong>
+                          </span>
+                          <span className="opacity-40">•</span>
+                          <span>
+                            Rem <strong className="text-foreground font-bold">{bond.yearsRemaining} yrs</strong>
+                          </span>
+                        </div>
+
+                        {/* Status Badge Pill */}
+                        <span
+                          className={`shrink-0 rounded-full px-3 py-0.5 text-[11px] font-semibold transition-colors ${
+                            bond.status === "Tax-Free"
+                              ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
+                              : "bg-muted/70 text-muted-foreground border border-border/60"
+                          }`}
+                        >
+                          {bond.status}
                         </span>
                       </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-border/60">
-                        <div>
-                          <span className="text-muted-foreground block">Coupon:</span>
-                          <span className="font-semibold text-foreground">{bond.coupon.toFixed(2)}%</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block">Maturity:</span>
-                          <span className="font-semibold text-foreground">{bond.maturityDate}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block">Term Remaining:</span>
-                          <span className="font-semibold text-foreground">{bond.yearsRemaining} yrs</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block">Status:</span>
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400">{bond.status}</span>
-                        </div>
-                      </div>
-
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        className="w-full rounded-xl font-bold border-border"
-                      >
-                        View Bond Details
-                      </Button>
                     </div>
                   ))}
                 </div>
