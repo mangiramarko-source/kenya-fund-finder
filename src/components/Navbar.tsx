@@ -183,7 +183,6 @@ function MobileSidebarDrawer({
           <SidebarSection title="MY SPACE">
             <SidebarRow icon={Wallet}      label="Portfolio"  to="/portfolio"   onClick={close} />
             <SidebarRow icon={Star}        label="Watchlist"  to="/watchlist"   onClick={close} badge={watchlistCount || null} />
-            <SidebarRow icon={Wallet}      label="Wallet"     to="/portfolio"   onClick={close} />
           </SidebarSection>
 
           <div className="h-px bg-border/60 mx-4 my-1" />
