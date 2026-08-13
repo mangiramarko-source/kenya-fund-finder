@@ -378,18 +378,15 @@ export default function TreasuryPage() {
             })}
           </div>
 
-          {/* Updated Date Details Row */}
-          <div className="text-[11px] font-bold tracking-wider uppercase pt-0.5 pb-0 px-0.5">
-            <span className="text-emerald-500">
-              UPDATED {activeTab === "tbills" ? "08 AUG 2026" : "01 AUG 2026"}
-            </span>
-          </div>
-
           {/* ───────────────────────────────────────────────────────────── */}
           {/* TAB 1: TREASURY BILLS                                         */}
           {/* ───────────────────────────────────────────────────────────── */}
           {activeTab === "tbills" && (
             <div className="space-y-3 animate-in fade-in-50 duration-300">
+              {/* Updated Date Row for T-Bills */}
+              <div className="text-[11px] font-bold tracking-wider uppercase px-0.5">
+                <span className="text-emerald-500">UPDATED 08 AUG 2026</span>
+              </div>
               {/* Section 3: Current T-Bill Rates Cards */}
               <section>
                 <div className="no-scrollbar -mx-4 px-4 flex gap-3 overflow-x-auto py-1 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:mx-0 md:px-0">
@@ -810,6 +807,11 @@ export default function TreasuryPage() {
                     </div>
                   </SheetContent>
                 </Sheet>
+              </div>
+
+              {/* Updated Date Row for Bonds (Below Search Bar) */}
+              <div className="text-[11px] font-bold tracking-wider uppercase px-0.5 -mt-4">
+                <span className="text-emerald-500">UPDATED 01 AUG 2026</span>
               </div>
 
               {/* Bond List Table / Cards */}
