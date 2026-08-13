@@ -355,8 +355,8 @@ export default function TreasuryPage() {
             </p>
           </div>
 
-          {/* ── Section 2: Top Navigation Tabs ── */}
-          <div className="flex border-b border-border gap-2 sm:gap-6 overflow-x-auto no-scrollbar">
+          {/* ── Section 2: Top Navigation Tabs (Pill Style) ── */}
+          <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1">
             {[
               { id: "tbills", label: "Treasury Bills" },
               { id: "bonds", label: "Treasury Bonds" },
@@ -366,16 +366,13 @@ export default function TreasuryPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`pb-3 px-1 text-sm md:text-base font-bold transition-colors relative whitespace-nowrap ${
+                  className={`px-5 py-2 text-sm md:text-base font-bold rounded-full transition-all whitespace-nowrap ${
                     isActive
-                      ? "text-emerald-600 dark:text-emerald-400"
-                      : "text-muted-foreground hover:text-foreground"
+                      ? "bg-foreground text-background shadow-sm"
+                      : "bg-card text-muted-foreground border border-border/80 hover:bg-muted/60 hover:text-foreground"
                   }`}
                 >
                   {tab.label}
-                  {isActive && (
-                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                  )}
                 </button>
               );
             })}
