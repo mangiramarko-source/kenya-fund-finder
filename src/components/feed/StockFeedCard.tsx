@@ -118,6 +118,35 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
         </button>
       </header>
 
+      {(() => {
+        const analysis = item.rawItem?.parsed_ai_analysis || {
+          event_label: item.title?.toLowerCase().includes("profit") || item.title?.toLowerCase().includes("results") || item.title?.toLowerCase().includes("half-year") ? "Earnings Report" : 
+                       item.title?.toLowerCase().includes("dividend") ? "Dividend Notice" : "Market Update",
+          impact_horizon: "Short-term relevance",
+          clustered_count: 1
+        };
+
+        return (
+          <div className="flex flex-wrap items-center gap-2 mb-1">
+            {analysis.event_label && (
+              <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+                {analysis.event_label}
+              </span>
+            )}
+            {analysis.impact_horizon && (
+              <span className="inline-flex items-center rounded-md bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 ring-1 ring-inset ring-blue-500/20">
+                {analysis.impact_horizon}
+              </span>
+            )}
+            {analysis.clustered_count > 1 && (
+              <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground ring-1 ring-inset ring-border">
+                +{analysis.clustered_count} sources
+              </span>
+            )}
+          </div>
+        );
+      })()}
+
       {item.isHeadlineOnly ? (
         <h2 className="font-body text-sm font-normal text-foreground/90 leading-relaxed">
           {item.title}

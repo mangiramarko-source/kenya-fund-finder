@@ -2,7 +2,7 @@ import { useState, useEffect, useMemo } from "react";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { fetchPublishedNews, fetchPublicStocks, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import { Search, Megaphone } from "lucide-react";
+import { Search, Megaphone, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -10,6 +10,7 @@ import { SocialFeedCard } from "@/components/feed/SocialFeed";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
+import { useAuth } from "@/hooks/useAuth";
 
 const INTERNATIONAL_SOURCES = new Set([
   "Reuters Business",
@@ -41,6 +42,7 @@ export default function NewsPage() {
     { title: "Market News – Kenya Investment & Global Financial Updates", description: "Up-to-date market news covering Kenya and global financial markets." }
   );
 
+  const { user } = useAuth();
   const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [stocks, setStocks] = useState<any[]>([]);
@@ -169,7 +171,20 @@ export default function NewsPage() {
             "Potential increase in non-performing loan (NPL) ratio in new market."
           ],
           what_happened: "Equity Group Holdings introduced instant digital loans in DRC to accelerate regional expansion.",
-          verified_figures: ["Targeting 90M+ population", "Mobile API deployment"]
+          verified_figures: ["Targeting 90M+ population", "Mobile API deployment"],
+          price_reaction_context: {
+            "1D": "+2.4%",
+            "7D": "+1.1%",
+            "1M": "+4.5%",
+            "3M": "+12.0%",
+            context: "Shares rallied 2.4% following the DRC expansion news, outperforming the broader banking index."
+          },
+          related_disclosures: [
+            { title: "DRC Expansion Strategy Brief (PDF)", url: "#" },
+            { title: "Regulatory Approval Notice", url: "#" }
+          ],
+          source_quality: "Tier 1 Media",
+          clustered_count: 2
         }
       },
       relatedStock: {
@@ -209,7 +224,21 @@ export default function NewsPage() {
             "Macroeconomic inflationary pressure on operational expenditure."
           ],
           what_happened: "KCB Group PLC declared H1 profit after tax of KES 29.9B (+18% YoY) driven by transaction fees and cost efficiencies.",
-          verified_figures: ["KES 29.9B Net Profit", "+18% YoY Growth", "46% Cost-to-Income Ratio"]
+          verified_figures: ["KES 29.9B Net Profit", "+18% YoY Growth", "46% Cost-to-Income Ratio"],
+          price_reaction_context: {
+            "1D": "-0.8%",
+            "7D": "+2.5%",
+            "1M": "+8.2%",
+            "3M": "+15.1%",
+            context: "Immediate term profit-taking saw shares dip 0.8%, but the stock remains strongly up over the last month on earnings anticipation."
+          },
+          related_disclosures: [
+            { title: "H1 2024 Unaudited Financial Results", url: "#" },
+            { title: "Investor Presentation", url: "#" },
+            { title: "Dividend Declaration Notice", url: "#" }
+          ],
+          source_quality: "Official",
+          clustered_count: 5
         }
       },
       relatedStock: {
@@ -257,6 +286,24 @@ export default function NewsPage() {
           />
         </div>
       </div>
+
+      {/* Watchlist Briefing */}
+      {user && (
+        <div className="mb-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 p-5">
+          <div className="flex items-center gap-2 mb-3">
+            <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+            <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-400">Your Watchlist Briefing</h2>
+          </div>
+          <div className="space-y-3">
+            <p className="text-[14px] text-foreground/90 leading-relaxed">
+              <strong>KCB Group (KCB):</strong> H1 earnings beat expectations with 18% YoY growth, driven by non-funded revenue. Short-term outlook remains positive.
+            </p>
+            <p className="text-[14px] text-foreground/90 leading-relaxed">
+              <strong>Equity Group (EQTY):</strong> Expansion into DRC announced via mobile API deployment. Potential long-term growth, but keep an eye on currency volatility risks.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Top Nav Filter Tabs */}
       <div className="relative mb-6 border-b border-border dark:border-white/10">

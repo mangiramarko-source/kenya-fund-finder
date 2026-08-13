@@ -143,6 +143,128 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     };
   }
 
+  if (id === "demo-eqty-article") {
+    return {
+      id: "demo-eqty-article",
+      title: "Equity Group expands digital lending platform into DRC market",
+      summary: "Equity Group Holdings has launched its proprietary micro-lending API in the Democratic Republic of Congo, targeting small business owners and cross-border traders.",
+      content: "Equity Group Holdings has launched its proprietary micro-lending API in the Democratic Republic of Congo, targeting small business owners and cross-border traders with instant credit access via mobile wallets.",
+      source: "Business Daily",
+      date_published: new Date().toISOString(),
+      url: null,
+      category: "Banking & Finance",
+      read_time: "3 min read",
+      is_featured: true,
+      status: "published",
+      image_url: null,
+    };
+  }
+
+  if (id === "demo-kcb-article") {
+    return {
+      id: "demo-kcb-article",
+      title: "KCB Group reports 18% surge in H1 net profit following NBK integration",
+      summary: "KCB Group PLC posted strong half-year financial results with profit after tax rising to KES 29.9 Billion, buoyed by non-funded revenue growth.",
+      content: "KCB Group PLC posted strong half-year financial results with profit after tax rising to KES 29.9 Billion, buoyed by non-funded revenue growth and operational synergies following the full integration of National Bank of Kenya.",
+      source: "Standard Media",
+      date_published: new Date().toISOString(),
+      url: null,
+      category: "Corporate Earnings",
+      read_time: "4 min read",
+      is_featured: true,
+      status: "published",
+      image_url: null,
+    };
+  }
+
+  if (id === "demo-safaricom-article" || id.includes("safaricom")) {
+    return {
+      id: "demo-safaricom-article",
+      title: "Safaricom changes availability of its KSh 20 one-hour data bundle",
+      summary: "Safaricom limited the bundle to specific hours and introduced alternative Pata More options to manage network congestion.",
+      content: "Safaricom limited the bundle to specific hours and introduced alternative Pata More options. The move is aimed at managing network congestion during peak hours while ensuring customers still have affordable access to internet services.",
+      source: "Tuko News",
+      date_published: new Date().toISOString(),
+      url: null,
+      category: "Telecommunications",
+      read_time: "2 min read",
+      is_featured: true,
+      status: "published",
+      image_url: null,
+    };
+  }
+
+  if (id === "market-update-weekly") {
+    return {
+      id: "market-update-weekly",
+      title: "Weekly Market Roundup: Equities and Yields",
+      summary: "A quick summary of this week's top market movers, highlighting equity gains and fixed-income stability.",
+      content: "This week saw significant movement in the banking sector, while Treasury yields remained attractive. Equities listed on the NSE showed resilience amidst shifting macroeconomic policies.",
+      source: "Market Insights",
+      date_published: new Date().toISOString(),
+      url: null,
+      category: "Market News",
+      read_time: "3 min read",
+      is_featured: false,
+      status: "published",
+      image_url: null,
+    };
+  }
+
+  if (id === "bonds-update-monthly") {
+    return {
+      id: "bonds-update-monthly",
+      title: "Treasury Bonds: Monthly Yield Review",
+      summary: "Analyzing the latest infrastructure and treasury bond auctions by the Central Bank of Kenya.",
+      content: "The latest government paper auctions were heavily oversubscribed, indicating strong investor appetite for risk-free returns. Yields on the 91-day and 364-day paper remained elevated, offering compelling real returns against current inflation rates.",
+      source: "Fixed Income Desk",
+      date_published: new Date().toISOString(),
+      url: null,
+      category: "Fixed Income",
+      read_time: "4 min read",
+      is_featured: false,
+      status: "published",
+      image_url: null,
+    };
+  }
+
+  if (id === "mmf-yield-alert") {
+    return {
+      id: "mmf-yield-alert",
+      title: "Money Market Funds Yield Update",
+      summary: "Top performing MMFs in Kenya maintain average yields above 13% effective annual rate.",
+      content: "Top Tier Money Market Funds have maintained their competitive edge, providing investors with highly liquid, low-risk alternatives yielding above 13% consistently over the past quarter.",
+      source: "Yield Tracker",
+      date_published: new Date().toISOString(),
+      url: null,
+      category: "Yield Updates",
+      read_time: "2 min read",
+      is_featured: false,
+      status: "published",
+      image_url: null,
+    };
+  }
+
+  // Only fallback for non-UUID strings that might have been dynamically generated feed items
+  const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+  if (!isUUID && !/^\d+$/.test(id)) {
+    const readableTitle = id.replace(/^(news-)?/, '').replace(/-/g, ' ');
+    return {
+      id: id,
+      title: readableTitle.charAt(0).toUpperCase() + readableTitle.slice(1),
+      summary: "Market news update and performance context for this asset.",
+      content: "Detailed market disclosure and performance update. The Nairobi Securities Exchange (NSE) continues to monitor issuer disclosures and market movements closely.",
+      source: "Market News",
+      date_published: new Date().toISOString(),
+      url: null,
+      category: "Market News",
+      read_time: "2 min read",
+      is_featured: false,
+      status: "published",
+      image_url: null,
+    };
+  }
+
   return null;
 }
 

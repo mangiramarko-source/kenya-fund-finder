@@ -150,7 +150,33 @@ export function useSocialFeed(
         id: "demo-safaricom-article",
         title: "Safaricom changes availability of its KSh 20 one-hour data bundle",
         source: "Tuko News",
-        parsed_ai_analysis: null // This will trigger the fallback mock in StockDecisionContext
+        parsed_ai_analysis: {
+          event_label: "Product Update",
+          impact_horizon: "Short-term relevance",
+          factors_positive: [
+            "Introduced 'Pata More' alternative for better user segmentation.",
+            "May improve network reliability during peak congestion periods."
+          ],
+          factors_negative: [
+            "Potential backlash from low-income users relying on the KSh 20 bundle.",
+            "Risk of losing market share to competitors offering cheaper hourly data."
+          ],
+          what_happened: "Safaricom has restructured its highly popular KSh 20 one-hour internet bundle, restricting its availability to off-peak hours to manage network strain.",
+          verified_figures: ["KSh 20 per hour", "1-hour validity limit"],
+          price_reaction_context: {
+            "1D": "-1.5%",
+            "7D": "+0.4%",
+            "1M": "+2.1%",
+            "3M": "+5.8%",
+            context: "SCOM shares dipped slightly today on fears of consumer pushback, though the overall trend remains positive for the quarter."
+          },
+          related_disclosures: [
+            { title: "Network Optimization Strategy 2026", url: "#" },
+            { title: "Press Release: Pata More Bundles", url: "#" }
+          ],
+          source_quality: "Tier 1 Media",
+          clustered_count: 3
+        }
       },
       relatedStock: scomStock as any
     };

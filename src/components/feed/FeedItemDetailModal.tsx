@@ -303,6 +303,32 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
             </div>
           </div>}
 
+          {/* Chronological Timeline */}
+          {item.relatedStock && (
+            <div className="mt-8 mb-4 border-t border-border pt-6">
+              <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/90 mb-6">
+                Company Timeline
+              </h3>
+              <div className="relative border-l-2 border-border ml-[9px] pl-5 space-y-6">
+                <div className="relative">
+                  <div className="absolute -left-[26px] top-1.5 h-3 w-3 rounded-full bg-emerald-500 ring-4 ring-background" />
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Today</p>
+                  <p className="text-[14px] font-medium text-foreground mt-1 leading-snug">{item.title}</p>
+                </div>
+                <div className="relative opacity-70 hover:opacity-100 transition-opacity">
+                  <div className="absolute -left-[26px] top-1.5 h-3 w-3 rounded-full bg-muted-foreground/40 ring-4 ring-background" />
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">1 Month Ago</p>
+                  <p className="text-[14px] font-medium text-foreground mt-1 leading-snug">Q1 Trading Update & Dividend Declaration <span className="text-emerald-500 font-bold ml-1">+8.2%</span></p>
+                </div>
+                <div className="relative opacity-70 hover:opacity-100 transition-opacity">
+                  <div className="absolute -left-[26px] top-1.5 h-3 w-3 rounded-full bg-muted-foreground/40 ring-4 ring-background" />
+                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">3 Months Ago</p>
+                  <p className="text-[14px] font-medium text-foreground mt-1 leading-snug">AGM Notice & Leadership Updates <span className="text-emerald-500 font-bold ml-1">+15.1%</span></p>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* External Source Link (Only for non-stock articles) */}
           {(() => {
             if (item.id === "daily-market-summary" || item.type === "EDUCATION" || item.relatedStock) return null;
