@@ -389,12 +389,6 @@ export default function TreasuryPage() {
             <div className="space-y-10 animate-in fade-in-50 duration-300">
               {/* Section 3: Current T-Bill Rates Cards */}
               <section className="space-y-4">
-                <div className="flex items-center justify-between">
-                  <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
-                    Current Treasury Bill Rates
-                  </h2>
-                  <span className="text-xs text-muted-foreground font-medium">Source: CBK Mock Rates</span>
-                </div>
 
                 <div className="no-scrollbar -mx-4 px-4 flex gap-3 overflow-x-auto py-1 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:mx-0 md:px-0">
                   {tBillCards.map((card) => (
