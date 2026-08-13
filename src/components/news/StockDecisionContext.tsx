@@ -38,7 +38,7 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
       <div className="space-y-4">
         
         {/* Header Title & Tags */}
-        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/90">
             Market Impact & Key Facts
           </h3>
