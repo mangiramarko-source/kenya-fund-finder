@@ -583,18 +583,18 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
                 
                 {/* Related Asset Metrics Pill */}
                 {relatedMmf && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${relatedMmf.changePercent >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
-                    {relatedMmf.yield.toFixed(2)}%
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${(relatedMmf.changePercent ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                    {(relatedMmf.annualYield ?? (relatedMmf as any).yield ?? 0).toFixed(2)}%
                   </span>
                 )}
                 {relatedFx && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${relatedFx.changePercent >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
-                    KES {relatedFx.rate.toFixed(2)}
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${(relatedFx.changePercent ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                    KES {(relatedFx.rate ?? 0).toFixed(2)}
                   </span>
                 )}
                 {relatedCommodity && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${relatedCommodity.changePercent >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
-                    ${relatedCommodity.price.toFixed(2)}
+                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-sm ${(relatedCommodity.changePercent ?? 0) >= 0 ? 'bg-emerald-500/10 text-emerald-600' : 'bg-rose-500/10 text-rose-600'}`}>
+                    ${(relatedCommodity.price ?? 0).toFixed(2)}
                   </span>
                 )}
               </div>

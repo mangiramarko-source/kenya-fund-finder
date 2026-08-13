@@ -23,7 +23,7 @@ export function MmfArticleMarketCard({ mmf }: { mmf: RelatedMmfProp }) {
     const points = [];
     const today = new Date();
     const totalPoints = range === "1W" ? 7 : range === "1M" ? 30 : range === "3M" ? 90 : 180;
-    const baseYield = mmf.annualYield;
+    const baseYield = mmf.annualYield ?? (mmf as any).yield ?? 0;
 
     for (let i = totalPoints - 1; i >= 0; i--) {
       const d = new Date(today);
@@ -62,7 +62,7 @@ export function MmfArticleMarketCard({ mmf }: { mmf: RelatedMmfProp }) {
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{mmf.name} YIELD</p>
-          <p className="text-xl font-bold text-foreground tabular-nums">{mmf.annualYield.toFixed(2)}%</p>
+          <p className="text-xl font-bold text-foreground tabular-nums">{(mmf.annualYield ?? (mmf as any).yield ?? 0).toFixed(2)}%</p>
         </div>
         <div className={`flex items-center gap-1 text-sm font-semibold ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
           {isUp ? <TrendingUp className="h-4 w-4" /> : isDown ? <TrendingDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
