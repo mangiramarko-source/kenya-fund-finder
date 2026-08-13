@@ -79,6 +79,12 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
 
   return (
     <div className="space-y-5 pb-20 px-3 sm:px-4 pt-2">
+      {/* Mobile Title Header */}
+      <div className="mb-1">
+        <h1 className="text-2xl font-bold text-foreground tracking-tight">Portfolio</h1>
+        <p className="text-sm text-muted-foreground mt-1">Track and manage your investments across MMFs, Stocks, T-Bills and FX.</p>
+      </div>
+
       {/* ─── 1. Total Value Summary Card ─── */}
       <div className="bg-card border border-border/75 rounded-3xl p-5 shadow-sm space-y-4 dark:bg-neutral-900/90 dark:border-white/10">
         <div className="flex items-center justify-between">
