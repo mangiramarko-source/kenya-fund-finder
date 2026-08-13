@@ -68,7 +68,7 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
               <Performance key={period.label} label={period.label} value={period.value} />
             ))}
           </div>
-          <p className="mt-3 text-xs leading-relaxed text-muted-foreground">
+          <p className="mt-3 text-sm leading-relaxed text-muted-foreground/90">
             The price increased during the same period, but the available data does not prove this story caused the movement.
           </p>
         </section>
@@ -77,7 +77,7 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
         {analysis.what_happened && (
           <section className="border-t border-border pt-4">
             <h3 className="text-sm font-bold">Source facts</h3>
-            <p className="mt-2 text-xs leading-relaxed text-muted-foreground">
+            <p className="mt-2 text-sm leading-relaxed text-muted-foreground/90">
               {/* If it's the demo data, we inject the strong tags to match screenshot exactly */}
               {article.parsed_ai_analysis ? analysis.what_happened : (
                 <>
@@ -88,7 +88,7 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
             {analysis.verified_figures && analysis.verified_figures.length > 0 && (
               <ul className="mt-3 space-y-1">
                 {analysis.verified_figures.map((figure: string, i: number) => (
-                  <li key={i} className="flex gap-2 text-xs leading-relaxed text-muted-foreground">
+                  <li key={i} className="flex gap-2 text-sm leading-relaxed text-muted-foreground/90">
                     <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />
                     {figure}
                   </li>
@@ -138,7 +138,7 @@ function FactorList({ title, items, tone }: { title: string; items: string[]; to
       </h3>
       <ul className="mt-2 space-y-2">
         {items.map((item, i) => (
-          <li key={i} className="flex gap-2 text-xs leading-relaxed text-muted-foreground">
+          <li key={i} className="flex gap-2 text-sm leading-relaxed text-muted-foreground/90">
             <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${positive ? "bg-emerald-500" : "bg-rose-500"}`} />
             {item}
           </li>
