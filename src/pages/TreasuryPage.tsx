@@ -711,14 +711,7 @@ export default function TreasuryPage() {
           {/* ───────────────────────────────────────────────────────────── */}
           {activeTab === "bonds" && (
             <div className="space-y-8 animate-in fade-in-50 duration-300">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                  <h2 className="text-2xl font-bold text-foreground">Current Treasury Bonds</h2>
-                  <p className="text-xs text-muted-foreground">
-                    Benchmark fixed-rate and tax-free infrastructure bonds issued by the Government of Kenya
-                  </p>
-                </div>
-
+              <div className="flex justify-end gap-4">
                 <div className="flex items-center gap-2">
                   <span className="text-xs font-semibold text-muted-foreground">Sort by:</span>
                   <select
