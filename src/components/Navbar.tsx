@@ -20,6 +20,7 @@ const mobileNavLinks = [
   { to: "/", label: "Overview" },
   { to: "/stocks", label: "Stocks" },
   { to: "/funds", label: "MMF" },
+  { to: "/treasury", label: "T-Bills" },
   { to: "/rates", label: "Fx rates" },
   { to: "/commodities", label: "Commodities" },
   { to: "/portfolio", label: "Portfolio" },
@@ -175,7 +176,7 @@ function MobileSidebarDrawer({
             <SidebarRow icon={BarChart2}   label="Unit Trusts"    to="/funds"       onClick={close} />
             <SidebarRow icon={DollarSign}  label="FX Rates"       to="/rates"       onClick={close} />
             <SidebarRow icon={Package}     label="Commodities"    to="/commodities" onClick={close} />
-            <SidebarRow icon={Landmark}    label="Bonds & T-Bills" to="/markets"    onClick={close} />
+            <SidebarRow icon={Landmark}    label="Bonds & T-Bills" to="/treasury"   onClick={close} />
           </SidebarSection>
 
           <div className="h-px bg-border/60 mx-4 my-1" />

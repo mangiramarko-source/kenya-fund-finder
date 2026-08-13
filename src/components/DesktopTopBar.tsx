@@ -65,6 +65,9 @@ const DesktopTopBar = () => {
     if (path === "/funds") {
       return location.pathname.startsWith("/funds") || /^\/compare\/[^/]+\/?$/.test(location.pathname);
     }
+    if (path === "/treasury") {
+      return location.pathname.startsWith("/treasury") || location.pathname.startsWith("/tbills") || location.pathname.startsWith("/bonds");
+    }
     return location.pathname.startsWith(path);
   };
 
@@ -73,6 +76,7 @@ const DesktopTopBar = () => {
     { to: "/ai-lab", label: "AI Lab" },
     { to: "/stocks", label: "Stocks" },
     { to: "/funds", label: "MMF" },
+    { to: "/treasury", label: "T-Bills" },
     { to: "/rates", label: "FX Rates" },
     { to: "/commodities", label: "Commodities" },
     { to: "/portfolio", label: "Portfolio" },
