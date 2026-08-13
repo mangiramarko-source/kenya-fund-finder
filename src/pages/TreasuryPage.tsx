@@ -458,123 +458,166 @@ export default function TreasuryPage() {
                 </div>
               </section>
 
-              {/* Section 4: T-Bill Rate History Chart */}
-              <section className="rounded-2xl border border-border bg-card p-5 md:p-6 space-y-6 shadow-sm">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div>
-                    <h3 className="text-lg md:text-xl font-bold text-foreground">
-                      Treasury Bill Rate History
-                    </h3>
-                    <p className="text-xs text-muted-foreground">
-                      Historical yield trends across 91-day, 182-day, and 364-day auctions
-                    </p>
+              {/* Section 4: T-Bill Rate History Chart (Matches Mobile Stocks UI) */}
+              <section className="space-y-4">
+                <div className="rounded-2xl border border-border bg-card p-4 md:p-6 space-y-5 shadow-sm">
+                  {/* Header & Range Selector */}
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <BarChart2 className="h-5 w-5 text-emerald-500 stroke-[2.2]" />
+                        <h3 className="text-base font-bold text-foreground md:text-lg">
+                          Rate Chart
+                        </h3>
+                      </div>
+                      
+                      {/* Security Line Visibility Toggles */}
+                      <div className="hidden sm:flex items-center gap-2 text-xs font-semibold">
+                        <button
+                          onClick={() => setVisibleLines((p) => ({ ...p, rate91: !p.rate91 }))}
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${
+                            visibleLines.rate91
+                              ? "border-emerald-500/50 text-emerald-600 bg-emerald-500/10 dark:text-emerald-400 text-[11px]"
+                              : "border-border text-muted-foreground opacity-50 text-[11px]"
+                          }`}
+                        >
+                          <span className="h-2 w-2 rounded-full bg-emerald-500" /> 91D
+                        </button>
+                        <button
+                          onClick={() => setVisibleLines((p) => ({ ...p, rate182: !p.rate182 }))}
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${
+                            visibleLines.rate182
+                              ? "border-amber-500/50 text-amber-600 bg-amber-500/10 dark:text-amber-400 text-[11px]"
+                              : "border-border text-muted-foreground opacity-50 text-[11px]"
+                          }`}
+                        >
+                          <span className="h-2 w-2 rounded-full bg-amber-500" /> 182D
+                        </button>
+                        <button
+                          onClick={() => setVisibleLines((p) => ({ ...p, rate364: !p.rate364 }))}
+                          className={`inline-flex items-center gap-1.5 px-2 py-0.5 rounded-full border transition-all ${
+                            visibleLines.rate364
+                              ? "border-purple-500/50 text-purple-600 bg-purple-500/10 dark:text-purple-400 text-[11px]"
+                              : "border-border text-muted-foreground opacity-50 text-[11px]"
+                          }`}
+                        >
+                          <span className="h-2 w-2 rounded-full bg-purple-500" /> 364D
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Period Tabs Bar (Matches Stock Detail horizontal pill selector) */}
+                    <div className="flex items-center gap-1 overflow-x-auto no-scrollbar border-b border-border/80 pb-2">
+                      {["1W", "1M", "3M", "1Y", "5Y", "10Y", "15Y"].map((period) => {
+                        const isActive = chartPeriod === period || (chartPeriod === "6M" && period === "3M");
+                        return (
+                          <button
+                            key={period}
+                            onClick={() => setChartPeriod(period === "1W" ? "1M" : period)}
+                            className={`shrink-0 rounded-full px-3.5 py-1 text-xs font-bold transition-all ${
+                              isActive
+                                ? "bg-emerald-500 text-white shadow-sm"
+                                : "text-muted-foreground hover:text-foreground hover:bg-muted/50"
+                            }`}
+                          >
+                            {period}
+                          </button>
+                        );
+                      })}
+                    </div>
                   </div>
 
-                  {/* Period Switcher */}
-                  <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl self-start sm:self-auto">
-                    {["1M", "3M", "6M", "1Y", "5Y"].map((period) => (
-                      <button
-                        key={period}
-                        onClick={() => setChartPeriod(period)}
-                        className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
-                          chartPeriod === period
-                            ? "bg-background text-emerald-600 dark:text-emerald-400 shadow-sm"
-                            : "text-muted-foreground hover:text-foreground"
-                        }`}
-                      >
-                        {period}
-                      </button>
-                    ))}
+                  {/* Chart Container */}
+                  <div className="h-64 md:h-72 w-full pt-2">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <LineChart data={historyDataMap[chartPeriod] || historyDataMap["6M"]}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" opacity={0.6} />
+                        <XAxis
+                          dataKey="date"
+                          stroke="currentColor"
+                          className="text-muted-foreground text-[10px]"
+                          tickLine={false}
+                        />
+                        <YAxis
+                          stroke="currentColor"
+                          className="text-muted-foreground text-[10px]"
+                          unit="%"
+                          domain={["dataMin - 0.5", "dataMax + 0.5"]}
+                          tickLine={false}
+                          width={35}
+                        />
+                        <RechartsTooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            borderColor: "hsl(var(--border))",
+                            borderRadius: "0.75rem",
+                            fontSize: "12px",
+                            boxShadow: "0 4px 12px rgba(0,0,0,0.15)",
+                          }}
+                        />
+                        {visibleLines.rate91 && (
+                          <Line
+                            type="monotone"
+                            dataKey="rate91"
+                            name="91-Day"
+                            stroke="#10b981"
+                            strokeWidth={2.5}
+                            dot={{ r: 3, fill: "#10b981" }}
+                          />
+                        )}
+                        {visibleLines.rate182 && (
+                          <Line
+                            type="monotone"
+                            dataKey="rate182"
+                            name="182-Day"
+                            stroke="#f59e0b"
+                            strokeWidth={2.5}
+                            dot={{ r: 3, fill: "#f59e0b" }}
+                          />
+                        )}
+                        {visibleLines.rate364 && (
+                          <Line
+                            type="monotone"
+                            dataKey="rate364"
+                            name="364-Day"
+                            stroke="#a855f7"
+                            strokeWidth={2.5}
+                            dot={{ r: 3, fill: "#a855f7" }}
+                          />
+                        )}
+                      </LineChart>
+                    </ResponsiveContainer>
                   </div>
                 </div>
 
-                {/* Line Visibility Toggles */}
-                <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
-                  <span className="text-muted-foreground">Toggle Securities:</span>
-                  <button
-                    onClick={() => setVisibleLines((p) => ({ ...p, rate91: !p.rate91 }))}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
-                      visibleLines.rate91
-                        ? "border-emerald-500 text-emerald-600 bg-emerald-500/10 dark:text-emerald-400"
-                        : "border-border text-muted-foreground opacity-50"
-                    }`}
-                  >
-                    <span className="h-2 w-2 rounded-full bg-emerald-500" /> 91-Day
-                  </button>
-                  <button
-                    onClick={() => setVisibleLines((p) => ({ ...p, rate182: !p.rate182 }))}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
-                      visibleLines.rate182
-                        ? "border-amber-500 text-amber-600 bg-amber-500/10 dark:text-amber-400"
-                        : "border-border text-muted-foreground opacity-50"
-                    }`}
-                  >
-                    <span className="h-2 w-2 rounded-full bg-amber-500" /> 182-Day
-                  </button>
-                  <button
-                    onClick={() => setVisibleLines((p) => ({ ...p, rate364: !p.rate364 }))}
-                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
-                      visibleLines.rate364
-                        ? "border-purple-500 text-purple-600 bg-purple-500/10 dark:text-purple-400"
-                        : "border-border text-muted-foreground opacity-50"
-                    }`}
-                  >
-                    <span className="h-2 w-2 rounded-full bg-purple-500" /> 364-Day
-                  </button>
-                </div>
-
-                {/* Responsive Recharts Chart */}
-                <div className="h-72 w-full">
-                  <ResponsiveContainer width="100%" height="100%">
-                    <LineChart data={historyDataMap[chartPeriod] || historyDataMap["6M"]}>
-                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border/40" />
-                      <XAxis dataKey="date" stroke="currentColor" className="text-muted-foreground text-xs" />
-                      <YAxis
-                        stroke="currentColor"
-                        className="text-muted-foreground text-xs"
-                        unit="%"
-                        domain={["dataMin - 0.5", "dataMax + 0.5"]}
-                      />
-                      <RechartsTooltip
-                        contentStyle={{
-                          backgroundColor: "hsl(var(--card))",
-                          borderColor: "hsl(var(--border))",
-                          borderRadius: "0.75rem",
-                          fontSize: "12px",
-                        }}
-                      />
-                      {visibleLines.rate91 && (
-                        <Line
-                          type="monotone"
-                          dataKey="rate91"
-                          name="91-Day"
-                          stroke="#10b981"
-                          strokeWidth={2.5}
-                          dot={{ r: 4 }}
-                        />
-                      )}
-                      {visibleLines.rate182 && (
-                        <Line
-                          type="monotone"
-                          dataKey="rate182"
-                          name="182-Day"
-                          stroke="#f59e0b"
-                          strokeWidth={2.5}
-                          dot={{ r: 4 }}
-                        />
-                      )}
-                      {visibleLines.rate364 && (
-                        <Line
-                          type="monotone"
-                          dataKey="rate364"
-                          name="364-Day"
-                          stroke="#a855f7"
-                          strokeWidth={2.5}
-                          dot={{ r: 4 }}
-                        />
-                      )}
-                    </LineChart>
-                  </ResponsiveContainer>
+                {/* 2x2 Grid Stat Cards (Exact match to Mobile Stocks UI) */}
+                <div className="grid grid-cols-2 gap-3">
+                  <div className="rounded-2xl border border-border bg-card p-3.5 space-y-1 shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PERIOD HIGH</p>
+                    <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">9.02%</p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card p-3.5 space-y-1 shadow-sm">
+                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PERIOD LOW</p>
+                    <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">7.20%</p>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card p-3.5 flex items-center gap-3 shadow-sm">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
+                      <DollarSign className="h-4 w-4 stroke-[2.2]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">RATE</p>
+                      <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">9.02%</p>
+                    </div>
+                  </div>
+                  <div className="rounded-2xl border border-border bg-card p-3.5 flex items-center gap-3 shadow-sm">
+                    <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
+                      <BarChart2 className="h-4 w-4 stroke-[2.2]" />
+                    </div>
+                    <div className="min-w-0">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">DEMAND</p>
+                      <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">1.6×</p>
+                    </div>
+                  </div>
                 </div>
               </section>
 
