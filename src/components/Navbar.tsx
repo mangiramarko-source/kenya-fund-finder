@@ -344,9 +344,9 @@ const Navbar = () => {
         {/* Left: Search */}
         <SearchDialog variant="icon" />
 
-        {/* Center: KF Logo */}
+        {/* Center: KFF Logo */}
         <Link to="/" className="font-mono text-xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400">
-          KF
+          KFF
         </Link>
 
         {/* Right: Hamburger */}
@@ -355,7 +355,7 @@ const Navbar = () => {
           className="grid size-9 place-items-center rounded-md"
           aria-label="Open menu"
         >
-          <Menu className="size-5 text-muted-foreground" />
+          <Menu className="size-5 text-foreground" />
         </button>
       </nav>
 

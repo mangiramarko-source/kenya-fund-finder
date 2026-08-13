@@ -84,7 +84,7 @@ const DesktopTopBar = () => {
       {/* 1. Logo */}
       <Link to="/" className="flex items-center shrink-0 mr-1 lg:mr-2 group" aria-label="KenyaFundFinder Home">
         <span className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400 transition-transform group-hover:scale-105">
-          KF
+          KFF
         </span>
       </Link>
 
