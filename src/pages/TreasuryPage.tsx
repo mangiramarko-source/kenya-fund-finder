@@ -614,90 +614,61 @@ export default function TreasuryPage() {
                 </div>
               </section>
 
-              {/* Section 5: Latest Auction Table */}
-              <section className="space-y-4">
+              {/* Section 5: Latest Auction Results Cards (Exact Match to Stock & Bond Cards UI) */}
+              <section className="space-y-3">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
-                  <h3 className="text-xl font-bold text-foreground">Latest Treasury Bill Auction</h3>
+                  <h3 className="text-base sm:text-lg font-bold text-foreground">Latest Treasury Bill Auction</h3>
                   <div className="text-xs text-muted-foreground font-medium">
                     Auction Date: <strong className="text-foreground">08 Aug 2026</strong> · Source: Central Bank of Kenya
                   </div>
                 </div>
 
-                {/* Desktop Table View */}
-                <div className="hidden md:block overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-                  <table className="w-full text-left text-sm">
-                    <thead className="bg-muted/50 text-xs font-bold text-muted-foreground uppercase border-b border-border">
-                      <tr>
-                        <th className="py-3.5 px-4">Security</th>
-                        <th className="py-3.5 px-4 text-right">Rate</th>
-                        <th className="py-3.5 px-4 text-right">Amount Offered</th>
-                        <th className="py-3.5 px-4 text-right">Bids Received</th>
-                        <th className="py-3.5 px-4 text-right">Amount Accepted</th>
-                        <th className="py-3.5 px-4 text-right flex items-center justify-end gap-1">
-                          <span>Demand</span>
-                          <Tooltip>
-                            <TooltipTrigger>
-                              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
-                            </TooltipTrigger>
-                            <TooltipContent className="max-w-xs text-xs">
-                              Demand shows how much investors wanted to buy compared with the amount the government offered.
-                            </TooltipContent>
-                          </Tooltip>
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody className="divide-y divide-border">
-                      {latestAuctions.map((row) => (
-                        <tr key={row.security} className="hover:bg-muted/40 transition-colors">
-                          <td className="py-4 px-4 font-bold text-foreground">{row.security}</td>
-                          <td className="py-4 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
-                            {row.rate}
-                          </td>
-                          <td className="py-4 px-4 text-right text-muted-foreground">{row.amountOffered}</td>
-                          <td className="py-4 px-4 text-right text-foreground font-semibold">{row.bidsReceived}</td>
-                          <td className="py-4 px-4 text-right text-foreground font-semibold">{row.amountAccepted}</td>
-                          <td className="py-4 px-4 text-right font-bold text-foreground">
-                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
-                              {row.demand}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* Mobile Cards View */}
-                <div className="md:hidden space-y-3">
+                {/* Stock-style Auction Cards Grid */}
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                   {latestAuctions.map((row) => (
-                    <div key={row.security} className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-sm">
-                      <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                        <span className="font-bold text-foreground text-base">{row.security} T-Bill</span>
-                        <span className="text-base font-black text-emerald-600 dark:text-emerald-400">{row.rate}</span>
+                    <div
+                      key={row.security}
+                      className="rounded-2xl border border-border/80 bg-card p-4 space-y-2.5 shadow-sm hover:border-emerald-500/40 transition-all"
+                    >
+                      {/* Top Row: Title/Subtitle + Rate */}
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-black text-foreground text-base tracking-tight block truncate">
+                            {row.security} T-Bill
+                          </span>
+                          <span className="text-xs text-muted-foreground truncate block">
+                            Short-Term Government Security
+                          </span>
+                        </div>
+
+                        <div className="text-right shrink-0">
+                          <span className="text-base sm:text-lg font-black text-foreground tabular-nums block">
+                            {row.rate}
+                          </span>
+                          <span className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 block">
+                            Yield p.a.
+                          </span>
+                        </div>
                       </div>
-                      <div className="grid grid-cols-2 gap-2 text-xs">
-                        <div>
-                          <span className="text-muted-foreground block">Offered:</span>
-                          <span className="font-semibold text-foreground">{row.amountOffered}</span>
+
+                      {/* Divider & Bottom Row */}
+                      <div className="border-t border-border/60 pt-2.5 flex items-center justify-between gap-2 text-xs">
+                        <div className="flex items-center gap-2 text-muted-foreground truncate text-[11px]">
+                          <span>
+                            Offered <strong className="text-foreground font-bold">{row.amountOffered}</strong>
+                          </span>
+                          <span className="opacity-40">•</span>
+                          <span>
+                            Bids <strong className="text-foreground font-bold">{row.bidsReceived}</strong>
+                          </span>
                         </div>
-                        <div>
-                          <span className="text-muted-foreground block">Bids Received:</span>
-                          <span className="font-semibold text-foreground">{row.bidsReceived}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block">Accepted:</span>
-                          <span className="font-semibold text-foreground">{row.amountAccepted}</span>
-                        </div>
-                        <div>
-                          <span className="text-muted-foreground block">Demand:</span>
-                          <span className="font-bold text-emerald-600 dark:text-emerald-400">{row.demand}</span>
-                        </div>
+
+                        <span className="shrink-0 rounded-full px-3 py-0.5 text-[11px] font-bold bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          {row.demand} Demand
+                        </span>
                       </div>
                     </div>
                   ))}
-                  <p className="text-[11px] text-muted-foreground italic px-1">
-                    * Demand shows how much investors wanted to buy compared with the amount offered by CBK.
-                  </p>
                 </div>
               </section>
             </div>
