@@ -1,0 +1,1199 @@
+import { useState, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import Navbar from "@/components/Navbar";
+import Footer from "@/components/Footer";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
+  TrendingUp,
+  TrendingDown,
+  Info,
+  Search,
+  SlidersHorizontal,
+  ChevronRight,
+  ShieldAlert,
+  ArrowRight,
+  HelpCircle,
+  BarChart2,
+  Calendar,
+  DollarSign,
+  Sparkles,
+  CheckCircle2,
+  X,
+  FileText,
+  Calculator as CalcIcon,
+  Landmark,
+} from "lucide-react";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip as RechartsTooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Legend,
+} from "recharts";
+
+// ─── Mock Data ───────────────────────────────────────────────────────────────
+
+interface TBillRateCard {
+  id: string;
+  term: string;
+  days: number;
+  approx: string;
+  rate: number;
+  change: number; // positive or negative
+  lastAuctionDate: string;
+  minInvestment: string;
+}
+
+const tBillCards: TBillRateCard[] = [
+  {
+    id: "91-day",
+    term: "91-Day T-Bill",
+    days: 91,
+    approx: "Approx. 3 months",
+    rate: 8.12,
+    change: 0.08,
+    lastAuctionDate: "08 Aug 2026",
+    minInvestment: "KSh 50,000",
+  },
+  {
+    id: "182-day",
+    term: "182-Day T-Bill",
+    days: 182,
+    approx: "Approx. 6 months",
+    rate: 8.34,
+    change: -0.03,
+    lastAuctionDate: "08 Aug 2026",
+    minInvestment: "KSh 50,000",
+  },
+  {
+    id: "364-day",
+    term: "364-Day T-Bill",
+    days: 364,
+    approx: "Approx. 1 year",
+    rate: 9.02,
+    change: 0.12,
+    lastAuctionDate: "08 Aug 2026",
+    minInvestment: "KSh 50,000",
+  },
+];
+
+// Historical rate chart data for 1M, 3M, 6M, 1Y, 5Y
+const historyDataMap: Record<string, Array<{ date: string; rate91: number; rate182: number; rate364: number }>> = {
+  "1M": [
+    { date: "Jul 15", rate91: 8.01, rate182: 8.32, rate364: 8.85 },
+    { date: "Jul 22", rate91: 8.04, rate182: 8.31, rate364: 8.90 },
+    { date: "Jul 29", rate91: 8.07, rate182: 8.35, rate364: 8.95 },
+    { date: "Aug 05", rate91: 8.10, rate182: 8.36, rate364: 8.99 },
+    { date: "Aug 08", rate91: 8.12, rate182: 8.34, rate364: 9.02 },
+  ],
+  "3M": [
+    { date: "May 15", rate91: 7.85, rate182: 8.15, rate364: 8.60 },
+    { date: "Jun 01", rate91: 7.92, rate182: 8.20, rate364: 8.72 },
+    { date: "Jun 15", rate91: 7.98, rate182: 8.25, rate364: 8.80 },
+    { date: "Jul 01", rate91: 8.02, rate182: 8.30, rate364: 8.88 },
+    { date: "Jul 15", rate91: 8.01, rate182: 8.32, rate364: 8.85 },
+    { date: "Aug 08", rate91: 8.12, rate182: 8.34, rate364: 9.02 },
+  ],
+  "6M": [
+    { date: "Feb 15", rate91: 7.60, rate182: 7.95, rate364: 8.40 },
+    { date: "Mar 15", rate91: 7.72, rate182: 8.05, rate364: 8.52 },
+    { date: "Apr 15", rate91: 7.80, rate182: 8.10, rate364: 8.65 },
+    { date: "May 15", rate91: 7.85, rate182: 8.15, rate364: 8.60 },
+    { date: "Jun 15", rate91: 7.98, rate182: 8.25, rate364: 8.80 },
+    { date: "Aug 08", rate91: 8.12, rate182: 8.34, rate364: 9.02 },
+  ],
+  "1Y": [
+    { date: "Aug 2025", rate91: 7.20, rate182: 7.50, rate364: 8.10 },
+    { date: "Nov 2025", rate91: 7.45, rate182: 7.75, rate364: 8.30 },
+    { date: "Feb 2026", rate91: 7.60, rate182: 7.95, rate364: 8.40 },
+    { date: "May 2026", rate91: 7.85, rate182: 8.15, rate364: 8.60 },
+    { date: "Aug 2026", rate91: 8.12, rate182: 8.34, rate364: 9.02 },
+  ],
+  "5Y": [
+    { date: "2022", rate91: 6.80, rate182: 7.10, rate364: 7.75 },
+    { date: "2023", rate91: 9.50, rate182: 10.10, rate364: 10.80 },
+    { date: "2024", rate91: 14.80, rate182: 15.20, rate364: 15.90 },
+    { date: "2025", rate91: 9.10, rate182: 9.40, rate364: 10.00 },
+    { date: "2026", rate91: 8.12, rate182: 8.34, rate364: 9.02 },
+  ],
+};
+
+// Auction Data
+const latestAuctions = [
+  {
+    security: "91 Day",
+    rate: "8.12%",
+    amountOffered: "KSh 4.0B",
+    bidsReceived: "KSh 5.6B",
+    amountAccepted: "KSh 5.1B",
+    demand: "1.4×",
+  },
+  {
+    security: "182 Day",
+    rate: "8.34%",
+    amountOffered: "KSh 10.0B",
+    bidsReceived: "KSh 12.0B",
+    amountAccepted: "KSh 9.7B",
+    demand: "1.2×",
+  },
+  {
+    security: "364 Day",
+    rate: "9.02%",
+    amountOffered: "KSh 10.0B",
+    bidsReceived: "KSh 16.0B",
+    amountAccepted: "KSh 12.3B",
+    demand: "1.6×",
+  },
+];
+
+// Treasury Bonds Data
+interface BondItem {
+  code: string;
+  name: string;
+  coupon: number;
+  yieldRate: number;
+  maturityDate: string;
+  yearsRemaining: number;
+  status: "Active" | "Tax-Free" | "New Issue";
+  issueDate: string;
+  isin: string;
+  auctionDate: string;
+  amountIssued: string;
+  explanation: string;
+}
+
+const mockBonds: BondItem[] = [
+  {
+    code: "FXD1/2024/010",
+    name: "10-Year Fixed Rate Treasury Bond",
+    coupon: 13.0,
+    yieldRate: 12.85,
+    maturityDate: "15 Mar 2034",
+    yearsRemaining: 7.6,
+    status: "Active",
+    issueDate: "18 Mar 2024",
+    isin: "KE5000005432",
+    auctionDate: "13 Mar 2024",
+    amountIssued: "KSh 45.0B",
+    explanation:
+      "This bond allows you to lend money to the Kenyan government. In return, the government pays interest based on the bond's coupon and repays the principal at maturity.",
+  },
+  {
+    code: "IFB1/2024/008.5",
+    name: "8.5-Year Tax-Exempt Infrastructure Bond",
+    coupon: 14.3,
+    yieldRate: 13.9,
+    maturityDate: "20 Sep 2032",
+    yearsRemaining: 6.1,
+    status: "Tax-Free",
+    issueDate: "24 Feb 2024",
+    isin: "KE5000006789",
+    auctionDate: "21 Feb 2024",
+    amountIssued: "KSh 70.0B",
+    explanation:
+      "Infrastructure bonds (IFB) are 100% tax-free in Kenya. Interest earned is exempt from withholding tax, making them highly attractive to long-term investors.",
+  },
+  {
+    code: "FXD2/2022/015",
+    name: "15-Year Fixed Rate Treasury Bond",
+    coupon: 13.94,
+    yieldRate: 13.5,
+    maturityDate: "08 Apr 2037",
+    yearsRemaining: 10.6,
+    status: "Active",
+    issueDate: "11 Apr 2022",
+    isin: "KE5000004111",
+    auctionDate: "06 Apr 2022",
+    amountIssued: "KSh 32.5B",
+    explanation:
+      "Long-term benchmark bond offering predictable semi-annual coupon payments for institutional and retail investors seeking decade-long income.",
+  },
+  {
+    code: "FXD1/2021/020",
+    name: "20-Year Fixed Rate Treasury Bond",
+    coupon: 13.44,
+    yieldRate: 14.1,
+    maturityDate: "22 Jul 2041",
+    yearsRemaining: 14.9,
+    status: "Active",
+    issueDate: "26 Jul 2021",
+    isin: "KE5000003002",
+    auctionDate: "21 Jul 2021",
+    amountIssued: "KSh 28.0B",
+    explanation:
+      "Ultra-long duration government security designed for long-term wealth preservation, retirement planning, and pension fund asset matching.",
+  },
+  {
+    code: "IFB1/2023/007",
+    name: "7-Year Tax-Exempt Infrastructure Bond",
+    coupon: 15.84,
+    yieldRate: 15.2,
+    maturityDate: "17 Jun 2030",
+    yearsRemaining: 3.8,
+    status: "Tax-Free",
+    issueDate: "20 Jun 2023",
+    isin: "KE5000005999",
+    auctionDate: "15 Jun 2023",
+    amountIssued: "KSh 60.0B",
+    explanation:
+      "High-coupon tax-free infrastructure paper funding national roads and water infrastructure. Yields are 100% tax-free under Kenyan law.",
+  },
+];
+
+export default function TreasuryPage() {
+  useDocumentTitle("Treasury Bills & Bonds | Rates, Auction & Return Calculator | KenyaFundFinder");
+
+  // Top tab selection: "tbills" | "bonds" | "calculator"
+  const [activeTab, setActiveTab] = useState<"tbills" | "bonds" | "calculator">("tbills");
+
+  // T-Bill Chart Period
+  const [chartPeriod, setChartPeriod] = useState<string>("6M");
+  const [visibleLines, setVisibleLines] = useState({ rate91: true, rate182: true, rate364: true });
+
+  // T-Bill Card Detail Modal
+  const [selectedTBill, setSelectedTBill] = useState<TBillRateCard | null>(null);
+
+  // Bonds Filters
+  const [bondSearch, setBondSearch] = useState("");
+  const [bondMaturityFilter, setBondMaturityFilter] = useState("All");
+  const [bondCouponFilter, setBondCouponFilter] = useState("All");
+  const [bondSortBy, setBondSortBy] = useState<"maturity" | "coupon" | "yield">("yield");
+  const [selectedBond, setSelectedBond] = useState<BondItem | null>(null);
+
+  // Investment Calculator State
+  const [calcAmount, setCalcAmount] = useState<number>(100000);
+  const [calcSecurityId, setCalcSecurityId] = useState<string>("364-day");
+
+  // Filtered bonds
+  const filteredBonds = useMemo(() => {
+    return mockBonds
+      .filter((b) => {
+        const matchesSearch =
+          b.code.toLowerCase().includes(bondSearch.toLowerCase()) ||
+          b.name.toLowerCase().includes(bondSearch.toLowerCase());
+
+        let matchesMaturity = true;
+        if (bondMaturityFilter === "< 2 Yrs") matchesMaturity = b.yearsRemaining < 2;
+        else if (bondMaturityFilter === "2–5 Yrs") matchesMaturity = b.yearsRemaining >= 2 && b.yearsRemaining <= 5;
+        else if (bondMaturityFilter === "5–10 Yrs") matchesMaturity = b.yearsRemaining > 5 && b.yearsRemaining <= 10;
+        else if (bondMaturityFilter === "10+ Yrs") matchesMaturity = b.yearsRemaining > 10;
+
+        let matchesCoupon = true;
+        if (bondCouponFilter === "Tax-Free") matchesCoupon = b.status === "Tax-Free";
+        else if (bondCouponFilter === "Fixed") matchesCoupon = b.status === "Active";
+
+        return matchesSearch && matchesMaturity && matchesCoupon;
+      })
+      .sort((a, b) => {
+        if (bondSortBy === "yield") return b.yieldRate - a.yieldRate;
+        if (bondSortBy === "coupon") return b.coupon - a.coupon;
+        if (bondSortBy === "maturity") return a.yearsRemaining - b.yearsRemaining;
+        return 0;
+      });
+  }, [bondSearch, bondMaturityFilter, bondCouponFilter, bondSortBy]);
+
+  // Selected Security for Calculator
+  const selectedCalcSecurity = useMemo(() => {
+    const card = tBillCards.find((c) => c.id === calcSecurityId);
+    if (card) return { name: card.term, rate: card.rate, days: card.days };
+    const bond = mockBonds.find((b) => b.code === calcSecurityId);
+    if (bond) return { name: bond.code, rate: bond.yieldRate, days: 365 };
+    return { name: "364-Day T-Bill", rate: 9.02, days: 364 };
+  }, [calcSecurityId]);
+
+  // Interactive calculation output
+  const calcResults = useMemo(() => {
+    const ratePct = selectedCalcSecurity.rate / 100;
+    const days = selectedCalcSecurity.days;
+    // Simple return = Amount * (Rate * Days / 365)
+    const estReturn = Math.round(calcAmount * ratePct * (days / 365));
+    const maturityVal = calcAmount + estReturn;
+    return {
+      estReturn,
+      maturityVal,
+      days,
+      rate: selectedCalcSecurity.rate,
+    };
+  }, [calcAmount, selectedCalcSecurity]);
+
+  return (
+    <TooltipProvider>
+      <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-emerald-500 selection:text-white">
+        <Navbar />
+
+        {/* ── Demo / Mock Data Alert Banner ── */}
+        <div className="bg-amber-500/10 border-b border-amber-500/20 px-4 py-2 text-center text-xs font-semibold text-amber-700 dark:text-amber-400 flex items-center justify-center gap-2">
+          <ShieldAlert className="h-4 w-4 shrink-0" />
+          <span>
+            <strong>DEMO MODE:</strong> Displaying simulated Central Bank of Kenya (CBK) rates & mock auction data for interface demonstration.
+          </span>
+        </div>
+
+        <main className="flex-1 container mx-auto px-4 py-6 md:py-10 max-w-6xl space-y-8">
+          {/* ── Section 1: Main Page Header ── */}
+          <div className="space-y-3">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">
+              <Landmark className="h-3.5 w-3.5" /> Government Securities
+            </div>
+            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-foreground">
+              Treasury Bills & Bonds
+            </h1>
+            <p className="text-base md:text-lg text-muted-foreground max-w-3xl">
+              Compare Kenyan government securities, track rates and understand potential returns with real-time analytics.
+            </p>
+          </div>
+
+          {/* ── Section 2: Top Navigation Tabs ── */}
+          <div className="flex border-b border-border gap-2 sm:gap-6 overflow-x-auto no-scrollbar">
+            {[
+              { id: "tbills", label: "Treasury Bills" },
+              { id: "bonds", label: "Treasury Bonds" },
+              { id: "calculator", label: "Calculator" },
+            ].map((tab) => {
+              const isActive = activeTab === tab.id;
+              return (
+                <button
+                  key={tab.id}
+                  onClick={() => setActiveTab(tab.id as any)}
+                  className={`pb-3 px-1 text-sm md:text-base font-bold transition-colors relative whitespace-nowrap ${
+                    isActive
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {tab.label}
+                  {isActive && (
+                    <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                  )}
+                </button>
+              );
+            })}
+          </div>
+
+          {/* ───────────────────────────────────────────────────────────── */}
+          {/* TAB 1: TREASURY BILLS                                         */}
+          {/* ───────────────────────────────────────────────────────────── */}
+          {activeTab === "tbills" && (
+            <div className="space-y-10 animate-in fade-in-50 duration-300">
+              {/* Section 3: Current T-Bill Rates Cards */}
+              <section className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h2 className="text-xl md:text-2xl font-bold tracking-tight text-foreground">
+                    Current Treasury Bill Rates
+                  </h2>
+                  <span className="text-xs text-muted-foreground font-medium">Source: CBK Mock Rates</span>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                  {tBillCards.map((card) => (
+                    <div
+                      key={card.id}
+                      className="rounded-2xl border border-border bg-card p-5 hover:border-emerald-500/40 transition-all shadow-sm flex flex-col justify-between space-y-4"
+                    >
+                      <div className="space-y-2">
+                        <div className="flex items-center justify-between">
+                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                            {card.term}
+                          </span>
+                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                            {card.approx}
+                          </span>
+                        </div>
+
+                        <div className="flex items-baseline gap-2">
+                          <span className="text-3xl md:text-4xl font-black text-foreground tabular-nums">
+                            {card.rate.toFixed(2)}%
+                          </span>
+                        </div>
+
+                        <div className="flex items-center gap-1.5 text-xs font-semibold">
+                          {card.change >= 0 ? (
+                            <span className="inline-flex items-center gap-0.5 text-emerald-600 dark:text-emerald-400">
+                              <TrendingUp className="h-3.5 w-3.5" /> ▲ {card.change.toFixed(2)}%
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-0.5 text-destructive">
+                              <TrendingDown className="h-3.5 w-3.5" /> ▼ {Math.abs(card.change).toFixed(2)}%
+                            </span>
+                          )}
+                          <span className="text-muted-foreground">from previous auction</span>
+                        </div>
+                      </div>
+
+                      <div className="pt-3 border-t border-border/60 space-y-3">
+                        <div className="grid grid-cols-2 gap-2 text-xs">
+                          <div>
+                            <p className="text-muted-foreground">Term</p>
+                            <p className="font-semibold text-foreground">{card.days} days</p>
+                          </div>
+                          <div>
+                            <p className="text-muted-foreground">Latest Auction</p>
+                            <p className="font-semibold text-foreground">{card.lastAuctionDate}</p>
+                          </div>
+                        </div>
+
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setSelectedTBill(card)}
+                          className="w-full rounded-xl font-bold border-border hover:bg-emerald-500/10 hover:text-emerald-600 dark:hover:text-emerald-400"
+                        >
+                          View Details <ChevronRight className="h-4 w-4 ml-1" />
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </section>
+
+              {/* Section 4: T-Bill Rate History Chart */}
+              <section className="rounded-2xl border border-border bg-card p-5 md:p-6 space-y-6 shadow-sm">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                  <div>
+                    <h3 className="text-lg md:text-xl font-bold text-foreground">
+                      Treasury Bill Rate History
+                    </h3>
+                    <p className="text-xs text-muted-foreground">
+                      Historical yield trends across 91-day, 182-day, and 364-day auctions
+                    </p>
+                  </div>
+
+                  {/* Period Switcher */}
+                  <div className="flex items-center gap-1 bg-muted/60 p-1 rounded-xl self-start sm:self-auto">
+                    {["1M", "3M", "6M", "1Y", "5Y"].map((period) => (
+                      <button
+                        key={period}
+                        onClick={() => setChartPeriod(period)}
+                        className={`px-3 py-1 text-xs font-bold rounded-lg transition-all ${
+                          chartPeriod === period
+                            ? "bg-background text-emerald-600 dark:text-emerald-400 shadow-sm"
+                            : "text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {period}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Line Visibility Toggles */}
+                <div className="flex flex-wrap items-center gap-4 text-xs font-semibold">
+                  <span className="text-muted-foreground">Toggle Securities:</span>
+                  <button
+                    onClick={() => setVisibleLines((p) => ({ ...p, rate91: !p.rate91 }))}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
+                      visibleLines.rate91
+                        ? "border-emerald-500 text-emerald-600 bg-emerald-500/10 dark:text-emerald-400"
+                        : "border-border text-muted-foreground opacity-50"
+                    }`}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-emerald-500" /> 91-Day
+                  </button>
+                  <button
+                    onClick={() => setVisibleLines((p) => ({ ...p, rate182: !p.rate182 }))}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
+                      visibleLines.rate182
+                        ? "border-amber-500 text-amber-600 bg-amber-500/10 dark:text-amber-400"
+                        : "border-border text-muted-foreground opacity-50"
+                    }`}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-amber-500" /> 182-Day
+                  </button>
+                  <button
+                    onClick={() => setVisibleLines((p) => ({ ...p, rate364: !p.rate364 }))}
+                    className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border transition-all ${
+                      visibleLines.rate364
+                        ? "border-purple-500 text-purple-600 bg-purple-500/10 dark:text-purple-400"
+                        : "border-border text-muted-foreground opacity-50"
+                    }`}
+                  >
+                    <span className="h-2 w-2 rounded-full bg-purple-500" /> 364-Day
+                  </button>
+                </div>
+
+                {/* Responsive Recharts Chart */}
+                <div className="h-72 w-full">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <LineChart data={historyDataMap[chartPeriod] || historyDataMap["6M"]}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="currentColor" className="text-border/40" />
+                      <XAxis dataKey="date" stroke="currentColor" className="text-muted-foreground text-xs" />
+                      <YAxis
+                        stroke="currentColor"
+                        className="text-muted-foreground text-xs"
+                        unit="%"
+                        domain={["dataMin - 0.5", "dataMax + 0.5"]}
+                      />
+                      <RechartsTooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          borderColor: "hsl(var(--border))",
+                          borderRadius: "0.75rem",
+                          fontSize: "12px",
+                        }}
+                      />
+                      {visibleLines.rate91 && (
+                        <Line
+                          type="monotone"
+                          dataKey="rate91"
+                          name="91-Day"
+                          stroke="#10b981"
+                          strokeWidth={2.5}
+                          dot={{ r: 4 }}
+                        />
+                      )}
+                      {visibleLines.rate182 && (
+                        <Line
+                          type="monotone"
+                          dataKey="rate182"
+                          name="182-Day"
+                          stroke="#f59e0b"
+                          strokeWidth={2.5}
+                          dot={{ r: 4 }}
+                        />
+                      )}
+                      {visibleLines.rate364 && (
+                        <Line
+                          type="monotone"
+                          dataKey="rate364"
+                          name="364-Day"
+                          stroke="#a855f7"
+                          strokeWidth={2.5}
+                          dot={{ r: 4 }}
+                        />
+                      )}
+                    </LineChart>
+                  </ResponsiveContainer>
+                </div>
+              </section>
+
+              {/* Section 5: Latest Auction Table */}
+              <section className="space-y-4">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
+                  <h3 className="text-xl font-bold text-foreground">Latest Treasury Bill Auction</h3>
+                  <div className="text-xs text-muted-foreground font-medium">
+                    Auction Date: <strong className="text-foreground">08 Aug 2026</strong> · Source: Central Bank of Kenya
+                  </div>
+                </div>
+
+                {/* Desktop Table View */}
+                <div className="hidden md:block overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-muted/50 text-xs font-bold text-muted-foreground uppercase border-b border-border">
+                      <tr>
+                        <th className="py-3.5 px-4">Security</th>
+                        <th className="py-3.5 px-4 text-right">Rate</th>
+                        <th className="py-3.5 px-4 text-right">Amount Offered</th>
+                        <th className="py-3.5 px-4 text-right">Bids Received</th>
+                        <th className="py-3.5 px-4 text-right">Amount Accepted</th>
+                        <th className="py-3.5 px-4 text-right flex items-center justify-end gap-1">
+                          <span>Demand</span>
+                          <Tooltip>
+                            <TooltipTrigger>
+                              <HelpCircle className="h-3.5 w-3.5 text-muted-foreground hover:text-foreground" />
+                            </TooltipTrigger>
+                            <TooltipContent className="max-w-xs text-xs">
+                              Demand shows how much investors wanted to buy compared with the amount the government offered.
+                            </TooltipContent>
+                          </Tooltip>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {latestAuctions.map((row) => (
+                        <tr key={row.security} className="hover:bg-muted/40 transition-colors">
+                          <td className="py-4 px-4 font-bold text-foreground">{row.security}</td>
+                          <td className="py-4 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">
+                            {row.rate}
+                          </td>
+                          <td className="py-4 px-4 text-right text-muted-foreground">{row.amountOffered}</td>
+                          <td className="py-4 px-4 text-right text-foreground font-semibold">{row.bidsReceived}</td>
+                          <td className="py-4 px-4 text-right text-foreground font-semibold">{row.amountAccepted}</td>
+                          <td className="py-4 px-4 text-right font-bold text-foreground">
+                            <span className="px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                              {row.demand}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Cards View */}
+                <div className="md:hidden space-y-3">
+                  {latestAuctions.map((row) => (
+                    <div key={row.security} className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-sm">
+                      <div className="flex items-center justify-between border-b border-border/60 pb-2">
+                        <span className="font-bold text-foreground text-base">{row.security} T-Bill</span>
+                        <span className="text-base font-black text-emerald-600 dark:text-emerald-400">{row.rate}</span>
+                      </div>
+                      <div className="grid grid-cols-2 gap-2 text-xs">
+                        <div>
+                          <span className="text-muted-foreground block">Offered:</span>
+                          <span className="font-semibold text-foreground">{row.amountOffered}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">Bids Received:</span>
+                          <span className="font-semibold text-foreground">{row.bidsReceived}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">Accepted:</span>
+                          <span className="font-semibold text-foreground">{row.amountAccepted}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">Demand:</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">{row.demand}</span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  <p className="text-[11px] text-muted-foreground italic px-1">
+                    * Demand shows how much investors wanted to buy compared with the amount offered by CBK.
+                  </p>
+                </div>
+              </section>
+            </div>
+          )}
+
+          {/* ───────────────────────────────────────────────────────────── */}
+          {/* TAB 2: TREASURY BONDS                                         */}
+          {/* ───────────────────────────────────────────────────────────── */}
+          {activeTab === "bonds" && (
+            <div className="space-y-8 animate-in fade-in-50 duration-300">
+              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div>
+                  <h2 className="text-2xl font-bold text-foreground">Current Treasury Bonds</h2>
+                  <p className="text-xs text-muted-foreground">
+                    Benchmark fixed-rate and tax-free infrastructure bonds issued by the Government of Kenya
+                  </p>
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <span className="text-xs font-semibold text-muted-foreground">Sort by:</span>
+                  <select
+                    value={bondSortBy}
+                    onChange={(e) => setBondSortBy(e.target.value as any)}
+                    className="rounded-xl border border-border bg-card px-3 py-1.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500"
+                  >
+                    <option value="yield">Yield (High to Low)</option>
+                    <option value="coupon">Coupon (High to Low)</option>
+                    <option value="maturity">Maturity (Shortest first)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Section 6: Filters */}
+              <div className="rounded-2xl border border-border bg-card p-4 space-y-4 shadow-sm">
+                <div className="relative">
+                  <Search className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                  <Input
+                    type="text"
+                    placeholder="Search bonds by code (e.g. FXD1, IFB)..."
+                    value={bondSearch}
+                    onChange={(e) => setBondSearch(e.target.value)}
+                    className="pl-9 rounded-xl border-border bg-background text-sm"
+                  />
+                </div>
+
+                <div className="flex flex-wrap items-center justify-between gap-3 text-xs">
+                  {/* Maturity Category Buttons */}
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="font-bold text-muted-foreground mr-1">Maturity:</span>
+                    {["All", "< 2 Years", "2–5 Years", "5–10 Years", "10+ Years"].map((mat) => (
+                      <button
+                        key={mat}
+                        onClick={() => setBondMaturityFilter(mat)}
+                        className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                          bondMaturityFilter === mat
+                            ? "bg-emerald-500 text-white shadow-sm"
+                            : "bg-muted text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {mat}
+                      </button>
+                    ))}
+                  </div>
+
+                  {/* Coupon Filter */}
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-bold text-muted-foreground">Coupon:</span>
+                    {["All", "Fixed", "Tax-Free"].map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => setBondCouponFilter(type)}
+                        className={`px-3 py-1 rounded-lg font-bold transition-all ${
+                          bondCouponFilter === type
+                            ? "bg-emerald-500 text-white shadow-sm"
+                            : "bg-muted text-muted-foreground hover:text-foreground"
+                        }`}
+                      >
+                        {type}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Bond List Table / Cards */}
+              <div className="space-y-3">
+                <div className="hidden md:block overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+                  <table className="w-full text-left text-sm">
+                    <thead className="bg-muted/50 text-xs font-bold text-muted-foreground uppercase border-b border-border">
+                      <tr>
+                        <th className="py-3.5 px-4">Bond</th>
+                        <th className="py-3.5 px-4 text-right">Coupon</th>
+                        <th className="py-3.5 px-4 text-right">Yield</th>
+                        <th className="py-3.5 px-4">Maturity</th>
+                        <th className="py-3.5 px-4 text-right">Remaining Term</th>
+                        <th className="py-3.5 px-4 text-center">Status</th>
+                        <th className="py-3.5 px-4 text-right">Action</th>
+                      </tr>
+                    </thead>
+                    <tbody className="divide-y divide-border">
+                      {filteredBonds.map((bond) => (
+                        <tr
+                          key={bond.code}
+                          onClick={() => setSelectedBond(bond)}
+                          className="hover:bg-muted/40 transition-colors cursor-pointer"
+                        >
+                          <td className="py-4 px-4">
+                            <p className="font-black text-foreground">{bond.code}</p>
+                            <p className="text-xs text-muted-foreground truncate max-w-xs">{bond.name}</p>
+                          </td>
+                          <td className="py-4 px-4 text-right font-bold text-foreground">{bond.coupon.toFixed(2)}%</td>
+                          <td className="py-4 px-4 text-right font-black text-emerald-600 dark:text-emerald-400">
+                            {bond.yieldRate.toFixed(2)}%
+                          </td>
+                          <td className="py-4 px-4 text-muted-foreground">{bond.maturityDate}</td>
+                          <td className="py-4 px-4 text-right font-semibold text-foreground">{bond.yearsRemaining} yrs</td>
+                          <td className="py-4 px-4 text-center">
+                            <span
+                              className={`px-2.5 py-0.5 rounded-full text-xs font-bold border ${
+                                bond.status === "Tax-Free"
+                                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+                                  : "bg-blue-500/10 text-blue-600 dark:text-blue-400 border-blue-500/30"
+                              }`}
+                            >
+                              {bond.status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="rounded-xl text-emerald-600 dark:text-emerald-400 font-bold hover:bg-emerald-500/10"
+                            >
+                              View Bond
+                            </Button>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* Mobile Cards */}
+                <div className="md:hidden space-y-3">
+                  {filteredBonds.map((bond) => (
+                    <div
+                      key={bond.code}
+                      onClick={() => setSelectedBond(bond)}
+                      className="rounded-2xl border border-border bg-card p-4 space-y-3 shadow-sm hover:border-emerald-500/40 transition-colors cursor-pointer"
+                    >
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <span className="font-black text-foreground text-base block">{bond.code}</span>
+                          <span className="text-xs text-muted-foreground">{bond.name}</span>
+                        </div>
+                        <span className="text-lg font-black text-emerald-600 dark:text-emerald-400">
+                          {bond.yieldRate.toFixed(2)}%
+                        </span>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-border/60">
+                        <div>
+                          <span className="text-muted-foreground block">Coupon:</span>
+                          <span className="font-semibold text-foreground">{bond.coupon.toFixed(2)}%</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">Maturity:</span>
+                          <span className="font-semibold text-foreground">{bond.maturityDate}</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">Term Remaining:</span>
+                          <span className="font-semibold text-foreground">{bond.yearsRemaining} yrs</span>
+                        </div>
+                        <div>
+                          <span className="text-muted-foreground block">Status:</span>
+                          <span className="font-bold text-emerald-600 dark:text-emerald-400">{bond.status}</span>
+                        </div>
+                      </div>
+
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        className="w-full rounded-xl font-bold border-border"
+                      >
+                        View Bond Details
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* ───────────────────────────────────────────────────────────── */}
+          {/* TAB 3 / SECTION 8: INVESTMENT CALCULATOR                     */}
+          {/* ───────────────────────────────────────────────────────────── */}
+          {(activeTab === "calculator" || activeTab === "tbills") && (
+            <section className="space-y-6 pt-6 border-t border-border">
+              <div>
+                <div className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider mb-1">
+                  <CalcIcon className="h-4 w-4" /> Interactive Estimator
+                </div>
+                <h2 className="text-2xl md:text-3xl font-black text-foreground">
+                  How much could I earn?
+                </h2>
+                <p className="text-xs md:text-sm text-muted-foreground">
+                  Estimate potential interest returns on Kenyan government T-Bills and Bonds based on current mock rates.
+                </p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
+                {/* Inputs Box */}
+                <div className="md:col-span-6 rounded-2xl border border-border bg-card p-5 space-y-5 shadow-sm">
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Investment Amount (KSh)
+                    </label>
+                    <div className="relative">
+                      <span className="absolute left-3.5 top-3 text-muted-foreground font-bold text-sm">KSh</span>
+                      <Input
+                        type="number"
+                        min={50000}
+                        step={10000}
+                        value={calcAmount}
+                        onChange={(e) => setCalcAmount(Math.max(0, Number(e.target.value)))}
+                        className="pl-14 rounded-xl text-base font-bold bg-background border-border"
+                      />
+                    </div>
+                    <p className="text-[11px] text-muted-foreground">Minimum investment for T-Bills is KSh 50,000.</p>
+                  </div>
+
+                  <div className="space-y-2">
+                    <label className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Select Security
+                    </label>
+                    <div className="grid grid-cols-1 gap-2">
+                      {tBillCards.map((c) => (
+                        <button
+                          key={c.id}
+                          onClick={() => setCalcSecurityId(c.id)}
+                          className={`flex items-center justify-between p-3 rounded-xl border text-left transition-all ${
+                            calcSecurityId === c.id
+                              ? "border-emerald-500 bg-emerald-500/10 text-foreground"
+                              : "border-border bg-background hover:bg-muted/50"
+                          }`}
+                        >
+                          <div>
+                            <p className="text-xs font-bold text-foreground">{c.term}</p>
+                            <p className="text-[11px] text-muted-foreground">{c.approx}</p>
+                          </div>
+                          <span className="text-sm font-black text-emerald-600 dark:text-emerald-400">
+                            {c.rate.toFixed(2)}%
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                </div>
+
+                {/* Result Card */}
+                <div className="md:col-span-6 rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-emerald-500/5 to-transparent p-6 flex flex-col justify-between space-y-6 shadow-sm">
+                  <div>
+                    <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                      Estimated Return
+                    </span>
+                    <div className="mt-1">
+                      <span className="text-4xl md:text-5xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+                        KSh {calcResults.estReturn.toLocaleString()}
+                      </span>
+                    </div>
+
+                    <div className="mt-6 space-y-2 text-sm border-t border-border/80 pt-4">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Investment:</span>
+                        <span className="font-bold text-foreground">KSh {calcAmount.toLocaleString()}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Estimated return:</span>
+                        <span className="font-bold text-emerald-600 dark:text-emerald-400">
+                          +KSh {calcResults.estReturn.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Estimated maturity value:</span>
+                        <span className="font-black text-foreground">
+                          KSh {calcResults.maturityVal.toLocaleString()}
+                        </span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Investment period:</span>
+                        <span className="font-semibold text-foreground">{calcResults.days} days</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Applied Rate:</span>
+                        <span className="font-semibold text-foreground">{calcResults.rate.toFixed(2)}% p.a.</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <Button className="w-full rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700 py-3">
+                    Calculate Return
+                  </Button>
+                </div>
+              </div>
+            </section>
+          )}
+
+          {/* ───────────────────────────────────────────────────────────── */}
+          {/* SECTION 9: COMPARISON WITH MONEY MARKET FUNDS                 */}
+          {/* ───────────────────────────────────────────────────────────── */}
+          <section className="space-y-4 pt-8 border-t border-border">
+            <div>
+              <h2 className="text-2xl font-bold text-foreground">Compare Your Options</h2>
+              <p className="text-xs md:text-sm text-muted-foreground">
+                See how Treasury Bills compare with Money Market Funds (MMFs) in Kenya.
+              </p>
+            </div>
+
+            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
+              <table className="w-full text-left text-sm">
+                <thead className="bg-muted/50 text-xs font-bold text-muted-foreground uppercase border-b border-border">
+                  <tr>
+                    <th className="py-3.5 px-4">Investment</th>
+                    <th className="py-3.5 px-4 text-right">Rate/Yield</th>
+                    <th className="py-3.5 px-4">Access to Money</th>
+                    <th className="py-3.5 px-4">Term</th>
+                    <th className="py-3.5 px-4 text-center">Risk</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border">
+                  <tr>
+                    <td className="py-4 px-4 font-bold text-foreground">91-Day T-Bill</td>
+                    <td className="py-4 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">8.12%</td>
+                    <td className="py-4 px-4 text-muted-foreground">At maturity</td>
+                    <td className="py-4 px-4 text-foreground font-semibold">91 days</td>
+                    <td className="py-4 px-4 text-center font-bold text-emerald-600">Low</td>
+                  </tr>
+                  <tr>
+                    <td className="py-4 px-4 font-bold text-foreground">182-Day T-Bill</td>
+                    <td className="py-4 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">8.34%</td>
+                    <td className="py-4 px-4 text-muted-foreground">At maturity</td>
+                    <td className="py-4 px-4 text-foreground font-semibold">182 days</td>
+                    <td className="py-4 px-4 text-center font-bold text-emerald-600">Low</td>
+                  </tr>
+                  <tr>
+                    <td className="py-4 px-4 font-bold text-foreground">364-Day T-Bill</td>
+                    <td className="py-4 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">9.02%</td>
+                    <td className="py-4 px-4 text-muted-foreground">At maturity</td>
+                    <td className="py-4 px-4 text-foreground font-semibold">364 days</td>
+                    <td className="py-4 px-4 text-center font-bold text-emerald-600">Low</td>
+                  </tr>
+                  <tr className="bg-emerald-500/5">
+                    <td className="py-4 px-4 font-bold text-foreground">Money Market Funds (MMF)</td>
+                    <td className="py-4 px-4 text-right font-extrabold text-foreground">Varies (10% - 17%)</td>
+                    <td className="py-4 px-4 text-muted-foreground">Usually flexible (24-48 hrs)</td>
+                    <td className="py-4 px-4 text-foreground font-semibold">Flexible / Daily</td>
+                    <td className="py-4 px-4 text-center font-bold text-emerald-600">Low</td>
+                  </tr>
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex justify-end">
+              <Link to="/funds">
+                <Button className="rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700">
+                  Compare Money Market Funds <ArrowRight className="h-4 w-4 ml-2" />
+                </Button>
+              </Link>
+            </div>
+          </section>
+
+          {/* ───────────────────────────────────────────────────────────── */}
+          {/* SECTION 10: EDUCATIONAL CARDS                                 */}
+          {/* ───────────────────────────────────────────────────────────── */}
+          <section className="space-y-4 pt-8 border-t border-border">
+            <h2 className="text-xl md:text-2xl font-bold text-foreground">Treasury Bills & Bonds Explained</h2>
+
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="rounded-2xl border border-border bg-card p-5 space-y-2 shadow-sm">
+                <h3 className="font-bold text-foreground text-base">What is a Treasury Bill?</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  You lend money to the Kenyan government for a short period (91, 182, or 364 days) and receive a guaranteed return when the investment matures.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card p-5 space-y-2 shadow-sm">
+                <h3 className="font-bold text-foreground text-base">Are T-Bills safe?</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Treasury Bills are issued by the Government of Kenya and are generally considered relatively low-risk investments, although no investment is completely risk-free.
+                </p>
+              </div>
+
+              <div className="rounded-2xl border border-border bg-card p-5 space-y-2 shadow-sm">
+                <h3 className="font-bold text-foreground text-base">Where does the information come from?</h3>
+                <p className="text-xs text-muted-foreground leading-relaxed">
+                  Treasury Bill and Treasury Bond information displayed on KenyaFundFinder is sourced from official government market information.
+                </p>
+                <p className="text-[11px] font-bold text-emerald-600 dark:text-emerald-400 pt-1">
+                  Source: Central Bank of Kenya (CBK)
+                </p>
+              </div>
+            </div>
+          </section>
+        </main>
+
+        {/* ── Section 7: Bond Detail Modal / Drawer ── */}
+        <Sheet open={Boolean(selectedBond)} onOpenChange={(open) => !open && setSelectedBond(null)}>
+          <SheetContent side="right" className="w-[90vw] sm:max-w-lg p-6 overflow-y-auto space-y-6 bg-background">
+            {selectedBond && (
+              <>
+                <SheetHeader className="text-left space-y-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    {selectedBond.status} Government Bond
+                  </span>
+                  <SheetTitle className="text-2xl font-black text-foreground">
+                    {selectedBond.code}
+                  </SheetTitle>
+                  <p className="text-xs text-muted-foreground">{selectedBond.name}</p>
+                </SheetHeader>
+
+                {/* Primary Metric */}
+                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center space-y-1">
+                  <span className="text-xs font-bold uppercase text-muted-foreground">Current Yield</span>
+                  <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">
+                    {selectedBond.yieldRate.toFixed(2)}%
+                  </p>
+                </div>
+
+                {/* Spec Grid */}
+                <div className="grid grid-cols-2 gap-3 text-xs">
+                  <div className="p-3 rounded-xl border border-border bg-card">
+                    <span className="text-muted-foreground block">Coupon Rate</span>
+                    <span className="font-bold text-foreground text-sm">{selectedBond.coupon.toFixed(2)}%</span>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-card">
+                    <span className="text-muted-foreground block">Maturity Date</span>
+                    <span className="font-bold text-foreground text-sm">{selectedBond.maturityDate}</span>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-card">
+                    <span className="text-muted-foreground block">Remaining Term</span>
+                    <span className="font-bold text-foreground text-sm">{selectedBond.yearsRemaining} years</span>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-card">
+                    <span className="text-muted-foreground block">ISIN</span>
+                    <span className="font-mono font-bold text-foreground text-xs">{selectedBond.isin}</span>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-card">
+                    <span className="text-muted-foreground block">Auction Date</span>
+                    <span className="font-semibold text-foreground">{selectedBond.auctionDate}</span>
+                  </div>
+                  <div className="p-3 rounded-xl border border-border bg-card">
+                    <span className="text-muted-foreground block">Amount Issued</span>
+                    <span className="font-semibold text-foreground">{selectedBond.amountIssued}</span>
+                  </div>
+                </div>
+
+                {/* What does this mean? Section */}
+                <div className="rounded-2xl border border-border bg-muted/40 p-4 space-y-2">
+                  <h4 className="font-bold text-foreground text-sm">What does this mean?</h4>
+                  <p className="text-xs text-muted-foreground leading-relaxed">
+                    {selectedBond.explanation}
+                  </p>
+                </div>
+
+                <Button
+                  onClick={() => setSelectedBond(null)}
+                  className="w-full rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700"
+                >
+                  Close Details
+                </Button>
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
+
+        {/* ── T-Bill Detail Modal / Drawer ── */}
+        <Sheet open={Boolean(selectedTBill)} onOpenChange={(open) => !open && setSelectedTBill(null)}>
+          <SheetContent side="right" className="w-[90vw] sm:max-w-md p-6 overflow-y-auto space-y-6 bg-background">
+            {selectedTBill && (
+              <>
+                <SheetHeader className="text-left space-y-1">
+                  <span className="text-xs font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
+                    Central Bank of Kenya T-Bill
+                  </span>
+                  <SheetTitle className="text-2xl font-black text-foreground">
+                    {selectedTBill.term}
+                  </SheetTitle>
+                  <p className="text-xs text-muted-foreground">{selectedTBill.approx}</p>
+                </SheetHeader>
+
+                <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center space-y-1">
+                  <span className="text-xs font-bold uppercase text-muted-foreground">Current Auction Rate</span>
+                  <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">
+                    {selectedTBill.rate.toFixed(2)}%
+                  </p>
+                  <p className="text-xs text-muted-foreground pt-1">
+                    {selectedTBill.change >= 0 ? `▲ +${selectedTBill.change.toFixed(2)}%` : `▼ ${selectedTBill.change.toFixed(2)}%`} from previous auction
+                  </p>
+                </div>
+
+                <div className="space-y-3 text-xs">
+                  <div className="flex justify-between p-3 rounded-xl border border-border bg-card">
+                    <span className="text-muted-foreground">Investment Term:</span>
+                    <span className="font-bold text-foreground">{selectedTBill.days} Days</span>
+                  </div>
+                  <div className="flex justify-between p-3 rounded-xl border border-border bg-card">
+                    <span className="text-muted-foreground">Latest Auction Date:</span>
+                    <span className="font-bold text-foreground">{selectedTBill.lastAuctionDate}</span>
+                  </div>
+                  <div className="flex justify-between p-3 rounded-xl border border-border bg-card">
+                    <span className="text-muted-foreground">Minimum Investment:</span>
+                    <span className="font-bold text-foreground">{selectedTBill.minInvestment}</span>
+                  </div>
+                  <div className="flex justify-between p-3 rounded-xl border border-border bg-card">
+                    <span className="text-muted-foreground">Issuer:</span>
+                    <span className="font-bold text-foreground">Government of Kenya (CBK)</span>
+                  </div>
+                </div>
+
+                <Button
+                  onClick={() => setSelectedTBill(null)}
+                  className="w-full rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700"
+                >
+                  Close Details
+                </Button>
+              </>
+            )}
+          </SheetContent>
+        </Sheet>
+
+        <Footer />
+      </div>
+    </TooltipProvider>
+  );
+}
