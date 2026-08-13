@@ -396,23 +396,23 @@ export default function TreasuryPage() {
                   <span className="text-xs text-muted-foreground font-medium">Source: CBK Mock Rates</span>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="no-scrollbar -mx-4 px-4 flex gap-3.5 overflow-x-auto py-1 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:mx-0 md:px-0">
                   {tBillCards.map((card) => (
                     <div
                       key={card.id}
-                      className="rounded-2xl border border-border bg-card p-5 hover:border-emerald-500/40 transition-all shadow-sm flex flex-col justify-between space-y-4"
+                      className="min-w-[260px] w-[260px] md:w-auto shrink-0 rounded-2xl border border-border/80 bg-card p-5 hover:border-emerald-500/40 transition-all shadow-sm flex flex-col justify-between space-y-4"
                     >
                       <div className="space-y-2">
-                        <div className="flex items-center justify-between">
-                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                        <div className="flex items-center justify-between gap-1">
+                          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground truncate">
                             {card.term}
                           </span>
-                          <span className="text-xs font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20">
+                          <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 shrink-0">
                             {card.approx}
                           </span>
                         </div>
 
-                        <div className="flex items-baseline gap-2">
+                        <div className="flex items-baseline gap-2 pt-1">
                           <span className="text-3xl md:text-4xl font-black text-foreground tabular-nums">
                             {card.rate.toFixed(2)}%
                           </span>
@@ -428,18 +428,18 @@ export default function TreasuryPage() {
                               <TrendingDown className="h-3.5 w-3.5" /> ▼ {Math.abs(card.change).toFixed(2)}%
                             </span>
                           )}
-                          <span className="text-muted-foreground">from previous auction</span>
+                          <span className="text-muted-foreground text-[11px] truncate">from prev auction</span>
                         </div>
                       </div>
 
                       <div className="pt-3 border-t border-border/60 space-y-3">
                         <div className="grid grid-cols-2 gap-2 text-xs">
                           <div>
-                            <p className="text-muted-foreground">Term</p>
+                            <p className="text-muted-foreground text-[10px]">Term</p>
                             <p className="font-semibold text-foreground">{card.days} days</p>
                           </div>
                           <div>
-                            <p className="text-muted-foreground">Latest Auction</p>
+                            <p className="text-muted-foreground text-[10px]">Latest Auction</p>
                             <p className="font-semibold text-foreground">{card.lastAuctionDate}</p>
                           </div>
                         </div>
