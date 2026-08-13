@@ -1346,7 +1346,7 @@ const OverviewPage = () => {
         </div>
 
         {/* Middle Column - Feed */}
-        <div className="md:col-span-6 flex flex-col w-full max-w-full overflow-hidden md:overflow-visible">
+        <div className="md:col-span-6 flex flex-col w-full max-w-full overflow-x-clip md:overflow-visible">
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 

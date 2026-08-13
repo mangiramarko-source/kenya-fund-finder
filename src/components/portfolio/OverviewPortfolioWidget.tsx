@@ -61,7 +61,7 @@ export default function OverviewPortfolioWidget() {
         </Link>
       </div>
 
-      <div className="flex overflow-x-auto gap-3.5 pb-2.5 px-0.5 md:px-0 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
+      <div className="flex overflow-x-auto gap-3.5 pb-2.5 -mx-4 px-4 scroll-px-4 md:mx-0 md:px-0 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
         {displayItems.map((item) => {
           const itemChange = isDemoFallback
             ? DEMO_CHANGE
@@ -75,13 +75,13 @@ export default function OverviewPortfolioWidget() {
               change={itemChange}
               compact={true}
               onClick={() => navigate("/portfolio")}
-              className="w-[215px] sm:w-[225px] shrink-0 snap-start min-h-[135px]"
+              className="w-[200px] sm:w-[225px] shrink-0 snap-start min-h-[135px]"
             />
           );
         })}
 
         {/* Dashed Add / See More Investment Card */}
-        <div className="w-[160px] shrink-0 snap-start min-h-[135px]">
+        <div className="w-[150px] sm:w-[160px] shrink-0 snap-start min-h-[135px]">
           <Link
             to="/portfolio"
             className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[135px] bg-[#131316]/80 border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all group"
