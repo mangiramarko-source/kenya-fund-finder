@@ -68,10 +68,10 @@ function SidebarRow({
   return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
 }
 
-function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
+function SidebarSection({ title, children, isFirst }: { title: string; children: React.ReactNode; isFirst?: boolean }) {
   return (
-    <div className="pt-4 pb-1">
-      <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">{title}</p>
+    <div className={isFirst ? "pt-2 pb-1" : "pt-3.5 pb-1"}>
+      <p className="px-4 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">{title}</p>
       <div className="space-y-0.5">{children}</div>
     </div>
   );
@@ -135,10 +135,10 @@ function MobileSidebarDrawer({
         aria-label="Navigation menu"
       >
         {/* ── Header ── */}
-        <div className="flex items-center gap-3.5 px-5 py-4 border-b border-border/80">
+        <div className="flex items-center gap-3.5 px-5 py-3 border-b border-border/80">
           {user ? (
             <>
-              <Avatar className="h-12 w-12 shrink-0 border border-emerald-500/30">
+              <Avatar className="h-11 w-11 shrink-0 border border-emerald-500/30">
                 <AvatarImage src={avatarUrl} alt={displayName} />
                 <AvatarFallback className="bg-emerald-600 text-white font-extrabold text-base">{initials}</AvatarFallback>
               </Avatar>
@@ -149,7 +149,7 @@ function MobileSidebarDrawer({
             </>
           ) : (
             <>
-              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-extrabold text-base">
+              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-extrabold text-base">
                 MA
               </div>
               <div className="flex-1 min-w-0">
@@ -168,9 +168,9 @@ function MobileSidebarDrawer({
         </div>
 
         {/* ── Scrollable Content ── */}
-        <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-1">
+        <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
 
-          <SidebarSection title="MARKETS">
+          <SidebarSection title="MARKETS" isFirst>
             <SidebarRow icon={TrendingUp}  label="NSE Stocks"     to="/stocks"      onClick={close} />
             <SidebarRow icon={BarChart2}   label="Unit Trusts"    to="/funds"       onClick={close} />
             <SidebarRow icon={DollarSign}  label="FX Rates"       to="/rates"       onClick={close} />
