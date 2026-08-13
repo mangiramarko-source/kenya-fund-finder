@@ -71,7 +71,7 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
               <Performance key={period.label} label={period.label} value={period.value} />
             ))}
           </div>
-          <p className="mt-3 text-[15px] leading-relaxed text-foreground/90">
+          <p className="mt-3 text-[15px] leading-relaxed text-foreground/90 line-clamp-1">
             The price increased during the same period, but the available data does not prove this story caused the movement.
           </p>
         </section>
@@ -80,7 +80,7 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
         {analysis.what_happened && (
           <section className="border-t border-border pt-4">
             <h3 className="text-sm font-bold text-foreground">Source facts</h3>
-            <p className="mt-2 text-[15px] leading-relaxed text-foreground/90">
+            <p className="mt-2 text-[15px] leading-relaxed text-foreground/90 line-clamp-1">
               {/* If it's the demo data, we inject the strong tags to match screenshot exactly */}
               {article.parsed_ai_analysis ? analysis.what_happened : (
                 <>

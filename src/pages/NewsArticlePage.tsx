@@ -342,7 +342,12 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     try { return new URL(article.url).hostname; } catch { return ""; }
   })();
   const sourceLogoUrl = sourceDomain ? `https://www.google.com/s2/favicons?domain=${sourceDomain}&sz=128` : "";
-  const articleText = decodeHtmlEntities(articlePresentation?.body || "");
+  let rawBody = articlePresentation?.body || "";
+  if (rawBody.length < 150 && article?.ai_insight && article.ai_insight.length > rawBody.length) {
+    rawBody = article.ai_insight;
+  }
+  const isHeadlineOnly = !rawBody;
+  const articleText = decodeHtmlEntities(rawBody);
   const articleParagraphs = splitReadableParagraphs(articleText);
 
   return (
@@ -430,14 +435,14 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
 
         {/* ─── 3. Post Text ─── */}
         <div className="space-y-3">
-          <h1 className={articlePresentation?.isHeadlineOnly
+          <h1 className={isHeadlineOnly
             ? "text-[15px] font-normal text-foreground/90 leading-relaxed"
             : "text-base sm:text-lg font-bold text-foreground leading-snug tracking-tight"
           }>
             {articlePresentation?.title || decodeHtmlEntities(article.title)}
           </h1>
 
-          {!articlePresentation?.isHeadlineOnly && <div className="text-[15px] sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
+          {!isHeadlineOnly && <div className="text-[15px] sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
             {articleParagraphs.map((paragraph, index) => (
               <p key={index} className="my-4">
                 {paragraph}

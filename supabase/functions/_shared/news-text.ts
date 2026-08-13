@@ -109,7 +109,19 @@ export function getNewsPresentation(input: NewsPresentationInput): NewsPresentat
   const content = isDuplicateNewsText(input.title, input.content, source)
     ? ""
     : (input.content || "").trim();
-  const body = summary || content;
+  
+  // Prefer the longer text if one is suspiciously short (like 1 word)
+  let body = "";
+  if (summary && content) {
+    body = summary.length > 30 ? summary : (content.length > summary.length ? content : summary);
+  } else {
+    body = summary || content;
+  }
+
+  // If content is significantly longer, prefer content over summary for the full article
+  if (content.length > summary.length * 2 && content.length > 50) {
+    body = content;
+  }
 
   return { title, body, isHeadlineOnly: !body };
 }
