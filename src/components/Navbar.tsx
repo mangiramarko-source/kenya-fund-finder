@@ -54,26 +54,28 @@ function useNseIndices(): { indices: IndexItem[]; isOpen: boolean } {
 function NseLiveWidget() {
   const { indices, isOpen } = useNseIndices();
   return (
-    <div className="px-4 py-3 border-b border-border">
-      <div className="flex items-center justify-between mb-2">
-        <div className="flex items-center gap-1.5">
-          <span className={`h-2 w-2 rounded-full ${isOpen ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground"}`} />
-          <span className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">NSE LIVE</span>
+    <div className="px-5 py-4 border-b border-border/80 bg-card/30">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <span className={`h-2.5 w-2.5 rounded-full ${isOpen ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground"}`} />
+          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">NSE LIVE</span>
         </div>
-        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full border ${
+        <span className={`text-xs font-semibold px-3 py-0.5 rounded-full border ${
           isOpen
-            ? "text-emerald-600 border-emerald-400/60 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400"
+            ? "text-emerald-700 bg-emerald-50 border-emerald-200/80 dark:bg-emerald-950/60 dark:border-emerald-800/60 dark:text-emerald-300"
             : "text-muted-foreground border-border bg-muted/40"
         }`}>{isOpen ? "Open" : "Closed"}</span>
       </div>
-      <div className="grid grid-cols-3 gap-1.5">
+      <div className="grid grid-cols-3 gap-2">
         {indices.map((idx) => (
-          <div key={idx.label} className="rounded-lg bg-muted/50 px-2 py-2">
-            <p className="text-[9px] text-muted-foreground font-medium leading-tight mb-0.5">{idx.label}</p>
-            <p className="text-[12px] font-bold tabular-nums text-foreground">{idx.value.toLocaleString()}</p>
-            <p className={`text-[10px] font-semibold ${
-              idx.change > 0 ? "text-emerald-500" : idx.change < 0 ? "text-destructive" : "text-muted-foreground"
-            }`}>{idx.change >= 0 ? "+" : ""}{idx.change.toFixed(2)}%</p>
+          <div key={idx.label} className="rounded-xl bg-muted/40 border border-border/50 p-2.5 flex flex-col justify-between">
+            <p className="text-[10px] text-muted-foreground font-medium leading-snug mb-1 truncate">{idx.label}</p>
+            <div>
+              <p className="text-[13px] font-extrabold tabular-nums text-foreground">{idx.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
+              <p className={`text-[11px] font-bold mt-0.5 ${
+                idx.change > 0 ? "text-emerald-500" : idx.change < 0 ? "text-destructive" : "text-muted-foreground"
+              }`}>{idx.change >= 0 ? "+" : ""}{idx.change.toFixed(2)}%</p>
+            </div>
           </div>
         ))}
       </div>
@@ -101,25 +103,21 @@ function SidebarRow({
 }) {
   const inner = (
     <>
-      <span className={`flex items-center justify-center h-8 w-8 rounded-lg shrink-0 ${
-        isDestructive ? "bg-destructive/10" : "bg-muted"
-      }`}>
-        <Icon className={`h-4 w-4 ${isDestructive ? "text-destructive" : "text-foreground/70"}`} />
-      </span>
-      <span className={`flex-1 text-sm font-medium ${
+      <Icon className={`h-5 w-5 shrink-0 stroke-[1.8] ${isDestructive ? "text-destructive" : "text-foreground/70"}`} />
+      <span className={`flex-1 text-[15px] font-bold tracking-tight ${
         isDestructive ? "text-destructive" : "text-foreground"
       }`}>{label}</span>
       {isNew && (
-        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-400">New</span>
+        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">New</span>
       )}
       {badge != null && badge > 0 && (
-        <span className="flex h-5 w-5 items-center justify-center rounded-full bg-emerald-500 text-[10px] font-bold text-white">{badge}</span>
+        <span className="flex h-5 px-2 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 text-xs font-extrabold">{badge}</span>
       )}
-      <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+      <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 stroke-[2]" />
     </>
   );
 
-  const cls = "flex items-center gap-3 w-full px-3 py-2.5 rounded-xl hover:bg-muted/70 active:bg-muted transition-colors";
+  const cls = "flex items-center gap-3.5 w-full px-4 py-3 rounded-xl hover:bg-muted/60 active:bg-muted transition-colors";
 
   if (to) {
     return <Link to={to} onClick={onClick} className={cls}>{inner}</Link>;
@@ -129,8 +127,8 @@ function SidebarRow({
 
 function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
-    <div className="pt-3 pb-1">
-      <p className="px-3 pb-1 text-[10px] font-semibold uppercase tracking-widest text-muted-foreground/60">{title}</p>
+    <div className="pt-4 pb-1">
+      <p className="px-4 pb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">{title}</p>
       <div className="space-y-0.5">{children}</div>
     </div>
   );
@@ -190,39 +188,39 @@ function MobileSidebarDrawer({
     <Sheet open={open} onOpenChange={(v) => !v && close()}>
       <SheetContent
         side="right"
-        className="w-[300px] p-0 flex flex-col bg-background border-l border-border"
+        className="w-[88vw] sm:max-w-sm p-0 flex flex-col bg-background border-l border-border [&>button]:hidden"
         aria-label="Navigation menu"
       >
         {/* ── Header ── */}
-        <div className="flex items-center gap-3 px-4 py-4 border-b border-border">
+        <div className="flex items-center gap-3.5 px-5 py-4 border-b border-border/80">
           {user ? (
             <>
-              <Avatar className="h-11 w-11 shrink-0">
+              <Avatar className="h-12 w-12 shrink-0 border border-emerald-500/30">
                 <AvatarImage src={avatarUrl} alt={displayName} />
-                <AvatarFallback className="bg-emerald-500 text-white font-bold text-sm">{initials}</AvatarFallback>
+                <AvatarFallback className="bg-emerald-600 text-white font-extrabold text-base">{initials}</AvatarFallback>
               </Avatar>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold truncate text-foreground">{displayName || "User"}</p>
-                <p className="text-[11px] text-muted-foreground truncate">Free plan · Nairobi</p>
+                <p className="text-base font-bold truncate text-foreground leading-snug">{displayName || "User"}</p>
+                <p className="text-xs text-muted-foreground truncate font-medium">Free plan · Nairobi</p>
               </div>
             </>
           ) : (
             <>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-muted">
-                <User className="h-5 w-5 text-muted-foreground" />
+              <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-extrabold text-base">
+                MA
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">Guest</p>
-                <p className="text-[11px] text-muted-foreground">Sign in to unlock all features</p>
+                <p className="text-base font-bold text-foreground leading-snug">Guest User</p>
+                <p className="text-xs text-muted-foreground font-medium">Free plan · Nairobi</p>
               </div>
             </>
           )}
           <button
             onClick={close}
             aria-label="Close menu"
-            className="ml-auto flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-muted hover:bg-muted/70 transition-colors"
+            className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 hover:bg-muted transition-colors"
           >
-            <X className="h-4 w-4 text-muted-foreground" />
+            <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
           </button>
         </div>
 
@@ -230,25 +228,27 @@ function MobileSidebarDrawer({
         <NseLiveWidget />
 
         {/* ── Scrollable Content ── */}
-        <nav className="flex-1 overflow-y-auto px-2 pb-2">
+        <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-1">
 
-          <SidebarSection title="Markets">
-            <SidebarRow icon={TrendingUp}  label="NSE Stocks"  to="/stocks"      onClick={close} />
-            <SidebarRow icon={BarChart2}   label="Unit Trusts" to="/funds"       onClick={close} />
-            <SidebarRow icon={DollarSign}  label="FX Rates"    to="/rates"       onClick={close} />
-            <SidebarRow icon={Package}     label="Commodities" to="/commodities" onClick={close} />
+          <SidebarSection title="MARKETS">
+            <SidebarRow icon={TrendingUp}  label="NSE Stocks"     to="/stocks"      onClick={close} />
+            <SidebarRow icon={BarChart2}   label="Unit Trusts"    to="/funds"       onClick={close} />
+            <SidebarRow icon={DollarSign}  label="FX Rates"       to="/rates"       onClick={close} />
+            <SidebarRow icon={Package}     label="Commodities"    to="/commodities" onClick={close} />
+            <SidebarRow icon={Landmark}    label="Bonds & T-Bills" to="/markets"    onClick={close} />
           </SidebarSection>
 
-          <div className="h-px bg-border mx-3 my-1" />
+          <div className="h-px bg-border/60 mx-4 my-1" />
 
-          <SidebarSection title="My Space">
+          <SidebarSection title="MY SPACE">
             <SidebarRow icon={Wallet}      label="Portfolio"  to="/portfolio"   onClick={close} />
             <SidebarRow icon={Star}        label="Watchlist"  to="/watchlist"   onClick={close} badge={watchlistCount || null} />
+            <SidebarRow icon={Wallet}      label="Wallet"     to="/portfolio"   onClick={close} />
           </SidebarSection>
 
-          <div className="h-px bg-border mx-3 my-1" />
+          <div className="h-px bg-border/60 mx-4 my-1" />
 
-          <SidebarSection title="Discover">
+          <SidebarSection title="DISCOVER">
             <SidebarRow icon={Sparkles}    label="AI Lab"          to="/ai-lab"    onClick={close} isNew />
             <SidebarRow icon={Newspaper}   label="Market News"     to="/news"      onClick={close} />
             <SidebarRow icon={BookOpen}    label="Learn & Academy" to="/learn"     onClick={close} />
@@ -256,9 +256,9 @@ function MobileSidebarDrawer({
             <SidebarRow icon={CalendarDays} label="Alerts"         to={user ? "/alerts" : "/auth"} onClick={close} />
           </SidebarSection>
 
-          <div className="h-px bg-border mx-3 my-1" />
+          <div className="h-px bg-border/60 mx-4 my-1" />
 
-          <SidebarSection title="Account">
+          <SidebarSection title="ACCOUNT">
             {user && (
               <SidebarRow icon={Settings} label="Settings" to="/profile" onClick={close} />
             )}
@@ -276,7 +276,7 @@ function MobileSidebarDrawer({
         </nav>
 
         {/* ── Fixed Bottom CTA ── */}
-        <div className="p-4 border-t border-border shrink-0">
+        <div className="p-4 border-t border-border/80 shrink-0 bg-background">
           {user ? (
             <button
               onClick={async () => { await signOut(); close(); navigate("/"); }}
@@ -288,7 +288,7 @@ function MobileSidebarDrawer({
             <Link
               to="/auth"
               onClick={close}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-500 py-3.5 text-sm font-bold text-white hover:bg-emerald-600 transition-colors"
+              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-sm"
             >
               <User className="h-4 w-4" /> Sign In / Sign Up
             </Link>
