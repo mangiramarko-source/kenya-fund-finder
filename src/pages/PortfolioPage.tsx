@@ -327,7 +327,7 @@ const PortfolioPage = () => {
                         change={itemChange}
                         compact={true}
                         onClick={(item) => setEditItem(item)}
-                        className="w-[215px] sm:w-[225px] shrink-0 snap-start min-h-[135px]"
+                        className="w-[245px] sm:w-[260px] shrink-0 snap-start min-h-[135px]"
                       />
                     );
                   })}
@@ -336,7 +336,7 @@ const PortfolioPage = () => {
                   {filteredItems.length > 5 ? (
                     <div
                       onClick={() => setViewMode("table")}
-                      className="flex flex-col items-center justify-center gap-2 w-[160px] shrink-0 snap-start min-h-[135px] bg-[#131316] border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all cursor-pointer group"
+                      className="flex flex-col items-center justify-center gap-2 w-[170px] sm:w-[180px] shrink-0 snap-start min-h-[135px] bg-[#131316] border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all cursor-pointer group"
                     >
                       <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
                         <ArrowRight className="h-4 w-4" />
@@ -353,7 +353,7 @@ const PortfolioPage = () => {
                   ) : (
                     <div
                       onClick={() => setShowAddModal(true)}
-                      className="flex flex-col items-center justify-center gap-2 w-[160px] shrink-0 snap-start min-h-[135px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-xl p-3 text-center transition-all cursor-pointer group"
+                      className="flex flex-col items-center justify-center gap-2 w-[170px] sm:w-[180px] shrink-0 snap-start min-h-[135px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-xl p-3 text-center transition-all cursor-pointer group"
                     >
                       <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
                         <Plus className="h-4 w-4 stroke-[2.5]" />

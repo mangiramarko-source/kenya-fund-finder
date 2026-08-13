@@ -75,13 +75,13 @@ export default function OverviewPortfolioWidget() {
               change={itemChange}
               compact={true}
               onClick={() => navigate("/portfolio")}
-              className="w-[200px] sm:w-[225px] shrink-0 snap-start min-h-[135px]"
+              className="w-[245px] sm:w-[260px] shrink-0 snap-start min-h-[135px]"
             />
           );
         })}
 
         {/* Dashed Add / See More Investment Card */}
-        <div className="w-[150px] sm:w-[160px] shrink-0 snap-start min-h-[135px]">
+        <div className="w-[170px] sm:w-[180px] shrink-0 snap-start min-h-[135px]">
           <Link
             to="/portfolio"
             className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[135px] bg-[#131316]/80 border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all group"
