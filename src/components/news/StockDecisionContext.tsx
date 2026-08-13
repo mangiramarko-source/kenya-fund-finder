@@ -38,7 +38,7 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
       <div className="space-y-4">
         
         {/* Tags / Event / Impact */}
-        <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground/70">
           {[analysis.event_label, analysis.impact_horizon, "Source facts checked"]
             .filter(Boolean)
             .join(" · ")}
@@ -59,8 +59,8 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
         {/* Price Context */}
         <section>
           <div className="flex items-center justify-between gap-3">
-            <h3 className="text-sm font-bold">Price context</h3>
-            <span className="text-[10px] uppercase tracking-[0.14em] text-muted-foreground">Demo data</span>
+            <h3 className="text-sm font-bold text-foreground">Price context</h3>
+            <span className="text-[10px] uppercase tracking-[0.14em] text-foreground/60">Demo data</span>
           </div>
           <div className="mt-3 flex flex-wrap items-center gap-x-6 gap-y-2">
             {/* The screenshot only has the 1D, 7D, 1M, 3M metrics, not the current price line */}
@@ -68,7 +68,7 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
               <Performance key={period.label} label={period.label} value={period.value} />
             ))}
           </div>
-          <p className="mt-3 text-sm leading-relaxed text-muted-foreground/90">
+          <p className="mt-3 text-[15px] leading-relaxed text-foreground/90">
             The price increased during the same period, but the available data does not prove this story caused the movement.
           </p>
         </section>
@@ -76,20 +76,20 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
         {/* Source facts / What happened */}
         {analysis.what_happened && (
           <section className="border-t border-border pt-4">
-            <h3 className="text-sm font-bold">Source facts</h3>
-            <p className="mt-2 text-sm leading-relaxed text-muted-foreground/90">
+            <h3 className="text-sm font-bold text-foreground">Source facts</h3>
+            <p className="mt-2 text-[15px] leading-relaxed text-foreground/90">
               {/* If it's the demo data, we inject the strong tags to match screenshot exactly */}
               {article.parsed_ai_analysis ? analysis.what_happened : (
                 <>
-                  <strong className="font-semibold text-foreground">Safaricom PLC</strong> changed a <strong className="font-semibold text-foreground">KSh 20</strong> data bundle. This is classified as a <strong className="font-semibold text-foreground">pricing change</strong> based on the linked publisher article.
+                  <strong className="font-bold text-foreground">Safaricom PLC</strong> changed a <strong className="font-bold text-foreground">KSh 20</strong> data bundle. This is classified as a <strong className="font-bold text-foreground">pricing change</strong> based on the linked publisher article.
                 </>
               )}
             </p>
             {analysis.verified_figures && analysis.verified_figures.length > 0 && (
               <ul className="mt-3 space-y-1">
                 {analysis.verified_figures.map((figure: string, i: number) => (
-                  <li key={i} className="flex gap-2 text-sm leading-relaxed text-muted-foreground/90">
-                    <span className="mt-1.5 h-1 w-1 shrink-0 rounded-full bg-muted-foreground/60" />
+                  <li key={i} className="flex gap-2 text-[15px] leading-relaxed text-foreground/90">
+                    <span className="mt-2 h-1.5 w-1.5 shrink-0 rounded-full bg-foreground/60" />
                     {figure}
                   </li>
                 ))}
@@ -116,7 +116,7 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
             <Link 
               to={`/stocks/${stock.symbol}`} 
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 text-sm text-foreground/80 hover:text-foreground transition-colors"
             >
               Open {stock.symbol} report <ExternalLink className="h-3.5 w-3.5" />
             </Link>
@@ -138,8 +138,8 @@ function FactorList({ title, items, tone }: { title: string; items: string[]; to
       </h3>
       <ul className="mt-2 space-y-2">
         {items.map((item, i) => (
-          <li key={i} className="flex gap-2 text-sm leading-relaxed text-muted-foreground/90">
-            <span className={`mt-1.5 h-1.5 w-1.5 shrink-0 rounded-full ${positive ? "bg-emerald-500" : "bg-rose-500"}`} />
+          <li key={i} className="flex gap-2 text-[15px] leading-relaxed text-foreground/90">
+            <span className={`mt-2 h-1.5 w-1.5 shrink-0 rounded-full ${positive ? "bg-emerald-500" : "bg-rose-500"}`} />
             {item}
           </li>
         ))}
@@ -152,8 +152,8 @@ function Performance({ label, value }: { label: string; value: number | null }) 
   if (value === null) {
     return (
       <div className="flex items-baseline gap-1.5">
-        <span className="text-[10px] font-semibold text-muted-foreground">{label}</span>
-        <span className="text-xs font-bold tabular-nums text-muted-foreground">—</span>
+        <span className="text-xs font-semibold text-foreground/70">{label}</span>
+        <span className="text-sm font-bold tabular-nums text-foreground/70">—</span>
       </div>
     );
   }
@@ -161,8 +161,8 @@ function Performance({ label, value }: { label: string; value: number | null }) 
   const isPositive = value >= 0;
   return (
     <div className="flex items-baseline gap-1.5">
-      <span className="text-[10px] font-semibold text-muted-foreground">{label}</span>
-      <span className={`text-xs font-bold tabular-nums ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
+      <span className="text-xs font-semibold text-foreground/70">{label}</span>
+      <span className={`text-sm font-bold tabular-nums ${isPositive ? 'text-emerald-500' : 'text-rose-500'}`}>
         {isPositive ? '+' : ''}{value.toFixed(2)}%
       </span>
     </div>
