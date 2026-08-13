@@ -1008,69 +1008,7 @@ export default function TreasuryPage() {
             </section>
           )}
 
-          {/* ───────────────────────────────────────────────────────────── */}
-          {/* SECTION 9: COMPARISON WITH MONEY MARKET FUNDS                 */}
-          {/* ───────────────────────────────────────────────────────────── */}
-          <section className="space-y-4 pt-8 border-t border-border">
-            <div>
-              <h2 className="text-2xl font-bold text-foreground">Compare Your Options</h2>
-              <p className="text-xs md:text-sm text-muted-foreground">
-                See how Treasury Bills compare with Money Market Funds (MMFs) in Kenya.
-              </p>
-            </div>
 
-            <div className="overflow-hidden rounded-2xl border border-border bg-card shadow-sm">
-              <table className="w-full text-left text-sm">
-                <thead className="bg-muted/50 text-xs font-bold text-muted-foreground uppercase border-b border-border">
-                  <tr>
-                    <th className="py-3.5 px-4">Investment</th>
-                    <th className="py-3.5 px-4 text-right">Rate/Yield</th>
-                    <th className="py-3.5 px-4">Access to Money</th>
-                    <th className="py-3.5 px-4">Term</th>
-                    <th className="py-3.5 px-4 text-center">Risk</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-border">
-                  <tr>
-                    <td className="py-4 px-4 font-bold text-foreground">91-Day T-Bill</td>
-                    <td className="py-4 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">8.12%</td>
-                    <td className="py-4 px-4 text-muted-foreground">At maturity</td>
-                    <td className="py-4 px-4 text-foreground font-semibold">91 days</td>
-                    <td className="py-4 px-4 text-center font-bold text-emerald-600">Low</td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 px-4 font-bold text-foreground">182-Day T-Bill</td>
-                    <td className="py-4 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">8.34%</td>
-                    <td className="py-4 px-4 text-muted-foreground">At maturity</td>
-                    <td className="py-4 px-4 text-foreground font-semibold">182 days</td>
-                    <td className="py-4 px-4 text-center font-bold text-emerald-600">Low</td>
-                  </tr>
-                  <tr>
-                    <td className="py-4 px-4 font-bold text-foreground">364-Day T-Bill</td>
-                    <td className="py-4 px-4 text-right font-extrabold text-emerald-600 dark:text-emerald-400">9.02%</td>
-                    <td className="py-4 px-4 text-muted-foreground">At maturity</td>
-                    <td className="py-4 px-4 text-foreground font-semibold">364 days</td>
-                    <td className="py-4 px-4 text-center font-bold text-emerald-600">Low</td>
-                  </tr>
-                  <tr className="bg-emerald-500/5">
-                    <td className="py-4 px-4 font-bold text-foreground">Money Market Funds (MMF)</td>
-                    <td className="py-4 px-4 text-right font-extrabold text-foreground">Varies (10% - 17%)</td>
-                    <td className="py-4 px-4 text-muted-foreground">Usually flexible (24-48 hrs)</td>
-                    <td className="py-4 px-4 text-foreground font-semibold">Flexible / Daily</td>
-                    <td className="py-4 px-4 text-center font-bold text-emerald-600">Low</td>
-                  </tr>
-                </tbody>
-              </table>
-            </div>
-
-            <div className="flex justify-end">
-              <Link to="/funds">
-                <Button className="rounded-xl font-bold bg-emerald-600 text-white hover:bg-emerald-700">
-                  Compare Money Market Funds <ArrowRight className="h-4 w-4 ml-2" />
-                </Button>
-              </Link>
-            </div>
-          </section>
 
           {/* ───────────────────────────────────────────────────────────── */}
           {/* SECTION 10: EDUCATIONAL CARDS                                 */}
