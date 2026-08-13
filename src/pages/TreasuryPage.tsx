@@ -328,6 +328,33 @@ export default function TreasuryPage() {
     };
   }, [calcAmount, selectedCalcSecurity]);
 
+  // Dynamic statistics explaining the active Rate History chart
+  const chartStats = useMemo(() => {
+    const currentData = historyDataMap[chartPeriod] || historyDataMap["6M"];
+    if (!currentData || currentData.length === 0) {
+      return { high: "9.02%", low: "7.20%", latest: "9.02%", demand: "1.6×" };
+    }
+
+    const rates: number[] = [];
+    currentData.forEach((item) => {
+      if (visibleLines.rate91 && item.rate91) rates.push(item.rate91);
+      if (visibleLines.rate182 && item.rate182) rates.push(item.rate182);
+      if (visibleLines.rate364 && item.rate364) rates.push(item.rate364);
+    });
+
+    if (rates.length === 0) {
+      return { high: "9.02%", low: "7.20%", latest: "9.02%", demand: "1.6×" };
+    }
+
+    const high = Math.max(...rates).toFixed(2) + "%";
+    const low = Math.min(...rates).toFixed(2) + "%";
+    const lastItem = currentData[currentData.length - 1];
+    const latestVal = visibleLines.rate364 ? lastItem.rate364 : visibleLines.rate182 ? lastItem.rate182 : lastItem.rate91;
+    const latest = `${(latestVal || 9.02).toFixed(2)}%`;
+
+    return { high, low, latest, demand: "1.6×" };
+  }, [chartPeriod, visibleLines]);
+
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-emerald-500 selection:text-white">
@@ -583,32 +610,45 @@ export default function TreasuryPage() {
                   </div>
                 </div>
 
-                {/* 2x2 Grid Stat Cards (Exact match to Mobile Stocks UI) */}
+                {/* 2x2 Grid Stat Cards (Explains active Rate History chart) */}
                 <div className="grid grid-cols-2 gap-3">
                   <div className="rounded-2xl border border-border bg-card p-3.5 space-y-1 shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PERIOD HIGH</p>
-                    <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">9.02%</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PERIOD HIGH</p>
+                      <span className="text-[10px] font-semibold text-emerald-500">{chartPeriod} Max</span>
+                    </div>
+                    <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">{chartStats.high}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">Peak yield in selected period</p>
                   </div>
+
                   <div className="rounded-2xl border border-border bg-card p-3.5 space-y-1 shadow-sm">
-                    <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PERIOD LOW</p>
-                    <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">7.20%</p>
+                    <div className="flex items-center justify-between">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">PERIOD LOW</p>
+                      <span className="text-[10px] font-semibold text-muted-foreground">{chartPeriod} Min</span>
+                    </div>
+                    <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">{chartStats.low}</p>
+                    <p className="text-[10px] text-muted-foreground truncate">Lowest yield in selected period</p>
                   </div>
+
                   <div className="rounded-2xl border border-border bg-card p-3.5 flex items-center gap-3 shadow-sm">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
                       <DollarSign className="h-4 w-4 stroke-[2.2]" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">RATE</p>
-                      <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">9.02%</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">LATEST RATE</p>
+                      <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">{chartStats.latest}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">Most recent auction yield</p>
                     </div>
                   </div>
+
                   <div className="rounded-2xl border border-border bg-card p-3.5 flex items-center gap-3 shadow-sm">
                     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-500">
                       <BarChart2 className="h-4 w-4 stroke-[2.2]" />
                     </div>
-                    <div className="min-w-0">
-                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">DEMAND</p>
-                      <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">1.6×</p>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">AVG DEMAND</p>
+                      <p className="text-base md:text-lg font-black tracking-tight tabular-nums text-foreground">{chartStats.demand}</p>
+                      <p className="text-[10px] text-muted-foreground truncate">CBK auction bid-to-cover</p>
                     </div>
                   </div>
                 </div>
