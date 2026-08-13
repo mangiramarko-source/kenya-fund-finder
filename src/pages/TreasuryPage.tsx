@@ -341,22 +341,22 @@ export default function TreasuryPage() {
           </span>
         </div>
 
-        <main className="flex-1 container mx-auto px-4 py-6 md:py-10 max-w-6xl space-y-8">
+        <main className="flex-1 container mx-auto px-4 py-4 md:py-6 max-w-6xl space-y-4">
           {/* ── Section 1: Main Page Header ── */}
-          <div className="space-y-3">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider">
-              <Landmark className="h-3.5 w-3.5" /> Government Securities
+          <div className="space-y-1">
+            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
+              <Landmark className="h-3 w-3" /> Government Securities
             </div>
-            <h1 className="text-3xl md:text-5xl font-black tracking-tight text-foreground">
+            <h1 className="text-2xl md:text-4xl font-black tracking-tight text-foreground">
               Treasury Bills & Bonds
             </h1>
-            <p className="text-base md:text-lg text-muted-foreground max-w-3xl">
+            <p className="text-sm md:text-base text-muted-foreground max-w-3xl">
               Compare Kenyan government securities and track rates
             </p>
           </div>
 
           {/* ── Section 2: Top Navigation Tabs (Pill Style) ── */}
-          <div className="flex items-center gap-2.5 overflow-x-auto no-scrollbar py-1">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             {[
               { id: "tbills", label: "Treasury Bills" },
               { id: "bonds", label: "Treasury Bonds" },
@@ -366,7 +366,7 @@ export default function TreasuryPage() {
                 <button
                   key={tab.id}
                   onClick={() => setActiveTab(tab.id as any)}
-                  className={`px-5 py-2 text-sm md:text-base font-bold rounded-full transition-all whitespace-nowrap ${
+                  className={`px-4 py-1.5 text-xs md:text-sm font-bold rounded-full transition-all whitespace-nowrap ${
                     isActive
                       ? "bg-foreground text-background shadow-sm"
                       : "bg-card text-muted-foreground border border-border/80 hover:bg-muted/60 hover:text-foreground"
@@ -382,10 +382,9 @@ export default function TreasuryPage() {
           {/* TAB 1: TREASURY BILLS                                         */}
           {/* ───────────────────────────────────────────────────────────── */}
           {activeTab === "tbills" && (
-            <div className="space-y-10 animate-in fade-in-50 duration-300">
+            <div className="space-y-5 animate-in fade-in-50 duration-300">
               {/* Section 3: Current T-Bill Rates Cards */}
-              <section className="space-y-4">
-
+              <section>
                 <div className="no-scrollbar -mx-4 px-4 flex gap-3 overflow-x-auto py-1 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:mx-0 md:px-0">
                   {tBillCards.map((card) => (
                     <div
