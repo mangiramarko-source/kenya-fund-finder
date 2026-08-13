@@ -45,9 +45,8 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
   return (
     <span className={`inline-flex items-center gap-3 ${className || ""}`}>
       {!hideDate && (
-        <span className="text-[12px] font-medium uppercase tracking-wider">
-          <span className="text-emerald-500 dark:text-emerald-400">{updateText}</span>
-          {!isFunds && !marketOpen && <span className="text-muted-foreground"> · {closedText}</span>}
+        <span className="text-[12px] font-medium uppercase tracking-wider text-emerald-500 dark:text-emerald-400">
+          {updateText}
         </span>
       )}
       {showLiveDot && (
@@ -57,6 +56,11 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
             <span className="relative inline-flex rounded-full h-2 w-2 bg-[hsl(152,55%,40%)] dark:bg-emerald-400" />
           </span>
           <span className="text-xs font-semibold text-[hsl(152,40%,30%)] dark:text-emerald-400 uppercase tracking-wide">LIVE</span>
+        </span>
+      )}
+      {!isFunds && !marketOpen && (
+        <span className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground">
+          {closedText}
         </span>
       )}
     </span>
