@@ -37,12 +37,15 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
     <div className="mt-4 space-y-4 font-sans text-foreground">
       <div className="space-y-4">
         
-        {/* Tags / Event / Impact */}
-        <p className="text-xs font-semibold uppercase tracking-[0.14em] text-foreground/70">
-          {[analysis.event_label, analysis.impact_horizon, "Source facts checked"]
-            .filter(Boolean)
-            .join(" · ")}
-        </p>
+        {/* Header Title & Tags */}
+        <div className="flex flex-wrap items-center justify-between gap-2 border-b border-border pb-2">
+          <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/90">
+            Market Impact & Key Facts
+          </h3>
+          <span className="text-[11px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
+            {[analysis.event_label, analysis.impact_horizon].filter(Boolean).join(" · ")}
+          </span>
+        </div>
 
         {/* Factors (Bullish/Bearish) */}
         {(analysis.factors_positive?.length || analysis.factors_negative?.length) ? (
