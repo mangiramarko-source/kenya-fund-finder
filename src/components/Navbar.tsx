@@ -213,6 +213,13 @@ function MobileSidebarDrawer({
             )}
           </SidebarSection>
 
+          <div className="h-px bg-border/60 mx-4 my-1" />
+
+          <SidebarSection title="LEGAL">
+            <SidebarRow icon={FileText} label="Privacy Policy" to="/privacy" onClick={close} />
+            <SidebarRow icon={FileText} label="Terms of Use" to="/terms" onClick={close} />
+          </SidebarSection>
+
         </nav>
 
         {/* ── Fixed Bottom CTA ── */}
