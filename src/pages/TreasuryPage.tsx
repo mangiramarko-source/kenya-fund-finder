@@ -172,9 +172,6 @@ export default function TreasuryPage() {
             <div className="space-y-4 animate-in fade-in-50 duration-500">
           {/* ── Section 1: Main Page Header ── */}
           <div className="space-y-1">
-            <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[11px] font-bold uppercase tracking-wider">
-              <Landmark className="h-3 w-3" /> Government Securities
-            </div>
             <h1 className="text-2xl md:text-4xl font-black tracking-tight text-foreground">
               Treasury Bills & Bonds
             </h1>
