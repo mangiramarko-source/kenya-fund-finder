@@ -25,63 +25,6 @@ const mobileNavLinks = [
   { to: "/portfolio", label: "Portfolio" },
 ];
 
-// ─── NSE Live Widget ────────────────────────────────────────────────────────
-interface IndexItem {
-  label: string;
-  value: number;
-  change: number; // percent
-}
-
-function useNseIndices(): { indices: IndexItem[]; isOpen: boolean } {
-  const [indices, setIndices] = useState<IndexItem[]>([
-    { label: "NSE 20 Share", value: 1742.5, change: 0.62 },
-    { label: "NASI (All Share)", value: 104.8, change: 0.41 },
-    { label: "NSE 25 Index", value: 2850.1, change: 1.15 },
-  ]);
-
-  // Derive market open: Mon–Fri 09:00–15:00 EAT (UTC+3)
-  const isOpen = (() => {
-    const now = new Date();
-    const eat = new Date(now.toLocaleString("en-US", { timeZone: "Africa/Nairobi" }));
-    const day = eat.getDay();
-    const h = eat.getHours();
-    return day >= 1 && day <= 5 && h >= 9 && h < 15;
-  })();
-
-  return { indices, isOpen };
-}
-
-function NseLiveWidget() {
-  const { indices, isOpen } = useNseIndices();
-  return (
-    <div className="px-5 py-4 border-b border-border/80 bg-card/30">
-      <div className="flex items-center justify-between mb-3">
-        <div className="flex items-center gap-2">
-          <span className={`h-2.5 w-2.5 rounded-full ${isOpen ? "bg-emerald-500 animate-pulse" : "bg-muted-foreground"}`} />
-          <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">NSE LIVE</span>
-        </div>
-        <span className={`text-xs font-semibold px-3 py-0.5 rounded-full border ${
-          isOpen
-            ? "text-emerald-700 bg-emerald-50 border-emerald-200/80 dark:bg-emerald-950/60 dark:border-emerald-800/60 dark:text-emerald-300"
-            : "text-muted-foreground border-border bg-muted/40"
-        }`}>{isOpen ? "Open" : "Closed"}</span>
-      </div>
-      <div className="grid grid-cols-3 gap-2">
-        {indices.map((idx) => (
-          <div key={idx.label} className="rounded-xl bg-muted/40 border border-border/50 p-2.5 flex flex-col justify-between">
-            <p className="text-[10px] text-muted-foreground font-medium leading-snug mb-1 truncate">{idx.label}</p>
-            <div>
-              <p className="text-[13px] font-extrabold tabular-nums text-foreground">{idx.value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</p>
-              <p className={`text-[11px] font-bold mt-0.5 ${
-                idx.change > 0 ? "text-emerald-500" : idx.change < 0 ? "text-destructive" : "text-muted-foreground"
-              }`}>{idx.change >= 0 ? "+" : ""}{idx.change.toFixed(2)}%</p>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
-  );
-}
 
 // ─── Sidebar Row ─────────────────────────────────────────────────────────────
 function SidebarRow({
@@ -223,9 +166,6 @@ function MobileSidebarDrawer({
             <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
           </button>
         </div>
-
-        {/* ── NSE Live Widget ── */}
-        <NseLiveWidget />
 
         {/* ── Scrollable Content ── */}
         <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-1">
