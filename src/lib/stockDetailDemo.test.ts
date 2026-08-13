@@ -93,9 +93,9 @@ describe("stock detail desktop demo helpers", () => {
 
     expect(offsets).toEqual([0, 2]);
     expect(grouped["scom-id"]).toEqual([
-      { snapshot_date: "2026-08-10", price: 35 },
-      { snapshot_date: "2026-08-11", price: 36 },
+      { snapshot_date: "2026-08-10", price: 35, timestamp: new Date("2026-08-10").getTime() },
+      { snapshot_date: "2026-08-11", price: 36, timestamp: new Date("2026-08-11").getTime() },
     ]);
-    expect(grouped["kcb-id"]).toEqual([{ snapshot_date: "2026-08-10", price: 84 }]);
+    expect(grouped["kcb-id"]).toEqual([{ snapshot_date: "2026-08-10", price: 84, timestamp: new Date("2026-08-10").getTime() }]);
   });
 });

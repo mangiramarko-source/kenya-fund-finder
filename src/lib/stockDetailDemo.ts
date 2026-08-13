@@ -19,6 +19,7 @@ export const stockProductionPath = (symbol: string) => `/stocks/${encodeURICompo
 export interface DemoPricePoint {
   snapshot_date: string;
   price: number;
+  timestamp?: number;
 }
 
 export interface DemoHistoryRow extends DemoPricePoint {
@@ -35,21 +36,29 @@ export async function fetchCompleteDemoHistory(
   pageSize = 5000,
 ): Promise<Record<string, DemoPricePoint[]>> {
   const rows = new Map<string, DemoHistoryRow>();
-  let offset = 0;
-  let count = 0;
+  const firstPage = await fetchPage(0, pageSize);
+  const count = firstPage.count;
+  firstPage.data.forEach((point) => rows.set(`${point.stock_id}:${point.snapshot_date}`, point));
 
-  do {
-    const page = await fetchPage(offset, pageSize);
-    count = page.count;
-    page.data.forEach((point) => rows.set(`${point.stock_id}:${point.snapshot_date}`, point));
-    if (page.data.length === 0) break;
-    offset += page.data.length;
-  } while (offset < count);
+  if (count > pageSize) {
+    const promises = [];
+    for (let offset = pageSize; offset < count; offset += pageSize) {
+      promises.push(fetchPage(offset, pageSize));
+    }
+    const pages = await Promise.all(promises);
+    for (const page of pages) {
+      page.data.forEach((point) => rows.set(`${point.stock_id}:${point.snapshot_date}`, point));
+    }
+  }
 
   const grouped: Record<string, DemoPricePoint[]> = {};
   rows.forEach((point) => {
     if (!grouped[point.stock_id]) grouped[point.stock_id] = [];
-    grouped[point.stock_id].push({ snapshot_date: point.snapshot_date, price: Number(point.price) });
+    grouped[point.stock_id].push({ 
+      snapshot_date: point.snapshot_date, 
+      price: Number(point.price),
+      timestamp: new Date(point.snapshot_date).getTime(),
+    });
   });
   Object.values(grouped).forEach((points) => points.sort((left, right) => left.snapshot_date.localeCompare(right.snapshot_date)));
   return grouped;
@@ -57,18 +66,40 @@ export async function fetchCompleteDemoHistory(
 
 export function calculateDemoReturn(points: DemoPricePoint[], currentPrice: number, days: number): number | null {
   if (points.length === 0 || currentPrice <= 0) return null;
-  const eligible = points
-    .filter((point) => Number.isFinite(point.price) && point.price > 0 && Number.isFinite(new Date(point.snapshot_date).getTime()))
-    .sort((a, b) => new Date(a.snapshot_date).getTime() - new Date(b.snapshot_date).getTime());
-  if (eligible.length === 0) return null;
 
-  const latestObservationTime = new Date(eligible[eligible.length - 1].snapshot_date).getTime();
+  // points are pre-sorted chronologically in fetchCompleteDemoHistory
+  let latestObservationTime = 0;
+  let latestIndex = -1;
+  for (let i = points.length - 1; i >= 0; i--) {
+    const pt = points[i];
+    if (Number.isFinite(pt.price) && pt.price > 0) {
+      const t = pt.timestamp || new Date(pt.snapshot_date).getTime();
+      if (Number.isFinite(t)) {
+        latestObservationTime = t;
+        latestIndex = i;
+        break;
+      }
+    }
+  }
+
+  if (latestIndex === -1) return null;
+
   const cutoff = latestObservationTime - days * 24 * 60 * 60 * 1000;
   let baseline: DemoPricePoint | null = null;
-  for (const point of eligible) {
-    if (new Date(point.snapshot_date).getTime() > cutoff) break;
-    baseline = point;
+  
+  for (let i = latestIndex; i >= 0; i--) {
+    const point = points[i];
+    if (Number.isFinite(point.price) && point.price > 0) {
+      const t = point.timestamp || new Date(point.snapshot_date).getTime();
+      if (Number.isFinite(t)) {
+        if (t <= cutoff) {
+          baseline = point;
+          break;
+        }
+      }
+    }
   }
+  
   if (!baseline) return null;
   return ((currentPrice - baseline.price) / baseline.price) * 100;
 }
