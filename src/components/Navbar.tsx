@@ -47,7 +47,7 @@ function SidebarRow({
   const inner = (
     <>
       <Icon className={`h-5 w-5 shrink-0 stroke-[1.8] ${isDestructive ? "text-destructive" : "text-foreground/70"}`} />
-      <span className={`flex-1 text-[15px] font-bold tracking-tight ${
+      <span className={`flex-1 text-left text-[15px] font-bold tracking-tight ${
         isDestructive ? "text-destructive" : "text-foreground"
       }`}>{label}</span>
       {isNew && (
@@ -60,7 +60,7 @@ function SidebarRow({
     </>
   );
 
-  const cls = "flex items-center gap-3.5 w-full px-4 py-3 rounded-xl hover:bg-muted/60 active:bg-muted transition-colors";
+  const cls = "flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-left hover:bg-muted/60 active:bg-muted transition-colors";
 
   if (to) {
     return <Link to={to} onClick={onClick} className={cls}>{inner}</Link>;
