@@ -230,8 +230,8 @@ const CommoditiesPage = () => {
 
   return (
     <div className="min-h-screen">
-      <div className="px-4 md:px-6 py-6">
-        <div className="mb-6">
+      <div className="px-4 md:px-6 py-5 md:py-6">
+        <div className="mb-4">
           <div className="hidden md:flex items-end justify-between gap-6 mb-7">
             <div>
               <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">Global Markets</p>
@@ -243,11 +243,6 @@ const CommoditiesPage = () => {
           <div className="md:hidden">
             <h1 className="text-2xl font-bold text-foreground tracking-tight">Commodities</h1>
             <p className="text-sm text-muted-foreground mt-1">Global commodity prices and daily movements.</p>
-          </div>
-          <div className="md:hidden mb-2">
-            <div className="flex items-center justify-between w-full">
-              <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />
-            </div>
           </div>
         </div>
 
@@ -417,6 +412,11 @@ const CommoditiesPage = () => {
               </button>
             );
           })}
+        </div>
+
+        {/* Mobile Live Status (Between filter pills and first card) */}
+        <div className="md:hidden mb-3.5 flex items-center justify-between px-0.5">
+          <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} className="w-full justify-between" />
         </div>
 
         {/* Desktop Table */}

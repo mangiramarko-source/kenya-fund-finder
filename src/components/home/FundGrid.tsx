@@ -8,6 +8,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose 
 import YieldChange from "@/components/YieldChange";
 import FundMobileCards from "./FundMobileCards";
 import FundLogo from "./FundLogo";
+import SectionLiveStatus from "@/components/SectionLiveStatus";
 import type { FundFromDB, FundType, YieldSnapshot } from "@/lib/api";
 
 type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee" | "change";
@@ -33,6 +34,7 @@ interface FundGridProps {
   snapshots: Record<string, YieldSnapshot>;
   allSnapshots?: Record<string, YieldSnapshot[]>;
   loading: boolean;
+  lastUpdate?: Date | null;
   isFavourite?: (id: string) => boolean;
   onToggleFavourite?: (id: string, name: string) => void;
 }
@@ -151,7 +153,7 @@ const VALID_SORT: SortKey[] = ["annual_yield", "daily_yield", "name", "minimum_i
 const VALID_MOVEMENT = ["all", "gainers", "losers", "unchanged"] as const;
 type Movement = typeof VALID_MOVEMENT[number];
 
-const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, onToggleFavourite }: FundGridProps) => {
+const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, isFavourite, onToggleFavourite }: FundGridProps) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
 
@@ -469,7 +471,10 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, isFavourite, o
         })}
       </div>
 
-
+      {/* Mobile Live Status (Between filter pills and first card) */}
+      <div className="md:hidden mb-3.5 flex items-center justify-between px-0.5">
+        <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} className="w-full justify-between" />
+      </div>
 
       {/* Mobile: card view */}
       <div className="md:hidden">

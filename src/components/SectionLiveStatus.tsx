@@ -8,9 +8,10 @@ interface SectionLiveStatusProps {
   hideLive?: boolean;
   hideDate?: boolean;
   isLoading?: boolean;
+  className?: string;
 }
 
-const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoading }: SectionLiveStatusProps) => {
+const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoading, className }: SectionLiveStatusProps) => {
   const { sections, loading } = useLiveStatus();
   const isFunds = section === "funds";
   if ((isFunds && loading) || isLoading) return <Skeleton className="h-6 w-48 rounded-md" />;
@@ -37,10 +38,10 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
     : displayDate ? `Updated ${displayDate}` : "Updated automatically";
   const closedText = isGlobal
     ? "Global Markets Closed (24/5)"
-    : "NSE Closed (Mon-Fri, 9 AM-5 PM EAT)";
+    : "Closed (Mon-Fri, 9 AM-5 PM EAT)";
 
   return (
-    <span className="inline-flex items-center gap-3">
+    <span className={`inline-flex items-center gap-3 ${className || ""}`}>
       {!hideDate && (
         <span className="text-[12px] font-medium uppercase tracking-wider">
           {!isFunds && !marketOpen && <span className="text-muted-foreground">{closedText} · </span>}

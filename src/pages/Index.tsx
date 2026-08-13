@@ -93,8 +93,8 @@ const Index = () => {
     : null;
 
   return (
-    <div className="space-y-4 px-4 md:px-6 py-4 md:py-6">
-      <div>
+    <div className="px-4 md:px-6 py-5 md:py-6 space-y-4">
+      <div className="mb-4">
         <div className="hidden md:flex items-end justify-between gap-6 mb-7">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">Kenyan Investment Funds</p>
@@ -106,11 +106,6 @@ const Index = () => {
         <div className="md:hidden">
           <h1 className="text-2xl font-bold text-foreground tracking-tight">Money Market Fund</h1>
           <p className="text-sm text-muted-foreground mt-1">Track listed Money Market, Fixed Income, Bond, Balanced, Equity and Special funds in Kenya.</p>
-        </div>
-        <div className="md:hidden mb-2">
-          <div className="flex items-center justify-between w-full">
-            <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} />
-          </div>
         </div>
       </div>
       {(usingCache || !online) && cacheSavedAt && (
@@ -153,6 +148,7 @@ const Index = () => {
         snapshots={snapshots}
         allSnapshots={allSnapshots}
         loading={loading}
+        lastUpdate={lastUpdate}
         isFavourite={user ? isFavourite : undefined}
         onToggleFavourite={user ? toggle : undefined}
       />

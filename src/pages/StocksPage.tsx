@@ -383,9 +383,9 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
 
   return (
     <div className="min-h-screen">
-      <div className="px-4 md:px-6 py-6">
+      <div className="px-4 md:px-6 py-5 md:py-6">
         {/* Desktop & Mobile Header */}
-        <div className="mb-6">
+        <div className="mb-4">
           <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4 md:mb-6">
             <div>
               <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Kenyan Stocks</h1>
@@ -394,12 +394,6 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
               </p>
             </div>
             <div className="hidden md:block">
-              <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
-            </div>
-          </div>
-          
-          <div className="md:hidden mb-4">
-            <div className="flex items-center justify-between w-full">
               <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
             </div>
           </div>
@@ -616,6 +610,11 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
             })}
           </div>
         )}
+
+        {/* Mobile Live Status (Between filter pills and first card) */}
+        <div className="md:hidden mb-3.5 flex items-center justify-between px-0.5">
+          <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} className="w-full justify-between" />
+        </div>
 
         {/* Desktop View */}
         <div className="hidden md:block mb-10">
