@@ -36,7 +36,7 @@ export function splitReadableParagraphs(text: string, targetLength = 360): strin
   };
 
   sourceParagraphs.forEach((paragraph) => {
-    const sentences = paragraph.match(/[^.!?]+(?:[.!?]+(?=\s|$)|$)/g)?.map((sentence) => sentence.trim()).filter(Boolean) || [paragraph];
+    const sentences = paragraph.match(/.*?[.!?]+(?=\s+|$)|.+/g)?.map((sentence) => sentence.trim()).filter(Boolean) || [paragraph];
     let chunk = "";
 
     sentences.forEach((sentence) => {
