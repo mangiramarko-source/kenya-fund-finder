@@ -809,14 +809,14 @@ export default function TreasuryPage() {
                 </Sheet>
               </div>
 
-              {/* Maturity Filter Pill Buttons (Matches Stocks Page Top Gainers UI) */}
+              {/* Maturity Filter Pill Buttons (Exact Match to Stocks Page Top Gainers UI) */}
               <div className="flex gap-2 overflow-x-auto py-0.5 no-scrollbar -mt-3">
                 {[
-                  { label: "All", key: "All" },
-                  { label: "< 2 Yrs", key: "< 2 Yrs" },
-                  { label: "2–5 Yrs", key: "2–5 Yrs" },
-                  { label: "5–10 Yrs", key: "5–10 Yrs" },
-                  { label: "10+ Yrs", key: "10+ Yrs" },
+                  { label: "All", key: "All", count: mockBonds.length },
+                  { label: "< 2 Yrs", key: "< 2 Yrs", count: mockBonds.filter((b) => b.yearsRemaining < 2).length },
+                  { label: "2–5 Yrs", key: "2–5 Yrs", count: mockBonds.filter((b) => b.yearsRemaining >= 2 && b.yearsRemaining <= 5).length },
+                  { label: "5–10 Yrs", key: "5–10 Yrs", count: mockBonds.filter((b) => b.yearsRemaining > 5 && b.yearsRemaining <= 10).length },
+                  { label: "10+ Yrs", key: "10+ Yrs", count: mockBonds.filter((b) => b.yearsRemaining > 10).length },
                 ].map((option) => {
                   const isActive = bondMaturityFilter === option.key;
                   return (
@@ -826,10 +826,11 @@ export default function TreasuryPage() {
                       className={`inline-flex shrink-0 items-center gap-1.5 rounded-full px-4 py-2 text-xs font-semibold transition-all ${
                         isActive
                           ? "bg-foreground text-background shadow-sm"
-                          : "bg-muted/60 text-muted-foreground hover:text-foreground"
+                          : "bg-card border border-border/80 text-muted-foreground hover:text-foreground hover:bg-muted/40"
                       }`}
                     >
                       <span>{option.label}</span>
+                      <span className="font-normal opacity-75">{option.count}</span>
                     </button>
                   );
                 })}
