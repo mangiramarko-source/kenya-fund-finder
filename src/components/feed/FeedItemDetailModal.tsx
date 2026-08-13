@@ -303,9 +303,9 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
             </div>
           </div>}
 
-          {/* External Source Link */}
+          {/* External Source Link (Only for non-stock articles) */}
           {(() => {
-            if (item.id === "daily-market-summary" || item.type === "EDUCATION") return null;
+            if (item.id === "daily-market-summary" || item.type === "EDUCATION" || item.relatedStock) return null;
             
             const formatExternalUrl = (url?: string | null, title?: string, source?: string): string => {
               if (!url || url.trim() === "" || url === "#") {

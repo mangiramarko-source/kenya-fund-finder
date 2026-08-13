@@ -459,22 +459,24 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
           </div>
         )}
 
-        {/* ─── 5. Source / Link ─── */}
-        <div className="border-b border-border/60 pb-5 pt-2 text-[10px] font-semibold text-emerald-500 md:border-0 md:p-0 md:text-xs md:text-muted-foreground md:font-medium">
-          {article.url && /^https?:\/\//i.test(article.url) ? (
-            <a
-              href={article.url}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="hover:underline flex items-center gap-2 text-emerald-500 md:gap-1"
-            >
-              <span>From {getSourceDomain(article.url, article.source)}</span>
-              <ExternalLink className="h-4 w-4 md:h-3 md:w-3" />
-            </a>
-          ) : (
-            <span>From {getSourceDomain(null, article.source)}</span>
-          )}
-        </div>
+        {/* ─── 5. Source / Link (Only for non-stock articles) ─── */}
+        {!relatedStock && (
+          <div className="border-b border-border/60 pb-5 pt-2 text-[10px] font-semibold text-emerald-500 md:border-0 md:p-0 md:text-xs md:text-muted-foreground md:font-medium">
+            {article.url && /^https?:\/\//i.test(article.url) ? (
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="hover:underline flex items-center gap-2 text-emerald-500 md:gap-1"
+              >
+                <span>From {getSourceDomain(article.url, article.source)}</span>
+                <ExternalLink className="h-4 w-4 md:h-3 md:w-3" />
+              </a>
+            ) : (
+              <span>From {getSourceDomain(null, article.source)}</span>
+            )}
+          </div>
+        )}
 
         {/* ─── AI Decision Support ─── */}
         {relatedStock && (

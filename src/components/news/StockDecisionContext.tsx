@@ -103,7 +103,7 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
 
         {/* Related Information / Disclosures */}
         <div className="border-t border-border pt-4">
-          <div className="flex flex-wrap items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4 text-sm font-semibold">
             {onReadMore && (
               <button 
                 type="button" 
@@ -111,15 +111,33 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
                   e.stopPropagation();
                   onReadMore();
                 }}
-                className="inline-flex items-center gap-1.5 text-sm font-semibold text-emerald-500 hover:text-emerald-400 transition-colors"
+                className="inline-flex items-center gap-1.5 text-emerald-500 hover:text-emerald-400 transition-colors"
               >
                 Continue reading <span className="text-lg leading-none">&rarr;</span>
               </button>
             )}
+
+            {article.url && /^https?:\/\//i.test(article.url) ? (
+              <a
+                href={article.url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-1.5 text-emerald-500 hover:text-emerald-400 hover:underline transition-colors"
+              >
+                <span>From {article.source || "Source"}</span>
+                <ExternalLink className="h-4 w-4" />
+              </a>
+            ) : article.source ? (
+              <span className="inline-flex items-center gap-1.5 text-emerald-500">
+                <span>From {article.source}</span>
+              </span>
+            ) : null}
+
             <Link 
               to={`/stocks/${stock.symbol}`} 
               onClick={(e) => e.stopPropagation()}
-              className="inline-flex items-center gap-1.5 text-sm text-foreground/80 hover:text-foreground transition-colors"
+              className="inline-flex items-center gap-1.5 font-normal text-foreground/80 hover:text-foreground transition-colors"
             >
               Open {stock.symbol} report <ExternalLink className="h-3.5 w-3.5" />
             </Link>
