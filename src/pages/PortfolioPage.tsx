@@ -313,10 +313,10 @@ const PortfolioPage = () => {
                 </div>
               </div>
 
-              {/* Holdings Grid or Table */}
+              {/* Holdings Cards Horizontal Scroll or Table */}
               {viewMode === "cards" ? (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {filteredItems.map((item) => {
+                <div className="flex overflow-x-auto gap-4 pb-3 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent snap-x snap-mandatory -mx-1 px-1">
+                  {filteredItems.slice(0, 5).map((item) => {
                     const itemChange = changes.find((c) => c.itemId === item.id);
                     return (
                       <PortfolioHoldingCard
@@ -325,28 +325,49 @@ const PortfolioPage = () => {
                         currency={currency}
                         totalValue={totalValue}
                         change={itemChange}
+                        compact={true}
                         onClick={(item) => setEditItem(item)}
+                        className="w-[280px] sm:w-[290px] shrink-0 snap-start min-h-[160px]"
                       />
                     );
                   })}
 
-                  {/* Add Investment Dashed Card */}
-                  <div
-                    onClick={() => setShowAddModal(true)}
-                    className="flex flex-col items-center justify-center gap-2 w-full min-h-[160px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-2xl p-4 text-center transition-all cursor-pointer group"
-                  >
-                    <div className="w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-                      <Plus className="h-5 w-5 stroke-[2.5]" />
-                    </div>
-                    <div>
-                      <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
-                        Add Investment
+                  {/* See More Card (if > 5 items) or Add Investment Dashed Card */}
+                  {filteredItems.length > 5 ? (
+                    <div
+                      onClick={() => setViewMode("table")}
+                      className="flex flex-col items-center justify-center gap-2.5 w-[200px] shrink-0 snap-start min-h-[160px] bg-[#131316] border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-2xl p-4 text-center transition-all cursor-pointer group"
+                    >
+                      <div className="w-10 h-10 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                        <ArrowRight className="h-5 w-5" />
                       </div>
-                      <div className="text-[11px] text-zinc-400 mt-0.5">
-                        Track MMF, Stocks, T-Bills, FX
+                      <div>
+                        <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
+                          See More ({filteredItems.length - 5} more)
+                        </div>
+                        <div className="text-[11px] text-zinc-400 mt-0.5">
+                          View all in table
+                        </div>
                       </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div
+                      onClick={() => setShowAddModal(true)}
+                      className="flex flex-col items-center justify-center gap-2 w-[200px] shrink-0 snap-start min-h-[160px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-2xl p-4 text-center transition-all cursor-pointer group"
+                    >
+                      <div className="w-9 h-9 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+                        <Plus className="h-5 w-5 stroke-[2.5]" />
+                      </div>
+                      <div>
+                        <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
+                          Add Investment
+                        </div>
+                        <div className="text-[11px] text-zinc-400 mt-0.5">
+                          Track MMF, Stocks & FX
+                        </div>
+                      </div>
+                    </div>
+                  )}
                 </div>
               ) : (
                 <Card className="border-border bg-card">

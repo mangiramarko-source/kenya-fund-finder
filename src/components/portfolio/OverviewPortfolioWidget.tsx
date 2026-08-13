@@ -38,8 +38,8 @@ export default function OverviewPortfolioWidget() {
   const navigate = useNavigate();
 
   const isDemoFallback = items.length === 0;
-  const displayItems = isDemoFallback ? [DEMO_ITEM] : items.slice(0, 4);
-  const hasMore = items.length > 4;
+  const displayItems = isDemoFallback ? [DEMO_ITEM] : items.slice(0, 5);
+  const hasMore = items.length > 5;
 
   return (
     <div className="mb-6 space-y-3">
@@ -61,7 +61,7 @@ export default function OverviewPortfolioWidget() {
         </Link>
       </div>
 
-      <div className="flex overflow-x-auto gap-3 pb-2 -mx-4 px-4 snap-x snap-mandatory scrollbar-none md:grid md:grid-cols-2 lg:grid-cols-3 md:gap-3 md:pb-0 md:mx-0 md:px-0 md:snap-none md:overflow-visible">
+      <div className="flex overflow-x-auto gap-3.5 pb-2.5 -mx-4 px-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent md:mx-0 md:px-0">
         {displayItems.map((item) => {
           const itemChange = isDemoFallback
             ? DEMO_CHANGE
@@ -75,26 +75,26 @@ export default function OverviewPortfolioWidget() {
               change={itemChange}
               compact={true}
               onClick={() => navigate("/portfolio")}
-              className="w-[64vw] max-w-[245px] md:max-w-none md:w-full shrink-0 md:shrink snap-center min-h-[160px]"
+              className="w-[270px] sm:w-[280px] shrink-0 snap-start min-h-[160px]"
             />
           );
         })}
 
-        {/* Dashed Add / View All Investment Card */}
-        <div className="w-[140px] md:w-full shrink-0 md:shrink snap-center min-h-[160px]">
+        {/* Dashed Add / See More Investment Card */}
+        <div className="w-[180px] shrink-0 snap-start min-h-[160px]">
           <Link
             to="/portfolio"
-            className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[160px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-2xl p-3.5 text-center transition-all group"
+            className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[160px] bg-[#131316]/80 border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-2xl p-3.5 text-center transition-all group"
           >
             <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
               {hasMore ? <ArrowRight className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
             </div>
             <div>
               <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
-                {hasMore ? `View All (${items.length})` : "Add Investment"}
+                {hasMore ? `See More (${items.length - 5} more)` : "Add Investment"}
               </div>
               <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">
-                {hasMore ? "Manage portfolio" : "Track MMF, Stocks & FX"}
+                {hasMore ? "View all portfolio" : "Track MMF, Stocks & FX"}
               </div>
             </div>
           </Link>
