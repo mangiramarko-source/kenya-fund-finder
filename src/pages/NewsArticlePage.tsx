@@ -34,6 +34,9 @@ import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
+import { MmfArticleMarketCard } from "@/components/news/MmfArticleMarketCard";
+import { FxArticleMarketCard } from "@/components/news/FxArticleMarketCard";
+import { CommodityArticleMarketCard } from "@/components/news/CommodityArticleMarketCard";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
 import { StockDecisionContext } from "@/components/news/StockDecisionContext";
 import { MmfDecisionContext } from "@/components/news/MmfDecisionContext";
@@ -602,6 +605,9 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         </div>
 
         {relatedStock && <StockArticleMarketCard stock={relatedStock} />}
+        {relatedMmf && <MmfArticleMarketCard mmf={relatedMmf} />}
+        {relatedFx && <FxArticleMarketCard fx={relatedFx} />}
+        {relatedCommodity && <CommodityArticleMarketCard commodity={relatedCommodity} />}
 
         {/* ─── 3. Post Text ─── */}
         <div className="space-y-3">

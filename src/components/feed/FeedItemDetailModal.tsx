@@ -31,6 +31,9 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type { PostInteraction } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
+import { MmfArticleMarketCard } from "@/components/news/MmfArticleMarketCard";
+import { FxArticleMarketCard } from "@/components/news/FxArticleMarketCard";
+import { CommodityArticleMarketCard } from "@/components/news/CommodityArticleMarketCard";
 import { splitReadableParagraphs } from "@/lib/utils";
 import { StockDecisionContext } from "@/components/news/StockDecisionContext";
 import { MmfDecisionContext } from "@/components/news/MmfDecisionContext";
@@ -257,6 +260,9 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
                 }}
               />
             )}
+            {item.relatedMmf && <MmfArticleMarketCard mmf={item.relatedMmf} />}
+            {item.relatedFx && <FxArticleMarketCard fx={item.relatedFx} />}
+            {item.relatedCommodity && <CommodityArticleMarketCard commodity={item.relatedCommodity} />}
 
             {/* AI Decision Support Context */}
             {item.relatedStock && item.rawItem && (
