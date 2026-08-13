@@ -378,6 +378,16 @@ export default function TreasuryPage() {
             })}
           </div>
 
+          {/* Updated Date Details Row (Matches Mobile Stocks UI) */}
+          <div className="flex items-center justify-between text-[11px] font-bold tracking-wider uppercase pt-1 pb-0.5 px-0.5">
+            <span className="text-emerald-500">
+              UPDATED {activeTab === "tbills" ? "08 AUG 2026" : "01 AUG 2026"}
+            </span>
+            <span className="text-muted-foreground">
+              UPDATED {activeTab === "tbills" ? "WEEKLY" : "MONTHLY"}
+            </span>
+          </div>
+
           {/* ───────────────────────────────────────────────────────────── */}
           {/* TAB 1: TREASURY BILLS                                         */}
           {/* ───────────────────────────────────────────────────────────── */}
