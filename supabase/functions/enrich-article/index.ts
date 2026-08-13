@@ -113,9 +113,12 @@ IMPORTANT: You MUST respond ONLY with a valid JSON object. Do not include markdo
 The JSON object must follow this exact structure:
 {
   "content": "Your generated paragraphs here. Plain paragraphs separated by a single blank line. No headings or bullet lists.",
-  "tags": ["Short-term relevance", "Product pricing", etc. (max 3 tags)],
-  "factors_positive": ["What could help (bullish factor 1)", "What could help 2" (max 3)],
-  "factors_negative": ["What to watch (bearish risk 1)", "What to watch 2" (max 3)],
+  "event_label": "Tag story as Earnings, Dividend, Acquisition, Regulation, Leadership, Product launch, Macroeconomic, or similar (max 1)",
+  "impact_horizon": "Immediate, Short term, or Long term",
+  "what_happened": "A neutral, succinct 1-2 sentence summary of what actually occurred.",
+  "verified_figures": ["Extract revenue, profit, dividend, deal value, dates, and percentages ONLY when those figures appear in the source. (e.g. 'Revenue: KSh 20M')", "Another figure..."],
+  "factors_positive": ["What could help (factual bullish factor 1)", "What could help 2" (max 3)],
+  "factors_negative": ["What to watch (factual bearish risk 1)", "What to watch 2" (max 3)],
   "source_facts": "A single succinct sentence summarizing the core factual event."
 }`;
 

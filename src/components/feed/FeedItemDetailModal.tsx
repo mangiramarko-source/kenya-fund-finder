@@ -28,11 +28,12 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 
 import { useIsMobile } from "@/hooks/use-mobile";
-
 import type { PostInteraction } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
 import { splitReadableParagraphs } from "@/lib/utils";
+import { StockDecisionContext } from "@/components/news/StockDecisionContext";
+import { type NewsFromDB, type PublicStock } from "@/lib/api";
 
 interface FeedItemDetailModalProps {
   item: FeedItem | null;
@@ -251,6 +252,19 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
                   previous_price: item.relatedStock.previousPrice,
                   day_change_percent: item.relatedStock.changePercent,
                 }}
+              />
+            )}
+
+            {/* AI Decision Support Context */}
+            {item.relatedStock && item.rawItem && (
+              <StockDecisionContext 
+                article={item.rawItem as NewsFromDB}
+                stock={{ 
+                  ...item.relatedStock, 
+                  day_change_percent: item.relatedStock.changePercent, 
+                  previous_price: item.relatedStock.previousPrice 
+                } as PublicStock}
+                inlineTransparent={false}
               />
             )}
 

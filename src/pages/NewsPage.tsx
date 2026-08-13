@@ -1,6 +1,6 @@
 import { useState, useEffect, useMemo } from "react";
 import { decodeHtmlEntities } from "@/lib/utils";
-import { fetchPublishedNews, type NewsFromDB } from "@/lib/api";
+import { fetchPublishedNews, fetchPublicStocks, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Search, Megaphone } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -43,15 +43,17 @@ export default function NewsPage() {
 
   const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
+  const [stocks, setStocks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeNavTab, setActiveNavTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
 
   useEffect(() => {
-    fetchPublishedNews()
-      .then((data) => {
-        setArticles(data);
+    Promise.all([fetchPublishedNews(), fetchPublicStocks()])
+      .then(([newsData, stocksData]) => {
+        setArticles(newsData);
+        setStocks(stocksData || []);
         setLoading(false);
       })
       .catch(() => setLoading(false));
@@ -84,22 +86,144 @@ export default function NewsPage() {
   }, [articles, activeNavTab, searchQuery]);
 
   const feedItems = useMemo(() => {
-    return filteredArticles.map((a) => ({
-      id: `news-${a.id}`,
-      type: "NEWS" as const,
-      authorName: a.source || "Market News",
-      authorLabel: a.category || "News",
-      title: decodeHtmlEntities(a.title),
-      content: a.summary || a.content || "",
-      mediaUrl: a.image_url || undefined,
-      mediaType: a.image_url ? ("image" as const) : undefined,
-      timestamp: new Date(a.created_at || a.date_published || Date.now()),
-      likes: a.likes || 0,
-      comments: a.comments || 0,
-      url: a.url || "#",
-      rawItem: a,
-    }));
-  }, [filteredArticles]);
+    const items: FeedItem[] = filteredArticles.map((a) => {
+      // Find related stock if present
+      let relatedStock: any = null;
+      if (a.related_stock_id) {
+        relatedStock = stocks.find(s => s.id === a.related_stock_id);
+      }
+      if (!relatedStock) {
+        const titleUpper = a.title.toUpperCase();
+        const found = stocks.find(s => titleUpper.includes(s.symbol));
+        if (found) relatedStock = found;
+      }
+
+      return {
+        id: `news-${a.id}`,
+        type: "NEWS" as const,
+        authorName: a.source || "Market News",
+        authorLabel: a.category || "News",
+        title: decodeHtmlEntities(a.title),
+        content: a.summary || a.content || "",
+        mediaUrl: a.image_url || undefined,
+        mediaType: a.image_url ? ("image" as const) : undefined,
+        timestamp: new Date(a.created_at || a.date_published || Date.now()),
+        likes: a.likes || 0,
+        comments: a.comments || 0,
+        url: a.url || "#",
+        rawItem: a,
+        relatedStock: relatedStock ? {
+          id: relatedStock.id,
+          symbol: relatedStock.symbol,
+          name: relatedStock.name,
+          price: relatedStock.price || 35.75,
+          previousPrice: relatedStock.previous_price || 35.0,
+          changePercent: relatedStock.day_change_percent || 1.2
+        } : null
+      };
+    });
+
+    // Add Demo Stock Articles at the top for UI testing with different stocks and dynamic data
+    const eqtyStock = stocks.find(s => s.symbol === "EQTY") || {
+      id: "demo-eqty",
+      symbol: "EQTY",
+      name: "Equity Group Holdings",
+      price: 42.50,
+      previous_price: 41.50,
+      day_change_percent: 2.4
+    };
+
+    const kcbStock = stocks.find(s => s.symbol === "KCB") || {
+      id: "demo-kcb",
+      symbol: "KCB",
+      name: "KCB Group PLC",
+      price: 38.20,
+      previous_price: 38.50,
+      day_change_percent: -0.8
+    };
+
+    const demoArticleEqty: FeedItem = {
+      id: "demo-eqty-article",
+      type: "NEWS",
+      authorName: "Business Daily",
+      authorLabel: "Banking & Finance",
+      title: "Equity Group expands digital lending platform into DRC market",
+      content: "Equity Group Holdings has launched its proprietary micro-lending API in the Democratic Republic of Congo, targeting small business owners and cross-border traders with instant credit access via mobile wallets.",
+      isHeadlineOnly: false,
+      timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 mins ago
+      likes: 89,
+      comments: 7,
+      rawItem: {
+        id: "demo-eqty-article",
+        title: "Equity Group expands digital lending platform into DRC market",
+        source: "Business Daily",
+        parsed_ai_analysis: {
+          event_label: "Regional Expansion",
+          impact_horizon: "Long-term relevance",
+          factors_positive: [
+            "Access to 90M+ underserved population in DRC market.",
+            "Higher net interest margins expected on mobile lending products."
+          ],
+          factors_negative: [
+            "Currency volatility risks associated with Congolese Franc.",
+            "Potential increase in non-performing loan (NPL) ratio in new market."
+          ],
+          what_happened: "Equity Group Holdings introduced instant digital loans in DRC to accelerate regional expansion.",
+          verified_figures: ["Targeting 90M+ population", "Mobile API deployment"]
+        }
+      },
+      relatedStock: {
+        id: eqtyStock.id,
+        symbol: eqtyStock.symbol,
+        name: eqtyStock.name,
+        price: eqtyStock.price || 42.50,
+        previousPrice: eqtyStock.previous_price || 41.50,
+        changePercent: eqtyStock.day_change_percent || 2.4
+      }
+    };
+
+    const demoArticleKcb: FeedItem = {
+      id: "demo-kcb-article",
+      type: "NEWS",
+      authorName: "Standard Media",
+      authorLabel: "Corporate Earnings",
+      title: "KCB Group reports 18% surge in H1 net profit following NBK integration",
+      content: "KCB Group PLC posted strong half-year financial results with profit after tax rising to KES 29.9 Billion, buoyed by non-funded revenue growth and operational synergies following the full integration of National Bank of Kenya.",
+      isHeadlineOnly: false,
+      timestamp: new Date(Date.now() - 2 * 3600 * 1000), // 2 hours ago
+      likes: 142,
+      comments: 19,
+      rawItem: {
+        id: "demo-kcb-article",
+        title: "KCB Group reports 18% surge in H1 net profit following NBK integration",
+        source: "Standard Media",
+        parsed_ai_analysis: {
+          event_label: "Earnings Report",
+          impact_horizon: "Immediate relevance",
+          factors_positive: [
+            "Non-interest revenue surged 24% year-on-year.",
+            "Cost-to-income ratio improved from 51% down to 46%."
+          ],
+          factors_negative: [
+            "Loan loss provisioning increased by 8% due to retail stress.",
+            "Macroeconomic inflationary pressure on operational expenditure."
+          ],
+          what_happened: "KCB Group PLC declared H1 profit after tax of KES 29.9B (+18% YoY) driven by transaction fees and cost efficiencies.",
+          verified_figures: ["KES 29.9B Net Profit", "+18% YoY Growth", "46% Cost-to-Income Ratio"]
+        }
+      },
+      relatedStock: {
+        id: kcbStock.id,
+        symbol: kcbStock.symbol,
+        name: kcbStock.name,
+        price: kcbStock.price || 38.20,
+        previousPrice: kcbStock.previous_price || 38.50,
+        changePercent: kcbStock.day_change_percent || -0.8
+      }
+    };
+
+    return [demoArticleEqty, demoArticleKcb, ...items];
+  }, [filteredArticles, stocks]);
 
   if (loading) {
     return (

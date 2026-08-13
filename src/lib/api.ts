@@ -43,6 +43,10 @@ export type YieldUnit = typeof YIELD_UNITS[number];
 
 export interface NewsAiAnalysis {
   content?: string;
+  event_label?: string;
+  impact_horizon?: string;
+  what_happened?: string;
+  verified_figures?: string[];
   tags?: string[];
   factors_positive?: string[];
   factors_negative?: string[];

@@ -11,6 +11,9 @@ import { toast } from "sonner";
 import { Skeleton } from "@/components/ui/skeleton";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from '@/lib/remarkGfmSafe';
+import { StockDecisionContext } from "../news/StockDecisionContext";
+import { Loader2, TrendingUp, TrendingDown, Sparkles } from "lucide-react";
+import { enrichArticleLive, type NewsFromDB, type PublicStock } from "@/lib/api";
 
 import { useFeedInteractions, type PostInteraction } from "@/hooks/useFeedInteractions";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -51,6 +54,9 @@ const getAvatarBg = (type: FeedItem["type"]) => {
   }
 };
 
+import { getStockLogoUrl } from "@/lib/stockBranding";
+import { Link } from "react-router-dom";
+
 export const SocialFeedCard = ({
   item,
   onSelect,
@@ -72,19 +78,19 @@ export const SocialFeedCard = ({
   const [isExpandable, setIsExpandable] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
+  const isStockNews = item.type === "NEWS" && !!item.relatedStock;
+  const isStockBranded = isStockNews;
+
   useEffect(() => {
     const checkOverflow = () => {
       const el = contentRef.current;
       if (!el || el.clientHeight === 0) return;
-      // Allow a small buffer for subpixel rendering differences
       const isOverflowing = el.scrollHeight > el.clientHeight + 4;
       setIsExpandable(isOverflowing);
     };
 
-    // Initial check with a slight delay to allow ReactMarkdown and fonts to render
     const timeoutId = setTimeout(checkOverflow, 150);
 
-    // ResizeObserver catches font loads, window resizes, and layout shifts
     const resizeObserver = new ResizeObserver(() => {
       checkOverflow();
     });
@@ -117,8 +123,6 @@ export const SocialFeedCard = ({
 
   const handleCardClick = () => {
     if (isMobile) {
-      // Feed item IDs are prefixed with "news-" (e.g. "news-abc123").
-      // Strip the prefix so the URL matches what fetchNewsById expects.
       const rawId = item.id.startsWith("news-") ? item.id.slice(5) : item.id;
       navigate(`/news/${rawId}`);
     } else {
@@ -160,65 +164,112 @@ export const SocialFeedCard = ({
     }
   };
 
+  const stockLogo = isStockBranded ? getStockLogoUrl(item.relatedStock!.symbol) : null;
+
   return (
     <div
       onClick={handleCardClick}
-      className="animate-rise -mx-4 space-y-3 overflow-hidden border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:hover:border-border"
+      className="animate-rise relative -mx-4 space-y-4 border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-6 md:shadow-sm"
       style={{ animationDelay: `${index * 80}ms` }}
     >
-      {/* Top Author Bar */}
-      <div className="flex items-center gap-3">
-        {/* Avatar Circle */}
-        <div className={`w-12 h-12 rounded-full border ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)} text-white font-bold text-xs flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
-          {isSocialPost ? (
-            <svg className="w-4 h-4 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
-              <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
-            </svg>
-          ) : showFavicon ? (
-            <img 
-              src={avatarSrc!} 
-              alt={authorName}
-              className="w-full h-full object-cover bg-white"
-              onError={() => setAvatarError(true)}
-            />
-          ) : (
-            initials
-          )}
+      {/* Ticker Pill - Rendered inline inside the card */}
+      {isStockNews && (
+        <div className="flex items-center">
+          <Link
+            to={`/stocks/${item.relatedStock!.symbol}`}
+            onClick={(e) => e.stopPropagation()}
+            className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs hover:bg-muted transition-colors font-sans"
+          >
+            <strong className="font-bold text-foreground">{item.relatedStock!.symbol}</strong>
+            <span className="text-muted-foreground">KES {item.relatedStock!.price.toFixed(2)}</span>
+            <span className={`inline-flex items-center font-semibold ${item.relatedStock!.changePercent >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+              {item.relatedStock!.changePercent >= 0 ? (
+                <TrendingUp className="mr-0.5 h-3 w-3" />
+              ) : (
+                <TrendingDown className="mr-0.5 h-3 w-3" />
+              )}
+              {Math.abs(item.relatedStock!.changePercent).toFixed(1)}%
+            </span>
+          </Link>
         </div>
+      )}
 
-        {/* Author Details & Timestamp */}
-        <div className="flex-1 min-w-0 text-xs">
-          <div className="flex items-center gap-2 min-w-0">
-            <span className="font-bold text-foreground text-sm truncate">{authorName}</span>
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
-            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground truncate">{item.authorLabel || "Market"}</span>
+      {/* Header Bar */}
+      {isStockBranded ? (
+        <header className="flex items-center gap-3">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-xl border border-border bg-white shadow-sm">
+            {stockLogo ? (
+              <img src={stockLogo} alt={item.relatedStock!.name} className="h-full w-full object-contain p-1" />
+            ) : (
+              <span className="font-bold text-emerald-700 text-sm">{item.relatedStock!.symbol}</span>
+            )}
           </div>
-          {isSocialPost && (
-            <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-black/5 dark:bg-white/10 text-foreground dark:text-white px-1.5 py-0.5 rounded-full border border-border/60 shrink-0">
-              <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h2 className="truncate text-sm font-bold text-foreground">{item.relatedStock!.name}</h2>
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
+              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground shrink-0">Stock</span>
+            </div>
+            <p className="text-[13px] text-muted-foreground">{authorName} · {timeAgo}</p>
+          </div>
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCardClick();
+            }}
+            className="p-1 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted/30"
+            aria-label="More options"
+          >
+            <MoreHorizontal className="h-5 w-5" />
+          </button>
+        </header>
+      ) : (
+        <div className="flex items-center gap-3">
+          {/* Avatar Circle */}
+          <div className={`w-12 h-12 rounded-full border ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)} text-white font-bold text-lg flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
+            {isSocialPost ? (
+              <svg className="w-4 h-4 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
-              <span>Social</span>
-            </span>
-          )}
-          <div className="mt-0.5 flex items-center gap-1.5 text-[13px]">
-            <span className="text-muted-foreground whitespace-nowrap">{timeAgo}</span>
+            ) : showFavicon ? (
+              <img 
+                src={avatarSrc!} 
+                alt={authorName}
+                className="w-full h-full object-cover bg-white"
+                onError={() => setAvatarError(true)}
+              />
+            ) : (
+              initials
+            )}
           </div>
-        </div>
 
-        {/* Options Button */}
-        <button
-          type="button"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleCardClick();
-          }}
-          className="text-muted-foreground hover:text-foreground p-1 transition-colors rounded-full hover:bg-muted/30"
-          aria-label="More options"
-        >
-          <MoreHorizontal className="w-5 h-5 md:w-4 md:h-4" />
-        </button>
-      </div>
+          {/* Author Details & Timestamp */}
+          <div className="flex-1 min-w-0 text-xs">
+            <div className="flex items-center gap-2 min-w-0">
+              <span className="font-bold text-foreground text-sm truncate">{authorName}</span>
+              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground truncate">{item.authorLabel || "Market"}</span>
+            </div>
+            <div className="mt-0.5 flex items-center gap-1.5 text-[13px]">
+              <span className="text-muted-foreground whitespace-nowrap">{timeAgo}</span>
+            </div>
+          </div>
+
+          {/* Options Button */}
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleCardClick();
+            }}
+            className="text-muted-foreground hover:text-foreground p-1 transition-colors rounded-full hover:bg-muted/30"
+            aria-label="More options"
+          >
+            <MoreHorizontal className="w-5 h-5 md:w-4 md:h-4" />
+          </button>
+        </div>
+      )}
 
       {/* Main Title / Headline */}
       {item.id !== "daily-market-summary" && (
@@ -232,7 +283,7 @@ export const SocialFeedCard = ({
 
       {/* Real Article Image (only shown if real image_url exists in database) */}
       {(item.mediaUrl || item.rawItem?.image_url) && (
-        <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden border-y border-border/80 bg-muted/40 aspect-[16/9] md:left-auto md:-mx-5 md:w-[calc(100%+2.5rem)] md:translate-x-0 md:border-x-0 md:max-h-[340px]">
+        <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden border-y border-border/80 bg-muted/40 aspect-[16/9] md:left-auto md:-mx-6 md:w-[calc(100%+3rem)] md:translate-x-0 md:border-x-0 md:max-h-[340px]">
           <img
             src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id) || (item.mediaUrl || item.rawItem?.image_url)}
             alt=""
@@ -243,11 +294,11 @@ export const SocialFeedCard = ({
         </div>
       )}
 
-      {/* Text Body Content */}
+      {/* Text Body Content - Clamped to 2 lines on feed preview */}
       {!item.isHeadlineOnly && (
         <div
           ref={contentRef}
-          className="font-body text-sm text-muted-foreground/90 leading-relaxed line-clamp-3 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
+          className="font-body text-sm text-muted-foreground/90 leading-relaxed line-clamp-2 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
         >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {item.content || ""}
@@ -255,22 +306,20 @@ export const SocialFeedCard = ({
         </div>
       )}
 
-      {/* See more Link (only shown for long articles that don't fit in card) */}
-      {isExpandable && (
-        <div>
-          <button
-            type="button"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleCardClick();
-            }}
-            className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-sm transition-colors cursor-pointer"
-          >
-            <span>Continue reading</span>
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-      )}
+      {/* Continue Reading Link */}
+      <div>
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleCardClick();
+          }}
+          className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-sm transition-colors cursor-pointer"
+        >
+          <span>Continue reading</span>
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
 
       <div className="flex items-center justify-between gap-3 pt-2 text-muted-foreground">
         <div className="flex items-center gap-5">

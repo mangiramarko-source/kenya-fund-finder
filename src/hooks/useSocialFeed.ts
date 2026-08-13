@@ -94,6 +94,13 @@ export function useSocialFeed(
           relatedSymbols.push(sym);
         }
       });
+      let relatedStock = null;
+      if (n.related_stock_id) {
+        relatedStock = stocks.find((s: any) => s.id === n.related_stock_id) || null;
+      }
+      if (!relatedStock && relatedSymbols.length > 0) {
+        relatedStock = stocks.find((s: any) => s.symbol === relatedSymbols[0]) || null;
+      }
       
       feed.push({
         id: `news-${n.id}`,
@@ -111,10 +118,43 @@ export function useSocialFeed(
         url: n.url,
         rawItem: n,
         relatedSymbols: relatedSymbols.length > 0 ? relatedSymbols : undefined,
+        relatedStock,
       });
     });
 
     // (Removed Market Insights and KenyaFundFinder Academy feed items as requested)
-    return feed.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    const sortedFeed = feed.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+
+    // Inject Demo Stock Article at the very top so the user can test the UI
+    const scomStock = stocks.find((s: any) => s.symbol === "SCOM") || {
+      id: "demo-scom-123",
+      symbol: "SCOM",
+      name: "Safaricom PLC",
+      price: 35.75,
+      previousPrice: 35.33,
+      changePercent: 1.2
+    };
+
+    const demoArticle: FeedItem = {
+      id: "demo-safaricom-article",
+      type: "NEWS",
+      authorName: "Tuko News",
+      authorLabel: "Telecommunications",
+      title: "Safaricom changes availability of its KSh 20 one-hour data bundle",
+      content: "Safaricom limited the bundle to specific hours and introduced alternative Pata More options. The move is aimed at managing network congestion during peak hours while ensuring customers still have affordable access to internet services.",
+      isHeadlineOnly: false,
+      timestamp: new Date(),
+      likes: 124,
+      comments: 12,
+      rawItem: {
+        id: "demo-safaricom-article",
+        title: "Safaricom changes availability of its KSh 20 one-hour data bundle",
+        source: "Tuko News",
+        parsed_ai_analysis: null // This will trigger the fallback mock in StockDecisionContext
+      },
+      relatedStock: scomStock as any
+    };
+
+    return [demoArticle, ...sortedFeed];
   }, [news, stocks, funds, fxRates, commodities]);
 }
