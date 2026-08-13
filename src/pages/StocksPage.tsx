@@ -1104,16 +1104,19 @@ const getReturnForDays = (history: PriceHistory[] | undefined, currentPrice: num
   if (!history || history.length === 0) return null;
   const targetDate = new Date();
   targetDate.setUTCDate(targetDate.getUTCDate() - days);
-  const targetStr = targetDate.toISOString().slice(0, 10);
+  const targetTime = targetDate.getTime();
   
-  // Find the closest date on or before the target date
-  let oldPrice = history[0].price; // default to oldest
-  for (let i = history.length - 1; i >= 0; i--) {
-    if (history[i].snapshot_date <= targetStr) {
+  let oldPrice = history[0].price;
+  let minDiff = Infinity;
+  for (let i = 0; i < history.length; i++) {
+    const ptTime = new Date(history[i].snapshot_date).getTime();
+    const diff = Math.abs(ptTime - targetTime);
+    if (diff < minDiff) {
+      minDiff = diff;
       oldPrice = history[i].price;
-      break;
     }
   }
+  
   if (oldPrice === 0) return 0;
   return ((currentPrice - oldPrice) / oldPrice) * 100;
 };

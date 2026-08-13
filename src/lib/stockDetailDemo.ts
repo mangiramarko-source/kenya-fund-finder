@@ -85,16 +85,18 @@ export function calculateDemoReturn(points: DemoPricePoint[], currentPrice: numb
   if (latestIndex === -1) return null;
 
   const cutoff = latestObservationTime - days * 24 * 60 * 60 * 1000;
-  let baseline: DemoPricePoint | null = null;
   
-  for (let i = latestIndex; i >= 0; i--) {
+  let baseline: DemoPricePoint | null = null;
+  let minDiff = Infinity;
+  for (let i = 0; i <= latestIndex; i++) {
     const point = points[i];
     if (Number.isFinite(point.price) && point.price > 0) {
       const t = point.timestamp || new Date(point.snapshot_date).getTime();
       if (Number.isFinite(t)) {
-        if (t <= cutoff) {
+        const diff = Math.abs(t - cutoff);
+        if (diff < minDiff) {
+          minDiff = diff;
           baseline = point;
-          break;
         }
       }
     }

@@ -31,6 +31,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   const [cachedStocks] = useState(() => stockCache.loadStocks()?.stocks ?? []);
   const [stocks, setStocks] = useState<CachedStock[]>(cachedStocks);
   const [history, setHistory] = useState<Record<string, DemoPricePoint[]>>({});
+  const [historyLoading, setHistoryLoading] = useState(true);
   const [loading, setLoading] = useState(cachedStocks.length === 0);
   const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState("");
@@ -76,6 +77,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
       }
     };
     const loadHistory = async () => {
+      setHistoryLoading(true);
       try {
         const grouped = await fetchCompleteDemoHistory(async (offset, limit) => {
           const response = await fetchPublicData<DemoHistoryRow>("stock-history-bulk", {
@@ -90,6 +92,8 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
         if (!cancelled) setHistory(grouped);
       } catch (historyError) {
         console.error("Failed to load stock returns", historyError);
+      } finally {
+        if (!cancelled) setHistoryLoading(false);
       }
     };
     loadStocks();
@@ -190,7 +194,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border bg-muted/20 dark:bg-[#191a1d]">
-                      {filteredStocks.map((stock) => <StockTableRow key={stock.id} stock={stock} points={history[stock.id] ?? []} selected={stock.id === selectedStock.id} />)}
+                      {filteredStocks.map((stock) => <StockTableRow key={stock.id} stock={stock} points={history[stock.id] ?? []} selected={stock.id === selectedStock.id} historyLoading={historyLoading} />)}
                     </tbody>
                   </table>
                 </div>
@@ -204,7 +208,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   );
 }
 
-function StockTableRow({ stock, points, selected }: { stock: CachedStock; points: DemoPricePoint[]; selected: boolean }) {
+function StockTableRow({ stock, points, selected, historyLoading }: { stock: CachedStock; points: DemoPricePoint[]; selected: boolean; historyLoading: boolean }) {
   const sevenDay = calculateDemoReturn(points, stock.price, 7);
   const oneMonth = calculateDemoReturn(points, stock.price, 30);
   const threeMonth = calculateDemoReturn(points, stock.price, 90);
@@ -215,11 +219,11 @@ function StockTableRow({ stock, points, selected }: { stock: CachedStock; points
       <td className="bg-background/60 px-6 py-4 dark:bg-[#151619]"><div className="flex items-center gap-3"><div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted/60 text-[10px] font-bold text-muted-foreground"><span>{stock.symbol.slice(0, 2)}</span>{logoUrl && <img src={logoUrl} alt={`${stock.name} logo`} className="absolute inset-0 h-full w-full bg-white object-contain p-1" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />}</div><div className="min-w-0"><p className="text-sm font-bold">{stock.symbol}</p><p className="max-w-[190px] truncate text-[11px] text-muted-foreground">{stock.name}</p></div></div></td>
       <td className="whitespace-nowrap px-3 py-4 text-center font-body text-sm font-bold tabular-nums"><span className="mr-1 text-[10px] font-medium text-muted-foreground">KSh</span>{formatPrice(stock.price)}</td>
       <td className="px-3 py-4 text-right"><ReturnValue value={stock.day_change_percent} /></td>
-      <td className="px-3 py-4 text-right"><ReturnValue value={sevenDay} /></td>
-      <td className="px-3 py-4 text-right"><ReturnValue value={oneMonth} /></td>
-      <td className="px-3 py-4 text-right"><ReturnValue value={threeMonth} /></td>
-      <td className="px-3 py-4 text-right"><ReturnValue value={oneYear} /></td>
-      <td className="px-3 py-4"><div className="flex justify-center"><TrendSparkline points={points} positive={(oneMonth ?? stock.day_change_percent) >= 0} /></div></td>
+      <td className="px-3 py-4 text-right"><ReturnValue value={sevenDay} loading={historyLoading} /></td>
+      <td className="px-3 py-4 text-right"><ReturnValue value={oneMonth} loading={historyLoading} /></td>
+      <td className="px-3 py-4 text-right"><ReturnValue value={threeMonth} loading={historyLoading} /></td>
+      <td className="px-3 py-4 text-right"><ReturnValue value={oneYear} loading={historyLoading} /></td>
+      <td className="px-3 py-4"><div className="flex justify-center"><TrendSparkline points={points} positive={(oneMonth ?? stock.day_change_percent) >= 0} loading={historyLoading} /></div></td>
       <td className="px-3 py-4"><RangeCell stock={stock} /></td>
       <td className="px-3 py-4 text-center font-body text-xs text-muted-foreground tabular-nums">{formatCompact(stock.volume)}</td>
       <td className="whitespace-nowrap px-3 py-4 text-center font-body text-sm font-bold tabular-nums">KSh {formatCompact(stock.market_cap)}</td>
@@ -227,12 +231,14 @@ function StockTableRow({ stock, points, selected }: { stock: CachedStock; points
   );
 }
 
-function ReturnValue({ value }: { value: number | null }) {
+function ReturnValue({ value, loading }: { value: number | null; loading?: boolean }) {
+  if (loading) return <Skeleton className="h-4 w-12 ml-auto" />;
   if (value == null) return <span className="text-xs text-muted-foreground">—</span>;
   return <span className={`whitespace-nowrap font-body text-sm font-bold tabular-nums ${value > 0 ? "text-emerald-500" : value < 0 ? "text-destructive" : "text-muted-foreground"}`}>{value > 0 ? "+" : ""}{formatPrice(value)}%</span>;
 }
 
-function TrendSparkline({ points, positive }: { points: DemoPricePoint[]; positive: boolean }) {
+function TrendSparkline({ points, positive, loading }: { points: DemoPricePoint[]; positive: boolean; loading?: boolean }) {
+  if (loading) return <Skeleton className="h-[24px] w-[60px]" />;
   const recent = points.slice(-12);
   if (recent.length < 2) return <span className="text-xs text-muted-foreground">—</span>;
   const color = positive ? "hsl(152 60% 42%)" : "hsl(var(--destructive))";
