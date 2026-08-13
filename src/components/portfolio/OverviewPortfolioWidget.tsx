@@ -47,11 +47,6 @@ export default function OverviewPortfolioWidget() {
         <h2 className="text-base font-bold text-foreground flex items-center gap-1.5">
           <Briefcase className="h-4 w-4 text-[#00A651]" />
           Portfolio
-          {isDemoFallback && (
-            <span className="text-[10px] bg-amber-500/10 text-amber-400 border border-amber-500/20 font-bold px-1.5 py-0.5 rounded-md">
-              SAMPLE
-            </span>
-          )}
         </h2>
         <Link
           to="/portfolio"
