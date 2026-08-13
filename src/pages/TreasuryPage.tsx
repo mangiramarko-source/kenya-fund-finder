@@ -970,6 +970,8 @@ export default function TreasuryPage() {
               </div>
             </div>
           </section>
+            </div>
+          )}
         </main>
 
         {/* ── Section 7: Bond Detail Modal / Drawer ── */}
