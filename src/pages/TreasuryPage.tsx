@@ -1,8 +1,7 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
-import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
@@ -153,7 +152,6 @@ export default function TreasuryPage() {
   return (
     <TooltipProvider>
       <div className="min-h-screen bg-background text-foreground flex flex-col selection:bg-emerald-500 selection:text-white">
-        <Navbar />
 
 
         <main className="flex-1 container mx-auto px-4 py-4 md:py-6 max-w-6xl space-y-4">
@@ -1091,8 +1089,6 @@ export default function TreasuryPage() {
             )}
           </SheetContent>
         </Sheet>
-
-        <Footer />
       </div>
     </TooltipProvider>
   );
