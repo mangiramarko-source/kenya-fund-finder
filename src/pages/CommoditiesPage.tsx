@@ -88,19 +88,34 @@ const MiniSparkline = ({ data, positive, livePoint }: { data: PriceHistory[]; po
 
 const CommoditiesPage = () => {
   useDocumentTitle(
-    "Commodity Prices – Kenya Fund Finder",
-    "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly.",
+    "Kenya Commodity Prices – Gold, Oil & More Today",
+    "Track gold, crude oil, and other commodity prices in Kenya. Indicative commodity pricing updated regularly for Kenyan investors and traders.",
     {
-      title: "Commodity Prices – Kenya Fund Finder",
-      description: "Track gold, oil, and cryptocurrency prices. Indicative commodity pricing updated regularly.",
+      title: "Kenya Commodity Prices – Gold, Oil & More Today",
+      description: "Live commodity prices in Kenya: gold, crude oil, and more. Updated regularly.",
     }
   );
   useJsonLd({
     "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: "Commodity Prices – Kenya Fund Finder",
-    description: "Track gold, oil, and cryptocurrency prices.",
+    "@type": "Dataset",
+    name: "Kenya Commodity Prices",
+    description: "Indicative commodity prices tracked for Kenyan investors, including gold, crude oil, and other key commodities. Updated regularly.",
     url: "https://kenyafundfinder.com/commodities",
+    publisher: {
+      "@type": "Organization",
+      name: "Kenya Fund Finder",
+      url: "https://kenyafundfinder.com"
+    },
+    spatialCoverage: { "@type": "Country", name: "Kenya", identifier: "KE" },
+    temporalCoverage: "2024/..",
+    variableMeasured: [
+      { "@type": "PropertyValue", name: "Gold Price", unitText: "USD per troy ounce" },
+      { "@type": "PropertyValue", name: "Crude Oil Price", unitText: "USD per barrel" },
+      { "@type": "PropertyValue", name: "Commodity Price Index", unitText: "USD" }
+    ],
+    license: "https://kenyafundfinder.com/terms",
+    isAccessibleForFree: true,
+    keywords: "gold price Kenya, oil price Kenya, commodity prices Kenya, Kenyan commodities, commodity market Kenya"
   });
 
   const { user } = useAuth();

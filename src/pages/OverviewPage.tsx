@@ -2,7 +2,7 @@ import { useEffect, useState, useMemo, useCallback } from "react";
 import { decodeHtmlEntities, isKenyanMarketOpen } from "@/lib/utils";
 import Sparkline from "@/components/Sparkline";
 import { Link, useNavigate } from "react-router-dom";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketData, type ExchangeRate, type Commodity, type Stock } from "@/components/home/MarketTicker";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
@@ -972,13 +972,36 @@ const WatchlistGroupedSection = ({
 /* ─── Main Page ─── */
 const OverviewPage = () => {
   useDocumentTitle(
-    "Kenya Fund Finder – Stocks, Unit Trusts, FX & Commodities",
-    "Compare CMA-regulated unit trusts, NSE stocks, FX rates, and commodity prices. Daily-updated data, calculators, and price alerts for Kenyan investors.",
+    "Kenya Fund Finder – Compare Stocks, Unit Trusts, FX & Commodities",
+    "Compare CMA-regulated unit trusts and MMFs, NSE stocks, KES exchange rates, and commodity prices. Daily-updated yields, calculators, and price alerts for Kenyan investors.",
     {
-      title: "Kenya Fund Finder – Stocks, Unit Trusts, FX & Commodities",
+      title: "Kenya Fund Finder – Compare Stocks, Unit Trusts, FX & Commodities",
       description: "Compare CMA-regulated unit trusts, NSE stocks, FX rates, and commodity prices for Kenyan investors.",
     }
   );
+
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "WebPage",
+    "@id": "https://kenyafundfinder.com/overview",
+    name: "Kenya Fund Finder – Market Overview",
+    description: "Your live Kenyan investment dashboard. Compare money market fund yields, NSE stock prices, FX exchange rates, and commodity prices in one place.",
+    url: "https://kenyafundfinder.com/overview",
+    publisher: {
+      "@type": "Organization",
+      name: "Kenya Fund Finder",
+      url: "https://kenyafundfinder.com",
+      areaServed: { "@type": "Country", name: "Kenya", identifier: "KE" },
+      logo: { "@type": "ImageObject", url: "https://kenyafundfinder.com/apple-touch-icon.png" }
+    },
+    about: [
+      { "@type": "Thing", name: "NSE Kenya Stock Prices" },
+      { "@type": "Thing", name: "Kenya Money Market Fund Yields" },
+      { "@type": "Thing", name: "Kenya Shilling Exchange Rates" },
+      { "@type": "Thing", name: "Kenya Commodity Prices" }
+    ],
+    inLanguage: "en-KE"
+  });
   const navigate = useNavigate();
   const { user } = useAuth();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();

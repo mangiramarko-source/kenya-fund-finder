@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { fetchPublishedNews, fetchPublicStocks, type NewsFromDB } from "@/lib/api";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Search, Megaphone, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -37,10 +37,37 @@ const isInternationalArticle = (a: { source?: string | null; category?: string |
 
 export default function NewsPage() {
   useDocumentTitle(
-    "Market News – Kenya Investment & Global Financial Updates",
-    "Stay informed with the latest Kenyan & international investment news, stock updates, unit trust developments, and market trends.",
-    { title: "Market News – Kenya Investment & Global Financial Updates", description: "Up-to-date market news covering Kenya and global financial markets." }
+    "Kenya Investment News – Stocks, MMFs, FX & Market Updates",
+    "Latest Kenyan market news covering NSE stocks, money market fund yields, FX exchange rates, commodities, and macroeconomic updates for Kenyan investors.",
+    { title: "Kenya Investment News – Stocks, MMFs, FX & Market Updates", description: "Kenyan market news: NSE stocks, MMF yields, FX rates, commodities, and economic updates." }
   );
+
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@type": "CollectionPage",
+    "@id": "https://kenyafundfinder.com/news",
+    name: "Kenya Investment Market News",
+    description: "Curated Kenyan and international financial news covering NSE stocks, money market funds, FX rates, commodities, and macroeconomic trends.",
+    url: "https://kenyafundfinder.com/news",
+    publisher: {
+      "@type": "Organization",
+      name: "Kenya Fund Finder",
+      url: "https://kenyafundfinder.com",
+      logo: { "@type": "ImageObject", url: "https://kenyafundfinder.com/apple-touch-icon.png" }
+    },
+    about: [
+      { "@type": "Thing", name: "Nairobi Securities Exchange" },
+      { "@type": "Thing", name: "Money Market Funds Kenya" },
+      { "@type": "Thing", name: "Kenya Shilling Exchange Rate" },
+      { "@type": "Thing", name: "Kenya Investment News" }
+    ],
+    inLanguage: "en-KE",
+    potentialAction: {
+      "@type": "SearchAction",
+      target: "https://kenyafundfinder.com/news?q={search_term_string}",
+      "query-input": "required name=search_term_string"
+    }
+  });
 
   const { user } = useAuth();
   const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();

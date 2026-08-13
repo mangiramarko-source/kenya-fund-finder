@@ -87,19 +87,34 @@ const MiniSparkline = ({ data, positive, livePoint }: { data: RateHistory[]; pos
 
 const RatesPage = () => {
   useDocumentTitle(
-    "FX Exchange Rates – Kenya Fund Finder",
-    "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more.",
+    "Kenya FX Exchange Rates – Live USD, EUR, GBP to KES Today",
+    "Live foreign exchange rates against the Kenya Shilling (KES). Track USD/KES, EUR/KES, GBP/KES and more. Updated daily from market data.",
     {
-      title: "FX Exchange Rates – Kenya Fund Finder",
-      description: "Live foreign exchange rates against the Kenya Shilling. Track USD, EUR, GBP and more.",
+      title: "Kenya FX Exchange Rates – Live USD, EUR, GBP to KES Today",
+      description: "Live KES exchange rates: USD, EUR, GBP, and more. Updated daily.",
     }
   );
   useJsonLd({
     "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: "FX Exchange Rates – Kenya Fund Finder",
-    description: "Live foreign exchange rates against the Kenya Shilling.",
+    "@type": "Dataset",
+    name: "Kenya Foreign Exchange Rates – KES",
+    description: "Live foreign exchange rates against the Kenyan Shilling (KES), including USD/KES, EUR/KES, GBP/KES and other major currency pairs. Updated daily.",
     url: "https://kenyafundfinder.com/rates",
+    publisher: {
+      "@type": "Organization",
+      name: "Kenya Fund Finder",
+      url: "https://kenyafundfinder.com"
+    },
+    spatialCoverage: { "@type": "Country", name: "Kenya", identifier: "KE" },
+    temporalCoverage: "2024/..",
+    variableMeasured: [
+      { "@type": "PropertyValue", name: "USD/KES Rate", unitText: "Kenya Shilling per US Dollar" },
+      { "@type": "PropertyValue", name: "EUR/KES Rate", unitText: "Kenya Shilling per Euro" },
+      { "@type": "PropertyValue", name: "GBP/KES Rate", unitText: "Kenya Shilling per British Pound" }
+    ],
+    license: "https://kenyafundfinder.com/terms",
+    isAccessibleForFree: true,
+    keywords: "Kenya exchange rates, USD KES, EUR KES, GBP KES, Kenyan Shilling, forex Kenya"
   });
 
   const { user } = useAuth();
