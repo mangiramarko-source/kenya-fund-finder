@@ -460,7 +460,7 @@ export default function TreasuryPage() {
 
               {/* Section 4: T-Bill Rate History Chart (Matches Mobile Stocks UI) */}
               <section className="space-y-4">
-                <div className="rounded-2xl border border-border bg-card p-4 md:p-6 space-y-5 shadow-sm">
+                <div className="border-0 bg-transparent p-0 shadow-none space-y-4">
                   {/* Header & Range Selector */}
                   <div className="space-y-3">
                     <div className="flex items-center justify-between">
