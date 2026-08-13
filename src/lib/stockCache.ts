@@ -16,7 +16,10 @@ export interface CachedStock {
   updated_at: string;
 }
 
-const STOCKS_KEY = "kff:cache:stocks:v1";
+const STOCKS_KEY = "kff:cache:stocks:v2";
+
+/** 6 hours in milliseconds — stale cache triggers a live refetch */
+const MAX_AGE_MS = 6 * 60 * 60 * 1000;
 
 interface StockCacheEnvelope {
   savedAt: number;
@@ -40,7 +43,14 @@ export const normalizeStock = (stock: any): CachedStock => ({
 const readStocks = (): StockCacheEnvelope | null => {
   try {
     const raw = localStorage.getItem(STOCKS_KEY);
-    return raw ? JSON.parse(raw) as StockCacheEnvelope : null;
+    if (!raw) return null;
+    const envelope = JSON.parse(raw) as StockCacheEnvelope;
+    // Discard if stale — force a live fetch after TTL expires
+    if (Date.now() - envelope.savedAt > MAX_AGE_MS) {
+      localStorage.removeItem(STOCKS_KEY);
+      return null;
+    }
+    return envelope;
   } catch {
     return null;
   }

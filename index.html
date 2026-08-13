@@ -19,7 +19,29 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <meta
       http-equiv="Content-Security-Policy"
-      content="default-src 'self' https://* 'unsafe-inline' 'unsafe-eval'; script-src 'self' https://* 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline' https://*; font-src 'self' https://* data:; img-src 'self' data: https: blob:; connect-src 'self' https://* wss://*; frame-src *; child-src *; object-src 'none'; frame-ancestors 'self';"
+      content="
+        default-src 'self' https://* 'unsafe-inline';
+        script-src 'self' 'unsafe-inline'
+          https://challenges.cloudflare.com
+          https://caawgzuofnujrznwbuxk.supabase.co;
+        style-src 'self' 'unsafe-inline' https://fonts.googleapis.com https://fonts.gstatic.com;
+        font-src 'self' https://fonts.gstatic.com data:;
+        img-src 'self' data: https: blob:;
+        connect-src 'self'
+          https://caawgzuofnujrznwbuxk.supabase.co
+          wss://caawgzuofnujrznwbuxk.supabase.co
+          https://challenges.cloudflare.com
+          https://fonts.googleapis.com
+          https://fonts.gstatic.com
+          https://images.unsplash.com
+          https://fastly.picsum.photos;
+        frame-src https://challenges.cloudflare.com;
+        child-src https://challenges.cloudflare.com;
+        object-src 'none';
+        frame-ancestors 'self';
+        base-uri 'self';
+        form-action 'self';
+      "
     />
     <script src="https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit" async defer></script>
     <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
