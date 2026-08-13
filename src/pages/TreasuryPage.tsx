@@ -378,13 +378,10 @@ export default function TreasuryPage() {
             })}
           </div>
 
-          {/* Updated Date Details Row (Matches Mobile Stocks UI) */}
-          <div className="flex items-center justify-between text-[11px] font-bold tracking-wider uppercase pt-1 pb-0.5 px-0.5">
+          {/* Updated Date Details Row */}
+          <div className="text-[11px] font-bold tracking-wider uppercase pt-0.5 pb-0 px-0.5">
             <span className="text-emerald-500">
               UPDATED {activeTab === "tbills" ? "08 AUG 2026" : "01 AUG 2026"}
-            </span>
-            <span className="text-muted-foreground">
-              UPDATED {activeTab === "tbills" ? "WEEKLY" : "MONTHLY"}
             </span>
           </div>
 
@@ -392,7 +389,7 @@ export default function TreasuryPage() {
           {/* TAB 1: TREASURY BILLS                                         */}
           {/* ───────────────────────────────────────────────────────────── */}
           {activeTab === "tbills" && (
-            <div className="space-y-5 animate-in fade-in-50 duration-300">
+            <div className="space-y-3 animate-in fade-in-50 duration-300">
               {/* Section 3: Current T-Bill Rates Cards */}
               <section>
                 <div className="no-scrollbar -mx-4 px-4 flex gap-3 overflow-x-auto py-1 md:grid md:grid-cols-3 md:gap-4 md:overflow-visible md:mx-0 md:px-0">
