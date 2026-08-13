@@ -351,7 +351,7 @@ export default function TreasuryPage() {
               Treasury Bills & Bonds
             </h1>
             <p className="text-base md:text-lg text-muted-foreground max-w-3xl">
-              Compare Kenyan government securities, track rates and understand potential returns with real-time analytics.
+              Compare Kenyan government securities and track rates
             </p>
           </div>
 
