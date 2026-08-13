@@ -61,7 +61,7 @@ export default function OverviewPortfolioWidget() {
         </Link>
       </div>
 
-      <div className="flex overflow-x-auto gap-3.5 pb-2.5 -mx-4 px-4 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent md:mx-0 md:px-0">
+      <div className="flex overflow-x-auto gap-3.5 pb-2.5 px-0.5 md:px-0 snap-x snap-mandatory scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
         {displayItems.map((item) => {
           const itemChange = isDemoFallback
             ? DEMO_CHANGE
