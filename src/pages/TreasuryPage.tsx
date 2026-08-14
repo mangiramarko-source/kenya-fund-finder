@@ -96,7 +96,7 @@ export default function TreasuryPage() {
         if (bondSortBy === "maturity") return a.tenorYears - b.tenorYears;
         return 0;
       });
-  }, [bondSearch, bondMaturityFilter, bondCouponFilter, bondSortBy]);
+  }, [data?.bonds, bondSearch, bondMaturityFilter, bondCouponFilter, bondSortBy]);
 
   // Selected Security for Calculator
   const selectedCalcSecurity = useMemo(() => {
