@@ -91,9 +91,9 @@ export default function TreasuryPage() {
         return matchesSearch && matchesMaturity && matchesCoupon;
       })
       .sort((a, b) => {
-        if (bondSortBy === "yield") return b.couponRateRate - a.yieldRate;
-        if (bondSortBy === "coupon") return b.couponRate - a.coupon;
-        if (bondSortBy === "maturity") return a.yearsRemaining - b.tenorYears;
+        if (bondSortBy === "yield") return b.couponRate - a.couponRate;
+        if (bondSortBy === "coupon") return b.couponRate - a.couponRate;
+        if (bondSortBy === "maturity") return a.tenorYears - b.tenorYears;
         return 0;
       });
   }, [bondSearch, bondMaturityFilter, bondCouponFilter, bondSortBy]);
@@ -104,8 +104,9 @@ export default function TreasuryPage() {
     if (card) return { name: card.type, rate: card.averageYield, days: card.days };
     const bond = data?.bonds?.find((b) => b.issueNo === calcSecurityId);
     if (bond) return { name: bond.issueNo, rate: bond.couponRate, days: 365 };
-    return { name: "364-Day T-Bill", rate: 9.02, days: 364 };
-  }, [calcSecurityId]);
+    const tbill364 = data?.tbills?.find((c) => c.type === "364-Day");
+    return { name: "364-Day T-Bill", rate: tbill364?.averageYield || 0, days: 364 };
+  }, [calcSecurityId, data]);
 
   // Interactive calculation output
   const calcResults = useMemo(() => {
@@ -126,7 +127,7 @@ export default function TreasuryPage() {
   const chartStats = useMemo(() => {
     const currentData = data?.rateHistory?.[chartPeriod] || data?.rateHistory?.["6M"] || [];
     if (!currentData || currentData.length === 0) {
-      return { high: "9.02%", low: "7.20%", latest: "9.02%", demand: "1.6×" };
+      return { high: "—", low: "—", latest: "—", demand: "—" };
     }
 
     const rates: number[] = [];
@@ -137,14 +138,14 @@ export default function TreasuryPage() {
     });
 
     if (rates.length === 0) {
-      return { high: "9.02%", low: "7.20%", latest: "9.02%", demand: "1.6×" };
+      return { high: "—", low: "—", latest: "—", demand: "—" };
     }
 
     const high = Math.max(...rates).toFixed(2) + "%";
     const low = Math.min(...rates).toFixed(2) + "%";
     const lastItem = currentData[currentData.length - 1];
     const latestVal = visibleLines.rate364 ? lastItem.rate364 : visibleLines.rate182 ? lastItem.rate182 : lastItem.rate91;
-    const latest = `${(latestVal || 9.02).toFixed(2)}%`;
+    const latest = latestVal ? `${latestVal.toFixed(2)}%` : "—";
 
     return { high, low, latest, demand: "1.6×" };
   }, [chartPeriod, visibleLines]);
@@ -158,26 +159,32 @@ export default function TreasuryPage() {
           {isLoading && (
             <div className="flex flex-col items-center justify-center py-32 space-y-4">
               <div className="h-8 w-8 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
-              <p className="text-muted-foreground font-semibold">Loading Treasury Data...</p>
+              <p className="text-muted-foreground font-semibold">Loading latest Treasury data…</p>
             </div>
           )}
           
           {isError && (
-            <div className="bg-destructive/10 text-destructive px-6 py-4 rounded-xl border border-destructive/20 text-center font-semibold max-w-md mx-auto my-20">
-              Failed to load Treasury Data. Please check your connection and try again.
+            <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 px-6 py-4 rounded-xl border border-amber-500/20 text-center font-semibold max-w-md mx-auto my-20">
+              Treasury data is temporarily unavailable.
             </div>
           )}
 
           {!isLoading && !isError && data && (
             <div className="space-y-4 animate-in fade-in-50 duration-500">
           {/* ── Section 1: Main Page Header ── */}
-          <div className="space-y-1">
-            <h1 className="text-2xl md:text-4xl font-black tracking-tight text-foreground">
-              Treasury Bills & Bonds
-            </h1>
-            <p className="text-sm md:text-base text-muted-foreground max-w-3xl">
-              Compare Kenyan government securities and track rates
-            </p>
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-border/60 pb-3">
+            <div className="space-y-1">
+              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-foreground">
+                Treasury Bills & Bonds
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground max-w-3xl">
+                Compare Kenyan government securities and track interest rates
+              </p>
+            </div>
+            <div className="flex items-center gap-2 text-xs text-muted-foreground bg-muted/50 px-3 py-1.5 rounded-lg border border-border/50 self-start md:self-auto">
+              <Landmark className="w-3.5 h-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
+              <span>Source: <strong>Central Bank of Kenya</strong> · Last verified: <strong>{data.lastVerifiedAt || "August 2026"}</strong></span>
+            </div>
           </div>
 
           {/* ── Section 2: Top Navigation Tabs (Pill Style) ── */}
@@ -210,7 +217,7 @@ export default function TreasuryPage() {
             <div className="space-y-3 animate-in fade-in-50 duration-300">
               {/* Updated Date Row for T-Bills */}
               <div className="text-[11px] font-bold tracking-wider uppercase px-0.5">
-                <span className="text-emerald-500">UPDATED 08 AUG 2026</span>
+                <span className="text-emerald-500">LATEST AUCTION: {data?.tbills?.[0]?.auctionDate?.toUpperCase() || "—"}</span>
               </div>
               {/* Section 3: Current T-Bill Rates Cards */}
               <section>
@@ -460,7 +467,7 @@ export default function TreasuryPage() {
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-1">
                   <h3 className="text-base sm:text-lg font-bold text-foreground">Latest Treasury Bill Auction</h3>
                   <div className="text-xs text-muted-foreground font-medium">
-                    Auction Date: <strong className="text-foreground">08 Aug 2026</strong> · Source: Central Bank of Kenya
+                    Latest Auction: <strong className="text-foreground">{data?.tbills?.[0]?.auctionDate || "—"}</strong> · Source: Central Bank of Kenya
                   </div>
                 </div>
 
@@ -650,7 +657,7 @@ export default function TreasuryPage() {
 
               {/* Updated Date Row for Bonds */}
               <div className="text-[11px] font-bold tracking-wider uppercase px-0.5 pt-0.5">
-                <span className="text-emerald-500">UPDATED 01 AUG 2026</span>
+                <span className="text-emerald-500">UPDATED {data?.lastVerifiedAt?.toUpperCase() || "RECENTLY"}</span>
               </div>
 
               {/* Bond List Table / Cards */}
@@ -823,7 +830,7 @@ export default function TreasuryPage() {
                   How much could I earn?
                 </h2>
                 <p className="text-xs md:text-sm text-muted-foreground">
-                  Estimate potential interest returns on Kenyan government T-Bills and Bonds based on current mock rates.
+                  Estimate potential interest returns on Kenyan government T-Bills and Bonds based on verified Central Bank of Kenya (CBK) rates.
                 </p>
               </div>
 
