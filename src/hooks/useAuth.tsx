@@ -31,34 +31,53 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   };
 
   useEffect(() => {
-    // Get initial session first
-    supabase.auth.getSession().then(({ data: { session } }) => {
+    const initializeAuth = async () => {
+      // 1. Manually check for hash from OAuth implicit flow
+      const hash = window.location.hash;
+      if (hash && hash.includes("access_token=") && hash.includes("refresh_token=")) {
+        const params = new URLSearchParams(hash.substring(1));
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
+
+        if (access_token && refresh_token) {
+          const { error: sessionError } = await supabase.auth.setSession({
+            access_token,
+            refresh_token,
+          });
+          if (!sessionError) {
+            window.location.hash = ""; // Clear hash manually
+          }
+        }
+      }
+
+      // 2. Get initial session
+      const { data: { session } } = await supabase.auth.getSession();
       if (session) {
         // Validate the session is still usable
-        supabase.auth.getUser().then(({ error }) => {
-          if (error) {
-            // Session is stale/broken — clear it
-            supabase.auth.signOut().then(() => {
-              setUser(null);
-              setSession(null);
-              setIsAdmin(false);
-              setLoading(false);
-            });
+        const { error } = await supabase.auth.getUser();
+        if (error) {
+          // Session is stale/broken — clear it
+          await supabase.auth.signOut();
+          setUser(null);
+          setSession(null);
+          setIsAdmin(false);
+          setLoading(false);
+        } else {
+          setSession(session);
+          setUser(session.user);
+          if (session.user.email?.toLowerCase() === 'kokoscalbaridi@gmail.com') {
+            setIsAdmin(true);
+            setLoading(false);
           } else {
-            setSession(session);
-            setUser(session.user);
-            if (session.user.email?.toLowerCase() === 'kokoscalbaridi@gmail.com') {
-              setIsAdmin(true);
-              setLoading(false);
-            } else {
-              checkAdmin(session.user.id).finally(() => setLoading(false));
-            }
+            checkAdmin(session.user.id).finally(() => setLoading(false));
           }
-        });
+        }
       } else {
         setLoading(false);
       }
-    });
+    };
+
+    initializeAuth();
 
     // Listen for auth changes - DO NOT await inside callback (causes deadlocks)
     const { data: { subscription } } = supabase.auth.onAuthStateChange(
