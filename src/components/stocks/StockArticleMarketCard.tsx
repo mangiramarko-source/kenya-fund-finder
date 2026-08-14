@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { BarChart3, ExternalLink, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { PublicStock } from "@/lib/api";
@@ -73,9 +73,12 @@ export function StockArticleMarketCard({ stock }: { stock: PublicStock }) {
     };
   }, [filteredHistory]);
 
-  const isUp = (stats?.change ?? stock.day_change_percent) > 0;
-  const isDown = (stats?.change ?? stock.day_change_percent) < 0;
-  const chartColor = isUp ? "hsl(152 60% 42%)" : isDown ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))";
+  const chartIsUp = (stats?.change ?? stock.day_change_percent) > 0;
+  const chartIsDown = (stats?.change ?? stock.day_change_percent) < 0;
+  const chartColor = chartIsUp ? "hsl(152 60% 42%)" : chartIsDown ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))";
+
+  const dayIsUp = stock.day_change_percent > 0;
+  const dayIsDown = stock.day_change_percent < 0;
 
   return (
     <section className="rounded-xl border border-border bg-card p-3 space-y-2">
@@ -84,8 +87,8 @@ export function StockArticleMarketCard({ stock }: { stock: PublicStock }) {
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{stock.symbol} share price</p>
           <p className="text-xl font-bold text-foreground tabular-nums">KSh {formatPrice(stock.price)}</p>
         </div>
-        <div className={`flex items-center gap-1 text-sm font-semibold ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
-          {isUp ? <TrendingUp className="h-4 w-4" /> : isDown ? <TrendingDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+        <div className={`flex items-center gap-1 text-sm font-semibold ${dayIsUp ? "text-emerald-500" : dayIsDown ? "text-destructive" : "text-muted-foreground"}`}>
+          {dayIsUp ? <TrendingUp className="h-4 w-4" /> : dayIsDown ? <TrendingDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
           {stock.day_change_percent > 0 ? "+" : ""}{stock.day_change_percent.toFixed(2)}%
         </div>
       </div>
@@ -127,6 +130,7 @@ export function StockArticleMarketCard({ stock }: { stock: PublicStock }) {
               labelFormatter={(value) => formatMarketDate(value, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
               formatter={(value: number) => [`KSh ${formatPrice(value)}`, "Price"]}
             />
+            <XAxis dataKey="snapshot_date" hide />
             <Area type="monotone" dataKey="price" stroke={chartColor} strokeWidth={2} fill={`url(#article-price-${stock.id})`} />
           </AreaChart>
         </ResponsiveContainer>
@@ -144,7 +148,7 @@ export function StockArticleMarketCard({ stock }: { stock: PublicStock }) {
           </div>
           <div>
             <p className="text-[9px] text-muted-foreground">Change</p>
-            <p className={`text-xs font-bold ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
+            <p className={`text-xs font-bold ${chartIsUp ? "text-emerald-500" : chartIsDown ? "text-destructive" : "text-muted-foreground"}`}>
               {stats.changePercent > 0 ? "+" : ""}{stats.changePercent.toFixed(2)}%
             </p>
           </div>

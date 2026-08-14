@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { BarChart3, ExternalLink, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { formatMarketDate } from "@/lib/utils";
 
@@ -48,14 +48,16 @@ export function MmfArticleMarketCard({ mmf }: { mmf: RelatedMmfProp }) {
       high: Math.max(...yields),
       low: Math.min(...yields),
       change,
-      changePercent: mmf.changePercent ?? (first ? (change / first) * 100 : 0),
+      changePercent: first ? (change / first) * 100 : 0,
     };
-  }, [history, mmf.changePercent]);
+  }, [history]);
 
-  const changeVal = stats?.changePercent ?? 0;
-  const isUp = changeVal > 0;
-  const isDown = changeVal < 0;
-  const chartColor = isUp ? "hsl(152 60% 42%)" : isDown ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))";
+  const chartIsUp = stats ? stats.changePercent > 0 : (mmf.changePercent ?? 0) > 0;
+  const chartIsDown = stats ? stats.changePercent < 0 : (mmf.changePercent ?? 0) < 0;
+  const chartColor = chartIsUp ? "hsl(152 60% 42%)" : chartIsDown ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))";
+
+  const dayIsUp = (mmf.changePercent ?? 0) > 0;
+  const dayIsDown = (mmf.changePercent ?? 0) < 0;
 
   return (
     <section className="rounded-xl border border-border bg-card p-3 space-y-2">
@@ -64,9 +66,9 @@ export function MmfArticleMarketCard({ mmf }: { mmf: RelatedMmfProp }) {
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{mmf.name} YIELD</p>
           <p className="text-xl font-bold text-foreground tabular-nums">{(mmf.annualYield ?? (mmf as any).yield ?? 0).toFixed(2)}%</p>
         </div>
-        <div className={`flex items-center gap-1 text-sm font-semibold ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
-          {isUp ? <TrendingUp className="h-4 w-4" /> : isDown ? <TrendingDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
-          {changeVal > 0 ? "+" : ""}{changeVal.toFixed(2)}%
+        <div className={`flex items-center gap-1 text-sm font-semibold ${dayIsUp ? "text-emerald-500" : dayIsDown ? "text-destructive" : "text-muted-foreground"}`}>
+          {dayIsUp ? <TrendingUp className="h-4 w-4" /> : dayIsDown ? <TrendingDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+          {(mmf.changePercent ?? 0) > 0 ? "+" : ""}{(mmf.changePercent ?? 0).toFixed(2)}%
         </div>
       </div>
 
@@ -102,6 +104,7 @@ export function MmfArticleMarketCard({ mmf }: { mmf: RelatedMmfProp }) {
             labelFormatter={(value) => formatMarketDate(value, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
             formatter={(value: number) => [`${value.toFixed(2)}%`, "Annual Yield"]}
           />
+          <XAxis dataKey="snapshot_date" hide />
           <Area type="monotone" dataKey="yield" stroke={chartColor} strokeWidth={2} fill={`url(#mmf-yield-${mmf.name.replace(/\s+/g, "-")})`} />
         </AreaChart>
       </ResponsiveContainer>
@@ -118,7 +121,7 @@ export function MmfArticleMarketCard({ mmf }: { mmf: RelatedMmfProp }) {
           </div>
           <div>
             <p className="text-[9px] text-muted-foreground">Change</p>
-            <p className={`text-xs font-bold ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
+            <p className={`text-xs font-bold ${chartIsUp ? "text-emerald-500" : chartIsDown ? "text-destructive" : "text-muted-foreground"}`}>
               {stats.changePercent > 0 ? "+" : ""}{stats.changePercent.toFixed(2)}%
             </p>
           </div>

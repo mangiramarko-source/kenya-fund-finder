@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { Area, AreaChart, ResponsiveContainer, Tooltip } from "recharts";
+import { Area, AreaChart, ResponsiveContainer, Tooltip, XAxis } from "recharts";
 import { BarChart3, ExternalLink, Minus, TrendingDown, TrendingUp } from "lucide-react";
 import { formatMarketDate } from "@/lib/utils";
 
@@ -38,16 +38,20 @@ export function CommodityArticleMarketCard({ commodity }: { commodity: RelatedCo
   const stats = useMemo(() => {
     if (!history.length) return null;
     const prices = history.map((p) => p.price);
+    const change = prices[prices.length - 1] - prices[0];
     return {
       high: Math.max(...prices),
       low: Math.min(...prices),
-      changePercent: commodity.changePercent,
+      changePercent: prices[0] ? (change / prices[0]) * 100 : 0,
     };
-  }, [history, commodity.changePercent]);
+  }, [history]);
 
-  const isUp = commodity.changePercent > 0;
-  const isDown = commodity.changePercent < 0;
-  const chartColor = isUp ? "hsl(152 60% 42%)" : isDown ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))";
+  const chartIsUp = stats ? stats.changePercent > 0 : commodity.changePercent > 0;
+  const chartIsDown = stats ? stats.changePercent < 0 : commodity.changePercent < 0;
+  const chartColor = chartIsUp ? "hsl(152 60% 42%)" : chartIsDown ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))";
+
+  const dayIsUp = commodity.changePercent > 0;
+  const dayIsDown = commodity.changePercent < 0;
 
   return (
     <section className="rounded-xl border border-border bg-card p-3 space-y-2">
@@ -56,8 +60,8 @@ export function CommodityArticleMarketCard({ commodity }: { commodity: RelatedCo
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">{commodity.name} PRICE</p>
           <p className="text-xl font-bold text-foreground tabular-nums">KSh {commodity.price.toLocaleString("en-KE")} <span className="text-xs text-muted-foreground font-normal">/ {commodity.unit}</span></p>
         </div>
-        <div className={`flex items-center gap-1 text-sm font-semibold ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
-          {isUp ? <TrendingUp className="h-4 w-4" /> : isDown ? <TrendingDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
+        <div className={`flex items-center gap-1 text-sm font-semibold ${dayIsUp ? "text-emerald-500" : dayIsDown ? "text-destructive" : "text-muted-foreground"}`}>
+          {dayIsUp ? <TrendingUp className="h-4 w-4" /> : dayIsDown ? <TrendingDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
           {commodity.changePercent > 0 ? "+" : ""}{commodity.changePercent.toFixed(2)}%
         </div>
       </div>
@@ -94,6 +98,7 @@ export function CommodityArticleMarketCard({ commodity }: { commodity: RelatedCo
             labelFormatter={(value) => formatMarketDate(value, "en-KE", { month: "long", day: "numeric", year: "numeric" })}
             formatter={(value: number) => [`KSh ${value.toLocaleString("en-KE")}`, "Price"]}
           />
+          <XAxis dataKey="snapshot_date" hide />
           <Area type="monotone" dataKey="price" stroke={chartColor} strokeWidth={2} fill={`url(#commodity-price-${commodity.name.replace(/\s+/g, "-")})`} />
         </AreaChart>
       </ResponsiveContainer>
@@ -110,7 +115,7 @@ export function CommodityArticleMarketCard({ commodity }: { commodity: RelatedCo
           </div>
           <div>
             <p className="text-[9px] text-muted-foreground">Change</p>
-            <p className={`text-xs font-bold ${isUp ? "text-emerald-500" : isDown ? "text-destructive" : "text-muted-foreground"}`}>
+            <p className={`text-xs font-bold ${chartIsUp ? "text-emerald-500" : chartIsDown ? "text-destructive" : "text-muted-foreground"}`}>
               {stats.changePercent > 0 ? "+" : ""}{stats.changePercent.toFixed(2)}%
             </p>
           </div>
