@@ -24,8 +24,13 @@ export function FxArticleMarketCard({ fx }: { fx: RelatedFxProp }) {
     for (let i = totalPoints - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const noise = (Math.cos(i / 2) * 0.8) + (i % 3 === 0 ? 0.3 : -0.2);
-      const rateVal = Number((baseRate + noise).toFixed(2));
+      
+      let rateVal = baseRate;
+      if (i > 0) {
+        const noise = (Math.cos(i / 2) * 0.8) + (i % 3 === 0 ? 0.3 : -0.2);
+        rateVal = Number((baseRate + noise).toFixed(2));
+      }
+
       points.push({
         snapshot_date: d.toISOString().split("T")[0],
         rate: rateVal,

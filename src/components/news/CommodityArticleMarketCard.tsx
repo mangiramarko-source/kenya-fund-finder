@@ -25,8 +25,13 @@ export function CommodityArticleMarketCard({ commodity }: { commodity: RelatedCo
     for (let i = totalPoints - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const noise = (Math.sin(i / 2.5) * (basePrice * 0.02)) + (i % 4 === 0 ? basePrice * 0.01 : -basePrice * 0.005);
-      const priceVal = Number((basePrice + noise).toFixed(2));
+      
+      let priceVal = basePrice;
+      if (i > 0) {
+        const noise = (Math.sin(i / 2.5) * (basePrice * 0.02)) + (i % 4 === 0 ? basePrice * 0.01 : -basePrice * 0.005);
+        priceVal = Number((basePrice + noise).toFixed(2));
+      }
+
       points.push({
         snapshot_date: d.toISOString().split("T")[0],
         price: priceVal,

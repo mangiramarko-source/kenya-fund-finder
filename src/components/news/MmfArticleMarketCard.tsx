@@ -28,8 +28,13 @@ export function MmfArticleMarketCard({ mmf }: { mmf: RelatedMmfProp }) {
     for (let i = totalPoints - 1; i >= 0; i--) {
       const d = new Date(today);
       d.setDate(d.getDate() - i);
-      const noise = (Math.sin(i / 3) * 0.15) + ((i % 5 === 0 ? 0.1 : -0.05));
-      const yieldVal = Number(Math.max(1, baseYield + noise).toFixed(2));
+      
+      let yieldVal = baseYield;
+      if (i > 0) {
+        const noise = (Math.sin(i / 3) * 0.15) + ((i % 5 === 0 ? 0.1 : -0.05));
+        yieldVal = Number(Math.max(1, baseYield + noise).toFixed(2));
+      }
+
       points.push({
         snapshot_date: d.toISOString().split("T")[0],
         yield: yieldVal,
