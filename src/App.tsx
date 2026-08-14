@@ -30,6 +30,7 @@ const NewsArticlePage = lazy(() => import("./pages/NewsArticlePage"));
 const LearnPage = lazy(() => import("./pages/LearnPage"));
 const MmfGuidePage = lazy(() => import("./pages/MmfGuidePage"));
 const AuthPage = lazy(() => import("./pages/AuthPage"));
+const AuthCallback = lazy(() => import("./pages/AuthCallback"));
 const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
@@ -104,6 +105,7 @@ const App = () => (
                     <Route path="/privacy" element={<SitePage />} />
                     <Route path="/terms" element={<SitePage />} />
                     <Route path="/auth" element={<AuthPage />} />
+                    <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
                     <Route path="/checklist" element={<ChecklistPage />} />
