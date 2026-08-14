@@ -629,8 +629,11 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
             </div>
         </div>
 
-        {relatedStock && <StockArticleMarketCard stock={relatedStock} />}
-        {relatedMmf && <MmfArticleMarketCard mmf={relatedMmf} />}
+        {relatedMmf ? (
+          <MmfArticleMarketCard mmf={relatedMmf} />
+        ) : relatedStock ? (
+          <StockArticleMarketCard stock={relatedStock} />
+        ) : null}
         {relatedFx && <FxArticleMarketCard fx={relatedFx} />}
         {relatedCommodity && <CommodityArticleMarketCard commodity={relatedCommodity} />}
 
@@ -685,20 +688,19 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         )}
 
         {/* ─── AI Decision Support ─── */}
-        {relatedStock && (
-          <StockDecisionContext 
-            article={article} 
-            stock={relatedStock} 
-            onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
-          />
-        )}
-        {relatedMmf && (
+        {relatedMmf ? (
           <MmfDecisionContext 
             article={article} 
             mmf={relatedMmf} 
             onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
           />
-        )}
+        ) : relatedStock ? (
+          <StockDecisionContext 
+            article={article} 
+            stock={relatedStock} 
+            onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
+          />
+        ) : null}
         {relatedFx && (
           <FxDecisionContext 
             article={article} 

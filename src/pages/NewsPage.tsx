@@ -116,6 +116,15 @@ export default function NewsPage() {
     }
   };
 
+  // Auto-fetch more articles if the current tab filter results in too few articles to fill the screen
+  useEffect(() => {
+    if (feedItems.length < 15 && hasMore && !loading && !loadingMore && !searchQuery) {
+      loadMore();
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [feedItems.length, hasMore, loading, loadingMore, searchQuery, offset, activeNavTab]);
+
+
   const filteredArticles = useMemo(() => {
     let list = [...articles];
 

@@ -176,7 +176,7 @@ export const SocialFeedCard = ({
       style={{ animationDelay: `${index * 80}ms` }}
     >
       {/* Ticker Pill - Rendered inline inside the card */}
-      {isStockNews && (
+      {isStockNews && !isMmfNews && (
         <div className="flex items-center">
           <Link
             to={`/stocks/${item.relatedStock!.symbol}`}

@@ -248,7 +248,9 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
 
         {/* Modal Body */}
         <div className="p-6 space-y-6">
-            {item.relatedStock && (
+            {item.relatedMmf ? (
+              <MmfArticleMarketCard mmf={item.relatedMmf} />
+            ) : item.relatedStock ? (
               <StockArticleMarketCard
                 stock={{
                   id: item.relatedStock.id,
@@ -259,13 +261,18 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
                   day_change_percent: item.relatedStock.changePercent,
                 }}
               />
-            )}
-            {item.relatedMmf && <MmfArticleMarketCard mmf={item.relatedMmf} />}
+            ) : null}
             {item.relatedFx && <FxArticleMarketCard fx={item.relatedFx} />}
             {item.relatedCommodity && <CommodityArticleMarketCard commodity={item.relatedCommodity} />}
 
             {/* AI Decision Support Context */}
-            {item.relatedStock && item.rawItem && (
+            {item.relatedMmf && item.rawItem ? (
+              <MmfDecisionContext 
+                item={item} 
+                article={item.rawItem as NewsFromDB} 
+                mmf={item.relatedMmf} 
+              />
+            ) : item.relatedStock && item.rawItem ? (
               <StockDecisionContext 
                 article={item.rawItem as NewsFromDB}
                 stock={{ 
@@ -273,13 +280,8 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
                   day_change_percent: item.relatedStock.changePercent, 
                   previous_price: item.relatedStock.previousPrice 
                 } as PublicStock}
-                inlineTransparent={false}
               />
-            )}
-            
-            {item.relatedMmf && (
-              <MmfDecisionContext item={item} />
-            )}
+            ) : null}
 
             {item.relatedFx && (
               <FxDecisionContext item={item} />
