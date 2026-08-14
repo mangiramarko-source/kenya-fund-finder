@@ -83,46 +83,133 @@ export default function NewsPage() {
 
   useEffect(() => {
     Promise.all([fetchPublishedNews(60, 0), fetchPublicStocks()])
-      .then(([newsData, stocksData]) => {
-        setArticles(newsData);
+      .then(async ([newsData, stocksData]) => {
         setStocks(stocksData || []);
-        if (newsData.length < 60) setHasMore(false);
-        setLoading(false);
+        if (newsData.length < 60) {
+          setArticles(newsData);
+          setHasMore(false);
+          setLoading(false);
+        } else {
+          // Fill the default "All" tab immediately — then mark loading done
+          setArticles(newsData);
+          setOffset(0);
+          setLoading(false);
+          // Pre-fill so niche tabs are usable without a manual Load More
+          try {
+            const filled = await fillTab("All", newsData, 0, true, stocksData || []);
+            setArticles(filled.articles);
+            setOffset(filled.offset);
+            setHasMore(filled.hasMore);
+          } catch {}
+        }
       })
       .catch(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  // --- Category match helpers (mirror the feedItems filter logic) ---
+  const tabMatchesArticle = (tab: string, a: NewsFromDB, stocksList: any[]): boolean => {
+    if (tab === "All" || tab === "Latest" || tab === "Oldest") return true;
+    if (tab === "Kenyan") return !isInternationalArticle(a);
+    if (tab === "International") return isInternationalArticle(a);
+    if (tab === "Stocks") {
+      if (a.related_stock_id) return true;
+      return stocksList.some(s => {
+        const cleanName = s.name.replace(/Group|Holdings|Plc|Ltd|Limited/gi, '').trim();
+        const aliases = [s.symbol, s.name];
+        if (cleanName.length > 3 && cleanName.toLowerCase() !== 'kenya') aliases.push(cleanName);
+        if (cleanName.toLowerCase() === 'equity') aliases.push('Equity Bank');
+        if (cleanName.toLowerCase() === 'co-operative') aliases.push('Co-op Bank');
+        if (s.symbol === 'SCOM') aliases.push('Safaricom');
+        const escaped = aliases.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        return new RegExp(`\\b(${escaped.join('|')})\\b`, 'i').test(a.title);
+      });
+    }
+    if (tab === "MMFs") {
+      const rx = /\b(money market( fund)?|mmf|unit trust|collective investment|fund manager|fund yield|money market yield)\b/i;
+      return rx.test(a.title) || (!!a.summary && rx.test(a.summary));
+    }
+    if (tab === "FX Rates") {
+      const rx = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
+      return a.category === "FX & Currency" || rx.test(a.title);
+    }
+    if (tab === "Commodities") {
+      const rx = /\b(oil|crude( oil)?|brent|gold|coffee|tea|fuel|agriculture|agricultural)\b/i;
+      return rx.test(a.title);
+    }
+    return true;
+  };
+
+  // Fetch batches until the current tab has at least `target` matching articles OR DB is exhausted.
+  // Returns updated [allArticles, newOffset, newHasMore].
+  const fillTab = async (
+    tab: string,
+    existingArticles: NewsFromDB[],
+    startOffset: number,
+    currentHasMore: boolean,
+    stocksList: any[],
+    target = 15,
+  ): Promise<{ articles: NewsFromDB[]; offset: number; hasMore: boolean }> => {
+    let accumulated = [...existingArticles];
+    let currentOffset = startOffset;
+    let hasMoreRemote = currentHasMore;
+    const MAX_BATCHES = 10; // safety cap — never fetch more than 600 extra articles
+    let batches = 0;
+
+    while (hasMoreRemote && batches < MAX_BATCHES) {
+      const matching = accumulated.filter(a => tabMatchesArticle(tab, a, stocksList));
+      if (matching.length >= target) break;
+
+      const nextOffset = currentOffset + 60;
+      const batch = await fetchPublishedNews(60, nextOffset);
+      batches++;
+
+      if (batch.length > 0) {
+        const existingIds = new Set(accumulated.map(a => a.id));
+        const fresh = batch.filter(a => !existingIds.has(a.id));
+        accumulated = [...accumulated, ...fresh];
+        currentOffset = nextOffset;
+      }
+      if (batch.length < 60) {
+        hasMoreRemote = false;
+      }
+      if (batch.length === 0) break;
+    }
+
+    return { articles: accumulated, offset: currentOffset, hasMore: hasMoreRemote };
+  };
+  // When the user switches to a specific tab, fill until we have enough
+  useEffect(() => {
+    if (loading || loadingMore || searchQuery) return;
+    const matchingNow = articles.filter(a => tabMatchesArticle(activeNavTab, a, stocks));
+    if (matchingNow.length < 15 && hasMore) {
+      setLoadingMore(true);
+      fillTab(activeNavTab, articles, offset, hasMore, stocks)
+        .then(result => {
+          setArticles(result.articles);
+          setOffset(result.offset);
+          setHasMore(result.hasMore);
+        })
+        .catch(console.error)
+        .finally(() => setLoadingMore(false));
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeNavTab]);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const nextOffset = offset + 60;
-      const moreNews = await fetchPublishedNews(60, nextOffset);
-      if (moreNews.length > 0) {
-        setArticles(prev => {
-          const existingIds = new Set(prev.map(a => a.id));
-          const fresh = moreNews.filter(a => !existingIds.has(a.id));
-          return [...prev, ...fresh];
-        });
-        setOffset(nextOffset);
-      }
-      if (moreNews.length < 60) {
-        setHasMore(false);
-      }
+      const result = await fillTab(activeNavTab, articles, offset, hasMore, stocks);
+      setArticles(result.articles);
+      setOffset(result.offset);
+      setHasMore(result.hasMore);
     } catch (error) {
       console.error("Failed to load more news:", error);
     } finally {
       setLoadingMore(false);
     }
   };
-
-  // Auto-fetch more articles if the current tab filter results in too few articles to fill the screen
-  useEffect(() => {
-    if (feedItems.length < 15 && hasMore && !loading && !loadingMore && !searchQuery) {
-      loadMore();
-    }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [feedItems.length, hasMore, loading, loadingMore, searchQuery, offset, activeNavTab]);
 
 
   const filteredArticles = useMemo(() => {
