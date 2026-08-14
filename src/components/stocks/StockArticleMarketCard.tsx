@@ -125,23 +125,25 @@ export function StockArticleMarketCard({ stock }: { stock: PublicStock }) {
     };
   }, [history]);
 
-  const chartIsUp = (stats?.change ?? stock.day_change_percent) > 0;
-  const chartIsDown = (stats?.change ?? stock.day_change_percent) < 0;
+  const safeChangePercent = Number(stock.day_change_percent) || 0;
+  const safePrice = Number(stock.price) || 0;
+  const chartIsUp = (stats?.change ?? safeChangePercent) > 0;
+  const chartIsDown = (stats?.change ?? safeChangePercent) < 0;
   const chartColor = chartIsUp ? "hsl(152 60% 42%)" : chartIsDown ? "hsl(var(--destructive))" : "hsl(var(--muted-foreground))";
 
-  const dayIsUp = stock.day_change_percent > 0;
-  const dayIsDown = stock.day_change_percent < 0;
+  const dayIsUp = safeChangePercent > 0;
+  const dayIsDown = safeChangePercent < 0;
 
   return (
     <section className="rounded-xl border border-border bg-card p-3.5 space-y-3">
       <div className="flex items-center justify-between gap-3">
         <div>
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">{stock.symbol} SHARE PRICE</p>
-          <p className="text-2xl font-extrabold text-foreground tabular-nums">KSh {formatPrice(stock.price)}</p>
+          <p className="text-2xl font-extrabold text-foreground tabular-nums">KSh {formatPrice(safePrice)}</p>
         </div>
         <div className={`flex items-center gap-1 text-sm font-semibold px-2.5 py-1 rounded-lg ${dayIsUp ? "text-emerald-500 bg-emerald-500/10" : dayIsDown ? "text-destructive bg-destructive/10" : "text-muted-foreground bg-muted"}`}>
           {dayIsUp ? <TrendingUp className="h-4 w-4" /> : dayIsDown ? <TrendingDown className="h-4 w-4" /> : <Minus className="h-4 w-4" />}
-          {stock.day_change_percent > 0 ? "+" : ""}{stock.day_change_percent.toFixed(2)}%
+          {safeChangePercent > 0 ? "+" : ""}{safeChangePercent.toFixed(2)}%
         </div>
       </div>
 

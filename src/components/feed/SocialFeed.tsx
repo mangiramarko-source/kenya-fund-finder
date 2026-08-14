@@ -78,7 +78,7 @@ export const SocialFeedCard = ({
   const [isExpandable, setIsExpandable] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
 
-  const isStockNews = item.type === "NEWS" && !!item.relatedStock;
+  const isStockNews = !!item.relatedStock;
   const isMmfNews = item.type === "NEWS" && !!item.relatedMmf;
   const isFxNews = item.type === "NEWS" && !!item.relatedFx;
   const isCommodityNews = item.type === "NEWS" && !!item.relatedCommodity;
@@ -176,22 +176,22 @@ export const SocialFeedCard = ({
       style={{ animationDelay: `${index * 80}ms` }}
     >
       {/* Ticker Pill - Rendered inline inside the card */}
-      {isStockNews && !isMmfNews && (
+      {isStockNews && !isMmfNews && item.relatedStock && (
         <div className="flex items-center">
           <Link
-            to={`/stocks/${item.relatedStock!.symbol}`}
+            to={`/stocks/${item.relatedStock.symbol}`}
             onClick={(e) => e.stopPropagation()}
             className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs hover:bg-muted transition-colors font-sans"
           >
-            <strong className="font-bold text-foreground">{item.relatedStock!.symbol}</strong>
-            <span className="text-muted-foreground">KES {item.relatedStock!.price.toFixed(2)}</span>
-            <span className={`inline-flex items-center font-semibold ${item.relatedStock!.changePercent >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
-              {item.relatedStock!.changePercent >= 0 ? (
+            <strong className="font-bold text-foreground">{item.relatedStock.symbol}</strong>
+            <span className="text-muted-foreground">KES {(Number(item.relatedStock.price) || 0).toFixed(2)}</span>
+            <span className={`inline-flex items-center font-semibold ${(Number(item.relatedStock.changePercent) || 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
+              {(Number(item.relatedStock.changePercent) || 0) >= 0 ? (
                 <TrendingUp className="mr-0.5 h-3 w-3" />
               ) : (
                 <TrendingDown className="mr-0.5 h-3 w-3" />
               )}
-              {Math.abs(item.relatedStock!.changePercent).toFixed(1)}%
+              {Math.abs(Number(item.relatedStock.changePercent) || 0).toFixed(1)}%
             </span>
           </Link>
         </div>

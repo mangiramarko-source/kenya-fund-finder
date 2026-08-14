@@ -286,10 +286,11 @@ export default function NewsPage() {
     } else if (activeNavTab === "International") {
       allItems = allItems.filter(a => isInternationalArticle(a.rawItem || {}));
     } else if (activeNavTab === "Stocks") {
-      allItems = allItems.filter(a => !!a.relatedStock);
+      allItems = allItems.filter(a => a.rawItem?.category === 'Stocks' || !!a.relatedStock);
     } else if (activeNavTab === "MMFs") {
       const mmfRegex = /\b(money market( fund)?|mmf|unit trust|collective investment|fund manager|fund yield|money market yield)\b/i;
       allItems = allItems.filter(a => 
+        a.rawItem?.category === 'MMFs' ||
         mmfRegex.test(a.title) || 
         (a.rawItem?.summary && mmfRegex.test(a.rawItem.summary))
       );
