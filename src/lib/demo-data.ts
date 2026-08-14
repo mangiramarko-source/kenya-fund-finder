@@ -93,17 +93,23 @@ export function getDemoArticles(
         clustered_count: 2
       }
     },
-    relatedMmf: funds && funds.length > 0 ? {
-      id: funds[0].id,
-      name: funds[0].name,
-      yield: funds[0].annual_yield,
-      changePercent: 0.15 // Or calculate dynamically if desired
-    } : {
-      id: "mmf-sanlam",
-      name: "Sanlam MMF",
-      yield: 14.20,
-      changePercent: 0.15
-    }
+    relatedMmf: (() => {
+      const sanlam = funds?.find(f => f.name.toLowerCase().includes('sanlam'));
+      if (sanlam) {
+        return {
+          id: sanlam.id,
+          name: sanlam.name,
+          yield: sanlam.annual_yield,
+          changePercent: 0.15
+        };
+      }
+      return {
+        id: "mmf-sanlam",
+        name: "Sanlam MMF",
+        yield: 14.20,
+        changePercent: 0.15
+      };
+    })()
   };
 
   const demoFxArticle: FeedItem = {
