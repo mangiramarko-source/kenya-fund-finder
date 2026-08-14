@@ -169,19 +169,47 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
               <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-foreground/90 mb-2">
                 Related Disclosures
               </h3>
-              {analysis.related_disclosures.map((disc: any, i: number) => (
-                <a
-                  key={i}
-                  href={disc.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-500 hover:underline transition-colors w-fit"
-                >
-                  <ExternalLink className="h-3.5 w-3.5 shrink-0" />
-                  {disc.title}
-                </a>
-              ))}
+              {analysis.related_disclosures.map((disc: any, i: number) => {
+                let linkUrl = disc.url;
+                let isInternal = false;
+
+                if (!linkUrl || linkUrl === "#") {
+                  if (stock?.ticker) {
+                    linkUrl = `/stocks/${stock.ticker}`;
+                    isInternal = true;
+                  }
+                } else if (linkUrl.startsWith('/')) {
+                  isInternal = true;
+                }
+
+                if (isInternal) {
+                  return (
+                    <Link
+                      key={i}
+                      to={linkUrl}
+                      onClick={(e) => e.stopPropagation()}
+                      className="flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-500 hover:underline transition-colors w-fit"
+                    >
+                      <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                      {disc.title}
+                    </Link>
+                  );
+                }
+
+                return (
+                  <a
+                    key={i}
+                    href={linkUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex items-center gap-2 text-sm font-medium text-emerald-600 hover:text-emerald-500 hover:underline transition-colors w-fit"
+                  >
+                    <ExternalLink className="h-3.5 w-3.5 shrink-0" />
+                    {disc.title}
+                  </a>
+                );
+              })}
             </div>
           )}
 
