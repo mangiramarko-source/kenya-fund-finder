@@ -77,16 +77,44 @@ export default function NewsPage() {
   const [activeNavTab, setActiveNavTab] = useState<string>("All");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
 
   useEffect(() => {
-    Promise.all([fetchPublishedNews(), fetchPublicStocks()])
+    Promise.all([fetchPublishedNews(60, 0), fetchPublicStocks()])
       .then(([newsData, stocksData]) => {
         setArticles(newsData);
         setStocks(stocksData || []);
+        if (newsData.length < 60) setHasMore(false);
         setLoading(false);
       })
       .catch(() => setLoading(false));
   }, []);
+
+  const loadMore = async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextOffset = offset + 60;
+      const moreNews = await fetchPublishedNews(60, nextOffset);
+      if (moreNews.length > 0) {
+        setArticles(prev => {
+          const existingIds = new Set(prev.map(a => a.id));
+          const fresh = moreNews.filter(a => !existingIds.has(a.id));
+          return [...prev, ...fresh];
+        });
+        setOffset(nextOffset);
+      }
+      if (moreNews.length < 60) {
+        setHasMore(false);
+      }
+    } catch (error) {
+      console.error("Failed to load more news:", error);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
 
   const filteredArticles = useMemo(() => {
     let list = [...articles];
@@ -115,8 +143,19 @@ export default function NewsPage() {
         relatedStock = stocks.find(s => s.id === a.related_stock_id);
       }
       if (!relatedStock) {
-        const titleUpper = a.title.toUpperCase();
-        const found = stocks.find(s => titleUpper.includes(s.symbol));
+        const found = stocks.find(s => {
+          const cleanName = s.name.replace(/Group|Holdings|Plc|Ltd|Limited/gi, '').trim();
+          const brandAliases = [s.symbol, s.name];
+          if (cleanName.length > 3 && cleanName.toLowerCase() !== 'kenya') brandAliases.push(cleanName);
+          if (cleanName.toLowerCase() === 'equity') brandAliases.push('Equity Bank');
+          if (cleanName.toLowerCase() === 'co-operative') brandAliases.push('Co-op Bank');
+          if (s.symbol === 'SCOM') brandAliases.push('Safaricom');
+          
+          // Escape aliases for regex
+          const escapedAliases = brandAliases.map(alias => alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+          const regex = new RegExp(`\\b(${escapedAliases.join('|')})\\b`, 'i');
+          return regex.test(a.title);
+        });
         if (found) relatedStock = found;
       }
 
@@ -145,287 +184,7 @@ export default function NewsPage() {
       };
     });
 
-    // Add Demo Stock Articles at the top for UI testing with different stocks and dynamic data
-    const eqtyStock = stocks.find(s => s.symbol === "EQTY") || {
-      id: "demo-eqty",
-      symbol: "EQTY",
-      name: "Equity Group Holdings",
-      price: 42.50,
-      previous_price: 41.50,
-      day_change_percent: 2.4
-    };
-
-    const kcbStock = stocks.find(s => s.symbol === "KCB") || {
-      id: "demo-kcb",
-      symbol: "KCB",
-      name: "KCB Group PLC",
-      price: 38.20,
-      previous_price: 38.50,
-      day_change_percent: -0.8
-    };
-
-    const demoArticleEqty: FeedItem = {
-      id: "demo-eqty-article",
-      type: "NEWS",
-      authorName: "Business Daily",
-      authorLabel: "Banking & Finance",
-      title: "Equity Group expands digital lending platform into DRC market",
-      content: "Equity Group Holdings has launched its proprietary micro-lending API in the Democratic Republic of Congo, targeting small business owners and cross-border traders with instant credit access via mobile wallets.",
-      isHeadlineOnly: false,
-      timestamp: new Date(Date.now() - 30 * 60 * 1000), // 30 mins ago
-      likes: 89,
-      comments: 7,
-      rawItem: {
-        id: "demo-eqty-article",
-        title: "Equity Group expands digital lending platform into DRC market",
-        source: "Business Daily",
-        parsed_ai_analysis: {
-          event_label: "Regional Expansion",
-          impact_horizon: "Long-term relevance",
-          factors_positive: [
-            "Access to 90M+ underserved population in DRC market.",
-            "Higher net interest margins expected on mobile lending products."
-          ],
-          factors_negative: [
-            "Currency volatility risks associated with Congolese Franc.",
-            "Potential increase in non-performing loan (NPL) ratio in new market."
-          ],
-          what_happened: "Equity Group Holdings introduced instant digital loans in DRC to accelerate regional expansion.",
-          verified_figures: ["Targeting 90M+ population", "Mobile API deployment"],
-          price_reaction_context: {
-            "1D": "+2.4%",
-            "7D": "+1.1%",
-            "1M": "+4.5%",
-            "3M": "+12.0%",
-            context: "Shares rallied 2.4% following the DRC expansion news, outperforming the broader banking index."
-          },
-          related_disclosures: [
-            { title: "DRC Expansion Strategy Brief (PDF)", url: "#" },
-            { title: "Regulatory Approval Notice", url: "#" }
-          ],
-          source_quality: "Tier 1 Media",
-          clustered_count: 2
-        }
-      },
-      relatedStock: {
-        id: eqtyStock.id,
-        symbol: eqtyStock.symbol,
-        name: eqtyStock.name,
-        price: eqtyStock.price || 42.50,
-        previousPrice: eqtyStock.previous_price || 41.50,
-        changePercent: eqtyStock.day_change_percent || 2.4
-      }
-    };
-
-    const demoArticleKcb: FeedItem = {
-      id: "demo-kcb-article",
-      type: "NEWS",
-      authorName: "Standard Media",
-      authorLabel: "Corporate Earnings",
-      title: "KCB Group reports 18% surge in H1 net profit following NBK integration",
-      content: "KCB Group PLC posted strong half-year financial results with profit after tax rising to KES 29.9 Billion, buoyed by non-funded revenue growth and operational synergies following the full integration of National Bank of Kenya.",
-      isHeadlineOnly: false,
-      timestamp: new Date(Date.now() - 2 * 3600 * 1000), // 2 hours ago
-      likes: 142,
-      comments: 19,
-      rawItem: {
-        id: "demo-kcb-article",
-        title: "KCB Group reports 18% surge in H1 net profit following NBK integration",
-        source: "Standard Media",
-        parsed_ai_analysis: {
-          event_label: "Earnings Report",
-          impact_horizon: "Immediate relevance",
-          factors_positive: [
-            "Non-interest revenue surged 24% year-on-year.",
-            "Cost-to-income ratio improved from 51% down to 46%."
-          ],
-          factors_negative: [
-            "Loan loss provisioning increased by 8% due to retail stress.",
-            "Macroeconomic inflationary pressure on operational expenditure."
-          ],
-          what_happened: "KCB Group PLC declared H1 profit after tax of KES 29.9B (+18% YoY) driven by transaction fees and cost efficiencies.",
-          verified_figures: ["KES 29.9B Net Profit", "+18% YoY Growth", "46% Cost-to-Income Ratio"],
-          price_reaction_context: {
-            "1D": "-0.8%",
-            "7D": "+2.5%",
-            "1M": "+8.2%",
-            "3M": "+15.1%",
-            context: "Immediate term profit-taking saw shares dip 0.8%, but the stock remains strongly up over the last month on earnings anticipation."
-          },
-          related_disclosures: [
-            { title: "H1 2024 Unaudited Financial Results", url: "#" },
-            { title: "Investor Presentation", url: "#" },
-            { title: "Dividend Declaration Notice", url: "#" }
-          ],
-          source_quality: "Official",
-          clustered_count: 5
-        }
-      },
-      relatedStock: {
-        id: kcbStock.id,
-        symbol: kcbStock.symbol,
-        name: kcbStock.name,
-        price: kcbStock.price || 38.20,
-        previousPrice: kcbStock.previous_price || 38.50,
-        changePercent: kcbStock.day_change_percent || -0.8
-      }
-    };
-
-    const demoMmfArticle: FeedItem = {
-      id: "demo-mmf-article",
-      type: "NEWS",
-      authorName: "Business Daily",
-      authorLabel: "Unit Trusts",
-      title: "Sanlam Money Market Fund yields cross 14% as T-bill rates climb",
-      content: "Sanlam has announced a record high yield on its flagship money market fund, attracting significant retail inflows as investors seek to beat inflation amidst rising 91-day T-bill rates.",
-      isHeadlineOnly: false,
-      timestamp: new Date(Date.now() - 45 * 60 * 1000),
-      likes: 88,
-      comments: 15,
-      rawItem: {
-        id: "demo-mmf-article",
-        title: "Sanlam Money Market Fund yields cross 14% as T-bill rates climb",
-        source: "Business Daily",
-        parsed_ai_analysis: {
-          event_label: "Yield Update",
-          impact_horizon: "Immediate relevance",
-          factors_positive: [
-            "Current yield of 14.2% effectively beats the 6.7% inflation rate.",
-            "High liquidity allows T+1 day withdrawals for retail investors."
-          ],
-          factors_negative: [
-            "Expected rate cuts by the CBK could lower yields in the medium term.",
-            "Increased AUM might dilute future returns if high-yield assets are scarce."
-          ],
-          what_happened: "Sanlam MMF reported an annualized yield exceeding 14%, directly correlated with recent central bank monetary tightening.",
-          verified_figures: ["14.2% Annualized Yield", "6.7% Inflation Rate"],
-          price_reaction_context: {
-            "1D": "+0.1%",
-            "7D": "+0.4%",
-            "1M": "+1.2%",
-            "3M": "+3.4%",
-            context: "The fund has maintained a steady upward trajectory in daily compounding interest."
-          },
-          related_disclosures: [
-            { title: "Fund Fact Sheet", url: "#" }
-          ],
-          source_quality: "Verified Reporting",
-          clustered_count: 2
-        }
-      },
-      relatedMmf: {
-        id: "mmf-sanlam",
-        name: "Sanlam Pesa Market Fund",
-        yield: 14.2,
-        previousYield: 13.9,
-        changePercent: 2.1
-      }
-    };
-
-    const demoFxArticle: FeedItem = {
-      id: "demo-fx-article",
-      type: "NEWS",
-      authorName: "Central Bank Watch",
-      authorLabel: "Forex Updates",
-      title: "Kenya Shilling gains against the Dollar following Eurobond buyback",
-      content: "The Kenyan Shilling (KES) demonstrated significant strengthening against the US Dollar (USD), dropping below the 130 mark for the first time in months following the successful buyback of the 2024 Eurobond.",
-      isHeadlineOnly: false,
-      timestamp: new Date(Date.now() - 3 * 3600 * 1000),
-      likes: 215,
-      comments: 42,
-      rawItem: {
-        id: "demo-fx-article",
-        title: "Kenya Shilling gains against the Dollar following Eurobond buyback",
-        source: "Central Bank Watch",
-        parsed_ai_analysis: {
-          event_label: "Currency Rally",
-          impact_horizon: "Medium-term relevance",
-          factors_positive: [
-            "Reduced sovereign default risk boosts investor confidence.",
-            "Lower import costs for fuel and machinery expected."
-          ],
-          factors_negative: [
-            "Export competitiveness may take a slight hit in the agricultural sector.",
-            "Diaspora remittances fetch fewer shillings locally."
-          ],
-          what_happened: "The KES rallied sharply against the USD after the Treasury successfully managed the impending Eurobond maturity.",
-          verified_figures: ["USD/KES at 129.50", "Buyback over $1.5B"],
-          price_reaction_context: {
-            "1D": "-1.5%",
-            "7D": "-3.2%",
-            "1M": "-5.8%",
-            "3M": "-12.4%",
-            context: "The USD/KES pair has been on a downward trend (KES strengthening) consistently over the past quarter."
-          },
-          related_disclosures: [
-            { title: "CBK Weekly Bulletin", url: "#" }
-          ],
-          source_quality: "Official",
-          clustered_count: 8
-        }
-      },
-      relatedFx: {
-        id: "fx-usdkes",
-        pair: "USD/KES",
-        rate: 129.50,
-        previousRate: 131.45,
-        changePercent: -1.48
-      }
-    };
-
-    const demoCommodityArticle: FeedItem = {
-      id: "demo-commodity-article",
-      type: "NEWS",
-      authorName: "Agri-Market Trends",
-      authorLabel: "Commodities",
-      title: "Tea auction prices hit record highs amidst global supply shortages",
-      content: "Premium Kenyan black tea prices soared at the Mombasa auction this week, driven by reduced outputs from rival Asian producers and heightened demand from Middle Eastern buyers.",
-      isHeadlineOnly: false,
-      timestamp: new Date(Date.now() - 5 * 3600 * 1000),
-      likes: 110,
-      comments: 8,
-      rawItem: {
-        id: "demo-commodity-article",
-        title: "Tea auction prices hit record highs amidst global supply shortages",
-        source: "Agri-Market Trends",
-        parsed_ai_analysis: {
-          event_label: "Price Surge",
-          impact_horizon: "Short-term relevance",
-          factors_positive: [
-            "Higher foreign exchange earnings for the national exchequer.",
-            "Increased bonus payouts expected for smallholder farmers."
-          ],
-          factors_negative: [
-            "Adverse weather (El Niño) disrupting local logistics and plucking schedules.",
-            "Potential pushback from price-sensitive bulk buyers."
-          ],
-          what_happened: "Average tea prices breached the $2.50 per kilo mark at the latest Mombasa auction, a 2-year high.",
-          verified_figures: ["$2.52 per kilo average", "15% volume drop from competitors"],
-          price_reaction_context: {
-            "1D": "+2.1%",
-            "7D": "+4.5%",
-            "1M": "+8.9%",
-            "3M": "+11.2%",
-            context: "KTDA-managed factory teas have seen the highest premium, consistently outperforming the base auction average."
-          },
-          related_disclosures: [
-            { title: "Mombasa Tea Auction Weekly Report", url: "#" }
-          ],
-          source_quality: "Tier 2 Media",
-          clustered_count: 4
-        }
-      },
-      relatedCommodity: {
-        id: "comm-tea",
-        name: "Kenyan Tea (KTDA Avg)",
-        price: 2.52,
-        previousPrice: 2.41,
-        changePercent: 4.56,
-        unit: "USD/kg"
-      }
-    };
-
-    let allItems = [demoArticleEqty, demoArticleKcb, demoMmfArticle, demoFxArticle, demoCommodityArticle, ...items];
+    let allItems = [...items];
     
     // Now perform filtering on allItems based on activeNavTab
     if (activeNavTab === "Kenyan") {
@@ -435,11 +194,20 @@ export default function NewsPage() {
     } else if (activeNavTab === "Stocks") {
       allItems = allItems.filter(a => !!a.relatedStock);
     } else if (activeNavTab === "MMFs") {
-      allItems = allItems.filter(a => !!a.relatedMmf);
+      const mmfRegex = /\b(money market( fund)?|mmf|unit trust|collective investment|fund manager|fund yield|money market yield)\b/i;
+      allItems = allItems.filter(a => 
+        mmfRegex.test(a.title) || 
+        (a.rawItem?.summary && mmfRegex.test(a.rawItem.summary))
+      );
     } else if (activeNavTab === "FX Rates") {
-      allItems = allItems.filter(a => !!a.relatedFx);
+      const fxRegex = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
+      allItems = allItems.filter(a => 
+        a.rawItem?.category === "FX & Currency" || 
+        fxRegex.test(a.title)
+      );
     } else if (activeNavTab === "Commodities") {
-      allItems = allItems.filter(a => !!a.relatedCommodity);
+      const commoditiesRegex = /\b(oil|crude( oil)?|brent|gold|coffee|tea|fuel|agriculture|agricultural)\b/i;
+      allItems = allItems.filter(a => commoditiesRegex.test(a.title));
     }
 
     return allItems;
@@ -547,6 +315,16 @@ export default function NewsPage() {
               onSelect={setSelectedFeedItem}
             />
           ))}
+          
+          {hasMore && (
+            <button
+              onClick={loadMore}
+              disabled={loadingMore}
+              className="mt-4 mx-auto block px-6 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors disabled:opacity-50"
+            >
+              {loadingMore ? "Loading..." : "Load More"}
+            </button>
+          )}
         </div>
       )}
 

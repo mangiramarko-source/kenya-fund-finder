@@ -660,20 +660,72 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
   const [news, setNews] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    const fetch = async () => {
-      // Search for news mentioning this stock
-      const { data } = await supabase
-        .from("news_articles_public")
-        .select("id, title, summary, date_published, created_at, source, category, image_url")
-        .or(`title.ilike.%${symbol}%,title.ilike.%${name}%,summary.ilike.%${symbol}%,summary.ilike.%${name}%`)
-        .order("created_at", { ascending: false })
-        .limit(10);
-      setNews(data || []);
-      setLoading(false);
+  const [offset, setOffset] = useState(0);
+  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+
+    const fetchValidNews = async (startOffset: number, countRequired: number) => {
+      let validArticles: any[] = [];
+      let currentOffset = startOffset;
+      let moreInDb = true;
+      
+      // Clean company name to extract the primary brand (e.g. "Safaricom PLC" -> "Safaricom", "Equity Group Holdings" -> "Equity")
+      const cleanName = name.replace(/\b(plc|group|holdings|ltd|limited|bank|company)\b/gi, '').trim();
+      const brandAliases = [symbol, name];
+      if (cleanName.length > 3) brandAliases.push(cleanName);
+      if (cleanName.toLowerCase() === 'equity') brandAliases.push('Equity Bank');
+      if (cleanName.toLowerCase() === 'co-operative') brandAliases.push('Co-op Bank');
+      
+      const regex = new RegExp(`\\b(${brandAliases.join('|')})\\b`, 'i');
+
+      while (validArticles.length < countRequired && moreInDb) {
+        const { data } = await supabase
+          .from("news_articles_public")
+          .select("id, title, summary, date_published, created_at, source, category, image_url")
+          .or(`title.ilike.%${symbol}%,title.ilike.%${name}%,summary.ilike.%${symbol}%,summary.ilike.%${name}%`)
+          .order("created_at", { ascending: false })
+          .range(currentOffset, currentOffset + 19);
+
+        if (!data || data.length === 0) {
+          moreInDb = false;
+          break;
+        }
+
+        const filtered = data.filter(a => regex.test(a.title) || regex.test(a.summary));
+        validArticles = [...validArticles, ...filtered];
+        currentOffset += 20;
+        
+        if (data.length < 20) {
+          moreInDb = false;
+        }
+      }
+      return { articles: validArticles.slice(0, countRequired), nextOffset: currentOffset, hasMore: moreInDb || validArticles.length > countRequired };
     };
-    fetch();
-  }, [symbol, name]);
+
+    useEffect(() => {
+      const fetch = async () => {
+        setLoading(true);
+        const { articles, nextOffset, hasMore: more } = await fetchValidNews(0, 10);
+        setNews(articles);
+        setOffset(nextOffset);
+        setHasMore(more);
+        setLoading(false);
+      };
+      fetch();
+    }, [symbol, name]);
+
+    const loadMore = async () => {
+      if (loadingMore || !hasMore) return;
+      setLoadingMore(true);
+      const { articles, nextOffset, hasMore: more } = await fetchValidNews(offset, 10);
+      
+      if (articles.length > 0) {
+        setNews(prev => [...prev, ...articles]);
+        setOffset(nextOffset);
+      }
+      setHasMore(more);
+      setLoadingMore(false);
+    };
 
   if (loading) return <div className="space-y-3">{Array.from({ length: 3 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}</div>;
 
@@ -732,7 +784,23 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
           </div>
         </div>
       ))}
-      <Link to="/news" className="block text-center text-xs text-primary hover:underline py-2">View all market news →</Link>
+      {hasMore ? (
+        <div className="flex justify-center pt-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={loadMore}
+            disabled={loadingMore}
+            className="rounded-full px-6 shadow-sm bg-background border-border/50 text-foreground hover:bg-muted"
+          >
+            {loadingMore ? "Loading..." : "Load More"}
+          </Button>
+        </div>
+      ) : (
+        <Link to="/news" className="block text-center text-xs text-primary hover:underline py-2">
+          View all market news →
+        </Link>
+      )}
 
       <FeedItemDetailModal
         item={selectedFeedItem}

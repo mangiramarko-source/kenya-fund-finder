@@ -43,8 +43,9 @@ export function MmfArticleMarketCard({ mmf }: { mmf: RelatedMmfProp }) {
       let yieldVal = baseYield;
       if (idx > 0) {
         const progress = dayOffset / totalDays;
-        const macroTrend = Math.sin(progress * Math.PI * 3.5) * (baseYield * 0.15);
-        const microWave = Math.cos(idx / 2.5) * (baseYield * 0.03);
+        const rangeSeed = totalDays / 365;
+        const macroTrend = Math.sin(progress * Math.PI * (3.5 + rangeSeed)) * (baseYield * 0.15);
+        const microWave = Math.cos(idx / (2.5 + rangeSeed * 0.2)) * (baseYield * 0.03);
         yieldVal = Number(Math.max(1, baseYield + macroTrend + microWave).toFixed(2));
       }
 

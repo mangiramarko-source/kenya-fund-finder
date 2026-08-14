@@ -1,0 +1,1562 @@
+[
+  {
+    "id": "e92d1ed3-0d3f-4c94-a1ef-b916b92c83f9",
+    "issue_number": "2690/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-07-13",
+    "new_auction_date": "2026-07-09",
+    "issue_date": "2026-07-13",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1045804532_RESULTS 2690-091 2664-182 2619-364 DATED 13-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "6c9db844-9215-4643-9bcd-17c411fa6381",
+    "issue_number": "2664/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-07-13",
+    "new_auction_date": "2026-07-09",
+    "issue_date": "2026-07-13",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1045804532_RESULTS 2690-091 2664-182 2619-364 DATED 13-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "3cecea0d-e6b6-4312-a7df-6e08e182f6ce",
+    "issue_number": "2619/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-07-13",
+    "new_auction_date": "2026-07-09",
+    "issue_date": "2026-07-13",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1045804532_RESULTS 2690-091 2664-182 2619-364 DATED 13-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "43e1bc6c-f733-4414-9a34-3093180e1325",
+    "issue_number": "2658/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-12-01",
+    "new_auction_date": "2025-11-27",
+    "issue_date": "2025-12-01",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1156914659_RESULTS 2658-091 2632-182 2587-364 DATED 01-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "f0667248-3c02-4d2e-a9ab-9a6d442ff80c",
+    "issue_number": "2632/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-12-01",
+    "new_auction_date": "2025-11-27",
+    "issue_date": "2025-12-01",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1156914659_RESULTS 2658-091 2632-182 2587-364 DATED 01-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "67287d8d-f893-455e-857f-0f62f03aa357",
+    "issue_number": "2587/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-12-01",
+    "new_auction_date": "2025-11-27",
+    "issue_date": "2025-12-01",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1156914659_RESULTS 2658-091 2632-182 2587-364 DATED 01-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "76000f23-ee30-4caa-9888-1e2a7dc45025",
+    "issue_number": "2678/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-04-20",
+    "new_auction_date": "2026-04-16",
+    "issue_date": "2026-04-20",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/987668783_RESULTS 2678-091 2652-182 2607-364 DATED 20-04-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "770f8c52-a2db-4721-a47f-41dc21309469",
+    "issue_number": "2652/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-04-20",
+    "new_auction_date": "2026-04-16",
+    "issue_date": "2026-04-20",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/987668783_RESULTS 2678-091 2652-182 2607-364 DATED 20-04-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "cbff80cc-0752-44f7-b2a9-67f6ea050ab8",
+    "issue_number": "2607/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-04-20",
+    "new_auction_date": "2026-04-16",
+    "issue_date": "2026-04-20",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/987668783_RESULTS 2678-091 2652-182 2607-364 DATED 20-04-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "94694900-a871-4e7d-a838-bc47a95b9fe9",
+    "issue_number": "2681/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-05-11",
+    "new_auction_date": "2026-05-07",
+    "issue_date": "2026-05-11",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1863205270_RESULTS 2681-091 2655-182 2610-364 DATED 11-05-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "352dad00-cb7b-48a3-8dd9-599a976aa70d",
+    "issue_number": "2655/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-05-11",
+    "new_auction_date": "2026-05-07",
+    "issue_date": "2026-05-11",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1863205270_RESULTS 2681-091 2655-182 2610-364 DATED 11-05-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "5ec2b44c-0bec-46b7-9cc1-353846e1e581",
+    "issue_number": "2610/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-05-11",
+    "new_auction_date": "2026-05-07",
+    "issue_date": "2026-05-11",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1863205270_RESULTS 2681-091 2655-182 2610-364 DATED 11-05-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "d123c4b9-52f5-4fce-ba3d-3e162847a33f",
+    "issue_number": "2664/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-01-12",
+    "new_auction_date": "2026-01-09",
+    "issue_date": "2026-01-12",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1742641457_RESULTS 2664-091 2638-182 2593-364 DATED 12-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "8dfdb3ad-bba7-4bfb-a218-4de93ca75cc8",
+    "issue_number": "2638/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-01-12",
+    "new_auction_date": "2026-01-09",
+    "issue_date": "2026-01-12",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1742641457_RESULTS 2664-091 2638-182 2593-364 DATED 12-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "4cc65368-f97e-4ff8-b406-7512deadb233",
+    "issue_number": "2593/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-01-12",
+    "new_auction_date": "2026-01-09",
+    "issue_date": "2026-01-12",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1742641457_RESULTS 2664-091 2638-182 2593-364 DATED 12-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "3bcf67cd-2bc8-4064-b86a-e48a1bacb8ca",
+    "issue_number": "2650/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-10-06",
+    "new_auction_date": "2025-10-02",
+    "issue_date": "2025-10-06",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1163282809_RESULTS 2650-091 2624-182 2578-364 DATED 06-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "4b4c242c-bd6d-402d-97b1-8e782936c18b",
+    "issue_number": "2624/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-10-06",
+    "new_auction_date": "2025-10-02",
+    "issue_date": "2025-10-06",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1163282809_RESULTS 2650-091 2624-182 2578-364 DATED 06-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "e26711a2-efbc-4d7f-8868-7a42aa65f252",
+    "issue_number": "2579/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-10-06",
+    "new_auction_date": "2025-10-02",
+    "issue_date": "2025-10-06",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1163282809_RESULTS 2650-091 2624-182 2578-364 DATED 06-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "e8902e23-dc03-4043-b58e-7a46a34058bb",
+    "issue_number": "2673/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-03-16",
+    "new_auction_date": "2026-03-12",
+    "issue_date": "2026-03-16",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1648782608_RESULTS 2673-091 2647-182 2602-364 DATED 16-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "a39d6f8b-f7c5-45fd-87da-a8b6507b6303",
+    "issue_number": "2647/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-03-16",
+    "new_auction_date": "2026-03-12",
+    "issue_date": "2026-03-16",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1648782608_RESULTS 2673-091 2647-182 2602-364 DATED 16-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "ac9e294f-0956-4924-9872-8d0da7209ba9",
+    "issue_number": "2602/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-03-16",
+    "new_auction_date": "2026-03-12",
+    "issue_date": "2026-03-16",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1648782608_RESULTS 2673-091 2647-182 2602-364 DATED 16-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "0744cb9c-cabb-47a5-89ad-17ec3d189e4e",
+    "issue_number": "2685/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-06-08",
+    "new_auction_date": "2026-06-04",
+    "issue_date": "2026-06-08",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1052486744_RESULTS 2685-091 2659-182 2614-364 DATED 08-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "57baef12-d879-4fa4-87d7-086b618933fc",
+    "issue_number": "2614/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-06-08",
+    "new_auction_date": "2026-06-04",
+    "issue_date": "2026-06-08",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1052486744_RESULTS 2685-091 2659-182 2614-364 DATED 08-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "ba6608f0-64c2-4381-8f17-530b6862a18f",
+    "issue_number": "2609/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-05-04",
+    "new_auction_date": "2026-04-30",
+    "issue_date": "2026-05-04",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/251519977_RESULTS 2680-091 2654-182 2609-364 DATED 04-05-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "a6a3a8c2-8e89-4924-ac46-3d617f3e7f4c",
+    "issue_number": "2595/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-01-26",
+    "new_auction_date": "2026-01-22",
+    "issue_date": "2026-01-26",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1105133656_RESULTS 2666-091 2640-182 2595-364 DATED 26-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "21d786b3-95f5-4f95-b944-7686bf68427b",
+    "issue_number": "2588/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-12-08",
+    "new_auction_date": "2025-12-04",
+    "issue_date": "2025-12-08",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1972093042_RESULTS 2659-091 2633-182 2588-364 DATED 08-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "52fac5cc-070d-4450-9962-576310c673bd",
+    "issue_number": "2622/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-08-03",
+    "new_auction_date": "2026-07-30",
+    "issue_date": "2026-08-03",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1434280977_RESULTS 2693-091 2667-182 2622-364 DATED 03-08-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "688e7386-5db2-447d-96f7-1f16ae54683f",
+    "issue_number": "2599/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-02-23",
+    "new_auction_date": "2026-02-19",
+    "issue_date": "2026-02-23",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/50420785_RESULTS 2670-091 2644-182 2599-364 DATED 23-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "2cfffbf1-e017-4dc3-99f2-145f8d13e054",
+    "issue_number": "2604/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-03-30",
+    "new_auction_date": "2026-03-26",
+    "issue_date": "2026-03-30",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/805764277_RESULTS 2675-091 2649-182 2604-364 DATED 30-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "ab555599-6687-4bde-b0f6-d77b93e40a20",
+    "issue_number": "2615/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-06-15",
+    "new_auction_date": "2026-06-11",
+    "issue_date": "2026-06-15",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/425003918_RESULTS 2686-091 2660-182 2615-364 DATED 15-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "bfbf7202-839c-4d80-a847-6d602e2c948d",
+    "issue_number": "2576/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-09-15",
+    "new_auction_date": "2025-09-11",
+    "issue_date": "2025-09-15",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/499145644_RESULTS 2647-091 2621-182 2575-364 DATED 15-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "2c2ae208-a9ac-4490-893e-b7fd97d1904f",
+    "issue_number": "2608/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-04-27",
+    "new_auction_date": "2026-04-23",
+    "issue_date": "2026-04-27",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/641294128_RESULTS 2679-091 2653-182 2608-364 DATED 27-04-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "643cbeb9-91ad-4fb2-9cb8-a22ce08f658e",
+    "issue_number": "2580/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-10-13",
+    "new_auction_date": "2025-10-09",
+    "issue_date": "2025-10-13",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1418647921_RESULTS 2651-091 2625-182 2579-364 DATED 13-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "37932fdf-8bd4-44a3-bf98-aaa1567c2df4",
+    "issue_number": "2620/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-07-20",
+    "new_auction_date": "2026-07-16",
+    "issue_date": "2026-07-20",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/285300586_RESULTS 2691-091 2665-182 2620-364 DATED 20-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "73e3fd6b-cc99-4817-a571-3039470e42db",
+    "issue_number": "2611/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-05-18",
+    "new_auction_date": "2026-05-14",
+    "issue_date": "2026-05-18",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/476753200_RESULTS 2682-091 2656-182 2611-364 DATED 18-05-2026.xlsx.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "25a10f63-2232-4707-bbf0-239c9408b31d",
+    "issue_number": "2603/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-03-23",
+    "new_auction_date": "2026-03-19",
+    "issue_date": "2026-03-23",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1675163887_RESULTS 2674-091 2648-182 2603-364 DATED 23-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "52100372-9a92-48c3-a119-138ee4ccf053",
+    "issue_number": "2597/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-02-09",
+    "new_auction_date": "2026-02-05",
+    "issue_date": "2026-02-09",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1275696235_RESULTS 2668-091 2642-182 2597-364 DATED 09-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "101abfa3-f3b9-4ee2-89ee-663d6c9b436c",
+    "issue_number": "2581/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-10-20",
+    "new_auction_date": "2025-10-16",
+    "issue_date": "2025-10-20",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1171311949_RESULTS 2652-091 2626-182 2580-364 DATED 20-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "e4e6362e-d24f-4941-89eb-5c2622a493c1",
+    "issue_number": "2618/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-07-06",
+    "new_auction_date": "2026-07-02",
+    "issue_date": "2026-07-06",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/2083267917_RESULTS 2689-091 2663-182 2618-364 DATED 06-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "00970037-c085-4072-9b26-edbee16494c6",
+    "issue_number": "2573/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-08-25",
+    "new_auction_date": "2025-08-21",
+    "issue_date": "2025-08-25",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1837291982_RESULTS 2644-091 2618-182 2572-364 DATED 25-08-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "19c74de7-9fb5-4806-bb1e-0e1074bdc41e",
+    "issue_number": "2600/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-03-02",
+    "new_auction_date": "2026-02-26",
+    "issue_date": "2026-03-02",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1647455569_RESULTS 2671-091 2645-182 2600-364 DATED 02-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "fd02ed18-3651-49d0-ac8d-f7d962f1654c",
+    "issue_number": "2592/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-01-05",
+    "new_auction_date": "2025-12-31",
+    "issue_date": "2026-01-05",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/632178852_RESULTS 2663-091 2637-182 2592-364 DATED 05-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "2731b3ff-ec6e-4d6c-bc17-831c0c94256f",
+    "issue_number": "2617/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-06-29",
+    "new_auction_date": "2026-06-25",
+    "issue_date": "2026-06-29",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1152236339_RESULTS 2688-091 2662-182 2617-364 DATED 29-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "e19874d9-7d2a-4d59-9693-f0dd5a3bd2c4",
+    "issue_number": "2661/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-12-22",
+    "new_auction_date": "2025-12-18",
+    "issue_date": "2025-12-22",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/74192338_RESULTS 2661-091 2635-182 2590-364 DATED 22-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "7a20c717-cb51-4c0b-bd36-b4f88814ecf2",
+    "issue_number": "2590/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-12-22",
+    "new_auction_date": "2025-12-18",
+    "issue_date": "2025-12-22",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/74192338_RESULTS 2661-091 2635-182 2590-364 DATED 22-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "11ece9f6-c51c-4da6-9051-b1991f9596ac",
+    "issue_number": "2659/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-06-08",
+    "new_auction_date": "2026-06-04",
+    "issue_date": "2026-06-08",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1052486744_RESULTS 2685-091 2659-182 2614-364 DATED 08-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "3e588b70-ca3f-41e4-8a64-d393fb905801",
+    "issue_number": "2654/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-05-04",
+    "new_auction_date": "2026-04-30",
+    "issue_date": "2026-05-04",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/251519977_RESULTS 2680-091 2654-182 2609-364 DATED 04-05-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "6f0b8611-19cf-4b81-b77c-7b9e874b6cec",
+    "issue_number": "2640/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-01-26",
+    "new_auction_date": "2026-01-22",
+    "issue_date": "2026-01-26",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1105133656_RESULTS 2666-091 2640-182 2595-364 DATED 26-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "47edb0ce-9ba3-4f03-b0e5-4fed75894b64",
+    "issue_number": "2633/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-12-08",
+    "new_auction_date": "2025-12-04",
+    "issue_date": "2025-12-08",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1972093042_RESULTS 2659-091 2633-182 2588-364 DATED 08-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "c48c7e82-28cd-472a-abc3-83ac7e35d4e6",
+    "issue_number": "2667/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-08-03",
+    "new_auction_date": "2026-07-30",
+    "issue_date": "2026-08-03",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1434280977_RESULTS 2693-091 2667-182 2622-364 DATED 03-08-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "0518bd33-4d65-4762-a708-81d31ab96343",
+    "issue_number": "2644/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-02-23",
+    "new_auction_date": "2026-02-19",
+    "issue_date": "2026-02-23",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/50420785_RESULTS 2670-091 2644-182 2599-364 DATED 23-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "22678bce-211b-44ab-9e8c-ee23a949d668",
+    "issue_number": "2649/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-03-30",
+    "new_auction_date": "2026-03-26",
+    "issue_date": "2026-03-30",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/805764277_RESULTS 2675-091 2649-182 2604-364 DATED 30-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "878cd54e-c598-4e4f-94d5-58ea4f797596",
+    "issue_number": "2660/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-06-15",
+    "new_auction_date": "2026-06-11",
+    "issue_date": "2026-06-15",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/425003918_RESULTS 2686-091 2660-182 2615-364 DATED 15-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "03067152-cbf3-457a-91c0-0bcae185d73e",
+    "issue_number": "2621/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-09-15",
+    "new_auction_date": "2025-09-11",
+    "issue_date": "2025-09-15",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/499145644_RESULTS 2647-091 2621-182 2575-364 DATED 15-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "c8ac1f80-afde-423a-960b-4aea296099a4",
+    "issue_number": "2653/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-04-27",
+    "new_auction_date": "2026-04-23",
+    "issue_date": "2026-04-27",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/641294128_RESULTS 2679-091 2653-182 2608-364 DATED 27-04-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "5f135615-de27-40ec-b0be-2eeb5e558f4c",
+    "issue_number": "2625/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-10-13",
+    "new_auction_date": "2025-10-09",
+    "issue_date": "2025-10-13",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1418647921_RESULTS 2651-091 2625-182 2579-364 DATED 13-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "9c52a13e-7fe2-45d5-bcbb-fc7f22f4ad02",
+    "issue_number": "2665/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-07-20",
+    "new_auction_date": "2026-07-16",
+    "issue_date": "2026-07-20",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/285300586_RESULTS 2691-091 2665-182 2620-364 DATED 20-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "feb956ec-5506-4b73-bff5-9e2ca1951984",
+    "issue_number": "2656/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-05-18",
+    "new_auction_date": "2026-05-14",
+    "issue_date": "2026-05-18",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/476753200_RESULTS 2682-091 2656-182 2611-364 DATED 18-05-2026.xlsx.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "3ac334d8-c32b-4a2f-92e4-8e3127157c64",
+    "issue_number": "2648/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-03-23",
+    "new_auction_date": "2026-03-19",
+    "issue_date": "2026-03-23",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1675163887_RESULTS 2674-091 2648-182 2603-364 DATED 23-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "584c2982-bf38-4d3d-a4fb-ab1e820bb052",
+    "issue_number": "2642/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-02-09",
+    "new_auction_date": "2026-02-05",
+    "issue_date": "2026-02-09",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1275696235_RESULTS 2668-091 2642-182 2597-364 DATED 09-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "805b7505-6d9c-41c1-9409-d0df5aba3c25",
+    "issue_number": "2626/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-10-20",
+    "new_auction_date": "2025-10-16",
+    "issue_date": "2025-10-20",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1171311949_RESULTS 2652-091 2626-182 2580-364 DATED 20-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "07f948fa-7c5c-4d44-b721-bcada40c2c2d",
+    "issue_number": "2663/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-07-06",
+    "new_auction_date": "2026-07-02",
+    "issue_date": "2026-07-06",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/2083267917_RESULTS 2689-091 2663-182 2618-364 DATED 06-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "e6e40d0f-1c72-4dc2-8eec-022c99cce1f6",
+    "issue_number": "2618/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-08-25",
+    "new_auction_date": "2025-08-21",
+    "issue_date": "2025-08-25",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1837291982_RESULTS 2644-091 2618-182 2572-364 DATED 25-08-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "d0fd4539-dbdf-46d3-b500-deccdc33f858",
+    "issue_number": "2645/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-03-02",
+    "new_auction_date": "2026-02-26",
+    "issue_date": "2026-03-02",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1647455569_RESULTS 2671-091 2645-182 2600-364 DATED 02-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "1530c405-c389-42c7-abb7-081437593531",
+    "issue_number": "2637/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-01-05",
+    "new_auction_date": "2025-12-31",
+    "issue_date": "2026-01-05",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/632178852_RESULTS 2663-091 2637-182 2592-364 DATED 05-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "31979dd7-3748-4db6-b323-6969c7746065",
+    "issue_number": "2662/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-06-29",
+    "new_auction_date": "2026-06-25",
+    "issue_date": "2026-06-29",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1152236339_RESULTS 2688-091 2662-182 2617-364 DATED 29-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "641a0587-c175-4336-9e58-ec896e96dc65",
+    "issue_number": "2635/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-12-22",
+    "new_auction_date": "2025-12-18",
+    "issue_date": "2025-12-22",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/74192338_RESULTS 2661-091 2635-182 2590-364 DATED 22-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "5e5799e1-2d00-4648-bd81-80f558313968",
+    "issue_number": "2680/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-05-04",
+    "new_auction_date": "2026-04-30",
+    "issue_date": "2026-05-04",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/251519977_RESULTS 2680-091 2654-182 2609-364 DATED 04-05-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "e75dc050-a4bf-4834-922d-2739a4c839a0",
+    "issue_number": "2666/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-01-26",
+    "new_auction_date": "2026-01-22",
+    "issue_date": "2026-01-26",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1105133656_RESULTS 2666-091 2640-182 2595-364 DATED 26-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "a0494da2-1e43-4878-bd54-b017d859beb6",
+    "issue_number": "2659/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-12-08",
+    "new_auction_date": "2025-12-04",
+    "issue_date": "2025-12-08",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1972093042_RESULTS 2659-091 2633-182 2588-364 DATED 08-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "1a2da6d7-a5af-48c3-a873-503d6e4dee44",
+    "issue_number": "2693/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-08-03",
+    "new_auction_date": "2026-07-30",
+    "issue_date": "2026-08-03",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1434280977_RESULTS 2693-091 2667-182 2622-364 DATED 03-08-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "b2000961-c305-4ffe-8d41-88f4bfb7d12f",
+    "issue_number": "2670/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-02-23",
+    "new_auction_date": "2026-02-19",
+    "issue_date": "2026-02-23",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/50420785_RESULTS 2670-091 2644-182 2599-364 DATED 23-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "b6fad5be-b0ff-4356-8d16-b4820f35910a",
+    "issue_number": "2675/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-03-30",
+    "new_auction_date": "2026-03-26",
+    "issue_date": "2026-03-30",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/805764277_RESULTS 2675-091 2649-182 2604-364 DATED 30-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "3ed4b997-364a-4229-9a7f-670bdaffd194",
+    "issue_number": "2686/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-06-15",
+    "new_auction_date": "2026-06-11",
+    "issue_date": "2026-06-15",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/425003918_RESULTS 2686-091 2660-182 2615-364 DATED 15-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "ebc3476f-2e5a-49a1-b16f-d133749156e7",
+    "issue_number": "2647/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-09-15",
+    "new_auction_date": "2025-09-11",
+    "issue_date": "2025-09-15",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/499145644_RESULTS 2647-091 2621-182 2575-364 DATED 15-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "8a3ff266-be3b-46ac-b38b-ca7e14f6c468",
+    "issue_number": "2679/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-04-27",
+    "new_auction_date": "2026-04-23",
+    "issue_date": "2026-04-27",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/641294128_RESULTS 2679-091 2653-182 2608-364 DATED 27-04-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "ffdabe1d-be8e-48c4-92c4-8b9814f8443b",
+    "issue_number": "2651/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-10-13",
+    "new_auction_date": "2025-10-09",
+    "issue_date": "2025-10-13",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1418647921_RESULTS 2651-091 2625-182 2579-364 DATED 13-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "4746a7ce-768f-476b-bcf3-75d23f95e73e",
+    "issue_number": "2691/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-07-20",
+    "new_auction_date": "2026-07-16",
+    "issue_date": "2026-07-20",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/285300586_RESULTS 2691-091 2665-182 2620-364 DATED 20-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "b19d0aee-7a48-46fc-bd17-00a1daba388b",
+    "issue_number": "2682/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-05-18",
+    "new_auction_date": "2026-05-14",
+    "issue_date": "2026-05-18",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/476753200_RESULTS 2682-091 2656-182 2611-364 DATED 18-05-2026.xlsx.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "fbb2629e-2071-4d4f-a7e0-6db39db320c3",
+    "issue_number": "2674/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-03-23",
+    "new_auction_date": "2026-03-19",
+    "issue_date": "2026-03-23",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1675163887_RESULTS 2674-091 2648-182 2603-364 DATED 23-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "a5f43ec7-5d2b-4ac1-8ab3-5f6453a6f57f",
+    "issue_number": "2668/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-02-09",
+    "new_auction_date": "2026-02-05",
+    "issue_date": "2026-02-09",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1275696235_RESULTS 2668-091 2642-182 2597-364 DATED 09-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "9e9ce825-0ba2-410b-89c2-ee2a80c2c829",
+    "issue_number": "2652/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-10-20",
+    "new_auction_date": "2025-10-16",
+    "issue_date": "2025-10-20",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1171311949_RESULTS 2652-091 2626-182 2580-364 DATED 20-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "f9582ce0-335c-478a-a77b-f3d230a9d56b",
+    "issue_number": "2689/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-07-06",
+    "new_auction_date": "2026-07-02",
+    "issue_date": "2026-07-06",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/2083267917_RESULTS 2689-091 2663-182 2618-364 DATED 06-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "d38ce161-1963-43fe-b075-5528c20743dd",
+    "issue_number": "2644/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-08-25",
+    "new_auction_date": "2025-08-21",
+    "issue_date": "2025-08-25",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1837291982_RESULTS 2644-091 2618-182 2572-364 DATED 25-08-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "97296baa-f381-4326-9c5d-bb3da0a7ff53",
+    "issue_number": "2671/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-03-02",
+    "new_auction_date": "2026-02-26",
+    "issue_date": "2026-03-02",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1647455569_RESULTS 2671-091 2645-182 2600-364 DATED 02-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "f9fb7b9b-592b-4922-97de-44b37e1877d4",
+    "issue_number": "2663/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-01-05",
+    "new_auction_date": "2025-12-31",
+    "issue_date": "2026-01-05",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/632178852_RESULTS 2663-091 2637-182 2592-364 DATED 05-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "696bdaeb-6852-4b10-8796-768bd6a19ddd",
+    "issue_number": "2688/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-06-29",
+    "new_auction_date": "2026-06-25",
+    "issue_date": "2026-06-29",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1152236339_RESULTS 2688-091 2662-182 2617-364 DATED 29-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "093b7a95-daed-4109-842d-59aafb4febac",
+    "issue_number": "2667/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-02-02",
+    "new_auction_date": "2026-01-29",
+    "issue_date": "2026-02-02",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1847007470_RESULTS 2667-091 2641-182 2596-364 DATED 02-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "4d2a9ead-1716-4ef7-85d4-7e3a95a29fee",
+    "issue_number": "2654/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-11-03",
+    "new_auction_date": "2025-10-30",
+    "issue_date": "2025-11-03",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1893666051_RESULTS 2654-091 2628-182 2582-364 DATED 03-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "3f496b46-dde0-4ce7-8893-193a2756939e",
+    "issue_number": "2641/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-02-02",
+    "new_auction_date": "2026-01-29",
+    "issue_date": "2026-02-02",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1847007470_RESULTS 2667-091 2641-182 2596-364 DATED 02-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "c159626d-5975-460f-a67a-a60a9998c593",
+    "issue_number": "2628/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-11-03",
+    "new_auction_date": "2025-10-30",
+    "issue_date": "2025-11-03",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1893666051_RESULTS 2654-091 2628-182 2582-364 DATED 03-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "e3445f46-654c-43ab-a614-adfa4d63ae16",
+    "issue_number": "2651/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-04-13",
+    "new_auction_date": "2026-04-09",
+    "issue_date": "2026-04-13",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/684355991_RESULTS 2677-091 2651-182 2606-364 DATED 13-04-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "a7d6f36e-e40a-4d8b-ae18-7569d761a321",
+    "issue_number": "2643/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-02-16",
+    "new_auction_date": "2026-02-12",
+    "issue_date": "2026-02-16",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/642096599_RESULTS 2669-091 2643-182 2598-364 DATED 16-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "03c252b0-35c0-40e6-bb05-cf1c0a07baaf",
+    "issue_number": "2636/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-12-29",
+    "new_auction_date": "2025-12-24",
+    "issue_date": "2025-12-29",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/523183319_RESULTS 2662-091 2636-182 2591-364 DATED 29-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "2e14f3a6-c428-4e60-88b8-a225761798d6",
+    "issue_number": "2657/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-05-25",
+    "new_auction_date": "2026-05-21",
+    "issue_date": "2026-05-25",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1993553951_RESULTS 2683-091 2657-182 2612-364 DATED 25-05-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "03b29a84-ab0f-4201-9fb2-6500415cf1ce",
+    "issue_number": "2646/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-03-09",
+    "new_auction_date": "2026-03-05",
+    "issue_date": "2026-03-09",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1510081164_RESULTS 2672-091 2646-182 2601-364 DATED 09-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "e235e5da-de17-4901-886a-c6b8eab0a0ec",
+    "issue_number": "2666/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-07-27",
+    "new_auction_date": "2026-07-23",
+    "issue_date": "2026-07-27",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/211919583_RESULTS 2692-091 2666-182 2621-364 DATED 27-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "a8fb3b86-29e8-4b39-8dbb-324195d55702",
+    "issue_number": "2634/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-12-15",
+    "new_auction_date": "2025-12-11",
+    "issue_date": "2025-12-15",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/938848557_RESULTS 2660-091 2634-182 2589-364 DATED 15-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "560743e9-7441-48e2-9e6d-903737742e92",
+    "issue_number": "2630/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-11-17",
+    "new_auction_date": "2025-11-13",
+    "issue_date": "2025-11-17",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/450559664_RESULTS 2656-091 2630-182 2584-364 DATED 17-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "8dadd98d-31be-4cad-b621-b04075166b23",
+    "issue_number": "2622/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-09-22",
+    "new_auction_date": "2025-09-18",
+    "issue_date": "2025-09-22",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/2051037404_RESULTS 2648-091 2622-182 2576-364 DATED 22-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "7bd32011-5e50-4ca9-95ba-13daa076b667",
+    "issue_number": "2639/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-01-19",
+    "new_auction_date": "2026-01-15",
+    "issue_date": "2026-01-19",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1360253624_RESULTS 2665-091 2639-182 2594-364 DATED 19-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "956f9d5a-209c-49da-a2d4-530113b639b1",
+    "issue_number": "2627/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-10-27",
+    "new_auction_date": "2025-10-23",
+    "issue_date": "2025-10-27",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1956245095_RESULTS 2653-091 2627-182 2581-364 DATED 27-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "28b42b75-689f-48cd-a0ab-ba4918617670",
+    "issue_number": "2629/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-11-10",
+    "new_auction_date": "2025-11-06",
+    "issue_date": "2025-11-10",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/298217097_RESULTS 2655-091 2629-182 2583-364 DATED 10-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "bf66ba1e-8e42-4ed6-9da9-4d281fbea7bf",
+    "issue_number": "2619/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-09-01",
+    "new_auction_date": "2025-08-28",
+    "issue_date": "2025-09-01",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1797783072_RESULTS 2645-091 2619-182 2573-364 DATED 01-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "6141f7e0-fdbd-43e0-a8e5-35666b760254",
+    "issue_number": "2620/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-09-08",
+    "new_auction_date": "2025-09-04",
+    "issue_date": "2025-09-08",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/2068152467_RESULTS 2646-091 2620-182 2574-364 DATED 08-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "9df74805-5b53-478e-b10d-721a259b115b",
+    "issue_number": "2668/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-08-10",
+    "new_auction_date": "2026-08-06",
+    "issue_date": "2026-08-10",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1883166998_RESULTS 2694-091 2668-182 2623-364 DATED 10-08-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "acd1f5b1-a85e-4c80-abd2-bf3dfe360f8f",
+    "issue_number": "2650/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-04-06",
+    "new_auction_date": "2026-04-02",
+    "issue_date": "2026-04-06",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1398950883_RESULTS 2676-091 2650-182 2605-364 DATED 06-04-2026...pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "3b40841f-c23b-4ebd-a763-a118c156da3a",
+    "issue_number": "2617/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-08-18",
+    "new_auction_date": "2025-08-14",
+    "issue_date": "2025-08-18",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/107989597_RESULTS 2643-091 2617-182 2571-364 DATED 18-08-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "654252d1-3800-4bf0-96e9-9824eb3e85ae",
+    "issue_number": "2623/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-09-29",
+    "new_auction_date": "2025-09-25",
+    "issue_date": "2025-09-29",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1149340265_RESULTS 2649-091 2623-182 2577-364 DATED 29-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "3b64576b-6e03-4a6a-8fd9-9fcfce6f4cf4",
+    "issue_number": "2658/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-06-01",
+    "new_auction_date": "2026-05-28",
+    "issue_date": "2026-06-01",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/826400477_RESULTS 2684-091 2658-182 2613-364 DATED 01-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "1cb6b4dc-e8f6-405b-8b78-83102e722f63",
+    "issue_number": "2661/182",
+    "tenor_days": 182,
+    "current_auction_date": "2026-06-22",
+    "new_auction_date": "2026-06-18",
+    "issue_date": "2026-06-22",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/549986739_RESULTS 2687-091 2661-182 2616-364 DATED 22-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "d1b4ff61-34d3-439d-9076-5e9384754a63",
+    "issue_number": "2631/182",
+    "tenor_days": 182,
+    "current_auction_date": "2025-11-24",
+    "new_auction_date": "2025-11-20",
+    "issue_date": "2025-11-24",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/883617898_RESULTS 2657-091 2631-182 2585-364 DATED 24-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "cae3e88d-4797-453e-91fa-ffc50ba796f0",
+    "issue_number": "2596/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-02-02",
+    "new_auction_date": "2026-01-29",
+    "issue_date": "2026-02-02",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1847007470_RESULTS 2667-091 2641-182 2596-364 DATED 02-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "5dfd418d-b59c-4aea-aaea-00ea13baae50",
+    "issue_number": "2583/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-11-03",
+    "new_auction_date": "2025-10-30",
+    "issue_date": "2025-11-03",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/1893666051_RESULTS 2654-091 2628-182 2582-364 DATED 03-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "316392f6-e8b8-4580-8f50-346eaed6640f",
+    "issue_number": "2606/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-04-13",
+    "new_auction_date": "2026-04-09",
+    "issue_date": "2026-04-13",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/684355991_RESULTS 2677-091 2651-182 2606-364 DATED 13-04-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "4d40215a-787a-4ff5-923b-336590fa26bf",
+    "issue_number": "2598/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-02-16",
+    "new_auction_date": "2026-02-12",
+    "issue_date": "2026-02-16",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/642096599_RESULTS 2669-091 2643-182 2598-364 DATED 16-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "92fa77f1-629f-4524-8461-ef64899549c8",
+    "issue_number": "2591/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-12-29",
+    "new_auction_date": "2025-12-24",
+    "issue_date": "2025-12-29",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/523183319_RESULTS 2662-091 2636-182 2591-364 DATED 29-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "8df4fa5f-f6f4-4194-8d77-1283d5e9bdcb",
+    "issue_number": "2612/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-05-25",
+    "new_auction_date": "2026-05-21",
+    "issue_date": "2026-05-25",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1993553951_RESULTS 2683-091 2657-182 2612-364 DATED 25-05-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "ea71bdfa-b2f4-43e4-95dd-be7de220eefd",
+    "issue_number": "2601/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-03-09",
+    "new_auction_date": "2026-03-05",
+    "issue_date": "2026-03-09",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1510081164_RESULTS 2672-091 2646-182 2601-364 DATED 09-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "2cd2085a-658f-4ea7-bf6d-f9292e7a05c3",
+    "issue_number": "2621/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-07-27",
+    "new_auction_date": "2026-07-23",
+    "issue_date": "2026-07-27",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/211919583_RESULTS 2692-091 2666-182 2621-364 DATED 27-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "f2d635e7-22e7-46c0-8e5e-136db90ad772",
+    "issue_number": "2589/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-12-15",
+    "new_auction_date": "2025-12-11",
+    "issue_date": "2025-12-15",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/938848557_RESULTS 2660-091 2634-182 2589-364 DATED 15-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "c013c3a6-2630-44f2-a8c9-4228923ed7d2",
+    "issue_number": "2585/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-11-17",
+    "new_auction_date": "2025-11-13",
+    "issue_date": "2025-11-17",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/450559664_RESULTS 2656-091 2630-182 2584-364 DATED 17-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "67e931ec-099b-4b52-bd4a-edae1897f4b7",
+    "issue_number": "2577/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-09-22",
+    "new_auction_date": "2025-09-18",
+    "issue_date": "2025-09-22",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/2051037404_RESULTS 2648-091 2622-182 2576-364 DATED 22-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "83f24b5e-e40b-49e6-ae9c-bd2a09ac2425",
+    "issue_number": "2594/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-01-19",
+    "new_auction_date": "2026-01-15",
+    "issue_date": "2026-01-19",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1360253624_RESULTS 2665-091 2639-182 2594-364 DATED 19-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "cde830b0-0ca1-42ec-a666-c795a6b8b101",
+    "issue_number": "2582/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-10-27",
+    "new_auction_date": "2025-10-23",
+    "issue_date": "2025-10-27",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1956245095_RESULTS 2653-091 2627-182 2581-364 DATED 27-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "5242269a-8897-4955-8dd7-83ffe924f9fe",
+    "issue_number": "2584/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-11-10",
+    "new_auction_date": "2025-11-06",
+    "issue_date": "2025-11-10",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/298217097_RESULTS 2655-091 2629-182 2583-364 DATED 10-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "9e846b4b-4d0e-4861-a7a1-6d0a2eb77c5d",
+    "issue_number": "2574/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-09-01",
+    "new_auction_date": "2025-08-28",
+    "issue_date": "2025-09-01",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1797783072_RESULTS 2645-091 2619-182 2573-364 DATED 01-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "47a4134c-9e63-43d0-b6e1-adc593ddd2da",
+    "issue_number": "2575/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-09-08",
+    "new_auction_date": "2025-09-04",
+    "issue_date": "2025-09-08",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/2068152467_RESULTS 2646-091 2620-182 2574-364 DATED 08-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "65941d2b-4044-4939-8835-5fe261710f83",
+    "issue_number": "2623/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-08-10",
+    "new_auction_date": "2026-08-06",
+    "issue_date": "2026-08-10",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1883166998_RESULTS 2694-091 2668-182 2623-364 DATED 10-08-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "bb928070-80d1-4b62-b53d-08ef5253c062",
+    "issue_number": "2605/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-04-06",
+    "new_auction_date": "2026-04-02",
+    "issue_date": "2026-04-06",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1398950883_RESULTS 2676-091 2650-182 2605-364 DATED 06-04-2026...pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "d7e2f05d-320f-406e-9eb6-41c024df1df7",
+    "issue_number": "2572/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-08-18",
+    "new_auction_date": "2025-08-14",
+    "issue_date": "2025-08-18",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/107989597_RESULTS 2643-091 2617-182 2571-364 DATED 18-08-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "84ad3e31-9fa3-442a-aef6-f3599730ec3f",
+    "issue_number": "2578/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-09-29",
+    "new_auction_date": "2025-09-25",
+    "issue_date": "2025-09-29",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1149340265_RESULTS 2649-091 2623-182 2577-364 DATED 29-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "f142e27b-f667-45fe-99d0-e67200828495",
+    "issue_number": "2613/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-06-01",
+    "new_auction_date": "2026-05-28",
+    "issue_date": "2026-06-01",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/826400477_RESULTS 2684-091 2658-182 2613-364 DATED 01-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "f9403369-2cd8-40c5-8b93-70adb22efd04",
+    "issue_number": "2616/364",
+    "tenor_days": 364,
+    "current_auction_date": "2026-06-22",
+    "new_auction_date": "2026-06-18",
+    "issue_date": "2026-06-22",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/549986739_RESULTS 2687-091 2661-182 2616-364 DATED 22-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "c33aeaea-9255-4cf2-84f1-e1a737efaf34",
+    "issue_number": "2586/364",
+    "tenor_days": 364,
+    "current_auction_date": "2025-11-24",
+    "new_auction_date": "2025-11-20",
+    "issue_date": "2025-11-24",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/883617898_RESULTS 2657-091 2631-182 2585-364 DATED 24-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "f583f251-ecda-4d87-b774-78440ba63815",
+    "issue_number": "2677/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-04-13",
+    "new_auction_date": "2026-04-09",
+    "issue_date": "2026-04-13",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/684355991_RESULTS 2677-091 2651-182 2606-364 DATED 13-04-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "fb7e06ca-1de6-49fb-932f-774b1ae151b5",
+    "issue_number": "2669/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-02-16",
+    "new_auction_date": "2026-02-12",
+    "issue_date": "2026-02-16",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/642096599_RESULTS 2669-091 2643-182 2598-364 DATED 16-02-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "fdf2c042-7a52-4cde-9a6b-c243d89acb51",
+    "issue_number": "2662/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-12-29",
+    "new_auction_date": "2025-12-24",
+    "issue_date": "2025-12-29",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/523183319_RESULTS 2662-091 2636-182 2591-364 DATED 29-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "a9a7be71-b2a3-484e-929f-469ae8c02024",
+    "issue_number": "2683/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-05-25",
+    "new_auction_date": "2026-05-21",
+    "issue_date": "2026-05-25",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1993553951_RESULTS 2683-091 2657-182 2612-364 DATED 25-05-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "2ccdabd3-0d5d-4d4e-84aa-a601e0613833",
+    "issue_number": "2672/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-03-09",
+    "new_auction_date": "2026-03-05",
+    "issue_date": "2026-03-09",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1510081164_RESULTS 2672-091 2646-182 2601-364 DATED 09-03-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "2c83a3a8-be27-4307-8379-30fe8d0e2f7c",
+    "issue_number": "2692/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-07-27",
+    "new_auction_date": "2026-07-23",
+    "issue_date": "2026-07-27",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/211919583_RESULTS 2692-091 2666-182 2621-364 DATED 27-07-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "fa118cd2-fd2e-48fd-ad30-581bed86d32b",
+    "issue_number": "2660/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-12-15",
+    "new_auction_date": "2025-12-11",
+    "issue_date": "2025-12-15",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/938848557_RESULTS 2660-091 2634-182 2589-364 DATED 15-12-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "11942e7e-c59e-459b-8f48-eb20039d4726",
+    "issue_number": "2656/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-11-17",
+    "new_auction_date": "2025-11-13",
+    "issue_date": "2025-11-17",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/450559664_RESULTS 2656-091 2630-182 2584-364 DATED 17-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "fd95ae7f-0749-4e88-b952-97e003be77e7",
+    "issue_number": "2648/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-09-22",
+    "new_auction_date": "2025-09-18",
+    "issue_date": "2025-09-22",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/2051037404_RESULTS 2648-091 2622-182 2576-364 DATED 22-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "98c353e1-7590-4521-826b-a0218430d98d",
+    "issue_number": "2665/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-01-19",
+    "new_auction_date": "2026-01-15",
+    "issue_date": "2026-01-19",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1360253624_RESULTS 2665-091 2639-182 2594-364 DATED 19-01-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "f9f96eae-0ed2-479b-8ca9-cd2b8551ac4f",
+    "issue_number": "2653/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-10-27",
+    "new_auction_date": "2025-10-23",
+    "issue_date": "2025-10-27",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1956245095_RESULTS 2653-091 2627-182 2581-364 DATED 27-10-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "61783033-a27c-4204-88cb-e27f8b6c4e2c",
+    "issue_number": "2655/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-11-10",
+    "new_auction_date": "2025-11-06",
+    "issue_date": "2025-11-10",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/298217097_RESULTS 2655-091 2629-182 2583-364 DATED 10-11-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "796e8f52-97d9-497c-96b2-73ba02f048aa",
+    "issue_number": "2645/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-09-01",
+    "new_auction_date": "2025-08-28",
+    "issue_date": "2025-09-01",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1797783072_RESULTS 2645-091 2619-182 2573-364 DATED 01-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "62504337-a071-490c-9a3a-fa789a19dee9",
+    "issue_number": "2646/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-09-08",
+    "new_auction_date": "2025-09-04",
+    "issue_date": "2025-09-08",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/2068152467_RESULTS 2646-091 2620-182 2574-364 DATED 08-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "8d1a6193-0983-41d8-8817-9def5b33d72b",
+    "issue_number": "2694/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-08-10",
+    "new_auction_date": "2026-08-06",
+    "issue_date": "2026-08-10",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1883166998_RESULTS 2694-091 2668-182 2623-364 DATED 10-08-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "160e7aee-d8df-4c13-bcfb-ace22a21f9a1",
+    "issue_number": "2676/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-04-06",
+    "new_auction_date": "2026-04-02",
+    "issue_date": "2026-04-06",
+    "source_url": "https://www.centralbank.go.ke/uploads/364_day_historical_treasury_bill_results/1398950883_RESULTS 2676-091 2650-182 2605-364 DATED 06-04-2026...pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "99eb51c2-191c-49c5-8eac-5e800da8eb2c",
+    "issue_number": "2643/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-08-18",
+    "new_auction_date": "2025-08-14",
+    "issue_date": "2025-08-18",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/107989597_RESULTS 2643-091 2617-182 2571-364 DATED 18-08-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "969e8662-0723-4c95-b81d-b25013ac5967",
+    "issue_number": "2649/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-09-29",
+    "new_auction_date": "2025-09-25",
+    "issue_date": "2025-09-29",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/1149340265_RESULTS 2649-091 2623-182 2577-364 DATED 29-09-2025.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "418ccd5a-b92f-4aef-ad00-e08f47e76014",
+    "issue_number": "2684/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-06-01",
+    "new_auction_date": "2026-05-28",
+    "issue_date": "2026-06-01",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/826400477_RESULTS 2684-091 2658-182 2613-364 DATED 01-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "b4f77cdb-d8db-464c-9d4e-045d93312305",
+    "issue_number": "2687/091",
+    "tenor_days": 91,
+    "current_auction_date": "2026-06-22",
+    "new_auction_date": "2026-06-18",
+    "issue_date": "2026-06-22",
+    "source_url": "https://www.centralbank.go.ke/uploads/91_day_historical_treasury_bill_results/549986739_RESULTS 2687-091 2661-182 2616-364 DATED 22-06-2026.pdf",
+    "evidence": "pdf_footer"
+  },
+  {
+    "id": "328ba8ca-da10-41c4-82c4-167a7ec67676",
+    "issue_number": "2657/091",
+    "tenor_days": 91,
+    "current_auction_date": "2025-11-24",
+    "new_auction_date": "2025-11-20",
+    "issue_date": "2025-11-24",
+    "source_url": "https://www.centralbank.go.ke/uploads/182_day_historical_treasury_bill_results/883617898_RESULTS 2657-091 2631-182 2585-364 DATED 24-11-2025.pdf",
+    "evidence": "pdf_footer"
+  }
+]

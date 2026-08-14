@@ -345,13 +345,13 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
   }
 }
 
-export async function fetchPublishedNews(limit: number = 60): Promise<NewsFromDB[]> {
+export async function fetchPublishedNews(limit: number = 60, offset: number = 0): Promise<NewsFromDB[]> {
   try {
     const { data, error } = await supabase
       .from("news_articles_public")
       .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
       .order("created_at", { ascending: false })
-      .limit(limit);
+      .range(offset, offset + limit - 1);
       
     if (error) throw error;
     

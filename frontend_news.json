@@ -1,0 +1,162 @@
+{
+  "Stocks": [
+    {
+      "title": "Kakuzi invests in AI, digital technology to boost farm operations",
+      "date_published": "2026-08-14",
+      "source": "Tuko News",
+      "reason": "related_stock_id exists"
+    },
+    {
+      "title": "KCB shareholders to get Sh9.64b interim dividend as net profit rises to Sh36.1b",
+      "date_published": "2026-08-13",
+      "source": "Standard Media",
+      "reason": "related_stock_id exists"
+    },
+    {
+      "title": "KCB sets interim dividend as profit after tax rises to KSh 49 billion in 6 months",
+      "date_published": "2026-08-13",
+      "source": "Tuko News",
+      "reason": "related_stock_id exists"
+    },
+    {
+      "title": "BAT Kenya challenges Sh4.5bn claim over VELO marketing campaign",
+      "date_published": "2026-08-13",
+      "source": "Business Daily",
+      "reason": "related_stock_id exists"
+    },
+    {
+      "title": "China Africa industrial hub: minerals to factories",
+      "date_published": "2026-08-13",
+      "source": "Further Africa",
+      "reason": "related_stock_id exists"
+    }
+  ],
+  "MMFs": [
+    {
+      "title": "NTSA refunds KSh 66k erroneously paid by Kenyan for number plates after Ombudsman's intervention",
+      "date_published": "2026-08-13",
+      "source": "Tuko News",
+      "reason": "Matches MMF rules (cat: Market News, title: ntsa refunds ksh 66k erroneously paid by kenyan for number plates after ombudsman's intervention)"
+    },
+    {
+      "title": "Rising treasury bill yields won’t derail rate cuts, CBK Governor Thugge says",
+      "date_published": "2026-08-13",
+      "source": "Capital FM",
+      "reason": "Matches MMF rules (cat: Yield Updates, title: rising treasury bill yields won’t derail rate cuts, cbk governor thugge says)"
+    },
+    {
+      "title": "Exporters under AGOA to receive refunds for duties paid in lapse period",
+      "date_published": "2026-08-13",
+      "source": "KBC",
+      "reason": "Matches MMF rules (cat: Regulatory Updates, title: exporters under agoa to receive refunds for duties paid in lapse period)"
+    },
+    {
+      "title": "Nigeria: Can estranged Aregbesola and Governor Adeleke stop Tinubu’s APC comeback in Osun?",
+      "date_published": "2026-08-13",
+      "source": "The Africa Report",
+      "reason": "Matches MMF rules (cat: Yield Updates, title: nigeria: can estranged aregbesola and governor adeleke stop tinubu’s apc comeback in osun?)"
+    },
+    {
+      "title": "World Bank-funded IGAD project invites Kenyans to apply for tenders, sets September 2026 deadline",
+      "date_published": "2026-08-13",
+      "source": "Tuko News",
+      "reason": "Matches MMF rules (cat: International, title: world bank-funded igad project invites kenyans to apply for tenders, sets september 2026 deadline)"
+    }
+  ],
+  "FX": [
+    {
+      "title": "US govt accuses Kenya of helping China evade Trump tariffs, threatens 66,000 local jobs",
+      "date_published": "2026-08-14",
+      "source": "Tuko News",
+      "reason": "Matches FX rules (cat: International, title: us govt accuses kenya of helping china evade trump tariffs, threatens 66,000 local jobs)"
+    },
+    {
+      "title": "List of top 10 countries with biggest IMF loans in the world as of August 2026",
+      "date_published": "2026-08-14",
+      "source": "Tuko News",
+      "reason": "Matches FX rules (cat: International, title: list of top 10 countries with biggest imf loans in the world as of august 2026)"
+    },
+    {
+      "title": "Top IMF Official Visits Treasury Months after Lender Denied Ruto More Loan",
+      "date_published": "2026-08-13",
+      "source": "Tuko News",
+      "reason": "Matches FX rules (cat: International, title: top imf official visits treasury months after lender denied ruto more loan)"
+    },
+    {
+      "title": "World Bank-funded IGAD project invites Kenyans to apply for tenders, sets September 2026 deadline",
+      "date_published": "2026-08-13",
+      "source": "Tuko News",
+      "reason": "Matches FX rules (cat: International, title: world bank-funded igad project invites kenyans to apply for tenders, sets september 2026 deadline)"
+    },
+    {
+      "title": "Pressure on Treasury to revive forex compensation for diplomatic missions",
+      "date_published": "2026-08-13",
+      "source": "Business Daily",
+      "reason": "Matches FX rules (cat: Market News, title: pressure on treasury to revive forex compensation for diplomatic missions)"
+    }
+  ],
+  "Commodities": [
+    {
+      "title": "Venezuela demands its gold back from the UK",
+      "date_published": "2026-08-14",
+      "source": "Financial Times Africa",
+      "reason": "Matches Commodities rules (title: venezuela demands its gold back from the uk)"
+    },
+    {
+      "title": "CBK sees inflation at 8pc if average oil prices stay at $110 per barrel",
+      "date_published": "2026-08-13",
+      "source": "Capital FM",
+      "reason": "Matches Commodities rules (title: cbk sees inflation at 8pc if average oil prices stay at $110 per barrel)"
+    },
+    {
+      "title": "CBK keeps rate steady as weather risks cloud inflation outlook",
+      "date_published": "2026-08-13",
+      "source": "The Star",
+      "reason": "Matches Commodities rules (title: cbk keeps rate steady as weather risks cloud inflation outlook)"
+    },
+    {
+      "title": "OPEC lowers oil demand growth forecasts for 2026",
+      "date_published": "2026-08-12",
+      "source": "Capital FM",
+      "reason": "Matches Commodities rules (title: opec lowers oil demand growth forecasts for 2026)"
+    },
+    {
+      "title": "CBK keeps interest rate at 8.75pc amid steady inflation, exchange rate",
+      "date_published": "2026-08-12",
+      "source": "Capital FM",
+      "reason": "Matches Commodities rules (title: cbk keeps interest rate at 8.75pc amid steady inflation, exchange rate)"
+    }
+  ],
+  "General": [
+    {
+      "title": "Elon Musk's Starlink announces high-speed internet in Kenya at KSh 4k monthly",
+      "date_published": "2026-08-14",
+      "source": "Tuko News",
+      "reason": "Matches no specific rules"
+    },
+    {
+      "title": "Brookside: Other owners inside Kenyatta family's milk empire, brands and history",
+      "date_published": "2026-08-14",
+      "source": "Tuko News",
+      "reason": "Matches no specific rules"
+    },
+    {
+      "title": "Ethiopia exports target: $13.4bn goal for 2026/27",
+      "date_published": "2026-08-14",
+      "source": "Further Africa",
+      "reason": "Matches no specific rules"
+    },
+    {
+      "title": "Kenyan Embassy in Paris announces vacancy for consular assistant, how to apply",
+      "date_published": "2026-08-14",
+      "source": "Tuko News",
+      "reason": "Matches no specific rules"
+    },
+    {
+      "title": "Wicknell Chivayo: 6 African presidents Zimbabwean tycoon has met",
+      "date_published": "2026-08-14",
+      "source": "Tuko News",
+      "reason": "Matches no specific rules"
+    }
+  ]
+}

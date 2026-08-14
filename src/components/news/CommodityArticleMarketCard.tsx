@@ -40,8 +40,9 @@ export function CommodityArticleMarketCard({ commodity }: { commodity: RelatedCo
       let priceVal = basePrice;
       if (idx > 0) {
         const progress = dayOffset / totalDays;
-        const macroTrend = Math.sin(progress * Math.PI * 3.5) * (basePrice * 0.1);
-        const microWave = Math.cos(idx / 2.5) * (basePrice * 0.03);
+        const rangeSeed = totalDays / 365;
+        const macroTrend = Math.sin(progress * Math.PI * (3.5 + rangeSeed)) * (basePrice * 0.1);
+        const microWave = Math.cos(idx / (2.5 + rangeSeed * 0.2)) * (basePrice * 0.03);
         priceVal = Number(Math.max(basePrice * 0.3, basePrice + macroTrend + microWave).toFixed(2));
       }
 

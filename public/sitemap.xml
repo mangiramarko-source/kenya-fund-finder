@@ -46,11 +46,6 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/treasury</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/learn</loc>
     <changefreq>monthly</changefreq>
     <priority>0.7</priority>

@@ -39,8 +39,9 @@ export function FxArticleMarketCard({ fx }: { fx: RelatedFxProp }) {
       let rateVal = baseRate;
       if (idx > 0) {
         const progress = dayOffset / totalDays;
-        const macroTrend = Math.sin(progress * Math.PI * 3.5) * (baseRate * 0.08);
-        const microWave = Math.cos(idx / 2.2) * (baseRate * 0.02);
+        const rangeSeed = totalDays / 365;
+        const macroTrend = Math.sin(progress * Math.PI * (3.5 + rangeSeed)) * (baseRate * 0.08);
+        const microWave = Math.cos(idx / (2.2 + rangeSeed * 0.2)) * (baseRate * 0.02);
         rateVal = Number(Math.max(baseRate * 0.4, baseRate + macroTrend + microWave).toFixed(2));
       }
 

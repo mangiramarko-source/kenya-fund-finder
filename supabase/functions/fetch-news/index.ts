@@ -170,10 +170,16 @@ function isFuzzyDuplicate(tokens: Set<string>, existingTokens: Set<string>[]): b
 
 function categorize(text: string): string {
   const lower = text.toLowerCase();
-  if (/yield|return|interest rate|cbk|central bank|treasury bill|t-bill/.test(lower)) return "Yield Updates";
-  if (/cma|regulator|compliance|policy|law|act|parliament/.test(lower)) return "Regulatory Updates";
-  if (/fund manager|unit trust|money market|mutual fund|sacco|pension|ipo|rights issue/.test(lower)) return "Fund Announcements";
+  
+  if (/\b(yield|interest rate|cbk|central bank|treasury bill|t-bill|t-bonds)\b/.test(lower)) return "Yield Updates";
+  if (/\b(cma|regulator|compliance|policy|law|act|parliament)\b/.test(lower)) return "Regulatory Updates";
+  if (/\b(fund manager|unit trust|money market( fund)?|mmf|mutual fund)\b/.test(lower)) return "Fund Announcements";
+  
+  // Specific FX & Currency category instead of hiding under International
+  if (/\b(shilling|kes|forex|fx|foreign exchange|currency|usd\/kes|exchange rate)\b/.test(lower)) return "FX & Currency";
+  
   if (/\b(fed|federal reserve|ecb|imf|world bank|wall street|s&p|nasdaq|ftse|dow jones|eurobond|brent|opec|emerging markets|global|us economy|china|europe)\b/.test(lower)) return "International";
+  
   return "Market News";
 }
 
@@ -524,7 +530,7 @@ Deno.serve(async (req) => {
     const seenTitles = new Set<string>();
     const seenTokenSets: Set<string>[] = [];
     let fuzzySkipped = 0;
-    const newArticles = allArticles.filter((a) => {
+    const dedupedArticles = allArticles.filter((a) => {
       const nUrl = normalizeUrl(a.url);
       const nTitle = normalizeTitle(a.title);
       if (nUrl && existingUrls.has(nUrl)) return false;
@@ -544,7 +550,34 @@ Deno.serve(async (req) => {
       if (tokens.size >= 3) seenTokenSets.push(tokens);
       return true;
     });
-    if (fuzzySkipped > 0) console.log(`Fuzzy dedup skipped ${fuzzySkipped} near-duplicate articles`);
+
+    const dedupSkipped = allArticles.length - dedupedArticles.length;
+    let rejectedCount = 0;
+
+    const newArticles = dedupedArticles.filter((a) => {
+      // Relevance Gate
+      const titleLower = a.title.toLowerCase();
+      const summaryLower = (a.summary || "").toLowerCase();
+      const contentLower = (a.content || "").toLowerCase();
+      const text = `${titleLower} ${summaryLower} ${contentLower}`;
+
+      // 1. Explicit Kenyan financial entities/brands (always pass)
+      const isKenyanEntity = /\b(cbk|cma|nse|safaricom|scom|kcb|equity bank|eqty|eabl|co-op bank|coop|epra|kra|treasury|nairobi securities exchange|capital markets authority|central bank of kenya)\b/i.test(text);
+      
+      // 2. Mention of Kenya/Nairobi + Financial context
+      const mentionsKenya = /\b(kenya|kenyan|nairobi|shilling|kes|ksh|shs?)\b/i.test(text);
+      const mentionsFinance = /\b(stock|equity|shares|dividend|earnings|profit|loss|revenue|tax|bond|yield|interest rate|inflation|cpi|gdp|economy|fund|mmf|unit trust|investment|investor|market|trade|export|import|price|commodity|gold|oil|agriculture|budget|deficit|debt|loan|mortgage|bank|banking|currency|forex|dollar|shilling)\b/i.test(text);
+      const isKenyanFinance = mentionsKenya && mentionsFinance;
+
+      // 3. Global macro events relevant to Kenya
+      const isGlobalMacro = /\b(federal reserve|fed|ecb|brent|opec|us economy|global oil|global inflation)\b/i.test(text);
+      
+      const pass = isKenyanEntity || isKenyanFinance || isGlobalMacro;
+      if (!pass) rejectedCount++;
+      return pass;
+    });
+
+    console.log(`Fetched: ${allArticles.length}, Duplicates skipped: ${dedupSkipped}, Rejected by relevance: ${rejectedCount}, Accepted: ${newArticles.length}`);
 
     if (newArticles.length === 0) {
       return new Response(
@@ -624,7 +657,12 @@ Deno.serve(async (req) => {
     return new Response(
       JSON.stringify({
         message: `Inserted ${rows.length} articles`,
+        fetched: allArticles.length,
+        rejected_by_relevance: rejectedCount,
+        accepted: newArticles.length,
         inserted: rows.length,
+        duplicates_skipped: dedupSkipped,
+        errors: failCount,
         rewritten: rewrittenCount,
         feeds: { success: successCount, failed: failCount },
       }),
