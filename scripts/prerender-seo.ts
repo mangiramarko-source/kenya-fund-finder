@@ -220,6 +220,13 @@ function staticRoutes(): SeoPageDefinition[] {
       heading: "Investment fund checklist",
       contentHtml: paragraph("Review key fund details before making an investment decision."),
     },
+    {
+      path: "/treasury",
+      title: "Kenya Treasury Bills & Bonds – Compare CBK Rates & Yields",
+      description: "Track the latest 91-day, 182-day and 364-day Treasury Bill auction rates in Kenya. Compare Treasury Bonds, yields, and time to maturity.",
+      heading: "Treasury Bills & Bonds",
+      contentHtml: paragraph("Track the latest Central Bank of Kenya Treasury Bill auction results and active Treasury Bonds available in the secondary market."),
+    },
   ];
 }
 

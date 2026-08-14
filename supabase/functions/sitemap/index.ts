@@ -10,6 +10,7 @@ const staticRoutes = [
   { path: "/rates", priority: "0.8", changefreq: "daily" },
   { path: "/commodities", priority: "0.8", changefreq: "daily" },
   { path: "/markets", priority: "0.8", changefreq: "daily" },
+  { path: "/treasury", priority: "0.8", changefreq: "daily" },
   { path: "/news", priority: "0.8", changefreq: "daily" },
   { path: "/overview", priority: "0.8", changefreq: "daily" },
   { path: "/calculator", priority: "0.8", changefreq: "monthly" },
