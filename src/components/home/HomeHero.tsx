@@ -81,7 +81,7 @@ const HomeHero = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="max-w-[380px] gap-6 rounded-[2.5rem] border-border/70 bg-card p-6">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-[380px] gap-5 sm:gap-6 rounded-[2rem] sm:rounded-[2.5rem] border-border/70 bg-card p-5 sm:p-6">
         {/* Header row: icon chip + status pill */}
         <div className="flex items-start justify-between">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
@@ -94,10 +94,10 @@ const HomeHero = () => {
 
         {/* Headline */}
         <div className="space-y-1.5">
-          <h2 className="text-2xl font-bold tracking-tight text-foreground">
+          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Kenya Fund Finder
           </h2>
-          <p className="text-sm leading-relaxed text-muted-foreground">
+          <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
             Unified access to Kenyan markets. Monitor yields, equities and macro
             data in one dashboard.
           </p>
@@ -179,7 +179,7 @@ const HeroTile = ({
   <a
     href={to}
     onClick={onClick}
-    className={`group flex items-center justify-between py-4 transition-colors active:bg-muted/40 ${
+    className={`group flex items-center justify-between py-3 sm:py-4 transition-colors active:bg-muted/40 ${
       divider ? "border-b border-border/40" : ""
     }`}
   >
