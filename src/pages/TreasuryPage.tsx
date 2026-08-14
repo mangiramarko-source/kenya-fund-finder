@@ -709,7 +709,7 @@ export default function TreasuryPage() {
                             <p className="font-black text-foreground">{bond.issueNo}</p>
                             <p className="text-xs text-muted-foreground truncate max-w-xs">{bond.name}</p>
                           </td>
-                          <td className="py-4 px-4 text-right font-bold text-foreground">{bond.coupon.toFixed(2)}%</td>
+                          <td className="py-4 px-4 text-right font-bold text-foreground">{bond.couponRate.toFixed(2)}%</td>
                           <td className="py-4 px-4 text-right font-black text-emerald-600 dark:text-emerald-400">
                             {bond.couponRate.toFixed(2)}%
                           </td>
@@ -789,7 +789,7 @@ export default function TreasuryPage() {
                         {/* Key Attributes */}
                         <div className="flex items-center gap-3 text-muted-foreground truncate text-[11px] sm:text-xs">
                           <span>
-                            Coupon <strong className="text-foreground font-bold">{bond.coupon.toFixed(2)}%</strong>
+                            Coupon <strong className="text-foreground font-bold">{bond.couponRate.toFixed(2)}%</strong>
                           </span>
                           <span className="opacity-40">•</span>
                           <span>
@@ -988,7 +988,7 @@ export default function TreasuryPage() {
                 <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/10 p-5 text-center space-y-1">
                   <span className="text-xs font-bold uppercase text-muted-foreground">Current Yield</span>
                   <p className="text-4xl font-black text-emerald-600 dark:text-emerald-400">
-                    {selectedBond.couponRateRate.toFixed(2)}%
+                    {selectedBond.couponRate.toFixed(2)}%
                   </p>
                 </div>
 
