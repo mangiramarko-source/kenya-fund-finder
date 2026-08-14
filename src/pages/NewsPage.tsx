@@ -83,28 +83,14 @@ export default function NewsPage() {
 
   useEffect(() => {
     Promise.all([fetchPublishedNews(60, 0), fetchPublicStocks()])
-      .then(async ([newsData, stocksData]) => {
+      .then(([newsData, stocksData]) => {
+        setArticles(newsData);
         setStocks(stocksData || []);
-        if (newsData.length < 60) {
-          setArticles(newsData);
-          setHasMore(false);
-          setLoading(false);
-        } else {
-          // Fill the default "All" tab immediately — then mark loading done
-          setArticles(newsData);
-          setOffset(0);
-          setLoading(false);
-          // Pre-fill so niche tabs are usable without a manual Load More
-          try {
-            const filled = await fillTab("All", newsData, 0, true, stocksData || []);
-            setArticles(filled.articles);
-            setOffset(filled.offset);
-            setHasMore(filled.hasMore);
-          } catch {}
-        }
+        setOffset(0);
+        setHasMore(newsData.length === 60);
+        setLoading(false);
       })
       .catch(() => setLoading(false));
-  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- Category match helpers (mirror the feedItems filter logic) ---
@@ -178,23 +164,32 @@ export default function NewsPage() {
 
     return { articles: accumulated, offset: currentOffset, hasMore: hasMoreRemote };
   };
-  // When the user switches to a specific tab, fill until we have enough
+
+  // Auto-fill: whenever articles change (new batch loaded) OR the active tab changes,
+  // check if the current tab has at least 15 matching articles. If not, fetch more.
+  // Deps: articles.length triggers re-check after each fillTab batch completes.
   useEffect(() => {
-    if (loading || loadingMore || searchQuery) return;
+    if (loading || loadingMore || searchQuery || !hasMore) return;
+
     const matchingNow = articles.filter(a => tabMatchesArticle(activeNavTab, a, stocks));
-    if (matchingNow.length < 15 && hasMore) {
-      setLoadingMore(true);
-      fillTab(activeNavTab, articles, offset, hasMore, stocks)
-        .then(result => {
-          setArticles(result.articles);
-          setOffset(result.offset);
-          setHasMore(result.hasMore);
-        })
-        .catch(console.error)
-        .finally(() => setLoadingMore(false));
-    }
+    if (matchingNow.length >= 15) return;
+
+    let cancelled = false;
+    setLoadingMore(true);
+    fillTab(activeNavTab, articles, offset, hasMore, stocks)
+      .then(result => {
+        if (cancelled) return;
+        setArticles(result.articles);
+        setOffset(result.offset);
+        setHasMore(result.hasMore);
+      })
+      .catch(console.error)
+      .finally(() => { if (!cancelled) setLoadingMore(false); });
+
+    return () => { cancelled = true; };
+  // articles.length is intentional: re-check whenever a new batch lands
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeNavTab]);
+  }, [activeNavTab, articles.length, loading]);
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
@@ -205,12 +200,11 @@ export default function NewsPage() {
       setOffset(result.offset);
       setHasMore(result.hasMore);
     } catch (error) {
-      console.error("Failed to load more news:", error);
+      console.error('Failed to load more news:', error);
     } finally {
       setLoadingMore(false);
     }
   };
-
 
   const filteredArticles = useMemo(() => {
     let list = [...articles];
