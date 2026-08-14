@@ -136,7 +136,7 @@ export function useSocialFeed(
       changePercent: 1.2
     };
 
-    const demoArticles = getDemoArticles(scomStock as any);
+    const demoArticles = getDemoArticles(scomStock as any, fxRates, commodities, funds);
 
     return [...demoArticles, ...sortedFeed];
   }, [news, stocks, funds, fxRates, commodities]);

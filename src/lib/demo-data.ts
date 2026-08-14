@@ -1,6 +1,11 @@
 import { type FeedItem } from "@/hooks/useSocialFeed";
 
-export function getDemoArticles(scomStock?: any): FeedItem[] {
+export function getDemoArticles(
+  scomStock?: any,
+  fxRates?: any[],
+  commodities?: any[],
+  funds?: any[]
+): FeedItem[] {
   const demoStockArticle: FeedItem = {
     id: "demo-eqty-article",
     type: "NEWS",
@@ -88,7 +93,12 @@ export function getDemoArticles(scomStock?: any): FeedItem[] {
         clustered_count: 2
       }
     },
-    relatedMmf: {
+    relatedMmf: funds && funds.length > 0 ? {
+      id: funds[0].id,
+      name: funds[0].name,
+      yield: funds[0].annual_yield,
+      changePercent: 0.15 // Or calculate dynamically if desired
+    } : {
       id: "mmf-sanlam",
       name: "Sanlam MMF",
       yield: 14.20,
@@ -138,7 +148,15 @@ export function getDemoArticles(scomStock?: any): FeedItem[] {
         clustered_count: 5
       }
     },
-    relatedFx: {
+    relatedFx: (fxRates && fxRates.find(f => f.currency_code === "USD")) ? (() => {
+      const usdFx = fxRates.find(f => f.currency_code === "USD");
+      return {
+        id: usdFx.id,
+        pair: "USD/KES",
+        rate: usdFx.rate,
+        changePercent: usdFx.previous_rate ? ((usdFx.rate - usdFx.previous_rate) / usdFx.previous_rate) * 100 : -1.2
+      };
+    })() : {
       id: "fx-usdkes",
       pair: "USD/KES",
       rate: 132.50,
@@ -188,7 +206,16 @@ export function getDemoArticles(scomStock?: any): FeedItem[] {
         clustered_count: 1
       }
     },
-    relatedCommodity: {
+    relatedCommodity: (commodities && commodities.find(c => c.name.toLowerCase().includes("tea"))) ? (() => {
+      const teaCmd = commodities.find(c => c.name.toLowerCase().includes("tea"));
+      return {
+        id: teaCmd.id,
+        name: teaCmd.name,
+        price: teaCmd.price,
+        unit: teaCmd.unit,
+        changePercent: teaCmd.previous_price ? ((teaCmd.price - teaCmd.previous_price) / teaCmd.previous_price) * 100 : 2.1
+      };
+    })() : {
       id: "cmd-tea",
       name: "KTDA Tea",
       price: 2.45,

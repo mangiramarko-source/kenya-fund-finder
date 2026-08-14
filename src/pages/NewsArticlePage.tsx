@@ -24,7 +24,8 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchNewsById, fetchPublicStockById, fetchRelatedNews, type NewsFromDB, type PublicStock } from "@/lib/api";
+import { fetchNewsById, fetchPublicStockById, fetchRelatedNews, fetchFunds, type NewsFromDB, type PublicStock } from "@/lib/api";
+import { supabase } from "@/integrations/supabase/client";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
@@ -299,53 +300,77 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     setStockLogoError(false);
     setSourceLogoError(false);
 
-    const demoArticles = getDemoArticles();
-    const demoMatch = demoArticles.find(a => a.id === id);
+    const loadDemoArticle = async () => {
+      let fxRates: any[] = [];
+      let commodities: any[] = [];
+      let funds: any[] = [];
+      
+      try {
+        const [fxRes, cmdRes, fndRes] = await Promise.all([
+          supabase.from("exchange_rates_public" as any).select("*"),
+          supabase.from("commodities_public" as any).select("*"),
+          fetchFunds()
+        ]);
+        fxRates = (fxRes.data || []).map((r: any) => ({ ...r, rate: Number(r.rate), previous_rate: r.previous_rate ? Number(r.previous_rate) : null }));
+        commodities = (cmdRes.data || []).map((c: any) => ({ ...c, price: Number(c.price), previous_price: c.previous_price ? Number(c.previous_price) : null }));
+        funds = fndRes || [];
+      } catch (e) {
+        // Fallback to empty arrays on error
+      }
 
-    if (demoMatch) {
-      setArticle(demoMatch.rawItem);
-      setRelatedStock(demoMatch.relatedStock || null);
-      setRelatedMmf(demoMatch.relatedMmf || null);
-      setRelatedFx(demoMatch.relatedFx || null);
-      setRelatedCommodity(demoMatch.relatedCommodity || null);
-      setLoading(false);
-      return () => clearTimeout(timer);
-    }
+      const demoArticles = getDemoArticles(undefined, fxRates, commodities, funds);
+      const demoMatch = demoArticles.find(a => a.id === id);
 
-    const synthetic = getSyntheticArticle(id);
-    if (synthetic) {
-      setArticle(synthetic);
-      setLoading(false);
-      return () => clearTimeout(timer);
-    }
-
-    fetchNewsById(id)
-      .then((a) => {
-        if (a) {
-          setArticle(a);
-          if (a.related_stock_id) {
-            fetchPublicStockById(a.related_stock_id)
-              .then(setRelatedStock)
-              .catch(() => setRelatedStock(null));
-          }
-          fetchRelatedNews(a.category, a.id, 3)
-            .then(setRelated)
-            .catch(() => {});
-        } else {
-          const syn = getSyntheticArticle(id);
-          setArticle(syn);
-        }
-      })
-      .catch(() => {
-        const syn = getSyntheticArticle(id);
-        setArticle(syn);
-      })
-      .finally(() => {
+      if (demoMatch) {
+        setArticle(demoMatch.rawItem);
+        setRelatedStock(demoMatch.relatedStock || null);
+        setRelatedMmf(demoMatch.relatedMmf || null);
+        setRelatedFx(demoMatch.relatedFx || null);
+        setRelatedCommodity(demoMatch.relatedCommodity || null);
         setLoading(false);
-        window.scrollTo(0, 0);
-        document.documentElement.scrollTop = 0;
-        document.body.scrollTop = 0;
-      });
+        return true;
+      }
+      return false;
+    };
+
+    loadDemoArticle().then(matched => {
+      if (matched) return;
+
+      const synthetic = getSyntheticArticle(id!);
+      if (synthetic) {
+        setArticle(synthetic);
+        setLoading(false);
+        return;
+      }
+
+      fetchNewsById(id!)
+        .then((a) => {
+          if (a) {
+            setArticle(a);
+            if (a.related_stock_id) {
+              fetchPublicStockById(a.related_stock_id)
+                .then(setRelatedStock)
+                .catch(() => setRelatedStock(null));
+            }
+            fetchRelatedNews(a.category, a.id, 3)
+              .then(setRelated)
+              .catch(() => {});
+          } else {
+            const syn = getSyntheticArticle(id!);
+            setArticle(syn);
+          }
+        })
+        .catch(() => {
+          const syn = getSyntheticArticle(id!);
+          setArticle(syn);
+        })
+        .finally(() => {
+          setLoading(false);
+          window.scrollTo(0, 0);
+          document.documentElement.scrollTop = 0;
+          document.body.scrollTop = 0;
+        });
+    });
 
     return () => clearTimeout(timer);
   }, [id]);
