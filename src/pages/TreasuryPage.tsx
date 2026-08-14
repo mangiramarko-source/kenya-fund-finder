@@ -333,12 +333,12 @@ export default function TreasuryPage() {
 
                     {/* Period Tabs Bar (Matches Stock Detail horizontal pill selector) */}
                     <div className="flex items-center gap-1 overflow-x-auto no-scrollbar border-b border-border/80 pb-2">
-                      {["1W", "1M", "3M", "1Y", "5Y", "10Y", "15Y"].map((period) => {
-                        const isActive = chartPeriod === period || (chartPeriod === "6M" && period === "3M");
+                      {["1M", "3M", "6M", "1Y", "ALL"].map((period) => {
+                        const isActive = chartPeriod === period;
                         return (
                           <button
                             key={period}
-                            onClick={() => setChartPeriod(period === "1W" ? "1M" : period)}
+                            onClick={() => setChartPeriod(period)}
                             className={`shrink-0 rounded-full px-3.5 py-1 text-xs font-bold transition-all ${
                               isActive
                                 ? "bg-emerald-500 text-white shadow-sm"

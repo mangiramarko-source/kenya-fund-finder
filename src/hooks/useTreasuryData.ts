@@ -179,28 +179,48 @@ const fetchTreasuryData = async (): Promise<TreasuryData> => {
   });
 
   // 3. Build Rate History from historical T-Bill rows
-  const history1M: RateHistoryPoint[] = [];
+  const rateHistory: RateHistoryMap = {};
   if (tbillRows && tbillRows.length > 0) {
     // Sort chronological
     const sorted = [...tbillRows].sort((a, b) => new Date(a.auction_date).getTime() - new Date(b.auction_date).getTime());
-    const byDate: Record<string, RateHistoryPoint> = {};
+    const byDate: Record<string, RateHistoryPoint & { _rawDate: Date }> = {};
     for (const r of sorted) {
       const dLabel = formatDate(r.auction_date);
       if (!byDate[dLabel]) {
-        byDate[dLabel] = { date: dLabel };
+        byDate[dLabel] = { date: dLabel, _rawDate: new Date(r.auction_date) };
       }
       if (r.tenor_days === 91) byDate[dLabel].rate91 = Number(r.accepted_average_rate);
       if (r.tenor_days === 182) byDate[dLabel].rate182 = Number(r.accepted_average_rate);
       if (r.tenor_days === 364) byDate[dLabel].rate364 = Number(r.accepted_average_rate);
     }
-    history1M.push(...Object.values(byDate));
+    
+    const fullHistory = Object.values(byDate);
+    if (fullHistory.length > 0) {
+      const latestDate = fullHistory[fullHistory.length - 1]._rawDate;
+      
+      const filterByMonths = (months: number) => {
+        const cutoff = new Date(latestDate);
+        cutoff.setMonth(cutoff.getMonth() - months);
+        return fullHistory.filter(p => p._rawDate >= cutoff).map(({ _rawDate, ...rest }) => rest);
+      };
+
+      rateHistory["1M"] = filterByMonths(1);
+      rateHistory["3M"] = filterByMonths(3);
+      rateHistory["6M"] = filterByMonths(6);
+      rateHistory["1Y"] = filterByMonths(12);
+      rateHistory["ALL"] = fullHistory.map(({ _rawDate, ...rest }) => rest);
+    }
   }
 
-  const rateHistory: RateHistoryMap = {
-    "1M": history1M.length > 0 ? history1M : [
-      { date: formatDate(latestByTenor[91]?.auction_date), rate91: Number(latestByTenor[91]?.accepted_average_rate ?? 0), rate182: Number(latestByTenor[182]?.accepted_average_rate ?? 0), rate364: Number(latestByTenor[364]?.accepted_average_rate ?? 0) }
-    ],
-  };
+  // fallback if empty
+  if (Object.keys(rateHistory).length === 0) {
+    const fallback = [{ date: formatDate(latestByTenor[91]?.auction_date), rate91: Number(latestByTenor[91]?.accepted_average_rate ?? 0), rate182: Number(latestByTenor[182]?.accepted_average_rate ?? 0), rate364: Number(latestByTenor[364]?.accepted_average_rate ?? 0) }];
+    rateHistory["1M"] = fallback;
+    rateHistory["3M"] = fallback;
+    rateHistory["6M"] = fallback;
+    rateHistory["1Y"] = fallback;
+    rateHistory["ALL"] = fallback;
+  }
 
   return {
     bonds,
