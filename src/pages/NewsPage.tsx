@@ -81,16 +81,45 @@ export default function NewsPage() {
   const [hasMore, setHasMore] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
 
+  // Imperative fill — called with fresh state values, no closure staleness
+  const triggerFillForTab = async (
+    tab: string,
+    currentArticles: NewsFromDB[],
+    currentOffset: number,
+    currentHasMore: boolean,
+    currentStocks: any[]
+  ) => {
+    const matching = currentArticles.filter(a => tabMatchesArticle(tab, a, currentStocks));
+    if (matching.length >= 15 || !currentHasMore) return;
+    setLoadingMore(true);
+    try {
+      const result = await fillTab(tab, currentArticles, currentOffset, currentHasMore, currentStocks);
+      setArticles(result.articles);
+      setOffset(result.offset);
+      setHasMore(result.hasMore);
+    } catch (err) {
+      console.error('fillTab error:', err);
+    } finally {
+      setLoadingMore(false);
+    }
+  };
+
   useEffect(() => {
     Promise.all([fetchPublishedNews(60, 0), fetchPublicStocks()])
       .then(([newsData, stocksData]) => {
+        const resolved = stocksData || [];
+        const more = newsData.length === 60;
         setArticles(newsData);
-        setStocks(stocksData || []);
+        setStocks(resolved);
         setOffset(0);
-        setHasMore(newsData.length === 60);
+        setHasMore(more);
         setLoading(false);
+        // Immediately fill the default tab ("All") — also primes for quick tab switches
+        // For "All" this exits instantly (60 ≥ 15), but runs the infrastructure correctly
+        triggerFillForTab("All", newsData, 0, more, resolved);
       })
       .catch(() => setLoading(false));
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   // --- Category match helpers (mirror the feedItems filter logic) ---
@@ -164,32 +193,7 @@ export default function NewsPage() {
 
     return { articles: accumulated, offset: currentOffset, hasMore: hasMoreRemote };
   };
-
-  // Auto-fill: whenever articles change (new batch loaded) OR the active tab changes,
-  // check if the current tab has at least 15 matching articles. If not, fetch more.
-  // Deps: articles.length triggers re-check after each fillTab batch completes.
-  useEffect(() => {
-    if (loading || loadingMore || searchQuery || !hasMore) return;
-
-    const matchingNow = articles.filter(a => tabMatchesArticle(activeNavTab, a, stocks));
-    if (matchingNow.length >= 15) return;
-
-    let cancelled = false;
-    setLoadingMore(true);
-    fillTab(activeNavTab, articles, offset, hasMore, stocks)
-      .then(result => {
-        if (cancelled) return;
-        setArticles(result.articles);
-        setOffset(result.offset);
-        setHasMore(result.hasMore);
-      })
-      .catch(console.error)
-      .finally(() => { if (!cancelled) setLoadingMore(false); });
-
-    return () => { cancelled = true; };
-  // articles.length is intentional: re-check whenever a new batch lands
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeNavTab, articles.length, loading]);
+  // No reactive useEffect needed — fills happen imperatively on tab click and initial load
 
   const loadMore = async () => {
     if (loadingMore || !hasMore) return;
@@ -372,7 +376,11 @@ export default function NewsPage() {
             return (
               <button
                 key={cat}
-                onClick={() => setActiveNavTab(cat)}
+                onClick={() => {
+                  setActiveNavTab(cat);
+                  // Pass current state directly — no closure staleness possible
+                  triggerFillForTab(cat, articles, offset, hasMore, stocks);
+                }}
                 className={`whitespace-nowrap transition-colors duration-200 relative pb-1 text-sm ${
                   isActive
                     ? "text-foreground font-bold dark:text-white"
