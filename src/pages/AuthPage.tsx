@@ -223,7 +223,7 @@ const AuthPage = () => {
         <div className="lg:col-span-6 w-full max-w-sm mx-auto">
           <div className="relative overflow-hidden lg:rounded-2xl lg:bg-card/90 lg:backdrop-blur-xl lg:border lg:border-border/80 lg:shadow-2xl lg:p-5 lg:py-4">
             
-            {/* Top Navigation Row: Back Button & Demo Mode Pill (Hidden on Desktop) */}
+            {/* Top Navigation Row: Back Button (Hidden on Desktop) */}
             <div className="flex items-center justify-between pt-1 mb-5 lg:mb-0 lg:hidden">
               <button
                 type="button"
@@ -232,15 +232,6 @@ const AuthPage = () => {
                 aria-label="Back to home"
               >
                 <ArrowLeft className="h-5 w-5" />
-              </button>
-
-              <button
-                type="button"
-                onClick={handleDemoMode}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-emerald-500/40 bg-emerald-500/10 text-emerald-400 text-xs font-medium hover:bg-emerald-500/20 transition-all shadow-sm"
-              >
-                <Sparkles className="h-3.5 w-3.5" />
-                Demo Mode
               </button>
             </div>
 
