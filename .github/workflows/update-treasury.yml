@@ -36,4 +36,4 @@ jobs:
           SUPABASE_SERVICE_ROLE_KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
           PYTHONPATH: data_pipeline/src
         run: |
-          python data_pipeline/src/updaters/treasury_updater.py
+          python data_pipeline/src/updaters/treasury_updater.py --live
