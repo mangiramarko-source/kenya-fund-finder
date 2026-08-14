@@ -13,6 +13,7 @@ const STOCK_DOMAINS: Record<string, string> = {
 
 const STOCK_LOGOS: Record<string, string> = {
   EABL: "/images/stocks/eabl.png",
+  KCB: "/images/stocks/kcb.png",
   NCBA: "/images/stocks/ncba.png",
   PORT: "/images/stocks/east-african-portland-cement.png",
   SBIC: "/images/stocks/stanbic-holdings.png",
