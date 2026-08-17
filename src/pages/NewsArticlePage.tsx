@@ -558,7 +558,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 md:pb-8">
       {/* ─── 1. Top Navigation Bar (Fixed top header below main navbar) ─── */}
-      <header className="sticky top-0 z-40 bg-background/95 backdrop-blur-md border-b border-border px-5 h-[58px] md:h-12 md:px-4 flex items-center justify-between">
+      <header className="fixed inset-x-0 top-0 z-40 flex h-[58px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md md:sticky md:h-12 md:px-4">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -595,6 +595,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
           </DropdownMenuContent>
         </DropdownMenu>
       </header>
+      <div className="h-[58px] md:hidden" aria-hidden="true" />
 
       <div className="max-w-[430px] mx-auto px-4 py-4 space-y-4 md:py-4">
         {/* ─── 2. Author Header ─── */}
