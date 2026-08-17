@@ -80,9 +80,19 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
   return (
     <div className="px-4 py-5 space-y-5 pb-20">
       {/* Mobile Title Header */}
-      <div className="mb-4">
-        <h1 className="text-2xl font-bold text-foreground tracking-tight">Portfolio</h1>
-        <p className="text-sm text-muted-foreground mt-1">Track and manage your investments across MMFs, Stocks, T-Bills and FX.</p>
+      <div className="mb-4 flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold text-foreground tracking-tight">Portfolio</h1>
+          <p className="text-sm text-muted-foreground mt-1">Track and manage your investments across MMFs, Stocks, T-Bills and FX.</p>
+        </div>
+        <button
+          onClick={() => setShowAddModal(true)}
+          className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#00A651] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#008f45] active:scale-[0.98]"
+          aria-label="Add investment"
+        >
+          <Plus className="h-3.5 w-3.5 stroke-[3]" />
+          Add
+        </button>
       </div>
 
       {/* ─── 1. Total Value Summary Card ─── */}

@@ -18,6 +18,7 @@ const navLinks = [
 
 const mobileNavLinks = [
   { to: "/", label: "Overview" },
+  { to: "/watchlist", label: "Watchlist" },
   { to: "/stocks", label: "Stocks" },
   { to: "/funds", label: "MMF" },
   { to: "/treasury", label: "T-Bills" },

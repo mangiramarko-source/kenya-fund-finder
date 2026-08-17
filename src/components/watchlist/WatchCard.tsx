@@ -19,6 +19,8 @@ export interface WatchCardProps {
   alertState?: AlertState;
   onRemove: () => void;
   linkTo?: string;
+  /** Mobile-only footer content, used for section status continuity. */
+  mobileFooter?: React.ReactNode;
 }
 
 /**
@@ -37,6 +39,7 @@ const WatchCard = ({
   alertState = "none",
   onRemove,
   linkTo,
+  mobileFooter,
 }: WatchCardProps) => {
   const AlertIcon = alertState === "triggered" ? BellRing : BellPlus;
   const alertTitle =
@@ -47,29 +50,43 @@ const WatchCard = ({
     alertState === "triggered" ? "text-warning hover:text-warning"
     : alertState === "active" ? "text-accent hover:text-accent"
     : "text-muted-foreground hover:text-accent";
+  const footerLabel =
+    alertState === "triggered" ? "Alert triggered"
+    : alertState === "active" ? "Alert active"
+    : "Saved item";
   const mobileMain = (
-    <>
-      <div className="flex-1 min-w-0">
-        <div className="flex items-center gap-1.5">
-          <span className="text-xs font-bold text-foreground">{title}</span>
+    <div className="flex min-w-0 flex-col gap-4">
+      <div className="flex items-start gap-3">
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-1.5">
+            <span className="text-[16px] font-semibold leading-tight text-foreground truncate">{title}</span>
+          </div>
+          <p className="mt-1 truncate text-[13px] leading-tight text-muted-foreground">{sub}</p>
         </div>
-        <p className="text-[10px] text-muted-foreground truncate">{sub}</p>
+        {sparkData && sparkData.length >= 3 && (
+          <div className="flex shrink-0 items-center self-center">
+            <Sparkline
+              data={sparkData}
+              width={74}
+              height={28}
+              color="auto"
+              trend={trend}
+              className="shrink-0"
+            />
+          </div>
+        )}
+        <div className="shrink-0 text-right">
+          <p className="text-[16px] font-semibold tabular-nums leading-tight text-foreground">{value}</p>
+          <div className="mt-1.5 flex justify-end">{change}</div>
+        </div>
       </div>
-      {sparkData && sparkData.length >= 3 && (
-        <Sparkline
-          data={sparkData}
-          width={48}
-          height={18}
-          color="auto"
-          trend={trend}
-          className="shrink-0"
-        />
+      <div className="h-px w-full bg-border/80" />
+      {mobileFooter ? (
+        <div className="min-w-0 text-[11px] text-muted-foreground">{mobileFooter}</div>
+      ) : (
+        <p className="truncate text-[12px] font-medium text-muted-foreground">{footerLabel}</p>
       )}
-      <div className="text-right shrink-0">
-        <p className="text-sm font-bold tabular-nums text-foreground">{value}</p>
-        <div className="mt-0.5">{change}</div>
-      </div>
-    </>
+    </div>
   );
 
   const desktopMain = (
@@ -91,49 +108,31 @@ const WatchCard = ({
   );
 
   return (
-    <div className="rounded-lg md:rounded-xl border border-border bg-card hover:border-accent/30 transition-colors group relative overflow-hidden">
-      {/* Mobile action buttons */}
-      <div className="flex items-center gap-1 shrink-0 absolute top-2 right-2 z-10 md:hidden">
-        {onAlert && (
-          <button
-            type="button"
-            onClick={onAlert}
-            className={`${alertClass} transition-colors p-0.5`}
-            title={alertTitle}
-            aria-label={alertTitle}
-          >
-            <AlertIcon className="h-3 w-3" />
-          </button>
-        )}
-        {onReset && alertState === "triggered" && (
-          <button
-            type="button"
-            onClick={onReset}
-            className="text-muted-foreground hover:text-accent transition-colors p-0.5"
-            title="Reset alert baseline"
-            aria-label="Reset alert baseline"
-          >
-            <RotateCcw className="h-3 w-3" />
-          </button>
-        )}
+    <div className="group relative overflow-hidden rounded-[28px] border border-border bg-card transition-colors hover:border-accent/30 md:rounded-xl">
+      {/* Mobile remove action */}
+      <div className="absolute bottom-3 right-3 z-10 flex shrink-0 items-center md:hidden">
         <button
           type="button"
-          onClick={onRemove}
-          className="text-muted-foreground/40 hover:text-destructive transition-colors p-0.5"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            onRemove();
+          }}
+          className="rounded-full bg-muted/70 p-1.5 text-muted-foreground transition-colors hover:text-destructive"
           title="Remove from watchlist"
           aria-label="Remove from watchlist"
         >
-          <X className="h-2.5 w-2.5" />
+          <X className="h-3.5 w-3.5" />
         </button>
       </div>
 
       {/* Mobile body */}
       {linkTo ? (
-        <Link to={linkTo} className="flex items-center gap-3 px-3 py-2 md:hidden pr-14">
+        <Link to={linkTo} className="block px-5 py-4 pr-12 md:hidden">
           {mobileMain}
         </Link>
       ) : (
-        <div className="flex items-center gap-3 px-3 py-2 md:hidden pr-14">{mobileMain}</div>
+        <div className="block px-5 py-4 pr-12 md:hidden">{mobileMain}</div>
       )}
 
       {/* Desktop action buttons (hover) */}
