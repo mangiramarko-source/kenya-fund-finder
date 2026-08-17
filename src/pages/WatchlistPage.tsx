@@ -627,7 +627,7 @@ const WatchlistPage = () => {
             )}
           </div>
 
-          {!loading && totalCount > 0 && (
+          {!loading && (
             <>
               <div className="mb-4 flex items-center gap-2.5">
                 <div className="relative flex-1">
