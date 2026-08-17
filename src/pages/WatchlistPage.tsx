@@ -152,6 +152,7 @@ const WatchlistPage = () => {
   const [fundsLoading, setFundsLoading] = useState(true);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
   const [watchlistLoading, setWatchlistLoading] = useState(true);
+  const [hasLocalWatchlistState, setHasLocalWatchlistState] = useState(false);
   const [search, setSearch] = useState("");
   const [mobileFilter, setMobileFilter] = useState<MobileWatchlistFilter>("all");
   const [showAddSheet, setShowAddSheet] = useState(false);
@@ -247,8 +248,10 @@ const WatchlistPage = () => {
     if (!user) {
       try {
         const saved = localStorage.getItem("kf_local_watchlist");
+        setHasLocalWatchlistState(saved !== null);
         setWatchlist(saved ? (JSON.parse(saved) as WatchlistItem[]) : []);
       } catch {
+        setHasLocalWatchlistState(false);
         setWatchlist([]);
       }
       setWatchlistLoading(false);
@@ -313,6 +316,7 @@ const WatchlistPage = () => {
     const nextWatchlist = effectiveWatchlist.filter((w) => w.id !== id);
     setWatchlist(nextWatchlist);
     if (!user) {
+      setHasLocalWatchlistState(true);
       localStorage.setItem("kf_local_watchlist", JSON.stringify(nextWatchlist));
       toast.success(`Removed ${existing.item_name}`);
       return;
@@ -352,6 +356,7 @@ const WatchlistPage = () => {
 
     if (!user) {
       const nextWatchlist = [...watchlist, tempItem];
+      setHasLocalWatchlistState(true);
       localStorage.setItem("kf_local_watchlist", JSON.stringify(nextWatchlist));
       toast.success(`Added ${itemName} to watchlist`);
       setShowAddSheet(false);
@@ -381,7 +386,7 @@ const WatchlistPage = () => {
 
   /* ─── Derived groups ─── */
   const demoWatchlist = useMemo<WatchlistItem[]>(() => {
-    if (user || watchlist.length > 0) return [];
+    if (user || hasLocalWatchlistState || watchlist.length > 0) return [];
     const samples = [
       funds[0] && { type: "fund", id: funds[0].id, name: funds[0].name },
       stocks[0] && { type: "stock", id: stocks[0].id, name: stocks[0].name },
@@ -397,7 +402,7 @@ const WatchlistPage = () => {
       item_name: sample.name,
       sort_order: index,
     }));
-  }, [commodities, funds, rates, stocks, user, watchlist.length]);
+  }, [commodities, funds, hasLocalWatchlistState, rates, stocks, user, watchlist.length]);
 
   const effectiveWatchlist = watchlist.length > 0 ? watchlist : demoWatchlist;
   const showingGuestDemo = !user && watchlist.length === 0 && demoWatchlist.length > 0;
