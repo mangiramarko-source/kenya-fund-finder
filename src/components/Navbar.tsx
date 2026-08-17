@@ -432,60 +432,63 @@ const Navbar = () => {
 
   return (
     <>
-    <header
-      ref={headerRef}
-      className="sticky top-0 z-50 border-b border-border bg-background/85 backdrop-blur-md"
-    >
-      <nav className="flex h-14 items-center justify-between px-4">
-        {/* Left: Search */}
-        <SearchDialog variant="icon" />
+    <div className="md:hidden">
+      <header
+        ref={headerRef}
+        className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md"
+      >
+        <nav className="flex h-14 items-center justify-between px-4">
+          {/* Left: Search */}
+          <SearchDialog variant="icon" />
 
-        {/* Center: KFF Logo */}
-        <Link to="/" className="font-mono text-xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400">
-          KFF
-        </Link>
+          {/* Center: KFF Logo */}
+          <Link to="/" className="font-mono text-xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400">
+            KFF
+          </Link>
 
-        {/* Right: Hamburger */}
-        <button
-          onClick={() => setOpen(true)}
-          className="grid size-9 place-items-center rounded-md"
-          aria-label="Open menu"
-        >
-          <Menu className="size-5 text-foreground" />
-        </button>
-      </nav>
+          {/* Right: Hamburger */}
+          <button
+            onClick={() => setOpen(true)}
+            className="grid size-9 place-items-center rounded-md"
+            aria-label="Open menu"
+          >
+            <Menu className="size-5 text-foreground" />
+          </button>
+        </nav>
 
-      {/* Full-width scrollable tab bar */}
-      <div className="no-scrollbar flex overflow-x-auto border-b border-border px-4">
-        <div ref={mobileTabsScrollRef} className="flex shrink-0 gap-6 py-3">
-          {mobileNavLinks.map((link) => {
-            const isActive = location.pathname === link.to;
-            return (
-              <Link
-                key={link.to}
-                to={link.to}
-                ref={(el) => { mobileTabRefs.current[link.to] = el; }}
-                onClick={(e) => {
-                  e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-                }}
-                className={`relative whitespace-nowrap text-sm font-medium transition-colors ${
-                  isActive
-                    ? "text-emerald-500 dark:text-emerald-400 font-bold"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {link.label}
-                {isActive && (
-                  <span className="absolute -bottom-3 left-0 h-0.5 w-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                )}
-              </Link>
-            );
-          })}
+        {/* Full-width scrollable tab bar */}
+        <div className="no-scrollbar flex overflow-x-auto border-b border-border px-4">
+          <div ref={mobileTabsScrollRef} className="flex shrink-0 gap-6 py-3">
+            {mobileNavLinks.map((link) => {
+              const isActive = location.pathname === link.to;
+              return (
+                <Link
+                  key={link.to}
+                  to={link.to}
+                  ref={(el) => { mobileTabRefs.current[link.to] = el; }}
+                  onClick={(e) => {
+                    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                  }}
+                  className={`relative whitespace-nowrap text-sm font-medium transition-colors ${
+                    isActive
+                      ? "text-emerald-500 dark:text-emerald-400 font-bold"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {link.label}
+                  {isActive && (
+                    <span className="absolute -bottom-3 left-0 h-0.5 w-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
+                  )}
+                </Link>
+              );
+            })}
+          </div>
         </div>
-      </div>
 
-      {location.pathname === '/' && <CurrencyTicker />}
-    </header>
+        {location.pathname === '/' && <CurrencyTicker />}
+      </header>
+      <div className={location.pathname === "/" ? "h-[137px]" : "h-[101px]"} aria-hidden="true" />
+    </div>
 
     <MobileSidebarDrawer {...sidebarProps} />
     </>

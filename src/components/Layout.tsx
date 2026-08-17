@@ -30,19 +30,21 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
       {/* Main column */}
       <div className={`flex-1 flex flex-col min-w-0 max-w-full overflow-x-hidden bg-background${isAiLab ? " min-h-0 overflow-hidden" : ""}`}>
         <DesktopTopBar />
+        {!isAiLab && <div className="hidden md:block h-14 shrink-0" aria-hidden="true" />}
         
         <OfflineBanner />
 
         {!isNewsArticle && !isAiLab && !isAuthPage && (
-          <div className="md:hidden sticky top-0 z-50 bg-background">
+          <div className="md:hidden">
             <Navbar />
           </div>
         )}
         {showTicker && (
-          <div className="hidden md:block sticky top-14 z-20 w-full">
+          <div className="fixed inset-x-0 top-14 z-40 hidden w-full md:block">
             <CurrencyTicker />
           </div>
         )}
+        {showTicker && <div className="hidden md:block h-9 shrink-0" aria-hidden="true" />}
 
         <main
           id="main-content"

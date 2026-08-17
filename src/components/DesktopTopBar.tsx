@@ -84,7 +84,7 @@ const DesktopTopBar = () => {
   ];
 
   return (
-    <header className="hidden md:flex items-center gap-2 lg:gap-4 xl:gap-6 h-14 px-4 lg:px-6 border-b border-border bg-card/95 backdrop-blur-md sticky top-0 z-30 max-w-full overflow-x-clip">
+    <header className="fixed inset-x-0 top-0 z-50 hidden h-14 max-w-full items-center gap-2 overflow-x-clip border-b border-border bg-card/95 px-4 backdrop-blur-md md:flex lg:gap-4 lg:px-6 xl:gap-6">
       {/* 1. Logo */}
       <Link to="/" className="flex items-center shrink-0 mr-1 lg:mr-2 group" aria-label="KenyaFundFinder Home">
         <span className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400 transition-transform group-hover:scale-105">
