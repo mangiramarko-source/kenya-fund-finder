@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
+import { isIndexableNewsArticle } from "@/lib/seoNewsEligibility";
 
 export type FundType = "money_market" | "fixed_income" | "balanced" | "equity" | "bond" | "special";
 
@@ -278,15 +279,15 @@ export async function enrichArticleLive(articleId: string): Promise<string> {
 export async function fetchRelatedNews(category: string, excludeId: string, limit = 3): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, ai_insight")
+    .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
     .eq("category", category)
     .neq("id", excludeId)
     .order("source_published_at", { ascending: false, nullsFirst: false })
     .order("date_published", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
-    .limit(limit);
+    .limit(Math.max(limit * 4, limit));
   if (error) throw error;
-  return (data || []).map((d: any) => {
+  return (data || []).filter((d: any) => isIndexableNewsArticle(d)).slice(0, limit).map((d: any) => {
     const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight);
     
     return {

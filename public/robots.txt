@@ -2,12 +2,15 @@
 # These lines must be at the top to fix the Search Console "Blocked" error
 User-agent: Google-InspectionTool
 Allow: /
+Disallow: /rest/
 
 User-agent: Googlebot
 Allow: /
+Disallow: /rest/
 
 User-agent: Storebot-Google
 Allow: /
+Disallow: /rest/
 
 # --- GENERAL SITE RULES ---
 User-agent: *
@@ -22,6 +25,7 @@ Disallow: /demo-stock-insights
 Disallow: /demo-stocks-feed
 Disallow: /portfolio
 Disallow: /profile
+Disallow: /rest/
 Disallow: /reset-password
 Disallow: /stocks-demo
 Disallow: /watchlist
@@ -54,6 +58,7 @@ Disallow: /demo-stock-insights
 Disallow: /demo-stocks-feed
 Disallow: /portfolio
 Disallow: /profile
+Disallow: /rest/
 Disallow: /reset-password
 Disallow: /stocks-demo
 Disallow: /watchlist

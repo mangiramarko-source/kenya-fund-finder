@@ -23,6 +23,7 @@ import { type FeedItem } from "@/hooks/useSocialFeed";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { StockDisclosuresTab } from "@/components/stocks/StockDisclosuresTab";
 import { getStockLogoUrl } from "@/lib/stockBranding";
+import { isIndexableNewsArticle } from "@/lib/seoNewsEligibility";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
@@ -637,7 +638,7 @@ const StockDetailPage = () => {
 
         {/* News Tab */}
         <TabsContent value="news">
-          <StockNewsTab symbol={s.symbol} name={s.name} />
+          <StockNewsTab stockId={s.id} symbol={s.symbol} name={s.name} />
         </TabsContent>
         <TabsContent value="disclosures">
           <StockDisclosuresTab stockId={s.id} />
@@ -655,7 +656,7 @@ const StockDetailPage = () => {
 };
 
 /* ─── News Tab Component ─── */
-const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
+const StockNewsTab = ({ stockId, symbol, name }: { stockId: string; symbol: string; name: string }) => {
   const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [news, setNews] = useState<any[]>([]);
@@ -680,10 +681,11 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
       const regex = new RegExp(`\\b(${brandAliases.join('|')})\\b`, 'i');
 
       while (validArticles.length < countRequired && moreInDb) {
+        const stockFilter = stockId ? `related_stock_id.eq.${stockId},` : "";
         const { data } = await supabase
           .from("news_articles_public")
-          .select("id, title, summary, date_published, source_published_at, created_at, source, category, image_url")
-          .or(`title.ilike.%${symbol}%,title.ilike.%${name}%,summary.ilike.%${symbol}%,summary.ilike.%${name}%`)
+          .select("id, title, summary, content, status, related_stock_id, date_published, source_published_at, created_at, source, category, image_url")
+          .or(`${stockFilter}title.ilike.%${symbol}%,title.ilike.%${name}%,summary.ilike.%${symbol}%,summary.ilike.%${name}%`)
           .order("source_published_at", { ascending: false, nullsFirst: false })
           .order("date_published", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false })
@@ -694,7 +696,9 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
           break;
         }
 
-        const filtered = data.filter(a => regex.test(a.title) || regex.test(a.summary));
+        const filtered = data
+          .filter(a => isIndexableNewsArticle(a) && (a.related_stock_id === stockId || regex.test(a.title) || regex.test(a.summary)))
+          .sort((a, b) => Number(b.related_stock_id === stockId) - Number(a.related_stock_id === stockId));
         validArticles = [...validArticles, ...filtered];
         currentOffset += 20;
         

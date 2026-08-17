@@ -4,6 +4,7 @@
 
 import { writeFileSync } from "fs";
 import { resolve } from "path";
+import { isIndexableNewsArticle, type SeoNewsArticleLike } from "../src/lib/seoNewsEligibility";
 
 const BASE_URL = "https://kenyafundfinder.com";
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "https://caawgzuofnujrznwbuxk.supabase.co";
@@ -19,6 +20,10 @@ interface SitemapEntry {
   lastmod?: string;
   changefreq?: "always" | "hourly" | "daily" | "weekly" | "monthly" | "yearly" | "never";
   priority?: string;
+}
+
+interface NewsSitemapRow extends SeoNewsArticleLike {
+  updated_at: string | null;
 }
 
 const staticEntries: SitemapEntry[] = [
@@ -57,8 +62,8 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     supaSelect<{ slug: string; updated_at: string }>(
       "funds_public?select=slug,updated_at&is_published=eq.true&order=name.asc",
     ),
-    supaSelect<{ id: string; updated_at: string }>(
-      `news_articles_public?select=id,updated_at&status=eq.published&order=source_published_at.desc.nullslast,date_published.desc.nullslast&limit=${NEWS_LIMIT}`,
+    supaSelect<NewsSitemapRow>(
+      `news_articles_public?select=id,title,summary,content,status,date_published,source_published_at,created_at,updated_at&status=eq.published&order=source_published_at.desc.nullslast,date_published.desc.nullslast&limit=${NEWS_LIMIT}`,
     ),
     supaSelect<{ slug: string; updated_at: string }>(
       "site_pages_public?select=slug,updated_at",
@@ -74,12 +79,14 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     changefreq: "daily",
     priority: "0.7",
   }));
-  const newsEntries: SitemapEntry[] = news.map((n) => ({
-    path: `/news/${n.id}`,
-    lastmod: n.updated_at?.slice(0, 10),
-    changefreq: "weekly",
-    priority: "0.5",
-  }));
+  const newsEntries: SitemapEntry[] = news
+    .filter(isIndexableNewsArticle)
+    .map((n) => ({
+      path: `/news/${n.id}`,
+      lastmod: (n.updated_at || n.source_published_at || n.date_published || n.created_at)?.slice(0, 10),
+      changefreq: "weekly",
+      priority: "0.5",
+    }));
   const pageEntries: SitemapEntry[] = pages
     .filter((p) => p.slug && !["privacy", "terms"].includes(p.slug))
     .map((p) => ({

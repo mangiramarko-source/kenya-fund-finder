@@ -11,6 +11,7 @@ import {
   truncateDescription,
   type SeoPageDefinition,
 } from "../src/lib/seoPrerender";
+import { isIndexableNewsArticle } from "../src/lib/seoNewsEligibility";
 
 const DIST_DIR = resolve("dist");
 const TEMPLATE_PATH = join(DIST_DIR, "index.html");
@@ -325,7 +326,7 @@ function fundPage(fund: FundRow): SeoPageDefinition | null {
 }
 
 function newsPage(article: NewsRow): SeoPageDefinition | null {
-  if (!validSegment(article.id) || !article.title || !article.summary) return null;
+  if (!validSegment(article.id) || !isIndexableNewsArticle(article)) return null;
   const path = `/news/${article.id}`;
   const published = article.source_published_at || article.date_published || article.created_at;
   const body = stripHtml(article.content || article.summary);
