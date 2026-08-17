@@ -1,5 +1,5 @@
-import { useEffect, useState, useMemo, useCallback } from "react";
-import { decodeHtmlEntities, isKenyanMarketOpen } from "@/lib/utils";
+import { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { cn, decodeHtmlEntities, isKenyanMarketOpen } from "@/lib/utils";
 import Sparkline from "@/components/Sparkline";
 import { Link, useNavigate } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
@@ -1063,6 +1063,14 @@ const OverviewPage = () => {
     });
   }, [feedItems, news, stocks]);
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
+  const marketNewsNavRef = useRef<HTMLDivElement | null>(null);
+  const [marketNewsNavPin, setMarketNewsNavPin] = useState({
+    pinned: false,
+    left: 0,
+    top: 0,
+    width: 0,
+    height: 0,
+  });
   const [watchlistPromptOpen, setWatchlistPromptOpen] = useState(false);
 
   const [alertDialog, setAlertDialog] = useState<{
@@ -1379,6 +1387,58 @@ const OverviewPage = () => {
     }).length;
   }, [news]);
 
+  useEffect(() => {
+    let frame = 0;
+
+    const updateMarketNewsNavPin = () => {
+      frame = 0;
+      const nav = marketNewsNavRef.current;
+      if (!nav) return;
+
+      const isDesktop = window.matchMedia("(min-width: 768px)").matches;
+      const top = isDesktop ? 56 + 36 : 137;
+      const rect = nav.getBoundingClientRect();
+      const pinned = rect.top <= top;
+
+      setMarketNewsNavPin((current) => {
+        const next = {
+          pinned,
+          left: rect.left,
+          top,
+          width: rect.width,
+          height: nav.offsetHeight,
+        };
+
+        if (
+          current.pinned === next.pinned &&
+          Math.abs(current.left - next.left) < 1 &&
+          Math.abs(current.top - next.top) < 1 &&
+          Math.abs(current.width - next.width) < 1 &&
+          Math.abs(current.height - next.height) < 1
+        ) {
+          return current;
+        }
+
+        return next;
+      });
+    };
+
+    const scheduleUpdate = () => {
+      if (frame) return;
+      frame = window.requestAnimationFrame(updateMarketNewsNavPin);
+    };
+
+    updateMarketNewsNavPin();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (frame) window.cancelAnimationFrame(frame);
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, []);
+
   // No global loading block - we will handle loading states inside the layout to prevent FCP lag.
 
   return (
@@ -1401,28 +1461,47 @@ const OverviewPage = () => {
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 
-          <div className="sticky top-[137px] z-30 -mx-4 border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md md:top-[calc(3.5rem+2.25rem)] md:-mx-2 md:px-2 md:pt-1">
-            <div className="mb-4 flex items-baseline justify-between mt-0">
-              <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
-              <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                {newTodayCount} new today
-              </span>
-            </div>
+          <div
+            ref={marketNewsNavRef}
+            style={marketNewsNavPin.pinned ? { height: marketNewsNavPin.height } : undefined}
+          >
+            <div
+              className={cn(
+                "-mx-4 border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md md:-mx-2 md:px-2 md:pt-1",
+                marketNewsNavPin.pinned && "fixed z-40 shadow-sm"
+              )}
+              style={
+                marketNewsNavPin.pinned
+                  ? {
+                      top: marketNewsNavPin.top,
+                      left: marketNewsNavPin.left,
+                      width: marketNewsNavPin.width,
+                    }
+                  : undefined
+              }
+            >
+              <div className="mb-4 flex items-baseline justify-between mt-0">
+                <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
+                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                  {newTodayCount} new today
+                </span>
+              </div>
 
-            <div className="no-scrollbar mb-5 flex gap-2 overflow-x-auto pb-1 md:mb-6">
-              {["All", "Stocks", "Kenyan", "International", "MMFs", "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => (
-                <button
-                  key={f}
-                  onClick={() => setActiveUpdateCategory(f)}
-                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-                    activeUpdateCategory === f
-                      ? "bg-foreground text-background"
-                      : "border border-border bg-card text-muted-foreground"
-                  }`}
-                >
-                  {f}
-                </button>
-              ))}
+              <div className="no-scrollbar mb-5 flex gap-2 overflow-x-auto pb-1 md:mb-6">
+                {["All", "Stocks", "Kenyan", "International", "MMFs", "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => (
+                  <button
+                    key={f}
+                    onClick={() => setActiveUpdateCategory(f)}
+                    className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
+                      activeUpdateCategory === f
+                        ? "bg-foreground text-background"
+                        : "border border-border bg-card text-muted-foreground"
+                    }`}
+                  >
+                    {f}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 
