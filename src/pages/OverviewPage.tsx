@@ -1401,7 +1401,7 @@ const OverviewPage = () => {
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 
-          <div className="md:sticky md:top-[5.75rem] md:z-10 md:-mx-2 md:bg-background/95 md:px-2 md:pt-1 md:backdrop-blur-md">
+          <div className="sticky top-[137px] z-30 -mx-4 border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md md:top-[5.75rem] md:-mx-2 md:px-2 md:pt-1">
             <div className="mb-4 flex items-baseline justify-between mt-0">
               <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
@@ -1409,7 +1409,7 @@ const OverviewPage = () => {
               </span>
             </div>
 
-            <div className="no-scrollbar mb-6 flex gap-2 overflow-x-auto md:pb-1">
+            <div className="no-scrollbar mb-5 flex gap-2 overflow-x-auto pb-1 md:mb-6">
               {["All", "Stocks", "Kenyan", "International", "MMFs", "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => (
                 <button
                   key={f}
