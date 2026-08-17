@@ -336,6 +336,11 @@ const WatchlistPage = () => {
   };
 
   const addToWatchlist = async (type: AddWatchlistType, itemId: string, itemName: string) => {
+    if (!itemId) {
+      toast.error("This item cannot be added yet");
+      return;
+    }
+
     const duplicate = watchlist.find((w) => w.item_type === type && w.item_id === itemId);
     if (duplicate) {
       toast.info(`${itemName} is already in your watchlist`);
@@ -364,15 +369,21 @@ const WatchlistPage = () => {
       return;
     }
 
-    const { error } = await supabase.from("user_watchlist").insert({
-      user_id: user.id,
-      item_type: type,
-      item_id: itemId,
-      item_name: itemName,
-      sort_order: nextSortOrder,
-    });
+    const { error } = await supabase
+      .from("user_watchlist")
+      .upsert(
+        {
+          user_id: user.id,
+          item_type: type,
+          item_id: itemId,
+          item_name: itemName,
+          sort_order: nextSortOrder,
+        },
+        { onConflict: "user_id,item_type,item_id", ignoreDuplicates: true }
+      );
 
     if (error) {
+      console.error("Failed to add to watchlist:", error);
       toast.error("Failed to add to watchlist");
       fetchWatchlist();
       return;
