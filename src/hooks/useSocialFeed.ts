@@ -3,7 +3,6 @@ import { type NewsFromDB, type FundFromDB } from "@/lib/api";
 import { type Stock, type ExchangeRate } from "@/components/home/MarketTicker";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
-import { getDemoArticles } from "@/lib/demo-data";
 
 export type FeedItemType = "NEWS" | "STOCK_INSIGHT" | "FUND_MILESTONE" | "FX_ALERT" | "EDUCATION";
 
@@ -126,18 +125,6 @@ export function useSocialFeed(
     // (Removed Market Insights and KenyaFundFinder Academy feed items as requested)
     const sortedFeed = feed.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
 
-    // Inject Demo Stock Article at the very top so the user can test the UI
-    const scomStock = stocks.find((s: any) => s.symbol === "SCOM") || {
-      id: "demo-scom-123",
-      symbol: "SCOM",
-      name: "Safaricom PLC",
-      price: 35.75,
-      previousPrice: 35.33,
-      changePercent: 1.2
-    };
-
-    const demoArticles = getDemoArticles(scomStock as any, fxRates, commodities, funds);
-
-    return [...demoArticles, ...sortedFeed];
+    return sortedFeed;
   }, [news, stocks, funds, fxRates, commodities]);
 }

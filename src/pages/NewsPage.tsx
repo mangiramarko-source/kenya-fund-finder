@@ -122,6 +122,26 @@ export default function NewsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
+  useEffect(() => {
+    const refreshLatest = async () => {
+      try {
+        const latest = await fetchPublishedNews(60, 0);
+        setArticles(current => {
+          const latestIds = new Set(latest.map(article => article.id));
+          return [...latest, ...current.filter(article => !latestIds.has(article.id))];
+        });
+      } catch {
+        // Keep the currently rendered feed when a background refresh fails.
+      }
+    };
+    const newsInterval = window.setInterval(refreshLatest, 3 * 60_000);
+    const clockInterval = window.setInterval(() => setArticles(current => [...current]), 60_000);
+    return () => {
+      window.clearInterval(newsInterval);
+      window.clearInterval(clockInterval);
+    };
+  }, []);
+
   // --- Category match helpers (mirror the feedItems filter logic) ---
   const tabMatchesArticle = (tab: string, a: NewsFromDB, stocksList: any[]): boolean => {
     if (tab === "All" || tab === "Latest" || tab === "Oldest") return true;

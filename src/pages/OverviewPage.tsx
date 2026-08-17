@@ -1124,6 +1124,20 @@ const OverviewPage = () => {
     return () => window.clearInterval(interval);
   }, [fetchAllData]);
 
+  useEffect(() => {
+    const refreshNews = () => {
+      fetchPublishedNews()
+        .then(setNews)
+        .catch(() => {});
+    };
+    const newsInterval = window.setInterval(refreshNews, 3 * 60_000);
+    const clockInterval = window.setInterval(() => setNews(current => [...current]), 60_000);
+    return () => {
+      window.clearInterval(newsInterval);
+      window.clearInterval(clockInterval);
+    };
+  }, []);
+
   // Fetch profile display name
   useEffect(() => {
     if (user) {
@@ -1333,11 +1347,18 @@ const OverviewPage = () => {
     } else if (activeUpdateCategory === "International") {
       list = list.filter(item => isInternationalFeedItem(item));
     } else if (activeUpdateCategory === "MMFs") {
-      list = list.filter(item => item.type === "MMF_INSIGHT" || item.relatedMmf || item.authorLabel === "MMF" || item.rawItem?.category === "MMF");
+      const mmfPattern = /\b(money market( fund)?|mmf|unit trust|collective investment|fund manager|fund yield|money market yield)\b/i;
+      list = list.filter(item =>
+        item.rawItem?.category === "Fund Announcements" ||
+        (item.rawItem?.category === "Yield Updates" && mmfPattern.test(`${item.title} ${item.content}`)) ||
+        mmfPattern.test(`${item.title} ${item.content}`)
+      );
     } else if (activeUpdateCategory === "FX Rates") {
-      list = list.filter(item => item.type === "FX_INSIGHT" || item.relatedFx || item.authorLabel === "FX Rates" || item.rawItem?.category === "FX Rates");
+      const fxPattern = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
+      list = list.filter(item => item.rawItem?.category === "FX & Currency" || fxPattern.test(`${item.title} ${item.content}`));
     } else if (activeUpdateCategory === "Commodities") {
-      list = list.filter(item => item.type === "COMMODITY_INSIGHT" || item.relatedCommodity || item.authorLabel === "Commodities" || item.rawItem?.category === "Commodities");
+      const commodityPattern = /\b(oil|crude( oil)?|brent|gold|coffee|tea|fuel|agriculture|agricultural|commodity|commodities)\b/i;
+      list = list.filter(item => commodityPattern.test(`${item.title} ${item.content}`));
     } else if (activeUpdateCategory === "Latest") {
       list.sort((a, b) => new Date(b.timestamp).getTime() - new Date(a.timestamp).getTime());
     } else if (activeUpdateCategory === "Oldest") {
