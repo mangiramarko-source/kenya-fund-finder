@@ -279,10 +279,10 @@ const StockDetailPage = () => {
   const isDown = s.day_change < 0;
 
   return (
-    <div className="min-h-screen px-3 pb-6 pt-3 md:px-6 md:py-6 max-w-6xl mx-auto">
+    <div className="min-h-screen px-3 pb-6 pt-0 md:px-6 md:py-6 max-w-6xl mx-auto">
       {/* Header */}
 
-      <div className="sticky top-0 z-40 -mx-3 -mt-3 mb-5 flex h-[58px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md md:hidden">
+      <div className="fixed inset-x-0 top-0 z-50 flex h-[58px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md md:hidden">
         <button
           type="button"
           onClick={() => navigate(-1)}
@@ -317,6 +317,7 @@ const StockDetailPage = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <div className="h-[58px] mb-5 md:hidden" aria-hidden="true" />
 
       <button
         onClick={() => navigate("/stocks")}

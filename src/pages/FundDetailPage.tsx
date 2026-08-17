@@ -227,8 +227,8 @@ const FundDetailPage = () => {
 
   return (
     <>
-    <div className="min-h-screen px-3 pb-6 pt-3 md:hidden">
-      <div className="sticky top-0 z-40 -mx-3 -mt-3 mb-4 flex h-[58px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md">
+    <div className="min-h-screen px-3 pb-6 pt-0 md:hidden">
+      <div className="fixed inset-x-0 top-0 z-50 flex h-[58px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md">
         <button type="button" onClick={() => navigate(-1)} aria-label="Go back" className="-ml-2 flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted/50">
           <ArrowLeft className="h-6 w-6" />
         </button>
@@ -248,6 +248,7 @@ const FundDetailPage = () => {
           </DropdownMenuContent>
         </DropdownMenu>
       </div>
+      <div className="h-[58px] mb-4" aria-hidden="true" />
 
       <div className="mb-1">
         <div className="flex items-center gap-3">
