@@ -1397,11 +1397,11 @@ const OverviewPage = () => {
         </div>
 
         {/* Middle Column - Feed */}
-        <div className="md:col-span-6 flex flex-col w-full max-w-full overflow-x-clip md:overflow-visible">
+        <div className="md:col-span-6 flex flex-col w-full min-w-0 max-w-full overflow-visible">
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 
-          <div className="sticky top-[137px] z-30 -mx-4 border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md md:top-[5.75rem] md:-mx-2 md:px-2 md:pt-1">
+          <div className="sticky top-[137px] z-30 -mx-4 border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md md:top-[calc(3.5rem+2.25rem)] md:-mx-2 md:px-2 md:pt-1">
             <div className="mb-4 flex items-baseline justify-between mt-0">
               <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
               <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
