@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { isLegacyCronAuthorization } from "../fetch-market-data/auth.ts";
+import {
+  evaluateNewsQuality,
+  NEWS_CLASSIFICATION_VERSION,
+} from "../_shared/news-quality.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -36,14 +40,6 @@ const KEYWORDS = [
 function matchesKeywords(text: string): boolean {
   const lower = text.toLowerCase();
   return KEYWORDS.some((kw) => lower.includes(kw));
-}
-
-function categorize(text: string): string {
-  const lower = text.toLowerCase();
-  if (/yield|return|interest rate|cbk|central bank|treasury bill|t-bill|basis points/.test(lower)) return "Yield Updates";
-  if (/cma|regulator|compliance|policy|law|act|parliament/.test(lower)) return "Regulatory Updates";
-  if (/fund manager|unit trust|money market|mutual fund|sacco|pension|ipo|rights issue/.test(lower)) return "Fund Announcements";
-  return "Market News";
 }
 
 function estimateReadTime(text: string): string {
@@ -319,20 +315,34 @@ Deno.serve(async (req) => {
         ? cleanText.slice(0, 80).trim() + (cleanText.length > 80 ? "…" : "")
         : `${author} on X`;
 
-      // Save to DB (matching the same schema as fetch-news)
-      const combinedText = rewritten.summary + " " + rewritten.content;
-      const { error } = await supabase.from("news_articles").insert({
+      const sourcePublishedAt = createdAt && !Number.isNaN(new Date(createdAt).getTime())
+        ? new Date(createdAt).toISOString()
+        : null;
+      const quality = evaluateNewsQuality({
         title,
         summary: rewritten.summary,
         content: rewritten.content,
+        source: `X - ${author}`,
+        url: sourceUrl,
+        sourcePublishedAt,
+      });
+
+      // Save to DB (matching the same schema as fetch-news)
+      const combinedText = quality.summary + " " + (quality.content || "");
+      const { error } = await supabase.from("news_articles").insert({
+        title: quality.title,
+        summary: quality.summary,
+        content: quality.content,
         url: sourceUrl,
         source: `X - ${author}`,
         image_url: post.media?.[0]?.media_url_https || null,
-        date_published: createdAt
-          ? new Date(createdAt).toISOString().split("T")[0]
-          : new Date().toISOString().split("T")[0],
-        category: categorize(text),
-        status: "published",
+        date_published: quality.datePublished,
+        source_published_at: quality.sourcePublishedAt,
+        category: quality.category,
+        status: quality.status,
+        quality_reasons: quality.reasons,
+        quality_checked_at: new Date().toISOString(),
+        classification_version: NEWS_CLASSIFICATION_VERSION,
         is_featured: false,
         read_time: estimateReadTime(combinedText),
       });

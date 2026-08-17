@@ -1,8 +1,10 @@
 import { useMemo } from "react";
-import { type NewsFromDB, type FundFromDB } from "@/lib/api";
+import { getNewsAiAnalysisDisplayText, parseNewsAiAnalysis, type NewsFromDB, type FundFromDB } from "@/lib/api";
 import { type Stock, type ExchangeRate } from "@/components/home/MarketTicker";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
+import { getNewsPublishedAt } from "@/lib/newsDate";
+import { buildRelatedMarketLinks } from "@/lib/newsMarketLinks";
 
 export type FeedItemType = "NEWS" | "STOCK_INSIGHT" | "FUND_MILESTONE" | "FX_ALERT" | "EDUCATION";
 
@@ -32,6 +34,26 @@ export interface FeedItem {
     name: string;
     price: number;
     previousPrice: number | null;
+    changePercent: number;
+  } | null;
+  relatedMmf?: {
+    id: string;
+    name: string;
+    yield: number;
+    changePercent: number;
+    slug?: string;
+  } | null;
+  relatedFx?: {
+    id: string;
+    pair: string;
+    rate: number;
+    changePercent: number;
+  } | null;
+  relatedCommodity?: {
+    id: string;
+    name: string;
+    price: number;
+    unit: string;
     changePercent: number;
   } | null;
 }
@@ -73,8 +95,7 @@ export function useSocialFeed(
 
     // 1. Process News Articles with real summaries
     (news || []).forEach((n: any) => {
-      // Use created_at if available (when it landed on our site), otherwise fallback to date_published
-      const timeSource = n.created_at || n.date_published;
+      const timeSource = getNewsPublishedAt(n);
       const newsDate = timeSource ? new Date(timeSource) : new Date();
       const presentation = getNewsPresentation({
         title: decodeHtmlEntities(n.title || ""),
@@ -84,6 +105,8 @@ export function useSocialFeed(
       });
       const cleanedTitle = presentation.title;
       const cleanedContent = presentation.body;
+      const parsedAnalysis = n.parsed_ai_analysis || parseNewsAiAnalysis(n.ai_insight);
+      const analysisText = getNewsAiAnalysisDisplayText(parsedAnalysis);
 
       const knownSymbols = ["SCOM", "EQTY", "KCB", "EABL", "BAT", "COOP", "NCBA", "USD/KES", "EUR/KES", "GBP/KES", "Oil", "Gold"];
       const relatedSymbols: string[] = [];
@@ -101,6 +124,7 @@ export function useSocialFeed(
       if (!relatedStock && relatedSymbols.length > 0) {
         relatedStock = stocks.find((s: any) => s.symbol === relatedSymbols[0]) || null;
       }
+      const marketLinks = buildRelatedMarketLinks(cleanedTitle, cleanedContent, funds, fxRates, commodities);
       
       feed.push({
         id: `news-${n.id}`,
@@ -108,7 +132,8 @@ export function useSocialFeed(
         authorName: n.source || "Market News",
         authorLabel: n.category || "News",
         title: cleanedTitle,
-        content: cleanedContent,
+        content: analysisText || cleanedContent,
+        aiInsight: analysisText || null,
         isHeadlineOnly: presentation.isHeadlineOnly,
         mediaUrl: n.image_url || undefined,
         mediaType: n.image_url ? "image" : undefined,
@@ -116,9 +141,10 @@ export function useSocialFeed(
         likes: n.likes || 0,
         comments: n.comments || 0,
         url: n.url,
-        rawItem: n,
+        rawItem: { ...n, parsed_ai_analysis: parsedAnalysis },
         relatedSymbols: relatedSymbols.length > 0 ? relatedSymbols : undefined,
         relatedStock,
+        ...marketLinks,
       });
     });
 

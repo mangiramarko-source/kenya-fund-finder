@@ -32,4 +32,18 @@ describe("matchStockDeterministically", () => {
     ];
     expect(matchStockDeterministically("AAA publishes results", duplicates)).toBeNull();
   });
+
+  it("does not match an ambiguous ticker used as an ordinary word", () => {
+    const port = [{ id: "port", symbol: "PORT", name: "East African Portland Cement PLC" }];
+    expect(matchStockDeterministically("Mombasa port handles record cargo volumes", port)).toBeNull();
+  });
+
+  it("accepts an explicitly tagged ambiguous ticker", () => {
+    const port = [{ id: "port", symbol: "PORT", name: "East African Portland Cement PLC" }];
+    expect(matchStockDeterministically("NSE:PORT releases its annual results", port)?.id).toBe("port");
+  });
+
+  it("does not match Safaricom from generic telecom context", () => {
+    expect(matchStockDeterministically("Kenya leads Africa in mobile internet usage", stocks)).toBeNull();
+  });
 });

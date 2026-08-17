@@ -681,8 +681,10 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
       while (validArticles.length < countRequired && moreInDb) {
         const { data } = await supabase
           .from("news_articles_public")
-          .select("id, title, summary, date_published, created_at, source, category, image_url")
+          .select("id, title, summary, date_published, source_published_at, created_at, source, category, image_url")
           .or(`title.ilike.%${symbol}%,title.ilike.%${name}%,summary.ilike.%${symbol}%,summary.ilike.%${name}%`)
+          .order("source_published_at", { ascending: false, nullsFirst: false })
+          .order("date_published", { ascending: false, nullsFirst: false })
           .order("created_at", { ascending: false })
           .range(currentOffset, currentOffset + 19);
 
@@ -749,7 +751,7 @@ const StockNewsTab = ({ symbol, name }: { symbol: string; name: string }) => {
       content: n.summary || "",
       mediaUrl: n.image_url || undefined,
       mediaType: n.image_url ? "image" : undefined,
-      timestamp: new Date(n.created_at || n.date_published || Date.now()),
+      timestamp: new Date(n.source_published_at || n.date_published || n.created_at || Date.now()),
       likes: 0,
       comments: 0,
       url: "#",

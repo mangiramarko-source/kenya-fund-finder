@@ -757,7 +757,12 @@ export type Database = {
           content: string | null
           created_at: string
           created_by: string | null
-          date_published: string
+          date_published: string | null
+          source_published_at: string | null
+          quality_reasons: string[]
+          quality_checked_at: string | null
+          classification_version: string | null
+          stock_match_evidence: Json | null
           id: string
           image_url: string | null
           is_featured: boolean
@@ -775,7 +780,12 @@ export type Database = {
           content?: string | null
           created_at?: string
           created_by?: string | null
-          date_published?: string
+          date_published?: string | null
+          source_published_at?: string | null
+          quality_reasons?: string[]
+          quality_checked_at?: string | null
+          classification_version?: string | null
+          stock_match_evidence?: Json | null
           id?: string
           image_url?: string | null
           is_featured?: boolean
@@ -793,7 +803,12 @@ export type Database = {
           content?: string | null
           created_at?: string
           created_by?: string | null
-          date_published?: string
+          date_published?: string | null
+          source_published_at?: string | null
+          quality_reasons?: string[]
+          quality_checked_at?: string | null
+          classification_version?: string | null
+          stock_match_evidence?: Json | null
           id?: string
           image_url?: string | null
           is_featured?: boolean
@@ -1907,6 +1922,7 @@ export type Database = {
           content: string | null
           created_at: string | null
           date_published: string | null
+          source_published_at: string | null
           id: string | null
           image_url: string | null
           is_featured: boolean | null
@@ -1923,6 +1939,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           date_published?: string | null
+          source_published_at?: string | null
           id?: string | null
           image_url?: string | null
           is_featured?: boolean | null
@@ -1939,6 +1956,7 @@ export type Database = {
           content?: string | null
           created_at?: string | null
           date_published?: string | null
+          source_published_at?: string | null
           id?: string | null
           image_url?: string | null
           is_featured?: boolean | null

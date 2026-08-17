@@ -31,6 +31,20 @@ export function sanitizeNewsText(value: string): string {
     .trim();
 }
 
+const BOILERPLATE_PATTERNS = [
+  /\bthe post\s+.+?\s+appeared first on\s+[^.]+\.?\s*$/i,
+  /\b(?:read|view) (?:the )?(?:full|original) (?:article|story)\b.*$/i,
+  /\bclick here to (?:read|continue)\b.*$/i,
+  /\bsubscribe (?:now|today)?\s*(?:for|to).*$/i,
+  /\ball rights reserved\b.*$/i,
+];
+
+export function cleanNewsBody(value: string): string {
+  let cleaned = sanitizeNewsText(value);
+  for (const pattern of BOILERPLATE_PATTERNS) cleaned = cleaned.replace(pattern, " ").trim();
+  return cleaned.replace(/\s+/g, " ").trim();
+}
+
 const PUBLISHER_LABELS = [
   "Business Daily",
   "Capital FM",
@@ -64,6 +78,7 @@ export function cleanNewsTitle(title: string, source = ""): string {
   }
   return cleaned
     .replace(/\s*[-–—|]\s*(?:www\.)?[a-z0-9.-]+\.[a-z]{2,}\s*$/i, "")
+    .replace(/\s*[-–—|]\s*(?:home|latest news|business news)\s*$/i, "")
     .trim();
 }
 
@@ -72,7 +87,7 @@ export function isDuplicateNewsText(
   text: string | null | undefined,
   source = "",
 ): boolean {
-  const cleanedText = sanitizeNewsText(text || "");
+  const cleanedText = cleanNewsBody(text || "");
   if (!cleanedText) return true;
 
   const textKey = comparisonKey(cleanedText);
@@ -105,10 +120,10 @@ export function getNewsPresentation(input: NewsPresentationInput): NewsPresentat
   const title = cleanNewsTitle(input.title, source);
   const summary = isDuplicateNewsText(input.title, input.summary, source)
     ? ""
-    : sanitizeNewsText(input.summary || "");
+    : cleanNewsBody(input.summary || "");
   const content = isDuplicateNewsText(input.title, input.content, source)
     ? ""
-    : (input.content || "").trim();
+    : cleanNewsBody(input.content || "");
   
   // Prefer the longer text if one is suspiciously short (like 1 word)
   let body = "";

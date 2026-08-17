@@ -32,6 +32,7 @@ import { MarketMoversCard } from "@/components/desktop/MarketMoversCard";
 import { toast } from "sonner";
 import { safeUUID } from "@/lib/safeUUID";
 import { fetchPublishedNews, fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
+import { getNewsPublishedAt } from "@/lib/newsDate";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
@@ -1371,7 +1372,7 @@ const OverviewPage = () => {
     const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
     return (news || []).filter(item => {
-      const timeSource = item.created_at || item.date_published;
+      const timeSource = getNewsPublishedAt(item);
       if (!timeSource) return false;
       const pubTime = new Date(timeSource).getTime();
       return !isNaN(pubTime) && (now - pubTime) <= oneDayMs;

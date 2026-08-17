@@ -7,15 +7,7 @@ function decodeBase64Url(segment: string) {
   const normalized = segment.replace(/-/g, "+").replace(/_/g, "/");
   const padded = normalized + "=".repeat((4 - (normalized.length % 4)) % 4);
 
-  if (typeof globalThis.atob === "function") {
-    return globalThis.atob(padded);
-  }
-
-  if (typeof Buffer !== "undefined") {
-    return Buffer.from(padded, "base64").toString("utf8");
-  }
-
-  return "";
+  return globalThis.atob(padded);
 }
 
 export function isLegacyCronAuthorization(authHeader: string) {

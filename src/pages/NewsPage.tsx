@@ -11,6 +11,7 @@ import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { useAuth } from "@/hooks/useAuth";
+import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 
 const INTERNATIONAL_SOURCES = new Set([
   "Reuters Business",
@@ -241,9 +242,9 @@ export default function NewsPage() {
 
     // Sort by Nav Tab (latest/oldest)
     if (activeNavTab === "Latest" || activeNavTab === "All" || ["Kenyan", "International", "Stocks", "MMFs", "FX Rates", "Commodities"].includes(activeNavTab)) {
-      list.sort((a, b) => new Date(b.created_at || b.date_published).getTime() - new Date(a.created_at || a.date_published).getTime());
+      list.sort((a, b) => getNewsPublishedTime(b) - getNewsPublishedTime(a));
     } else if (activeNavTab === "Oldest") {
-      list.sort((a, b) => new Date(a.created_at || a.date_published).getTime() - new Date(b.created_at || b.date_published).getTime());
+      list.sort((a, b) => getNewsPublishedTime(a) - getNewsPublishedTime(b));
     }
 
     return list;
@@ -282,7 +283,7 @@ export default function NewsPage() {
         content: a.summary || a.content || "",
         mediaUrl: a.image_url || undefined,
         mediaType: a.image_url ? ("image" as const) : undefined,
-        timestamp: new Date(a.created_at || a.date_published || Date.now()),
+        timestamp: new Date(getNewsPublishedAt(a) || Date.now()),
         likes: a.likes || 0,
         comments: a.comments || 0,
         url: a.url || "#",

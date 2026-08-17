@@ -1,5 +1,13 @@
 import { ExternalLink, Sparkles } from "lucide-react";
 import { type FeedItem } from "@/hooks/useSocialFeed";
+import { type NewsAiAnalysis } from "@/lib/api";
+import { AnalystNote } from "./AnalystNote";
+import { DecisionDrivers } from "./DecisionDrivers";
+import { EvidenceGuardrail } from "./EvidenceGuardrail";
+import { MarketContextSnapshot, buildCommodityMarketContext } from "./MarketContextSnapshot";
+import { RelatedMarketsStrip } from "./RelatedMarketsStrip";
+import { WatchNextChecklist } from "./WatchNextChecklist";
+import { ConfidenceBadge } from "./ConfidenceBadge";
 
 interface CommodityDecisionContextProps {
   item?: FeedItem;
@@ -25,8 +33,91 @@ const FactorList = ({ title, tone, items }: { title: string, tone: 'positive' | 
   </div>
 );
 
+const getArticleText = (item?: FeedItem, article?: any) => {
+  const title = String(article?.title || item?.title || "This story").trim();
+  const summary = String(article?.summary || article?.content || item?.content || title).trim();
+  return { title, summary: summary || title };
+};
+
+function generateCommodityFallback(item?: FeedItem, article?: any, commodity?: any): NewsAiAnalysis | null {
+  const relatedCommodity = commodity || item?.relatedCommodity;
+  if (!relatedCommodity) return null;
+
+  const { title, summary } = getArticleText(item, article);
+  const name = relatedCommodity.name || "this commodity";
+  const price = Number(relatedCommodity.price);
+  const unit = relatedCommodity.unit ? ` ${relatedCommodity.unit}` : "";
+  const priceText = Number.isFinite(price) ? `${price.toFixed(2)}${unit}` : "the current quoted price";
+  const change = Number(relatedCommodity.changePercent);
+  const changeText = Number.isFinite(change) ? `${change >= 0 ? "+" : ""}${change.toFixed(2)}%` : "not available";
+
+  return {
+    event_label: "Commodity-linked story",
+    impact_horizon: "Needs source follow-up",
+    narrative_sections: [
+      {
+        heading: "The story",
+        body: summary,
+      },
+      {
+        heading: "The commodity link",
+        body: `This story is linked to ${name}. Compare it with the latest commodity price, but do not assume the article caused the move.`,
+      },
+      {
+        heading: "What to check",
+        body: "For commodities, the useful follow-up is whether supply, demand, weather, logistics, trade flows, or policy changed.",
+      },
+    ],
+    analyst_summary: summary,
+    investment_context: `This article is linked to ${name}. Compare the story with the latest quoted price of ${priceText} and move of ${changeText}; the article alone does not prove the commodity-price move.`,
+    key_uncertainty: "The available source text does not confirm whether supply, demand, weather, logistics, or policy changed because of this story.",
+    what_happened: title,
+    confirmed_facts: [
+      `The story is linked to ${name}.`,
+      `Kenya Fund Finder currently shows ${priceText} as the linked commodity price.`,
+    ],
+    inferred_implications: [
+      "For commodity watchers, the useful check is whether the story affects supply, demand, trade flows, input costs, or local producer prices.",
+    ],
+    not_confirmed: [
+      "No causal impact on the commodity price is confirmed from the available article text.",
+    ],
+    decision_drivers: [
+      {
+        driver: "Commodity price context",
+        direction: "neutral",
+        explanation: `The linked price is ${priceText}, but this story should not be treated as the cause of the move unless the source says so.`,
+      },
+      {
+        driver: "Supply and demand",
+        direction: "mixed",
+        explanation: "If the story affects production, logistics, weather, exports, or input costs, it may be relevant to commodity pricing.",
+      },
+    ],
+    related_markets: ["Commodities"],
+    related_market_implications: [
+      {
+        market: "Commodities",
+        implication: `Watch whether ${name} prices move further and whether source facts support a supply or demand change.`,
+      },
+    ],
+    price_reaction_context: {
+      latest_price: priceText,
+      move: changeText,
+      context: "This is current commodity data shown beside the story; it is not evidence that the article caused the move.",
+    },
+    watch_next: [
+      "Official production or trade updates",
+      "Follow-up price movement",
+      "Supply, weather, logistics, or policy changes",
+    ],
+    source_quality: "Linked market data",
+    confidence_label: "Grounded fallback",
+  };
+}
+
 export function CommodityDecisionContext({ item, article, commodity, onEnrichmentComplete, onReadMore }: CommodityDecisionContextProps) {
-  const analysis = item?.rawItem?.parsed_ai_analysis || article?.parsed_ai_analysis;
+  const analysis = item?.rawItem?.parsed_ai_analysis || article?.parsed_ai_analysis || generateCommodityFallback(item, article, commodity);
   
   if (!analysis) return null;
 
@@ -45,9 +136,37 @@ export function CommodityDecisionContext({ item, article, commodity, onEnrichmen
           </div>
         )}
 
+        <ConfidenceBadge analysis={analysis} />
+
+        <AnalystNote analysis={analysis} />
+
+        {(() => {
+          const context = buildCommodityMarketContext(commodity || item?.relatedCommodity);
+          return context ? <MarketContextSnapshot {...context} /> : null;
+        })()}
+
+        <DecisionDrivers drivers={analysis.decision_drivers} />
+
+        <EvidenceGuardrail
+          confirmed={analysis.confirmed_facts || (analysis.source_facts ? [analysis.source_facts] : undefined)}
+          inferred={analysis.inferred_implications}
+          notConfirmed={analysis.not_confirmed}
+        />
+
+        <RelatedMarketsStrip
+          markets={analysis.related_markets}
+          implications={analysis.related_market_implications}
+        />
+
+        <WatchNextChecklist
+          items={analysis.watch_next}
+          impactScore={analysis.impact_score}
+          impactReason={analysis.impact_reason}
+        />
+
         {/* Price Reaction Context */}
         {analysis.price_reaction_context && (
-          <section className="border-y border-border py-4">
+          <section className={`${(analysis.content || analysis.market_lens || analysis.why_it_matters || analysis.investor_takeaway) ? "border-b" : "border-y"} border-border py-4`}>
             <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-foreground/90 mb-3">
               Global Spot Price Context
             </h3>

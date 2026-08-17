@@ -1,6 +1,13 @@
 import { Link } from "react-router-dom";
 import { ExternalLink, TrendingDown, TrendingUp, Sparkles } from "lucide-react";
-import { type NewsFromDB, type PublicStock } from "@/lib/api";
+import { type NewsAiAnalysis, type NewsFromDB, type PublicStock } from "@/lib/api";
+import { AnalystNote } from "./AnalystNote";
+import { DecisionDrivers } from "./DecisionDrivers";
+import { EvidenceGuardrail } from "./EvidenceGuardrail";
+import { MarketContextSnapshot, buildStockMarketContext } from "./MarketContextSnapshot";
+import { RelatedMarketsStrip } from "./RelatedMarketsStrip";
+import { WatchNextChecklist } from "./WatchNextChecklist";
+import { ConfidenceBadge } from "./ConfidenceBadge";
 
 interface StockDecisionContextProps {
   article: NewsFromDB;
@@ -9,7 +16,7 @@ interface StockDecisionContextProps {
   onReadMore?: () => void;
 }
 
-function generateDynamicAnalysis(article: NewsFromDB, stock?: PublicStock) {
+function generateDynamicAnalysis(article: NewsFromDB, stock?: PublicStock): NewsAiAnalysis {
   const title = article.title || "";
   const summary = article.summary || article.content || title;
   const isPositiveHeadline = /profit|surge|jump|rise|gain|beat|up|growth|record|expand|launch|dividend/i.test(title);
@@ -34,11 +41,10 @@ function generateDynamicAnalysis(article: NewsFromDB, stock?: PublicStock) {
   // Dynamic Positive Factors
   const factors_positive: string[] = [];
   if (isPositiveHeadline) {
-    factors_positive.push(`Financial performance milestone: ${title.split(' to ')[0] || title.slice(0, 60)}.`);
-    factors_positive.push(`Demonstrated resilience in core operations for ${stock?.name || stock?.symbol || 'the company'}.`);
+    factors_positive.push(`The story points to a possible support factor for ${stock?.symbol || "the stock"} sentiment.`);
+    factors_positive.push("Investors may focus on whether the development improves revenue, cash flow, or customer retention.");
   } else {
-    factors_positive.push(`Proactive management steps taken by ${stock?.symbol || 'the company'} to address market demand.`);
-    factors_positive.push("Long-term strategic focus remains intact despite immediate volatility.");
+    factors_positive.push("The item gives investors fresh context to monitor alongside official company disclosures.");
   }
 
   // Dynamic Negative Factors
@@ -47,28 +53,71 @@ function generateDynamicAnalysis(article: NewsFromDB, stock?: PublicStock) {
     factors_negative.push(`Short-term headwind highlighted in recent news for ${stock?.symbol || 'the asset'}.`);
     factors_negative.push("Potential pressure on immediate margins and investor sentiment.");
   } else {
-    factors_negative.push(`Broader industry and inflationary pressures on operational overhead.`);
-    factors_negative.push("Risk of market profit-taking following recent announcements.");
+    factors_negative.push("The available source text does not prove a direct earnings impact yet.");
+    factors_negative.push("Price moves should be checked against volume, disclosures, and broader market conditions.");
   }
 
   return {
     event_label,
     impact_horizon: isPositiveHeadline ? "Immediate relevance" : "Short-term relevance",
+    narrative_sections: [
+      {
+        heading: "The story",
+        body: summary.length > 220 ? summary.slice(0, 220) + "..." : summary,
+      },
+      {
+        heading: "The market link",
+        body: `${stock?.symbol || "This stock"} is the linked market. Use the story to frame questions about revenue, costs, regulation, demand, dividends, or strategy rather than as a standalone signal.`,
+      },
+      {
+        heading: "What is not proven",
+        body: "The available article text does not prove earnings impact, valuation impact, or that the share-price move was caused by this story.",
+      },
+    ],
+    analyst_summary: summary.length > 180 ? summary.slice(0, 180) + "..." : summary,
+    investment_context: `${stock?.symbol || "This stock"} investors can use this story as context, then compare it with official disclosures and current market reaction.`,
+    key_uncertainty: "The article alone does not confirm whether the event will change earnings, dividends, valuation, or longer-term demand.",
+    decision_drivers: [
+      {
+        driver: "Company story",
+        direction: "neutral" as const,
+        explanation: `This article adds context for ${stock?.symbol || "the linked stock"}, but it does not prove a financial impact on its own.`,
+      },
+    ],
+    market_lens: `${stock?.symbol || "This stock"} lens: the article is linked to the company, but only the original source can confirm whether the event affects revenue, costs, regulation, or investor sentiment.`,
+    why_it_matters: `This matters for ${stock?.symbol || "the linked stock"} because investors need to decide whether the event changes the company story, or is only short-term news flow.`,
+    investor_takeaway: "Treat this as decision support, not a buy or sell signal. Confirm the facts with the original source and official issuer updates.",
+    confirmed_facts: [summary.length > 180 ? summary.slice(0, 180) + "..." : summary],
+    inferred_implications: [`The story may matter to ${stock?.symbol || "the stock"} if it affects revenue, costs, regulation, or customer sentiment.`],
+    not_confirmed: ["The source text does not prove earnings impact or stock-price causation."],
+    impact_score: verified_figures.length > 0 ? 3 : 2,
+    impact_reason: `Company is directly linked, but the source text should still be checked for confirmed financial impact.`,
+    watch_next: [
+      `Official ${stock?.symbol || "issuer"} disclosure or update`,
+      "Next earnings, dividend, or trading update",
+      "Price and volume confirmation over the next few trading sessions",
+    ],
     factors_positive,
     factors_negative,
     what_happened: summary.length > 220 ? summary.slice(0, 220) + "..." : summary,
     verified_figures,
     price_reaction_context: {
-      "1D": stock?.day_change_percent ? `${stock.day_change_percent > 0 ? '+' : ''}${stock.day_change_percent.toFixed(1)}%` : "+0.5%",
-      "7D": `${stock?.day_change_percent && stock.day_change_percent < 0 ? '-' : '+'}${Math.abs((stock?.day_change_percent || 1) * 1.5).toFixed(1)}%`,
-      "1M": "+3.4%",
-      "3M": "+7.8%",
-      context: `Trading activity for ${stock?.symbol || 'the stock'} currently reflects KES ${(stock?.price || 0).toFixed(2)} (${(stock?.day_change_percent || 0) >= 0 ? '+' : ''}${(stock?.day_change_percent || 0).toFixed(1)}% change).`
+      "Latest": `KES ${(stock?.price || 0).toFixed(2)}`,
+      "1D": `${(stock?.day_change_percent || 0) >= 0 ? '+' : ''}${(stock?.day_change_percent || 0).toFixed(1)}%`,
+      context: `Current quote for ${stock?.symbol || 'the stock'} is KES ${(stock?.price || 0).toFixed(2)}. This does not prove the article caused the move.`
     },
+    related_markets: ["Stocks"],
+    related_market_implications: [
+      {
+        market: "Stocks",
+        implication: `The story is tied to ${stock?.symbol || "the linked company"}, so investors can compare the article facts with price, volume, and official company updates.`,
+      },
+    ],
     related_disclosures: [
       { title: `${stock?.name || stock?.symbol || 'Issuer'} Official Announcement`, url: article.url || "#" }
     ],
-    source_quality: article.source?.toLowerCase().includes("reuters") || article.source?.toLowerCase().includes("bloomberg") ? "Tier 1 Media" : "Verified Reporting",
+    source_quality: article.source?.toLowerCase().includes("reuters") || article.source?.toLowerCase().includes("bloomberg") ? "Tier 1 Media" : "Source-linked",
+    confidence_label: "Source-grounded",
     clustered_count: 1
   };
 }
@@ -91,9 +140,37 @@ export function StockDecisionContext({ article, stock, inlineTransparent, onRead
           </div>
         )}
 
+        <ConfidenceBadge analysis={analysis} />
+
+        <AnalystNote analysis={analysis} />
+
+        {(() => {
+          const context = buildStockMarketContext(stock);
+          return context ? <MarketContextSnapshot {...context} /> : null;
+        })()}
+
+        <DecisionDrivers drivers={analysis?.decision_drivers} />
+
+        <EvidenceGuardrail
+          confirmed={analysis?.confirmed_facts || (analysis?.source_facts ? [analysis.source_facts] : undefined)}
+          inferred={analysis?.inferred_implications}
+          notConfirmed={analysis?.not_confirmed}
+        />
+
+        <RelatedMarketsStrip
+          markets={analysis?.related_markets}
+          implications={analysis?.related_market_implications}
+        />
+
+        <WatchNextChecklist
+          items={analysis?.watch_next}
+          impactScore={analysis?.impact_score}
+          impactReason={analysis?.impact_reason}
+        />
+
         {/* Price Reaction Context */}
         {analysis?.price_reaction_context && (
-          <section className="border-y border-border py-4">
+          <section className={`${(analysis?.content || analysis?.market_lens || analysis?.why_it_matters || analysis?.investor_takeaway) ? "border-b" : "border-y"} border-border py-4`}>
             <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-foreground/90 mb-3">
               Price Reaction Context
             </h3>

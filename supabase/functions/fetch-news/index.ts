@@ -3,6 +3,10 @@ import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { parseFeed } from "https://deno.land/x/rss@0.5.8/mod.ts";
 import { isLegacyCronAuthorization } from "../fetch-market-data/auth.ts";
 import { cleanNewsTitle, isDuplicateNewsText, sanitizeNewsText } from "../_shared/news-text.ts";
+import {
+  evaluateNewsQuality,
+  NEWS_CLASSIFICATION_VERSION,
+} from "../_shared/news-quality.ts";
 import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
 
 const corsHeaders = {
@@ -58,7 +62,7 @@ interface ParsedArticle {
   url: string | null;
   summary: string;
   content: string | null;
-  date_published: string;
+  source_published_at: string | null;
   source: string;
   image_url: string | null;
 }
@@ -88,12 +92,9 @@ function extractTag(xml: string, tag: string): string {
   return match ? match[1].trim() : "";
 }
 
-function parseDate(dateStr: string): string {
-  try {
-    const d = new Date(dateStr);
-    if (!isNaN(d.getTime())) return d.toISOString().split("T")[0];
-  } catch { /* fall through */ }
-  return new Date().toISOString().split("T")[0];
+function parseSourcePublishedAt(dateStr: string): string | null {
+  const parsed = new Date(dateStr);
+  return Number.isNaN(parsed.getTime()) ? null : parsed.toISOString();
 }
 
 function estimateReadTime(text: string): string {
@@ -166,21 +167,6 @@ function isFuzzyDuplicate(tokens: Set<string>, existingTokens: Set<string>[]): b
     if (jaccardSimilarity(tokens, ex) >= FUZZY_THRESHOLD) return true;
   }
   return false;
-}
-
-function categorize(text: string): string {
-  const lower = text.toLowerCase();
-  
-  if (/\b(yield|interest rate|cbk|central bank|treasury bill|t-bill|t-bonds)\b/.test(lower)) return "Yield Updates";
-  if (/\b(cma|regulator|compliance|policy|law|act|parliament)\b/.test(lower)) return "Regulatory Updates";
-  if (/\b(fund manager|unit trust|money market( fund)?|mmf|mutual fund)\b/.test(lower)) return "Fund Announcements";
-  
-  // Specific FX & Currency category instead of hiding under International
-  if (/\b(shilling|kes|forex|fx|foreign exchange|currency|usd\/kes|exchange rate)\b/.test(lower)) return "FX & Currency";
-  
-  if (/\b(fed|federal reserve|ecb|imf|world bank|wall street|s&p|nasdaq|ftse|dow jones|eurobond|brent|opec|emerging markets|global|us economy|china|europe)\b/.test(lower)) return "International";
-  
-  return "Market News";
 }
 
 // --- AI rewriting (summary + long-form body, in original words) ----------
@@ -417,7 +403,7 @@ async function fetchFeed(feedUrl: string, source: string): Promise<ParsedArticle
         url: link || null,
         summary,
         content: sanitizedContent || null,
-        date_published: parseDate(pubDate),
+        source_published_at: parseSourcePublishedAt(pubDate),
         source,
         image_url: extractImageUrl(item),
       });
@@ -626,24 +612,30 @@ Deno.serve(async (req) => {
       const rw = rewrites[i];
       const summaryCandidate = rw?.summary || a.summary;
       const contentCandidate = rw?.content || a.content;
-      const summary = isDuplicateNewsText(a.title, summaryCandidate, a.source)
-        ? ""
-        : sanitizeNewsText(summaryCandidate || "");
-      const content = isDuplicateNewsText(a.title, contentCandidate, a.source)
-        ? null
-        : contentCandidate;
-      return {
+      const quality = evaluateNewsQuality({
         title: a.title,
+        summary: summaryCandidate,
+        content: contentCandidate,
+        source: a.source,
         url: a.url,
-        summary,
-        content,
-        date_published: a.date_published,
+        sourcePublishedAt: a.source_published_at,
+      });
+      return {
+        title: quality.title,
+        url: a.url,
+        summary: quality.summary,
+        content: quality.content,
+        date_published: quality.datePublished,
+        source_published_at: quality.sourcePublishedAt,
         source: a.source,
         image_url: a.image_url,
-        category: categorize(`${a.title} ${summary}`),
-        status: "published",
+        category: quality.category,
+        status: quality.status,
+        quality_reasons: quality.reasons,
+        quality_checked_at: new Date().toISOString(),
+        classification_version: NEWS_CLASSIFICATION_VERSION,
         is_featured: false,
-        read_time: estimateReadTime(summary + " " + (content || "")),
+        read_time: estimateReadTime(quality.summary + " " + (quality.content || "")),
       };
     });
 

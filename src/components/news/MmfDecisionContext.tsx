@@ -1,6 +1,14 @@
 import { ExternalLink, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import { type FeedItem } from "@/hooks/useSocialFeed";
+import { type NewsAiAnalysis } from "@/lib/api";
+import { AnalystNote } from "./AnalystNote";
+import { DecisionDrivers } from "./DecisionDrivers";
+import { EvidenceGuardrail } from "./EvidenceGuardrail";
+import { MarketContextSnapshot, buildMmfMarketContext } from "./MarketContextSnapshot";
+import { RelatedMarketsStrip } from "./RelatedMarketsStrip";
+import { WatchNextChecklist } from "./WatchNextChecklist";
+import { ConfidenceBadge } from "./ConfidenceBadge";
 
 interface MmfDecisionContextProps {
   item?: FeedItem;
@@ -26,8 +34,90 @@ const FactorList = ({ title, tone, items }: { title: string, tone: 'positive' | 
   </div>
 );
 
+const getArticleText = (item?: FeedItem, article?: any) => {
+  const title = String(article?.title || item?.title || "This story").trim();
+  const summary = String(article?.summary || article?.content || item?.content || title).trim();
+  return { title, summary: summary || title };
+};
+
+function generateMmfFallback(item?: FeedItem, article?: any, mmf?: any): NewsAiAnalysis | null {
+  const relatedMmf = mmf || item?.relatedMmf;
+  if (!relatedMmf) return null;
+
+  const { title, summary } = getArticleText(item, article);
+  const name = relatedMmf.name || "this money market fund";
+  const annualYield = Number(relatedMmf.annualYield ?? relatedMmf.yield);
+  const yieldText = Number.isFinite(annualYield) ? `${annualYield.toFixed(2)}%` : "the current quoted yield";
+  const change = Number(relatedMmf.changePercent);
+  const changeText = Number.isFinite(change) ? `${change >= 0 ? "+" : ""}${change.toFixed(2)}%` : "not available";
+
+  return {
+    event_label: "Fund-linked story",
+    impact_horizon: "Needs source follow-up",
+    narrative_sections: [
+      {
+        heading: "The story",
+        body: summary,
+      },
+      {
+        heading: "The fund link",
+        body: `This story is linked to ${name}. Compare it with the fund's current yield, but do not assume the story caused any yield movement.`,
+      },
+      {
+        heading: "What to check",
+        body: "For MMFs, the important follow-up is whether interest rates, liquidity, fees, or portfolio positioning changed in official updates.",
+      },
+    ],
+    analyst_summary: summary,
+    investment_context: `This article is linked to ${name}. Compare the story with the fund's current annual yield of ${yieldText} and yield move of ${changeText}; the article alone does not prove a yield change.`,
+    key_uncertainty: "The available source text does not confirm whether fund yields, fees, liquidity, or portfolio holdings changed because of this story.",
+    what_happened: title,
+    confirmed_facts: [
+      `The story is linked to ${name}.`,
+      `Kenya Fund Finder currently shows ${yieldText} as the linked fund yield.`,
+    ],
+    inferred_implications: [
+      "For MMF investors, the useful check is whether the story affects interest rates, liquidity, fees, or the fund manager's portfolio positioning.",
+    ],
+    not_confirmed: [
+      "No causal impact on the fund yield is confirmed from the available article text.",
+    ],
+    decision_drivers: [
+      {
+        driver: "Yield context",
+        direction: "neutral",
+        explanation: `The linked fund yield is ${yieldText}, but this story should not be treated as the reason for that yield unless the source says so.`,
+      },
+      {
+        driver: "Liquidity and rates",
+        direction: "mixed",
+        explanation: "If the story relates to interest rates or market liquidity, it may be relevant for comparing MMF returns, but the effect needs confirmation.",
+      },
+    ],
+    related_markets: ["MMFs"],
+    related_market_implications: [
+      {
+        market: "MMFs",
+        implication: `Check whether ${name}'s yield, fees, or liquidity profile changed after this story.`,
+      },
+    ],
+    price_reaction_context: {
+      annual_yield: yieldText,
+      yield_move: changeText,
+      context: "This is current fund data shown beside the story; it is not evidence that the article caused the move.",
+    },
+    watch_next: [
+      "Any official fund manager update",
+      "Changes in daily or annual yield",
+      "New Central Bank or market-rate signals",
+    ],
+    source_quality: "Linked market data",
+    confidence_label: "Grounded fallback",
+  };
+}
+
 export function MmfDecisionContext({ item, article, mmf, onEnrichmentComplete, onReadMore }: MmfDecisionContextProps) {
-  const analysis = item?.rawItem?.parsed_ai_analysis || article?.parsed_ai_analysis;
+  const analysis = item?.rawItem?.parsed_ai_analysis || article?.parsed_ai_analysis || generateMmfFallback(item, article, mmf);
   
   if (!analysis) return null;
 
@@ -46,9 +136,37 @@ export function MmfDecisionContext({ item, article, mmf, onEnrichmentComplete, o
           </div>
         )}
 
+        <ConfidenceBadge analysis={analysis} />
+
+        <AnalystNote analysis={analysis} />
+
+        {(() => {
+          const context = buildMmfMarketContext(mmf || item?.relatedMmf);
+          return context ? <MarketContextSnapshot {...context} /> : null;
+        })()}
+
+        <DecisionDrivers drivers={analysis.decision_drivers} />
+
+        <EvidenceGuardrail
+          confirmed={analysis.confirmed_facts || (analysis.source_facts ? [analysis.source_facts] : undefined)}
+          inferred={analysis.inferred_implications}
+          notConfirmed={analysis.not_confirmed}
+        />
+
+        <RelatedMarketsStrip
+          markets={analysis.related_markets}
+          implications={analysis.related_market_implications}
+        />
+
+        <WatchNextChecklist
+          items={analysis.watch_next}
+          impactScore={analysis.impact_score}
+          impactReason={analysis.impact_reason}
+        />
+
         {/* Yield Context */}
         {analysis.price_reaction_context && (
-          <section className="border-y border-border py-4">
+          <section className={`${(analysis.content || analysis.market_lens || analysis.why_it_matters || analysis.investor_takeaway) ? "border-b" : "border-y"} border-border py-4`}>
             <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-foreground/90 mb-3">
               Yield Reaction Context
             </h3>

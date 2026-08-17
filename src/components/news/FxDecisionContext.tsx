@@ -1,5 +1,13 @@
 import { ExternalLink, Sparkles } from "lucide-react";
 import { type FeedItem } from "@/hooks/useSocialFeed";
+import { type NewsAiAnalysis } from "@/lib/api";
+import { AnalystNote } from "./AnalystNote";
+import { DecisionDrivers } from "./DecisionDrivers";
+import { EvidenceGuardrail } from "./EvidenceGuardrail";
+import { MarketContextSnapshot, buildFxMarketContext } from "./MarketContextSnapshot";
+import { RelatedMarketsStrip } from "./RelatedMarketsStrip";
+import { WatchNextChecklist } from "./WatchNextChecklist";
+import { ConfidenceBadge } from "./ConfidenceBadge";
 
 interface FxDecisionContextProps {
   item?: FeedItem;
@@ -25,8 +33,90 @@ const FactorList = ({ title, tone, items }: { title: string, tone: 'positive' | 
   </div>
 );
 
+const getArticleText = (item?: FeedItem, article?: any) => {
+  const title = String(article?.title || item?.title || "This story").trim();
+  const summary = String(article?.summary || article?.content || item?.content || title).trim();
+  return { title, summary: summary || title };
+};
+
+function generateFxFallback(item?: FeedItem, article?: any, fx?: any): NewsAiAnalysis | null {
+  const relatedFx = fx || item?.relatedFx;
+  if (!relatedFx) return null;
+
+  const { title, summary } = getArticleText(item, article);
+  const pair = relatedFx.pair || "this FX pair";
+  const rate = Number(relatedFx.rate);
+  const rateText = Number.isFinite(rate) ? `KES ${rate.toFixed(2)}` : "the current quoted rate";
+  const change = Number(relatedFx.changePercent);
+  const changeText = Number.isFinite(change) ? `${change >= 0 ? "+" : ""}${change.toFixed(2)}%` : "not available";
+
+  return {
+    event_label: "FX-linked story",
+    impact_horizon: "Needs source follow-up",
+    narrative_sections: [
+      {
+        heading: "The story",
+        body: summary,
+      },
+      {
+        heading: "The FX link",
+        body: `This story is linked to ${pair}. Compare it with the current exchange rate, but do not assume the story caused the currency move.`,
+      },
+      {
+        heading: "What to check",
+        body: "For FX, the useful follow-up is whether policy, trade flows, dollar demand, import costs, or export receipts changed.",
+      },
+    ],
+    analyst_summary: summary,
+    investment_context: `This article is linked to ${pair}. Compare the story with the latest quoted rate of ${rateText} and move of ${changeText}; the article alone does not prove the exchange-rate move.`,
+    key_uncertainty: "The available source text does not confirm whether currency supply, demand, policy, or trade flows changed because of this story.",
+    what_happened: title,
+    confirmed_facts: [
+      `The story is linked to ${pair}.`,
+      `Kenya Fund Finder currently shows ${rateText} as the linked FX rate.`,
+    ],
+    inferred_implications: [
+      "For FX users, the useful check is whether the story affects import costs, export receipts, policy expectations, or dollar demand.",
+    ],
+    not_confirmed: [
+      "No causal impact on the exchange rate is confirmed from the available article text.",
+    ],
+    decision_drivers: [
+      {
+        driver: "Currency context",
+        direction: "neutral",
+        explanation: `The linked rate is ${rateText}, but this story should not be treated as the cause of the FX move unless the source says so.`,
+      },
+      {
+        driver: "Cost exposure",
+        direction: "mixed",
+        explanation: "If the story affects imports, exports, fuel, policy, or dollar demand, it may matter for FX-sensitive decisions.",
+      },
+    ],
+    related_markets: ["FX"],
+    related_market_implications: [
+      {
+        market: "FX",
+        implication: `Watch whether ${pair} moves further after this story and whether official policy or trade data supports the move.`,
+      },
+    ],
+    price_reaction_context: {
+      latest_rate: rateText,
+      move: changeText,
+      context: "This is current FX data shown beside the story; it is not evidence that the article caused the move.",
+    },
+    watch_next: [
+      "Central Bank updates",
+      "Import/export or fuel-price signals",
+      "Follow-up moves in the linked FX pair",
+    ],
+    source_quality: "Linked market data",
+    confidence_label: "Grounded fallback",
+  };
+}
+
 export function FxDecisionContext({ item, article, fx, onEnrichmentComplete, onReadMore }: FxDecisionContextProps) {
-  const analysis = item?.rawItem?.parsed_ai_analysis || article?.parsed_ai_analysis;
+  const analysis = item?.rawItem?.parsed_ai_analysis || article?.parsed_ai_analysis || generateFxFallback(item, article, fx);
   
   if (!analysis) return null;
 
@@ -45,9 +135,37 @@ export function FxDecisionContext({ item, article, fx, onEnrichmentComplete, onR
           </div>
         )}
 
+        <ConfidenceBadge analysis={analysis} />
+
+        <AnalystNote analysis={analysis} />
+
+        {(() => {
+          const context = buildFxMarketContext(fx || item?.relatedFx);
+          return context ? <MarketContextSnapshot {...context} /> : null;
+        })()}
+
+        <DecisionDrivers drivers={analysis.decision_drivers} />
+
+        <EvidenceGuardrail
+          confirmed={analysis.confirmed_facts || (analysis.source_facts ? [analysis.source_facts] : undefined)}
+          inferred={analysis.inferred_implications}
+          notConfirmed={analysis.not_confirmed}
+        />
+
+        <RelatedMarketsStrip
+          markets={analysis.related_markets}
+          implications={analysis.related_market_implications}
+        />
+
+        <WatchNextChecklist
+          items={analysis.watch_next}
+          impactScore={analysis.impact_score}
+          impactReason={analysis.impact_reason}
+        />
+
         {/* Price Reaction Context */}
         {analysis.price_reaction_context && (
-          <section className="border-y border-border py-4">
+          <section className={`${(analysis.content || analysis.market_lens || analysis.why_it_matters || analysis.investor_takeaway) ? "border-b" : "border-y"} border-border py-4`}>
             <h3 className="text-xs font-bold uppercase tracking-[0.12em] text-foreground/90 mb-3">
               Exchange Rate Context
             </h3>

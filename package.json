@@ -20,6 +20,8 @@
     "db:apply-repair-schema": "node scripts/apply-repair-schema.mjs",
     "market:backfill": "node scripts/backfill-market-data.mjs",
     "news:backfill-stocks": "node scripts/backfill-stock-news.mjs",
+    "news:quality-backfill": "tsx scripts/backfill-news-quality.ts",
+    "news:quality-backfill:apply": "tsx scripts/backfill-news-quality.ts --apply",
     "disclosures:backfill": "node scripts/backfill-stock-disclosures.mjs",
     "disclosures:backfill:apply": "node scripts/backfill-stock-disclosures.mjs --apply"
   },

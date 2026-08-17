@@ -49,6 +49,59 @@ describe("stock news feed", () => {
     expect(item.content).toBe("Summary fallback");
   });
 
+  it("renders structured AI analysis as readable decision text", () => {
+    const ai_insight = JSON.stringify({
+      content: "Safaricom changed a bundle rule, which may affect customer usage patterns.",
+      analyst_summary: "Safaricom adjusted how customers can use one data bundle.",
+      investment_context: "For SCOM investors, this is customer-pricing context rather than proven earnings impact.",
+      key_uncertainty: "The article does not confirm revenue or profit impact.",
+      narrative_sections: [
+        {
+          heading: "The story",
+          body: "Safaricom changed how a customer bundle can be used.",
+        },
+      ],
+      decision_drivers: [
+        {
+          driver: "Customer demand",
+          direction: "mixed",
+          explanation: "The pricing change may influence how customers use data bundles.",
+        },
+      ],
+      market_lens: "Stocks lens: this is customer-pricing news for SCOM, not proven earnings impact.",
+      why_it_matters: "Investors should monitor whether pricing changes support data revenue.",
+      investor_takeaway: "Watch future disclosures before treating this as earnings impact.",
+      confirmed_facts: ["The article says Safaricom changed a bundle rule."],
+      inferred_implications: ["Customer usage may change if the new rule affects convenience."],
+      not_confirmed: ["The article does not prove stock-price causation."],
+      impact_score: 2,
+      impact_reason: "Direct company mention, but limited financial evidence.",
+      watch_next: ["Watch Safaricom disclosures for data revenue impact."],
+      related_markets: ["Stocks"],
+      related_market_implications: [
+        {
+          market: "Stocks",
+          implication: "The article is relevant to SCOM because it discusses a Safaricom pricing change.",
+        },
+      ],
+    });
+    const [item] = buildNewsFeedItems([article({ ai_insight })], [stock]);
+    expect(item.content).toContain("The story: Safaricom changed how a customer bundle can be used.");
+    expect(item.content).toContain("customer-pricing context");
+    expect(item.rawItem.parsed_ai_analysis.market_lens).toContain("Stocks lens");
+    expect(item.rawItem.parsed_ai_analysis.analyst_summary).toContain("adjusted");
+    expect(item.rawItem.parsed_ai_analysis.narrative_sections?.[0].heading).toBe("The story");
+    expect(item.rawItem.parsed_ai_analysis.investment_context).toContain("customer-pricing");
+    expect(item.rawItem.parsed_ai_analysis.key_uncertainty).toContain("revenue");
+    expect(item.rawItem.parsed_ai_analysis.decision_drivers?.[0].driver).toBe("Customer demand");
+    expect(item.rawItem.parsed_ai_analysis.investor_takeaway).toContain("future disclosures");
+    expect(item.rawItem.parsed_ai_analysis.impact_score).toBe(2);
+    expect(item.rawItem.parsed_ai_analysis.watch_next?.[0]).toContain("data revenue");
+    expect(item.rawItem.parsed_ai_analysis.related_market_implications?.[0].implication).toContain("pricing change");
+    expect(item.rawItem.parsed_ai_analysis.not_confirmed?.[0]).toContain("stock-price causation");
+    expect(item.rawItem.parsed_ai_analysis.why_it_matters).toContain("pricing changes");
+  });
+
   it("does not render legacy RSS markup in a summary", () => {
     const summary = '<a href="https://news.google.com">EABL stake sale</a> <font>Business Daily</font>';
     const [item] = buildNewsFeedItems([article({ ai_insight: null, summary })], [stock]);

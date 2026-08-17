@@ -4,6 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import type { NewsFromDB } from "@/lib/api";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
+import { getNewsPublishedAt } from "@/lib/newsDate";
 
 interface NewsSidebarProps {
   news: NewsFromDB[];
@@ -78,7 +79,7 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
             <div className="flex items-center justify-between mt-2.5">
               <p className="text-xs text-muted-foreground">
                 {article.source && `${article.source} · `}
-                {new Date(article.created_at || article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+                {new Date(getNewsPublishedAt(article) || "").toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
               </p>
               <span className="text-xs text-accent font-medium flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
                 Read <ArrowRight className="h-3 w-3" />
@@ -117,7 +118,7 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
               {article.title}
             </h3>
             <p className="text-xs text-muted-foreground mt-1">
-              {new Date(article.created_at || article.date_published).toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
+              {new Date(getNewsPublishedAt(article) || "").toLocaleDateString("en-KE", { month: "short", day: "numeric" })}
             </p>
           </div>
         </div>

@@ -76,7 +76,7 @@
           if (location.pathname !== "/" && location.pathname !== "/index.html") return;
           var SUPABASE_URL = "https://caawgzuofnujrznwbuxk.supabase.co";
           var SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFybXRoY2l1cm5ncHpwamhldmRqIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzIyNzQ1ODksImV4cCI6MjA4Nzg1MDU4OX0.WeQLthaDLzYdmSjY_tt4_ZClx68aXQe3EOjn314yygs";
-          var url = SUPABASE_URL + "/rest/v1/news_articles_public?select=id,title,summary,source,date_published,url,category,read_time,is_featured,status,image_url&order=date_published.desc&limit=4";
+          var url = SUPABASE_URL + "/rest/v1/news_articles_public?select=id,title,summary,source,date_published,source_published_at,created_at,url,category,read_time,is_featured,status,image_url&order=source_published_at.desc.nullslast,date_published.desc.nullslast,created_at.desc&limit=4";
           window.__newsPreviewPromise = fetch(url, {
             headers: { apikey: SUPABASE_KEY, Authorization: "Bearer " + SUPABASE_KEY },
             credentials: "omit",

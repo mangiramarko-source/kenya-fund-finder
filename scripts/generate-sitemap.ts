@@ -58,7 +58,7 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
       "funds_public?select=slug,updated_at&is_published=eq.true&order=name.asc",
     ),
     supaSelect<{ id: string; updated_at: string }>(
-      `news_articles_public?select=id,updated_at&status=eq.published&order=date_published.desc&limit=${NEWS_LIMIT}`,
+      `news_articles_public?select=id,updated_at&status=eq.published&order=source_published_at.desc.nullslast,date_published.desc.nullslast&limit=${NEWS_LIMIT}`,
     ),
     supaSelect<{ slug: string; updated_at: string }>(
       "site_pages_public?select=slug,updated_at",

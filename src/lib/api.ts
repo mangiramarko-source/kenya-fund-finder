@@ -46,11 +46,81 @@ export interface NewsAiAnalysis {
   event_label?: string;
   impact_horizon?: string;
   what_happened?: string;
+  why_it_matters?: string;
+  investor_takeaway?: string;
+  market_lens?: string;
+  analyst_summary?: string;
+  investment_context?: string;
+  key_uncertainty?: string;
+  narrative_sections?: Array<{
+    heading: string;
+    body: string;
+  }>;
+  decision_drivers?: Array<{
+    driver: string;
+    direction?: "positive" | "negative" | "mixed" | "neutral";
+    explanation: string;
+  }>;
+  confirmed_facts?: string[];
+  inferred_implications?: string[];
+  not_confirmed?: string[];
+  watch_next?: string[];
+  impact_score?: number;
+  impact_reason?: string;
   verified_figures?: string[];
   tags?: string[];
   factors_positive?: string[];
   factors_negative?: string[];
   source_facts?: string;
+  related_markets?: string[];
+  related_market_implications?: Array<{ market: string; implication: string }>;
+  related_disclosures?: Array<{ title: string; url?: string | null }>;
+  price_reaction_context?: Record<string, string>;
+  source_quality?: string;
+  confidence_label?: string;
+  clustered_count?: number;
+}
+
+export function parseNewsAiAnalysis(aiInsight: string | null | undefined): NewsAiAnalysis | null {
+  if (!aiInsight) return null;
+  try {
+    const parsed = JSON.parse(aiInsight);
+    if (typeof parsed === "object" && parsed !== null) {
+      return parsed as NewsAiAnalysis;
+    }
+  } catch {
+    return { content: aiInsight };
+  }
+  return null;
+}
+
+export function getNewsAiAnalysisDisplayText(analysis: NewsAiAnalysis | null | undefined): string {
+  if (!analysis) return "";
+  const narrativeText = (analysis.narrative_sections || [])
+    .filter((section) => section?.heading?.trim() && section?.body?.trim())
+    .slice(0, 3)
+    .map((section) => `${section.heading.trim()}: ${section.body.trim()}`)
+    .join("\n\n");
+
+  const parts = [
+    narrativeText,
+    analysis.content || analysis.analyst_summary,
+    analysis.investment_context,
+    analysis.market_lens,
+    analysis.why_it_matters ? `Why it matters: ${analysis.why_it_matters}` : null,
+    analysis.investor_takeaway ? `Investor takeaway: ${analysis.investor_takeaway}` : null,
+  ]
+    .filter((value): value is string => typeof value === "string" && value.trim().length > 0)
+    .map((value) => value.trim());
+
+  if (parts.length > 0) {
+    return parts.slice(0, 3).join("\n\n");
+  }
+
+  return [
+    analysis.what_happened,
+    analysis.source_facts,
+  ].find((value) => typeof value === "string" && value.trim().length > 0)?.trim() || "";
 }
 
 export interface NewsFromDB {
@@ -60,6 +130,7 @@ export interface NewsFromDB {
   content: string | null;
   source: string;
   date_published: string;
+  source_published_at: string | null;
   url: string | null;
   category: string;
   read_time: string;
@@ -147,22 +218,12 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
 export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+    .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  let parsed_ai_analysis: NewsAiAnalysis | null = null;
-  if (data.ai_insight) {
-    try {
-      const parsed = JSON.parse(data.ai_insight);
-      if (typeof parsed === 'object' && parsed !== null) {
-        parsed_ai_analysis = parsed;
-      }
-    } catch (e) {
-      parsed_ai_analysis = { content: data.ai_insight };
-    }
-  }
+  const parsed_ai_analysis = parseNewsAiAnalysis(data.ai_insight);
 
   return {
     id: data.id!,
@@ -171,6 +232,7 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
     content: data.content || null,
     source: data.source!,
     date_published: data.date_published!,
+    source_published_at: data.source_published_at || null,
     url: data.url || null,
     category: data.category!,
     read_time: data.read_time!,
@@ -216,24 +278,16 @@ export async function enrichArticleLive(articleId: string): Promise<string> {
 export async function fetchRelatedNews(category: string, excludeId: string, limit = 3): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, ai_insight")
+    .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, ai_insight")
     .eq("category", category)
     .neq("id", excludeId)
+    .order("source_published_at", { ascending: false, nullsFirst: false })
+    .order("date_published", { ascending: false, nullsFirst: false })
     .order("created_at", { ascending: false })
     .limit(limit);
   if (error) throw error;
   return (data || []).map((d: any) => {
-    let parsed_ai_analysis: NewsAiAnalysis | null = null;
-    if (d.ai_insight) {
-      try {
-        const parsed = JSON.parse(d.ai_insight);
-        if (typeof parsed === 'object' && parsed !== null) {
-          parsed_ai_analysis = parsed;
-        }
-      } catch (e) {
-        parsed_ai_analysis = { content: d.ai_insight };
-      }
-    }
+    const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight);
     
     return {
       id: d.id,
@@ -242,6 +296,7 @@ export async function fetchRelatedNews(category: string, excludeId: string, limi
       content: d.content || null,
       source: d.source,
       date_published: d.date_published,
+      source_published_at: d.source_published_at || null,
       created_at: d.created_at,
       url: d.url,
       category: d.category,
@@ -276,6 +331,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
           content: null,
           source: d.source,
           date_published: d.date_published,
+          source_published_at: d.source_published_at || null,
           created_at: d.created_at,
           url: d.url,
           category: d.category,
@@ -291,7 +347,9 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
   try {
     const { data, error } = await supabase
       .from("news_articles_public")
-      .select("id, title, summary, source, date_published, created_at, url, category, read_time, is_featured, status, image_url")
+      .select("id, title, summary, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url")
+      .order("source_published_at", { ascending: false, nullsFirst: false })
+      .order("date_published", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) throw error;
@@ -302,6 +360,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
       content: null,
       source: d.source,
       date_published: d.date_published,
+      source_published_at: d.source_published_at || null,
       created_at: d.created_at,
       url: d.url,
       category: d.category,
@@ -309,6 +368,9 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
       is_featured: d.is_featured,
       status: d.status,
       image_url: d.image_url || null,
+      related_stock_id: null,
+      ai_insight: null,
+      parsed_ai_analysis: null,
     }));
   } catch (err) {
     console.error("Failed to fetch latest news from Supabase (likely RLS error), using mock data", err);
@@ -320,6 +382,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
         content: null,
         source: "Millan Philipose",
         date_published: new Date().toISOString(),
+        source_published_at: new Date().toISOString(),
         url: "#",
         category: "Platform Update",
         read_time: "1 min read",
@@ -334,6 +397,7 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
         content: null,
         source: "Business Daily",
         date_published: new Date(Date.now() - 3600000).toISOString(),
+        source_published_at: new Date(Date.now() - 3600000).toISOString(),
         url: "#",
         category: "Economy",
         read_time: "3 min read",
@@ -349,29 +413,36 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
   try {
     const { data, error } = await supabase
       .from("news_articles_public")
-      .select("id, title, summary, content, source, date_published, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+      .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+      .order("source_published_at", { ascending: false, nullsFirst: false })
+      .order("date_published", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .range(offset, offset + limit - 1);
       
     if (error) throw error;
     
-    return (data || []).map((d: any) => ({
-      id: d.id,
-      title: d.title,
-      summary: d.summary,
-      content: d.content || null,
-      source: d.source,
-      date_published: d.date_published,
-      created_at: d.created_at,
-      url: d.url,
-      category: d.category,
-      read_time: d.read_time,
-      is_featured: d.is_featured,
-      status: d.status,
-      image_url: d.image_url || null,
-      related_stock_id: d.related_stock_id || null,
-      ai_insight: d.ai_insight || null,
-    }));
+    return (data || []).map((d: any) => {
+      const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight);
+      return {
+        id: d.id,
+        title: d.title,
+        summary: d.summary,
+        content: d.content || null,
+        source: d.source,
+        date_published: d.date_published,
+        source_published_at: d.source_published_at || null,
+        created_at: d.created_at,
+        url: d.url,
+        category: d.category,
+        read_time: d.read_time,
+        is_featured: d.is_featured,
+        status: d.status,
+        image_url: d.image_url || null,
+        related_stock_id: d.related_stock_id || null,
+        ai_insight: d.ai_insight || null,
+        parsed_ai_analysis,
+      };
+    });
   } catch (err) {
     console.error("Failed to fetch news from Supabase (likely RLS error), using mock data", err);
     // Return mock data so the right column works while RLS is being fixed
@@ -383,6 +454,7 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
         content: "Take control of your timeline with our new advanced filtering tools.",
         source: "Millan Philipose",
         date_published: new Date().toISOString(),
+        source_published_at: new Date().toISOString(),
         url: "#",
         category: "Platform Update",
         read_time: "1 min read",
@@ -399,6 +471,7 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
         content: "The Central Bank of Kenya has decided to maintain its benchmark lending rate...",
         source: "Business Daily",
         date_published: new Date(Date.now() - 3600000).toISOString(),
+        source_published_at: new Date(Date.now() - 3600000).toISOString(),
         url: "#",
         category: "Economy",
         read_time: "3 min read",
@@ -415,6 +488,7 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
         content: "Driven by M-PESA and mobile data growth, the telco giant...",
         source: "TechCabal",
         date_published: new Date(Date.now() - 86400000).toISOString(),
+        source_published_at: new Date(Date.now() - 86400000).toISOString(),
         url: "#",
         category: "Tech",
         read_time: "4 min read",

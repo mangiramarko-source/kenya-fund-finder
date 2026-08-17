@@ -1,7 +1,8 @@
-import type { NewsFromDB, PublicStock } from "@/lib/api";
+import { getNewsAiAnalysisDisplayText, parseNewsAiAnalysis, type NewsFromDB, type PublicStock } from "@/lib/api";
 import type { FeedItem } from "@/hooks/useSocialFeed";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
+import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 
 export type NewsTab = "All" | "Stocks" | "Kenyan" | "International" | "Latest" | "Oldest";
 
@@ -29,8 +30,8 @@ export function filterNewsArticles(articles: NewsFromDB[], tab: NewsTab, query: 
 
   const ascending = tab === "Oldest";
   return [...result].sort((left, right) => {
-    const leftTime = new Date(left.created_at || left.date_published).getTime();
-    const rightTime = new Date(right.created_at || right.date_published).getTime();
+    const leftTime = getNewsPublishedTime(left);
+    const rightTime = getNewsPublishedTime(right);
     return ascending ? leftTime - rightTime : rightTime - leftTime;
   });
 }
@@ -46,7 +47,8 @@ export function buildNewsFeedItems(articles: NewsFromDB[], stocks: PublicStock[]
       content: decodeHtmlEntities(article.content || ""),
       source: article.source,
     });
-    const aiInsight = article.ai_insight ? decodeHtmlEntities(article.ai_insight) : null;
+    const parsedAnalysis = article.parsed_ai_analysis || parseNewsAiAnalysis(article.ai_insight);
+    const aiInsight = getNewsAiAnalysisDisplayText(parsedAnalysis) || (article.ai_insight && !parsedAnalysis ? decodeHtmlEntities(article.ai_insight) : null);
     return {
       id: `news-${article.id}`,
       type: "NEWS" as const,
@@ -56,11 +58,11 @@ export function buildNewsFeedItems(articles: NewsFromDB[], stocks: PublicStock[]
       content: aiInsight || presentation.body,
       mediaUrl: article.image_url || undefined,
       mediaType: article.image_url ? ("image" as const) : undefined,
-      timestamp: new Date(article.created_at || article.date_published || Date.now()),
+      timestamp: new Date(getNewsPublishedAt(article) || Date.now()),
       likes: article.likes || 0,
       comments: article.comments || 0,
       url: article.url || "#",
-      rawItem: article,
+      rawItem: { ...article, parsed_ai_analysis: parsedAnalysis },
       aiInsight,
       isHeadlineOnly: !aiInsight && presentation.isHeadlineOnly,
       relatedStock: stock ? {

@@ -24,12 +24,13 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
-import { fetchNewsById, fetchPublicStockById, fetchRelatedNews, fetchFunds, type NewsFromDB, type PublicStock } from "@/lib/api";
+import { fetchNewsById, fetchPublicStockById, fetchRelatedNews, fetchFunds, getNewsAiAnalysisDisplayText, type NewsFromDB, type PublicStock } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
 import { formatDistanceToNow, format } from "date-fns";
+import { getNewsPublishedAt } from "@/lib/newsDate";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
@@ -44,6 +45,7 @@ import { MmfDecisionContext } from "@/components/news/MmfDecisionContext";
 import { FxDecisionContext } from "@/components/news/FxDecisionContext";
 import { CommodityDecisionContext } from "@/components/news/CommodityDecisionContext";
 import { getDemoArticles } from "@/lib/demo-data";
+import { buildRelatedMarketLinks } from "@/lib/newsMarketLinks";
 
 interface CommentItem {
   id: string;
@@ -344,7 +346,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
       }
 
       fetchNewsById(id!)
-        .then((a) => {
+        .then(async (a) => {
           if (a) {
             setArticle(a);
             if (a.related_stock_id) {
@@ -352,6 +354,35 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
                 .then(setRelatedStock)
                 .catch(() => setRelatedStock(null));
             }
+            const presentation = getNewsPresentation(a);
+            Promise.all([
+              fetchFunds().catch(() => []),
+              supabase.from("exchange_rates_public" as any).select("*"),
+              supabase.from("commodities_public" as any).select("*"),
+            ]).then(([fundRows, fxRes, commodityRes]) => {
+              const fxRates = ((fxRes as any)?.data || []).map((rate: any) => ({
+                ...rate,
+                rate: Number(rate.rate) || 0,
+                previous_rate: rate.previous_rate == null ? null : Number(rate.previous_rate),
+                day_change_percent: rate.day_change_percent == null ? null : Number(rate.day_change_percent),
+              }));
+              const commodities = ((commodityRes as any)?.data || []).map((commodity: any) => ({
+                ...commodity,
+                price: Number(commodity.price) || 0,
+                previous_price: commodity.previous_price == null ? null : Number(commodity.previous_price),
+                day_change_percent: commodity.day_change_percent == null ? null : Number(commodity.day_change_percent),
+              }));
+              const marketLinks = buildRelatedMarketLinks(
+                presentation.title,
+                presentation.body,
+                fundRows,
+                fxRates,
+                commodities,
+              );
+              setRelatedMmf(marketLinks.relatedMmf);
+              setRelatedFx(marketLinks.relatedFx);
+              setRelatedCommodity(marketLinks.relatedCommodity);
+            }).catch(() => {});
             fetchRelatedNews(a.category, a.id, 3)
               .then(setRelated)
               .catch(() => {});
@@ -403,7 +434,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         headline: articlePresentation?.title || article.title,
         description: articlePresentation?.body || articlePresentation?.title || article.summary,
         mainEntityOfPage: `https://kenyafundfinder.com/news/${article.id}`,
-        datePublished: article.date_published || article.created_at,
+        datePublished: getNewsPublishedAt(article),
         dateModified: article.created_at || article.date_published,
         ...(article.image_url ? { image: [article.image_url] } : {}),
         author: { "@type": "Organization", name: article.source || "Kenya Fund Finder" },
@@ -504,7 +535,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     }
   };
 
-  const pubDate = new Date(article.created_at || article.date_published);
+  const pubDate = new Date(getNewsPublishedAt(article) || "");
   const formattedTime = isNaN(pubDate.getTime()) ? "12:00 PM" : format(pubDate, "h:mm a");
   const formattedDate = isNaN(pubDate.getTime()) ? "Today" : format(pubDate, "d MMM yyyy");
   const relativeTime = isNaN(pubDate.getTime()) ? "now" : formatDistanceToNow(pubDate, { addSuffix: true }).replace("about ", "");
@@ -516,8 +547,9 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
   })();
   const sourceLogoUrl = sourceDomain ? `https://www.google.com/s2/favicons?domain=${sourceDomain}&sz=128` : "";
   let rawBody = articlePresentation?.body || "";
-  if (rawBody.length < 150 && article?.ai_insight && article.ai_insight.length > rawBody.length) {
-    rawBody = article.ai_insight;
+  const analysisBody = getNewsAiAnalysisDisplayText(article?.parsed_ai_analysis);
+  if (rawBody.length < 150 && analysisBody.length > rawBody.length) {
+    rawBody = analysisBody;
   }
   const isHeadlineOnly = !rawBody;
   const articleText = decodeHtmlEntities(rawBody);

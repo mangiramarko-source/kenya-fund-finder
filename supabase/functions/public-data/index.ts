@@ -111,11 +111,11 @@ const RESOURCES: Record<string, ResourceDef> = {
     kind: "list",
     view: "news_articles_public",
     columns: [
-      "id", "title", "summary", "source", "date_published", "url",
+      "id", "title", "summary", "source", "date_published", "source_published_at", "url",
       "category", "read_time", "is_featured", "status", "image_url",
     ],
-    orderable: ["date_published", "is_featured"],
-    defaultOrder: "date_published.desc",
+    orderable: ["source_published_at", "date_published", "is_featured"],
+    defaultOrder: "source_published_at.desc",
     cacheSeconds: 120,
   },
   // History resources: require ?id=<uuid>, capped at MAX_HISTORY_DAYS days.
@@ -295,8 +295,14 @@ Deno.serve(async (req) => {
   let query = supabase
     .from(resource.view)
     .select(columns.join(","), { count: "exact" })
-    .order(order.col, { ascending: order.asc })
+    .order(order.col, { ascending: order.asc, nullsFirst: false })
     .range(offset, offset + limit - 1);
+
+  if (resourceKey === "news" && order.col === "source_published_at") {
+    query = query
+      .order("date_published", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false });
+  }
 
   if (resource.kind === "history" || resource.kind === "related") {
     const parentId = url.searchParams.get("id");

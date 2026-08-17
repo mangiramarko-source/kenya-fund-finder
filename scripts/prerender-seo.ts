@@ -62,6 +62,7 @@ interface NewsRow {
   content: string | null;
   source: string | null;
   date_published: string | null;
+  source_published_at: string | null;
   created_at: string | null;
   updated_at: string | null;
   image_url: string | null;
@@ -326,7 +327,7 @@ function fundPage(fund: FundRow): SeoPageDefinition | null {
 function newsPage(article: NewsRow): SeoPageDefinition | null {
   if (!validSegment(article.id) || !article.title || !article.summary) return null;
   const path = `/news/${article.id}`;
-  const published = article.date_published || article.created_at;
+  const published = article.source_published_at || article.date_published || article.created_at;
   const body = stripHtml(article.content || article.summary);
   return {
     path,
@@ -395,7 +396,7 @@ async function loadDynamicPages(): Promise<SeoPageDefinition[]> {
   const [stocks, funds, news, sitePages] = await Promise.all([
     supaSelect<StockRow>("stocks_public", "select=symbol,name,sector,price,day_change,day_change_percent,volume,market_cap,pe_ratio,dividend_yield,year_high,year_low,updated_at,is_active&is_active=eq.true&order=sort_order.asc"),
     supaSelect<FundRow>("funds_public", "select=slug,name,manager,annual_yield,daily_yield,minimum_investment,management_fee,withdrawal_time,description,fund_type,yield_unit,cma_licensed,is_published,updated_at,logo_url&is_published=eq.true&order=name.asc"),
-    supaSelect<NewsRow>("news_articles_public", "select=id,title,summary,content,source,date_published,created_at,updated_at,image_url,category,read_time,status&status=eq.published&order=date_published.desc"),
+    supaSelect<NewsRow>("news_articles_public", "select=id,title,summary,content,source,date_published,source_published_at,created_at,updated_at,image_url,category,read_time,status&status=eq.published&order=source_published_at.desc.nullslast,date_published.desc.nullslast"),
     supaSelect<SitePageRow>("site_pages_public", "select=slug,title,content,meta,updated_at&order=slug.asc"),
   ]);
 

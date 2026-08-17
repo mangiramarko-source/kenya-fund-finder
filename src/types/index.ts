@@ -71,6 +71,7 @@ export interface NewsArticle {
   source: string;
   url: string | null;
   date_published: string;
+  source_published_at?: string | null;
   read_time: string;
   is_featured: boolean;
 }
