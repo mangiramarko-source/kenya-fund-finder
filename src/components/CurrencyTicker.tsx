@@ -95,7 +95,7 @@ const CurrencyTicker = () => {
 
   return (
     <div
-      className="flex h-9 items-center overflow-hidden border-b border-border/80 bg-card text-card-foreground px-4 shadow-sm"
+      className="flex h-9 w-full min-w-0 max-w-full items-center overflow-hidden border-b border-border/80 bg-card px-4 text-card-foreground shadow-sm"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={() => setPaused(true)}
@@ -103,7 +103,7 @@ const CurrencyTicker = () => {
     >
       <div
         ref={scrollRef}
-        className="animate-marquee flex gap-8 whitespace-nowrap"
+        className="animate-marquee flex w-max shrink-0 gap-8 whitespace-nowrap"
         style={{
           animationPlayState: paused ? "paused" : "running",
           animationDuration: `${items.length * (isMobile ? 3.5 : 4.5)}s`

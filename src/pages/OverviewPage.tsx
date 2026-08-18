@@ -47,6 +47,7 @@ import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { buildNewsFeedItems } from "@/lib/stockNewsFeed";
 import { getCurrencyFlag } from "@/lib/currencyFlags";
+import { getPinnedMarketNewsBounds } from "@/lib/pinnedMarketNews";
 
 const INTERNATIONAL_SOURCES = new Set([
   "Reuters Business",
@@ -1064,6 +1065,7 @@ const OverviewPage = () => {
   }, [feedItems, news, stocks]);
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const marketNewsNavRef = useRef<HTMLDivElement | null>(null);
+  const marketNewsPanelRef = useRef<HTMLDivElement | null>(null);
   const [marketNewsNavPin, setMarketNewsNavPin] = useState({
     pinned: false,
     left: 0,
@@ -1399,14 +1401,20 @@ const OverviewPage = () => {
       const top = isDesktop ? 56 + 36 : 137;
       const rect = nav.getBoundingClientRect();
       const pinned = rect.top <= top;
+      const bounds = getPinnedMarketNewsBounds({
+        left: rect.left,
+        width: rect.width,
+        viewportWidth: window.innerWidth,
+        bleed: isDesktop ? 8 : 16,
+      });
 
       setMarketNewsNavPin((current) => {
         const next = {
           pinned,
-          left: rect.left,
+          left: bounds.left,
           top,
-          width: rect.width,
-          height: nav.offsetHeight,
+          width: bounds.width,
+          height: marketNewsPanelRef.current?.offsetHeight || nav.offsetHeight,
         };
 
         if (
@@ -1443,7 +1451,7 @@ const OverviewPage = () => {
 
   return (
     <>
-      <main className="px-4 py-6 md:grid md:grid-cols-12 md:gap-6 md:px-6">
+      <main className="w-full min-w-0 max-w-full px-4 py-6 md:grid md:grid-cols-12 md:gap-6 md:px-6">
         <h1 className="sr-only">KenyaFundFinder market overview</h1>
 
         {/* Left Column - Desktop Only */}
@@ -1466,9 +1474,12 @@ const OverviewPage = () => {
             style={marketNewsNavPin.pinned ? { height: marketNewsNavPin.height } : undefined}
           >
             <div
+              ref={marketNewsPanelRef}
               className={cn(
-                "-mx-4 border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md md:-mx-2 md:px-2 md:pt-1",
-                marketNewsNavPin.pinned && "fixed z-40 shadow-sm"
+                "border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md md:px-2 md:pt-1",
+                marketNewsNavPin.pinned
+                  ? "fixed max-w-full z-40 shadow-sm"
+                  : "-mx-4 md:-mx-2"
               )}
               style={
                 marketNewsNavPin.pinned
@@ -1487,7 +1498,7 @@ const OverviewPage = () => {
                 </span>
               </div>
 
-              <div className="no-scrollbar mb-5 flex gap-2 overflow-x-auto pb-1 md:mb-6">
+              <div className="no-scrollbar mb-5 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 md:mb-6">
                 {["All", "Stocks", "Kenyan", "International", "MMFs", "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => (
                   <button
                     key={f}

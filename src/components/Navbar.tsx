@@ -458,8 +458,8 @@ const Navbar = () => {
         </nav>
 
         {/* Full-width scrollable tab bar */}
-        <div className="no-scrollbar flex overflow-x-auto border-b border-border px-4">
-          <div ref={mobileTabsScrollRef} className="flex shrink-0 gap-6 py-3">
+        <div className="no-scrollbar flex w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain border-b border-border px-4">
+          <div ref={mobileTabsScrollRef} className="flex w-max shrink-0 gap-6 py-3">
             {mobileNavLinks.map((link) => {
               const isActive = location.pathname === link.to;
               return (
