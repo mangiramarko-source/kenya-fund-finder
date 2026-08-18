@@ -1498,7 +1498,7 @@ const OverviewPage = () => {
                 </span>
               </div>
 
-              <div className="no-scrollbar mb-5 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 md:mb-6">
+              <div className="no-scrollbar mb-2 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 md:mb-3">
                 {["All", "Stocks", "Kenyan", "International", "MMFs", "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => (
                   <button
                     key={f}
