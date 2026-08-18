@@ -21,6 +21,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   const isAuthPage = pathname === "/auth";
   // AI Lab uses its own floating composer — hide global footer entirely
   const isAiLab = pathname === "/ai-lab" || pathname.startsWith("/ai-lab/");
+  const isOverview = pathname === "/" || pathname === "/overview";
   const showMobileAiLabFab = shouldShowMobileAiLabFab(pathname);
 
   return (
@@ -51,6 +52,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           className={
             isAiLab
               ? "flex-1 min-h-0 flex flex-col overflow-hidden"
+              : isOverview
+                ? "flex-1 min-h-0 md:overflow-hidden"
               : "flex-1 min-h-[80vh]"
           }
         >
@@ -58,7 +61,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         </main>
         {/* Footer hidden on mobile news article pages, auth page, and entirely on the AI Lab */}
         {!isAiLab && !isAuthPage && (
-          <div className={isNewsArticle ? "hidden md:block" : ""}>
+          <div className={`${isNewsArticle ? "hidden md:block" : ""}${isOverview ? " md:hidden" : ""}`}>
             <Footer />
           </div>
         )}

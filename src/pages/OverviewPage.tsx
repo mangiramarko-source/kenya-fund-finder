@@ -1398,14 +1398,23 @@ const OverviewPage = () => {
       if (!nav) return;
 
       const isDesktop = window.matchMedia("(min-width: 768px)").matches;
-      const top = isDesktop ? 56 + 36 : 137;
+      if (isDesktop) {
+        setMarketNewsNavPin((current) =>
+          current.pinned || current.left || current.top || current.width || current.height
+            ? { pinned: false, left: 0, top: 0, width: 0, height: 0 }
+            : current
+        );
+        return;
+      }
+
+      const top = 137;
       const rect = nav.getBoundingClientRect();
       const pinned = rect.top <= top;
       const bounds = getPinnedMarketNewsBounds({
         left: rect.left,
         width: rect.width,
         viewportWidth: window.innerWidth,
-        bleed: isDesktop ? 8 : 16,
+        bleed: 16,
       });
 
       setMarketNewsNavPin((current) => {
@@ -1451,11 +1460,11 @@ const OverviewPage = () => {
 
   return (
     <>
-      <main className="w-full min-w-0 max-w-full px-4 py-6 md:grid md:grid-cols-12 md:gap-6 md:px-6">
+      <main className="w-full min-w-0 max-w-full px-4 py-6 md:grid md:h-[calc(100dvh-5.75rem)] md:grid-cols-12 md:gap-6 md:overflow-hidden md:px-6">
         <h1 className="sr-only">KenyaFundFinder market overview</h1>
 
         {/* Left Column - Desktop Only */}
-        <div className="hidden md:flex md:flex-col md:col-span-3 space-y-4 sticky top-20 h-fit">
+        <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 md:col-span-3 md:flex md:flex-col md:space-y-4">
           <NseMarketStatusCard />
           <WatchlistSummaryCard
             items={derivedWatchlistItems}
@@ -1465,18 +1474,19 @@ const OverviewPage = () => {
         </div>
 
         {/* Middle Column - Feed */}
-        <div className="md:col-span-6 flex flex-col w-full min-w-0 max-w-full overflow-visible">
+        <div className="flex w-full min-w-0 max-w-full flex-col overflow-visible md:col-span-6 md:min-h-0 md:overflow-x-hidden md:overflow-y-auto">
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 
           <div
             ref={marketNewsNavRef}
+            className="md:sticky md:top-0 md:z-30"
             style={marketNewsNavPin.pinned ? { height: marketNewsNavPin.height } : undefined}
           >
             <div
               ref={marketNewsPanelRef}
               className={cn(
-                "border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md md:px-2 md:pt-1",
+                "border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md md:px-2 md:pt-1 md:shadow-sm",
                 marketNewsNavPin.pinned
                   ? "fixed max-w-full z-40 shadow-sm"
                   : "-mx-4 md:-mx-2"
@@ -1561,7 +1571,7 @@ const OverviewPage = () => {
         </div>
 
         {/* Right Column - Desktop Only */}
-        <div className="hidden md:flex md:flex-col md:col-span-3 space-y-4 sticky top-20 h-[calc(100vh-6rem)] overflow-y-auto pr-1">
+        <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 md:col-span-3 md:flex md:flex-col md:space-y-4">
           <ExchangeRatesCard
             rates={displayFxRates}
             onOpenCustomize={() => setFxCustomizeOpen(true)}
