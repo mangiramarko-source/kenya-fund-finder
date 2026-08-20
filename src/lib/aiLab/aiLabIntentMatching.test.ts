@@ -2,7 +2,7 @@ import { describe, it, expect } from "vitest";
 import { classifyAiLabPrompt } from "./intent";
 import { routePrompt } from "./router";
 import { isNewsLabPrompt, NEWS_LIMITATION_MSG } from "./newsContext";
-import { detectAdviceIntent, RESPONSE_QUALITY_BANNED } from "./safety";
+import { detectAdviceIntent, hasResponseQualityIssue } from "./safety";
 import { composeAssistantResponse } from "./responseComposer";
 import type { MarketContext, ComparableAsset } from "./marketContext";
 import type { NewsArticle, NewsContext } from "./newsContext";
@@ -125,8 +125,6 @@ describe("fuzzy compare responses stay safe", () => {
     const r = routePrompt("compare safaricom and kcb", ctx);
     expect(r.kind).toBe("compare");
     const composed = composeAssistantResponse({ prompt: "compare safaricom and kcb", result: r });
-    for (const pattern of RESPONSE_QUALITY_BANNED) {
-      expect(pattern.test(composed.text)).toBe(false);
-    }
+    expect(hasResponseQualityIssue(composed.text)).toBe(false);
   });
 });

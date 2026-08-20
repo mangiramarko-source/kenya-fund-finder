@@ -6,12 +6,10 @@ import {
   isHypotheticalScenarioPrompt,
 } from "./hypotheticalScenarios";
 import { classifyEducational } from "./educationalClassifier";
-import { RESPONSE_QUALITY_BANNED } from "./safety";
-
-const ADVICE_BAN = RESPONSE_QUALITY_BANNED;
+import { hasResponseQualityIssue } from "./safety";
 
 function isSafeText(text: string) {
-  return !ADVICE_BAN.some((re) => re.test(text));
+  return !hasResponseQualityIssue(text);
 }
 
 describe("classifyHypotheticalPrompt", () => {

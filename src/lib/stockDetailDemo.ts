@@ -104,12 +104,6 @@ export function calculateDemoReturn(points: DemoPricePoint[], currentPrice: numb
       }
     }
   }
-  
-  // Fallback: if no baseline point was found within maxDiff, use the earliest available point in range
-  if (!baseline && points.length > 0) {
-    baseline = points[0];
-  }
-
   if (!baseline || baseline.price <= 0) return null;
   return ((currentPrice - baseline.price) / baseline.price) * 100;
 }

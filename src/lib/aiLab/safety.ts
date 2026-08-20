@@ -10,9 +10,21 @@ export const FORBIDDEN_PATTERNS: RegExp[] = [
   /\bsafest fund\b/i,
   /\bbetter option\b/i,
   /\brecommended choice\b/i,
-  /\bguaranteed returns?\b/i,
   /\brisk[-\s]?free\b/i,
   /\bput your money\b/i,
+];
+
+const PERMITTED_GUARANTEE_WARNING_PATTERNS: RegExp[] = [
+  /\b(?:returns?|dividends?|profits?|income|results?)\s+(?:are|is)\s+not\s+guaranteed\b/gi,
+  /\bthere\s+is\s+no\s+guaranteed\s+returns?\b/gi,
+  /\bpast\s+performance\s+does\s+not\s+guarantee\s+future\s+(?:returns?|results?|performance)\b/gi,
+];
+
+export const FINANCIAL_CERTAINTY_CLAIM_PATTERNS: RegExp[] = [
+  /\bguaranteed\s+(?:returns?|profits?|income|yield|earnings?|money|way)\b/i,
+  /\b(?:returns?|profits?|income|yield|earnings?)\s+(?:are|is)\s+guaranteed\b/i,
+  /\byou\s+(?:are\s+)?guaranteed\s+to\s+(?:make|earn|receive|get)\b/i,
+  /\bguarantees?\s+(?:future\s+)?(?:returns?|profits?|income|money|yield|earnings?)\b/i,
 ];
 
 /** Used in tests to scan composed assistant output (stricter than runtime guards). */
@@ -21,9 +33,38 @@ export const RESPONSE_QUALITY_BANNED: RegExp[] = [
   /\bbest\b/i,
   /\btop\b/i,
   /\bsafest\b/i,
-  /\bguaranteed\b/i, // simplified: removed (?<!not ) lookbehind — unsupported on Safari < 16.4 (iOS 15)
   /\brecommended\b/i,
 ];
+
+function removePermittedGuaranteeWarnings(text: string): string {
+  return PERMITTED_GUARANTEE_WARNING_PATTERNS.reduce(
+    (current, pattern) => current.replace(pattern, " "),
+    text,
+  );
+}
+
+export function containsFinancialCertaintyClaim(text: string): boolean {
+  const textToCheck = removePermittedGuaranteeWarnings(text);
+  return FINANCIAL_CERTAINTY_CLAIM_PATTERNS.some((pattern) => pattern.test(textToCheck));
+}
+
+export function findForbiddenSafetyIssue(text: string): string | null {
+  const forbiddenPattern = FORBIDDEN_PATTERNS.find((pattern) => pattern.test(text));
+  if (forbiddenPattern) return forbiddenPattern.toString();
+  if (containsFinancialCertaintyClaim(text)) return "financial certainty claim";
+  return null;
+}
+
+export function findResponseQualityIssue(text: string): string | null {
+  const bannedPattern = RESPONSE_QUALITY_BANNED.find((pattern) => pattern.test(text));
+  if (bannedPattern) return bannedPattern.toString();
+  if (containsFinancialCertaintyClaim(text)) return "financial certainty claim";
+  return null;
+}
+
+export function hasResponseQualityIssue(text: string): boolean {
+  return findResponseQualityIssue(text) != null;
+}
 
 export const STOCK_AMOUNT_MAKE_SCENARIO_RE =
   /\bhow much will i make if i (put|invest|buy)\b/i;
@@ -148,6 +189,14 @@ export function sanitizeOutput(text: string): string {
       console.warn("[ai-lab] stripped forbidden phrase", pattern);
       text = text.replace(pattern, "[redacted]");
     }
+  }
+  if (containsFinancialCertaintyClaim(text)) {
+    if (import.meta.env?.DEV) {
+      throw new Error("Forbidden advisory phrase detected: financial certainty claim");
+    }
+    // eslint-disable-next-line no-console
+    console.warn("[ai-lab] stripped forbidden financial certainty claim");
+    text = text.replace(/\bguarante\w*\b/gi, "[redacted]");
   }
   return text;
 }

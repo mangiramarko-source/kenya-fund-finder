@@ -5,7 +5,8 @@ import {
   buildRefusal,
   FORBIDDEN_PATTERNS,
   STANDARD_DISCLAIMER,
-  RESPONSE_QUALITY_BANNED,
+  containsFinancialCertaintyClaim,
+  hasResponseQualityIssue,
 } from "./safety";
 
 describe("detectAdviceIntent", () => {
@@ -127,6 +128,37 @@ describe("sanitizeOutput", () => {
       "Based on the data shown"
     );
   });
+
+  it("allows explicit warnings that deny guaranteed outcomes", () => {
+    const safeWarnings = [
+      "Dividends are not guaranteed.",
+      "Returns are not guaranteed.",
+      "There is no guaranteed return.",
+      "Past performance does not guarantee future results.",
+    ];
+
+    for (const phrase of safeWarnings) {
+      expect(containsFinancialCertaintyClaim(phrase), phrase).toBe(false);
+      expect(hasResponseQualityIssue(phrase), phrase).toBe(false);
+      expect(sanitizeOutput(phrase)).toBe(phrase);
+    }
+  });
+
+  it("still blocks language that claims financial certainty", () => {
+    const unsafeClaims = [
+      "Returns are guaranteed.",
+      "This investment guarantees profit.",
+      "You will receive guaranteed income.",
+      "This is a guaranteed way to make money.",
+      "risk-free guaranteed income",
+    ];
+
+    for (const phrase of unsafeClaims) {
+      expect(containsFinancialCertaintyClaim(phrase), phrase).toBe(true);
+      expect(hasResponseQualityIssue(phrase), phrase).toBe(true);
+      expect(() => sanitizeOutput(phrase), phrase).toThrow(/Forbidden/i);
+    }
+  });
 });
 
 describe("buildRefusal", () => {
@@ -150,8 +182,6 @@ describe("buildRefusal", () => {
     expect(r.message).toMatch(/can't tell you what to buy/i);
     expect(r.safeAlternatives.length).toBeGreaterThan(0);
     expect(r.disclaimer).toBe(STANDARD_DISCLAIMER);
-    for (const re of RESPONSE_QUALITY_BANNED) {
-      expect(r.message).not.toMatch(re);
-    }
+    expect(hasResponseQualityIssue(r.message)).toBe(false);
   });
 });

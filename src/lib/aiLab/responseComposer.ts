@@ -4,7 +4,8 @@
 import { UNKNOWN_FALLBACK_MSG, type RouterResult } from "./router";
 import type { AiLabSessionContext } from "./chat";
 import {
-  FORBIDDEN_PATTERNS,
+  findForbiddenSafetyIssue,
+  hasResponseQualityIssue,
   REFUSAL_MESSAGE,
   RESPONSE_QUALITY_BANNED,
   SAFE_ALTERNATIVES,
@@ -101,10 +102,9 @@ function fmtKes(amount: number): string {
 }
 
 function assertSafe(text: string): void {
-  for (const pattern of FORBIDDEN_PATTERNS) {
-    if (pattern.test(text)) {
-      throw new Error(`Composer produced forbidden phrase: ${pattern}`);
-    }
+  const issue = findForbiddenSafetyIssue(text);
+  if (issue) {
+    throw new Error(`Composer produced forbidden phrase: ${issue}`);
   }
 }
 
@@ -536,7 +536,7 @@ export function composeClarifyingResponse(args: {
 
 export function composedOutputIsSafe(text: string, followUps: string[]): boolean {
   const combined = [text, ...followUps].join(" ");
-  return !RESPONSE_QUALITY_BANNED.some((re) => re.test(combined));
+  return !hasResponseQualityIssue(combined);
 }
 
 export { isUnsupportedFilterLookupPrompt, isMmfYieldFilterPrompt } from "./websiteLookup";

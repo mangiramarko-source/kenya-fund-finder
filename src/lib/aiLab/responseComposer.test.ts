@@ -10,9 +10,8 @@ import {
   composeFilterUnsupportedResponse,
   capFollowUps,
   isFilterLookupPrompt,
-  RESPONSE_QUALITY_BANNED,
 } from "./responseComposer";
-import { STANDARD_DISCLAIMER } from "./safety";
+import { hasResponseQualityIssue, STANDARD_DISCLAIMER } from "./safety";
 import type { WebsiteLookupScenarioResult } from "./scenarios";
 
 const ctx: MarketContext = {
@@ -366,9 +365,7 @@ describe("composeAssistantResponse", () => {
         const result = routePrompt(prompt, ctx);
         const { text, followUps } = composeAssistantResponse({ prompt, result });
         const combined = [text, ...followUps].join(" ").toLowerCase();
-        for (const re of RESPONSE_QUALITY_BANNED) {
-          expect(combined).not.toMatch(re);
-        }
+        expect(hasResponseQualityIssue(combined)).toBe(false);
       }
     });
   });
