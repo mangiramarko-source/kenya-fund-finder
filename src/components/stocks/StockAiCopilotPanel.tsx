@@ -194,6 +194,7 @@ export const StockAiCopilotPanel: React.FC<StockAiCopilotPanelProps> = ({
               type="submit"
               disabled={loading || !query.trim()}
               className="p-1.5 rounded-lg bg-emerald-500 hover:bg-emerald-600 text-white disabled:opacity-40 transition-colors"
+              aria-label="Send stock AI question"
             >
               <Send className="h-3.5 w-3.5" />
             </button>

@@ -1,0 +1,5 @@
+Contact: https://kenyafundfinder.com/page/contact
+Policy: https://kenyafundfinder.com/page/contact
+Canonical: https://kenyafundfinder.com/.well-known/security.txt
+Preferred-Languages: en
+Expires: 2027-08-18T00:00:00.000Z

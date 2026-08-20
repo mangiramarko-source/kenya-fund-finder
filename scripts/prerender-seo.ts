@@ -1,7 +1,9 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import {
+  SEO_DEFAULT_OG_IMAGE,
   SEO_SITE_URL,
+  buildFundSeoTitle,
   canonicalUrl,
   definitionList,
   escapeHtml,
@@ -12,6 +14,8 @@ import {
   type SeoPageDefinition,
 } from "../src/lib/seoPrerender";
 import { isIndexableNewsArticle } from "../src/lib/seoNewsEligibility";
+import { faqByFundType, type FaqItem } from "../src/data/faq";
+import { mmfGuideFaq } from "../src/data/mmfGuideFaq";
 
 const DIST_DIR = resolve("dist");
 const TEMPLATE_PATH = join(DIST_DIR, "index.html");
@@ -134,6 +138,27 @@ function breadcrumb(items: Array<{ name: string; path: string }>): Record<string
   };
 }
 
+function faqSchema(items: FaqItem[]): Record<string, unknown> {
+  return {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: items.map((item) => ({
+      "@type": "Question",
+      name: item.question,
+      acceptedAnswer: { "@type": "Answer", text: item.answer },
+    })),
+  };
+}
+
+function faqContentHtml(items: FaqItem[]): string {
+  return `<section aria-labelledby="seo-faq-heading"><h2 id="seo-faq-heading">Frequently asked questions</h2>${items
+    .map(
+      (item) =>
+        `<article><h3>${escapeHtml(item.question)}</h3><p>${escapeHtml(item.answer)}</p></article>`,
+    )
+    .join("")}</section>`;
+}
+
 function staticRoutes(): SeoPageDefinition[] {
   return [
     {
@@ -141,7 +166,13 @@ function staticRoutes(): SeoPageDefinition[] {
       title: "Kenya Fund Finder – NSE Stocks, Money Market Funds & FX",
       description: "Compare CMA-regulated money market funds, NSE share prices, FX rates and commodities in Kenya. Track performance, charts and market news.",
       heading: "Kenya investment markets in one place",
-      contentHtml: `${paragraph("Compare Kenyan stocks, money market funds, foreign exchange rates and commodity prices using regularly updated market data.")}<nav><a href="/stocks">NSE stocks</a> · <a href="/funds">Money market funds</a> · <a href="/rates">FX rates</a> · <a href="/news">Market news</a></nav>`,
+      image: SEO_DEFAULT_OG_IMAGE,
+      contentHtml: [
+        paragraph("Kenya Fund Finder brings public information about Kenyan investment funds and markets into one place so you can research options before making a decision."),
+        '<section><h2>Compare Kenyan investment options</h2><p>Review published yields, fees, minimum deposits and withdrawal periods on the <a href="/funds">fund directory</a>, compare selected products side by side with the <a href="/compare">fund comparison tool</a>, estimate possible returns using the <a href="/calculator">investment calculator</a>, and use the <a href="/checklist">fund checklist</a> when evaluating an option.</p></section>',
+        '<section><h2>Follow markets and rates</h2><p>Explore <a href="/stocks">Nairobi Securities Exchange stocks</a>, <a href="/treasury">Kenya Treasury bills and bonds</a>, <a href="/rates">foreign exchange rates</a>, <a href="/commodities">commodity prices</a>, or open the combined <a href="/markets">markets dashboard</a>.</p></section>',
+        '<section><h2>Learn before you invest</h2><p>Read current <a href="/news">Kenyan market news</a>, browse plain-language answers in the <a href="/learn">investing learning centre</a>, or follow the practical guide on <a href="/learn/how-to-invest-in-money-market-funds-kenya">how to invest in a Kenyan money market fund</a>. Verify product details with the fund manager and the relevant regulator before investing.</p></section>',
+      ].join(""),
       jsonLd: { "@context": "https://schema.org", "@type": "WebPage", name: "Kenya Fund Finder Market Overview", url: canonicalUrl("/") },
     },
     {
@@ -205,15 +236,35 @@ function staticRoutes(): SeoPageDefinition[] {
       title: "Learn About Investing in Kenya | Kenya Fund Finder",
       description: "Educational guides about Kenyan money market funds, unit trusts, NSE stocks, investment fees and market terminology.",
       heading: "Learn about investing in Kenya",
-      contentHtml: paragraph("Read practical educational guides about Kenyan investment products and markets."),
+      contentHtml: `${paragraph("Read practical educational guides about Kenyan investment products and markets.")}${faqContentHtml(faqByFundType.general)}`,
+      jsonLd: faqSchema(faqByFundType.general),
     },
     {
       path: "/learn/how-to-invest-in-money-market-funds-kenya",
       title: "How to Invest in Money Market Funds in Kenya",
       description: "A practical guide to choosing and investing in a CMA-regulated money market fund in Kenya, including yields, fees, tax and withdrawals.",
       heading: "How to invest in a money market fund in Kenya",
-      contentHtml: paragraph("Learn how Kenyan money market funds work, what fees and taxes apply, and what to compare before investing."),
+      contentHtml: `${paragraph("Learn how Kenyan money market funds work, what fees and taxes apply, and what to compare before investing.")}${faqContentHtml(
+        mmfGuideFaq.map(({ q, a }) => ({ question: q, answer: a })),
+      )}<p><a href="/funds?type=money_market">Compare money market funds</a> · <a href="/calculator">Estimate investment returns</a></p>`,
       type: "article",
+      jsonLd: [
+        {
+          "@context": "https://schema.org",
+          "@type": "Article",
+          headline: "How to Invest in Money Market Funds in Kenya",
+          description: "A practical guide to choosing and investing in a CMA-regulated money market fund in Kenya, including yields, fees, tax and withdrawals.",
+          mainEntityOfPage: canonicalUrl("/learn/how-to-invest-in-money-market-funds-kenya"),
+          author: { "@type": "Organization", name: "Kenya Fund Finder" },
+          publisher: { "@type": "Organization", name: "Kenya Fund Finder" },
+        },
+        faqSchema(mmfGuideFaq.map(({ q, a }) => ({ question: q, answer: a }))),
+        breadcrumb([
+          { name: "Home", path: "/" },
+          { name: "Learn", path: "/learn" },
+          { name: "How to invest in money market funds in Kenya", path: "/learn/how-to-invest-in-money-market-funds-kenya" },
+        ]),
+      ],
     },
     {
       path: "/checklist",
@@ -294,10 +345,9 @@ function fundPage(fund: FundRow): SeoPageDefinition | null {
   const description = `${fund.name} by ${fund.manager}${yieldLabel ? ` currently shows a ${yieldLabel}` : ""}. Compare fees, minimum investment and withdrawal time.`;
   return {
     path,
-    title: `${fund.name} – Yield, Fees & Minimum Investment`,
+    title: buildFundSeoTitle(fund.name, fund.slug),
     description,
     heading: fund.name,
-    image: fund.logo_url,
     contentHtml: `${paragraph(`${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as CMA regulated" : ""}.`)}${paragraph(fund.description)}${definitionList([
       ["Annual yield", percent(fund.annual_yield)],
       ["Daily yield", percent(fund.daily_yield)],

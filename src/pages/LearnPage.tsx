@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BookOpen, Landmark, BarChart3, PieChart, TrendingUp, Banknote, LineChart, Search } from "lucide-react";
-import { faqByFundType, faqItems } from "@/data/faq";
+import { faqByFundType } from "@/data/faq";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
@@ -60,17 +60,17 @@ const LearnPage = () => {
     "Everything you need to know about stocks, Money Market, Fixed Income, Equity, Bond and Balanced Funds in Kenya — risks, returns, and CMA regulation explained simply."
   );
 
-  useJsonLd({
+  const currentFaqs = faqByFundType[activeTab as keyof typeof faqByFundType] || [];
+
+  useJsonLd(currentFaqs.length > 0 ? {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: faqItems.map((item) => ({
+    mainEntity: currentFaqs.map((item) => ({
       "@type": "Question",
       name: item.question,
       acceptedAnswer: { "@type": "Answer", text: item.answer },
     })),
-  });
-
-  const currentFaqs = faqByFundType[activeTab as keyof typeof faqByFundType] || [];
+  } : null);
   const isFundType = activeTab !== "general" && activeTab !== "stocks" && activeTab !== "glossary";
   const isGlossary = activeTab === "glossary";
 

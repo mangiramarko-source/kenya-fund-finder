@@ -13,6 +13,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { fetchFundBySlug, fetchFunds, fetchHistoricalYields, fetchFundSnapshots, type FundFromDB, type HistoricalYield, type YieldSnapshot } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
+import { buildFundSeoTitle } from "@/lib/seoPrerender";
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import YieldChange, { formatYield } from "@/components/YieldChange";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
@@ -86,11 +87,13 @@ const FundDetailPage = () => {
     toast({ title: "Link copied to clipboard" });
   };
 
+  const fundSeoTitle = fund ? buildFundSeoTitle(fund.name, fund.slug) : "Fund Details | Kenya Fund Finder";
+
   useDocumentTitle(
-    fund ? `${fund.name} – Fund Details` : "Fund Details",
+    fundSeoTitle,
     fund ? `${fund.name} by ${fund.manager}. Annual rate: ${fund.annual_yield}%. Compare unit trusts in Kenya.` : undefined,
     fund ? {
-      title: `${fund.name} – ${fund.annual_yield}% Annual Rate`,
+      title: fundSeoTitle,
       description: `${fund.name} by ${fund.manager}. Annual rate: ${fund.annual_yield}%. Min investment: KES ${fund.minimum_investment.toLocaleString()}.`,
       type: "article",
     } : undefined

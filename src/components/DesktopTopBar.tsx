@@ -137,7 +137,11 @@ const DesktopTopBar = () => {
         <div className="flex items-center ml-1 shrink-0">
           <DropdownMenu>
             <DropdownMenuTrigger asChild>
-              <button className="rounded-full ring-2 ring-transparent hover:ring-border transition-all">
+              <button
+                type="button"
+                className="rounded-full ring-2 ring-transparent hover:ring-border transition-all"
+                aria-label={user ? `Open account menu for ${displayName || user.email || "your account"}` : "Open account menu"}
+              >
                 <Avatar className="h-8 w-8 border border-border bg-muted">
                   {user ? (
                     <>

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { SEO_DEFAULT_OG_IMAGE } from "@/lib/seoPrerender";
 
 const SITE_URL = "https://kenyafundfinder.com";
 
@@ -51,7 +52,14 @@ export function useDocumentTitle(title: string, description?: string, og?: OgMet
       setOg("og:description", og.description);
       setOg("og:url", `${SITE_URL}${pathname}`);
       setOg("og:type", og.type || "website");
-      if (og.image) setOg("og:image", og.image);
+      const image = og.image || SEO_DEFAULT_OG_IMAGE;
+      setOg("og:image", image);
+      setOg("og:image:alt", og.title + " — Kenya Fund Finder");
+      if (!og.image) {
+        setOg("og:image:type", "image/png");
+        setOg("og:image:width", "1200");
+        setOg("og:image:height", "630");
+      }
 
       // Twitter
       let twitterTitle = document.querySelector('meta[name="twitter:title"]') as HTMLMetaElement | null;
@@ -71,6 +79,24 @@ export function useDocumentTitle(title: string, description?: string, og?: OgMet
         ogTags.push(twitterDesc);
       }
       twitterDesc.setAttribute("content", og.description);
+
+      let twitterImage = document.querySelector('meta[name="twitter:image"]') as HTMLMetaElement | null;
+      if (!twitterImage) {
+        twitterImage = document.createElement("meta");
+        twitterImage.setAttribute("name", "twitter:image");
+        document.head.appendChild(twitterImage);
+        ogTags.push(twitterImage);
+      }
+      twitterImage.setAttribute("content", image);
+
+      let twitterImageAlt = document.querySelector('meta[name="twitter:image:alt"]') as HTMLMetaElement | null;
+      if (!twitterImageAlt) {
+        twitterImageAlt = document.createElement("meta");
+        twitterImageAlt.setAttribute("name", "twitter:image:alt");
+        document.head.appendChild(twitterImageAlt);
+        ogTags.push(twitterImageAlt);
+      }
+      twitterImageAlt.setAttribute("content", og.title + " — Kenya Fund Finder");
     }
 
     return () => {

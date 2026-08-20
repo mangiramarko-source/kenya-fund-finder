@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { ArrowRight, Banknote, ShieldCheck, TrendingUp, Wallet, CheckCircle2, Calculator, BookOpen } from "lucide-react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
+import { mmfGuideFaq } from "@/data/mmfGuideFaq";
 
 const TOC = [
   { id: "what-is-mmf", label: "What is a Money Market Fund?" },
@@ -10,33 +11,6 @@ const TOC = [
   { id: "fees-tax", label: "Fees, withholding tax & returns" },
   { id: "risks", label: "Risks to understand" },
   { id: "faq", label: "Frequently asked questions" },
-];
-
-const FAQ: { q: string; a: string }[] = [
-  {
-    q: "How does a money market fund work in Kenya?",
-    a: "A Kenyan money market fund (MMF) pools investor money and lends it to low-risk, short-term instruments such as Treasury Bills, fixed deposits with regulated banks, and short-dated commercial paper. Interest earned by the fund is calculated daily, accrues to your account, and is typically credited to your balance at the end of each month, where it compounds.",
-  },
-  {
-    q: "How do I start investing in a money market fund in Kenya?",
-    a: "You pick a CMA-licensed fund manager, complete an online or in-person KYC application (ID, KRA PIN, selfie, and bank or M-Pesa details), fund your account from M-Pesa or a bank transfer, and the units are allocated at the fund's daily NAV. Most MMFs in Kenya let you start with as little as KES 100 to KES 5,000.",
-  },
-  {
-    q: "Which money market fund pays the highest yield in Kenya?",
-    a: "Yields move every week with Treasury Bill rates and the fund's portfolio mix, so there is no single 'best' MMF. KenyaFundFinder publishes the daily and annual effective yields of every CMA-licensed MMF on the Unit Trusts page so you can compare current rates rather than rely on outdated rankings.",
-  },
-  {
-    q: "Are money market funds safe in Kenya?",
-    a: "MMFs are regulated by the Capital Markets Authority (CMA) and invest in short-term, low-risk instruments, but they are not bank deposits and are not covered by the Kenya Deposit Insurance Corporation (KDIC). The main risks are interest-rate movements and issuer credit risk.",
-  },
-  {
-    q: "How much tax do I pay on money market fund returns?",
-    a: "Interest income from Kenyan money market funds is subject to a 15% withholding tax, which the fund manager deducts at source before crediting interest to your account. The yields quoted by most fund managers are gross — your net return is roughly 85% of the quoted figure.",
-  },
-  {
-    q: "How quickly can I withdraw from a money market fund?",
-    a: "MMFs are highly liquid. Most Kenyan fund managers process withdrawals within 2 to 4 working days to your bank account or M-Pesa, depending on cut-off times and the size of the withdrawal.",
-  },
 ];
 
 const MmfGuidePage = () => {
@@ -67,7 +41,7 @@ const MmfGuidePage = () => {
       },
       {
         "@type": "FAQPage",
-        mainEntity: FAQ.map((f) => ({
+        mainEntity: mmfGuideFaq.map((f) => ({
           "@type": "Question",
           name: f.q,
           acceptedAnswer: { "@type": "Answer", text: f.a },
@@ -76,10 +50,11 @@ const MmfGuidePage = () => {
       {
         "@type": "BreadcrumbList",
         itemListElement: [
-          { "@type": "ListItem", position: 1, name: "Learn", item: "https://kenyafundfinder.com/learn" },
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://kenyafundfinder.com/" },
+          { "@type": "ListItem", position: 2, name: "Learn", item: "https://kenyafundfinder.com/learn" },
           {
             "@type": "ListItem",
-            position: 2,
+            position: 3,
             name: "How to invest in money market funds in Kenya",
             item: "https://kenyafundfinder.com/learn/how-to-invest-in-money-market-funds-kenya",
           },
@@ -92,6 +67,8 @@ const MmfGuidePage = () => {
     <article className="px-4 md:px-6 py-6 max-w-3xl mx-auto">
       {/* Breadcrumb */}
       <nav className="text-xs text-muted-foreground mb-3" aria-label="Breadcrumb">
+        <Link to="/" className="hover:text-foreground">Home</Link>
+        <span className="mx-1.5">/</span>
         <Link to="/learn" className="hover:text-foreground">Learn</Link>
         <span className="mx-1.5">/</span>
         <span className="text-foreground">Money Market Funds Guide</span>
@@ -278,7 +255,7 @@ const MmfGuidePage = () => {
       <section id="faq" className="mb-7">
         <h2 className="text-lg md:text-xl font-bold text-foreground mb-3">Frequently asked questions</h2>
         <div className="border border-border rounded-xl divide-y divide-border overflow-hidden">
-          {FAQ.map((f) => (
+          {mmfGuideFaq.map((f) => (
             <details key={f.q} className="group">
               <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-semibold text-foreground flex items-center justify-between hover:bg-muted/40">
                 <span>{f.q}</span>
