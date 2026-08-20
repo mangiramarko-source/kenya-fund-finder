@@ -14,6 +14,12 @@ import {
   type SeoPageDefinition,
 } from "../src/lib/seoPrerender";
 import { isIndexableNewsArticle } from "../src/lib/seoNewsEligibility";
+import {
+  getNewsArchivePage,
+  getNewsArchivePageCount,
+  getNewsArchivePath,
+} from "../src/lib/newsArchive";
+import { isIndexableSitePageSlug } from "../src/lib/seoSitePageEligibility";
 import { faqByFundType, type FaqItem } from "../src/data/faq";
 import { mmfGuideFaq } from "../src/data/mmfGuideFaq";
 
@@ -172,6 +178,7 @@ function staticRoutes(): SeoPageDefinition[] {
         '<section><h2>Compare Kenyan investment options</h2><p>Review published yields, fees, minimum deposits and withdrawal periods on the <a href="/funds">fund directory</a>, compare selected products side by side with the <a href="/compare">fund comparison tool</a>, estimate possible returns using the <a href="/calculator">investment calculator</a>, and use the <a href="/checklist">fund checklist</a> when evaluating an option.</p></section>',
         '<section><h2>Follow markets and rates</h2><p>Explore <a href="/stocks">Nairobi Securities Exchange stocks</a>, <a href="/treasury">Kenya Treasury bills and bonds</a>, <a href="/rates">foreign exchange rates</a>, <a href="/commodities">commodity prices</a>, or open the combined <a href="/markets">markets dashboard</a>.</p></section>',
         '<section><h2>Learn before you invest</h2><p>Read current <a href="/news">Kenyan market news</a>, browse plain-language answers in the <a href="/learn">investing learning centre</a>, or follow the practical guide on <a href="/learn/how-to-invest-in-money-market-funds-kenya">how to invest in a Kenyan money market fund</a>. Verify product details with the fund manager and the relevant regulator before investing.</p></section>',
+        '<section><h2>About and policies</h2><p>Learn <a href="/page/about">about Kenya Fund Finder</a>, <a href="/page/contact">contact the team</a>, and review the <a href="/privacy">privacy policy</a> and <a href="/terms">terms of use</a>.</p></section>',
       ].join(""),
       jsonLd: { "@context": "https://schema.org", "@type": "WebPage", name: "Kenya Fund Finder Market Overview", url: canonicalUrl("/") },
     },
@@ -222,7 +229,7 @@ function staticRoutes(): SeoPageDefinition[] {
       title: "Kenya Market News – Stocks, Funds, Business & Economy",
       description: "Read Kenyan stock-market, investment-fund, business and economic news with linked company data and concise market context.",
       heading: "Kenya market news",
-      contentHtml: paragraph("Follow current Kenyan business, stock market, investment fund and economic stories."),
+      contentHtml: `${paragraph("Follow current Kenyan business, stock market, investment fund and economic stories.")}<p><a href="/news/archive">Browse the complete indexed news archive</a></p>`,
     },
     {
       path: "/calculator",
@@ -430,6 +437,86 @@ function contentPage(page: SitePageRow): SeoPageDefinition | null {
   };
 }
 
+function fundDirectoryPage(funds: FundRow[]): SeoPageDefinition {
+  const validFunds = funds.filter((fund) => validSegment(fund.slug) && fund.name && fund.manager);
+  const grouped = new Map<string, FundRow[]>();
+  for (const fund of validFunds) {
+    const group = fund.fund_type?.replaceAll("_", " ") || "Other funds";
+    grouped.set(group, [...(grouped.get(group) || []), fund]);
+  }
+  const groups = [...grouped.entries()].map(([label, rows]) => (
+    `<section><h2>${escapeHtml(label)}</h2><ul>${rows.map((fund) => (
+      `<li><a href="/compare/${encodeURIComponent(fund.slug!)}">${escapeHtml(fund.name)}</a> — ${escapeHtml(fund.manager)}</li>`
+    )).join("")}</ul></section>`
+  )).join("");
+
+  return {
+    path: "/funds",
+    title: "Money Market Funds in Kenya – Compare Yields & Fees",
+    description: "Compare CMA-regulated money market funds and unit trusts in Kenya by annual yield, fees, minimum investment and withdrawal time.",
+    heading: "Money market funds and unit trusts in Kenya",
+    contentHtml: `${paragraph(`Browse ${validFunds.length} published Kenyan unit trust funds. Compare current terms on each fund page and verify details with the manager before investing.`)}${groups}<p><a href="/calculator">Estimate possible returns</a> · <a href="/checklist">Use the fund checklist</a> · <a href="/learn/how-to-invest-in-money-market-funds-kenya">Read the money market fund guide</a></p>`,
+  };
+}
+
+function stockDirectoryPage(stocks: StockRow[]): SeoPageDefinition {
+  const validStocks = stocks.filter((stock) => validSegment(stock.symbol) && stock.name);
+  const links = validStocks.map((stock) => (
+    `<li><a href="/stocks/${encodeURIComponent(stock.symbol!)}">${escapeHtml(stock.name)} (${escapeHtml(stock.symbol!.toUpperCase())})</a>${stock.sector ? ` — ${escapeHtml(stock.sector)}` : ""}</li>`
+  )).join("");
+  return {
+    path: "/stocks",
+    title: "NSE Share Prices Today – Kenyan Stocks Market Data",
+    description: "Track Nairobi Securities Exchange share prices, daily changes, market capitalisation, dividend yields and price charts for Kenyan listed companies.",
+    heading: "Nairobi Securities Exchange share prices",
+    contentHtml: `${paragraph(`Browse ${validStocks.length} active NSE listings with current market data and company detail pages.`)}<section><h2>NSE company directory</h2><ul>${links}</ul></section><p><a href="/markets">Open the markets dashboard</a> · <a href="/news">Read market news</a></p>`,
+  };
+}
+
+function newsDirectoryPage(news: NewsRow[]): SeoPageDefinition {
+  const eligible = news.filter(isIndexableNewsArticle);
+  const recent = eligible.slice(0, 20).map((article) => (
+    `<li><a href="/news/${article.id}">${escapeHtml(article.title)}</a>${article.source ? ` — ${escapeHtml(article.source)}` : ""}</li>`
+  )).join("");
+  return {
+    path: "/news",
+    title: "Kenya Market News – Stocks, Funds, Business & Economy",
+    description: "Read Kenyan stock-market, investment-fund, business and economic news with linked company data and concise market context.",
+    heading: "Kenya market news",
+    contentHtml: `${paragraph(`Follow current Kenyan market news and browse ${eligible.length} articles that meet the public indexing standard.`)}<p><a href="/news/archive">Browse the complete indexed news archive</a></p><section><h2>Latest indexed articles</h2><ol>${recent}</ol></section>`,
+  };
+}
+
+function newsArchivePages(news: NewsRow[]): SeoPageDefinition[] {
+  const eligible = news.filter(isIndexableNewsArticle);
+  const pageCount = getNewsArchivePageCount(eligible.length);
+  return Array.from({ length: pageCount }, (_, index) => {
+    const page = index + 1;
+    const path = getNewsArchivePath(page);
+    const articles = getNewsArchivePage(eligible, page);
+    const articleLinks = articles.map((article) => (
+      `<li><a href="/news/${article.id}">${escapeHtml(article.title)}</a>${article.source ? ` — ${escapeHtml(article.source)}` : ""}</li>`
+    )).join("");
+    const pagination = Array.from({ length: pageCount }, (_, pageIndex) => {
+      const target = pageIndex + 1;
+      return `<a href="${getNewsArchivePath(target)}"${target === page ? ' aria-current="page"' : ""}>Page ${target}</a>`;
+    }).join(" · ");
+
+    return {
+      path,
+      title: page === 1 ? "Kenya Market News Archive | Kenya Fund Finder" : `Kenya Market News Archive – Page ${page} | Kenya Fund Finder`,
+      description: `Browse page ${page} of the Kenya Fund Finder archive covering Kenyan markets, NSE stocks, funds, FX, commodities, business and the economy.`,
+      heading: page === 1 ? "Kenya market news archive" : `Kenya market news archive – page ${page}`,
+      contentHtml: `${paragraph(`Archive page ${page} of ${pageCount}. These articles meet the public indexing standard for a valid title, publication date, and substantive summary.`)}<ol>${articleLinks}</ol><nav aria-label="News archive pages">${pagination}</nav><p><a href="/news">Return to latest market news</a></p>`,
+      jsonLd: breadcrumb([
+        { name: "Home", path: "/" },
+        { name: "Market News", path: "/news" },
+        { name: page === 1 ? "Archive" : `Archive page ${page}`, path },
+      ]),
+    };
+  });
+}
+
 function outputPath(routePath: string): string {
   if (routePath === "/") return TEMPLATE_PATH;
   const relative = routePath.replace(/^\//, "");
@@ -452,10 +539,16 @@ async function loadDynamicPages(): Promise<SeoPageDefinition[]> {
   ]);
 
   return [
+    fundDirectoryPage(funds),
+    stockDirectoryPage(stocks),
+    newsDirectoryPage(news),
+    ...newsArchivePages(news),
     ...stocks.map(stockPage),
     ...funds.map(fundPage),
     ...news.map(newsPage),
-    ...sitePages.map(contentPage),
+    ...sitePages
+      .filter((page) => ["privacy", "terms"].includes(page.slug || "") || isIndexableSitePageSlug(page.slug))
+      .map(contentPage),
   ].filter((page): page is SeoPageDefinition => Boolean(page));
 }
 

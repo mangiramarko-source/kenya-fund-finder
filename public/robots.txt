@@ -71,7 +71,10 @@ User-agent: Pinterestbot
 User-agent: WhatsApp
 Allow: /
 
-# --- DISALLOWED AI, SCRAPERS & SEO TOOLS ---
+# --- INTENTIONALLY BLOCKED MODEL-TRAINING & BULK SCRAPING ---
+# Search and user-requested retrieval agents remain allowed above. The agents
+# below are blocked from model training, bulk collection, or non-user-requested
+# scraping as an explicit site policy.
 User-agent: ai2bot
 User-agent: ai2bot-dolma
 User-agent: ahrefsbot
@@ -119,6 +122,7 @@ User-agent: firecrawl
 User-agent: friendlycrawler
 User-agent: gemini-deep-research
 User-agent: gptbot
+User-agent: google-extended
 User-agent: grokbot
 User-agent: hada-news
 User-agent: ia-archiver

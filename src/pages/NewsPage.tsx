@@ -1,8 +1,9 @@
 import { useState, useEffect, useMemo } from "react";
+import { Link } from "react-router-dom";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { fetchPublishedNews, fetchPublicStocks, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Search, Megaphone, Sparkles } from "lucide-react";
+import { Archive, Search, Megaphone, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Input } from "@/components/ui/input";
@@ -361,6 +362,14 @@ export default function NewsPage() {
           />
         </div>
       </div>
+
+      <Link
+        to="/news/archive"
+        className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-3 text-sm transition-colors hover:border-emerald-600/50 hover:bg-muted/35"
+      >
+        <span className="flex items-center gap-2 font-semibold text-foreground"><Archive className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Browse the complete news archive</span>
+        <span className="text-xs text-muted-foreground">All indexed articles →</span>
+      </Link>
 
       {/* Watchlist Briefing */}
       {user && (

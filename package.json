@@ -8,6 +8,7 @@
     "dev": "vite",
     "prebuild": "tsx scripts/generate-sitemap.ts",
     "build": "vite build && tsx scripts/prerender-seo.ts",
+    "verify:crawlability": "tsx scripts/verify-crawlability.ts",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "preview": "vite preview",

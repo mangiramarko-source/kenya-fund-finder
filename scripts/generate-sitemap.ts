@@ -5,6 +5,8 @@
 import { writeFileSync } from "fs";
 import { resolve } from "path";
 import { isIndexableNewsArticle, type SeoNewsArticleLike } from "../src/lib/seoNewsEligibility";
+import { getNewsArchivePageCount, getNewsArchivePath } from "../src/lib/newsArchive";
+import { isIndexableSitePageSlug } from "../src/lib/seoSitePageEligibility";
 
 const BASE_URL = "https://kenyafundfinder.com";
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "https://caawgzuofnujrznwbuxk.supabase.co";
@@ -34,6 +36,7 @@ const staticEntries: SitemapEntry[] = [
   { path: "/rates", changefreq: "daily", priority: "0.8" },
   { path: "/commodities", changefreq: "daily", priority: "0.8" },
   { path: "/markets", changefreq: "daily", priority: "0.8" },
+  { path: "/treasury", changefreq: "weekly", priority: "0.8" },
   { path: "/news", changefreq: "daily", priority: "0.8" },
   { path: "/calculator", changefreq: "monthly", priority: "0.8" },
   { path: "/learn", changefreq: "monthly", priority: "0.7" },
@@ -79,16 +82,24 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     changefreq: "daily",
     priority: "0.7",
   }));
-  const newsEntries: SitemapEntry[] = news
-    .filter(isIndexableNewsArticle)
+  const indexableNews = news.filter(isIndexableNewsArticle);
+  const newsEntries: SitemapEntry[] = indexableNews
     .map((n) => ({
       path: `/news/${n.id}`,
       lastmod: (n.updated_at || n.source_published_at || n.date_published || n.created_at)?.slice(0, 10),
       changefreq: "weekly",
       priority: "0.5",
     }));
+  const newsArchiveEntries: SitemapEntry[] = Array.from(
+    { length: getNewsArchivePageCount(indexableNews.length) },
+    (_, index) => ({
+      path: getNewsArchivePath(index + 1),
+      changefreq: "daily" as const,
+      priority: "0.6",
+    }),
+  );
   const pageEntries: SitemapEntry[] = pages
-    .filter((p) => p.slug && !["privacy", "terms"].includes(p.slug))
+    .filter((p) => isIndexableSitePageSlug(p.slug))
     .map((p) => ({
       path: `/page/${p.slug}`,
       lastmod: p.updated_at?.slice(0, 10),
@@ -101,7 +112,7 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     changefreq: "daily",
     priority: "0.6",
   }));
-  return [...fundEntries, ...newsEntries, ...pageEntries, ...stockEntries];
+  return [...fundEntries, ...newsArchiveEntries, ...newsEntries, ...pageEntries, ...stockEntries];
 }
 
 function render(entries: SitemapEntry[]) {

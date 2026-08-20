@@ -26,6 +26,7 @@ const ComparePage = lazy(() => import("./pages/ComparePage"));
 const FundDetailPage = lazy(() => import("./pages/FundDetailPage"));
 
 const NewsPage = lazy(() => import("./pages/NewsPage"));
+const NewsArchivePage = lazy(() => import("./pages/NewsArchivePage"));
 const NewsArticlePage = lazy(() => import("./pages/NewsArticlePage"));
 const LearnPage = lazy(() => import("./pages/LearnPage"));
 const MmfGuidePage = lazy(() => import("./pages/MmfGuidePage"));
@@ -99,6 +100,8 @@ const App = () => (
 
                     
                     <Route path="/news" element={<NewsPage />} />
+                    <Route path="/news/archive" element={<NewsArchivePage />} />
+                    <Route path="/news/archive/:page" element={<NewsArchivePage />} />
                     <Route path="/news/:id" element={<NewsArticlePage />} />
                     <Route path="/learn" element={<LearnPage />} />
                     <Route path="/learn/how-to-invest-in-money-market-funds-kenya" element={<MmfGuidePage />} />

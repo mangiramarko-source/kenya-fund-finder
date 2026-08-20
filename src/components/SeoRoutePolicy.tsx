@@ -7,12 +7,13 @@ const INDEXABLE_PATHS = [
   /^\/compare\/?$/,
   /^\/compare\/[A-Za-z0-9_-]+\/?$/,
   /^\/news\/?$/,
+  /^\/news\/archive(?:\/[1-9][0-9]*)?\/?$/,
   /^\/news\/[A-Za-z0-9_-]+\/?$/,
   /^\/learn\/?$/,
   /^\/learn\/how-to-invest-in-money-market-funds-kenya\/?$/,
   /^\/(privacy|terms|checklist|rates|commodities|stocks|markets|calculator|treasury)\/?$/,
   /^\/stocks\/[A-Za-z0-9_-]+\/?$/,
-  /^\/page\/[A-Za-z0-9_-]+\/?$/,
+  /^\/page\/(about|contact)\/?$/,
 ];
 
 const NON_INDEXABLE_DEMO_PATHS = [

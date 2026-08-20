@@ -7,6 +7,7 @@ import FundGrid from "@/components/home/FundGrid";
 import FundFavourites from "@/components/home/FundFavourites";
 import { fundCache } from "@/lib/fundCache";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
+import FundBuyerQuestions from "@/components/funds/FundBuyerQuestions";
 
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
@@ -152,6 +153,7 @@ const Index = () => {
         isFavourite={user ? isFavourite : undefined}
         onToggleFavourite={user ? toggle : undefined}
       />
+      <FundBuyerQuestions />
     </div>
   );
 };
