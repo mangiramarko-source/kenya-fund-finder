@@ -1,7 +1,11 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { parseFeed } from "https://deno.land/x/rss@0.5.8/mod.ts";
-import { isLegacyCronAuthorization } from "../fetch-market-data/auth.ts";
+import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
+import {
+  getSupabasePublishableKey,
+  getSupabaseSecretKey,
+} from "../_shared/supabase-keys.ts";
 import { cleanNewsTitle, isDuplicateNewsText, sanitizeNewsText } from "../_shared/news-text.ts";
 import {
   evaluateNewsQuality,
@@ -419,59 +423,37 @@ Deno.serve(async (req) => {
 
   try {
     const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-    const supabase = createClient(supabaseUrl, serviceKey);
+    const authorization = await authorizePrivilegedRequest(req, {
+      namedSecretKeysJson: Deno.env.get("SUPABASE_SECRET_KEYS"),
+      secretName: "automations",
+      verifyUser: async (accessToken) => {
+        const userClient = createClient(supabaseUrl, getSupabasePublishableKey());
+        const { data, error } = await userClient.auth.getUser(accessToken);
+        return error ? null : data.user?.id ?? null;
+      },
+      isAdmin: async (userId) => {
+        const adminClient = createClient(supabaseUrl, getSupabaseSecretKey());
+        const { data } = await adminClient
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .maybeSingle();
+        return Boolean(data);
+      },
+    });
 
-    // Authentication: allow cron jobs (via CRON_SECRET) and admin users.
-    const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
-
-    let body: Record<string, unknown> = {};
-    try {
-      body = await req.json();
-    } catch { /* no body is fine */ }
-
-    // Check dedicated cron secret (simple string set as Supabase secret)
-    const cronSecret = Deno.env.get("CRON_SECRET") || "";
-    let isCronCall = (cronSecret.length > 0 && (body?.cron_secret === cronSecret || token === cronSecret)) || 
-                       (token === serviceKey);
-
-    if (!isCronCall && isLegacyCronAuthorization(authHeader)) {
-      isCronCall = true;
-      console.log("[fetch-news] Cron call authenticated via legacy bearer token");
+    if (!authorization.ok) {
+      return new Response(
+        JSON.stringify({ error: authorization.status === 401 ? "Unauthorized" : "Forbidden" }),
+        {
+          status: authorization.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
-    if (!isCronCall) {
-      const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-      if (!token || !anonKey) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: `Bearer ${token}` } },
-      });
-      const { data: userData, error: userError } = await userClient.auth.getUser();
-      if (userError || !userData?.user?.id) {
-        return new Response(JSON.stringify({ error: "Unauthorized" }), {
-          status: 401,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      const { data: roleData } = await supabase
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userData.user.id)
-        .eq("role", "admin")
-        .maybeSingle();
-      if (!roleData) {
-        return new Response(JSON.stringify({ error: "Forbidden" }), {
-          status: 403,
-          headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-    }
+    const supabase = createClient(supabaseUrl, getSupabaseSecretKey());
 
     const feedResults = await Promise.allSettled(
       RSS_FEEDS.map((f) => fetchFeed(f.url, f.source))

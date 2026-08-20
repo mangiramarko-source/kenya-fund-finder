@@ -1,5 +1,9 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
-import { isCronSecretAuthorized, isLegacyCronAuthorization } from "./auth.ts";
+import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
+import {
+  getSupabasePublishableKey,
+  getSupabaseSecretKey,
+} from "../_shared/supabase-keys.ts";
 
 const allowedOrigins = [
   "https://kenya-fund-finder.lovable.app",
@@ -579,68 +583,41 @@ Deno.serve(async (req) => {
   }
 
   const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
-  const supabase = createClient(supabaseUrl, serviceRoleKey);
+  const authorization = await authorizePrivilegedRequest(req, {
+    namedSecretKeysJson: Deno.env.get("SUPABASE_SECRET_KEYS"),
+    secretName: "automations",
+    verifyUser: async (accessToken) => {
+      const userClient = createClient(supabaseUrl, getSupabasePublishableKey());
+      const { data, error } = await userClient.auth.getUser(accessToken);
+      return error ? null : data.user?.id ?? null;
+    },
+    isAdmin: async (userId) => {
+      const adminClient = createClient(supabaseUrl, getSupabaseSecretKey());
+      const { data } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      return Boolean(data);
+    },
+  });
 
-  // Authentication: allow cron jobs (via service role or anon JWT) and admin users
-  const authHeader = req.headers.get("Authorization") || "";
-  const token = authHeader.replace("Bearer ", "");
+  if (!authorization.ok) {
+    return new Response(
+      JSON.stringify({ error: authorization.status === 401 ? "Unauthorized" : "Forbidden" }),
+      {
+        status: authorization.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+  }
 
-  // Check if this is a service-level / cron call
-  let isCronCall = false;
-
-  // Method 1: Check for cron secret in body
+  const supabase = createClient(supabaseUrl, getSupabaseSecretKey());
   let body: Record<string, unknown> = {};
   try {
     body = await req.json();
   } catch { /* no body is fine */ }
-
-  const serviceRoleSecret = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-  if (isCronSecretAuthorized(body, serviceRoleSecret)) {
-    isCronCall = true;
-    console.log("[fetch-market-data] Cron call authenticated via secret or service-role header");
-  }
-
-  // Method 2: Accept the legacy bearer-token cron auth used by older scheduled jobs
-  // so existing Supabase cron entries keep working without requiring a body secret.
-  if (!isCronCall && isLegacyCronAuthorization(authHeader)) {
-    isCronCall = true;
-    console.log("[fetch-market-data] Cron call authenticated via legacy bearer token");
-  }
-
-  // Method 3: Check getUser for authenticated admin user
-  if (!isCronCall) {
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY") || "";
-    const userClient = createClient(supabaseUrl, anonKey, {
-      global: { headers: { Authorization: authHeader } },
-    });
-    
-    const { data: userData, error: userError } = await userClient.auth.getUser(token);
-    if (userError || !userData?.user?.id) {
-      console.error("[fetch-market-data] Auth failed:", userError?.message || "no user");
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-
-    const userId = userData.user.id;
-    const { data: roleData } = await supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId)
-      .eq("role", "admin")
-      .maybeSingle();
-
-    if (!roleData) {
-      console.error("[fetch-market-data] User is not admin:", userId);
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
-    console.log("[fetch-market-data] Admin user authenticated:", userId);
-  }
 
   const fetchType = (body as Record<string, unknown>)?.fetch_type as string | undefined;
   const results: string[] = [];

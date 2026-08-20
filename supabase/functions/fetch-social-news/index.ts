@@ -1,6 +1,10 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { isLegacyCronAuthorization } from "../fetch-market-data/auth.ts";
+import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
+import {
+  getSupabasePublishableKey,
+  getSupabaseSecretKey,
+} from "../_shared/supabase-keys.ts";
 import {
   evaluateNewsQuality,
   NEWS_CLASSIFICATION_VERSION,
@@ -191,28 +195,35 @@ Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
   try {
-    // Auth: accept CRON_SECRET in Bearer header OR in the JSON body
-    const authHeader = req.headers.get("Authorization") || "";
-    const token = authHeader.startsWith("Bearer ") ? authHeader.slice(7) : authHeader;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
+    const authorization = await authorizePrivilegedRequest(req, {
+      namedSecretKeysJson: Deno.env.get("SUPABASE_SECRET_KEYS"),
+      secretName: "automations",
+      verifyUser: async (accessToken) => {
+        const userClient = createClient(supabaseUrl, getSupabasePublishableKey());
+        const { data, error } = await userClient.auth.getUser(accessToken);
+        return error ? null : data.user?.id ?? null;
+      },
+      isAdmin: async (userId) => {
+        const adminClient = createClient(supabaseUrl, getSupabaseSecretKey());
+        const { data } = await adminClient
+          .from("user_roles")
+          .select("role")
+          .eq("user_id", userId)
+          .eq("role", "admin")
+          .maybeSingle();
+        return Boolean(data);
+      },
+    });
 
-    let body: Record<string, unknown> = {};
-    try { body = await req.json(); } catch { /* no body is fine */ }
-
-    const cronSecret = Deno.env.get("CRON_SECRET") || "";
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "";
-    let isCronCall = (cronSecret.length > 0 && (body?.cron_secret === cronSecret || token === cronSecret)) || 
-                       (token === serviceKey);
-
-    if (!isCronCall && isLegacyCronAuthorization(authHeader)) {
-      isCronCall = true;
-      console.log("[fetch-social-news] Cron call authenticated via legacy bearer token");
-    }
-
-    if (!isCronCall) {
-      return new Response(JSON.stringify({ error: "Unauthorized" }), {
-        status: 401,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
+    if (!authorization.ok) {
+      return new Response(
+        JSON.stringify({ error: authorization.status === 401 ? "Unauthorized" : "Forbidden" }),
+        {
+          status: authorization.status,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        },
+      );
     }
 
     const apifyToken = Deno.env.get("APIFY_API_TOKEN");
@@ -232,8 +243,8 @@ Deno.serve(async (req) => {
     }
 
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL") ?? "",
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "",
+      supabaseUrl,
+      getSupabaseSecretKey(),
     );
 
     // 1) Fetch posts from Apify
