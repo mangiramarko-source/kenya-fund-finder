@@ -119,6 +119,25 @@ def determine_publication_date(
 CBK_AUCTION_NEWS_ACTIVATION_DATE = os.environ.get("CBK_AUCTION_NEWS_ACTIVATION_DATE", "2026-08-23")
 
 
+def get_activation_boundary_date() -> datetime:
+    """
+    Parses and validates the CBK_AUCTION_NEWS_ACTIVATION_DATE configuration.
+    Fails closed (returns None) if malformed or missing.
+    """
+    raw_val = os.environ.get("CBK_AUCTION_NEWS_ACTIVATION_DATE", "2026-08-23")
+    if not raw_val or not isinstance(raw_val, str):
+        logger.error("Missing or invalid CBK_AUCTION_NEWS_ACTIVATION_DATE config.")
+        return None
+    try:
+        return datetime.strptime(raw_val.strip(), "%Y-%m-%d").date()
+    except Exception:
+        logger.error(
+            f"Malformed CBK_AUCTION_NEWS_ACTIVATION_DATE: '{raw_val}'. "
+            "Must be formatted as YYYY-MM-DD. Fails closed (editorial generation disabled)."
+        )
+        return None
+
+
 def format_cbk_tbill_auction_article(
     auction_rows: list[dict],
     source_url: str = None,
@@ -180,18 +199,23 @@ def format_cbk_tbill_auction_article(
         return None
 
     try:
-        datetime.strptime(date_published, "%Y-%m-%d")
+        pub_dt = datetime.strptime(date_published, "%Y-%m-%d").date()
     except Exception:
         logger.warning(f"CBK editorial event skipped: publication date '{date_published}' is malformed.")
         return None
 
     # Historical Rollout Safeguard: Block historical auctions from automatically generating news
-    if not allow_historical_news_backfill and date_published < CBK_AUCTION_NEWS_ACTIVATION_DATE:
-        logger.info(
-            f"CBK editorial event skipped: publication date {date_published} "
-            f"predates Batch 2 activation boundary {CBK_AUCTION_NEWS_ACTIVATION_DATE}."
-        )
-        return None
+    if not allow_historical_news_backfill:
+        activation_boundary = get_activation_boundary_date()
+        if activation_boundary is None:
+            logger.warning("CBK editorial event skipped: activation boundary is invalid or unconfigured.")
+            return None
+        if pub_dt < activation_boundary:
+            logger.info(
+                f"CBK editorial event skipped: publication date {date_published} "
+                f"predates Batch 2 activation boundary {activation_boundary}."
+            )
+            return None
 
     # Sort available tenors (91, 182, 364)
     sorted_tenors = sorted(tenor_map.keys())

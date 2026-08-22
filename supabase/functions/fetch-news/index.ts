@@ -65,6 +65,8 @@ const RSS_FEEDS = [
   { url: "https://news.google.com/rss/search?q=site:kenyanwallstreet.com+(%22treasury+bill%22+OR+%22treasury+bills%22+OR+%22treasury+bond%22+OR+%22treasury+bonds%22+OR+%22corporate+bond%22+OR+%22money+market%22+OR+%22unit+trust%22)+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Kenyan Wall Street" },
   { url: "https://news.google.com/rss/search?q=site:standardmedia.co.ke+(%22treasury+bill%22+OR+%22treasury+bills%22+OR+%22treasury+bond%22+OR+%22treasury+bonds%22+OR+%22corporate+bond%22+OR+%22money+market%22+OR+%22unit+trust%22)+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Standard Media" },
   { url: "https://news.google.com/rss/search?q=Kenya+(%22treasury+bills%22+OR+%22treasury+bonds%22+OR+%22infrastructure+bond%22+OR+%22corporate+bond%22+OR+%22money+market+fund%22+OR+%22unit+trust%22+OR+%22DhowCSD%22)+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
+  // Official Regulators (Batch 3 Official Ingestion)
+  { url: "https://www.cma.or.ke/feed/", source: "Capital Markets Authority" },
 ];
 
 interface ParsedArticle {
@@ -412,6 +414,11 @@ const TRUSTED_PUBLISHERS: Record<string, string> = {
   "ft.com": "Financial Times Africa",
   "techcabal": "TechCabal",
   "techweez": "TechWeez",
+  "capital markets authority": "Capital Markets Authority",
+  "cma.or.ke": "Capital Markets Authority",
+  "cma": "Capital Markets Authority",
+  "central bank of kenya": "Central Bank of Kenya",
+  "centralbank.go.ke": "Central Bank of Kenya",
 };
 
 function resolveTrustedPublisher(rawSource: string, link: string): string | null {

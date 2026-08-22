@@ -102,9 +102,9 @@ export const findRelatedMmf = (title: string, content: string, funds: FundFromDB
         }
 
         const matched = searchPool.find((f) => {
-          const fn = normalizeForMarketMatch(f.name);
+          const fn = normalizeForMarketMatch(f.name || "");
           const fm = normalizeForMarketMatch(f.manager || "");
-          const fs = f.slug.toLowerCase();
+          const fs = (f.slug || "").toLowerCase();
           return fn.includes(brandLower) || fm.includes(brandLower) || fs.includes(brandLower);
         });
         if (matched) return matched;

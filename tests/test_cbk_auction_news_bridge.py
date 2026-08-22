@@ -244,6 +244,12 @@ class TestCbkAuctionNewsBridge(unittest.TestCase):
         self.assertEqual(payload["date_published"], "2026-08-27")
         self.assertIsNone(payload["source_published_at"])  # Should NOT treat 00:00:00 as real clock time
 
+    def test_malformed_activation_boundary_fails_closed(self):
+        with patch.dict(os.environ, {"CBK_AUCTION_NEWS_ACTIVATION_DATE": "23-08-2026"}):
+            # Invalid non-ISO format should fail closed
+            payload = format_cbk_tbill_auction_article(self.sample_rows_full)
+            self.assertIsNone(payload, "Malformed activation boundary config must fail closed")
+
 
 if __name__ == "__main__":
     unittest.main()

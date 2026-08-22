@@ -8,7 +8,7 @@ export interface ArticleLikeForClassification {
 }
 
 // 1. Money Market & Collective Investment Scheme phrases
-const MMF_CIS_PHRASES = /\b(money\s+market\s+funds?|money\s+market|\bmmfs?\b|unit\s+trusts?|collective\s+investment\s+schemes?|fixed\s+income\s+funds?|bond\s+funds?|fund\s+managers?\s+(?:yields?|rates?|annual\s+yield|daily\s+yield|aum|distributions?)|yields?\s+on\s+(?:funds?|mmfs?|unit\s+trusts?))\b/i;
+const MMF_CIS_PHRASES = /\b(money\s+market\s+funds?|money\s+market|\bmmfs?\b|unit\s+trusts?|collective\s+investment\s+schemes?|fixed\s+income\s+funds?|bond\s+funds?|special\s+funds?|sub-funds?|exchange\s+traded\s+funds?|\betfs?\b|fund\s+managers?|fund\s+management|asset\s+management|corporate\s+trustees?|wealth\s+management|fund\s+managers?\s+(?:yields?|rates?|annual\s+yield|daily\s+yield|aum|distributions?)|yields?\s+on\s+(?:funds?|mmfs?|unit\s+trusts?))\b/i;
 
 // 2. Government Securities (Treasury Bills & Treasury Bonds) phrases
 const GOV_SECURITIES_PHRASES = /\b(treasury\s+bills?|\bt-?bills?\b|91-day\s+(?:treasury\s+)?bills?|182-day\s+(?:treasury\s+)?bills?|364-day\s+(?:treasury\s+)?bills?|treasury\s+bonds?|\bt-?bonds?\b|infrastructure\s+bonds?|government\s+securities|sovereign\s+bonds?|eurobonds?|dhowcsd|treasury\s+auctions?|treasury\s+yields?|bond\s+auctions?|reopened\s+bonds?|tap\s+sales?)\b/i;
