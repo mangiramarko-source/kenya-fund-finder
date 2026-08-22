@@ -426,6 +426,21 @@ def process_and_upsert_pdf(
             r.raise_for_status()
             result["writes"] = len(records_to_insert)
             logger.info(f"Successfully bulk inserted {result['writes']} new records.")
+
+            # ── Step 6: Attempt Editorial Event Generation (Isolated non-fatal mode) ──
+            if not dry_run and result["writes"] > 0 and result.get("auction_date"):
+                try:
+                    from bridges.cbk_auction_news_bridge import generate_news_for_auction_date
+                    news_res = generate_news_for_auction_date(
+                        SUPABASE_URL,
+                        SUPABASE_KEY,
+                        result["auction_date"],
+                        dry_run=False,
+                    )
+                    logger.info(f"Editorial event generation result for {result['auction_date']}: {news_res}")
+                except Exception as news_err:
+                    logger.error(f"Editorial bridge generation non-fatal error: {news_err}")
+
         except Exception as e:
             result["errors"].append(f"BULK_UPSERT_ERROR: {e}")
             logger.error(f"Bulk upsert failed: {e}")
