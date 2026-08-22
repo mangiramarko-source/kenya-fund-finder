@@ -1,4 +1,6 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
+import posthog from "posthog-js";
+import { setConsent, clearConsent } from "./consent";
 import {
   extractCampaignParams,
   captureUtmAttribution,
@@ -9,6 +11,9 @@ import {
   trackEvent,
   identifyUser,
   resetUser,
+  initAnalytics,
+  handleConsentRevoked,
+  _resetAnalyticsStateForTesting,
 } from "./analytics";
 
 describe("Growth Batch 1 — Campaign Tracking & Attribution Verification", () => {
@@ -155,5 +160,93 @@ describe("Growth Batch 1 — Campaign Tracking & Attribution Verification", () =
     expect(sanitized.api_key).toBeUndefined();
     expect(sanitized.password).toBeUndefined();
     expect(sanitized.session).toBeUndefined();
+  });
+
+  it("9: PostHog does NOT initialize or capture events when analytics consent is absent", () => {
+    _resetAnalyticsStateForTesting();
+    localStorage.clear();
+    sessionStorage.clear();
+
+    const posthogCaptureSpy = vi.spyOn(posthog, "capture");
+    const posthogInitSpy = vi.spyOn(posthog, "init");
+
+    initAnalytics("phc_test_key");
+
+    expect(posthogInitSpy).not.toHaveBeenCalled();
+
+    trackEvent("site_landed", { landing_path: "/" });
+    expect(posthogCaptureSpy).not.toHaveBeenCalled();
+  });
+
+  it("10: PostHog initializes and captures events when analytics consent is granted", () => {
+    _resetAnalyticsStateForTesting();
+    localStorage.clear();
+    sessionStorage.clear();
+
+    const posthogCaptureSpy = vi.spyOn(posthog, "capture");
+
+    // Grant analytics consent
+    setConsent("accepted", { analytics: true, ads: false });
+
+    initAnalytics("phc_test_key");
+    trackEvent("site_landed", { landing_path: "/funds" });
+
+    // Capture must have been called
+    expect(posthogCaptureSpy).toHaveBeenCalledWith(
+      "site_landed",
+      expect.objectContaining({
+        landing_path: "/funds",
+      })
+    );
+  });
+
+  it("11: PostHog stops capturing and resets identity when consent is revoked", () => {
+    _resetAnalyticsStateForTesting();
+    localStorage.clear();
+
+    const posthogCaptureSpy = vi.spyOn(posthog, "capture");
+    const posthogOptOutSpy = vi.spyOn(posthog, "opt_out_capturing");
+    posthogCaptureSpy.mockClear();
+    posthogOptOutSpy.mockClear();
+
+    // 1. Grant consent
+    setConsent("accepted", { analytics: true, ads: false });
+    initAnalytics("phc_test_key");
+
+    posthogCaptureSpy.mockClear();
+    trackEvent("market_page_viewed", { section: "stocks" });
+    expect(posthogCaptureSpy).toHaveBeenCalledWith("market_page_viewed", expect.anything());
+
+    // 2. Revoke consent
+    setConsent("rejected", { analytics: false, ads: false });
+    handleConsentRevoked();
+
+    expect(posthogOptOutSpy).toHaveBeenCalled();
+
+    // 3. Try to track after revocation
+    posthogCaptureSpy.mockClear();
+    trackEvent("stock_viewed", { stock_symbol: "SCOM" });
+
+    expect(posthogCaptureSpy).not.toHaveBeenCalled();
+  });
+
+  it("12: UTM attribution is saved locally even when consent is not yet granted, but not transmitted to PostHog", () => {
+    _resetAnalyticsStateForTesting();
+    localStorage.clear();
+    sessionStorage.clear();
+
+    const posthogCaptureSpy = vi.spyOn(posthog, "capture");
+
+    // User lands with campaign query parameters prior to consent decision
+    captureUtmAttribution("?utm_source=meta_ads&utm_campaign=q3_launch", "https://instagram.com", "/");
+
+    // Stored in localStorage for subsequent attribution
+    const firstTouch = getFirstTouchAttribution();
+    expect(firstTouch.utm_source).toBe("meta_ads");
+    expect(firstTouch.utm_campaign).toBe("q3_launch");
+
+    // Calling trackEvent prior to consent does not send network payload to PostHog
+    trackEvent("site_landed", { landing_path: "/" });
+    expect(posthogCaptureSpy).not.toHaveBeenCalled();
   });
 });

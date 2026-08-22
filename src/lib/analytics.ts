@@ -1,4 +1,5 @@
 import posthog from "posthog-js";
+import { hasConsent, onConsent } from "@/lib/consent";
 
 export interface UtmAttribution {
   utm_source?: string;
@@ -57,14 +58,70 @@ function sanitizeParam(val: string | null | undefined): string | undefined {
 }
 
 /**
- * Initialize PostHog once with safe config.
+ * State tracking for consent and initialization
  */
 let isPosthogInitialized = false;
+let consentListenerRegistered = false;
 
-export function initAnalytics(): void {
-  if (typeof window === "undefined" || isPosthogInitialized) return;
+/**
+ * Handle consent revocation by opting out and resetting user session in PostHog.
+ */
+export function handleConsentRevoked(): void {
+  if (isPosthogInitialized && posthog) {
+    try {
+      if (typeof posthog.opt_out_capturing === "function") {
+        posthog.opt_out_capturing();
+      }
+      if (typeof posthog.reset === "function") {
+        posthog.reset();
+      }
+    } catch {
+      // ignore
+    }
+  }
+}
 
-  const apiKey = import.meta.env.VITE_POSTHOG_KEY;
+/**
+ * Initialize PostHog ONLY when analytics consent is granted.
+ */
+export function initAnalytics(apiKeyOverride?: string): void {
+  if (typeof window === "undefined") return;
+
+  // Register one-time listener to react to real-time consent updates (grant or revoke)
+  if (!consentListenerRegistered) {
+    consentListenerRegistered = true;
+
+    onConsent("analytics", () => {
+      initAnalytics(apiKeyOverride);
+    });
+
+    window.addEventListener("cookie-consent-change", () => {
+      if (!hasConsent("analytics")) {
+        handleConsentRevoked();
+      } else {
+        initAnalytics(apiKeyOverride);
+      }
+    });
+  }
+
+  // Strictly block initialization if analytics consent is not granted
+  if (!hasConsent("analytics")) {
+    return;
+  }
+
+  // If already initialized and re-granted, ensure capturing is enabled
+  if (isPosthogInitialized) {
+    if (posthog && typeof posthog.opt_in_capturing === "function") {
+      try {
+        posthog.opt_in_capturing();
+      } catch {
+        // ignore
+      }
+    }
+    return;
+  }
+
+  const apiKey = apiKeyOverride || import.meta.env.VITE_POSTHOG_KEY;
   const apiHost = import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com";
 
   if (apiKey) {
@@ -76,6 +133,14 @@ export function initAnalytics(): void {
     });
     isPosthogInitialized = true;
   }
+}
+
+/**
+ * Test helper to reset internal initialization flags
+ */
+export function _resetAnalyticsStateForTesting(): void {
+  isPosthogInitialized = false;
+  consentListenerRegistered = false;
 }
 
 /**
@@ -286,8 +351,8 @@ export function trackEvent(
 
   const cleanProps = sanitizeProperties(rawProps);
 
-  // Dispatch to PostHog if available
-  if (posthog && typeof posthog.capture === "function") {
+  // Dispatch to PostHog ONLY IF analytics consent is granted AND PostHog is initialized
+  if (hasConsent("analytics") && isPosthogInitialized && posthog && typeof posthog.capture === "function") {
     posthog.capture(event, cleanProps);
   }
 
@@ -323,7 +388,7 @@ export function identifyUser(
     first_landing_page: firstTouch.landing_page,
   });
 
-  if (posthog && typeof posthog.identify === "function") {
+  if (hasConsent("analytics") && isPosthogInitialized && posthog && typeof posthog.identify === "function") {
     posthog.identify(userId, cleanTraits);
   }
 }
@@ -332,7 +397,7 @@ export function identifyUser(
  * Reset PostHog identity on logout.
  */
 export function resetUser(): void {
-  if (posthog && typeof posthog.reset === "function") {
+  if (isPosthogInitialized && posthog && typeof posthog.reset === "function") {
     posthog.reset();
   }
 }
