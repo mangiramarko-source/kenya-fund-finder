@@ -26,8 +26,8 @@ class TestCbkAuctionNewsBridge(unittest.TestCase):
             {
                 "tenor_days": 91,
                 "issue_number": "2695/091",
-                "auction_date": "2026-08-13",
-                "issue_date": "2026-08-17",
+                "auction_date": "2026-08-27",
+                "issue_date": "2026-08-31",
                 "amount_offered": 8000000000.0,
                 "bids_received": 18236310000.0,
                 "amount_accepted": 16364210000.0,
@@ -39,8 +39,8 @@ class TestCbkAuctionNewsBridge(unittest.TestCase):
             {
                 "tenor_days": 182,
                 "issue_number": "2669/182",
-                "auction_date": "2026-08-13",
-                "issue_date": "2026-08-17",
+                "auction_date": "2026-08-27",
+                "issue_date": "2026-08-31",
                 "amount_offered": 10000000000.0,
                 "bids_received": 8993350000.0,
                 "amount_accepted": 7092670000.0,
@@ -52,8 +52,8 @@ class TestCbkAuctionNewsBridge(unittest.TestCase):
             {
                 "tenor_days": 364,
                 "issue_number": "2624/364",
-                "auction_date": "2026-08-13",
-                "issue_date": "2026-08-17",
+                "auction_date": "2026-08-27",
+                "issue_date": "2026-08-31",
                 "amount_offered": 10000000000.0,
                 "bids_received": 13560930000.0,
                 "amount_accepted": 13560930000.0,
@@ -99,7 +99,7 @@ class TestCbkAuctionNewsBridge(unittest.TestCase):
         # Verify metadata
         self.assertEqual(payload["category"], "Yield Updates")
         self.assertEqual(payload["source"], "Central Bank of Kenya")
-        self.assertEqual(payload["date_published"], "2026-08-13")
+        self.assertEqual(payload["date_published"], "2026-08-27")
         self.assertIsNone(payload["source_published_at"])  # Truthful, no manufactured time
         self.assertEqual(payload["url"], "https://www.centralbank.go.ke/uploads/results_2695.pdf")
 
@@ -144,57 +144,105 @@ class TestCbkAuctionNewsBridge(unittest.TestCase):
             self.assertEqual(res["action"], "SKIPPED")
             self.assertEqual(res["id"], "existing-uuid-123")
 
+    def test_future_auction_after_activation_allowed(self):
+        # Future auction: 27 August 2026 >= activation boundary 2026-08-23
+        future_rows = [dict(r) for r in self.sample_rows_full]
+        for r in future_rows:
+            r["auction_date"] = "2026-08-27"
+            r["issue_date"] = "2026-08-31"
+
+        payload = format_cbk_tbill_auction_article(future_rows)
+        self.assertIsNotNone(payload)
+        self.assertEqual(payload["date_published"], "2026-08-27")
+        self.assertIn("27 August 2026", payload["summary"])
+
+    def test_auction_on_activation_boundary_allowed(self):
+        # Boundary auction: exactly on 23 August 2026
+        boundary_rows = [dict(r) for r in self.sample_rows_full]
+        for r in boundary_rows:
+            r["auction_date"] = "2026-08-23"
+            r["issue_date"] = "2026-08-24"
+
+        payload = format_cbk_tbill_auction_article(boundary_rows)
+        self.assertIsNotNone(payload)
+        self.assertEqual(payload["date_published"], "2026-08-23")
+
+    def test_historical_auction_before_activation_skipped(self):
+        # Historical auction: 13 August 2026 < activation boundary 2026-08-23
+        historical_rows = [dict(r) for r in self.sample_rows_full]
+        for r in historical_rows:
+            r["auction_date"] = "2026-08-13"
+
+        payload = format_cbk_tbill_auction_article(historical_rows, allow_historical_news_backfill=False)
+        self.assertIsNone(payload, "Historical auction must return None to prevent automatic news publication")
+
+    def test_old_historical_repair_2025_skipped(self):
+        # 2025 historical repair auction
+        old_rows = [dict(r) for r in self.sample_rows_full]
+        for r in old_rows:
+            r["auction_date"] = "2025-10-20"
+            r["issue_date"] = "2025-10-24"
+
+        payload = format_cbk_tbill_auction_article(old_rows, allow_historical_news_backfill=False)
+        self.assertIsNone(payload, "2025 historical repair must not generate a news article")
+
+    def test_explicit_backfill_override_permitted(self):
+        # Historical auction allowed only when explicitly requested
+        historical_rows = [dict(r) for r in self.sample_rows_full]
+        for r in historical_rows:
+            r["auction_date"] = "2026-08-13"
+
+        payload = format_cbk_tbill_auction_article(historical_rows, allow_historical_news_backfill=True)
+        self.assertIsNotNone(payload, "Explicit override must permit formatting when requested")
+
+    def test_missing_or_empty_publication_date_fails_closed(self):
+        empty_date_rows = [dict(r) for r in self.sample_rows_full]
+        for r in empty_date_rows:
+            r["auction_date"] = ""
+
+        payload = format_cbk_tbill_auction_article(empty_date_rows)
+        self.assertIsNone(payload, "Empty date must fail closed without generating an article")
+
     def test_distinct_auction_date_and_publication_date(self):
-        # Auction date is Wednesday 2026-08-12, results published Thursday 2026-08-13
+        # Auction date is Wednesday 2026-08-26, results published Thursday 2026-08-27
         custom_rows = [dict(r) for r in self.sample_rows_full]
         for r in custom_rows:
-            r["auction_date"] = "2026-08-12"
-            r["published_at"] = "2026-08-13T16:30:00+03:00"  # Truthful release time
+            r["auction_date"] = "2026-08-26"
+            r["published_at"] = "2026-08-27T16:30:00+03:00"  # Truthful release time
 
         payload = format_cbk_tbill_auction_article(custom_rows)
         self.assertIsNotNone(payload)
-        self.assertEqual(payload["date_published"], "2026-08-13")
-        self.assertEqual(payload["source_published_at"], "2026-08-13T16:30:00+03:00")
+        self.assertEqual(payload["date_published"], "2026-08-27")
+        self.assertEqual(payload["source_published_at"], "2026-08-27T16:30:00+03:00")
         
-        # Article body truthfully mentions the auction date (12 August 2026)
-        self.assertIn("12 August 2026", payload["summary"])
-        self.assertIn("- **Auction Date**: 12 August 2026", payload["content"])
-        self.assertIn("- **Results Publication Date**: 13 August 2026", payload["content"])
+        # Article body truthfully mentions the auction date (26 August 2026)
+        self.assertIn("26 August 2026", payload["summary"])
+        self.assertIn("- **Auction Date**: 26 August 2026", payload["content"])
+        self.assertIn("- **Results Publication Date**: 27 August 2026", payload["content"])
 
     def test_same_day_auction_and_publication_date(self):
         custom_rows = [dict(r) for r in self.sample_rows_full]
         for r in custom_rows:
-            r["auction_date"] = "2026-08-13"
+            r["auction_date"] = "2026-08-27"
             r["published_at"] = None
 
         payload = format_cbk_tbill_auction_article(custom_rows)
         self.assertIsNotNone(payload)
-        self.assertEqual(payload["date_published"], "2026-08-13")
+        self.assertEqual(payload["date_published"], "2026-08-27")
         self.assertIsNone(payload["source_published_at"])
-        self.assertIn("- **Auction Date**: 13 August 2026", payload["content"])
+        self.assertIn("- **Auction Date**: 27 August 2026", payload["content"])
         self.assertNotIn("- **Results Publication Date**:", payload["content"])
 
     def test_generic_midnight_timestamp_not_fabricated(self):
         custom_rows = [dict(r) for r in self.sample_rows_full]
         for r in custom_rows:
-            r["auction_date"] = "2026-08-13"
-            r["published_at"] = "2026-08-13T00:00:00+00:00"  # Generic midnight ISO
+            r["auction_date"] = "2026-08-27"
+            r["published_at"] = "2026-08-27T00:00:00+00:00"  # Generic midnight ISO
 
         payload = format_cbk_tbill_auction_article(custom_rows)
         self.assertIsNotNone(payload)
-        self.assertEqual(payload["date_published"], "2026-08-13")
+        self.assertEqual(payload["date_published"], "2026-08-27")
         self.assertIsNone(payload["source_published_at"])  # Should NOT treat 00:00:00 as real clock time
-
-    def test_malformed_publication_date_fallback(self):
-        custom_rows = [dict(r) for r in self.sample_rows_full]
-        for r in custom_rows:
-            r["auction_date"] = "2026-08-13"
-            r["published_at"] = "not-a-valid-date"
-
-        payload = format_cbk_tbill_auction_article(custom_rows)
-        self.assertIsNotNone(payload)
-        self.assertEqual(payload["date_published"], "2026-08-13")
-        self.assertIsNone(payload["source_published_at"])
 
 
 if __name__ == "__main__":

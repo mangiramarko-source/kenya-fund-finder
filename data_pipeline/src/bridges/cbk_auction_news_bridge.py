@@ -112,7 +112,18 @@ def determine_publication_date(
     return (auction_date, None)
 
 
-def format_cbk_tbill_auction_article(auction_rows: list[dict], source_url: str = None) -> dict | None:
+# Batch 2 Rollout Activation Date Boundary (23 August 2026)
+# Only official CBK auctions with results publication date >= activation boundary generate news.
+# Historical repairs/backfills predating this boundary will persist to treasury_bill_auctions,
+# but will NOT generate news_articles automatically.
+CBK_AUCTION_NEWS_ACTIVATION_DATE = os.environ.get("CBK_AUCTION_NEWS_ACTIVATION_DATE", "2026-08-23")
+
+
+def format_cbk_tbill_auction_article(
+    auction_rows: list[dict],
+    source_url: str = None,
+    allow_historical_news_backfill: bool = False,
+) -> dict | None:
     """
     Deterministically formats an array of treasury_bill_auctions rows
     (for a single auction_date) into a publication-ready news_articles record.
@@ -123,11 +134,14 @@ def format_cbk_tbill_auction_article(auction_rows: list[dict], source_url: str =
         Rows queried from treasury_bill_auctions for a given auction_date.
     source_url : str, optional
         Official CBK results PDF URL.
+    allow_historical_news_backfill : bool, optional
+        If True, permits generating news articles for historical auctions predating
+        CBK_AUCTION_NEWS_ACTIVATION_DATE. Default is False.
 
     Returns
     -------
     dict | None
-        Structured news_articles payload, or None if input data is invalid.
+        Structured news_articles payload, or None if input data is invalid or historical.
     """
     if not auction_rows or not isinstance(auction_rows, list):
         logger.warning("Editorial bridge called with empty or invalid auction_rows.")
@@ -159,6 +173,25 @@ def format_cbk_tbill_auction_article(auction_rows: list[dict], source_url: str =
 
     # Determine publication date separately from auction date
     date_published, source_published_at = determine_publication_date(auction_rows, auction_date)
+
+    # Validate date_published format (YYYY-MM-DD) - Fail closed if invalid
+    if not date_published or not isinstance(date_published, str):
+        logger.warning("CBK editorial event skipped: publication date unavailable.")
+        return None
+
+    try:
+        datetime.strptime(date_published, "%Y-%m-%d")
+    except Exception:
+        logger.warning(f"CBK editorial event skipped: publication date '{date_published}' is malformed.")
+        return None
+
+    # Historical Rollout Safeguard: Block historical auctions from automatically generating news
+    if not allow_historical_news_backfill and date_published < CBK_AUCTION_NEWS_ACTIVATION_DATE:
+        logger.info(
+            f"CBK editorial event skipped: publication date {date_published} "
+            f"predates Batch 2 activation boundary {CBK_AUCTION_NEWS_ACTIVATION_DATE}."
+        )
+        return None
 
     # Sort available tenors (91, 182, 364)
     sorted_tenors = sorted(tenor_map.keys())
@@ -413,6 +446,7 @@ def generate_news_for_auction_date(
     supabase_key: str,
     auction_date: str,
     dry_run: bool = True,
+    allow_historical_news_backfill: bool = False,
 ) -> dict:
     """
     Fetches persisted rows from treasury_bill_auctions for a given auction_date,
@@ -435,9 +469,12 @@ def generate_news_for_auction_date(
             logger.warning(f"No treasury_bill_auctions rows found for auction_date {auction_date}")
             return {"status": "NOT_FOUND", "auction_date": auction_date}
 
-        payload = format_cbk_tbill_auction_article(rows)
+        payload = format_cbk_tbill_auction_article(
+            rows,
+            allow_historical_news_backfill=allow_historical_news_backfill,
+        )
         if not payload:
-            return {"status": "FORMAT_FAILED", "auction_date": auction_date}
+            return {"status": "SKIPPED_HISTORICAL_OR_INVALID", "auction_date": auction_date}
 
         return publish_cbk_auction_article(supabase_url, supabase_key, payload, dry_run=dry_run)
     except Exception as e:
