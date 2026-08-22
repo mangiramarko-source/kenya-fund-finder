@@ -129,4 +129,31 @@ describe("Growth Batch 1 — Campaign Tracking & Attribution Verification", () =
     expect(capturedDetail.properties.initial_utm_source).toBe("twitter");
     expect(capturedDetail.properties.dummy_token).toBeUndefined();
   });
+
+  it("8: application property sanitization preserves non-sensitive properties while stripping sensitive fields", () => {
+    const rawProps = {
+      page: "/overview",
+      asset_symbol: "SCOM",
+      yield_rate: 16.5,
+      auth_token: "secret_123",
+      refresh_token: "secret_456",
+      api_key: "secret_789",
+      password: "password123",
+      session: "Bearer abc.def.ghi",
+    };
+
+    const sanitized = sanitizeProperties(rawProps);
+
+    // Non-sensitive properties preserved
+    expect(sanitized.page).toBe("/overview");
+    expect(sanitized.asset_symbol).toBe("SCOM");
+    expect(sanitized.yield_rate).toBe(16.5);
+
+    // Sensitive properties strictly stripped
+    expect(sanitized.auth_token).toBeUndefined();
+    expect(sanitized.refresh_token).toBeUndefined();
+    expect(sanitized.api_key).toBeUndefined();
+    expect(sanitized.password).toBeUndefined();
+    expect(sanitized.session).toBeUndefined();
+  });
 });

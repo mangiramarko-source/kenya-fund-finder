@@ -42,6 +42,7 @@ const SENSITIVE_KEY_PATTERNS = [
   /auth/i,
   /jwt/i,
   /apikey/i,
+  /api_key/i,
   /access_token/i,
   /refresh_token/i,
   /bearer/i,
@@ -72,7 +73,6 @@ export function initAnalytics(): void {
       autocapture: false, // Explicit events only
       capture_pageview: false, // We control pageviews to ensure clean attribution
       persistence: "localStorage+cookie",
-      sanitize_properties: (properties) => sanitizeProperties(properties),
     });
     isPosthogInitialized = true;
   }
