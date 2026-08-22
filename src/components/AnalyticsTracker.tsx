@@ -5,6 +5,7 @@ import {
   captureUtmAttribution,
   trackEvent,
 } from "@/lib/analytics";
+import { initMetaPixel } from "@/lib/metaPixel";
 
 const SESSION_LANDED_KEY = "kff_session_landed";
 
@@ -12,9 +13,10 @@ export const AnalyticsTracker = () => {
   const location = useLocation();
   const lastPathRef = useRef<string | null>(null);
 
-  // Initialize PostHog and capture initial landing attribution
+  // Initialize PostHog and Meta Pixel with consent gates, and capture initial landing attribution
   useEffect(() => {
     initAnalytics();
+    initMetaPixel();
 
     if (typeof window !== "undefined") {
       const search = window.location.search;

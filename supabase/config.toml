@@ -9,11 +9,23 @@ verify_jwt = false
 [functions.fetch-market-data]
 verify_jwt = false
 
+[functions.check-price-alerts]
+verify_jwt = false
+
 [functions.process-email-queue]
-verify_jwt = true
+verify_jwt = false
+
+[functions.send-market-update]
+verify_jwt = false
 
 [functions.sync-portfolio-prices]
-verify_jwt = true
+verify_jwt = false
+
+[functions.enrich-article]
+verify_jwt = false
+
+[functions.fetch-stock-disclosures]
+verify_jwt = false
 
 [functions.fetch-news]
 verify_jwt = false
@@ -30,9 +42,6 @@ verify_jwt = false
 [functions.ai-lab-explain]
 verify_jwt = false
 
-[functions.fetch-stock-disclosures]
-verify_jwt = false
-
 [functions.fetch-social-news]
 enabled = true
 verify_jwt = false
@@ -43,3 +52,6 @@ entrypoint = "./functions/fetch-social-news/index.ts"
 # Specifies static files to be bundled with the function. Supports glob patterns.
 # For example, if you want to serve static HTML pages in your function:
 # static_files = [ "./functions/fetch-social-news/*.html" ]
+
+[functions.meta-conversion]
+verify_jwt = false

@@ -1,5 +1,7 @@
 import posthog from "posthog-js";
 import { hasConsent, onConsent } from "@/lib/consent";
+import { trackMetaEvent, generateEventId } from "@/lib/metaPixel";
+import { sendMetaConversion } from "@/lib/metaCapi";
 
 export interface UtmAttribution {
   utm_source?: string;
@@ -354,6 +356,45 @@ export function trackEvent(
   // Dispatch to PostHog ONLY IF analytics consent is granted AND PostHog is initialized
   if (hasConsent("analytics") && isPosthogInitialized && posthog && typeof posthog.capture === "function") {
     posthog.capture(event, cleanProps);
+  }
+
+  // Dispatch to Meta Pixel & Conversions API with deduplication event_id (gated by ads consent)
+  const eventId = generateEventId(`kff_${event}`);
+  trackMetaEvent(event, cleanProps, eventId);
+
+  // Send server-side Meta Conversions API event for primary conversion and quality milestones
+  if (hasConsent("ads")) {
+    if (event === "signup_completed") {
+      sendMetaConversion({
+        event_name: "CompleteRegistration",
+        event_id: eventId,
+        custom_data: cleanProps,
+      });
+    } else if (event === "signup_started") {
+      sendMetaConversion({
+        event_name: "Lead",
+        event_id: eventId,
+        custom_data: cleanProps,
+      });
+    } else if (event === "portfolio_asset_added") {
+      sendMetaConversion({
+        event_name: "PortfolioAssetAdded",
+        event_id: eventId,
+        custom_data: cleanProps,
+      });
+    } else if (event === "watchlist_item_added") {
+      sendMetaConversion({
+        event_name: "WatchlistItemAdded",
+        event_id: eventId,
+        custom_data: cleanProps,
+      });
+    } else if (event === "price_alert_created") {
+      sendMetaConversion({
+        event_name: "PriceAlertCreated",
+        event_id: eventId,
+        custom_data: cleanProps,
+      });
+    }
   }
 
   // Dispatch browser custom event for local monitoring/testing
