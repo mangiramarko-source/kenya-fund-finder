@@ -22,7 +22,8 @@ const SUPABASE_URL =
 const BASE = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/public-data`;
 const ANON_KEY =
   (import.meta?.env?.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhYXdnenVvZm51anJ6bndidXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMjI0ODYsImV4cCI6MjA5MTg5ODQ4Nn0.Ci7AcNBlIa4LhINAEvpmeDjLQfxWUxcROd8q5hNAQnA";
+  (import.meta?.env?.VITE_SUPABASE_ANON_KEY as string | undefined) ||
+  "sb_publishable_6snC3do-2emXAMEp7-C9AA_3_kb-GkC";
 
 export type GatewayResource =
   | "funds"

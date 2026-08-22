@@ -7,13 +7,15 @@ import { normalizeSupabaseUrl } from '@/lib/supabase-url';
 // the local .env, which is gitignored). Local dev still uses import.meta.env so
 // you can override against another Supabase project from .env when needed.
 const FALLBACK_SUPABASE_URL = "https://caawgzuofnujrznwbuxk.supabase.co";
-const FALLBACK_SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhYXdnenVvZm51anJ6bndidXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMjI0ODYsImV4cCI6MjA5MTg5ODQ4Nn0.Ci7AcNBlIa4LhINAEvpmeDjLQfxWUxcROd8q5hNAQnA";
+const FALLBACK_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_6snC3do-2emXAMEp7-C9AA_3_kb-GkC";
 const FALLBACK_SUPABASE_PROJECT_ID = "caawgzuofnujrznwbuxk";
 
 const SUPABASE_URL =
   normalizeSupabaseUrl(import.meta?.env?.VITE_SUPABASE_URL) ?? FALLBACK_SUPABASE_URL;
 const SUPABASE_PUBLISHABLE_KEY =
-  import.meta?.env?.VITE_SUPABASE_PUBLISHABLE_KEY ?? FALLBACK_SUPABASE_PUBLISHABLE_KEY;
+  import.meta?.env?.VITE_SUPABASE_PUBLISHABLE_KEY ??
+  import.meta?.env?.VITE_SUPABASE_ANON_KEY ??
+  FALLBACK_SUPABASE_PUBLISHABLE_KEY;
 export const SUPABASE_PROJECT_ID =
   import.meta?.env?.VITE_SUPABASE_PROJECT_ID ?? FALLBACK_SUPABASE_PROJECT_ID;
 

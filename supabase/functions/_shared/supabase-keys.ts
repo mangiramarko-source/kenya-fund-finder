@@ -25,7 +25,9 @@ export function readNamedSecretKey(
 
 export function getSupabaseSecretKey(name = "default"): string {
   const named = readNamedSecretKey(Deno.env.get("SUPABASE_SECRET_KEYS"), name);
-  const single = name === "default" ? Deno.env.get("SUPABASE_SECRET_KEY") : null;
+  const single = name === "default"
+    ? Deno.env.get("SUPABASE_SECRET_KEY") || Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")
+    : null;
   const value = named || single;
 
   if (!value) {

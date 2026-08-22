@@ -28,7 +28,8 @@ const TEMPLATE_PATH = join(DIST_DIR, "index.html");
 const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "https://caawgzuofnujrznwbuxk.supabase.co";
 const SUPABASE_ANON_KEY =
   process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhYXdnenVvZm51anJ6bndidXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMjI0ODYsImV4cCI6MjA5MTg5ODQ4Nn0.Ci7AcNBlIa4LhINAEvpmeDjLQfxWUxcROd8q5hNAQnA";
+  process.env.VITE_SUPABASE_ANON_KEY ||
+  "sb_publishable_6snC3do-2emXAMEp7-C9AA_3_kb-GkC";
 const STRICT = process.env.VERCEL === "1" || process.env.SEO_PRERENDER_STRICT === "true";
 
 interface StockRow {

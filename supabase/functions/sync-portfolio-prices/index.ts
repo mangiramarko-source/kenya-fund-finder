@@ -1,4 +1,6 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.4";
+import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
+import { getSupabasePublishableKey, getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -6,38 +8,50 @@ const corsHeaders = {
     "authorization, x-client-info, apikey, content-type",
 };
 
-function parseJwtClaims(token: string): Record<string, unknown> | null {
-  try {
-    const part = token.split(".")[1];
-    if (!part) return null;
-    const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
-    return JSON.parse(atob(padded));
-  } catch { return null; }
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", { headers: corsHeaders });
   }
 
-  // Require service_role JWT (cron / server invocation only). The signature
-  // itself is not verified in-code, but the service-role JWT is a secret held
-  // only by our backend, so a matching role claim proves the caller has it.
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7) : "";
-  const claims = parseJwtClaims(token);
-  if (claims?.role !== "service_role") {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403,
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const authorization = await authorizePrivilegedRequest(req, {
+    namedSecretKeysJson: Deno.env.get("SUPABASE_SECRET_KEYS"),
+    secretName: "automations",
+    verifyUser: async (accessToken) => {
+      const userClient = createClient(supabaseUrl, getSupabasePublishableKey(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data, error } = await userClient.auth.getUser(accessToken);
+      return error ? null : data.user?.id ?? null;
+    },
+    isAdmin: async (userId) => {
+      const adminClient = createClient(supabaseUrl, getSupabaseSecretKey(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      return Boolean(data);
+    },
+  });
+
+  if (!authorization.ok) {
+    return new Response(
+      JSON.stringify({ error: authorization.status === 401 ? "Unauthorized" : "Forbidden" }),
+      {
+        status: authorization.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
   try {
     const supabase = createClient(
-      Deno.env.get("SUPABASE_URL")!,
-      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!
+      supabaseUrl,
+      getSupabaseSecretKey(),
     );
 
     // Fetch all portfolio items

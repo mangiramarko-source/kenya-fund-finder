@@ -1,14 +1,29 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
 import { extractText } from "https://esm.sh/unpdf@0.12.1";
+import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
+import { getSupabasePublishableKey, getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
 
-const supabase = import.meta.main ? createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } }) : null as any;
-const WEBHOOK_SECRET = import.meta.main ? Deno.env.get("DISCLOSURES_WEBHOOK_SECRET") || "" : "";
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
+};
+
+let supabaseInstance: any = null;
+function getSupabaseClient() {
+  if (!supabaseInstance) {
+    const url = Deno.env.get("SUPABASE_URL")!;
+    const key = getSupabaseSecretKey();
+    supabaseInstance = createClient(url, key, { auth: { persistSession: false } });
+  }
+  return supabaseInstance;
+}
+
 const MAX_BYTES = 10 * 1024 * 1024;
 
 interface SourceRow { id: string; stock_id: string; source_url: string; source_domain: string; source_type: "html" | "rss" | "sitemap"; rate_limit_ms: number; etag: string | null; last_modified: string | null; checkpoint: { cursor?: number }; stocks: { symbol: string; name: string }; }
 interface Extraction { issuer_name: string; title: string; disclosure_type: "financial_results" | "dividend" | "agm" | "rights_issue" | "stock_split" | "acquisition" | "governance" | "other"; published_at: string; summary: string; key_facts: Array<{ label: string; value: string }>; corporate_action: null | { action_type: "dividend" | "agm" | "rights_issue" | "stock_split" | "bonus_issue" | "merger" | "acquisition" | "other"; announcement_date: string; ex_date: string | null; book_closure_date: string | null; payment_date: string | null; amount: number | null; currency: string | null; ratio: string | null; }; }
 
-const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { "content-type": "application/json" } });
+const json = (body: unknown, status = 200) => new Response(JSON.stringify(body), { status, headers: { ...corsHeaders, "content-type": "application/json" } });
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
 const normalized = (value: string) => value.toLowerCase().replace(/[,\s]/g, "").replace(/\.0+$/, "");
 
@@ -73,6 +88,7 @@ async function readDocument(response: Response) {
 }
 
 async function processDocument(source: SourceRow, rawUrl: string, dryRun: boolean) {
+  const supabase = getSupabaseClient();
   const url = canonicalizeUrl(rawUrl); const robots = await fetch(`https://${source.source_domain}/robots.txt`, { headers: { "user-agent": "KenyaFundFinderDisclosures/1.0" } });
   if (robots.ok && !robotsAllows(await robots.text(), new URL(url).pathname)) throw new Error("Blocked by robots.txt");
   const response = await fetchAllowed(url, source); if (!response.ok) throw new Error(`Document returned ${response.status}`);
@@ -95,6 +111,7 @@ async function processDocument(source: SourceRow, rawUrl: string, dryRun: boolea
 }
 
 async function processSource(source: SourceRow, dryRun: boolean) {
+  const supabase = getSupabaseClient();
   const root = await fetchAllowed(source.source_url, source, !source.checkpoint?.cursor); if (root.status === 304) return { source: source.source_url, status: "not_modified", documents: [] }; if (!root.ok) throw new Error(`Source returned ${root.status}`);
   const body = await root.text(); const urls = source.source_type === "html" ? discoverLinks(body, source.source_url, source.source_domain) : [...body.matchAll(/<loc>([^<]+)<\/loc>/gi)].map((match) => match[1]).filter((url) => isAllowedUrl(url, source.source_domain)).slice(0, 50); if (!urls.length) urls.push(source.source_url);
   const start = Math.min(Number(source.checkpoint?.cursor || 0), Math.max(0, urls.length - 1)); const batch = urls.slice(start, start + 8); const nextCursor = start + batch.length >= urls.length ? 0 : start + batch.length;
@@ -104,7 +121,42 @@ async function processSource(source: SourceRow, dryRun: boolean) {
 }
 
 export async function handleRequest(request: Request) {
-  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405); if (WEBHOOK_SECRET && request.headers.get("x-webhook-secret") !== WEBHOOK_SECRET) return json({ error: "Unauthorized" }, 401);
+  if (request.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
+  if (request.method !== "POST") return json({ error: "Method not allowed" }, 405);
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const authorization = await authorizePrivilegedRequest(request, {
+    namedSecretKeysJson: Deno.env.get("SUPABASE_SECRET_KEYS"),
+    secretName: "automations",
+    verifyUser: async (accessToken) => {
+      const userClient = createClient(supabaseUrl, getSupabasePublishableKey(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data, error } = await userClient.auth.getUser(accessToken);
+      return error ? null : data.user?.id ?? null;
+    },
+    isAdmin: async (userId) => {
+      const adminClient = createClient(supabaseUrl, getSupabaseSecretKey(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      return Boolean(data);
+    },
+  });
+
+  if (!authorization.ok) {
+    return json(
+      { error: authorization.status === 401 ? "Unauthorized" : "Forbidden" },
+      authorization.status,
+    );
+  }
+
+  const supabase = getSupabaseClient();
   const body = await request.json().catch(() => ({})); const dryRun = body.dry_run === true;
   let query = supabase.from("stock_disclosure_sources").select("*, stocks!inner(symbol,name)").eq("is_enabled", true).order("source_domain"); if (body.source_id) query = query.eq("id", body.source_id);
   const { data, error } = await query; if (error) return json({ error: error.message }, 500); const report = [];

@@ -48,10 +48,10 @@ def load_local_env():
 load_local_env()
 
 SUPABASE_URL = os.environ.get("VITE_SUPABASE_URL") or os.environ.get("SUPABASE_URL")
-SUPABASE_KEY = os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
+SUPABASE_KEY = os.environ.get("SUPABASE_SECRET_KEY") or os.environ.get("SUPABASE_SERVICE_ROLE_KEY")
 
 if not SUPABASE_KEY:
-    logger.error("CRITICAL: SUPABASE_SERVICE_ROLE_KEY is required")
+    logger.error("CRITICAL: SUPABASE_SECRET_KEY or SUPABASE_SERVICE_ROLE_KEY is required")
     sys.exit(1)
 
 HEADERS = {

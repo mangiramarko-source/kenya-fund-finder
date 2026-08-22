@@ -1,35 +1,52 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
+import { getSupabasePublishableKey, getSupabaseSecretKey, readNamedSecretKey } from "../_shared/supabase-keys.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-function parseJwtClaims(token: string): Record<string, unknown> | null {
-  try {
-    const part = token.split(".")[1];
-    if (!part) return null;
-    const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
-    return JSON.parse(atob(padded));
-  } catch { return null; }
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
-  const authHeader = req.headers.get("Authorization") ?? "";
-  const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7) : "";
-  const claims = parseJwtClaims(token);
-  if (claims?.role !== "service_role") {
-    return new Response(JSON.stringify({ error: "Forbidden" }), {
-      status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" },
-    });
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const authorization = await authorizePrivilegedRequest(req, {
+    namedSecretKeysJson: Deno.env.get("SUPABASE_SECRET_KEYS"),
+    secretName: "automations",
+    verifyUser: async (accessToken) => {
+      const userClient = createClient(supabaseUrl, getSupabasePublishableKey(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data, error } = await userClient.auth.getUser(accessToken);
+      return error ? null : data.user?.id ?? null;
+    },
+    isAdmin: async (userId) => {
+      const adminClient = createClient(supabaseUrl, getSupabaseSecretKey(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      return Boolean(data);
+    },
+  });
+
+  if (!authorization.ok) {
+    return new Response(
+      JSON.stringify({ error: authorization.status === 401 ? "Unauthorized" : "Forbidden" }),
+      {
+        status: authorization.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const serviceKey = getSupabaseSecretKey();
     const supabase = createClient(supabaseUrl, serviceKey);
 
     const { data: alerts, error: alertsError } = await supabase
@@ -183,11 +200,14 @@ Deno.serve(async (req) => {
         .eq("instant_alerts", true)
         .in("user_id", [...triggeredUserIds]);
 
-      const eligibleUserIds = (prefs || []).map((p: any) => p.user_id);
-
+      const automationsKey = readNamedSecretKey(Deno.env.get("SUPABASE_SECRET_KEYS"), "automations") || serviceKey;
+      const eligibleUserIds = new Set((prefs || []).map((p: any) => p.user_id));
       for (const userId of eligibleUserIds) {
         try {
-          await supabase.functions.invoke("send-market-update", { body: { user_id: userId } });
+          await supabase.functions.invoke("send-market-update", {
+            body: { user_id: userId },
+            headers: { apikey: automationsKey },
+          });
         } catch (err) {
           console.error(`Failed to send instant email to ${userId}:`, err);
         }
@@ -201,7 +221,7 @@ Deno.serve(async (req) => {
   } catch (error) {
     console.error("check-price-alerts error", error);
     return new Response(
-      JSON.stringify({ error: "Internal error" }),
+      JSON.stringify({ error: error instanceof Error ? error.message : error }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

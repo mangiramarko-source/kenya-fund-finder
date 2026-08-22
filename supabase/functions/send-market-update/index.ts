@@ -1,5 +1,7 @@
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
 import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
+import { getSupabasePublishableKey, getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
 import {
   buildRetentionBlock,
   NEUTRAL_DISCLAIMER_HTML,
@@ -417,19 +419,43 @@ async function fetchUserRetentionData(supabase: any, userId: string): Promise<{
 
 // ── Main handler ─────────────────────────────────────────────────────
 
-/** Decode JWT payload (signature checked upstream by Supabase). */
-function parseJwtClaims(token: string): Record<string, unknown> | null {
-  try {
-    const part = token.split(".")[1];
-    if (!part) return null;
-    const b64 = part.replace(/-/g, "+").replace(/_/g, "/");
-    const padded = b64 + "=".repeat((4 - (b64.length % 4)) % 4);
-    return JSON.parse(atob(padded));
-  } catch { return null; }
-}
-
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
+
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const authorization = await authorizePrivilegedRequest(req, {
+    namedSecretKeysJson: Deno.env.get("SUPABASE_SECRET_KEYS"),
+    secretName: "automations",
+    verifyUser: async (accessToken) => {
+      const userClient = createClient(supabaseUrl, getSupabasePublishableKey(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data, error } = await userClient.auth.getUser(accessToken);
+      return error ? null : data.user?.id ?? null;
+    },
+    isAdmin: async (userId) => {
+      const adminClient = createClient(supabaseUrl, getSupabaseSecretKey(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      return Boolean(data);
+    },
+  });
+
+  if (!authorization.ok) {
+    return new Response(
+      JSON.stringify({ error: authorization.status === 401 ? "Unauthorized" : "Forbidden" }),
+      {
+        status: authorization.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+  }
 
   const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
   if (!LOVABLE_API_KEY) {
@@ -448,39 +474,9 @@ Deno.serve(async (req) => {
   }
 
   try {
-    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-    const anonKey = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const serviceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const serviceKey = getSupabaseSecretKey();
     const supabase = createClient(supabaseUrl, serviceKey);
     const siteUrl = "https://kenya-fund-finder.lovable.app";
-
-    // ── Auth gate ──────────────────────────────────────────────
-    // Allow service-role callers (cron / check-price-alerts) OR admin users.
-    const authHeader = req.headers.get("Authorization") ?? "";
-    const token = authHeader.toLowerCase().startsWith("bearer ") ? authHeader.slice(7) : "";
-    const claims = parseJwtClaims(token);
-    let authorized = claims?.role === "service_role";
-    if (!authorized && token) {
-      const userClient = createClient(supabaseUrl, anonKey, {
-        global: { headers: { Authorization: authHeader } },
-      });
-      const { data: userData } = await userClient.auth.getUser();
-      if (userData?.user) {
-        const { data: roleRow } = await supabase
-          .from("user_roles")
-          .select("role")
-          .eq("user_id", userData.user.id)
-          .eq("role", "admin")
-          .maybeSingle();
-        if (roleRow) authorized = true;
-      }
-    }
-    if (!authorized) {
-      return new Response(JSON.stringify({ error: "Forbidden" }), {
-        status: 403,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
 
 
     const body = await req.json().catch(() => ({}));

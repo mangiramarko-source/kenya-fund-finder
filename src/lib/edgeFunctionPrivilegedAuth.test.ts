@@ -1,19 +1,26 @@
 import { describe, expect, it, vi } from "vitest";
 import { authorizePrivilegedRequest } from "../../supabase/functions/_shared/privileged-auth";
 
-const endpoint = "https://example.supabase.co/functions/v1/fetch-market-data";
+const endpoints = [
+  "https://example.supabase.co/functions/v1/check-price-alerts",
+  "https://example.supabase.co/functions/v1/process-email-queue",
+  "https://example.supabase.co/functions/v1/send-market-update",
+  "https://example.supabase.co/functions/v1/sync-portfolio-prices",
+  "https://example.supabase.co/functions/v1/enrich-article",
+  "https://example.supabase.co/functions/v1/fetch-stock-disclosures",
+];
 const namedKeys = JSON.stringify({ automations: "sb_secret_automation_test_value" });
 
-function request(headers: HeadersInit = {}) {
-  return new Request(endpoint, { method: "POST", headers });
+function request(url: string, headers: HeadersInit = {}) {
+  return new Request(url, { method: "POST", headers });
 }
 
 describe("privileged Edge Function authorization", () => {
-  it("rejects anonymous requests before user or admin lookup", async () => {
+  it.each(endpoints)("rejects anonymous requests for %s before user or admin lookup", async (endpoint) => {
     const verifyUser = vi.fn(async () => null);
     const isAdmin = vi.fn(async () => false);
 
-    await expect(authorizePrivilegedRequest(request(), {
+    await expect(authorizePrivilegedRequest(request(endpoint), {
       namedSecretKeysJson: namedKeys,
       verifyUser,
       isAdmin,
@@ -22,21 +29,21 @@ describe("privileged Edge Function authorization", () => {
     expect(isAdmin).not.toHaveBeenCalled();
   });
 
-  it("rejects a fake JWT role claim after server-side verification fails", async () => {
+  it.each(endpoints)("rejects fake JWT role claim for %s after server-side verification fails", async (endpoint) => {
     const verifyUser = vi.fn(async () => null);
     const isAdmin = vi.fn(async () => true);
 
-    const result = await authorizePrivilegedRequest(request({
-      Authorization: "Bearer fake.header.payload",
+    const result = await authorizePrivilegedRequest(request(endpoint, {
+      Authorization: "Bearer eyJhbGciOiJub25lIn0.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.",
     }), { namedSecretKeysJson: namedKeys, verifyUser, isAdmin });
 
     expect(result).toEqual({ ok: false, status: 401 });
-    expect(verifyUser).toHaveBeenCalledWith("fake.header.payload");
+    expect(verifyUser).toHaveBeenCalledWith("eyJhbGciOiJub25lIn0.eyJyb2xlIjoic2VydmljZV9yb2xlIn0.");
     expect(isAdmin).not.toHaveBeenCalled();
   });
 
-  it("rejects a verified ordinary user", async () => {
-    const result = await authorizePrivilegedRequest(request({
+  it.each(endpoints)("rejects a verified ordinary user for %s", async (endpoint) => {
+    const result = await authorizePrivilegedRequest(request(endpoint, {
       Authorization: "Bearer valid-user-token",
     }), {
       namedSecretKeysJson: namedKeys,
@@ -47,8 +54,8 @@ describe("privileged Edge Function authorization", () => {
     expect(result).toEqual({ ok: false, status: 403 });
   });
 
-  it("accepts a verified administrator", async () => {
-    const result = await authorizePrivilegedRequest(request({
+  it.each(endpoints)("accepts a verified administrator for %s", async (endpoint) => {
+    const result = await authorizePrivilegedRequest(request(endpoint, {
       Authorization: "Bearer valid-admin-token",
     }), {
       namedSecretKeysJson: namedKeys,
@@ -59,14 +66,14 @@ describe("privileged Edge Function authorization", () => {
     expect(result).toEqual({ ok: true, kind: "admin", userId: "admin-user-id" });
   });
 
-  it("accepts only the named scheduled-service key in the apikey header", async () => {
+  it.each(endpoints)("accepts only the named scheduled-service key in the apikey header for %s", async (endpoint) => {
     const verifyUser = vi.fn(async () => null);
     const isAdmin = vi.fn(async () => false);
 
-    const accepted = await authorizePrivilegedRequest(request({
+    const accepted = await authorizePrivilegedRequest(request(endpoint, {
       apikey: "sb_secret_automation_test_value",
     }), { namedSecretKeysJson: namedKeys, verifyUser, isAdmin });
-    const rejected = await authorizePrivilegedRequest(request({
+    const rejected = await authorizePrivilegedRequest(request(endpoint, {
       apikey: "sb_secret_wrong_value",
     }), { namedSecretKeysJson: namedKeys, verifyUser, isAdmin });
 
@@ -76,8 +83,8 @@ describe("privileged Edge Function authorization", () => {
     expect(isAdmin).not.toHaveBeenCalled();
   });
 
-  it("does not accept a secret supplied as an Authorization bearer", async () => {
-    const result = await authorizePrivilegedRequest(request({
+  it.each(endpoints)("does not accept a secret supplied as an Authorization bearer for %s", async (endpoint) => {
+    const result = await authorizePrivilegedRequest(request(endpoint, {
       Authorization: "Bearer sb_secret_automation_test_value",
     }), {
       namedSecretKeysJson: namedKeys,

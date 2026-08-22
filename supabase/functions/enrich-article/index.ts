@@ -1,5 +1,7 @@
 // Enrich a news article: scrape with Firecrawl + summarize with Lovable AI, then cache to DB
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
+import { getSupabasePublishableKey, getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -13,18 +15,50 @@ const GEMINI_AI_URL = "https://generativelanguage.googleapis.com/v1beta/openai/c
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
+  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+  const authorization = await authorizePrivilegedRequest(req, {
+    namedSecretKeysJson: Deno.env.get("SUPABASE_SECRET_KEYS"),
+    secretName: "automations",
+    verifyUser: async (accessToken) => {
+      const userClient = createClient(supabaseUrl, getSupabasePublishableKey(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data, error } = await userClient.auth.getUser(accessToken);
+      return error ? null : data.user?.id ?? null;
+    },
+    isAdmin: async (userId) => {
+      const adminClient = createClient(supabaseUrl, getSupabaseSecretKey(), {
+        auth: { persistSession: false, autoRefreshToken: false },
+      });
+      const { data } = await adminClient
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", userId)
+        .eq("role", "admin")
+        .maybeSingle();
+      return Boolean(data);
+    },
+  });
+
+  if (!authorization.ok) {
+    return new Response(
+      JSON.stringify({ error: authorization.status === 401 ? "Unauthorized" : "Forbidden" }),
+      {
+        status: authorization.status,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      },
+    );
+  }
+
   try {
     const FIRECRAWL_API_KEY = Deno.env.get("FIRECRAWL_API_KEY");
     const GEMINI_API_KEY = Deno.env.get("GEMINI_API_KEY");
-    const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
-    const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
-    const SUPABASE_SERVICE_ROLE_KEY = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const serviceKey = getSupabaseSecretKey();
 
     if (!FIRECRAWL_API_KEY) throw new Error("FIRECRAWL_API_KEY not configured");
     if (!GEMINI_API_KEY) throw new Error("GEMINI_API_KEY not configured");
 
-    // Removed admin gate to allow on-the-fly generation for demo purposes
-    const adminClient = createClient(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY);
+    const adminClient = createClient(supabaseUrl, serviceKey);
     
     const body = await req.json().catch(() => ({}));
     const articleId = typeof body?.articleId === "string" ? body.articleId : null;
