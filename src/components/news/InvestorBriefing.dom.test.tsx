@@ -188,5 +188,41 @@ describe("InvestorBriefing DOM & Visual Verification", () => {
     expect(screen.getByText("Business Daily")).toBeInTheDocument();
     expect(screen.getByText("Company Timeline")).toBeInTheDocument();
   });
+
+  it("suppresses the headline when showTitle is false (modal mode) and renders it when showTitle is true (page mode)", () => {
+    const briefing = buildInvestorBriefing(mockArticle, { stock: mockStock });
+    
+    // Test modal mode (showTitle = false)
+    const { queryByRole, rerender } = render(
+      <MemoryRouter>
+        <InvestorBriefing briefing={briefing} showTitle={false} />
+      </MemoryRouter>
+    );
+    expect(queryByRole("heading", { level: 1 })).not.toBeInTheDocument();
+
+    // Test standalone page mode (showTitle = true, default)
+    rerender(
+      <MemoryRouter>
+        <InvestorBriefing briefing={briefing} showTitle={true} />
+      </MemoryRouter>
+    );
+    expect(queryByRole("heading", { level: 1 })).toBeInTheDocument();
+    expect(queryByRole("heading", { level: 1 })?.textContent).toBe("The Safaricom Platform Expands to KDF & Foreign Residents");
+  });
+
+  it("renders What It Could Mean with responsive two-column grid classes for desktop alignment", () => {
+    const briefing = buildInvestorBriefing(mockArticle, { stock: mockStock });
+    const { container } = render(
+      <MemoryRouter>
+        <InvestorBriefing briefing={briefing} />
+      </MemoryRouter>
+    );
+
+    const meaningRows = container.querySelectorAll(".sm\\:grid-cols-\\[170px_minmax\\(0\\,1fr\\)\\]");
+    expect(meaningRows.length).toBeGreaterThanOrEqual(1);
+    expect(meaningRows[0].classList.contains("sm:grid")).toBe(true);
+    expect(meaningRows[0].classList.contains("flex")).toBe(true);
+  });
 });
+
 

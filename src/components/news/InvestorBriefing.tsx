@@ -26,12 +26,14 @@ interface InvestorBriefingProps {
   heroImage?: string | null;
   onImageError?: (e: React.SyntheticEvent<HTMLImageElement>) => void;
   inlineTransparent?: boolean;
+  showTitle?: boolean;
 }
 
 export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
   briefing,
   heroImage,
   onImageError,
+  showTitle = true,
 }) => {
   const [showChart, setShowChart] = useState(false);
 
@@ -52,9 +54,11 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
 
       {/* ─── 1. The Takeaway (Max 1–2 short paragraphs: What happened) ─── */}
       <section className="space-y-3">
-        <h1 className="text-xl sm:text-2xl font-extrabold text-foreground leading-tight tracking-tight">
-          {briefing.title}
-        </h1>
+        {showTitle && (
+          <h1 className="text-xl sm:text-2xl font-extrabold text-foreground leading-tight tracking-tight">
+            {briefing.title}
+          </h1>
+        )}
 
         {briefing.takeaway.length > 0 && (
           <div className="text-[16px] sm:text-[17px] text-foreground/90 leading-relaxed space-y-3 font-normal">
@@ -349,11 +353,11 @@ const MeaningRow: React.FC<{ item: MeaningPoint }> = ({ item }) => {
       : "text-muted-foreground bg-muted";
 
   return (
-    <div className="flex items-start gap-2 text-[14px] sm:text-[15px] leading-relaxed">
-      <span className={`text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shrink-0 mt-0.5 ${badgeClass}`}>
+    <div className="flex items-start gap-2 sm:grid sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-3.5 text-[14px] sm:text-[15px] leading-relaxed">
+      <span className={`inline-flex items-center text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shrink-0 self-start mt-0.5 ${badgeClass}`}>
         {item.label}:
       </span>
-      <span className="text-foreground/90">{item.text}</span>
+      <span className="text-foreground/90 leading-relaxed">{item.text}</span>
     </div>
   );
 };

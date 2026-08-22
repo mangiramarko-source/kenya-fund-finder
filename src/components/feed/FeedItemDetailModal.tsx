@@ -257,7 +257,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
         {/* Modal Body */}
         <div className="p-6 space-y-6">
           {briefing ? (
-            <InvestorBriefing briefing={briefing} />
+            <InvestorBriefing briefing={briefing} showTitle={false} />
           ) : (
             <>
               {/* Media Box */}
