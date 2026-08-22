@@ -48,6 +48,7 @@ import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { buildNewsFeedItems } from "@/lib/stockNewsFeed";
 import { getCurrencyFlag } from "@/lib/currencyFlags";
 import { getPinnedMarketNewsBounds } from "@/lib/pinnedMarketNews";
+import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/fundsFixedIncomeNews";
 
 const INTERNATIONAL_SOURCES = new Set([
   "Reuters Business",
@@ -1013,6 +1014,9 @@ const OverviewPage = () => {
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [fundsLoading, setFundsLoading] = useState(true);
   const [news, setNews] = useState<NewsFromDB[]>([]);
+  const [newsOffset, setNewsOffset] = useState(0);
+  const [newsHasMore, setNewsHasMore] = useState(true);
+  const [newsCategoryLoading, setNewsCategoryLoading] = useState(false);
   const [rateHistory, setRateHistory] = useState<RateHistory[]>([]);
   const [fundSnapshots, setFundSnapshots] = useState<FundYieldSnapshot[]>([]);
   const [stockHistory, setStockHistory] = useState<StockPriceHistory[]>([]);
@@ -1048,6 +1052,102 @@ const OverviewPage = () => {
   const [profileName, setProfileName] = useState("");
   // Top tab: "overview", "watchlist", or "portfolio"
   const [mobileTab, setMobileTab] = useState<"overview" | "watchlist" | "portfolio">("overview");
+
+  // Category match helpers for on-demand category pagination
+  const tabMatchesArticle = (tab: string, a: NewsFromDB, stocksList: any[]): boolean => {
+    if (tab === "All" || tab === "Latest" || tab === "Oldest") return true;
+    if (tab === "Kenyan") return !isInternationalFeedItem(a);
+    if (tab === "International") return isInternationalFeedItem(a);
+    if (tab === "Stocks") {
+      if (a.related_stock_id) return true;
+      return stocksList.some(s => {
+        const cleanName = s.name.replace(/Group|Holdings|Plc|Ltd|Limited/gi, '').trim();
+        const aliases = [s.symbol, s.name];
+        if (cleanName.length > 3 && cleanName.toLowerCase() !== 'kenya') aliases.push(cleanName);
+        if (cleanName.toLowerCase() === 'equity') aliases.push('Equity Bank');
+        if (cleanName.toLowerCase() === 'co-operative') aliases.push('Co-op Bank');
+        if (s.symbol === 'SCOM') aliases.push('Safaricom');
+        const escaped = aliases.map((x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
+        return new RegExp(`\\b(${escaped.join('|')})\\b`, 'i').test(a.title);
+      });
+    }
+    if (tab === FUNDS_AND_FIXED_INCOME_TAB || tab === "MMFs") {
+      return isFundsAndFixedIncomeArticle(a);
+    }
+    if (tab === "FX Rates") {
+      const rx = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
+      return a.category === "FX & Currency" || rx.test(a.title) || (!!a.summary && rx.test(a.summary)) || (!!a.content && rx.test(a.content));
+    }
+    if (tab === "Commodities") {
+      const rx = /\b(oil|crude( oil)?|brent|gold|coffee|tea|fuel|agriculture|agricultural|commodity|commodities)\b/i;
+      return rx.test(a.title) || (!!a.summary && rx.test(a.summary)) || (!!a.content && rx.test(a.content));
+    }
+    return true;
+  };
+
+  const fillCategoryNews = async (
+    category: string,
+    existingArticles: NewsFromDB[],
+    startOffset: number,
+    currentHasMore: boolean,
+    stocksList: any[],
+    target = 15,
+  ): Promise<{ articles: NewsFromDB[]; offset: number; hasMore: boolean }> => {
+    let accumulated = [...existingArticles];
+    let currentOffset = startOffset;
+    let hasMoreRemote = currentHasMore;
+    const MAX_BATCHES = 10;
+    let batches = 0;
+
+    while (hasMoreRemote && batches < MAX_BATCHES) {
+      const matching = accumulated.filter(a => tabMatchesArticle(category, a, stocksList));
+      if (matching.length >= target) break;
+
+      const nextOffset = currentOffset + 60;
+      const batch = await fetchPublishedNews(60, nextOffset);
+      batches++;
+
+      if (batch.length > 0) {
+        const existingIds = new Set(accumulated.map(a => a.id));
+        const fresh = batch.filter(a => !existingIds.has(a.id));
+        accumulated = [...accumulated, ...fresh];
+        currentOffset = nextOffset;
+      }
+      if (batch.length < 60) {
+        hasMoreRemote = false;
+      }
+      if (batch.length === 0) break;
+    }
+
+    return { articles: accumulated, offset: currentOffset, hasMore: hasMoreRemote };
+  };
+
+  const fillInProgressRef = useRef(false);
+
+  const triggerFillForCategory = async (
+    category: string,
+    currentArticles: NewsFromDB[],
+    currentOffset: number,
+    currentHasMore: boolean,
+    stocksList: any[]
+  ) => {
+    if (fillInProgressRef.current) return;
+    const matching = currentArticles.filter(a => tabMatchesArticle(category, a, stocksList));
+    if (matching.length >= 15 || !currentHasMore) return;
+    fillInProgressRef.current = true;
+    setNewsCategoryLoading(true);
+    try {
+      const result = await fillCategoryNews(category, currentArticles, currentOffset, currentHasMore, stocksList);
+      setNews(result.articles);
+      setNewsOffset(result.offset);
+      setNewsHasMore(result.hasMore);
+    } catch (err) {
+      console.error("fillCategoryNews error:", err);
+    } finally {
+      fillInProgressRef.current = false;
+      setNewsCategoryLoading(false);
+    }
+  };
 
   const feedItems = useSocialFeed(news, stocks, funds, rates, commodities);
   const stockNewsFeedItems = useMemo(
@@ -1104,7 +1204,11 @@ const OverviewPage = () => {
       })
       .then(undefined, () => {})
       .then(() => setFundsLoading(false));
-    fetchPublishedNews().then(n => setNews(n)).catch(() => {});
+    fetchPublishedNews(60, 0).then(n => {
+      setNews(n);
+      setNewsOffset(0);
+      setNewsHasMore(n.length === 60);
+    }).catch(() => {});
     // 90-day window for history (much smaller payloads than limit=500/1000 unfiltered)
     const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
     supabase.from("exchange_rate_history_public" as any)
@@ -1357,13 +1461,8 @@ const OverviewPage = () => {
       list = list.filter(item => !isInternationalFeedItem(item));
     } else if (activeUpdateCategory === "International") {
       list = list.filter(item => isInternationalFeedItem(item));
-    } else if (activeUpdateCategory === "MMFs") {
-      const mmfPattern = /\b(money market( fund)?|mmf|unit trust|collective investment|fund manager|fund yield|money market yield)\b/i;
-      list = list.filter(item =>
-        item.rawItem?.category === "Fund Announcements" ||
-        (item.rawItem?.category === "Yield Updates" && mmfPattern.test(`${item.title} ${item.content}`)) ||
-        mmfPattern.test(`${item.title} ${item.content}`)
-      );
+    } else if (activeUpdateCategory === FUNDS_AND_FIXED_INCOME_TAB || activeUpdateCategory === "MMFs") {
+      list = list.filter(item => isFundsAndFixedIncomeArticle(item.rawItem || item));
     } else if (activeUpdateCategory === "FX Rates") {
       const fxPattern = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
       list = list.filter(item => item.rawItem?.category === "FX & Currency" || fxPattern.test(`${item.title} ${item.content}`));
@@ -1509,10 +1608,13 @@ const OverviewPage = () => {
               </div>
 
               <div className="no-scrollbar mb-2 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 md:mb-3">
-                {["All", "Stocks", "Kenyan", "International", "MMFs", "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => (
+                {["All", "Stocks", "Kenyan", "International", FUNDS_AND_FIXED_INCOME_TAB, "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => (
                   <button
                     key={f}
-                    onClick={() => setActiveUpdateCategory(f)}
+                    onClick={() => {
+                      setActiveUpdateCategory(f);
+                      triggerFillForCategory(f, news, newsOffset, newsHasMore, stocks);
+                    }}
                     className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
                       activeUpdateCategory === f
                         ? "bg-foreground text-background"
@@ -1528,7 +1630,7 @@ const OverviewPage = () => {
 
           <div className="space-y-0 md:space-y-4">
             {activeUpdateCategory === "Stocks" ? (
-              filteredFeedItems.length === 0 && !loading ? (
+              filteredFeedItems.length === 0 && !loading && !newsCategoryLoading ? (
                 <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
                   No stock-linked news is available yet.
                 </div>
@@ -1565,7 +1667,7 @@ const OverviewPage = () => {
                 />
               ))
             ) : (
-              <SocialFeed items={filteredFeedItems} loading={loading} />
+              <SocialFeed items={filteredFeedItems} loading={loading || newsCategoryLoading} />
             )}
           </div>
         </div>

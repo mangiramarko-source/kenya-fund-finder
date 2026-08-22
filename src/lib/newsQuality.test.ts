@@ -17,6 +17,30 @@ describe("news quality pipeline", () => {
       .toBe("stale_publication_time");
   });
 
+  it("handles exact date boundary cases for freshness", () => {
+    // 1. Article from today (0 days old) -> accepted
+    const today = parseNewsPublicationTime("2026-08-17T06:00:00.000Z", NOW);
+    expect(today.reason).toBeNull();
+    expect(today.iso).toBe("2026-08-17T06:00:00.000Z");
+
+    // 2. Article from 3 days ago -> accepted
+    const threeDaysAgo = parseNewsPublicationTime("2026-08-14T12:00:00.000Z", NOW);
+    expect(threeDaysAgo.reason).toBeNull();
+
+    // 3. Article exactly at 7 days boundary -> accepted
+    const sevenDaysAgo = parseNewsPublicationTime("2026-08-10T12:00:00.000Z", NOW);
+    expect(sevenDaysAgo.reason).toBeNull();
+
+    // 4. Article several months old returned by Google News (e.g. 2025-10-28) -> rejected
+    const monthsOld = parseNewsPublicationTime("2025-10-28T18:45:43.000Z", NOW);
+    expect(monthsOld.reason).toBe("stale_publication_time");
+
+    // 5. Malformed or missing date string -> rejected conservatively
+    expect(parseNewsPublicationTime("", NOW).reason).toBe("invalid_publication_time");
+    expect(parseNewsPublicationTime(null, NOW).reason).toBe("invalid_publication_time");
+    expect(parseNewsPublicationTime("invalid-date-string", NOW).reason).toBe("invalid_publication_time");
+  });
+
   it("orders by source publication time rather than ingestion time", () => {
     const oldStoryIngestedNow = {
       source_published_at: "2026-08-10T08:00:00.000Z",

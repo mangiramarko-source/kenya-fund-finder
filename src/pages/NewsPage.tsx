@@ -12,6 +12,7 @@ import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { useAuth } from "@/hooks/useAuth";
+import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/fundsFixedIncomeNews";
 import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 
 const INTERNATIONAL_SOURCES = new Set([
@@ -162,9 +163,8 @@ export default function NewsPage() {
         return new RegExp(`\\b(${escaped.join('|')})\\b`, 'i').test(a.title);
       });
     }
-    if (tab === "MMFs") {
-      const rx = /\b(money market( fund)?|mmf|unit trust|collective investment|fund manager|fund yield|money market yield)\b/i;
-      return rx.test(a.title) || (!!a.summary && rx.test(a.summary));
+    if (tab === FUNDS_AND_FIXED_INCOME_TAB || tab === "MMFs") {
+      return isFundsAndFixedIncomeArticle(a);
     }
     if (tab === "FX Rates") {
       const rx = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
@@ -309,13 +309,8 @@ export default function NewsPage() {
       allItems = allItems.filter(a => isInternationalArticle(a.rawItem || {}));
     } else if (activeNavTab === "Stocks") {
       allItems = allItems.filter(a => a.rawItem?.category === 'Stocks' || !!a.relatedStock);
-    } else if (activeNavTab === "MMFs") {
-      const mmfRegex = /\b(money market( fund)?|mmf|unit trust|collective investment|fund manager|fund yield|money market yield)\b/i;
-      allItems = allItems.filter(a => 
-        a.rawItem?.category === 'MMFs' ||
-        mmfRegex.test(a.title) || 
-        (a.rawItem?.summary && mmfRegex.test(a.rawItem.summary))
-      );
+    } else if (activeNavTab === FUNDS_AND_FIXED_INCOME_TAB || activeNavTab === "MMFs") {
+      allItems = allItems.filter(a => isFundsAndFixedIncomeArticle(a.rawItem || a));
     } else if (activeNavTab === "FX Rates") {
       const fxRegex = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
       allItems = allItems.filter(a => 
@@ -397,7 +392,7 @@ export default function NewsPage() {
             "Kenyan",
             "International",
             "Stocks",
-            "MMFs",
+            FUNDS_AND_FIXED_INCOME_TAB,
             "FX Rates",
             "Commodities",
             "Latest",

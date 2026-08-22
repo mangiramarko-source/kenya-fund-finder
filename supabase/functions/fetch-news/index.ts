@@ -9,6 +9,7 @@ import {
 import { cleanNewsTitle, isDuplicateNewsText, sanitizeNewsText } from "../_shared/news-text.ts";
 import {
   evaluateNewsQuality,
+  parseNewsPublicationTime,
   NEWS_CLASSIFICATION_VERSION,
 } from "../_shared/news-quality.ts";
 import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
@@ -58,7 +59,12 @@ const RSS_FEEDS = [
   { url: "https://news.google.com/rss/search?q=site:techweez.com+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "TechWeez" },
   // Free Google News RSS queries strictly focused on Kenyan Markets
   { url: "https://news.google.com/rss/search?q=Kenya+economy+OR+NSE+OR+CBK+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
-  { url: "https://news.google.com/rss/search?q=Kenya+shilling+OR+%22unit+trust%22+OR+%22money+market%22+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" }
+  { url: "https://news.google.com/rss/search?q=Kenya+shilling+OR+%22unit+trust%22+OR+%22money+market%22+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
+  // Targeted Funds & Fixed Income Queries (Batch 1 Sourcing Expansion)
+  { url: "https://news.google.com/rss/search?q=site:businessdailyafrica.com+(%22treasury+bill%22+OR+%22treasury+bills%22+OR+%22treasury+bond%22+OR+%22treasury+bonds%22+OR+%22infrastructure+bond%22+OR+%22corporate+bond%22+OR+%22money+market+fund%22+OR+%22unit+trust%22)+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Business Daily" },
+  { url: "https://news.google.com/rss/search?q=site:kenyanwallstreet.com+(%22treasury+bill%22+OR+%22treasury+bills%22+OR+%22treasury+bond%22+OR+%22treasury+bonds%22+OR+%22corporate+bond%22+OR+%22money+market%22+OR+%22unit+trust%22)+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Kenyan Wall Street" },
+  { url: "https://news.google.com/rss/search?q=site:standardmedia.co.ke+(%22treasury+bill%22+OR+%22treasury+bills%22+OR+%22treasury+bond%22+OR+%22treasury+bonds%22+OR+%22corporate+bond%22+OR+%22money+market%22+OR+%22unit+trust%22)+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Standard Media" },
+  { url: "https://news.google.com/rss/search?q=Kenya+(%22treasury+bills%22+OR+%22treasury+bonds%22+OR+%22infrastructure+bond%22+OR+%22corporate+bond%22+OR+%22money+market+fund%22+OR+%22unit+trust%22+OR+%22DhowCSD%22)+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
 ];
 
 interface ParsedArticle {
@@ -371,8 +377,60 @@ async function mapWithConcurrency<T, R>(
   return results;
 }
 
+const TRUSTED_PUBLISHERS: Record<string, string> = {
+  "business daily": "Business Daily",
+  "businessdailyafrica.com": "Business Daily",
+  "standard media": "Standard Media",
+  "the standard": "Standard Media",
+  "standardmedia.co.ke": "Standard Media",
+  "kenyan wall street": "Kenyan Wall Street",
+  "the kenyan wallstreet": "Kenyan Wall Street",
+  "the kenyan wall street": "Kenyan Wall Street",
+  "kenyanwallstreet.com": "Kenyan Wall Street",
+  "capital fm": "Capital FM",
+  "capital business": "Capital FM",
+  "capitalfm.co.ke": "Capital FM",
+  "nation": "Nation",
+  "daily nation": "Nation",
+  "nation.africa": "Nation",
+  "the star": "The Star",
+  "the-star.co.ke": "The Star",
+  "tuko news": "Tuko News",
+  "tuko.co.ke": "Tuko News",
+  "people daily": "People Daily",
+  "pd.co.ke": "People Daily",
+  "citizen digital": "Citizen Digital",
+  "citizen.digital": "Citizen Digital",
+  "kbc": "KBC",
+  "kbc.co.ke": "KBC",
+  "bizna kenya": "Bizna Kenya",
+  "bizna.co.ke": "Bizna Kenya",
+  "african business": "African Business",
+  "the africa report": "The Africa Report",
+  "further africa": "Further Africa",
+  "financial times": "Financial Times Africa",
+  "ft.com": "Financial Times Africa",
+  "techcabal": "TechCabal",
+  "techweez": "TechWeez",
+};
+
+function resolveTrustedPublisher(rawSource: string, link: string): string | null {
+  const normRaw = (rawSource || "").toLowerCase().replace(/[^\w\s.-]/g, " ").trim();
+  for (const [key, canonical] of Object.entries(TRUSTED_PUBLISHERS)) {
+    if (normRaw.includes(key)) return canonical;
+  }
+  try {
+    const host = new URL(link).hostname.toLowerCase().replace(/^www\./, "");
+    for (const [key, canonical] of Object.entries(TRUSTED_PUBLISHERS)) {
+      if (host.includes(key)) return canonical;
+    }
+  } catch {}
+  return null;
+}
+
 async function fetchFeed(feedUrl: string, source: string): Promise<ParsedArticle[]> {
   const articles: ParsedArticle[] = [];
+  const now = new Date();
   try {
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), 15000);
@@ -388,15 +446,33 @@ async function fetchFeed(feedUrl: string, source: string): Promise<ParsedArticle
     for (const item of items) {
       const rawTitle = stripHtml(extractTag(item, "title"));
       if (!rawTitle) continue;
-      const title = cleanNewsTitle(rawTitle, source);
       const link = extractTag(item, "link").trim();
+      const pubDate = extractTag(item, "pubDate") || extractTag(item, "dc:date");
+
+      // 1. Hard Freshness Gate (Rejects articles outside the 7-day window or future-dated)
+      const pubInfo = parseNewsPublicationTime(pubDate, now);
+      if (pubInfo.reason === "stale_publication_time" || pubInfo.reason === "future_publication_time") {
+        continue;
+      }
+
+      // 2. Source-Authority Gate (For Google News aggregator feeds, require verified publisher)
+      let resolvedSource = source;
+      if (source === "Google News") {
+        const rawSourceTag = stripHtml(extractTag(item, "source"));
+        const matched = resolveTrustedPublisher(rawSourceTag, link);
+        if (!matched) {
+          continue; // Skip unapproved publisher
+        }
+        resolvedSource = matched;
+      }
+
+      const title = cleanNewsTitle(rawTitle, resolvedSource);
       const descriptionRaw = extractTag(item, "description");
       const contentRaw = extractTag(item, "content:encoded") || extractTag(item, "content");
-      const pubDate = extractTag(item, "pubDate") || extractTag(item, "dc:date");
-      const summary = isDuplicateNewsText(rawTitle, descriptionRaw, source)
+      const summary = isDuplicateNewsText(rawTitle, descriptionRaw, resolvedSource)
         ? ""
         : stripHtml(descriptionRaw).slice(0, 1000);
-      const sanitizedContent = isDuplicateNewsText(rawTitle, contentRaw, source)
+      const sanitizedContent = isDuplicateNewsText(rawTitle, contentRaw, resolvedSource)
         ? ""
         : stripHtml(contentRaw).slice(0, 5000);
       const fullText = `${title} ${summary} ${sanitizedContent}`;
@@ -407,8 +483,8 @@ async function fetchFeed(feedUrl: string, source: string): Promise<ParsedArticle
         url: link || null,
         summary,
         content: sanitizedContent || null,
-        source_published_at: parseSourcePublishedAt(pubDate),
-        source,
+        source_published_at: pubInfo.iso,
+        source: resolvedSource,
         image_url: extractImageUrl(item),
       });
     }
