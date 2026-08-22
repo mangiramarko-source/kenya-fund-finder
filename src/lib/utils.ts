@@ -5,29 +5,47 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Decode HTML entities (&#8217; &amp; &quot; etc.) and strip HTML tags into clean text safely */
+/** Decode HTML entities (&#8217; &amp; &quot; &#xA0; &#x54; etc.) and strip HTML tags into clean text safely */
 export function decodeHtmlEntities(text: string): string {
   if (!text || typeof text !== "string") return text;
   if (!text.includes("&") && !text.includes("<")) return text;
   try {
     if (typeof DOMParser !== "undefined") {
       const doc = new DOMParser().parseFromString(text, "text/html");
-      return doc.body.textContent || "";
+      const decoded = doc.body.textContent;
+      if (typeof decoded === "string") {
+        // Also check if any nested entities remain
+        if (!decoded.includes("&#")) return decoded;
+      }
     }
   } catch {
-    // Fallback if DOMParser is unavailable
+    // Fallback if DOMParser is unavailable or fails
   }
   return text
     .replace(/<[^>]*>/g, "")
+    // Hexadecimal entities like &#xA0; or &#x54;
+    .replace(/&#x([0-9a-fA-F]+);/g, (_, hex) => {
+      try {
+        const code = parseInt(hex, 16);
+        return String.fromCharCode(code);
+      } catch {
+        return "";
+      }
+    })
+    // Decimal entities like &#160; or &#8217;
+    .replace(/&#([0-9]+);/g, (_, dec) => {
+      try {
+        const code = parseInt(dec, 10);
+        return String.fromCharCode(code);
+      } catch {
+        return "";
+      }
+    })
     .replace(/&amp;/g, "&")
     .replace(/&lt;/g, "<")
     .replace(/&gt;/g, ">")
     .replace(/&quot;/g, '"')
-    .replace(/&#039;|&apos;/g, "'")
-    .replace(/&#8217;/g, "'")
-    .replace(/&#8216;/g, "'")
-    .replace(/&#8220;/g, '"')
-    .replace(/&#8221;/g, '"')
+    .replace(/&apos;/g, "'")
     .replace(/&nbsp;/g, " ");
 }
 

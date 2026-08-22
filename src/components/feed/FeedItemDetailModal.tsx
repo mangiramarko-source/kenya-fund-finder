@@ -30,16 +30,10 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { PostInteraction } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
-import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
-import { MmfArticleMarketCard } from "@/components/news/MmfArticleMarketCard";
-import { FxArticleMarketCard } from "@/components/news/FxArticleMarketCard";
-import { CommodityArticleMarketCard } from "@/components/news/CommodityArticleMarketCard";
-import { splitReadableParagraphs } from "@/lib/utils";
-import { StockDecisionContext } from "@/components/news/StockDecisionContext";
-import { MmfDecisionContext } from "@/components/news/MmfDecisionContext";
-import { FxDecisionContext } from "@/components/news/FxDecisionContext";
-import { CommodityDecisionContext } from "@/components/news/CommodityDecisionContext";
+import { InvestorBriefing } from "@/components/news/InvestorBriefing";
+import { buildInvestorBriefing } from "@/lib/newsBriefingMapper";
 import { type NewsFromDB, type PublicStock } from "@/lib/api";
+import { splitReadableParagraphs } from "@/lib/utils";
 
 interface FeedItemDetailModalProps {
   item: FeedItem | null;
@@ -94,6 +88,20 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
   const formattedDate = format(item.timestamp, "d MMM yyyy");
   const readTime = item.rawItem?.read_time;
   const readableContent = splitReadableParagraphs(item.content).join("\n\n");
+  const briefing = item.rawItem
+    ? buildInvestorBriefing(item.rawItem as NewsFromDB, {
+        stock: item.relatedStock
+          ? ({
+              ...item.relatedStock,
+              day_change_percent: item.relatedStock.changePercent,
+              previous_price: item.relatedStock.previousPrice,
+            } as PublicStock)
+          : null,
+        mmf: item.relatedMmf,
+        fx: item.relatedFx,
+        commodity: item.relatedCommodity,
+      })
+    : null;
 
   const handleShare = async () => {
     const rawId = item.id.startsWith("news-") ? item.id.slice(5) : item.id;
@@ -248,108 +256,47 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
 
         {/* Modal Body */}
         <div className="p-6 space-y-6">
-            {item.relatedMmf ? (
-              <MmfArticleMarketCard mmf={item.relatedMmf} />
-            ) : item.relatedStock ? (
-              <StockArticleMarketCard
-                stock={{
-                  id: item.relatedStock.id,
-                  symbol: item.relatedStock.symbol,
-                  name: item.relatedStock.name,
-                  price: item.relatedStock.price,
-                  previous_price: item.relatedStock.previousPrice,
-                  day_change_percent: item.relatedStock.changePercent,
-                }}
-              />
-            ) : null}
-            {item.relatedFx && <FxArticleMarketCard fx={item.relatedFx} />}
-            {item.relatedCommodity && <CommodityArticleMarketCard commodity={item.relatedCommodity} />}
-
-            {/* AI Decision Support Context */}
-            {item.relatedMmf && item.rawItem ? (
-              <MmfDecisionContext 
-                item={item} 
-                article={item.rawItem as NewsFromDB} 
-                mmf={item.relatedMmf} 
-              />
-            ) : item.relatedStock && item.rawItem ? (
-              <StockDecisionContext 
-                article={item.rawItem as NewsFromDB}
-                stock={{ 
-                  ...item.relatedStock, 
-                  day_change_percent: item.relatedStock.changePercent, 
-                  previous_price: item.relatedStock.previousPrice 
-                } as PublicStock}
-              />
-            ) : null}
-
-            {item.relatedFx && (
-              <FxDecisionContext item={item} />
-            )}
-
-            {item.relatedCommodity && (
-              <CommodityDecisionContext item={item} />
-            )}
-
-            {/* Media Box */}
-            {(item.mediaUrl || item.rawItem?.image_url) && (
-              <div className="relative mt-4 mb-2 rounded-xl overflow-hidden border border-border bg-muted/40 max-h-[350px]">
-                <img
-                  src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id) || (item.mediaUrl || item.rawItem?.image_url)}
-                  alt=""
-                  className="w-full h-full object-cover"
-                  onError={handleNewsImageError}
-                  loading="lazy"
-                />
-              </div>
-            )}
-
-            {/* Video Embed */}
-            {item.mediaType === "video" && item.mediaUrl && (
-              <div className="relative mt-4 mb-2 rounded-xl overflow-hidden border border-border bg-black aspect-video">
-                <iframe
-                  src={item.mediaUrl}
-                  title="Video player"
-                  className="w-full h-full border-0"
-                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                  allowFullScreen
-                ></iframe>
-              </div>
-            )}
-
-          {/* Article Text Content */}
-          {!item.isHeadlineOnly && <div className="text-base text-foreground/90 leading-relaxed font-normal whitespace-pre-line">
-            <div className="prose prose-base dark:prose-invert max-w-none prose-p:my-3 prose-p:text-[16px] prose-p:text-foreground/90 prose-p:leading-relaxed prose-headings:mt-4 prose-headings:mb-2 prose-headings:text-foreground">
-              <ReactMarkdown remarkPlugins={[remarkGfm]}>
-                {readableContent}
-              </ReactMarkdown>
-            </div>
-          </div>}
-
-          {/* Chronological Timeline */}
-          {item.relatedStock && (
-            <div className="mt-8 mb-4 border-t border-border pt-6">
-              <h3 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/90 mb-6">
-                Company Timeline
-              </h3>
-              <div className="relative border-l-2 border-border ml-[9px] pl-5 space-y-6">
-                <div className="relative">
-                  <div className="absolute -left-[26px] top-1.5 h-3 w-3 rounded-full bg-emerald-500 ring-4 ring-background" />
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">Today</p>
-                  <p className="text-[14px] font-medium text-foreground mt-1 leading-snug">{item.title}</p>
+          {briefing ? (
+            <InvestorBriefing briefing={briefing} />
+          ) : (
+            <>
+              {/* Media Box */}
+              {(item.mediaUrl || item.rawItem?.image_url) && (
+                <div className="relative mt-4 mb-2 rounded-xl overflow-hidden border border-border bg-muted/40 max-h-[350px]">
+                  <img
+                    src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id) || (item.mediaUrl || item.rawItem?.image_url)}
+                    alt=""
+                    className="w-full h-full object-cover"
+                    onError={handleNewsImageError}
+                    loading="lazy"
+                  />
                 </div>
-                <div className="relative opacity-70 hover:opacity-100 transition-opacity">
-                  <div className="absolute -left-[26px] top-1.5 h-3 w-3 rounded-full bg-muted-foreground/40 ring-4 ring-background" />
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">1 Month Ago</p>
-                  <p className="text-[14px] font-medium text-foreground mt-1 leading-snug">Q1 Trading Update & Dividend Declaration <span className="text-emerald-500 font-bold ml-1">+8.2%</span></p>
+              )}
+
+              {/* Video Embed */}
+              {item.mediaType === "video" && item.mediaUrl && (
+                <div className="relative mt-4 mb-2 rounded-xl overflow-hidden border border-border bg-black aspect-video">
+                  <iframe
+                    src={item.mediaUrl}
+                    title="Video player"
+                    className="w-full h-full border-0"
+                    allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                    allowFullScreen
+                  ></iframe>
                 </div>
-                <div className="relative opacity-70 hover:opacity-100 transition-opacity">
-                  <div className="absolute -left-[26px] top-1.5 h-3 w-3 rounded-full bg-muted-foreground/40 ring-4 ring-background" />
-                  <p className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground">3 Months Ago</p>
-                  <p className="text-[14px] font-medium text-foreground mt-1 leading-snug">AGM Notice & Leadership Updates <span className="text-emerald-500 font-bold ml-1">+15.1%</span></p>
+              )}
+
+              {/* Article Text Content */}
+              {!item.isHeadlineOnly && (
+                <div className="text-base text-foreground/90 leading-relaxed font-normal whitespace-pre-line">
+                  <div className="prose prose-base dark:prose-invert max-w-none prose-p:my-3 prose-p:text-[16px] prose-p:text-foreground/90 prose-p:leading-relaxed prose-headings:mt-4 prose-headings:mb-2 prose-headings:text-foreground">
+                    <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                      {readableContent}
+                    </ReactMarkdown>
+                  </div>
                 </div>
-              </div>
-            </div>
+              )}
+            </>
           )}
 
           {/* External Source Link (Only for non-stock articles) */}

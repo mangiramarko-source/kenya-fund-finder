@@ -35,17 +35,11 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
-import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
-import { MmfArticleMarketCard } from "@/components/news/MmfArticleMarketCard";
-import { FxArticleMarketCard } from "@/components/news/FxArticleMarketCard";
-import { CommodityArticleMarketCard } from "@/components/news/CommodityArticleMarketCard";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
-import { StockDecisionContext } from "@/components/news/StockDecisionContext";
-import { MmfDecisionContext } from "@/components/news/MmfDecisionContext";
-import { FxDecisionContext } from "@/components/news/FxDecisionContext";
-import { CommodityDecisionContext } from "@/components/news/CommodityDecisionContext";
 import { getDemoArticles } from "@/lib/demo-data";
 import { buildRelatedMarketLinks } from "@/lib/newsMarketLinks";
+import { InvestorBriefing } from "@/components/news/InvestorBriefing";
+import { buildInvestorBriefing } from "@/lib/newsBriefingMapper";
 
 interface CommentItem {
   id: string;
@@ -547,14 +541,12 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     try { return new URL(article.url).hostname; } catch { return ""; }
   })();
   const sourceLogoUrl = sourceDomain ? `https://www.google.com/s2/favicons?domain=${sourceDomain}&sz=128` : "";
-  let rawBody = articlePresentation?.body || "";
-  const analysisBody = getNewsAiAnalysisDisplayText(article?.parsed_ai_analysis);
-  if (rawBody.length < 150 && analysisBody.length > rawBody.length) {
-    rawBody = analysisBody;
-  }
-  const isHeadlineOnly = !rawBody;
-  const articleText = decodeHtmlEntities(rawBody);
-  const articleParagraphs = splitReadableParagraphs(articleText);
+  const briefing = article ? buildInvestorBriefing(article, {
+    stock: relatedStock,
+    mmf: relatedMmf,
+    fx: relatedFx,
+    commodity: relatedCommodity,
+  }) : null;
 
   return (
     <div className="min-h-screen bg-background text-foreground pb-20 md:pb-8">
@@ -598,7 +590,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
       </header>
       <div className="h-[58px] md:hidden" aria-hidden="true" />
 
-      <div className="max-w-[430px] mx-auto px-4 py-4 space-y-4 md:py-4">
+      <div className="max-w-[430px] mx-auto px-4 py-4 space-y-5 md:max-w-2xl md:py-6">
         {/* ─── 2. Author Header ─── */}
         <div className="flex items-center gap-3">
             {/* Avatar */}
@@ -663,90 +655,12 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
             </div>
         </div>
 
-        {relatedMmf ? (
-          <MmfArticleMarketCard mmf={relatedMmf} />
-        ) : relatedStock ? (
-          <StockArticleMarketCard stock={relatedStock} />
-        ) : null}
-        {relatedFx && <FxArticleMarketCard fx={relatedFx} />}
-        {relatedCommodity && <CommodityArticleMarketCard commodity={relatedCommodity} />}
-
-        {/* ─── 3. Post Text ─── */}
-        <div className="space-y-3">
-          <h1 className={isHeadlineOnly
-            ? "text-[15px] font-normal text-foreground/90 leading-relaxed"
-            : "text-base sm:text-lg font-bold text-foreground leading-snug tracking-tight"
-          }>
-            {articlePresentation?.title || decodeHtmlEntities(article.title)}
-          </h1>
-
-          {!isHeadlineOnly && <div className="text-[15px] sm:text-xl text-foreground/90 leading-relaxed space-y-4 font-normal">
-            {articleParagraphs.map((paragraph, index) => (
-              <p key={index} className="my-4">
-                {paragraph}
-              </p>
-            ))}
-          </div>}
-        </div>
-
-        {/* ─── 4. Main Image ─── */}
-        {heroImage && (
-          <div className="rounded-2xl overflow-hidden border border-border/80 bg-muted/30">
-            <img
-              src={heroImage}
-              alt={article.title}
-              className="w-full aspect-[16/9] object-cover"
-              onError={handleNewsImageError}
-              loading="eager"
-            />
-          </div>
-        )}
-
-        {/* ─── 5. Source / Link (Only for non-stock articles) ─── */}
-        {!relatedStock && (
-          <div className="border-b border-border/60 pb-5 pt-2 text-[10px] font-semibold text-emerald-500 md:border-0 md:p-0 md:text-xs md:text-muted-foreground md:font-medium">
-            {article.url && /^https?:\/\//i.test(article.url) ? (
-              <a
-                href={article.url}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="hover:underline flex items-center gap-2 text-emerald-500 md:gap-1"
-              >
-                <span>From {getSourceDomain(article.url, article.source)}</span>
-                <ExternalLink className="h-4 w-4 md:h-3 md:w-3" />
-              </a>
-            ) : (
-              <span>From {getSourceDomain(null, article.source)}</span>
-            )}
-          </div>
-        )}
-
-        {/* ─── AI Decision Support ─── */}
-        {relatedMmf ? (
-          <MmfDecisionContext 
-            article={article} 
-            mmf={relatedMmf} 
-            onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
-          />
-        ) : relatedStock ? (
-          <StockDecisionContext 
-            article={article} 
-            stock={relatedStock} 
-            onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
-          />
-        ) : null}
-        {relatedFx && (
-          <FxDecisionContext 
-            article={article} 
-            fx={relatedFx} 
-            onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
-          />
-        )}
-        {relatedCommodity && (
-          <CommodityDecisionContext 
-            article={article} 
-            commodity={relatedCommodity} 
-            onEnrichmentComplete={(updatedArticle) => setArticle(updatedArticle)} 
+        {/* ─── 3. Structured Investor Briefing (9-Part Target Structure) ─── */}
+        {briefing && (
+          <InvestorBriefing
+            briefing={briefing}
+            heroImage={heroImage}
+            onImageError={handleNewsImageError}
           />
         )}
 
