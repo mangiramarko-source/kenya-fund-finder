@@ -252,6 +252,106 @@ describe("newsBriefingMapper", () => {
     expect(briefing.whatWeDontKnow[0]).toContain("No specific tariff adjustments");
     expect(briefing.whatItCouldMean).toHaveLength(0); // No fabricated positives/negatives
   });
+
+  it("extracts full healthy briefing for real ZiiDi article without explicit AI fields", () => {
+    const realZiidiArticle: NewsFromDB = {
+      id: "scom-ziidi-real",
+      title: "Safaricom-backed ZiiDi Trader expands platform access to KDF, non-Kenyan residents",
+      summary: "ZiiDi Trader has expanded its registration criteria to include Kenya Defence Forces personnel using military identification cards and foreign passport holders residing in Kenya. The mobile trading platform, integrated within the M-PESA Super App, previously restricted onboarding to holders of Kenyan national identity cards.",
+      content: "The expansion allows active service members of the Kenya Defence Forces (KDF) and accredited foreign passport holders with valid Kenyan alien residency cards to open retail stock trading accounts. ZiiDi Trader operates under CMA regulatory sandbox guidelines, offering direct NSE equity execution. Safaricom introduced the feature to broaden financial inclusion across the capital markets ecosystem.",
+      source: "Business Daily",
+      url: "https://businessdailyafrica.com/markets/ziidi-trader-expansion",
+      image_url: "https://example.com/scom.jpg",
+      related_stock_id: "stock-scom",
+      ai_insight: JSON.stringify({
+        what_happened: "ZiiDi Trader expanded user onboarding eligibility to include KDF military personnel and foreign passport holders with Kenyan residency.",
+        verified_figures: ["4 new identification formats supported"],
+        factors_positive: ["Expands potential retail investor pool across digital trading channels."],
+        factors_negative: ["Retail trading volumes remain dependent on broader market macroeconomic conditions."],
+      }),
+      created_at: "2026-08-20T10:00:00Z",
+    };
+
+    const briefing = buildInvestorBriefing(realZiidiArticle, { stock: mockStock });
+
+    // 1. Takeaway
+    expect(briefing.takeaway.length).toBeGreaterThanOrEqual(1);
+    expect(briefing.takeaway[0]).toContain("ZiiDi Trader expanded user onboarding eligibility");
+
+    // 2. Why This Matters (derived cautiously)
+    expect(briefing.whyThisMatters.length).toBeGreaterThanOrEqual(1);
+    expect(briefing.whyThisMatters[0]).toContain("Safaricom");
+    expect(briefing.whyThisMatters[0]).toContain("expanding product access and user eligibility");
+
+    // 3. Market Snapshot
+    expect(briefing.marketSnapshot?.symbolOrName).toBe("SCOM");
+    expect(briefing.marketSnapshot?.priceOrYield).toBe("KES 36.35");
+
+    // 4. What We Know (extracted from content)
+    expect(briefing.whatWeKnow.length).toBeGreaterThanOrEqual(2);
+    const factsJoined = briefing.whatWeKnow.join(" ");
+    expect(factsJoined).toMatch(/Kenya Defence Forces|CMA regulatory sandbox|M-PESA/i);
+
+    // 5. What It Could Mean
+    expect(briefing.whatItCouldMean.length).toBeGreaterThanOrEqual(2);
+
+    // 6. What We Don't Know
+    expect(briefing.whatWeDontKnow.length).toBeGreaterThanOrEqual(1);
+
+    // 7. Watch Next
+    expect(briefing.watchNext.length).toBeGreaterThanOrEqual(2);
+
+    // 8. Source & Timeline
+    expect(briefing.source.name).toBe("Business Daily");
+    expect(briefing.timeline).toHaveLength(3);
+
+    // Total content word count check
+    const totalWords = [
+      ...briefing.takeaway,
+      ...briefing.whyThisMatters,
+      ...briefing.whatWeKnow,
+      ...briefing.whatItCouldMean.map((m) => m.text),
+      ...briefing.whatWeDontKnow,
+      ...briefing.watchNext,
+    ].join(" ").split(/\s+/).length;
+
+    expect(totalWords).toBeGreaterThanOrEqual(120);
+  });
+
+  it("extracts healthy briefing for another stock article (Equity Group DRC)", () => {
+    const eqtyStock: PublicStock = {
+      id: "stock-eqty",
+      symbol: "EQTY",
+      name: "Equity Group Holdings",
+      price: 44.5,
+      previous_price: 43.8,
+      day_change_percent: 1.6,
+    };
+
+    const eqtyArticle: NewsFromDB = {
+      id: "eqty-drc-article",
+      title: "Equity Group rolls out digital micro-lending API in DRC market",
+      summary: "Equity Group Holdings has launched its proprietary micro-lending API in the Democratic Republic of Congo, targeting small business owners and cross-border traders with instant credit access via mobile wallets.",
+      content: "The rollout represents Equity's latest regional expansion strategy following its acquisition of BCDC. The new API connects directly with Airtel Money and Orange Money in Kinshasa, offering loan disbursement within 60 seconds. Equity BCDC currently accounts for over 28% of the group's total balance sheet assets.",
+      source: "The EastAfrican",
+      url: "https://theeastafrican.co.ke/business/equity-drc-api",
+      image_url: null,
+      related_stock_id: "stock-eqty",
+      ai_insight: null, // Test fallback extraction when ai_insight is completely null!
+      created_at: "2026-08-21T12:00:00Z",
+    };
+
+    const briefing = buildInvestorBriefing(eqtyArticle, { stock: eqtyStock });
+
+    expect(briefing.takeaway[0]).toContain("Equity Group Holdings has launched its proprietary micro-lending API");
+    expect(briefing.whyThisMatters[0]).toContain("Equity Group Holdings");
+    expect(briefing.marketSnapshot?.symbolOrName).toBe("EQTY");
+    expect(briefing.marketSnapshot?.priceOrYield).toBe("KES 44.50");
+    expect(briefing.whatWeKnow.length).toBeGreaterThanOrEqual(2);
+    expect(briefing.whatItCouldMean.length).toBeGreaterThanOrEqual(2);
+    expect(briefing.whatWeDontKnow.length).toBeGreaterThanOrEqual(1);
+    expect(briefing.watchNext.length).toBeGreaterThanOrEqual(2);
+  });
 });
 
 describe("isSemanticallySimilar Audit", () => {

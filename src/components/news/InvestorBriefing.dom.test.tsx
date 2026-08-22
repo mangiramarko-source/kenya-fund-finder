@@ -133,4 +133,60 @@ describe("InvestorBriefing DOM & Visual Verification", () => {
     fireEvent.click(screen.getByRole("button", { name: /Hide Chart/i }));
     expect(screen.getByRole("button", { name: /Show Chart/i })).toBeInTheDocument();
   });
+
+  it("renders rich briefing for standard article without explicit AI fields (ZiiDi expansion)", () => {
+    const standardArticle: NewsFromDB = {
+      id: "ziidi-std",
+      title: "Safaricom expands ZiiDi Trader access to military personnel and foreign residents",
+      summary: "ZiiDi Trader has expanded its registration criteria to include Kenya Defence Forces personnel using military identification cards and foreign passport holders residing in Kenya.",
+      content: "The expansion allows active service members of the Kenya Defence Forces (KDF) and accredited foreign passport holders with valid Kenyan alien residency cards to open retail stock trading accounts. ZiiDi Trader operates under CMA regulatory sandbox guidelines, offering direct NSE equity execution. Safaricom introduced the feature to broaden financial inclusion across the capital markets ecosystem.",
+      source: "Business Daily",
+      url: "https://businessdailyafrica.com/ziidi-expansion",
+      image_url: null,
+      created_at: "2026-08-20T10:00:00Z",
+      ai_insight: null, // Zero AI fields!
+    };
+
+    const briefing = buildInvestorBriefing(standardArticle, { stock: mockStock });
+    render(
+      <MemoryRouter>
+        <InvestorBriefing briefing={briefing} />
+      </MemoryRouter>
+    );
+
+    // 1. Decoded Title
+    expect(screen.getByRole("heading", { level: 1 }).textContent).toContain("Safaricom expands ZiiDi Trader access");
+
+    // 2. The Takeaway
+    expect(screen.getByText(/ZiiDi Trader has expanded its registration criteria/)).toBeInTheDocument();
+
+    // 3. Why This Matters (Derived)
+    expect(screen.getByText("Why This Matters")).toBeInTheDocument();
+    expect(screen.getByText(/expanding product access and user eligibility widens the addressable audience/)).toBeInTheDocument();
+
+    // 4. Market Snapshot
+    expect(screen.getByText("SCOM")).toBeInTheDocument();
+    expect(screen.getByText("KES 36.35")).toBeInTheDocument();
+
+    // 5. What We Know (Extracted from content)
+    expect(screen.getByText("What We Know")).toBeInTheDocument();
+    expect(screen.getAllByText(/Kenya Defence Forces/i).length).toBeGreaterThanOrEqual(1);
+
+    // 6. What It Could Mean (Cautious interpretation)
+    expect(screen.getByText("What It Could Mean")).toBeInTheDocument();
+    expect(screen.getByText(/Broadens customer onboarding avenues/)).toBeInTheDocument();
+
+    // 7. What We Don't Know
+    expect(screen.getByText("What We Don't Know")).toBeInTheDocument();
+    expect(screen.getByText(/does not quantify direct financial revenue/)).toBeInTheDocument();
+
+    // 8. Watch Next
+    expect(screen.getByText("Watch Next")).toBeInTheDocument();
+    expect(screen.getByText(/Official disclosure of active user uptake/)).toBeInTheDocument();
+
+    // 9. Source & Company Timeline
+    expect(screen.getByText("Business Daily")).toBeInTheDocument();
+    expect(screen.getByText("Company Timeline")).toBeInTheDocument();
+  });
 });
+
