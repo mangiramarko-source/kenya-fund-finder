@@ -11,6 +11,26 @@
       "source": "/overview",
       "destination": "/",
       "permanent": true
+    },
+    {
+      "source": "/privacy-policy",
+      "destination": "/privacy",
+      "permanent": true
+    },
+    {
+      "source": "/terms-of-service",
+      "destination": "/terms",
+      "permanent": true
+    },
+    {
+      "source": "/contact",
+      "destination": "/page/contact",
+      "permanent": true
+    },
+    {
+      "source": "/about",
+      "destination": "/page/about",
+      "permanent": true
     }
   ],
   "rewrites": [
