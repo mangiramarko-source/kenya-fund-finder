@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Menu, TrendingUp, BarChart3, Newspaper, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark, Calculator, ArrowLeft, GraduationCap, Sparkles, X, ChevronRight, Star, Wallet, BarChart2, DollarSign, Tag, BookOpen, CalendarDays, HelpCircle, Package } from "lucide-react";
+import { Menu, TrendingUp, BarChart3, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark, Calculator, ArrowLeft, GraduationCap, Sparkles, X, ChevronRight, Star, Wallet, BarChart2, DollarSign, Tag, BookOpen, CalendarDays, HelpCircle, Package } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
@@ -191,7 +191,6 @@ function MobileSidebarDrawer({
 
           <SidebarSection title="DISCOVER">
             <SidebarRow icon={Sparkles}    label="AI Lab"          to="/ai-lab"    onClick={close} isNew />
-            <SidebarRow icon={Newspaper}   label="Market News"     to="/news"      onClick={close} />
             <SidebarRow icon={BookOpen}    label="Learn & Academy" to="/learn"     onClick={close} />
             <SidebarRow icon={Calculator}  label="Calculators"     to="/calculator" onClick={close} />
             <SidebarRow icon={CalendarDays} label="Alerts"         to={user ? "/alerts" : "/auth"} onClick={close} />
@@ -253,10 +252,10 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(156);
   const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined") return true;
+    if (typeof window === "undefined" || typeof localStorage === "undefined") return true;
     const saved = localStorage.getItem("theme");
     if (saved) return saved === "dark";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
   });
   const headerRef = useRef<HTMLElement | null>(null);
   const mobileTabsScrollRef = useRef<HTMLDivElement | null>(null);
@@ -324,7 +323,7 @@ const Navbar = () => {
     const containerRect = container.getBoundingClientRect();
     const offset =
       activeEl.offsetLeft - container.offsetLeft - (containerRect.width / 2) + (elRect.width / 2);
-    container.scrollTo({ left: Math.max(0, offset), behavior: "smooth" });
+    container.scrollTo?.({ left: Math.max(0, offset), behavior: "smooth" });
   }, [location.pathname]);
 
   useEffect(() => {

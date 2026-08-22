@@ -20,10 +20,10 @@ const DesktopTopBar = () => {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
   const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined") return true;
+    if (typeof window === "undefined" || typeof localStorage === "undefined") return true;
     const saved = localStorage.getItem("theme");
     if (saved) return saved === "dark";
-    return window.matchMedia("(prefers-color-scheme: dark)").matches;
+    return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
   });
   const location = useLocation();
   const navigate = useNavigate();
