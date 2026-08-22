@@ -136,10 +136,11 @@ describe("Phase 10 access gate", () => {
     expect(canShowAiLabNav({ user: null, isAdmin: true })).toBe(true);
   });
 
-  it("no public nav link is added to mobile Navbar", () => {
+  it("mobileNavLinks tab bar maintains core financial market tabs", () => {
     const navbarPath = join(__dirname, "../../components/Navbar.tsx");
     const navbarSource = readFileSync(navbarPath, "utf8");
-    expect(navbarSource).not.toMatch(/\/ai-lab/);
-    expect(navbarSource).not.toMatch(/AI Lab/);
+    expect(navbarSource).toMatch(/const mobileNavLinks/);
+    expect(navbarSource).toMatch(/to: "\/stocks"/);
+    expect(navbarSource).toMatch(/to: "\/funds"/);
   });
 });

@@ -8,15 +8,55 @@ Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
   integrations: [
     Sentry.browserTracingIntegration(),
-    Sentry.replayIntegration(),
+    Sentry.replayIntegration({
+      maskAllText: true,
+      blockAllMedia: true,
+    }),
   ],
   // Performance Monitoring
-  tracesSampleRate: 1.0, //  Capture 100% of the transactions
-  // Set 'tracePropagationTargets' to control for which URLs distributed tracing should be enabled
-  tracePropagationTargets: ["localhost", /^https:\/\/yourserver\.io\/api/],
+  tracesSampleRate: 0.1,
+  tracePropagationTargets: ["localhost", "https://caawgzuofnujrznwbuxk.supabase.co"],
   // Session Replay
-  replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
-  replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+  replaysSessionSampleRate: 0.0,
+  replaysOnErrorSampleRate: 1.0,
+  beforeSend(event) {
+    // Redact authorization headers, api keys, and tokens
+    if (event.request?.headers) {
+      delete event.request.headers["authorization"];
+      delete event.request.headers["apikey"];
+      delete event.request.headers["x-api-key"];
+    }
+    if (event.request?.url) {
+      try {
+        const parsed = new URL(event.request.url);
+        if (parsed.hash && (parsed.hash.includes("access_token") || parsed.hash.includes("refresh_token"))) {
+          parsed.hash = "";
+          event.request.url = parsed.toString();
+        }
+        if (parsed.searchParams.has("token") || parsed.searchParams.has("code") || parsed.searchParams.has("access_token")) {
+          parsed.search = "";
+          event.request.url = parsed.toString();
+        }
+      } catch {
+        // ignore parse error
+      }
+    }
+    return event;
+  },
+  beforeBreadcrumb(breadcrumb) {
+    if (breadcrumb.data?.url) {
+      try {
+        const parsed = new URL(breadcrumb.data.url);
+        if (parsed.hash && (parsed.hash.includes("access_token") || parsed.hash.includes("refresh_token"))) {
+          parsed.hash = "";
+          breadcrumb.data.url = parsed.toString();
+        }
+      } catch {
+        // ignore
+      }
+    }
+    return breadcrumb;
+  },
 });
 
 // Install BEFORE React renders so any script tag that attempts to load is

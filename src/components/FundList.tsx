@@ -274,7 +274,7 @@ export const FundList: React.FC<FundListProps> = ({
 
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'flex-end' }}>
               <button className="btn-secondary" onClick={() => setSelectedFund(null)}>Close</button>
-              {selectedFund.website && (
+              {selectedFund.website && /^https?:\/\//i.test(selectedFund.website) && (
                 <a href={selectedFund.website} target="_blank" rel="noopener noreferrer" className="btn-primary">
                   Official Portal <ExternalLink size={14} />
                 </a>

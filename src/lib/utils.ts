@@ -5,14 +5,30 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-/** Decode HTML entities (&#8217; &amp; &quot; etc.) and strip HTML tags into clean text */
-let _div: HTMLDivElement | null = null;
+/** Decode HTML entities (&#8217; &amp; &quot; etc.) and strip HTML tags into clean text safely */
 export function decodeHtmlEntities(text: string): string {
-  if (!text || typeof text !== 'string') return text;
+  if (!text || typeof text !== "string") return text;
   if (!text.includes("&") && !text.includes("<")) return text;
-  if (!_div) _div = document.createElement("div");
-  _div.innerHTML = text;
-  return _div.textContent || _div.innerText || "";
+  try {
+    if (typeof DOMParser !== "undefined") {
+      const doc = new DOMParser().parseFromString(text, "text/html");
+      return doc.body.textContent || "";
+    }
+  } catch {
+    // Fallback if DOMParser is unavailable
+  }
+  return text
+    .replace(/<[^>]*>/g, "")
+    .replace(/&amp;/g, "&")
+    .replace(/&lt;/g, "<")
+    .replace(/&gt;/g, ">")
+    .replace(/&quot;/g, '"')
+    .replace(/&#039;|&apos;/g, "'")
+    .replace(/&#8217;/g, "'")
+    .replace(/&#8216;/g, "'")
+    .replace(/&#8220;/g, '"')
+    .replace(/&#8221;/g, '"')
+    .replace(/&nbsp;/g, " ");
 }
 
 /** Split long article text into readable paragraphs at sentence boundaries. */

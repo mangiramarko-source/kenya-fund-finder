@@ -357,7 +357,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
             if (item.id === "daily-market-summary" || item.type === "EDUCATION" || item.relatedStock) return null;
             
             const formatExternalUrl = (url?: string | null, title?: string, source?: string): string => {
-              if (!url || url.trim() === "" || url === "#") {
+              if (!url || url.trim() === "" || url === "#" || /^javascript:/i.test(url.trim())) {
                 return `https://www.google.com/search?q=${encodeURIComponent(`${title || ""} ${source || ""}`.trim())}`;
               }
               const trimmed = url.trim();

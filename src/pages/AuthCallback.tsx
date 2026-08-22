@@ -25,8 +25,7 @@ export default function AuthCallback() {
             });
             
             if (sessionError) {
-              console.error("Manual session setting failed:", sessionError);
-              setError(sessionError.message);
+              setError(sessionError.message || "Failed to establish session.");
               return;
             }
           }
@@ -45,8 +44,7 @@ export default function AuthCallback() {
           setError("Failed to retrieve session after authentication.");
         }
       } catch (err: any) {
-        console.error("Auth callback error:", err);
-        setError(err.message || "Authentication failed");
+        setError(err?.message || "Authentication failed");
       }
     };
 

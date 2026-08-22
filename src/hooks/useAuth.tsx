@@ -32,48 +32,31 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      console.log("🔥 [useAuth] initializeAuth started. Current URL:", window.location.href);
-      console.log("🔥 [useAuth] Current hash:", window.location.hash);
-      
-      // 1. Manually check for hash from OAuth implicit flow
+      // 1. Manually check for hash from OAuth implicit flow if present
       const hash = window.location.hash;
       if (hash && hash.includes("access_token=") && hash.includes("refresh_token=")) {
-        console.log("🔥 [useAuth] Found access_token in hash! Parsing...");
         const params = new URLSearchParams(hash.substring(1));
         const access_token = params.get("access_token");
         const refresh_token = params.get("refresh_token");
 
         if (access_token && refresh_token) {
-          console.log("🔥 [useAuth] Attempting to manually set session...");
           const { error: sessionError } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           });
-          if (sessionError) {
-            console.error("🔥 [useAuth] Manual setSession failed:", sessionError);
-          } else {
-            console.log("🔥 [useAuth] Manual setSession successful!");
-            window.location.hash = ""; // Clear hash manually
+          if (!sessionError) {
+            window.location.hash = ""; // Clear hash securely
           }
         }
-      } else {
-        console.log("🔥 [useAuth] No valid token found in hash.");
       }
 
       // 2. Get initial session
-      console.log("🔥 [useAuth] Fetching session from Supabase client...");
-      const { data: { session }, error: getSessionError } = await supabase.auth.getSession();
-      
-      if (getSessionError) {
-        console.error("🔥 [useAuth] Error fetching session:", getSessionError);
-      }
+      const { data: { session } } = await supabase.auth.getSession();
       
       if (session) {
-        console.log("🔥 [useAuth] Session found! Validating user...");
         // Validate the session is still usable
         const { error } = await supabase.auth.getUser();
         if (error) {
-          console.error("🔥 [useAuth] getUser failed, session stale. Signing out...", error);
           // Session is stale/broken — clear it
           await supabase.auth.signOut();
           setUser(null);
@@ -81,18 +64,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setIsAdmin(false);
           setLoading(false);
         } else {
-          console.log("🔥 [useAuth] User validated successfully:", session.user.email);
           setSession(session);
           setUser(session.user);
-          if (session.user.email?.toLowerCase() === 'kokoscalbaridi@gmail.com') {
-            setIsAdmin(true);
-            setLoading(false);
-          } else {
-            checkAdmin(session.user.id).finally(() => setLoading(false));
-          }
+          checkAdmin(session.user.id).finally(() => setLoading(false));
         }
       } else {
-        console.log("🔥 [useAuth] No session found.");
         setLoading(false);
       }
     };
@@ -116,12 +92,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
-          if (session.user.email?.toLowerCase() === 'kokoscalbaridi@gmail.com') {
-            setIsAdmin(true);
-          } else {
-            // Fire and forget - no await
-            checkAdmin(session.user.id);
-          }
+          checkAdmin(session.user.id);
         } else {
           setIsAdmin(false);
         }
