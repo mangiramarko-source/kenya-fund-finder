@@ -132,7 +132,7 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
             </span>
           </div>
 
-          <div className="space-y-2.5 pt-1">
+          <div className="space-y-3.5 md:space-y-2.5 pt-1">
             {briefing.whatItCouldMean.map((item, idx) => (
               <MeaningRow key={idx} item={item} />
             ))}
@@ -353,11 +353,11 @@ const MeaningRow: React.FC<{ item: MeaningPoint }> = ({ item }) => {
       : "text-muted-foreground bg-muted";
 
   return (
-    <div className="flex items-start gap-2 sm:grid sm:grid-cols-[170px_minmax(0,1fr)] sm:gap-3.5 text-[14px] sm:text-[15px] leading-relaxed">
-      <span className={`inline-flex items-center text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shrink-0 self-start mt-0.5 ${badgeClass}`}>
+    <div className="flex flex-col items-start gap-1.5 md:grid md:grid-cols-[170px_minmax(0,1fr)] md:gap-3.5 text-[14px] sm:text-[15px] leading-relaxed">
+      <span className={`inline-flex items-center text-[11px] font-bold uppercase tracking-wider px-2 py-0.5 rounded shrink-0 self-start md:mt-0.5 ${badgeClass}`}>
         {item.label}:
       </span>
-      <span className="text-foreground/90 leading-relaxed">{item.text}</span>
+      <span className="text-foreground/90 leading-relaxed w-full">{item.text}</span>
     </div>
   );
 };

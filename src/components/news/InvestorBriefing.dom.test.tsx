@@ -210,7 +210,7 @@ describe("InvestorBriefing DOM & Visual Verification", () => {
     expect(queryByRole("heading", { level: 1 })?.textContent).toBe("The Safaricom Platform Expands to KDF & Foreign Residents");
   });
 
-  it("renders What It Could Mean with responsive two-column grid classes for desktop alignment", () => {
+  it("renders What It Could Mean with mobile stacked flex-col and desktop two-column grid classes", () => {
     const briefing = buildInvestorBriefing(mockArticle, { stock: mockStock });
     const { container } = render(
       <MemoryRouter>
@@ -218,10 +218,11 @@ describe("InvestorBriefing DOM & Visual Verification", () => {
       </MemoryRouter>
     );
 
-    const meaningRows = container.querySelectorAll(".sm\\:grid-cols-\\[170px_minmax\\(0\\,1fr\\)\\]");
+    const meaningRows = container.querySelectorAll(".md\\:grid-cols-\\[170px_minmax\\(0\\,1fr\\)\\]");
     expect(meaningRows.length).toBeGreaterThanOrEqual(1);
-    expect(meaningRows[0].classList.contains("sm:grid")).toBe(true);
     expect(meaningRows[0].classList.contains("flex")).toBe(true);
+    expect(meaningRows[0].classList.contains("flex-col")).toBe(true);
+    expect(meaningRows[0].classList.contains("md:grid")).toBe(true);
   });
 });
 
