@@ -59,10 +59,18 @@ const CookieConsent = () => {
         setVisible(true);
       }
     };
+
+    const onOpenSettings = () => {
+      setVisible(true);
+      setShowSettings(true);
+    };
+
     window.addEventListener("storage", onStorage);
+    window.addEventListener("kff_open_cookie_settings", onOpenSettings);
     return () => {
       cic(handle);
       window.removeEventListener("storage", onStorage);
+      window.removeEventListener("kff_open_cookie_settings", onOpenSettings);
     };
   }, []);
 

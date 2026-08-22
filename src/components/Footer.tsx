@@ -112,6 +112,15 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms of Use</Link></li>
+              <li>
+                <button
+                  type="button"
+                  onClick={() => window.dispatchEvent(new CustomEvent("kff_open_cookie_settings"))}
+                  className="hover:text-foreground transition-colors text-left"
+                >
+                  Cookie Settings
+                </button>
+              </li>
               <li><Link to="/page/contact" className="hover:text-foreground transition-colors">Contact</Link></li>
             </ul>
           </div>

@@ -943,7 +943,7 @@ export default function TreasuryPage() {
               <div className="rounded-2xl border border-border bg-card p-5 space-y-2 shadow-sm">
                 <h3 className="font-bold text-foreground text-base">What is a Treasury Bill?</h3>
                 <p className="text-xs text-muted-foreground leading-relaxed">
-                  You lend money to the Kenyan government for a short period (91, 182, or 364 days) and receive a guaranteed return when the investment matures.
+                  You lend money to the Kenyan government for a short period (91, 182, or 364 days) and receive a fixed yield at maturity based on the accepted auction discount rate.
                 </p>
               </div>
 

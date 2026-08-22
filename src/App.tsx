@@ -108,7 +108,11 @@ const App = () => (
                     <Route path="/learn" element={<LearnPage />} />
                     <Route path="/learn/how-to-invest-in-money-market-funds-kenya" element={<MmfGuidePage />} />
                     <Route path="/privacy" element={<SitePage />} />
+                    <Route path="/privacy-policy" element={<Navigate to="/privacy" replace />} />
                     <Route path="/terms" element={<SitePage />} />
+                    <Route path="/terms-of-service" element={<Navigate to="/terms" replace />} />
+                    <Route path="/contact" element={<Navigate to="/page/contact" replace />} />
+                    <Route path="/about" element={<Navigate to="/page/about" replace />} />
                     <Route path="/auth" element={<AuthPage />} />
                     <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
