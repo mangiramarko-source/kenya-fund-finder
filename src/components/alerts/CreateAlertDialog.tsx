@@ -10,6 +10,7 @@ import { canCreateAlert, limitMessages } from "@/lib/featureLimits";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
+import { trackEvent } from "@/lib/analytics";
 
 interface Props {
   assetType: Exclude<AlertAssetType, "new_fund">;
@@ -86,6 +87,12 @@ export const CreateAlertDialog = ({
     if (result?.error) {
       toast.error("Failed to create alert");
     } else {
+      trackEvent("price_alert_created", {
+        asset_type: assetType,
+        asset_identifier: assetName,
+        asset_id: assetId,
+        condition,
+      });
       toast.success(`Alert created for ${assetName}`);
       setOpen(false);
       setThreshold("");

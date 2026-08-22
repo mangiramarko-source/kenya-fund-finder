@@ -11,6 +11,7 @@ import Layout from "@/components/Layout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
 import { Analytics } from "@vercel/analytics/react";
+import AnalyticsTracker from "./components/AnalyticsTracker";
 // CookieConsent loaded eagerly: it's the LCP element on first visit;
 // lazy-loading it delays paint and tanks the LCP score.
 import CookieConsent from "./components/CookieConsent";
@@ -86,6 +87,7 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
+              <AnalyticsTracker />
               <ScrollToTop />
               <SeoRoutePolicy />
               <Layout>

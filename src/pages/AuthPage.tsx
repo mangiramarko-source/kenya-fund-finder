@@ -15,6 +15,7 @@ import {
   isTurnstileDevBypassEnabled,
   TURNSTILE_DEV_BYPASS_TOKEN,
 } from "@/lib/turnstile-dev";
+import { trackEvent } from "@/lib/analytics";
 
 const AuthPage = () => {
   const [isSignUp, setIsSignUp] = useState(false);
@@ -85,6 +86,7 @@ const AuthPage = () => {
       if (error) {
         setError(error.message);
       } else {
+        trackEvent("signup_completed", { method: "email" });
         setMessage("Account created! Please check your email to verify your account before signing in.");
         setIsSignUp(false);
         setPassword("");
@@ -95,6 +97,7 @@ const AuthPage = () => {
       if (error) {
         setError(error.message);
       } else {
+        trackEvent("login_completed", { method: "email" });
         navigate("/");
       }
     }
@@ -112,6 +115,9 @@ const AuthPage = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSignUp) {
+      trackEvent("signup_started", { method: "email" });
+    }
     if (!turnstileToken) {
       setError("Please complete the security check before continuing.");
       return;
@@ -122,6 +128,7 @@ const AuthPage = () => {
   const handleGoogleSignIn = async () => {
     setError("");
     setLoading(true);
+    trackEvent("signup_started", { method: "google" });
     try {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",

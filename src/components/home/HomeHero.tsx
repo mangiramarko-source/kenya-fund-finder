@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { useConsent } from "@/hooks/useConsent";
 import { useAuth } from "@/hooks/useAuth";
+import { trackEvent } from "@/lib/analytics";
 
 const SESSION_SHOWN_KEY = "kff_intro_shown_session_v1";
 const SIGNIN_SHOWN_PREFIX = "kff_intro_signin_shown_";
@@ -71,8 +72,13 @@ const HomeHero = () => {
 
   const navigate = useNavigate();
 
-  const handleNavigate = (e: React.MouseEvent<HTMLAnchorElement>, path: string) => {
+  const handleNavigate = (e: React.MouseEvent<HTMLAnchorElement>, path: string, label: string) => {
     e.preventDefault();
+    trackEvent("cta_clicked", {
+      cta_label: label,
+      destination: path,
+      source_component: "home_hero_modal",
+    });
     setOpen(false);
     setTimeout(() => {
       navigate(path);
@@ -109,7 +115,7 @@ const HomeHero = () => {
             asChild
             className="h-12 w-full rounded-2xl gap-2 text-sm font-semibold transition-transform active:scale-95"
           >
-            <a href="/portfolio" onClick={(e) => handleNavigate(e, "/portfolio")}>
+            <a href="/portfolio" onClick={(e) => handleNavigate(e, "/portfolio", "Start portfolio tracker")}>
               <LayoutDashboard className="h-4 w-4" /> Start portfolio tracker
             </a>
           </Button>
@@ -118,7 +124,7 @@ const HomeHero = () => {
             variant="outline"
             className="h-12 w-full rounded-2xl gap-2 border-border bg-transparent text-sm font-medium transition-transform active:scale-95"
           >
-            <a href="/overview" onClick={(e) => handleNavigate(e, "/overview")}>
+            <a href="/overview" onClick={(e) => handleNavigate(e, "/overview", "Browse market data")}>
               <Search className="h-4 w-4" /> Browse market data
             </a>
           </Button>
@@ -131,7 +137,7 @@ const HomeHero = () => {
             label="Unit Trusts & MMFs"
             sub="Yield focus"
             meta="Rates"
-            onClick={(e) => handleNavigate(e, "/funds")}
+            onClick={(e) => handleNavigate(e, "/funds", "Unit Trusts & MMFs")}
             divider
           />
           <HeroTile
@@ -139,7 +145,7 @@ const HomeHero = () => {
             label="Stocks, T-Bills & FX"
             sub="NSE markets"
             meta="Prices"
-            onClick={(e) => handleNavigate(e, "/stocks")}
+            onClick={(e) => handleNavigate(e, "/stocks", "Stocks, T-Bills & FX")}
             divider
           />
           <HeroTile
@@ -147,7 +153,7 @@ const HomeHero = () => {
             label="Commodities & News"
             sub="Macro data"
             meta="Live"
-            onClick={(e) => handleNavigate(e, "/commodities")}
+            onClick={(e) => handleNavigate(e, "/commodities", "Commodities & News")}
           />
         </div>
 

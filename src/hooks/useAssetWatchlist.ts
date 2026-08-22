@@ -3,6 +3,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { safeUUID } from "@/lib/safeUUID";
+import { trackEvent } from "@/lib/analytics";
 
 export interface WatchlistEntry {
   id: string;
@@ -45,6 +46,11 @@ export function useAssetWatchlist(itemType: string) {
       } else {
         const temp: WatchlistEntry = { id: safeUUID(), item_id: id, item_name: name };
         setEntries((prev) => [temp, ...prev]);
+        trackEvent("watchlist_item_added", {
+          asset_type: itemType,
+          asset_identifier: name,
+          item_id: id,
+        });
         await supabase.from("user_watchlist").insert({
           user_id: user.id,
           item_type: itemType,

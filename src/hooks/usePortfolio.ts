@@ -5,6 +5,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
 import { portfolioStorage } from "@/lib/portfolioStorage";
 import { portfolioEventsStorage } from "@/lib/portfolioEventsStorage";
+import { trackEvent } from "@/lib/analytics";
 
 export type AssetType = "mmf" | "stock" | "fx" | "fixed_income" | "commodity";
 
@@ -295,7 +296,17 @@ export const usePortfolio = () => {
       });
       return rec;
     },
-    onSuccess: () => {
+    onSuccess: (_, variables) => {
+      if (items.length === 0) {
+        trackEvent("portfolio_created", {
+          initial_asset_type: variables.asset_type,
+          initial_asset_name: variables.asset_name,
+        });
+      }
+      trackEvent("portfolio_asset_added", {
+        asset_type: variables.asset_type,
+        asset_identifier: variables.ticker || variables.asset_name,
+      });
       queryClient.invalidateQueries({ queryKey: ["mock_portfolios"] });
       queryClient.invalidateQueries({ queryKey: ["portfolio_events"] });
       toast.success("Holding added");

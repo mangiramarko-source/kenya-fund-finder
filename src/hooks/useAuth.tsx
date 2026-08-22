@@ -1,6 +1,7 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
+import { identifyUser, resetUser } from "@/lib/analytics";
 
 interface AuthContextType {
   user: User | null;
@@ -40,11 +41,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         const refresh_token = params.get("refresh_token");
 
         if (access_token && refresh_token) {
-          const { error: sessionError } = await supabase.auth.setSession({
+          const { data, error: sessionError } = await supabase.auth.setSession({
             access_token,
             refresh_token,
           });
-          if (!sessionError) {
+          if (!sessionError && data.session) {
+            identifyUser(data.session.user.id, { created_at: data.session.user.created_at });
             window.location.hash = ""; // Clear hash securely
           }
         }
@@ -62,10 +64,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setUser(null);
           setSession(null);
           setIsAdmin(false);
+          resetUser();
           setLoading(false);
         } else {
           setSession(session);
           setUser(session.user);
+          identifyUser(session.user.id, { created_at: session.user.created_at });
           checkAdmin(session.user.id).finally(() => setLoading(false));
         }
       } else {
@@ -84,6 +88,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setUser(null);
             setSession(null);
             setIsAdmin(false);
+            resetUser();
             window.location.href = '/admin/login';
           });
           return;
@@ -92,9 +97,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setSession(session);
         setUser(session?.user ?? null);
         if (session?.user) {
+          identifyUser(session.user.id, { created_at: session.user.created_at });
           checkAdmin(session.user.id);
         } else {
           setIsAdmin(false);
+          resetUser();
         }
       }
     );
@@ -105,6 +112,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(null);
         setSession(null);
         setIsAdmin(false);
+        resetUser();
       }
     };
     window.addEventListener('storage', handleStorageEvent);
@@ -128,6 +136,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const signOut = async () => {
     await supabase.auth.signOut();
     setIsAdmin(false);
+    resetUser();
   };
 
   return (

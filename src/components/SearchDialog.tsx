@@ -28,6 +28,7 @@ import {
 import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import SaveToWatchlistButton from "@/components/watchlist/SaveToWatchlistButton";
+import { trackEvent } from "@/lib/analytics";
 
 interface SearchDialogProps {
   variant?: "default" | "topbar" | "icon";
@@ -154,9 +155,14 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
 
   const go = useCallback((path: string, term?: string) => {
     if (term) pushRecent(term);
+    trackEvent("search_used", {
+      query: (term || query).trim(),
+      destination: path,
+      category,
+    });
     setOpen(false);
     navigate(path);
-  }, [navigate, pushRecent]);
+  }, [navigate, pushRecent, query, category]);
 
   const q = query.trim().toLowerCase();
   const showCat = (c: Category) => category === "all" || category === c;
