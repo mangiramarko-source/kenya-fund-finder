@@ -3,9 +3,12 @@ import { describe, it, expect, beforeEach, vi, afterEach } from "vitest";
 import posthog from "posthog-js";
 
 const invokeMock = vi.fn();
+const getSessionMock = vi.fn();
+
 vi.mock("@/integrations/supabase/client", () => ({
   supabase: {
     functions: { invoke: (...args: unknown[]) => invokeMock(...args) },
+    auth: { getSession: () => getSessionMock() },
   },
 }));
 
@@ -20,13 +23,21 @@ import {
 import { sendMetaConversion } from "./metaCapi";
 import { initAnalytics, trackEvent, _resetAnalyticsStateForTesting } from "./analytics";
 
-describe("Meta Advertising Conversion Tracking & CAPI Deduplication", () => {
+describe("Meta Advertising Conversion Tracking & Hardened CAPI Deduplication", () => {
   beforeEach(() => {
     _resetMetaPixelStateForTesting();
     _resetAnalyticsStateForTesting();
     localStorage.clear();
     sessionStorage.clear();
     vi.clearAllMocks();
+    getSessionMock.mockResolvedValue({
+      data: {
+        session: {
+          access_token: "valid_supabase_user_jwt_token",
+          user: { id: "user_test_123", email: "user@example.com" },
+        },
+      },
+    });
   });
 
   afterEach(() => {
@@ -37,7 +48,6 @@ describe("Meta Advertising Conversion Tracking & CAPI Deduplication", () => {
   });
 
   it("1: no ad consent → Meta Pixel does not initialize", () => {
-    // No consent given
     initMetaPixel("1234567890");
 
     expect(window.fbq).toBeUndefined();
@@ -54,7 +64,7 @@ describe("Meta Advertising Conversion Tracking & CAPI Deduplication", () => {
     expect(window.fbq.loaded).toBe(true);
   });
 
-  it("3: site_landed maps correctly to PageView with eventID", () => {
+  it("3: site_landed maps correctly to PageView with eventID in browser Pixel", () => {
     setConsent("accepted", { analytics: false, ads: true });
     initMetaPixel("1234567890");
 
@@ -71,7 +81,7 @@ describe("Meta Advertising Conversion Tracking & CAPI Deduplication", () => {
     );
   });
 
-  it("4: signup_started maps correctly to Lead with eventID", () => {
+  it("4: signup_started maps correctly to Lead with eventID in browser Pixel (CAPI omitted for anonymous)", () => {
     setConsent("accepted", { analytics: false, ads: true });
     initMetaPixel("1234567890");
 
@@ -105,7 +115,7 @@ describe("Meta Advertising Conversion Tracking & CAPI Deduplication", () => {
     );
   });
 
-  it("6: browser/server event_id deduplication works across Pixel and CAPI", async () => {
+  it("6: browser/server event_id deduplication works across Pixel and CAPI for authenticated user", async () => {
     setConsent("accepted", { analytics: true, ads: true });
     initMetaPixel("1234567890");
 
@@ -121,11 +131,13 @@ describe("Meta Advertising Conversion Tracking & CAPI Deduplication", () => {
     trackMetaEvent("signup_completed", { method: "email" }, eventId);
 
     // 2. Server CAPI conversion send
-    await sendMetaConversion({
+    const res = await sendMetaConversion({
       event_name: "CompleteRegistration",
       event_id: eventId,
       custom_data: { method: "email" },
     });
+
+    expect(res).toBe(true);
 
     // Check that both browser and server used the EXACT same eventID
     expect(fbqSpy).toHaveBeenCalledWith(
@@ -142,33 +154,51 @@ describe("Meta Advertising Conversion Tracking & CAPI Deduplication", () => {
           event_name: "CompleteRegistration",
           event_id: eventId,
         }),
+        headers: {
+          Authorization: "Bearer valid_supabase_user_jwt_token",
+        },
       })
     );
   });
 
-  it("7: Meta server secret never appears in frontend environment or bundle", () => {
-    // Verify frontend does not define or expose META_CONVERSIONS_API_ACCESS_TOKEN
+  it("7: unauthenticated user cannot send CAPI conversions (Pixel only)", async () => {
+    setConsent("accepted", { analytics: true, ads: true });
+    getSessionMock.mockResolvedValueOnce({ data: { session: null } });
+
+    const res = await sendMetaConversion({
+      event_name: "CompleteRegistration",
+      event_id: "evt_unauth_123",
+    });
+
+    expect(res).toBe(false);
+    expect(invokeMock).not.toHaveBeenCalled();
+  });
+
+  it("8: Meta server secret never appears in frontend environment or bundle", () => {
     expect((import.meta.env as any).META_CONVERSIONS_API_ACCESS_TOKEN).toBeUndefined();
     expect((import.meta.env as any).VITE_META_CONVERSIONS_API_ACCESS_TOKEN).toBeUndefined();
   });
 
-  it("8: only allowed server-side event names are valid in CAPI contract", () => {
+  it("9: only authenticated milestone events are allowed in CAPI contract (PageView & Lead removed)", () => {
     const allowed = [
       "CompleteRegistration",
-      "Lead",
       "PortfolioAssetAdded",
       "WatchlistItemAdded",
       "PriceAlertCreated",
-      "PageView",
     ];
 
     expect(allowed).toContain("CompleteRegistration");
-    expect(allowed).toContain("Lead");
     expect(allowed).toContain("PortfolioAssetAdded");
+    expect(allowed).toContain("WatchlistItemAdded");
+    expect(allowed).toContain("PriceAlertCreated");
+
+    // Anonymous events must NOT be in CAPI allowlist
+    expect(allowed).not.toContain("PageView");
+    expect(allowed).not.toContain("Lead");
     expect(allowed).not.toContain("ArbitraryUnauthorizedEvent");
   });
 
-  it("9: revoking advertising consent stops browser Meta tracking", () => {
+  it("10: revoking advertising consent stops browser Meta tracking", () => {
     setConsent("accepted", { analytics: true, ads: true });
     initMetaPixel("1234567890");
 
@@ -181,12 +211,10 @@ describe("Meta Advertising Conversion Tracking & CAPI Deduplication", () => {
 
     trackMetaEvent("signup_completed", { method: "email" });
 
-    // Ensure no conversion event was dispatched
     expect(fbqSpy).not.toHaveBeenCalledWith("track", "CompleteRegistration", expect.anything(), expect.anything());
   });
 
-  it("10: PostHog behavior is unchanged and independent of Meta ad consent", () => {
-    // Give analytics consent but NOT ads consent
+  it("11: PostHog behavior is unchanged and independent of Meta ad consent", () => {
     setConsent("custom", { analytics: true, ads: false });
     initAnalytics("phc_posthog_test");
 
@@ -195,13 +223,11 @@ describe("Meta Advertising Conversion Tracking & CAPI Deduplication", () => {
 
     trackEvent("stock_viewed", { stock_symbol: "EQTY" });
 
-    // PostHog received the event
     expect(posthogCaptureSpy).toHaveBeenCalledWith(
       "stock_viewed",
       expect.objectContaining({ stock_symbol: "EQTY" })
     );
 
-    // Meta Pixel was never initialized
     expect(window.fbq).toBeUndefined();
   });
 });

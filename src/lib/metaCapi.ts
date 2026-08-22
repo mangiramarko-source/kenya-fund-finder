@@ -2,13 +2,19 @@ import { hasConsent } from "@/lib/consent";
 import { supabase } from "@/integrations/supabase/client";
 import { sanitizeProperties } from "@/lib/analytics";
 
+export type AuthenticatedMetaCapiEvent =
+  | "CompleteRegistration"
+  | "PortfolioAssetAdded"
+  | "WatchlistItemAdded"
+  | "PriceAlertCreated";
+
 export interface MetaCapiEventPayload {
-  event_name: "CompleteRegistration" | "Lead" | "PortfolioAssetAdded" | "WatchlistItemAdded" | "PriceAlertCreated" | "PageView";
+  event_name: AuthenticatedMetaCapiEvent;
   event_id: string;
   event_time?: number;
   event_source_url?: string;
   user_data?: {
-    em?: string; // Will be hashed on server or client
+    em?: string;
     ph?: string;
     client_ip_address?: string;
     client_user_agent?: string;
@@ -21,7 +27,7 @@ export interface MetaCapiEventPayload {
 
 /**
  * Send a server-side conversion event to the Meta Conversions API via Supabase Edge Function.
- * Strictly gated by advertising consent.
+ * Strictly gated by advertising consent AND active authenticated Supabase user session.
  */
 export async function sendMetaConversion(payload: MetaCapiEventPayload): Promise<boolean> {
   if (typeof window === "undefined" || !hasConsent("ads")) {
@@ -29,6 +35,14 @@ export async function sendMetaConversion(payload: MetaCapiEventPayload): Promise
   }
 
   try {
+    const { data: sessionData } = await supabase.auth.getSession();
+    const token = sessionData?.session?.access_token;
+
+    // CAPI requires a real authenticated session
+    if (!token) {
+      return false;
+    }
+
     const cleanCustomData = sanitizeProperties(payload.custom_data || {});
     const cleanPayload: MetaCapiEventPayload = {
       ...payload,
@@ -39,6 +53,9 @@ export async function sendMetaConversion(payload: MetaCapiEventPayload): Promise
 
     const { data, error } = await supabase.functions.invoke("meta-conversion", {
       body: cleanPayload,
+      headers: {
+        Authorization: `Bearer ${token}`,
+      },
     });
 
     if (error) {

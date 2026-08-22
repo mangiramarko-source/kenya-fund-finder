@@ -362,17 +362,11 @@ export function trackEvent(
   const eventId = generateEventId(`kff_${event}`);
   trackMetaEvent(event, cleanProps, eventId);
 
-  // Send server-side Meta Conversions API event for primary conversion and quality milestones
+  // Send server-side Meta Conversions API event for authenticated milestones (gated by ads consent)
   if (hasConsent("ads")) {
     if (event === "signup_completed") {
       sendMetaConversion({
         event_name: "CompleteRegistration",
-        event_id: eventId,
-        custom_data: cleanProps,
-      });
-    } else if (event === "signup_started") {
-      sendMetaConversion({
-        event_name: "Lead",
         event_id: eventId,
         custom_data: cleanProps,
       });
