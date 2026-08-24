@@ -14,29 +14,7 @@ import { type FeedItem } from "@/hooks/useSocialFeed";
 import { useAuth } from "@/hooks/useAuth";
 import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/fundsFixedIncomeNews";
 import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
-
-const INTERNATIONAL_SOURCES = new Set([
-  "Reuters Business",
-  "Reuters Markets",
-  "Reuters",
-  "BBC Business",
-  "BBC News",
-  "Financial Times Africa",
-  "Financial Times",
-  "Bloomberg",
-  "Al Jazeera",
-  "CNBC World",
-  "CNBC",
-  "Investing.com",
-  "MarketWatch",
-  "Seeking Alpha",
-  "African Business",
-  "The Africa Report",
-  "Further Africa",
-]);
-
-const isInternationalArticle = (a: { source?: string | null; category?: string | null }) =>
-  a.category === "International" || (a.source ? INTERNATIONAL_SOURCES.has(a.source) : false);
+import { matchesNewsTab } from "@/lib/newsTabMatching";
 
 export default function NewsPage() {
   useDocumentTitle(
@@ -92,7 +70,7 @@ export default function NewsPage() {
     currentHasMore: boolean,
     currentStocks: any[]
   ) => {
-    const matching = currentArticles.filter(a => tabMatchesArticle(tab, a, currentStocks));
+    const matching = currentArticles.filter(a => matchesNewsTab(tab, a, currentStocks));
     if (matching.length >= 15 || !currentHasMore) return;
     setLoadingMore(true);
     try {
@@ -145,38 +123,6 @@ export default function NewsPage() {
     };
   }, []);
 
-  // --- Category match helpers (mirror the feedItems filter logic) ---
-  const tabMatchesArticle = (tab: string, a: NewsFromDB, stocksList: any[]): boolean => {
-    if (tab === "All" || tab === "Latest" || tab === "Oldest") return true;
-    if (tab === "Kenyan") return !isInternationalArticle(a);
-    if (tab === "International") return isInternationalArticle(a);
-    if (tab === "Stocks") {
-      if (a.related_stock_id) return true;
-      return stocksList.some(s => {
-        const cleanName = s.name.replace(/Group|Holdings|Plc|Ltd|Limited/gi, '').trim();
-        const aliases = [s.symbol, s.name];
-        if (cleanName.length > 3 && cleanName.toLowerCase() !== 'kenya') aliases.push(cleanName);
-        if (cleanName.toLowerCase() === 'equity') aliases.push('Equity Bank');
-        if (cleanName.toLowerCase() === 'co-operative') aliases.push('Co-op Bank');
-        if (s.symbol === 'SCOM') aliases.push('Safaricom');
-        const escaped = aliases.map(x => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        return new RegExp(`\\b(${escaped.join('|')})\\b`, 'i').test(a.title);
-      });
-    }
-    if (tab === FUNDS_AND_FIXED_INCOME_TAB || tab === "MMFs") {
-      return isFundsAndFixedIncomeArticle(a);
-    }
-    if (tab === "FX Rates") {
-      const rx = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
-      return a.category === "FX & Currency" || rx.test(a.title);
-    }
-    if (tab === "Commodities") {
-      const rx = /\b(oil|crude( oil)?|brent|gold|coffee|tea|fuel|agriculture|agricultural)\b/i;
-      return rx.test(a.title);
-    }
-    return true;
-  };
-
   // Fetch batches until the current tab has at least `target` matching articles OR DB is exhausted.
   // Returns updated [allArticles, newOffset, newHasMore].
   const fillTab = async (
@@ -194,7 +140,7 @@ export default function NewsPage() {
     let batches = 0;
 
     while (hasMoreRemote && batches < MAX_BATCHES) {
-      const matching = accumulated.filter(a => tabMatchesArticle(tab, a, stocksList));
+      const matching = accumulated.filter(a => matchesNewsTab(tab, a, stocksList));
       if (matching.length >= target) break;
 
       const nextOffset = currentOffset + 60;
@@ -303,23 +249,10 @@ export default function NewsPage() {
     let allItems = [...items];
     
     // Now perform filtering on allItems based on activeNavTab
-    if (activeNavTab === "Kenyan") {
-      allItems = allItems.filter(a => !isInternationalArticle(a.rawItem || {}));
-    } else if (activeNavTab === "International") {
-      allItems = allItems.filter(a => isInternationalArticle(a.rawItem || {}));
-    } else if (activeNavTab === "Stocks") {
-      allItems = allItems.filter(a => a.rawItem?.category === 'Stocks' || !!a.relatedStock);
+    if (["Kenyan", "International", "Stocks", "FX Rates", "Commodities"].includes(activeNavTab)) {
+      allItems = allItems.filter(a => matchesNewsTab(activeNavTab, a.rawItem || a, stocks));
     } else if (activeNavTab === FUNDS_AND_FIXED_INCOME_TAB || activeNavTab === "MMFs") {
       allItems = allItems.filter(a => isFundsAndFixedIncomeArticle(a.rawItem || a));
-    } else if (activeNavTab === "FX Rates") {
-      const fxRegex = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
-      allItems = allItems.filter(a => 
-        a.rawItem?.category === "FX & Currency" || 
-        fxRegex.test(a.title)
-      );
-    } else if (activeNavTab === "Commodities") {
-      const commoditiesRegex = /\b(oil|crude( oil)?|brent|gold|coffee|tea|fuel|agriculture|agricultural)\b/i;
-      allItems = allItems.filter(a => commoditiesRegex.test(a.title));
     }
 
     return allItems;
