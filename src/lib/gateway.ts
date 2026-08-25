@@ -1,29 +1,12 @@
 // Thin client for the public-data gateway edge function.
 // Use this for unauthenticated reads of market data (funds, stocks, rates,
 // commodities, news, history). It enforces pagination and rate limits server-side.
-//
-// The gateway is the long-term replacement for direct PostgREST reads against
-// the *_public views. Existing direct reads still work, but new code should
-// prefer the gateway so we can throttle and monitor scrapers in one place.
 
-import { normalizeSupabaseUrl } from "@/lib/supabase-url";
+import { getValidatedSupabaseConfig } from "@/lib/supabase-config";
 
-// Use VITE_SUPABASE_URL as the source of truth. Published builds may omit both
-// VITE_SUPABASE_URL and VITE_SUPABASE_PROJECT_ID, so keep a public, generated
-// project URL fallback instead of ever producing https://undefined.supabase.co.
-const envSupabaseUrl = normalizeSupabaseUrl(import.meta?.env?.VITE_SUPABASE_URL as string | undefined);
-const envProjectId = import.meta?.env?.VITE_SUPABASE_PROJECT_ID as string | undefined;
-const SUPABASE_URL =
-  envSupabaseUrl && envSupabaseUrl !== "undefined"
-    ? envSupabaseUrl
-    : envProjectId && envProjectId !== "undefined"
-      ? `https://${envProjectId}.supabase.co`
-      : "https://caawgzuofnujrznwbuxk.supabase.co";
-const BASE = `${SUPABASE_URL.replace(/\/$/, "")}/functions/v1/public-data`;
-const ANON_KEY =
-  (import.meta?.env?.VITE_SUPABASE_PUBLISHABLE_KEY as string | undefined) ||
-  (import.meta?.env?.VITE_SUPABASE_ANON_KEY as string | undefined) ||
-  "sb_publishable_6snC3do-2emXAMEp7-C9AA_3_kb-GkC";
+const { supabaseUrl, supabasePublishableKey } = getValidatedSupabaseConfig();
+const BASE = `${supabaseUrl}/functions/v1/public-data`;
+const ANON_KEY = supabasePublishableKey;
 
 export type GatewayResource =
   | "funds"

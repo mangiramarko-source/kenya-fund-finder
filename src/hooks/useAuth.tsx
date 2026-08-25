@@ -1,5 +1,5 @@
 import { createContext, useContext, useEffect, useState, ReactNode } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { supabase, SUPABASE_PROJECT_ID } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { identifyUser, resetUser } from "@/lib/analytics";
 
@@ -108,7 +108,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
     // Also listen for auth errors via the session refresh
     const handleStorageEvent = (e: StorageEvent) => {
-      if (e.key === 'sb-' + import.meta.env.VITE_SUPABASE_PROJECT_ID + '-auth-token' && e.newValue === null) {
+      if (e.key === `sb-${SUPABASE_PROJECT_ID}-auth-token` && e.newValue === null) {
         setUser(null);
         setSession(null);
         setIsAdmin(false);

@@ -1,7 +1,59 @@
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 import react from "@vitejs/plugin-react-swc";
 import path from "path";
 import { componentTagger } from "lovable-tagger";
+
+function validateSupabaseBuildEnv(mode: string) {
+  const env = loadEnv(mode, process.cwd(), "");
+  const url = env.VITE_SUPABASE_URL || process.env.VITE_SUPABASE_URL;
+  const key = env.VITE_SUPABASE_PUBLISHABLE_KEY || process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const projectId = env.VITE_SUPABASE_PROJECT_ID || process.env.VITE_SUPABASE_PROJECT_ID;
+
+  if (!url || typeof url !== "string" || !url.trim()) {
+    throw new Error(
+      "\n❌ [FAIL-CLOSED] Missing VITE_SUPABASE_URL. A valid HTTPS Supabase URL is required for building.\n"
+    );
+  }
+  const trimmedUrl = url.trim();
+  if (trimmedUrl.startsWith("eyJ") || !/^https:\/\/[a-z0-9-]+\.supabase\.co\/?$/i.test(trimmedUrl)) {
+    throw new Error(
+      "\n❌ [FAIL-CLOSED] Malformed VITE_SUPABASE_URL. Expected https://<project>.supabase.co\n"
+    );
+  }
+
+  // Derive and validate project ID
+  const urlMatch = trimmedUrl.match(/^https:\/\/([a-z0-9-]+)\.supabase\.co/i);
+  const derivedRef = urlMatch && urlMatch[1] ? urlMatch[1].toLowerCase() : "";
+  if (projectId && typeof projectId === "string" && projectId.trim()) {
+    if (projectId.trim().toLowerCase() !== derivedRef) {
+      throw new Error(
+        "\n❌ [FAIL-CLOSED] VITE_SUPABASE_PROJECT_ID mismatch: Supplied project ID does not match the project reference in VITE_SUPABASE_URL.\n"
+      );
+    }
+  }
+
+  if (!key || typeof key !== "string" || !key.trim()) {
+    throw new Error(
+      "\n❌ [FAIL-CLOSED] Missing VITE_SUPABASE_PUBLISHABLE_KEY. An active publishable key is required.\n"
+    );
+  }
+  const trimmedKey = key.trim();
+  if (trimmedKey.startsWith("eyJ")) {
+    throw new Error(
+      "\n❌ [FAIL-CLOSED] Legacy JWT key or ciphertext envelope detected in VITE_SUPABASE_PUBLISHABLE_KEY (starts with 'eyJ'). Legacy keys are disabled on Supabase. Must provide an active 'sb_publishable_*' key.\n"
+    );
+  }
+  if (trimmedKey.startsWith("sb_secret_") || trimmedKey.toLowerCase().includes("service_role")) {
+    throw new Error(
+      "\n❌ [FAIL-CLOSED] Security violation: Secret or service_role key detected in client VITE_SUPABASE_PUBLISHABLE_KEY.\n"
+    );
+  }
+  if (!trimmedKey.startsWith("sb_publishable_")) {
+    throw new Error(
+      "\n❌ [FAIL-CLOSED] Malformed VITE_SUPABASE_PUBLISHABLE_KEY. Key must start with 'sb_publishable_'.\n"
+    );
+  }
+}
 
 // https://vitejs.dev/config/
 export default defineConfig(({ mode }) => ({
@@ -13,7 +65,18 @@ export default defineConfig(({ mode }) => ({
       overlay: false,
     },
   },
-  plugins: [react(), mode === "development" && componentTagger()].filter(Boolean),
+  plugins: [
+    react(),
+    mode === "development" && componentTagger(),
+    {
+      name: "fail-closed-supabase-validator",
+      configResolved(config) {
+        if (config.command === "build") {
+          validateSupabaseBuildEnv(mode);
+        }
+      },
+    },
+  ].filter(Boolean),
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
