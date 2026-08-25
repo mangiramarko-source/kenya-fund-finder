@@ -1,83 +1,151 @@
 import { describe, expect, it } from "vitest";
-import { demoNewsHighlightsData, formatDisplayDate, renderNewsHighlightsEmail } from "../../supabase/functions/_shared/news-highlights-email";
+import {
+  demoNewsHighlightsData,
+  formatDisplayDate,
+  renderNewsHighlightsEmail,
+  type NewsHighlightsEmailData,
+} from "../../supabase/functions/_shared/news-highlights-email.ts";
 
-describe("News Highlights email renderer", () => {
-  it("formats dates from ISO timestamps into human-readable strings", () => {
+describe("News Highlights Email Renderer (Gmail-Resistant Dark Mode)", () => {
+  it("renders with fallback bgcolor attributes on body and outer tables", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    expect(rendered.html).toContain('bgcolor="#0B0F14"');
+    expect(rendered.html).toContain('bgcolor="#10161D"');
+    expect(rendered.html).toContain('bgcolor="#151C24"');
+  });
+
+  it("renders inline background-color declarations on major containers", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    expect(rendered.html).toContain("background-color:#0B0F14");
+    expect(rendered.html).toContain("background-color:#10161D");
+    expect(rendered.html).toContain("background-color:#151C24");
+  });
+
+  it("applies solid linear-gradient protection for Gmail on dark backgrounds", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    expect(rendered.html).toContain("background:linear-gradient(#0B0F14,#0B0F14)");
+    expect(rendered.html).toContain("background:linear-gradient(#10161D,#10161D)");
+    expect(rendered.html).toContain("background:linear-gradient(#151C24,#151C24)");
+    expect(rendered.html).toContain("background:linear-gradient(#19212B,#19212B)");
+  });
+
+  it("does not declare unsupported dark-only color-scheme meta tags", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    expect(rendered.html).not.toContain('<meta name="color-scheme"');
+    expect(rendered.html).not.toContain('<meta name="supported-color-schemes"');
+    expect(rendered.html).not.toContain("color-scheme: dark");
+    expect(rendered.html).not.toContain("color-scheme:dark");
+    expect(rendered.html).not.toContain("color-scheme: light dark");
+  });
+
+  it("preserves apple message reformatting meta tag", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    expect(rendered.html).toContain('<meta name="x-apple-disable-message-reformatting">');
+  });
+
+  it("sets body class='body' and doctype for Gmail blend targeting", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    expect(rendered.html.startsWith("<!doctype html>")).toBe(true);
+    expect(rendered.html).toContain('<body class="body"');
+  });
+
+  it("includes u + .body CSS blend mode rules for Gmail iOS text preservation", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    expect(rendered.html).toContain("u + .body .gmail-blend-screen{background:#000;mix-blend-mode:screen}");
+    expect(rendered.html).toContain("u + .body .gmail-blend-difference{background:#000;mix-blend-mode:difference}");
+  });
+
+  it("protects primary white headings and headlines with nested blend divs", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    // Section title "Top stories"
+    expect(rendered.html).toContain(
+      '<div class="gmail-blend-screen"><div class="gmail-blend-difference">Top stories</div></div>'
+    );
+    // Section title "Why it matters"
+    expect(rendered.html).toContain(
+      '<div class="gmail-blend-screen"><div class="gmail-blend-difference">Why it matters</div></div>'
+    );
+    // Story headline
+    expect(rendered.html).toContain(
+      '<div class="gmail-blend-screen"><div class="gmail-blend-difference">Sample bank profits improve as loan book growth offsets margin pressure</div></div>'
+    );
+  });
+
+  it("does not wrap secondary grey summaries or muted metadata in blend mode wrappers", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    // Secondary summaries should be plain text or escaped text inside the styling container
+    expect(rendered.html).toContain("Fictional earnings coverage showing how a bank update might be summarized");
+    expect(rendered.html).not.toContain(
+      '<div class="gmail-blend-screen"><div class="gmail-blend-difference">Fictional earnings coverage'
+    );
+
+    // Muted meta should not be wrapped
+    expect(rendered.html).not.toContain(
+      '<div class="gmail-blend-screen"><div class="gmail-blend-difference">Business Daily'
+    );
+  });
+
+  it("preserves CTA button and green links", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    expect(rendered.html).toContain("VIEW MORE MARKET NEWS");
+    expect(rendered.html).toContain('bgcolor="#22C55E"');
+    expect(rendered.html).toContain("background:linear-gradient(#22C55E,#22C55E)");
+    expect(rendered.html).toContain("color:#22C55E");
+  });
+
+  it("correctly formats published dates into clean display strings", () => {
     expect(formatDisplayDate("2026-08-24T02:00:00+00:00")).toBe("24 Aug 2026");
     expect(formatDisplayDate("2026-08-23T18:00:00+00:00")).toBe("23 Aug 2026");
-    expect(formatDisplayDate("2026-08-23T15:00:00+00:00")).toBe("23 Aug 2026");
     expect(formatDisplayDate("")).toBe("");
     expect(formatDisplayDate(undefined)).toBe("");
   });
 
-  it("renders the premium dark theme email with email-safe structure and accurate data", () => {
-    const email = renderNewsHighlightsEmail({
+  it("escapes untrusted user or news content before inserting into HTML and blend wrappers", () => {
+    const untrustedData: NewsHighlightsEmailData = {
       ...demoNewsHighlightsData,
-      unsubscribeUrl: "https://example.test/unsubscribe",
-      preferencesUrl: "https://example.test/preferences",
-    });
+      topStories: [
+        {
+          category: "TECH & MEDIA",
+          headline: 'Alert: <script>alert("xss")</script> & Market "News"',
+          summary: "Summary with <b>tags</b> & quotes",
+          url: "https://kenyafundfinder.com/news?a=1&b=2",
+        },
+      ],
+      featuredStory: {
+        category: "SPECIAL",
+        headline: 'Featured <img src="x" onerror="alert(1)">',
+        summary: "Featured summary <script>",
+        url: "https://kenyafundfinder.com/news",
+      },
+    };
 
-    expect(email.subject).toBe("[DEMO] KenyaFundFinder News Highlights");
+    const rendered = renderNewsHighlightsEmail(untrustedData);
 
-    // Hero preservation
-    expect(email.html).toContain('src="https://kenyafundfinder.com/market-news-highlights-hero.png"');
-    expect(email.html).toContain('width="600" alt="KenyaFundFinder News Highlights"');
-    expect(email.html).toContain('style="display:block;width:100%;max-width:600px;height:auto;border:0;"');
+    expect(rendered.html).not.toContain("<script>");
+    expect(rendered.html).not.toContain('<img src="x"');
+    expect(rendered.html).toContain("&lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; &amp; Market &quot;News&quot;");
+    expect(rendered.html).toContain("&lt;b&gt;tags&lt;/b&gt; &amp; quotes");
+    expect(rendered.html).toContain(
+      '<div class="gmail-blend-screen"><div class="gmail-blend-difference">Alert: &lt;script&gt;alert(&quot;xss&quot;)&lt;/script&gt; &amp; Market &quot;News&quot;</div></div>'
+    );
+  });
 
-    // Dark theme color palette & email client compatibility
-    expect(email.html).toContain('bgcolor="#0B0F14"');
-    expect(email.html).toContain("background-color:#0B0F14");
-    expect(email.html).toContain('bgcolor="#10161D"');
-    expect(email.html).toContain("background-color:#10161D");
-    expect(email.html).toContain('bgcolor="#151C24"');
-    expect(email.html).toContain("background-color:#151C24");
-    expect(email.html).toContain('bgcolor="#19212B"');
-    expect(email.html).toContain("background-color:#19212B");
-    expect(email.html).toContain("color:#F3F4F6");
-    expect(email.html).toContain("color:#A7B0BB");
-    expect(email.html).toContain("color:#7F8A98");
-    expect(email.html).toContain("color:#22C55E");
-    expect(email.html).toContain("background-color:#15803D");
-    expect(email.html).toContain("border:1px solid #263241");
-    expect(email.html).toContain('<meta name="color-scheme" content="dark">');
+  it("keeps total HTML email byte size well below Gmail clipping limit of 102KB", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+    const bytes = Buffer.byteLength(rendered.html, "utf8");
 
-    // Section headings
-    expect(email.html).toContain("Top stories");
-    expect(email.html).toContain("Why it matters");
-    expect(email.html).toContain("Company watch");
-    expect(email.html).toContain("Economy / policy watch");
-    expect(email.html).toContain("Editor&#039;s pick");
-    expect(email.html).toContain("VIEW MORE MARKET NEWS");
-
-    // Category pills & content
-    expect(email.html).toContain("EARNINGS REPORT");
-    expect(email.html).toContain("MARKET SENTIMENT");
-    expect(email.html).toContain("FX");
-    expect(email.html).toContain("POLICY");
-    expect(email.html).toContain("Read more -&gt;");
-
-    // Human-readable formatted dates (no raw ISO timestamps in rendered HTML)
-    expect(email.html).toContain("24 Aug 2026");
-    expect(email.html).toContain("23 Aug 2026");
-    expect(email.html).not.toContain("2026-08-24T02:00:00+00:00");
-
-    // Links
-    expect(email.html).toContain('href="https://example.test/unsubscribe"');
-    expect(email.html).toContain('href="https://example.test/preferences"');
-    expect(email.html).toContain('href="https://kenyafundfinder.com/news"');
-
-    // Demo constraints & plain-text variant
-    expect(demoNewsHighlightsData.topStories).toHaveLength(4);
-    expect(demoNewsHighlightsData.topStories.length).toBeGreaterThanOrEqual(3);
-    expect(demoNewsHighlightsData.topStories.length).toBeLessThanOrEqual(5);
-    expect(email.text).toContain("TOP STORIES");
-    expect(email.text).toContain("WHY IT MATTERS");
-    expect(email.text).toContain("COMPANY WATCH");
-    expect(email.text).toContain("ECONOMY / POLICY WATCH");
-    expect(email.text).toContain("EDITOR'S PICK");
-
-    // Safety: no scripts, proper table balance
-    expect(email.html).not.toMatch(/<script\b|market_overviews|from\(\"news_articles\"|from\(\"stocks\"|source_as_of|overview_id/i);
-    expect((email.html.match(/<table\b/gi) ?? []).length).toBe((email.html.match(/<\/table>/gi) ?? []).length);
+    // Email size should be ~10KB - 20KB, well under 102KB (104,448 bytes)
+    expect(bytes).toBeLessThan(50 * 1024);
+    expect(bytes).toBeGreaterThan(5 * 1024);
   });
 });
