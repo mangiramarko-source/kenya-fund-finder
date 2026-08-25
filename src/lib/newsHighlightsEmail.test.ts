@@ -79,6 +79,21 @@ describe("News Highlights Email Renderer (Gmail-Resistant Dark Mode)", () => {
     );
   });
 
+  it("renders valid footer branding markup without invalid strong/div nesting", () => {
+    const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
+
+    // Footer branding still contains KenyaFundFinder and is blend protected
+    expect(rendered.html).toContain(
+      '<div style="font-weight:700;color:#F3F4F6"><div class="gmail-blend-screen"><div class="gmail-blend-difference">KenyaFundFinder</div></div></div>'
+    );
+
+    // Ensure NO invalid <strong ...><div class="gmail-blend-screen"> nesting exists anywhere
+    expect(rendered.html).not.toMatch(/<strong[^>]*>\s*<div class="gmail-blend-screen"/i);
+    expect(rendered.html).not.toMatch(/<span[^>]*>\s*<div class="gmail-blend-screen"/i);
+    expect(rendered.html).not.toMatch(/<a[^>]*>\s*<div class="gmail-blend-screen"/i);
+    expect(rendered.html).not.toMatch(/<p[^>]*>\s*<div class="gmail-blend-screen"/i);
+  });
+
   it("does not wrap secondary grey summaries or muted metadata in blend mode wrappers", () => {
     const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
 
@@ -92,6 +107,50 @@ describe("News Highlights Email Renderer (Gmail-Resistant Dark Mode)", () => {
     expect(rendered.html).not.toContain(
       '<div class="gmail-blend-screen"><div class="gmail-blend-difference">Business Daily'
     );
+  });
+
+  it("correctly colors price changes preserving whitespace trim semantics", () => {
+    const dataWithChanges: NewsHighlightsEmailData = {
+      ...demoNewsHighlightsData,
+      topStories: [
+        {
+          category: "BANKING",
+          headline: "KCB Update",
+          summary: "Earnings note",
+          url: "https://kenyafundfinder.com/news",
+          ticker: "KCB",
+          price: "KES 93.75",
+          change: "-0.8%", // standard negative -> red (#FB7185)
+        },
+        {
+          category: "TELCO",
+          headline: "Safaricom Update",
+          summary: "Earnings note",
+          url: "https://kenyafundfinder.com/news",
+          ticker: "SCOM",
+          price: "KES 15.20",
+          change: " -0.8%", // whitespace-prefixed negative -> red (#FB7185)
+        },
+        {
+          category: "ENERGY",
+          headline: "KenGen Update",
+          summary: "Earnings note",
+          url: "https://kenyafundfinder.com/news",
+          ticker: "KEGN",
+          price: "KES 2.45",
+          change: "+0.8%", // positive -> green (#22C55E)
+        },
+      ],
+    };
+
+    const rendered = renderNewsHighlightsEmail(dataWithChanges);
+
+    // Standard negative change is red
+    expect(rendered.html).toContain('<span style="color:#FB7185">-0.8%</span>');
+    // Whitespace-prefixed negative change is red
+    expect(rendered.html).toContain('<span style="color:#FB7185"> -0.8%</span>');
+    // Positive change is green
+    expect(rendered.html).toContain('<span style="color:#22C55E">+0.8%</span>');
   });
 
   it("preserves CTA button and green links", () => {
@@ -144,7 +203,7 @@ describe("News Highlights Email Renderer (Gmail-Resistant Dark Mode)", () => {
     const rendered = renderNewsHighlightsEmail(demoNewsHighlightsData);
     const bytes = Buffer.byteLength(rendered.html, "utf8");
 
-    // Email size should be ~10KB - 20KB, well under 102KB (104,448 bytes)
+    // Email size should be ~10KB - 25KB, well under 102KB (104,448 bytes)
     expect(bytes).toBeLessThan(50 * 1024);
     expect(bytes).toBeGreaterThan(5 * 1024);
   });
