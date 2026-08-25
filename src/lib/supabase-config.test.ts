@@ -1,9 +1,13 @@
 import { describe, it, expect } from "vitest";
+import { readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
+import { globSync } from "glob";
 import {
   validateSupabaseUrl,
   validateSupabasePublishableKey,
   extractProjectRefFromUrl,
   validateSupabaseProjectId,
+  getValidatedSupabaseConfig,
 } from "./supabase-config";
 
 describe("validateSupabaseUrl", () => {
@@ -100,5 +104,35 @@ describe("validateSupabasePublishableKey", () => {
     expect(() => validateSupabasePublishableKey("random_string_123")).toThrowError(
       /Invalid publishable key format/
     );
+  });
+});
+
+describe("getValidatedSupabaseConfig runtime & static inlining regression tests", () => {
+  it("returns validated config in test environment", () => {
+    const config = getValidatedSupabaseConfig();
+    expect(config.supabaseUrl).toBe("https://test-project.supabase.co");
+    expect(config.supabasePublishableKey).toBe("sb_publishable_test_value_for_unit_tests_only");
+    expect(config.supabaseProjectId).toBe("test-project");
+  });
+
+  it("source code uses direct import.meta.env expressions without optional chaining for Vite AST inlining", () => {
+    const src = readFileSync(resolve(__dirname, "supabase-config.ts"), "utf8");
+    expect(src).not.toMatch(/import\.meta\?\.env/);
+    expect(src).toMatch(/import\.meta\.env\.VITE_SUPABASE_URL/);
+    expect(src).toMatch(/import\.meta\.env\.VITE_SUPABASE_PUBLISHABLE_KEY/);
+    expect(src).toMatch(/import\.meta\.env\.VITE_SUPABASE_PROJECT_ID/);
+  });
+
+  it("compiled bundle (if present) does not retain raw unresolved import.meta.env.VITE_ keys", () => {
+    const distAssets = resolve(__dirname, "../../dist/assets");
+    if (existsSync(distAssets)) {
+      const jsFiles = globSync(resolve(distAssets, "*.js"));
+      for (const file of jsFiles) {
+        const content = readFileSync(file, "utf8");
+        expect(content).not.toMatch(/import\.meta\?\.env/);
+        expect(content).not.toMatch(/import\.meta\.env\.VITE_SUPABASE_URL/);
+        expect(content).not.toMatch(/import\.meta\.env\.VITE_SUPABASE_PUBLISHABLE_KEY/);
+      }
+    }
   });
 });

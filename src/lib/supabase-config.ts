@@ -13,6 +13,7 @@
  *    - encrypted envelope blobs (e.g. starting with '{"v":' or base64 'eyJ2Ij')
  *    - malformed URLs or project ID mismatches
  * 5. Never echoes environment variable values in error messages.
+ * 6. Uses exact static `import.meta.env.VITE_*` expressions so Vite AST transforms can statically inline them in production bundles.
  */
 
 import { normalizeSupabaseUrl } from "./supabase-url";
@@ -103,9 +104,9 @@ export function validateSupabasePublishableKey(rawKey: unknown): string {
 }
 
 export function getValidatedSupabaseConfig() {
-  const urlEnv = import.meta?.env?.VITE_SUPABASE_URL;
-  const keyEnv = import.meta?.env?.VITE_SUPABASE_PUBLISHABLE_KEY;
-  const projectEnv = import.meta?.env?.VITE_SUPABASE_PROJECT_ID;
+  const urlEnv = import.meta.env.VITE_SUPABASE_URL;
+  const keyEnv = import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const projectEnv = import.meta.env.VITE_SUPABASE_PROJECT_ID;
 
   const url = validateSupabaseUrl(urlEnv);
   const publishableKey = validateSupabasePublishableKey(keyEnv);
