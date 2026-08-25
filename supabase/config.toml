@@ -55,3 +55,28 @@ entrypoint = "./functions/fetch-social-news/index.ts"
 
 [functions.meta-conversion]
 verify_jwt = false
+
+# MVP communications functions use explicit named-secret/admin authorization.
+# Schedules remain intentionally absent until staging and production smoke tests pass.
+[functions.generate-market-overview]
+verify_jwt = false
+
+[functions.enqueue-market-brief]
+verify_jwt = false
+
+[functions.run-news-highlights-edition]
+verify_jwt = false
+
+[functions.process-communication-outbox]
+verify_jwt = false
+
+[functions.communication-unsubscribe]
+verify_jwt = false
+
+[functions.resend-webhook]
+verify_jwt = false
+
+# One-off internal design-demo endpoint. It uses explicit admin authorization,
+# reads no market tables, and cannot operate outside internal allowlist mode.
+[functions.send-market-brief-demo]
+verify_jwt = false

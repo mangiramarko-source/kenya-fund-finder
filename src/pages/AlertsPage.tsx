@@ -183,15 +183,15 @@ const AlertsPage = () => {
             <SettingRow
               title="Instant Price Alerts"
               description="Email you immediately when targets are hit."
-              checked={prefs.instant_alerts}
-              onChange={(v) => updatePref("instant_alerts", v)}
+              checked={prefs.price_alert_email}
+              onChange={(v) => updatePref("price_alert_email", v)}
               disabled={prefsLoading}
             />
             <SettingRow
-              title="Weekly Market Summary"
-              description="A digest of your saved funds, saved stocks, portfolio summary and news."
-              checked={prefs.weekly_summary}
-              onChange={(v) => updatePref("weekly_summary", v)}
+              title="Market Brief & Morning News"
+              description="Market Brief updates plus weekday morning News Highlights from stored, quality-checked articles."
+              checked={prefs.market_brief_email}
+              onChange={(v) => updatePref("market_brief_email", v)}
               disabled={prefsLoading}
             />
           </CardContent>
