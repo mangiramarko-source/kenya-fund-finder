@@ -23,9 +23,10 @@ describe("Market Brief email renderer", () => {
   });
 
   it("omits optional report sections without leaving headings behind", () => {
-    const email = renderMarketBriefEmail({ ...demoMarketBriefData, movers: [], currencies: [], watchlist: [], watchItems: [], news: [], discoveryActions: [], importantUpdates: undefined });
+    const email = renderMarketBriefEmail({ ...demoMarketBriefData, movers: [], currencies: [], watchlist: [], watchItems: [], newsSummary: [], news: [], discoveryActions: [], importantUpdates: undefined });
     expect(email.html).not.toContain("Biggest movers");
     expect(email.html).not.toContain("Kenyan Shilling");
+    expect(email.html).not.toContain("News summary");
     expect(email.html).not.toContain("Watchlist tracker");
     expect(email.html).not.toContain("What to watch next");
     expect(email.html).not.toContain("Stories that matter");
@@ -45,6 +46,17 @@ describe("Market Brief email renderer", () => {
     expect(email.html).not.toContain("Was this brief useful?");
     expect(email.html).not.toContain("Kenya Market Brief</div>");
     expect(email.html).not.toContain(darkDemoMarketBriefData.marketHeadline);
+    expect(email.html).toContain("News summary");
+    expect(email.html).toContain("STORED MARKET NEWS · SAMPLE");
+    expect(email.html).toContain("Business Daily · Aug 24, 2026");
+    expect(email.html).toContain("Sample banks lead NSE turnover as large caps move");
+    expect(email.html).toContain("Why it matters:");
+    expect(email.html).toContain("Takeaway:");
+    expect(email.text).toContain("NEWS SUMMARY");
+    expect(email.text).toContain("Watch liquidity and large-cap breadth, not a single index call.");
+    expect(email.html.indexOf(">What happened today<")).toBeLessThan(email.html.indexOf(">News summary<"));
+    expect(email.html.indexOf(">News summary<")).toBeLessThan(email.html.indexOf(">Biggest movers<"));
+    expect(darkDemoMarketBriefData.newsSummary).toHaveLength(4);
     expect(email.html).toContain("Top gainers · sample");
     expect(email.html).toContain("Top losers · sample");
     expect(darkDemoMarketBriefData.movers?.filter((item) => item.changePercent >= 0)).toHaveLength(5);
