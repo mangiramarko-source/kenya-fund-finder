@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
+import { getValidatedSupabaseConfig } from "@/lib/supabase-config";
 import { useAuth } from "@/hooks/useAuth";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -54,13 +55,8 @@ const AdminNews = () => {
   const handleFetchNewsNow = async () => {
     setIsFetchingNews(true);
     try {
-      const envUrl = import.meta.env.VITE_SUPABASE_URL as string | undefined;
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID as string | undefined;
-      const baseUrl = envUrl && envUrl !== "undefined"
-        ? envUrl.replace(/\/$/, "")
-        : projectId && projectId !== "undefined"
-          ? `https://${projectId}.supabase.co`
-          : "https://qrmthciurngpzpjhevdj.supabase.co";
+      const { supabaseUrl } = getValidatedSupabaseConfig();
+      const baseUrl = supabaseUrl;
       const { data: { session } } = await supabase.auth.getSession();
       const headers: Record<string, string> = { "Content-Type": "application/json" };
       if (session?.access_token) {
