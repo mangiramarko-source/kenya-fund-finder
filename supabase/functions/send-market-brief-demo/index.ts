@@ -4,7 +4,16 @@ import { demoMarketBriefData, renderMarketBriefEmail } from "../_shared/market-b
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
 import { getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
 
-const jsonHeaders = { "Content-Type": "application/json" };
+// This endpoint is called from the signed-in production admin page.  It still
+// performs explicit server-side admin authorization; these headers merely let
+// that page complete the browser CORS preflight.
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "https://kenyafundfinder.com",
+  "Access-Control-Allow-Headers": "authorization, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Vary": "Origin",
+};
+const jsonHeaders = { ...corsHeaders, "Content-Type": "application/json" };
 
 async function fingerprint(value: string): Promise<string> {
   const bytes = new TextEncoder().encode(value);
@@ -13,6 +22,7 @@ async function fingerprint(value: string): Promise<string> {
 }
 
 Deno.serve(async (request) => {
+  if (request.method === "OPTIONS") return new Response(null, { status: 204, headers: corsHeaders });
   if (request.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers: jsonHeaders });
   const body = await request.json().catch(() => ({})) as { confirm_demo?: unknown; preflight?: unknown };
   if (body.preflight !== true && body.confirm_demo !== true) return new Response(JSON.stringify({ error: "Explicit demo confirmation required" }), { status: 400, headers: jsonHeaders });
