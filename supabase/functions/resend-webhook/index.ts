@@ -57,6 +57,7 @@ Deno.serve(async (request) => {
   }
 
   const event = JSON.parse(rawBody) as {
+    created_at?: string;
     type?: string;
     data?: {
       email_id?: string;
@@ -64,36 +65,54 @@ Deno.serve(async (request) => {
       bounce?: { type?: string };
     };
   };
+  const webhookEventId = request.headers.get("svix-id");
   const providerMessageId = event.data?.email_id;
-  if (!providerMessageId) return new Response(JSON.stringify({ received: true, ignored: "missing_email_id" }), { headers });
+  if (!webhookEventId || !providerMessageId) {
+    return new Response(JSON.stringify({ received: true, ignored: "missing_event_identity" }), { headers });
+  }
 
   const supabase = createClient(supabaseUrl, getSupabaseSecretKey(), { auth: { persistSession: false, autoRefreshToken: false } });
   const eventType = event.type ?? "";
-  const deliveryStatus = eventType === "email.delivered"
-    ? "delivered"
-    : eventType === "email.bounced"
-    ? "bounced"
-    : eventType === "email.complained"
-    ? "complained"
-    : null;
-  if (!deliveryStatus) return new Response(JSON.stringify({ received: true, ignored: eventType }), { headers });
+  const supported = new Set([
+    "email.sent", "email.delivered", "email.delivery_delayed", "email.failed",
+    "email.bounced", "email.complained", "email.suppressed",
+  ]);
+  if (!supported.has(eventType)) return new Response(JSON.stringify({ received: true, ignored: eventType }), { headers });
+  const headerTimestamp = Number(request.headers.get("svix-timestamp"));
+  const eventCreatedAt = event.created_at && Number.isFinite(Date.parse(event.created_at))
+    ? new Date(event.created_at).toISOString()
+    : new Date(headerTimestamp * 1000).toISOString();
+  const { data: recorded, error: recordError } = await supabase.rpc("record_communication_delivery_event", {
+    p_webhook_event_id: webhookEventId,
+    p_provider_message_id: providerMessageId,
+    p_event_type: eventType,
+    p_event_created_at: eventCreatedAt,
+    p_failure_reason: eventType,
+  });
+  if (recordError) {
+    console.error("Unable to persist Resend webhook", recordError);
+    return new Response(JSON.stringify({ error: "Webhook persistence failed" }), { status: 500, headers });
+  }
 
-  await supabase.from("communication_outbox").update({
-    delivery_status: deliveryStatus,
-    delivered_at: deliveryStatus === "delivered" ? new Date().toISOString() : null,
-    failure_reason: deliveryStatus === "delivered" ? null : eventType,
-  }).eq("provider_message_id", providerMessageId);
-
-  const shouldSuppress = deliveryStatus === "complained"
-    || (deliveryStatus === "bounced" && event.data?.bounce?.type !== "soft");
+  const recipientEmail = normalizeEmail(recorded?.[0]?.recipient_email ?? event.data?.to?.[0] ?? "");
+  const shouldSuppress = eventType === "email.complained" || eventType === "email.suppressed"
+    || (eventType === "email.bounced" && event.data?.bounce?.type !== "soft");
   if (shouldSuppress) {
-    const reason = deliveryStatus === "complained" ? "complaint" : "hard_bounce";
-    for (const rawEmail of event.data?.to ?? []) {
-      const email = normalizeEmail(rawEmail);
-      const { data: existing } = await supabase.from("communication_suppressions").select("id").eq("email_normalized", email).eq("scope", "all_email").is("lifted_at", null).maybeSingle();
-      if (!existing) await supabase.from("communication_suppressions").insert({ email_normalized: email, scope: "all_email", reason, source: "resend_webhook" });
+    if (!recipientEmail) return new Response(JSON.stringify({ error: "Suppression recipient unavailable" }), { status: 500, headers });
+    const reason = eventType === "email.complained" ? "complaint"
+      : eventType === "email.suppressed" ? "provider_suppression" : "hard_bounce";
+    const { data: existing, error: suppressionReadError } = await supabase.from("communication_suppressions")
+      .select("id").eq("email_normalized", recipientEmail).eq("scope", "all_email").is("lifted_at", null).maybeSingle();
+    if (suppressionReadError) return new Response(JSON.stringify({ error: "Suppression persistence failed" }), { status: 500, headers });
+    if (!existing) {
+      const { error: suppressionInsertError } = await supabase.from("communication_suppressions").insert({
+        email_normalized: recipientEmail, scope: "all_email", reason, source: "resend_webhook",
+      });
+      if (suppressionInsertError && suppressionInsertError.code !== "23505") {
+        return new Response(JSON.stringify({ error: "Suppression persistence failed" }), { status: 500, headers });
+      }
     }
   }
 
-  return new Response(JSON.stringify({ received: true }), { headers });
+  return new Response(JSON.stringify({ received: true, duplicate: recorded?.[0]?.event_inserted === false }), { headers });
 });

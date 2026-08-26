@@ -8,6 +8,7 @@ import {
 } from "../_shared/communications.ts";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
 import { getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
+import { renderMarketBriefEmail, type MarketBriefEmailData } from "../_shared/market-brief-email.ts";
 import { renderNewsHighlightsEmail, type NewsHighlightsEmailData } from "../_shared/news-highlights-email.ts";
 
 const headers = { "Content-Type": "application/json" };
@@ -19,12 +20,22 @@ interface OutboxRow {
   idempotency_key: string;
   payload: Record<string, unknown>;
   attempts: number;
+  claim_token: string;
+  provider_request: ProviderRequest | null;
+  provider_request_frozen_at: string | null;
+  submission_started_at: string | null;
 }
 
 interface EmailContent {
   subject: string;
   html: string;
   text: string;
+}
+
+interface ProviderRequest extends EmailContent {
+  from: string;
+  to: string[];
+  headers: Record<string, string>;
 }
 
 type ServiceClient = SupabaseClient<any, "public", "public", any, any>;
@@ -112,11 +123,58 @@ async function renderMarketBrief(
     ${alertRows ? `<h2 style="font-size:16px;margin-top:24px">Recent alerts</h2><ul style="padding-left:20px;line-height:1.5">${alertRows}</ul>` : ""}
     ${newsRows ? `<h2 style="font-size:16px;margin-top:24px">Financial news</h2><ul style="padding-left:20px;line-height:1.5">${newsRows}</ul>` : ""}`;
 
-  return {
-    subject: `Kenya Market Brief · ${overview.market_date}`,
-    html: page("Kenya Market Brief", body, unsubscribeUrl),
-    text: `${overview.narrative}\n\nAs of ${overview.source_as_of ?? overview.generated_at}\n\nUnsubscribe: ${unsubscribeUrl}`,
+  const movers = [...(overview.top_gainers ?? []), ...(overview.top_losers ?? [])]
+    .map((mover: Record<string, unknown>) => ({
+      ticker: String(mover.symbol ?? ""),
+      company: String(mover.name ?? mover.symbol ?? "Market mover"),
+      price: `KES ${formatNumber(mover.price)}`,
+      changePercent: Number(mover.change_percent) || 0,
+    }))
+    .filter((mover) => mover.ticker);
+  const personalizedWatchlist = items.flatMap((item) => {
+    const asset = resolved.get(`${item.item_type}:${item.item_id}`);
+    if (!asset) return [];
+    const [ticker, ...name] = asset.label.split(" · ");
+    const change = Number.parseFloat(asset.change);
+    return [{ ticker, company: name.join(" · ") || ticker, price: asset.value, changePercent: Number.isFinite(change) ? change : 0 }];
+  });
+  const newsSummary = (overview.news_items ?? []).slice(0, 5).map((article: Record<string, unknown>) => ({
+    headline: String(article.title ?? "Market update"),
+    source: String(article.source ?? "KenyaFundFinder"),
+    published_at: String(article.published_at ?? overview.market_date),
+    why_it_matters: String(article.summary ?? "See the linked source for the latest market context."),
+    takeaway: "Read the source alongside the broader market context.",
+    url: String(article.url ?? "https://kenyafundfinder.com/news"),
+  }));
+  const importantUpdates = (notifications ?? []).map((notification) => ({
+    company: "Price alert",
+    title: notification.title,
+    description: notification.message,
+  }));
+  const content: MarketBriefEmailData = {
+    date: String(overview.market_date),
+    demo: false,
+    theme: "dark",
+    marketHeadline: String(overview.narrative ?? "Kenya Market Brief"),
+    breadth: {
+      gainers: Number(overview.gainers_count ?? 0),
+      losers: Number(overview.losers_count ?? 0),
+      unchanged: Number(overview.unchanged_count ?? 0),
+      today: String(overview.breadth_direction ?? "Mixed"),
+    },
+    usdKes: { rate: "—", change: "—" },
+    summary: String(overview.narrative ?? overview.deterministic_summary ?? "Market information is currently unavailable."),
+    movers,
+    watchlist: personalizedWatchlist,
+    importantUpdates,
+    newsSummary,
+    ctaUrl: "https://kenyafundfinder.com",
+    watchlistUrl: "https://kenyafundfinder.com/watchlist",
+    preferencesUrl: "https://kenyafundfinder.com/alerts?tab=settings",
+    unsubscribeUrl,
   };
+  const rendered = renderMarketBriefEmail(content);
+  return { ...rendered, subject: `Kenya Market Brief · ${overview.market_date}` };
 }
 
 function renderPriceAlert(row: OutboxRow, unsubscribeUrl: string): EmailContent {
@@ -159,7 +217,7 @@ async function renderNewsHighlights(
     policyWatch: (Array.isArray(edition.policy_watch) ? edition.policy_watch : []) as NewsHighlightsEmailData["policyWatch"],
     featuredStory: featured as NewsHighlightsEmailData["featuredStory"],
     ctaUrl: "https://kenyafundfinder.com/news",
-    preferencesUrl: "https://kenyafundfinder.com/profile",
+    preferencesUrl: "https://kenyafundfinder.com/alerts?tab=settings",
     unsubscribeUrl,
   };
   return renderNewsHighlightsEmail(data);
@@ -172,14 +230,82 @@ async function updateFailure(
   reason: string,
 ) {
   const canRetry = retryable && row.attempts < 3;
-  await supabase.from("communication_outbox").update({
+  const { data, error } = await supabase.from("communication_outbox").update({
     status: canRetry ? "retry_wait" : "failed",
     next_attempt_at: canRetry
       ? new Date(Date.now() + retryDelayMinutes(row.attempts) * 60_000).toISOString()
       : new Date().toISOString(),
     lease_expires_at: null,
+    claim_token: null,
     failure_reason: reason.slice(0, 1000),
-  }).eq("id", row.id).eq("status", "processing");
+  }).eq("id", row.id).eq("status", "processing").eq("claim_token", row.claim_token).select("id").maybeSingle();
+  if (error || !data) throw new Error("Unable to persist worker failure state");
+}
+
+async function fencedUpdate(supabase: ServiceClient, row: OutboxRow, patch: Record<string, unknown>) {
+  const { data, error } = await supabase.from("communication_outbox").update(patch)
+    .eq("id", row.id).eq("status", "processing").eq("claim_token", row.claim_token)
+    .select("id").maybeSingle();
+  if (error || !data) throw new Error("Communication claim is no longer owned by this worker");
+}
+
+async function resolveAllowlistedUserIds(supabase: ServiceClient, allowlist: Set<string>): Promise<string[]> {
+  if (allowlist.size === 0) return [];
+  const ids: string[] = [];
+  for (let page = 1; page <= 20; page += 1) {
+    const { data, error } = await supabase.auth.admin.listUsers({ page, perPage: 200 });
+    if (error) throw new Error("Unable to resolve internal recipient scope");
+    for (const user of data.users) {
+      if (user.email && allowlist.has(normalizeEmail(user.email))) ids.push(user.id);
+    }
+    if (data.users.length < 200) break;
+  }
+  return [...new Set(ids)];
+}
+
+async function eligibleRecipient(
+  supabase: ServiceClient,
+  row: OutboxRow,
+  sendMode: "live" | "internal",
+  allowlist: Set<string>,
+): Promise<string> {
+  if (!row.user_id) throw new Error("Recipient user no longer exists");
+  const { data: userResult, error: userError } = await supabase.auth.admin.getUserById(row.user_id);
+  if (userError || !userResult.user?.email) throw new Error("Recipient has no usable email address");
+  const email = normalizeEmail(userResult.user.email);
+  if (!email) throw new Error("Recipient has no usable email address");
+
+  const { data: preference, error: preferenceError } = await supabase.from("communication_preferences")
+    .select("market_brief_email,price_alert_email,market_brief_email_consented_at,price_alert_email_consented_at")
+    .eq("user_id", row.user_id).maybeSingle();
+  if (preferenceError || !preference) throw new Error("Recipient preference could not be confirmed");
+  const enabled = row.category === "market_brief" || row.category === "news_highlights"
+    ? preference.market_brief_email === true && Boolean(preference.market_brief_email_consented_at)
+    : preference.price_alert_email === true && Boolean(preference.price_alert_email_consented_at);
+  if (!enabled) throw new Error("Recipient preference is disabled or unconfirmed");
+
+  const suppressionScope = row.category === "news_highlights" ? "market_brief" : row.category;
+  const { data: suppressions, error: suppressionError } = await supabase.from("communication_suppressions")
+    .select("id").eq("email_normalized", email).is("lifted_at", null)
+    .in("scope", ["all_email", suppressionScope]).limit(1);
+  if (suppressionError) throw new Error("Recipient suppression state could not be confirmed");
+  if ((suppressions?.length ?? 0) > 0) throw new Error("Recipient is suppressed");
+  if (sendMode === "internal" && !allowlist.has(email)) throw new Error("Recipient is outside the internal allowlist");
+  return email;
+}
+
+function isProviderRequest(value: unknown): value is ProviderRequest {
+  if (!value || typeof value !== "object") return false;
+  const request = value as Partial<ProviderRequest>;
+  return typeof request.from === "string" && Array.isArray(request.to) && request.to.length === 1
+    && request.to.every((email) => typeof email === "string")
+    && typeof request.subject === "string" && typeof request.html === "string"
+    && typeof request.text === "string" && Boolean(request.headers) && typeof request.headers === "object";
+}
+
+async function fingerprint(value: string): Promise<string> {
+  const digest = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(value));
+  return Array.from(new Uint8Array(digest)).map((byte) => byte.toString(16).padStart(2, "0")).join("").slice(0, 12);
 }
 
 Deno.serve(async (request) => {
@@ -199,65 +325,107 @@ Deno.serve(async (request) => {
   const sendMode = configuredSendMode === "live" || configuredSendMode === "internal" || configuredSendMode === "disabled"
     ? configuredSendMode
     : "internal";
+  const body = await request.json().catch(() => ({})) as {
+    batch_size?: number;
+    category?: OutboxRow["category"];
+    preflight?: boolean;
+  };
+  const categories = new Set<OutboxRow["category"]>(["market_brief", "price_alert", "news_highlights"]);
+  if (body.category !== undefined && !categories.has(body.category)) {
+    return new Response(JSON.stringify({ error: "Unsupported communication category" }), { status: 400, headers });
+  }
+  if (sendMode === "disabled") {
+    return new Response(JSON.stringify({ status: "disabled", send_mode: sendMode, claimed: 0, writes: 0 }), { headers });
+  }
+  if (!body.category) {
+    return new Response(JSON.stringify({ error: "Explicit communication category required" }), { status: 400, headers });
+  }
+
   const resendKey = Deno.env.get("RESEND_API_KEY");
   const unsubscribeSecret = Deno.env.get("COMMUNICATION_UNSUBSCRIBE_SECRET");
   const from = Deno.env.get("COMMUNICATION_FROM_EMAIL");
-  if (sendMode !== "disabled" && (!resendKey || !unsubscribeSecret || !from)) {
+  if (!resendKey || !unsubscribeSecret || !from) {
     return new Response(JSON.stringify({ error: "Email worker is not configured" }), { status: 503, headers });
   }
+  const allowlist = new Set((Deno.env.get("COMMUNICATION_EMAIL_ALLOWLIST") ?? "").split(",").map(normalizeEmail).filter(Boolean));
+  if (sendMode === "internal" && allowlist.size === 0) {
+    return new Response(JSON.stringify({ error: "Internal recipient allowlist is empty" }), { status: 409, headers });
+  }
+  if (body.preflight === true) {
+    return new Response(JSON.stringify({
+      status: "ready", send_mode: sendMode, category: body.category,
+      allowlist_count: sendMode === "internal" ? allowlist.size : 0, writes: 0,
+    }), { headers });
+  }
 
-  const body = await request.json().catch(() => ({})) as { batch_size?: number; category?: "news_highlights" };
-  const batchSize = Math.min(25, Math.max(1, Number(body.batch_size ?? 10)));
-  const { data: claimed, error: claimError } = body.category === "news_highlights"
-    ? await supabase.rpc("claim_communication_category_batch", { p_category: "news_highlights", p_limit: batchSize, p_lease_seconds: 120 })
-    : await supabase.rpc("claim_communication_batch", { p_limit: batchSize, p_lease_seconds: 120 });
+  let allowedUserIds: string[] | null = null;
+  if (sendMode === "internal") {
+    try {
+      allowedUserIds = await resolveAllowlistedUserIds(supabase, allowlist);
+    } catch (error) {
+      return new Response(JSON.stringify({ error: error instanceof Error ? error.message : "Unable to resolve internal scope" }), { status: 500, headers });
+    }
+    if (allowedUserIds.length === 0) {
+      return new Response(JSON.stringify({ send_mode: sendMode, category: body.category, claimed: 0, results: [] }), { headers });
+    }
+  }
+
+  const batchSize = Math.min(5, Math.max(1, Number(body.batch_size ?? 5)));
+  const { data: claimed, error: claimError } = await supabase.rpc("claim_communication_category_batch", {
+    p_category: body.category,
+    p_limit: batchSize,
+    p_lease_seconds: 300,
+    p_allowed_user_ids: allowedUserIds,
+  });
   if (claimError) return new Response(JSON.stringify({ error: "Unable to claim communications" }), { status: 500, headers });
 
-  const allowlist = new Set((Deno.env.get("COMMUNICATION_EMAIL_ALLOWLIST") ?? "").split(",").map(normalizeEmail).filter(Boolean));
   const functionsBaseUrl = supabaseUrl.replace(/\/$/, "");
   const results: Array<Record<string, unknown>> = [];
 
   for (const row of (claimed ?? []) as OutboxRow[]) {
+    let submissionAttempted = false;
     try {
-      if (!row.user_id) throw new Error("Recipient user no longer exists");
-      const { data: userResult, error: userError } = await supabase.auth.admin.getUserById(row.user_id);
-      if (userError || !userResult.user?.email) throw new Error("Recipient has no email address");
-      const email = normalizeEmail(userResult.user.email);
-      const { data: preference } = await supabase.from("communication_preferences").select("market_brief_email,price_alert_email").eq("user_id", row.user_id).maybeSingle();
-      const enabled = row.category === "market_brief" || row.category === "news_highlights"
-        ? preference?.market_brief_email === true
-        : preference?.price_alert_email !== false;
-      const suppressionScope = row.category === "news_highlights" ? "market_brief" : row.category;
-      const { data: suppressions } = await supabase.from("communication_suppressions").select("id").eq("email_normalized", email).is("lifted_at", null).in("scope", ["all_email", suppressionScope]).limit(1);
+      const email = await eligibleRecipient(supabase, row, sendMode, allowlist);
+      let providerRequest = row.provider_request;
+      if (providerRequest && !isProviderRequest(providerRequest)) throw new Error("Frozen provider request is invalid");
+      if (!providerRequest) {
+        const scope = (row.category === "news_highlights" ? "market_brief" : row.category) as UnsubscribeScope;
+        const unsubscribeUrl = `${functionsBaseUrl}/functions/v1/communication-unsubscribe?token=${encodeURIComponent(
+          await createUnsubscribeToken(unsubscribeSecret, row.user_id!, scope, new Date(Date.now() + 365 * 86_400_000)),
+        )}`;
+        const content = row.category === "market_brief"
+          ? await renderMarketBrief(supabase, row, unsubscribeUrl)
+          : row.category === "news_highlights"
+          ? await renderNewsHighlights(supabase, row, unsubscribeUrl)
+          : renderPriceAlert(row, unsubscribeUrl);
+        providerRequest = {
+          from, to: [email], subject: content.subject, html: content.html, text: content.text,
+          headers: {
+            "List-Unsubscribe": `<${unsubscribeUrl}>`,
+            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
+          },
+        };
+        await fencedUpdate(supabase, row, {
+          provider_request: providerRequest,
+          provider_request_frozen_at: new Date().toISOString(),
+          recipient_email: email,
+        });
+      }
 
-      if (!enabled || (suppressions?.length ?? 0) > 0) {
-        await supabase.from("communication_outbox").update({ status: "cancelled", recipient_email: email, lease_expires_at: null, failure_reason: enabled ? "recipient_suppressed" : "preference_disabled" }).eq("id", row.id);
-        results.push({ id: row.id, status: "cancelled" });
-        continue;
-      }
-      if (sendMode === "internal" && !allowlist.has(email)) {
-        await supabase.from("communication_outbox").update({ status: "cancelled", recipient_email: email, lease_expires_at: null, failure_reason: "internal_allowlist_blocked" }).eq("id", row.id);
-        results.push({ id: row.id, status: "allowlist_blocked" });
+      const confirmedEmail = await eligibleRecipient(supabase, row, sendMode, allowlist);
+      if (providerRequest.to[0] !== confirmedEmail) throw new Error("Recipient changed after provider request was frozen");
+      if (row.submission_started_at && Date.now() - new Date(row.submission_started_at).getTime() >= 23 * 60 * 60 * 1000) {
+        await fencedUpdate(supabase, row, {
+          status: "submission_unknown", claim_token: null, lease_expires_at: null,
+          failure_reason: "Provider retry window expired; manual reconciliation required",
+        });
+        results.push({ id: row.id, status: "submission_unknown" });
         continue;
       }
 
-      const scope = (row.category === "news_highlights" ? "market_brief" : row.category) as UnsubscribeScope;
-      const unsubscribeUrl = sendMode === "disabled"
-        ? `${functionsBaseUrl}/functions/v1/communication-unsubscribe?test=disabled`
-        : `${functionsBaseUrl}/functions/v1/communication-unsubscribe?token=${encodeURIComponent(await createUnsubscribeToken(unsubscribeSecret!, row.user_id, scope, new Date(Date.now() + 365 * 86_400_000)))}`;
-      const content = row.category === "market_brief"
-        ? await renderMarketBrief(supabase, row, unsubscribeUrl)
-        : row.category === "news_highlights"
-        ? await renderNewsHighlights(supabase, row, unsubscribeUrl)
-        : renderPriceAlert(row, unsubscribeUrl);
-      if (sendMode === "disabled") {
-        await supabase.from("communication_outbox").update({
-          status: "cancelled", recipient_email: email, lease_expires_at: null,
-          failure_reason: "send_mode_disabled", updated_at: new Date().toISOString(),
-        }).eq("id", row.id).eq("status", "processing");
-        results.push({ id: row.id, status: "cancelled", rendered: true });
-        continue;
-      }
+      const submissionStartedAt = row.submission_started_at ?? new Date().toISOString();
+      await fencedUpdate(supabase, row, { submission_started_at: submissionStartedAt });
+      submissionAttempted = true;
       const response = await fetch("https://api.resend.com/emails", {
         method: "POST",
         headers: {
@@ -265,17 +433,7 @@ Deno.serve(async (request) => {
           "Content-Type": "application/json",
           "Idempotency-Key": row.idempotency_key,
         },
-        body: JSON.stringify({
-          from,
-          to: [email],
-          subject: content.subject,
-          html: content.html,
-          text: content.text,
-          headers: {
-            "List-Unsubscribe": `<${unsubscribeUrl}>`,
-            "List-Unsubscribe-Post": "List-Unsubscribe=One-Click",
-          },
-        }),
+        body: JSON.stringify(providerRequest),
         signal: AbortSignal.timeout(20_000),
       });
       const responseBody = await response.json().catch(() => ({}));
@@ -285,20 +443,41 @@ Deno.serve(async (request) => {
         results.push({ id: row.id, status: retryable ? "retry_wait" : "failed" });
         continue;
       }
-
-      await supabase.from("communication_outbox").update({
+      if (typeof responseBody.id !== "string" || !responseBody.id) {
+        await fencedUpdate(supabase, row, {
+          status: "submission_unknown", claim_token: null, lease_expires_at: null,
+          failure_reason: "Provider accepted request without a message id; manual reconciliation required",
+        });
+        results.push({ id: row.id, status: "submission_unknown" });
+        continue;
+      }
+      await fencedUpdate(supabase, row, {
         status: "accepted",
         delivery_status: "accepted",
-        recipient_email: email,
         provider_message_id: responseBody.id,
         sent_at: new Date().toISOString(),
         lease_expires_at: null,
+        claim_token: null,
         failure_reason: null,
-      }).eq("id", row.id).eq("status", "processing");
-      results.push({ id: row.id, status: "accepted", provider_message_id: responseBody.id });
+      });
+      results.push({ id: row.id, status: "accepted", provider_message_id_fingerprint: await fingerprint(responseBody.id) });
     } catch (error) {
-      await updateFailure(supabase, row, true, error instanceof Error ? error.message : "Worker failure");
-      results.push({ id: row.id, status: row.attempts < 3 ? "retry_wait" : "failed" });
+      const reason = error instanceof Error ? error.message : "Worker failure";
+      try {
+        if (submissionAttempted) {
+          await fencedUpdate(supabase, row, {
+            status: "submission_unknown", claim_token: null, lease_expires_at: null,
+            failure_reason: `Provider response unknown: ${reason}`.slice(0, 1000),
+          });
+          results.push({ id: row.id, status: "submission_unknown" });
+        } else {
+          await updateFailure(supabase, row, true, reason);
+          results.push({ id: row.id, status: row.attempts < 3 ? "retry_wait" : "failed" });
+        }
+      } catch (stateError) {
+        console.error("Unable to persist communication state", { id: row.id, error: stateError });
+        results.push({ id: row.id, status: "state_write_failed" });
+      }
     }
   }
 

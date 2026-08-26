@@ -34,23 +34,33 @@ async function enqueueReadyEditionRecipients(
   supabase: ServiceClient,
   editionId: string,
 ) {
+  const sendModeValue = Deno.env.get("COMMUNICATION_SEND_MODE");
+  const sendMode = sendModeValue === "live" || sendModeValue === "internal" || sendModeValue === "disabled"
+    ? sendModeValue : "internal";
+  if (sendMode === "disabled") return newsHighlightsEnqueueResult(0, 0);
   const { data: preferences, error: preferenceError } = await supabase
     .from("communication_preferences")
     .select("user_id")
-    .eq("market_brief_email", true);
+    .eq("market_brief_email", true)
+    .not("market_brief_email_consented_at", "is", null);
   if (preferenceError) throw preferenceError;
 
+  const allowlist = new Set((Deno.env.get("COMMUNICATION_EMAIL_ALLOWLIST") ?? "").split(",").map(normalizeEmail).filter(Boolean));
+  if (sendMode === "internal" && allowlist.size === 0) throw new Error("Internal recipient allowlist is empty");
   const eligibleUserIds: string[] = [];
   for (const preference of preferences ?? []) {
-    const { data: userResult } = await supabase.auth.admin.getUserById(preference.user_id);
+    const { data: userResult, error: userError } = await supabase.auth.admin.getUserById(preference.user_id);
+    if (userError) throw userError;
     const email = userResult.user?.email ? normalizeEmail(userResult.user.email) : "";
     if (!email) continue;
-    const { data: suppression } = await supabase.from("communication_suppressions")
+    if (sendMode === "internal" && !allowlist.has(email)) continue;
+    const { data: suppression, error: suppressionError } = await supabase.from("communication_suppressions")
       .select("id")
       .eq("email_normalized", email)
       .in("scope", ["all_email", "market_brief"])
       .is("lifted_at", null)
       .limit(1);
+    if (suppressionError) throw suppressionError;
     if ((suppression?.length ?? 0) > 0) continue;
     eligibleUserIds.push(preference.user_id);
   }
@@ -77,7 +87,13 @@ Deno.serve(async (request) => {
   });
   if (!authorization.ok) return new Response(JSON.stringify({ error: authorization.status === 401 ? "Unauthorized" : "Forbidden" }), { status: authorization.status, headers });
 
-  const body = await request.json().catch(() => ({})) as { edition_date?: string; retry_failed_only?: boolean };
+  const body = await request.json().catch(() => ({})) as { edition_date?: string; retry_failed_only?: boolean; preflight?: boolean };
+  const sendModeValue = Deno.env.get("COMMUNICATION_SEND_MODE");
+  const sendMode = sendModeValue === "live" || sendModeValue === "internal" || sendModeValue === "disabled"
+    ? sendModeValue : "internal";
+  if (body.preflight === true) {
+    return new Response(JSON.stringify({ status: sendMode === "disabled" ? "disabled" : "ready", send_mode: sendMode, writes: 0 }), { headers });
+  }
   const editionDate = body.edition_date ?? nairobiDate();
   if (!/^\d{4}-\d{2}-\d{2}$/.test(editionDate)) return new Response(JSON.stringify({ error: "edition_date must be YYYY-MM-DD" }), { status: 400, headers });
   if (!isWeekday(editionDate)) return new Response(JSON.stringify({ edition_date: editionDate, status: "skipped", reason: "weekend" }), { headers });
@@ -90,6 +106,7 @@ Deno.serve(async (request) => {
     .maybeSingle();
   if (existingError) return new Response(JSON.stringify({ error: "Unable to read edition state" }), { status: 500, headers });
   if (existing?.status === "skipped") return new Response(JSON.stringify({ edition_id: existing.id, edition_date: editionDate, status: existing.status, edition_created: false, newly_enqueued: 0 }), { headers });
+  if (existing?.status === "building") return new Response(JSON.stringify({ edition_id: existing.id, edition_date: editionDate, status: "building", edition_created: false, newly_enqueued: 0 }), { status: 202, headers });
   if (body.retry_failed_only && existing?.status !== "failed") return new Response(JSON.stringify({ edition_date: editionDate, status: existing?.status ?? "not_started", enqueued: 0 }), { headers });
 
   if (existing?.status === "ready") {
@@ -105,10 +122,22 @@ Deno.serve(async (request) => {
   }
 
   try {
-    await supabase.from("news_highlights_editions").upsert({
+    const buildingState = {
       edition_date: editionDate, status: "building", source_window_start: window.start, source_window_end: window.end,
       diagnostics: { source: "stored_news", retry_failed_only: Boolean(body.retry_failed_only) },
-    }, { onConflict: "edition_date" });
+    };
+    if (existing?.status === "failed") {
+      const { data: claimedRetry, error: retryError } = await supabase.from("news_highlights_editions")
+        .update(buildingState).eq("id", existing.id).eq("status", "failed").select("id").maybeSingle();
+      if (retryError) throw retryError;
+      if (!claimedRetry) return new Response(JSON.stringify({ edition_id: existing.id, edition_date: editionDate, status: "building", edition_created: false, newly_enqueued: 0 }), { status: 202, headers });
+    } else {
+      const { error: insertBuildingError } = await supabase.from("news_highlights_editions").insert(buildingState);
+      if (insertBuildingError?.code === "23505") {
+        return new Response(JSON.stringify({ edition_date: editionDate, status: "building", edition_created: false, newly_enqueued: 0 }), { status: 202, headers });
+      }
+      if (insertBuildingError) throw insertBuildingError;
+    }
 
     const { data: articles, error: articleError } = await supabase
       .from("news_articles")
