@@ -73,6 +73,9 @@ verify_jwt = false
 [functions.communication-unsubscribe]
 verify_jwt = false
 
+[functions.update-communication-preferences]
+verify_jwt = false
+
 [functions.resend-webhook]
 verify_jwt = false
 

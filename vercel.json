@@ -1,4 +1,9 @@
 {
+  "git": {
+    "deploymentEnabled": {
+      "main": false
+    }
+  },
   "cleanUrls": true,
   "trailingSlash": false,
   "redirects": [

@@ -13,6 +13,18 @@ export const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
   price_alert_email: false, price_alert_inapp: true, market_brief_email: false,
 };
 const columns = "user_id,price_alert_email,price_alert_inapp,market_brief_email,email_welcome_completed" as const;
+const consentColumns = `${columns},price_alert_email_consented_at,market_brief_email_consented_at` as const;
+
+function effectivePreferences<T extends EmailPreferences & {
+  price_alert_email_consented_at?: string | null;
+  market_brief_email_consented_at?: string | null;
+}>(row: T): T {
+  return {
+    ...row,
+    price_alert_email: row.price_alert_email === true && Boolean(row.price_alert_email_consented_at),
+    market_brief_email: row.market_brief_email === true && Boolean(row.market_brief_email_consented_at),
+  };
+}
 
 export function useEmailPreferences() {
   const { user } = useAuth();
@@ -24,9 +36,9 @@ export function useEmailPreferences() {
     enabled: Boolean(user),
     queryFn: async () => {
       const { data, error } = await supabase.from("communication_preferences")
-        .select(columns).eq("user_id", user!.id).single();
+        .select(consentColumns).eq("user_id", user!.id).single();
       if (error || !data) throw new Error("Couldn't load your email choices. Please try again.");
-      return data;
+      return effectivePreferences(data);
     },
   });
   const mutation = useMutation({
@@ -35,10 +47,15 @@ export function useEmailPreferences() {
       await cache.cancelQueries({ queryKey: ["communication-preferences", userId] });
     },
     mutationFn: async ({ userId, patch }: { userId: string; patch: Partial<EmailPreferences> & { email_welcome_completed?: boolean } }) => {
-      const { data, error } = await supabase.from("communication_preferences")
-        .update(patch).eq("user_id", userId).select(columns).single();
-      if (error || !data) throw new Error("Your choices weren't saved. Please try again.");
-      return data;
+      if (Object.prototype.hasOwnProperty.call(patch, "price_alert_inapp")) {
+        const { data, error } = await supabase.from("communication_preferences")
+          .update({ price_alert_inapp: patch.price_alert_inapp }).eq("user_id", userId).select(consentColumns).single();
+        if (error || !data) throw new Error("Your choices weren't saved. Please try again.");
+        return effectivePreferences(data);
+      }
+      const { data, error } = await supabase.functions.invoke("update-communication-preferences", { body: patch });
+      if (error || !data?.preferences) throw new Error("Your choices weren't saved. Please try again.");
+      return effectivePreferences(data.preferences);
     },
     onSuccess: (data, variables) => cache.setQueryData(["communication-preferences", variables.userId], data),
   });

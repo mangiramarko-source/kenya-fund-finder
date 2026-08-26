@@ -13,6 +13,7 @@ describe("Market Brief editorial email renderer", () => {
     expect(email.html).toContain(".email-content{padding-left:16px!important;padding-right:16px!important}");
     expect(email.html).toContain('src="https://kenyafundfinder.com/market-brief-hero.png"');
     expect(email.html).toContain("VIEW FULL MARKET OVERVIEW");
+    expect(email.html).toContain("https://kenyafundfinder.com/alerts?tab=settings");
     expect(email.html).toContain("News summary");
     expect(email.text).toContain("NEWS SUMMARY");
     expect(email.html).not.toMatch(/email-card|border-radius|#0a0a0b|#111113|color-scheme/);

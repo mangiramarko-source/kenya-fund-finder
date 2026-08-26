@@ -1,6 +1,6 @@
 BEGIN;
 CREATE EXTENSION IF NOT EXISTS pgtap WITH SCHEMA extensions;
-SELECT plan(50);
+SELECT plan(51);
 
 SELECT has_table('public', 'user_watchlist', 'user_watchlist exists');
 SELECT has_table('public', 'price_alerts', 'price_alerts exists');
@@ -13,7 +13,7 @@ SELECT has_table('public', 'news_highlights_editions', 'news_highlights_editions
 
 SELECT has_function('public', 'claim_price_alert_event', ARRAY['uuid', 'numeric', 'timestamp with time zone', 'boolean'], 'atomic alert claim exists');
 SELECT has_function('public', 'claim_communication_batch', ARRAY['integer', 'integer'], 'outbox batch claim exists');
-SELECT has_function('public', 'claim_communication_category_batch', ARRAY['text', 'integer', 'integer'], 'category outbox batch claim exists');
+SELECT has_function('public', 'claim_communication_category_batch', ARRAY['text', 'integer', 'integer', 'uuid[]'], 'scoped category outbox batch claim exists');
 
 SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid = 'public.user_watchlist'::regclass), 'watchlist RLS enabled');
 SELECT ok((SELECT relrowsecurity FROM pg_class WHERE oid = 'public.price_alerts'::regclass), 'alerts RLS enabled');
@@ -37,7 +37,7 @@ SELECT ok(NOT has_table_privilege('authenticated', 'public.news_highlights_editi
 SELECT ok(NOT has_table_privilege('authenticated', 'public.communication_preferences', 'INSERT'), 'authenticated cannot create preference rows');
 SELECT ok(NOT has_function_privilege('authenticated', 'public.claim_price_alert_event(uuid,numeric,timestamp with time zone,boolean)', 'EXECUTE'), 'authenticated cannot claim alerts');
 SELECT ok(NOT has_function_privilege('anon', 'public.claim_communication_batch(integer,integer)', 'EXECUTE'), 'anon cannot claim outbox');
-SELECT ok(NOT has_function_privilege('authenticated', 'public.claim_communication_category_batch(text,integer,integer)', 'EXECUTE'), 'authenticated cannot claim category outbox');
+SELECT ok(NOT has_function_privilege('authenticated', 'public.claim_communication_category_batch(text,integer,integer,uuid[])', 'EXECUTE'), 'authenticated cannot claim category outbox');
 SELECT is(
   (SELECT pg_get_expr(d.adbin, d.adrelid)
    FROM pg_attrdef d
@@ -73,10 +73,11 @@ SELECT ok(
 );
 
 SELECT is(
-  (SELECT market_brief_email FROM public.communication_preferences
-   WHERE user_id = '10000000-0000-0000-0000-000000000000'),
-  false,
-  'existing user is backfilled with Market Brief disabled'
+  (SELECT count(*)::integer FROM public.communication_preferences
+   WHERE market_brief_email = true
+     AND market_brief_email_consented_at IS NULL),
+  0,
+  'backfilled Market Brief opt-ins always retain consent evidence'
 );
 
 INSERT INTO auth.users (
@@ -104,26 +105,32 @@ SELECT is(
   'migration and preference creation enqueue no Market Brief messages'
 );
 
-SET LOCAL ROLE authenticated;
-SELECT set_config('request.jwt.claims', '{"sub":"10000000-0000-0000-0000-000000000001","role":"authenticated"}', true);
-UPDATE public.communication_preferences
-SET market_brief_email = true
-WHERE user_id = '10000000-0000-0000-0000-000000000001';
-SELECT is(
-  (SELECT market_brief_email FROM public.communication_preferences
-   WHERE user_id = '10000000-0000-0000-0000-000000000001'),
-  true,
-  'user can explicitly opt in to Market Brief'
+SELECT ok(
+  NOT has_column_privilege('authenticated', 'public.communication_preferences', 'market_brief_email', 'UPDATE')
+  AND NOT has_column_privilege('authenticated', 'public.communication_preferences', 'price_alert_email', 'UPDATE'),
+  'authenticated users cannot bypass the consent endpoint'
 );
-UPDATE public.communication_preferences
-SET market_brief_email = true
-WHERE user_id = '10000000-0000-0000-0000-000000000002';
+SET LOCAL ROLE service_role;
+SELECT public.update_communication_preferences_service(
+  '10000000-0000-0000-0000-000000000001',
+  'mvp-a@example.com',
+  true,
+  true,
+  true
+);
 RESET ROLE;
+SELECT ok(
+  (SELECT market_brief_email AND market_brief_email_consented_at IS NOT NULL
+      AND price_alert_email AND price_alert_email_consented_at IS NOT NULL
+   FROM public.communication_preferences
+   WHERE user_id = '10000000-0000-0000-0000-000000000001'),
+  'service endpoint records explicit consent evidence'
+);
 SELECT is(
   (SELECT market_brief_email FROM public.communication_preferences
    WHERE user_id = '10000000-0000-0000-0000-000000000002'),
   false,
-  'user A cannot modify user B preferences'
+  'updating user A does not modify user B preferences'
 );
 
 INSERT INTO public.stocks (id, symbol, name, price, previous_price)
@@ -146,12 +153,12 @@ INSERT INTO public.price_alerts (
 
 SET LOCAL ROLE service_role;
 SELECT is(
-  (SELECT count(*)::integer FROM public.claim_price_alert_event('30000000-0000-0000-0000-000000000001', 110, now())),
+  (SELECT count(*)::integer FROM public.claim_price_alert_event('30000000-0000-0000-0000-000000000001', 110, now(), true)),
   1,
   'first alert claim succeeds'
 );
 SELECT is(
-  (SELECT count(*)::integer FROM public.claim_price_alert_event('30000000-0000-0000-0000-000000000001', 110, now())),
+  (SELECT count(*)::integer FROM public.claim_price_alert_event('30000000-0000-0000-0000-000000000001', 110, now(), true)),
   0,
   'duplicate alert claim is ignored'
 );

@@ -1,228 +1,75 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
+import { localDateInNairobi } from "../_shared/market-overview.ts";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
-import { getSupabasePublishableKey, getSupabaseSecretKey, readNamedSecretKey } from "../_shared/supabase-keys.ts";
+import { getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
 
-const corsHeaders = {
-  "Access-Control-Allow-Origin": "*",
-  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
-};
+const headers = { "Content-Type": "application/json" };
 
-Deno.serve(async (req) => {
-  if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
-
-  const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
-  const authorization = await authorizePrivilegedRequest(req, {
+// Price-alert automation remains unscheduled. This reconciles the safer
+// deployed stock-only evaluator and makes email eligibility fail closed for any
+// separately authorized manual invocation.
+Deno.serve(async (request) => {
+  if (request.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
+  const supabaseUrl = Deno.env.get("SUPABASE_URL");
+  if (!supabaseUrl) return new Response(JSON.stringify({ error: "Server configuration error" }), { status: 500, headers });
+  const supabase = createClient(supabaseUrl, getSupabaseSecretKey(), { auth: { persistSession: false, autoRefreshToken: false } });
+  const authorization = await authorizePrivilegedRequest(request, {
     namedSecretKeysJson: Deno.env.get("SUPABASE_SECRET_KEYS"),
     secretName: "automations",
-    verifyUser: async (accessToken) => {
-      const userClient = createClient(supabaseUrl, getSupabasePublishableKey(), {
-        auth: { persistSession: false, autoRefreshToken: false },
-      });
-      const { data, error } = await userClient.auth.getUser(accessToken);
-      return error ? null : data.user?.id ?? null;
-    },
-    isAdmin: async (userId) => {
-      const adminClient = createClient(supabaseUrl, getSupabaseSecretKey(), {
-        auth: { persistSession: false, autoRefreshToken: false },
-      });
-      const { data } = await adminClient
-        .from("user_roles")
-        .select("role")
-        .eq("user_id", userId)
-        .eq("role", "admin")
-        .maybeSingle();
-      return Boolean(data);
-    },
+    verifyUser: async (token) => (await supabase.auth.getUser(token)).data.user?.id ?? null,
+    isAdmin: async (userId) => Boolean((await supabase.from("user_roles").select("id").eq("user_id", userId).eq("role", "admin").maybeSingle()).data),
   });
-
-  if (!authorization.ok) {
-    return new Response(
-      JSON.stringify({ error: authorization.status === 401 ? "Unauthorized" : "Forbidden" }),
-      {
-        status: authorization.status,
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      },
-    );
-  }
+  if (!authorization.ok) return new Response(JSON.stringify({ error: "Forbidden" }), { status: authorization.status, headers });
 
   try {
-    const serviceKey = getSupabaseSecretKey();
-    const supabase = createClient(supabaseUrl, serviceKey);
-
-    const { data: alerts, error: alertsError } = await supabase
-      .from("price_alerts")
-      .select("*")
-      .eq("is_active", true)
-      .eq("is_triggered", false);
-
+    const { data: alerts, error: alertsError } = await supabase.from("price_alerts")
+      .select("id,user_id,stock_id,asset_id").eq("is_active", true).eq("is_triggered", false).is("triggered_at", null);
     if (alertsError) throw alertsError;
-    if (!alerts || alerts.length === 0) {
-      return new Response(JSON.stringify({ checked: 0, triggered: 0 }), {
-        headers: { ...corsHeaders, "Content-Type": "application/json" },
-      });
-    }
+    if (!alerts?.length) return new Response(JSON.stringify({ checked: 0, triggered: 0 }), { headers });
 
-    // Group by asset_type
-    const stockAlerts = alerts.filter((a: any) => a.asset_type === "stock");
-    const currencyAlerts = alerts.filter((a: any) => a.asset_type === "currency");
-    const commodityAlerts = alerts.filter((a: any) => a.asset_type === "commodity");
-    const fundAlerts = alerts.filter((a: any) => a.asset_type === "fund");
-    const newFundAlerts = alerts.filter((a: any) => a.asset_type === "new_fund");
-
-    const priceMap: Record<string, number> = {};
-
-    const stockIds = [...new Set(stockAlerts.map((a: any) => a.asset_id))];
-    const currencyIds = [...new Set(currencyAlerts.map((a: any) => a.asset_id))];
-    const commodityIds = [...new Set(commodityAlerts.map((a: any) => a.asset_id))];
-    const fundIds = [...new Set(fundAlerts.map((a: any) => a.asset_id))];
-
-    if (stockIds.length) {
-      const { data } = await supabase.from("stocks").select("id, price").in("id", stockIds);
-      (data || []).forEach((s: any) => { priceMap[s.id] = Number(s.price); });
-    }
-    if (currencyIds.length) {
-      const { data } = await supabase.from("exchange_rates").select("id, rate").in("id", currencyIds);
-      (data || []).forEach((r: any) => { priceMap[r.id] = Number(r.rate); });
-    }
-    if (commodityIds.length) {
-      const { data } = await supabase.from("commodities").select("id, price").in("id", commodityIds);
-      (data || []).forEach((c: any) => { priceMap[c.id] = Number(c.price); });
-    }
-    if (fundIds.length) {
-      const { data } = await supabase.from("funds").select("id, annual_yield").in("id", fundIds);
-      (data || []).forEach((f: any) => { priceMap[f.id] = Number(f.annual_yield); });
-    }
-
+    const stockIds = [...new Set(alerts.map((alert) => alert.stock_id ?? alert.asset_id).filter(Boolean))];
+    const { data: stocks, error: stocksError } = await supabase.from("stocks")
+      .select("id,price,updated_at,is_active").in("id", stockIds).eq("is_active", true);
+    if (stocksError) throw stocksError;
+    const prices = new Map((stocks ?? []).map((stock) => [stock.id, stock]));
+    const observedAt = new Date().toISOString();
+    const marketDate = localDateInNairobi(observedAt);
+    const emailEligibility = new Map<string, boolean>();
     let triggered = 0;
-    const triggeredUserIds = new Set<string>();
 
     for (const alert of alerts) {
-      if (alert.asset_type === "new_fund") continue; // handled below
-
-      const currentPrice = priceMap[alert.asset_id];
-      if (currentPrice == null) continue;
-
-      const cond = alert.condition as string;
-      const threshold = Number(alert.target_price);
-      const baseline = alert.baseline_price != null ? Number(alert.baseline_price) : null;
-
-      let shouldTrigger = false;
-      let messageDetail = "";
-
-      if (cond === "above") {
-        shouldTrigger = currentPrice >= threshold;
-        messageDetail = `${currentPrice.toLocaleString()} ≥ ${threshold.toLocaleString()}`;
-      } else if (cond === "below") {
-        shouldTrigger = currentPrice <= threshold;
-        messageDetail = `${currentPrice.toLocaleString()} ≤ ${threshold.toLocaleString()}`;
-      } else if (baseline != null && baseline !== 0) {
-        // change_* — % delta vs baseline
-        const deltaPct = ((currentPrice - baseline) / baseline) * 100;
-        if (cond === "change_up") shouldTrigger = deltaPct >= threshold;
-        else if (cond === "change_down") shouldTrigger = deltaPct <= -threshold;
-        else if (cond === "change_any") shouldTrigger = Math.abs(deltaPct) >= threshold;
-        messageDetail = `${deltaPct >= 0 ? "+" : ""}${deltaPct.toFixed(2)}% vs baseline ${baseline.toLocaleString()}`;
-      }
-
-      if (!shouldTrigger) continue;
-
-      await supabase.from("price_alerts").update({
-        is_triggered: true,
-        triggered_at: new Date().toISOString(),
-        triggered_price: currentPrice,
-      }).eq("id", alert.id);
-
-      const unitLabel = alert.asset_type === "fund" ? "%" : "";
-      const isChange = cond.startsWith("change_");
-      const title = isChange
-        ? `Yield data changed: ${alert.asset_name}`
-        : `Data update: ${alert.asset_name}`;
-      const body = isChange
-        ? `${alert.asset_name} yield data changed. ${messageDetail}. Current value: ${currentPrice}${unitLabel}.`
-        : `${alert.asset_name} reached your threshold. ${messageDetail}.`;
-
-      if (alert.notify_inapp !== false) {
-        await supabase.from("notifications").insert({
-          user_id: alert.user_id,
-          title,
-          message: `${body} Data update only — not financial advice.`,
-          type: "price_alert",
-          metadata: {
-            alert_id: alert.id,
-            asset_type: alert.asset_type,
-            asset_id: alert.asset_id,
-            condition: cond,
-            target_price: alert.target_price,
-            triggered_price: currentPrice,
-          },
-        });
-      }
-      if (alert.notify_email !== false) triggeredUserIds.add(alert.user_id);
-      triggered++;
-    }
-
-    // ─── New-fund alerts ───
-    if (newFundAlerts.length) {
-      for (const alert of newFundAlerts) {
-        const since = alert.triggered_at ? new Date(alert.triggered_at) : new Date(alert.created_at);
-        const { data: newFunds } = await supabase
-          .from("funds")
-          .select("id, name")
-          .eq("is_published", true)
-          .gt("created_at", since.toISOString())
-          .limit(20);
-        if (!newFunds || newFunds.length === 0) continue;
-
-        await supabase.from("price_alerts").update({
-          triggered_at: new Date().toISOString(),
-        }).eq("id", alert.id);
-
-        const list = newFunds.map((f: any) => f.name).slice(0, 5).join(", ");
-        if (alert.notify_inapp !== false) {
-          await supabase.from("notifications").insert({
-            user_id: alert.user_id,
-            title: `${newFunds.length} new fund${newFunds.length === 1 ? "" : "s"} added`,
-            message: `New fund data is available: ${list}${newFunds.length > 5 ? "…" : ""}. Data update only — not financial advice.`,
-            type: "new_fund",
-            metadata: { fund_ids: newFunds.map((f: any) => f.id) },
-          });
+      const stock = prices.get(alert.stock_id ?? alert.asset_id);
+      const price = Number(stock?.price);
+      if (!stock || !stock.updated_at || localDateInNairobi(stock.updated_at) !== marketDate || !Number.isFinite(price) || price <= 0) continue;
+      let emailAllowed = emailEligibility.get(alert.user_id);
+      if (emailAllowed === undefined) {
+        const { data: userResult, error: userError } = await supabase.auth.admin.getUserById(alert.user_id);
+        const email = userError ? "" : userResult.user?.email?.trim().toLowerCase() ?? "";
+        if (!email) {
+          emailAllowed = false;
+        } else {
+          const { data: suppression, error: suppressionError } = await supabase.from("communication_suppressions")
+            .select("id").eq("email_normalized", email).is("lifted_at", null)
+            .in("scope", ["all_email", "price_alert"]).limit(1);
+          emailAllowed = !suppressionError && (suppression?.length ?? 0) === 0;
         }
-        if (alert.notify_email !== false) triggeredUserIds.add(alert.user_id);
-        triggered++;
+        emailEligibility.set(alert.user_id, emailAllowed);
       }
-    }
-
-    // Send instant email alerts to users who have instant_alerts enabled
-    if (triggeredUserIds.size > 0) {
-      const { data: prefs } = await supabase
-        .from("email_preferences")
-        .select("user_id")
-        .eq("instant_alerts", true)
-        .in("user_id", [...triggeredUserIds]);
-
-      const automationsKey = readNamedSecretKey(Deno.env.get("SUPABASE_SECRET_KEYS"), "automations") || serviceKey;
-      const eligibleUserIds = new Set((prefs || []).map((p: any) => p.user_id));
-      for (const userId of eligibleUserIds) {
-        try {
-          await supabase.functions.invoke("send-market-update", {
-            body: { user_id: userId },
-            headers: { apikey: automationsKey },
-          });
-        } catch (err) {
-          console.error(`Failed to send instant email to ${userId}:`, err);
-        }
+      const { data, error } = await supabase.rpc("claim_price_alert_event", {
+        p_alert_id: alert.id,
+        p_triggered_price: price,
+        p_source_observed_at: stock.updated_at ?? observedAt,
+        p_email_allowed: emailAllowed,
+      });
+      if (error) {
+        console.error("Unable to claim alert", { alert_id: alert.id, error });
+        continue;
       }
+      if (data?.length) triggered += 1;
     }
-
-    return new Response(
-      JSON.stringify({ checked: alerts.length, triggered, emailed: triggeredUserIds.size }),
-      { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    return new Response(JSON.stringify({ checked: alerts.length, triggered }), { headers });
   } catch (error) {
-    console.error("check-price-alerts error", error);
-    return new Response(
-      JSON.stringify({ error: error instanceof Error ? error.message : error }),
-      { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
-    );
+    console.error("check-price-alerts failed", error);
+    return new Response(JSON.stringify({ error: "Alert evaluation failed" }), { status: 500, headers });
   }
 });

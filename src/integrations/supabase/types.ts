@@ -245,12 +245,41 @@ export type Database = {
           },
         ]
       }
+      communication_delivery_events: {
+        Row: {
+          created_at: string
+          event_created_at: string
+          event_type: string
+          id: string
+          provider_message_id: string
+          webhook_event_id: string
+        }
+        Insert: {
+          created_at?: string
+          event_created_at: string
+          event_type: string
+          id?: string
+          provider_message_id: string
+          webhook_event_id: string
+        }
+        Update: {
+          created_at?: string
+          event_created_at?: string
+          event_type?: string
+          id?: string
+          provider_message_id?: string
+          webhook_event_id?: string
+        }
+        Relationships: []
+      }
       communication_outbox: {
         Row: {
           attempts: number
           category: string
+          claim_token: string | null
           created_at: string
           delivered_at: string | null
+          delivery_event_at: string | null
           delivery_status: string
           failure_reason: string | null
           id: string
@@ -258,18 +287,23 @@ export type Database = {
           lease_expires_at: string | null
           next_attempt_at: string
           payload: Json
+          provider_request: Json | null
+          provider_request_frozen_at: string | null
           provider_message_id: string | null
           recipient_email: string | null
           sent_at: string | null
           status: string
+          submission_started_at: string | null
           updated_at: string
           user_id: string | null
         }
         Insert: {
           attempts?: number
           category: string
+          claim_token?: string | null
           created_at?: string
           delivered_at?: string | null
+          delivery_event_at?: string | null
           delivery_status?: string
           failure_reason?: string | null
           id?: string
@@ -277,18 +311,23 @@ export type Database = {
           lease_expires_at?: string | null
           next_attempt_at?: string
           payload?: Json
+          provider_request?: Json | null
+          provider_request_frozen_at?: string | null
           provider_message_id?: string | null
           recipient_email?: string | null
           sent_at?: string | null
           status?: string
+          submission_started_at?: string | null
           updated_at?: string
           user_id?: string | null
         }
         Update: {
           attempts?: number
           category?: string
+          claim_token?: string | null
           created_at?: string
           delivered_at?: string | null
+          delivery_event_at?: string | null
           delivery_status?: string
           failure_reason?: string | null
           id?: string
@@ -296,10 +335,13 @@ export type Database = {
           lease_expires_at?: string | null
           next_attempt_at?: string
           payload?: Json
+          provider_request?: Json | null
+          provider_request_frozen_at?: string | null
           provider_message_id?: string | null
           recipient_email?: string | null
           sent_at?: string | null
           status?: string
+          submission_started_at?: string | null
           updated_at?: string
           user_id?: string | null
         }
@@ -310,7 +352,9 @@ export type Database = {
           created_at: string
           email_welcome_completed: boolean
           market_brief_email: boolean
+          market_brief_email_consented_at: string | null
           price_alert_email: boolean
+          price_alert_email_consented_at: string | null
           price_alert_inapp: boolean
           updated_at: string
           user_id: string
@@ -319,7 +363,9 @@ export type Database = {
           created_at?: string
           email_welcome_completed?: boolean
           market_brief_email?: boolean
+          market_brief_email_consented_at?: string | null
           price_alert_email?: boolean
+          price_alert_email_consented_at?: string | null
           price_alert_inapp?: boolean
           updated_at?: string
           user_id: string
@@ -328,7 +374,9 @@ export type Database = {
           created_at?: string
           email_welcome_completed?: boolean
           market_brief_email?: boolean
+          market_brief_email_consented_at?: string | null
           price_alert_email?: boolean
+          price_alert_email_consented_at?: string | null
           price_alert_inapp?: boolean
           updated_at?: string
           user_id?: string
@@ -2456,12 +2504,19 @@ export type Database = {
         }
       }
       claim_communication_category_batch: {
-        Args: { p_category: string; p_lease_seconds?: number; p_limit?: number }
+        Args: {
+          p_allowed_user_ids?: string[] | null
+          p_category: string
+          p_lease_seconds: number
+          p_limit: number
+        }
         Returns: {
           attempts: number
           category: string
+          claim_token: string | null
           created_at: string
           delivered_at: string | null
+          delivery_event_at: string | null
           delivery_status: string
           failure_reason: string | null
           id: string
@@ -2469,10 +2524,13 @@ export type Database = {
           lease_expires_at: string | null
           next_attempt_at: string
           payload: Json
+          provider_request: Json | null
+          provider_request_frozen_at: string | null
           provider_message_id: string | null
           recipient_email: string | null
           sent_at: string | null
           status: string
+          submission_started_at: string | null
           updated_at: string
           user_id: string | null
         }[]
@@ -2497,6 +2555,31 @@ export type Database = {
           trigger_count: number
           user_id: string
         }[]
+      }
+      record_communication_delivery_event: {
+        Args: {
+          p_event_created_at: string
+          p_event_type: string
+          p_failure_reason?: string | null
+          p_provider_message_id: string
+          p_webhook_event_id: string
+        }
+        Returns: {
+          delivery_status: string
+          event_inserted: boolean
+          outbox_updated: boolean
+          recipient_email: string
+        }[]
+      }
+      update_communication_preferences_service: {
+        Args: {
+          p_email_normalized: string
+          p_email_welcome_completed?: boolean | null
+          p_market_brief_email?: boolean | null
+          p_price_alert_email?: boolean | null
+          p_user_id: string
+        }
+        Returns: Database["public"]["Tables"]["communication_preferences"]["Row"]
       }
       get_guest_liked_posts: {
         Args: { p_guest_token: string }
