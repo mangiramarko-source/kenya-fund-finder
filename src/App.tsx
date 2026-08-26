@@ -58,6 +58,7 @@ const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const AiLabPage = lazy(() => import("./pages/AiLabPage"));
 const DevEmailPreviewPage = lazy(() => import("./pages/DevEmailPreviewPage"));
+const DevWelcomePreviewPage = lazy(() => import("./pages/DevWelcomePreviewPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 
@@ -143,6 +144,9 @@ const App = () => (
                     <Route path="/admin" element={<AdminPage />} />
                     {import.meta.env.DEV && (
                       <Route path="/dev/email-preview" element={<DevEmailPreviewPage />} />
+                    )}
+                    {import.meta.env.DEV && (
+                      <Route path="/dev/welcome-preview" element={<DevWelcomePreviewPage />} />
                     )}
                     <Route path="*" element={<NotFound />} />
                   </Routes>

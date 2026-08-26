@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useEmailPreferences } from "@/hooks/useEmailPreferences";
 import { Card, CardContent } from "@/components/ui/card";
@@ -41,12 +41,13 @@ const AlertsPage = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
   const { alerts, loading, deleteAlert, toggleAlert, createAlert } = usePriceAlerts();
-  const { prefs, loading: prefsLoading, updatePref } = useEmailPreferences();
+  const { prefs, loading: prefsLoading, saving: prefsSaving, error: prefsError, retry: retryPrefs, updatePref } = useEmailPreferences();
+  const [searchParams] = useSearchParams();
 
-  const [tab, setTab] = useState<TabKey>("active");
+  const [tab, setTab] = useState<TabKey>(() => searchParams.get("tab") === "settings" ? "settings" : "active");
 
   // New Alert dialog state
-  const [showCreate, setShowCreate] = useState(false);
+  const [showCreate, setShowCreate] = useState(() => searchParams.get("create") === "1");
   const [assetType, setAssetType] = useState<"stock" | "currency" | "commodity" | "fund">("stock");
   const [assetOptions, setAssetOptions] = useState<AssetOption[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
@@ -180,19 +181,21 @@ const AlertsPage = () => {
               <Mail className="h-4 w-4 text-accent" />
               <h3 className="font-semibold text-sm text-foreground">Email Notifications</h3>
             </div>
+            {prefsError && <div role="alert" className="mb-3 text-sm text-destructive">{prefsError} <Button variant="link" size="sm" onClick={() => void retryPrefs()}>Retry</Button></div>}
+            {prefsSaving && <p role="status" className="mb-2 text-xs text-muted-foreground">Saving your choices…</p>}
             <SettingRow
               title="Instant Price Alerts"
               description="Email you immediately when targets are hit."
               checked={prefs.price_alert_email}
               onChange={(v) => updatePref("price_alert_email", v)}
-              disabled={prefsLoading}
+              disabled={prefsLoading || prefsSaving || Boolean(prefsError)}
             />
             <SettingRow
               title="Market Brief & Morning News"
               description="Market Brief updates plus weekday morning News Highlights from stored, quality-checked articles."
               checked={prefs.market_brief_email}
               onChange={(v) => updatePref("market_brief_email", v)}
-              disabled={prefsLoading}
+              disabled={prefsLoading || prefsSaving || Boolean(prefsError)}
             />
           </CardContent>
         </Card>

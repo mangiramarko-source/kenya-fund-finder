@@ -308,6 +308,7 @@ export type Database = {
       communication_preferences: {
         Row: {
           created_at: string
+          email_welcome_completed: boolean
           market_brief_email: boolean
           price_alert_email: boolean
           price_alert_inapp: boolean
@@ -316,6 +317,7 @@ export type Database = {
         }
         Insert: {
           created_at?: string
+          email_welcome_completed?: boolean
           market_brief_email?: boolean
           price_alert_email?: boolean
           price_alert_inapp?: boolean
@@ -324,6 +326,7 @@ export type Database = {
         }
         Update: {
           created_at?: string
+          email_welcome_completed?: boolean
           market_brief_email?: boolean
           price_alert_email?: boolean
           price_alert_inapp?: boolean

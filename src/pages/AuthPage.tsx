@@ -87,7 +87,7 @@ const AuthPage = () => {
         setError(error.message);
       } else {
         trackEvent("signup_completed", { method: "email" });
-        setMessage("Account created! Please check your email to verify your account before signing in.");
+        setMessage("Account created! Please check your email to verify your account before signing in. You'll choose optional email updates after sign-in.");
         setIsSignUp(false);
         setPassword("");
       }
@@ -266,6 +266,7 @@ const AuthPage = () => {
                 <p className="text-xs lg:text-[11px] text-muted-foreground">
                   {isSignUp ? "Join thousands tracking wealth across Kenya" : "Sign in to continue tracking the markets"}
                 </p>
+                {isSignUp && <p className="text-xs text-muted-foreground pt-1">Optional email updates start off. Choose what you'd like after sign-in.</p>}
               </div>
             </div>
 

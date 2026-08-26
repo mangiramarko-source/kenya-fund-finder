@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   ArrowRight,
   LayoutDashboard,
@@ -14,6 +14,8 @@ import {
 import { useConsent } from "@/hooks/useConsent";
 import { useAuth } from "@/hooks/useAuth";
 import { trackEvent } from "@/lib/analytics";
+import { useEmailPreferences } from "@/hooks/useEmailPreferences";
+import ChooseUpdates from "./ChooseUpdates";
 
 const SESSION_SHOWN_KEY = "kff_intro_shown_session_v1";
 const SIGNIN_SHOWN_PREFIX = "kff_intro_signin_shown_";
@@ -24,7 +26,7 @@ const SIGNIN_SHOWN_PREFIX = "kff_intro_signin_shown_";
  *  - Once per signed-in user when they log in (per session).
  * Manual close dismisses it for the session.
  */
-const HomeHero = () => {
+const LegacyHomeHero = () => {
   const { choice } = useConsent();
   const { user } = useAuth();
   const location = useLocation();
@@ -100,13 +102,13 @@ const HomeHero = () => {
 
         {/* Headline */}
         <div className="space-y-1.5">
-          <h2 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
+          <DialogTitle className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             Kenya Fund Finder
-          </h2>
-          <p className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
+          </DialogTitle>
+          <DialogDescription className="text-xs sm:text-sm leading-relaxed text-muted-foreground">
             Unified access to Kenyan markets. Monitor yields, equities and macro
             data in one dashboard.
-          </p>
+          </DialogDescription>
         </div>
 
         {/* Primary actions */}
@@ -207,4 +209,43 @@ const HeroTile = ({
 );
 
 
-export default HomeHero;
+// Keyed by account so a different sign-in never inherits another user's draft.
+function SignedInIntroduction({ userId }: { userId: string }) {
+  const { choice } = useConsent();
+  const { pathname } = useLocation();
+  const navigate = useNavigate();
+  const { prefs, loading, needsWelcome, saving, saveWelcome } = useEmailPreferences();
+  const [started, setStarted] = useState(false);
+  const [dismissed, setDismissed] = useState(false);
+  const isIntroRoute = pathname === "/" || pathname === "/overview";
+
+  // Retain the success screen after the saved preference invalidates needsWelcome.
+  useEffect(() => {
+    if (needsWelcome && choice && isIntroRoute && !dismissed) setStarted(true);
+  }, [needsWelcome, choice, isIntroRoute, dismissed]);
+
+  const dismiss = () => {
+    if (saving) return;
+    setDismissed(true);
+    try {
+      sessionStorage.setItem(SESSION_SHOWN_KEY, "1");
+      sessionStorage.setItem(SIGNIN_SHOWN_PREFIX + userId, "1");
+    } catch { /* Dismissal still works when browser storage is unavailable. */ }
+  };
+
+  if (loading || dismissed) return null;
+  if (!needsWelcome && !started) return <LegacyHomeHero />;
+  return (
+    <Dialog open={Boolean(choice) && isIntroRoute} onOpenChange={next => { if (!next) dismiss(); }}>
+      <DialogContent className="w-[calc(100vw-2rem)] max-w-[480px] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl bg-background p-5 sm:p-7">
+        <ChooseUpdates initialChoices={{ price_alert_email: prefs.price_alert_email, market_brief_email: prefs.market_brief_email }} onSave={saveWelcome} onContinue={dismiss} onCreateAlert={() => { dismiss(); navigate("/alerts?create=1"); }} />
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+export default function HomeHero() {
+  const { user, loading } = useAuth();
+  if (loading) return null;
+  return user ? <SignedInIntroduction key={user.id} userId={user.id} /> : <LegacyHomeHero />;
+}
