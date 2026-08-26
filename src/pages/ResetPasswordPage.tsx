@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getCapturedAuthHash } from "@/lib/authFragment";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -16,24 +17,30 @@ const ResetPasswordPage = () => {
   const [error, setError] = useState("");
 
   useEffect(() => {
-    // Check hash for recovery token
-    const hash = window.location.hash;
-    if (hash && hash.includes("type=recovery")) {
-      setMode("update");
-      return;
-    }
-
-    // Check if user arrived via recovery (session already established)
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      // If there's an active session on this page, assume recovery flow
-      if (session) {
+    // The recovery token fragment is scrubbed from the URL at startup, so read
+    // it from the captured value and establish the session from it before the
+    // user sets a new password.
+    const initRecovery = async () => {
+      const hash = getCapturedAuthHash();
+      if (hash && hash.includes("type=recovery")) {
+        const params = new URLSearchParams(hash.replace(/^#/, ""));
+        const access_token = params.get("access_token");
+        const refresh_token = params.get("refresh_token");
+        if (access_token && refresh_token) {
+          await supabase.auth.setSession({ access_token, refresh_token });
+        }
         setMode("update");
-      } else {
-        setMode("request");
+        return;
       }
-    });
 
-    // Also listen for PASSWORD_RECOVERY event
+      // No recovery token: an active session still means the recovery flow.
+      const { data: { session } } = await supabase.auth.getSession();
+      setMode(session ? "update" : "request");
+    };
+
+    initRecovery();
+
+    // Also react to a PASSWORD_RECOVERY event, in case the scrub did not run.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event) => {
       if (event === "PASSWORD_RECOVERY") {
         setMode("update");
