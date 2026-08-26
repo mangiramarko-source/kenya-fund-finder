@@ -404,7 +404,9 @@ async function fetchFeed(feedUrl: string, source: string): Promise<ParsedArticle
 
       articles.push({
         title,
-        url: link || null,
+        // Store the same canonical URL used for duplicate detection. This makes
+        // the database constraint effective even when feeds add tracking data.
+        url: normalizeUrl(link) || null,
         summary,
         content: sanitizedContent || null,
         source_published_at: parseSourcePublishedAt(pubDate),
@@ -621,20 +623,27 @@ Deno.serve(async (req) => {
       };
     });
 
-    const { error } = await supabase.from("news_articles").insert(rows);
+    // The database constraint is the final, race-safe guard. Two concurrent
+    // scheduled invocations can both finish the read-time check above, but only
+    // one may persist a given source URL.
+    const { data: insertedRows, error } = await supabase
+      .from("news_articles")
+      .upsert(rows, { onConflict: "source,url", ignoreDuplicates: true })
+      .select("id");
     if (error) {
       console.error("Insert error:", error);
       return new Response(JSON.stringify({ error: error.message }), { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    console.log(`Inserted ${rows.length} news articles from ${successCount} feeds (rewritten: ${rewrittenCount})`);
+    const insertedCount = insertedRows?.length ?? 0;
+    console.log(`Inserted ${insertedCount} news articles from ${successCount} feeds (rewritten: ${rewrittenCount})`);
     return new Response(
       JSON.stringify({
-        message: `Inserted ${rows.length} articles`,
+        message: `Inserted ${insertedCount} articles`,
         fetched: allArticles.length,
         rejected_by_relevance: rejectedCount,
         accepted: newArticles.length,
-        inserted: rows.length,
+        inserted: insertedCount,
         duplicates_skipped: dedupSkipped,
         errors: failCount,
         rewritten: rewrittenCount,

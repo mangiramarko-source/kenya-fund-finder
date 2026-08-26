@@ -1,6 +1,7 @@
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
 import { isIndexableNewsArticle } from "@/lib/seoNewsEligibility";
+import { dedupeNewsByUrl } from "@/lib/newsDedupe";
 
 export type FundType = "money_market" | "fixed_income" | "balanced" | "equity" | "bond" | "special";
 
@@ -422,7 +423,7 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
       
     if (error) throw error;
     
-    return (data || []).map((d: any) => {
+    return dedupeNewsByUrl((data || []).map((d: any) => {
       const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight);
       return {
         id: d.id,
@@ -443,7 +444,7 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
         ai_insight: d.ai_insight || null,
         parsed_ai_analysis,
       };
-    });
+    }));
   } catch (err) {
     console.error("Failed to fetch news from Supabase (likely RLS error), using mock data", err);
     // Return mock data so the right column works while RLS is being fixed
