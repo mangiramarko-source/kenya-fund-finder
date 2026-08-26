@@ -1,4 +1,5 @@
-import { useEffect, useState, useCallback, useMemo } from "react";
+import { useEffect, useState, useCallback, useMemo, useRef } from "react";
+import { sendMarketBriefDemo } from "@/lib/sendMarketBriefDemo";
 import { supabase } from "@/integrations/supabase/client";
 import { type FundType, FUND_TYPE_LABELS } from "@/lib/api";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -310,6 +311,7 @@ const AdminDashboard = () => {
   useEffect(() => { load(); }, [load]);
 
   const [sendingEmails, setSendingEmails] = useState(false);
+  const demoSendLocked = useRef(false);
 
   const handleLogout = async () => {
     await signOut();
@@ -317,17 +319,20 @@ const AdminDashboard = () => {
   };
 
   const handleSendMarketUpdate = async () => {
+    if (demoSendLocked.current) return;
+    demoSendLocked.current = true;
     setSendingEmails(true);
     try {
-      const { data, error } = await supabase.functions.invoke("send-market-update", {
-        body: {},
-      });
-      if (error) throw error;
-      toast.success(`Market update sent to ${data?.sent ?? 0} user(s)`);
+      const { data, error } = await supabase.auth.getSession();
+      if (error || !data.session) throw new Error("Please sign in again.");
+      await sendMarketBriefDemo(import.meta.env.VITE_SUPABASE_URL, data.session.access_token);
+      toast.success("Demo accepted by the email provider for the single test address.");
     } catch (err: any) {
-      toast.error("Failed to send market update: " + (err.message || "Unknown error"));
+      toast.error("Demo email: " + (err.message || "Unknown error"));
     } finally {
       setSendingEmails(false);
+      // Keep this page locked after an attempt: an ambiguous network response
+      // must not encourage a second submission. Reload after checking delivery.
     }
   };
 
@@ -438,21 +443,21 @@ const AdminDashboard = () => {
           </ToggleGroup>
           <AlertDialog>
             <AlertDialogTrigger asChild>
-              <Button variant="outline" size="sm" disabled={sendingEmails}>
+              <Button variant="outline" size="sm" disabled={sendingEmails || demoSendLocked.current}>
                 <Mail className={`mr-2 h-4 w-4 ${sendingEmails ? "animate-spin" : ""}`} />
-                {sendingEmails ? "Sending…" : "Send Market Update"}
+                {sendingEmails ? "Sending demo…" : demoSendLocked.current ? "Demo attempted — check inbox" : "Send Market Brief Demo"}
               </Button>
             </AlertDialogTrigger>
             <AlertDialogContent>
               <AlertDialogHeader>
-                <AlertDialogTitle>Send Market Update Email</AlertDialogTitle>
+                <AlertDialogTitle>Send one Market Brief demo?</AlertDialogTitle>
                 <AlertDialogDescription>
-                  This will send a branded Market Update email to all users who have opted in to the weekly summary. Continue?
+                  Sends sample data to the single configured internal test address through Resend. No subscriber broadcast or schedule changes.
                 </AlertDialogDescription>
               </AlertDialogHeader>
               <AlertDialogFooter>
                 <AlertDialogCancel>Cancel</AlertDialogCancel>
-                <AlertDialogAction onClick={handleSendMarketUpdate}>Send Emails</AlertDialogAction>
+                <AlertDialogAction onClick={handleSendMarketUpdate} disabled={sendingEmails}>Send one demo</AlertDialogAction>
               </AlertDialogFooter>
             </AlertDialogContent>
           </AlertDialog>
