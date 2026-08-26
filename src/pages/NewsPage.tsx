@@ -15,6 +15,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/fundsFixedIncomeNews";
 import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 import { matchesNewsTab } from "@/lib/newsTabMatching";
+import { dedupeNewsByUrl } from "@/lib/newsDedupe";
 
 export default function NewsPage() {
   useDocumentTitle(
@@ -109,7 +110,10 @@ export default function NewsPage() {
         const latest = await fetchPublishedNews(60, 0);
         setArticles(current => {
           const latestIds = new Set(latest.map(article => article.id));
-          return [...latest, ...current.filter(article => !latestIds.has(article.id))];
+          return dedupeNewsByUrl([
+            ...latest,
+            ...current.filter(article => !latestIds.has(article.id)),
+          ]);
         });
       } catch {
         // Keep the currently rendered feed when a background refresh fails.
@@ -150,7 +154,7 @@ export default function NewsPage() {
       if (batch.length > 0) {
         const existingIds = new Set(accumulated.map(a => a.id));
         const fresh = batch.filter(a => !existingIds.has(a.id));
-        accumulated = [...accumulated, ...fresh];
+        accumulated = dedupeNewsByUrl([...accumulated, ...fresh]);
         currentOffset = nextOffset;
       }
       if (batch.length < 60) {
