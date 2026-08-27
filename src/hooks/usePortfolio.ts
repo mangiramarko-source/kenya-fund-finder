@@ -94,9 +94,10 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
 };
 
 /** Fetch live asset lists from DB */
-export const useLiveAssets = () => {
+export const useLiveAssets = (enabled = true) => {
   return useQuery({
     queryKey: ["live_assets_for_portfolio"],
+    enabled,
     queryFn: async () => {
       const [fundsRes, stocksRes, commoditiesRes, fxRes] = await Promise.all([
         supabase.from("funds_public").select("id, name, slug, annual_yield, daily_yield, fund_type").order("name"),
