@@ -79,6 +79,8 @@ export function useEmailPreferences() {
     error: query.error?.message ?? mutation.error?.message ?? null,
     retry: () => { mutation.reset(); return query.refetch(); },
     updatePref: (key: keyof EmailPreferences, value: boolean) => save({ [key]: value }),
+    saveEmailChoices: (choices: WelcomeEmailChoices) => save(choices),
+    completeWelcome: () => save({ email_welcome_completed: true }),
     saveWelcome: (choices: WelcomeEmailChoices) => save({ ...choices, email_welcome_completed: true }),
   };
 }

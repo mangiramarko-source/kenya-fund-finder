@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
@@ -15,7 +15,10 @@ import { useConsent } from "@/hooks/useConsent";
 import { useAuth } from "@/hooks/useAuth";
 import { trackEvent } from "@/lib/analytics";
 import { useEmailPreferences } from "@/hooks/useEmailPreferences";
-import ChooseUpdates from "./ChooseUpdates";
+import { useLiveAssets } from "@/hooks/usePortfolio";
+import OnboardingSetup, { type OnboardingAsset } from "@/components/onboarding/OnboardingSetup";
+import { buildOnboardingAssets, portfolioItemFromOnboardingAsset, watchlistType } from "@/components/onboarding/onboardingAssets";
+import { supabase } from "@/integrations/supabase/client";
 
 const SESSION_SHOWN_KEY = "kff_intro_shown_session_v1";
 const SIGNIN_SHOWN_PREFIX = "kff_intro_signin_shown_";
@@ -211,18 +214,86 @@ const HeroTile = ({
 
 // Keyed by account so a different sign-in never inherits another user's draft.
 function SignedInIntroduction({ userId }: { userId: string }) {
-  const { choice } = useConsent();
   const { pathname } = useLocation();
   const navigate = useNavigate();
-  const { prefs, loading, needsWelcome, saving, saveWelcome } = useEmailPreferences();
+  const { loading, needsWelcome, saving, saveEmailChoices, completeWelcome } = useEmailPreferences();
   const [started, setStarted] = useState(false);
   const [dismissed, setDismissed] = useState(false);
   const isIntroRoute = pathname === "/" || pathname === "/overview";
+  const { data: liveAssets, isLoading: assetsLoading } = useLiveAssets(needsWelcome && isIntroRoute);
+  const assets = useMemo(() => buildOnboardingAssets(liveAssets), [liveAssets]);
 
   // Retain the success screen after the saved preference invalidates needsWelcome.
   useEffect(() => {
-    if (needsWelcome && choice && isIntroRoute && !dismissed) setStarted(true);
-  }, [needsWelcome, choice, isIntroRoute, dismissed]);
+    if (needsWelcome && isIntroRoute && !dismissed) setStarted(true);
+  }, [needsWelcome, isIntroRoute, dismissed]);
+
+  const saveSetup = async (draft: {
+    priceAlertEmail: boolean;
+    marketBriefEmail: boolean;
+    watchlist: OnboardingAsset[];
+    portfolioAsset: OnboardingAsset | null;
+    portfolioAmount: number | null;
+  }) => {
+    if (!await saveEmailChoices({
+      price_alert_email: draft.priceAlertEmail,
+      market_brief_email: draft.marketBriefEmail,
+    })) return false;
+
+    const watchlistRows = draft.watchlist.map((asset, index) => {
+      const itemType = watchlistType(asset);
+      if (!itemType || !asset.databaseId) return null;
+      return { user_id: userId, item_type: itemType, item_id: asset.databaseId, item_name: asset.name, sort_order: index };
+    });
+    if (watchlistRows.some((row) => row === null)) return false;
+    if (watchlistRows.length) {
+      const { error } = await supabase.from("user_watchlist").upsert(
+        watchlistRows as { user_id: string; item_type: "fund" | "stock" | "currency" | "commodity"; item_id: string; item_name: string; sort_order: number }[],
+        { onConflict: "user_id,item_type,item_id", ignoreDuplicates: true },
+      );
+      if (error) return false;
+    }
+
+    if (draft.portfolioAsset && draft.portfolioAmount) {
+      const item = portfolioItemFromOnboardingAsset(draft.portfolioAsset, draft.portfolioAmount);
+      if (!item) return false;
+      let existingQuery = supabase.from("mock_portfolios").select("id").eq("user_id", userId).eq("asset_type", item.asset_type).limit(1);
+      existingQuery = item.asset_id
+        ? existingQuery.eq("asset_id", item.asset_id)
+        : existingQuery.eq("asset_name", item.asset_name);
+      const { data: existing, error: existingError } = await existingQuery.maybeSingle();
+      if (existingError) return false;
+      if (!existing) {
+        const { data: savedHolding, error: portfolioError } = await supabase.from("mock_portfolios").insert({
+          user_id: userId,
+          asset_type: item.asset_type,
+          asset_name: item.asset_name,
+          ticker: item.ticker ?? null,
+          asset_id: item.asset_id ?? null,
+          units: item.units,
+          buy_price: item.buy_price,
+          current_price: item.current_price,
+          current_yield: item.current_yield ?? 0,
+          buy_date: item.buy_date ?? new Date().toISOString(),
+          notes: "",
+        }).select("id").single();
+        if (portfolioError || !savedHolding) return false;
+        void supabase.from("portfolio_events").insert({
+          user_id: userId,
+          portfolio_holding_id: savedHolding.id,
+          asset_id: item.asset_id ?? null,
+          asset_type: item.asset_type,
+          asset_name: item.asset_name,
+          event_type: "add",
+          amount: item.units * item.buy_price,
+          quantity: item.units,
+          note: "Created during new-user setup",
+        });
+      }
+    }
+
+    return completeWelcome();
+  };
 
   const dismiss = () => {
     if (saving) return;
@@ -236,9 +307,9 @@ function SignedInIntroduction({ userId }: { userId: string }) {
   if (loading || dismissed) return null;
   if (!needsWelcome && !started) return <LegacyHomeHero />;
   return (
-    <Dialog open={Boolean(choice) && isIntroRoute} onOpenChange={next => { if (!next) dismiss(); }}>
+    <Dialog open={isIntroRoute} onOpenChange={next => { if (!next) dismiss(); }}>
       <DialogContent className="w-[calc(100vw-2rem)] max-w-[480px] max-h-[calc(100dvh-2rem)] overflow-y-auto rounded-2xl bg-background p-5 sm:p-7">
-        <ChooseUpdates initialChoices={{ price_alert_email: prefs.price_alert_email, market_brief_email: prefs.market_brief_email }} onSave={saveWelcome} onContinue={dismiss} onCreateAlert={() => { dismiss(); navigate("/alerts?create=1"); }} />
+        {assetsLoading ? <p className="py-8 text-center text-sm text-muted-foreground">Loading available assets…</p> : <OnboardingSetup assets={assets} onComplete={saveSetup} onExplore={dismiss} onCreateAlert={() => { dismiss(); navigate("/alerts?create=1"); }} />}
       </DialogContent>
     </Dialog>
   );
