@@ -16,6 +16,7 @@ import AnalyticsTracker from "./components/AnalyticsTracker";
 // lazy-loading it delays paint and tanks the LCP score.
 import CookieConsent from "./components/CookieConsent";
 import SeoRoutePolicy from "./components/SeoRoutePolicy";
+import { NotificationProvider } from "./components/alerts/NotificationProvider";
 
 // Defer heavy/non-critical UI to shrink initial JS bundle
 const CompareModal = lazy(() => import("./components/compare/CompareModal"));
@@ -88,10 +89,11 @@ const App = () => (
             <Toaster />
             <Sonner />
             <BrowserRouter>
-              <AnalyticsTracker />
-              <ScrollToTop />
-              <SeoRoutePolicy />
-              <Layout>
+              <NotificationProvider>
+                <AnalyticsTracker />
+                <ScrollToTop />
+                <SeoRoutePolicy />
+                <Layout>
                 <Suspense fallback={<PageFallback />}>
                   <Routes>
                     <Route path="/" element={<OverviewPage />} />
@@ -151,16 +153,17 @@ const App = () => (
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
-              </Layout>
-              <CompareBar />
-              <Suspense fallback={null}>
-                <CompareModal />
-              </Suspense>
-              <Suspense fallback={null}>
-                <HomeHero />
-              </Suspense>
-              <CookieConsent />
-              <Analytics />
+                </Layout>
+                <CompareBar />
+                <Suspense fallback={null}>
+                  <CompareModal />
+                </Suspense>
+                <Suspense fallback={null}>
+                  <HomeHero />
+                </Suspense>
+                <CookieConsent />
+                <Analytics />
+              </NotificationProvider>
             </BrowserRouter>
           </CompareProvider>
         </AuthProvider>

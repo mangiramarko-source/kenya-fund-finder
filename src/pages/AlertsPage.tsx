@@ -19,6 +19,7 @@ import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
+import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 
 interface AssetOption {
   id: string;
@@ -42,6 +43,7 @@ const AlertsPage = () => {
   const navigate = useNavigate();
   const { alerts, loading, deleteAlert, toggleAlert, createAlert } = usePriceAlerts();
   const { prefs, loading: prefsLoading, saving: prefsSaving, error: prefsError, retry: retryPrefs, updatePref } = useEmailPreferences();
+  const { enabled: pushEnabled, supported: pushSupported, enable: enablePush, disable: disablePush } = useDeviceNotifications();
   const [searchParams] = useSearchParams();
 
   const [tab, setTab] = useState<TabKey>(() => searchParams.get("tab") === "settings" ? "settings" : "active");
@@ -97,6 +99,9 @@ const AlertsPage = () => {
       toast.error(result.error.message || "Failed to create alert");
     } else {
       toast.success(`Alert set for ${selectedAsset.name}`);
+      if (!pushEnabled && pushSupported) {
+        toast("Get alerts on this device", { description: "Enable device notifications for price targets, even when Kenya Fund Finder is closed.", action: { label: "Enable", onClick: () => { void enablePush(); } } });
+      }
       setShowCreate(false);
       setTargetPrice("");
       setSelectedAssetId("");
@@ -176,6 +181,20 @@ const AlertsPage = () => {
               checked={prefs.price_alert_email}
               onChange={(v) => updatePref("price_alert_email", v)}
               disabled={prefsLoading || prefsSaving || Boolean(prefsError)}
+            />
+            <SettingRow
+              title="In-app notifications"
+              description="Show alerts in your notification centre and while Kenya Fund Finder is open."
+              checked={prefs.price_alert_inapp}
+              onChange={(v) => updatePref("price_alert_inapp", v)}
+              disabled={prefsLoading || prefsSaving || Boolean(prefsError)}
+            />
+            <SettingRow
+              title="Device notifications"
+              description={pushSupported ? "Show a browser or device notification when an alert is hit while the app is closed." : "Not supported by this browser. Your in-app notification centre still works."}
+              checked={pushEnabled}
+              onChange={(v) => { void (v ? enablePush() : disablePush()); }}
+              disabled={!pushSupported || prefsLoading || prefsSaving || Boolean(prefsError)}
             />
             <SettingRow
               title="Market Brief & Morning News"

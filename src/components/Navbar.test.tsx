@@ -27,6 +27,12 @@ vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ user: null, isAdmin: false, signOut: vi.fn() }),
 }));
 
+vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn(), trackPageView: vi.fn() }));
+
+vi.mock("@/components/alerts/NotificationProvider", () => ({
+  useNotifications: () => ({ notifications: [], unreadCount: 0, markAllRead: vi.fn(), deleteNotification: vi.fn(), openNotification: vi.fn() }),
+}));
+
 describe("Mobile & Desktop Navigation Verification", () => {
   it("does not render Market News in the mobile sidebar drawer", () => {
     render(
@@ -34,6 +40,8 @@ describe("Mobile & Desktop Navigation Verification", () => {
         <Navbar />
       </MemoryRouter>
     );
+
+    expect(screen.getAllByRole("button", { name: /sign in for notifications/i }).length).toBeGreaterThanOrEqual(1);
 
     // Open mobile sidebar drawer
     const menuButtons = screen.getAllByRole("button", { name: /Open menu/i });

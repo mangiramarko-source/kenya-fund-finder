@@ -8,7 +8,7 @@ const state = vi.hoisted(() => ({ user: { id: "user-a" } as { id: string } | nul
 vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: state.user }) }));
 vi.mock("@/integrations/supabase/client", () => ({ supabase: { from: state.from, functions: { invoke: state.invoke } } }));
 const row = (id = "user-a", completed = false) => ({
-  user_id: id, price_alert_email: false, price_alert_inapp: true, market_brief_email: false,
+  user_id: id, price_alert_email: false, price_alert_inapp: true, price_alert_push: false, market_brief_email: false,
   email_welcome_completed: completed, price_alert_email_consented_at: null, market_brief_email_consented_at: null,
 });
 function setup() {
@@ -80,6 +80,15 @@ describe("email preference persistence", () => {
     state.invoke.mockResolvedValue({ data: { preferences: { ...row(), market_brief_email: true, market_brief_email_consented_at: "2026-08-26T20:00:00Z" } }, error: null });
     await act(async () => { await result.current.updatePref("market_brief_email", true); });
     await waitFor(() => expect(second.result.current.prefs.market_brief_email).toBe(true));
+  });
+  it("persists device push separately from email preferences", async () => {
+    const { result } = setup();
+    await waitFor(() => expect(result.current.loading).toBe(false));
+    state.single.mockResolvedValue({ data: { ...row(), price_alert_push: true }, error: null });
+    await act(async () => { expect(await result.current.updatePref("price_alert_push", true)).toBe(true); });
+    expect(state.update).toHaveBeenCalledWith({ price_alert_push: true });
+    expect(state.invoke).not.toHaveBeenCalled();
+    await waitFor(() => expect(result.current.prefs.price_alert_push).toBe(true));
   });
   it("does not leak cached choices between accounts", async () => {
     state.single.mockResolvedValue({ data: { ...row(), market_brief_email: true, market_brief_email_consented_at: "2026-08-26T20:00:00Z" }, error: null });

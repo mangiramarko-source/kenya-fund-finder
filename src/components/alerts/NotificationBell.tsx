@@ -2,14 +2,14 @@ import { useState } from "react";
 import { Bell, Check, X } from "lucide-react";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Button } from "@/components/ui/button";
-import { useNotifications } from "@/hooks/usePriceAlerts";
+import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { useAuth } from "@/hooks/useAuth";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 
 const NotificationBell = () => {
   const { user } = useAuth();
-  const { notifications, unreadCount, markAsRead, markAllRead, deleteNotification } = useNotifications();
+  const { notifications, unreadCount, markAllRead, deleteNotification, openNotification } = useNotifications();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
 
@@ -67,7 +67,7 @@ const NotificationBell = () => {
                   key={n.id}
                   className={`px-3 py-2.5 flex gap-2 group ${!n.is_read ? "bg-accent/5" : ""}`}
                 >
-                  <div className="flex-1 min-w-0" onClick={() => !n.is_read && markAsRead(n.id)}>
+                  <button type="button" className="flex-1 min-w-0 text-left" onClick={() => void openNotification(n)}>
                     <p className={`text-xs ${!n.is_read ? "font-semibold text-foreground" : "text-muted-foreground"}`}>
                       {n.title}
                     </p>
@@ -75,7 +75,7 @@ const NotificationBell = () => {
                     <p className="text-[10px] text-muted-foreground/60 mt-1">
                       {new Date(n.created_at).toLocaleDateString("en-KE", { month: "short", day: "numeric", hour: "2-digit", minute: "2-digit" })}
                     </p>
-                  </div>
+                  </button>
                   <Button
                     variant="ghost"
                     size="sm"

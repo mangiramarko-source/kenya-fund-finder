@@ -83,3 +83,6 @@ verify_jwt = false
 # reads no market tables, and cannot operate outside internal allowlist mode.
 [functions.send-market-brief-demo]
 verify_jwt = false
+
+[functions.manage-push-subscription]
+verify_jwt = false
