@@ -6,6 +6,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketData, type ExchangeRate, type Commodity, type Stock } from "@/components/home/MarketTicker";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
+import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
@@ -107,6 +108,7 @@ const QuickAlertDialog = ({
   assetType: "stock" | "currency" | "commodity"; assetId: string; assetName: string; currentPrice: number; unit?: string;
 }) => {
   const { createAlert } = usePriceAlerts();
+  const { enabled: deviceNotificationsEnabled, supported: deviceNotificationsSupported, enable: enableDeviceNotifications } = useDeviceNotifications();
   const [targetPrice, setTargetPrice] = useState("");
   const [condition, setCondition] = useState<"above" | "below">("above");
   const [saving, setSaving] = useState(false);
@@ -118,7 +120,16 @@ const QuickAlertDialog = ({
     const result = await createAlert({ asset_type: assetType, asset_id: assetId, asset_name: assetName, target_price: price, condition });
     setSaving(false);
     if (result?.error) toast.error(result.error.message || "Failed to create alert");
-    else { toast.success(`Alert set: ${assetName} ${condition} ${price}`); onClose(); setTargetPrice(""); }
+    else {
+      toast.success(`Alert set: ${assetName} ${condition} ${price}`);
+      if (!deviceNotificationsEnabled && deviceNotificationsSupported) {
+        toast("Want alerts on this device too?", {
+          action: { label: "Enable device notifications", onClick: () => void enableDeviceNotifications() },
+        });
+      }
+      onClose();
+      setTargetPrice("");
+    }
   };
 
   return (

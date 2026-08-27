@@ -6,13 +6,14 @@ import { useRef } from "react";
 export interface EmailPreferences {
   price_alert_email: boolean;
   price_alert_inapp: boolean;
+  price_alert_push: boolean;
   market_brief_email: boolean;
 }
 export type WelcomeEmailChoices = Pick<EmailPreferences, "price_alert_email" | "market_brief_email">;
 export const DEFAULT_EMAIL_PREFERENCES: EmailPreferences = {
-  price_alert_email: false, price_alert_inapp: true, market_brief_email: false,
+  price_alert_email: false, price_alert_inapp: true, price_alert_push: false, market_brief_email: false,
 };
-const columns = "user_id,price_alert_email,price_alert_inapp,market_brief_email,email_welcome_completed" as const;
+const columns = "user_id,price_alert_email,price_alert_inapp,price_alert_push,market_brief_email,email_welcome_completed" as const;
 const consentColumns = `${columns},price_alert_email_consented_at,market_brief_email_consented_at` as const;
 
 function effectivePreferences<T extends EmailPreferences & {
@@ -47,9 +48,12 @@ export function useEmailPreferences() {
       await cache.cancelQueries({ queryKey: ["communication-preferences", userId] });
     },
     mutationFn: async ({ userId, patch }: { userId: string; patch: Partial<EmailPreferences> & { email_welcome_completed?: boolean } }) => {
-      if (Object.prototype.hasOwnProperty.call(patch, "price_alert_inapp")) {
+      if (Object.prototype.hasOwnProperty.call(patch, "price_alert_inapp") || Object.prototype.hasOwnProperty.call(patch, "price_alert_push")) {
+        const preferencePatch: Record<string, boolean> = {};
+        if (typeof patch.price_alert_inapp === "boolean") preferencePatch.price_alert_inapp = patch.price_alert_inapp;
+        if (typeof patch.price_alert_push === "boolean") preferencePatch.price_alert_push = patch.price_alert_push;
         const { data, error } = await supabase.from("communication_preferences")
-          .update({ price_alert_inapp: patch.price_alert_inapp }).eq("user_id", userId).select(consentColumns).single();
+          .update(preferencePatch).eq("user_id", userId).select(consentColumns).single();
         if (error || !data) throw new Error("Your choices weren't saved. Please try again.");
         return effectivePreferences(data);
       }

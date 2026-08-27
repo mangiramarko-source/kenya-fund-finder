@@ -356,6 +356,8 @@ export type Database = {
           price_alert_email: boolean
           price_alert_email_consented_at: string | null
           price_alert_inapp: boolean
+          price_alert_push: boolean
+          price_alert_push_consented_at: string | null
           updated_at: string
           user_id: string
         }
@@ -367,6 +369,8 @@ export type Database = {
           price_alert_email?: boolean
           price_alert_email_consented_at?: string | null
           price_alert_inapp?: boolean
+          price_alert_push?: boolean
+          price_alert_push_consented_at?: string | null
           updated_at?: string
           user_id: string
         }
@@ -378,6 +382,8 @@ export type Database = {
           price_alert_email?: boolean
           price_alert_email_consented_at?: string | null
           price_alert_inapp?: boolean
+          price_alert_push?: boolean
+          price_alert_push_consented_at?: string | null
           updated_at?: string
           user_id?: string
         }

@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { PRICE_ALERT_AVAILABILITY_MESSAGE, usePriceAlerts } from "@/hooks/usePriceAlerts";
+import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
@@ -22,6 +23,7 @@ export const CreateAlertDialog = ({
 }: CreateAlertDialogProps) => {
   const { user } = useAuth();
   const { createAlert } = usePriceAlerts();
+  const { enabled: deviceNotificationsEnabled, supported: deviceNotificationsSupported, enable: enableDeviceNotifications } = useDeviceNotifications();
   const [open, setOpen] = useState(false);
   const [targetPrice, setTargetPrice] = useState("");
   const [condition, setCondition] = useState<"above" | "below">("above");
@@ -61,6 +63,11 @@ export const CreateAlertDialog = ({
       toast.error(result.error.message || "Failed to create alert");
     } else {
       toast.success(`Alert set for ${assetName} ${condition} ${price}`);
+      if (!deviceNotificationsEnabled && deviceNotificationsSupported) {
+        toast("Want alerts on this device too?", {
+          action: { label: "Enable device notifications", onClick: () => void enableDeviceNotifications() },
+        });
+      }
       setOpen(false);
       setTargetPrice("");
     }

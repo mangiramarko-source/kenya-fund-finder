@@ -11,6 +11,7 @@ import { toast } from "sonner";
 import { Link } from "react-router-dom";
 import { cn } from "@/lib/utils";
 import { trackEvent } from "@/lib/analytics";
+import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 
 interface Props {
   assetType: Exclude<AlertAssetType, "new_fund">;
@@ -35,6 +36,7 @@ export const CreateAlertDialog = ({
 }: Props) => {
   const { user } = useAuth();
   const { createAlert, alerts } = usePriceAlerts();
+  const { enabled: pushEnabled, supported: pushSupported, enable: enablePush } = useDeviceNotifications();
   const [openState, setOpenState] = useState(false);
   const isControlled = openProp !== undefined;
   const open = isControlled ? !!openProp : openState;
@@ -99,6 +101,9 @@ export const CreateAlertDialog = ({
         condition,
       });
       toast.success(`Alert created for ${assetName}`);
+      if (!pushEnabled && pushSupported) {
+        toast("Get alerts on this device", { description: "Enable device notifications for price targets when Kenya Fund Finder is closed.", action: { label: "Enable", onClick: () => { void enablePush(); } } });
+      }
       setOpen(false);
       setThreshold("");
     }

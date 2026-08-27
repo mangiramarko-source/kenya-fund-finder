@@ -413,15 +413,9 @@ const Navbar = () => {
                 <span className="text-sm font-medium">Home</span>
               </Button>
             )}
-            <Button
-              variant="ghost"
-              size="icon"
-              onClick={() => setOpen(true)}
-              className="rounded-full h-9 w-9 text-foreground hover:bg-muted"
-              aria-label="Open menu"
-            >
-              <Menu className="h-5 w-5" />
-            </Button>
+            <div className="flex items-center gap-1"><NotificationBell /><Button
+              variant="ghost" size="icon" onClick={() => setOpen(true)} className="rounded-full h-9 w-9 text-foreground hover:bg-muted" aria-label="Open menu"
+            ><Menu className="h-5 w-5" /></Button></div>
           </div>
         </header>
         <div className="md:hidden h-16" aria-hidden="true" />
@@ -446,14 +440,8 @@ const Navbar = () => {
             KFF
           </Link>
 
-          {/* Right: Hamburger */}
-          <button
-            onClick={() => setOpen(true)}
-            className="grid size-9 place-items-center rounded-md"
-            aria-label="Open menu"
-          >
-            <Menu className="size-5 text-foreground" />
-          </button>
+          {/* Right: Notifications and menu */}
+          <div className="flex items-center gap-1"><NotificationBell /><button onClick={() => setOpen(true)} className="grid size-9 place-items-center rounded-md" aria-label="Open menu"><Menu className="size-5 text-foreground" /></button></div>
         </nav>
 
         {/* Full-width scrollable tab bar */}
