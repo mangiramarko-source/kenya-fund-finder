@@ -117,7 +117,7 @@ const QuickAlertDialog = ({
     setSaving(true);
     const result = await createAlert({ asset_type: assetType, asset_id: assetId, asset_name: assetName, target_price: price, condition });
     setSaving(false);
-    if (result?.error) toast.error("Failed to create alert");
+    if (result?.error) toast.error(result.error.message || "Failed to create alert");
     else { toast.success(`Alert set: ${assetName} ${condition} ${price}`); onClose(); setTargetPrice(""); }
   };
 

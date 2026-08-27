@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
-import { usePriceAlerts } from "@/hooks/usePriceAlerts";
+import { PRICE_ALERT_AVAILABILITY_MESSAGE, usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
@@ -26,6 +26,7 @@ export const CreateAlertDialog = ({
   const [targetPrice, setTargetPrice] = useState("");
   const [condition, setCondition] = useState<"above" | "below">("above");
   const [saving, setSaving] = useState(false);
+  const isSupported = assetType === "stock";
 
   if (!user) {
     return (
@@ -38,6 +39,10 @@ export const CreateAlertDialog = ({
   }
 
   const handleCreate = async () => {
+    if (!isSupported) {
+      toast.info(PRICE_ALERT_AVAILABILITY_MESSAGE);
+      return;
+    }
     const price = parseFloat(targetPrice);
     if (isNaN(price) || price <= 0) {
       toast.error("Please enter a valid target price");
@@ -53,7 +58,7 @@ export const CreateAlertDialog = ({
     });
     setSaving(false);
     if (result?.error) {
-      toast.error("Failed to create alert");
+      toast.error(result.error.message || "Failed to create alert");
     } else {
       toast.success(`Alert set for ${assetName} ${condition} ${price}`);
       setOpen(false);
@@ -81,6 +86,7 @@ export const CreateAlertDialog = ({
             </p>
           </div>
 
+          {isSupported ? <>
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Notify me when price goes</label>
             <Select value={condition} onValueChange={(v) => setCondition(v as "above" | "below")}>
@@ -117,6 +123,9 @@ export const CreateAlertDialog = ({
           <Button onClick={handleCreate} disabled={saving} className="w-full">
             {saving ? "Creating…" : "Create Alert"}
           </Button>
+          </> : <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm leading-relaxed text-muted-foreground">
+            {PRICE_ALERT_AVAILABILITY_MESSAGE} You can still save this asset to your watchlist or portfolio.
+          </div>}
         </div>
       </DialogContent>
     </Dialog>

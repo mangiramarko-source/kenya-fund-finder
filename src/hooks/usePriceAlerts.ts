@@ -34,6 +34,42 @@ export interface Notification {
   created_at: string;
 }
 
+/**
+ * The production evaluator currently has a strict stock-only contract. Keep
+ * this guard next to the write so a route cannot accidentally offer an alert
+ * that the evaluator will never process.
+ */
+export const PRICE_ALERT_AVAILABILITY_MESSAGE = "Price alerts are currently available for NSE stocks only.";
+
+export interface NewPriceAlert {
+  asset_type: AlertAssetType;
+  asset_id: string;
+  asset_name: string;
+  target_price: number;
+  condition: AlertCondition;
+  baseline_price?: number | null;
+  notify_email?: boolean;
+  notify_inapp?: boolean;
+}
+
+export const buildPriceAlertInsert = (userId: string, alert: NewPriceAlert) => {
+  if (alert.asset_type !== "stock") return null;
+  return {
+    // `stock_id` is the canonical foreign key used by the evaluator. The
+    // compatibility `asset_*` fields remain for the existing UI/history.
+    stock_id: alert.asset_id,
+    asset_type: alert.asset_type,
+    asset_id: alert.asset_id,
+    asset_name: alert.asset_name,
+    target_price: alert.target_price,
+    condition: alert.condition,
+    baseline_price: alert.baseline_price ?? null,
+    notify_email: alert.notify_email ?? true,
+    notify_inapp: alert.notify_inapp ?? true,
+    user_id: userId,
+  };
+};
+
 export function usePriceAlerts() {
   const { user } = useAuth();
   const [alerts, setAlerts] = useState<PriceAlert[]>([]);
@@ -55,30 +91,15 @@ export function usePriceAlerts() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const createAlert = async (alert: {
-    asset_type: AlertAssetType;
-    asset_id: string;
-    asset_name: string;
-    target_price: number;
-    condition: AlertCondition;
-    baseline_price?: number | null;
-    notify_email?: boolean;
-    notify_inapp?: boolean;
-  }) => {
+  const createAlert = async (alert: NewPriceAlert) => {
     if (!user) return { data: null, error: { message: "Not authenticated" } };
+    const insert = buildPriceAlertInsert(user.id, alert);
+    if (!insert) {
+      return { data: null, error: { message: PRICE_ALERT_AVAILABILITY_MESSAGE } };
+    }
     const { data, error } = await supabase
       .from("price_alerts")
-      .insert({
-        asset_type: alert.asset_type,
-        asset_id: alert.asset_id,
-        asset_name: alert.asset_name,
-        target_price: alert.target_price,
-        condition: alert.condition,
-        baseline_price: alert.baseline_price ?? null,
-        notify_email: alert.notify_email ?? true,
-        notify_inapp: alert.notify_inapp ?? true,
-        user_id: user.id,
-      })
+      .insert(insert)
       .select()
       .single();
     if (!error) await fetchAlerts();
