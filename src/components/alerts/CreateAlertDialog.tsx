@@ -5,7 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Switch } from "@/components/ui/switch";
 import { useAuth } from "@/hooks/useAuth";
-import { usePriceAlerts, type AlertCondition, type AlertAssetType } from "@/hooks/usePriceAlerts";
+import { PRICE_ALERT_AVAILABILITY_MESSAGE, usePriceAlerts, type AlertCondition, type AlertAssetType } from "@/hooks/usePriceAlerts";
 import { canCreateAlert, limitMessages } from "@/lib/featureLimits";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
@@ -44,6 +44,7 @@ export const CreateAlertDialog = ({
   };
 
   const isFund = assetType === "fund";
+  const isSupported = assetType === "stock";
   const [condition, setCondition] = useState<AlertCondition>(isFund ? "change_any" : "above");
   const [threshold, setThreshold] = useState("");
   const [notifyEmail, setNotifyEmail] = useState(true);
@@ -63,6 +64,10 @@ export const CreateAlertDialog = ({
   const activeCount = alerts.filter((a) => a.is_active && !a.is_triggered).length;
 
   const handleCreate = async () => {
+    if (!isSupported) {
+      toast.info(PRICE_ALERT_AVAILABILITY_MESSAGE);
+      return;
+    }
     if (!canCreateAlert(activeCount)) {
       toast.error(limitMessages.alertsAtMax);
       return;
@@ -85,7 +90,7 @@ export const CreateAlertDialog = ({
     });
     setSaving(false);
     if (result?.error) {
-      toast.error("Failed to create alert");
+      toast.error(result.error.message || "Failed to create alert");
     } else {
       trackEvent("price_alert_created", {
         asset_type: assetType,
@@ -129,6 +134,11 @@ export const CreateAlertDialog = ({
             </p>
           </div>
 
+          {!isSupported ? (
+            <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm leading-relaxed text-muted-foreground">
+              {PRICE_ALERT_AVAILABILITY_MESSAGE} You can still save this asset to your watchlist or portfolio.
+            </div>
+          ) : <>
           {/* Condition selector */}
           <div>
             <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
@@ -214,6 +224,8 @@ export const CreateAlertDialog = ({
           <Button onClick={handleCreate} disabled={saving || !canCreateAlert(activeCount)} className="w-full">
             {saving ? "Creating…" : "Create alert"}
           </Button>
+
+          </>}
 
           <p className="text-[10px] text-muted-foreground leading-relaxed">
             Data update notifications only. Not personal financial advice.

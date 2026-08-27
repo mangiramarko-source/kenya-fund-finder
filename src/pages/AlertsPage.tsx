@@ -31,11 +31,11 @@ type TabKey = "active" | "triggered" | "paused" | "settings";
 
 const AlertsPage = () => {
   useDocumentTitle(
-    "Price Alerts – Track Stocks, FX & Commodities | Kenya Fund Finder",
-    "Set custom price alerts for Kenyan stocks, FX rates, and commodities. Get notified when assets cross your target price.",
+    "Price Alerts – Track NSE Stocks | Kenya Fund Finder",
+    "Set custom price alerts for Kenyan NSE stocks. Get notified when a stock crosses your target price.",
     {
-      title: "Price Alerts for Kenyan Stocks, FX & Commodities",
-      description: "Set custom price alerts and get notified when assets cross your target price.",
+      title: "Price Alerts for Kenyan NSE Stocks",
+      description: "Set custom price alerts and get notified when NSE stocks cross your target price.",
     }
   );
   const { user } = useAuth();
@@ -48,7 +48,6 @@ const AlertsPage = () => {
 
   // New Alert dialog state
   const [showCreate, setShowCreate] = useState(() => searchParams.get("create") === "1");
-  const [assetType, setAssetType] = useState<"stock" | "currency" | "commodity" | "fund">("stock");
   const [assetOptions, setAssetOptions] = useState<AssetOption[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
   const [selectedAssetId, setSelectedAssetId] = useState("");
@@ -57,7 +56,7 @@ const AlertsPage = () => {
   const [condition, setCondition] = useState<"above" | "below">("above");
   const [saving, setSaving] = useState(false);
 
-  // Fetch assets when type changes
+  // The server-side evaluator currently supports NSE stock alerts only.
   useEffect(() => {
     if (!showCreate) return;
     setLoadingAssets(true);
@@ -66,25 +65,13 @@ const AlertsPage = () => {
     setTargetPrice("");
 
     const fetchAssets = async () => {
-      let options: AssetOption[] = [];
-      if (assetType === "stock") {
-        const { data } = await supabase.from("stocks").select("id, name, symbol, price").eq("is_active", true).order("name");
-        options = (data || []).map((s) => ({ id: s.id, name: `${s.name} (${s.symbol})`, currentValue: Number(s.price), unit: "KES" }));
-      } else if (assetType === "currency") {
-        const { data } = await supabase.from("exchange_rates").select("id, currency_name, currency_code, rate").eq("is_active", true).order("currency_name");
-        options = (data || []).map((r) => ({ id: r.id, name: `${r.currency_name} (${r.currency_code})`, currentValue: Number(r.rate), unit: "KES" }));
-      } else if (assetType === "commodity") {
-        const { data } = await supabase.from("commodities").select("id, name, symbol, price, unit").eq("is_active", true).order("name");
-        options = (data || []).map((c) => ({ id: c.id, name: c.name, currentValue: Number(c.price), unit: c.unit }));
-      } else if (assetType === "fund") {
-        const { data } = await supabase.from("funds").select("id, name, annual_yield").eq("is_published", true).order("name");
-        options = (data || []).map((f) => ({ id: f.id, name: f.name, currentValue: Number(f.annual_yield), unit: "%" }));
-      }
+      const { data } = await supabase.from("stocks").select("id, name, symbol, price").eq("is_active", true).order("name");
+      const options = (data || []).map((s) => ({ id: s.id, name: `${s.name} (${s.symbol})`, currentValue: Number(s.price), unit: "KES" }));
       setAssetOptions(options);
       setLoadingAssets(false);
     };
     fetchAssets();
-  }, [assetType, showCreate]);
+  }, [showCreate]);
 
   const selectedAsset = assetOptions.find((a) => a.id === selectedAssetId);
   const filteredAssets = useMemo(() => {
@@ -99,7 +86,7 @@ const AlertsPage = () => {
     if (isNaN(price) || price <= 0) { toast.error("Please enter a valid target"); return; }
     setSaving(true);
     const result = await createAlert({
-      asset_type: assetType,
+      asset_type: "stock",
       asset_id: selectedAsset.id,
       asset_name: selectedAsset.name,
       target_price: price,
@@ -107,7 +94,7 @@ const AlertsPage = () => {
     });
     setSaving(false);
     if (result?.error) {
-      toast.error("Failed to create alert");
+      toast.error(result.error.message || "Failed to create alert");
     } else {
       toast.success(`Alert set for ${selectedAsset.name}`);
       setShowCreate(false);
@@ -121,7 +108,7 @@ const AlertsPage = () => {
       <div className="container mx-auto px-4 py-16 text-center">
         <Bell className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
         <h1 className="text-2xl font-bold text-foreground mb-2">Sign in to manage alerts</h1>
-        <p className="text-muted-foreground mb-6">Create and manage price alerts for stocks, currencies, commodities, and unit trusts.</p>
+        <p className="text-muted-foreground mb-6">Create and manage price alerts for NSE stocks.</p>
         <Button onClick={() => navigate("/auth")}>Sign In</Button>
       </div>
     );
@@ -267,7 +254,7 @@ const AlertsPage = () => {
               </div>
               <h2 className="text-base font-semibold text-foreground mb-1">No alerts yet</h2>
               <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">
-                Get notified when stocks, unit trusts, currencies, or commodities hit your target.
+                Get notified when an NSE stock reaches your chosen target. Other assets can still be saved to your watchlist.
               </p>
               <Button onClick={() => setShowCreate(true)} className="gap-1.5 rounded-full">
                 <Plus className="h-4 w-4" /> Create your first alert
@@ -296,36 +283,17 @@ const AlertsPage = () => {
           </DialogHeader>
 
           <div className="px-4 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
-            {/* Asset Type — segmented chips */}
+            {/* Alert coverage */}
             <div>
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Asset Type</label>
-              <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
-                {([
-                  { value: "stock", label: "Stocks" },
-                  { value: "fund", label: "Unit Trusts" },
-                  { value: "currency", label: "FX Rates" },
-                  { value: "commodity", label: "Commodities" },
-                ] as const).map((t) => (
-                  <button
-                    key={t.value}
-                    onClick={() => setAssetType(t.value)}
-                    className={cn(
-                      "h-9 rounded-lg text-xs font-medium border transition-colors",
-                      assetType === t.value
-                        ? "bg-primary text-primary-foreground border-primary"
-                        : "bg-card text-foreground border-border hover:bg-muted"
-                    )}
-                  >
-                    {t.label}
-                  </button>
-                ))}
-              </div>
+              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Available now</label>
+              <div className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2.5 text-sm font-medium text-foreground">NSE stocks</div>
+              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Unit Trusts, FX, and commodities can be followed in your watchlist. Price alerts for them will appear here when their data evaluators are ready.</p>
             </div>
 
             {/* Asset search + select */}
             <div>
               <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                Select {assetType === "fund" ? "Unit Trust" : assetType === "currency" ? "Currency" : assetType === "commodity" ? "Commodity" : "Stock"}
+                Select NSE stock
               </label>
               <div className="relative mb-2">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -357,7 +325,7 @@ const AlertsPage = () => {
             {selectedAsset && (
               <div className="rounded-lg border border-border bg-muted/40 p-3 flex items-center justify-between">
                 <div>
-                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Current {assetType === "fund" ? "yield" : "price"}</p>
+                <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Current price</p>
                   <p className="text-base font-semibold text-accent">
                     {selectedAsset.currentValue.toLocaleString("en-US", { minimumFractionDigits: 2 })} {selectedAsset.unit}
                   </p>
@@ -379,7 +347,7 @@ const AlertsPage = () => {
             {/* Condition — toggle */}
             <div>
               <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                Notify when {assetType === "fund" ? "yield" : "price"} goes
+                Notify when price goes
               </label>
               <div className="grid grid-cols-2 gap-1.5">
                 <button
@@ -410,7 +378,7 @@ const AlertsPage = () => {
             {/* Target */}
             <div>
               <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                Target {assetType === "fund" ? "Yield (%)" : "Price"}
+                Target price
               </label>
               <Input
                 type="number"

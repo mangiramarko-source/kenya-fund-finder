@@ -34,7 +34,7 @@ export interface OnboardingSetupProps {
 }
 
 const labels: Record<OnboardingAssetType, string> = {
-  fund: "Funds", stock: "NSE stocks", currency: "FX", commodity: "Commodities", fixed_income: "T-bills & bonds",
+  fund: "Unit Trusts", stock: "NSE stocks", currency: "FX", commodity: "Commodities", fixed_income: "T-bills & bonds",
 };
 
 export default function OnboardingSetup({

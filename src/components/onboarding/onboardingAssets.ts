@@ -5,12 +5,26 @@ type LiveAssets = Record<AssetType, LiveAsset[]>;
 
 const assetId = (type: string, asset: LiveAsset) => asset.id ?? `${type}:${asset.ticker ?? asset.name}`;
 
+const fundTypeLabel = (fundType?: string) => {
+  const normalized = fundType?.trim().toLowerCase().replace(/[ -]+/g, "_");
+  const labels: Record<string, string> = {
+    money_market: "MMF",
+    mmf: "MMF",
+    fixed_income: "Fixed Income",
+    balanced: "Balanced Fund",
+    equity: "Equity Fund",
+    bond: "Bond Fund",
+    special: "Special Fund",
+  };
+  return labels[normalized ?? ""] ?? (fundType ? fundType.replace(/_/g, " ").replace(/\b\w/g, (letter) => letter.toUpperCase()) : "Unit Trust");
+};
+
 export function buildOnboardingAssets(liveAssets: LiveAssets | undefined): OnboardingAsset[] {
   if (!liveAssets) return [];
   return [
     ...liveAssets.mmf.map((asset) => ({
       id: assetId("fund", asset), databaseId: asset.id, type: "fund" as const, name: asset.name,
-      detail: `${asset.yld?.toFixed(2) ?? "—"}% p.a. · ${asset.fundType?.replace(/_/g, " ") ?? "Fund"}`,
+      detail: `${fundTypeLabel(asset.fundType)} · ${asset.yld?.toFixed(2) ?? "—"}% p.a.`,
       price: asset.price, ticker: asset.ticker, annualYield: asset.yld,
     })),
     ...liveAssets.stock.map((asset) => ({
