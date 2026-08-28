@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
+import { createClient, type SupabaseClient } from "../_shared/supabase-client.ts";
 import {
   deterministicNewsHighlightInsights,
   isPolicyNewsCategory,
@@ -28,7 +28,7 @@ function isWeekday(date: string): boolean {
   return weekday >= 1 && weekday <= 5;
 }
 
-type ServiceClient = SupabaseClient<any, "public", "public", any, any>;
+type ServiceClient = SupabaseClient;
 
 async function enqueueReadyEditionRecipients(
   supabase: ServiceClient,

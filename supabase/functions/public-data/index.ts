@@ -6,7 +6,7 @@
 //
 // This function is intentionally permissive about CORS and does not require auth.
 
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { createClient } from "../_shared/supabase-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -215,7 +215,7 @@ async function hashIp(ip: string): Promise<string> {
 }
 
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
-const SAFE_FILTER_RE = /^[A-Za-z0-9_\-]+$/;
+const SAFE_FILTER_RE = /^[A-Za-z0-9_-]+$/;
 
 function parseOrder(raw: string | null, def: string, allowed: string[]): { col: string; asc: boolean } {
   const value = raw && raw.includes(".") ? raw : def;

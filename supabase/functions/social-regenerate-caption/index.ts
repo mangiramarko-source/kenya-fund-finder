@@ -1,5 +1,5 @@
 // Regenerates the caption + hashtags for an existing social_posts row.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "../_shared/supabase-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -28,6 +28,8 @@ const SAFER: Record<string, string> = {
 };
 const DISCLAIMER_LONG = "Information is for educational purposes only. Confirm details with the fund provider before investing.";
 const DISCLAIMER_SHORT = "Educational only. Confirm with provider.";
+
+type FundReference = { name: string; annual_yield: number | null; yield_unit: string | null };
 
 function sanitize(t: string) {
   let o = t;
@@ -63,9 +65,11 @@ Deno.serve(async (req) => {
     if (!post) return json({ error: "Post not found" }, 404);
     const { data: tpl } = await admin.from("social_post_templates").select("*").eq("id", post.template_id).maybeSingle();
 
-    const funds = post.source_data?.funds ?? [];
+    const funds = Array.isArray(post.source_data?.funds)
+      ? post.source_data.funds as FundReference[]
+      : [];
     const charLimit = post.platform === "x" ? 240 : post.platform === "instagram" ? 2000 : 1500;
-    const fundLines = funds.map((f: any) => `${f.name} ${f.annual_yield}${f.yield_unit === "%" ? "%" : " " + f.yield_unit}`).join("\n");
+    const fundLines = funds.map((fund) => `${fund.name} ${fund.annual_yield}${fund.yield_unit === "%" ? "%" : " " + fund.yield_unit}`).join("\n");
 
     const userPrompt = [
       `Rewrite a fresh ${post.platform} caption for content type "${post.content_type}".`,

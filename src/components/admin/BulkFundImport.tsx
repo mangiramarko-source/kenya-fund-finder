@@ -88,7 +88,7 @@ export function parseMarkdownData(text: string): ParsedFund[] {
     }
 
     // Skip separator lines and header rows
-    if (!line.startsWith("|") || /^[\|\s\-:]+$/.test(line)) continue;
+    if (!line.startsWith("|") || /^[|\s:-]+$/.test(line)) continue;
 
     const cells = line.split("|").map((c) => c.trim()).filter(Boolean);
     if (cells.length < 4) continue;

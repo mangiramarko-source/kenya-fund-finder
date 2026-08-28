@@ -30,7 +30,6 @@ export async function generateGeminiEducationalAnswer(
     });
 
     if (error) {
-      // eslint-disable-next-line no-console
       console.warn("[ai-lab] gemini invoke error", error.message);
       return { ok: false, reason: "invoke_error" };
     }
@@ -42,7 +41,6 @@ export async function generateGeminiEducationalAnswer(
 
     const validation = validateGeminiOutput(payload.text);
     if (!validation.ok) {
-      // eslint-disable-next-line no-console
       console.warn("[ai-lab] gemini output rejected:", validation.reason);
       return { ok: false, reason: `validation:${validation.reason}` };
     }
@@ -50,7 +48,6 @@ export async function generateGeminiEducationalAnswer(
     const markdown = `${validation.text.trim()}\n\n_${STANDARD_DISCLAIMER}_`;
     return { ok: true, markdown };
   } catch (err) {
-    // eslint-disable-next-line no-console
     console.warn("[ai-lab] gemini fetch failed", err);
     return { ok: false, reason: "network_error" };
   }

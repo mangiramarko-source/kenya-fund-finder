@@ -1,10 +1,16 @@
 // Phase 2.1 — publish a social_posts row to Facebook Page.
 // Admin-only. Honors test_mode on the token row: when true, validates everything
 // and writes a posted_at + facebook_post_id="TEST-..." without calling Graph.
-import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "../_shared/supabase-client.ts";
+import { corsHeaders } from "../_shared/cors-headers.ts";
 
 const GRAPH_VERSION = Deno.env.get("META_GRAPH_API_VERSION") ?? "v21.0";
+
+type FacebookPublishResponse = {
+  id?: string;
+  post_id?: string;
+  [key: string]: unknown;
+};
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
@@ -90,7 +96,7 @@ Deno.serve(async (req) => {
 
     // 6. Publish (or simulate)
     let fbPostId: string | null = null;
-    let fbResponse: unknown = null;
+    let fbResponse: FacebookPublishResponse | null = null;
     if (testMode) {
       fbPostId = `TEST-${crypto.randomUUID()}`;
       fbResponse = { test_mode: true, would_post: { message, image: imageUrl, page_id: acct.handle } };
@@ -114,7 +120,7 @@ Deno.serve(async (req) => {
               access_token: tok.page_access_token,
             }),
           });
-      fbResponse = await graphRes.json();
+      fbResponse = await graphRes.json() as FacebookPublishResponse;
       if (!graphRes.ok) {
         await admin.from("social_posts").update({
           status: "failed",
@@ -122,11 +128,11 @@ Deno.serve(async (req) => {
         }).eq("id", post_id);
         await admin.from("social_post_analytics").insert({
           post_id, event: "failed", platform: "facebook",
-          content_type: post.content_type, meta: fbResponse as any,
+          content_type: post.content_type, meta: fbResponse,
         });
         return j({ error: "Facebook publish failed", details: fbResponse }, 502);
       }
-      fbPostId = (fbResponse as any).post_id ?? (fbResponse as any).id ?? null;
+      fbPostId = fbResponse.post_id ?? fbResponse.id ?? null;
     }
 
     // 7. Mark posted
@@ -140,7 +146,7 @@ Deno.serve(async (req) => {
     await admin.from("social_post_analytics").insert({
       post_id, event: "posted", platform: "facebook",
       content_type: post.content_type,
-      meta: { facebook_post_id: fbPostId, test_mode: testMode } as any,
+      meta: { facebook_post_id: fbPostId, test_mode: testMode },
     });
 
     return j({ ok: true, test_mode: testMode, facebook_post_id: fbPostId, response: fbResponse });

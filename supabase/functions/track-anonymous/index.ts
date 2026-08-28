@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "../_shared/supabase-client.ts";
 
 const allowedOrigins = [
   "https://kenya-fund-finder.lovable.app",
@@ -133,7 +133,7 @@ Deno.serve(async (req) => {
       });
     }
 
-    const sanitizedPath = page_path.replace(/[^a-zA-Z0-9\-_\/\.]/g, "").slice(0, 500);
+    const sanitizedPath = page_path.replace(/[^a-zA-Z0-9_/.-]/g, "").slice(0, 500);
 
     if (type === "page_view") {
       const { error } = await supabaseAdmin.from("page_views").insert({

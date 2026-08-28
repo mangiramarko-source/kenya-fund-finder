@@ -845,7 +845,7 @@ async function resolveMmfYieldFilter(prompt: string): Promise<WebsiteLookupScena
   const funds = await fetchAllFunds();
   const mmfFunds = funds.filter((fund) => fund.name && isMoneyMarketFund(fund));
 
-  let matching = mmfFunds.filter((fund) => {
+  const matching = mmfFunds.filter((fund) => {
     const yieldPct = num(fund.annual_yield);
     return yieldPct != null && matchesYieldFilter(yieldPct, intent);
   });

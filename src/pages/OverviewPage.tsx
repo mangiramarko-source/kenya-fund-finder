@@ -1277,7 +1277,9 @@ const OverviewPage = () => {
     try {
       const saved = localStorage.getItem("kf_local_watchlist");
       if (saved) localItems = JSON.parse(saved);
-    } catch {}
+    } catch {
+      // Ignore malformed local watchlist data and start from an empty list.
+    }
 
     if (!user) {
       setWatchlist(localItems);

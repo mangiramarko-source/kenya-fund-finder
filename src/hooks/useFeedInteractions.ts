@@ -173,7 +173,9 @@ export function useFeedInteractions() {
   useEffect(() => {
     try {
       localStorage.setItem("kf_user_likes", JSON.stringify(userLikes));
-    } catch {}
+    } catch {
+      // Likes remain available in memory when local storage is unavailable.
+    }
   }, [userLikes]);
 
   const toggleLike = useCallback(async (itemId: string, defaultLikes: number = 0) => {

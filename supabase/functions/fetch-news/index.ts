@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "../_shared/supabase-client.ts";
 import { parseFeed } from "https://deno.land/x/rss@0.5.8/mod.ts";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
 import {
@@ -429,7 +429,9 @@ function resolveTrustedPublisher(rawSource: string, link: string): string | null
     for (const [key, canonical] of Object.entries(TRUSTED_PUBLISHERS)) {
       if (host.includes(key)) return canonical;
     }
-  } catch {}
+  } catch {
+    // Invalid article URLs are treated as untrusted publishers.
+  }
   return null;
 }
 
@@ -647,7 +649,7 @@ Deno.serve(async (req) => {
 
     const aiKey = Deno.env.get("GROQ_API_KEY") || Deno.env.get("GEMINI_API_KEY");
     let rewrittenCount = 0;
-    let rewrites: Array<RewrittenArticle | null> = [];
+    const rewrites: Array<RewrittenArticle | null> = [];
 
     if (aiKey) {
       for (const a of processingArticles) {

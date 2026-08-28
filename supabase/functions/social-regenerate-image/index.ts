@@ -1,5 +1,5 @@
 // Regenerates the image for an existing social_posts row.
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "../_shared/supabase-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -12,6 +12,8 @@ const LOVABLE_IMG_URL = "https://ai.gateway.lovable.dev/v1/images/generations";
 const PLATFORM_SIZE: Record<string, string> = {
   instagram: "1024x1024", facebook: "1536x1024", x: "1536x1024",
 };
+
+type FundReference = { name: string; annual_yield: number | null; yield_unit: string | null };
 
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
@@ -42,12 +44,14 @@ Deno.serve(async (req) => {
     if (!post) return json({ error: "Post not found" }, 404);
     const { data: tpl } = await admin.from("social_post_templates").select("image_prompt").eq("id", post.template_id).maybeSingle();
 
-    const funds = post.source_data?.funds ?? [];
+    const funds = Array.isArray(post.source_data?.funds)
+      ? post.source_data.funds as FundReference[]
+      : [];
     const prompt = customPrompt ?? [
       tpl?.image_prompt ?? "",
       `Headline: "${post.image_headline ?? ""}"`,
       post.image_subtext ? `Subtext: "${post.image_subtext}"` : "",
-      funds.length ? `Funds: ${funds.map((f: any) => `${f.name} ${f.annual_yield}${f.yield_unit === "%" ? "%" : " " + f.yield_unit}`).join(", ")}` : "",
+      funds.length ? `Funds: ${funds.map((fund) => `${fund.name} ${fund.annual_yield}${fund.yield_unit === "%" ? "%" : " " + fund.yield_unit}`).join(", ")}` : "",
       `Date: ${post.data_as_of ?? ""}`,
       `Bottom: kenyafundfinder.com`,
       `Tiny disclaimer line: "Educational only. Confirm with provider."`,

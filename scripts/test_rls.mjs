@@ -1,27 +1,80 @@
-// scripts/test_rls.mjs
+import { existsSync, readFileSync } from "node:fs";
+import { dirname, resolve } from "node:path";
+import { fileURLToPath } from "node:url";
 import { createClient } from "@supabase/supabase-js";
 
-const SUPABASE_URL = "https://caawgzuofnujrznwbuxk.supabase.co";
-const SUPABASE_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImNhYXdnenVvZm51anJ6bndidXhrIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzMjI0ODYsImV4cCI6MjA5MTg5ODQ4Nn0.Ci7AcNBlIa4LhINAEvpmeDjLQfxWUxcROd8q5hNAQnA";
+const root = resolve(dirname(fileURLToPath(import.meta.url)), "..");
 
-const supabase = createClient(SUPABASE_URL, SUPABASE_ANON);
+function loadEnvFile() {
+  const path = resolve(root, ".env");
+  if (!existsSync(path)) return;
 
-async function testRLS() {
-  console.log("--- commodity_price_history (base table) ---");
-  const baseRes = await supabase.from("commodity_price_history").select("id").limit(1);
-  console.log("Count/Error:", baseRes.data?.length, baseRes.error?.message);
+  for (const rawLine of readFileSync(path, "utf8").split("\n")) {
+    const line = rawLine.trim();
+    if (!line || line.startsWith("#")) continue;
+    const separator = line.indexOf("=");
+    if (separator === -1) continue;
 
-  console.log("\n--- commodity_price_history_public (view) ---");
-  const viewRes = await supabase.from("commodity_price_history_public").select("id").limit(1);
-  console.log("Count/Error:", viewRes.data?.length, viewRes.error?.message);
-
-  console.log("\n--- exchange_rate_history (base table) ---");
-  const rateBase = await supabase.from("exchange_rate_history").select("id").limit(1);
-  console.log("Count/Error:", rateBase.data?.length, rateBase.error?.message);
-
-  console.log("\n--- exchange_rate_history_public (view) ---");
-  const rateView = await supabase.from("exchange_rate_history_public").select("id").limit(1);
-  console.log("Count/Error:", rateView.data?.length, rateView.error?.message);
+    const name = line.slice(0, separator).trim();
+    let value = line.slice(separator + 1).trim();
+    if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+      value = value.slice(1, -1);
+    }
+    if (!process.env[name]) process.env[name] = value;
+  }
 }
 
-testRLS();
+loadEnvFile();
+
+const supabaseUrl = process.env.VITE_SUPABASE_URL || process.env.SUPABASE_URL;
+const publishableKey =
+  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
+  process.env.SUPABASE_PUBLISHABLE_KEY ||
+  process.env.SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !publishableKey) {
+  console.error("Missing VITE_SUPABASE_URL and VITE_SUPABASE_PUBLISHABLE_KEY (or compatible aliases).");
+  process.exit(1);
+}
+
+const supabase = createClient(supabaseUrl, publishableKey, {
+  auth: { persistSession: false, autoRefreshToken: false },
+});
+
+const protectedTables = [
+  { name: "profiles", column: "user_id" },
+  { name: "user_roles", column: "user_id" },
+  { name: "communication_preferences", column: "user_id" },
+  { name: "price_alerts", column: "user_id" },
+];
+
+const publicMarketRelations = [
+  "commodity_price_history",
+  "commodity_price_history_public",
+  "exchange_rate_history",
+  "exchange_rate_history_public",
+];
+
+let failed = false;
+
+for (const { name, column } of protectedTables) {
+  const protectedResult = await supabase.from(name).select(column).limit(1);
+  const leakedRows = protectedResult.data?.length ?? 0;
+  const protectedOk = Boolean(protectedResult.error) || leakedRows === 0;
+  console.log(`${protectedOk ? "PASS" : "FAIL"} protected ${name}`);
+  if (!protectedOk) failed = true;
+}
+
+for (const name of publicMarketRelations) {
+  const publicResult = await supabase.from(name).select("id").limit(1);
+  const publicOk = !publicResult.error;
+  console.log(`${publicOk ? "PASS" : "FAIL"} readable ${name}`);
+  if (!publicOk) failed = true;
+}
+
+if (failed) {
+  console.error("RLS verification failed.");
+  process.exit(1);
+}
+
+console.log("RLS verification passed.");

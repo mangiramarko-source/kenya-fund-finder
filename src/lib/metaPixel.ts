@@ -73,7 +73,7 @@ export function initMetaPixel(pixelIdOverride?: string): void {
   if (!window.fbq) {
     const n = (window.fbq = function (...args: any[]) {
       if (n.callMethod) {
-        n.callMethod.apply(n, args);
+        n.callMethod(...args);
       } else {
         n.queue.push(args);
       }

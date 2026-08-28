@@ -1,6 +1,7 @@
-import webpush from "npm:web-push@3.6.7";
+import webpush from "npm:web-push";
+import type { SupabaseClient } from "./supabase-client.ts";
 
-type AdminClient = any;
+type AdminClient = SupabaseClient;
 
 type PushNotification = {
   event_key: string;

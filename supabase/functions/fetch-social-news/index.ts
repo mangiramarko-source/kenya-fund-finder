@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
+import { createClient } from "../_shared/supabase-client.ts";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
 import {
   getSupabasePublishableKey,
@@ -58,6 +58,16 @@ const AI_MODEL = "llama-3.3-70b-versatile";
 interface RewrittenPost {
   summary: string;
   content: string;
+}
+
+interface ApifyPost {
+  url?: string;
+  full_text?: string;
+  text?: string;
+  created_at?: string;
+  author?: { name?: string };
+  user?: { name?: string };
+  media?: Array<{ media_url_https?: string }>;
 }
 
 async function rewriteSocialPost(
@@ -151,7 +161,7 @@ Rewrite this social media post into a professional analytical news update:
 }
 
 // ─── Apify Scraper ───────────────────────────────────────────────────────────
-async function fetchFromApify(apifyToken: string): Promise<any[]> {
+async function fetchFromApify(apifyToken: string): Promise<ApifyPost[]> {
   console.log("Triggering Apify Twitter Scraper...");
 
   // Use a long timeout — Apify sync runs can take up to 60s.
@@ -182,7 +192,8 @@ async function fetchFromApify(apifyToken: string): Promise<any[]> {
       return [];
     }
 
-    return await res.json();
+    const payload: unknown = await res.json();
+    return Array.isArray(payload) ? payload as ApifyPost[] : [];
   } catch (err) {
     clearTimeout(timeout);
     console.error("Apify fetch error:", err);
@@ -260,7 +271,7 @@ Deno.serve(async (req) => {
     }
 
     // 2) Filter for finance keywords
-    const financeRelevant = rawPosts.filter((post: any) => {
+    const financeRelevant = rawPosts.filter((post) => {
       const text = post.full_text || post.text || "";
       return text.length > 30 && matchesKeywords(text);
     });
@@ -275,8 +286,8 @@ Deno.serve(async (req) => {
 
     // 3) Batch-check which URLs already exist in DB
     const postUrls = financeRelevant
-      .map((p: any) => p.url)
-      .filter(Boolean);
+      .map((post) => post.url)
+      .filter((url): url is string => Boolean(url));
 
     const { data: existingRows } = await supabase
       .from("news_articles")
@@ -287,7 +298,10 @@ Deno.serve(async (req) => {
       (existingRows || []).map((r: { url: string }) => r.url),
     );
 
-    const newPosts = financeRelevant.filter((p: any) => p.url && !existingUrls.has(p.url));
+    const newPosts = financeRelevant.filter(
+      (post): post is ApifyPost & { url: string } =>
+        typeof post.url === "string" && !existingUrls.has(post.url),
+    );
     console.log(`${newPosts.length} new posts after dedup.`);
 
     if (newPosts.length === 0) {
@@ -307,7 +321,7 @@ Deno.serve(async (req) => {
     let newCount = 0;
 
     for (const post of batch) {
-      const text = post.full_text || post.text;
+      const text = post.full_text || post.text || "";
       const author = post.author?.name || post.user?.name || "Social Media";
       const sourceUrl = post.url;
       const createdAt = post.created_at;

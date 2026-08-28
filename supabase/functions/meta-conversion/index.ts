@@ -1,5 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "../_shared/supabase-client.ts";
 
 const ALLOWED_ORIGINS = [
   "https://kenya-fund-finder.lovable.app",
@@ -19,6 +19,27 @@ const ALLOWED_CAPI_EVENTS = [
 ] as const;
 
 type AllowedCapiEvent = (typeof ALLOWED_CAPI_EVENTS)[number];
+
+type MetaConversionBody = {
+  event_name?: string;
+  event_id?: string;
+  event_time?: number;
+  event_source_url?: string;
+  user_data?: {
+    client_ip_address?: string;
+    client_user_agent?: string;
+    em?: string;
+    ph?: string;
+    fbp?: string;
+    fbc?: string;
+  };
+  custom_data?: Record<string, unknown>;
+};
+
+type MetaApiResponse = {
+  events_received?: number;
+  error?: { message?: string };
+};
 
 // Replay Protection: In-memory TTL cache for event_id (10-minute window)
 const seenEventIds = new Map<string, number>();
@@ -168,9 +189,9 @@ serve(async (req: Request) => {
       );
     }
 
-    let body: any;
+    let body: MetaConversionBody;
     try {
-      body = JSON.parse(rawBody);
+      body = JSON.parse(rawBody) as MetaConversionBody;
     } catch {
       return new Response(
         JSON.stringify({ error: "Invalid JSON body" }),
@@ -250,7 +271,7 @@ serve(async (req: Request) => {
     const userAgent =
       req.headers.get("user-agent") || user_data?.client_user_agent || undefined;
 
-    const processedUserData: Record<string, any> = {
+    const processedUserData: Record<string, unknown> = {
       client_ip_address: clientIp,
       client_user_agent: userAgent,
       external_id: await sha256(authenticatedUserId),
@@ -300,7 +321,7 @@ serve(async (req: Request) => {
       body: JSON.stringify(eventPayload),
     });
 
-    const metaData = await metaRes.json();
+    const metaData = await metaRes.json() as MetaApiResponse;
 
     if (!metaRes.ok) {
       console.warn("[MetaCAPI] Meta Graph API returned error:", metaRes.status, metaData);
@@ -318,10 +339,10 @@ serve(async (req: Request) => {
       JSON.stringify({ ok: true, events_received: metaData?.events_received || 1 }),
       { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
-  } catch (err: any) {
+  } catch (err: unknown) {
     console.error("[MetaCAPI] Exception processing conversion event:", err);
     return new Response(
-      JSON.stringify({ ok: false, error: err?.message || "Internal error" }),
+      JSON.stringify({ ok: false, error: err instanceof Error ? err.message : "Internal error" }),
       { status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" } }
     );
   }

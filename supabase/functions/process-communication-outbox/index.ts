@@ -1,4 +1,4 @@
-import { createClient, type SupabaseClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
+import { createClient, type SupabaseClient } from "../_shared/supabase-client.ts";
 import {
   createUnsubscribeToken,
   escapeHtml,
@@ -38,7 +38,7 @@ interface ProviderRequest extends EmailContent {
   headers: Record<string, string>;
 }
 
-type ServiceClient = SupabaseClient<any, "public", "public", any, any>;
+type ServiceClient = SupabaseClient;
 
 function formatNumber(value: unknown, digits = 2): string {
   const number = Number(value);

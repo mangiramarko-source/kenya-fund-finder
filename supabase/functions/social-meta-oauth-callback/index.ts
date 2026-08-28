@@ -2,7 +2,7 @@
 // Validates state, exchanges code -> short-lived user token -> long-lived user token,
 // lists Pages, stores tokens server-side in social_account_tokens, then redirects
 // admin back to /admin/social/accounts. NO publishing yet (test_mode=true).
-import { createClient } from "npm:@supabase/supabase-js@2";
+import { createClient } from "../_shared/supabase-client.ts";
 
 const APP_ID = Deno.env.get("META_APP_ID")!;
 const APP_SECRET = Deno.env.get("META_APP_SECRET")!;
@@ -10,6 +10,15 @@ const REDIRECT_URI = Deno.env.get("META_OAUTH_REDIRECT_URI")!;
 const GRAPH_VERSION = Deno.env.get("META_GRAPH_API_VERSION") ?? "v21.0";
 const APP_RETURN_URL =
   Deno.env.get("META_APP_RETURN_URL") ?? "https://www.kenyafundfinder.com/admin";
+
+type TokenResponse = { access_token?: string; expires_in?: number };
+type ManagedPage = {
+  id: string;
+  name: string;
+  access_token: string;
+  instagram_business_account?: { id?: string };
+};
+type PagesResponse = { data?: ManagedPage[] };
 
 Deno.serve(async (req) => {
   const url = new URL(req.url);
@@ -44,7 +53,7 @@ Deno.serve(async (req) => {
         redirect_uri: REDIRECT_URI, code,
       }),
     );
-    const shortJson = await shortRes.json();
+    const shortJson = await shortRes.json() as TokenResponse;
     if (!shortRes.ok || !shortJson.access_token) {
       return redirect(`${APP_RETURN_URL}?meta_oauth=error&reason=token_exchange&msg=${enc(shortJson)}`);
     }
@@ -58,7 +67,7 @@ Deno.serve(async (req) => {
         fb_exchange_token: shortJson.access_token,
       }),
     );
-    const longJson = await longRes.json();
+    const longJson = await longRes.json() as TokenResponse;
     const userToken: string = longJson.access_token ?? shortJson.access_token;
     const expiresIn: number | undefined = longJson.expires_in;
 
@@ -66,8 +75,8 @@ Deno.serve(async (req) => {
     const pagesRes = await fetch(
       `https://graph.facebook.com/${GRAPH_VERSION}/me/accounts?fields=id,name,access_token,instagram_business_account&access_token=${userToken}`,
     );
-    const pagesJson = await pagesRes.json();
-    const pages: any[] = pagesJson.data ?? [];
+    const pagesJson = await pagesRes.json() as PagesResponse;
+    const pages = pagesJson.data ?? [];
 
     if (pages.length === 0) {
       return redirect(`${APP_RETURN_URL}/social/accounts?meta_oauth=no_pages`);
@@ -89,7 +98,7 @@ Deno.serve(async (req) => {
             connected_at: new Date().toISOString(),
             test_mode: true,
           },
-        }, { onConflict: "platform,handle" } as any)
+        }, { onConflict: "platform,handle" })
         .select("id").single();
       if (acctErr) continue;
 
@@ -104,7 +113,7 @@ Deno.serve(async (req) => {
         scopes: ["pages_show_list", "pages_manage_posts", "instagram_content_publish"],
         expires_at: expiresIn ? new Date(Date.now() + expiresIn * 1000).toISOString() : null,
         test_mode: true,
-      }, { onConflict: "account_id" } as any);
+      }, { onConflict: "account_id" });
     }
 
     return redirect(`${APP_RETURN_URL}/social/accounts?meta_oauth=connected&pages=${pages.length}`);

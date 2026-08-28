@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "../_shared/supabase-client.ts";
 
 const SITE_URL = "https://kenyafundfinder.com";
 const OG_IMAGE = "https://kenyafundfinder.com/og-image.png";
@@ -60,7 +60,7 @@ Deno.serve(async (req) => {
 
   let title = "Kenya Fund Finder – Compare Investment Funds";
   let description = "Daily-updated data on all Kenyan unit trusts. Compare yields, fees, and calculate returns.";
-  let pageUrl = `${SITE_URL}${path}`;
+  const pageUrl = `${SITE_URL}${path}`;
   let image = OG_IMAGE;
 
   // Check static pages first

@@ -37,6 +37,8 @@ import {
   type AutoRemapPlan,
 } from "@/lib/bulkFundAutoRemap";
 
+const SHOW_LEGACY_SYNC_PANEL = false;
+
 /** Per-row admin overrides on top of parsed data */
 interface RowEdit {
   daily?: number;
@@ -1284,7 +1286,7 @@ const BulkFundPasteVerify = () => {
       )}
 
       {/* Hidden legacy block (sync action panel) replaced by Step 3 above */}
-      {false && (
+      {SHOW_LEGACY_SYNC_PANEL && (
         <>
           {/* Sync action */}
           <div className="flex items-center justify-between gap-3 rounded-lg border border-border bg-card p-4">

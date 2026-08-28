@@ -54,38 +54,45 @@ if (!url || !key) {
 const supabase = createClient(url, key, { auth: { persistSession: false } });
 
 const TABLES = [
-  { name: "funds", note: "core" },
-  { name: "funds_public", note: "view" },
-  { name: "fund_yield_snapshots", note: "core" },
-  { name: "stocks", note: "core" },
-  { name: "stocks_public", note: "view" },
-  { name: "stock_price_history", note: "core" },
-  { name: "exchange_rates", note: "core" },
-  { name: "exchange_rates_public", note: "view" },
-  { name: "exchange_rate_history", note: "core" },
-  { name: "commodities", note: "core" },
-  { name: "commodities_public", note: "view" },
-  { name: "commodity_price_history", note: "core" },
-  { name: "news_articles", note: "core" },
-  { name: "news_articles_public", note: "view" },
-  { name: "site_pages", note: "core" },
-  { name: "site_pages_public", note: "view" },
-  { name: "social_links", note: "core" },
-  { name: "profiles", note: "auth" },
-  { name: "user_roles", note: "auth" },
+  { name: "funds", visibility: "protected" },
+  { name: "funds_public", visibility: "public" },
+  { name: "fund_yield_snapshots", visibility: "public" },
+  { name: "stocks", visibility: "protected" },
+  { name: "stocks_public", visibility: "public" },
+  { name: "stock_price_history", visibility: "public" },
+  { name: "exchange_rates", visibility: "protected" },
+  { name: "exchange_rates_public", visibility: "public" },
+  { name: "exchange_rate_history", visibility: "public" },
+  { name: "commodities", visibility: "protected" },
+  { name: "commodities_public", visibility: "public" },
+  { name: "commodity_price_history", visibility: "public" },
+  { name: "news_articles", visibility: "public" },
+  { name: "news_articles_public", visibility: "public" },
+  { name: "site_pages", visibility: "protected" },
+  { name: "site_pages_public", visibility: "public" },
+  { name: "social_links", visibility: "protected" },
+  { name: "profiles", visibility: "protected" },
+  { name: "user_roles", visibility: "protected" },
 ];
 
-async function countTable(name) {
+async function countTable(name, visibility) {
   const { count, error } = await supabase.from(name).select("*", { count: "exact", head: true });
+  if (visibility === "protected") {
+    if (error || count === null || count === 0) {
+      return { name, count: null, status: "protected", detail: "hidden by anonymous access" };
+    }
+    return { name, count, status: "visible", detail: "anonymous rows are readable" };
+  }
+
   if (error) return { name, count: null, status: "error", detail: error.message };
   return { name, count: count ?? 0, status: count === 0 ? "empty" : "ok", detail: "" };
 }
 
 async function main() {
   const results = [];
-  for (const { name, note } of TABLES) {
-    const row = await countTable(name);
-    results.push({ ...row, note });
+  for (const { name, visibility } of TABLES) {
+    const row = await countTable(name, visibility);
+    results.push({ ...row, visibility });
   }
 
   if (jsonOut) {
@@ -101,7 +108,7 @@ async function main() {
     const status = r.status === "error" ? `ERR: ${r.detail}` : r.status;
     console.log(`${r.name.padEnd(28)} ${countStr.padStart(8)}  ${status}`);
   }
-  console.log("\nRun npm run db:migrate-lovable:quick if core tables are empty.");
+  console.log("\nProtected tables intentionally do not expose anonymous row counts. Validate public views for application data health.");
 }
 
 main().catch((e) => {

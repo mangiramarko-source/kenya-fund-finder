@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "../_shared/supabase-client.ts";
 
 const allowedOrigins = [
   "https://kenya-fund-finder.lovable.app",
@@ -35,6 +35,11 @@ function getCorsHeaders(req: Request) {
 // In-memory dedup cache
 const recentEvents = new Map<string, number>();
 const DEDUP_WINDOW_MS = 15_000;
+
+type AdRow = {
+  start_date: string | null;
+  end_date: string | null;
+};
 
 function cleanDedup() {
   const cutoff = Date.now() - DEDUP_WINDOW_MS;
@@ -113,7 +118,7 @@ Deno.serve(async (req) => {
       }
 
       const today = new Date().toISOString().split("T")[0];
-      const active = (data || []).filter((a: any) => {
+      const active = (data || []).filter((a: AdRow) => {
         if (a.start_date && a.start_date > today) return false;
         if (a.end_date && a.end_date < today) return false;
         return true;
@@ -187,7 +192,7 @@ Deno.serve(async (req) => {
       recentEvents.set(dedupKey, Date.now());
 
       const sanitizedPath = page_path
-        ? page_path.replace(/[^a-zA-Z0-9\-_\/\.]/g, "").slice(0, 200)
+        ? page_path.replace(/[^a-zA-Z0-9_/.-]/g, "").slice(0, 200)
         : null;
 
       const { error } = await client.from("ad_events").insert({

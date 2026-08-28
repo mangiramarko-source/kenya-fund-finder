@@ -1,7 +1,7 @@
 // Phase 2 — Step 1: build the Facebook authorize URL.
 // Admin-only. Returns { authorize_url } so the client can window.location to it.
-import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "npm:@supabase/supabase-js@2/cors";
+import { createClient } from "../_shared/supabase-client.ts";
+import { corsHeaders } from "../_shared/cors-headers.ts";
 
 const APP_ID = Deno.env.get("META_APP_ID")!;
 const REDIRECT_URI = Deno.env.get("META_OAUTH_REDIRECT_URI")!;
@@ -76,6 +76,11 @@ function json(body: unknown, status = 200) {
     headers: { ...corsHeaders, "Content-Type": "application/json" },
   });
 }
-async function safeBody(req: Request): Promise<any> {
-  try { return await req.clone().json(); } catch { return null; }
+async function safeBody(req: Request): Promise<{ redirect_to?: string } | null> {
+  try {
+    const body: unknown = await req.clone().json();
+    return body && typeof body === "object" ? body as { redirect_to?: string } : null;
+  } catch {
+    return null;
+  }
 }

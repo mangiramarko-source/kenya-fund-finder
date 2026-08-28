@@ -1,5 +1,5 @@
 // Enrich a news article: scrape with Firecrawl + summarize with Lovable AI, then cache to DB
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "../_shared/supabase-client.ts";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
 import { getSupabasePublishableKey, getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
 

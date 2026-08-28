@@ -1,5 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.49.1";
-import { corsHeaders } from "https://esm.sh/@supabase/supabase-js@2.95.0/cors";
+import { createClient, type SupabaseClient } from "../_shared/supabase-client.ts";
+import { corsHeaders } from "../_shared/cors-headers.ts";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
 import { getSupabasePublishableKey, getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
 import {
@@ -32,6 +32,17 @@ interface NewsItem {
   summary: string;
   id: string;
 }
+
+type WatchlistRow = { item_id: string; item_type: string };
+type FundAssetRow = { name: string; annual_yield: number | null; daily_yield: number | null; yield_unit: string | null; fund_type: string | null };
+type StockAssetRow = { name: string; symbol: string; price: number | null; day_change_percent: number | null; sector: string | null };
+type CurrencyAssetRow = { currency_name: string; currency_code: string; rate: number | null; previous_rate: number | null };
+type SavedFundQueryRow = { id: string; name: string; annual_yield: number | null; yield_unit: string | null; updated_at: string | null };
+type FundSnapshotRow = { fund_id: string; annual_yield: number | null };
+type SavedStockQueryRow = { name: string; symbol: string; price: number | null; day_change: number | null; updated_at: string | null };
+type HoldingRow = { asset_type: string; units: number | null; buy_price: number | null; current_price: number | null; current_yield: number | null; buy_date: string };
+type TopFundQueryRow = { name: string; annual_yield: number | null; slug: string };
+type NewsQueryRow = { id: string; title: string; summary: string | null };
 
 // ── Helpers ──────────────────────────────────────────────────────────
 
@@ -222,16 +233,17 @@ function buildEmailHtml(
 
 // ── Per-user watchlist data fetching ─────────────────────────────────
 
-async function fetchUserWatchlistAssets(supabase: any, userId: string) {
+async function fetchUserWatchlistAssets(supabase: SupabaseClient, userId: string) {
   // Fetch all watchlist items for the user in one query
   const { data: watchlist } = await supabase
     .from("user_watchlist")
     .select("item_id, item_name, item_type")
     .eq("user_id", userId);
 
-  const fundIds = (watchlist || []).filter((w: any) => w.item_type === "fund").map((w: any) => w.item_id);
-  const stockIds = (watchlist || []).filter((w: any) => w.item_type === "stock").map((w: any) => w.item_id);
-  const currencyIds = (watchlist || []).filter((w: any) => w.item_type === "currency").map((w: any) => w.item_id);
+  const watchlistRows = (watchlist || []) as WatchlistRow[];
+  const fundIds = watchlistRows.filter((item) => item.item_type === "fund").map((item) => item.item_id);
+  const stockIds = watchlistRows.filter((item) => item.item_type === "stock").map((item) => item.item_id);
+  const currencyIds = watchlistRows.filter((item) => item.item_type === "currency").map((item) => item.item_id);
 
   let fundAssets: WatchlistAsset[] = [];
   let stockAssets: WatchlistAsset[] = [];
@@ -243,13 +255,13 @@ async function fetchUserWatchlistAssets(supabase: any, userId: string) {
       .from("funds")
       .select("name, annual_yield, daily_yield, yield_unit, fund_type")
       .in("id", fundIds);
-    fundAssets = (funds || []).map((f: any) => {
-      const suffix = f.yield_unit === "%" ? "%" : "";
-      const chg = formatChange(Number(f.daily_yield), suffix);
+    fundAssets = ((funds || []) as FundAssetRow[]).map((fund) => {
+      const suffix = fund.yield_unit === "%" ? "%" : "";
+      const chg = formatChange(Number(fund.daily_yield), suffix);
       return {
-        name: f.name,
-        category: (f.fund_type || "fund").replace(/_/g, " "),
-        value: `${f.annual_yield}${suffix}`,
+        name: fund.name,
+        category: (fund.fund_type || "fund").replace(/_/g, " "),
+        value: `${fund.annual_yield}${suffix}`,
         change: chg.text,
         changeColor: chg.color,
         changeBg: chg.bg,
@@ -263,12 +275,12 @@ async function fetchUserWatchlistAssets(supabase: any, userId: string) {
       .from("stocks")
       .select("name, symbol, price, day_change, day_change_percent, sector")
       .in("id", stockIds);
-    stockAssets = (stocks || []).map((s: any) => {
-      const chg = formatChange(Number(s.day_change_percent), "%");
+    stockAssets = ((stocks || []) as StockAssetRow[]).map((stock) => {
+      const chg = formatChange(Number(stock.day_change_percent), "%");
       return {
-        name: s.name,
-        category: `${s.symbol} · ${s.sector}`,
-        value: `KES ${Number(s.price).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
+        name: stock.name,
+        category: `${stock.symbol} · ${stock.sector}`,
+        value: `KES ${Number(stock.price).toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`,
         change: chg.text,
         changeColor: chg.color,
         changeBg: chg.bg,
@@ -282,14 +294,14 @@ async function fetchUserWatchlistAssets(supabase: any, userId: string) {
       .from("exchange_rates")
       .select("currency_name, currency_code, rate, previous_rate")
       .in("id", currencyIds);
-    currencyAssets = (currencies || []).map((c: any) => {
-      const rate = Number(c.rate);
-      const prev = Number(c.previous_rate || rate);
+    currencyAssets = ((currencies || []) as CurrencyAssetRow[]).map((currency) => {
+      const rate = Number(currency.rate);
+      const prev = Number(currency.previous_rate || rate);
       const pctChange = prev !== 0 ? ((rate - prev) / prev) * 100 : 0;
       const chg = formatChange(pctChange, "%");
       return {
-        name: c.currency_name,
-        category: `${c.currency_code}/KES`,
+        name: currency.currency_name,
+        category: `${currency.currency_code}/KES`,
         value: `KES ${rate.toFixed(2)}`,
         change: chg.text,
         changeColor: chg.color,
@@ -303,7 +315,7 @@ async function fetchUserWatchlistAssets(supabase: any, userId: string) {
 
 // ── Per-user retention data (saved funds + saved stocks + portfolio) ─
 
-async function fetchUserRetentionData(supabase: any, userId: string): Promise<{
+async function fetchUserRetentionData(supabase: SupabaseClient, userId: string): Promise<{
   savedFunds: SavedFundRow[];
   savedStocks: SavedStockRow[];
   portfolio: PortfolioSummary | null;
@@ -313,8 +325,9 @@ async function fetchUserRetentionData(supabase: any, userId: string): Promise<{
     .select("item_id, item_type")
     .eq("user_id", userId);
 
-  const fundIds = (watchlist || []).filter((w: any) => w.item_type === "fund").map((w: any) => w.item_id);
-  const stockIds = (watchlist || []).filter((w: any) => w.item_type === "stock").map((w: any) => w.item_id);
+  const watchlistRows = (watchlist || []) as WatchlistRow[];
+  const fundIds = watchlistRows.filter((item) => item.item_type === "fund").map((item) => item.item_id);
+  const stockIds = watchlistRows.filter((item) => item.item_type === "stock").map((item) => item.item_id);
 
   let savedFunds: SavedFundRow[] = [];
   if (fundIds.length > 0) {
@@ -322,7 +335,7 @@ async function fetchUserRetentionData(supabase: any, userId: string): Promise<{
       .from("funds")
       .select("id, name, annual_yield, yield_unit, updated_at")
       .in("id", fundIds);
-    const fundList = funds || [];
+    const fundList = (funds || []) as SavedFundQueryRow[];
     const { data: snaps } = await supabase
       .from("fund_yield_snapshots")
       .select("fund_id, annual_yield, snapshot_date")
@@ -330,18 +343,18 @@ async function fetchUserRetentionData(supabase: any, userId: string): Promise<{
       .order("snapshot_date", { ascending: false })
       .limit(fundList.length * 5);
     const prevByFund = new Map<string, number>();
-    (snaps || []).forEach((s: any) => {
-      if (!prevByFund.has(s.fund_id)) prevByFund.set(s.fund_id, Number(s.annual_yield));
+    ((snaps || []) as FundSnapshotRow[]).forEach((snapshot) => {
+      if (!prevByFund.has(snapshot.fund_id)) prevByFund.set(snapshot.fund_id, Number(snapshot.annual_yield));
     });
-    savedFunds = fundList.map((f: any) => {
-      const prev = prevByFund.get(f.id);
-      const yc = prev != null ? Number(f.annual_yield) - prev : null;
+    savedFunds = fundList.map((fund) => {
+      const prev = prevByFund.get(fund.id);
+      const yc = prev != null ? Number(fund.annual_yield) - prev : null;
       return {
-        name: f.name,
-        latest_yield: Number(f.annual_yield) || 0,
-        yield_unit: f.yield_unit || "%",
+        name: fund.name,
+        latest_yield: Number(fund.annual_yield) || 0,
+        yield_unit: fund.yield_unit || "%",
         yield_change: yc,
-        last_updated: f.updated_at || null,
+        last_updated: fund.updated_at || null,
       };
     });
   }
@@ -352,12 +365,12 @@ async function fetchUserRetentionData(supabase: any, userId: string): Promise<{
       .from("stocks")
       .select("id, name, symbol, price, day_change, updated_at")
       .in("id", stockIds);
-    savedStocks = (stocks || []).map((s: any) => ({
-      name: s.name,
-      symbol: s.symbol,
-      price: Number(s.price) || 0,
-      price_change: s.day_change != null ? Number(s.day_change) : null,
-      last_updated: s.updated_at || null,
+    savedStocks = ((stocks || []) as SavedStockQueryRow[]).map((stock) => ({
+      name: stock.name,
+      symbol: stock.symbol,
+      price: Number(stock.price) || 0,
+      price_change: stock.day_change != null ? Number(stock.day_change) : null,
+      last_updated: stock.updated_at || null,
     }));
   }
 
@@ -367,25 +380,25 @@ async function fetchUserRetentionData(supabase: any, userId: string): Promise<{
     .eq("user_id", userId);
 
   let portfolio: PortfolioSummary | null = null;
-  const list = holdings || [];
+  const list = (holdings || []) as HoldingRow[];
   if (list.length > 0) {
-    const valueOf = (h: any): number => {
-      if (h.asset_type === "mmf") {
-        const days = Math.max(0, Math.floor((Date.now() - new Date(h.buy_date).getTime()) / 86400000));
-        const principal = Number(h.units) * Number(h.buy_price);
-        const rate = Number(h.current_yield) || 15;
+    const valueOf = (holding: HoldingRow): number => {
+      if (holding.asset_type === "mmf") {
+        const days = Math.max(0, Math.floor((Date.now() - new Date(holding.buy_date).getTime()) / 86400000));
+        const principal = Number(holding.units) * Number(holding.buy_price);
+        const rate = Number(holding.current_yield) || 15;
         return principal * Math.pow(1 + rate / 100 / 365, days);
       }
-      return Number(h.units) * Number(h.current_price);
+      return Number(holding.units) * Number(holding.current_price);
     };
-    const total = list.reduce((s: number, h: any) => s + valueOf(h), 0);
+    const total = list.reduce((sum, holding) => sum + valueOf(holding), 0);
     if (total > 0) {
       let yieldSum = 0;
       let yieldValueSum = 0;
-      list.forEach((h: any) => {
-        if (h.current_yield != null && Number(h.current_yield) > 0) {
-          const v = valueOf(h);
-          yieldSum += v * Number(h.current_yield);
+      list.forEach((holding) => {
+        if (holding.current_yield != null && Number(holding.current_yield) > 0) {
+          const v = valueOf(holding);
+          yieldSum += v * Number(holding.current_yield);
           yieldValueSum += v;
         }
       });
@@ -397,9 +410,9 @@ async function fetchUserRetentionData(supabase: any, userId: string): Promise<{
         fixed_income: "Fixed Income", commodity: "Commodities",
       };
       const buckets = new Map<string, number>();
-      list.forEach((h: any) => {
-        const label = ALLOC_LABELS[h.asset_type] || "Other";
-        buckets.set(label, (buckets.get(label) || 0) + valueOf(h));
+      list.forEach((holding) => {
+        const label = ALLOC_LABELS[holding.asset_type] || "Other";
+        buckets.set(label, (buckets.get(label) || 0) + valueOf(holding));
       });
       const allocation = Array.from(buckets.entries()).map(([label, value]) => ({
         label, value, pct: (value / total) * 100,
@@ -499,15 +512,15 @@ Deno.serve(async (req) => {
         .limit(3),
     ]);
 
-    const topFunds: TopFund[] = (topFundsRaw || []).map((f: any) => ({
-      name: f.name,
-      annual_yield: Number(f.annual_yield),
-      slug: f.slug,
+    const topFunds: TopFund[] = ((topFundsRaw || []) as TopFundQueryRow[]).map((fund) => ({
+      name: fund.name,
+      annual_yield: Number(fund.annual_yield),
+      slug: fund.slug,
     }));
-    const news: NewsItem[] = (latestNewsRaw || []).map((n: any) => ({
-      title: n.title,
-      summary: n.summary,
-      id: n.id,
+    const news: NewsItem[] = ((latestNewsRaw || []) as NewsQueryRow[]).map((article) => ({
+      title: article.title,
+      summary: article.summary || "",
+      id: article.id,
     }));
 
     // Determine target users
