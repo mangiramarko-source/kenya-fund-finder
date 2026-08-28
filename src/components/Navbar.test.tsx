@@ -1,9 +1,11 @@
-import { describe, it, expect, vi } from "vitest";
+import { afterEach, describe, it, expect, vi } from "vitest";
 import React from "react";
 import { render, screen, fireEvent } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Navbar from "./Navbar";
 import DesktopTopBar from "./DesktopTopBar";
+
+const notificationState = vi.hoisted(() => ({ unreadCount: 0 }));
 
 // Mock Supabase
 vi.mock("@/integrations/supabase/client", () => ({
@@ -30,10 +32,12 @@ vi.mock("@/hooks/useAuth", () => ({
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn(), trackPageView: vi.fn() }));
 
 vi.mock("@/components/alerts/NotificationProvider", () => ({
-  useNotifications: () => ({ notifications: [], unreadCount: 0, markAllRead: vi.fn(), deleteNotification: vi.fn(), openNotification: vi.fn() }),
+  useNotifications: () => ({ notifications: [], unreadCount: notificationState.unreadCount, markAllRead: vi.fn(), deleteNotification: vi.fn(), openNotification: vi.fn() }),
 }));
 
 describe("Mobile & Desktop Navigation Verification", () => {
+  afterEach(() => { notificationState.unreadCount = 0; });
+
   it("keeps mobile notifications in the navigation sidebar", () => {
     render(
       <MemoryRouter>
@@ -46,6 +50,7 @@ describe("Mobile & Desktop Navigation Verification", () => {
     // Open mobile sidebar drawer
     const menuButtons = screen.getAllByRole("button", { name: /Open menu/i });
     expect(menuButtons.length).toBeGreaterThanOrEqual(1);
+    expect(menuButtons[0]).not.toHaveClass("bg-destructive/10");
     fireEvent.click(menuButtons[0]);
 
     expect(screen.getByRole("button", { name: /notifications/i })).toBeInTheDocument();
@@ -64,6 +69,22 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.getByText("No notifications yet")).toBeInTheDocument();
 
     expect(screen.queryByRole("button", { name: /back to menu/i })).not.toBeInTheDocument();
+  });
+
+  it("shows a red unread count and glow on both mobile hamburger variants", () => {
+    notificationState.unreadCount = 12;
+    const { unmount } = render(<MemoryRouter><Navbar /></MemoryRouter>);
+
+    const standardMenu = screen.getByRole("button", { name: "Open menu, 12 unread notifications" });
+    expect(standardMenu).toHaveClass("bg-destructive/10", "motion-safe:animate-pulse");
+    expect(standardMenu).toHaveTextContent("9+");
+    unmount();
+
+    notificationState.unreadCount = 1;
+    render(<MemoryRouter initialEntries={["/alerts"]}><Navbar /></MemoryRouter>);
+    const minimalMenu = screen.getByRole("button", { name: "Open menu, 1 unread notification" });
+    expect(minimalMenu).toHaveClass("bg-destructive/10", "motion-safe:animate-pulse");
+    expect(minimalMenu).toHaveTextContent("1");
   });
 
   it("renders desktop navigation links cleanly on desktop bar", () => {

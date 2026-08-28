@@ -81,6 +81,22 @@ function SidebarSection({ title, children, isFirst }: { title: string; children:
   );
 }
 
+function MobileMenuButton({ unreadCount, onClick, rounded = "rounded-md" }: { unreadCount: number; onClick: () => void; rounded?: "rounded-md" | "rounded-full" }) {
+  const hasUnread = unreadCount > 0;
+  const count = unreadCount > 9 ? "9+" : unreadCount;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative grid h-9 w-9 place-items-center ${rounded} transition-colors ${hasUnread ? "bg-destructive/10 text-destructive shadow-[0_0_0_1px_hsl(var(--destructive)/0.4),0_0_16px_hsl(var(--destructive)/0.55)] motion-safe:animate-pulse" : "text-foreground hover:bg-muted"}`}
+      aria-label={hasUnread ? `Open menu, ${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}` : "Open menu"}
+    >
+      <Menu className="h-5 w-5" />
+      {hasUnread && <span aria-hidden="true" className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-destructive-foreground shadow-sm">{count}</span>}
+    </button>
+  );
+}
+
 // ─── Main Mobile Sidebar Drawer ──────────────────────────────────────────────
 function MobileSidebarDrawer({
   open,
@@ -330,6 +346,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     if (user) {
@@ -478,9 +495,7 @@ const Navbar = () => {
                 <span className="text-sm font-medium">Home</span>
               </Button>
             )}
-            <div className="flex items-center gap-1"><Button
-              variant="ghost" size="icon" onClick={() => setOpen(true)} className="rounded-full h-9 w-9 text-foreground hover:bg-muted" aria-label="Open menu"
-            ><Menu className="h-5 w-5" /></Button></div>
+            <div className="flex items-center gap-1"><MobileMenuButton unreadCount={unreadCount} onClick={() => setOpen(true)} rounded="rounded-full" /></div>
           </div>
         </header>
         <div className="md:hidden h-16" aria-hidden="true" />
@@ -506,7 +521,7 @@ const Navbar = () => {
           </Link>
 
           {/* Right: mobile menu */}
-          <div className="flex items-center gap-1"><button onClick={() => setOpen(true)} className="grid size-9 place-items-center rounded-md" aria-label="Open menu"><Menu className="size-5 text-foreground" /></button></div>
+          <div className="flex items-center gap-1"><MobileMenuButton unreadCount={unreadCount} onClick={() => setOpen(true)} /></div>
         </nav>
 
         {/* Full-width scrollable tab bar */}
