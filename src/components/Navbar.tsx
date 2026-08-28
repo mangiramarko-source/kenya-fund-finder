@@ -1,14 +1,16 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Menu, TrendingUp, BarChart3, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark, Calculator, ArrowLeft, GraduationCap, Sparkles, X, ChevronRight, Star, Wallet, BarChart2, DollarSign, Tag, BookOpen, CalendarDays, HelpCircle, Package } from "lucide-react";
+import { Menu, TrendingUp, BarChart3, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark, Calculator, ArrowLeft, GraduationCap, Sparkles, X, ChevronRight, Star, Wallet, BarChart2, DollarSign, Tag, BookOpen, CalendarDays, HelpCircle, Package, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
-import NotificationBell from "@/components/alerts/NotificationBell";
+import { NotificationRow } from "@/components/alerts/NotificationBell";
+import { useNotifications } from "@/components/alerts/NotificationProvider";
 import CurrencyTicker from "@/components/CurrencyTicker";
+import { ScrollArea } from "@/components/ui/scroll-area";
 
 const navLinks = [
   { to: "/", label: "Home", icon: BarChart3 },
@@ -79,6 +81,22 @@ function SidebarSection({ title, children, isFirst }: { title: string; children:
   );
 }
 
+function MobileMenuButton({ unreadCount, onClick, rounded = "rounded-md" }: { unreadCount: number; onClick: () => void; rounded?: "rounded-md" | "rounded-full" }) {
+  const hasUnread = unreadCount > 0;
+  const count = unreadCount > 9 ? "9+" : unreadCount;
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={`relative grid h-9 w-9 place-items-center ${rounded} transition-colors ${hasUnread ? "bg-destructive/10 text-destructive shadow-[0_0_0_1px_hsl(var(--destructive)/0.4),0_0_16px_hsl(var(--destructive)/0.55)] motion-safe:animate-pulse" : "text-foreground hover:bg-muted"}`}
+      aria-label={hasUnread ? `Open menu, ${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}` : "Open menu"}
+    >
+      <Menu className="h-5 w-5" />
+      {hasUnread && <span aria-hidden="true" className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-destructive-foreground shadow-sm">{count}</span>}
+    </button>
+  );
+}
+
 // ─── Main Mobile Sidebar Drawer ──────────────────────────────────────────────
 function MobileSidebarDrawer({
   open,
@@ -103,6 +121,13 @@ function MobileSidebarDrawer({
   signOut: () => Promise<void>;
   navigate: (to: string) => void;
 }) {
+  const { notifications, unreadCount, markAllRead, deleteNotification, openNotification } = useNotifications();
+  const [view, setView] = useState<"menu" | "notifications">("menu");
+
+  useEffect(() => {
+    if (!open) setView("menu");
+  }, [open]);
+
   // Watchlist count from localStorage
   const [watchlistCount, setWatchlistCount] = useState(0);
   useEffect(() => {
@@ -123,7 +148,15 @@ function MobileSidebarDrawer({
     };
   }, []);
 
-  const close = () => onClose();
+  const close = () => {
+    setView("menu");
+    onClose();
+  };
+
+  const openNotificationItem = (notification: typeof notifications[number]) => {
+    void openNotification(notification);
+    close();
+  };
 
   const initials = user
     ? (displayName || user.email || "U").slice(0, 2).toUpperCase()
@@ -134,8 +167,48 @@ function MobileSidebarDrawer({
       <SheetContent
         side="right"
         className="w-[88vw] sm:max-w-sm p-0 flex flex-col bg-background border-l border-border [&>button]:hidden"
-        aria-label="Navigation menu"
+        aria-label={view === "notifications" ? "Notifications" : "Navigation menu"}
       >
+        {view === "notifications" ? (
+          <>
+            <div className="flex items-center gap-2 border-b border-border/80 px-5 py-3">
+              <div className="min-w-0 flex-1">
+                <p className="text-base font-bold text-foreground">Notifications</p>
+                <p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alert${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p>
+              </div>
+              <button onClick={close} aria-label="Close menu" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 hover:bg-muted transition-colors">
+                <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
+              </button>
+            </div>
+            {unreadCount > 0 && (
+              <div className="border-b border-border/70 px-4 py-2">
+                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-emerald-600 hover:text-emerald-700" onClick={() => void markAllRead()}>
+                  <Check className="mr-1 h-3.5 w-3.5" /> Read all
+                </Button>
+              </div>
+            )}
+            <ScrollArea className="min-h-0 flex-1">
+              {notifications.length === 0 ? (
+                <div className="px-5 py-10 text-center">
+                  <Bell className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
+                  <p className="text-sm font-medium text-foreground">No notifications yet</p>
+                  <p className="mt-1 text-xs text-muted-foreground">Price alerts will appear here when they are triggered.</p>
+                </div>
+              ) : (
+                <div className="space-y-2 p-3">
+                  {notifications.map((notification) => (
+                    <NotificationRow
+                      key={notification.id}
+                      notification={notification}
+                      onOpen={() => openNotificationItem(notification)}
+                      onDelete={() => void deleteNotification(notification.id)}
+                    />
+                  ))}
+                </div>
+              )}
+            </ScrollArea>
+          </>
+        ) : <>
         {/* ── Header ── */}
         <div className="flex items-center gap-3.5 px-5 py-3 border-b border-border/80">
           {user ? (
@@ -171,6 +244,13 @@ function MobileSidebarDrawer({
 
         {/* ── Scrollable Content ── */}
         <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
+
+          <div className="pt-2 pb-1">
+            <SidebarRow icon={Bell} label="Notifications" onClick={() => {
+              if (user) setView("notifications");
+              else { close(); navigate("/auth"); }
+            }} badge={unreadCount || null} />
+          </div>
 
           <SidebarSection title="MARKETS" isFirst>
             <SidebarRow icon={TrendingUp}  label="NSE Stocks"     to="/stocks"      onClick={close} />
@@ -241,6 +321,7 @@ function MobileSidebarDrawer({
             </Link>
           )}
         </div>
+        </>}
       </SheetContent>
     </Sheet>
   );
@@ -265,6 +346,7 @@ const Navbar = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
+  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     if (user) {
@@ -413,9 +495,7 @@ const Navbar = () => {
                 <span className="text-sm font-medium">Home</span>
               </Button>
             )}
-            <div className="flex items-center gap-1"><NotificationBell /><Button
-              variant="ghost" size="icon" onClick={() => setOpen(true)} className="rounded-full h-9 w-9 text-foreground hover:bg-muted" aria-label="Open menu"
-            ><Menu className="h-5 w-5" /></Button></div>
+            <div className="flex items-center gap-1"><MobileMenuButton unreadCount={unreadCount} onClick={() => setOpen(true)} rounded="rounded-full" /></div>
           </div>
         </header>
         <div className="md:hidden h-16" aria-hidden="true" />
@@ -440,8 +520,8 @@ const Navbar = () => {
             KFF
           </Link>
 
-          {/* Right: Notifications and menu */}
-          <div className="flex items-center gap-1"><NotificationBell /><button onClick={() => setOpen(true)} className="grid size-9 place-items-center rounded-md" aria-label="Open menu"><Menu className="size-5 text-foreground" /></button></div>
+          {/* Right: mobile menu */}
+          <div className="flex items-center gap-1"><MobileMenuButton unreadCount={unreadCount} onClick={() => setOpen(true)} /></div>
         </nav>
 
         {/* Full-width scrollable tab bar */}
