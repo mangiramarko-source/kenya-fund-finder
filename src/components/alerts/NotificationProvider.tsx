@@ -1,8 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
-import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { LivePriceAlertCard } from "./LivePriceAlertCard";
+import { toast } from "sonner";
 
 export interface AppNotification {
   id: string;
@@ -13,6 +14,8 @@ export interface AppNotification {
   is_read: boolean;
   metadata: Record<string, unknown>;
   created_at: string;
+  assetName?: string;
+  assetSymbol?: string;
 }
 
 type NotificationContextValue = {
@@ -30,15 +33,28 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const { user } = useAuth();
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
+  const [livePriceAlert, setLivePriceAlert] = useState<AppNotification | null>(null);
   const seenIds = useRef(new Set<string>());
 
+  const hydrateNotifications = useCallback(async (items: AppNotification[]) => {
+    const stockIds = [...new Set(items.map((item) => item.type === "price_alert" ? item.metadata?.stock_id : null).filter((id): id is string => typeof id === "string"))];
+    if (!stockIds.length) return items;
+    const { data } = await supabase.from("stocks").select("id,name,symbol").in("id", stockIds);
+    const stocks = new Map((data ?? []).map((stock) => [stock.id, stock]));
+    return items.map((item) => {
+      const stockId = typeof item.metadata?.stock_id === "string" ? item.metadata.stock_id : null;
+      const stock = stockId ? stocks.get(stockId) : null;
+      return stock ? { ...item, assetName: stock.name, assetSymbol: stock.symbol } : item;
+    });
+  }, []);
+
   const fetchNotifications = useCallback(async () => {
-    if (!user) { setNotifications([]); seenIds.current.clear(); return; }
+    if (!user) { setNotifications([]); setLivePriceAlert(null); seenIds.current.clear(); return; }
     const { data } = await supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50);
-    const next = (data as AppNotification[] | null) ?? [];
+    const next = await hydrateNotifications((data as AppNotification[] | null) ?? []);
     setNotifications(next);
     next.forEach((notification) => seenIds.current.add(notification.id));
-  }, [user]);
+  }, [hydrateNotifications, user]);
 
   const markAsRead = useCallback(async (id: string) => {
     await supabase.from("notifications").update({ is_read: true }).eq("id", id);
@@ -76,10 +92,15 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           if (!id || seenIds.current.has(id)) return;
           const { data } = await supabase.from("notifications").select("*").eq("id", id).maybeSingle();
           if (!data) return;
-          const notification = data as AppNotification;
+          const [notification] = await hydrateNotifications([data as AppNotification]);
+          if (!notification) return;
           seenIds.current.add(notification.id);
           setNotifications((items) => [notification, ...items.filter((item) => item.id !== notification.id)]);
-          toast(notification.title, { description: notification.message, action: notification.type === "price_alert" ? { label: "View alert", onClick: () => void openNotification(notification) } : undefined });
+          if (notification.type === "price_alert") {
+            setLivePriceAlert(notification);
+          } else {
+            toast(notification.title, { description: notification.message });
+          }
         }).subscribe();
     };
     touchPresence();
@@ -91,14 +112,14 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       document.removeEventListener("visibilitychange", touchPresence);
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [fetchNotifications, openNotification, user]);
+  }, [fetchNotifications, hydrateNotifications, user]);
 
   const value = useMemo(() => ({
     notifications,
     unreadCount: notifications.filter((notification) => !notification.is_read).length,
     markAsRead, markAllRead, deleteNotification, openNotification,
   }), [deleteNotification, markAllRead, markAsRead, notifications, openNotification]);
-  return <NotificationContext.Provider value={value}>{children}</NotificationContext.Provider>;
+  return <NotificationContext.Provider value={value}>{children}<LivePriceAlertCard notification={livePriceAlert} onDismiss={() => setLivePriceAlert(null)} onView={(notification) => { setLivePriceAlert(null); void openNotification(notification); }} /></NotificationContext.Provider>;
 }
 
 export function useNotifications() {
