@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Check, ChevronRight, Trash2 } from "lucide-react";
+import { Bell, Check, ChevronRight, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { useAuth } from "@/hooks/useAuth";
@@ -46,21 +46,24 @@ const NotificationBell = () => {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="inset-x-0 bottom-0 max-h-[82dvh] rounded-t-[28px] border-t border-border bg-background p-0 sm:inset-y-0 sm:right-0 sm:left-auto sm:h-full sm:w-[400px] sm:max-h-none sm:max-w-[92vw] sm:rounded-none sm:border-l sm:border-t-0">
-        <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-muted sm:hidden" />
-        <div className="flex items-center justify-between border-b border-border px-5 py-4 pr-12">
-          <div><SheetTitle className="text-lg font-bold text-foreground">Notifications</SheetTitle><p className="mt-0.5 text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alert${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
+      <SheetContent side="right" className="inset-y-0 right-0 left-auto h-full w-[400px] max-w-[92vw] rounded-none border-l border-t-0 bg-background p-0 [&>button]:hidden">
+        <div className="flex items-center gap-2 border-b border-border/80 px-5 py-3">
+          <div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold text-foreground">Notifications</SheetTitle><p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alert${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
           {unreadCount > 0 && (
             <Button variant="ghost" size="sm" className="text-xs h-8 px-2 text-emerald-600 hover:text-emerald-700" onClick={markAllRead}>
               <Check className="h-3.5 w-3.5 mr-1" /> Read all
             </Button>
           )}
+          <button onClick={() => setOpen(false)} aria-label="Close notifications" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 hover:bg-muted transition-colors">
+            <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
+          </button>
         </div>
-        <ScrollArea className="h-[calc(82dvh-87px)] sm:h-[calc(100dvh-73px)]">
+        <ScrollArea className="h-[calc(100dvh-69px)]">
           {notifications.length === 0 ? (
-            <div className="py-8 text-center">
+            <div className="px-5 py-10 text-center">
               <Bell className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
-              <p className="text-xs text-muted-foreground">No notifications yet</p>
+              <p className="text-sm font-medium text-foreground">No notifications yet</p>
+              <p className="mt-1 text-xs text-muted-foreground">Price alerts will appear here when they are triggered.</p>
             </div>
           ) : (
             <div className="space-y-2 p-3">

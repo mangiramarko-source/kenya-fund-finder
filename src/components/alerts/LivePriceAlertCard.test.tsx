@@ -1,8 +1,21 @@
 import { fireEvent, render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
+import { MemoryRouter } from "react-router-dom";
 import { LivePriceAlertCard } from "./LivePriceAlertCard";
-import { NotificationRow } from "./NotificationBell";
+import NotificationBell, { NotificationRow } from "./NotificationBell";
 import type { AppNotification } from "./NotificationProvider";
+
+vi.mock("@/hooks/useAuth", () => ({
+  useAuth: () => ({ user: { id: "user-1", email: "test@example.com" } }),
+}));
+
+vi.mock("./NotificationProvider", async (importOriginal) => {
+  const actual = await importOriginal<typeof import("./NotificationProvider")>();
+  return {
+    ...actual,
+    useNotifications: () => ({ notifications: [], unreadCount: 0, markAllRead: vi.fn(), deleteNotification: vi.fn(), openNotification: vi.fn() }),
+  };
+});
 
 const notification: AppNotification = {
   id: "alert-1",
@@ -49,5 +62,18 @@ describe("NotificationRow", () => {
     expect(screen.getByText("Above KES 36.90")).toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: /View alert/ }));
     expect(onOpen).toHaveBeenCalledOnce();
+  });
+});
+
+describe("Desktop notification drawer", () => {
+  it("opens a dedicated right-side notification drawer and closes from its own header", () => {
+    render(<MemoryRouter><NotificationBell /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole("button", { name: /open notifications/i }));
+    expect(screen.getByRole("dialog", { name: "Notifications" })).toBeInTheDocument();
+    expect(screen.getByText("No notifications yet")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: "Close notifications" }));
+    expect(screen.queryByRole("dialog", { name: "Notifications" })).not.toBeInTheDocument();
   });
 });
