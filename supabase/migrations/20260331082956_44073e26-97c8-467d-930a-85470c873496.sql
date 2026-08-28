@@ -1,4 +1,12 @@
 -- Update all 45 stocks with March 30 & 31 data
+-- This was a production-data backfill. A fresh database has no matching stock
+-- rows, so guard the whole batch to keep migration replay deterministic.
+DO $$
+BEGIN
+IF EXISTS (
+  SELECT 1 FROM public.stocks
+  WHERE id = 'f6d69e25-6b73-4045-b118-d8988d3d7acf'
+) THEN
 INSERT INTO stock_price_history (stock_id, price, snapshot_date) VALUES ('f6d69e25-6b73-4045-b118-d8988d3d7acf', 28.67, '2026-03-30') ON CONFLICT (stock_id, snapshot_date) DO UPDATE SET price = EXCLUDED.price;
 INSERT INTO stock_price_history (stock_id, price, snapshot_date) VALUES ('f6d69e25-6b73-4045-b118-d8988d3d7acf', 28.4, '2026-03-31') ON CONFLICT (stock_id, snapshot_date) DO UPDATE SET price = EXCLUDED.price;
 UPDATE stocks SET price = 28.4, previous_price = 28.67, day_change = -0.27, day_change_percent = -0.94, updated_at = now() WHERE id = 'f6d69e25-6b73-4045-b118-d8988d3d7acf';
@@ -134,3 +142,6 @@ UPDATE stocks SET price = 139.81, previous_price = 140.59, day_change = -0.78, d
 INSERT INTO stock_price_history (stock_id, price, snapshot_date) VALUES ('3988125a-3910-47b1-8b20-295e2c092007', 44.51, '2026-03-30') ON CONFLICT (stock_id, snapshot_date) DO UPDATE SET price = EXCLUDED.price;
 INSERT INTO stock_price_history (stock_id, price, snapshot_date) VALUES ('3988125a-3910-47b1-8b20-295e2c092007', 44.11, '2026-03-31') ON CONFLICT (stock_id, snapshot_date) DO UPDATE SET price = EXCLUDED.price;
 UPDATE stocks SET price = 44.11, previous_price = 44.51, day_change = -0.4, day_change_percent = -0.9, updated_at = now() WHERE id = '3988125a-3910-47b1-8b20-295e2c092007';
+END IF;
+END
+$$;
