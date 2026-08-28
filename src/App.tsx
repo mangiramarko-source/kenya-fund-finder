@@ -60,6 +60,7 @@ const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const AiLabPage = lazy(() => import("./pages/AiLabPage"));
 const DevEmailPreviewPage = lazy(() => import("./pages/DevEmailPreviewPage"));
 const DevWelcomePreviewPage = lazy(() => import("./pages/DevWelcomePreviewPage"));
+const DevNotificationPreviewPage = lazy(() => import("./pages/DevNotificationPreviewPage"));
 const NotFound = lazy(() => import("./pages/NotFound"));
 
 
@@ -149,6 +150,9 @@ const App = () => (
                     )}
                     {import.meta.env.DEV && (
                       <Route path="/dev/welcome-preview" element={<DevWelcomePreviewPage />} />
+                    )}
+                    {import.meta.env.DEV && (
+                      <Route path="/dev/notification-preview" element={<DevNotificationPreviewPage />} />
                     )}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
