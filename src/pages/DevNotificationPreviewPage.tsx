@@ -5,6 +5,7 @@ import {
   Check,
   ChevronRight,
   Clock3,
+  Menu,
   Moon,
   RotateCcw,
   Sun,
@@ -92,7 +93,7 @@ export default function DevNotificationPreviewPage() {
             </div>
             <div className="mt-5 space-y-3 border-t border-border pt-4 text-xs leading-relaxed text-muted-foreground">
               <p><strong className="text-foreground">Live alert:</strong> centred, acknowledgement-required, and shown only for a new incoming price alert.</p>
-              <p><strong className="text-foreground">Drawer:</strong> right-side on desktop and a bottom sheet on mobile.</p>
+              <p><strong className="text-foreground">Drawer:</strong> right-side on desktop; on mobile, Notifications opens from the main navigation drawer.</p>
               <p><strong className="text-foreground">Dismiss:</strong> closes the live card but leaves the alert unread in the centre.</p>
             </div>
           </aside>
@@ -126,7 +127,7 @@ function PreviewFrame({
     <div className={`relative min-h-[670px] overflow-hidden bg-background text-foreground ${isMobile ? "min-h-[760px]" : ""}`}>
       <header className="flex h-16 items-center justify-between border-b border-border bg-background px-5">
         <div className="flex items-center gap-2.5"><span className="grid h-8 w-8 place-items-center rounded-xl bg-emerald-500 text-sm font-black text-slate-950">K</span><div><p className="text-sm font-bold leading-none">Kenya Fund Finder</p><p className="mt-1 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">Markets, made clear</p></div></div>
-        <button type="button" onClick={() => setDrawerOpen(true)} aria-label={`Open notifications, ${unreadCount} unread`} className="relative grid h-10 w-10 place-items-center rounded-xl border border-border bg-card transition hover:bg-muted"><Bell className="h-4 w-4" />{unreadCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-emerald-500 px-1 text-[10px] font-black text-slate-950">{unreadCount}</span>}</button>
+        {isMobile ? <button type="button" onClick={() => setDrawerOpen(true)} aria-label={`Open menu, ${unreadCount} unread`} className={`relative grid h-10 w-10 place-items-center rounded-xl transition ${unreadCount > 0 ? "bg-destructive/10 text-destructive shadow-[0_0_0_1px_hsl(var(--destructive)/0.4),0_0_16px_hsl(var(--destructive)/0.55)] motion-safe:animate-pulse" : "border border-border bg-card hover:bg-muted"}`}><Menu className="h-5 w-5" />{unreadCount > 0 && <span className="absolute -right-1.5 -top-1.5 flex h-5 min-w-5 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-black text-destructive-foreground shadow-sm">{unreadCount > 9 ? "9+" : unreadCount}</span>}</button> : <button type="button" onClick={() => setDrawerOpen(true)} aria-label={`Open notifications, ${unreadCount} unread`} className="relative grid h-10 w-10 place-items-center rounded-xl border border-border bg-card transition hover:bg-muted"><Bell className="h-4 w-4" />{unreadCount > 0 && <span className="absolute -right-1 -top-1 grid h-5 min-w-5 place-items-center rounded-full bg-emerald-500 px-1 text-[10px] font-black text-slate-950">{unreadCount}</span>}</button>}
       </header>
 
       <div className="p-5 sm:p-8">
