@@ -81,5 +81,13 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.getByText("Commodities")).toBeInTheDocument();
     expect(screen.getByText("Portfolio")).toBeInTheDocument();
     expect(screen.getByText("Calculator")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /open account menu/i }));
+    const drawer = screen.getByRole("dialog", { name: "User" });
+    expect(drawer).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Close account menu" })).toBeInTheDocument();
+    expect(screen.getAllByText("My Alerts").length).toBeGreaterThan(0);
+    fireEvent.click(screen.getByRole("button", { name: "Close account menu" }));
+    expect(screen.queryByRole("dialog", { name: "User" })).not.toBeInTheDocument();
   });
 });

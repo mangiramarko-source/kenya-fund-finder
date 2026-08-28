@@ -3,22 +3,34 @@ import { useState, useEffect, useRef } from "react";
 import { 
   Moon, Sun, User, LogOut, Shield, Settings, Bell, 
   TrendingUp, Sparkles, Briefcase, Calculator, GraduationCap, 
-  FileText, Scale 
+  FileText, Scale, ChevronRight, X
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { 
-  DropdownMenu, DropdownMenuContent, DropdownMenuItem, 
-  DropdownMenuSeparator, DropdownMenuTrigger, DropdownMenuGroup 
-} from "@/components/ui/dropdown-menu";
+import { Sheet, SheetContent, SheetTitle } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
 import NotificationBell from "@/components/alerts/NotificationBell";
 
+function AccountDrawerRow({ icon: Icon, label, tone, onClick }: { icon: React.ElementType; label: string; tone?: "accent" | "destructive"; onClick: () => void }) {
+  const iconClass = tone === "destructive" ? "text-destructive" : tone === "accent" ? "text-emerald-600" : "text-foreground/70";
+  const labelClass = tone === "destructive" ? "text-destructive" : tone === "accent" ? "text-emerald-600" : "text-foreground";
+  return <button type="button" onClick={onClick} className="flex w-full items-center gap-3.5 rounded-xl px-4 py-3 text-left transition-colors hover:bg-muted/60 active:bg-muted">
+    <Icon className={`h-5 w-5 shrink-0 stroke-[1.8] ${iconClass}`} />
+    <span className={`flex-1 text-[15px] font-bold tracking-tight ${labelClass}`}>{label}</span>
+    <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground/40 stroke-[2]" />
+  </button>;
+}
+
+function AccountDrawerSection({ title, children }: { title: string; children: React.ReactNode }) {
+  return <div className="pb-1 pt-3.5"><p className="px-4 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">{title}</p><div className="space-y-0.5">{children}</div></div>;
+}
+
 const DesktopTopBar = () => {
   const [avatarUrl, setAvatarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
+  const [accountOpen, setAccountOpen] = useState(false);
   const [dark, setDark] = useState(() => {
     if (typeof window === "undefined" || typeof localStorage === "undefined") return true;
     const saved = localStorage.getItem("theme");
@@ -59,6 +71,7 @@ const DesktopTopBar = () => {
   }, [user]);
 
   const handleSignOut = async () => { await signOut(); navigate("/"); };
+  const closeAndNavigate = (to: string) => { setAccountOpen(false); navigate(to); };
 
   const isActive = (path: string) => {
     if (path === "/") return location.pathname === "/";
@@ -133,100 +146,23 @@ const DesktopTopBar = () => {
 
         <NotificationBell />
 
-        {/* 4. User Profile / Tools Dropdown */}
+        {/* 4. User account drawer */}
         <div className="flex items-center ml-1 shrink-0">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <button
-                type="button"
-                className="rounded-full ring-2 ring-transparent hover:ring-border transition-all"
-                aria-label={user ? `Open account menu for ${displayName || user.email || "your account"}` : "Open account menu"}
-              >
-                <Avatar className="h-8 w-8 border border-border bg-muted">
-                  {user ? (
-                    <>
-                      <AvatarImage src={avatarUrl} alt={displayName || user.email || ""} />
-                      <AvatarFallback className="bg-accent text-accent-foreground text-xs font-semibold">
-                        {(displayName || user.email || "U").slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </>
-                  ) : (
-                    <AvatarFallback className="bg-transparent text-muted-foreground">
-                      <User className="h-4 w-4" />
-                    </AvatarFallback>
-                  )}
-                </Avatar>
-              </button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end" className="w-56 font-medium">
-              {user ? (
-                <div className="px-2 py-1.5">
-                  <p className="text-sm font-semibold truncate">{displayName || "User"}</p>
-                  <p className="text-xs text-muted-foreground truncate">{user.email}</p>
-                </div>
-              ) : (
-                <DropdownMenuItem onClick={() => navigate("/auth")} className="gap-2.5 cursor-pointer">
-                  <User className="h-4 w-4 text-accent" /> Sign In / Register
-                </DropdownMenuItem>
-              )}
-              
-              <DropdownMenuSeparator />
-              
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => navigate("/ai-lab")} className="gap-2.5 cursor-pointer">
-                  <Sparkles className="h-4 w-4 text-accent" /> AI Lab
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/portfolio")} className="gap-2.5 cursor-pointer">
-                  <Briefcase className="h-4 w-4 text-muted-foreground" /> Portfolio
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/calculator")} className="gap-2.5 cursor-pointer">
-                  <Calculator className="h-4 w-4 text-muted-foreground" /> Calculator
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/learn")} className="gap-2.5 cursor-pointer">
-                  <GraduationCap className="h-4 w-4 text-muted-foreground" /> Learn
-                </DropdownMenuItem>
-                {isAdmin && (
-                  <DropdownMenuItem onClick={() => navigate("/admin")} className="gap-2.5 cursor-pointer text-accent focus:text-accent">
-                    <Shield className="h-4 w-4" /> Admin Panel
-                  </DropdownMenuItem>
-                )}
-              </DropdownMenuGroup>
-              
-              {user && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuGroup>
-                    <DropdownMenuItem onClick={() => navigate("/alerts")} className="gap-2.5 cursor-pointer">
-                      <Bell className="h-4 w-4 text-muted-foreground" /> My Alerts
-                    </DropdownMenuItem>
-                    <DropdownMenuItem onClick={() => navigate("/profile")} className="gap-2.5 cursor-pointer">
-                      <Settings className="h-4 w-4 text-muted-foreground" /> Profile Settings
-                    </DropdownMenuItem>
-                  </DropdownMenuGroup>
-                </>
-              )}
-              
-              <DropdownMenuSeparator />
-              
-              <DropdownMenuGroup>
-                <DropdownMenuItem onClick={() => navigate("/privacy")} className="gap-2.5 cursor-pointer text-xs text-muted-foreground">
-                  <FileText className="h-3.5 w-3.5" /> Privacy Policy
-                </DropdownMenuItem>
-                <DropdownMenuItem onClick={() => navigate("/terms")} className="gap-2.5 cursor-pointer text-xs text-muted-foreground">
-                  <Scale className="h-3.5 w-3.5" /> Terms of Use
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-
-              {user && (
-                <>
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem onClick={handleSignOut} className="gap-2.5 cursor-pointer text-destructive focus:text-destructive">
-                    <LogOut className="h-4 w-4" /> Sign Out
-                  </DropdownMenuItem>
-                </>
-              )}
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <button type="button" onClick={() => setAccountOpen(true)} className="rounded-full ring-2 ring-transparent transition-all hover:ring-border" aria-label={user ? `Open account menu for ${displayName || user.email || "your account"}` : "Open account menu"}>
+            <Avatar className="h-8 w-8 border border-border bg-muted">
+              {user ? <><AvatarImage src={avatarUrl} alt={displayName || user.email || ""} /><AvatarFallback className="bg-accent text-accent-foreground text-xs font-semibold">{(displayName || user.email || "U").slice(0, 2).toUpperCase()}</AvatarFallback></> : <AvatarFallback className="bg-transparent text-muted-foreground"><User className="h-4 w-4" /></AvatarFallback>}
+            </Avatar>
+          </button>
+          <Sheet open={accountOpen} onOpenChange={setAccountOpen}>
+            <SheetContent side="right" className="inset-y-0 right-0 left-auto flex h-full w-[400px] max-w-[92vw] flex-col rounded-none border-l border-t-0 bg-background p-0 [&>button]:hidden">
+              <div className="flex items-center gap-3.5 border-b border-border/80 px-5 py-3">
+                {user ? <><Avatar className="h-11 w-11 shrink-0 border border-emerald-500/30"><AvatarImage src={avatarUrl} alt={displayName || user.email || ""} /><AvatarFallback className="bg-emerald-600 text-base font-extrabold text-white">{(displayName || user.email || "U").slice(0, 2).toUpperCase()}</AvatarFallback></Avatar><div className="min-w-0 flex-1"><SheetTitle className="truncate text-base font-bold leading-snug">{displayName || "User"}</SheetTitle><p className="truncate text-xs font-medium text-muted-foreground">{user.email}</p></div></> : <><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-base font-extrabold text-white">KFF</div><div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold leading-snug">Welcome</SheetTitle><p className="text-xs font-medium text-muted-foreground">Sign in to personalise KFF</p></div></>}
+                <button onClick={() => setAccountOpen(false)} aria-label="Close account menu" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 transition-colors hover:bg-muted"><X className="h-4 w-4 text-muted-foreground stroke-[2.5]" /></button>
+              </div>
+              {user ? <nav className="flex-1 overflow-y-auto px-2 pb-4"><AccountDrawerSection title="TOOLS"><AccountDrawerRow icon={Sparkles} label="AI Lab" tone="accent" onClick={() => closeAndNavigate("/ai-lab")} /><AccountDrawerRow icon={Briefcase} label="Portfolio" onClick={() => closeAndNavigate("/portfolio")} /><AccountDrawerRow icon={Calculator} label="Calculator" onClick={() => closeAndNavigate("/calculator")} /><AccountDrawerRow icon={GraduationCap} label="Learn" onClick={() => closeAndNavigate("/learn")} />{isAdmin && <AccountDrawerRow icon={Shield} label="Admin Panel" tone="accent" onClick={() => closeAndNavigate("/admin")} />}</AccountDrawerSection><div className="mx-4 my-1 h-px bg-border/60" /><AccountDrawerSection title="ACCOUNT"><AccountDrawerRow icon={Bell} label="My Alerts" onClick={() => closeAndNavigate("/alerts")} /><AccountDrawerRow icon={Settings} label="Profile Settings" onClick={() => closeAndNavigate("/profile")} /></AccountDrawerSection><div className="mx-4 my-1 h-px bg-border/60" /><AccountDrawerSection title="LEGAL"><AccountDrawerRow icon={FileText} label="Privacy Policy" onClick={() => closeAndNavigate("/privacy")} /><AccountDrawerRow icon={Scale} label="Terms of Use" onClick={() => closeAndNavigate("/terms")} /></AccountDrawerSection></nav> : <div className="flex-1 px-5 py-8"><p className="text-sm text-muted-foreground">Sign in to manage alerts, your portfolio, and account settings.</p></div>}
+              <div className="shrink-0 border-t border-border/80 bg-background p-4">{user ? <button onClick={async () => { setAccountOpen(false); await handleSignOut(); }} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-destructive/10 py-3.5 text-sm font-bold text-destructive transition-colors hover:bg-destructive/20"><LogOut className="h-4 w-4" /> Sign Out</button> : <button onClick={() => closeAndNavigate("/auth")} className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3.5 text-sm font-bold text-white transition-colors hover:bg-emerald-700"><User className="h-4 w-4" /> Sign In / Sign Up</button>}</div>
+            </SheetContent>
+          </Sheet>
         </div>
       </div>
     </header>
