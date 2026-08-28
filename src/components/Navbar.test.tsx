@@ -24,7 +24,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
-  useAuth: () => ({ user: null, isAdmin: false, signOut: vi.fn() }),
+  useAuth: () => ({ user: { id: "user-1", email: "test@example.com" }, isAdmin: false, signOut: vi.fn() }),
 }));
 
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn(), trackPageView: vi.fn() }));
@@ -34,19 +34,21 @@ vi.mock("@/components/alerts/NotificationProvider", () => ({
 }));
 
 describe("Mobile & Desktop Navigation Verification", () => {
-  it("does not render Market News in the mobile sidebar drawer", () => {
+  it("keeps mobile notifications in the navigation sidebar", () => {
     render(
       <MemoryRouter>
         <Navbar />
       </MemoryRouter>
     );
 
-    expect(screen.getAllByRole("button", { name: /sign in for notifications/i }).length).toBeGreaterThanOrEqual(1);
+    expect(screen.queryByRole("button", { name: /sign in for notifications/i })).not.toBeInTheDocument();
 
     // Open mobile sidebar drawer
     const menuButtons = screen.getAllByRole("button", { name: /Open menu/i });
     expect(menuButtons.length).toBeGreaterThanOrEqual(1);
     fireEvent.click(menuButtons[0]);
+
+    expect(screen.getByRole("button", { name: /notifications/i })).toBeInTheDocument();
 
     // Market News should NOT be present anywhere in the mobile navigation drawer
     expect(screen.queryByText("Market News")).not.toBeInTheDocument();
@@ -56,6 +58,13 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.getByText("Learn & Academy")).toBeInTheDocument();
     expect(screen.getByText("Calculators")).toBeInTheDocument();
     expect(screen.getByText("Alerts")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /notifications/i }));
+    expect(screen.getByText("Notifications")).toBeInTheDocument();
+    expect(screen.getByText("No notifications yet")).toBeInTheDocument();
+
+    fireEvent.click(screen.getByRole("button", { name: /back to menu/i }));
+    expect(screen.getByText("MARKETS")).toBeInTheDocument();
   });
 
   it("renders desktop navigation links cleanly on desktop bar", () => {
