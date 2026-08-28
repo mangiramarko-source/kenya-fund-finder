@@ -63,8 +63,7 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.getByText("Notifications")).toBeInTheDocument();
     expect(screen.getByText("No notifications yet")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /back to menu/i }));
-    expect(screen.getByText("MARKETS")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /back to menu/i })).not.toBeInTheDocument();
   });
 
   it("renders desktop navigation links cleanly on desktop bar", () => {

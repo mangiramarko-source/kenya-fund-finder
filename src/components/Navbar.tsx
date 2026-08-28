@@ -155,10 +155,7 @@ function MobileSidebarDrawer({
       >
         {view === "notifications" ? (
           <>
-            <div className="flex items-center gap-2 border-b border-border/80 px-4 py-3">
-              <button onClick={() => setView("menu")} aria-label="Back to menu" className="flex h-9 items-center gap-1 rounded-full px-2 text-sm font-bold text-foreground hover:bg-muted transition-colors">
-                <ArrowLeft className="h-4 w-4" /> Menu
-              </button>
+            <div className="flex items-center gap-2 border-b border-border/80 px-5 py-3">
               <div className="min-w-0 flex-1">
                 <p className="text-base font-bold text-foreground">Notifications</p>
                 <p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alert${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p>
