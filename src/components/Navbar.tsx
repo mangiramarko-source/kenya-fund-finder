@@ -9,7 +9,6 @@ import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
 import { NotificationRow } from "@/components/alerts/NotificationBell";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
-import CurrencyTicker from "@/components/CurrencyTicker";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const navLinks = [
@@ -553,9 +552,8 @@ const Navbar = () => {
           </div>
         </div>
 
-        {location.pathname === '/' && <CurrencyTicker />}
       </header>
-      <div className={location.pathname === "/" ? "h-[137px]" : "h-[101px]"} aria-hidden="true" />
+      <div className="h-[101px]" aria-hidden="true" />
     </div>
 
     <MobileSidebarDrawer {...sidebarProps} />
