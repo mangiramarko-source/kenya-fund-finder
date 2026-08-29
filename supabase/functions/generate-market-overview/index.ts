@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
+import { createClient } from "../_shared/supabase-client.ts";
 import { geminiGenerateText, parseModelJson } from "../_shared/gemini.ts";
 import {
   MARKET_OVERVIEW_PAYLOAD_VERSION,

@@ -1,4 +1,5 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+import { createClient } from "../_shared/supabase-client.ts";
+import { calculateMarketSummary } from "../_shared/market-summary.ts";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
 import {
   getSupabasePublishableKey,
@@ -245,6 +246,7 @@ type StockCacheRow = {
   day_change_percent: number;
   volume: number;
   market_cap: number | null;
+  pe_ratio: number | null;
   year_high: number | null;
   year_low: number | null;
   updated_at: string;
@@ -797,10 +799,14 @@ Deno.serve(async (req) => {
 
     // ── 3. Fetch Kenyan stock prices (RapidAPI NSE primary, Yahoo fallback) ──
     if (shouldFetchStocks) {
-    const { data: stockRows } = await supabase
+    const { data: stockRows, error: stockRowsError } = await supabase
       .from("stocks")
-      .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, updated_at")
+      .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, year_high, year_low, updated_at")
       .eq("is_active", true);
+
+    if (stockRowsError) {
+      throw new Error(`Failed to load active stocks: ${stockRowsError.message}`);
+    }
 
     if (stockRows && stockRows.length > 0) {
       let stocksUpdated = 0;
@@ -884,30 +890,17 @@ Deno.serve(async (req) => {
 
       // Calculate Market Aggregates for today
       if (stocksUpdated > 0 || fallbackCount > 0) {
-        let totalMarketCap = 0;
-        let sumPE = 0;
-        let countPE = 0;
-        let advances = 0;
-        let declines = 0;
-        let unchanged = 0;
-
-        for (const row of stockRows) {
+        const summaryRows = stockRows.map((row) => {
           const sym = (row.symbol || "").toUpperCase();
           const quote = stockData.quotes.get(sym);
-          const dayChange = quote?.dayChange ?? row.day_change;
-
-          if (dayChange > 0) advances++;
-          else if (dayChange < 0) declines++;
-          else unchanged++;
-
-          if (row.market_cap) totalMarketCap += row.market_cap;
-          if (row.pe_ratio) {
-            sumPE += row.pe_ratio;
-            countPE++;
-          }
-        }
-
-        const averagePE = countPE > 0 ? Number((sumPE / countPE).toFixed(2)) : 0;
+          return {
+            dayChange: quote?.dayChange ?? row.day_change,
+            marketCap: row.market_cap,
+            peRatio: row.pe_ratio,
+          };
+        });
+        const { totalMarketCap, averagePE, advances, declines, unchanged } =
+          calculateMarketSummary(summaryRows);
         const snapshotDate = new Date().toISOString().split("T")[0];
 
         await supabase.from("market_summary_history").upsert(

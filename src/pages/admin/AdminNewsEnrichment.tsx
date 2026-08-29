@@ -129,7 +129,8 @@ const AdminNewsEnrichment = () => {
     let fail = 0;
     for (const t of targets) {
       const res = await runOne(t.id);
-      res.ok ? ok++ : fail++;
+      if (res.ok) ok++;
+      else fail++;
       // small spacing to avoid hammering rate limits
       await new Promise((r) => setTimeout(r, 400));
     }

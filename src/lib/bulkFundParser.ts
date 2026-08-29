@@ -209,7 +209,7 @@ export function parseBulkFundText(input: string, extraHeaders: Array<[string, Fu
 
     const managerRaw = text.slice(segStart, nextRow.currencyIdx);
     const manager = managerRaw
-      .replace(/[\s\|]+/g, " ")
+      .replace(/[\s|]+/g, " ")
       .trim()
       .replace(/\s+(?:Sh|KES|USD|GBP)\s*$/i, "")
       .trim();

@@ -102,7 +102,6 @@ const AuthPage = () => {
       }
     }
     setTurnstileToken(null);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [isSignUp, email, password, confirmPassword, signIn, signUp, navigate]);
 
   // Auto-submit when Turnstile verification completes (after fields are filled)

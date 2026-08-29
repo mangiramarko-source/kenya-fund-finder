@@ -1,4 +1,10 @@
-SELECT cron.unschedule(1);
+DO $$
+BEGIN
+  PERFORM cron.unschedule('fetch-market-data-hourly');
+EXCEPTION
+  WHEN OTHERS THEN NULL;
+END
+$$;
 
 SELECT cron.schedule(
   'fetch-market-data-hourly',

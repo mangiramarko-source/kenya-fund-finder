@@ -1,5 +1,5 @@
 import { sendLovableEmail } from 'npm:@lovable.dev/email-js'
-import { createClient } from 'npm:@supabase/supabase-js@2'
+import { createClient, type SupabaseClient } from "../_shared/supabase-client.ts";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts"
 import { getSupabasePublishableKey, getSupabaseSecretKey } from "../_shared/supabase-keys.ts"
 
@@ -38,8 +38,7 @@ function getRetryAfterSeconds(error: unknown): number {
 
 // Move a message to the dead letter queue and log the reason.
 async function moveToDlq(
-  // deno-lint-ignore no-explicit-any
-  supabase: any,
+  supabase: SupabaseClient,
   queue: string,
   msg: { msg_id: number; message: Record<string, unknown> },
   reason: string
@@ -115,8 +114,7 @@ Deno.serve(async (req) => {
     )
   }
 
-  // deno-lint-ignore no-explicit-any
-  const supabase = createClient(supabaseUrl, supabaseServiceKey) as any
+  const supabase = createClient(supabaseUrl, supabaseServiceKey)
 
   // 1. Check rate-limit cooldown and read queue config
   const { data: state } = await supabase

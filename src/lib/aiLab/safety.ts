@@ -185,7 +185,6 @@ export function sanitizeOutput(text: string): string {
       if (import.meta.env?.DEV) {
         throw new Error(`Forbidden advisory phrase detected: ${pattern}`);
       }
-      // eslint-disable-next-line no-console
       console.warn("[ai-lab] stripped forbidden phrase", pattern);
       text = text.replace(pattern, "[redacted]");
     }
@@ -194,7 +193,6 @@ export function sanitizeOutput(text: string): string {
     if (import.meta.env?.DEV) {
       throw new Error("Forbidden advisory phrase detected: financial certainty claim");
     }
-    // eslint-disable-next-line no-console
     console.warn("[ai-lab] stripped forbidden financial certainty claim");
     text = text.replace(/\bguarante\w*\b/gi, "[redacted]");
   }

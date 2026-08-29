@@ -31,6 +31,7 @@ const SUPABASE_ANON_KEY =
   process.env.VITE_SUPABASE_ANON_KEY ||
   "sb_publishable_6snC3do-2emXAMEp7-C9AA_3_kb-GkC";
 const STRICT = process.env.VERCEL === "1" || process.env.SEO_PRERENDER_STRICT === "true";
+const SKIP_DYNAMIC = process.env.SEO_PRERENDER_SKIP_DYNAMIC === "true";
 
 interface StockRow {
   symbol: string | null;
@@ -556,11 +557,13 @@ async function loadDynamicPages(): Promise<SeoPageDefinition[]> {
 async function main() {
   const template = readFileSync(TEMPLATE_PATH, "utf8");
   let dynamicPages: SeoPageDefinition[] = [];
-  try {
-    dynamicPages = await loadDynamicPages();
-  } catch (error) {
-    console.error("[seo-prerender] dynamic content fetch failed", error);
-    if (STRICT) process.exitCode = 1;
+  if (!SKIP_DYNAMIC) {
+    try {
+      dynamicPages = await loadDynamicPages();
+    } catch (error) {
+      console.error("[seo-prerender] dynamic content fetch failed", error);
+      if (STRICT) process.exitCode = 1;
+    }
   }
 
   const pages = [...staticRoutes(), ...privateRoutes(), ...dynamicPages];

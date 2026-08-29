@@ -1,5 +1,5 @@
--- Enable RLS on realtime.messages and add policies to scope channel subscriptions
-ALTER TABLE realtime.messages ENABLE ROW LEVEL SECURITY;
+-- realtime.messages is managed by Supabase Realtime and already has RLS
+-- enabled. Only its authorization policies are application-owned.
 
 -- Allow authenticated users to receive broadcasts/postgres_changes on public market data channels
 CREATE POLICY "Authenticated can read public market channels"

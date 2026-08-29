@@ -96,14 +96,16 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
     try {
       const raw = localStorage.getItem(RECENT_KEY);
       if (raw) setRecent(JSON.parse(raw));
-    } catch {}
+    } catch {
+      // Ignore invalid or unavailable local storage and start with no history.
+    }
   }, []);
 
   // Load data when opened
   useEffect(() => {
     if (!open) return;
-    if (funds.length === 0) fetchFunds().then(setFunds).catch(() => {});
-    if (news.length === 0) fetchPublishedNews().then(setNews).catch(() => {});
+    if (funds.length === 0) fetchFunds().then(setFunds).catch(() => undefined);
+    if (news.length === 0) fetchPublishedNews().then(setNews).catch(() => undefined);
     if (stocks.length === 0) {
       supabase
         .from("stocks")
@@ -143,14 +145,22 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
     if (!t) return;
     setRecent((prev) => {
       const next = [t, ...prev.filter((x) => x.toLowerCase() !== t.toLowerCase())].slice(0, MAX_RECENT);
-      try { localStorage.setItem(RECENT_KEY, JSON.stringify(next)); } catch {}
+      try {
+        localStorage.setItem(RECENT_KEY, JSON.stringify(next));
+      } catch {
+        // Recent searches remain available for this session when storage fails.
+      }
       return next;
     });
   }, []);
 
   const clearRecent = useCallback(() => {
     setRecent([]);
-    try { localStorage.removeItem(RECENT_KEY); } catch {}
+    try {
+      localStorage.removeItem(RECENT_KEY);
+    } catch {
+      // In-memory state is already cleared.
+    }
   }, []);
 
   const go = useCallback((path: string, term?: string) => {

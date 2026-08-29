@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.98.0";
+import { createClient } from "../_shared/supabase-client.ts";
 import { normalizeEmail, verifyUnsubscribeToken } from "../_shared/communications.ts";
 import { getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
 

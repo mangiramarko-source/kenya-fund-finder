@@ -554,6 +554,9 @@ grant all on public.market_overviews to service_role;
 grant all on public.communication_preferences to service_role;
 grant all on public.communication_outbox to service_role;
 grant all on public.communication_suppressions to service_role;
+-- claim_price_alert_event is SECURITY INVOKER and resolves the stock name
+-- directly from the base table, so its service-only caller needs SELECT.
+grant select on public.stocks to service_role;
 
 revoke all on function public.claim_price_alert_event(uuid, numeric, timestamptz, boolean) from public, anon, authenticated;
 revoke all on function public.claim_communication_batch(integer, integer) from public, anon, authenticated;

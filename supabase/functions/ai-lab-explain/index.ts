@@ -3,8 +3,8 @@
 // classified as educational. Never used to rewrite scenario/comparison/MMF/stock
 // output. See .lovable/plan.md.
 
-import { createClient } from "npm:@supabase/supabase-js@2.49.1";
-import { corsHeaders } from "npm:@supabase/supabase-js@2.95.0/cors";
+import { createClient } from "../_shared/supabase-client.ts";
+import { corsHeaders } from "../_shared/cors-headers.ts";
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const AI_MODEL = "google/gemini-3-flash-preview";

@@ -1,6 +1,6 @@
 // Generates AI captions + image cards for a KenyaFundFinder social post,
 // uploads images to social-images bucket, inserts social_posts rows (one per platform).
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.0";
+import { createClient } from "../_shared/supabase-client.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -43,6 +43,21 @@ const PLATFORM_LABEL: Record<string, string> = {
   instagram: "Instagram", facebook: "Facebook", x: "X/Twitter",
 };
 
+type FundRow = {
+  id: string;
+  name: string;
+  manager: string;
+  annual_yield: number | null;
+  daily_yield: number | null;
+  yield_unit: string | null;
+  fund_type: string;
+  minimum_investment: number | null;
+  fact_sheet_date: string | null;
+};
+
+type ChatResponse = { choices?: Array<{ message?: { content?: string } }> };
+type ImageResponse = { data?: Array<{ b64_json?: string }> };
+
 function sanitize(text: string): string {
   let out = text;
   for (const p of FORBIDDEN) {
@@ -73,7 +88,7 @@ async function callChat(apiKey: string, model: string, system: string, user: str
     const t = await res.text().catch(() => "");
     throw new Error(`AI chat ${res.status}: ${t.slice(0, 200)}`);
   }
-  const json = await res.json();
+  const json = await res.json() as ChatResponse;
   return json?.choices?.[0]?.message?.content ?? "";
 }
 
@@ -92,7 +107,7 @@ async function generateImage(apiKey: string, prompt: string, size: string): Prom
     const t = await res.text().catch(() => "");
     throw new Error(`AI image ${res.status}: ${t.slice(0, 200)}`);
   }
-  const json = await res.json();
+  const json = await res.json() as ImageResponse;
   const b64 = json?.data?.[0]?.b64_json;
   if (!b64) throw new Error("no image returned");
   const bin = atob(b64);
@@ -135,7 +150,7 @@ Deno.serve(async (req) => {
     if (!tpl) return json({ error: "Template not found" }, 404);
 
     // Load fund data
-    let funds: any[] = [];
+    let funds: FundRow[] = [];
     if (requestedFundIds.length > 0) {
       const { data } = await admin.from("funds")
         .select("id, name, manager, annual_yield, daily_yield, yield_unit, fund_type, minimum_investment, fact_sheet_date")
@@ -151,9 +166,9 @@ Deno.serve(async (req) => {
     }
 
     const dataAsOf = new Date().toISOString().slice(0, 10);
-    const fundSummary = funds.map(f => `${f.name} (${f.manager}): ${f.annual_yield}${f.yield_unit === "%" ? "%" : " " + f.yield_unit} annual`).join("\n");
-    const yieldValues = funds.reduce((acc: Record<string, unknown>, f: any) => {
-      acc[f.id] = { name: f.name, annual_yield: f.annual_yield, yield_unit: f.yield_unit };
+    const fundSummary = funds.map((fund) => `${fund.name} (${fund.manager}): ${fund.annual_yield}${fund.yield_unit === "%" ? "%" : " " + fund.yield_unit} annual`).join("\n");
+    const yieldValues = funds.reduce((acc: Record<string, unknown>, fund) => {
+      acc[fund.id] = { name: fund.name, annual_yield: fund.annual_yield, yield_unit: fund.yield_unit };
       return acc;
     }, {});
 
@@ -232,8 +247,8 @@ Deno.serve(async (req) => {
           image_url: imageUrl,
           image_size: imgSize,
           source_data: { funds, custom_note: customNote },
-          fund_ids: funds.map(f => f.id),
-          fund_names: funds.map(f => f.name),
+          fund_ids: funds.map((fund) => fund.id),
+          fund_names: funds.map((fund) => fund.name),
           yield_values: yieldValues,
           data_as_of: dataAsOf,
           created_by: u.user.id,
@@ -244,9 +259,9 @@ Deno.serve(async (req) => {
         await admin.from("social_post_analytics").insert({
           post_id: ins.id, event: "generated", platform, content_type: contentType,
         });
-      } catch (e: any) {
+      } catch (e: unknown) {
         console.error("platform generation failed", platform, e);
-        errors.push(`${platform}: ${e?.message ?? "error"}`);
+        errors.push(`${platform}: ${e instanceof Error ? e.message : "error"}`);
       }
     }
 

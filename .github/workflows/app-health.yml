@@ -1,0 +1,74 @@
+name: Application Health
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+concurrency:
+  group: app-health-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  application:
+    name: Frontend and Edge verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.7.14
+
+      - name: Install locked dependencies
+        run: npm ci
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Lint regression budget
+        run: npm run lint:budget
+
+      - name: Edge lint
+        run: npx eslint supabase/functions
+
+      - name: Edge type check
+        run: npm run check:edge
+
+      - name: Tests
+        run: npm test
+
+      - name: Production build
+        run: npm run build:ci
+        env:
+          VITE_SUPABASE_URL: https://ci-build.supabase.co
+          VITE_SUPABASE_PROJECT_ID: ci-build
+          VITE_SUPABASE_PUBLISHABLE_KEY: sb_publishable_ci_build_only_not_a_real_key
+
+      - name: Production dependency audit
+        run: npm run check:security
+
+  database:
+    name: Local migration and pgTAP verification
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: supabase/setup-cli@v1
+        with:
+          version: 2.114.0
+
+      - name: Start local database
+        run: supabase start --exclude gotrue,realtime,storage-api,imgproxy,kong,mailpit,postgrest,postgres-meta,studio,edge-runtime,logflare,vector,supavisor
+
+      - name: Run database tests
+        run: supabase test db
+
+      - name: Stop local database
+        if: always()
+        run: supabase stop --no-backup

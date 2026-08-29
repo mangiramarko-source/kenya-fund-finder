@@ -1,4 +1,4 @@
-import { createClient } from "https://esm.sh/@supabase/supabase-js@2.45.4";
+import { createClient, type SupabaseClient } from "../_shared/supabase-client.ts";
 import { extractText } from "https://esm.sh/unpdf@0.12.1";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
 import { getSupabasePublishableKey, getSupabaseSecretKey } from "../_shared/supabase-keys.ts";
@@ -8,7 +8,7 @@ const corsHeaders = {
   "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type, x-supabase-client-platform, x-supabase-client-platform-version, x-supabase-client-runtime, x-supabase-client-runtime-version",
 };
 
-let supabaseInstance: any = null;
+let supabaseInstance: SupabaseClient | null = null;
 function getSupabaseClient() {
   if (!supabaseInstance) {
     const url = Deno.env.get("SUPABASE_URL")!;
