@@ -20,6 +20,7 @@ import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
+import { priceAlertMessaging } from "@/lib/priceAlertMessaging";
 
 interface AssetOption {
   id: string;
@@ -33,10 +34,10 @@ type TabKey = "active" | "triggered" | "paused" | "settings";
 const AlertsPage = () => {
   useDocumentTitle(
     "Price Alerts – Track NSE Stocks | Kenya Fund Finder",
-    "Set custom price alerts for Kenyan NSE stocks. Get notified when a stock crosses your target price.",
+    priceAlertMessaging.seoDescription,
     {
       title: "Price Alerts for Kenyan NSE Stocks",
-      description: "Set custom price alerts and get notified when NSE stocks cross your target price.",
+      description: priceAlertMessaging.seoDescription,
     }
   );
   const { user } = useAuth();
@@ -100,7 +101,7 @@ const AlertsPage = () => {
     } else {
       toast.success(`Alert set for ${selectedAsset.name}`);
       if (!pushEnabled && pushSupported) {
-        toast("Get alerts on this device", { description: "Enable device notifications for price targets, even when Kenya Fund Finder is closed.", action: { label: "Enable", onClick: () => { void enablePush(); } } });
+        toast("Get alerts on this device", { description: priceAlertMessaging.devicePrompt, action: { label: "Enable", onClick: () => { void enablePush(); } } });
       }
       setShowCreate(false);
       setTargetPrice("");
@@ -158,7 +159,7 @@ const AlertsPage = () => {
     if (tab === "triggered") {
       return triggeredAlerts.length > 0
         ? <div className="space-y-2.5">{triggeredAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
-        : <EmptyState icon={CheckCircle} title="Nothing triggered yet" description="Alerts move here once your target is hit." />;
+        : <EmptyState icon={CheckCircle} title="Nothing triggered yet" description={priceAlertMessaging.triggeredEmptyState} />;
     }
     if (tab === "paused") {
       return pausedAlerts.length > 0
@@ -176,8 +177,8 @@ const AlertsPage = () => {
             {prefsError && <div role="alert" className="mb-3 text-sm text-destructive">{prefsError} <Button variant="link" size="sm" onClick={() => void retryPrefs()}>Retry</Button></div>}
             {prefsSaving && <p role="status" className="mb-2 text-xs text-muted-foreground">Saving your choices…</p>}
             <SettingRow
-              title="Instant Price Alerts"
-              description="Email you immediately when targets are hit."
+              title={priceAlertMessaging.settingsTitle}
+              description={priceAlertMessaging.settingsDescription}
               checked={prefs.price_alert_email}
               onChange={(v) => updatePref("price_alert_email", v)}
               disabled={prefsLoading || prefsSaving || Boolean(prefsError)}

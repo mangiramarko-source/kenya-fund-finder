@@ -4,6 +4,7 @@ import {
   Check, ChevronRight, Mail, Search, ShieldCheck, Sparkles,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { priceAlertMessaging } from "@/lib/priceAlertMessaging";
 import { Input } from "@/components/ui/input";
 import { DialogDescription, DialogTitle } from "@/components/ui/dialog";
 
@@ -118,7 +119,7 @@ export default function OnboardingSetup({
           <DialogDescription className="mt-2 text-sm leading-relaxed">Your account works either way. Choose only the emails that help you keep track.</DialogDescription>
         </div>
         <div className="space-y-3">
-          <ChoiceCard icon={BellRing} title="Price alert emails" detail="Email me when a price target I have set is reached." checked={priceAlertEmail} onChange={setPriceAlertEmail} />
+          <ChoiceCard icon={BellRing} title={priceAlertMessaging.onboardingTitle} detail={priceAlertMessaging.onboardingDescription} checked={priceAlertEmail} onChange={setPriceAlertEmail} />
           <ChoiceCard icon={Mail} title="Market Brief & Morning News" detail="Send market summaries and weekday morning news highlights." checked={marketBriefEmail} onChange={setMarketBriefEmail} />
         </div>
         <p className="flex items-start gap-2 text-xs leading-relaxed text-muted-foreground"><ShieldCheck className="mt-0.5 h-4 w-4 shrink-0" />No email is sent now. You can change these in Alerts → Settings at any time.</p>

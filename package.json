@@ -11,6 +11,7 @@
     "build": "vite build && tsx scripts/prerender-seo.ts",
     "build:ci": "vite build && SEO_PRERENDER_SKIP_DYNAMIC=true tsx scripts/prerender-seo.ts",
     "verify:crawlability": "tsx scripts/verify-crawlability.ts",
+    "verify:launch-surface": "node scripts/verify-production-launch-surface.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",
     "lint:budget": "node scripts/check-lint-budget.mjs",

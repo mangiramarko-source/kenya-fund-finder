@@ -38,18 +38,12 @@ const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const ChecklistPage = lazy(() => import("./pages/ChecklistPage"));
 const SitePage = lazy(() => import("./pages/SitePage"));
 const RatesPage = lazy(() => import("./pages/RatesPage"));
 const CommoditiesPage = lazy(() => import("./pages/CommoditiesPage"));
 const StocksPage = lazy(() => import("./pages/StocksPage"));
-const StocksDemoPage = lazy(() => import("./pages/StocksDemoPage"));
-const DemoStocksPage = lazy(() => import("./pages/DemoStocksPage"));
-const DemoStockFeedPage = lazy(() => import("./pages/DemoStockFeedPage"));
 const TreasuryPage = lazy(() => import("./pages/TreasuryPage"));
-const StockDecisionFeedDemoPage = lazy(() => import("./pages/StockDecisionFeedDemoPage"));
 const StockDetailPage = lazy(() => import("./pages/StockDetailPage"));
-const StocksMobileDesktopDemoPage = lazy(() => import("./pages/StocksMobileDesktopDemoPage"));
 const MarketDashboardPage = lazy(() => import("./pages/MarketDashboardPage"));
 const AlertsPage = lazy(() => import("./pages/AlertsPage"));
 const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
@@ -58,10 +52,18 @@ const OverviewPage = lazy(() => import("./pages/OverviewPage"));
 const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const AiLabPage = lazy(() => import("./pages/AiLabPage"));
-const DevEmailPreviewPage = lazy(() => import("./pages/DevEmailPreviewPage"));
-const DevWelcomePreviewPage = lazy(() => import("./pages/DevWelcomePreviewPage"));
-const DevNotificationPreviewPage = import.meta.env.DEV
-  ? lazy(() => import("./pages/DevNotificationPreviewPage"))
+const DevOnlyPages = import.meta.env.DEV
+  ? {
+      ChecklistPage: lazy(() => import("./pages/ChecklistPage")),
+      StocksDemoPage: lazy(() => import("./pages/StocksDemoPage")),
+      DemoStocksPage: lazy(() => import("./pages/DemoStocksPage")),
+      DemoStockFeedPage: lazy(() => import("./pages/DemoStockFeedPage")),
+      StockDecisionFeedDemoPage: lazy(() => import("./pages/StockDecisionFeedDemoPage")),
+      StocksMobileDesktopDemoPage: lazy(() => import("./pages/StocksMobileDesktopDemoPage")),
+      DevEmailPreviewPage: lazy(() => import("./pages/DevEmailPreviewPage")),
+      DevWelcomePreviewPage: lazy(() => import("./pages/DevWelcomePreviewPage")),
+      DevNotificationPreviewPage: lazy(() => import("./pages/DevNotificationPreviewPage")),
+    }
   : null;
 const NotFound = lazy(() => import("./pages/NotFound"));
 
@@ -123,7 +125,6 @@ const App = () => (
                     <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
-                    <Route path="/checklist" element={<ChecklistPage />} />
                     <Route path="/page/:slug" element={<SitePage />} />
                     <Route path="/treasury" element={<TreasuryPage />} />
                     <Route path="/tbills" element={<Navigate to="/treasury" replace />} />
@@ -131,11 +132,6 @@ const App = () => (
                     <Route path="/rates" element={<RatesPage />} />
                     <Route path="/commodities" element={<CommoditiesPage />} />
                     <Route path="/stocks" element={<StocksPage />} />
-                    <Route path="/stocks-demo" element={<StocksDemoPage />} />
-                    <Route path="/demo-stocks-feed" element={<DemoStocksPage />} />
-                    <Route path="/demo-feed" element={<DemoStockFeedPage />} />
-                    <Route path="/demo-stock-insights" element={<StockDecisionFeedDemoPage />} />
-                    <Route path="/stocks/demo-2" element={<StocksMobileDesktopDemoPage />} />
                     <Route path="/stocks/:symbol" element={<StockDetailPage />} />
                     <Route path="/markets" element={<MarketDashboardPage />} />
                     <Route path="/overview" element={<Navigate to="/" replace />} />
@@ -147,15 +143,17 @@ const App = () => (
                     <Route path="/ai-lab" element={<AiLabPage />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin" element={<AdminPage />} />
-                    {import.meta.env.DEV && (
-                      <Route path="/dev/email-preview" element={<DevEmailPreviewPage />} />
-                    )}
-                    {import.meta.env.DEV && (
-                      <Route path="/dev/welcome-preview" element={<DevWelcomePreviewPage />} />
-                    )}
-                    {DevNotificationPreviewPage && (
-                      <Route path="/dev/notification-preview" element={<DevNotificationPreviewPage />} />
-                    )}
+                    {DevOnlyPages ? <>
+                      <Route path="/checklist" element={<DevOnlyPages.ChecklistPage />} />
+                      <Route path="/stocks-demo" element={<DevOnlyPages.StocksDemoPage />} />
+                      <Route path="/demo-stocks-feed" element={<DevOnlyPages.DemoStocksPage />} />
+                      <Route path="/demo-feed" element={<DevOnlyPages.DemoStockFeedPage />} />
+                      <Route path="/demo-stock-insights" element={<DevOnlyPages.StockDecisionFeedDemoPage />} />
+                      <Route path="/stocks/demo-2" element={<DevOnlyPages.StocksMobileDesktopDemoPage />} />
+                      <Route path="/dev/email-preview" element={<DevOnlyPages.DevEmailPreviewPage />} />
+                      <Route path="/dev/welcome-preview" element={<DevOnlyPages.DevWelcomePreviewPage />} />
+                      <Route path="/dev/notification-preview" element={<DevOnlyPages.DevNotificationPreviewPage />} />
+                    </> : null}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
                 </Suspense>
