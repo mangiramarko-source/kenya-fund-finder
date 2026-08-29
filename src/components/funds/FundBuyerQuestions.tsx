@@ -26,8 +26,8 @@ const questions = [
   {
     question: "What should I verify before sending money?",
     answer: "Verify the official manager website, payment instructions, fees, beneficiary details, fact sheet date, and withdrawal process independently.",
-    link: "/checklist",
-    linkLabel: "Use the fund checklist",
+    link: "/learn/how-to-invest-in-money-market-funds-kenya",
+    linkLabel: "Read the fund-investing guide",
   },
 ];
 
@@ -60,4 +60,3 @@ export default function FundBuyerQuestions() {
     </section>
   );
 }
-

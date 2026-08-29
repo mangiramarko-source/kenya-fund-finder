@@ -11,14 +11,9 @@ const INDEXABLE_PATHS = [
   /^\/news\/[A-Za-z0-9_-]+\/?$/,
   /^\/learn\/?$/,
   /^\/learn\/how-to-invest-in-money-market-funds-kenya\/?$/,
-  /^\/(privacy|terms|checklist|rates|commodities|stocks|markets|calculator|treasury)\/?$/,
+  /^\/(privacy|terms|rates|commodities|stocks|markets|calculator|treasury)\/?$/,
   /^\/stocks\/[A-Za-z0-9_-]+\/?$/,
   /^\/page\/(about|contact)\/?$/,
-];
-
-const NON_INDEXABLE_DEMO_PATHS = [
-  /^\/stocks\/demo-2\/?$/,
-  /^\/demo-stock-insights\/?$/,
 ];
 
 export default function SeoRoutePolicy() {
@@ -31,8 +26,7 @@ export default function SeoRoutePolicy() {
       meta.name = "robots";
       document.head.appendChild(meta);
     }
-    const indexable = !NON_INDEXABLE_DEMO_PATHS.some((pattern) => pattern.test(pathname))
-      && INDEXABLE_PATHS.some((pattern) => pattern.test(pathname));
+    const indexable = INDEXABLE_PATHS.some((pattern) => pattern.test(pathname));
     meta.content = indexable
       ? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
       : "noindex, nofollow, noarchive";

@@ -3,6 +3,7 @@ import { BellRing, Mail, ArrowRight, Check, ShieldCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import type { WelcomeEmailChoices } from "@/hooks/useEmailPreferences";
+import { priceAlertMessaging } from "@/lib/priceAlertMessaging";
 
 interface Props {
   initialChoices?: WelcomeEmailChoices;
@@ -42,7 +43,7 @@ export default function ChooseUpdates({ initialChoices, onSave, onContinue, onCr
         </DialogDescription>
       </div>
       {choices.price_alert_email && <div className="space-y-3 border-t border-border pt-5">
-        <p className="text-sm text-muted-foreground">One more step for price alerts: choose an asset and set a target. Turning emails on does not create an alert.</p>
+        <p className="text-sm text-muted-foreground">{priceAlertMessaging.targetSetup} Turning emails on does not create an alert.</p>
         <Button className="w-full min-h-12 h-auto whitespace-normal py-3" onClick={onCreateAlert}>Create your first price alert <ArrowRight className="ml-2 h-4 w-4 shrink-0" /></Button>
       </div>}
       <Button className="w-full min-h-12 h-auto whitespace-normal py-3" variant={choices.price_alert_email ? "outline" : "default"} onClick={onContinue}>Explore the dashboard</Button>
@@ -50,7 +51,7 @@ export default function ChooseUpdates({ initialChoices, onSave, onContinue, onCr
   );
 
   const options = [
-    { key: "price_alert_email" as const, title: "Price alert emails", detail: "Email me when a price target I've set is reached.", note: "You'll choose the asset and target separately.", Icon: BellRing },
+    { key: "price_alert_email" as const, title: priceAlertMessaging.onboardingTitle, detail: priceAlertMessaging.onboardingDescription, note: "You'll choose the asset and target separately.", Icon: BellRing },
     { key: "market_brief_email" as const, title: "Market Brief & Morning News", detail: "Send me market summaries and weekday morning news highlights.", note: "Built from available, quality-checked market and news data.", Icon: Mail },
   ];
   return (
