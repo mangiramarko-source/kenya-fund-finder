@@ -5,7 +5,7 @@
 do $migration$
 declare
   missing_secrets text[];
-  scheduled_job_count integer;
+  missing_jobs text[];
   target record;
 begin
   select array_agg(required.name order by required.name)
@@ -24,19 +24,26 @@ begin
     raise exception 'Required Vault secret(s) missing: %', array_to_string(missing_secrets, ', ');
   end if;
 
-  select count(*) into scheduled_job_count
-  from cron.job
-  where jobname in (
-    'fetch-news-hourly',
-    'fetch-news-cron',
-    'fetch-social-news-schedule',
-    'fetch-social-news-cron',
-    'fetch-market-data-fx',
-    'fetch-market-data-stocks'
+  -- A clean history contains the four canonical jobs. Some production
+  -- histories also retain the two legacy news jobs, which are migrated by the
+  -- loops below when present but are not prerequisites for a safe replay.
+  select array_agg(required.name order by required.name)
+    into missing_jobs
+  from (
+    values
+      ('fetch-news-cron'),
+      ('fetch-social-news-cron'),
+      ('fetch-market-data-fx'),
+      ('fetch-market-data-stocks')
+  ) as required(name)
+  where not exists (
+    select 1
+    from cron.job jobs
+    where jobs.jobname = required.name
   );
 
-  if scheduled_job_count <> 6 then
-    raise exception 'Expected 6 target cron jobs, found %', scheduled_job_count;
+  if missing_jobs is not null then
+    raise exception 'Required cron job(s) missing: %', array_to_string(missing_jobs, ', ');
   end if;
 
   for target in
