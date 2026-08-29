@@ -23,8 +23,8 @@ describe("production launch surface", () => {
     expect(appSource).toContain("const DevOnlyPages = import.meta.env.DEV");
 
     for (const path of internalPaths) {
-      expect(productionRouteSource).not.toContain(`path=\"${path}\"`);
-      expect(devOnlyRouteSource).toContain(`path=\"${path}\"`);
+      expect(productionRouteSource).not.toContain(`path="${path}"`);
+      expect(devOnlyRouteSource).toContain(`path="${path}"`);
     }
   });
 
