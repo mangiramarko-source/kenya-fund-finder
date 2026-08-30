@@ -13,6 +13,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import RateFavourites from "../components/home/RateFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
+import MarketPageLoader from "@/components/MarketPageLoader";
 
 interface Rate {
   id: string;
@@ -122,6 +123,7 @@ const RatesPage = () => {
 
   const [rates, setRates] = useState<Rate[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialHistoryReady, setInitialHistoryReady] = useState(false);
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [history, setHistory] = useState<Record<string, RateHistory[]>>({});
@@ -129,18 +131,24 @@ const RatesPage = () => {
 
   useEffect(() => {
     const fetch = async () => {
-      const { data } = await supabase
-        .from("exchange_rates_public" as any)
-        .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
-        .order("sort_order");
-      setRates(
-        ((data as any) || []).map((r: any) => ({
-          ...r,
-          rate: Number(r.rate),
-          previous_rate: r.previous_rate != null ? Number(r.previous_rate) : null,
-        }))
-      );
-      setLoading(false);
+      try {
+        const { data } = await supabase
+          .from("exchange_rates_public" as any)
+          .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
+          .order("sort_order");
+        setRates(
+          ((data as any) || []).map((r: any) => ({
+            ...r,
+            rate: Number(r.rate),
+            previous_rate: r.previous_rate != null ? Number(r.previous_rate) : null,
+          }))
+        );
+      } catch (error) {
+        console.error("Failed to load FX rates", error);
+        setRates([]);
+      } finally {
+        setLoading(false);
+      }
     };
     fetch();
     const ch = supabase
@@ -152,32 +160,42 @@ const RatesPage = () => {
 
   // Preload sparkline history for all rates (last ~90 days, refreshed periodically)
   useEffect(() => {
-    if (rates.length === 0) return;
+    if (loading) return;
+    if (rates.length === 0) {
+      setInitialHistoryReady(true);
+      return;
+    }
     let cancelled = false;
     const fetchAllHistory = async () => {
-      // Pull the most recent ~90 days across all currencies. Order DESC so the
-      // 1000-row Supabase default cap drops the OLDEST rows, not the newest.
-      const sinceIso = new Date(Date.now() - 95 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10);
-      const { data } = await supabase
-        .from("exchange_rate_history_public" as any)
-        .select("exchange_rate_id, rate, snapshot_date")
-        .gte("snapshot_date", sinceIso)
-        .order("snapshot_date", { ascending: false })
-        .limit(2000);
-      if (cancelled || !data) return;
-      const grouped: Record<string, RateHistory[]> = {};
-      (data as any[]).forEach((d) => {
-        const rid = d.exchange_rate_id;
-        if (!grouped[rid]) grouped[rid] = [];
-        grouped[rid].push({ snapshot_date: d.snapshot_date, rate: Number(d.rate) });
-      });
-      // Sort ascending for chart rendering
-      Object.keys(grouped).forEach((k) => {
-        grouped[k].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
-      });
-      setHistory(grouped);
+      try {
+        // Pull the most recent ~90 days across all currencies. Order DESC so the
+        // 1000-row Supabase default cap drops the OLDEST rows, not the newest.
+        const sinceIso = new Date(Date.now() - 95 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 10);
+        const { data } = await supabase
+          .from("exchange_rate_history_public" as any)
+          .select("exchange_rate_id, rate, snapshot_date")
+          .gte("snapshot_date", sinceIso)
+          .order("snapshot_date", { ascending: false })
+          .limit(2000);
+        if (cancelled || !data) return;
+        const grouped: Record<string, RateHistory[]> = {};
+        (data as any[]).forEach((d) => {
+          const rid = d.exchange_rate_id;
+          if (!grouped[rid]) grouped[rid] = [];
+          grouped[rid].push({ snapshot_date: d.snapshot_date, rate: Number(d.rate) });
+        });
+        // Sort ascending for chart rendering
+        Object.keys(grouped).forEach((k) => {
+          grouped[k].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+        });
+        setHistory(grouped);
+      } catch (error) {
+        console.error("Failed to load FX rate sparkline data", error);
+      } finally {
+        if (!cancelled) setInitialHistoryReady(true);
+      }
     };
     fetchAllHistory();
     // Refresh every 5 minutes so newly-snapshotted points appear without reload
@@ -186,7 +204,7 @@ const RatesPage = () => {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [rates]);
+  }, [rates, loading]);
 
   const toggleExpand = async (rateId: string) => {
     if (expanded === rateId) {
@@ -247,8 +265,18 @@ const RatesPage = () => {
     return result;
   }, [rates, search, mobileMovement, mobileSort]);
 
+  const pageLoading = loading || !initialHistoryReady;
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen px-4 md:px-6 py-5 md:py-6">
+        <MarketPageLoader message="Loading latest FX rate data…" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen animate-in fade-in-50 duration-500">
       <div className="px-4 md:px-6 py-5 md:py-6">
         <div className="mb-4">
           <div className="hidden md:flex items-end justify-between gap-6 mb-7">

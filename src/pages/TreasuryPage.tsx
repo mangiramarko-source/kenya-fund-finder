@@ -42,6 +42,7 @@ import {
   Legend,
 } from "recharts";
 import { useTreasuryData, TBillAuction, TreasuryBond } from "@/hooks/useTreasuryData";
+import MarketPageLoader from "@/components/MarketPageLoader";
 
 export default function TreasuryPage() {
   useDocumentTitle("Treasury Bills & Bonds | Rates, Auction & Return Calculator | KenyaFundFinder");
@@ -157,10 +158,7 @@ export default function TreasuryPage() {
 
         <main className="flex-1 container mx-auto px-4 py-4 md:py-6 max-w-6xl space-y-4">
           {isLoading && (
-            <div className="flex flex-col items-center justify-center py-32 space-y-4">
-              <div className="h-8 w-8 rounded-full border-4 border-emerald-500 border-t-transparent animate-spin"></div>
-              <p className="text-muted-foreground font-semibold">Loading latest Treasury data…</p>
-            </div>
+            <MarketPageLoader message="Loading latest Treasury data…" />
           )}
           
           {isError && (

@@ -8,6 +8,7 @@ import FundFavourites from "@/components/home/FundFavourites";
 import { fundCache } from "@/lib/fundCache";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import FundBuyerQuestions from "@/components/funds/FundBuyerQuestions";
+import MarketPageLoader from "@/components/MarketPageLoader";
 
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
@@ -26,7 +27,7 @@ const Index = () => {
   const [funds, setFunds] = useState<FundFromDB[]>(cachedFunds?.funds ?? []);
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>(cachedSnaps?.snapshots ?? {});
   const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});
-  const [loading, setLoading] = useState(!cachedFunds);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [usingCache, setUsingCache] = useState(false);
   const [cacheSavedAt, setCacheSavedAt] = useState<number | null>(cachedFunds?.savedAt ?? null);
@@ -93,8 +94,16 @@ const Index = () => {
     ? new Date(lastUpdateDate) 
     : null;
 
+  if (loading) {
+    return (
+      <div className="px-4 md:px-6 py-5 md:py-6 min-h-screen">
+        <MarketPageLoader message="Loading latest fund data…" />
+      </div>
+    );
+  }
+
   return (
-    <div className="px-4 md:px-6 py-5 md:py-6 space-y-4">
+    <div className="px-4 md:px-6 py-5 md:py-6 space-y-4 animate-in fade-in-50 duration-500">
       <div className="mb-4">
         <div className="hidden md:flex items-end justify-between gap-6 mb-7">
           <div>

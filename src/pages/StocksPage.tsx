@@ -32,6 +32,7 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import StockFavourites from "@/components/home/StockFavourites";
+import MarketPageLoader from "@/components/MarketPageLoader";
 import { useAssetWatchlist, type WatchlistEntry } from "@/hooks/useAssetWatchlist";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, ComposedChart } from "recharts";
@@ -185,7 +186,9 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
   const [cachedStocks] = useState(() => stockCache.loadStocks());
   const [stocks, setStocks] = useState<Stock[]>(cachedStocks?.stocks ?? []);
   const [marketHistory, setMarketHistory] = useState<any[]>([]);
-  const [loading, setLoading] = useState(!cachedStocks);
+  const [loading, setLoading] = useState(true);
+  const [marketHistoryReady, setMarketHistoryReady] = useState(false);
+  const [sparklineHistoryReady, setSparklineHistoryReady] = useState(false);
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
   const [sortKey, setSortKey] = useState<SortKey>("market_cap");
@@ -234,6 +237,8 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
         if (data) setMarketHistory(data);
       } catch (e) {
         console.error("Failed to load market history", e);
+      } finally {
+        setMarketHistoryReady(true);
       }
     };
 
@@ -250,7 +255,12 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
 
   // Preload sparkline data for all stocks (recent window via gateway).
   useEffect(() => {
-    if (stocks.length === 0) return;
+    if (loading) return;
+    if (stocks.length === 0) {
+      setSparklineHistoryReady(true);
+      return;
+    }
+    let cancelled = false;
     const fetchAllHistory = async () => {
       try {
         // Use a 90-day window so sparsely-updated stocks (e.g. KPC, BAMB)
@@ -269,13 +279,18 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
           if (!grouped[sid]) grouped[sid] = [];
           grouped[sid].push({ snapshot_date: d.snapshot_date, price: Number(d.price) });
         });
-        setHistory(grouped);
+        if (!cancelled) setHistory(grouped);
       } catch (e) {
         console.error("Failed to load stock sparkline data", e);
+      } finally {
+        if (!cancelled) setSparklineHistoryReady(true);
       }
     };
     fetchAllHistory();
-  }, [stocks]);
+    return () => {
+      cancelled = true;
+    };
+  }, [loading, stocks]);
 
   const toggleExpand = async (stockId: string) => {
     if (expanded === stockId) {
@@ -381,8 +396,18 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     );
   }
 
+  const pageLoading = loading || !marketHistoryReady || !sparklineHistoryReady;
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen px-4 md:px-6 py-5 md:py-6">
+        <MarketPageLoader message="Loading latest stock data…" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen animate-in fade-in-50 duration-500">
       <div className="px-4 md:px-6 py-5 md:py-6">
         {/* Desktop & Mobile Header */}
         <div className="mb-4">
