@@ -13,6 +13,7 @@ import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianG
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import CommodityFavourites from "../components/home/CommodityFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
+import MarketPageLoader from "@/components/MarketPageLoader";
 
 interface Commodity {
   id: string;
@@ -123,6 +124,7 @@ const CommoditiesPage = () => {
 
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [loading, setLoading] = useState(true);
+  const [initialHistoryReady, setInitialHistoryReady] = useState(false);
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
   const [history, setHistory] = useState<Record<string, PriceHistory[]>>({});
@@ -133,18 +135,24 @@ const CommoditiesPage = () => {
 
   useEffect(() => {
     const fetchData = async () => {
-      const { data } = await supabase
-        .from("commodities_public" as any)
-        .select("id, name, symbol, price, previous_price, unit, updated_at")
-        .order("sort_order");
-      setCommodities(
-        ((data as any) || []).map((c: any) => ({
-          ...c,
-          price: Number(c.price),
-          previous_price: c.previous_price != null ? Number(c.previous_price) : null,
-        }))
-      );
-      setLoading(false);
+      try {
+        const { data } = await supabase
+          .from("commodities_public" as any)
+          .select("id, name, symbol, price, previous_price, unit, updated_at")
+          .order("sort_order");
+        setCommodities(
+          ((data as any) || []).map((c: any) => ({
+            ...c,
+            price: Number(c.price),
+            previous_price: c.previous_price != null ? Number(c.previous_price) : null,
+          }))
+        );
+      } catch (error) {
+        console.error("Failed to load commodities", error);
+        setCommodities([]);
+      } finally {
+        setLoading(false);
+      }
     };
     fetchData();
 
@@ -159,29 +167,39 @@ const CommoditiesPage = () => {
 
   // Preload sparkline history for all commodities (last ~90 days, refreshed periodically)
   useEffect(() => {
-    if (commodities.length === 0) return;
+    if (loading) return;
+    if (commodities.length === 0) {
+      setInitialHistoryReady(true);
+      return;
+    }
     let cancelled = false;
     const fetchAllHistory = async () => {
-      const sinceIso = new Date(Date.now() - 95 * 24 * 60 * 60 * 1000)
-        .toISOString()
-        .slice(0, 10);
-      const { data } = await supabase
-        .from("commodity_price_history" as any)
-        .select("commodity_id, price, snapshot_date")
-        .gte("snapshot_date", sinceIso)
-        .order("snapshot_date", { ascending: false })
-        .limit(2000);
-      if (cancelled || !data) return;
-      const grouped: Record<string, PriceHistory[]> = {};
-      (data as any[]).forEach((d) => {
-        const cid = d.commodity_id;
-        if (!grouped[cid]) grouped[cid] = [];
-        grouped[cid].push({ snapshot_date: d.snapshot_date, price: Number(d.price) });
-      });
-      Object.keys(grouped).forEach((k) => {
-        grouped[k].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
-      });
-      setHistory(grouped);
+      try {
+        const sinceIso = new Date(Date.now() - 95 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 10);
+        const { data } = await supabase
+          .from("commodity_price_history" as any)
+          .select("commodity_id, price, snapshot_date")
+          .gte("snapshot_date", sinceIso)
+          .order("snapshot_date", { ascending: false })
+          .limit(2000);
+        if (cancelled || !data) return;
+        const grouped: Record<string, PriceHistory[]> = {};
+        (data as any[]).forEach((d) => {
+          const cid = d.commodity_id;
+          if (!grouped[cid]) grouped[cid] = [];
+          grouped[cid].push({ snapshot_date: d.snapshot_date, price: Number(d.price) });
+        });
+        Object.keys(grouped).forEach((k) => {
+          grouped[k].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+        });
+        setHistory(grouped);
+      } catch (error) {
+        console.error("Failed to load commodity sparkline data", error);
+      } finally {
+        if (!cancelled) setInitialHistoryReady(true);
+      }
     };
     fetchAllHistory();
     const intervalId = window.setInterval(() => void fetchAllHistory(), 5 * 60 * 1000);
@@ -189,7 +207,7 @@ const CommoditiesPage = () => {
       cancelled = true;
       window.clearInterval(intervalId);
     };
-  }, [commodities]);
+  }, [commodities, loading]);
 
   const toggleExpand = async (id: string) => {
     if (expanded === id) { setExpanded(null); return; }
@@ -243,8 +261,18 @@ const CommoditiesPage = () => {
     return result;
   }, [commodities, search, mobileMovement, mobileSort]);
 
+  const pageLoading = loading || !initialHistoryReady;
+
+  if (pageLoading) {
+    return (
+      <div className="min-h-screen px-4 md:px-6 py-5 md:py-6">
+        <MarketPageLoader message="Loading latest commodity data…" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen">
+    <div className="min-h-screen animate-in fade-in-50 duration-500">
       <div className="px-4 md:px-6 py-5 md:py-6">
         <div className="mb-4">
           <div className="hidden md:flex items-end justify-between gap-6 mb-7">

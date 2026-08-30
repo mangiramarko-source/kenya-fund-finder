@@ -16,6 +16,7 @@ import { fetchPublicData } from "@/lib/gateway";
 import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
 import { calculateDemoReturn, fetchCompleteDemoHistory, filterDemoStocks, findDemoStock, stockProductionPath, type DemoHistoryRow, type DemoPricePoint } from "@/lib/stockDetailDemo";
 import { getStockLogoUrl } from "@/lib/stockBranding";
+import MarketPageLoader from "@/components/MarketPageLoader";
 
 const formatPrice = (value: number) => value.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -32,7 +33,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   const [stocks, setStocks] = useState<CachedStock[]>(cachedStocks);
   const [history, setHistory] = useState<Record<string, DemoPricePoint[]>>({});
   const [historyLoading, setHistoryLoading] = useState(true);
-  const [loading, setLoading] = useState(cachedStocks.length === 0);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState(false);
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
@@ -50,7 +51,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   useEffect(() => {
     let cancelled = false;
     const loadStocks = async () => {
-      if (cachedStocks.length === 0) setLoading(true);
+      setLoading(true);
       setLoadError(false);
       try {
         const response = await fetchPublicData<CachedStock>("stocks", {
@@ -129,14 +130,18 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
 
   if (isMobile) return null;
 
+  if (loading || historyLoading) {
+    return (
+      <div className="min-h-screen bg-background px-6 py-6 text-foreground">
+        <MarketPageLoader message="Loading latest stock data…" />
+      </div>
+    );
+  }
+
   return (
-    <div className="min-h-screen bg-background pb-16 text-foreground">
+    <div className="min-h-screen bg-background pb-16 text-foreground animate-in fade-in-50 duration-500">
       <main className="mx-auto max-w-[1600px] px-6 py-6">
-        {loading ? (
-          <div className="space-y-4">
-            <Skeleton className="h-[720px] rounded-2xl" />
-          </div>
-        ) : loadError ? (
+        {loadError ? (
           <DemoState title="Stock data is temporarily unavailable" detail="Please check your connection and refresh the demo." />
         ) : !selectedStock ? (
           <DemoState title="Stock not found" detail={`No listed stock matches “${symbol}”.`} />
