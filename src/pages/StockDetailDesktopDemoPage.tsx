@@ -17,6 +17,7 @@ import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
 import { calculateDemoReturn, fetchCompleteDemoHistory, filterDemoStocks, findDemoStock, stockProductionPath, type DemoHistoryRow, type DemoPricePoint } from "@/lib/stockDetailDemo";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 const formatPrice = (value: number) => value.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -127,10 +128,11 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   const latestUpdate = useMemo(() => stocks.length > 0
     ? stocks.reduce((latest, stock) => stock.updated_at > latest ? stock.updated_at : latest, stocks[0].updated_at)
     : null, [stocks]);
+  const showLoading = useMinimumLoadingDuration(loading || historyLoading);
 
   if (isMobile) return null;
 
-  if (loading || historyLoading) {
+  if (showLoading) {
     return (
       <div className="min-h-screen bg-background px-6 py-6 text-foreground">
         <MarketPageLoader message="Loading latest stock data…" />

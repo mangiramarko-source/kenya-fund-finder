@@ -43,11 +43,13 @@ import {
 } from "recharts";
 import { useTreasuryData, TBillAuction, TreasuryBond } from "@/hooks/useTreasuryData";
 import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 export default function TreasuryPage() {
   useDocumentTitle("Treasury Bills & Bonds | Rates, Auction & Return Calculator | KenyaFundFinder");
 
   const { data, isLoading, isError } = useTreasuryData();
+  const showLoading = useMinimumLoadingDuration(isLoading);
 
   // Top tab selection: "tbills" | "bonds"
   const [activeTab, setActiveTab] = useState<"tbills" | "bonds">("tbills");
@@ -157,17 +159,17 @@ export default function TreasuryPage() {
 
 
         <main className="flex-1 container mx-auto px-4 py-4 md:py-6 max-w-6xl space-y-4">
-          {isLoading && (
+          {showLoading && (
             <MarketPageLoader message="Loading latest Treasury data…" />
           )}
           
-          {isError && (
+          {!showLoading && isError && (
             <div className="bg-amber-500/10 text-amber-600 dark:text-amber-400 px-6 py-4 rounded-xl border border-amber-500/20 text-center font-semibold max-w-md mx-auto my-20">
               Treasury data is temporarily unavailable.
             </div>
           )}
 
-          {!isLoading && !isError && data && (
+          {!showLoading && !isError && data && (
             <div className="space-y-4 animate-in fade-in-50 duration-500">
           {/* ── Section 1: Main Page Header ── */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-border/60 pb-3">

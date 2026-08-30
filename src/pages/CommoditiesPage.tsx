@@ -14,6 +14,7 @@ import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import CommodityFavourites from "../components/home/CommodityFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 interface Commodity {
   id: string;
@@ -262,8 +263,9 @@ const CommoditiesPage = () => {
   }, [commodities, search, mobileMovement, mobileSort]);
 
   const pageLoading = loading || !initialHistoryReady;
+  const showPageLoading = useMinimumLoadingDuration(pageLoading);
 
-  if (pageLoading) {
+  if (showPageLoading) {
     return (
       <div className="min-h-screen px-4 md:px-6 py-5 md:py-6">
         <MarketPageLoader message="Loading latest commodity data…" />

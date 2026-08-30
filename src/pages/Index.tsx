@@ -9,6 +9,7 @@ import { fundCache } from "@/lib/fundCache";
 import { useOnlineStatus } from "@/hooks/useOnlineStatus";
 import FundBuyerQuestions from "@/components/funds/FundBuyerQuestions";
 import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
@@ -93,8 +94,9 @@ const Index = () => {
   const lastUpdate = lastUpdateDate 
     ? new Date(lastUpdateDate) 
     : null;
+  const showLoading = useMinimumLoadingDuration(loading);
 
-  if (loading) {
+  if (showLoading) {
     return (
       <div className="px-4 md:px-6 py-5 md:py-6 min-h-screen">
         <MarketPageLoader message="Loading latest fund data…" />

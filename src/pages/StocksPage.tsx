@@ -33,6 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
 import StockFavourites from "@/components/home/StockFavourites";
 import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { useAssetWatchlist, type WatchlistEntry } from "@/hooks/useAssetWatchlist";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, ComposedChart } from "recharts";
@@ -364,6 +365,8 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
       : null;
 
   const maxMarketCap = useMemo(() => Math.max(...stocks.map((s) => s.market_cap || 0)), [stocks]);
+  const pageLoading = loading || !marketHistoryReady || !sparklineHistoryReady;
+  const showPageLoading = useMinimumLoadingDuration(pageLoading);
 
   if (desktopDemo) {
     if (isMobile) return null;
@@ -396,9 +399,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     );
   }
 
-  const pageLoading = loading || !marketHistoryReady || !sparklineHistoryReady;
-
-  if (pageLoading) {
+  if (showPageLoading) {
     return (
       <div className="min-h-screen px-4 md:px-6 py-5 md:py-6">
         <MarketPageLoader message="Loading latest stock data…" />
