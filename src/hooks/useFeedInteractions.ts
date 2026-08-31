@@ -16,6 +16,16 @@ interface StoredFeedData {
   };
 }
 
+// Supabase reuses a channel when its topic name matches an existing one. Feed
+// pages can briefly overlap while routes change, so a shared topic lets a new
+// mount add callbacks to an already-subscribed channel and throws at runtime.
+let feedRealtimeChannelSequence = 0;
+
+function nextFeedRealtimeChannelName() {
+  feedRealtimeChannelSequence += 1;
+  return `feed-interactions-${feedRealtimeChannelSequence}`;
+}
+
 function getGuestToken(): string {
   try {
     let token = localStorage.getItem("kf_guest_token");
@@ -114,7 +124,7 @@ export function useFeedInteractions() {
     fetchInitialData();
 
     // Setup Realtime subscriptions
-    const channel = supabase.channel('schema-db-changes')
+    const channel = supabase.channel(nextFeedRealtimeChannelName())
       .on(
         'postgres_changes',
         { event: 'INSERT', schema: 'public', table: 'post_likes' },
