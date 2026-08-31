@@ -13,9 +13,23 @@ import { useToast } from "@/hooks/use-toast";
 import CookiePreferences from "@/components/CookiePreferences";
 import MarketPageLoader from "@/components/MarketPageLoader";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
+import DeleteAccountCard from "@/components/profile/DeleteAccountCard";
+
+async function accountDeletionErrorMessage(error: unknown) {
+  const context = (error as { context?: unknown } | null)?.context;
+  if (context instanceof Response) {
+    try {
+      const payload = await context.clone().json() as { error?: { message?: unknown } };
+      if (typeof payload.error?.message === "string") return payload.error.message;
+    } catch {
+      // Fall through to the stable client-side message.
+    }
+  }
+  return "We could not delete your account. Please try again.";
+}
 
 const ProfilePage = () => {
-  const { user, loading: authLoading } = useAuth();
+  const { user, isAdmin, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { toast } = useToast();
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -136,6 +150,20 @@ const ProfilePage = () => {
       setNewPassword("");
       setConfirmPassword("");
     }
+  };
+
+  const handleDeleteAccount = async () => {
+    const { data, error } = await supabase.functions.invoke("delete-account", {
+      body: { confirmation: "DELETE" },
+    });
+
+    if (error || data?.deleted !== true) {
+      throw new Error(await accountDeletionErrorMessage(error));
+    }
+
+    await supabase.auth.signOut({ scope: "local" });
+    toast({ title: "Account deleted", description: "Your account and private data have been permanently removed." });
+    navigate("/", { replace: true });
   };
 
   const showPageLoading = useMinimumLoadingDuration(authLoading || loadingProfile);
@@ -263,6 +291,8 @@ const ProfilePage = () => {
       </Card>
 
       <CookiePreferences />
+
+      <DeleteAccountCard isAdmin={isAdmin} onDelete={handleDeleteAccount} />
     </div>
   );
 };
