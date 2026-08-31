@@ -10,14 +10,14 @@ function LoadingProbe({ loading }: { loading: boolean }) {
 describe("useMinimumLoadingDuration", () => {
   afterEach(() => vi.useRealTimers());
 
-  it("keeps a completed load visible for at least 700ms", () => {
+  it("keeps a completed load visible for at least 1.5 seconds", () => {
     vi.useFakeTimers();
     const { rerender } = render(<LoadingProbe loading />);
 
     rerender(<LoadingProbe loading={false} />);
     expect(screen.getByText("loading")).toBeInTheDocument();
 
-    act(() => vi.advanceTimersByTime(699));
+    act(() => vi.advanceTimersByTime(1499));
     expect(screen.getByText("loading")).toBeInTheDocument();
 
     act(() => vi.advanceTimersByTime(1));

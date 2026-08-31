@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 
 /** Keeps an initial loading screen visible long enough for it to be perceived. */
-export function useMinimumLoadingDuration(isLoading: boolean, minimumDuration = 700) {
+export function useMinimumLoadingDuration(isLoading: boolean, minimumDuration = 1500) {
   const startedAt = useRef<number | null>(isLoading ? Date.now() : null);
   const [minimumElapsed, setMinimumElapsed] = useState(false);
 
