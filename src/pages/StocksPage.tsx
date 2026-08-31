@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
 import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
+import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import {
   TrendingUp,
@@ -43,6 +44,12 @@ type Stock = CachedStock;
 interface PriceHistory {
   snapshot_date: string;
   price: number;
+}
+
+interface StocksPageMemory {
+  stocks: Stock[];
+  marketHistory: any[];
+  history: Record<string, PriceHistory[]>;
 }
 
 type SortKey = "symbol" | "price" | "day_change_percent" | "volume" | "market_cap" | "dividend_yield";
@@ -184,18 +191,19 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
 
   const { user } = useAuth();
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
+  const [initialPageMemory] = useState(() => getMarketPageMemory<StocksPageMemory>("stocks"));
   const [cachedStocks] = useState(() => stockCache.loadStocks());
-  const [stocks, setStocks] = useState<Stock[]>(cachedStocks?.stocks ?? []);
-  const [marketHistory, setMarketHistory] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [marketHistoryReady, setMarketHistoryReady] = useState(false);
-  const [sparklineHistoryReady, setSparklineHistoryReady] = useState(false);
+  const [stocks, setStocks] = useState<Stock[]>(initialPageMemory?.stocks ?? cachedStocks?.stocks ?? []);
+  const [marketHistory, setMarketHistory] = useState<any[]>(initialPageMemory?.marketHistory ?? []);
+  const [loading, setLoading] = useState(() => !initialPageMemory);
+  const [marketHistoryReady, setMarketHistoryReady] = useState(() => Boolean(initialPageMemory));
+  const [sparklineHistoryReady, setSparklineHistoryReady] = useState(() => Boolean(initialPageMemory));
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
   const [sortKey, setSortKey] = useState<SortKey>("market_cap");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [history, setHistory] = useState<Record<string, PriceHistory[]>>({});
+  const [history, setHistory] = useState<Record<string, PriceHistory[]>>(initialPageMemory?.history ?? {});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
   const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
   const [viewMode, setViewMode] = useState<"list" | "grid">("grid");
@@ -367,6 +375,12 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
   const maxMarketCap = useMemo(() => Math.max(...stocks.map((s) => s.market_cap || 0)), [stocks]);
   const pageLoading = loading || !marketHistoryReady || !sparklineHistoryReady;
   const showPageLoading = useMinimumLoadingDuration(pageLoading);
+
+  useEffect(() => {
+    if (!pageLoading) {
+      setMarketPageMemory<StocksPageMemory>("stocks", { stocks, marketHistory, history });
+    }
+  }, [history, marketHistory, pageLoading, stocks]);
 
   if (desktopDemo) {
     if (isMobile) return null;

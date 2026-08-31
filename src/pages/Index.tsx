@@ -13,6 +13,13 @@ import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
+import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
+
+interface FundsPageMemory {
+  funds: FundFromDB[];
+  snapshots: Record<string, YieldSnapshot>;
+  allSnapshots: Record<string, YieldSnapshot[]>;
+}
 
 const Index = () => {
   useDocumentTitle(
@@ -23,12 +30,13 @@ const Index = () => {
       description: "Compare CMA-regulated unit trusts and MMFs in Kenya by yield, manager, and minimum investment. Updated daily.",
     }
   );
+  const [initialPageMemory] = useState(() => getMarketPageMemory<FundsPageMemory>("funds"));
   const [cachedFunds] = useState(() => fundCache.loadFunds());
   const [cachedSnaps] = useState(() => fundCache.loadSnapshots());
-  const [funds, setFunds] = useState<FundFromDB[]>(cachedFunds?.funds ?? []);
-  const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>(cachedSnaps?.snapshots ?? {});
-  const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>({});
-  const [loading, setLoading] = useState(true);
+  const [funds, setFunds] = useState<FundFromDB[]>(initialPageMemory?.funds ?? cachedFunds?.funds ?? []);
+  const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>(initialPageMemory?.snapshots ?? cachedSnaps?.snapshots ?? {});
+  const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>(initialPageMemory?.allSnapshots ?? {});
+  const [loading, setLoading] = useState(() => !initialPageMemory);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [usingCache, setUsingCache] = useState(false);
   const [cacheSavedAt, setCacheSavedAt] = useState<number | null>(cachedFunds?.savedAt ?? null);
@@ -38,7 +46,7 @@ const Index = () => {
   const { lastUpdateDate } = useLiveStatus();
 
   const load = useCallback(async () => {
-    if (!cachedFunds) setLoading(true);
+    if (!initialPageMemory && !cachedFunds) setLoading(true);
     setLoadError(null);
     try {
       const f = await fetchFunds();
@@ -85,9 +93,15 @@ const Index = () => {
     } finally {
       setLoading(false);
     }
-  }, [cachedFunds, cachedSnaps]);
+  }, [cachedFunds, cachedSnaps, initialPageMemory]);
 
   useEffect(() => { load(); }, [load]);
+
+  useEffect(() => {
+    if (!loading) {
+      setMarketPageMemory<FundsPageMemory>("funds", { funds, snapshots, allSnapshots });
+    }
+  }, [allSnapshots, funds, loading, snapshots]);
 
   const published = funds.filter((f) => f.is_published);
 

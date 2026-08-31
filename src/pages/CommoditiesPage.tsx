@@ -15,6 +15,7 @@ import CommodityFavourites from "../components/home/CommodityFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import MarketPageLoader from "@/components/MarketPageLoader";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
+import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
 
 interface Commodity {
   id: string;
@@ -29,6 +30,11 @@ interface Commodity {
 interface PriceHistory {
   snapshot_date: string;
   price: number;
+}
+
+interface CommoditiesPageMemory {
+  commodities: Commodity[];
+  history: Record<string, PriceHistory[]>;
 }
 
 const ChangeIndicator = ({ current, previous }: { current: number; previous: number | null }) => {
@@ -122,13 +128,14 @@ const CommoditiesPage = () => {
 
   const { user } = useAuth();
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("commodity");
+  const [initialPageMemory] = useState(() => getMarketPageMemory<CommoditiesPageMemory>("commodities"));
 
-  const [commodities, setCommodities] = useState<Commodity[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [initialHistoryReady, setInitialHistoryReady] = useState(false);
+  const [commodities, setCommodities] = useState<Commodity[]>(initialPageMemory?.commodities ?? []);
+  const [loading, setLoading] = useState(() => !initialPageMemory);
+  const [initialHistoryReady, setInitialHistoryReady] = useState(() => Boolean(initialPageMemory));
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [history, setHistory] = useState<Record<string, PriceHistory[]>>({});
+  const [history, setHistory] = useState<Record<string, PriceHistory[]>>(initialPageMemory?.history ?? {});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
   const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
   type SortKey = "default" | "price_desc" | "price_asc" | "change_desc" | "change_asc" | "name_asc" | "name_desc";
@@ -264,6 +271,12 @@ const CommoditiesPage = () => {
 
   const pageLoading = loading || !initialHistoryReady;
   const showPageLoading = useMinimumLoadingDuration(pageLoading);
+
+  useEffect(() => {
+    if (!pageLoading) {
+      setMarketPageMemory<CommoditiesPageMemory>("commodities", { commodities, history });
+    }
+  }, [commodities, history, pageLoading]);
 
   if (showPageLoading) {
     return (

@@ -3,7 +3,8 @@ import { useEffect, useRef, useState } from "react";
 /** Keeps an initial loading screen visible long enough for it to be perceived. */
 export function useMinimumLoadingDuration(isLoading: boolean, minimumDuration = 1500) {
   const startedAt = useRef<number | null>(isLoading ? Date.now() : null);
-  const [minimumElapsed, setMinimumElapsed] = useState(false);
+  // A route that mounts with cached, ready data should not invent a new loading cycle.
+  const [minimumElapsed, setMinimumElapsed] = useState(() => !isLoading);
 
   useEffect(() => {
     if (isLoading) {

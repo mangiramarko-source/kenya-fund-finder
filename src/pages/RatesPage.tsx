@@ -15,6 +15,7 @@ import RateFavourites from "../components/home/RateFavourites";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import MarketPageLoader from "@/components/MarketPageLoader";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
+import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
 
 interface Rate {
   id: string;
@@ -28,6 +29,11 @@ interface Rate {
 interface RateHistory {
   snapshot_date: string;
   rate: number;
+}
+
+interface RatesPageMemory {
+  rates: Rate[];
+  history: Record<string, RateHistory[]>;
 }
 
 const ChangeIndicator = ({ current, previous }: { current: number; previous: number | null }) => {
@@ -121,13 +127,14 @@ const RatesPage = () => {
 
   const { user } = useAuth();
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("currency");
+  const [initialPageMemory] = useState(() => getMarketPageMemory<RatesPageMemory>("rates"));
 
-  const [rates, setRates] = useState<Rate[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [initialHistoryReady, setInitialHistoryReady] = useState(false);
+  const [rates, setRates] = useState<Rate[]>(initialPageMemory?.rates ?? []);
+  const [loading, setLoading] = useState(() => !initialPageMemory);
+  const [initialHistoryReady, setInitialHistoryReady] = useState(() => Boolean(initialPageMemory));
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [history, setHistory] = useState<Record<string, RateHistory[]>>({});
+  const [history, setHistory] = useState<Record<string, RateHistory[]>>(initialPageMemory?.history ?? {});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
 
   useEffect(() => {
@@ -268,6 +275,12 @@ const RatesPage = () => {
 
   const pageLoading = loading || !initialHistoryReady;
   const showPageLoading = useMinimumLoadingDuration(pageLoading);
+
+  useEffect(() => {
+    if (!pageLoading) {
+      setMarketPageMemory<RatesPageMemory>("rates", { rates, history });
+    }
+  }, [history, pageLoading, rates]);
 
   if (showPageLoading) {
     return (

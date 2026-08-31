@@ -23,4 +23,10 @@ describe("useMinimumLoadingDuration", () => {
     act(() => vi.advanceTimersByTime(1));
     expect(screen.getByText("ready")).toBeInTheDocument();
   });
+
+  it("does not replay loading when a route mounts with ready cached data", () => {
+    render(<LoadingProbe loading={false} />);
+
+    expect(screen.getByText("ready")).toBeInTheDocument();
+  });
 });
