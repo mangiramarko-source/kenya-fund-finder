@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Navigate, Routes, Route } from "react-router-dom";
+import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CompareProvider } from "@/hooks/useCompare";
 import ErrorBoundary from "@/components/ErrorBoundary";
@@ -13,6 +13,7 @@ import CompareBar from "./components/compare/CompareBar";
 import { Analytics } from "@vercel/analytics/react";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import MarketPageLoader from "./components/MarketPageLoader";
+import { getPageLoadingMessage } from "./lib/pageLoadingMessage";
 // CookieConsent loaded eagerly: it's the LCP element on first visit;
 // lazy-loading it delays paint and tanks the LCP score.
 import CookieConsent from "./components/CookieConsent";
@@ -80,9 +81,11 @@ const queryClient = new QueryClient({
   },
 });
 
-const PageFallback = () => (
-  <MarketPageLoader message="Loading page…" className="min-h-[60vh]" />
-);
+const PageFallback = () => {
+  const { pathname } = useLocation();
+
+  return <MarketPageLoader message={getPageLoadingMessage(pathname)} className="min-h-[60vh]" />;
+};
 
 const App = () => (
   <ErrorBoundary>
