@@ -83,7 +83,7 @@ const AlertChip = ({ alert }: { alert: PriceAlert }) => {
       )}
       <span className="font-medium truncate max-w-[120px]">{alert.asset_name}</span>
       <span className="text-muted-foreground">
-        {isAbove ? ">" : "<"} {alert.target_price.toLocaleString()}
+        {isAbove ? ">" : "<"} {alert.price_unit} {alert.target_price.toLocaleString()}
       </span>
       {isTriggered && (
         <Badge className="bg-accent/20 text-accent text-[9px] px-1 py-0 leading-tight">

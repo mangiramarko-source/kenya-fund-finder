@@ -122,7 +122,7 @@ const AlertsPage = () => {
       <div className="container mx-auto px-4 py-16 text-center">
         <Bell className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
         <h1 className="text-2xl font-bold text-foreground mb-2">Sign in to manage alerts</h1>
-        <p className="text-muted-foreground mb-6">Create and manage price alerts for NSE stocks.</p>
+        <p className="text-muted-foreground mb-6">Create and manage price alerts for NSE stocks, FX rates, and commodities.</p>
         <Button onClick={() => navigate("/auth")}>Sign In</Button>
       </div>
     );

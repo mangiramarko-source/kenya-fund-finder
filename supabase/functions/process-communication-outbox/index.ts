@@ -179,15 +179,16 @@ async function renderMarketBrief(
 
 function renderPriceAlert(row: OutboxRow, unsubscribeUrl: string): EmailContent {
   const payload = row.payload;
-  const name = String(payload.stock_name ?? "Stock");
+  const name = String(payload.asset_name ?? payload.stock_name ?? "Asset");
   const condition = String(payload.condition ?? "threshold");
+  const unit = String(payload.price_unit ?? "KES");
   const current = formatNumber(payload.triggered_price);
   const target = formatNumber(payload.target_price);
-  const content = `<h1 style="font-size:22px;margin:0 0 12px">Price alert</h1><p style="font-size:15px;line-height:1.6"><strong>${escapeHtml(name)}</strong> is now <strong>KES ${escapeHtml(current)}</strong>, meeting your ${escapeHtml(condition)} KES ${escapeHtml(target)} alert.</p><p style="font-size:12px;color:#778197">Observed ${escapeHtml(payload.observed_at)}</p>`;
+  const content = `<h1 style="font-size:22px;margin:0 0 12px">Price alert</h1><p style="font-size:15px;line-height:1.6"><strong>${escapeHtml(name)}</strong> is now <strong>${escapeHtml(unit)} ${escapeHtml(current)}</strong>, meeting your ${escapeHtml(condition)} ${escapeHtml(unit)} ${escapeHtml(target)} alert.</p><p style="font-size:12px;color:#778197">Observed ${escapeHtml(payload.observed_at)}</p>`;
   return {
     subject: `Price alert · ${name}`,
     html: page("Price alert", content, unsubscribeUrl),
-    text: `${name} is now KES ${current}, meeting your ${condition} KES ${target} alert. Data update only — not investment advice.\n\nUnsubscribe: ${unsubscribeUrl}`,
+    text: `${name} is now ${unit} ${current}, meeting your ${condition} ${unit} ${target} alert. Data update only — not investment advice.\n\nUnsubscribe: ${unsubscribeUrl}`,
   };
 }
 

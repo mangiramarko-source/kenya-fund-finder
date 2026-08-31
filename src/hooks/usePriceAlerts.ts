@@ -11,6 +11,7 @@ export interface PriceAlert {
   asset_type: AlertAssetType;
   asset_id: string;
   asset_name: string;
+  price_unit: string;
   target_price: number;
   condition: AlertCondition;
   baseline_price: number | null;
@@ -34,12 +35,8 @@ export interface Notification {
   created_at: string;
 }
 
-/**
- * The production evaluator currently has a strict stock-only contract. Keep
- * this guard next to the write so a route cannot accidentally offer an alert
- * that the evaluator will never process.
- */
-export const PRICE_ALERT_AVAILABILITY_MESSAGE = "Price alerts are currently available for NSE stocks only.";
+/** Price alerts for funds remain unavailable while their change-based evaluator is separate. */
+export const PRICE_ALERT_AVAILABILITY_MESSAGE = "Price alerts are currently unavailable for unit trusts.";
 
 export interface NewPriceAlert {
   asset_type: AlertAssetType;
@@ -47,20 +44,22 @@ export interface NewPriceAlert {
   asset_name: string;
   target_price: number;
   condition: AlertCondition;
+  price_unit?: string;
   baseline_price?: number | null;
   notify_email?: boolean;
   notify_inapp?: boolean;
 }
 
 export const buildPriceAlertInsert = (userId: string, alert: NewPriceAlert) => {
-  if (alert.asset_type !== "stock") return null;
+  if (!(["stock", "currency", "commodity"] as const).includes(alert.asset_type as "stock" | "currency" | "commodity")) return null;
   return {
     // `stock_id` is the canonical foreign key used by the evaluator. The
     // compatibility `asset_*` fields remain for the existing UI/history.
-    stock_id: alert.asset_id,
+    stock_id: alert.asset_type === "stock" ? alert.asset_id : null,
     asset_type: alert.asset_type,
     asset_id: alert.asset_id,
     asset_name: alert.asset_name,
+    price_unit: alert.price_unit || "KES",
     target_price: alert.target_price,
     condition: alert.condition,
     baseline_price: alert.baseline_price ?? null,

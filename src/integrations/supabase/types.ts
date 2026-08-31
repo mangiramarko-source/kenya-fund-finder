@@ -1087,6 +1087,7 @@ export type Database = {
           last_evaluated_at: string | null
           notify_email: boolean
           notify_inapp: boolean
+          price_unit: string
           stock_id: string | null
           target_price: number
           trigger_count: number
@@ -1108,6 +1109,7 @@ export type Database = {
           last_evaluated_at?: string | null
           notify_email?: boolean
           notify_inapp?: boolean
+          price_unit?: string
           stock_id?: string | null
           target_price: number
           trigger_count?: number
@@ -1129,6 +1131,7 @@ export type Database = {
           last_evaluated_at?: string | null
           notify_email?: boolean
           notify_inapp?: boolean
+          price_unit?: string
           stock_id?: string | null
           target_price?: number
           trigger_count?: number

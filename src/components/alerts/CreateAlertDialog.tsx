@@ -47,7 +47,6 @@ export const CreateAlertDialog = ({
   };
 
   const isFund = assetType === "fund";
-  const isSupported = assetType === "stock";
   const [condition, setCondition] = useState<AlertCondition>(isFund ? "change_any" : "above");
   const [threshold, setThreshold] = useState("");
   const [notifyEmail, setNotifyEmail] = useState(true);
@@ -67,10 +66,6 @@ export const CreateAlertDialog = ({
   const activeCount = alerts.filter((a) => a.is_active && !a.is_triggered).length;
 
   const handleCreate = async () => {
-    if (!isSupported) {
-      toast.info(PRICE_ALERT_AVAILABILITY_MESSAGE);
-      return;
-    }
     if (!canCreateAlert(activeCount)) {
       toast.error(limitMessages.alertsAtMax);
       return;
@@ -87,6 +82,7 @@ export const CreateAlertDialog = ({
       asset_name: assetName,
       target_price: val,
       condition,
+      price_unit: unit || "KES",
       baseline_price: isFund ? currentPrice : null,
       notify_email: notifyEmail,
       notify_inapp: notifyInapp,
@@ -140,7 +136,7 @@ export const CreateAlertDialog = ({
             </p>
           </div>
 
-          {!isSupported ? (
+          {isFund ? (
             <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm leading-relaxed text-muted-foreground">
               {PRICE_ALERT_AVAILABILITY_MESSAGE} You can still save this asset to your watchlist or portfolio.
             </div>

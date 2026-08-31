@@ -6,9 +6,8 @@ import { dispatchPriceAlertPushes } from "../_shared/push-notifications.ts";
 
 const headers = { "Content-Type": "application/json" };
 
-// Price-alert automation remains unscheduled. This reconciles the safer
-// deployed stock-only evaluator and makes email eligibility fail closed for any
-// separately authorized manual invocation.
+// Price-alert automation remains unscheduled. Each invocation evaluates the
+// latest fresh stock, FX, and commodity observations before claiming alerts.
 Deno.serve(async (request) => {
   if (request.method !== "POST") return new Response(JSON.stringify({ error: "Method not allowed" }), { status: 405, headers });
   const supabaseUrl = Deno.env.get("SUPABASE_URL");
@@ -24,24 +23,33 @@ Deno.serve(async (request) => {
 
   try {
     const { data: alerts, error: alertsError } = await supabase.from("price_alerts")
-      .select("id,user_id,stock_id,asset_id,asset_name,condition,target_price").eq("is_active", true).eq("is_triggered", false).is("triggered_at", null);
+      .select("id,user_id,stock_id,asset_type,asset_id,asset_name,price_unit,condition,target_price").eq("is_active", true).eq("is_triggered", false).is("triggered_at", null);
     if (alertsError) throw alertsError;
     if (!alerts?.length) return new Response(JSON.stringify({ checked: 0, triggered: 0 }), { headers });
 
-    const stockIds = [...new Set(alerts.map((alert) => alert.stock_id ?? alert.asset_id).filter(Boolean))];
-    const { data: stocks, error: stocksError } = await supabase.from("stocks")
-      .select("id,name,price,updated_at,is_active").in("id", stockIds).eq("is_active", true);
-    if (stocksError) throw stocksError;
-    const prices = new Map((stocks ?? []).map((stock) => [stock.id, stock]));
+    const stockIds = [...new Set(alerts.filter((alert) => alert.asset_type === "stock").map((alert) => alert.stock_id ?? alert.asset_id).filter(Boolean))];
+    const currencyIds = [...new Set(alerts.filter((alert) => alert.asset_type === "currency").map((alert) => alert.asset_id).filter(Boolean))];
+    const commodityIds = [...new Set(alerts.filter((alert) => alert.asset_type === "commodity").map((alert) => alert.asset_id).filter(Boolean))];
+    const [stocksResult, currenciesResult, commoditiesResult] = await Promise.all([
+      stockIds.length ? supabase.from("stocks").select("id,name,price,updated_at").in("id", stockIds).eq("is_active", true) : Promise.resolve({ data: [], error: null }),
+      currencyIds.length ? supabase.from("exchange_rates").select("id,currency_code,rate,updated_at").in("id", currencyIds).eq("is_active", true) : Promise.resolve({ data: [], error: null }),
+      commodityIds.length ? supabase.from("commodities").select("id,name,price,updated_at").in("id", commodityIds).eq("is_active", true) : Promise.resolve({ data: [], error: null }),
+    ]);
+    if (stocksResult.error || currenciesResult.error || commoditiesResult.error) throw stocksResult.error ?? currenciesResult.error ?? commoditiesResult.error;
+    const prices = new Map<string, { name: string; price: number; updated_at: string | null }>();
+    for (const stock of stocksResult.data ?? []) prices.set(`stock:${stock.id}`, { name: stock.name, price: Number(stock.price), updated_at: stock.updated_at });
+    for (const currency of currenciesResult.data ?? []) prices.set(`currency:${currency.id}`, { name: `${currency.currency_code}/KES`, price: Number(currency.rate), updated_at: currency.updated_at });
+    for (const commodity of commoditiesResult.data ?? []) prices.set(`commodity:${commodity.id}`, { name: commodity.name, price: Number(commodity.price), updated_at: commodity.updated_at });
     const observedAt = new Date().toISOString();
     const marketDate = localDateInNairobi(observedAt);
     const emailEligibility = new Map<string, boolean>();
     let triggered = 0;
 
     for (const alert of alerts) {
-      const stock = prices.get(alert.stock_id ?? alert.asset_id);
-      const price = Number(stock?.price);
-      if (!stock || !stock.updated_at || localDateInNairobi(stock.updated_at) !== marketDate || !Number.isFinite(price) || price <= 0) continue;
+      const assetId = alert.asset_type === "stock" ? alert.stock_id ?? alert.asset_id : alert.asset_id;
+      const asset = prices.get(`${alert.asset_type}:${assetId}`);
+      const price = Number(asset?.price);
+      if (!asset || !asset.updated_at || localDateInNairobi(asset.updated_at) !== marketDate || !Number.isFinite(price) || price <= 0) continue;
       let emailAllowed = emailEligibility.get(alert.user_id);
       if (emailAllowed === undefined) {
         const { data: userResult, error: userError } = await supabase.auth.admin.getUserById(alert.user_id);
@@ -59,7 +67,7 @@ Deno.serve(async (request) => {
       const { data, error } = await supabase.rpc("claim_price_alert_event", {
         p_alert_id: alert.id,
         p_triggered_price: price,
-        p_source_observed_at: stock.updated_at ?? observedAt,
+        p_source_observed_at: asset.updated_at ?? observedAt,
         p_email_allowed: emailAllowed,
       });
       if (error) {
@@ -69,13 +77,13 @@ Deno.serve(async (request) => {
       if (data?.length) {
         triggered += 1;
         const eventKey = `price_alert:${alert.id}:trigger:${data[0].trigger_count}`;
-        const stockName = stock.name?.trim() || alert.asset_name;
+        const assetName = asset.name?.trim() || alert.asset_name;
         let pushNotification = {
           event_key: eventKey,
           notification_id: null as string | null,
           user_id: data[0].user_id,
-          title: `Price alert: ${stockName}`,
-          message: `${stockName} is now KES ${price.toFixed(2)}, meeting your ${alert.condition} KES ${Number(alert.target_price).toFixed(2)} alert. Data update only — not financial advice.`,
+          title: `Price alert: ${assetName}`,
+          message: `${assetName} is now ${alert.price_unit || "KES"} ${price.toFixed(2)}, meeting your ${alert.condition} ${alert.price_unit || "KES"} ${Number(alert.target_price).toFixed(2)} alert. Data update only — not financial advice.`,
           type: "price_alert",
         };
         if (data[0].notification_created) {

@@ -5,13 +5,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
-import { PRICE_ALERT_AVAILABILITY_MESSAGE, usePriceAlerts } from "@/hooks/usePriceAlerts";
+import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
 interface CreateAlertDialogProps {
-  assetType: "stock" | "currency" | "commodity" | "fund";
+  assetType: "stock" | "currency" | "commodity";
   assetId: string;
   assetName: string;
   currentPrice: number;
@@ -28,7 +28,6 @@ export const CreateAlertDialog = ({
   const [targetPrice, setTargetPrice] = useState("");
   const [condition, setCondition] = useState<"above" | "below">("above");
   const [saving, setSaving] = useState(false);
-  const isSupported = assetType === "stock";
 
   if (!user) {
     return (
@@ -41,10 +40,6 @@ export const CreateAlertDialog = ({
   }
 
   const handleCreate = async () => {
-    if (!isSupported) {
-      toast.info(PRICE_ALERT_AVAILABILITY_MESSAGE);
-      return;
-    }
     const price = parseFloat(targetPrice);
     if (isNaN(price) || price <= 0) {
       toast.error("Please enter a valid target price");
@@ -57,6 +52,7 @@ export const CreateAlertDialog = ({
       asset_name: assetName,
       target_price: price,
       condition,
+      price_unit: unit || "KES",
     });
     setSaving(false);
     if (result?.error) {
@@ -93,7 +89,7 @@ export const CreateAlertDialog = ({
             </p>
           </div>
 
-          {isSupported ? <>
+          <>
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Notify me when price goes</label>
             <Select value={condition} onValueChange={(v) => setCondition(v as "above" | "below")}>
@@ -130,9 +126,7 @@ export const CreateAlertDialog = ({
           <Button onClick={handleCreate} disabled={saving} className="w-full">
             {saving ? "Creating…" : "Create Alert"}
           </Button>
-          </> : <div className="rounded-lg border border-border bg-muted/40 p-3 text-sm leading-relaxed text-muted-foreground">
-            {PRICE_ALERT_AVAILABILITY_MESSAGE} You can still save this asset to your watchlist or portfolio.
-          </div>}
+          </>
         </div>
       </DialogContent>
     </Dialog>
@@ -217,13 +211,13 @@ const AlertCard = ({
         )}
       </div>
       <p className="text-xs text-muted-foreground mt-0.5">
-        {alert.condition === "above" ? "↑" : "↓"} {alert.condition} {alert.target_price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+        {alert.condition === "above" ? "↑" : "↓"} {alert.condition} {alert.price_unit} {alert.target_price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
         <span className="mx-1.5">·</span>
         <span className="capitalize">{alert.asset_type}</span>
       </p>
       {alert.is_triggered && alert.triggered_price && (
         <p className="text-[10px] text-accent mt-0.5">
-          Triggered at {alert.triggered_price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+          Triggered at {alert.price_unit} {alert.triggered_price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
           {alert.triggered_at && ` on ${new Date(alert.triggered_at).toLocaleDateString("en-KE")}`}
         </p>
       )}
