@@ -5,6 +5,9 @@ import {
   getSupabasePublishableKey,
   getSupabaseSecretKey,
 } from "../_shared/supabase-keys.ts";
+import { matchRapidApiStocks, parseRapidApiStockResponse, type QuoteSource, type StockQuote } from "./stock-quotes.ts";
+import { persistStockQuote, type StockWriteOperations } from "./stock-writes.ts";
+import { fetchNseSector, parseNseQuoteRows, parseNseSnapshotDate, summarizeNseFallback } from "./nse-fallback.ts";
 
 const allowedOrigins = [
   "https://kenya-fund-finder.lovable.app",
@@ -29,8 +32,6 @@ const FX_API = "https://open.er-api.com/v6/latest/KES";
 const COINGECKO_API = "https://api.coingecko.com/api/v3/simple/price";
 
 const RAPIDAPI_STOCKS_API = "https://nairobi-stock-exchange-nse.p.rapidapi.com/stocks";
-const NSE_MARKET_STATS_PAGE = "https://www.nse.co.ke/dataservices/market-statistics/";
-const NSE_MARKET_STATS_AJAX = "https://www.nse.co.ke/dataservices/wp-admin/admin-ajax.php";
 const STOCK_REQUEST_HEADERS = {
   "User-Agent": "Mozilla/5.0",
   "Accept": "application/json",
@@ -225,18 +226,6 @@ function normalizeText(value: string) {
   return value.toLowerCase().replace(/&/g, "and").replace(/[^a-z0-9]+/g, " ").trim();
 }
 
-type StockQuoteSource = "primary" | "secondary" | "cache";
-
-type StockQuote = {
-  price: number;
-  previousPrice: number;
-  dayChange: number;
-  dayChangePct: number;
-  volume: number;
-  source: StockQuoteSource;
-  asOfDate: string | null;
-};
-
 type StockCacheRow = {
   id: string;
   symbol: string;
@@ -250,6 +239,8 @@ type StockCacheRow = {
   year_high: number | null;
   year_low: number | null;
   updated_at: string;
+  provider_updated_at: string | null;
+  quote_source: QuoteSource | null;
 };
 
 type StockDataResult = {
@@ -258,37 +249,11 @@ type StockDataResult = {
   fallback: boolean;
   cacheTimestamp: string | null;
   notes: string[];
+  fallbackDiagnostics: ReturnType<typeof summarizeNseFallback> | null;
 };
 
 const NSE_XHR_SECTORS = [...new Set(Object.values(NSE_SECTOR_MAP))];
-const MONTH_NUMBERS: Record<string, string> = {
-  jan: "01",
-  feb: "02",
-  mar: "03",
-  apr: "04",
-  may: "05",
-  jun: "06",
-  jul: "07",
-  aug: "08",
-  sep: "09",
-  oct: "10",
-  nov: "11",
-  dec: "12",
-};
-
 const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
-function parseNumber(value: string | number | null | undefined) {
-  if (typeof value === "number") return Number.isFinite(value) ? value : 0;
-  const cleaned = String(value ?? "").replace(/,/g, "").replace(/[^\d.-]/g, "").trim();
-  return cleaned ? Number.parseFloat(cleaned) || 0 : 0;
-}
-
-function parseInteger(value: string | number | null | undefined) {
-  if (typeof value === "number") return Number.isFinite(value) ? Math.trunc(value) : 0;
-  const cleaned = String(value ?? "").replace(/,/g, "").replace(/[^\d-]/g, "").trim();
-  return cleaned ? Number.parseInt(cleaned, 10) || 0 : 0;
-}
 
 function buildCachedStockQuotes(stockRows: StockCacheRow[]) {
   const quotes = new Map<string, StockQuote>();
@@ -306,6 +271,8 @@ function buildCachedStockQuotes(stockRows: StockCacheRow[]) {
       volume: row.volume || 0,
       source: "cache",
       asOfDate: row.updated_at ? row.updated_at.split("T")[0] : null,
+      providerUpdatedAt: row.provider_updated_at,
+      quoteSource: row.quote_source,
     });
   }
 
@@ -345,7 +312,7 @@ async function fetchWithRetry(url: string, init: RequestInit, attempts = 2) {
   throw new Error(lastError);
 }
 
-async function fetchRapidApiStockQuotes(rapidApiKey: string) {
+async function fetchRapidApiStockQuotes(rapidApiKey: string, stockSymbols: string[]) {
   try {
     const response = await fetchWithRetry(
       RAPIDAPI_STOCKS_API,
@@ -360,36 +327,22 @@ async function fetchRapidApiStockQuotes(rapidApiKey: string) {
       2,
     );
 
-    const payload = await response.json() as { data?: Array<Record<string, unknown>> };
-    const quotes = new Map<string, StockQuote>();
-
-    for (const stock of payload.data || []) {
-      const ticker = String(stock.ticker || "").toUpperCase();
-      const price = parseNumber(stock.price as string | number | null | undefined);
-      const volume = parseInteger(stock.volume as string | number | null | undefined);
-      if (!ticker || price <= 0) continue;
-
-      const changeValue = String(stock.change || "0").replace(/\(.*\)/, "").trim();
-      const dayChange = parseNumber(changeValue);
-      const previousPrice = Number((price - dayChange).toFixed(2));
-      const dayChangePct = previousPrice > 0
-        ? Number(((dayChange / previousPrice) * 100).toFixed(2))
-        : 0;
-
-      quotes.set(ticker, {
-        price: Number(price.toFixed(2)),
-        previousPrice,
-        dayChange: Number(dayChange.toFixed(2)),
-        dayChangePct,
-        volume,
-        source: "primary",
-        asOfDate: null,
+    const parsed = parseRapidApiStockResponse(await response.json());
+    const { quotes, rejectedAliases } = matchRapidApiStocks(stockSymbols, parsed.quotes);
+    console.info("[fetch-market-data] RapidAPI stock response", {
+      ...parsed.diagnostics,
+      matched_stocks: quotes.size,
+      rejected_aliases: rejectedAliases,
+    });
+    if (rejectedAliases.length || parsed.diagnostics.rejected) {
+      console.warn("[fetch-market-data] Some RapidAPI instruments failed validation", {
+        rejected: parsed.diagnostics.rejected, rejected_aliases: rejectedAliases,
       });
     }
 
     return {
       quotes,
-      note: `Primary API fetched ${quotes.size} stocks`,
+      note: `Primary API returned ${parsed.diagnostics.returned} instruments, matched ${quotes.size} stocks, rejected ${parsed.diagnostics.rejected} invalid records and ${rejectedAliases.length} aliases`,
     };
   } catch (error) {
     const message = error instanceof Error ? error.message : String(error);
@@ -400,81 +353,24 @@ async function fetchRapidApiStockQuotes(rapidApiKey: string) {
   }
 }
 
-function parseNseSnapshotDate(html: string) {
-  const match = html.match(/Statistics as of\s+(\d{2})-([A-Za-z]{3})-(\d{4})/i);
-  if (!match) return null;
-
-  const [, day, monthName, year] = match;
-  const month = MONTH_NUMBERS[monthName.toLowerCase()];
-  return month ? `${year}-${month}-${day}` : null;
-}
-
-function parseNseQuoteRows(html: string) {
-  const rows: Array<{ company: string; price: number; changePct: number; volume: number }> = [];
-  const trRegex = /<tr[^>]*>([\s\S]*?)<\/tr>/gi;
-  let trMatch;
-  while ((trMatch = trRegex.exec(html)) !== null) {
-    const trHtml = trMatch[1];
-    const tdRegex = /<td[^>]*>([\s\S]*?)<\/td>/gi;
-    const cells: string[] = [];
-    let tdMatch;
-    while ((tdMatch = tdRegex.exec(trHtml)) !== null) {
-      const text = tdMatch[1].replace(/<[^>]+>/g, "").trim();
-      cells.push(text);
-    }
-    
-    if (cells.length >= 5) {
-      const company = cells[0];
-      const volume = parseInteger(cells[2]);
-      const price = parseNumber(cells[3]);
-      const changePct = parseNumber(cells[4]);
-      if (company && price > 0) {
-        rows.push({ company, volume, price, changePct });
-      }
-    }
-  }
-  return rows;
-}
-
 async function fetchNseXhrStockQuotes() {
   const sectorRows = new Map<string, Array<{ company: string; price: number; changePct: number; volume: number }>>();
   let snapshotDate: string | null = null;
 
   const responses = await Promise.all(
-    NSE_XHR_SECTORS.map(async (sector) => {
-      try {
-        const response = await fetchWithRetry(
-          NSE_MARKET_STATS_AJAX,
-          {
-            method: "POST",
-            headers: {
-              ...STOCK_REQUEST_HEADERS,
-              "Content-Type": "application/x-www-form-urlencoded; charset=UTF-8",
-              "Referer": NSE_MARKET_STATS_PAGE,
-            },
-            body: new URLSearchParams({
-              action: "display_prices",
-              sector,
-            }).toString(),
-          },
-          2,
-        );
-
-        return { sector, html: await response.text() };
-      } catch (error) {
-        console.error(`[fetch-market-data] NSE XHR failed for sector ${sector}:`, error);
-        return { sector, html: "" };
-      }
-    }),
+    NSE_XHR_SECTORS.map((sector) => fetchNseSector(sector)),
   );
 
-  for (const { sector, html } of responses) {
+  for (const response of responses) {
+    const { sector, html } = response;
     if (!html) continue;
     snapshotDate = snapshotDate || parseNseSnapshotDate(html);
 
     const rows = parseNseQuoteRows(html);
     if (rows.length > 0) {
       sectorRows.set(sector, rows);
+    } else {
+      response.errorCode = "NO_QUOTE_ROWS";
     }
   }
 
@@ -502,12 +398,19 @@ async function fetchNseXhrStockQuotes() {
       volume: row.volume,
       source: "secondary",
       asOfDate: snapshotDate,
+      providerUpdatedAt: null,
+      quoteSource: "nse",
     });
   }
 
+  const diagnostics = summarizeNseFallback(responses, quotes.size);
+  if (diagnostics.status !== "available") {
+    console.warn("[fetch-market-data] Official NSE fallback degraded", diagnostics);
+  }
   return {
     quotes,
-    note: `NSE XHR fetched ${quotes.size} stocks${snapshotDate ? ` (${snapshotDate})` : ""}`,
+    diagnostics,
+    note: `NSE XHR ${diagnostics.status}: fetched ${quotes.size} stocks, ${diagnostics.sectors_failed}/${diagnostics.sectors_requested} sectors failed${snapshotDate ? ` (${snapshotDate})` : ""}`,
   };
 }
 
@@ -522,6 +425,7 @@ function getQuoteSource(quotes: Map<string, StockQuote>) {
 async function getStockData(stockRows: StockCacheRow[]): Promise<StockDataResult> {
   const quotes = new Map<string, StockQuote>();
   const notes: string[] = [];
+  let fallbackDiagnostics: StockDataResult["fallbackDiagnostics"] = null;
   const cachedQuotes = buildCachedStockQuotes(stockRows);
   const cacheTimestamp = getLatestCacheTimestamp(stockRows);
   const stockSymbols = stockRows
@@ -530,7 +434,7 @@ async function getStockData(stockRows: StockCacheRow[]): Promise<StockDataResult
 
   const rapidApiKey = Deno.env.get("RAPIDAPI_KEY");
   if (rapidApiKey) {
-    const primary = await fetchRapidApiStockQuotes(rapidApiKey);
+    const primary = await fetchRapidApiStockQuotes(rapidApiKey, stockSymbols);
     notes.push(primary.note);
     primary.quotes.forEach((quote, symbol) => quotes.set(symbol, quote));
   } else {
@@ -541,6 +445,7 @@ async function getStockData(stockRows: StockCacheRow[]): Promise<StockDataResult
   if (missingAfterPrimary.length > 0) {
     const secondary = await fetchNseXhrStockQuotes();
     notes.push(secondary.note);
+    fallbackDiagnostics = secondary.diagnostics;
 
     for (const symbol of missingAfterPrimary) {
       const quote = secondary.quotes.get(symbol);
@@ -575,6 +480,7 @@ async function getStockData(stockRows: StockCacheRow[]): Promise<StockDataResult
     fallback: Array.from(quotes.values()).some((quote) => quote.source === "cache"),
     cacheTimestamp,
     notes,
+    fallbackDiagnostics,
   };
 }
 
@@ -623,6 +529,8 @@ Deno.serve(async (req) => {
 
   const fetchType = (body as Record<string, unknown>)?.fetch_type as string | undefined;
   const results: string[] = [];
+  let stockRunReport: Record<string, unknown> | null = null;
+  let stockWriteErrors = 0;
   console.log(`[fetch-market-data] Starting data fetch cycle... (type: ${fetchType || "all"})`);
 
   const shouldFetchFx = !fetchType || fetchType === "fx";
@@ -797,19 +705,24 @@ Deno.serve(async (req) => {
     }
     } // end shouldFetchCommodities
 
-    // ── 3. Fetch Kenyan stock prices (RapidAPI NSE primary, Yahoo fallback) ──
+    // ── 3. Fetch Kenyan stock prices (RapidAPI primary, official NSE fallback) ──
     if (shouldFetchStocks) {
-    const { data: stockRows, error: stockRowsError } = await supabase
+    const { data: stockRows, error: stocksReadError } = await supabase
       .from("stocks")
-      .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, year_high, year_low, updated_at")
+      .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, year_high, year_low, updated_at, provider_updated_at, quote_source")
       .eq("is_active", true);
-
-    if (stockRowsError) {
-      throw new Error(`Failed to load active stocks: ${stockRowsError.message}`);
-    }
+    if (stocksReadError) throw new Error(`Stock read failed: ${stocksReadError.code}`);
 
     if (stockRows && stockRows.length > 0) {
       let stocksUpdated = 0;
+      let historyUpdated = 0;
+      const successfulStockIds = new Set<string>();
+      const writeFailures: Array<{ symbol: string; step: string; code: string }> = [];
+      const stockWriter: StockWriteOperations = {
+        updateStock: (id, patch) => supabase.from("stocks").update(patch).eq("id", id).select("id").maybeSingle(),
+        upsertHistory: (row) => supabase.from("stock_price_history")
+          .upsert(row, { onConflict: "stock_id,snapshot_date" }).select("id").maybeSingle(),
+      };
       const stockData = await getStockData(stockRows as StockCacheRow[]);
       const fallbackCount = Array.from(stockData.quotes.values()).filter((quote) => quote.source === "cache").length;
       const freshCount = stockData.quotes.size - fallbackCount;
@@ -860,31 +773,16 @@ Deno.serve(async (req) => {
             yearLow = yearLow ? Math.min(yearLow, quote.price) : quote.price;
           }
 
-          const snapshotDate = quote.asOfDate || new Date().toISOString().split("T")[0];
-          const updatedAt = new Date().toISOString();
-          const updateData: Record<string, unknown> = {
-            previous_price: quote.previousPrice,
-            price: quote.price,
-            day_change: quote.dayChange,
-            day_change_percent: quote.dayChangePct,
-            year_high: yearHigh,
-            year_low: yearLow,
-            updated_at: updatedAt,
-          };
-          if (quote.volume > 0) updateData.volume = quote.volume;
-
-          await supabase.from("stocks").update(updateData).eq("id", row.id);
-          await supabase
-            .from("stock_price_history")
-            .upsert(
-              {
-                stock_id: row.id,
-                price: quote.price,
-                snapshot_date: snapshotDate,
-              },
-              { onConflict: "stock_id,snapshot_date" }
-            );
-          stocksUpdated++;
+          const written = await persistStockQuote(row.id, quote, { yearHigh, yearLow }, stockWriter);
+          if (written.stockWritten) {
+            stocksUpdated++;
+            successfulStockIds.add(row.id);
+          }
+          if (written.historyWritten) historyUpdated++;
+          for (const failure of written.errors) {
+            writeFailures.push({ symbol: sym, ...failure });
+            console.error("[fetch-market-data] Stock write failed", { stock_id: row.id, symbol: sym, ...failure });
+          }
         }
       }
 
@@ -894,7 +792,7 @@ Deno.serve(async (req) => {
           const sym = (row.symbol || "").toUpperCase();
           const quote = stockData.quotes.get(sym);
           return {
-            dayChange: quote?.dayChange ?? row.day_change,
+            dayChange: successfulStockIds.has(row.id) ? quote!.dayChange : row.day_change,
             marketCap: row.market_cap,
             peRatio: row.pe_ratio,
           };
@@ -903,7 +801,7 @@ Deno.serve(async (req) => {
           calculateMarketSummary(summaryRows);
         const snapshotDate = new Date().toISOString().split("T")[0];
 
-        await supabase.from("market_summary_history").upsert(
+        const { error: summaryError } = await supabase.from("market_summary_history").upsert(
           {
             date: snapshotDate,
             total_market_cap: totalMarketCap,
@@ -914,7 +812,12 @@ Deno.serve(async (req) => {
           },
           { onConflict: "date" }
         );
-        results.push(`Inserted daily market summary history for ${snapshotDate}`);
+        if (summaryError) {
+          writeFailures.push({ symbol: "market_summary", step: "summary_upsert", code: summaryError.code });
+          console.error("[fetch-market-data] Stock summary write failed", { code: summaryError.code });
+        } else {
+          results.push(`Inserted daily market summary history for ${snapshotDate}`);
+        }
       }
 
       const stillMissing = stockRows
@@ -931,11 +834,28 @@ Deno.serve(async (req) => {
         results.push(`Stocks: refreshed ${stocksUpdated}/${stockRows.length} prices${fallbackCount > 0 ? `, using cache for ${fallbackCount}` : ""}`);
       }
       console.log(`[fetch-market-data] Stocks source=${stockData.source}, refreshed=${stocksUpdated}, cacheFallback=${fallbackCount}, usedCache=${stockData.fallback}`);
+      stockWriteErrors = writeFailures.length;
+      stockRunReport = {
+        status: stockWriteErrors ? "partial_failure"
+          : fallbackCount || stillMissing.length || (stockData.fallbackDiagnostics && stockData.fallbackDiagnostics.status !== "available")
+          ? "degraded" : "complete",
+        tracked: stockRows.length,
+        refreshed: stocksUpdated,
+        history_written: historyUpdated,
+        cache_count: fallbackCount,
+        missing: stillMissing,
+        write_failures: writeFailures,
+        official_fallback: stockData.fallbackDiagnostics ?? { status: "not_requested" },
+      };
+      console.info("[fetch-market-data] Stock run summary", stockRunReport);
     }
     } // end shouldFetchStocks
 
-    console.log(`[fetch-market-data] Completed successfully: ${results.length} operations`);
-    return new Response(JSON.stringify({ success: true, results }), {
+    const completion = stockWriteErrors ? "Completed with stock write errors"
+      : stockRunReport?.status === "degraded" ? "Completed with degraded stock data" : "Completed successfully";
+    console.log(`[fetch-market-data] ${completion}: ${results.length} operations`);
+    return new Response(JSON.stringify({ success: stockWriteErrors === 0, results, ...(stockRunReport ? { stocks: stockRunReport } : {}) }), {
+      status: stockWriteErrors ? 500 : 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {

@@ -14,6 +14,9 @@ export interface CachedStock {
   pe_ratio: number | null;
   dividend_yield: number | null;
   updated_at: string;
+  /** Provider/cache timestamp, not a confirmed exchange trade time. */
+  provider_updated_at?: string | null;
+  quote_source?: "rapidapi" | "nse" | null;
 }
 
 const STOCKS_KEY = "kff:cache:stocks:v2";

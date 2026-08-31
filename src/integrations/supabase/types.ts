@@ -1561,6 +1561,8 @@ export type Database = {
           pe_ratio: number | null
           previous_price: number | null
           price: number
+          provider_updated_at: string | null
+          quote_source: string | null
           sector: string
           sort_order: number
           symbol: string
@@ -1583,6 +1585,8 @@ export type Database = {
           pe_ratio?: number | null
           previous_price?: number | null
           price?: number
+          provider_updated_at?: string | null
+          quote_source?: string | null
           sector?: string
           sort_order?: number
           symbol: string
@@ -1605,6 +1609,8 @@ export type Database = {
           pe_ratio?: number | null
           previous_price?: number | null
           price?: number
+          provider_updated_at?: string | null
+          quote_source?: string | null
           sector?: string
           sort_order?: number
           symbol?: string
@@ -2422,6 +2428,8 @@ export type Database = {
           pe_ratio: number | null
           previous_price: number | null
           price: number | null
+          provider_updated_at: string | null
+          quote_source: string | null
           sector: string | null
           sort_order: number | null
           symbol: string | null
@@ -2441,6 +2449,8 @@ export type Database = {
           pe_ratio?: number | null
           previous_price?: number | null
           price?: number | null
+          provider_updated_at?: string | null
+          quote_source?: string | null
           sector?: string | null
           sort_order?: number | null
           symbol?: string | null
@@ -2460,6 +2470,8 @@ export type Database = {
           pe_ratio?: number | null
           previous_price?: number | null
           price?: number | null
+          provider_updated_at?: string | null
+          quote_source?: string | null
           sector?: string | null
           sort_order?: number | null
           symbol?: string | null

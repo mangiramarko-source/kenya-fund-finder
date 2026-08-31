@@ -78,7 +78,7 @@ const RESOURCES: Record<string, ResourceDef> = {
       "id", "symbol", "name", "sector", "price", "previous_price",
       "day_change", "day_change_percent", "volume", "market_cap",
       "pe_ratio", "dividend_yield", "year_high", "year_low",
-      "sort_order", "updated_at",
+      "sort_order", "updated_at", "provider_updated_at", "quote_source",
     ],
     orderable: ["sort_order", "symbol", "price", "day_change_percent", "updated_at"],
     defaultOrder: "sort_order.asc",
