@@ -12,6 +12,7 @@ import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
 import { Analytics } from "@vercel/analytics/react";
 import AnalyticsTracker from "./components/AnalyticsTracker";
+import MarketPageLoader from "./components/MarketPageLoader";
 // CookieConsent loaded eagerly: it's the LCP element on first visit;
 // lazy-loading it delays paint and tanks the LCP score.
 import CookieConsent from "./components/CookieConsent";
@@ -80,9 +81,7 @@ const queryClient = new QueryClient({
 });
 
 const PageFallback = () => (
-  <div className="flex items-center justify-center min-h-[60vh]">
-    <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-accent" />
-  </div>
+  <MarketPageLoader message="Loading page…" className="min-h-[60vh]" />
 );
 
 const App = () => (

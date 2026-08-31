@@ -11,6 +11,8 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Camera, Save, ArrowLeft, User, Mail, Lock, Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import CookiePreferences from "@/components/CookiePreferences";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 const ProfilePage = () => {
   const { user, loading: authLoading } = useAuth();
@@ -136,11 +138,11 @@ const ProfilePage = () => {
     }
   };
 
-  if (authLoading || loadingProfile) {
+  const showPageLoading = useMinimumLoadingDuration(authLoading || loadingProfile);
+
+  if (showPageLoading) {
     return (
-      <div className="container py-20 text-center text-muted-foreground">
-        <Loader2 className="h-6 w-6 animate-spin mx-auto" />
-      </div>
+      <MarketPageLoader message="Loading your profile…" className="min-h-screen" />
     );
   }
 

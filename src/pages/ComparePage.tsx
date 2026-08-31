@@ -9,7 +9,7 @@ import { fetchFunds, fetchLatestSnapshots, type FundFromDB, type FundType, type 
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Badge } from "@/components/ui/badge";
-import { Skeleton } from "@/components/ui/skeleton";
+import PageLoadingGate from "@/components/PageLoadingGate";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import FundSubTable from "@/components/compare/FundSubTable";
 
@@ -108,20 +108,8 @@ const ComparePage = () => {
     setSearchQuery("");
   };
 
-  if (loading) {
-    return (
-      <div className="container py-10">
-        <Skeleton className="h-9 w-80 mb-2" />
-        <Skeleton className="h-5 w-96 mb-6" />
-        <Skeleton className="h-10 w-full mb-6" />
-        <div className="space-y-3">
-          {[...Array(5)].map((_, i) => <Skeleton key={i} className="h-16 w-full" />)}
-        </div>
-      </div>
-    );
-  }
-
   return (
+    <PageLoadingGate isReady={!loading} message="Loading latest fund comparison data…" loaderClassName="min-h-screen">
     <div className="container py-10 max-w-7xl">
       {/* Header */}
       <div className="mb-6">
@@ -244,6 +232,7 @@ const ComparePage = () => {
         </p>
       </div>
     </div>
+    </PageLoadingGate>
   );
 };
 

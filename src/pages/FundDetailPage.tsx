@@ -24,6 +24,8 @@ import ReportIssueDialog from "@/components/funds/ReportIssueDialog";
 import { getFundExplainer } from "@/lib/fundExplainers";
 import { BookOpen, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 const FUND_TYPE_LABELS: Record<string, string> = {
   money_market: "Money Market",
@@ -179,17 +181,11 @@ const FundDetailPage = () => {
     return calculateReturns(calcAmount, fund.annual_yield, calcMonths, calcMonthly, calcCompound, fund.management_fee);
   }, [fund, calcAmount, calcMonths, calcMonthly, calcCompound]);
 
-  if (loading) {
+  const showPageLoading = useMinimumLoadingDuration(loading);
+
+  if (showPageLoading) {
     return (
-      <div className="container py-20 text-center text-muted-foreground">
-        <div className="animate-pulse space-y-4 max-w-3xl mx-auto">
-          <div className="h-6 bg-muted rounded w-48" />
-          <div className="h-10 bg-muted rounded w-80" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mt-8">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-24 bg-muted rounded-xl" />)}
-          </div>
-        </div>
-      </div>
+      <MarketPageLoader message="Loading fund details…" className="min-h-screen" />
     );
   }
 

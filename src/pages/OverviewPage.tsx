@@ -9,6 +9,8 @@ import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -1025,12 +1027,14 @@ const OverviewPage = () => {
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [fundsLoading, setFundsLoading] = useState(true);
   const [news, setNews] = useState<NewsFromDB[]>([]);
+  const [newsLoading, setNewsLoading] = useState(true);
   const [newsOffset, setNewsOffset] = useState(0);
   const [newsHasMore, setNewsHasMore] = useState(true);
   const [newsCategoryLoading, setNewsCategoryLoading] = useState(false);
   const [rateHistory, setRateHistory] = useState<RateHistory[]>([]);
   const [fundSnapshots, setFundSnapshots] = useState<FundYieldSnapshot[]>([]);
   const [stockHistory, setStockHistory] = useState<StockPriceHistory[]>([]);
+  const [historyReady, setHistoryReady] = useState(false);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
 
   const [watchlistLoading, setWatchlistLoading] = useState(true);
@@ -1219,24 +1223,29 @@ const OverviewPage = () => {
       setNews(n);
       setNewsOffset(0);
       setNewsHasMore(n.length === 60);
-    }).catch(() => {});
+    }).catch(() => {}).finally(() => setNewsLoading(false));
     // 90-day window for history (much smaller payloads than limit=500/1000 unfiltered)
     const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    supabase.from("exchange_rate_history_public" as any)
+    const historyRequests = [
+      supabase.from("exchange_rate_history_public" as any)
       .select("snapshot_date, rate, currency_code")
       .gte("snapshot_date", since)
-      .order("snapshot_date", { ascending: true })
-      .then(({ data }) => setRateHistory(((data as any) || []).map((h: any) => ({ ...h, rate: Number(h.rate) }))));
-    supabase.from("fund_yield_snapshots")
+      .order("snapshot_date", { ascending: true }),
+      supabase.from("fund_yield_snapshots")
       .select("snapshot_date, annual_yield, fund_id")
       .gte("snapshot_date", since)
-      .order("snapshot_date", { ascending: true })
-      .then(({ data }) => setFundSnapshots(((data as any) || []).map((s: any) => ({ ...s, annual_yield: Number(s.annual_yield) }))));
-    supabase.from("stock_price_history" as any)
+      .order("snapshot_date", { ascending: true }),
+      supabase.from("stock_price_history" as any)
       .select("snapshot_date, price, stock_id")
       .gte("snapshot_date", since)
-      .order("snapshot_date", { ascending: true })
-      .then(({ data }) => setStockHistory(((data as any) || []).map((h: any) => ({ ...h, price: Number(h.price) }))));
+      .order("snapshot_date", { ascending: true }),
+    ];
+    void Promise.allSettled(historyRequests).then(([ratesResult, fundsResult, stocksResult]) => {
+      if (ratesResult.status === "fulfilled") setRateHistory(((ratesResult.value.data as any) || []).map((h: any) => ({ ...h, rate: Number(h.rate) })));
+      if (fundsResult.status === "fulfilled") setFundSnapshots(((fundsResult.value.data as any) || []).map((s: any) => ({ ...s, annual_yield: Number(s.annual_yield) })));
+      if (stocksResult.status === "fulfilled") setStockHistory(((stocksResult.value.data as any) || []).map((h: any) => ({ ...h, price: Number(h.price) })));
+      setHistoryReady(true);
+    });
   }, []);
 
   useEffect(() => {
@@ -1389,9 +1398,8 @@ const OverviewPage = () => {
 
   const hasWatchlist = watchedStocks.length > 0 || watchedRates.length > 0 || watchedCommoditiesList.length > 0 || watchedFunds.length > 0;
 
-  // Only block on essentials: market data and (for signed-in users) the watchlist itself.
-  // Funds + historical snapshots stream in progressively to keep TTFP fast.
-  const loading = marketLoading || (!!user && watchlistLoading);
+  // Keep every initially visible market panel out of view until its data has settled.
+  const loading = marketLoading || fundsLoading || newsLoading || !historyReady || (!!user && watchlistLoading);
 
   // Best performers
   const bestStock = useMemo(() => stocks.length ? [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [stocks]);
@@ -1568,7 +1576,11 @@ const OverviewPage = () => {
     };
   }, []);
 
-  // No global loading block - we will handle loading states inside the layout to prevent FCP lag.
+  const showPageLoading = useMinimumLoadingDuration(loading);
+
+  if (showPageLoading) {
+    return <MarketPageLoader message="Loading latest market overview…" className="min-h-screen" />;
+  }
 
   return (
     <>

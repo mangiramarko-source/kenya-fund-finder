@@ -13,6 +13,8 @@ import {
 import { routePrompt } from "@/lib/aiLab/router";
 import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import {
   fetchAssetHistory,
   type AssetHistory,
@@ -383,11 +385,11 @@ const AiLabPage = () => {
     [messages, market.data, news.data],
   );
 
-  if (loading) {
+  const showPageLoading = useMinimumLoadingDuration(loading);
+
+  if (showPageLoading) {
     return (
-      <div className={`${AI_LAB_PAGE} flex items-center justify-center`}>
-        <p className="text-muted-foreground">Loading…</p>
-      </div>
+      <MarketPageLoader message="Loading AI Lab…" className={AI_LAB_PAGE} />
     );
   }
 

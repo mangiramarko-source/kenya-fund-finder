@@ -30,6 +30,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { normalizeName } from "@/lib/assetMatch";
 import { formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 const CATEGORY_CHIPS: Array<{ key: "all" | AssetType; label: string }> = [
   { key: "all", label: "All" },
@@ -169,6 +171,13 @@ const PortfolioPage = () => {
   }, [items]);
 
   const isEmpty = !isLoading && items.length === 0;
+  const showPageLoading = useMinimumLoadingDuration(
+    isLoading || (!isDemo && (changesLoading || activityLoading)),
+  );
+
+  if (showPageLoading) {
+    return <MarketPageLoader message="Loading your portfolio…" className="min-h-screen" />;
+  }
 
   return (
     <>

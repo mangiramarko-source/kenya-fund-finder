@@ -14,6 +14,8 @@ import { getHoldingAlertState } from "@/lib/portfolioAlertBadge";
 import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
 import { usePortfolioEvents } from "@/hooks/usePortfolioEvents";
 import { format } from "date-fns";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 const fmtKES = (val: number) =>
   new Intl.NumberFormat("en-KE", {
@@ -25,13 +27,13 @@ const fmtKES = (val: number) =>
 
 const PortfolioSummaryPage = () => {
   useDocumentTitle("Portfolio Summary | KenyaFundFinder");
-  const { items, totalValue, totalPnL, totalPnLPercent, allocation } = usePortfolio();
+  const { items, totalValue, totalPnL, totalPnLPercent, allocation, isLoading } = usePortfolio();
   const metrics = usePortfolioMetrics(items);
-  const { changes } = usePortfolioChanges(items);
+  const { changes, loading: changesLoading } = usePortfolioChanges(items);
   const { alerts } = usePriceAlerts();
   const { entries: savedFunds } = useFundWatchlist();
   const { entries: savedStocks } = useAssetWatchlist("stock");
-  const { events: activityEvents } = usePortfolioEvents(30);
+  const { events: activityEvents, isLoading: activityLoading } = usePortfolioEvents(30);
 
   const recentActivity = useMemo(() => {
     const added = activityEvents.filter((e) => e.event_type === "add").slice(0, 5);
@@ -57,6 +59,9 @@ const PortfolioSummaryPage = () => {
   const buckets = useMemo(() => buildWeeklyBuckets(changes), [changes]);
   const isEmpty = items.length === 0;
   const hasWatchlist = savedFunds.length > 0 || savedStocks.length > 0;
+  const showPageLoading = useMinimumLoadingDuration(isLoading || changesLoading || activityLoading);
+
+  if (showPageLoading) return <MarketPageLoader message="Loading your portfolio summary…" className="min-h-screen" />;
 
   return (
     <div className="max-w-3xl mx-auto px-4 py-6 print:py-2 print:max-w-none">

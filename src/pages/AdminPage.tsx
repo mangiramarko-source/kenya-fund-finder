@@ -14,13 +14,15 @@ import AdminNewsEnrichment from "./admin/AdminNewsEnrichment";
 import AdminTestimonials from "./admin/AdminTestimonials";
 import SocialIndex from "./admin/social/SocialIndex";
 import AdminStockDisclosures from "./admin/AdminStockDisclosures";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 const AdminPage = () => {
   const { isAdmin, loading, user } = useAuth();
 
-  if (loading) {
-    return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
-  }
+  const showPageLoading = useMinimumLoadingDuration(loading);
+
+  if (showPageLoading) return <MarketPageLoader message="Loading admin workspace…" className="min-h-screen" />;
 
   if (!user) {
     return <Navigate to="/admin/login" replace />;

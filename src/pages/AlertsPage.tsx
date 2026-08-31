@@ -21,6 +21,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
 import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 import { priceAlertMessaging } from "@/lib/priceAlertMessaging";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 interface AssetOption {
   id: string;
@@ -40,7 +42,7 @@ const AlertsPage = () => {
       description: priceAlertMessaging.seoDescription,
     }
   );
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const navigate = useNavigate();
   const { alerts, loading, deleteAlert, toggleAlert, createAlert } = usePriceAlerts();
   const { prefs, loading: prefsLoading, saving: prefsSaving, error: prefsError, retry: retryPrefs, updatePref } = useEmailPreferences();
@@ -108,6 +110,12 @@ const AlertsPage = () => {
       setSelectedAssetId("");
     }
   };
+
+  const showPageLoading = useMinimumLoadingDuration(authLoading || (Boolean(user) && (loading || prefsLoading)));
+
+  if (showPageLoading) {
+    return <MarketPageLoader message="Loading your alerts…" className="min-h-screen" />;
+  }
 
   if (!user) {
     return (

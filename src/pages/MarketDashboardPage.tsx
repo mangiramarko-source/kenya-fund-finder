@@ -8,6 +8,7 @@ import { TrendingUp, TrendingDown, Minus, ArrowUpDown, Search, DollarSign, Gem }
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageLoadingGate from "@/components/PageLoadingGate";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
 import MiniCurrencyConverter from "@/components/calculator/MiniCurrencyConverter";
 
@@ -149,15 +150,8 @@ const MarketDashboardPage = () => {
     : activeTab === "commodities" ? filteredCommodities.length
     : filteredStocks.length;
 
-  if (loading) {
-    return (
-      <div className="min-h-screen">
-        <div className="px-4 md:px-6 py-6"><TableSkeleton /></div>
-      </div>
-    );
-  }
-
   return (
+    <PageLoadingGate isReady={!loading} message="Loading latest market data…" loaderClassName="min-h-screen">
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
         <div className="mb-4">
@@ -394,6 +388,7 @@ const MarketDashboardPage = () => {
         </div>
       </div>
     </div>
+    </PageLoadingGate>
   );
 };
 

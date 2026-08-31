@@ -6,6 +6,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Archive, Search, Megaphone, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageLoadingGate from "@/components/PageLoadingGate";
 import { Input } from "@/components/ui/input";
 import { SocialFeedCard } from "@/components/feed/SocialFeed";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
@@ -262,19 +263,8 @@ export default function NewsPage() {
     return allItems;
   }, [filteredArticles, stocks, activeNavTab]);
 
-  if (loading) {
-    return (
-      <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 space-y-4">
-        <Skeleton className="h-10 w-48" />
-        <Skeleton className="h-8 w-full max-w-md" />
-        <div className="space-y-4 pt-4">
-          {[1, 2, 3, 4].map(i => <Skeleton key={i} className="h-44 rounded-2xl" />)}
-        </div>
-      </div>
-    );
-  }
-
   return (
+    <PageLoadingGate isReady={!loading} message="Loading latest market news…" loaderClassName="min-h-screen">
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 min-h-screen">
       {/* Header */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
@@ -401,5 +391,6 @@ export default function NewsPage() {
         onAddComment={addComment}
       />
     </div>
+    </PageLoadingGate>
   );
 }

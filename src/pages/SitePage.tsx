@@ -2,6 +2,8 @@ import { useEffect, useState } from "react";
 import { useParams, useLocation, Link } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Mail, ArrowLeft, Info } from "lucide-react";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 interface SitePage {
   id: string;
@@ -42,7 +44,8 @@ const SitePage = () => {
       });
   }, [slug]);
 
-  if (loading) return <div className="container py-20 text-center text-muted-foreground">Loading...</div>;
+  const showPageLoading = useMinimumLoadingDuration(loading);
+  if (showPageLoading) return <MarketPageLoader message="Loading page…" className="min-h-screen" />;
 
   if (!page) {
     return (

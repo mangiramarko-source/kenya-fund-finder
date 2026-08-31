@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo, useRef } from "react";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
@@ -123,7 +125,8 @@ const StockDetailPage = () => {
       (item) => item.symbol.toUpperCase() === symbol.toUpperCase(),
     );
     const fetchStock = async () => {
-      setLoading(!cached);
+      // Cached values may seed the request, but never unlock the initial page.
+      setLoading(true);
       setLoadError(false);
       setStock(cached ?? null);
       try {
@@ -230,15 +233,11 @@ const StockDetailPage = () => {
     };
   }, [filteredHistory]);
 
-  if (loading) {
+  const showPageLoading = useMinimumLoadingDuration(loading || (Boolean(stock) && historyLoading));
+
+  if (showPageLoading) {
     return (
-      <div className="min-h-screen px-4 md:px-6 py-6">
-        <Skeleton className="h-8 w-48 mb-4" />
-        <Skeleton className="h-64 w-full rounded-xl mb-4" />
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          {Array.from({ length: 8 }).map((_, i) => <Skeleton key={i} className="h-20 rounded-xl" />)}
-        </div>
-      </div>
+      <MarketPageLoader message="Loading stock details…" className="min-h-screen" />
     );
   }
 

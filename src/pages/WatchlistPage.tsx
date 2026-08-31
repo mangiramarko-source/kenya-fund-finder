@@ -21,6 +21,8 @@ import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
 import { computeAlertSummary } from "@/lib/watchlistAlertSummary";
 import { safeUUID } from "@/lib/safeUUID";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 interface WatchlistItem {
   id: string;
@@ -162,6 +164,7 @@ const WatchlistPage = () => {
   const [rateHistory, setRateHistory] = useState<RateHistoryRow[]>([]);
   const [stockHistory, setStockHistory] = useState<StockHistoryRow[]>([]);
   const [fundSnapshots, setFundSnapshots] = useState<FundSnapshotRow[]>([]);
+  const [historyReady, setHistoryReady] = useState(false);
 
   /* ─── Alert helpers ─── */
   const alertFor = useCallback(
@@ -273,33 +276,23 @@ const WatchlistPage = () => {
 
   /* ─── 90-day history (for sparklines) ─── */
   useEffect(() => {
+    let cancelled = false;
     const since = new Date();
     since.setDate(since.getDate() - 90);
     const sinceISO = since.toISOString().split("T")[0];
 
-    supabase
-      .from("exchange_rate_history_public")
-      .select("snapshot_date, rate, currency_code")
-      .gte("snapshot_date", sinceISO)
-      .order("snapshot_date", { ascending: true })
-      .limit(10000)
-      .then(({ data }) => setRateHistory((data as RateHistoryRow[]) || []));
-
-    supabase
-      .from("stock_price_history_public")
-      .select("snapshot_date, price, stock_id")
-      .gte("snapshot_date", sinceISO)
-      .order("snapshot_date", { ascending: true })
-      .limit(10000)
-      .then(({ data }) => setStockHistory((data as StockHistoryRow[]) || []));
-
-    supabase
-      .from("fund_yield_snapshots")
-      .select("snapshot_date, annual_yield, fund_id")
-      .gte("snapshot_date", sinceISO)
-      .order("snapshot_date", { ascending: true })
-      .limit(10000)
-      .then(({ data }) => setFundSnapshots((data as FundSnapshotRow[]) || []));
+    void Promise.allSettled([
+      supabase.from("exchange_rate_history_public").select("snapshot_date, rate, currency_code").gte("snapshot_date", sinceISO).order("snapshot_date", { ascending: true }).limit(10000),
+      supabase.from("stock_price_history_public").select("snapshot_date, price, stock_id").gte("snapshot_date", sinceISO).order("snapshot_date", { ascending: true }).limit(10000),
+      supabase.from("fund_yield_snapshots").select("snapshot_date, annual_yield, fund_id").gte("snapshot_date", sinceISO).order("snapshot_date", { ascending: true }).limit(10000),
+    ]).then(([ratesResult, stocksResult, fundsResult]) => {
+      if (cancelled) return;
+      if (ratesResult.status === "fulfilled") setRateHistory((ratesResult.value.data as RateHistoryRow[]) || []);
+      if (stocksResult.status === "fulfilled") setStockHistory((stocksResult.value.data as StockHistoryRow[]) || []);
+      if (fundsResult.status === "fulfilled") setFundSnapshots((fundsResult.value.data as FundSnapshotRow[]) || []);
+      setHistoryReady(true);
+    });
+    return () => { cancelled = true; };
   }, []);
 
   const getRateSpark = (code: string) =>
@@ -618,13 +611,11 @@ const WatchlistPage = () => {
     }));
   }, [addSheetItems]);
 
-  if (authLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-[60vh]">
-        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-accent" />
-      </div>
-    );
-  }
+  const showPageLoading = useMinimumLoadingDuration(
+    authLoading || marketLoading || fundsLoading || watchlistLoading || !historyReady,
+  );
+
+  if (showPageLoading) return <MarketPageLoader message="Loading your watchlist…" className="min-h-screen" />;
 
   return (
     <div className="space-y-6 px-4 md:px-6 py-4 md:py-6">

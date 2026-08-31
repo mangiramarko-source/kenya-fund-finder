@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Link, Navigate, useParams } from "react-router-dom";
 import { Archive, CalendarDays, ChevronLeft, ChevronRight } from "lucide-react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import PageLoadingGate from "@/components/PageLoadingGate";
 import { supabase } from "@/integrations/supabase/client";
 import { isIndexableNewsArticle } from "@/lib/seoNewsEligibility";
 import {
@@ -89,6 +90,7 @@ export default function NewsArchivePage() {
   if (!loading && !error && page > pageCount) return <Navigate to={getNewsArchivePath(pageCount)} replace />;
 
   return (
+    <PageLoadingGate isReady={!loading} message="Loading news archive…" resetKey={page} loaderClassName="min-h-screen">
     <main className="mx-auto min-h-screen w-full max-w-5xl px-4 py-8 md:px-6 md:py-10">
       <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted-foreground">
         <Link to="/" className="hover:text-foreground">Home</Link>
@@ -109,9 +111,7 @@ export default function NewsArchivePage() {
         </p>
       </header>
 
-      {loading ? (
-        <div className="rounded-xl border border-border p-8 text-center text-sm text-muted-foreground">Loading news archive…</div>
-      ) : error ? (
+      {error ? (
         <div className="rounded-xl border border-destructive/40 bg-destructive/10 p-5 text-sm text-destructive">{error}</div>
       ) : (
         <>
@@ -171,6 +171,6 @@ export default function NewsArchivePage() {
         </>
       )}
     </main>
+    </PageLoadingGate>
   );
 }
-

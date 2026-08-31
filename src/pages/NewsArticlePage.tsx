@@ -24,6 +24,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
+import PageLoadingGate from "@/components/PageLoadingGate";
 import { fetchNewsById, fetchPublicStockById, fetchRelatedNews, fetchFunds, getNewsAiAnalysisDisplayText, type NewsFromDB, type PublicStock } from "@/lib/api";
 import { supabase } from "@/integrations/supabase/client";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
@@ -479,41 +480,17 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     }));
   };
 
-  if (loading) {
-    return (
-      <div className="min-h-screen bg-background text-foreground">
-        <header className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border px-5 h-[58px] flex items-center justify-between">
-          <button
-            type="button"
-            onClick={() => navigate(-1)}
-            className="flex items-center justify-center h-9 w-9 rounded-full text-foreground hover:bg-muted/50 transition-colors -ml-2 cursor-pointer"
-            aria-label="Back"
-          >
-            <ArrowLeft className="h-5 w-5" />
-          </button>
-          <div className="font-bold text-base text-foreground tracking-tight">Post</div>
-          <div className="w-9" />
-        </header>
-        <div className="h-[58px]" aria-hidden="true" />
-        <div className="max-w-[430px] mx-auto py-4 px-4 space-y-4">
-          <Skeleton className="h-10 w-full rounded-xl" />
-          <Skeleton className="h-6 w-48" />
-          <Skeleton className="h-8 w-full" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
-        </div>
-      </div>
-    );
-  }
-
   if (!article) {
     return (
-      <div className="max-w-3xl mx-auto py-20 text-center px-4">
-        <h1 className="text-2xl font-bold mb-4">Post Not Found</h1>
-        <p className="text-muted-foreground mb-6">This post may have been removed or the link is incorrect.</p>
-        <Button asChild variant="outline">
-          <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Return Home</Link>
-        </Button>
-      </div>
+      <PageLoadingGate isReady={!loading} message="Loading market news…" resetKey={id} loaderClassName="min-h-screen">
+        <div className="max-w-3xl mx-auto py-20 text-center px-4">
+          <h1 className="text-2xl font-bold mb-4">Post Not Found</h1>
+          <p className="text-muted-foreground mb-6">This post may have been removed or the link is incorrect.</p>
+          <Button asChild variant="outline">
+            <Link to="/"><ArrowLeft className="mr-2 h-4 w-4" /> Return Home</Link>
+          </Button>
+        </div>
+      </PageLoadingGate>
     );
   }
 
@@ -549,6 +526,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
   }) : null;
 
   return (
+    <PageLoadingGate isReady={!loading && Boolean(article)} message="Loading market news…" resetKey={id} loaderClassName="min-h-screen">
     <div className="min-h-screen bg-background text-foreground pb-20 md:pb-8">
       {/* ─── 1. Top Navigation Bar (Fixed top header below main navbar) ─── */}
       <header className="fixed inset-x-0 top-0 z-50 flex h-[58px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md md:sticky md:z-40 md:h-12 md:px-4">
@@ -774,6 +752,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         </form>
       </div>
     </div>
+    </PageLoadingGate>
   );
 };
 
