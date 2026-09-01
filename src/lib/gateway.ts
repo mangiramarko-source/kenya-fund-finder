@@ -20,7 +20,8 @@ export type GatewayResource =
   | "stock-disclosures"
   | "stock-actions"
   | "fund-snapshots"
-  | "stock-history-bulk";
+  | "stock-history-bulk"
+  | "stock-history-monthly-bulk";
 
 export interface GatewayQuery {
   select?: string[];

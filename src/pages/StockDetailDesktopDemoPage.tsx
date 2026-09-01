@@ -3,6 +3,7 @@ import { useNavigate, useParams } from "react-router-dom";
 import {
   Minus,
   Search,
+  Star,
   TrendingDown,
   TrendingUp,
 } from "lucide-react";
@@ -12,12 +13,15 @@ import { Skeleton } from "@/components/ui/skeleton";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useAuth } from "@/hooks/useAuth";
+import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import { fetchPublicData } from "@/lib/gateway";
 import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
 import { calculateDemoReturn, fetchCompleteDemoHistory, filterDemoStocks, findDemoStock, stockProductionPath, type DemoHistoryRow, type DemoPricePoint } from "@/lib/stockDetailDemo";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import MarketPageLoader from "@/components/MarketPageLoader";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
+import { toast } from "sonner";
 
 const formatPrice = (value: number) => value.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
 
@@ -30,6 +34,8 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   const { symbol = "" } = useParams<{ symbol: string }>();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+  const { user } = useAuth();
+  const { isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
   const [cachedStocks] = useState(() => stockCache.loadStocks()?.stocks ?? []);
   const [stocks, setStocks] = useState<CachedStock[]>(cachedStocks);
   const [history, setHistory] = useState<Record<string, DemoPricePoint[]>>({});
@@ -59,7 +65,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
           select: [
             "id", "symbol", "name", "sector", "price", "previous_price", "day_change",
             "day_change_percent", "volume", "market_cap", "pe_ratio", "dividend_yield",
-            "year_high", "year_low", "updated_at",
+            "updated_at",
           ],
           limit: 200,
         });
@@ -82,10 +88,10 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
       setHistoryLoading(true);
       try {
         const grouped = await fetchCompleteDemoHistory(async (offset, limit) => {
-          const response = await fetchPublicData<DemoHistoryRow>("stock-history-bulk", {
+          const response = await fetchPublicData<DemoHistoryRow>("stock-history-monthly-bulk", {
             select: ["stock_id", "snapshot_date", "price"],
             order: "snapshot_date.desc",
-            days: 365,
+            days: 1825,
             offset,
             limit,
           });
@@ -129,6 +135,17 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
     ? stocks.reduce((latest, stock) => stock.updated_at > latest ? stock.updated_at : latest, stocks[0].updated_at)
     : null, [stocks]);
   const showLoading = useMinimumLoadingDuration(loading || historyLoading);
+
+  const handleWatchlistToggle = (stock: CachedStock) => {
+    if (!user) {
+      toast.message("Sign in to save items to your watchlist.", {
+        action: { label: "Sign in", onClick: () => navigate("/auth?redirect=/watchlist") },
+      });
+      return;
+    }
+
+    void toggleFavourite(stock.id, `${stock.symbol} - ${stock.name}`);
+  };
 
   if (isMobile) return null;
 
@@ -183,25 +200,25 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
                     </button>
                   ))}
                 </div>
-                <div className="overflow-x-auto">
-                  <table className="w-full min-w-[1380px] table-fixed text-left">
+                <div>
+                  <table className="w-full table-fixed text-left">
                     <thead className="border-b border-border bg-muted/50 text-xs uppercase tracking-[0.18em] text-muted-foreground dark:bg-[#1b1c1f]">
                       <tr>
-                        <th className="w-[18%] bg-background/60 px-6 py-3 font-semibold dark:bg-[#151619]">Company</th>
-                        <th className="w-[10%] px-3 py-3 text-center font-semibold">Last Price</th>
-                        <th className="w-[7%] px-3 py-3 text-right font-semibold">1D</th>
-                        <th className="w-[7%] px-3 py-3 text-right font-semibold">7D</th>
-                        <th className="w-[7%] px-3 py-3 text-right font-semibold">1M</th>
-                        <th className="w-[7%] px-3 py-3 text-right font-semibold">3M</th>
-                        <th className="w-[7%] px-3 py-3 text-right font-semibold">1Y</th>
-                        <th className="w-[9%] px-3 py-3 text-center font-semibold">Trend</th>
-                        <th className="w-[12%] px-3 py-3 text-left font-semibold">52W Range</th>
-                        <th className="w-[7%] px-3 py-3 text-center font-semibold">Volume</th>
-                        <th className="w-[9%] px-3 py-3 text-center font-semibold">Mkt Cap</th>
+                        <th className="w-[18%] bg-background/60 px-4 py-3 font-semibold dark:bg-[#151619]">Company</th>
+                        <th className="w-[12%] px-2 py-3 text-center font-semibold">Last Price</th>
+                        <th className="w-[7%] px-2 py-3 text-right font-semibold">1D</th>
+                        <th className="w-[7%] px-2 py-3 text-right font-semibold">7D</th>
+                        <th className="w-[7%] px-2 py-3 text-right font-semibold">1M</th>
+                        <th className="w-[7%] px-2 py-3 text-right font-semibold">3M</th>
+                        <th className="w-[7%] px-2 py-3 text-right font-semibold">1Y</th>
+                        <th className="w-[8.5%] px-2 py-3 text-center font-semibold">Trend</th>
+                        <th className="w-[8.5%] px-2 py-3 text-center font-semibold">Volume</th>
+                        <th className="w-[10.5%] px-2 py-3 text-center font-semibold">Mkt Cap</th>
+                        <th className="w-11 px-2 py-3 text-center"><span className="sr-only">Watchlist</span></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border bg-muted/20 dark:bg-[#191a1d]">
-                      {filteredStocks.map((stock) => <StockTableRow key={stock.id} stock={stock} points={history[stock.id] ?? []} selected={stock.id === selectedStock.id} historyLoading={historyLoading} />)}
+                      {filteredStocks.map((stock) => <StockTableRow key={stock.id} stock={stock} points={history[stock.id] ?? []} selected={stock.id === selectedStock.id} historyLoading={historyLoading} isFavourite={isFavourite(stock.id)} onToggleFavourite={() => handleWatchlistToggle(stock)} />)}
                     </tbody>
                   </table>
                 </div>
@@ -215,7 +232,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   );
 }
 
-function StockTableRow({ stock, points, selected, historyLoading }: { stock: CachedStock; points: DemoPricePoint[]; selected: boolean; historyLoading: boolean }) {
+function StockTableRow({ stock, points, selected, historyLoading, isFavourite, onToggleFavourite }: { stock: CachedStock; points: DemoPricePoint[]; selected: boolean; historyLoading: boolean; isFavourite: boolean; onToggleFavourite: () => void }) {
   const sevenDay = calculateDemoReturn(points, stock.price, 7);
   const oneMonth = calculateDemoReturn(points, stock.price, 30);
   const threeMonth = calculateDemoReturn(points, stock.price, 90);
@@ -223,17 +240,27 @@ function StockTableRow({ stock, points, selected, historyLoading }: { stock: Cac
   const logoUrl = getStockLogoUrl(stock.symbol);
   return (
     <tr onClick={() => window.location.assign(stockProductionPath(stock.symbol))} className={`cursor-pointer bg-muted/20 transition-colors hover:bg-muted/35 dark:bg-[#191a1d] dark:hover:bg-[#202226] ${selected ? "ring-1 ring-inset ring-emerald-500/20" : ""}`}>
-      <td className="bg-background/60 px-6 py-4 dark:bg-[#151619]"><div className="flex items-center gap-3"><div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted/60 text-[10px] font-bold text-muted-foreground"><span>{stock.symbol.slice(0, 2)}</span>{logoUrl && <img src={logoUrl} alt={`${stock.name} logo`} className="absolute inset-0 h-full w-full bg-white object-contain p-1" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />}</div><div className="min-w-0"><p className="text-sm font-bold">{stock.symbol}</p><p className="max-w-[190px] truncate text-[11px] text-muted-foreground">{stock.name}</p></div></div></td>
-      <td className="whitespace-nowrap px-3 py-4 text-center font-body text-sm font-bold tabular-nums"><span className="mr-1 text-[10px] font-medium text-muted-foreground">KSh</span>{formatPrice(stock.price)}</td>
-      <td className="px-3 py-4 text-right"><ReturnValue value={stock.day_change_percent} /></td>
-      <td className="px-3 py-4 text-right"><ReturnValue value={sevenDay} loading={historyLoading} /></td>
-      <td className="px-3 py-4 text-right"><ReturnValue value={oneMonth} loading={historyLoading} /></td>
-      <td className="px-3 py-4 text-right"><ReturnValue value={threeMonth} loading={historyLoading} /></td>
-      <td className="px-3 py-4 text-right"><ReturnValue value={oneYear} loading={historyLoading} /></td>
-      <td className="px-3 py-4"><div className="flex justify-center"><TrendSparkline points={points} positive={(oneMonth ?? stock.day_change_percent) >= 0} loading={historyLoading} /></div></td>
-      <td className="px-3 py-4"><RangeCell stock={stock} /></td>
-      <td className="px-3 py-4 text-center font-body text-xs text-muted-foreground tabular-nums">{formatCompact(stock.volume)}</td>
-      <td className="whitespace-nowrap px-3 py-4 text-center font-body text-sm font-bold tabular-nums">KSh {formatCompact(stock.market_cap)}</td>
+      <td className="bg-background/60 px-4 py-4 dark:bg-[#151619]"><div className="flex items-center gap-2.5"><div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted/60 text-[10px] font-bold text-muted-foreground"><span>{stock.symbol.slice(0, 2)}</span>{logoUrl && <img src={logoUrl} alt={`${stock.name} logo`} className="absolute inset-0 h-full w-full bg-white object-contain p-1" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />}</div><div className="min-w-0"><p className="text-sm font-bold">{stock.symbol}</p><p className="truncate text-[11px] text-muted-foreground">{stock.name}</p></div></div></td>
+      <td className="whitespace-nowrap px-2 py-4 text-center font-body text-sm font-bold tabular-nums"><span className="mr-1 text-[10px] font-medium text-muted-foreground">KSh</span>{formatPrice(stock.price)}</td>
+      <td className="px-2 py-4 text-right"><ReturnValue value={stock.day_change_percent} /></td>
+      <td className="px-2 py-4 text-right"><ReturnValue value={sevenDay} loading={historyLoading} /></td>
+      <td className="px-2 py-4 text-right"><ReturnValue value={oneMonth} loading={historyLoading} /></td>
+      <td className="px-2 py-4 text-right"><ReturnValue value={threeMonth} loading={historyLoading} /></td>
+      <td className="px-2 py-4 text-right"><ReturnValue value={oneYear} loading={historyLoading} /></td>
+      <td className="px-2 py-4"><div className="flex justify-center"><TrendSparkline points={points} positive={(oneMonth ?? stock.day_change_percent) >= 0} loading={historyLoading} /></div></td>
+      <td className="px-2 py-4 text-center font-body text-xs text-muted-foreground tabular-nums">{formatCompact(stock.volume)}</td>
+      <td className="whitespace-nowrap px-2 py-4 text-center font-body text-sm font-bold tabular-nums">KSh {formatCompact(stock.market_cap)}</td>
+      <td className="px-2 py-4 text-center">
+        <button
+          type="button"
+          onClick={(event) => { event.preventDefault(); event.stopPropagation(); onToggleFavourite(); }}
+          className="inline-flex h-8 w-8 items-center justify-center rounded-full text-muted-foreground transition-colors hover:bg-muted hover:text-yellow-500 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-500"
+          aria-label={isFavourite ? `Remove ${stock.symbol} from watchlist` : `Add ${stock.symbol} to watchlist`}
+          aria-pressed={isFavourite}
+        >
+          <Star className={`h-4 w-4 ${isFavourite ? "fill-yellow-500 text-yellow-500" : ""}`} />
+        </button>
+      </td>
     </tr>
   );
 }
@@ -246,14 +273,14 @@ function ReturnValue({ value, loading }: { value: number | null; loading?: boole
 
 function TrendSparkline({ points, positive, loading }: { points: DemoPricePoint[]; positive: boolean; loading?: boolean }) {
   if (loading) return <Skeleton className="h-[24px] w-[60px]" />;
-  const recent = points.slice(-12);
-  if (recent.length < 2) return <span className="text-xs text-muted-foreground">—</span>;
+  const monthlyTrend = points.slice(-60);
+  if (monthlyTrend.length < 2) return <span className="text-xs text-muted-foreground">—</span>;
   const color = positive ? "hsl(152 60% 42%)" : "hsl(var(--destructive))";
   const gradientId = `stock-trend-${positive ? "up" : "down"}`;
   return (
     <div className="h-[24px] w-[60px]" aria-hidden="true">
       <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={recent} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+        <ComposedChart data={monthlyTrend} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
           <defs>
             <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor={color} stopOpacity={0.25} />
@@ -267,12 +294,6 @@ function TrendSparkline({ points, positive, loading }: { points: DemoPricePoint[
       </ResponsiveContainer>
     </div>
   );
-}
-
-function RangeCell({ stock }: { stock: CachedStock }) {
-  if (stock.year_low == null || stock.year_high == null || stock.year_high <= stock.year_low) return <span className="text-xs text-muted-foreground">—</span>;
-  const position = Math.min(100, Math.max(0, ((stock.price - stock.year_low) / (stock.year_high - stock.year_low)) * 100));
-  return <div className="min-w-[130px]"><div className="flex justify-between font-body text-[10px] text-muted-foreground tabular-nums"><span>{formatPrice(stock.year_low)}</span><span>{formatPrice(stock.year_high)}</span></div><div className="relative mt-2 h-1.5 rounded-full bg-muted"><span className="absolute top-1/2 h-3 w-3 -translate-x-1/2 -translate-y-1/2 rounded-full bg-emerald-500 shadow-[0_0_8px_hsl(160_84%_39%/0.45)]" style={{ left: `${position}%` }} /></div></div>;
 }
 
 function MovementButton({ label, count, active, onClick, icon, tone }: { label: string; count: number; active: boolean; onClick: () => void; icon?: ReactNode; tone?: "positive" | "negative" }) {

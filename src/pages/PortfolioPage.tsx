@@ -17,8 +17,6 @@ import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
 import EditHoldingModal from "@/components/portfolio/EditHoldingModal";
 import PortfolioActivity from "@/components/portfolio/PortfolioActivity";
 import SaveDemoBanner from "@/components/portfolio/SaveDemoBanner";
-import WeightedYieldCard from "@/components/portfolio/WeightedYieldCard";
-import MonthlyIncomeCard from "@/components/portfolio/MonthlyIncomeCard";
 import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
 import PortfolioWeeklyChanges from "@/components/portfolio/PortfolioWeeklyChanges";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
@@ -397,36 +395,28 @@ const PortfolioPage = () => {
               )}
             </div>
 
-            {/* ─── 3. Yield Metrics Row ─── */}
-            {metrics.hasFunds && (
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pt-2">
-                <WeightedYieldCard
-                  weightedAvgYield={metrics.weightedAvgYield}
-                  hasFunds={metrics.hasFunds}
-                />
-                <MonthlyIncomeCard
-                  monthlyIncome={metrics.monthlyIncome}
-                  currency={currency}
-                  hasFunds={metrics.hasFunds}
-                />
-              </div>
-            )}
-
-            {/* ─── 4. Allocation Charts & Analytics ─── */}
-            <PortfolioCharts allocation={allocation} totalValue={totalValue} currency={currency} />
+            {/* ─── 3. Portfolio insights ─── */}
+            <PortfolioCharts
+              allocation={allocation}
+              totalValue={totalValue}
+              currency={currency}
+              weightedAvgYield={metrics.weightedAvgYield}
+              monthlyIncome={metrics.monthlyIncome}
+              hasFunds={metrics.hasFunds}
+            />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <LiquidityBreakdown items={items} />
+              <LiquidityBreakdown items={items} variant="dashboard" />
               <PortfolioWeeklyChanges changes={changes} loading={changesLoading} />
             </div>
 
             {/* ─── 5. Activity Log ─── */}
-            <Card className="border-border bg-card">
-              <CardHeader className="pb-2 flex flex-row items-center justify-between gap-2 flex-wrap">
-                <CardTitle className="text-sm font-semibold text-primary">Portfolio activity</CardTitle>
-                <span className="text-xs text-muted-foreground">{activityEvents.length} events logged</span>
+            <Card className="rounded-[22px] border-border/80 bg-card shadow-sm">
+              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 px-5 pb-1 pt-5">
+                <CardTitle className="text-sm font-semibold tracking-tight text-foreground">Portfolio activity</CardTitle>
+                <span className="rounded-full border border-border/80 bg-muted/30 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">{activityEvents.length} events logged</span>
               </CardHeader>
-              <CardContent>
+              <CardContent className="px-5 pb-5 pt-3">
                 <PortfolioActivity
                   events={activityEvents}
                   isLoading={activityLoading}

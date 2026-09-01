@@ -48,17 +48,17 @@ const PortfolioWeeklyChanges = ({ changes, loading }: Props) => {
   const buckets = buildWeeklyBuckets(changes);
 
   return (
-    <Card className="border-border bg-card">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold text-primary flex items-center gap-2">
+    <Card className="rounded-[22px] border-border/80 bg-card shadow-sm">
+      <CardHeader className="px-5 pb-1 pt-5">
+        <CardTitle className="flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground">
           <Activity className="h-4 w-4" /> What changed recently
         </CardTitle>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-5 pb-5 pt-3">
         {loading ? (
-          <p className="text-sm text-muted-foreground py-3">Loading…</p>
+          <p className="rounded-2xl border border-dashed border-border/80 bg-muted/20 py-8 text-center text-sm text-muted-foreground">Loading…</p>
         ) : buckets.isEmpty ? (
-          <p className="text-sm text-muted-foreground py-3">Not enough recent data yet.</p>
+          <p className="rounded-2xl border border-dashed border-border/80 bg-muted/20 py-8 text-center text-sm text-muted-foreground">Not enough recent data yet.</p>
         ) : (
           <>
             <ul className="divide-y divide-border">

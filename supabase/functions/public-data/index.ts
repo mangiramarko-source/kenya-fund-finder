@@ -190,6 +190,14 @@ const RESOURCES: Record<string, ResourceDef> = {
     defaultOrder: "snapshot_date.asc",
     cacheSeconds: 600,
   },
+  "stock-history-monthly-bulk": {
+    kind: "bulk-recent",
+    view: "stock_price_history_monthly_public",
+    columns: ["stock_id", "snapshot_date", "price"],
+    orderable: ["snapshot_date"],
+    defaultOrder: "snapshot_date.asc",
+    cacheSeconds: 600,
+  },
 };
 
 // --- Helpers ----------------------------------------------------------------

@@ -7,6 +7,7 @@ import { normalizeName } from "@/lib/assetMatch";
 
 interface Props {
   items: PortfolioItem[];
+  variant?: "default" | "dashboard";
 }
 
 const bucketFor = (days: number | null | undefined): string => {
@@ -18,7 +19,7 @@ const bucketFor = (days: number | null | undefined): string => {
 
 const ORDER = ["Same day / T+0", "1–3 days", "4+ days", "Not available"];
 
-const LiquidityBreakdown = ({ items }: Props) => {
+const LiquidityBreakdown = ({ items, variant = "default" }: Props) => {
   const [byNormName, setByNormName] = useState<Map<string, number | null>>(new Map());
   const [byId, setById] = useState<Map<string, number | null>>(new Map());
   const fundItems = items.filter((i) => i.asset_type === "mmf");
@@ -32,7 +33,7 @@ const LiquidityBreakdown = ({ items }: Props) => {
       .then(({ data }) => {
         const m = new Map<string, number | null>();
         const idMap = new Map<string, number | null>();
-        (data || []).forEach((r: any) => {
+        (data || []).forEach((r) => {
           const key = normalizeName(r.name);
           if (key) m.set(key, r.withdrawal_days ?? null);
           if (r.id) idMap.set(r.id, r.withdrawal_days ?? null);
@@ -59,13 +60,13 @@ const LiquidityBreakdown = ({ items }: Props) => {
   if (total === 0) return null;
 
   return (
-    <Card className="border-border bg-card">
-      <CardHeader className="pb-2">
-        <CardTitle className="text-sm font-semibold text-primary flex items-center gap-2">
+    <Card className={variant === "dashboard" ? "rounded-[22px] border-border/80 bg-card shadow-sm" : "border-border bg-card"}>
+      <CardHeader className={variant === "dashboard" ? "px-5 pb-1 pt-5" : "pb-2"}>
+        <CardTitle className={variant === "dashboard" ? "flex items-center gap-2 text-sm font-semibold tracking-tight text-foreground" : "flex items-center gap-2 text-sm font-semibold text-primary"}>
           <Droplets className="h-4 w-4" /> Liquidity breakdown
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2.5">
+      <CardContent className={variant === "dashboard" ? "space-y-3 px-5 pb-5 pt-3" : "space-y-2.5"}>
         {ORDER.map((label) => {
           const v = buckets.get(label) || 0;
           const pct = total > 0 ? (v / total) * 100 : 0;
@@ -75,16 +76,16 @@ const LiquidityBreakdown = ({ items }: Props) => {
                 <span className="text-muted-foreground">{label}</span>
                 <span className="tabular-nums font-medium">{pct.toFixed(1)}%</span>
               </div>
-              <div className="h-1.5 bg-muted rounded-full overflow-hidden">
+              <div className="h-2 overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full bg-primary rounded-full transition-all"
+                  className="h-full rounded-full bg-primary transition-all"
                   style={{ width: `${pct}%` }}
                 />
               </div>
             </div>
           );
         })}
-        <p className="text-[11px] text-muted-foreground pt-1">
+        <p className="pt-1 text-[11px] leading-5 text-muted-foreground">
           Based on fund-reported withdrawal period. Subject to fund terms.
         </p>
       </CardContent>
