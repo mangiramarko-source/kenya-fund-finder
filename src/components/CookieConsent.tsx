@@ -98,11 +98,11 @@ const CookieConsent = () => {
         {!showSettings ? (
           <>
             <div className="flex flex-col items-center gap-3 text-center">
-              <Cookie className="h-6 w-6 text-accent" />
+              <Cookie className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
               <p className="text-sm text-muted-foreground">
                 We use cookies to enhance your experience and serve ads. Cookie data is processed by{" "}
                 <span className="text-foreground font-medium">Elyon Innovation LTD</span>.{" "}
-                <Link to="/privacy" className="text-accent hover:underline">
+                <Link to="/privacy" className="font-medium text-emerald-600 hover:underline dark:text-emerald-400">
                   Privacy Policy
                 </Link>
               </p>
@@ -111,7 +111,7 @@ const CookieConsent = () => {
               <Button
                 size="sm"
                 onClick={acceptAll}
-                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg text-sm h-9"
+                className="h-9 w-full rounded-lg bg-emerald-600 text-sm text-white hover:bg-emerald-700"
               >
                 Accept all cookies
               </Button>
@@ -137,7 +137,7 @@ const CookieConsent = () => {
           <>
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
-                <Cookie className="h-5 w-5 text-accent" />
+                <Cookie className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
                 <h3 className="text-sm font-semibold text-foreground">Cookie settings</h3>
               </div>
               <button
@@ -183,7 +183,7 @@ const CookieConsent = () => {
 
             <p className="text-xs text-muted-foreground text-center">
               See our{" "}
-              <Link to="/privacy" className="text-accent hover:underline">
+              <Link to="/privacy" className="font-medium text-emerald-600 hover:underline dark:text-emerald-400">
                 Privacy Policy
               </Link>{" "}
               for details.
@@ -193,7 +193,7 @@ const CookieConsent = () => {
               <Button
                 size="sm"
                 onClick={saveCustom}
-                className="w-full bg-accent text-accent-foreground hover:bg-accent/90 rounded-lg text-sm h-9"
+                className="h-9 w-full rounded-lg bg-emerald-600 text-sm text-white hover:bg-emerald-700"
               >
                 Save preferences
               </Button>
