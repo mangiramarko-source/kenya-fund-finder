@@ -46,6 +46,7 @@ const AlertsPage = () => {
   const { prefs, loading: prefsLoading, updatePref } = useEmailPreferences();
 
   const [tab, setTab] = useState<TabKey>("active");
+  const [alertQuery, setAlertQuery] = useState("");
 
   // New Alert dialog state
   const [showCreate, setShowCreate] = useState(false);
@@ -122,6 +123,11 @@ const AlertsPage = () => {
   const activeAlerts = alerts.filter(a => a.is_active && !a.is_triggered);
   const triggeredAlerts = alerts.filter(a => a.is_triggered);
   const pausedAlerts = alerts.filter(a => !a.is_active && !a.is_triggered);
+  const matchesAlertQuery = (alert: typeof alerts[number]) =>
+    !alertQuery.trim() || `${alert.asset_name} ${alert.asset_type}`.toLowerCase().includes(alertQuery.trim().toLowerCase());
+  const visibleActiveAlerts = activeAlerts.filter(matchesAlertQuery);
+  const visibleTriggeredAlerts = triggeredAlerts.filter(matchesAlertQuery);
+  const visiblePausedAlerts = pausedAlerts.filter(matchesAlertQuery);
 
   const handleDelete = async (id: string) => {
     await deleteAlert(id);
@@ -151,18 +157,18 @@ const AlertsPage = () => {
       );
     }
     if (tab === "active") {
-      return activeAlerts.length > 0
-        ? <div className="space-y-2.5">{activeAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
-        : <EmptyState icon={Bell} title="No active alerts" description="Tap '+ New' to create your first one." onCta={() => setShowCreate(true)} ctaLabel="New Alert" />;
+      return visibleActiveAlerts.length > 0
+        ? <div className="space-y-2.5">{visibleActiveAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
+        : <EmptyState icon={Bell} title={alertQuery ? "No matching alerts" : "No active alerts"} description={alertQuery ? "Try another search term." : "Tap '+ New' to create your first one."} onCta={alertQuery ? undefined : () => setShowCreate(true)} ctaLabel="New Alert" />;
     }
     if (tab === "triggered") {
-      return triggeredAlerts.length > 0
-        ? <div className="space-y-2.5">{triggeredAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
+      return visibleTriggeredAlerts.length > 0
+        ? <div className="space-y-2.5">{visibleTriggeredAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
         : <EmptyState icon={CheckCircle} title="Nothing triggered yet" description="Alerts move here once your target is hit." />;
     }
     if (tab === "paused") {
-      return pausedAlerts.length > 0
-        ? <div className="space-y-2.5">{pausedAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
+      return visiblePausedAlerts.length > 0
+        ? <div className="space-y-2.5">{visiblePausedAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
         : <EmptyState icon={BellOff} title="No paused alerts" description="Pause an alert to temporarily stop monitoring." />;
     }
     return (
@@ -196,34 +202,27 @@ const AlertsPage = () => {
   return (
     <>
       <div className="hidden md:block"><DesktopWatchlistWorkspace active="alerts" /></div>
-      <main className="mx-auto max-w-3xl px-3 sm:px-4 pt-3 pb-28 md:hidden">
-      <WatchlistAlertsTabs active="alerts" />
-
-      <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300" role="status">
-        Alerts are evaluated against published market updates and delivered through your enabled notification channels.
-      </div>
-
-      {/* Sticky compact header */}
-      <header className="sticky top-0 z-20 -mx-3 sm:-mx-4 mt-3 px-3 sm:px-4 py-3 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b border-border/60">
-        <div className="flex items-center justify-between gap-3">
-          <div className="min-w-0">
-            <h1 className="text-lg sm:text-2xl font-bold text-foreground leading-tight">Price Alerts</h1>
-            <p className="text-[11px] sm:text-xs text-muted-foreground mt-0.5">
-              {activeAlerts.length} active · {triggeredAlerts.length} triggered · {pausedAlerts.length} paused
-            </p>
+      <main className="mx-auto max-w-3xl space-y-6 px-4 py-4 pb-28 md:hidden">
+        <header>
+          <div className="mb-4">
+            <h1 className="text-2xl font-bold tracking-tight text-foreground">Alerts</h1>
+            <p className="mt-1 text-sm text-muted-foreground">Monitor saved-asset targets and manage how you are notified.</p>
           </div>
-          <Button
-            onClick={() => setShowCreate(true)}
-            size="sm"
-            className="gap-1 shrink-0 h-9 px-3 rounded-full"
-          >
-            <Plus className="h-4 w-4" /> New
-          </Button>
-        </div>
+          <div className="relative mb-4">
+            <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/80" />
+            <Input value={alertQuery} onChange={(event) => setAlertQuery(event.target.value)} placeholder="Search alerts..." className="h-11 w-full rounded-full border-border/80 bg-card pl-10 text-[15px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:ring-1" />
+          </div>
+          <div className="mb-3.5 flex items-center gap-2">
+            <WatchlistAlertsTabs active="alerts" />
+            <button type="button" onClick={() => setShowCreate(true)} className="ml-auto inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#00A651] px-3.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#008f45] active:scale-[0.98]" aria-label="Create alert">
+              <Plus className="h-3.5 w-3.5 stroke-[3]" /> Add
+            </button>
+          </div>
+        </header>
 
-        {/* Scrollable tabs */}
-        <div className="mt-3 -mx-3 sm:-mx-4 px-3 sm:px-4 overflow-x-auto no-scrollbar">
-          <div className="flex gap-1.5 min-w-max">
+        <section>
+          <div className="mb-3 overflow-x-auto no-scrollbar">
+            <div className="flex min-w-max gap-1.5">
             {tabs.map((t) => {
               const isActive = tab === t.key;
               const Icon = t.icon;
@@ -252,11 +251,10 @@ const AlertsPage = () => {
               );
             })}
           </div>
-        </div>
-      </header>
+          </div>
+        </section>
 
-      {/* Body */}
-      <div className="mt-4">
+      <div>
         {alerts.length === 0 && !loading && tab !== "settings" ? (
           <Card>
             <CardContent className="py-12 text-center px-4">
@@ -276,15 +274,6 @@ const AlertsPage = () => {
           renderList()
         )}
       </div>
-
-      {/* Mobile floating action button */}
-      <button
-        onClick={() => setShowCreate(true)}
-        aria-label="New alert"
-        className="md:hidden fixed bottom-20 right-4 z-30 h-14 w-14 rounded-full bg-primary text-primary-foreground shadow-lg shadow-primary/30 flex items-center justify-center active:scale-95 transition-transform"
-      >
-        <Plus className="h-6 w-6" />
-      </button>
 
       {/* Create Alert Dialog — mobile bottom sheet, desktop centered */}
       <Dialog open={showCreate} onOpenChange={setShowCreate}>
