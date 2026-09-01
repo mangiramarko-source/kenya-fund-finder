@@ -17,6 +17,7 @@ vi.mock("@/hooks/useAssetWatchlist", () => ({
   useAssetWatchlist: () => ({ isFavourite: () => mocks.favourite, toggle: mocks.toggle }),
 }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
+vi.mock("@/hooks/useMinimumLoadingDuration", () => ({ useMinimumLoadingDuration: () => false }));
 vi.mock("@/hooks/useDocumentTitle", () => ({ useDocumentTitle: vi.fn() }));
 vi.mock("@/components/SectionLiveStatus", () => ({ default: () => <div>Market closed</div> }));
 vi.mock("@/components/MarketPageLoader", () => ({ default: () => <div>Loading</div> }));
