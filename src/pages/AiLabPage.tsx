@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft, Sparkles, Trash2 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import AiLabChat, { type CompareState } from "@/components/ai-lab/AiLabChat";
@@ -25,6 +25,12 @@ import {
   deriveSessionContext,
   type AiLabChatMessage,
 } from "@/lib/aiLab/chat";
+import {
+  aiLabUnavailableMessage,
+  askAiLabAssistant,
+  isContextualFollowUp,
+  type AiLabHistoryTurn,
+} from "@/lib/aiLab/assistant";
 import { resolveWebsiteLookup } from "@/lib/aiLab/websiteLookup";
 import {
   composeAssistantResponse,
@@ -33,13 +39,6 @@ import {
   isCapabilitiesPrompt,
 } from "@/lib/aiLab/responseComposer";
 import { isUnsupportedFilterLookupPrompt } from "@/lib/aiLab/websiteLookup";
-import {
-  generateGeminiEducationalAnswer,
-  isGeminiEducationalEnabled,
-} from "@/lib/aiLab/generateGeminiEducationalAnswer";
-import { canUseGeminiEducationalAssist } from "@/lib/aiLab/geminiEligibility";
-
-
 function AiLabMobileBack() {
   return (
     <Link
@@ -54,6 +53,7 @@ function AiLabMobileBack() {
 
 const DEFAULT_LOOKBACK: LookbackDays = 30;
 const STORAGE_KEY = "ai-lab-messages-v1";
+const AI_CONSENT_KEY = "ai-lab-free-tier-consent-v1";
 
 function loadPersistedMessages(): AiLabChatMessage[] {
   if (typeof window === "undefined") return [];
@@ -72,9 +72,26 @@ function loadPersistedMessages(): AiLabChatMessage[] {
   }
 }
 
+function loadAiConsent(): boolean {
+  if (typeof window === "undefined") return false;
+  return window.localStorage.getItem(AI_CONSENT_KEY) === "accepted";
+}
+
+function makeHistory(messages: AiLabChatMessage[]): AiLabHistoryTurn[] {
+  return messages
+    .filter((message): message is AiLabChatMessage & { role: "user" | "assistant" } =>
+      (message.role === "user" || message.role === "assistant") &&
+      Boolean(message.text.trim()) &&
+      message.status !== "pending",
+    )
+    .slice(-12)
+    .map((message) => ({ role: message.role, text: message.text }));
+}
+
 const AiLabPage = () => {
   const { user, loading } = useAuth();
   const [messages, setMessages] = useState<AiLabChatMessage[]>(loadPersistedMessages);
+  const [hasAiConsent, setHasAiConsent] = useState(loadAiConsent);
   const [compareLookback, setCompareLookback] = useState<Record<string, LookbackDays>>({});
   const [compareHistory, setCompareHistory] = useState<
     Record<string, Record<string, AssetHistory> | null>
@@ -254,12 +271,22 @@ const AiLabPage = () => {
     setCompareLookback((prev) => ({ ...prev, [messageId]: days }));
   }, []);
 
+  const clearChat = useCallback(() => {
+    setMessages([]);
+    setCompareLookback({});
+    setCompareHistory({});
+    setCompareHistoryLoading({});
+    if (typeof window !== "undefined") window.localStorage.removeItem(STORAGE_KEY);
+  }, []);
+
   const handleSubmit = useCallback(
     (prompt: string) => {
       const userMessage = createUserMessage(prompt);
       setMessages((prev) => [...prev, userMessage]);
 
       const sessionContext = deriveSessionContext(messages);
+      const history = makeHistory(messages);
+      const contextualFollowUp = isContextualFollowUp(prompt, history.length > 0);
 
       if (isCapabilitiesPrompt(prompt)) {
         const { text, followUps } = composeCapabilitiesGuide();
@@ -283,7 +310,9 @@ const AiLabPage = () => {
         return;
       }
 
-      const clarifying = buildClarifyingResponse(prompt, sessionContext);
+      const clarifying = contextualFollowUp
+        ? null
+        : buildClarifyingResponse(prompt, sessionContext);
 
       if (clarifying) {
         const assistantMessage = createAssistantMessage({
@@ -309,6 +338,66 @@ const AiLabPage = () => {
 
       void (async () => {
         try {
+          const answerFromRemote = async () => {
+            const remote = await askAiLabAssistant(prompt, history);
+            if (remote.kind === "kff_rewrite") {
+              const lookup = await resolveWebsiteLookup(remote.prompt, market.data);
+              if (lookup) {
+                const { text, followUps } = composeAssistantResponse({
+                  prompt: remote.prompt,
+                  result: lookup,
+                  sessionContext,
+                });
+                replacePending(createAssistantMessage({
+                  text,
+                  result: lookup,
+                  followUps,
+                  answerMode: "kff",
+                  contextNote: "Interpreted from this conversation using KenyaFundFinder data.",
+                }));
+                return;
+              }
+              const { prompt: enriched, note } = applyLiveContext(remote.prompt, market.data);
+              const result = routePrompt(enriched, market.data, news.data);
+              const { text, followUps } = composeAssistantResponse({
+                prompt: remote.prompt,
+                result,
+                sessionContext,
+              });
+              replacePending(createAssistantMessage({
+                text,
+                result: result.kind === "refusal" || result.kind === "unknown" ? undefined : result,
+                followUps,
+                answerMode: "kff",
+                contextNote: note ?? "Interpreted from this conversation using KenyaFundFinder data.",
+              }));
+              return;
+            }
+            if (remote.kind === "answer" || remote.kind === "web_answer") {
+              replacePending(createAssistantMessage({
+                text: `${remote.text}\n\n_Data only. Not personal financial advice._`,
+                status: "answered",
+                answerMode: remote.kind === "web_answer" ? "web" : "ai",
+                sources: remote.kind === "web_answer" ? remote.sources : undefined,
+                contextNote: remote.kind === "web_answer"
+                  ? "Web research can change; review the linked sources."
+                  : "AI-assisted educational explanation.",
+              }));
+              return;
+            }
+            replacePending(createAssistantMessage({
+              text: aiLabUnavailableMessage(remote.reason),
+              status: remote.kind === "blocked" ? "refused" : "error",
+              answerMode: "ai",
+              followUps: ["KES 10,000 in SCOM", "Show Etica MMF yield", "Explain dividend yield"],
+            }));
+          };
+
+          if (contextualFollowUp) {
+            await answerFromRemote();
+            return;
+          }
+
           const lookup = await resolveWebsiteLookup(prompt, market.data);
           if (lookup) {
             const { text, followUps } = composeAssistantResponse({
@@ -317,7 +406,7 @@ const AiLabPage = () => {
               sessionContext,
             });
             replacePending(
-              createAssistantMessage({ text, result: lookup, followUps }),
+              createAssistantMessage({ text, result: lookup, followUps, answerMode: "kff" }),
             );
             return;
           }
@@ -330,32 +419,9 @@ const AiLabPage = () => {
             sessionContext,
           });
 
-          // Phase-1 Gemini educational assist. Public but flag-gated,
-          // educational-only, and only when the deterministic router returned
-          // unknown. Deterministic scenario/refusal/comparison/news/website/
-          // capabilities/clarifying results are never rewritten. Any failure or
-          // validation rejection silently falls back to deterministic text.
-          const geminiEligible = canUseGeminiEducationalAssist({
-            user,
-            prompt,
-            resultKind: result.kind,
-            flagEnabled: isGeminiEducationalEnabled(),
-          });
-
-          if (geminiEligible) {
-            const gemini = await generateGeminiEducationalAnswer(prompt);
-            if (gemini.ok && gemini.markdown) {
-              const labeled = `${gemini.markdown}\n\n<sub>AI-assisted educational explanation</sub>`;
-              replacePending(
-                createAssistantMessage({
-                  text: labeled,
-                  status: "answered",
-                  followUps,
-                  contextNote: note ?? undefined,
-                }),
-              );
-              return;
-            }
+          if (result.kind === "unknown") {
+            await answerFromRemote();
+            return;
           }
 
           replacePending(
@@ -365,6 +431,7 @@ const AiLabPage = () => {
                 result.kind === "refusal" || result.kind === "unknown" ? undefined : result,
               followUps,
               contextNote: note ?? undefined,
+              answerMode: "kff",
             }),
           );
         } catch (err) {
@@ -387,6 +454,48 @@ const AiLabPage = () => {
     return (
       <div className={`${AI_LAB_PAGE} flex items-center justify-center`}>
         <p className="text-muted-foreground">Loading…</p>
+      </div>
+    );
+  }
+
+  if (!user) {
+    return (
+      <div className={`${AI_LAB_PAGE} flex items-center justify-center p-4`}>
+        <div className="max-w-md rounded-2xl border border-border bg-card p-6 text-center shadow-sm">
+          <Sparkles className="mx-auto mb-3 h-7 w-7 text-emerald-600" />
+          <h1 className="text-xl font-bold">Sign in to use AI Lab</h1>
+          <p className="mt-2 text-sm text-muted-foreground">
+            Sign in keeps the free AI and web-research allowance fair for everyone.
+          </p>
+          <Link to="/auth" className="mt-5 inline-flex rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700">
+            Sign in
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  if (!hasAiConsent) {
+    return (
+      <div className={`${AI_LAB_PAGE} flex items-center justify-center p-4`}>
+        <div className="max-w-lg rounded-2xl border border-border bg-card p-6 shadow-sm">
+          <Sparkles className="mb-3 h-7 w-7 text-emerald-600" />
+          <h1 className="text-xl font-bold">Before using AI Lab</h1>
+          <p className="mt-2 text-sm leading-relaxed text-muted-foreground">
+            AI Lab sends only the chat text you enter to Gemini’s free tier. Do not enter account, ID, payment, contact, portfolio, or other sensitive information. Your profile and saved portfolio are never sent automatically. Free-tier prompts may be used by Google to improve its products.
+          </p>
+          <p className="mt-3 text-xs text-muted-foreground">Web research has a limited free daily allowance and never switches to a paid provider.</p>
+          <button
+            type="button"
+            onClick={() => {
+              window.localStorage.setItem(AI_CONSENT_KEY, "accepted");
+              setHasAiConsent(true);
+            }}
+            className="mt-5 rounded-full bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700"
+          >
+            I understand — continue
+          </button>
+        </div>
       </div>
     );
   }
@@ -422,8 +531,20 @@ const AiLabPage = () => {
               </div>
             </div>
 
-            <div className="hidden md:block text-xs text-muted-foreground font-medium">
-              Scenarios only — not financial advice.
+            <div className="hidden md:flex items-center gap-3">
+              {messages.length > 0 && (
+                <button
+                  type="button"
+                  onClick={clearChat}
+                  className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground hover:text-foreground"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                  Clear chat
+                </button>
+              )}
+              <div className="text-xs text-muted-foreground font-medium">
+                Scenarios only — not financial advice.
+              </div>
             </div>
           </div>
         </header>

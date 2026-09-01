@@ -28,7 +28,10 @@ verify_jwt = false
 verify_jwt = false
 
 [functions.ai-lab-explain]
-verify_jwt = false
+verify_jwt = true
+
+[functions.ai-lab-chat]
+verify_jwt = true
 
 [functions.fetch-stock-disclosures]
 verify_jwt = false

@@ -92,6 +92,12 @@ const shouldShowResultCard = (msg: AiLabChatMessage): boolean => {
   return true;
 };
 
+function answerModeLabel(mode?: AiLabChatMessage["answerMode"]): string {
+  if (mode === "web") return "WEB RESEARCH";
+  if (mode === "ai") return "AI EXPLANATION";
+  return "KFF DATA & SCENARIO";
+}
+
 const AiLabChat = ({
   messages,
   onSubmit,
@@ -220,11 +226,30 @@ const AiLabChat = ({
                       <div className="space-y-2">
                         <div className="flex items-center gap-1.5 text-emerald-600 font-bold text-xs tracking-wider">
                           <Sparkles className="h-3.5 w-3.5" />
-                          <span>AI SCENARIO</span>
+                          <span>{answerModeLabel(msg.answerMode)}</span>
                         </div>
                         <div className="text-sm md:text-[15px] text-foreground leading-relaxed prose prose-sm dark:prose-invert max-w-none prose-p:my-2 prose-ul:my-2 prose-ol:my-2 prose-headings:font-semibold prose-headings:mt-3 prose-headings:mb-1.5 prose-strong:text-foreground prose-strong:font-bold prose-code:px-1 prose-code:py-0.5 prose-code:rounded prose-code:bg-muted prose-code:text-foreground prose-code:before:hidden prose-code:after:hidden prose-a:text-accent">
                           <ReactMarkdown remarkPlugins={[remarkGfm]}>{msg.text}</ReactMarkdown>
                         </div>
+                        {msg.sources && msg.sources.length > 0 && (
+                          <div className="rounded-xl border border-border/70 bg-muted/30 px-3 py-2.5 text-xs">
+                            <p className="font-semibold text-foreground mb-1.5">Web sources</p>
+                            <ul className="space-y-1">
+                              {msg.sources.map((source) => (
+                                <li key={source.url}>
+                                  <a
+                                    className="text-accent hover:underline"
+                                    href={source.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                  >
+                                    {source.title}
+                                  </a>
+                                </li>
+                              ))}
+                            </ul>
+                          </div>
+                        )}
                       </div>
                     )}
                     {msg.contextNote && !isPending && (

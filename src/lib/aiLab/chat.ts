@@ -17,6 +17,7 @@ import { isUnsupportedFilterLookupPrompt } from "./websiteLookup";
 import { applyLiveContext, type MarketContext } from "./marketContext";
 import type { NewsContext } from "./newsContext";
 import { resolveWebsiteLookup } from "./websiteLookup";
+import type { AiLabAnswerMode, AiLabSource } from "./assistant";
 
 export type AiLabChatRole = "user" | "assistant" | "system";
 
@@ -38,6 +39,8 @@ export interface AiLabChatMessage {
   status?: AiLabChatStatus;
   contextNote?: string;
   followUps?: string[];
+  answerMode?: AiLabAnswerMode;
+  sources?: AiLabSource[];
 }
 
 export interface AiLabSessionContext {
@@ -216,6 +219,8 @@ export function createAssistantMessage(args: {
   status?: AiLabChatStatus;
   contextNote?: string;
   followUps?: string[];
+  answerMode?: AiLabAnswerMode;
+  sources?: AiLabSource[];
 }): AiLabChatMessage {
   const status = args.status ?? statusFromResult(args.result);
   return {
@@ -227,6 +232,8 @@ export function createAssistantMessage(args: {
     status,
     contextNote: args.contextNote,
     followUps: args.followUps,
+    answerMode: args.answerMode,
+    sources: args.sources,
   };
 }
 
