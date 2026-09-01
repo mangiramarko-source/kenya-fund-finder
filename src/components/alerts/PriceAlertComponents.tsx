@@ -6,12 +6,11 @@ import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useAuth } from "@/hooks/useAuth";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
-import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 import { toast } from "sonner";
 import { Link } from "react-router-dom";
 
 interface CreateAlertDialogProps {
-  assetType: "stock" | "currency" | "commodity";
+  assetType: "stock" | "currency" | "commodity" | "fund";
   assetId: string;
   assetName: string;
   currentPrice: number;
@@ -23,7 +22,6 @@ export const CreateAlertDialog = ({
 }: CreateAlertDialogProps) => {
   const { user } = useAuth();
   const { createAlert } = usePriceAlerts();
-  const { enabled: deviceNotificationsEnabled, supported: deviceNotificationsSupported, enable: enableDeviceNotifications } = useDeviceNotifications();
   const [open, setOpen] = useState(false);
   const [targetPrice, setTargetPrice] = useState("");
   const [condition, setCondition] = useState<"above" | "below">("above");
@@ -50,20 +48,15 @@ export const CreateAlertDialog = ({
       asset_type: assetType,
       asset_id: assetId,
       asset_name: assetName,
+      asset_unit: unit,
       target_price: price,
       condition,
-      price_unit: unit || "KES",
     });
     setSaving(false);
     if (result?.error) {
-      toast.error(result.error.message || "Failed to create alert");
+      toast.error("Failed to create alert");
     } else {
       toast.success(`Alert set for ${assetName} ${condition} ${price}`);
-      if (!deviceNotificationsEnabled && deviceNotificationsSupported) {
-        toast("Want alerts on this device too?", {
-          action: { label: "Enable device notifications", onClick: () => void enableDeviceNotifications() },
-        });
-      }
       setOpen(false);
       setTargetPrice("");
     }
@@ -82,14 +75,13 @@ export const CreateAlertDialog = ({
         </DialogHeader>
         <div className="space-y-4 mt-2">
           <div className="rounded-lg bg-muted/50 p-3">
-            <p className="text-xs text-muted-foreground">{assetType === "fund" ? "Unit Trust" : "Asset"}</p>
+            <p className="text-xs text-muted-foreground">Stock</p>
             <p className="font-semibold text-foreground">{assetName}</p>
             <p className="text-xs text-muted-foreground mt-1">
               Current price: <span className="font-semibold text-accent">{currentPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })} {unit}</span>
             </p>
           </div>
 
-          <>
           <div>
             <label className="text-xs font-medium text-muted-foreground mb-1.5 block">Notify me when price goes</label>
             <Select value={condition} onValueChange={(v) => setCondition(v as "above" | "below")}>
@@ -126,7 +118,6 @@ export const CreateAlertDialog = ({
           <Button onClick={handleCreate} disabled={saving} className="w-full">
             {saving ? "Creating…" : "Create Alert"}
           </Button>
-          </>
         </div>
       </DialogContent>
     </Dialog>
@@ -158,7 +149,7 @@ export const AlertsPanel = () => {
         <Bell className="h-8 w-8 text-muted-foreground mx-auto mb-2" />
         <p className="text-sm text-muted-foreground">No price alerts set</p>
         <p className="text-xs text-muted-foreground mt-1">
-          Visit the Stocks, FX Rates, or Commodities pages to set alerts
+          Visit the Stocks page to set an above or below price alert
         </p>
       </div>
     );
@@ -211,13 +202,13 @@ const AlertCard = ({
         )}
       </div>
       <p className="text-xs text-muted-foreground mt-0.5">
-        {alert.condition === "above" ? "↑" : "↓"} {alert.condition} {alert.price_unit} {alert.target_price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+        {alert.condition === "above" ? "↑" : "↓"} {alert.condition} {alert.target_price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
         <span className="mx-1.5">·</span>
         <span className="capitalize">{alert.asset_type}</span>
       </p>
       {alert.is_triggered && alert.triggered_price && (
         <p className="text-[10px] text-accent mt-0.5">
-          Triggered at {alert.price_unit} {alert.triggered_price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+          Triggered at {alert.triggered_price.toLocaleString("en-US", { minimumFractionDigits: 2 })}
           {alert.triggered_at && ` on ${new Date(alert.triggered_at).toLocaleDateString("en-KE")}`}
         </p>
       )}

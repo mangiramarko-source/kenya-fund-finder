@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
+import { fetchPublicData } from "@/lib/gateway";
 
 export interface ExchangeRate {
   id: string;
@@ -65,35 +66,26 @@ export function useMarketData() {
     if (showLoading) setLoading(true);
 
     const [ratesRes, commoditiesRes, stocksRes] = await Promise.all([
-      supabase
-        .from("exchange_rates_public" as any)
-        .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
-        .order("sort_order"),
-      supabase
-        .from("commodities_public" as any)
-        .select("id, name, symbol, price, previous_price, unit, updated_at")
-        .order("sort_order"),
-      supabase
-        .from("stocks_public" as any)
-        .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, updated_at")
-        .order("sort_order"),
+      fetchPublicData<ExchangeRate>("rates", { limit: 200 }),
+      fetchPublicData<Commodity>("commodities", { limit: 200 }),
+      fetchPublicData<Stock>("stocks", { limit: 500 }),
     ]);
     setRates(
-      (((ratesRes.data as any) || []).map((r: any) => ({
+      ((ratesRes.data || []).map((r) => ({
         ...r,
         rate: Number(r.rate),
         previous_rate: r.previous_rate != null ? Number(r.previous_rate) : null,
       })) as ExchangeRate[])
     );
     setCommodities(
-      (((commoditiesRes.data as any) || []).map((c: any) => ({
+      ((commoditiesRes.data || []).map((c) => ({
         ...c,
         price: Number(c.price),
         previous_price: c.previous_price != null ? Number(c.previous_price) : null,
       })) as Commodity[])
     );
     setStocks(
-      (((stocksRes.data as any) || []).map((s: any) => ({
+      ((stocksRes.data || []).map((s) => ({
         ...s,
         price: Number(s.price),
         previous_price: s.previous_price != null ? Number(s.previous_price) : null,

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useEmailPreferences } from "@/hooks/useEmailPreferences";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,16 +19,13 @@ import { format, formatDistanceToNow } from "date-fns";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
 import { cn } from "@/lib/utils";
-import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
-import { priceAlertMessaging } from "@/lib/priceAlertMessaging";
-import MarketPageLoader from "@/components/MarketPageLoader";
-import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
+import WatchlistAlertsTabs from "@/components/watchlist/WatchlistAlertsTabs";
+import DesktopWatchlistWorkspace from "@/components/watchlist/DesktopWatchlistWorkspace";
 
 interface AssetOption {
   id: string;
   name: string;
   currentValue: number;
-  assetType: "stock" | "currency" | "commodity";
   unit?: string;
 }
 
@@ -36,34 +33,31 @@ type TabKey = "active" | "triggered" | "paused" | "settings";
 
 const AlertsPage = () => {
   useDocumentTitle(
-    "Price Alerts | Kenya Fund Finder",
-    "Set price alerts for Kenyan stocks, FX rates, and commodities.",
+    "Stock Price Alerts | Kenya Fund Finder",
+    "Set simple above or below price alerts for Kenyan stocks.",
     {
-      title: "Price Alerts for Kenyan Markets",
-      description: "Set price alerts for Kenyan stocks, FX rates, and commodities.",
+      title: "Price Alerts for Kenyan Stocks",
+      description: "Set simple above or below price alerts for Kenyan stocks.",
     }
   );
-  const { user, loading: authLoading } = useAuth();
+  const { user } = useAuth();
   const navigate = useNavigate();
   const { alerts, loading, deleteAlert, toggleAlert, createAlert } = usePriceAlerts();
-  const { prefs, loading: prefsLoading, saving: prefsSaving, error: prefsError, retry: retryPrefs, updatePref } = useEmailPreferences();
-  const { enabled: pushEnabled, supported: pushSupported, enable: enablePush, disable: disablePush } = useDeviceNotifications();
-  const [searchParams] = useSearchParams();
+  const { prefs, loading: prefsLoading, updatePref } = useEmailPreferences();
 
-  const [tab, setTab] = useState<TabKey>(() => searchParams.get("tab") === "settings" ? "settings" : "active");
+  const [tab, setTab] = useState<TabKey>("active");
 
   // New Alert dialog state
-  const [showCreate, setShowCreate] = useState(() => searchParams.get("create") === "1");
+  const [showCreate, setShowCreate] = useState(false);
   const [assetOptions, setAssetOptions] = useState<AssetOption[]>([]);
   const [loadingAssets, setLoadingAssets] = useState(false);
-  const [assetType, setAssetType] = useState<AssetOption["assetType"]>("stock");
   const [selectedAssetId, setSelectedAssetId] = useState("");
   const [assetSearch, setAssetSearch] = useState("");
   const [targetPrice, setTargetPrice] = useState("");
   const [condition, setCondition] = useState<"above" | "below">("above");
   const [saving, setSaving] = useState(false);
 
-  // Fetch the selected market type whenever the alert dialog is opened.
+  // Fetch assets when type changes
   useEffect(() => {
     if (!showCreate) return;
     setLoadingAssets(true);
@@ -73,21 +67,13 @@ const AlertsPage = () => {
 
     const fetchAssets = async () => {
       let options: AssetOption[] = [];
-      if (assetType === "stock") {
-        const { data } = await supabase.from("stocks").select("id, name, symbol, price").eq("is_active", true).order("name");
-        options = (data || []).map((s) => ({ id: s.id, name: `${s.name} (${s.symbol})`, currentValue: Number(s.price), assetType, unit: "KES" }));
-      } else if (assetType === "currency") {
-        const { data } = await supabase.from("exchange_rates").select("id, currency_code, currency_name, rate").eq("is_active", true).order("currency_code");
-        options = (data || []).map((rate) => ({ id: rate.id, name: `${rate.currency_code}/KES${rate.currency_name ? ` · ${rate.currency_name}` : ""}`, currentValue: Number(rate.rate), assetType, unit: "KES" }));
-      } else {
-        const { data } = await supabase.from("commodities").select("id, name, symbol, price, unit").eq("is_active", true).order("name");
-        options = (data || []).map((commodity) => ({ id: commodity.id, name: commodity.symbol ? `${commodity.name} (${commodity.symbol})` : commodity.name, currentValue: Number(commodity.price), assetType, unit: commodity.unit || "" }));
-      }
+      const { data } = await supabase.from("stocks").select("id, name, symbol, price").eq("is_active", true).order("name");
+      options = (data || []).map((s) => ({ id: s.id, name: `${s.name} (${s.symbol})`, currentValue: Number(s.price), unit: "KES" }));
       setAssetOptions(options);
       setLoadingAssets(false);
     };
     fetchAssets();
-  }, [showCreate, assetType]);
+  }, [showCreate]);
 
   const selectedAsset = assetOptions.find((a) => a.id === selectedAssetId);
   const filteredAssets = useMemo(() => {
@@ -102,41 +88,34 @@ const AlertsPage = () => {
     if (isNaN(price) || price <= 0) { toast.error("Please enter a valid target"); return; }
     setSaving(true);
     const result = await createAlert({
-      asset_type: selectedAsset.assetType,
+      asset_type: "stock",
       asset_id: selectedAsset.id,
       asset_name: selectedAsset.name,
       target_price: price,
       condition,
-      price_unit: selectedAsset.unit || "KES",
     });
     setSaving(false);
     if (result?.error) {
-      toast.error(result.error.message || "Failed to create alert");
+      toast.error("Failed to create alert");
     } else {
       toast.success(`Alert set for ${selectedAsset.name}`);
-      if (!pushEnabled && pushSupported) {
-        toast("Get alerts on this device", { description: priceAlertMessaging.devicePrompt, action: { label: "Enable", onClick: () => { void enablePush(); } } });
-      }
       setShowCreate(false);
       setTargetPrice("");
       setSelectedAssetId("");
     }
   };
 
-  const showPageLoading = useMinimumLoadingDuration(authLoading || (Boolean(user) && (loading || prefsLoading)));
-
-  if (showPageLoading) {
-    return <MarketPageLoader message="Loading your alerts…" className="min-h-screen" />;
-  }
-
   if (!user) {
     return (
-      <div className="container mx-auto px-4 py-16 text-center">
-        <Bell className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-        <h1 className="text-2xl font-bold text-foreground mb-2">Sign in to manage alerts</h1>
-        <p className="text-muted-foreground mb-6">Create and manage price alerts for NSE stocks, FX rates, and commodities.</p>
-        <Button onClick={() => navigate("/auth")}>Sign In</Button>
-      </div>
+      <>
+        <div className="hidden md:block"><DesktopWatchlistWorkspace active="alerts" /></div>
+        <div className="container mx-auto px-4 py-16 text-center md:hidden">
+          <Bell className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
+          <h1 className="text-2xl font-bold text-foreground mb-2">Sign in to manage alerts</h1>
+          <p className="text-muted-foreground mb-6">Create and manage simple above or below alerts for Kenyan stocks.</p>
+          <Button onClick={() => navigate("/auth")}>Sign In</Button>
+        </div>
+      </>
     );
   }
 
@@ -179,7 +158,7 @@ const AlertsPage = () => {
     if (tab === "triggered") {
       return triggeredAlerts.length > 0
         ? <div className="space-y-2.5">{triggeredAlerts.map(a => <AlertCard key={a.id} alert={a} onToggle={handleToggle} onDelete={handleDelete} />)}</div>
-        : <EmptyState icon={CheckCircle} title="Nothing triggered yet" description={priceAlertMessaging.triggeredEmptyState} />;
+        : <EmptyState icon={CheckCircle} title="Nothing triggered yet" description="Alerts move here once your target is hit." />;
     }
     if (tab === "paused") {
       return pausedAlerts.length > 0
@@ -194,35 +173,19 @@ const AlertsPage = () => {
               <Mail className="h-4 w-4 text-accent" />
               <h3 className="font-semibold text-sm text-foreground">Email Notifications</h3>
             </div>
-            {prefsError && <div role="alert" className="mb-3 text-sm text-destructive">{prefsError} <Button variant="link" size="sm" onClick={() => void retryPrefs()}>Retry</Button></div>}
-            {prefsSaving && <p role="status" className="mb-2 text-xs text-muted-foreground">Saving your choices…</p>}
             <SettingRow
-              title={priceAlertMessaging.settingsTitle}
-              description={priceAlertMessaging.settingsDescription}
+              title="Instant Price Alerts"
+              description="Email preference for triggered market alerts."
               checked={prefs.price_alert_email}
               onChange={(v) => updatePref("price_alert_email", v)}
-              disabled={prefsLoading || prefsSaving || Boolean(prefsError)}
-            />
-            <SettingRow
-              title="In-app notifications"
-              description="Show alerts in your notification centre and while Kenya Fund Finder is open."
-              checked={prefs.price_alert_inapp}
-              onChange={(v) => updatePref("price_alert_inapp", v)}
-              disabled={prefsLoading || prefsSaving || Boolean(prefsError)}
-            />
-            <SettingRow
-              title="Device notifications"
-              description={pushSupported ? "Show a browser or device notification when an alert is hit while the app is closed." : "Not supported by this browser. Your in-app notification centre still works."}
-              checked={pushEnabled}
-              onChange={(v) => { void (v ? enablePush() : disablePush()); }}
-              disabled={!pushSupported || prefsLoading || prefsSaving || Boolean(prefsError)}
+              disabled={prefsLoading}
             />
             <SettingRow
               title="Market Brief & Morning News"
               description="Market Brief updates plus weekday morning News Highlights from stored, quality-checked articles."
               checked={prefs.market_brief_email}
               onChange={(v) => updatePref("market_brief_email", v)}
-              disabled={prefsLoading || prefsSaving || Boolean(prefsError)}
+              disabled={prefsLoading}
             />
           </CardContent>
         </Card>
@@ -231,9 +194,17 @@ const AlertsPage = () => {
   };
 
   return (
-    <main className="mx-auto max-w-3xl px-3 sm:px-4 pt-3 pb-28 md:pb-10">
+    <>
+      <div className="hidden md:block"><DesktopWatchlistWorkspace active="alerts" /></div>
+      <main className="mx-auto max-w-3xl px-3 sm:px-4 pt-3 pb-28 md:hidden">
+      <WatchlistAlertsTabs active="alerts" />
+
+      <div className="mt-3 rounded-lg border border-amber-500/30 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300" role="status">
+        Alerts are evaluated against published market updates and delivered through your enabled notification channels.
+      </div>
+
       {/* Sticky compact header */}
-      <header className="sticky top-0 z-20 -mx-3 sm:-mx-4 px-3 sm:px-4 py-3 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b border-border/60">
+      <header className="sticky top-0 z-20 -mx-3 sm:-mx-4 mt-3 px-3 sm:px-4 py-3 bg-background/85 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b border-border/60">
         <div className="flex items-center justify-between gap-3">
           <div className="min-w-0">
             <h1 className="text-lg sm:text-2xl font-bold text-foreground leading-tight">Price Alerts</h1>
@@ -294,7 +265,7 @@ const AlertsPage = () => {
               </div>
               <h2 className="text-base font-semibold text-foreground mb-1">No alerts yet</h2>
               <p className="text-sm text-muted-foreground mb-5 max-w-xs mx-auto">
-                Get notified when an NSE stock reaches your chosen target. Other assets can still be saved to your watchlist.
+                Save an above or below target for a Kenyan stock and review its status here.
               </p>
               <Button onClick={() => setShowCreate(true)} className="gap-1.5 rounded-full">
                 <Plus className="h-4 w-4" /> Create your first alert
@@ -323,37 +294,10 @@ const AlertsPage = () => {
           </DialogHeader>
 
           <div className="px-4 py-4 space-y-4 overflow-y-auto flex-1 min-h-0">
-            {/* Alert coverage */}
-            <div>
-              <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">Available now</label>
-              <div className="rounded-lg border border-primary/25 bg-primary/5 px-3 py-2.5 text-sm font-medium text-foreground">NSE stocks, FX rates, and commodities</div>
-              <p className="mt-2 text-xs leading-relaxed text-muted-foreground">Choose a market below, then set an above or below target. Unit Trust alerts are not available yet.</p>
-            </div>
-
-            <div className="grid grid-cols-3 gap-1.5">
-              {([
-                ["stock", "NSE stocks"],
-                ["currency", "FX rates"],
-                ["commodity", "Commodities"],
-              ] as const).map(([type, label]) => (
-                <button
-                  key={type}
-                  type="button"
-                  onClick={() => setAssetType(type)}
-                  className={cn(
-                    "h-10 rounded-lg border px-2 text-xs font-medium transition-colors",
-                    assetType === type ? "border-primary bg-primary/10 text-primary" : "border-border bg-card text-muted-foreground hover:text-foreground"
-                  )}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-
             {/* Asset search + select */}
             <div>
               <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                {assetType === "stock" ? "Select NSE stock" : assetType === "currency" ? "Select FX rate" : "Select commodity"}
+                Select Stock
               </label>
               <div className="relative mb-2">
                 <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
@@ -385,7 +329,7 @@ const AlertsPage = () => {
             {selectedAsset && (
               <div className="rounded-lg border border-border bg-muted/40 p-3 flex items-center justify-between">
                 <div>
-                <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Current price</p>
+                  <p className="text-[11px] text-muted-foreground uppercase tracking-wider">Current price</p>
                   <p className="text-base font-semibold text-accent">
                     {selectedAsset.currentValue.toLocaleString("en-US", { minimumFractionDigits: 2 })} {selectedAsset.unit}
                   </p>
@@ -438,7 +382,7 @@ const AlertsPage = () => {
             {/* Target */}
             <div>
               <label className="text-[11px] font-medium text-muted-foreground uppercase tracking-wider mb-2 block">
-                Target price
+                Target Price (KES)
               </label>
               <Input
                 type="number"
@@ -463,7 +407,8 @@ const AlertsPage = () => {
           </div>
         </DialogContent>
       </Dialog>
-    </main>
+      </main>
+    </>
   );
 };
 
@@ -478,7 +423,7 @@ const AlertCard = ({
   const isTriggered = alert.is_triggered;
   const isPaused = !alert.is_active && !isTriggered;
   const isFund = alert.asset_type === "fund";
-  const unit = isFund ? "%" : alert.price_unit || "KES";
+  const suffix = isFund ? "%" : "";
 
   return (
     <div className={cn(
@@ -522,14 +467,14 @@ const AlertCard = ({
           <p className="text-xs text-muted-foreground mt-1">
             {alert.condition === "above" ? "Above" : "Below"}{" "}
             <span className="font-semibold text-foreground">
-              {unit} {alert.target_price.toLocaleString()}
+              {alert.target_price.toLocaleString()}{suffix}
             </span>
           </p>
 
           {isTriggered && alert.triggered_price != null && (
             <p className="text-[11px] text-accent mt-1 inline-flex items-center gap-1">
               <CheckCircle className="h-3 w-3" />
-              Hit at {unit} {alert.triggered_price.toLocaleString()}
+              Hit at {alert.triggered_price.toLocaleString()}{suffix}
               {alert.triggered_at && ` · ${formatDistanceToNow(new Date(alert.triggered_at), { addSuffix: true })}`}
             </p>
           )}

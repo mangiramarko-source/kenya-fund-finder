@@ -14,7 +14,7 @@ describe("fetch-market-data stock query contract", () => {
   });
 
   it("fails explicitly when active stocks cannot be loaded", () => {
-    expect(source).toContain("error: stockRowsError");
-    expect(source).toContain("Failed to load active stocks");
+    expect(source).toContain("error: stocksReadError");
+    expect(source).toContain("Stock read failed");
   });
 });

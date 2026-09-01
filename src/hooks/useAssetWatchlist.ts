@@ -1,9 +1,7 @@
-import { useState, useEffect, useCallback } from "react";
-import { supabase } from "@/integrations/supabase/client";
+import { useCallback, useMemo } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import { toast } from "sonner";
-import { safeUUID } from "@/lib/safeUUID";
-import { trackEvent } from "@/lib/analytics";
+import { useUnifiedWatchlist } from "@/hooks/useUnifiedWatchlist";
 
 export interface WatchlistEntry {
   id: string;
@@ -13,22 +11,11 @@ export interface WatchlistEntry {
 
 export function useAssetWatchlist(itemType: string) {
   const { user } = useAuth();
-  const [entries, setEntries] = useState<WatchlistEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  const fetchEntries = useCallback(async () => {
-    if (!user) { setEntries([]); setLoading(false); return; }
-    const { data } = await supabase
-      .from("user_watchlist")
-      .select("id, item_id, item_name")
-      .eq("user_id", user.id)
-      .eq("item_type", itemType)
-      .order("created_at", { ascending: false });
-    setEntries((data as WatchlistEntry[]) || []);
-    setLoading(false);
-  }, [user, itemType]);
-
-  useEffect(() => { fetchEntries(); }, [fetchEntries]);
+  const { items, loading, add, remove } = useUnifiedWatchlist();
+  const entries = useMemo(
+    () => items.filter((item) => item.item_type === itemType),
+    [itemType, items],
+  );
 
   const isFavourite = useCallback(
     (id: string) => entries.some((e) => e.item_id === id),
@@ -40,28 +27,22 @@ export function useAssetWatchlist(itemType: string) {
       if (!user) return;
       const existing = entries.find((e) => e.item_id === id);
       if (existing) {
-        setEntries((prev) => prev.filter((e) => e.id !== existing.id));
-        await supabase.from("user_watchlist").delete().eq("id", existing.id);
+        const result = await remove(existing.id);
+        if (!result.ok) {
+          toast.error(`Could not remove ${name}`);
+          return;
+        }
         toast.success(`Removed ${name} from watchlist`);
       } else {
-        const temp: WatchlistEntry = { id: safeUUID(), item_id: id, item_name: name };
-        setEntries((prev) => [temp, ...prev]);
-        trackEvent("watchlist_item_added", {
-          asset_type: itemType,
-          asset_identifier: name,
-          item_id: id,
-        });
-        await supabase.from("user_watchlist").insert({
-          user_id: user.id,
-          item_type: itemType,
-          item_id: id,
-          item_name: name,
-        });
+        const result = await add(itemType, id, name);
+        if (!result.ok) {
+          toast.error(`Could not add ${name}`);
+          return;
+        }
         toast.success(`Added ${name} to watchlist`);
-        fetchEntries();
       }
     },
-    [user, entries, fetchEntries, itemType]
+    [add, entries, itemType, remove, user]
   );
 
   return { entries, loading, isFavourite, toggle };

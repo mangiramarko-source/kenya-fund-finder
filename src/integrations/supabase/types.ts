@@ -10,7 +10,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: "14.1"
   }
   public: {
     Tables: {
@@ -104,6 +104,83 @@ export type Database = {
           title?: string
           updated_at?: string
           updated_by?: string | null
+        }
+        Relationships: []
+      }
+      api_key_usage: {
+        Row: {
+          api_key_id: string
+          created_at: string
+          endpoint: string
+          id: string
+          ip_hash: string | null
+          status_code: number
+        }
+        Insert: {
+          api_key_id: string
+          created_at?: string
+          endpoint: string
+          id?: string
+          ip_hash?: string | null
+          status_code: number
+        }
+        Update: {
+          api_key_id?: string
+          created_at?: string
+          endpoint?: string
+          id?: string
+          ip_hash?: string | null
+          status_code?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "api_key_usage_api_key_id_fkey"
+            columns: ["api_key_id"]
+            isOneToOne: false
+            referencedRelation: "api_keys"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      api_keys: {
+        Row: {
+          created_at: string
+          created_by: string | null
+          expires_at: string | null
+          id: string
+          is_active: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at: string | null
+          name: string
+          rate_limit_per_minute: number
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash: string
+          key_prefix: string
+          last_used_at?: string | null
+          name: string
+          rate_limit_per_minute?: number
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          created_by?: string | null
+          expires_at?: string | null
+          id?: string
+          is_active?: boolean
+          key_hash?: string
+          key_prefix?: string
+          last_used_at?: string | null
+          name?: string
+          rate_limit_per_minute?: number
+          updated_at?: string
         }
         Relationships: []
       }
@@ -245,221 +322,122 @@ export type Database = {
           },
         ]
       }
-      communication_delivery_events: {
+      email_preferences: {
         Row: {
           created_at: string
-          event_created_at: string
-          event_type: string
           id: string
-          provider_message_id: string
-          webhook_event_id: string
-        }
-        Insert: {
-          created_at?: string
-          event_created_at: string
-          event_type: string
-          id?: string
-          provider_message_id: string
-          webhook_event_id: string
-        }
-        Update: {
-          created_at?: string
-          event_created_at?: string
-          event_type?: string
-          id?: string
-          provider_message_id?: string
-          webhook_event_id?: string
-        }
-        Relationships: []
-      }
-      communication_outbox: {
-        Row: {
-          attempts: number
-          category: string
-          claim_token: string | null
-          created_at: string
-          delivered_at: string | null
-          delivery_event_at: string | null
-          delivery_status: string
-          failure_reason: string | null
-          id: string
-          idempotency_key: string
-          lease_expires_at: string | null
-          next_attempt_at: string
-          payload: Json
-          provider_request: Json | null
-          provider_request_frozen_at: string | null
-          provider_message_id: string | null
-          recipient_email: string | null
-          sent_at: string | null
-          status: string
-          submission_started_at: string | null
-          updated_at: string
-          user_id: string | null
-        }
-        Insert: {
-          attempts?: number
-          category: string
-          claim_token?: string | null
-          created_at?: string
-          delivered_at?: string | null
-          delivery_event_at?: string | null
-          delivery_status?: string
-          failure_reason?: string | null
-          id?: string
-          idempotency_key: string
-          lease_expires_at?: string | null
-          next_attempt_at?: string
-          payload?: Json
-          provider_request?: Json | null
-          provider_request_frozen_at?: string | null
-          provider_message_id?: string | null
-          recipient_email?: string | null
-          sent_at?: string | null
-          status?: string
-          submission_started_at?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Update: {
-          attempts?: number
-          category?: string
-          claim_token?: string | null
-          created_at?: string
-          delivered_at?: string | null
-          delivery_event_at?: string | null
-          delivery_status?: string
-          failure_reason?: string | null
-          id?: string
-          idempotency_key?: string
-          lease_expires_at?: string | null
-          next_attempt_at?: string
-          payload?: Json
-          provider_request?: Json | null
-          provider_request_frozen_at?: string | null
-          provider_message_id?: string | null
-          recipient_email?: string | null
-          sent_at?: string | null
-          status?: string
-          submission_started_at?: string | null
-          updated_at?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      communication_preferences: {
-        Row: {
-          created_at: string
-          email_welcome_completed: boolean
-          market_brief_email: boolean
-          market_brief_email_consented_at: string | null
-          price_alert_email: boolean
-          price_alert_email_consented_at: string | null
-          price_alert_inapp: boolean
-          price_alert_push: boolean
-          price_alert_push_consented_at: string | null
+          instant_alerts: boolean
           updated_at: string
           user_id: string
+          weekly_summary: boolean
         }
         Insert: {
           created_at?: string
-          email_welcome_completed?: boolean
-          market_brief_email?: boolean
-          market_brief_email_consented_at?: string | null
-          price_alert_email?: boolean
-          price_alert_email_consented_at?: string | null
-          price_alert_inapp?: boolean
-          price_alert_push?: boolean
-          price_alert_push_consented_at?: string | null
+          id?: string
+          instant_alerts?: boolean
           updated_at?: string
           user_id: string
+          weekly_summary?: boolean
         }
         Update: {
           created_at?: string
-          email_welcome_completed?: boolean
-          market_brief_email?: boolean
-          market_brief_email_consented_at?: string | null
-          price_alert_email?: boolean
-          price_alert_email_consented_at?: string | null
-          price_alert_inapp?: boolean
-          price_alert_push?: boolean
-          price_alert_push_consented_at?: string | null
+          id?: string
+          instant_alerts?: boolean
           updated_at?: string
           user_id?: string
+          weekly_summary?: boolean
         }
         Relationships: []
       }
-      communication_suppressions: {
+      email_send_log: {
         Row: {
           created_at: string
-          email_normalized: string
+          error_message: string | null
           id: string
-          lifted_at: string | null
-          reason: string
-          scope: string
-          source: string
+          message_id: string | null
+          metadata: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
         }
         Insert: {
           created_at?: string
-          email_normalized: string
+          error_message?: string | null
           id?: string
-          lifted_at?: string | null
-          reason: string
-          scope: string
-          source?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email: string
+          status: string
+          template_name: string
         }
         Update: {
           created_at?: string
-          email_normalized?: string
+          error_message?: string | null
           id?: string
-          lifted_at?: string | null
-          reason?: string
-          scope?: string
-          source?: string
+          message_id?: string | null
+          metadata?: Json | null
+          recipient_email?: string
+          status?: string
+          template_name?: string
         }
         Relationships: []
       }
-      corporate_actions: {
+      email_send_state: {
         Row: {
-          action_date: string
-          action_type: string
-          created_at: string | null
-          details: string | null
-          id: string
-          stock_id: string
+          auth_email_ttl_minutes: number
+          batch_size: number
+          id: number
+          retry_after_until: string | null
+          send_delay_ms: number
+          transactional_email_ttl_minutes: number
+          updated_at: string
         }
         Insert: {
-          action_date: string
-          action_type: string
-          created_at?: string | null
-          details?: string | null
-          id?: string
-          stock_id: string
+          auth_email_ttl_minutes?: number
+          batch_size?: number
+          id?: number
+          retry_after_until?: string | null
+          send_delay_ms?: number
+          transactional_email_ttl_minutes?: number
+          updated_at?: string
         }
         Update: {
-          action_date?: string
-          action_type?: string
-          created_at?: string | null
-          details?: string | null
-          id?: string
-          stock_id?: string
+          auth_email_ttl_minutes?: number
+          batch_size?: number
+          id?: number
+          retry_after_until?: string | null
+          send_delay_ms?: number
+          transactional_email_ttl_minutes?: number
+          updated_at?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "corporate_actions_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "corporate_actions_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
+      }
+      email_unsubscribe_tokens: {
+        Row: {
+          created_at: string
+          email: string
+          expires_at: string
+          id: string
+          token: string
+          used_at: string | null
+        }
+        Insert: {
+          created_at?: string
+          email: string
+          expires_at?: string
+          id?: string
+          token: string
+          used_at?: string | null
+        }
+        Update: {
+          created_at?: string
+          email?: string
+          expires_at?: string
+          id?: string
+          token?: string
+          used_at?: string | null
+        }
+        Relationships: []
       }
       exchange_rate_history: {
         Row: {
@@ -617,20 +595,28 @@ export type Database = {
       funds: {
         Row: {
           annual_yield: number
+          aum_kes: number | null
           cma_licensed: boolean
           created_at: string
           created_by: string | null
           daily_yield: number
           description: string
+          exit_fee: number | null
           fact_sheet_date: string | null
           fund_type: string
+          good_for: string[]
           id: string
+          inception_date: string | null
+          is_featured: boolean
           is_published: boolean
           logo_url: string | null
           management_fee: number
           manager: string
+          manager_years_active: number | null
           minimum_investment: number
           name: string
+          not_good_for: string[]
+          risk_level: string
           seven_day_yield: number
           slug: string
           source_url: string | null
@@ -638,25 +624,34 @@ export type Database = {
           updated_at: string
           updated_by: string | null
           website: string
+          withdrawal_days: number | null
           withdrawal_time: string
           yield_unit: string
         }
         Insert: {
           annual_yield: number
+          aum_kes?: number | null
           cma_licensed?: boolean
           created_at?: string
           created_by?: string | null
           daily_yield?: number
           description?: string
+          exit_fee?: number | null
           fact_sheet_date?: string | null
           fund_type?: string
+          good_for?: string[]
           id?: string
+          inception_date?: string | null
+          is_featured?: boolean
           is_published?: boolean
           logo_url?: string | null
           management_fee: number
           manager: string
+          manager_years_active?: number | null
           minimum_investment: number
           name: string
+          not_good_for?: string[]
+          risk_level?: string
           seven_day_yield: number
           slug: string
           source_url?: string | null
@@ -664,25 +659,34 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           website?: string
+          withdrawal_days?: number | null
           withdrawal_time: string
           yield_unit?: string
         }
         Update: {
           annual_yield?: number
+          aum_kes?: number | null
           cma_licensed?: boolean
           created_at?: string
           created_by?: string | null
           daily_yield?: number
           description?: string
+          exit_fee?: number | null
           fact_sheet_date?: string | null
           fund_type?: string
+          good_for?: string[]
           id?: string
+          inception_date?: string | null
+          is_featured?: boolean
           is_published?: boolean
           logo_url?: string | null
           management_fee?: number
           manager?: string
+          manager_years_active?: number | null
           minimum_investment?: number
           name?: string
+          not_good_for?: string[]
+          risk_level?: string
           seven_day_yield?: number
           slug?: string
           source_url?: string | null
@@ -690,38 +694,249 @@ export type Database = {
           updated_at?: string
           updated_by?: string | null
           website?: string
+          withdrawal_days?: number | null
           withdrawal_time?: string
           yield_unit?: string
         }
         Relationships: []
       }
-      macro_rates: {
+      mock_portfolios: {
+        Row: {
+          asset_id: string | null
+          asset_name: string
+          asset_type: string
+          buy_date: string
+          buy_price: number
+          created_at: string
+          current_price: number
+          current_yield: number | null
+          id: string
+          notes: string | null
+          ticker: string | null
+          units: number
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          asset_id?: string | null
+          asset_name: string
+          asset_type: string
+          buy_date?: string
+          buy_price: number
+          created_at?: string
+          current_price: number
+          current_yield?: number | null
+          id?: string
+          notes?: string | null
+          ticker?: string | null
+          units?: number
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          asset_id?: string | null
+          asset_name?: string
+          asset_type?: string
+          buy_date?: string
+          buy_price?: number
+          created_at?: string
+          current_price?: number
+          current_yield?: number | null
+          id?: string
+          notes?: string | null
+          ticker?: string | null
+          units?: number
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      news_articles: {
+        Row: {
+          category: string
+          content: string | null
+          created_at: string
+          created_by: string | null
+          date_published: string | null
+          source_published_at: string | null
+          quality_reasons: string[]
+          quality_checked_at: string | null
+          classification_version: string | null
+          stock_match_evidence: Json | null
+          id: string
+          image_url: string | null
+          is_featured: boolean
+          read_time: string
+          source: string
+          status: string
+          summary: string
+          title: string
+          updated_at: string
+          updated_by: string | null
+          url: string | null
+        }
+        Insert: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_published?: string | null
+          source_published_at?: string | null
+          quality_reasons?: string[]
+          quality_checked_at?: string | null
+          classification_version?: string | null
+          stock_match_evidence?: Json | null
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean
+          read_time?: string
+          source?: string
+          status?: string
+          summary: string
+          title: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+        }
+        Update: {
+          category?: string
+          content?: string | null
+          created_at?: string
+          created_by?: string | null
+          date_published?: string | null
+          source_published_at?: string | null
+          quality_reasons?: string[]
+          quality_checked_at?: string | null
+          classification_version?: string | null
+          stock_match_evidence?: Json | null
+          id?: string
+          image_url?: string | null
+          is_featured?: boolean
+          read_time?: string
+          source?: string
+          status?: string
+          summary?: string
+          title?: string
+          updated_at?: string
+          updated_by?: string | null
+          url?: string | null
+        }
+        Relationships: []
+      }
+      communication_outbox: {
+        Row: {
+          attempts: number
+          category: string
+          created_at: string
+          delivered_at: string | null
+          delivery_status: string
+          failure_reason: string | null
+          id: string
+          idempotency_key: string
+          lease_expires_at: string | null
+          next_attempt_at: string
+          payload: Json
+          provider_message_id: string | null
+          recipient_email: string | null
+          sent_at: string | null
+          status: string
+          updated_at: string
+          user_id: string | null
+        }
+        Insert: {
+          attempts?: number
+          category: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string
+          failure_reason?: string | null
+          id?: string
+          idempotency_key: string
+          lease_expires_at?: string | null
+          next_attempt_at?: string
+          payload?: Json
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Update: {
+          attempts?: number
+          category?: string
+          created_at?: string
+          delivered_at?: string | null
+          delivery_status?: string
+          failure_reason?: string | null
+          id?: string
+          idempotency_key?: string
+          lease_expires_at?: string | null
+          next_attempt_at?: string
+          payload?: Json
+          provider_message_id?: string | null
+          recipient_email?: string | null
+          sent_at?: string | null
+          status?: string
+          updated_at?: string
+          user_id?: string | null
+        }
+        Relationships: []
+      }
+      communication_preferences: {
         Row: {
           created_at: string
-          id: string
-          metric: string
-          observation_date: string
-          source: string
-          source_url: string | null
-          value: number
+          market_brief_email: boolean
+          price_alert_email: boolean
+          price_alert_inapp: boolean
+          updated_at: string
+          user_id: string
         }
         Insert: {
           created_at?: string
-          id?: string
-          metric: string
-          observation_date: string
-          source: string
-          source_url?: string | null
-          value: number
+          market_brief_email?: boolean
+          price_alert_email?: boolean
+          price_alert_inapp?: boolean
+          updated_at?: string
+          user_id: string
         }
         Update: {
           created_at?: string
+          market_brief_email?: boolean
+          price_alert_email?: boolean
+          price_alert_inapp?: boolean
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      communication_suppressions: {
+        Row: {
+          created_at: string
+          email_normalized: string
+          id: string
+          lifted_at: string | null
+          reason: string
+          scope: string
+          source: string
+        }
+        Insert: {
+          created_at?: string
+          email_normalized: string
           id?: string
-          metric?: string
-          observation_date?: string
+          lifted_at?: string | null
+          reason: string
+          scope: string
           source?: string
-          source_url?: string | null
-          value?: number
+        }
+        Update: {
+          created_at?: string
+          email_normalized?: string
+          id?: string
+          lifted_at?: string | null
+          reason?: string
+          scope?: string
+          source?: string
         }
         Relationships: []
       }
@@ -815,150 +1030,6 @@ export type Database = {
         }
         Relationships: []
       }
-      news_articles: {
-        Row: {
-          ai_insight: string | null
-          category: string
-          classification_version: string | null
-          content: string | null
-          created_at: string
-          created_by: string | null
-          date_published: string | null
-          id: string
-          image_url: string | null
-          is_featured: boolean
-          quality_checked_at: string | null
-          quality_reasons: string[]
-          read_time: string
-          related_stock_id: string | null
-          source: string
-          source_published_at: string | null
-          status: string
-          stock_match_evidence: Json | null
-          summary: string
-          title: string
-          updated_at: string
-          updated_by: string | null
-          url: string | null
-        }
-        Insert: {
-          ai_insight?: string | null
-          category?: string
-          classification_version?: string | null
-          content?: string | null
-          created_at?: string
-          created_by?: string | null
-          date_published?: string | null
-          id?: string
-          image_url?: string | null
-          is_featured?: boolean
-          quality_checked_at?: string | null
-          quality_reasons?: string[]
-          read_time?: string
-          related_stock_id?: string | null
-          source?: string
-          source_published_at?: string | null
-          status?: string
-          stock_match_evidence?: Json | null
-          summary: string
-          title: string
-          updated_at?: string
-          updated_by?: string | null
-          url?: string | null
-        }
-        Update: {
-          ai_insight?: string | null
-          category?: string
-          classification_version?: string | null
-          content?: string | null
-          created_at?: string
-          created_by?: string | null
-          date_published?: string | null
-          id?: string
-          image_url?: string | null
-          is_featured?: boolean
-          quality_checked_at?: string | null
-          quality_reasons?: string[]
-          read_time?: string
-          related_stock_id?: string | null
-          source?: string
-          source_published_at?: string | null
-          status?: string
-          stock_match_evidence?: Json | null
-          summary?: string
-          title?: string
-          updated_at?: string
-          updated_by?: string | null
-          url?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "news_articles_related_stock_id_fkey"
-            columns: ["related_stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "news_articles_related_stock_id_fkey"
-            columns: ["related_stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      news_highlights_editions: {
-        Row: {
-          company_watch: Json
-          created_at: string
-          diagnostics: Json
-          edition_date: string
-          featured_story: Json | null
-          generated_at: string | null
-          id: string
-          insights: Json
-          policy_watch: Json
-          selected_articles: Json
-          source_window_end: string
-          source_window_start: string
-          status: string
-          updated_at: string
-        }
-        Insert: {
-          company_watch?: Json
-          created_at?: string
-          diagnostics?: Json
-          edition_date: string
-          featured_story?: Json | null
-          generated_at?: string | null
-          id?: string
-          insights?: Json
-          policy_watch?: Json
-          selected_articles?: Json
-          source_window_end: string
-          source_window_start: string
-          status?: string
-          updated_at?: string
-        }
-        Update: {
-          company_watch?: Json
-          created_at?: string
-          diagnostics?: Json
-          edition_date?: string
-          featured_story?: Json | null
-          generated_at?: string | null
-          id?: string
-          insights?: Json
-          policy_watch?: Json
-          selected_articles?: Json
-          source_window_end?: string
-          source_window_start?: string
-          status?: string
-          updated_at?: string
-        }
-        Relationships: []
-      }
       notifications: {
         Row: {
           created_at: string
@@ -966,7 +1037,7 @@ export type Database = {
           id: string
           is_read: boolean
           message: string
-          metadata: Json
+          metadata: Json | null
           title: string
           type: string
           user_id: string
@@ -977,7 +1048,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           message: string
-          metadata?: Json
+          metadata?: Json | null
           title: string
           type?: string
           user_id: string
@@ -988,7 +1059,7 @@ export type Database = {
           id?: string
           is_read?: boolean
           message?: string
-          metadata?: Json
+          metadata?: Json | null
           title?: string
           type?: string
           user_id?: string
@@ -1019,57 +1090,48 @@ export type Database = {
         }
         Relationships: []
       }
-      post_comments: {
+      portfolio_events: {
         Row: {
-          author_name: string | null
-          content: string
+          amount: number | null
+          asset_id: string | null
+          asset_name: string
+          asset_type: string
           created_at: string
-          device_id: string | null
+          event_date: string
+          event_type: string
           id: string
-          post_id: string
-          user_id: string | null
+          note: string
+          portfolio_holding_id: string | null
+          quantity: number | null
+          user_id: string
         }
         Insert: {
-          author_name?: string | null
-          content: string
+          amount?: number | null
+          asset_id?: string | null
+          asset_name: string
+          asset_type: string
           created_at?: string
-          device_id?: string | null
+          event_date?: string
+          event_type: string
           id?: string
-          post_id: string
-          user_id?: string | null
+          note?: string
+          portfolio_holding_id?: string | null
+          quantity?: number | null
+          user_id: string
         }
         Update: {
-          author_name?: string | null
-          content?: string
+          amount?: number | null
+          asset_id?: string | null
+          asset_name?: string
+          asset_type?: string
           created_at?: string
-          device_id?: string | null
+          event_date?: string
+          event_type?: string
           id?: string
-          post_id?: string
-          user_id?: string | null
-        }
-        Relationships: []
-      }
-      post_likes: {
-        Row: {
-          created_at: string
-          guest_hash: string | null
-          id: string
-          post_id: string
-          user_id: string | null
-        }
-        Insert: {
-          created_at?: string
-          guest_hash?: string | null
-          id?: string
-          post_id: string
-          user_id?: string | null
-        }
-        Update: {
-          created_at?: string
-          guest_hash?: string | null
-          id?: string
-          post_id?: string
-          user_id?: string | null
+          note?: string
+          portfolio_holding_id?: string | null
+          quantity?: number | null
+          user_id?: string
         }
         Relationships: []
       }
@@ -1078,6 +1140,7 @@ export type Database = {
           asset_id: string
           asset_name: string
           asset_type: string
+          asset_unit: string
           baseline_price: number | null
           condition: string
           created_at: string
@@ -1087,7 +1150,6 @@ export type Database = {
           last_evaluated_at: string | null
           notify_email: boolean
           notify_inapp: boolean
-          price_unit: string
           stock_id: string | null
           target_price: number
           trigger_count: number
@@ -1099,7 +1161,8 @@ export type Database = {
         Insert: {
           asset_id: string
           asset_name: string
-          asset_type?: string
+          asset_type: string
+          asset_unit?: string
           baseline_price?: number | null
           condition: string
           created_at?: string
@@ -1109,7 +1172,6 @@ export type Database = {
           last_evaluated_at?: string | null
           notify_email?: boolean
           notify_inapp?: boolean
-          price_unit?: string
           stock_id?: string | null
           target_price: number
           trigger_count?: number
@@ -1122,6 +1184,7 @@ export type Database = {
           asset_id?: string
           asset_name?: string
           asset_type?: string
+          asset_unit?: string
           baseline_price?: number | null
           condition?: string
           created_at?: string
@@ -1131,7 +1194,6 @@ export type Database = {
           last_evaluated_at?: string | null
           notify_email?: boolean
           notify_inapp?: boolean
-          price_unit?: string
           stock_id?: string | null
           target_price?: number
           trigger_count?: number
@@ -1140,22 +1202,7 @@ export type Database = {
           updated_at?: string
           user_id?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "price_alerts_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "price_alerts_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       profiles: {
         Row: {
@@ -1232,6 +1279,95 @@ export type Database = {
         }
         Relationships: []
       }
+      social_account_tokens: {
+        Row: {
+          account_id: string | null
+          created_at: string
+          expires_at: string | null
+          id: string
+          ig_business_id: string | null
+          page_access_token: string | null
+          page_id: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          scopes: string[] | null
+          test_mode: boolean
+          token_type: string | null
+          updated_at: string
+          user_access_token: string | null
+        }
+        Insert: {
+          account_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ig_business_id?: string | null
+          page_access_token?: string | null
+          page_id?: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          scopes?: string[] | null
+          test_mode?: boolean
+          token_type?: string | null
+          updated_at?: string
+          user_access_token?: string | null
+        }
+        Update: {
+          account_id?: string | null
+          created_at?: string
+          expires_at?: string | null
+          id?: string
+          ig_business_id?: string | null
+          page_access_token?: string | null
+          page_id?: string | null
+          platform?: Database["public"]["Enums"]["social_platform"]
+          scopes?: string[] | null
+          test_mode?: boolean
+          token_type?: string | null
+          updated_at?: string
+          user_access_token?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "social_account_tokens_account_id_fkey"
+            columns: ["account_id"]
+            isOneToOne: true
+            referencedRelation: "social_accounts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      social_accounts: {
+        Row: {
+          connection_status: string
+          created_at: string
+          display_name: string | null
+          handle: string | null
+          id: string
+          meta: Json
+          platform: Database["public"]["Enums"]["social_platform"]
+          updated_at: string
+        }
+        Insert: {
+          connection_status?: string
+          created_at?: string
+          display_name?: string | null
+          handle?: string | null
+          id?: string
+          meta?: Json
+          platform: Database["public"]["Enums"]["social_platform"]
+          updated_at?: string
+        }
+        Update: {
+          connection_status?: string
+          created_at?: string
+          display_name?: string | null
+          handle?: string | null
+          id?: string
+          meta?: Json
+          platform?: Database["public"]["Enums"]["social_platform"]
+          updated_at?: string
+        }
+        Relationships: []
+      }
       social_links: {
         Row: {
           created_at: string
@@ -1268,242 +1404,264 @@ export type Database = {
         }
         Relationships: []
       }
-      stock_corporate_actions: {
+      social_oauth_states: {
         Row: {
-          action_type: string
-          amount: number | null
-          announcement_date: string
-          book_closure_date: string | null
+          consumed_at: string | null
           created_at: string
-          currency: string | null
-          disclosure_id: string
-          ex_date: string | null
-          id: string
-          payment_date: string | null
-          ratio: string | null
-          source_url: string
-          stock_id: string
-          updated_at: string
+          expires_at: string
+          platform: Database["public"]["Enums"]["social_platform"]
+          redirect_to: string | null
+          state: string
+          user_id: string
         }
         Insert: {
-          action_type: string
-          amount?: number | null
-          announcement_date: string
-          book_closure_date?: string | null
+          consumed_at?: string | null
           created_at?: string
-          currency?: string | null
-          disclosure_id: string
-          ex_date?: string | null
-          id?: string
-          payment_date?: string | null
-          ratio?: string | null
-          source_url: string
-          stock_id: string
-          updated_at?: string
+          expires_at?: string
+          platform: Database["public"]["Enums"]["social_platform"]
+          redirect_to?: string | null
+          state: string
+          user_id: string
         }
         Update: {
-          action_type?: string
-          amount?: number | null
-          announcement_date?: string
-          book_closure_date?: string | null
+          consumed_at?: string | null
           created_at?: string
-          currency?: string | null
-          disclosure_id?: string
-          ex_date?: string | null
+          expires_at?: string
+          platform?: Database["public"]["Enums"]["social_platform"]
+          redirect_to?: string | null
+          state?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      social_post_analytics: {
+        Row: {
+          content_type: string | null
+          event: string
+          id: string
+          meta: Json
+          occurred_at: string
+          platform: Database["public"]["Enums"]["social_platform"] | null
+          post_id: string | null
+        }
+        Insert: {
+          content_type?: string | null
+          event: string
           id?: string
-          payment_date?: string | null
-          ratio?: string | null
-          source_url?: string
-          stock_id?: string
-          updated_at?: string
+          meta?: Json
+          occurred_at?: string
+          platform?: Database["public"]["Enums"]["social_platform"] | null
+          post_id?: string | null
+        }
+        Update: {
+          content_type?: string | null
+          event?: string
+          id?: string
+          meta?: Json
+          occurred_at?: string
+          platform?: Database["public"]["Enums"]["social_platform"] | null
+          post_id?: string | null
         }
         Relationships: [
           {
-            foreignKeyName: "stock_corporate_actions_disclosure_id_fkey"
-            columns: ["disclosure_id"]
+            foreignKeyName: "social_post_analytics_post_id_fkey"
+            columns: ["post_id"]
             isOneToOne: false
-            referencedRelation: "stock_disclosures"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_corporate_actions_disclosure_id_fkey"
-            columns: ["disclosure_id"]
-            isOneToOne: false
-            referencedRelation: "stock_disclosures_public"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_corporate_actions_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_corporate_actions_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks_public"
+            referencedRelation: "social_posts"
             referencedColumns: ["id"]
           },
         ]
       }
-      stock_disclosure_sources: {
+      social_post_templates: {
         Row: {
-          checkpoint: Json
+          caption_skeleton: string | null
+          content_type: string
           created_at: string
-          etag: string | null
+          enabled: boolean
+          hashtags_default: string[]
           id: string
-          is_enabled: boolean
-          last_checked_at: string | null
-          last_error: string | null
-          last_modified: string | null
-          last_success_at: string | null
-          rate_limit_ms: number
-          source_domain: string
-          source_type: string
-          source_url: string
-          stock_id: string
+          image_prompt: string
+          key: string
+          name: string
+          platform_defaults: Json
+          system_prompt: string
           updated_at: string
         }
         Insert: {
-          checkpoint?: Json
+          caption_skeleton?: string | null
+          content_type: string
           created_at?: string
-          etag?: string | null
+          enabled?: boolean
+          hashtags_default?: string[]
           id?: string
-          is_enabled?: boolean
-          last_checked_at?: string | null
-          last_error?: string | null
-          last_modified?: string | null
-          last_success_at?: string | null
-          rate_limit_ms?: number
-          source_domain: string
-          source_type?: string
-          source_url: string
-          stock_id: string
+          image_prompt: string
+          key: string
+          name: string
+          platform_defaults?: Json
+          system_prompt: string
           updated_at?: string
         }
         Update: {
-          checkpoint?: Json
+          caption_skeleton?: string | null
+          content_type?: string
           created_at?: string
-          etag?: string | null
+          enabled?: boolean
+          hashtags_default?: string[]
           id?: string
-          is_enabled?: boolean
-          last_checked_at?: string | null
-          last_error?: string | null
-          last_modified?: string | null
-          last_success_at?: string | null
-          rate_limit_ms?: number
-          source_domain?: string
-          source_type?: string
-          source_url?: string
-          stock_id?: string
+          image_prompt?: string
+          key?: string
+          name?: string
+          platform_defaults?: Json
+          system_prompt?: string
           updated_at?: string
+        }
+        Relationships: []
+      }
+      social_posts: {
+        Row: {
+          caption: string
+          content_type: string
+          created_at: string
+          created_by: string | null
+          cta: string | null
+          data_as_of: string | null
+          disclaimer: string | null
+          error_message: string | null
+          fund_ids: string[]
+          fund_names: string[]
+          hashtags: string[]
+          id: string
+          image_headline: string | null
+          image_size: string | null
+          image_subtext: string | null
+          image_url: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          posted_at: string | null
+          scheduled_at: string | null
+          source_data: Json
+          status: Database["public"]["Enums"]["social_post_status"]
+          template_id: string | null
+          updated_at: string
+          utm_url: string | null
+          yield_values: Json
+        }
+        Insert: {
+          caption?: string
+          content_type: string
+          created_at?: string
+          created_by?: string | null
+          cta?: string | null
+          data_as_of?: string | null
+          disclaimer?: string | null
+          error_message?: string | null
+          fund_ids?: string[]
+          fund_names?: string[]
+          hashtags?: string[]
+          id?: string
+          image_headline?: string | null
+          image_size?: string | null
+          image_subtext?: string | null
+          image_url?: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          posted_at?: string | null
+          scheduled_at?: string | null
+          source_data?: Json
+          status?: Database["public"]["Enums"]["social_post_status"]
+          template_id?: string | null
+          updated_at?: string
+          utm_url?: string | null
+          yield_values?: Json
+        }
+        Update: {
+          caption?: string
+          content_type?: string
+          created_at?: string
+          created_by?: string | null
+          cta?: string | null
+          data_as_of?: string | null
+          disclaimer?: string | null
+          error_message?: string | null
+          fund_ids?: string[]
+          fund_names?: string[]
+          hashtags?: string[]
+          id?: string
+          image_headline?: string | null
+          image_size?: string | null
+          image_subtext?: string | null
+          image_url?: string | null
+          platform?: Database["public"]["Enums"]["social_platform"]
+          posted_at?: string | null
+          scheduled_at?: string | null
+          source_data?: Json
+          status?: Database["public"]["Enums"]["social_post_status"]
+          template_id?: string | null
+          updated_at?: string
+          utm_url?: string | null
+          yield_values?: Json
         }
         Relationships: [
           {
-            foreignKeyName: "stock_disclosure_sources_stock_id_fkey"
-            columns: ["stock_id"]
+            foreignKeyName: "social_posts_template_id_fkey"
+            columns: ["template_id"]
             isOneToOne: false
-            referencedRelation: "stocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_disclosure_sources_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks_public"
+            referencedRelation: "social_post_templates"
             referencedColumns: ["id"]
           },
         ]
       }
-      stock_disclosures: {
+      social_schedules: {
         Row: {
-          canonical_url: string | null
-          content_hash: string
+          cadence: Database["public"]["Enums"]["social_cadence"]
           created_at: string
-          disclosure_type: string
-          extraction_error: string | null
-          extraction_status: string
-          fetched_at: string
+          day_of_week: number | null
+          enabled: boolean
           id: string
-          key_facts: Json
-          model_version: string | null
-          prompt_version: string | null
-          published_at: string
-          source_domain: string
-          source_id: string | null
-          source_text: string | null
-          source_url: string | null
-          stock_id: string
-          summary: string | null
-          title: string
+          next_run_at: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          post_id: string | null
+          template_id: string | null
+          time_of_day: string | null
           updated_at: string
         }
         Insert: {
-          canonical_url?: string | null
-          content_hash: string
+          cadence?: Database["public"]["Enums"]["social_cadence"]
           created_at?: string
-          disclosure_type: string
-          extraction_error?: string | null
-          extraction_status?: string
-          fetched_at?: string
+          day_of_week?: number | null
+          enabled?: boolean
           id?: string
-          key_facts?: Json
-          model_version?: string | null
-          prompt_version?: string | null
-          published_at: string
-          source_domain: string
-          source_id?: string | null
-          source_text?: string | null
-          source_url?: string | null
-          stock_id: string
-          summary?: string | null
-          title: string
+          next_run_at?: string | null
+          platform: Database["public"]["Enums"]["social_platform"]
+          post_id?: string | null
+          template_id?: string | null
+          time_of_day?: string | null
           updated_at?: string
         }
         Update: {
-          canonical_url?: string | null
-          content_hash?: string
+          cadence?: Database["public"]["Enums"]["social_cadence"]
           created_at?: string
-          disclosure_type?: string
-          extraction_error?: string | null
-          extraction_status?: string
-          fetched_at?: string
+          day_of_week?: number | null
+          enabled?: boolean
           id?: string
-          key_facts?: Json
-          model_version?: string | null
-          prompt_version?: string | null
-          published_at?: string
-          source_domain?: string
-          source_id?: string | null
-          source_text?: string | null
-          source_url?: string | null
-          stock_id?: string
-          summary?: string | null
-          title?: string
+          next_run_at?: string | null
+          platform?: Database["public"]["Enums"]["social_platform"]
+          post_id?: string | null
+          template_id?: string | null
+          time_of_day?: string | null
           updated_at?: string
         }
         Relationships: [
           {
-            foreignKeyName: "stock_disclosures_source_id_fkey"
-            columns: ["source_id"]
+            foreignKeyName: "social_schedules_post_id_fkey"
+            columns: ["post_id"]
             isOneToOne: false
-            referencedRelation: "stock_disclosure_sources"
+            referencedRelation: "social_posts"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "stock_disclosures_stock_id_fkey"
-            columns: ["stock_id"]
+            foreignKeyName: "social_schedules_template_id_fkey"
+            columns: ["template_id"]
             isOneToOne: false
-            referencedRelation: "stocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_disclosures_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks_public"
+            referencedRelation: "social_post_templates"
             referencedColumns: ["id"]
           },
         ]
@@ -1622,287 +1780,93 @@ export type Database = {
         }
         Relationships: []
       }
-      treasury_bill_auctions: {
+      suggestions: {
         Row: {
-          accepted_average_rate: number | null
-          amount_accepted: number | null
-          amount_offered: number | null
-          auction_date: string
-          bid_to_cover: number | null
-          bids_received: number | null
-          competitive_bids: number | null
+          created_at: string
+          display_name: string
           id: string
-          issue_date: string
-          issue_number: string
-          market_average_rate: number | null
-          maturity_date: string
-          non_competitive_bids: number | null
-          number_bids_accepted: number | null
-          number_bids_received: number | null
-          performance_rate: number | null
-          previous_rate: number | null
-          price_per_100: number | null
-          published_at: string | null
-          rate_change: number | null
-          retrieved_at: string
-          source_document: string | null
-          source_url: string | null
-          tenor_days: number
+          is_read: boolean
+          message: string
+          user_id: string
         }
         Insert: {
-          accepted_average_rate?: number | null
-          amount_accepted?: number | null
-          amount_offered?: number | null
-          auction_date: string
-          bid_to_cover?: number | null
-          bids_received?: number | null
-          competitive_bids?: number | null
+          created_at?: string
+          display_name?: string
           id?: string
-          issue_date: string
-          issue_number: string
-          market_average_rate?: number | null
-          maturity_date: string
-          non_competitive_bids?: number | null
-          number_bids_accepted?: number | null
-          number_bids_received?: number | null
-          performance_rate?: number | null
-          previous_rate?: number | null
-          price_per_100?: number | null
-          published_at?: string | null
-          rate_change?: number | null
-          retrieved_at?: string
-          source_document?: string | null
-          source_url?: string | null
-          tenor_days: number
+          is_read?: boolean
+          message: string
+          user_id: string
         }
         Update: {
-          accepted_average_rate?: number | null
-          amount_accepted?: number | null
-          amount_offered?: number | null
-          auction_date?: string
-          bid_to_cover?: number | null
-          bids_received?: number | null
-          competitive_bids?: number | null
+          created_at?: string
+          display_name?: string
           id?: string
-          issue_date?: string
-          issue_number?: string
-          market_average_rate?: number | null
-          maturity_date?: string
-          non_competitive_bids?: number | null
-          number_bids_accepted?: number | null
-          number_bids_received?: number | null
-          performance_rate?: number | null
-          previous_rate?: number | null
-          price_per_100?: number | null
-          published_at?: string | null
-          rate_change?: number | null
-          retrieved_at?: string
-          source_document?: string | null
-          source_url?: string | null
-          tenor_days?: number
+          is_read?: boolean
+          message?: string
+          user_id?: string
         }
         Relationships: []
       }
-      treasury_bond_auctions: {
+      suppressed_emails: {
         Row: {
-          amount_accepted: number | null
-          amount_offered: number | null
-          auction_date: string
-          auction_type: string | null
-          average_price: number | null
-          average_rate: number | null
-          bids_received: number | null
-          bond_id: string
-          cutoff_rate: number | null
+          created_at: string
+          email: string
           id: string
-          retrieved_at: string
-          settlement_date: string | null
-          source_url: string | null
+          metadata: Json | null
+          reason: string
         }
         Insert: {
-          amount_accepted?: number | null
-          amount_offered?: number | null
-          auction_date: string
-          auction_type?: string | null
-          average_price?: number | null
-          average_rate?: number | null
-          bids_received?: number | null
-          bond_id: string
-          cutoff_rate?: number | null
+          created_at?: string
+          email: string
           id?: string
-          retrieved_at?: string
-          settlement_date?: string | null
-          source_url?: string | null
+          metadata?: Json | null
+          reason: string
         }
         Update: {
-          amount_accepted?: number | null
-          amount_offered?: number | null
-          auction_date?: string
-          auction_type?: string | null
-          average_price?: number | null
-          average_rate?: number | null
-          bids_received?: number | null
-          bond_id?: string
-          cutoff_rate?: number | null
+          created_at?: string
+          email?: string
           id?: string
-          retrieved_at?: string
-          settlement_date?: string | null
-          source_url?: string | null
+          metadata?: Json | null
+          reason?: string
         }
-        Relationships: [
-          {
-            foreignKeyName: "treasury_bond_auctions_bond_id_fkey"
-            columns: ["bond_id"]
-            isOneToOne: false
-            referencedRelation: "treasury_bonds"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
-      treasury_bonds: {
+      testimonials: {
         Row: {
-          bond_code: string
-          bond_type: string
-          coupon_rate: number | null
+          author_name: string
+          author_role: string
+          avatar_url: string
           created_at: string
           id: string
-          interest_payment_frequency: string | null
-          isin: string | null
-          issue_date: string
-          maturity_date: string
-          original_tenor_years: number | null
-          source_url: string | null
-          status: string
-          tax_status: string | null
+          is_active: boolean
+          quote: string
+          sort_order: number
           updated_at: string
+          updated_by: string | null
         }
         Insert: {
-          bond_code: string
-          bond_type: string
-          coupon_rate?: number | null
+          author_name: string
+          author_role?: string
+          avatar_url?: string
           created_at?: string
           id?: string
-          interest_payment_frequency?: string | null
-          isin?: string | null
-          issue_date: string
-          maturity_date: string
-          original_tenor_years?: number | null
-          source_url?: string | null
-          status: string
-          tax_status?: string | null
+          is_active?: boolean
+          quote: string
+          sort_order?: number
           updated_at?: string
+          updated_by?: string | null
         }
         Update: {
-          bond_code?: string
-          bond_type?: string
-          coupon_rate?: number | null
+          author_name?: string
+          author_role?: string
+          avatar_url?: string
           created_at?: string
           id?: string
-          interest_payment_frequency?: string | null
-          isin?: string | null
-          issue_date?: string
-          maturity_date?: string
-          original_tenor_years?: number | null
-          source_url?: string | null
-          status?: string
-          tax_status?: string | null
+          is_active?: boolean
+          quote?: string
+          sort_order?: number
           updated_at?: string
-        }
-        Relationships: []
-      }
-      treasury_upcoming_auctions: {
-        Row: {
-          amount_offered: number | null
-          auction_date: string
-          closing_date: string | null
-          created_at: string
-          id: string
-          issue_number: string | null
-          results_date: string | null
-          security: string
-          security_type: string
-          settlement_date: string | null
-          source_url: string | null
-        }
-        Insert: {
-          amount_offered?: number | null
-          auction_date: string
-          closing_date?: string | null
-          created_at?: string
-          id?: string
-          issue_number?: string | null
-          results_date?: string | null
-          security: string
-          security_type: string
-          settlement_date?: string | null
-          source_url?: string | null
-        }
-        Update: {
-          amount_offered?: number | null
-          auction_date?: string
-          closing_date?: string | null
-          created_at?: string
-          id?: string
-          issue_number?: string | null
-          results_date?: string | null
-          security?: string
-          security_type?: string
-          settlement_date?: string | null
-          source_url?: string | null
-        }
-        Relationships: []
-      }
-      treasury_update_runs: {
-        Row: {
-          completed_at: string | null
-          created_at: string | null
-          error_code: string | null
-          error_message: string | null
-          execution_duration_ms: number | null
-          id: string
-          latest_source_issue: string | null
-          latest_stored_issue: string | null
-          records_detected: number | null
-          records_inserted: number | null
-          records_updated: number | null
-          source_checked: string | null
-          started_at: string
-          status: string
-          trigger_type: string
-        }
-        Insert: {
-          completed_at?: string | null
-          created_at?: string | null
-          error_code?: string | null
-          error_message?: string | null
-          execution_duration_ms?: number | null
-          id?: string
-          latest_source_issue?: string | null
-          latest_stored_issue?: string | null
-          records_detected?: number | null
-          records_inserted?: number | null
-          records_updated?: number | null
-          source_checked?: string | null
-          started_at: string
-          status: string
-          trigger_type: string
-        }
-        Update: {
-          completed_at?: string | null
-          created_at?: string | null
-          error_code?: string | null
-          error_message?: string | null
-          execution_duration_ms?: number | null
-          id?: string
-          latest_source_issue?: string | null
-          latest_stored_issue?: string | null
-          records_detected?: number | null
-          records_inserted?: number | null
-          records_updated?: number | null
-          source_checked?: string | null
-          started_at?: string
-          status?: string
-          trigger_type?: string
+          updated_by?: string | null
         }
         Relationships: []
       }
@@ -1935,8 +1899,8 @@ export type Database = {
           item_name: string
           item_type: string
           sort_order: number
-          updated_at: string
           user_id: string
+          updated_at: string
         }
         Insert: {
           created_at?: string
@@ -1945,8 +1909,8 @@ export type Database = {
           item_name?: string
           item_type: string
           sort_order?: number
-          updated_at?: string
           user_id: string
+          updated_at?: string
         }
         Update: {
           created_at?: string
@@ -1955,8 +1919,8 @@ export type Database = {
           item_name?: string
           item_type?: string
           sort_order?: number
-          updated_at?: string
           user_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
@@ -2185,18 +2149,16 @@ export type Database = {
       }
       news_articles_public: {
         Row: {
-          ai_insight: string | null
           category: string | null
           content: string | null
           created_at: string | null
           date_published: string | null
+          source_published_at: string | null
           id: string | null
           image_url: string | null
           is_featured: boolean | null
           read_time: string | null
-          related_stock_id: string | null
           source: string | null
-          source_published_at: string | null
           status: string | null
           summary: string | null
           title: string | null
@@ -2204,18 +2166,16 @@ export type Database = {
           url: string | null
         }
         Insert: {
-          ai_insight?: string | null
           category?: string | null
           content?: string | null
           created_at?: string | null
           date_published?: string | null
+          source_published_at?: string | null
           id?: string | null
           image_url?: string | null
           is_featured?: boolean | null
           read_time?: string | null
-          related_stock_id?: string | null
           source?: string | null
-          source_published_at?: string | null
           status?: string | null
           summary?: string | null
           title?: string | null
@@ -2223,40 +2183,23 @@ export type Database = {
           url?: string | null
         }
         Update: {
-          ai_insight?: string | null
           category?: string | null
           content?: string | null
           created_at?: string | null
           date_published?: string | null
+          source_published_at?: string | null
           id?: string | null
           image_url?: string | null
           is_featured?: boolean | null
           read_time?: string | null
-          related_stock_id?: string | null
           source?: string | null
-          source_published_at?: string | null
           status?: string | null
           summary?: string | null
           title?: string | null
           updated_at?: string | null
           url?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: "news_articles_related_stock_id_fkey"
-            columns: ["related_stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "news_articles_related_stock_id_fkey"
-            columns: ["related_stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks_public"
-            referencedColumns: ["id"]
-          },
-        ]
+        Relationships: []
       }
       site_pages_public: {
         Row: {
@@ -2308,88 +2251,6 @@ export type Database = {
           url?: string | null
         }
         Relationships: []
-      }
-      stock_corporate_actions_public: {
-        Row: {
-          action_type: string | null
-          amount: number | null
-          announcement_date: string | null
-          book_closure_date: string | null
-          currency: string | null
-          ex_date: string | null
-          id: string | null
-          payment_date: string | null
-          ratio: string | null
-          source_url: string | null
-          stock_id: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stock_corporate_actions_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_corporate_actions_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks_public"
-            referencedColumns: ["id"]
-          },
-        ]
-      }
-      stock_disclosures_public: {
-        Row: {
-          disclosure_type: string | null
-          id: string | null
-          key_facts: Json | null
-          published_at: string | null
-          source_domain: string | null
-          source_url: string | null
-          stock_id: string | null
-          summary: string | null
-          title: string | null
-        }
-        Insert: {
-          disclosure_type?: string | null
-          id?: string | null
-          key_facts?: Json | null
-          published_at?: string | null
-          source_domain?: string | null
-          source_url?: never
-          stock_id?: string | null
-          summary?: string | null
-          title?: string | null
-        }
-        Update: {
-          disclosure_type?: string | null
-          id?: string | null
-          key_facts?: Json | null
-          published_at?: string | null
-          source_domain?: string | null
-          source_url?: never
-          stock_id?: string | null
-          summary?: string | null
-          title?: string | null
-        }
-        Relationships: [
-          {
-            foreignKeyName: "stock_disclosures_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks"
-            referencedColumns: ["id"]
-          },
-          {
-            foreignKeyName: "stock_disclosures_stock_id_fkey"
-            columns: ["stock_id"]
-            isOneToOne: false
-            referencedRelation: "stocks_public"
-            referencedColumns: ["id"]
-          },
-        ]
       }
       stock_price_history_public: {
         Row: {
@@ -2484,83 +2345,10 @@ export type Database = {
       }
     }
     Functions: {
-      bulk_sync_funds: {
-        Args: { dry_run?: boolean; p_effective_date?: string; payload: Json }
-        Returns: Json
-      }
-      check_rate_limit: {
-        Args: {
-          p_ip_hash: string
-          p_max_requests?: number
-          p_window_seconds?: number
-        }
-        Returns: boolean
-      }
+      backfill_my_portfolio_asset_ids: { Args: never; Returns: Json }
       claim_communication_batch: {
         Args: { p_lease_seconds?: number; p_limit?: number }
-        Returns: {
-          attempts: number
-          category: string
-          created_at: string
-          delivered_at: string | null
-          delivery_status: string
-          failure_reason: string | null
-          id: string
-          idempotency_key: string
-          lease_expires_at: string | null
-          next_attempt_at: string
-          payload: Json
-          provider_message_id: string | null
-          recipient_email: string | null
-          sent_at: string | null
-          status: string
-          updated_at: string
-          user_id: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "communication_outbox"
-          isOneToOne: false
-          isSetofReturn: true
-        }
-      }
-      claim_communication_category_batch: {
-        Args: {
-          p_allowed_user_ids?: string[] | null
-          p_category: string
-          p_lease_seconds: number
-          p_limit: number
-        }
-        Returns: {
-          attempts: number
-          category: string
-          claim_token: string | null
-          created_at: string
-          delivered_at: string | null
-          delivery_event_at: string | null
-          delivery_status: string
-          failure_reason: string | null
-          id: string
-          idempotency_key: string
-          lease_expires_at: string | null
-          next_attempt_at: string
-          payload: Json
-          provider_request: Json | null
-          provider_request_frozen_at: string | null
-          provider_message_id: string | null
-          recipient_email: string | null
-          sent_at: string | null
-          status: string
-          submission_started_at: string | null
-          updated_at: string
-          user_id: string | null
-        }[]
-        SetofOptions: {
-          from: "*"
-          to: "communication_outbox"
-          isOneToOne: false
-          isSetofReturn: true
-        }
+        Returns: Database["public"]["Tables"]["communication_outbox"]["Row"][]
       }
       claim_price_alert_event: {
         Args: {
@@ -2577,35 +2365,33 @@ export type Database = {
           user_id: string
         }[]
       }
-      record_communication_delivery_event: {
-        Args: {
-          p_event_created_at: string
-          p_event_type: string
-          p_failure_reason?: string | null
-          p_provider_message_id: string
-          p_webhook_event_id: string
-        }
-        Returns: {
-          delivery_status: string
-          event_inserted: boolean
-          outbox_updated: boolean
-          recipient_email: string
-        }[]
+      bulk_sync_funds: {
+        Args: { dry_run?: boolean; p_effective_date?: string; payload: Json }
+        Returns: Json
       }
-      update_communication_preferences_service: {
+      check_rate_limit: {
         Args: {
-          p_email_normalized: string
-          p_email_welcome_completed?: boolean | null
-          p_market_brief_email?: boolean | null
-          p_price_alert_email?: boolean | null
-          p_user_id: string
+          p_ip_hash: string
+          p_max_requests?: number
+          p_window_seconds?: number
         }
-        Returns: Database["public"]["Tables"]["communication_preferences"]["Row"]
+        Returns: boolean
       }
-      get_guest_liked_posts: {
-        Args: { p_guest_token: string }
+      cleanup_email_unsubscribe_tokens: { Args: never; Returns: number }
+      delete_email: {
+        Args: { message_id: number; queue_name: string }
+        Returns: boolean
+      }
+      email_queue_dispatch: { Args: never; Returns: undefined }
+      enqueue_email: {
+        Args: { payload: Json; queue_name: string }
+        Returns: number
+      }
+      fund_snapshot_days_in_range: {
+        Args: { p_end: string; p_start: string }
         Returns: {
-          post_id: string
+          fund_count: number
+          snapshot_date: string
         }[]
       }
       has_role: {
@@ -2615,17 +2401,46 @@ export type Database = {
         }
         Returns: boolean
       }
-      like_post: {
-        Args: { p_guest_token?: string; p_post_id: string }
-        Returns: boolean
+      move_to_dlq: {
+        Args: {
+          dlq_name: string
+          message_id: number
+          payload: Json
+          source_queue: string
+        }
+        Returns: number
       }
-      unlike_post: {
-        Args: { p_guest_token?: string; p_post_id: string }
-        Returns: boolean
+      read_email_batch: {
+        Args: { batch_size: number; queue_name: string; vt: number }
+        Returns: {
+          message: Json
+          msg_id: number
+          read_ct: number
+        }[]
+      }
+      revert_last_bulk_sync: { Args: never; Returns: Json }
+      verify_api_key: {
+        Args: { _key_hash: string }
+        Returns: {
+          id: string
+          name: string
+          rate_limit_per_minute: number
+        }[]
       }
     }
     Enums: {
       app_role: "admin" | "editor" | "reviewer"
+      social_cadence: "one_time" | "daily" | "weekly" | "monthly"
+      social_platform: "instagram" | "facebook" | "x"
+      social_post_status:
+        | "draft"
+        | "in_review"
+        | "approved"
+        | "scheduled"
+        | "posted"
+        | "failed"
+        | "manually_posted"
+        | "cancelled"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -2754,6 +2569,18 @@ export const Constants = {
   public: {
     Enums: {
       app_role: ["admin", "editor", "reviewer"],
+      social_cadence: ["one_time", "daily", "weekly", "monthly"],
+      social_platform: ["instagram", "facebook", "x"],
+      social_post_status: [
+        "draft",
+        "in_review",
+        "approved",
+        "scheduled",
+        "posted",
+        "failed",
+        "manually_posted",
+        "cancelled",
+      ],
     },
   },
 } as const

@@ -20,18 +20,9 @@ import WatchCard, { type AlertState } from "@/components/watchlist/WatchCard";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
 import { computeAlertSummary } from "@/lib/watchlistAlertSummary";
-import { safeUUID } from "@/lib/safeUUID";
-import MarketPageLoader from "@/components/MarketPageLoader";
-import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
-
-interface WatchlistItem {
-  id: string;
-  user_id: string;
-  item_type: string;
-  item_id: string;
-  item_name: string;
-  sort_order: number;
-}
+import { useUnifiedWatchlist, type UnifiedWatchlistItem as WatchlistItem } from "@/hooks/useUnifiedWatchlist";
+import WatchlistAlertsTabs from "@/components/watchlist/WatchlistAlertsTabs";
+import DesktopWatchlistWorkspace from "@/components/watchlist/DesktopWatchlistWorkspace";
 
 interface RateHistoryRow { snapshot_date: string; rate: number; currency_code: string }
 interface StockHistoryRow { snapshot_date: string; price: number; stock_id: string }
@@ -149,12 +140,16 @@ const WatchlistPage = () => {
   const { user, loading: authLoading } = useAuth();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();
   const { alerts, resetAlert } = usePriceAlerts();
+  const {
+    items: watchlist,
+    loading: watchlistLoading,
+    hasLocalState: hasLocalWatchlistState,
+    add: addWatchlistItem,
+    remove: removeWatchlistItem,
+  } = useUnifiedWatchlist();
 
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [fundsLoading, setFundsLoading] = useState(true);
-  const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
-  const [watchlistLoading, setWatchlistLoading] = useState(true);
-  const [hasLocalWatchlistState, setHasLocalWatchlistState] = useState(false);
   const [search, setSearch] = useState("");
   const [mobileFilter, setMobileFilter] = useState<MobileWatchlistFilter>("all");
   const [showAddSheet, setShowAddSheet] = useState(false);
@@ -164,7 +159,6 @@ const WatchlistPage = () => {
   const [rateHistory, setRateHistory] = useState<RateHistoryRow[]>([]);
   const [stockHistory, setStockHistory] = useState<StockHistoryRow[]>([]);
   const [fundSnapshots, setFundSnapshots] = useState<FundSnapshotRow[]>([]);
-  const [historyReady, setHistoryReady] = useState(false);
 
   /* ─── Alert helpers ─── */
   const alertFor = useCallback(
@@ -190,22 +184,6 @@ const WatchlistPage = () => {
     unit: string;
   } | null>(null);
 
-  const openAlertForFund = (f: FundFromDB) => {
-    const existing = alertFor("fund", f.id);
-    if (existing?.is_triggered) {
-      resetAlert(existing.id, f.annual_yield);
-      toast.success("Alert reset");
-      return;
-    }
-    setAlertDialog({
-      assetType: "fund",
-      assetId: f.id,
-      assetName: f.name,
-      currentPrice: f.annual_yield,
-      unit: f.yield_unit === "%" ? "%" : f.yield_unit,
-    });
-  };
-
   const openAlertForStock = (s: { id: string; symbol: string; name: string; price: number }) => {
     const existing = alertFor("stock", s.id);
     if (existing?.is_triggered) {
@@ -220,14 +198,6 @@ const WatchlistPage = () => {
       currentPrice: s.price,
       unit: "KES",
     });
-  };
-
-  const resetFundAlert = (f: FundFromDB) => {
-    const existing = alertFor("fund", f.id);
-    if (existing) {
-      resetAlert(existing.id, f.annual_yield);
-      toast.success("Alert reset");
-    }
   };
 
   const resetStockAlert = (s: { id: string; price: number }) => {
@@ -246,53 +216,35 @@ const WatchlistPage = () => {
       .finally(() => setFundsLoading(false));
   }, []);
 
-  /* ─── Watchlist ─── */
-  const fetchWatchlist = useCallback(async () => {
-    if (!user) {
-      try {
-        const saved = localStorage.getItem("kf_local_watchlist");
-        setHasLocalWatchlistState(saved !== null);
-        setWatchlist(saved ? (JSON.parse(saved) as WatchlistItem[]) : []);
-      } catch {
-        setHasLocalWatchlistState(false);
-        setWatchlist([]);
-      }
-      setWatchlistLoading(false);
-      return;
-    }
-    const { data, error } = await supabase
-      .from("user_watchlist")
-      .select("*")
-      .eq("user_id", user.id)
-      .order("sort_order");
-    if (error) console.error("Failed to fetch watchlist:", error);
-    setWatchlist((data as WatchlistItem[]) || []);
-    setWatchlistLoading(false);
-  }, [user]);
-
-  useEffect(() => {
-    fetchWatchlist();
-  }, [fetchWatchlist]);
-
   /* ─── 90-day history (for sparklines) ─── */
   useEffect(() => {
-    let cancelled = false;
     const since = new Date();
     since.setDate(since.getDate() - 90);
     const sinceISO = since.toISOString().split("T")[0];
 
-    void Promise.allSettled([
-      supabase.from("exchange_rate_history_public").select("snapshot_date, rate, currency_code").gte("snapshot_date", sinceISO).order("snapshot_date", { ascending: true }).limit(10000),
-      supabase.from("stock_price_history_public").select("snapshot_date, price, stock_id").gte("snapshot_date", sinceISO).order("snapshot_date", { ascending: true }).limit(10000),
-      supabase.from("fund_yield_snapshots").select("snapshot_date, annual_yield, fund_id").gte("snapshot_date", sinceISO).order("snapshot_date", { ascending: true }).limit(10000),
-    ]).then(([ratesResult, stocksResult, fundsResult]) => {
-      if (cancelled) return;
-      if (ratesResult.status === "fulfilled") setRateHistory((ratesResult.value.data as RateHistoryRow[]) || []);
-      if (stocksResult.status === "fulfilled") setStockHistory((stocksResult.value.data as StockHistoryRow[]) || []);
-      if (fundsResult.status === "fulfilled") setFundSnapshots((fundsResult.value.data as FundSnapshotRow[]) || []);
-      setHistoryReady(true);
-    });
-    return () => { cancelled = true; };
+    supabase
+      .from("exchange_rate_history_public")
+      .select("snapshot_date, rate, currency_code")
+      .gte("snapshot_date", sinceISO)
+      .order("snapshot_date", { ascending: true })
+      .limit(10000)
+      .then(({ data }) => setRateHistory((data as RateHistoryRow[]) || []));
+
+    supabase
+      .from("stock_price_history_public")
+      .select("snapshot_date, price, stock_id")
+      .gte("snapshot_date", sinceISO)
+      .order("snapshot_date", { ascending: true })
+      .limit(10000)
+      .then(({ data }) => setStockHistory((data as StockHistoryRow[]) || []));
+
+    supabase
+      .from("fund_yield_snapshots")
+      .select("snapshot_date, annual_yield, fund_id")
+      .gte("snapshot_date", sinceISO)
+      .order("snapshot_date", { ascending: true })
+      .limit(10000)
+      .then(({ data }) => setFundSnapshots((data as FundSnapshotRow[]) || []));
   }, []);
 
   const getRateSpark = (code: string) =>
@@ -306,18 +258,9 @@ const WatchlistPage = () => {
   const removeItem = async (id: string) => {
     const existing = effectiveWatchlist.find((w) => w.id === id);
     if (!existing) return;
-    const nextWatchlist = effectiveWatchlist.filter((w) => w.id !== id);
-    setWatchlist(nextWatchlist);
-    if (!user) {
-      setHasLocalWatchlistState(true);
-      localStorage.setItem("kf_local_watchlist", JSON.stringify(nextWatchlist));
-      toast.success(`Removed ${existing.item_name}`);
-      return;
-    }
-    const { error } = await supabase.from("user_watchlist").delete().eq("id", id);
-    if (error) {
+    const result = await removeWatchlistItem(id);
+    if (!result.ok) {
       toast.error("Failed to remove");
-      fetchWatchlist();
       return;
     }
     toast.success(`Removed ${existing.item_name}`);
@@ -334,58 +277,19 @@ const WatchlistPage = () => {
       return;
     }
 
-    const duplicate = watchlist.find((w) => w.item_type === type && w.item_id === itemId);
-    if (duplicate) {
-      toast.info(`${itemName} is already in your watchlist`);
-      return;
-    }
-
-    const nextSortOrder = watchlist.length;
-    const tempItem: WatchlistItem = {
-      id: safeUUID(),
-      user_id: user?.id || "guest",
-      item_type: type,
-      item_id: itemId,
-      item_name: itemName,
-      sort_order: nextSortOrder,
-    };
-
-    setWatchlist((prev) => [...prev, tempItem]);
-
-    if (!user) {
-      const nextWatchlist = [...watchlist, tempItem];
-      setHasLocalWatchlistState(true);
-      localStorage.setItem("kf_local_watchlist", JSON.stringify(nextWatchlist));
-      toast.success(`Added ${itemName} to watchlist`);
-      setShowAddSheet(false);
-      setAddSearch("");
-      return;
-    }
-
-    const { error } = await supabase
-      .from("user_watchlist")
-      .upsert(
-        {
-          user_id: user.id,
-          item_type: type,
-          item_id: itemId,
-          item_name: itemName,
-          sort_order: nextSortOrder,
-        },
-        { onConflict: "user_id,item_type,item_id", ignoreDuplicates: true }
-      );
-
-    if (error) {
-      console.error("Failed to add to watchlist:", error);
+    const result = await addWatchlistItem(type, itemId, itemName);
+    if (!result.ok) {
       toast.error("Failed to add to watchlist");
-      fetchWatchlist();
+      return;
+    }
+    if (result.duplicate) {
+      toast.info(`${itemName} is already in your watchlist`);
       return;
     }
 
     toast.success(`Added ${itemName} to watchlist`);
     setShowAddSheet(false);
     setAddSearch("");
-    fetchWatchlist();
   };
 
   /* ─── Derived groups ─── */
@@ -611,14 +515,18 @@ const WatchlistPage = () => {
     }));
   }, [addSheetItems]);
 
-  const showPageLoading = useMinimumLoadingDuration(
-    authLoading || marketLoading || fundsLoading || watchlistLoading || !historyReady,
-  );
-
-  if (showPageLoading) return <MarketPageLoader message="Loading your watchlist…" className="min-h-screen" />;
+  if (authLoading) {
+    return (
+      <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="h-8 w-8 animate-spin rounded-full border-4 border-muted border-t-accent" />
+      </div>
+    );
+  }
 
   return (
-    <div className="space-y-6 px-4 md:px-6 py-4 md:py-6">
+    <>
+      <div className="hidden md:block"><DesktopWatchlistWorkspace active="watchlist" /></div>
+      <div className="space-y-6 px-4 py-4 md:hidden">
       {/* Header */}
       <div>
         <div className="md:hidden mb-4">
@@ -703,27 +611,12 @@ const WatchlistPage = () => {
                 </Sheet>
               </div>
 
-              <div className="mb-3.5 flex items-center justify-between px-0.5">
-                <div className="flex items-center gap-2 text-[11px] text-muted-foreground">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1">
-                    <Star className="h-3 w-3 text-warning" />
-                    <span className="tabular-nums font-semibold text-foreground">{totalCount}</span>
-                  </span>
-                  <span className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1">
-                    <span>Alerts</span>
-                    <span className="tabular-nums font-semibold text-foreground">{alertSummary.active}</span>
-                  </span>
-                  {alertSummary.triggered > 0 && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-destructive/30 bg-destructive/10 px-2.5 py-1 text-destructive">
-                      <span>Triggered</span>
-                      <span className="tabular-nums font-semibold">{alertSummary.triggered}</span>
-                    </span>
-                  )}
-                </div>
+              <div className="mb-3.5 flex items-center gap-2">
+                <WatchlistAlertsTabs active="watchlist" />
                 <button
                   type="button"
                   onClick={() => setShowAddSheet(true)}
-                  className="inline-flex shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#00A651] px-4 py-2 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#008f45] active:scale-[0.98]"
+                  className="ml-auto inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#00A651] px-3.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#008f45] active:scale-[0.98]"
                   aria-label="Add watchlist item"
                 >
                   <Plus className="h-3.5 w-3.5 stroke-[3]" />
@@ -862,9 +755,6 @@ const WatchlistPage = () => {
                         trend={trend}
                         linkTo={`/compare/${f.slug}`}
                         onRemove={() => removeByTypeAndId("fund", f.id)}
-                        onAlert={() => openAlertForFund(f)}
-                        onReset={() => resetFundAlert(f)}
-                        alertState={alertStateOf("fund", f.id)}
                         mobileFooter={<SectionLiveStatus section="funds" className={watchCardStatusClass} />}
                       />
                     );
@@ -1110,7 +1000,8 @@ const WatchlistPage = () => {
           unit={alertDialog.unit}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 };
 

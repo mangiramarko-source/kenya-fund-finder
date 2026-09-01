@@ -23,4 +23,15 @@ describe("computeAlertSummary", () => {
   it("returns zero counts when no alerts match", () => {
     expect(computeAlertSummary([], watched)).toEqual({ active: 0, triggered: 0 });
   });
+
+  it("supports currency and commodity alert keys", () => {
+    const res = computeAlertSummary(
+      [
+        { asset_type: "currency", asset_id: "usd", is_active: true, is_triggered: false },
+        { asset_type: "commodity", asset_id: "gold", is_active: true, is_triggered: true },
+      ],
+      new Set(["currency:usd", "commodity:gold"]),
+    );
+    expect(res).toEqual({ active: 1, triggered: 1 });
+  });
 });

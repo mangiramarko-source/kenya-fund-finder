@@ -2,16 +2,17 @@ import { useState, useEffect } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 
-export type AlertAssetType = "stock" | "currency" | "commodity" | "fund" | "new_fund";
-export type AlertCondition = "above" | "below" | "change_up" | "change_down" | "change_any";
+export type AlertAssetType = "stock" | "fund" | "currency" | "commodity";
+export type AlertCondition = "above" | "below";
 
 export interface PriceAlert {
   id: string;
   user_id: string;
   asset_type: AlertAssetType;
   asset_id: string;
+  stock_id: string | null;
   asset_name: string;
-  price_unit: string;
+  asset_unit: string;
   target_price: number;
   condition: AlertCondition;
   baseline_price: number | null;
@@ -22,6 +23,7 @@ export interface PriceAlert {
   triggered_at: string | null;
   triggered_price: number | null;
   created_at: string;
+  trigger_count: number;
 }
 
 export interface Notification {
@@ -35,39 +37,31 @@ export interface Notification {
   created_at: string;
 }
 
-/** Price alerts for funds remain unavailable while their change-based evaluator is separate. */
-export const PRICE_ALERT_AVAILABILITY_MESSAGE = "Price alerts are currently unavailable for unit trusts.";
-
-export interface NewPriceAlert {
+export type AlertDraft = {
   asset_type: AlertAssetType;
   asset_id: string;
   asset_name: string;
+  asset_unit?: string;
   target_price: number;
   condition: AlertCondition;
-  price_unit?: string;
   baseline_price?: number | null;
   notify_email?: boolean;
   notify_inapp?: boolean;
-}
-
-export const buildPriceAlertInsert = (userId: string, alert: NewPriceAlert) => {
-  if (!(["stock", "currency", "commodity"] as const).includes(alert.asset_type as "stock" | "currency" | "commodity")) return null;
-  return {
-    // `stock_id` is the canonical foreign key used by the evaluator. The
-    // compatibility `asset_*` fields remain for the existing UI/history.
-    stock_id: alert.asset_type === "stock" ? alert.asset_id : null,
-    asset_type: alert.asset_type,
-    asset_id: alert.asset_id,
-    asset_name: alert.asset_name,
-    price_unit: alert.price_unit || "KES",
-    target_price: alert.target_price,
-    condition: alert.condition,
-    baseline_price: alert.baseline_price ?? null,
-    notify_email: alert.notify_email ?? true,
-    notify_inapp: alert.notify_inapp ?? true,
-    user_id: userId,
-  };
 };
+
+export const buildPriceAlertInsert = (userId: string, alert: AlertDraft) => ({
+  user_id: userId,
+  stock_id: alert.asset_type === "stock" ? alert.asset_id : null,
+  asset_type: alert.asset_type,
+  asset_id: alert.asset_id,
+  asset_name: alert.asset_name,
+  asset_unit: alert.asset_unit ?? "KES",
+  target_price: alert.target_price,
+  condition: alert.condition,
+  baseline_price: alert.baseline_price ?? null,
+  notify_email: alert.notify_email ?? true,
+  notify_inapp: alert.notify_inapp ?? true,
+});
 
 export function usePriceAlerts() {
   const { user } = useAuth();
@@ -90,15 +84,11 @@ export function usePriceAlerts() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
-  const createAlert = async (alert: NewPriceAlert) => {
+  const createAlert = async (alert: AlertDraft) => {
     if (!user) return { data: null, error: { message: "Not authenticated" } };
-    const insert = buildPriceAlertInsert(user.id, alert);
-    if (!insert) {
-      return { data: null, error: { message: PRICE_ALERT_AVAILABILITY_MESSAGE } };
-    }
     const { data, error } = await supabase
       .from("price_alerts")
-      .insert(insert)
+      .insert(buildPriceAlertInsert(user.id, alert))
       .select()
       .single();
     if (!error) await fetchAlerts();
@@ -115,18 +105,75 @@ export function usePriceAlerts() {
     await fetchAlerts();
   };
 
-  const resetAlert = async (id: string, baseline_price?: number | null) => {
-    const patch: Record<string, unknown> = {
-      is_triggered: false,
-      triggered_at: null,
-      triggered_price: null,
-    };
-    if (baseline_price != null) patch.baseline_price = baseline_price;
-    await supabase.from("price_alerts").update(patch).eq("id", id);
-    await fetchAlerts();
+  const updateAlert = async (id: string, changes: Omit<AlertDraft, "asset_type" | "asset_id" | "asset_name" | "asset_unit">) => {
+    if (!user) return { data: null, error: { message: "Not authenticated" } };
+    const existing = alerts.find((alert) => alert.id === id);
+    if (!existing) return { data: null, error: { message: "Alert not found" } };
+
+    if (existing.is_triggered) {
+      const replacement = await createAlert({
+        asset_type: existing.asset_type,
+        asset_id: existing.asset_id,
+        asset_name: existing.asset_name,
+        asset_unit: existing.asset_unit,
+        target_price: changes.target_price,
+        condition: changes.condition,
+        baseline_price: changes.baseline_price ?? existing.baseline_price,
+        notify_email: changes.notify_email,
+        notify_inapp: changes.notify_inapp,
+      });
+      if (replacement.error) return replacement;
+      const { error } = await supabase.from("price_alerts").delete().eq("id", id).eq("user_id", user.id);
+      if (!error) await fetchAlerts();
+      return { data: replacement.data, error };
+    }
+
+    const { data, error } = await supabase
+      .from("price_alerts")
+      .update({
+        target_price: changes.target_price,
+        condition: changes.condition,
+        baseline_price: changes.baseline_price ?? existing.baseline_price,
+        notify_email: changes.notify_email ?? existing.notify_email,
+        notify_inapp: changes.notify_inapp ?? existing.notify_inapp,
+      })
+      .eq("id", id)
+      .eq("user_id", user.id)
+      .select()
+      .single();
+    if (!error) await fetchAlerts();
+    return { data, error };
   };
 
-  return { alerts, loading, createAlert, deleteAlert, toggleAlert, resetAlert, refetch: fetchAlerts };
+  const resetAlert = async (id: string, baseline_price?: number | null) => {
+    if (!user) return { error: { message: "Not authenticated" } };
+    const existing = alerts.find((alert) => alert.id === id);
+    if (!existing) return { error: { message: "Alert not found" } };
+
+    // Trigger/evaluation state is service-controlled. Reset a one-shot alert by
+    // creating a fresh user-owned alert, then remove the completed alert only
+    // after the replacement exists.
+    const { error: createError } = await supabase.from("price_alerts").insert({
+      user_id: user.id,
+      asset_type: existing.asset_type,
+      asset_id: existing.asset_id,
+      asset_name: existing.asset_name,
+      asset_unit: existing.asset_unit,
+      condition: existing.condition,
+      target_price: existing.target_price,
+      notify_email: existing.notify_email,
+      notify_inapp: existing.notify_inapp,
+      is_active: true,
+      baseline_price: baseline_price ?? existing.baseline_price,
+    });
+    if (createError) return { error: createError };
+
+    const { error: deleteError } = await supabase.from("price_alerts").delete().eq("id", id);
+    await fetchAlerts();
+    return { error: deleteError };
+  };
+
+  return { alerts, loading, createAlert, updateAlert, deleteAlert, toggleAlert, resetAlert, refetch: fetchAlerts };
 }
 
 export function useNotifications() {
@@ -150,16 +197,8 @@ export function useNotifications() {
   useEffect(() => {
     fetchNotifications();
     if (!user) return;
-    const channel = supabase
-      .channel(`notifications-rt:${user.id}`)
-      .on("postgres_changes", {
-        event: "INSERT",
-        schema: "public",
-        table: "notifications",
-        filter: `user_id=eq.${user.id}`,
-      }, () => fetchNotifications())
-      .subscribe();
-    return () => { supabase.removeChannel(channel); };
+    const timer = window.setInterval(fetchNotifications, 60_000);
+    return () => window.clearInterval(timer);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [user]);
 
