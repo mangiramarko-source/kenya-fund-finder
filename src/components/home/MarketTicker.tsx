@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useId, useState } from "react";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +57,10 @@ export interface Stock {
 }
 
 export function useMarketData() {
+  // Watchlist's desktop and mobile shells can both use this hook during a
+  // responsive render. Supabase channels cannot share a topic while one is
+  // already subscribed, so each hook instance gets its own stable channel.
+  const marketChannelId = useId().replace(/:/g, "");
   const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [commodities, setCommodities] = useState<Commodity[]>([]);
   const [stocks, setStocks] = useState<Stock[]>([]);
@@ -100,7 +104,7 @@ export function useMarketData() {
     void fetchData(true);
 
     const channel = supabase
-      .channel("market-realtime")
+      .channel(`market-realtime-${marketChannelId}`)
       .on("postgres_changes", { event: "*", schema: "public", table: "exchange_rates" }, () => void fetchData())
       .on("postgres_changes", { event: "*", schema: "public", table: "commodities" }, () => void fetchData())
       .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => void fetchData())
@@ -109,7 +113,7 @@ export function useMarketData() {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [fetchData]);
+  }, [fetchData, marketChannelId]);
 
   return { rates, commodities, stocks, loading };
 }

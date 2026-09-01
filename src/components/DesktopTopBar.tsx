@@ -86,6 +86,7 @@ const DesktopTopBar = () => {
 
   const NAV_LINKS = [
     { to: "/", label: "Overview" },
+    { to: "/watchlist", label: "Watchlist" },
     { to: "/ai-lab", label: "AI Lab" },
     { to: "/stocks", label: "Stocks" },
     { to: "/funds", label: "MMF" },
@@ -93,7 +94,6 @@ const DesktopTopBar = () => {
     { to: "/rates", label: "FX Rates" },
     { to: "/commodities", label: "Commodities" },
     { to: "/portfolio", label: "Portfolio" },
-    { to: "/watchlist", label: "Watchlist" },
     { to: "/calculator", label: "Calculator" },
   ];
 
