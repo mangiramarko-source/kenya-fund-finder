@@ -20,6 +20,7 @@ import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
 import { calculateDemoReturn, fetchCompleteDemoHistory, filterDemoStocks, findDemoStock, stockProductionPath, type DemoHistoryRow, type DemoPricePoint } from "@/lib/stockDetailDemo";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import MarketPageLoader from "@/components/MarketPageLoader";
+import StockFavourites from "@/components/home/StockFavourites";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { toast } from "sonner";
 
@@ -35,7 +36,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const { user } = useAuth();
-  const { isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
+  const { entries: favouriteEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
   const [cachedStocks] = useState(() => stockCache.loadStocks()?.stocks ?? []);
   const [stocks, setStocks] = useState<CachedStock[]>(cachedStocks);
   const [history, setHistory] = useState<Record<string, DemoPricePoint[]>>({});
@@ -175,6 +176,10 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
                 </div>
                 <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
               </div>
+
+              {user && favouriteEntries.length > 0 && (
+                <StockFavourites entries={favouriteEntries} stocks={stocks} />
+              )}
 
               <div className="mb-5 overflow-hidden">
                 <div className="flex items-center gap-2">

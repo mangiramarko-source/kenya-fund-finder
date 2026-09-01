@@ -6,6 +6,7 @@ import StockDetailDesktopDemoPage from "./StockDetailDesktopDemoPage";
 const mocks = vi.hoisted(() => ({
   user: null as { id: string } | null,
   favourite: false,
+  entries: [] as Array<{ id: string; item_id: string; item_name: string }>,
   toggle: vi.fn(),
   toastMessage: vi.fn(),
   fetchPublicData: vi.fn(),
@@ -14,7 +15,7 @@ const mocks = vi.hoisted(() => ({
 
 vi.mock("@/hooks/useAuth", () => ({ useAuth: () => ({ user: mocks.user }) }));
 vi.mock("@/hooks/useAssetWatchlist", () => ({
-  useAssetWatchlist: () => ({ isFavourite: () => mocks.favourite, toggle: mocks.toggle }),
+  useAssetWatchlist: () => ({ entries: mocks.entries, isFavourite: () => mocks.favourite, toggle: mocks.toggle }),
 }));
 vi.mock("@/hooks/use-mobile", () => ({ useIsMobile: () => false }));
 vi.mock("@/hooks/useMinimumLoadingDuration", () => ({ useMinimumLoadingDuration: () => false }));
@@ -64,6 +65,7 @@ describe("StockDetailDesktopDemoPage", () => {
   beforeEach(() => {
     mocks.user = null;
     mocks.favourite = false;
+    mocks.entries = [];
     mocks.toggle.mockReset();
     mocks.toastMessage.mockReset();
     mocks.history = {};
@@ -112,5 +114,14 @@ describe("StockDetailDesktopDemoPage", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Add SCOM to watchlist" }));
     await waitFor(() => expect(mocks.toggle).toHaveBeenCalledWith("scom", "SCOM - Safaricom PLC"));
+  });
+
+  it("shows a signed-in user's saved stocks above the desktop filters", async () => {
+    mocks.user = { id: "user-1" };
+    mocks.entries = [{ id: "watch-1", item_id: "scom", item_name: "SCOM - Safaricom PLC" }];
+    renderPage();
+
+    expect(await screen.findByText("Your Watchlist")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /SCOM/ })).toHaveAttribute("href", "/stocks/SCOM");
   });
 });
