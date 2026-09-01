@@ -19,13 +19,13 @@ const navLinks = [
 
 const mobileNavLinks = [
   { to: "/", label: "Overview" },
+  { to: "/portfolio", label: "Portfolio" },
   { to: "/watchlist", label: "Watchlist" },
   { to: "/stocks", label: "Stocks" },
   { to: "/funds", label: "MMF" },
   { to: "/treasury", label: "T-Bills" },
   { to: "/rates", label: "Fx rates" },
   { to: "/commodities", label: "Commodities" },
-  { to: "/portfolio", label: "Portfolio" },
 ];
 
 
