@@ -23,6 +23,7 @@ import { computeAlertSummary } from "@/lib/watchlistAlertSummary";
 import { useUnifiedWatchlist, type UnifiedWatchlistItem as WatchlistItem } from "@/hooks/useUnifiedWatchlist";
 import WatchlistAlertsTabs from "@/components/watchlist/WatchlistAlertsTabs";
 import DesktopWatchlistWorkspace from "@/components/watchlist/DesktopWatchlistWorkspace";
+import MobileWatchlistAlertsPanel, { type WatchlistAlertAsset } from "@/components/watchlist/MobileWatchlistAlertsPanel";
 
 interface RateHistoryRow { snapshot_date: string; rate: number; currency_code: string }
 interface StockHistoryRow { snapshot_date: string; price: number; stock_id: string }
@@ -139,7 +140,7 @@ const WatchlistPage = () => {
   const navigate = useNavigate();
   const { user, loading: authLoading } = useAuth();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();
-  const { alerts, resetAlert } = usePriceAlerts();
+  const { alerts, resetAlert, deleteAlert, toggleAlert } = usePriceAlerts();
   const {
     items: watchlist,
     loading: watchlistLoading,
@@ -152,6 +153,8 @@ const WatchlistPage = () => {
   const [fundsLoading, setFundsLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [mobileFilter, setMobileFilter] = useState<MobileWatchlistFilter>("all");
+  const [mobileTab, setMobileTab] = useState<"watchlist" | "alerts">("watchlist");
+  const [mobileAlertPickerOpen, setMobileAlertPickerOpen] = useState(false);
   const [showAddSheet, setShowAddSheet] = useState(false);
   const [addType, setAddType] = useState<AddWatchlistType>("stock");
   const [addSearch, setAddSearch] = useState("");
@@ -336,6 +339,13 @@ const WatchlistPage = () => {
     const ids = new Set(effectiveWatchlist.filter((w) => w.item_type === "fund").map((w) => w.item_id));
     return funds.filter((f) => ids.has(f.id));
   }, [funds, effectiveWatchlist]);
+
+  const mobileAlertAssets = useMemo<WatchlistAlertAsset[]>(() => [
+    ...watchedStocks.map((asset) => ({ type: "stock" as const, id: asset.id, name: `${asset.name} (${asset.symbol})`, value: Number(asset.price), unit: "KES" })),
+    ...watchedFunds.map((asset) => ({ type: "fund" as const, id: asset.id, name: asset.name, value: Number(asset.annual_yield), unit: "%" })),
+    ...watchedRates.map((asset) => ({ type: "currency" as const, id: asset.id, name: `${asset.currency_code}/KES`, value: Number(asset.rate), unit: "KES" })),
+    ...watchedCommodities.map((asset) => ({ type: "commodity" as const, id: asset.id, name: asset.name, value: Number(asset.price), unit: asset.unit })),
+  ], [watchedCommodities, watchedFunds, watchedRates, watchedStocks]);
 
   const normalizedSearch = search.trim().toLowerCase();
   const fundMatchesSearch = useCallback((f: FundFromDB) => {
@@ -548,7 +558,7 @@ const WatchlistPage = () => {
                 <div className="relative flex-1">
                   <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/80" />
                   <Input
-                    placeholder="Search watchlist..."
+                    placeholder={mobileTab === "watchlist" ? "Search watchlist..." : "Search alerts..."}
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     className="pl-10 h-11 rounded-full bg-card border-border/80 w-full text-[15px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:ring-1"
@@ -558,7 +568,7 @@ const WatchlistPage = () => {
                   <SheetTrigger asChild>
                     <button
                       type="button"
-                      className="relative inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-border/80 bg-card px-4 text-sm font-semibold text-foreground shadow-sm transition-colors active:scale-95"
+                      className={`relative inline-flex h-11 shrink-0 items-center justify-center gap-1.5 rounded-full border border-border/80 bg-card px-4 text-sm font-semibold text-foreground shadow-sm transition-colors active:scale-95 ${mobileTab === "alerts" ? "hidden" : ""}`}
                       aria-label="Filter watchlist"
                     >
                       <SlidersHorizontal className="h-4 w-4 text-foreground/80" />
@@ -612,12 +622,20 @@ const WatchlistPage = () => {
               </div>
 
               <div className="mb-3.5 flex items-center gap-2">
-                <WatchlistAlertsTabs active="watchlist" />
+                <WatchlistAlertsTabs active={mobileTab} onSelect={setMobileTab} />
                 <button
                   type="button"
-                  onClick={() => setShowAddSheet(true)}
+                  onClick={() => {
+                    if (mobileTab === "watchlist") {
+                      setShowAddSheet(true);
+                    } else if (!user) {
+                      navigate("/auth?redirect=/watchlist");
+                    } else {
+                      setMobileAlertPickerOpen(true);
+                    }
+                  }}
                   className="ml-auto inline-flex h-10 shrink-0 items-center justify-center gap-1.5 rounded-full bg-[#00A651] px-3.5 text-xs font-bold text-white shadow-sm transition-all hover:bg-[#008f45] active:scale-[0.98]"
-                  aria-label="Add watchlist item"
+                  aria-label={mobileTab === "watchlist" ? "Add watchlist item" : "Create alert"}
                 >
                   <Plus className="h-3.5 w-3.5 stroke-[3]" />
                   Add
@@ -650,6 +668,18 @@ const WatchlistPage = () => {
         </div>
       </div>
 
+      {mobileTab === "alerts" ? (
+        <MobileWatchlistAlertsPanel
+          alerts={alerts}
+          assets={mobileAlertAssets}
+          query={search}
+          onQueryChange={setSearch}
+          pickerOpen={mobileAlertPickerOpen}
+          onPickerOpenChange={setMobileAlertPickerOpen}
+          onDelete={async (id) => { await deleteAlert(id); toast.success("Alert deleted"); }}
+          onToggle={async (id, active) => { await toggleAlert(id, active); toast.success(active ? "Alert resumed" : "Alert paused"); }}
+        />
+      ) : <>
       {/* Summary pills (neutral labels — no recommendations) */}
       {!loading && totalCount > 0 && (
         <div className="hidden md:flex flex-wrap items-center gap-2 text-[11px]">
@@ -1000,6 +1030,7 @@ const WatchlistPage = () => {
           unit={alertDialog.unit}
         />
       )}
+      </>}
       </div>
     </>
   );
