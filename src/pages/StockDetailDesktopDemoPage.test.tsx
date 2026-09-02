@@ -92,12 +92,13 @@ describe("StockDetailDesktopDemoPage", () => {
     expect(mocks.toastMessage).toHaveBeenCalledWith("Sign in to save items to your watchlist.", expect.objectContaining({ action: expect.any(Object) }));
   });
 
-  it("uses the stored stock logo with a contained avatar treatment", async () => {
+  it("uses the stored stock logo with an edge-to-edge avatar treatment", async () => {
     renderPage();
 
     const logo = await screen.findByAltText("Safaricom PLC logo");
     expect(logo).toHaveAttribute("src", stockResponse.data[0].logo_url);
-    expect(logo).toHaveClass("object-contain");
+    expect(logo).toHaveClass("object-cover");
+    expect(logo).not.toHaveClass("p-1");
   });
 
   it("loads five years of monthly history and renders at most 60 trend points", async () => {
