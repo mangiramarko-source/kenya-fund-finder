@@ -151,6 +151,7 @@ export interface PublicStock {
   id: string;
   symbol: string;
   name: string;
+  logo_url?: string | null;
   price: number;
   previous_price: number | null;
   day_change_percent: number;

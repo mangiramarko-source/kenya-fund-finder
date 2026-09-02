@@ -1,16 +1,3 @@
-const STOCK_DOMAINS: Record<string, string> = {
-  BAT: "bat.com",
-  COOP: "co-opbank.co.ke",
-  EABL: "eabl.com",
-  EQTY: "equitygroupholdings.com",
-  KCB: "kcbgroup.com",
-  KPC: "kpc.co.ke",
-  NCBA: "ncbagroup.com",
-  PORT: "kpa.co.ke",
-  SBIC: "stanbicbank.co.ke",
-  SCOM: "safaricom.co.ke",
-};
-
 const STOCK_LOGOS: Record<string, string> = {
   EABL: "/images/stocks/eabl.png",
   KCB: "/images/stocks/kcb.png",
@@ -20,11 +7,13 @@ const STOCK_LOGOS: Record<string, string> = {
   SCOM: "/images/stocks/safaricom.png",
 };
 
-export function getStockLogoUrl(symbol: string) {
+/**
+ * Prefer the reviewed logo copied to market-logos storage. The bundled images
+ * only keep the existing branded rows stable while the catalog is populated.
+ */
+export function getStockLogoUrl(symbol: string, logoUrl?: string | null) {
+  if (logoUrl?.trim()) return logoUrl;
   const normalizedSymbol = symbol.toUpperCase();
   const customLogo = STOCK_LOGOS[normalizedSymbol];
-  if (customLogo) return customLogo;
-
-  const domain = STOCK_DOMAINS[normalizedSymbol];
-  return domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : "";
+  return customLogo || "";
 }

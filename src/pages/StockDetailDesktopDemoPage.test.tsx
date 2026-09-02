@@ -22,7 +22,7 @@ vi.mock("@/hooks/useMinimumLoadingDuration", () => ({ useMinimumLoadingDuration:
 vi.mock("@/hooks/useDocumentTitle", () => ({ useDocumentTitle: vi.fn() }));
 vi.mock("@/components/SectionLiveStatus", () => ({ default: () => <div>Market closed</div> }));
 vi.mock("@/components/MarketPageLoader", () => ({ default: () => <div>Loading</div> }));
-vi.mock("@/lib/stockBranding", () => ({ getStockLogoUrl: () => null }));
+vi.mock("@/lib/stockBranding", () => ({ getStockLogoUrl: (_symbol: string, storedLogoUrl?: string | null) => storedLogoUrl || null }));
 vi.mock("@/lib/stockCache", () => ({
   normalizeStock: (stock: unknown) => stock,
   stockCache: { loadStocks: () => null, saveStocks: vi.fn() },
@@ -51,6 +51,7 @@ const stockResponse = {
     id: "scom", symbol: "SCOM", name: "Safaricom PLC", sector: "Telecommunication",
     price: 25.5, previous_price: 25, day_change: 0.5, day_change_percent: 2,
     volume: 120000, market_cap: 1000000000, pe_ratio: null, dividend_yield: null,
+    logo_url: "https://example.supabase.co/storage/v1/object/public/market-logos/stocks/SCOM.webp",
     updated_at: "2026-09-02T00:00:00.000Z",
   }],
 };
@@ -89,6 +90,14 @@ describe("StockDetailDesktopDemoPage", () => {
 
     fireEvent.click(await screen.findByRole("button", { name: "Add SCOM to watchlist" }));
     expect(mocks.toastMessage).toHaveBeenCalledWith("Sign in to save items to your watchlist.", expect.objectContaining({ action: expect.any(Object) }));
+  });
+
+  it("uses the stored stock logo with a contained avatar treatment", async () => {
+    renderPage();
+
+    const logo = await screen.findByAltText("Safaricom PLC logo");
+    expect(logo).toHaveAttribute("src", stockResponse.data[0].logo_url);
+    expect(logo).toHaveClass("object-contain");
   });
 
   it("loads five years of monthly history and renders at most 60 trend points", async () => {

@@ -53,6 +53,7 @@ export interface Stock {
   day_change_percent: number;
   volume: number;
   market_cap: number | null;
+  logo_url?: string | null;
   updated_at: string;
 }
 

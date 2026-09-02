@@ -789,6 +789,7 @@ export type Database = {
           dividend_yield: number | null
           id: string
           is_active: boolean
+          logo_url: string | null
           market_cap: number | null
           name: string
           pe_ratio: number | null
@@ -813,6 +814,7 @@ export type Database = {
           dividend_yield?: number | null
           id?: string
           is_active?: boolean
+          logo_url?: string | null
           market_cap?: number | null
           name: string
           pe_ratio?: number | null
@@ -837,6 +839,7 @@ export type Database = {
           dividend_yield?: number | null
           id?: string
           is_active?: boolean
+          logo_url?: string | null
           market_cap?: number | null
           name?: string
           pe_ratio?: number | null
@@ -1233,6 +1236,7 @@ export type Database = {
           dividend_yield: number | null
           id: string | null
           is_active: boolean | null
+          logo_url: string | null
           market_cap: number | null
           name: string | null
           pe_ratio: number | null
@@ -1254,6 +1258,7 @@ export type Database = {
           dividend_yield?: number | null
           id?: string | null
           is_active?: boolean | null
+          logo_url?: string | null
           market_cap?: number | null
           name?: string | null
           pe_ratio?: number | null
@@ -1275,6 +1280,7 @@ export type Database = {
           dividend_yield?: number | null
           id?: string | null
           is_active?: boolean | null
+          logo_url?: string | null
           market_cap?: number | null
           name?: string | null
           pe_ratio?: number | null

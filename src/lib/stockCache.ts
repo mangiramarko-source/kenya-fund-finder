@@ -13,6 +13,7 @@ export interface CachedStock {
   year_low: number | null;
   pe_ratio: number | null;
   dividend_yield: number | null;
+  logo_url?: string | null;
   updated_at: string;
   /** Provider/cache timestamp, not a confirmed exchange trade time. */
   provider_updated_at?: string | null;

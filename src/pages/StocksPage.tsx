@@ -219,7 +219,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
           select: [
             "id", "symbol", "name", "sector", "price", "previous_price",
             "day_change", "day_change_percent", "volume", "market_cap",
-            "year_high", "year_low", "pe_ratio", "dividend_yield", "updated_at",
+            "year_high", "year_low", "pe_ratio", "dividend_yield", "logo_url", "updated_at",
           ],
           order: "sort_order.asc",
           limit: 200,

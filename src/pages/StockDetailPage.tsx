@@ -134,7 +134,7 @@ const StockDetailPage = () => {
           select: [
             "id", "symbol", "name", "sector", "price", "previous_price",
             "day_change", "day_change_percent", "volume", "market_cap",
-            "pe_ratio", "dividend_yield", "year_high", "year_low", "updated_at",
+            "pe_ratio", "dividend_yield", "year_high", "year_low", "logo_url", "updated_at",
           ],
           filters: { symbol: symbol.toUpperCase() },
           limit: 1,
@@ -329,7 +329,7 @@ const StockDetailPage = () => {
       <div className="mb-4 md:mb-6">
         <div className="md:hidden">
           <div className="flex items-center gap-3">
-            <StockLogo symbol={s.symbol} name={s.name} />
+            <StockLogo symbol={s.symbol} name={s.name} logoUrl={s.logo_url} />
             <div className="min-w-0">
               <h1 className="truncate text-2xl font-black tracking-tight text-foreground">{s.name}</h1>
               <p className="mt-0.5 text-sm text-muted-foreground">NASE:{s.symbol} · Stock Report</p>
@@ -847,9 +847,9 @@ const FinRow = ({ label, value, color }: { label: string; value: string; color?:
   </div>
 );
 
-const StockLogo = ({ symbol, name }: { symbol: string; name: string }) => {
+const StockLogo = ({ symbol, name, logoUrl: storedLogoUrl }: { symbol: string; name: string; logoUrl?: string | null }) => {
   const [failed, setFailed] = useState(false);
-  const logoUrl = getStockLogoUrl(symbol);
+  const logoUrl = getStockLogoUrl(symbol, storedLogoUrl);
 
   return (
     <div className="flex h-12 w-12 shrink-0 items-center justify-center overflow-hidden rounded-2xl border border-border bg-muted/40 md:hidden">

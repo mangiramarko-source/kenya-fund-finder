@@ -66,7 +66,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
           select: [
             "id", "symbol", "name", "sector", "price", "previous_price", "day_change",
             "day_change_percent", "volume", "market_cap", "pe_ratio", "dividend_yield",
-            "updated_at",
+            "logo_url", "updated_at",
           ],
           limit: 200,
         });
@@ -242,7 +242,7 @@ function StockTableRow({ stock, points, selected, historyLoading, isFavourite, o
   const oneMonth = calculateDemoReturn(points, stock.price, 30);
   const threeMonth = calculateDemoReturn(points, stock.price, 90);
   const oneYear = calculateDemoReturn(points, stock.price, 365);
-  const logoUrl = getStockLogoUrl(stock.symbol);
+  const logoUrl = getStockLogoUrl(stock.symbol, stock.logo_url);
   return (
     <tr onClick={() => window.location.assign(stockProductionPath(stock.symbol))} className={`cursor-pointer bg-muted/20 transition-colors hover:bg-muted/35 dark:bg-[#191a1d] dark:hover:bg-[#202226] ${selected ? "ring-1 ring-inset ring-emerald-500/20" : ""}`}>
       <td className="bg-background/60 px-4 py-4 dark:bg-[#151619]"><div className="flex items-center gap-2.5"><div className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border bg-muted/60 text-[10px] font-bold text-muted-foreground"><span>{stock.symbol.slice(0, 2)}</span>{logoUrl && <img src={logoUrl} alt={`${stock.name} logo`} className="absolute inset-0 h-full w-full bg-white object-contain p-1" loading="lazy" onError={(event) => { event.currentTarget.style.display = "none"; }} />}</div><div className="min-w-0"><p className="text-sm font-bold">{stock.symbol}</p><p className="truncate text-[11px] text-muted-foreground">{stock.name}</p></div></div></td>

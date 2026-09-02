@@ -34,6 +34,7 @@ export interface Stock {
   market_cap: number | null;
   pe_ratio: number | null;
   dividend_yield: number | null;
+  logo_url: string | null;
   year_high: number | null;
   year_low: number | null;
   sector: string;
