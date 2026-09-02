@@ -195,8 +195,6 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
                 <Link to="/watchlist" className={cn("inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold transition-colors", active === "watchlist" ? "border-foreground bg-foreground text-background" : "border-border bg-card text-muted-foreground hover:text-foreground")}>Saved assets <span className="tabular-nums opacity-70">{rows.length}</span></Link>
                 <Link to="/alerts" className={cn("inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold transition-colors", active === "alerts" ? "border-foreground bg-foreground text-background" : "border-border bg-card text-muted-foreground hover:text-foreground")}>Alerts <span className="tabular-nums opacity-70">{counts.active + counts.triggered + counts.paused}</span></Link>
               </nav>
-              <span className="h-7 w-px shrink-0 bg-border" />
-              {(["all", "stock", "fund", "currency", "commodity"] as const).map((value) => <button key={value} type="button" onClick={() => setFilter(value)} className={cn("inline-flex h-11 shrink-0 items-center rounded-full border px-4 text-sm font-bold transition-colors", filter === value ? "border-foreground bg-foreground text-background" : "border-border bg-card text-muted-foreground hover:text-foreground")}>{value === "all" ? "All assets" : assetLabels[value]}</button>)}
             </div>
             <div className="relative ml-auto w-80 shrink-0"><Search className="absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(event) => setQuery(event.target.value)} placeholder="Search saved assets..." className="h-11 rounded-full border-border bg-card pl-11 text-sm shadow-none focus-visible:ring-1 focus-visible:ring-emerald-500/50" /></div>
             <Button onClick={() => setShowAdd(true)} className="h-11 shrink-0 gap-1.5 rounded-full bg-emerald-500 px-4 font-bold text-white hover:bg-emerald-600"><Plus className="h-4 w-4" /> Add assets</Button>
@@ -204,18 +202,36 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
 
           {!user && <div className="rounded-2xl border border-border/70 bg-card px-5 py-4 text-sm text-muted-foreground shadow-sm">Saved items are stored in this browser. <Link to="/auth?redirect=/watchlist" className="font-bold text-emerald-600 hover:text-emerald-500 hover:underline dark:text-emerald-400">Sign in</Link> to create alerts and keep your watchlist across devices.</div>}
 
-          {loading ? <div className="grid grid-cols-2 gap-4"><div className="h-32 animate-pulse rounded-2xl bg-muted" /><div className="h-32 animate-pulse rounded-2xl bg-muted" /></div> : filteredRows.length === 0 ? <EmptyWatchlist onAdd={() => setShowAdd(true)} /> : (
+          {loading ? <div className="grid grid-cols-2 gap-4"><div className="h-32 animate-pulse rounded-2xl bg-muted" /><div className="h-32 animate-pulse rounded-2xl bg-muted" /></div> : rows.length === 0 ? <EmptyWatchlist onAdd={() => setShowAdd(true)} /> : (
             <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
+              <div className="w-full overflow-x-auto border-b border-border/60 scrollbar-hide">
+                <nav className="flex min-w-max items-center gap-6 px-5" aria-label="Saved asset type">
+                  {(["all", "stock", "fund", "currency", "commodity"] as const).map((value) => {
+                    const activeFilter = filter === value;
+                    return (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setFilter(value)}
+                        className={cn("relative shrink-0 pb-3 pt-4 text-sm font-medium transition-colors", activeFilter ? "text-emerald-500" : "text-muted-foreground hover:text-foreground")}
+                      >
+                        {value === "all" ? "All assets" : assetLabels[value]}
+                        {activeFilter && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-t-full bg-emerald-500" />}
+                      </button>
+                    );
+                  })}
+                </nav>
+              </div>
               <div className="flex items-center justify-between gap-4 border-b border-border/60 px-5 py-4">
                 <div><h2 className="text-sm font-bold">Saved assets</h2><p className="mt-0.5 text-xs text-muted-foreground">Live values are refreshed with the latest published market data.</p></div>
                 <Button variant="ghost" size="sm" onClick={() => setIsReordering((value) => !value)} className={cn("gap-1.5 rounded-lg text-xs font-bold", isReordering && "bg-muted text-foreground")}><SlidersHorizontal className="h-3.5 w-3.5" /> {isReordering ? "Done" : "Reorder"}</Button>
               </div>
-              <div className="divide-y divide-border/60">
+              {filteredRows.length === 0 ? <div className="px-5 py-12 text-center"><p className="text-sm font-bold">No matching saved assets</p><p className="mt-1 text-sm text-muted-foreground">Try another search term or select a different asset type.</p></div> : <div className="divide-y divide-border/60">
                 {filteredRows.map((row) => {
                   const alert = alerts.find((item) => item.asset_type === row.type && item.asset_id === row.entry.item_id);
                   return <AssetListRow key={row.entry.id} row={row} alert={alert} reordering={isReordering} canMoveUp={items[0]?.id !== row.entry.id} canMoveDown={items[items.length - 1]?.id !== row.entry.id} onMove={move} onAlert={() => { setEditing(row); setEditingAlert(alert ?? null); }} onRemove={() => void removeAsset(row)} />;
                 })}
-              </div>
+              </div>}
             </section>
           )}
         </>
