@@ -6,6 +6,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
 import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
+import { getStockLogoUrl } from "@/lib/stockBranding";
 import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import {
@@ -88,6 +89,34 @@ const getAvatarColor = (symbol) => {
   let hash = 0;
   for (let i = 0; i < symbol.length; i++) hash = symbol.charCodeAt(i) + ((hash << 5) - hash);
   return colors[Math.abs(hash) % colors.length];
+};
+
+const StockLogoAvatar = ({ stock, size = 48 }: { stock: Stock; size?: number }) => {
+  const logoUrl = getStockLogoUrl(stock.symbol, stock.logo_url);
+
+  return (
+    <div
+      className={`relative flex shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/60 text-xs font-bold text-white shadow-sm ${getAvatarColor(stock.symbol)}`}
+      style={{ width: size, height: size }}
+      aria-hidden={logoUrl ? undefined : true}
+    >
+      <span>{getInitials(stock.name, stock.symbol)}</span>
+      {logoUrl && (
+        <img
+          src={logoUrl}
+          alt={`${stock.name} logo`}
+          width={size}
+          height={size}
+          loading="lazy"
+          decoding="async"
+          className="absolute inset-0 h-full w-full object-cover"
+          onError={(event) => {
+            event.currentTarget.style.display = "none";
+          }}
+        />
+      )}
+    </div>
+  );
 };
 
 /* ─── Mini Sparkline ─── */
@@ -1340,13 +1369,14 @@ const MobileStockCard = ({
     className="block rounded-[20px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all active:scale-[0.99] overflow-hidden mb-3"
   >
     {/* Top Row: Symbol/Name (Left), Sparkline (Center), Price/Return (Right) */}
-    <div className="flex items-center justify-between gap-2">
+    <div className="flex items-center justify-between gap-2.5">
       {/* Symbol + Name */}
-      <div className="min-w-0 flex-1">
-        <div className="flex items-center gap-1.5">
-          <span className="font-extrabold text-foreground text-base tracking-tight">{s.symbol}</span>
+      <div className="flex min-w-0 flex-1 items-center gap-3">
+        <StockLogoAvatar stock={s} />
+        <div className="min-w-0">
+          <span className="block truncate font-extrabold text-base tracking-tight text-foreground">{s.symbol}</span>
+          <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.name}</p>
         </div>
-        <p className="text-xs text-muted-foreground truncate mt-0.5">{s.name}</p>
       </div>
 
       {/* Sparkline in Center */}
