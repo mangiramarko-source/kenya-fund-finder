@@ -10,6 +10,7 @@ import FundMobileCards from "./FundMobileCards";
 import FundLogo from "./FundLogo";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import type { FundFromDB, FundType, YieldSnapshot } from "@/lib/api";
+import { getFundManagerLogoUrl } from "@/lib/fundBranding";
 
 type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee" | "change";
 type SortDir = "asc" | "desc";
@@ -568,7 +569,12 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                       className="flex items-center gap-3 min-w-0"
                       title={fund.name}
                     >
-                      <FundLogo name={fund.name} logoUrl={fund.logo_url} size={44} />
+                      <FundLogo
+                        name={fund.name}
+                        logoUrl={getFundManagerLogoUrl(fund.manager, fund.logo_url)}
+                        size={44}
+                        fullBleed={activeTab === "money_market"}
+                      />
                       <div className="min-w-0">
                         <div className="font-bold text-foreground group-hover:text-emerald-500 transition-colors truncate text-[14px]">
                           {fund.name}

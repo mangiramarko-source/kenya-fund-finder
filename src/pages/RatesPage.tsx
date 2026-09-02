@@ -16,6 +16,7 @@ import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import MarketPageLoader from "@/components/MarketPageLoader";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
+import { getCurrencyFlagUrl, KENYA_FLAG_URL } from "@/lib/currencyBranding";
 
 interface Rate {
   id: string;
@@ -56,6 +57,44 @@ const ChangeIndicator = ({ current, previous }: { current: number; previous: num
     <span className="inline-flex items-center gap-1 text-muted-foreground text-sm">
       <Minus className="h-3.5 w-3.5" /> 0.00%
     </span>
+  );
+};
+
+const CurrencyPairAvatar = ({ currencyCode, compact = false }: { currencyCode: string; compact?: boolean }) => {
+  const currencyFlagUrl = getCurrencyFlagUrl(currencyCode);
+  const primarySize = compact ? "h-7 w-7" : "h-11 w-11";
+  const kenyaSize = compact ? "h-4 w-4" : "h-7 w-7";
+
+  return (
+    <div
+      className={`relative shrink-0 ${compact ? "h-8 w-9" : "h-12 w-14"}`}
+      aria-label={`${currencyCode}/KES flags`}
+    >
+      {currencyFlagUrl ? (
+        <img
+          src={currencyFlagUrl}
+          alt=""
+          width={compact ? 28 : 44}
+          height={compact ? 28 : 44}
+          loading="lazy"
+          decoding="async"
+          className={`absolute left-0 top-0 ${primarySize} rounded-full border-2 border-card object-cover shadow-sm`}
+        />
+      ) : (
+        <span className={`absolute left-0 top-0 flex ${primarySize} items-center justify-center rounded-full bg-muted text-[10px] font-bold text-muted-foreground`}>
+          {currencyCode.slice(0, 2)}
+        </span>
+      )}
+      <img
+        src={KENYA_FLAG_URL}
+        alt=""
+        width={compact ? 16 : 28}
+        height={compact ? 16 : 28}
+        loading="lazy"
+        decoding="async"
+        className={`absolute bottom-0 right-0 ${kenyaSize} rounded-full border-2 border-card object-cover shadow-sm`}
+      />
+    </div>
   );
 };
 
@@ -441,8 +480,8 @@ const RatesPage = () => {
               <table className="w-full text-sm table-fixed min-w-[900px] lg:min-w-0">
                 <colgroup>
                   <col style={{ width: "3%" }} />
-                  <col style={{ width: "7%" }} />
-                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "12%" }} />
+                  <col style={{ width: "10%" }} />
                   <col style={{ width: "10%" }} />
                   <col style={{ width: "10%" }} />
                   <col style={{ width: "9%" }} />
@@ -455,7 +494,7 @@ const RatesPage = () => {
                 <thead>
                   <tr className="bg-background text-[12px] text-muted-foreground border-b border-border/40">
                     <th className="text-left pl-4 pr-2 py-3 font-normal">#</th>
-                    <th className="text-left px-3 py-3 font-normal">Symbol</th>
+                    <th className="text-left px-3 py-3 font-normal">Pair</th>
                     <th className="text-left px-3 py-3 font-normal">Currency</th>
                     <th className="text-left px-3 py-3 font-normal">Rate (KES)</th>
                     <th className="text-left px-3 py-3 font-normal">Previous</th>
@@ -603,29 +642,28 @@ const MobileRateCard = ({
   const changePct = r.previous_rate != null && r.previous_rate !== 0 ? ((change! / r.previous_rate) * 100) : null;
 
   return (
-    <div className="block rounded-[20px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all overflow-hidden mb-3">
+    <div className="block rounded-[22px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all overflow-hidden mb-3">
       <button
         type="button"
         onClick={onToggle}
         className="w-full text-left"
         aria-expanded={isExpanded}
       >
-        {/* Top Row: Symbol/Name (Left), Sparkline (Center), Price/Change (Right) */}
-        <div className="flex items-center justify-between gap-2">
-          {/* Symbol + Name */}
+        {/* Top Row: currency-pair image, rate details, sparkline, and rate. */}
+        <div className="flex items-center gap-3">
+          <CurrencyPairAvatar currencyCode={r.currency_code} />
+
           <div className="min-w-0 flex-1">
-            <span className="font-extrabold text-foreground text-base tracking-tight">{r.currency_code}</span>
-            <p className="text-xs text-muted-foreground truncate mt-0.5">{r.currency_name}</p>
+            <span className="font-extrabold text-foreground text-[17px] tracking-tight">{r.currency_code}/KES</span>
+            <p className="text-sm text-muted-foreground truncate mt-0.5">{r.currency_name}</p>
           </div>
 
-          {/* Sparkline in Center */}
           <div className="shrink-0 px-1">
             <MiniSparkline data={history || []} positive={positive} livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], rate: r.rate }} />
           </div>
 
-          {/* Rate + Change % */}
           <div className="text-right shrink-0">
-            <p className="font-extrabold text-foreground text-base tabular-nums">
+            <p className="font-extrabold text-foreground text-[17px] tabular-nums">
               KES {r.rate.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </p>
             <div className="mt-0.5 flex justify-end">
@@ -795,7 +833,10 @@ const RateRow = ({
       >
         <td className="pl-4 pr-2 py-4 text-muted-foreground/60 text-sm tabular-nums">{index + 1}</td>
         <td className="px-3 py-4">
-          <span className="font-bold text-foreground text-sm tracking-wide">{rate.currency_code}</span>
+          <div className="flex items-center gap-2.5 min-w-0">
+            <CurrencyPairAvatar currencyCode={rate.currency_code} compact />
+            <span className="font-bold text-foreground text-sm tracking-wide whitespace-nowrap">{rate.currency_code}/KES</span>
+          </div>
         </td>
         <td className="px-3 py-4">
           <span className="block text-sm text-foreground truncate" title={rate.currency_name}>{rate.currency_name}</span>

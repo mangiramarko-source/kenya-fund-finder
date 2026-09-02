@@ -1,9 +1,11 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, TrendingDown, Minus, Star } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Star, WalletCards, BadgePercent } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
+import { getFundManagerLogoUrl } from "@/lib/fundBranding";
+import FundLogo from "./FundLogo";
 
 interface FundMobileCardsProps {
   funds: FundFromDB[];
@@ -23,6 +25,7 @@ const categoryLabels: Record<string, string> = {
   balanced: "Balanced",
   equity: "Equity",
   bond: "Bond",
+  special: "Special",
 };
 
 const isPercentUnit = (unit: string) => unit === "%";
@@ -64,9 +67,12 @@ const CardSkeleton = () => (
     {Array.from({ length: 4 }).map((_, i) => (
       <div key={i} className="rounded-[20px] border border-border bg-card p-4">
         <div className="flex items-center justify-between gap-3">
-          <div className="flex-1">
+          <div className="flex items-center gap-3 flex-1">
+            <Skeleton className="h-12 w-12 rounded-full" />
+            <div>
             <Skeleton className="h-4 w-28 mb-1.5" />
             <Skeleton className="h-3 w-36" />
+            </div>
           </div>
           <Skeleton className="h-6 w-16" />
           <Skeleton className="h-5 w-14" />
@@ -106,26 +112,31 @@ const FundMobileCards = ({ funds, snapshots, allSnapshots, loading, onClearSearc
         <Link 
           key={fund.id} 
           to={`/compare/${fund.slug}`} 
-          className="block rounded-[20px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all active:scale-[0.99] overflow-hidden"
+          className="block rounded-[22px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all active:scale-[0.99] overflow-hidden"
         >
-          {/* Top Row: Fund Name/Manager (Left), Sparkline (Center), Yield/Change (Right) */}
-          <div className="flex items-center justify-between gap-2">
-            {/* Fund Name + Manager */}
+          {/* Top Row: Brand, fund details, sparkline, then annual yield. */}
+          <div className="flex items-center gap-3">
+            <FundLogo
+              name={fund.name}
+              logoUrl={getFundManagerLogoUrl(fund.manager, fund.logo_url)}
+              size={48}
+              fullBleed
+              className="shrink-0"
+            />
+
             <div className="min-w-0 flex-1">
-              <span className="font-extrabold text-foreground text-base tracking-tight truncate block">
+              <span className="font-extrabold text-foreground text-[17px] tracking-tight truncate block">
                 {fund.name}
               </span>
-              <p className="text-xs text-muted-foreground truncate mt-0.5">{fund.manager}</p>
+              <p className="text-sm text-muted-foreground truncate mt-0.5">{fund.manager}</p>
             </div>
 
-            {/* Center: Sparkline Graph */}
             <div className="shrink-0 px-1">
               <CardSparkline history={allSnapshots?.[fund.id]} currentValue={fund.annual_yield} />
             </div>
 
-            {/* Right: Annual Yield + Change */}
             <div className="text-right shrink-0">
-              <p className="font-extrabold text-foreground text-base tabular-nums">
+              <p className="font-extrabold text-foreground text-[17px] tabular-nums">
                 {fmtYield(fund.annual_yield, fund.yield_unit)}
               </p>
               <div className="mt-0.5 flex justify-end">
@@ -153,18 +164,19 @@ const FundMobileCards = ({ funds, snapshots, allSnapshots, loading, onClearSearc
             </div>
           </div>
 
-          {/* Thin Divider Line */}
-          <div className="border-t border-border/40 my-3" />
+          <div className="border-t border-border/40 my-3.5" />
 
-          {/* Bottom Row: Min KES & Fee (Left), Category Pill (Right) */}
+          {/* Bottom Row: key fund details and category. */}
           <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-3 text-muted-foreground">
-              <span>
-                Min <strong className="font-semibold text-foreground ml-0.5">KES {fund.minimum_investment.toLocaleString()}</strong>
+            <div className="flex items-center gap-3.5 text-muted-foreground">
+              <span className="inline-flex items-center gap-1.5">
+                <WalletCards className="h-3.5 w-3.5" aria-hidden="true" />
+                Min <strong className="font-semibold text-foreground">KES {fund.minimum_investment.toLocaleString()}</strong>
               </span>
               {fund.management_fee > 0 && (
-                <span>
-                  Fee <strong className="font-semibold text-foreground ml-0.5">{fund.management_fee}%</strong>
+                <span className="inline-flex items-center gap-1.5">
+                  <BadgePercent className="h-3.5 w-3.5" aria-hidden="true" />
+                  Fee <strong className="font-semibold text-foreground">{fund.management_fee}%</strong>
                 </span>
               )}
             </div>
