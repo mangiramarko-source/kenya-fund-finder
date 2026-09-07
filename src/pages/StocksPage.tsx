@@ -5,6 +5,7 @@ import StockDetailDesktopDemoPage from "@/pages/StockDetailDesktopDemoPage";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
+import { startMarketRefresh } from "@/lib/marketRefresh";
 import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
@@ -242,7 +243,11 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
   }, [desktopDemo, isMobile, navigate]);
 
   useEffect(() => {
+    let fetchingStocks = false;
+    let disposed = false;
     const fetchStocks = async () => {
+      if (fetchingStocks || disposed) return;
+      fetchingStocks = true;
       try {
         const { data } = await fetchPublicData<any>("stocks", {
           select: [
@@ -255,13 +260,15 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
         });
         const normalized = data.map(normalizeStock);
         if (normalized.length === 0) throw new Error("No stock data returned");
+        if (disposed) return;
         setStocks(normalized);
         stockCache.saveStocks(normalized);
       } catch (e) {
         console.error("Failed to load stocks", e);
-        if (cachedStocks) setStocks(cachedStocks.stocks);
+        // Keep the latest successful prices on a temporary refresh failure.
       } finally {
-        setLoading(false);
+        fetchingStocks = false;
+        if (!disposed) setLoading(false);
       }
     };
     
@@ -282,11 +289,14 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
 
     fetchStocks();
     fetchMarketHistory();
+    const stopRefresh = startMarketRefresh(fetchStocks);
     const ch = supabase
       .channel("stocks-page-rt")
       .on("postgres_changes", { event: "*", schema: "public", table: "stocks" }, () => fetchStocks())
       .subscribe();
     return () => {
+      disposed = true;
+      stopRefresh();
       supabase.removeChannel(ch);
     };
   }, [cachedStocks]);

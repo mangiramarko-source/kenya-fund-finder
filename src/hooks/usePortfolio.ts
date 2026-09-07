@@ -164,6 +164,9 @@ export const useLiveAssets = (enabled = true) => {
       return { mmf: funds, stock: stocks, commodity: commodities, fx, fixed_income: fixedIncome } as Record<AssetType, LiveAsset[]>;
     },
     staleTime: 60_000,
+    refetchInterval: 60_000,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
   });
 };
 
