@@ -40,14 +40,14 @@ Deno.serve(async (request) => {
   const allowlist = [...new Set((Deno.env.get("COMMUNICATION_EMAIL_ALLOWLIST") ?? "").split(",").map(normalizeEmail).filter(Boolean))];
   const resendKey = Deno.env.get("RESEND_API_KEY");
   const from = Deno.env.get("COMMUNICATION_FROM_EMAIL");
-  if (sendMode !== "internal" || allowlist.length !== 1 || !resendKey || !from) {
+  if ((sendMode !== "internal" && sendMode !== "live") || allowlist.length !== 1 || !resendKey || !from) {
     return new Response(JSON.stringify({ error: "Demo delivery safety gate failed" }), { status: 409, headers: jsonHeaders });
   }
 
   if (body.preflight === true) {
     return new Response(JSON.stringify({
       status: "ready",
-      send_mode: "internal",
+      send_mode: sendMode,
       allowlist_count: 1,
       demo_data_only: true,
     }), { headers: jsonHeaders });
