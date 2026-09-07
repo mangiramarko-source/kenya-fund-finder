@@ -1705,6 +1705,60 @@ export type Database = {
           },
         ]
       }
+      stock_company_profiles: {
+        Row: {
+          created_at: string
+          headquarters: string | null
+          is_published: boolean
+          official_website: string
+          reviewed_at: string
+          source_url: string
+          stock_id: string
+          summary: string
+          telephone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          headquarters?: string | null
+          is_published?: boolean
+          official_website: string
+          reviewed_at?: string
+          source_url: string
+          stock_id: string
+          summary: string
+          telephone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          headquarters?: string | null
+          is_published?: boolean
+          official_website?: string
+          reviewed_at?: string
+          source_url?: string
+          stock_id?: string
+          summary?: string
+          telephone?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "stock_company_profiles_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: true
+            referencedRelation: "stocks"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "stock_company_profiles_stock_id_fkey"
+            columns: ["stock_id"]
+            isOneToOne: true
+            referencedRelation: "stocks_public"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       stocks: {
         Row: {
           created_at: string
@@ -2282,14 +2336,17 @@ export type Database = {
       }
       stocks_public: {
         Row: {
+          company_summary: string | null
           day_change: number | null
           day_change_percent: number | null
           dividend_yield: number | null
           id: string | null
+          headquarters: string | null
           is_active: boolean | null
           logo_url: string | null
           market_cap: number | null
           name: string | null
+          official_website: string | null
           pe_ratio: number | null
           previous_price: number | null
           price: number | null
@@ -2298,20 +2355,24 @@ export type Database = {
           sector: string | null
           sort_order: number | null
           symbol: string | null
+          telephone: string | null
           updated_at: string | null
           volume: number | null
           year_high: number | null
           year_low: number | null
         }
         Insert: {
+          company_summary?: string | null
           day_change?: number | null
           day_change_percent?: number | null
           dividend_yield?: number | null
           id?: string | null
+          headquarters?: string | null
           is_active?: boolean | null
           logo_url?: string | null
           market_cap?: number | null
           name?: string | null
+          official_website?: string | null
           pe_ratio?: number | null
           previous_price?: number | null
           price?: number | null
@@ -2320,20 +2381,24 @@ export type Database = {
           sector?: string | null
           sort_order?: number | null
           symbol?: string | null
+          telephone?: string | null
           updated_at?: string | null
           volume?: number | null
           year_high?: number | null
           year_low?: number | null
         }
         Update: {
+          company_summary?: string | null
           day_change?: number | null
           day_change_percent?: number | null
           dividend_yield?: number | null
           id?: string | null
+          headquarters?: string | null
           is_active?: boolean | null
           logo_url?: string | null
           market_cap?: number | null
           name?: string | null
+          official_website?: string | null
           pe_ratio?: number | null
           previous_price?: number | null
           price?: number | null
@@ -2342,6 +2407,7 @@ export type Database = {
           sector?: string | null
           sort_order?: number | null
           symbol?: string | null
+          telephone?: string | null
           updated_at?: string | null
           volume?: number | null
           year_high?: number | null

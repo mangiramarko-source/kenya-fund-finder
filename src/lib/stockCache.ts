@@ -13,7 +13,15 @@ export interface CachedStock {
   year_low: number | null;
   pe_ratio: number | null;
   dividend_yield: number | null;
+  /** Exchange-provided intraday values when the quote source has supplied them. */
+  day_low?: number | null;
+  day_high?: number | null;
   logo_url?: string | null;
+  /** Editorial profile data, separate from live market quote fields. */
+  company_summary?: string | null;
+  official_website?: string | null;
+  headquarters?: string | null;
+  telephone?: string | null;
   updated_at: string;
   /** Provider/cache timestamp, not a confirmed exchange trade time. */
   provider_updated_at?: string | null;
@@ -42,6 +50,8 @@ export const normalizeStock = (stock: any): CachedStock => ({
   year_low: stock.year_low != null ? Number(stock.year_low) : null,
   pe_ratio: stock.pe_ratio != null ? Number(stock.pe_ratio) : null,
   dividend_yield: stock.dividend_yield != null ? Number(stock.dividend_yield) : null,
+  day_low: stock.day_low != null ? Number(stock.day_low) : null,
+  day_high: stock.day_high != null ? Number(stock.day_high) : null,
 });
 
 const readStocks = (): StockCacheEnvelope | null => {

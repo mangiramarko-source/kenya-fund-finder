@@ -33,7 +33,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import {
   TrendingUp, TrendingDown, Minus, ArrowLeft, Star, BarChart3, Activity,
   Calendar, Building2, DollarSign, Users, Newspaper, ChevronDown, ChevronUp, MoreHorizontal,
-  Link2, Twitter, Facebook,
+  Link2, Twitter, Facebook, ExternalLink,
 } from "lucide-react";
 import {
   XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid,
@@ -45,6 +45,31 @@ type Stock = CachedStock;
 interface PriceHistory {
   snapshot_date: string;
   price: number;
+}
+
+interface FinancialPeriod {
+  id: string;
+  period_end: string;
+  period_type: "annual" | "half_year" | "quarterly";
+  period_label: string;
+  revenue: number | null;
+  operating_expense: number | null;
+  net_income: number | null;
+  eps: number | null;
+  net_margin: number | null;
+  operating_cash_flow: number | null;
+  total_assets: number | null;
+  total_liabilities: number | null;
+  total_equity: number | null;
+}
+
+interface ReferenceMetrics {
+  as_of_date: string;
+  isin: string | null;
+  shares_issued: number | null;
+  book_value_per_share: number | null;
+  roe: number | null;
+  net_margin: number | null;
 }
 
 const fmt = (n: number, d = 2) =>
@@ -86,6 +111,10 @@ const StockDetailPage = () => {
   const [history, setHistory] = useState<PriceHistory[]>([]);
   const [historyLoading, setHistoryLoading] = useState(true);
   const [range, setRange] = useState<StockHistoryRange>("3M");
+  const [customStart, setCustomStart] = useState("");
+  const [customEnd, setCustomEnd] = useState("");
+  const [financialPeriods, setFinancialPeriods] = useState<FinancialPeriod[]>([]);
+  const [referenceMetrics, setReferenceMetrics] = useState<ReferenceMetrics | null>(null);
   const historyCache = useRef(new Map<string, PriceHistory[]>());
   const shareUrl = `https://kenyafundfinder.com/stocks/${encodeURIComponent(symbol || "")}`;
 
@@ -135,6 +164,7 @@ const StockDetailPage = () => {
             "id", "symbol", "name", "sector", "price", "previous_price",
             "day_change", "day_change_percent", "volume", "market_cap",
             "pe_ratio", "dividend_yield", "year_high", "year_low", "logo_url", "updated_at",
+            "company_summary", "official_website", "headquarters", "telephone", "day_low", "day_high",
           ],
           filters: { symbol: symbol.toUpperCase() },
           limit: 1,
@@ -202,6 +232,38 @@ const StockDetailPage = () => {
     return () => { cancelled = true; };
   }, [stock?.id]);
 
+  useEffect(() => {
+    if (!stock) return undefined;
+    let cancelled = false;
+    Promise.all([
+      fetchPublicData<FinancialPeriod>("stock-financials", { id: stock.id, limit: 20 }),
+      fetchPublicData<ReferenceMetrics>("stock-reference-metrics", { id: stock.id, limit: 1 }),
+    ]).then(([financialResponse, referenceResponse]) => {
+      if (cancelled) return;
+      setFinancialPeriods(financialResponse.data.map((period) => ({
+        ...period,
+        revenue: period.revenue == null ? null : Number(period.revenue),
+        operating_expense: period.operating_expense == null ? null : Number(period.operating_expense),
+        net_income: period.net_income == null ? null : Number(period.net_income),
+        eps: period.eps == null ? null : Number(period.eps),
+        net_margin: period.net_margin == null ? null : Number(period.net_margin),
+        operating_cash_flow: period.operating_cash_flow == null ? null : Number(period.operating_cash_flow),
+        total_assets: period.total_assets == null ? null : Number(period.total_assets),
+        total_liabilities: period.total_liabilities == null ? null : Number(period.total_liabilities),
+        total_equity: period.total_equity == null ? null : Number(period.total_equity),
+      })));
+      const metric = referenceResponse.data[0];
+      setReferenceMetrics(metric ? {
+        ...metric,
+        shares_issued: metric.shares_issued == null ? null : Number(metric.shares_issued),
+        book_value_per_share: metric.book_value_per_share == null ? null : Number(metric.book_value_per_share),
+        roe: metric.roe == null ? null : Number(metric.roe),
+        net_margin: metric.net_margin == null ? null : Number(metric.net_margin),
+      } : null);
+    }).catch((error) => console.error("Failed to load reviewed stock details", error));
+    return () => { cancelled = true; };
+  }, [stock?.id]);
+
   const filteredHistory = useMemo(() => {
     if (!stock || !history.length) return [];
     
@@ -216,8 +278,9 @@ const StockDetailPage = () => {
       fullHistory.unshift({ snapshot_date: prevDate, price: stock.previous_price });
     }
 
-    return filterStockHistory(fullHistory, range);
-  }, [history, range, stock]);
+    const rangedHistory = filterStockHistory(fullHistory, range);
+    return rangedHistory.filter((entry) => (!customStart || entry.snapshot_date >= customStart) && (!customEnd || entry.snapshot_date <= customEnd));
+  }, [history, range, stock, customStart, customEnd]);
 
   const chartHistory = useMemo(() => downsampleStockHistory(filteredHistory), [filteredHistory]);
 
@@ -232,6 +295,11 @@ const StockDetailPage = () => {
       changePct: ((prices[prices.length - 1] - prices[0]) / prices[0]) * 100,
     };
   }, [filteredHistory]);
+
+  const latestFinancialPeriod = financialPeriods[0] ?? null;
+  const priceToBook = referenceMetrics?.book_value_per_share && referenceMetrics.book_value_per_share > 0
+    ? stock ? stock.price / referenceMetrics.book_value_per_share : null
+    : null;
 
   const showPageLoading = useMinimumLoadingDuration(loading || (Boolean(stock) && historyLoading));
 
@@ -380,6 +448,7 @@ const StockDetailPage = () => {
           <TabsTrigger value="summary" className="shrink-0 rounded-none border-b-[3px] border-transparent bg-transparent px-5 py-3 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none md:px-6">Summary</TabsTrigger>
           <TabsTrigger value="financials" className="shrink-0 rounded-none border-b-[3px] border-transparent bg-transparent px-5 py-3 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none md:px-6">Financials</TabsTrigger>
           <TabsTrigger value="statistics" className="shrink-0 rounded-none border-b-[3px] border-transparent bg-transparent px-5 py-3 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none md:px-6">Statistics</TabsTrigger>
+          <TabsTrigger value="holders" className="shrink-0 rounded-none border-b-[3px] border-transparent bg-transparent px-5 py-3 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-emerald-500 data-[state=active]:text-foreground data-[state=active]:shadow-none md:px-6">Holders</TabsTrigger>
           <TabsTrigger value="historical" className="shrink-0 rounded-none border-b-[3px] border-transparent bg-transparent px-5 py-3 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none md:px-6">Historical</TabsTrigger>
           <TabsTrigger value="news" className="shrink-0 rounded-none border-b-[3px] border-transparent bg-transparent px-5 py-3 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none md:px-6">News</TabsTrigger>
           <TabsTrigger value="disclosures" className="shrink-0 rounded-none border-b-[3px] border-transparent bg-transparent px-5 py-3 text-sm font-semibold text-muted-foreground shadow-none data-[state=active]:border-emerald-500 data-[state=active]:bg-transparent data-[state=active]:text-foreground data-[state=active]:shadow-none md:px-6">Disclosures</TabsTrigger>
@@ -387,12 +456,15 @@ const StockDetailPage = () => {
 
         {/* Summary Tab */}
         <TabsContent value="summary" className="space-y-4 md:space-y-6">
-          {/* Price Chart */}
+          {/* Stock performance graph */}
           <div className="border-0 bg-transparent p-0 shadow-none md:rounded-xl md:border md:border-border md:bg-card md:p-4">
             <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
               <div className="flex items-center gap-2">
                 <BarChart3 className="h-5 w-5 text-primary md:h-4 md:w-4 md:text-muted-foreground" />
-                <span className="text-base font-bold text-foreground md:text-sm md:font-semibold">Price Chart</span>
+                <div>
+                  <span className="text-base font-bold text-foreground md:text-sm md:font-semibold">Stock Performance</span>
+                  <p className="mt-0.5 text-[11px] text-muted-foreground">Closing-price movement across the selected period</p>
+                </div>
               </div>
               <div className="-mx-1 flex w-[calc(100%+0.5rem)] gap-2 overflow-x-auto px-1 pb-1 sm:mx-0 sm:w-auto sm:gap-1 sm:px-0 sm:pb-0">
                 {visibleHistoryRanges.map((r) => (
@@ -477,6 +549,13 @@ const StockDetailPage = () => {
             <StatCard icon={<TrendingUp className="h-4 w-4 text-emerald-500" />} label="Div Yield" value={s.dividend_yield != null ? `${fmt(s.dividend_yield)}%` : "—"} />
           </div>
 
+          <FinancialSummary
+            stock={s}
+            latestPeriod={latestFinancialPeriod}
+            referenceMetrics={referenceMetrics}
+            priceToBook={priceToBook}
+          />
+
           {/* 52 Week Range */}
           {yearRange && (
             <div className="rounded-[18px] border border-border bg-card p-4 shadow-[0_6px_18px_hsl(var(--foreground)/0.05)] md:rounded-xl md:shadow-none">
@@ -495,6 +574,16 @@ const StockDetailPage = () => {
               <p className="mt-3 text-center text-xs text-muted-foreground md:mt-2">Current: KSh {fmt(s.price)} · <strong className="text-foreground">{fmt(((s.price - s.year_low!) / s.year_low!) * 100, 1)}%</strong> above the 52-week low</p>
             </div>
           )}
+
+          <StockAboutCard
+            companyName={s.name}
+            symbol={s.symbol}
+            sector={s.sector}
+            summary={s.company_summary}
+            officialWebsite={s.official_website}
+            headquarters={s.headquarters}
+            telephone={s.telephone}
+          />
         </TabsContent>
 
         {/* Financials Tab */}
@@ -517,6 +606,8 @@ const StockDetailPage = () => {
             </div>
           </div>
 
+          {financialPeriods.length > 0 && <FinancialHistoryTables periods={financialPeriods} />}
+
           <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
             <h3 className="text-sm font-semibold text-foreground mb-3 flex items-center gap-2">
               <Building2 className="h-4 w-4 text-muted-foreground" /> Company Info
@@ -536,7 +627,7 @@ const StockDetailPage = () => {
             <h3 className="text-sm font-semibold text-foreground mb-4">Trading Statistics</h3>
             <div className="divide-y divide-border">
               <FinRow label="Current Price" value={`KSh ${fmt(s.price)}`} />
-              <FinRow label="Day Range" value={s.previous_price != null ? `KSh ${fmt(Math.min(s.price, s.previous_price))} – KSh ${fmt(Math.max(s.price, s.previous_price))}` : "—"} />
+              <FinRow label="Day Range" value={s.day_low != null && s.day_high != null ? `KSh ${fmt(s.day_low)} – KSh ${fmt(s.day_high)}` : "—"} />
               <FinRow label="52-Week Range" value={yearRange ? `KSh ${fmt(s.year_low!)} – KSh ${fmt(s.year_high!)}` : "—"} />
               <FinRow label="Volume" value={s.volume.toLocaleString()} />
               <FinRow label="Market Cap" value={fmtCap(s.market_cap)} />
@@ -550,6 +641,12 @@ const StockDetailPage = () => {
               <FinRow label="Dividend Yield (TTM)" value={s.dividend_yield != null ? `${fmt(s.dividend_yield)}%` : "N/A"} />
               <FinRow label="Price-to-52W-High" value={s.year_high != null ? `${fmt((s.price / s.year_high) * 100)}%` : "N/A"} />
               <FinRow label="Price-to-52W-Low" value={s.year_low != null ? `${fmt((s.price / s.year_low) * 100)}%` : "N/A"} />
+              <FinRow label="Book Value per Share" value={referenceMetrics?.book_value_per_share != null ? `KSh ${fmt(referenceMetrics.book_value_per_share)}` : "—"} />
+              <FinRow label="Price-to-Book" value={referenceMetrics?.book_value_per_share ? `${fmt(s.price / referenceMetrics.book_value_per_share)}x` : "—"} />
+              <FinRow label="Return on Equity" value={referenceMetrics?.roe != null ? `${fmt(referenceMetrics.roe)}%` : "—"} />
+              <FinRow label="Net Margin" value={referenceMetrics?.net_margin != null ? `${fmt(referenceMetrics.net_margin)}%` : "—"} />
+              <FinRow label="Shares Issued" value={referenceMetrics?.shares_issued != null ? referenceMetrics.shares_issued.toLocaleString("en-KE") : "—"} />
+              <FinRow label="ISIN" value={referenceMetrics?.isin || "—"} />
             </div>
           </div>
 
@@ -567,6 +664,10 @@ const StockDetailPage = () => {
               </div>
             </div>
           )}
+        </TabsContent>
+
+        <TabsContent value="holders">
+          <StockHoldersTab stockId={s.id} />
         </TabsContent>
 
         {/* Historical Data Tab */}
@@ -589,6 +690,15 @@ const StockDetailPage = () => {
                   </button>
                 ))}
               </div>
+            </div>
+
+            <div className="grid gap-2 border-b border-border p-4 sm:grid-cols-2">
+              <label className="text-xs font-medium text-muted-foreground">Start date
+                <input type="date" value={customStart} max={customEnd || undefined} onChange={(event) => setCustomStart(event.target.value)} className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground" />
+              </label>
+              <label className="text-xs font-medium text-muted-foreground">End date
+                <input type="date" value={customEnd} min={customStart || undefined} onChange={(event) => setCustomEnd(event.target.value)} className="mt-1 block w-full rounded-lg border border-border bg-background px-3 py-2 text-sm text-foreground" />
+              </label>
             </div>
 
             {historyLoading ? (
@@ -822,7 +932,200 @@ const StockNewsTab = ({ stockId, symbol, name }: { stockId: string; symbol: stri
   );
 };
 
+const formatBillions = (value: number | null) => value == null ? "—" : `KSh ${(value / 1_000_000_000).toFixed(2)}B`;
+
+const FinancialHistoryTables = ({ periods }: { periods: FinancialPeriod[] }) => (
+  <section className="space-y-4">
+    <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <h3 className="text-sm font-semibold text-foreground">Income statement history</h3>
+        <span className="text-xs text-muted-foreground">KES · annual results</span>
+      </div>
+      <FinancialTable periods={periods} rows={[
+        ["Revenue", (p) => formatBillions(p.revenue)],
+        ["Operating expense", (p) => formatBillions(p.operating_expense)],
+        ["Net income", (p) => formatBillions(p.net_income)],
+        ["EPS", (p) => p.eps == null ? "—" : `KSh ${fmt(p.eps)}`],
+        ["Net margin", (p) => p.net_margin == null ? "—" : `${fmt(p.net_margin)}%`],
+        ["Operating cash flow", (p) => formatBillions(p.operating_cash_flow)],
+      ]} />
+    </div>
+    <div className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
+      <h3 className="mb-4 text-sm font-semibold text-foreground">Balance sheet history</h3>
+      <FinancialTable periods={periods} rows={[
+        ["Total assets", (p) => formatBillions(p.total_assets)],
+        ["Total liabilities", (p) => formatBillions(p.total_liabilities)],
+        ["Total equity", (p) => formatBillions(p.total_equity)],
+      ]} />
+    </div>
+  </section>
+);
+
+const FinancialTable = ({ periods, rows }: { periods: FinancialPeriod[]; rows: [string, (period: FinancialPeriod) => string][] }) => (
+  <div className="overflow-x-auto">
+    <table className="min-w-[680px] w-full text-sm">
+      <thead className="border-b border-border text-xs text-muted-foreground">
+        <tr><th className="px-2 py-2 text-left font-medium">Metric</th>{periods.map((period) => <th key={period.id} className="px-2 py-2 text-right font-medium">{period.period_label}</th>)}</tr>
+      </thead>
+      <tbody>
+        {rows.map(([label, render]) => <tr key={label} className="border-b border-border/60 last:border-0"><th className="px-2 py-3 text-left font-medium text-muted-foreground">{label}</th>{periods.map((period) => <td key={period.id} className="px-2 py-3 text-right font-semibold tabular-nums">{render(period)}</td>)}</tr>)}
+      </tbody>
+    </table>
+  </div>
+);
+
+interface Holder {
+  id: string;
+  reported_as_of: string;
+  holder_rank: number;
+  holder_name: string;
+  shares: number;
+  ownership_percent: number;
+  holding_value: number | null;
+}
+
+const StockHoldersTab = ({ stockId }: { stockId: string }) => {
+  const [holders, setHolders] = useState<Holder[]>([]);
+  const [loading, setLoading] = useState(true);
+  useEffect(() => {
+    let cancelled = false;
+    fetchPublicData<Holder>("stock-holders", { id: stockId, limit: 100 }).then(({ data }) => {
+      if (!cancelled) setHolders(data.map((holder) => ({ ...holder, shares: Number(holder.shares), ownership_percent: Number(holder.ownership_percent), holding_value: holder.holding_value == null ? null : Number(holder.holding_value) })).sort((a, b) => a.holder_rank - b.holder_rank));
+    }).catch((error) => console.error("Failed to load stock holders", error)).finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
+  }, [stockId]);
+  if (loading) return <Skeleton className="h-64 w-full rounded-xl" />;
+  if (!holders.length) return <div className="rounded-xl border border-border bg-card p-8 text-center text-sm text-muted-foreground">No reviewed shareholder snapshot is available for this stock.</div>;
+  const reportDate = new Date(holders[0].reported_as_of).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" });
+  return <section className="rounded-[28px] border border-border bg-card p-5 shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:p-4 md:shadow-none">
+    <div className="mb-4"><h3 className="text-sm font-semibold">Major shareholders</h3><p className="mt-1 text-xs text-muted-foreground">Historical ownership snapshot reported as of {reportDate}; it is not live ownership data.</p></div>
+    <div className="overflow-x-auto"><table className="min-w-[720px] w-full text-sm"><thead className="border-b border-border text-xs text-muted-foreground"><tr><th className="px-2 py-2 text-left">#</th><th className="px-2 py-2 text-left">Shareholder</th><th className="px-2 py-2 text-right">Shares</th><th className="px-2 py-2 text-right">Ownership</th><th className="px-2 py-2 text-right">Holding value</th></tr></thead><tbody>{holders.map((holder) => <tr key={holder.id} className="border-b border-border/60 last:border-0"><td className="px-2 py-3 text-muted-foreground">{holder.holder_rank}</td><td className="px-2 py-3 font-medium">{holder.holder_name}</td><td className="px-2 py-3 text-right tabular-nums">{holder.shares.toLocaleString("en-KE")}</td><td className="px-2 py-3 text-right tabular-nums">{fmt(holder.ownership_percent)}%</td><td className="px-2 py-3 text-right font-semibold tabular-nums">{formatBillions(holder.holding_value)}</td></tr>)}</tbody></table></div>
+  </section>;
+};
+
+const FinancialSummary = ({
+  stock,
+  latestPeriod,
+  referenceMetrics,
+  priceToBook,
+}: {
+  stock: Stock;
+  latestPeriod: FinancialPeriod | null;
+  referenceMetrics: ReferenceMetrics | null;
+  priceToBook: number | null;
+}) => {
+  const hasReviewedStatement = Boolean(latestPeriod);
+  const hasReferenceMetrics = Boolean(referenceMetrics);
+  if (!hasReviewedStatement && !hasReferenceMetrics) {
+    return (
+      <section className="rounded-[18px] border border-border bg-card p-4 shadow-[0_6px_18px_hsl(var(--foreground)/0.05)] md:rounded-xl md:p-5 md:shadow-none">
+        <div className="flex items-center justify-between gap-4">
+          <div><h2 className="text-base font-bold text-foreground md:text-lg">Financial Snapshot</h2><p className="mt-1 text-sm text-muted-foreground">A quick valuation view based on currently available market data.</p></div>
+          <Badge variant="secondary" className="shrink-0">Market data</Badge>
+        </div>
+        <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+          <MiniStat label="Market Cap" value={fmtCap(stock.market_cap)} />
+          <MiniStat label="P/E Ratio" value={stock.pe_ratio == null ? "—" : `${fmt(stock.pe_ratio)}x`} />
+          <MiniStat label="Dividend Yield" value={stock.dividend_yield == null ? "—" : `${fmt(stock.dividend_yield)}%`} />
+          <MiniStat label="52W Position" value={stock.year_high ? `${fmt((stock.price / stock.year_high) * 100, 1)}%` : "—"} />
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="rounded-[18px] border border-border bg-card p-4 shadow-[0_6px_18px_hsl(var(--foreground)/0.05)] md:rounded-xl md:p-5 md:shadow-none">
+      <div className="flex flex-wrap items-start justify-between gap-3">
+        <div><h2 className="text-base font-bold text-foreground md:text-lg">Financial Snapshot</h2><p className="mt-1 text-sm text-muted-foreground">Latest reviewed company results alongside current market valuation.</p></div>
+        {latestPeriod && <Badge variant="secondary">{latestPeriod.period_label}</Badge>}
+      </div>
+      <div className="mt-4 grid grid-cols-2 gap-2 md:grid-cols-4 md:gap-3">
+        <MiniStat label="Revenue" value={latestPeriod?.revenue == null ? "—" : formatBillions(latestPeriod.revenue)} />
+        <MiniStat label="Net Income" value={latestPeriod?.net_income == null ? "—" : formatBillions(latestPeriod.net_income)} />
+        <MiniStat label="EPS" value={latestPeriod?.eps == null ? "—" : `KSh ${fmt(latestPeriod.eps)}`} />
+        <MiniStat label="Net Margin" value={latestPeriod?.net_margin == null ? (referenceMetrics?.net_margin == null ? "—" : `${fmt(referenceMetrics.net_margin)}%`) : `${fmt(latestPeriod.net_margin)}%`} />
+        <MiniStat label="Book Value/Share" value={referenceMetrics?.book_value_per_share == null ? "—" : `KSh ${fmt(referenceMetrics.book_value_per_share)}`} />
+        <MiniStat label="Price-to-Book" value={priceToBook == null ? "—" : `${fmt(priceToBook)}x`} />
+        <MiniStat label="Return on Equity" value={referenceMetrics?.roe == null ? "—" : `${fmt(referenceMetrics.roe)}%`} />
+        <MiniStat label="Dividend Yield" value={stock.dividend_yield == null ? "—" : `${fmt(stock.dividend_yield)}%`} />
+      </div>
+    </section>
+  );
+};
+
 /* ─── Shared Components ─── */
+export const getOfficialWebsiteLabel = (website: string | null | undefined) => {
+  if (!website) return null;
+  try {
+    const parsed = new URL(website);
+    if (parsed.protocol !== "https:" || !parsed.hostname) return null;
+    return parsed.hostname.replace(/^www\./, "");
+  } catch {
+    return null;
+  }
+};
+
+export const StockAboutCard = ({
+  companyName,
+  symbol,
+  sector,
+  summary,
+  officialWebsite,
+  headquarters,
+  telephone,
+}: {
+  companyName: string;
+  symbol: string;
+  sector: string;
+  summary?: string | null;
+  officialWebsite?: string | null;
+  headquarters?: string | null;
+  telephone?: string | null;
+}) => {
+  const websiteLabel = getOfficialWebsiteLabel(officialWebsite);
+  if (!summary || !websiteLabel || !officialWebsite) return null;
+
+  return (
+    <section className="rounded-[18px] border border-border bg-card p-4 shadow-[0_6px_18px_hsl(var(--foreground)/0.05)] md:rounded-xl md:p-5 md:shadow-none" aria-labelledby="stock-about-heading">
+      <h2 id="stock-about-heading" className="text-base font-bold text-foreground md:text-lg">About {companyName}</h2>
+      <p className="mt-2.5 text-sm leading-6 text-muted-foreground md:max-w-4xl">{summary}</p>
+      <div className="mt-5 border-t border-border pt-4">
+        <h3 className="text-sm font-semibold text-foreground">Company details</h3>
+        <dl className="mt-2 divide-y divide-border">
+          <CompanyDetailRow label="Company name">{companyName}</CompanyDetailRow>
+          <CompanyDetailRow label="Ticker">{symbol}</CompanyDetailRow>
+          <CompanyDetailRow label="Official website">
+            <a
+              href={officialWebsite}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center justify-end gap-1.5 break-all text-primary transition-colors hover:text-primary/80 hover:underline"
+            >
+              {websiteLabel}<ExternalLink className="h-3.5 w-3.5 shrink-0" aria-hidden="true" />
+            </a>
+          </CompanyDetailRow>
+          {headquarters && <CompanyDetailRow label="Head office">{headquarters}</CompanyDetailRow>}
+          {telephone && (
+            <CompanyDetailRow label="Phone">
+              <a href={`tel:${telephone.replace(/[^+\d]/g, "")}`} className="text-primary transition-colors hover:text-primary/80 hover:underline">
+                {telephone}
+              </a>
+            </CompanyDetailRow>
+          )}
+          <CompanyDetailRow label="Sector">{sector}</CompanyDetailRow>
+        </dl>
+      </div>
+    </section>
+  );
+};
+
+const CompanyDetailRow = ({ label, children }: { label: string; children: React.ReactNode }) => (
+  <div className="grid grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)] items-start gap-4 py-3 text-sm leading-5 md:grid-cols-[minmax(0,0.75fr)_minmax(0,1.25fr)]">
+    <dt className="font-medium text-muted-foreground">{label}</dt>
+    <dd className="min-w-0 text-right font-semibold text-foreground">{children}</dd>
+  </div>
+);
+
 const StatCard = ({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) => (
   <div className="flex min-h-[72px] items-center gap-2.5 rounded-[16px] border border-border bg-card p-3 shadow-[0_5px_16px_hsl(var(--foreground)/0.05)] md:min-h-0 md:gap-3 md:rounded-xl md:p-3.5 md:shadow-none">
     <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 md:rounded-lg md:bg-muted/60">{icon}</div>

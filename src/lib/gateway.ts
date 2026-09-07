@@ -19,6 +19,10 @@ export type GatewayResource =
   | "commodity-history"
   | "stock-disclosures"
   | "stock-actions"
+  | "stock-financials"
+  | "stock-reference-metrics"
+  | "stock-holders"
+  | "stock-filings"
   | "fund-snapshots"
   | "stock-history-bulk"
   | "stock-history-monthly-bulk";

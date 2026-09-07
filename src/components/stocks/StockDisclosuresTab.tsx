@@ -28,6 +28,15 @@ interface CorporateAction {
   source_url: string;
 }
 
+interface Filing {
+  id: string;
+  fiscal_year: number;
+  filing_type: string;
+  title: string;
+  published_at: string | null;
+  official_url: string | null;
+}
+
 const label = (value: string) => value.replaceAll("_", " ").replace(/\b\w/g, (letter) => letter.toUpperCase());
 const date = (value: string | null) => value ? new Date(value).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : "—";
 
@@ -35,6 +44,7 @@ export function StockDisclosuresTab({ stockId }: { stockId: string }) {
   const [searchParams] = useSearchParams();
   const [disclosures, setDisclosures] = useState<Disclosure[]>([]);
   const [actions, setActions] = useState<CorporateAction[]>([]);
+  const [filings, setFilings] = useState<Filing[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -42,10 +52,12 @@ export function StockDisclosuresTab({ stockId }: { stockId: string }) {
     Promise.all([
       fetchPublicData<Disclosure>("stock-disclosures", { id: stockId, limit: 50 }),
       fetchPublicData<CorporateAction>("stock-actions", { id: stockId, limit: 50 }),
-    ]).then(([disclosureResponse, actionResponse]) => {
+      fetchPublicData<Filing>("stock-filings", { id: stockId, limit: 100 }),
+    ]).then(([disclosureResponse, actionResponse, filingResponse]) => {
       if (!cancelled) {
         setDisclosures(disclosureResponse.data);
         setActions(actionResponse.data);
+        setFilings(filingResponse.data);
       }
     }).catch((error) => console.error("Failed to load stock disclosures", error))
       .finally(() => { if (!cancelled) setLoading(false); });
@@ -66,13 +78,13 @@ export function StockDisclosuresTab({ stockId }: { stockId: string }) {
     source_domain: "safaricom.co.ke",
   }] : disclosures;
 
-  if (!visibleDisclosures.length && !actions.length) {
+  if (!visibleDisclosures.length && !actions.length && !filings.length) {
     return (
       <div className="rounded-[28px] border border-border bg-card px-5 py-14 text-center shadow-[0_10px_28px_hsl(var(--foreground)/0.07)] md:rounded-xl md:shadow-none">
         <FileText className="mx-auto mb-3 h-7 w-7 text-muted-foreground" />
         <h3 className="text-sm font-semibold">No issuer disclosures yet</h3>
         <p className="mx-auto mt-1 max-w-md text-xs leading-relaxed text-muted-foreground">
-          Verified filings and corporate actions from this company’s official investor-relations sources will appear here.
+          Reviewed filing metadata and corporate actions will appear here when available.
         </p>
       </div>
     );
@@ -80,6 +92,7 @@ export function StockDisclosuresTab({ stockId }: { stockId: string }) {
 
   return (
     <div className="space-y-6">
+      <h2 className="text-base font-semibold text-foreground">Filings &amp; actions</h2>
       {actions.length > 0 && (
         <section>
           <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><CalendarDays className="h-4 w-4 text-primary" /> Corporate actions</h3>
@@ -108,6 +121,21 @@ export function StockDisclosuresTab({ stockId }: { stockId: string }) {
                 <h4 className="mt-3 text-sm font-semibold leading-snug">{item.title}</h4>
                 {item.summary && <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{item.summary}</p>}
                 <a href={item.source_url} target="_blank" rel="noopener noreferrer" className="mt-3 inline-flex items-center gap-1.5 text-xs font-semibold text-primary hover:underline">Open original on {item.source_domain}<ExternalLink className="h-3.5 w-3.5" /></a>
+              </article>
+            ))}
+          </div>
+        </section>
+      )}
+
+      {filings.length > 0 && (
+        <section>
+          <h3 className="mb-3 flex items-center gap-2 text-sm font-semibold"><FileText className="h-4 w-4 text-primary" /> Reviewed report archive</h3>
+          <div className="space-y-2">
+            {filings.map((filing) => (
+              <article key={filing.id} className="flex flex-wrap items-center gap-x-3 gap-y-1 rounded-xl border border-border bg-card p-4">
+                <span className="text-xs font-semibold text-primary">{filing.fiscal_year}</span>
+                <div className="min-w-[12rem] flex-1"><p className="text-sm font-semibold">{filing.title}</p><p className="mt-0.5 text-xs text-muted-foreground">{label(filing.filing_type)} · {date(filing.published_at)}</p></div>
+                {filing.official_url ? <a href={filing.official_url} target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-xs font-semibold text-primary hover:underline">Open official report <ExternalLink className="h-3.5 w-3.5" /></a> : <span className="text-xs text-muted-foreground">Official download unavailable</span>}
               </article>
             ))}
           </div>
