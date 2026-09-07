@@ -6,6 +6,8 @@ import { toast } from "sonner";
 import { portfolioStorage } from "@/lib/portfolioStorage";
 import { portfolioEventsStorage } from "@/lib/portfolioEventsStorage";
 import { trackEvent } from "@/lib/analytics";
+import { getFundManagerLogoUrl } from "@/lib/fundBranding";
+import { getStockLogoUrl } from "@/lib/stockBranding";
 
 export type AssetType = "mmf" | "stock" | "fx" | "fixed_income" | "commodity";
 
@@ -54,8 +56,10 @@ export interface LiveAsset {
   ticker?: string;
   price: number;
   yld?: number;
+  changePercent?: number;
   id?: string;
   fundType?: string;
+  logoUrl?: string;
 }
 
 /** MMF daily compounding: Value = Principal × (1 + Rate/365)^Days */
@@ -93,6 +97,11 @@ export const ASSET_TYPE_LABELS: Record<AssetType, string> = {
   commodity: "Commodities",
 };
 
+const percentChange = (current: number | null, previous: number | null) =>
+  current != null && previous != null && previous !== 0
+    ? ((Number(current) - Number(previous)) / Number(previous)) * 100
+    : undefined;
+
 /** Fetch live asset lists from DB */
 export const useLiveAssets = (enabled = true) => {
   return useQuery({
@@ -100,10 +109,10 @@ export const useLiveAssets = (enabled = true) => {
     enabled,
     queryFn: async () => {
       const [fundsRes, stocksRes, commoditiesRes, fxRes] = await Promise.all([
-        supabase.from("funds_public").select("id, name, slug, annual_yield, daily_yield, fund_type").order("name"),
-        supabase.from("stocks_public").select("id, name, symbol, price").order("name"),
-        supabase.from("commodities_public").select("id, name, symbol, price, unit").order("name"),
-        supabase.from("exchange_rates_public").select("id, currency_code, currency_name, rate").order("sort_order"),
+        supabase.from("funds_public").select("id, name, slug, manager, logo_url, annual_yield, daily_yield, fund_type").order("name"),
+        supabase.from("stocks_public").select("id, name, symbol, logo_url, price, previous_price, day_change_percent").order("name"),
+        supabase.from("commodities_public").select("id, name, symbol, price, previous_price, unit").order("name"),
+        supabase.from("exchange_rates_public").select("id, currency_code, currency_name, rate, previous_rate").order("sort_order"),
       ]);
 
       const funds: LiveAsset[] = (fundsRes.data || []).map((f) => ({
@@ -113,19 +122,25 @@ export const useLiveAssets = (enabled = true) => {
         yld: Number(f.annual_yield) || 15,
         id: f.id || undefined,
         fundType: (f as any).fund_type || undefined,
+        logoUrl: getFundManagerLogoUrl((f as any).manager, (f as any).logo_url),
       }));
 
       const stocks: LiveAsset[] = (stocksRes.data || []).map((s) => ({
         name: s.name || "",
         ticker: s.symbol || undefined,
         price: Number(s.price) || 0,
+        changePercent: s.day_change_percent == null
+          ? percentChange(s.price, s.previous_price)
+          : Number(s.day_change_percent),
         id: s.id || undefined,
+        logoUrl: getStockLogoUrl(s.symbol || "", (s as any).logo_url),
       }));
 
       const commodities: LiveAsset[] = (commoditiesRes.data || []).map((c) => ({
         name: `${c.name || ""} (${c.unit || "USD"})`,
         ticker: c.symbol || undefined,
         price: Number(c.price) || 0,
+        changePercent: percentChange(c.price, c.previous_price),
         id: c.id || undefined,
       }));
 
@@ -133,6 +148,7 @@ export const useLiveAssets = (enabled = true) => {
         name: `KES / ${r.currency_code || ""}`,
         ticker: `KES/${r.currency_code || ""}`,
         price: Number(r.rate) || 0,
+        changePercent: percentChange(r.rate, r.previous_rate),
         id: r.id || undefined,
       }));
 
