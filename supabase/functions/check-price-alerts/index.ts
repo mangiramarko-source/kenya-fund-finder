@@ -50,19 +50,27 @@ Deno.serve(async (request) => {
       if (!quote || !quote.observedAt || typeof price !== "number" || !Number.isFinite(price) || price <= 0) continue;
       let emailAllowed = emailEligibility.get(alert.user_id);
       if (emailAllowed === undefined) {
-        const { data: userResult } = await supabase.auth.admin.getUserById(alert.user_id);
-        const email = userResult.user?.email?.trim().toLowerCase();
-        if (!email) {
+        const [{ data: userResult, error: userError }, { data: preferences, error: preferencesError }] = await Promise.all([
+          supabase.auth.admin.getUserById(alert.user_id),
+          supabase
+            .from("communication_preferences")
+            .select("price_alert_email,price_alert_email_consented_at")
+            .eq("user_id", alert.user_id)
+            .maybeSingle(),
+        ]);
+        const email = userError ? "" : userResult.user?.email?.trim().toLowerCase() ?? "";
+        const hasEmailConsent = !preferencesError && preferences?.price_alert_email === true && Boolean(preferences.price_alert_email_consented_at);
+        if (!email || !hasEmailConsent) {
           emailAllowed = false;
         } else {
-          const { data: suppression } = await supabase
+          const { data: suppression, error: suppressionError } = await supabase
             .from("communication_suppressions")
             .select("id")
             .eq("email_normalized", email)
             .is("lifted_at", null)
             .in("scope", ["all_email", "price_alert"])
             .limit(1);
-          emailAllowed = (suppression?.length ?? 0) === 0;
+          emailAllowed = !suppressionError && (suppression?.length ?? 0) === 0;
         }
         emailEligibility.set(alert.user_id, emailAllowed);
       }

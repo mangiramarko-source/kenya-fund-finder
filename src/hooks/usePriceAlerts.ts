@@ -51,7 +51,6 @@ export type AlertDraft = {
 
 export const buildPriceAlertInsert = (userId: string, alert: AlertDraft) => ({
   user_id: userId,
-  stock_id: alert.asset_type === "stock" ? alert.asset_id : null,
   asset_type: alert.asset_type,
   asset_id: alert.asset_id,
   asset_name: alert.asset_name,

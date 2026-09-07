@@ -181,7 +181,7 @@ function renderPriceAlert(row: OutboxRow, unsubscribeUrl: string): EmailContent 
   const payload = row.payload;
   const name = String(payload.asset_name ?? payload.stock_name ?? "Asset");
   const condition = String(payload.condition ?? "threshold");
-  const unit = String(payload.price_unit ?? "KES");
+  const unit = String(payload.asset_unit ?? payload.price_unit ?? "KES");
   const current = formatNumber(payload.triggered_price);
   const target = formatNumber(payload.target_price);
   const content = `<h1 style="font-size:22px;margin:0 0 12px">Price alert</h1><p style="font-size:15px;line-height:1.6"><strong>${escapeHtml(name)}</strong> is now <strong>${escapeHtml(unit)} ${escapeHtml(current)}</strong>, meeting your ${escapeHtml(condition)} ${escapeHtml(unit)} ${escapeHtml(target)} alert.</p><p style="font-size:12px;color:#778197">Observed ${escapeHtml(payload.observed_at)}</p>`;
