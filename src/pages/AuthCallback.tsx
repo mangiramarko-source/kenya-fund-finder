@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
+import { getCapturedAuthHash } from "@/lib/authFragment";
 import { Loader2 } from "lucide-react";
 
 export default function AuthCallback() {
@@ -9,10 +10,10 @@ export default function AuthCallback() {
 
   useEffect(() => {
     const processAuth = async () => {
-      // Supabase's client should automatically process the hash if detectSessionInUrl is true.
-      // We also do a manual check just in case.
+      // The token fragment is scrubbed from the URL before the Supabase client
+      // loads, so establish the session from the captured fragment here.
       try {
-        const hash = window.location.hash;
+        const hash = getCapturedAuthHash();
         if (hash && hash.includes("access_token=") && hash.includes("refresh_token=")) {
           const params = new URLSearchParams(hash.substring(1));
           const access_token = params.get("access_token");

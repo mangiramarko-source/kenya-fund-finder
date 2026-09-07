@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useState, ReactNode } from "react
 import { supabase, SUPABASE_PROJECT_ID } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 import { identifyUser, resetUser } from "@/lib/analytics";
+import { getCapturedAuthHash } from "@/lib/authFragment";
 
 interface AuthContextType {
   user: User | null;
@@ -33,8 +34,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   useEffect(() => {
     const initializeAuth = async () => {
-      // 1. Manually check for hash from OAuth implicit flow if present
-      const hash = window.location.hash;
+      // 1. Manually check for the OAuth implicit-flow hash. It is captured and
+      // removed from the URL at startup, so read it from the captured value.
+      const hash = getCapturedAuthHash();
       if (hash && hash.includes("access_token=") && hash.includes("refresh_token=")) {
         const params = new URLSearchParams(hash.substring(1));
         const access_token = params.get("access_token");

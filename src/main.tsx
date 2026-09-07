@@ -1,3 +1,6 @@
+// Must be the first import: scrubs OAuth token fragments from the URL before
+// the Supabase client, analytics, or session recording read the address.
+import "./lib/scrubAuthUrlOnLoad";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
