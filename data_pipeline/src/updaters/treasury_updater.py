@@ -19,7 +19,7 @@ import re
 import io
 import logging
 import time
-from datetime import datetime, date as date_type, timezone
+from datetime import datetime, date as date_type, timedelta, timezone
 import requests
 import pdfplumber
 
@@ -95,6 +95,54 @@ def extract_pdf_urls(html_content: str) -> list[str]:
         if m not in urls:
             urls.append(m)
     return urls
+
+
+def issue_date_from_result_url(source_url: str) -> date_type | None:
+    """Return the CBK result publication's settlement date encoded in its URL."""
+    import urllib.parse
+
+    filename = urllib.parse.unquote(source_url.split("/")[-1])
+    match = re.search(
+        r"DATED[\s_-]+(\d{1,2})[\s_/-]+(\d{1,2})[\s_/-]+(\d{4})",
+        filename,
+        re.IGNORECASE,
+    )
+    if not match:
+        return None
+    try:
+        return date_type(int(match.group(3)), int(match.group(2)), int(match.group(1)))
+    except ValueError:
+        return None
+
+
+def select_unprocessed_result_urls(pdf_urls: list[str], latest_issue_date: str | None) -> list[str]:
+    """Select and order result PDFs newer than the latest stored settlement date.
+
+    CBK exposes the same weekly result through several historical directories.
+    Deduplicate on the issue-number tuple so each auction is published once.
+    """
+    latest = date_type.fromisoformat(latest_issue_date) if latest_issue_date else None
+    selected: list[tuple[date_type, str]] = []
+    seen_issues: set[str] = set()
+
+    for url in pdf_urls:
+        issue_date = issue_date_from_result_url(url)
+        if not issue_date or (latest and issue_date <= latest):
+            continue
+        import urllib.parse
+        filename = urllib.parse.unquote(url.rsplit("/", 1)[-1])
+        issue_key = re.search(r"RESULTS?\s+(\d+-091\s+\d+-182\s+\d+-364)", filename, re.IGNORECASE)
+        # The CBK index contains Treasury-bond and switch-auction PDFs too.
+        # A T-Bill result must name all three standard bill tenors.
+        if not issue_key:
+            continue
+        key = issue_key.group(1)
+        if key in seen_issues:
+            continue
+        seen_issues.add(key)
+        selected.append((issue_date, url))
+
+    return [url for _, url in sorted(selected, key=lambda item: item[0])]
 
 
 def check_db_latest_tbill() -> dict | None:
@@ -310,6 +358,10 @@ def process_and_upsert_pdf(
             "issue_number":          issue_nums.get(tenor, f"UNKNOWN/{tenor}"),
             "auction_date":          auction_date,
             "issue_date":            issue_date,
+            # CBK bills redeem at face value after their stated tenor.  The
+            # live schema requires this field; omitting it made every new
+            # batch fail with a NOT NULL violation before it could publish.
+            "maturity_date":         (date_type.fromisoformat(issue_date) + timedelta(days=tenor)).isoformat(),
             "amount_offered":        ao,
             "bids_received":         br,
             "amount_accepted":       aa,
@@ -423,6 +475,10 @@ def process_and_upsert_pdf(
                 json=records_to_insert,
                 timeout=15,
             )
+            if not r.ok:
+                result["errors"].append(
+                    f"BULK_UPSERT_ERROR: HTTP {r.status_code}: {r.text[:1000]}"
+                )
             r.raise_for_status()
             result["writes"] = len(records_to_insert)
             logger.info(f"Successfully bulk inserted {result['writes']} new records.")
@@ -464,7 +520,7 @@ def run_updater(trigger_type: str = "SCHEDULED",
         db_latest = check_db_latest_tbill()
         logger.info(f"Latest stored T-Bill auction in DB: {db_latest}")
 
-        # ── Discover PDFs ──────────────────────────────────────────────────────
+        # ── Discover every missed result PDF, not only the current first link ──
         pdf_urls = []
         if mock_pdf_bytes is None:
             for page_url in CBK_PAGES_TO_CHECK:
@@ -475,42 +531,59 @@ def run_updater(trigger_type: str = "SCHEDULED",
             logger.info(f"Discovered {len(pdf_urls)} T-Bill result PDFs on CBK")
             if not pdf_urls:
                 finalize_update_run(run_id, "SUCCESS_NO_CHANGE")
-                return
+                return True
 
-            latest_pdf_url = pdf_urls[0]
-            logger.info(f"Processing: {latest_pdf_url}")
-            r = requests.get(latest_pdf_url, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
-            r.raise_for_status()
-            pdf_bytes = r.content
+            latest_issue_date = db_latest.get("issue_date") if db_latest else None
+            candidate_urls = select_unprocessed_result_urls(pdf_urls, latest_issue_date)
+            logger.info(f"Found {len(candidate_urls)} unprocessed T-Bill result PDFs")
+            if not candidate_urls:
+                finalize_update_run(run_id, "SUCCESS_NO_CHANGE")
+                return True
         else:
-            pdf_bytes = mock_pdf_bytes
-            latest_pdf_url = "mock://test"
+            candidate_urls = ["mock://test"]
 
-        # ── Process PDF ────────────────────────────────────────────────────────
-        result = process_and_upsert_pdf(
-            pdf_bytes, latest_pdf_url, scraper, dry_run=dry_run
+        summaries = []
+        for source_url in candidate_urls:
+            logger.info(f"Processing: {source_url}")
+            if mock_pdf_bytes is None:
+                r = requests.get(source_url, timeout=20, headers={"User-Agent": "Mozilla/5.0"})
+                r.raise_for_status()
+                pdf_bytes = r.content
+            else:
+                pdf_bytes = mock_pdf_bytes
+
+            result = process_and_upsert_pdf(pdf_bytes, source_url, scraper, dry_run=dry_run)
+            summaries.append(result)
+            if result["status"] not in ("SUCCESS", "DRY_RUN_OK"):
+                status = "DATABASE_FAILED" if any(
+                    error.startswith("BULK_UPSERT_ERROR") for error in result["errors"]
+                ) else "VALIDATION_FAILED"
+                finalize_update_run(
+                    run_id,
+                    status,
+                    error_code=result["status"],
+                    error_message="; ".join(result["errors"]),
+                    records_detected=result.get("records_detected", 0),
+                )
+                logger.error(f"Treasury update failed: {result}")
+                return False
+
+        detected = sum(result.get("records_detected", 0) for result in summaries)
+        inserted = sum(result.get("writes", 0) for result in summaries)
+        finalize_update_run(
+            run_id,
+            "SUCCESS_NEW_DATA" if inserted else "SUCCESS_NO_CHANGE",
+            records_detected=detected,
+            records_inserted=inserted,
         )
-
-        if result["status"] in ("PARSER_FAILED", "PARSER_INCOMPLETE",
-                                 "DATE_EXTRACTION_FAILED"):
-            finalize_update_run(
-                run_id, result["status"],
-                error_code=result["status"],
-                error_message="; ".join(result["errors"]),
-            )
-        else:
-            finalize_update_run(
-                run_id, "SUCCESS_NEW_DATA",
-                records_detected=result.get("records_detected", 0),
-                records_inserted=result.get("writes", 0),
-            )
-
-        logger.info(f"Treasury update complete: {result}")
+        logger.info(f"Treasury update complete: {summaries}")
+        return True
 
     except Exception as e:
         logger.error(f"Unexpected failure: {e}")
         finalize_update_run(run_id, "FETCH_FAILED",
                             error_code="FETCH_ERR", error_message=str(e))
+        return False
 
 
 if __name__ == "__main__":
@@ -521,4 +594,5 @@ if __name__ == "__main__":
                     help="Actually write to production (default: dry-run)")
     ap.add_argument("--trigger", default="MANUAL")
     args = ap.parse_args()
-    run_updater(trigger_type=args.trigger, dry_run=not args.live)
+    if not run_updater(trigger_type=args.trigger, dry_run=not args.live):
+        sys.exit(1)
