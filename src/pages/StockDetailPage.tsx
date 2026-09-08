@@ -24,6 +24,7 @@ import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { StockDisclosuresTab } from "@/components/stocks/StockDisclosuresTab";
+import KoraIllustration from "@/components/kora/KoraIllustration";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { isIndexableNewsArticle } from "@/lib/seoNewsEligibility";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -556,6 +557,12 @@ const StockDetailPage = () => {
             priceToBook={priceToBook}
           />
 
+          <KoraFinanceNote
+            hasPe={s.pe_ratio != null}
+            hasYield={s.dividend_yield != null}
+            hasRange={yearRange}
+          />
+
           {/* 52 Week Range */}
           {yearRange && (
             <div className="rounded-[18px] border border-border bg-card p-4 shadow-[0_6px_18px_hsl(var(--foreground)/0.05)] md:rounded-xl md:shadow-none">
@@ -573,6 +580,14 @@ const StockDetailPage = () => {
               </div>
               <p className="mt-3 text-center text-xs text-muted-foreground md:mt-2">Current: KSh {fmt(s.price)} · <strong className="text-foreground">{fmt(((s.price - s.year_low!) / s.year_low!) * 100, 1)}%</strong> above the 52-week low</p>
             </div>
+          )}
+
+          {yearRange && (
+            <aside className="relative overflow-hidden rounded-[18px] border border-border bg-card px-4 py-3 pr-24 md:rounded-xl md:pr-32" aria-label="52-week range context">
+              <p className="text-sm font-semibold text-foreground">Kora’s range note</p>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">At KSh {fmt(s.price)}, {s.symbol} is {fmt(((s.price - s.year_low!) / s.year_low!) * 100, 1)}% above its 52-week low. This is price context, not a prediction.</p>
+              <KoraIllustration pose="insight" className="absolute bottom-0 right-0 h-24 w-28 md:h-28 md:w-36" />
+            </aside>
           )}
 
           <StockAboutCard
@@ -1050,6 +1065,17 @@ const FinancialSummary = ({
         <MiniStat label="Dividend Yield" value={stock.dividend_yield == null ? "—" : `${fmt(stock.dividend_yield)}%`} />
       </div>
     </section>
+  );
+};
+
+const KoraFinanceNote = ({ hasPe, hasYield, hasRange }: { hasPe: boolean; hasYield: boolean; hasRange: boolean }) => {
+  const topics = [hasPe && "P/E compares the share price with earnings.", hasYield && "Dividend yield puts expected cash distributions in context.", hasRange && "The 52-week range shows where today’s price sits within the past year."].filter(Boolean);
+  if (!topics.length) return null;
+  return (
+    <aside className="flex items-center gap-3 rounded-[18px] border border-border bg-muted/25 px-4 py-3 md:rounded-xl" aria-label="How to read these stock metrics">
+      <KoraIllustration pose="explain" className="h-16 w-16 shrink-0 md:h-20 md:w-20" />
+      <div><p className="text-sm font-semibold text-foreground">How to read this</p><p className="mt-1 text-xs leading-relaxed text-muted-foreground">{topics.join(" ")}</p></div>
+    </aside>
   );
 };
 

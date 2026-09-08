@@ -122,6 +122,9 @@ describe("isWebsiteLookupPrompt", () => {
   it("detects stock price lookup prompts", () => {
     expect(isWebsiteLookupPrompt("What is SCOM's current price?")).toBe(true);
     expect(isWebsiteLookupPrompt("What is Safaricom's current price?")).toBe(true);
+    expect(isWebsiteLookupPrompt("Tell me how Safaricom stocks are doing")).toBe(true);
+    expect(isWebsiteLookupPrompt("How are Safaricom shares performing?")).toBe(true);
+    expect(isWebsiteLookupPrompt("Help me understand Safaricom stocks")).toBe(true);
   });
 
   it("detects fund yield lookup prompts", () => {
@@ -264,6 +267,38 @@ describe("resolveWebsiteLookup", () => {
     });
 
     const result = await resolveWebsiteLookup("What is Safaricom's current price?", ctx);
+    expect(result?.entityType).toBe("stock");
+    expect(result?.entitySymbol).toBe("SCOM");
+  });
+
+  it("answers conversational stock-performance questions", async () => {
+    vi.mocked(fetchPublicData).mockResolvedValue({
+      resource: "stocks",
+      count: 1,
+      limit: 1,
+      offset: 0,
+      data: [{ symbol: "SCOM", name: "Safaricom", price: 18.5, day_change_percent: 1.2 }],
+    });
+
+    const result = await resolveWebsiteLookup("Tell me how Safaricom stocks are doing", ctx);
+    expect(result?.entityType).toBe("stock");
+    expect(result?.entitySymbol).toBe("SCOM");
+    expect(result?.fields).toEqual(expect.arrayContaining([
+      expect.objectContaining({ label: "Latest price" }),
+      expect.objectContaining({ label: "Day change" }),
+    ]));
+  });
+
+  it("answers a request to understand a named stock", async () => {
+    vi.mocked(fetchPublicData).mockResolvedValue({
+      resource: "stocks",
+      count: 1,
+      limit: 1,
+      offset: 0,
+      data: [{ symbol: "SCOM", name: "Safaricom", price: 18.5, day_change_percent: 1.2 }],
+    });
+
+    const result = await resolveWebsiteLookup("Help me understand Safaricom stocks", ctx);
     expect(result?.entityType).toBe("stock");
     expect(result?.entitySymbol).toBe("SCOM");
   });

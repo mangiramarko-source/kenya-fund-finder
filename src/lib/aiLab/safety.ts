@@ -114,6 +114,11 @@ export const ADVICE_INTENT_PATTERNS: RegExp[] = [
   /\bmake me the most\b/i,
   /\btop mmf\b/i,
   /\bwhich (is|one is)?\s*(better|best|safer|higher)\b/i,
+  /\bwhich\s+(?:one\s+)?is\s+the\s+(?:best|better|safer|safest)\b/i,
+  /\bwhich\s+(?:option|investment|asset)\b.*\b(?:better|best|safer|safest)\b/i,
+  /\bpick\s+(?:a|the|me)\b.*\b(?:fund|stock|share|mmf|investment)\b/i,
+  /\bwill\b.*\b(?:rise|fall|go\s+up|go\s+down)\b/i,
+  /\bguaranteed\b.*\b(?:return|profit|investment|income)\b/i,
 ];
 
 export interface RefusalPayload {

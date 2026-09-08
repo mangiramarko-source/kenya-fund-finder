@@ -32,6 +32,10 @@ const SCENARIO_BLOCKERS: RegExp[] = [
 
 const LOOKUP_SIGNALS: RegExp[] = [
   /\b(what is|what's|show me|tell me about|lookup|data for|details for)\b/i,
+  // Conversational performance questions, e.g. "How are Safaricom shares doing?"
+  // are data lookups too — they should not require the user to know the ticker.
+  /\b(?:how (?:is|are|has|have)|tell me how)\b.*\b(?:doing|performing|performed|trading)\b/i,
+  /\bhelp me (?:understand|learn about)\b/i,
   /\b(current|latest|listed|shown)\b.*\b(price|yield|rate|value)\b/i,
   /\b(price|yield|rate|trading at|minimum investment|management fee|withdrawal time|pe ratio|dividend yield|market cap|volume|sector)\b/i,
   /\bhow much is .+ trading\b/i,
@@ -69,6 +73,7 @@ const STOCK_LOOKUP_SELECT = [
   "dividend_yield",
   "year_high",
   "year_low",
+  "company_summary",
   "updated_at",
 ] as const;
 
@@ -146,6 +151,8 @@ const BROAD_FILTER_LOOKUP_RE =
 const YIELD_THRESHOLD_RE =
   /\b(mmf|mmfs|money market|fund|funds)\b.*\b(above|below|over|under)\s+\d+\s*%/i;
 const SHOW_MMFS_ABOVE_RE = /\bshow\s+mmfs?\s+above\b/i;
+const MMF_YIELD_RANKING_RE =
+  /\b(?:which|show|list|order|rank)?\s*(?:money market funds?|mmfs?)?.*\b(?:highest|largest)\s+(?:published\s+)?(?:annual\s+)?yield\b|\b(?:money market funds?|mmfs?)\s+by\s+(?:published\s+)?yield\b/i;
 
 export type MmfYieldComparison = "above" | "below" | "equal";
 
@@ -183,6 +190,11 @@ export function isMmfYieldFilterPrompt(prompt: string): boolean {
   return parseMmfYieldFilterPrompt(prompt) != null;
 }
 
+export function isMmfYieldRankingPrompt(prompt: string): boolean {
+  if (detectAdviceIntent(prompt)) return false;
+  return MMF_YIELD_RANKING_RE.test(prompt) && MMF_CONTEXT_RE.test(prompt);
+}
+
 function isBroadFilterLookupPrompt(prompt: string): boolean {
   return (
     BROAD_FILTER_LOOKUP_RE.test(prompt) ||
@@ -192,6 +204,7 @@ function isBroadFilterLookupPrompt(prompt: string): boolean {
 }
 
 export function isUnsupportedFilterLookupPrompt(prompt: string): boolean {
+  if (isMmfYieldRankingPrompt(prompt)) return false;
   if (isMmfYieldFilterPrompt(prompt)) return false;
   if (isBroadFilterLookupPrompt(prompt)) return true;
   if (
@@ -242,6 +255,7 @@ interface StockRow {
   dividend_yield?: number | string | null;
   year_high?: number | string | null;
   year_low?: number | string | null;
+  company_summary?: string | null;
   updated_at?: string | null;
 }
 
@@ -593,6 +607,7 @@ export function isWebsiteLookupPrompt(prompt: string): boolean {
   if (EXPLAIN_RE.test(prompt)) return false;
   if (hasScenarioSignals(prompt)) return false;
   if (hasAmountScenario(prompt)) return false;
+  if (isMmfYieldRankingPrompt(prompt)) return true;
   if (FX_PAIR_RE.test(prompt)) return true;
   const signalMatch = LOOKUP_SIGNALS.some((re) => re.test(prompt));
   const namedFundMatch = isNamedFundLookupPrompt(prompt);
@@ -736,6 +751,7 @@ function buildStockLookup(row: StockRow): WebsiteLookupScenarioResult | null {
   const fields: Array<{ label: string; value: string }> = [];
   addField(fields, "Latest price", fmtKES(num(row.price)) ?? undefined);
   addField(fields, "Day change", fmtPct(num(row.day_change_percent)) ?? undefined);
+  addField(fields, "About", row.company_summary ?? undefined);
   addField(fields, "Sector", row.sector ?? undefined);
   addField(fields, "Volume", fmtNum(num(row.volume)) ?? undefined);
   addField(fields, "Market cap", fmtKES(num(row.market_cap)) ?? undefined);
@@ -743,6 +759,12 @@ function buildStockLookup(row: StockRow): WebsiteLookupScenarioResult | null {
   addField(fields, "Dividend yield", fmtPct(num(row.dividend_yield)) ?? undefined);
   addField(fields, "52-week high", fmtKES(num(row.year_high)) ?? undefined);
   addField(fields, "52-week low", fmtKES(num(row.year_low)) ?? undefined);
+  if (row.updated_at) {
+    const updated = new Date(row.updated_at);
+    if (!Number.isNaN(updated.getTime())) {
+      addField(fields, "Data updated", updated.toLocaleString("en-KE", { dateStyle: "medium", timeStyle: "short" }));
+    }
+  }
   return buildResult(
     "stock",
     row.name,
@@ -750,6 +772,28 @@ function buildStockLookup(row: StockRow): WebsiteLookupScenarioResult | null {
     fields,
     `/stocks/${row.symbol}`,
   );
+}
+
+export async function resolveStockPerformanceLookup(
+  query: string,
+  ctx: MarketContext,
+  days: 7 | 30 | 90 | 365,
+): Promise<WebsiteLookupScenarioResult | null> {
+  const asset = findAssetInPrompt(query, ctx.assets.filter((candidate) => candidate.kind === "stock"));
+  if (!asset) return null;
+  const row = await fetchStockBySymbol(asset.symbol);
+  const result = row ? buildStockLookup(row) : buildResult(
+    "stock",
+    asset.name,
+    asset.symbol,
+    [
+      { label: "Latest price", value: fmtKES(asset.value) ?? String(asset.value) },
+      ...(asset.changePct == null ? [] : [{ label: "Day change", value: fmtPct(asset.changePct)! }]),
+    ],
+    `/stocks/${asset.symbol}`,
+  );
+  if (!result) return null;
+  return { ...result, historyAsset: asset, requestedLookbackDays: days };
 }
 
 function buildFxLookup(
@@ -912,6 +956,30 @@ async function resolveMmfYieldFilter(prompt: string): Promise<WebsiteLookupScena
     lookupMode: "mmf-yield-filter",
     totalMatches,
     shownCount,
+  };
+}
+
+async function resolveMmfYieldRanking(): Promise<WebsiteLookupScenarioResult> {
+  const funds = (await fetchAllFunds())
+    .filter((fund) => fund.name && isMoneyMarketFund(fund) && num(fund.annual_yield) != null)
+    .sort((a, b) => (num(b.annual_yield) ?? 0) - (num(a.annual_yield) ?? 0));
+  const shown = funds.slice(0, MMF_FILTER_LIMIT);
+  if (!shown.length) return buildNotFoundResult("fund", "money market fund yields");
+  return {
+    kind: "website-lookup",
+    summary: "Money market funds ordered by latest published annual yield.",
+    entityType: "fund",
+    entityName: "MMFs by published annual yield",
+    fields: shown.map((fund) => ({
+      label: fund.name!,
+      value: `${fmtPct(num(fund.annual_yield))} published annual yield · ${fundTypeLabel(fund)}`,
+    })),
+    sourceNote: "Ordered from KenyaFundFinder public listings via the data gateway.",
+    pagePath: "/compare",
+    disclaimer: STANDARD_DISCLAIMER,
+    lookupMode: "mmf-yield-ranking",
+    totalMatches: funds.length,
+    shownCount: shown.length,
   };
 }
 
@@ -1121,6 +1189,9 @@ export async function resolveWebsiteLookup(
   prompt: string,
   ctx: MarketContext | null,
 ): Promise<WebsiteLookupScenarioResult | null> {
+  if (isMmfYieldRankingPrompt(prompt)) {
+    return resolveMmfYieldRanking();
+  }
   if (isMmfYieldFilterPrompt(prompt)) {
     return resolveMmfYieldFilter(prompt);
   }
@@ -1159,7 +1230,7 @@ export async function resolveWebsiteLookup(
   const stockHit = findAssetInPrompt(prompt, stocks);
   const stockIntent = /\b(stock|share|price|trading)\b/i.test(prompt);
 
-  if (hasExplicitFundKeyword || (bareBrand && !stockHit)) {
+  if ((hasExplicitFundKeyword && !(stockHit && stockIntent)) || (bareBrand && !stockHit)) {
     return resolveFundLookup(prompt);
   }
 

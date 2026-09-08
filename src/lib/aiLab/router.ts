@@ -10,6 +10,7 @@ import {
   calculateFxConversionScenario,
   calculateFxMoveScenario,
   calculateCommodityMoveScenario,
+  calculateCommodityAmountScenario,
   calculateNewsSummaryScenario,
   calculatePortfolioSplitScenario,
   compareAssets,
@@ -54,12 +55,6 @@ const PERCENT_RE = /([0-9]+(?:\.[0-9]+)?)\s*%/;
 
 /** Router-only keyword list — do not surface "mutual fund" in user-facing copy. */
 const FUND_CONTEXT_RE = /\b(mmf|money market|unit trust|mutual fund|money market fund)\b/i;
-
-const STOCK_QUERY_RES = [
-  /\b(?:in|into|of)\s+([A-Za-z][A-Za-z0-9\s.'&-]+?)(?:\?|\.|$)/i,
-  /\bworth of\s+([A-Za-z][A-Za-z0-9\s.'&-]+?)(?:\?|\.|$)/i,
-  /\bput(?:ting)?\s+(?:it\s+)?in(?:to)?\s+([A-Za-z][A-Za-z0-9\s.'&-]+?)(?:\?|\.|$)/i,
-];
 
 const STOCK_AMOUNT_UNKNOWN_MSG =
   "I could not confidently match that stock to available KenyaFundFinder data yet. Try a ticker or company name shown on the platform.";
@@ -181,34 +176,11 @@ function resolveYieldPct(
   return { pct: 11, assumed: true };
 }
 
-function extractStockQuery(prompt: string): string | null {
-  if (/\bhow many\b.*\bshares\b/i.test(prompt)) {
-    const named = prompt.match(/\bhow many\s+([A-Za-z][A-Za-z0-9\s.'&-]*?)\s+shares\b/i);
-    if (named?.[1]?.trim()) return named[1].trim();
-    const ticker = prompt.match(/\b(SCOM|EQTY|KCB|NCBA|[A-Z]{2,6})\b/);
-    if (ticker?.[1]) return ticker[1];
-  }
-  for (const re of STOCK_QUERY_RES) {
-    const m = prompt.match(re);
-    if (m?.[1]) {
-      const q = m[1]
-        .trim()
-        .replace(/\b(what happens|worth|shares?|stock)\b/gi, "")
-        .trim();
-      if (FUND_CONTEXT_RE.test(q) || FUND_CONTEXT_RE.test(prompt)) return null;
-      return q;
-    }
-  }
-  return null;
-}
-
 function isStockAmountIntent(lower: string, prompt: string): boolean {
   if (isPortfolioSplitIntent(lower, prompt)) return false;
   if (/\bsplit\b/.test(lower) && FUND_CONTEXT_RE.test(lower)) return false;
   if (FUND_CONTEXT_RE.test(lower) && /\d+\s*%\s*.*\band\s*\d+\s*%/.test(lower)) return false;
-  if (FUND_CONTEXT_RE.test(lower) && !/\b(scom|eqty|kcb|safaricom|equity)\b/i.test(lower)) {
-    return false;
-  }
+  if (FUND_CONTEXT_RE.test(lower)) return false;
   if (hasMmfYieldContext(prompt) && FUND_CONTEXT_RE.test(lower)) return false;
   if (/\bhow many\b.*\bshares\b/.test(lower)) return true;
   if (/\bshow possible outcomes\b/.test(lower)) return true;
@@ -229,11 +201,19 @@ function tryStockAmountRoute(
 ): RouterResult | null {
   if (!isStockAmountIntent(lower, prompt)) return null;
   const amount = parseAmount(prompt);
-  const stockQuery = extractStockQuery(prompt);
-  if (amount == null || !stockQuery) return null;
+  if (amount == null) return null;
 
   const stocks = (ctx?.assets ?? []).filter((a) => a.kind === "stock");
-  const asset = findAsset(stockQuery, stocks);
+  const match = resolveAssetMatch(prompt, stocks);
+  if (match.status === "ambiguous") {
+    return {
+      kind: "unknown",
+      message: formatAmbiguousMatchMessage("the stock", match.query, match.candidates),
+      suggestions: STOCK_AMOUNT_SUGGESTIONS,
+      disclaimer: STANDARD_DISCLAIMER,
+    };
+  }
+  const asset = match.asset;
   if (!asset || asset.value <= 0) {
     return {
       kind: "unknown",
@@ -243,6 +223,92 @@ function tryStockAmountRoute(
     };
   }
   return calculateStockAmountScenario(amount, asset);
+}
+
+function isNeutralAmountAssetPrompt(prompt: string, lower: string): boolean {
+  if (parseAmount(prompt) == null || isPortfolioSplitIntent(lower, prompt)) return false;
+  return (
+    /\b(?:put|invest|buy|allocate|spend)\b/.test(lower) ||
+    /\b(?:in|into)\b/.test(lower) ||
+    /\bhow many\b.*\bshares?\b/.test(lower)
+  );
+}
+
+function commodityQuoteCurrency(valueLabel: string): string | null {
+  const direct = valueLabel.match(/\b(KES|USD|EUR|GBP)\b/i)?.[1];
+  if (direct) return direct.toUpperCase();
+  if (/\bUS\$|\$\b/.test(valueLabel)) return "USD";
+  return null;
+}
+
+function assetAmountUnknown(message: string): UnknownPayload {
+  return {
+    kind: "unknown",
+    message,
+    suggestions: [
+      "KES 10,000 in SCOM",
+      "KES 10,000 in Etica MMF",
+      "KES 10,000 in USD",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
+/** Resolve a neutral amount + named catalog asset without hard-coded tickers. */
+function tryAssetAmountRoute(
+  prompt: string,
+  lower: string,
+  ctx?: MarketContext | null,
+): RouterResult | null {
+  if (!isNeutralAmountAssetPrompt(prompt, lower)) return null;
+  // An explicit yield is a distinct user assumption handled by the established
+  // MMF route below; otherwise use the matched fund's published yield.
+  if (parsePercent(prompt) != null && FUND_CONTEXT_RE.test(prompt)) return null;
+
+  const amount = parseAmount(prompt);
+  if (amount == null) return null;
+  const assets = ctx?.assets ?? [];
+  // A generic "MMF" is a fund category, not a candidate for cross-asset
+  // matching. Resolve named fund wording only within the fund catalog so
+  // unrelated short prose tokens cannot select an FX or commodity asset.
+  const candidateAssets = FUND_CONTEXT_RE.test(prompt)
+    ? assets.filter((asset) => asset.kind === "fund")
+    : assets;
+  const match = resolveAssetMatch(prompt, candidateAssets);
+  if (FUND_CONTEXT_RE.test(prompt) && match.status !== "match") return null;
+  if (match.status === "ambiguous") {
+    return assetAmountUnknown(
+      formatAmbiguousMatchMessage("the investment", match.query, match.candidates),
+    );
+  }
+  const asset = match.asset;
+  if (!asset || asset.value <= 0) return null;
+
+  switch (asset.kind) {
+    case "stock":
+      return calculateStockAmountScenario(amount, asset);
+    case "fund":
+      return calculateMmfScenario(amount, asset.value, parseMonths(prompt) ?? 12, [
+        `Uses ${asset.name}'s latest published annual yield from KenyaFundFinder.`,
+      ]);
+    case "fx":
+      return calculateFxConversionScenario(amount, "KES", asset.symbol, asset.value, asset.valueLabel);
+    case "commodity": {
+      const quoteCurrency = commodityQuoteCurrency(asset.valueLabel);
+      if (!quoteCurrency) {
+        return assetAmountUnknown(
+          `I found ${asset.name}, but I need its published quote currency before estimating units.`,
+        );
+      }
+      const rate = quoteCurrency === "KES" ? null : findFxAsset(quoteCurrency, ctx)?.value ?? null;
+      if (quoteCurrency !== "KES" && (!rate || rate <= 0)) {
+        return assetAmountUnknown(
+          `I found ${asset.name}, but I need the current ${quoteCurrency}/KES rate to estimate units from KES.`,
+        );
+      }
+      return calculateCommodityAmountScenario(amount, asset, quoteCurrency, rate);
+    }
+  }
 }
 
 function tryMmfRoutes(
@@ -704,9 +770,25 @@ function tryNewsSummaryRoute(
 
 function routeExplainer(lower: string): ScenarioResult | null {
   if (isNewsLabPrompt(lower)) return null;
+  if (
+    /\b(?:new to|beginner|beginners?|starting|start)\b.*\b(?:invest|investing|shares?|stocks?|money)\b/i.test(lower) ||
+    /\b(?:how (?:do|can) i|how to|where do|what does a)\b.*\b(?:start|begin|learn)\b.*\b(?:invest|investing|shares?|stocks?)\b/i.test(lower) ||
+    /\bi (?:know|understand) (?:nothing|little) about\b.*\b(?:invest\w*|shares?|stocks?)\b/i.test(lower) ||
+    /\bnew investor\b|\bbeginers?\b.*\binv(?:e)?sting\b|\bstart learning about investments?\b/i.test(lower) ||
+    /\bnataka kuanza\s+(?:ku)?invest/i.test(lower) ||
+    /\bgetting[-\s]started\b/i.test(lower)
+  ) {
+    return EXPLAINERS["getting-started"];
+  }
   const isExp = /explain|what is|what's|define/.test(lower);
   if (!isExp) return null;
 
+  if (/\b(?:mmf|money market)\b.*\b(?:vs|versus|difference|stock|share)\b|\b(?:stock|share)\b.*\b(?:vs|versus|difference|mmf|money market)\b/.test(lower)) {
+    return EXPLAINERS["stock-vs-mmf"];
+  }
+  if (/\b(?:investment|investing)\s+risk\b|\brisk\s+of\s+investing\b/.test(lower)) {
+    return EXPLAINERS["investment-risk"];
+  }
   if (/(t-?bill|treasury bill)/.test(lower)) return EXPLAINERS["t-bills"];
   if (/withholding/.test(lower)) return EXPLAINERS["withholding-tax"];
   if (/dividend yield/.test(lower)) return EXPLAINERS["dividend-yield"];
@@ -766,6 +848,9 @@ export function routePrompt(
 
   const portfolioSplit = tryPortfolioSplitRoute(prompt, lower, ctx);
   if (portfolioSplit) return portfolioSplit;
+
+  const assetAmount = tryAssetAmountRoute(prompt, lower, ctx);
+  if (assetAmount) return assetAmount;
 
   const mmf = tryMmfRoutes(prompt, lower, ctx);
   if (mmf) return mmf;

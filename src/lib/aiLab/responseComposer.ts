@@ -29,7 +29,7 @@ const YIELD_THRESHOLD_RE =
 const SHOW_MMFS_ABOVE_RE = /\bshow\s+mmfs?\s+above\b/i;
 
 const CAPABILITIES_RE =
-  /\b(what can i ask|what can you do|what data do you have|what can you search|help me|^\s*help\s*$)\b/i;
+  /^\s*(?:what can i ask|what can you do|what data do you have|what can you search|help|help me)\s*[?.!]*\s*$/i;
 
 const UNSUPPORTED_FOLLOWUP_RE =
   /\b(show mmfs above|above 10%|rank fund|best fund|top fund|safest fund|filter by|compare scom and kcb)\b/i;
@@ -122,13 +122,13 @@ export function capFollowUps(followUps: string[], max = MAX_FOLLOW_UPS): string[
   return filterSafeFollowUps(followUps).slice(0, max);
 }
 
-function followUpsForWebsiteLookup(entityType: string): string[] {
-  switch (entityType) {
+function followUpsForWebsiteLookup(result: Extract<RouterResult, { kind: "website-lookup" }>): string[] {
+  switch (result.entityType) {
     case "stock":
       return capFollowUps([
-        "Latest news about Safaricom",
-        "What can I ask?",
-        "KES 10,000 in SCOM",
+        "How has it moved over 30 days?",
+        `Latest news about ${result.entityName}`,
+        "Show company details",
       ]);
     case "fund":
       return capFollowUps([
@@ -204,6 +204,27 @@ function composeHypotheticalNarrative(result: RouterResult): string | null {
           "Does not predict future prices",
         ],
         whatCouldChange: STOCK_WHAT_COULD_CHANGE,
+        important: NOT_RECOMMENDATION_LINE,
+      });
+    }
+
+    case "commodity-amount": {
+      const { inputs, quoteAmount, estimatedUnits } = result;
+      return composeStructuredAnswer({
+        result: `${fmtKes(inputs.amountKes)} is about ${quoteAmount.toLocaleString("en-KE", { maximumFractionDigits: 2 })} ${inputs.quoteCurrency}, which represents an estimated ${estimatedUnits.toLocaleString("en-KE", { maximumFractionDigits: 4 })} quoted units of ${inputs.name} at the latest available KenyaFundFinder price.`,
+        assumptions: [
+          `Amount: ${fmtKes(inputs.amountKes)}`,
+          `Commodity: ${inputs.symbol} (${inputs.name})`,
+          `Commodity quote: ${inputs.currentValue.toLocaleString("en-KE", { maximumFractionDigits: 4 })} (${inputs.valueLabel})`,
+          inputs.fxRate == null
+            ? "No FX conversion required"
+            : `FX rate: ${inputs.fxRate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} KES per ${inputs.quoteCurrency}`,
+        ],
+        whatCouldChange: [
+          "Commodity benchmark prices can rise or fall",
+          "FX rates, product premiums, spreads, fees, and taxes can change the actual result",
+          "This does not predict future commodity prices",
+        ],
         important: NOT_RECOMMENDATION_LINE,
       });
     }
@@ -304,6 +325,9 @@ function composeIntro(result: RouterResult, prompt: string): string {
     case "commodity-move":
       return `Here's a hypothetical ${result.inputs.name} scenario if the value moves by ${result.inputs.movementPct}%. It does not predict future commodity prices.`;
 
+    case "commodity-amount":
+      return `Here's an estimated ${result.inputs.name} exposure using the latest available KenyaFundFinder commodity price${result.inputs.fxRate == null ? "" : " and FX rate"}. It does not predict future commodity prices.`;
+
     case "news-summary":
       return `Here are matching stored news items from KenyaFundFinder data${result.articles.length > 0 ? ` (${result.articles.length} article${result.articles.length === 1 ? "" : "s"})` : ""}. This does not predict price movement.`;
 
@@ -317,8 +341,20 @@ function composeIntro(result: RouterResult, prompt: string): string {
       if (result.lookupMode === "mmf-yield-filter") {
         return "Money market funds matching your yield filter from available KenyaFundFinder data. This is a data lookup, not a recommendation.";
       }
+      if (result.lookupMode === "mmf-yield-ranking") {
+        return "Here are money market funds ordered by their latest published annual yield. This is a factual data view, not a recommendation.";
+      }
       if (result.lookupMode === "instrument-family-overview") {
         return "Matching instruments from available KenyaFundFinder data. This is a data lookup, not a recommendation.";
+      }
+      if (result.entityType === "stock") {
+        const price = result.fields.find((field) => field.label === "Latest price")?.value;
+        const change = result.fields.find((field) => field.label === "Day change")?.value;
+        const about = result.fields.find((field) => field.label === "About")?.value;
+        const movement = change
+          ? `${parseFloat(change) > 0 ? "up" : parseFloat(change) < 0 ? "down" : "unchanged at"} ${change.replace(/^-/, "")} today`
+          : "with no day-change figure available";
+        return `${result.entityName}${result.entitySymbol ? ` (${result.entitySymbol})` : ""} is trading at ${price ?? "an unavailable latest price"}, ${movement}.${about ? ` ${about}` : ""} The figures below explain the latest available snapshot.`;
       }
       return `Here are matching records for ${result.entityName} from available KenyaFundFinder data. This is a data lookup, not a recommendation.`;
 
@@ -385,6 +421,13 @@ function followUpsForResult(result: RouterResult, prompt: string): string[] {
       ]);
 
     case "explainer":
+      if (result.title === "Getting started with investing") {
+        return capFollowUps([
+          "Explain MMFs in simple language",
+          "What is the difference between an MMF and a stock?",
+          "Explain investment risk",
+        ]);
+      }
       return capFollowUps([
         "KES 10,000 in SCOM",
         "Show Etica MMF yield",
@@ -412,6 +455,13 @@ function followUpsForResult(result: RouterResult, prompt: string): string[] {
         "KES 100,000 to USD",
       ]);
 
+    case "commodity-amount":
+      return capFollowUps([
+        `${result.inputs.name} rises 5%`,
+        "KES 100,000 to USD",
+        "What can I ask?",
+      ]);
+
     case "news-summary":
       return capFollowUps([
         "KES 10,000 in SCOM",
@@ -427,7 +477,7 @@ function followUpsForResult(result: RouterResult, prompt: string): string[] {
       ]);
 
     case "website-lookup":
-      return followUpsForWebsiteLookup(result.entityType);
+      return followUpsForWebsiteLookup(result);
 
     case "refusal":
       return capFollowUps(
@@ -502,16 +552,19 @@ export function composeCapabilitiesGuide(): { text: string; followUps: string[] 
       '• "Latest news about Safaricom"',
       '• "Explain dividend yield"',
       "",
-      "4. Limits",
+      "4. Getting started",
+      '• "I am new to investing, what do I do?"',
+      "",
+      "5. Limits",
       "AI Lab cannot tell you what to buy or sell.",
     ].join("\n"),
     true,
   );
 
   const followUps = capFollowUps([
+    "Help me get started with investing",
     "Show Etica MMF yield",
     "What is SCOM's current price?",
-    "KES 10,000 in SCOM",
   ]);
 
   return { text, followUps };

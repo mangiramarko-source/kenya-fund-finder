@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowRight, ArrowUp, Plus, Search, Sparkles } from "lucide-react";
+import { ArrowRight, ArrowUp, Plus, Search, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "@/lib/remarkGfmSafe";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
@@ -42,6 +42,7 @@ interface Props {
   onSubmit: (prompt: string) => void;
   compareStateByMessageId: Record<string, CompareState>;
   onLookbackChange: (messageId: string, days: LookbackDays) => void;
+  onFeedback?: (messageId: string, value: "helpful" | "not-helpful") => void;
 }
 
 const PromptChip = ({ label, onClick }: { label: string; onClick: () => void }) => (
@@ -97,6 +98,7 @@ const AiLabChat = ({
   onSubmit,
   compareStateByMessageId,
   onLookbackChange,
+  onFeedback,
 }: Props) => {
   const [input, setInput] = useState("");
   const threadRef = useRef<HTMLDivElement>(null);
@@ -232,7 +234,9 @@ const AiLabChat = ({
                     )}
                   </div>
 
-                  {showResult && msg.result && msg.result.kind === "compare" && compareState && (
+                  {showResult && msg.result &&
+                    (msg.result.kind === "compare" || (msg.result.kind === "website-lookup" && msg.result.historyAsset)) &&
+                    compareState && (
                     <details className={AI_LAB_COLLAPSIBLE}>
                       <summary className="cursor-pointer font-medium text-foreground">
                         Compare lookback ({compareState.lookbackDays}D)
@@ -263,6 +267,30 @@ const AiLabChat = ({
                       historyLoading={compareState?.historyLoading}
                       lookbackDays={compareState?.lookbackDays}
                     />
+                  )}
+
+                  {!isPending && msg.status !== "error" && onFeedback && (
+                    <div className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
+                      <span className="mr-1">Was this helpful?</span>
+                      <button
+                        type="button"
+                        aria-label="Mark answer helpful"
+                        aria-pressed={msg.feedback === "helpful"}
+                        onClick={() => onFeedback(msg.id, "helpful")}
+                        className={`rounded-full border p-1.5 transition-colors ${msg.feedback === "helpful" ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600" : "border-border hover:bg-muted"}`}
+                      >
+                        <ThumbsUp className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        aria-label="Mark answer not helpful"
+                        aria-pressed={msg.feedback === "not-helpful"}
+                        onClick={() => onFeedback(msg.id, "not-helpful")}
+                        className={`rounded-full border p-1.5 transition-colors ${msg.feedback === "not-helpful" ? "border-amber-500/40 bg-amber-500/10 text-amber-600" : "border-border hover:bg-muted"}`}
+                      >
+                        <ThumbsDown className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
                   )}
 
                   {followUps.length > 0 && (

@@ -32,6 +32,8 @@ export type AnalyticsEventName =
   | "portfolio_asset_added"
   | "watchlist_item_added"
   | "price_alert_created"
+  | "ai_lab_answer_feedback"
+  | "ai_lab_route_completed"
   | "search_used"
   | "cta_clicked";
 

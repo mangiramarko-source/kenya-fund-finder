@@ -223,6 +223,14 @@ describe("processAiLabUserPrompt — top-level chat flow", () => {
     }
   });
 
+  it("routes standalone help to the capabilities guide before generic lookup", async () => {
+    const out = await processAiLabUserPrompt("What can I ask?", ctx);
+    expect(out.route).toBe("capabilities");
+    expect(out.result).toBeUndefined();
+    expect(out.text).toContain("You can ask about:");
+    expect(out.text).not.toContain("No matching instruments");
+  });
+
     it("Show MMFs above 10% routes through website-lookup as MMF yield filter", async () => {
     mockFunds([
       ...britamFunds,

@@ -67,8 +67,8 @@ describe("computeReturnPct", () => {
 });
 
 describe("lookback helpers", () => {
-  it("LOOKBACK_OPTIONS contains 7, 30, and 90", () => {
-    expect(LOOKBACK_OPTIONS).toEqual([7, 30, 90]);
+  it("LOOKBACK_OPTIONS contains week, month, quarter, and year views", () => {
+    expect(LOOKBACK_OPTIONS).toEqual([7, 30, 90, 365]);
   });
 
   it("formatReturnLabel returns day-specific return labels", () => {

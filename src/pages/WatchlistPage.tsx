@@ -24,6 +24,7 @@ import { useUnifiedWatchlist, type UnifiedWatchlistItem as WatchlistItem } from 
 import WatchlistAlertsTabs from "@/components/watchlist/WatchlistAlertsTabs";
 import DesktopWatchlistWorkspace from "@/components/watchlist/DesktopWatchlistWorkspace";
 import MobileWatchlistAlertsPanel, { type WatchlistAlertAsset } from "@/components/watchlist/MobileWatchlistAlertsPanel";
+import KoraIllustration from "@/components/kora/KoraIllustration";
 
 interface RateHistoryRow { snapshot_date: string; rate: number; currency_code: string }
 interface StockHistoryRow { snapshot_date: string; price: number; stock_id: string }
@@ -710,7 +711,8 @@ const WatchlistPage = () => {
 
       {/* Empty state */}
       {isEmpty && (
-        <div className="rounded-xl border border-dashed border-border bg-card/40 p-8 text-center">
+        <div className="relative overflow-hidden rounded-xl border border-dashed border-border bg-card/40 p-8 text-center">
+          <KoraIllustration pose="wave" className="absolute bottom-1 right-1 h-24 w-24 opacity-90" />
           <Star className="h-8 w-8 text-muted-foreground/40 mx-auto mb-3" />
           <h2 className="text-base font-semibold text-foreground mb-1">
             Your watchlist is empty

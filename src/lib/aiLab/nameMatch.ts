@@ -103,11 +103,15 @@ function escapeRegExp(value: string): string {
   return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
 }
 
-export function normalizeInstrumentQuery(raw: string): string {
+function normalizeInstrumentLiteral(raw: string): string {
   let q = raw.toLowerCase().trim();
   q = q.replace(/[''?.!,]/g, " ");
   q = q.replace(/[^\w\s]/g, " ");
-  q = q.replace(/\s+/g, " ").trim();
+  return q.replace(/\s+/g, " ").trim();
+}
+
+export function normalizeInstrumentQuery(raw: string): string {
+  let q = normalizeInstrumentLiteral(raw);
 
   for (const [alias, replacement] of Object.entries(INSTRUMENT_ALIASES)) {
     q = q.replace(new RegExp(`\\b${escapeRegExp(alias)}\\b`, "gi"), replacement);
@@ -127,13 +131,15 @@ export function tokenizeInstrumentQuery(raw: string): string[] {
 }
 
 function assetSearchTerms(asset: ComparableAsset): string[] {
-  return [
+  const rawTerms = [
     asset.symbol,
     asset.name,
     ...asset.aliases,
-  ]
-    .map((t) => normalizeInstrumentQuery(t))
-    .filter(Boolean);
+  ];
+  return [...new Set([
+    ...rawTerms.map((t) => normalizeInstrumentQuery(t)),
+    ...rawTerms.map((t) => normalizeInstrumentLiteral(t)),
+  ].filter(Boolean))];
 }
 
 /** Damerau-style edit distance, capped for performance. */
@@ -175,9 +181,13 @@ function isFuzzyMatch(query: string, term: string): boolean {
 
 function scoreAssetCandidate(query: string, asset: ComparableAsset): number {
   const qNorm = normalizeInstrumentQuery(query);
+  const qLiteral = normalizeInstrumentLiteral(query);
   if (!qNorm) return -999;
 
-  const qTokens = qNorm.split(/\s+/).filter(Boolean);
+  // One-letter prose tokens (notably "I") must not become instrument matches.
+  // Supported codes and names are at least two characters long.
+  const qTokens = qNorm.split(/\s+/).filter((token) => token.length >= MIN_PREFIX_LEN);
+  const literalTokens = qLiteral.split(/\s+/).filter((token) => token.length >= MIN_PREFIX_LEN);
   const symbolNorm = normalizeInstrumentQuery(asset.symbol);
   const nameNorm = normalizeInstrumentQuery(asset.name);
   const terms = assetSearchTerms(asset);
@@ -215,7 +225,15 @@ function scoreAssetCandidate(query: string, asset: ComparableAsset): number {
         score += TYPO_BONUS;
         break;
       }
+      if (isFuzzyMatch(qLiteral, term)) {
+        score += TYPO_BONUS;
+        break;
+      }
       if (qTokens.some((t) => isFuzzyMatch(t, term))) {
+        score += Math.floor(TYPO_BONUS * 0.7);
+        break;
+      }
+      if (literalTokens.some((t) => isFuzzyMatch(t, term))) {
         score += Math.floor(TYPO_BONUS * 0.7);
         break;
       }

@@ -1,9 +1,10 @@
 import "@testing-library/jest-dom";
 
-// Provide fake, structurally valid test environment defaults for Supabase configuration
-process.env.VITE_SUPABASE_URL = process.env.VITE_SUPABASE_URL || "https://test-project.supabase.co";
-process.env.VITE_SUPABASE_PUBLISHABLE_KEY = process.env.VITE_SUPABASE_PUBLISHABLE_KEY || "sb_publishable_test_value_for_unit_tests_only";
-process.env.VITE_SUPABASE_PROJECT_ID = process.env.VITE_SUPABASE_PROJECT_ID || "test-project";
+// Unit tests must never inherit a developer or production Supabase project from
+// the shell/.env. Keep the test runtime deterministic and safely isolated.
+process.env.VITE_SUPABASE_URL = "https://test-project.supabase.co";
+process.env.VITE_SUPABASE_PUBLISHABLE_KEY = "sb_publishable_test_value_for_unit_tests_only";
+process.env.VITE_SUPABASE_PROJECT_ID = "test-project";
 
 if (typeof import.meta !== "undefined") {
   (import.meta as any).env = {

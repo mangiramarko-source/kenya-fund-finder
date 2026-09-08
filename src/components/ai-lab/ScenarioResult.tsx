@@ -101,6 +101,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   if (result.kind === "website-lookup") {
     const topFields = result.fields.slice(0, 3);
     const restFields = result.fields.slice(3);
+    const lookupHistory = result.historyAsset ? history?.[result.historyAsset.symbol] : undefined;
     return (
       <ResultShell>
         <SummaryMetricGrid>
@@ -115,6 +116,32 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
             ))}
           </Section>
         )}
+        {result.historyAsset && (
+          <Section icon={<TrendingUp className="h-3 w-3" />} title={`${effectiveLookbackDays}-day performance`}>
+            <div className="flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold">
+                {historyLoading ? "Loading…" : fmtPctColored(lookupHistory?.returnPct ?? null)}
+              </span>
+              {lookupHistory?.points?.length ? (
+                <Sparkline
+                  data={lookupHistory.points}
+                  width={120}
+                  height={28}
+                  color="auto"
+                  trend={(lookupHistory.returnPct ?? 0) > 0 ? "up" : (lookupHistory.returnPct ?? 0) < 0 ? "down" : "flat"}
+                />
+              ) : !historyLoading ? <span className="text-xs text-muted-foreground">History unavailable</span> : null}
+            </div>
+          </Section>
+        )}
+        <div className="flex flex-wrap items-center justify-between gap-2 text-[11px] text-muted-foreground">
+          <span>{sanitizeOutput(result.sourceNote)}</span>
+          {result.pagePath && (
+            <Link to={result.pagePath} className="inline-flex items-center gap-1 font-medium text-accent hover:underline">
+              View source data <ExternalLink className="h-3 w-3" aria-hidden="true" />
+            </Link>
+          )}
+        </div>
         <Disclaimer text={result.disclaimer} />
       </ResultShell>
     );
@@ -533,6 +560,39 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
             {result.importantNotes.map((n, i) => (
               <li key={i}>{sanitizeOutput(n)}</li>
             ))}
+          </ul>
+        </CollapsibleDetails>
+        <Disclaimer text={result.disclaimer} />
+      </ResultShell>
+    );
+  }
+
+  if (result.kind === "commodity-amount") {
+    const { inputs } = result;
+    const quoteAmount = `${result.quoteAmount.toLocaleString("en-KE", { maximumFractionDigits: 2 })} ${inputs.quoteCurrency}`;
+    return (
+      <ResultShell>
+        <SummaryMetricGrid>
+          <SummaryMetricCard label="Starting amount" value={fmtKES(inputs.amountKes)} />
+          <SummaryMetricCard label="Quote-currency exposure" value={quoteAmount} />
+          <SummaryMetricCard label="Estimated quoted units" value={result.estimatedUnits.toLocaleString("en-KE", { maximumFractionDigits: 4 })} sublabel={inputs.symbol} />
+        </SummaryMetricGrid>
+        <CollapsibleDetails title="Assumptions">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.assumptions.map((a, i) => <li key={i}>{sanitizeOutput(a)}</li>)}
+          </ul>
+        </CollapsibleDetails>
+        <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
+          <KV k="Commodity" v={`${inputs.symbol} · ${inputs.name}`} />
+          <KV k="Starting amount" v={fmtKES(inputs.amountKes)} />
+          <KV k="Published commodity quote" v={`${inputs.currentValue.toLocaleString("en-KE", { maximumFractionDigits: 4 })} (${inputs.valueLabel})`} />
+          {inputs.fxRate != null && <KV k="FX rate used" v={`${inputs.fxRate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} KES per ${inputs.quoteCurrency}`} />}
+          <KV k="Quote-currency exposure" v={quoteAmount} />
+          <KV k="Estimated quoted units" v={result.estimatedUnits.toLocaleString("en-KE", { maximumFractionDigits: 4 })} />
+        </Section>
+        <CollapsibleDetails title="Notes">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.importantNotes.map((n, i) => <li key={i}>{sanitizeOutput(n)}</li>)}
           </ul>
         </CollapsibleDetails>
         <Disclaimer text={result.disclaimer} />

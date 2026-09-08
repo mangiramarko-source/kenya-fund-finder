@@ -7,6 +7,7 @@ import { Briefcase, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { usePortfolio, type AssetType, type NewPortfolioItem } from "@/hooks/usePortfolio";
 import { Link } from "react-router-dom";
+import KoraIllustration from "@/components/kora/KoraIllustration";
 
 type Variant = "default" | "outline" | "secondary" | "ghost";
 
@@ -106,8 +107,8 @@ const AddToPortfolioButton = ({
             )}
           </Button>
           {justAdded && (
-            <div className="text-[11px] text-accent flex items-center justify-between">
-              <span>Added.</span>
+            <div className="flex items-center justify-between gap-2 text-[11px] text-accent">
+              <span className="inline-flex items-center gap-1.5"><KoraIllustration pose="celebrate" alt="" className="h-7 w-7" /> Added to your mock portfolio.</span>
               <Link to="/portfolio" className="underline">View portfolio →</Link>
             </div>
           )}

@@ -6,6 +6,7 @@ import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
 import EditHoldingModal from "@/components/portfolio/EditHoldingModal";
 import PortfolioSummaryModal from "@/components/portfolio/PortfolioSummaryModal";
 import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
+import KoraIllustration from "@/components/kora/KoraIllustration";
 
 interface MobilePortfolioViewProps {
   currency: "KES" | "USD";
@@ -257,11 +258,12 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
 
         {/* Holdings Cards List */}
         {isEmpty ? (
-          <div className="bg-card border border-dashed border-border rounded-2xl p-6 text-center text-sm text-muted-foreground space-y-3 dark:bg-neutral-900/50">
-            <p>No holdings added in this category.</p>
+          <div className="relative overflow-hidden bg-card border border-dashed border-border rounded-2xl p-6 text-center text-sm text-muted-foreground space-y-3 dark:bg-neutral-900/50">
+            <KoraIllustration pose="neutral" className="absolute bottom-0 right-2 h-28 w-28 opacity-90" />
+            <p className="relative">No holdings added in this category.</p>
             <button
               onClick={() => setShowAddModal(true)}
-              className="inline-flex items-center gap-1.5 bg-[#00A651] text-white font-semibold text-xs px-4 py-2 rounded-full shadow-xs"
+              className="relative inline-flex items-center gap-1.5 bg-[#00A651] text-white font-semibold text-xs px-4 py-2 rounded-full shadow-xs"
             >
               <Plus className="h-3.5 w-3.5" /> Add First Holding
             </button>

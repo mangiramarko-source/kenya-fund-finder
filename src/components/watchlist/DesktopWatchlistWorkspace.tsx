@@ -7,6 +7,7 @@ import {
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useUnifiedWatchlist, type UnifiedWatchlistItem } from "@/hooks/useUnifiedWatchlist";
+import KoraIllustration from "@/components/kora/KoraIllustration";
 import { usePriceAlerts, type AlertAssetType, type PriceAlert } from "@/hooks/usePriceAlerts";
 import { useMarketData } from "@/components/home/MarketTicker";
 import { fetchFunds, type FundFromDB } from "@/lib/api";
@@ -285,7 +286,7 @@ function AssetListRow({ row, alert, reordering, canMoveUp, canMoveDown, onMove, 
 }
 
 function EmptyWatchlist({ onAdd }: { onAdd: () => void }) {
-  return <div className="rounded-2xl border border-dashed border-border/80 bg-card px-6 py-14 text-center shadow-sm"><span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-amber-500/25 bg-amber-500/10"><Star className="h-5 w-5 text-amber-500" /></span><h2 className="mt-4 text-sm font-bold">No saved assets</h2><p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">Add funds, stocks, FX rates, or commodities to begin tracking them.</p><Button className="mt-5 h-10 gap-1.5 rounded-xl bg-emerald-500 font-bold text-white hover:bg-emerald-600" onClick={onAdd}><Plus className="h-4 w-4" /> Add assets</Button></div>;
+  return <div className="relative overflow-hidden rounded-2xl border border-dashed border-border/80 bg-card px-6 py-12 text-center shadow-sm"><KoraIllustration pose="wave" className="absolute bottom-0 right-5 hidden h-36 w-36 md:block" /><span className="mx-auto flex h-12 w-12 items-center justify-center rounded-full border border-amber-500/25 bg-amber-500/10"><Star className="h-5 w-5 text-amber-500" /></span><h2 className="mt-4 text-sm font-bold">No saved assets</h2><p className="mx-auto mt-1 max-w-md text-sm text-muted-foreground">Add funds, stocks, FX rates, or commodities to begin tracking them.</p><Button className="mt-5 h-10 gap-1.5 rounded-xl bg-emerald-500 font-bold text-white hover:bg-emerald-600" onClick={onAdd}><Plus className="h-4 w-4" /> Add assets</Button></div>;
 }
 
 function AddAssetsDialog({ open, onOpenChange, type, onTypeChange, query, onQueryChange, items, onAdd }: { open: boolean; onOpenChange: (open: boolean) => void; type: AssetType; onTypeChange: (type: AssetType) => void; query: string; onQueryChange: (query: string) => void; items: Array<{ id: string; name: string; value: string }>; onAdd: (id: string, name: string) => Promise<void>; }) {

@@ -92,6 +92,7 @@ const SCENARIO_SMOKE: Array<{ prompt: string; kind: string; needsNews?: boolean 
   { prompt: "KES 100,000 to USD", kind: "fx-conversion" },
   { prompt: "USD/KES falls 5%", kind: "fx-move" },
   { prompt: "Gold rises 5%", kind: "commodity-move" },
+  { prompt: "Put 100k in Gold", kind: "commodity-amount" },
   { prompt: "Latest news about Safaricom", kind: "news-summary", needsNews: true },
   { prompt: "Split 100k between MMF and SCOM at 11% yield", kind: "portfolio-split" },
   { prompt: "Explain dividend yield", kind: "explainer" },
@@ -105,10 +106,11 @@ describe("Phase 9 readiness copy", () => {
     expect(AI_LAB_BETA_NOTE).toContain("does not use an LLM");
   });
 
-  it("documents supported scenario inventory without new kinds", () => {
-    expect(AI_LAB_SCENARIO_INVENTORY).toHaveLength(12);
+  it("documents the supported scenario inventory", () => {
+    expect(AI_LAB_SCENARIO_INVENTORY).toHaveLength(13);
     expect(AI_LAB_SCENARIO_INVENTORY).toContain("portfolio-split");
     expect(AI_LAB_SCENARIO_INVENTORY).toContain("news-summary");
+    expect(AI_LAB_SCENARIO_INVENTORY).toContain("commodity-amount");
     expect(AI_LAB_SCENARIO_INVENTORY).not.toContain("llm");
   });
 

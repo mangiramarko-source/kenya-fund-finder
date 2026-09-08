@@ -52,3 +52,21 @@ describe("ai-lab-explain public guardrails", () => {
     expect(source).toContain('{ ok: false, reason: "gateway_unavailable" }');
   });
 });
+
+describe("ai-lab-assist public guardrails", () => {
+  it("is public, rate-limited to ten interpretations, and does not log prompts", () => {
+    const config = readProjectFile("supabase/config.toml");
+    const source = readProjectFile("supabase/functions/ai-lab-assist/index.ts");
+    expect(config).toMatch(/\[functions\.ai-lab-assist\]\s+verify_jwt = false/);
+    expect(source).toContain("RATE_MAX_REQUESTS = 10");
+    expect(source).toContain('rpc("check_rate_limit"');
+    expect(source).toContain("hashIp(clientIp(req)");
+    expect(source).not.toMatch(/console\.(log|warn|error)\([^)]*prompt/i);
+    expect(source).toContain("validateNaturalLanguageIntent");
+    expect(source).toContain('Deno.env.get("GEMINI_API_KEY")');
+    expect(source).toContain("responseMimeType: \"application/json\"");
+    expect(source).toContain("normalizeModelIntent");
+    expect(source).toContain('topic "getting-started"');
+    expect(source).toContain("asset-amount");
+  });
+});

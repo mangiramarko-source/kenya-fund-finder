@@ -45,6 +45,9 @@ verify_jwt = false
 [functions.ai-lab-explain]
 verify_jwt = false
 
+[functions.ai-lab-assist]
+verify_jwt = false
+
 [functions.fetch-social-news]
 enabled = true
 verify_jwt = false

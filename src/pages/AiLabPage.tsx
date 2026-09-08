@@ -10,8 +10,7 @@ import {
   AI_LAB_PAGE_INNER,
   AI_LAB_SAFETY_LINE,
 } from "@/components/ai-lab/aiLabTheme";
-import { routePrompt } from "@/lib/aiLab/router";
-import { applyLiveContext, useMarketContext } from "@/lib/aiLab/marketContext";
+import { useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
 import MarketPageLoader from "@/components/MarketPageLoader";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
@@ -21,25 +20,18 @@ import {
   type LookbackDays,
 } from "@/lib/aiLab/history";
 import {
-  buildClarifyingResponse,
   createAssistantMessage,
   createUserMessage,
   deriveSessionContext,
+  processAiLabUserPrompt,
   type AiLabChatMessage,
 } from "@/lib/aiLab/chat";
-import { resolveWebsiteLookup } from "@/lib/aiLab/websiteLookup";
-import {
-  composeAssistantResponse,
-  composeCapabilitiesGuide,
-  composeFilterUnsupportedResponse,
-  isCapabilitiesPrompt,
-} from "@/lib/aiLab/responseComposer";
-import { isUnsupportedFilterLookupPrompt } from "@/lib/aiLab/websiteLookup";
 import {
   generateGeminiEducationalAnswer,
   isGeminiEducationalEnabled,
 } from "@/lib/aiLab/generateGeminiEducationalAnswer";
 import { canUseGeminiEducationalAssist } from "@/lib/aiLab/geminiEligibility";
+import { trackEvent } from "@/lib/analytics";
 
 
 function AiLabMobileBack() {
@@ -195,7 +187,11 @@ const AiLabPage = () => {
   const compareMessageIds = useMemo(
     () =>
       messages
-        .filter((m) => m.role === "assistant" && m.result?.kind === "compare")
+        .filter((m) =>
+          m.role === "assistant" &&
+          (m.result?.kind === "compare" ||
+            (m.result?.kind === "website-lookup" && Boolean(m.result.historyAsset))),
+        )
         .map((m) => m.id),
     [messages],
   );
@@ -206,17 +202,23 @@ const AiLabPage = () => {
     for (const messageId of compareMessageIds) {
       cancelled.set(messageId, false);
       const msg = messages.find((m) => m.id === messageId);
-      if (!msg?.result || msg.result.kind !== "compare") continue;
+      if (!msg?.result || (msg.result.kind !== "compare" && msg.result.kind !== "website-lookup")) continue;
 
-      const compareResult = msg.result;
-      const lookbackDays = compareLookback[messageId] ?? DEFAULT_LOOKBACK;
+      const assets = msg.result.kind === "compare"
+        ? msg.result.assets
+        : msg.result.historyAsset ? [msg.result.historyAsset] : [];
+      if (!assets.length) continue;
+      const requestedDays = msg.result.kind === "website-lookup"
+        ? msg.result.requestedLookbackDays
+        : undefined;
+      const lookbackDays = compareLookback[messageId] ?? requestedDays ?? DEFAULT_LOOKBACK;
 
       setCompareHistoryLoading((prev) => ({ ...prev, [messageId]: true }));
-      Promise.all(compareResult.assets.map((a) => fetchAssetHistory(a, lookbackDays)))
+      Promise.all(assets.map((a) => fetchAssetHistory(a, lookbackDays)))
         .then((rows) => {
           if (cancelled.get(messageId)) return;
           const map: Record<string, AssetHistory> = {};
-          compareResult.assets.forEach((a, i) => {
+          assets.forEach((a, i) => {
             map[a.symbol] = rows[i];
           });
           setCompareHistory((prev) => ({ ...prev, [messageId]: map }));
@@ -238,14 +240,16 @@ const AiLabPage = () => {
   const compareStateByMessageId = useMemo(() => {
     const state: Record<string, CompareState> = {};
     for (const messageId of compareMessageIds) {
+      const result = messages.find((message) => message.id === messageId)?.result;
+      const requestedDays = result?.kind === "website-lookup" ? result.requestedLookbackDays : undefined;
       state[messageId] = {
-        lookbackDays: compareLookback[messageId] ?? DEFAULT_LOOKBACK,
+        lookbackDays: compareLookback[messageId] ?? requestedDays ?? DEFAULT_LOOKBACK,
         history: compareHistory[messageId] ?? null,
         historyLoading: compareHistoryLoading[messageId] ?? false,
       };
     }
     return state;
-  }, [compareMessageIds, compareLookback, compareHistory, compareHistoryLoading]);
+  }, [compareMessageIds, compareLookback, compareHistory, compareHistoryLoading, messages]);
 
   useDocumentTitle(
     "AI Scenario Assistant – KenyaFundFinder",
@@ -256,46 +260,19 @@ const AiLabPage = () => {
     setCompareLookback((prev) => ({ ...prev, [messageId]: days }));
   }, []);
 
+  const handleFeedback = useCallback((messageId: string, value: "helpful" | "not-helpful") => {
+    setMessages((prev) => prev.map((message) =>
+      message.id === messageId ? { ...message, feedback: value } : message,
+    ));
+    trackEvent("ai_lab_answer_feedback", { rating: value });
+  }, []);
+
   const handleSubmit = useCallback(
     (prompt: string) => {
       const userMessage = createUserMessage(prompt);
       setMessages((prev) => [...prev, userMessage]);
 
       const sessionContext = deriveSessionContext(messages);
-
-      if (isCapabilitiesPrompt(prompt)) {
-        const { text, followUps } = composeCapabilitiesGuide();
-        const assistantMessage = createAssistantMessage({
-          text,
-          status: "answered",
-          followUps,
-        });
-        setMessages((prev) => [...prev, assistantMessage]);
-        return;
-      }
-
-      if (isUnsupportedFilterLookupPrompt(prompt)) {
-        const { text, followUps } = composeFilterUnsupportedResponse();
-        const assistantMessage = createAssistantMessage({
-          text,
-          status: "answered",
-          followUps,
-        });
-        setMessages((prev) => [...prev, assistantMessage]);
-        return;
-      }
-
-      const clarifying = buildClarifyingResponse(prompt, sessionContext);
-
-      if (clarifying) {
-        const assistantMessage = createAssistantMessage({
-          text: clarifying.text,
-          status: "clarifying",
-          followUps: clarifying.followUps,
-        });
-        setMessages((prev) => [...prev, assistantMessage]);
-        return;
-      }
 
       const pendingMessage = createAssistantMessage({
         text: "",
@@ -311,25 +288,14 @@ const AiLabPage = () => {
 
       void (async () => {
         try {
-          const lookup = await resolveWebsiteLookup(prompt, market.data);
-          if (lookup) {
-            const { text, followUps } = composeAssistantResponse({
-              prompt,
-              result: lookup,
-              sessionContext,
-            });
-            replacePending(
-              createAssistantMessage({ text, result: lookup, followUps }),
-            );
-            return;
-          }
-
-          const { prompt: enriched, note } = applyLiveContext(prompt, market.data);
-          const result = routePrompt(enriched, market.data, news.data);
-          const { text, followUps } = composeAssistantResponse({
-            prompt,
-            result,
+          const output = await processAiLabUserPrompt(prompt, market.data, news.data, {
             sessionContext,
+            naturalLanguage: true,
+          });
+          const result = output.result;
+          trackEvent("ai_lab_route_completed", {
+            route: output.route,
+            result_kind: result?.kind ?? "none",
           });
 
           // Phase-1 Gemini educational assist. Public but flag-gated,
@@ -340,7 +306,7 @@ const AiLabPage = () => {
           const geminiEligible = canUseGeminiEducationalAssist({
             user,
             prompt,
-            resultKind: result.kind,
+            resultKind: result?.kind ?? "unknown",
             flagEnabled: isGeminiEducationalEnabled(),
           });
 
@@ -352,8 +318,8 @@ const AiLabPage = () => {
                 createAssistantMessage({
                   text: labeled,
                   status: "answered",
-                  followUps,
-                  contextNote: note ?? undefined,
+                  followUps: output.followUps,
+                  contextNote: output.contextNote,
                 }),
               );
               return;
@@ -362,11 +328,11 @@ const AiLabPage = () => {
 
           replacePending(
             createAssistantMessage({
-              text,
+              text: output.text,
               result:
-                result.kind === "refusal" || result.kind === "unknown" ? undefined : result,
-              followUps,
-              contextNote: note ?? undefined,
+                result?.kind === "refusal" || result?.kind === "unknown" ? undefined : result,
+              followUps: output.followUps,
+              contextNote: output.contextNote,
             }),
           );
         } catch (err) {
@@ -436,6 +402,7 @@ const AiLabPage = () => {
             onSubmit={handleSubmit}
             compareStateByMessageId={compareStateByMessageId}
             onLookbackChange={handleLookbackChange}
+            onFeedback={handleFeedback}
           />
         </main>
       </div>

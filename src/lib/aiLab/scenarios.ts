@@ -2,6 +2,7 @@
 // No advice. Results are projections, not guarantees.
 
 import type { NewsArticle, NewsQueryKind } from "./newsContext";
+import type { ComparableAsset } from "./marketContext";
 
 export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";
 
@@ -216,6 +217,25 @@ export interface CommodityMoveScenarioResult {
   disclaimer: string;
 }
 
+export interface CommodityAmountScenarioResult {
+  kind: "commodity-amount";
+  summary: string;
+  inputs: {
+    amountKes: number;
+    symbol: string;
+    name: string;
+    currentValue: number;
+    valueLabel: string;
+    quoteCurrency: string;
+    fxRate: number | null;
+  };
+  quoteAmount: number;
+  estimatedUnits: number;
+  assumptions: string[];
+  importantNotes: string[];
+  disclaimer: string;
+}
+
 export function calculateFxConversionScenario(
   amount: number,
   fromCurrency: string,
@@ -298,16 +318,64 @@ export function calculateCommodityMoveScenario(
   };
 }
 
+/**
+ * Estimates commodity exposure from a KES amount. The caller supplies only
+ * KenyaFundFinder catalog values: the commodity quote and, when necessary, its
+ * KES FX rate.
+ */
+export function calculateCommodityAmountScenario(
+  amountKes: number,
+  asset: ComparableAsset,
+  quoteCurrency: string,
+  fxRate: number | null,
+): CommodityAmountScenarioResult {
+  const quoteAmount = quoteCurrency === "KES"
+    ? amountKes
+    : Math.round((amountKes / (fxRate ?? 1)) * 100) / 100;
+  const estimatedUnits = Math.round((quoteAmount / asset.value) * 10000) / 10000;
+
+  return {
+    kind: "commodity-amount",
+    summary: `This is an estimated ${asset.name} exposure using the latest available KenyaFundFinder prices and exchange rates. It does not predict future commodity prices.`,
+    inputs: {
+      amountKes,
+      symbol: asset.symbol,
+      name: asset.name,
+      currentValue: asset.value,
+      valueLabel: asset.valueLabel,
+      quoteCurrency,
+      fxRate,
+    },
+    quoteAmount,
+    estimatedUnits,
+    assumptions: [
+      "Uses the latest available KenyaFundFinder commodity price.",
+      quoteCurrency === "KES"
+        ? "The commodity price is already quoted in Kenyan shillings."
+        : `Converts KES to ${quoteCurrency} using the latest available KenyaFundFinder FX rate.`,
+      "Excludes product premiums, spreads, storage, taxes, fees, and provider costs.",
+      "This is a scenario, not a prediction or trading recommendation.",
+    ],
+    importantNotes: [
+      "Commodity units are an estimate based on the published quote unit.",
+      "Actual commodity products and provider prices can differ materially from the quoted benchmark.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
+}
+
 export function getFxCommodityUserText(
-  result: FxConversionScenarioResult | FxMoveScenarioResult | CommodityMoveScenarioResult,
+  result: FxConversionScenarioResult | FxMoveScenarioResult | CommodityMoveScenarioResult | CommodityAmountScenarioResult,
 ): string {
   const parts = [result.summary, ...result.assumptions, ...result.importantNotes];
   if (result.kind === "fx-conversion") {
     parts.push(String(result.convertedAmount));
   } else if (result.kind === "fx-move") {
     parts.push(String(result.estimatedRateAfterMove));
-  } else {
+  } else if (result.kind === "commodity-move") {
     parts.push(String(result.estimatedValueAfterMove), String(result.estimatedChange));
+  } else {
+    parts.push(String(result.quoteAmount), String(result.estimatedUnits));
   }
   return parts.join(" ");
 }
@@ -941,6 +1009,49 @@ export const EXPLAINERS: Record<string, ExplainerResult> = {
     ],
     disclaimer: STANDARD_DISCLAIMER,
   },
+  "getting-started": {
+    kind: "explainer",
+    title: "Getting started with investing",
+    paragraphs: [
+      "Starting does not require picking a product immediately. Begin by naming a goal, the amount you can afford to set aside, and when you may need the money.",
+      "Keep an emergency buffer for near-term needs before taking investment risk. Then learn how money market funds, treasury bills, bonds, and shares differ in risk, access to cash, fees, and how their values can change.",
+      "Use KenyaFundFinder to compare current published information such as yields, fees, liquidity terms, and share-price movement. Read the relevant product documents before making a decision.",
+      "Take one topic at a time: start with how an MMF works, then compare it with shares, and learn how risk, fees, taxes, and time horizon affect an outcome.",
+    ],
+    assumptions: [
+      "This is general education, not a personal recommendation or a suitability assessment.",
+      "Investment values and yields can change, and past performance does not guarantee future outcomes.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  "stock-vs-mmf": {
+    kind: "explainer",
+    title: "MMF versus stock: the basic difference",
+    paragraphs: [
+      "A money market fund invests mainly in short-term interest-bearing instruments and usually aims for steadier value and relatively quick access to cash, subject to its terms.",
+      "A stock is an ownership stake in a company. Its price can move more sharply, and returns may come from price changes or dividends, neither of which is guaranteed.",
+      "They serve different purposes. Compare liquidity, fees, time horizon, volatility, and the specific product terms instead of treating either as automatically better.",
+    ],
+    assumptions: [
+      "Fund terms, yields, and withdrawal timing vary by provider.",
+      "Share prices can rise or fall and past performance does not guarantee future outcomes.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
+  "investment-risk": {
+    kind: "explainer",
+    title: "Investment risk in simple language",
+    paragraphs: [
+      "Investment risk is the chance that an outcome differs from what you expected, including the possibility of receiving less value or income than planned.",
+      "Common risks include price movement, changing interest rates or yields, difficulty accessing money quickly, fees, taxes, and inflation reducing purchasing power.",
+      "A longer time horizon does not remove risk. It gives you more time for an investment to change, so understanding how much variation you can tolerate matters before choosing a product.",
+    ],
+    assumptions: [
+      "Risk differs between products and can change over time.",
+      "General education cannot determine what is suitable for an individual.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  },
 
 };
 
@@ -1017,9 +1128,12 @@ export interface WebsiteLookupScenarioResult {
   notFound?: boolean;
   /** User-facing lookup outcome when notFound or ambiguous. */
   lookupMessage?: string;
-  lookupMode?: "single" | "mmf-yield-filter" | "instrument-family-overview";
+  lookupMode?: "single" | "mmf-yield-filter" | "mmf-yield-ranking" | "instrument-family-overview";
   totalMatches?: number;
   shownCount?: number;
+  /** Optional single-asset history shown with overview/lookup results. */
+  historyAsset?: ComparableAsset;
+  requestedLookbackDays?: 7 | 30 | 90 | 365;
 }
 
 export type ScenarioResult =
@@ -1032,6 +1146,7 @@ export type ScenarioResult =
   | FxConversionScenarioResult
   | FxMoveScenarioResult
   | CommodityMoveScenarioResult
+  | CommodityAmountScenarioResult
   | NewsSummaryScenarioResult
   | PortfolioSplitScenarioResult
   | ExplainerResult

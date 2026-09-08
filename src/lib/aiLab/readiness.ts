@@ -15,6 +15,7 @@ export const AI_LAB_SCENARIO_INVENTORY = [
   "fx-conversion",
   "fx-move",
   "commodity-move",
+  "commodity-amount",
   "news-summary",
   "portfolio-split",
   "explainer",
