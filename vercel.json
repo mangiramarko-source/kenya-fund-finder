@@ -3,7 +3,7 @@
   "outputDirectory": "dist",
   "git": {
     "deploymentEnabled": {
-      "main": false
+      "main": true
     }
   },
   "cleanUrls": true,
@@ -41,12 +41,12 @@
     }
   ],
   "rewrites": [
-    { "source": "/stocks/:symbol", "destination": "/index.html" },
-    { "source": "/compare/:slug", "destination": "/index.html" },
-    { "source": "/news/archive/:page", "destination": "/index.html" },
-    { "source": "/news/:id", "destination": "/index.html" },
-    { "source": "/page/:slug", "destination": "/index.html" },
-    { "source": "/(.*)", "destination": "/index.html" }
+    { "source": "/stocks/:symbol", "destination": "/index" },
+    { "source": "/compare/:slug", "destination": "/index" },
+    { "source": "/news/archive/:page", "destination": "/index" },
+    { "source": "/news/:id", "destination": "/index" },
+    { "source": "/page/:slug", "destination": "/index" },
+    { "source": "/(.*)", "destination": "/index" }
   ],
   "headers": [
     {
