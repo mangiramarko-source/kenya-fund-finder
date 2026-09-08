@@ -44,4 +44,13 @@ describe("portfolioStorage backward compatibility", () => {
     });
     expect(portfolioStorage.list()[0].asset_id).toBeNull();
   });
+
+  it("removes only imported records when clearing a successful import", () => {
+    const first = portfolioStorage.add({ asset_type: "stock", asset_name: "First", units: 1, buy_price: 1, current_price: 1 });
+    const second = portfolioStorage.add({ asset_type: "stock", asset_name: "Second", units: 1, buy_price: 1, current_price: 1 });
+
+    portfolioStorage.removeMany([first.id]);
+
+    expect(portfolioStorage.list().map((item) => item.id)).toEqual([second.id]);
+  });
 });

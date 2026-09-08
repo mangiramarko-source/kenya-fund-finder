@@ -19,6 +19,8 @@ import { getPageLoadingMessage } from "./lib/pageLoadingMessage";
 import CookieConsent from "./components/CookieConsent";
 import SeoRoutePolicy from "./components/SeoRoutePolicy";
 import { NotificationProvider } from "./components/alerts/NotificationProvider";
+import PortfolioAccountSync from "./components/portfolio/PortfolioAccountSync";
+import PortfolioImportPrompt from "./components/portfolio/PortfolioImportPrompt";
 
 // Defer heavy/non-critical UI to shrink initial JS bundle
 const CompareModal = lazy(() => import("./components/compare/CompareModal"));
@@ -92,6 +94,8 @@ const App = () => (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <AuthProvider>
+          <PortfolioAccountSync />
+          <PortfolioImportPrompt />
           <CompareProvider>
             <Toaster />
             <Sonner />

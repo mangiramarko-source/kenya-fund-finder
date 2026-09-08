@@ -707,6 +707,7 @@ export type Database = {
           asset_type: string
           buy_date: string
           buy_price: number
+          client_source_id: string | null
           created_at: string
           current_price: number
           current_yield: number | null
@@ -723,6 +724,7 @@ export type Database = {
           asset_type: string
           buy_date?: string
           buy_price: number
+          client_source_id?: string | null
           created_at?: string
           current_price: number
           current_yield?: number | null
@@ -739,6 +741,7 @@ export type Database = {
           asset_type?: string
           buy_date?: string
           buy_price?: number
+          client_source_id?: string | null
           created_at?: string
           current_price?: number
           current_yield?: number | null

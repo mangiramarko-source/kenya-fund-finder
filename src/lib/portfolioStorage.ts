@@ -98,6 +98,10 @@ export const portfolioStorage = {
   remove(id: string) {
     safeWrite(safeRead().filter((i) => i.id !== id));
   },
+  removeMany(ids: Iterable<string>) {
+    const removed = new Set(ids);
+    safeWrite(safeRead().filter((item) => !removed.has(item.id)));
+  },
   clear() {
     safeWrite([]);
   },
