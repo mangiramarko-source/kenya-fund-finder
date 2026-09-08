@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg xmlns="http://www.w3.org/2000/svg" version="1.2" baseProfile="tiny-ps" viewBox="0 0 256 256">
+  <title>KenyaFundFinder</title>
+  <desc>KenyaFundFinder green market arrow logo on charcoal background</desc>
+  <rect width="256" height="256" fill="#202224"/>
+  <rect x="66" y="66" width="124" height="124" rx="28" ry="28" fill="#00B94F"/>
+  <path d="M91 157 L119 129 L136 146 L171 111 M151 111 L171 111 L171 131"
+        fill="none" stroke="#F7F7F5" stroke-width="15" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
