@@ -77,6 +77,7 @@ describe("NotificationRow", () => {
     const title = screen.getByText(longNotification.assetName);
     expect(title).toHaveClass("min-w-0", "flex-1", "truncate");
     expect(screen.getByText("Above KES 36.90")).toHaveClass("truncate");
+    expect(title.closest(".group")).toHaveClass("w-full", "max-w-full", "overflow-hidden");
     fireEvent.click(screen.getByRole("button", { name: /View alert/ }));
     expect(onOpen).toHaveBeenCalledOnce();
   });

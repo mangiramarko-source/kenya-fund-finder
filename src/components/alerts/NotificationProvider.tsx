@@ -28,13 +28,35 @@ type NotificationContextValue = {
 };
 
 const NotificationContext = createContext<NotificationContextValue | null>(null);
+const shownPriceAlertStorageKey = "kff:shown-price-alert-modal-ids";
+
+function readShownPriceAlertIds() {
+  if (typeof window === "undefined") return new Set<string>();
+  try {
+    const stored = JSON.parse(window.sessionStorage.getItem(shownPriceAlertStorageKey) ?? "[]");
+    return new Set(Array.isArray(stored) ? stored.filter((id): id is string => typeof id === "string") : []);
+  } catch {
+    return new Set<string>();
+  }
+}
 
 export function NotificationProvider({ children }: { children: React.ReactNode }) {
   const { user } = useAuth();
+  const userId = user?.id;
   const navigate = useNavigate();
   const [notifications, setNotifications] = useState<AppNotification[]>([]);
   const [livePriceAlert, setLivePriceAlert] = useState<AppNotification | null>(null);
   const seenIds = useRef(new Set<string>());
+  const shownPriceAlertIds = useRef(readShownPriceAlertIds());
+
+  const markPriceAlertModalShown = useCallback((notificationId: string) => {
+    shownPriceAlertIds.current.add(notificationId);
+    try {
+      window.sessionStorage.setItem(shownPriceAlertStorageKey, JSON.stringify([...shownPriceAlertIds.current]));
+    } catch {
+      // The live alert remains functional when session storage is unavailable.
+    }
+  }, []);
 
   const hydrateNotifications = useCallback(async (items: AppNotification[]) => {
     const stockIds = [...new Set(items.map((item) => item.type === "price_alert" ? item.metadata?.stock_id : null).filter((id): id is string => typeof id === "string"))];
@@ -49,22 +71,27 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const fetchNotifications = useCallback(async () => {
-    if (!user) { setNotifications([]); setLivePriceAlert(null); seenIds.current.clear(); return; }
-    const { data } = await supabase.from("notifications").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(50);
+    if (!userId) { setNotifications([]); setLivePriceAlert(null); seenIds.current.clear(); return; }
+    const { data } = await supabase.from("notifications").select("*").eq("user_id", userId).order("created_at", { ascending: false }).limit(50);
     const next = await hydrateNotifications((data as AppNotification[] | null) ?? []);
     setNotifications(next);
     next.forEach((notification) => seenIds.current.add(notification.id));
-  }, [hydrateNotifications, user]);
+    const newestUnshownPriceAlert = next.find((notification) => notification.type === "price_alert" && !notification.is_read && !shownPriceAlertIds.current.has(notification.id));
+    if (newestUnshownPriceAlert) {
+      markPriceAlertModalShown(newestUnshownPriceAlert.id);
+      setLivePriceAlert(newestUnshownPriceAlert);
+    }
+  }, [hydrateNotifications, markPriceAlertModalShown, userId]);
 
   const markAsRead = useCallback(async (id: string) => {
     await supabase.from("notifications").update({ is_read: true }).eq("id", id);
     setNotifications((items) => items.map((item) => item.id === id ? { ...item, is_read: true } : item));
   }, []);
   const markAllRead = useCallback(async () => {
-    if (!user) return;
-    await supabase.from("notifications").update({ is_read: true }).eq("user_id", user.id).eq("is_read", false);
+    if (!userId) return;
+    await supabase.from("notifications").update({ is_read: true }).eq("user_id", userId).eq("is_read", false);
     setNotifications((items) => items.map((item) => ({ ...item, is_read: true })));
-  }, [user]);
+  }, [userId]);
   const deleteNotification = useCallback(async (id: string) => {
     await supabase.from("notifications").delete().eq("id", id);
     setNotifications((items) => items.filter((item) => item.id !== id));
@@ -76,17 +103,17 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
 
   useEffect(() => {
     void fetchNotifications();
-    if (!user) return;
+    if (!userId) return;
     let channel: ReturnType<typeof supabase.channel> | null = null;
     let timer: number | null = null;
     const touchPresence = () => {
       if (document.visibilityState !== "visible") return;
-      void supabase.from("notification_presence").upsert({ user_id: user.id, last_seen_at: new Date().toISOString() });
+      void supabase.from("notification_presence").upsert({ user_id: userId, last_seen_at: new Date().toISOString() });
     };
     const subscribe = async () => {
       const { data: session } = await supabase.auth.getSession();
       if (session.session?.access_token) await supabase.realtime.setAuth(session.session.access_token);
-      channel = supabase.channel(`user:${user.id}:notifications`, { config: { private: true } })
+      channel = supabase.channel(`user:${userId}:notifications`, { config: { private: true } })
         .on("broadcast", { event: "notification_created" }, async (event) => {
           const id = String((event.payload as { id?: string }).id ?? "");
           if (!id || seenIds.current.has(id)) return;
@@ -97,6 +124,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
           seenIds.current.add(notification.id);
           setNotifications((items) => [notification, ...items.filter((item) => item.id !== notification.id)]);
           if (notification.type === "price_alert") {
+            markPriceAlertModalShown(notification.id);
             setLivePriceAlert(notification);
           } else {
             toast(notification.title, { description: notification.message });
@@ -112,7 +140,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
       document.removeEventListener("visibilitychange", touchPresence);
       if (channel) void supabase.removeChannel(channel);
     };
-  }, [fetchNotifications, hydrateNotifications, user]);
+  }, [fetchNotifications, hydrateNotifications, markPriceAlertModalShown, userId]);
 
   const value = useMemo(() => ({
     notifications,
