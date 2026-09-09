@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Check, ChevronRight, Trash2, X } from "lucide-react";
+import { Bell, Check, ChevronRight, Coffee, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { priceAlertPresentation } from "./priceAlertPresentation";
+import { getCurrencyFlagUrl } from "@/lib/currencyBranding";
 
 const NotificationBell = () => {
   const { user } = useAuth();
@@ -66,7 +67,7 @@ const NotificationBell = () => {
               <p className="mt-1 text-xs text-muted-foreground">Price alerts will appear here when they are triggered.</p>
             </div>
           ) : (
-            <div className="w-full max-w-full space-y-2 overflow-x-hidden p-3">
+            <div className="w-full max-w-full divide-y divide-border/60 overflow-x-hidden">
               {notifications.map((n) => (
                 <NotificationRow
                   key={n.id}
@@ -83,11 +84,44 @@ const NotificationBell = () => {
   );
 };
 
+function NotificationAssetVisual({ notification, symbol }: { notification: ReturnType<typeof useNotifications>["notifications"][number]; symbol: string | null }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  const flagUrl = notification.assetType === "currency" ? getCurrencyFlagUrl(symbol) : undefined;
+  const label = notification.assetName ?? notification.title;
+
+  if (notification.assetVisualUrl && !imageFailed) {
+    return <img src={notification.assetVisualUrl} alt={`${label} logo`} className="h-full w-full object-contain p-1.5" onError={() => setImageFailed(true)} />;
+  }
+  if (flagUrl && !imageFailed) {
+    return <img src={flagUrl} alt={`${symbol} flag`} className="h-5 w-5 rounded-full object-cover" onError={() => setImageFailed(true)} />;
+  }
+  if (notification.assetType === "commodity") return <Coffee className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-label="Commodity" />;
+  return <span className="text-xs font-black tracking-wide text-foreground">{symbol?.slice(0, 3) ?? "KFF"}</span>;
+}
+
+function notificationTime(value: string | null) {
+  if (!value) return "Recently";
+  const timestamp = Date.parse(value);
+  if (!Number.isFinite(timestamp)) return "Recently";
+  const minutes = Math.max(0, Math.floor((Date.now() - timestamp) / 60_000));
+  if (minutes < 1) return "Just now";
+  if (minutes < 60) return `${minutes}m ago`;
+  if (minutes < 1_440) return `${Math.floor(minutes / 60)}h ago`;
+  return `${Math.floor(minutes / 1_440)}d ago`;
+}
+
 export function NotificationRow({ notification, onOpen, onDelete }: { notification: ReturnType<typeof useNotifications>["notifications"][number]; onOpen: () => void; onDelete: () => void }) {
   const details = notification.type === "price_alert" ? priceAlertPresentation(notification) : null;
-  return <div className={`group box-border w-full max-w-full min-w-0 overflow-hidden rounded-2xl border p-4 transition ${notification.is_read ? "border-border bg-card" : "border-emerald-500/35 bg-emerald-500/[0.08]"}`}>
-    <div className="flex min-w-0 items-start gap-3"><button type="button" onClick={onOpen} className="flex min-w-0 flex-1 items-start gap-3 text-left"><span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-500 text-xs font-black text-slate-950">{details?.symbol?.slice(0, 2) ?? "KFF"}</span><span className="min-w-0 flex-1"><span className="flex min-w-0 items-center gap-2"><span className="min-w-0 flex-1 truncate text-sm font-bold text-foreground">{details?.assetName ?? notification.title}</span>{!notification.is_read && <span className="h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />}</span><span className="mt-1 block truncate text-xs text-muted-foreground">{details?.target ?? notification.message}</span></span></button><Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:text-destructive" onClick={onDelete} aria-label={`Delete notification: ${notification.title}`}><Trash2 className="h-3.5 w-3.5" /></Button></div>
-    <button type="button" onClick={onOpen} className="mt-3 flex min-w-0 w-full items-center justify-between gap-3 border-t border-border/70 pt-3 text-left"><span className="min-w-0 flex-1 truncate text-base font-bold tabular-nums text-foreground">{details?.currentPrice ?? "View update"}</span><span className="inline-flex shrink-0 items-center text-xs font-bold text-emerald-600">View alert <ChevronRight className="h-3.5 w-3.5" /></span></button>
+  const assetName = details?.assetName ?? notification.title;
+  const symbol = details?.symbol ?? notification.assetSymbol ?? null;
+  return <div className={`group relative box-border flex w-full max-w-full min-w-0 items-center gap-2 overflow-hidden px-4 py-4 transition ${notification.is_read ? "hover:bg-muted/40" : "bg-emerald-500/[0.045] hover:bg-emerald-500/[0.08]"}`}>
+    {!notification.is_read && <span className="absolute inset-y-3 left-0 w-0.5 rounded-r-full bg-emerald-500" aria-label="Unread" />}
+    <button type="button" onClick={onOpen} aria-label={`Open alert: ${assetName}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
+      <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm"><NotificationAssetVisual notification={notification} symbol={symbol} /></span>
+      <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-foreground">{assetName}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{details?.target ?? notification.message}</span></span>
+      <span className="flex shrink-0 items-center gap-1.5 text-right"><span><span className="block text-sm font-bold tabular-nums text-foreground">{details?.currentPrice ?? "View update"}</span><span className="mt-0.5 block text-xs text-muted-foreground">{notificationTime(details?.observedAt ?? notification.created_at)}</span></span><ChevronRight className="h-4 w-4 text-muted-foreground" /></span>
+    </button>
+    <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:text-destructive" onClick={onDelete} aria-label={`Delete notification: ${notification.title}`}><Trash2 className="h-3.5 w-3.5" /></Button>
   </div>;
 }
 

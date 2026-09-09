@@ -4,6 +4,8 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
 import { LivePriceAlertCard } from "./LivePriceAlertCard";
 import { toast } from "sonner";
+import { getFundManagerLogoUrl } from "@/lib/fundBranding";
+import { getStockLogoUrl } from "@/lib/stockBranding";
 
 export interface AppNotification {
   id: string;
@@ -16,6 +18,8 @@ export interface AppNotification {
   created_at: string;
   assetName?: string;
   assetSymbol?: string;
+  assetType?: "stock" | "fund" | "currency" | "commodity";
+  assetVisualUrl?: string;
 }
 
 type NotificationContextValue = {
@@ -59,14 +63,35 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   }, []);
 
   const hydrateNotifications = useCallback(async (items: AppNotification[]) => {
-    const stockIds = [...new Set(items.map((item) => item.type === "price_alert" ? item.metadata?.stock_id : null).filter((id): id is string => typeof id === "string"))];
-    if (!stockIds.length) return items;
-    const { data } = await supabase.from("stocks").select("id,name,symbol").in("id", stockIds);
-    const stocks = new Map((data ?? []).map((stock) => [stock.id, stock]));
+    const priceAlerts = items.filter((item) => item.type === "price_alert");
+    const idsFor = (assetType: "stock" | "fund" | "currency" | "commodity") => [...new Set(priceAlerts
+      .map((item) => item.metadata?.asset_type === assetType ? item.metadata.asset_id : assetType === "stock" ? item.metadata?.stock_id : null)
+      .filter((id): id is string => typeof id === "string"))];
+    const [stockResult, fundResult, currencyResult, commodityResult] = await Promise.all([
+      idsFor("stock").length ? supabase.from("stocks").select("id,name,symbol,logo_url").in("id", idsFor("stock")) : Promise.resolve({ data: [] }),
+      idsFor("fund").length ? supabase.from("funds").select("id,name,manager,logo_url").in("id", idsFor("fund")) : Promise.resolve({ data: [] }),
+      idsFor("currency").length ? supabase.from("exchange_rates").select("id,currency_code,currency_name").in("id", idsFor("currency")) : Promise.resolve({ data: [] }),
+      idsFor("commodity").length ? supabase.from("commodities").select("id,name,symbol").in("id", idsFor("commodity")) : Promise.resolve({ data: [] }),
+    ]);
+    const stocks = new Map((stockResult.data ?? []).map((stock) => [stock.id, stock]));
+    const funds = new Map((fundResult.data ?? []).map((fund) => [fund.id, fund]));
+    const currencies = new Map((currencyResult.data ?? []).map((currency) => [currency.id, currency]));
+    const commodities = new Map((commodityResult.data ?? []).map((commodity) => [commodity.id, commodity]));
+
     return items.map((item) => {
-      const stockId = typeof item.metadata?.stock_id === "string" ? item.metadata.stock_id : null;
+      if (item.type !== "price_alert") return item;
+      const assetType = item.metadata?.asset_type;
+      const assetId = typeof item.metadata?.asset_id === "string" ? item.metadata.asset_id : null;
+      const stockId = assetType === "stock" ? assetId : typeof item.metadata?.stock_id === "string" ? item.metadata.stock_id : null;
       const stock = stockId ? stocks.get(stockId) : null;
-      return stock ? { ...item, assetName: stock.name, assetSymbol: stock.symbol } : item;
+      if (stock) return { ...item, assetType: "stock" as const, assetName: stock.name, assetSymbol: stock.symbol, assetVisualUrl: getStockLogoUrl(stock.symbol, stock.logo_url) || undefined };
+      const fund = assetType === "fund" && assetId ? funds.get(assetId) : null;
+      if (fund) return { ...item, assetType: "fund" as const, assetName: fund.name, assetVisualUrl: getFundManagerLogoUrl(fund.manager, fund.logo_url) };
+      const currency = assetType === "currency" && assetId ? currencies.get(assetId) : null;
+      if (currency) return { ...item, assetType: "currency" as const, assetName: `${currency.currency_code}/KES · ${currency.currency_name}`, assetSymbol: currency.currency_code };
+      const commodity = assetType === "commodity" && assetId ? commodities.get(assetId) : null;
+      if (commodity) return { ...item, assetType: "commodity" as const, assetName: commodity.name, assetSymbol: commodity.symbol };
+      return { ...item, assetType: assetType === "stock" || assetType === "fund" || assetType === "currency" || assetType === "commodity" ? assetType : undefined, assetName: typeof item.metadata?.asset_name === "string" ? item.metadata.asset_name : item.assetName };
     });
   }, []);
 

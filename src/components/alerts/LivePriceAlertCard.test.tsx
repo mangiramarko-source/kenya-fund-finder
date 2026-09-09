@@ -60,7 +60,7 @@ describe("NotificationRow", () => {
     render(<NotificationRow notification={notification} onOpen={onOpen} onDelete={vi.fn()} />);
 
     expect(screen.getByText("Above KES 36.90")).toBeInTheDocument();
-    fireEvent.click(screen.getByRole("button", { name: /View alert/ }));
+    fireEvent.click(screen.getByRole("button", { name: /Open alert: Safaricom PLC/ }));
     expect(onOpen).toHaveBeenCalledOnce();
   });
 
@@ -75,11 +75,19 @@ describe("NotificationRow", () => {
     render(<NotificationRow notification={longNotification} onOpen={onOpen} onDelete={vi.fn()} />);
 
     const title = screen.getByText(longNotification.assetName);
-    expect(title).toHaveClass("min-w-0", "flex-1", "truncate");
+    expect(title).toHaveClass("truncate");
     expect(screen.getByText("Above KES 36.90")).toHaveClass("truncate");
-    expect(title.closest(".group")).toHaveClass("w-full", "max-w-full", "overflow-hidden");
-    fireEvent.click(screen.getByRole("button", { name: /View alert/ }));
+    expect(title.closest(".group")).toHaveClass("w-full", "max-w-full", "overflow-hidden", "min-w-0");
+    fireEvent.click(screen.getByRole("button", { name: /Open alert: Market alert: AUD\/KES/ }));
     expect(onOpen).toHaveBeenCalledOnce();
+  });
+
+  it("renders the resolved asset visual and falls back to an FX flag", () => {
+    const { rerender } = render(<NotificationRow notification={{ ...notification, assetVisualUrl: "/images/stocks/safaricom.png" }} onOpen={vi.fn()} onDelete={vi.fn()} />);
+    expect(screen.getByRole("img", { name: "Safaricom PLC logo" })).toHaveAttribute("src", "/images/stocks/safaricom.png");
+
+    rerender(<NotificationRow notification={{ ...notification, assetType: "currency", assetSymbol: "AUD", assetName: "AUD/KES · Australian Dollar" }} onOpen={vi.fn()} onDelete={vi.fn()} />);
+    expect(screen.getByRole("img", { name: "AUD flag" })).toHaveAttribute("src", expect.stringContaining("/au.png"));
   });
 });
 

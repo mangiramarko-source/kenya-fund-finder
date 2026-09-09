@@ -194,7 +194,7 @@ function MobileSidebarDrawer({
                   <p className="mt-1 text-xs text-muted-foreground">Price alerts will appear here when they are triggered.</p>
                 </div>
               ) : (
-                <div className="w-full max-w-full space-y-2 overflow-x-hidden p-3">
+                <div className="w-full max-w-full divide-y divide-border/60 overflow-x-hidden">
                   {notifications.map((notification) => (
                     <NotificationRow
                       key={notification.id}
