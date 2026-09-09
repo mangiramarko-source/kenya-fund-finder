@@ -63,6 +63,23 @@ describe("NotificationRow", () => {
     fireEvent.click(screen.getByRole("button", { name: /View alert/ }));
     expect(onOpen).toHaveBeenCalledOnce();
   });
+
+  it("keeps long market-alert text inside the available card width", () => {
+    const onOpen = vi.fn();
+    const longNotification = {
+      ...notification,
+      title: "Market alert: AUD/KES · Australian Dollar exchange-rate movement notification",
+      assetName: "Market alert: AUD/KES · Australian Dollar exchange-rate movement notification",
+      assetSymbol: "AUD/KES",
+    };
+    render(<NotificationRow notification={longNotification} onOpen={onOpen} onDelete={vi.fn()} />);
+
+    const title = screen.getByText(longNotification.assetName);
+    expect(title).toHaveClass("min-w-0", "flex-1", "truncate");
+    expect(screen.getByText("Above KES 36.90")).toHaveClass("truncate");
+    fireEvent.click(screen.getByRole("button", { name: /View alert/ }));
+    expect(onOpen).toHaveBeenCalledOnce();
+  });
 });
 
 describe("Desktop notification drawer", () => {
