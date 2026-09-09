@@ -11,6 +11,7 @@ import {
   RotateCcw,
   Sun,
   TrendingUp,
+  WalletCards,
   X,
 } from "lucide-react";
 
@@ -25,10 +26,11 @@ type PreviewNotification = {
   target: string;
   time: string;
   read: boolean;
-  visual: { kind: "logo"; src: string } | { kind: "flag"; value: string } | { kind: "commodity" };
+  visual: { kind: "logo"; src: string } | { kind: "flag"; value: string } | { kind: "commodity" } | { kind: "portfolio" };
 };
 
 const seedNotifications: PreviewNotification[] = [
+  { id: "portfolio", symbol: "PORTFOLIO", asset: "Portfolio up today", price: "KES 110,000.00", target: "+KES 10,000.00 (+10.00%)", time: "Today", read: false, visual: { kind: "portfolio" } },
   { id: "absa", symbol: "ABSA", asset: "Absa Bank Kenya", price: "KES 15.10", target: "Above KES 15.00", time: "Just now", read: false, visual: { kind: "logo", src: "https://caawgzuofnujrznwbuxk.supabase.co/storage/v1/object/public/market-logos/stocks/ABSA-provided-v3.webp" } },
   { id: "scom", symbol: "SCOM", asset: "Safaricom PLC", price: "KES 37.05", target: "Above KES 36.90", time: "12 min ago", read: false, visual: { kind: "logo", src: "/images/stocks/safaricom.png" } },
   { id: "aud", symbol: "AUD", asset: "AUD/KES · Australian Dollar", price: "KES 93.37", target: "Above KES 93.00", time: "Yesterday", read: true, visual: { kind: "flag", value: "🇦🇺" } },
@@ -59,8 +61,8 @@ export default function DevNotificationPreviewPage() {
         <header className="flex flex-col gap-4 rounded-2xl border border-border bg-card p-5 shadow-sm sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Development preview</p>
-            <h1 className="mt-1 text-2xl font-bold tracking-tight">Market-signal notifications</h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Synthetic alert data previews branded stocks, FX and commodity rows. Nothing is read from or written to your account.</p>
+            <h1 className="mt-1 text-2xl font-bold tracking-tight">Notifications</h1>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Synthetic portfolio and market updates. Nothing is read from or written to your account.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <PreviewButton active={theme === "dark"} onClick={() => setTheme("dark")} label="Dark"><Moon className="h-3.5 w-3.5" /> Dark</PreviewButton>
@@ -124,7 +126,7 @@ function PreviewFrame({
   onOpenNotification: (id: string) => void;
 }) {
   const isMobile = device === "mobile";
-  const liveAlert = notifications[0];
+  const liveAlert = notifications.find((notification) => notification.id === "absa") ?? notifications[0];
 
   return (
     <div className={`relative min-h-[670px] overflow-hidden bg-background text-foreground ${isMobile ? "min-h-[760px]" : ""}`}>
@@ -173,6 +175,7 @@ function NotificationVisual({ notification }: { notification: PreviewNotificatio
   }
   if (notification.visual.kind === "flag") return <span className="text-xl leading-none" aria-label={`${notification.asset} flag`}>{notification.visual.value}</span>;
   if (notification.visual.kind === "commodity") return <Coffee className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-label="Commodity" />;
+  if (notification.visual.kind === "portfolio") return <WalletCards className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-label="Portfolio" />;
   return <span className="text-xs font-black tracking-wide text-foreground">{notification.symbol.slice(0, 3)}</span>;
 }
 
@@ -183,7 +186,7 @@ function NotificationDrawer({ device, notifications, unreadCount, onClose, onMar
       <section role="dialog" aria-modal="true" aria-label="Notification centre" onClick={(event) => event.stopPropagation()} className={`absolute flex flex-col overflow-hidden bg-background shadow-2xl ${mobile ? "inset-x-0 bottom-0 max-h-[78%] rounded-t-[28px] border-t border-border" : "right-0 top-0 h-full w-[420px] border-l border-border"}`}>
         {mobile && <div className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-muted" />}
         <header className="flex items-center justify-between gap-3 border-b border-border/70 px-5 py-4">
-          <div className="min-w-0"><p className="text-lg font-bold tracking-tight">Notifications</p><p className="mt-0.5 text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alert${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
+          <div className="min-w-0"><p className="text-lg font-bold tracking-tight">Notifications</p><p className="mt-0.5 text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new notification${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
           <div className="flex shrink-0 items-center gap-1">
             <button type="button" onClick={onMarkAllRead} disabled={!unreadCount} className="rounded-full px-3 py-2 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500/10 disabled:opacity-40"><Check className="mr-1 inline h-3.5 w-3.5" />Read all</button>
             <button type="button" onClick={onClose} aria-label="Close notifications" className="rounded-full p-2.5 transition hover:bg-muted"><X className="h-4 w-4" /></button>
