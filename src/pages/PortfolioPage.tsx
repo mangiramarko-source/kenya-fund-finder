@@ -56,6 +56,7 @@ const PortfolioPage = () => {
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [showAddModal, setShowAddModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
+  const [showPortfolioValues, setShowPortfolioValues] = useState(false);
 
   const {
     items,
@@ -189,7 +190,12 @@ const PortfolioPage = () => {
     <>
       {/* Mobile View Only */}
       <div className="block md:hidden">
-        <MobilePortfolioView currency={currency} setCurrency={setCurrency} />
+        <MobilePortfolioView
+          currency={currency}
+          setCurrency={setCurrency}
+          showPortfolioValues={showPortfolioValues}
+          onTogglePortfolioValues={() => setShowPortfolioValues((visible) => !visible)}
+        />
       </div>
 
       {/* Desktop View Only */}
@@ -244,6 +250,8 @@ const PortfolioPage = () => {
           allocation={allocation}
           onOpenAddModal={() => setShowAddModal(true)}
           onOpenReportModal={() => setShowSummaryModal(true)}
+          showPortfolioValues={showPortfolioValues}
+          onTogglePortfolioValues={() => setShowPortfolioValues((visible) => !visible)}
         />
 
         {/* Empty State vs Full Portfolio */}

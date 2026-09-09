@@ -3,7 +3,7 @@
 export const AI_LAB_PAGE =
   "fixed inset-0 flex flex-col min-h-0 overflow-hidden bg-background h-[var(--ai-lab-vvh,100dvh)] max-h-[var(--ai-lab-vvh,100dvh)] overscroll-none";
 export const AI_LAB_PAGE_INNER =
-  "flex flex-col flex-1 min-h-0 h-full w-full gap-2 md:gap-4 container pt-2 md:pt-20 pb-0 max-w-3xl overflow-hidden px-3 md:px-4";
+  "flex flex-col flex-1 min-h-0 h-full w-full gap-2 md:gap-4 container pt-2 md:pt-4 pb-0 max-w-3xl overflow-hidden px-3 md:px-4";
 
 export const AI_LAB_CARD =
   "rounded-2xl border border-border bg-card text-card-foreground shadow-sm";
@@ -75,7 +75,7 @@ export const AI_LAB_SAFETY_LINE = "Data only. Not personal financial advice.";
 /** Pinned below the bottom input — short, always visible during chat. */
 export const AI_LAB_DOCK_DISCLAIMER_TEXT =
   "Scenarios only — not financial advice.";
-export const AI_LAB_INPUT_PLACEHOLDER = "Put 100k in an MMF for 12 months";
+export const AI_LAB_INPUT_PLACEHOLDER = "Ask Ai lab";
 
 export const AI_LAB_SAFE_PROMPT_CHIPS = [
   "Put 100k in an MMF for 12 months",

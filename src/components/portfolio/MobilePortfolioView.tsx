@@ -14,10 +14,13 @@ import KoraIllustration from "@/components/kora/KoraIllustration";
 import PortfolioDailyInsightCard, { portfolioInsight } from "@/components/portfolio/PortfolioDailyInsightCard";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { usePortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
+import PortfolioValueToggle, { PortfolioSensitiveValue } from "@/components/portfolio/PortfolioValueVisibility";
 
 interface MobilePortfolioViewProps {
   currency: "KES" | "USD";
   setCurrency: (c: "KES" | "USD") => void;
+  showPortfolioValues: boolean;
+  onTogglePortfolioValues: () => void;
 }
 
 const CATEGORY_COLORS: Record<AssetType, string> = {
@@ -46,7 +49,7 @@ const fmtCurrency = (val: number, curr: "KES" | "USD" = "KES") => {
   }).format(val);
 };
 
-export default function MobilePortfolioView({ currency, setCurrency }: MobilePortfolioViewProps) {
+export default function MobilePortfolioView({ currency, setCurrency, showPortfolioValues, onTogglePortfolioValues }: MobilePortfolioViewProps) {
   const { items, isLoading, addItem, updateItem, deleteItem, totalValue, totalPnL, totalPnLPercent, allocation } = usePortfolio();
   const { changes, loading: changesLoading } = usePortfolioChanges(items);
   const metrics = usePortfolioMetrics(items);
@@ -143,8 +146,11 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
         </div>
 
         <div>
-          <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight tabular-nums">
-            {fmtCurrency(totalValue, currency)}
+          <div className="flex items-center gap-2">
+            <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight tabular-nums">
+              <PortfolioSensitiveValue value={fmtCurrency(totalValue, currency)} visible={showPortfolioValues} />
+            </div>
+            <PortfolioValueToggle visible={showPortfolioValues} onToggle={onTogglePortfolioValues} />
           </div>
           <div className="flex items-center gap-1.5 mt-1">
             {displayChangePct != null ? (
@@ -176,7 +182,7 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
               </span>
             )}
             <span className="text-xs text-muted-foreground font-medium">
-              ({fmtCurrency(totalPnL, currency)})
+              (<PortfolioSensitiveValue value={fmtCurrency(totalPnL, currency)} visible={showPortfolioValues} />)
             </span>
           </div>
         </div>

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { Link } from "react-router-dom";
-import { ArrowLeft, Sparkles } from "lucide-react";
+import { ArrowLeft } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import AiLabChat, { type CompareState } from "@/components/ai-lab/AiLabChat";
@@ -418,23 +418,31 @@ const AiLabPage = () => {
 
   return (
     <div className={AI_LAB_PAGE}>
+      <aside className="pointer-events-none fixed left-3 top-24 z-30 hidden lg:block" aria-label="AI Lab information">
+        <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/90 p-2 shadow-sm backdrop-blur-sm">
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-bold leading-none text-foreground">AI Lab</span>
+              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[8px] font-semibold text-emerald-600">BETA</span>
+            </div>
+            <p className="mt-0.5 max-w-[150px] text-[9px] leading-snug text-muted-foreground">{AI_LAB_SAFETY_LINE}</p>
+          </div>
+        </div>
+      </aside>
       <div className={AI_LAB_PAGE_INNER}>
-        <header className="flex shrink-0 items-center justify-between gap-2 py-1 md:py-2 border-b border-border/40 pb-2 md:pb-3">
+        <header className="flex shrink-0 items-center justify-between gap-2 py-1 md:py-2 border-b border-border/40 pb-2 md:pb-3 md:hidden">
           {/* Unified header (Mobile & Desktop) */}
           <div className="flex items-center justify-between w-full">
-            <div className="flex items-center gap-3">
+            <div className="flex w-full items-center gap-3">
               <Link
                 to="/"
-                className="inline-flex items-center justify-center h-9 w-9 rounded-full bg-muted/60 text-foreground hover:bg-muted transition-colors shrink-0"
+                className="md:hidden inline-flex items-center justify-center h-9 w-9 rounded-full bg-muted/60 text-foreground hover:bg-muted transition-colors shrink-0"
                 aria-label="Back to overview"
               >
                 <ArrowLeft className="h-4 w-4" aria-hidden="true" />
               </Link>
 
-              <div className="flex items-center gap-2">
-                <div className="flex items-center justify-center h-8 w-8 rounded-full bg-emerald-500/10 text-emerald-600 shrink-0">
-                  <Sparkles className="h-4 w-4" />
-                </div>
+              <div className="ml-auto flex items-center gap-2">
                 <div>
                   <div className="flex items-center gap-2">
                     <span className="font-bold text-base md:text-lg text-foreground leading-none">AI Lab</span>
@@ -447,9 +455,6 @@ const AiLabPage = () => {
               </div>
             </div>
 
-            <div className="hidden md:block text-xs text-muted-foreground font-medium">
-              Scenarios only — not financial advice.
-            </div>
           </div>
         </header>
 

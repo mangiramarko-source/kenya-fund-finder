@@ -4,6 +4,7 @@ import { AssetType, ASSET_TYPE_LABELS } from "@/hooks/usePortfolio";
 import PortfolioDailyInsightCard, { portfolioInsight } from "@/components/portfolio/PortfolioDailyInsightCard";
 import type { AppNotification } from "@/components/alerts/NotificationProvider";
 import type { PortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
+import PortfolioValueToggle, { PortfolioSensitiveValue } from "@/components/portfolio/PortfolioValueVisibility";
 
 interface DesktopPortfolioHeroProps {
   totalValue: number;
@@ -17,6 +18,8 @@ interface DesktopPortfolioHeroProps {
   allocation: Record<AssetType, number>;
   onOpenAddModal: () => void;
   onOpenReportModal: () => void;
+  showPortfolioValues: boolean;
+  onTogglePortfolioValues: () => void;
 }
 
 const CATEGORY_COLORS: Record<AssetType, string> = {
@@ -48,6 +51,8 @@ export default function DesktopPortfolioHero({
   allocation,
   onOpenAddModal,
   onOpenReportModal,
+  showPortfolioValues,
+  onTogglePortfolioValues,
 }: DesktopPortfolioHeroProps) {
   const insight = portfolioInsight(portfolioNotification, liveMovement);
   const displayChangePct = liveMovement?.percentChange ?? recentChangePct;
@@ -101,8 +106,11 @@ export default function DesktopPortfolioHero({
       {/* Main Balance & PnL Subline */}
       <div className="flex items-baseline justify-between flex-wrap gap-4">
         <div>
-          <div className="text-3xl sm:text-4xl font-black text-foreground tracking-tight tabular-nums">
-            {fmtCurrency(totalValue, currency)}
+          <div className="flex items-center gap-2">
+            <div className="text-3xl sm:text-4xl font-black text-foreground tracking-tight tabular-nums">
+              <PortfolioSensitiveValue value={fmtCurrency(totalValue, currency)} visible={showPortfolioValues} />
+            </div>
+            <PortfolioValueToggle visible={showPortfolioValues} onToggle={onTogglePortfolioValues} />
           </div>
           <div className="flex items-center gap-2 mt-1.5">
             {displayChangePct != null ? (
@@ -135,7 +143,7 @@ export default function DesktopPortfolioHero({
               </span>
             )}
             <span className="text-sm text-muted-foreground font-medium">
-              ({fmtCurrency(totalPnL, currency)})
+              (<PortfolioSensitiveValue value={fmtCurrency(totalPnL, currency)} visible={showPortfolioValues} />)
             </span>
           </div>
         </div>

@@ -186,7 +186,7 @@ const AiLabChat = ({
                 <PromptChip key={chip} label={chip} onClick={() => submitPrompt(chip)} />
               ))}
             </div>
-            <p className={AI_LAB_DOCK_DISCLAIMER}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
+            <p className={`${AI_LAB_DOCK_DISCLAIMER} md:hidden`}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
           </div>
         ) : (
           <div className="max-w-3xl w-full mx-auto space-y-6">
@@ -346,7 +346,7 @@ const AiLabChat = ({
                 onInputFocus={scrollInputIntoThread}
               />
             </form>
-            <p className={`${AI_LAB_DOCK_DISCLAIMER} mt-1.5`}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
+            <p className={`${AI_LAB_DOCK_DISCLAIMER} mt-1.5 md:hidden`}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
           </div>
         </div>
       )}
