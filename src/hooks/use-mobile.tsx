@@ -10,9 +10,16 @@ export function useIsMobile() {
     const onChange = () => {
       setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
     };
-    mql.addEventListener("change", onChange);
+    // MediaQueryList.addEventListener is missing in older iOS Safari builds.
+    // Keep the legacy listener path so the breakpoint hook cannot abort the
+    // rest of the app during hydration/startup on those devices.
+    if (typeof mql.addEventListener === "function") mql.addEventListener("change", onChange);
+    else mql.addListener(onChange);
     setIsMobile(window.innerWidth < MOBILE_BREAKPOINT);
-    return () => mql.removeEventListener("change", onChange);
+    return () => {
+      if (typeof mql.removeEventListener === "function") mql.removeEventListener("change", onChange);
+      else mql.removeListener(onChange);
+    };
   }, []);
 
   return !!isMobile;
