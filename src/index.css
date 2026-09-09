@@ -76,6 +76,7 @@
   .ai-lab-compact .p-3\.5 { padding: 0.625rem !important; }
   .ai-lab-compact .gap-3 { gap: 0.5rem !important; }
   .ai-lab-compact .text-foreground { overflow-wrap: anywhere; }
+  .ai-lab-compact > div > .relative { padding-left: 0.75rem !important; padding-right: 0.75rem !important; }
 }
 
 @layer base {
