@@ -67,6 +67,7 @@ const DevOnlyPages = import.meta.env.DEV
       DevEmailPreviewPage: lazy(() => import("./pages/DevEmailPreviewPage")),
       DevWelcomePreviewPage: lazy(() => import("./pages/DevWelcomePreviewPage")),
       DevNotificationPreviewPage: lazy(() => import("./pages/DevNotificationPreviewPage")),
+      DevPortfolioChangePreviewPage: lazy(() => import("./pages/DevPortfolioChangePreviewPage")),
     }
   : null;
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -159,6 +160,7 @@ const App = () => (
                       <Route path="/dev/email-preview" element={<DevOnlyPages.DevEmailPreviewPage />} />
                       <Route path="/dev/welcome-preview" element={<DevOnlyPages.DevWelcomePreviewPage />} />
                       <Route path="/dev/notification-preview" element={<DevOnlyPages.DevNotificationPreviewPage />} />
+                      <Route path="/dev/portfolio-change-preview" element={<DevOnlyPages.DevPortfolioChangePreviewPage />} />
                     </> : null}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
