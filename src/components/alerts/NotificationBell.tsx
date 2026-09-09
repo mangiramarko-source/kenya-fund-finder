@@ -47,7 +47,8 @@ const NotificationBell = () => {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="right" className="inset-y-0 right-0 left-auto h-full w-[400px] max-w-[92vw] rounded-none border-l border-t-0 bg-background p-0 [&>button]:hidden">
+      <SheetContent side="bottom" className="inset-x-0 bottom-0 flex max-h-[78dvh] flex-col rounded-t-[28px] border-x border-t bg-background p-0 [&>button]:hidden">
+        <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-muted" />
         <div className="flex items-center gap-2 border-b border-border/80 px-5 py-3">
           <div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold text-foreground">Notifications</SheetTitle><p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alert${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
           {unreadCount > 0 && (
@@ -59,7 +60,7 @@ const NotificationBell = () => {
             <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
           </button>
         </div>
-        <ScrollArea className="h-[calc(100dvh-69px)]">
+        <ScrollArea className="min-h-0 flex-1">
           {notifications.length === 0 ? (
             <div className="px-5 py-10 text-center">
               <Bell className="h-6 w-6 text-muted-foreground mx-auto mb-2" />

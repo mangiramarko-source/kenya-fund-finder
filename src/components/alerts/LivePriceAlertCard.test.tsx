@@ -91,8 +91,8 @@ describe("NotificationRow", () => {
   });
 });
 
-describe("Desktop notification drawer", () => {
-  it("opens a dedicated right-side notification drawer and closes from its own header", () => {
+describe("Notification drawer", () => {
+  it("opens the bottom notification sheet and closes from its own header", () => {
     render(<MemoryRouter><NotificationBell /></MemoryRouter>);
 
     fireEvent.click(screen.getByRole("button", { name: /open notifications/i }));

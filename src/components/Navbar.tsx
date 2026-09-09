@@ -164,28 +164,29 @@ function MobileSidebarDrawer({
   return (
     <Sheet open={open} onOpenChange={(v) => !v && close()}>
       <SheetContent
-        side="right"
-        className="w-[88vw] sm:max-w-sm p-0 flex flex-col bg-background border-l border-border [&>button]:hidden"
+        side={view === "notifications" ? "bottom" : "right"}
+        className={view === "notifications"
+          ? "inset-x-0 bottom-0 flex max-h-[78dvh] flex-col rounded-t-[28px] border-x border-t bg-background p-0 [&>button]:hidden"
+          : "flex w-[88vw] flex-col border-l border-border bg-background p-0 sm:max-w-sm [&>button]:hidden"}
         aria-label={view === "notifications" ? "Notifications" : "Navigation menu"}
       >
         {view === "notifications" ? (
           <>
+            <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-muted" />
             <div className="flex items-center gap-2 border-b border-border/80 px-5 py-3">
               <div className="min-w-0 flex-1">
                 <p className="text-base font-bold text-foreground">Notifications</p>
                 <p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alert${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p>
               </div>
+              {unreadCount > 0 && (
+                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-emerald-600 hover:text-emerald-700" onClick={() => void markAllRead()}>
+                  <Check className="mr-1 h-3.5 w-3.5" /> Read all
+                </Button>
+              )}
               <button onClick={close} aria-label="Close menu" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 hover:bg-muted transition-colors">
                 <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
               </button>
             </div>
-            {unreadCount > 0 && (
-              <div className="border-b border-border/70 px-4 py-2">
-                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-emerald-600 hover:text-emerald-700" onClick={() => void markAllRead()}>
-                  <Check className="mr-1 h-3.5 w-3.5" /> Read all
-                </Button>
-              </div>
-            )}
             <ScrollArea className="min-h-0 flex-1">
               {notifications.length === 0 ? (
                 <div className="px-5 py-10 text-center">
