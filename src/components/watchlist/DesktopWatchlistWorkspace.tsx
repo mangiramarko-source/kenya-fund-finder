@@ -19,6 +19,9 @@ import { Switch } from "@/components/ui/switch";
 import { cn } from "@/lib/utils";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
+import { getStockLogoUrl } from "@/lib/stockBranding";
+import { getFundManagerLogoUrl } from "@/lib/fundBranding";
+import { getCurrencyFlagUrl } from "@/lib/currencyBranding";
 
 type WorkspaceTab = "watchlist" | "alerts";
 type AssetType = AlertAssetType;
@@ -32,11 +35,13 @@ type AssetRow = {
   unit: string;
   change?: number | null;
   href?: string;
+  visualUrl?: string;
+  meta?: Array<{ label: string; value: string }>;
 };
 
 const assetLabels: Record<AssetType, string> = {
   stock: "Stocks",
-  fund: "Funds",
+  fund: "MMFs",
   currency: "FX rates",
   commodity: "Commodities",
 };
@@ -87,19 +92,19 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
     return items.reduce<AssetRow[]>((result, entry) => {
       if (entry.item_type === "stock") {
         const asset = stockMap.get(entry.item_id);
-        if (asset) result.push({ entry, type: "stock", title: asset.symbol, subtitle: asset.name, value: asset.price, unit: "KES", change: asset.day_change_percent, href: `/stocks/${asset.symbol}` });
+        if (asset) result.push({ entry, type: "stock", title: asset.symbol, subtitle: asset.name, value: asset.price, unit: "KES", change: asset.day_change_percent, href: `/stocks/${asset.symbol}`, visualUrl: getStockLogoUrl(asset.symbol, asset.logo_url), meta: [{ label: "Vol", value: asset.volume ? `${(asset.volume / 1_000_000).toFixed(1)}M` : "—" }, { label: "Cap", value: asset.market_cap ? `KES ${(asset.market_cap / 1_000_000_000).toFixed(1)}B` : "—" }] });
       }
       else if (entry.item_type === "fund") {
         const asset = fundMap.get(entry.item_id);
-        if (asset) result.push({ entry, type: "fund", title: asset.name, subtitle: asset.manager, value: asset.annual_yield, unit: "%", href: `/compare/${asset.slug}` });
+        if (asset) result.push({ entry, type: "fund", title: asset.name, subtitle: asset.manager, value: asset.annual_yield, unit: "%", href: `/compare/${asset.slug}`, visualUrl: getFundManagerLogoUrl(asset.manager, asset.logo_url), meta: [{ label: "Yield", value: `${asset.annual_yield.toFixed(2)}%` }, { label: "Manager", value: asset.manager }] });
       }
       else if (entry.item_type === "currency") {
         const asset = rateMap.get(entry.item_id);
-        if (asset) result.push({ entry, type: "currency", title: `${asset.currency_code}/KES`, subtitle: asset.currency_name, value: asset.rate, unit: "KES", change: asset.day_change_percent, href: "/rates" });
+        if (asset) result.push({ entry, type: "currency", title: `${asset.currency_code}/KES`, subtitle: asset.currency_name, value: asset.rate, unit: "KES", change: asset.day_change_percent, href: "/rates", visualUrl: getCurrencyFlagUrl(asset.currency_code), meta: [{ label: "Pair", value: `${asset.currency_code}/KES` }, { label: "Rate", value: formatValue(asset.rate, "KES") }] });
       }
       else if (entry.item_type === "commodity") {
         const asset = commodityMap.get(entry.item_id);
-        if (asset) result.push({ entry, type: "commodity", title: asset.name, subtitle: asset.symbol, value: asset.price, unit: asset.unit, change: asset.day_change_percent, href: "/commodities" });
+        if (asset) result.push({ entry, type: "commodity", title: asset.name, subtitle: asset.symbol, value: asset.price, unit: asset.unit, change: asset.day_change_percent, href: "/commodities", meta: [{ label: "Symbol", value: asset.symbol }, { label: "Unit", value: asset.unit }] });
       }
       return result;
     }, []);
@@ -178,7 +183,7 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
   };
 
   return (
-    <section className="mx-auto max-w-[1600px] space-y-6 px-6 py-6">
+    <section className="mx-auto max-w-[1600px] space-y-5 bg-black px-6 py-6 text-white">
       <header className="flex items-end justify-between gap-6">
         <div>
           <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">Personal market workspace</p>
@@ -204,9 +209,9 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
           {!user && <div className="rounded-2xl border border-border/70 bg-card px-5 py-4 text-sm text-muted-foreground shadow-sm">Saved items are stored in this browser. <Link to="/auth?redirect=/watchlist" className="font-bold text-emerald-600 hover:text-emerald-500 hover:underline dark:text-emerald-400">Sign in</Link> to create alerts and keep your watchlist across devices.</div>}
 
           {loading ? <div className="grid grid-cols-2 gap-4"><div className="h-32 animate-pulse rounded-2xl bg-muted" /><div className="h-32 animate-pulse rounded-2xl bg-muted" /></div> : rows.length === 0 ? <EmptyWatchlist onAdd={() => setShowAdd(true)} /> : (
-            <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm">
-              <div className="w-full overflow-x-auto border-b border-border/60 scrollbar-hide">
-                <nav className="flex min-w-max items-center gap-6 px-5" aria-label="Saved asset type">
+            <section className="overflow-hidden rounded-2xl border border-white/10 bg-black">
+              <div className="w-full overflow-x-auto border-b border-white/10 px-4 py-4 scrollbar-hide">
+                <nav className="flex min-w-max items-center gap-2" aria-label="Saved asset type">
                   {(["all", "stock", "fund", "currency", "commodity"] as const).map((value) => {
                     const activeFilter = filter === value;
                     return (
@@ -214,20 +219,19 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
                         key={value}
                         type="button"
                         onClick={() => setFilter(value)}
-                        className={cn("relative shrink-0 pb-3 pt-4 text-sm font-medium transition-colors", activeFilter ? "text-emerald-500" : "text-muted-foreground hover:text-foreground")}
+                        className={cn("inline-flex h-10 shrink-0 items-center rounded-full border px-5 text-sm font-bold transition-colors", activeFilter ? "border-white bg-white text-black" : "border-white/20 bg-transparent text-white/65 hover:border-white/40 hover:text-white")}
                       >
                         {value === "all" ? "All assets" : assetLabels[value]}
-                        {activeFilter && <span className="absolute inset-x-0 bottom-0 h-0.5 rounded-t-full bg-emerald-500" />}
                       </button>
                     );
                   })}
                 </nav>
               </div>
-              <div className="flex items-center justify-between gap-4 border-b border-border/60 px-5 py-4">
+              <div className="flex items-center justify-between gap-4 border-b border-white/10 px-5 py-4">
                 <div><h2 className="text-sm font-bold">Saved assets</h2><p className="mt-0.5 text-xs text-muted-foreground">Live values are refreshed with the latest published market data.</p></div>
                 <Button variant="ghost" size="sm" onClick={() => setIsReordering((value) => !value)} className={cn("gap-1.5 rounded-lg text-xs font-bold", isReordering && "bg-muted text-foreground")}><SlidersHorizontal className="h-3.5 w-3.5" /> {isReordering ? "Done" : "Reorder"}</Button>
               </div>
-              {filteredRows.length === 0 ? <div className="px-5 py-12 text-center"><p className="text-sm font-bold">No matching saved assets</p><p className="mt-1 text-sm text-muted-foreground">Try another search term or select a different asset type.</p></div> : <div className="grid gap-3 p-4 lg:grid-cols-2 xl:grid-cols-3">
+              {filteredRows.length === 0 ? <div className="px-5 py-12 text-center"><p className="text-sm font-bold">No matching saved assets</p><p className="mt-1 text-sm text-muted-foreground">Try another search term or select a different asset type.</p></div> : <div className="grid gap-3 p-4 lg:grid-cols-2">
                 {filteredRows.map((row) => {
                   const alert = alerts.find((item) => item.asset_type === row.type && item.asset_id === row.entry.item_id);
                   return <AssetListRow key={row.entry.id} row={row} alert={alert} reordering={isReordering} canMoveUp={items[0]?.id !== row.entry.id} canMoveDown={items[items.length - 1]?.id !== row.entry.id} onMove={move} onAlert={() => { setEditing(row); setEditingAlert(alert ?? null); }} onRemove={() => void removeAsset(row)} />;
@@ -241,15 +245,15 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
           <div className="flex items-center gap-2 overflow-hidden">
             <div className="flex min-w-0 items-center gap-2 overflow-x-auto scrollbar-hide">
               <nav className="flex items-center gap-2" aria-label="Watchlist workspace">
-                <Link to="/watchlist" className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-border bg-card px-4 text-sm font-bold text-muted-foreground transition-colors hover:text-foreground">Saved assets <span className="tabular-nums opacity-70">{rows.length}</span></Link>
-                <Link to="/alerts" className="inline-flex h-11 shrink-0 items-center gap-2 rounded-full border border-foreground bg-foreground px-4 text-sm font-bold text-background">Alerts <span className="tabular-nums opacity-70">{counts.active + counts.triggered + counts.paused}</span></Link>
+                <Link to="/watchlist" className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-white/20 px-5 text-sm font-bold text-white/65 transition-colors hover:border-white/40 hover:text-white">Saved assets <span className="tabular-nums opacity-70">{rows.length}</span></Link>
+                <Link to="/alerts" className="inline-flex h-10 shrink-0 items-center gap-2 rounded-full border border-white bg-white px-5 text-sm font-bold text-black">Alerts <span className="tabular-nums opacity-70">{counts.active + counts.triggered + counts.paused}</span></Link>
               </nav>
               <span className="h-7 w-px shrink-0 bg-border" />
-              {(["active", "triggered", "paused"] as const).map((value) => <button key={value} type="button" onClick={() => setAlertFilter(value)} className={cn("inline-flex h-11 shrink-0 items-center gap-2 rounded-full border px-4 text-sm font-bold capitalize transition-colors", alertFilter === value ? "border-foreground bg-foreground text-background" : "border-border bg-card text-muted-foreground hover:text-foreground")}>{value} <span className="tabular-nums opacity-70">{counts[value]}</span></button>)}
+              {(["active", "triggered", "paused"] as const).map((value) => <button key={value} type="button" onClick={() => setAlertFilter(value)} className={cn("inline-flex h-10 shrink-0 items-center gap-2 rounded-full border px-5 text-sm font-bold capitalize transition-colors", alertFilter === value ? "border-white bg-white text-black" : "border-white/20 bg-transparent text-white/65 hover:border-white/40 hover:text-white")}>{value} <span className="tabular-nums opacity-70">{counts[value]}</span></button>)}
             </div>
             <Button disabled={!user || rows.length === 0} onClick={() => { const first = rows[0]; if (first) { setEditing(first); setEditingAlert(null); } }} className="ml-auto h-11 shrink-0 gap-1.5 rounded-full bg-emerald-500 px-4 font-bold text-white hover:bg-emerald-600"><Plus className="h-4 w-4" /> New alert</Button>
           </div>
-          {!user ? <div className="rounded-2xl border border-border/70 bg-card px-5 py-4 text-sm text-muted-foreground shadow-sm">Sign in to create and manage alerts.</div> : rows.length === 0 ? <div className="rounded-2xl border border-dashed border-border/80 bg-card px-4 py-10 text-center text-sm text-muted-foreground shadow-sm">Save an asset first, then create its alert here.</div> : alertsLoading ? <div className="h-32 animate-pulse rounded-2xl bg-muted" /> : visibleAlerts.length === 0 ? <div className="rounded-2xl border border-dashed border-border/80 bg-card px-4 py-10 text-center text-sm text-muted-foreground shadow-sm">No {alertFilter} alerts.</div> : <section className="overflow-hidden rounded-2xl border border-border/70 bg-card shadow-sm"><div className="border-b border-border/60 px-5 py-4"><h2 className="text-sm font-bold capitalize">{alertFilter} alerts</h2><p className="mt-0.5 text-xs text-muted-foreground">One-shot alerts are delivered when their target is met.</p></div><div className="divide-y divide-border/60">{visibleAlerts.map((alert) => <AlertRow key={alert.id} alert={alert} onEdit={() => editAlert(alert)} onToggle={() => void toggleAlert(alert.id, !alert.is_active)} onDelete={() => void deleteAlert(alert.id)} />)}</div></section>}
+          {!user ? <div className="rounded-2xl border border-white/10 bg-black px-5 py-4 text-sm text-white/60">Sign in to create and manage alerts.</div> : rows.length === 0 ? <div className="rounded-2xl border border-dashed border-white/20 bg-black px-4 py-10 text-center text-sm text-white/60">Save an asset first, then create its alert here.</div> : alertsLoading ? <div className="h-32 animate-pulse rounded-2xl bg-white/10" /> : visibleAlerts.length === 0 ? <div className="rounded-2xl border border-dashed border-white/20 bg-black px-4 py-10 text-center text-sm text-white/60">No {alertFilter} alerts.</div> : <section className="overflow-hidden rounded-2xl border border-white/10 bg-black"><div className="border-b border-white/10 px-5 py-4"><h2 className="text-sm font-bold capitalize">{alertFilter} alerts</h2><p className="mt-0.5 text-xs text-white/60">One-shot alerts are delivered when their target is met.</p></div><div className="grid gap-3 p-4 lg:grid-cols-2">{visibleAlerts.map((alert) => <AlertRow key={alert.id} alert={alert} visualUrl={rowByAlert.get(`${alert.asset_type}:${alert.asset_id}`)?.visualUrl} onEdit={() => editAlert(alert)} onToggle={() => void toggleAlert(alert.id, !alert.is_active)} onDelete={() => void deleteAlert(alert.id)} />)}</div></section>}
         </>
       )}
 
@@ -264,6 +268,13 @@ function AssetIcon({ type }: { type: AssetType }) {
   return <Icon className="h-4 w-4" />;
 }
 
+function AssetVisual({ type, visualUrl }: { type: AssetType; visualUrl?: string }) {
+  const [failed, setFailed] = useState(false);
+  return <div className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full border border-border/70 bg-muted/50 text-muted-foreground">
+    {visualUrl && !failed ? <img src={visualUrl} alt="" className="h-full w-full object-contain p-1.5" onError={() => setFailed(true)} /> : <AssetIcon type={type} />}
+  </div>;
+}
+
 function AssetListRow({ row, alert, reordering, canMoveUp, canMoveDown, onMove, onAlert, onRemove }: {
   row: AssetRow;
   alert?: PriceAlert;
@@ -275,13 +286,10 @@ function AssetListRow({ row, alert, reordering, canMoveUp, canMoveDown, onMove, 
   onRemove: () => void;
 }) {
   const isPositive = (row.change ?? 0) >= 0;
-  const deltaTone = row.change == null ? "border-border/70 bg-muted/50 text-muted-foreground" : isPositive ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-destructive/20 bg-destructive/10 text-destructive";
 
-  return <article className="group flex min-w-0 items-center gap-3 rounded-2xl border border-border/70 bg-background px-4 py-4 shadow-sm transition-colors hover:border-emerald-500/30 hover:bg-muted/25">
-    <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full border", deltaTone)}><AssetIcon type={row.type} /></div>
-    <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Link to={row.href ?? "/watchlist"} className="truncate text-sm font-bold tracking-tight hover:text-emerald-600 dark:hover:text-emerald-400">{row.title}</Link><span className="rounded-full border border-border/70 px-2 py-0.5 text-[10px] font-bold capitalize text-muted-foreground">{row.type}</span></div><p className="mt-0.5 truncate text-xs text-muted-foreground">{row.subtitle}</p></div>
-    <div className="hidden text-right sm:block"><p className="text-sm font-bold tabular-nums">{formatValue(row.value, row.unit)}</p><p className={cn("mt-0.5 text-xs font-bold tabular-nums", row.change == null ? "text-muted-foreground" : isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>{row.change == null ? "No daily change" : `${isPositive ? "+" : ""}${row.change.toFixed(2)}% today`}</p></div>
-    {reordering ? <div className="flex items-center gap-1"><GripVertical className="h-4 w-4 text-muted-foreground" /><Button variant="ghost" size="icon" title="Move up" disabled={!canMoveUp} onClick={() => void onMove(row, -1)}><ArrowUp className="h-4 w-4" /></Button><Button variant="ghost" size="icon" title="Move down" disabled={!canMoveDown} onClick={() => void onMove(row, 1)}><ArrowDown className="h-4 w-4" /></Button></div> : <div className="flex items-center gap-1"><Button variant="ghost" size="icon" title={currentAlertState(alert)} onClick={onAlert} className="rounded-full hover:bg-emerald-500/10"><Bell className={cn("h-4 w-4", alert?.is_triggered ? "text-amber-500" : alert?.is_active ? "text-emerald-600 dark:text-emerald-400" : "text-muted-foreground")} /></Button><Button variant="ghost" size="icon" title="Remove from watchlist" className="rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button></div>}
+  return <article className="group flex min-w-0 flex-col gap-4 rounded-2xl border border-white/15 bg-[#171719] px-5 py-5 transition-colors hover:border-emerald-500/40">
+    <div className="flex min-w-0 w-full items-start gap-3"><AssetVisual type={row.type} visualUrl={row.visualUrl} /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Link to={row.href ?? "/watchlist"} className="truncate text-lg font-bold tracking-tight hover:text-emerald-400">{row.title}</Link><span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-bold capitalize text-white/60">{row.type === "fund" ? "MMF" : row.type}</span></div><p className="mt-0.5 truncate text-sm text-white/60">{row.subtitle}</p></div><div className="shrink-0 text-right"><p className="text-lg font-bold tabular-nums">{formatValue(row.value, row.unit)}</p><p className={cn("mt-0.5 text-xs font-bold tabular-nums", row.change == null ? "text-white/55" : isPositive ? "text-emerald-400" : "text-red-400")}>{row.change == null ? "No daily change" : `${isPositive ? "+" : ""}${row.change.toFixed(2)}% today`}</p></div></div>
+    <div className="flex w-full items-center justify-between gap-3 border-t border-white/10 pt-3"><div className="flex min-w-0 gap-5 text-xs text-white/60">{row.meta?.map((item) => <span key={item.label} className="truncate"><span>{item.label} </span><strong className="text-white">{item.value}</strong></span>)}</div>{reordering ? <div className="flex items-center gap-1"><GripVertical className="h-4 w-4 text-white/50" /><Button variant="ghost" size="icon" title="Move up" disabled={!canMoveUp} onClick={() => void onMove(row, -1)}><ArrowUp className="h-4 w-4" /></Button><Button variant="ghost" size="icon" title="Move down" disabled={!canMoveDown} onClick={() => void onMove(row, 1)}><ArrowDown className="h-4 w-4" /></Button></div> : <div className="flex items-center gap-1"><Button variant="ghost" size="icon" title={currentAlertState(alert)} onClick={onAlert} className="rounded-full hover:bg-emerald-500/10"><Bell className={cn("h-4 w-4", alert?.is_triggered ? "text-amber-500" : alert?.is_active ? "text-emerald-400" : "text-white/50")} /></Button><Button variant="ghost" size="icon" title="Remove from watchlist" className="rounded-full text-white/50 hover:bg-destructive/10 hover:text-destructive" onClick={onRemove}><Trash2 className="h-4 w-4" /></Button></div>}</div>
   </article>;
 }
 
@@ -293,7 +301,7 @@ function AddAssetsDialog({ open, onOpenChange, type, onTypeChange, query, onQuer
   return <Dialog open={open} onOpenChange={onOpenChange}><DialogContent className="max-w-xl rounded-2xl border-border/70 p-6 shadow-soft"><DialogHeader><DialogTitle className="text-lg tracking-tight">Add to watchlist</DialogTitle></DialogHeader><div className="flex gap-1 overflow-x-auto rounded-xl bg-muted/70 p-1">{(Object.keys(assetLabels) as AssetType[]).map((value) => <button key={value} type="button" onClick={() => onTypeChange(value)} className={cn("whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold transition-colors", type === value ? "bg-background text-foreground shadow-sm" : "text-muted-foreground")}>{assetLabels[value]}</button>)}</div><div className="relative"><Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" /><Input value={query} onChange={(event) => onQueryChange(event.target.value)} placeholder={`Search ${assetLabels[type].toLowerCase()}`} className="h-10 rounded-xl pl-9" /></div><div className="max-h-80 space-y-1 overflow-y-auto">{items.map((item) => <button key={item.id} type="button" onClick={() => void onAdd(item.id, item.name)} className="flex w-full items-center justify-between rounded-xl px-3 py-3 text-left transition-colors hover:bg-muted"><span className="text-sm font-bold">{item.name}</span><span className="text-xs font-semibold text-muted-foreground">{item.value}</span></button>)}{items.length === 0 && <p className="py-8 text-center text-sm text-muted-foreground">No matching assets available.</p>}</div></DialogContent></Dialog>;
 }
 
-function AlertRow({ alert, onEdit, onToggle, onDelete }: { alert: PriceAlert; onEdit: () => void; onToggle: () => void; onDelete: () => void; }) {
+function AlertRow({ alert, visualUrl, onEdit, onToggle, onDelete }: { alert: PriceAlert; visualUrl?: string; onEdit: () => void; onToggle: () => void; onDelete: () => void; }) {
   const triggered = alert.is_triggered;
-  return <article className={cn("flex items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/25", triggered && "bg-amber-500/[0.04]")}><div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-full border", alert.condition === "above" ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-destructive/20 bg-destructive/10 text-destructive")}>{alert.condition === "above" ? <TrendingUp className="h-4 w-4" /> : <TrendingDown className="h-4 w-4" />}</div><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="truncate text-sm font-bold">{alert.asset_name}</span><span className="rounded-full border border-border/70 px-2 py-0.5 text-[10px] font-bold capitalize text-muted-foreground">{alert.asset_type}</span>{triggered && <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-600 dark:text-amber-400">Triggered</span>}</div><p className="mt-1 text-xs text-muted-foreground"><span className="font-bold text-foreground">{alert.condition === "above" ? "Above" : "Below"} {formatValue(alert.target_price, alert.asset_unit)}</span><span className="ml-2">{alert.is_active ? "Monitoring" : "Paused"}</span></p></div>{!triggered && <Switch checked={alert.is_active} onCheckedChange={onToggle} aria-label={alert.is_active ? "Pause alert" : "Resume alert"} />}<Button variant="ghost" size="sm" onClick={onEdit} className="rounded-lg text-xs font-bold">Edit</Button><Button variant="ghost" size="icon" className="rounded-full text-muted-foreground hover:bg-destructive/10 hover:text-destructive" onClick={onDelete} aria-label="Delete alert"><Trash2 className="h-4 w-4" /></Button></article>;
+  return <article className={cn("flex min-w-0 items-center gap-3 rounded-2xl border border-white/15 bg-[#171719] px-4 py-4 transition-colors hover:border-emerald-500/40", triggered && "border-amber-500/30 bg-amber-500/[0.04]")}><AssetVisual type={alert.asset_type} visualUrl={visualUrl} /><div className="min-w-0 flex-1"><div className="flex items-center gap-2"><span className="truncate text-sm font-bold">{alert.asset_name}</span><span className="rounded-full border border-white/15 px-2 py-0.5 text-[10px] font-bold capitalize text-white/60">{alert.asset_type === "fund" ? "MMF" : alert.asset_type}</span>{triggered && <span className="rounded-full border border-amber-500/25 bg-amber-500/10 px-2 py-0.5 text-[10px] font-bold text-amber-400">Triggered</span>}</div><p className="mt-1 text-xs text-white/60"><span className="font-bold text-white">{alert.condition === "above" ? "Above" : "Below"} {formatValue(alert.target_price, alert.asset_unit)}</span><span className="ml-2">{alert.is_active ? "Monitoring" : "Paused"}</span></p></div>{!triggered && <Switch checked={alert.is_active} onCheckedChange={onToggle} aria-label={alert.is_active ? "Pause alert" : "Resume alert"} />}<Button variant="ghost" size="sm" onClick={onEdit} className="rounded-lg text-xs font-bold">Edit</Button><Button variant="ghost" size="icon" className="rounded-full text-white/50 hover:bg-destructive/10 hover:text-destructive" onClick={onDelete} aria-label="Delete alert"><Trash2 className="h-4 w-4" /></Button></article>;
 }

@@ -60,9 +60,9 @@ describe("DesktopWatchlistWorkspace", () => {
 
     const typeNav = screen.getByRole("navigation", { name: "Saved asset type" });
     const allAssets = within(typeNav).getByRole("button", { name: "All assets" });
-    expect(allAssets).toHaveClass("text-emerald-500");
+    expect(allAssets).toHaveClass("bg-white", "text-black");
     expect(within(typeNav).getByRole("button", { name: "Stocks" })).toBeInTheDocument();
-    expect(within(typeNav).getByRole("button", { name: "Funds" })).toBeInTheDocument();
+    expect(within(typeNav).getByRole("button", { name: "MMFs" })).toBeInTheDocument();
 
     fireEvent.click(within(typeNav).getByRole("button", { name: "Stocks" }));
     expect(screen.getByText("SCOM")).toBeInTheDocument();
