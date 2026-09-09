@@ -1,6 +1,8 @@
 import { describe, expect, it } from "vitest";
 import {
   numberAppearsInPrompt,
+  naturalLanguageIntentToFrame,
+  validateQuerySemanticFrame,
   validateNaturalLanguageIntent,
 } from "./naturalLanguageIntent";
 
@@ -31,6 +33,19 @@ describe("natural-language intent contract", () => {
     expect(validateNaturalLanguageIntent({ intent: "overview", confidence: "high", price: 42 }).ok).toBe(false);
     expect(validateNaturalLanguageIntent({ intent: "overview", confidence: "high", answer: "Buy it" }).ok).toBe(false);
     expect(validateNaturalLanguageIntent({ intent: "overview", confidence: "high", yield: 12 }).ok).toBe(false);
+  });
+
+  it("uses a versioned semantic frame that contains mentions but no canonical IDs", () => {
+    const frame = naturalLanguageIntentToFrame({
+      intent: "compare",
+      confidence: "high",
+      entity: "KCB",
+      secondEntity: "Equity",
+    });
+    expect(frame).toMatchObject({ version: 1, action: "compare" });
+    expect(frame.entityMentions.map((mention) => mention.text)).toEqual(["KCB", "Equity"]);
+    expect(validateQuerySemanticFrame(frame).ok).toBe(true);
+    expect(JSON.stringify(frame)).not.toContain("canonicalId");
   });
 
   it("rejects malformed and out-of-range values", () => {

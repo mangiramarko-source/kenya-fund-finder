@@ -173,106 +173,87 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
 
   if (result.kind === "compare") {
     const fmtVal = (a: ComparableAsset) =>
-      new Intl.NumberFormat("en-KE", { maximumFractionDigits: 4 }).format(a.value);
-    const [a, b] = result.assets;
-    // Build full metric list across both assets
+      a.dataUnavailable ? "Unavailable" : new Intl.NumberFormat("en-KE", { maximumFractionDigits: 4 }).format(a.value);
+    const assets = result.assets;
     const metrics = new Set<string>();
-    metrics.add(a.valueLabel);
-    metrics.add(b.valueLabel);
+    for (const asset of assets) metrics.add(asset.valueLabel);
     const extraLabels = new Set<string>();
-    for (const x of result.assets) for (const e of x.extras ?? []) extraLabels.add(e.label);
+    for (const asset of assets) for (const extra of asset.extras ?? []) extraLabels.add(extra.label);
 
     const valueRow = (asset: ComparableAsset, label: string) =>
-      asset.valueLabel === label ? fmtVal(asset) : "—";
+      asset.dataUnavailable ? "Unavailable" : asset.valueLabel === label ? fmtVal(asset) : "—";
     const extraRow = (asset: ComparableAsset, label: string) =>
       asset.extras?.find((e) => e.label === label)?.value ?? "—";
 
     return (
       <ResultShell>
         <SummaryMetricGrid>
-          <SummaryMetricCard label={a.symbol} value={fmtVal(a)} sublabel={a.name} />
-          <SummaryMetricCard label={b.symbol} value={fmtVal(b)} sublabel={b.name} />
-          <SummaryMetricCard label={`${a.symbol} recent change`} value={fmtPctColored(a.changePct)} sublabel={`${b.symbol}: see breakdown`} />
+          {assets.map((asset) => (
+            <SummaryMetricCard key={asset.symbol} label={asset.symbol} value={fmtVal(asset)} sublabel={asset.name} />
+          ))}
         </SummaryMetricGrid>
         <Section icon={<ArrowLeftRight className="h-3 w-3" />} title="Compare breakdown">
           <BreakdownTable>
               <thead>
                 <tr className="text-[10px] uppercase tracking-widest text-muted-foreground">
                   <th className="text-left font-medium py-1 pr-3">Metric</th>
-                  <th className="text-right font-medium py-1 px-2">
-                    {a.symbol}
-                    <div className="text-[10px] text-muted-foreground/70 normal-case font-normal">
-                      {a.kind} · {a.name}
-                    </div>
-                  </th>
-                  <th className="text-right font-medium py-1 pl-2">
-                    {b.symbol}
-                    <div className="text-[10px] text-muted-foreground/70 normal-case font-normal">
-                      {b.kind} · {b.name}
-                    </div>
-                  </th>
+                  {assets.map((asset) => (
+                    <th key={asset.symbol} className="text-right font-medium py-1 px-2">
+                      {asset.symbol}
+                      <div className="text-[10px] text-muted-foreground/70 normal-case font-normal">
+                        {asset.kind} · {asset.name}
+                      </div>
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
                 {[...metrics].map((m) => (
                   <tr key={m} className="border-t border-border/40">
                     <td className="py-1.5 pr-3 text-xs text-muted-foreground">{m}</td>
-                    <td className="py-1.5 px-2 text-right font-semibold">{valueRow(a, m)}</td>
-                    <td className="py-1.5 pl-2 text-right font-semibold">{valueRow(b, m)}</td>
+                    {assets.map((asset) => (
+                      <td key={asset.symbol} className="py-1.5 px-2 text-right font-semibold">{valueRow(asset, m)}</td>
+                    ))}
                   </tr>
                 ))}
                 <tr className="border-t border-border/40">
                   <td className="py-1.5 pr-3 text-xs text-muted-foreground">Recent change</td>
-                  <td className="py-1.5 px-2 text-right">{fmtPctColored(a.changePct)}</td>
-                  <td className="py-1.5 pl-2 text-right">{fmtPctColored(b.changePct)}</td>
+                  {assets.map((asset) => (
+                    <td key={asset.symbol} className="py-1.5 px-2 text-right">{fmtPctColored(asset.changePct)}</td>
+                  ))}
                 </tr>
                 <tr className="border-t border-border/40">
                   <td className="py-1.5 pr-3 text-xs text-muted-foreground">{formatReturnLabel(effectiveLookbackDays)}</td>
-                  <td className="py-1.5 px-2 text-right">
-                    {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPctColored(history?.[a.symbol]?.returnPct ?? null)}
-                  </td>
-                  <td className="py-1.5 pl-2 text-right">
-                    {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPctColored(history?.[b.symbol]?.returnPct ?? null)}
-                  </td>
+                  {assets.map((asset) => (
+                    <td key={asset.symbol} className="py-1.5 px-2 text-right">
+                      {historyLoading ? <span className="text-muted-foreground">…</span> : fmtPctColored(history?.[asset.symbol]?.returnPct ?? null)}
+                    </td>
+                  ))}
                 </tr>
                 <tr className="border-t border-border/40">
                   <td className="py-1.5 pr-3 text-xs text-muted-foreground">{formatTrendLabel(effectiveLookbackDays)}</td>
-                  <td className="py-1.5 px-2 text-right">
-                    {history?.[a.symbol]?.points?.length ? (
-                      <div className="inline-flex justify-end w-full">
-                        <Sparkline
-                          data={history[a.symbol].points}
-                          width={90}
-                          height={22}
-                          color="auto"
-                          trend={(history[a.symbol].returnPct ?? 0) > 0 ? "up" : (history[a.symbol].returnPct ?? 0) < 0 ? "down" : "flat"}
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">{historyLoading ? "…" : "—"}</span>
-                    )}
-                  </td>
-                  <td className="py-1.5 pl-2 text-right">
-                    {history?.[b.symbol]?.points?.length ? (
-                      <div className="inline-flex justify-end w-full">
-                        <Sparkline
-                          data={history[b.symbol].points}
-                          width={90}
-                          height={22}
-                          color="auto"
-                          trend={(history[b.symbol].returnPct ?? 0) > 0 ? "up" : (history[b.symbol].returnPct ?? 0) < 0 ? "down" : "flat"}
-                        />
-                      </div>
-                    ) : (
-                      <span className="text-muted-foreground text-xs">{historyLoading ? "…" : "—"}</span>
-                    )}
-                  </td>
+                  {assets.map((asset) => (
+                    <td key={asset.symbol} className="py-1.5 px-2 text-right">
+                      {history?.[asset.symbol]?.points?.length ? (
+                        <div className="inline-flex justify-end w-full">
+                          <Sparkline
+                            data={history[asset.symbol].points}
+                            width={90}
+                            height={22}
+                            color="auto"
+                            trend={(history[asset.symbol].returnPct ?? 0) > 0 ? "up" : (history[asset.symbol].returnPct ?? 0) < 0 ? "down" : "flat"}
+                          />
+                        </div>
+                      ) : <span className="text-muted-foreground text-xs">{historyLoading ? "…" : "—"}</span>}
+                    </td>
+                  ))}
                 </tr>
                 {[...extraLabels].map((lbl) => (
                   <tr key={lbl} className="border-t border-border/40">
                     <td className="py-1.5 pr-3 text-xs text-muted-foreground">{lbl}</td>
-                    <td className="py-1.5 px-2 text-right text-xs">{extraRow(a, lbl)}</td>
-                    <td className="py-1.5 pl-2 text-right text-xs">{extraRow(b, lbl)}</td>
+                    {assets.map((asset) => (
+                      <td key={asset.symbol} className="py-1.5 px-2 text-right text-xs">{extraRow(asset, lbl)}</td>
+                    ))}
                   </tr>
                 ))}
               </tbody>
@@ -285,6 +266,13 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
                 <KV key={d.label} k={d.label} v={d.value} />
               ))}
             </div>
+          </Section>
+        )}
+        {(result.warnings ?? []).length > 0 && (
+          <Section icon={<AlertTriangle className="h-3 w-3" />} title="Data warnings">
+            <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+              {(result.warnings ?? []).map((warning) => <li key={warning}>{sanitizeOutput(warning)}</li>)}
+            </ul>
           </Section>
         )}
         
@@ -760,6 +748,19 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           </div>
         </div>
 
+        <Section icon={<Calculator className="h-3 w-3" />} title="Yield change calculations">
+          <KV k="Principal" v={fmtKES(result.inputs.amount)} />
+          <KV k="Annual income at old yield" v={fmtKES2(result.fromGrossYearly)} />
+          <KV k="Annual income at new yield" v={fmtKES2(result.toGrossYearly)} />
+          <KV k="Annual income difference" v={`${result.deltaYearly >= 0 ? "+" : ""}${fmtKES2(result.deltaYearly)}`} />
+          <KV k="Monthly approximate difference" v={`${result.deltaMonthly >= 0 ? "+" : ""}${fmtKES2(result.deltaMonthly)}`} />
+          <KV k="Yield change" v={`${result.percentagePointChange >= 0 ? "+" : ""}${result.percentagePointChange.toFixed(2)} percentage points`} />
+          <KV
+            k="Relative change in yield"
+            v={result.relativeYieldChangePct == null ? "Not defined from a 0% starting yield" : `${result.relativeYieldChangePct >= 0 ? "+" : ""}${result.relativeYieldChangePct.toFixed(2)}%`}
+          />
+        </Section>
+
         {/* Assumptions List with Emerald Dots */}
         <div className="space-y-2 pt-1">
           <p className="text-sm font-bold text-foreground">Assumptions</p>
@@ -790,6 +791,8 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   if (result.kind === "mmf") {
     calcs = (
       <>
+        {result.inputs.productName && <KV k="Selected fund" v={result.inputs.productName} />}
+        {result.inputs.fundType && <KV k="Fund type" v={result.inputs.fundType.replace(/_/g, " ")} />}
         <KV k="Initial amount" v={fmtKES(result.inputs.amount)} />
         <KV k="Annual yield" v={`${result.inputs.annualYieldPct}%`} />
         <KV k="Period" v={`${result.inputs.months} months`} />

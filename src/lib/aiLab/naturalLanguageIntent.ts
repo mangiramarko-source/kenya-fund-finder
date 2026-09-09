@@ -1,19 +1,43 @@
 import { supabase } from "@/integrations/supabase/client";
 import {
+  naturalLanguageIntentToFrame,
+  validateQuerySemanticFrame,
   validateNaturalLanguageIntent,
   type NaturalLanguageIntent,
+  type QuerySemanticFrameV1,
 } from "../../../supabase/functions/_shared/ai-lab-intent";
+import {
+  validateQueryResolutionResult,
+  type QueryResolutionResult,
+} from "../../../supabase/functions/_shared/universal-query";
 import type { AiLabSessionContext } from "./chat";
 import type { MarketContext } from "./marketContext";
 import { findAsset } from "./marketContext";
 import { detectAdviceIntent } from "./safety";
 
 export type { NaturalLanguageIntent } from "../../../supabase/functions/_shared/ai-lab-intent";
-export { validateNaturalLanguageIntent } from "../../../supabase/functions/_shared/ai-lab-intent";
+export {
+  naturalLanguageIntentToFrame,
+  validateNaturalLanguageIntent,
+  validateQuerySemanticFrame,
+} from "../../../supabase/functions/_shared/ai-lab-intent";
 
 export interface NaturalLanguageInterpretationResult {
   ok: boolean;
   intent?: NaturalLanguageIntent;
+  frame?: QuerySemanticFrameV1;
+  resolution?: QueryResolutionResult;
+  serverResult?: {
+    kind: string;
+    text: string;
+    data?: Record<string, unknown>;
+    freshness?: { fetchedAt: string; source: "server" };
+  };
+  clarification?: {
+    question: string;
+    choices: Array<{ id: string; kind: string; subtype?: string; label: string; description: string; sourceKey: string }>;
+    continuationToken: string;
+  };
   reason?: string;
 }
 
@@ -22,19 +46,17 @@ export function isNaturalLanguageAssistEnabled(): boolean {
   return flag == null || flag === "true" || flag === "1";
 }
 
-function compactCatalog(ctx: MarketContext | null) {
-  return (ctx?.assets ?? []).slice(0, 200).map((asset) => ({
-    kind: asset.kind,
-    symbol: asset.symbol.slice(0, 60),
-    name: asset.name.slice(0, 100),
-    aliases: asset.aliases.slice(0, 8).map((alias) => alias.slice(0, 60)),
-  }));
+export function isServerAuthoritativeAiLabEnabled(): boolean {
+  const value = import.meta.env?.VITE_AI_LAB_SERVER_AUTHORITATIVE;
+  if (value == null) return import.meta.env?.MODE !== "test";
+  return value === "true" || value === "1";
 }
 
 export async function interpretNaturalLanguage(
   prompt: string,
   ctx: MarketContext | null,
   session?: AiLabSessionContext,
+  selectionId?: string,
 ): Promise<NaturalLanguageInterpretationResult> {
   if (!isNaturalLanguageAssistEnabled()) return { ok: false, reason: "disabled" };
   try {
@@ -47,19 +69,33 @@ export async function interpretNaturalLanguage(
               lastIntent: session.lastScenarioKind,
               lastAmount: session.lastAmount,
               lastPercentage: session.lastYieldPct,
+              lastFromYieldPct: session.lastFromYieldPct,
+              lastToYieldPct: session.lastToYieldPct,
               lastCurrency: session.lastCurrency,
+              continuationToken: session.pendingClarification?.continuationToken,
+              selectionId,
             }
           : undefined,
-        catalog: compactCatalog(ctx),
       },
     });
     if (error) return { ok: false, reason: "invoke_error" };
-    const payload = data as { ok?: boolean; intent?: unknown; reason?: string } | null;
+    const payload = data as { ok?: boolean; intent?: unknown; frame?: unknown; resolution?: unknown; result?: unknown; clarification?: unknown; reason?: string } | null;
     if (!payload?.ok) return { ok: false, reason: payload?.reason ?? "empty_response" };
     const validated = validateNaturalLanguageIntent(payload.intent);
-    return validated.ok
-      ? { ok: true, intent: validated.intent }
-      : { ok: false, reason: `validation:${validated.reason}` };
+    if (!validated.ok) return { ok: false, reason: `validation:${validated.reason}` };
+    const frame = payload.frame
+      ? validateQuerySemanticFrame(payload.frame)
+      : { ok: true as const, frame: naturalLanguageIntentToFrame(validated.intent) };
+    if (!frame.ok) return { ok: false, reason: `frame_validation:${frame.reason}` };
+    const resolution = payload.resolution ? validateQueryResolutionResult(payload.resolution) : undefined;
+    if (payload.resolution && !resolution) return { ok: false, reason: "resolution_validation" };
+    const serverResult = payload.result && typeof payload.result === "object" && typeof (payload.result as { text?: unknown }).text === "string"
+      ? payload.result as NaturalLanguageInterpretationResult["serverResult"]
+      : undefined;
+    const clarification = payload.clarification && typeof payload.clarification === "object"
+      ? payload.clarification as NaturalLanguageInterpretationResult["clarification"]
+      : undefined;
+    return { ok: true, intent: validated.intent, frame: frame.frame, resolution, serverResult, clarification };
   } catch {
     return { ok: false, reason: "network_error" };
   }

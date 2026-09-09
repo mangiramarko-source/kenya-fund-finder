@@ -23,6 +23,7 @@ import {
   createAssistantMessage,
   createUserMessage,
   deriveSessionContext,
+  processAiLabClarificationSelection,
   processAiLabUserPrompt,
   type AiLabChatMessage,
 } from "@/lib/aiLab/chat";
@@ -310,7 +311,7 @@ const AiLabPage = () => {
             flagEnabled: isGeminiEducationalEnabled(),
           });
 
-          if (geminiEligible) {
+          if (!output.clarification && geminiEligible) {
             const gemini = await generateGeminiEducationalAnswer(prompt);
             if (gemini.ok && gemini.markdown) {
               const labeled = `${gemini.markdown}\n\n<sub>AI-assisted educational explanation</sub>`;
@@ -333,6 +334,7 @@ const AiLabPage = () => {
                 result?.kind === "refusal" || result?.kind === "unknown" ? undefined : result,
               followUps: output.followUps,
               contextNote: output.contextNote,
+              clarification: output.clarification,
             }),
           );
         } catch (err) {
@@ -348,8 +350,63 @@ const AiLabPage = () => {
         }
       })();
     },
-    [messages, market.data, news.data],
+    [messages, market.data, news.data, user],
   );
+
+  const handleClarificationSelect = useCallback((messageId: string, entityId: string) => {
+    const sourceMessage = messages.find((message) => message.id === messageId);
+    const clarification = sourceMessage?.clarification;
+    const choice = clarification?.choices.find((candidate) => candidate.id === entityId);
+    if (!clarification || !choice) return;
+
+    const userMessage = createUserMessage(choice.label);
+    const pendingMessage = createAssistantMessage({ text: "", status: "pending" });
+    setMessages((prev) => [
+      ...prev.map((message) => message.id === messageId ? { ...message, clarification: undefined } : message),
+      userMessage,
+      pendingMessage,
+    ]);
+
+    void (async () => {
+      try {
+        const output = await processAiLabClarificationSelection(
+          clarification,
+          entityId,
+          market.data,
+          news.data,
+          deriveSessionContext(messages),
+        );
+        const result = output.result;
+        setMessages((prev) => prev.map((message) => message.id === pendingMessage.id
+          ? {
+              ...createAssistantMessage({
+                text: output.text,
+                result: result?.kind === "refusal" || result?.kind === "unknown" ? undefined : result,
+                followUps: output.followUps,
+                contextNote: output.contextNote,
+                clarification: output.clarification,
+              }),
+              id: pendingMessage.id,
+            }
+          : message));
+        trackEvent("ai_lab_clarification_selected", {
+          entity_kind: choice.kind,
+          entity_subtype: choice.subtype ?? "none",
+        });
+      } catch (error) {
+        console.error("[AiLab] clarification selection failed", error);
+        setMessages((prev) => prev.map((message) => message.id === pendingMessage.id
+          ? {
+              ...createAssistantMessage({
+                text: "I couldn't continue that comparison. Please enter the full product name and try again.",
+                status: "error",
+              }),
+              id: pendingMessage.id,
+            }
+          : message));
+      }
+    })();
+  }, [messages, market.data, news.data]);
 
   const showPageLoading = useMinimumLoadingDuration(loading);
 
@@ -403,6 +460,7 @@ const AiLabPage = () => {
             compareStateByMessageId={compareStateByMessageId}
             onLookbackChange={handleLookbackChange}
             onFeedback={handleFeedback}
+            onClarificationSelect={handleClarificationSelect}
           />
         </main>
       </div>

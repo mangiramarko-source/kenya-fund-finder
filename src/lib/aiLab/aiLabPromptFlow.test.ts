@@ -76,6 +76,15 @@ const ctx: MarketContext = {
   fetchedAt: new Date().toISOString(),
 };
 
+const crossAssetCtx: MarketContext = {
+  ...ctx,
+  assets: [
+    ...ctx.assets,
+    { kind: "fx", symbol: "USD", name: "US Dollar", value: 129.5, valueLabel: "KES per 1 unit", changePct: 0.1, aliases: ["usd", "dollar"] },
+    { kind: "commodity", symbol: "GOLD", name: "Gold", value: 2_500, valueLabel: "Price (USD)", changePct: 0.2, aliases: ["gold"] },
+  ],
+};
+
 function mockFunds(data: FundRow[]) {
   vi.mocked(fetchPublicData).mockResolvedValue({
     resource: "funds",
@@ -84,6 +93,20 @@ function mockFunds(data: FundRow[]) {
     offset: 0,
     data,
   });
+}
+
+function mockLiveCrossAssetCatalog() {
+  vi.mocked(fetchPublicData)
+    .mockResolvedValueOnce({ resource: "funds", count: 0, limit: 100, offset: 0, data: [] })
+    .mockResolvedValueOnce({ resource: "stocks", count: 0, limit: 80, offset: 0, data: [] })
+    .mockResolvedValueOnce({
+      resource: "commodities", count: 1, limit: 40, offset: 0,
+      data: [{ id: "gold", symbol: "GOLD", name: "Gold", price: 2_500, previous_price: 2_490, unit: "USD" }],
+    })
+    .mockResolvedValueOnce({
+      resource: "rates", count: 1, limit: 40, offset: 0,
+      data: [{ id: "usd", currency_code: "USD", currency_name: "US Dollar", rate: 129.5, previous_rate: 129.4 }],
+    });
 }
 
 const GENERIC_UNKNOWN =
@@ -216,7 +239,7 @@ describe("processAiLabUserPrompt — top-level chat flow", () => {
       };
     });
     const out = await processAiLabUserPrompt("Safaricom", ctx);
-    expect(out.route).toBe("website-lookup");
+    expect(out.route).toBe("universal-query");
     if (out.result?.kind === "website-lookup") {
       expect(out.result.entityType).toBe("stock");
       expect(out.result.entitySymbol).toBe("SCOM");
@@ -281,6 +304,32 @@ describe("processAiLabUserPrompt — top-level chat flow", () => {
       expect(out.text.toLowerCase()).toContain("can't tell you what to buy, sell, or choose");
       expect(out.text.toLowerCase()).toContain("can't rank instruments");
     });
+  });
+
+  it.each([
+    ["put 10k in USD", "fx-conversion"],
+    ["put 10,000 in USD", "fx-conversion"],
+    ["invest 10k in gold", "commodity-amount"],
+  ])("keeps named FX and commodity amount prompts out of generic clarification: %s", async (prompt, kind) => {
+    const out = await processAiLabUserPrompt(prompt, crossAssetCtx, null, { naturalLanguage: false });
+    expect(out.route).not.toBe("clarifying");
+    expect(out.result?.kind).toBe(kind);
+  });
+
+  it("asks only for the amount when a named asset is present", async () => {
+    const out = await processAiLabUserPrompt("put money in gold", crossAssetCtx, null, { naturalLanguage: false });
+    expect(out.route).toBe("clarifying");
+    expect(out.text).toContain("How much KES");
+    expect(out.text).toContain("Gold");
+  });
+
+  it.each([
+    ["put 10k in USD", "fx-conversion"],
+    ["invest 10k in gold", "commodity-amount"],
+  ])("refreshes a missing live cross-asset catalogue for %s", async (prompt, kind) => {
+    mockLiveCrossAssetCatalog();
+    const out = await processAiLabUserPrompt(prompt, ctx, null, { naturalLanguage: false });
+    expect(out.result?.kind).toBe(kind);
   });
 
 

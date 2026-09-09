@@ -25,6 +25,17 @@ export const INSTRUMENT_NOISE_WORDS = new Set([
   "group",
   "holding",
   "holdings",
+  // Scenario phrasing is not part of an instrument identity. Removing it lets
+  // a full sentence such as "put 10k in USD" resolve exactly like "USD".
+  "put",
+  "invest",
+  "buy",
+  "allocate",
+  "spend",
+  "in",
+  "into",
+  "with",
+  "to",
 ]);
 
 /** Known ticker/name shortcuts applied before tokenization. */
@@ -119,7 +130,7 @@ export function normalizeInstrumentQuery(raw: string): string {
 
   const tokens = q
     .split(/\s+/)
-    .filter((t) => t.length > 0 && !INSTRUMENT_NOISE_WORDS.has(t));
+    .filter((t) => t.length > 0 && !INSTRUMENT_NOISE_WORDS.has(t) && !/^\d+(?:\.\d+)?[km]?$/.test(t));
 
   return tokens.join(" ").trim();
 }
@@ -273,6 +284,22 @@ export function resolveAssetMatch(
   const top = scored[0];
   const second = scored[1];
   const gap = second ? top.score - second.score : top.score;
+
+  // A precise catalog symbol wins over a longer symbol or alias that happens
+  // to contain the same token (for example FX `USD` vs a commodity quoted as
+  // `USD/KG`). This is identity resolution, not a fuzzy preference.
+  const exactSymbolMatches = scored.filter(
+    ({ asset }) => /^[A-Z0-9]{2,6}$/.test(asset.symbol) && normalizeInstrumentQuery(asset.symbol) === qNorm,
+  );
+  if (exactSymbolMatches.length === 1) {
+    return {
+      status: "match",
+      asset: exactSymbolMatches[0].asset,
+      candidates: scored.slice(0, 3).map((entry) => entry.asset),
+      query: trimmed,
+      topScore: exactSymbolMatches[0].score,
+    };
+  }
 
   if (brandOnly && scored.length > 1) {
     const brandMatches = scored.filter(({ asset }) => {

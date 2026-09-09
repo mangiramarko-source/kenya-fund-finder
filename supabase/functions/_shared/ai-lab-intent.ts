@@ -111,3 +111,88 @@ export function validateNaturalLanguageIntent(value: unknown):
 export const FORBIDDEN_MODEL_FACT_FIELDS = [
   "price", "yield", "return", "marketCap", "volume", "answer", "summary",
 ] as const;
+
+const ASSET_KIND_TO_ENTITY_KIND: Record<NaturalLanguageAssetKind, CanonicalEntityKind> = {
+  stock: "stock",
+  fund: "fund",
+  fx: "fx",
+  commodity: "commodity",
+  market: "market_topic",
+};
+
+const ENTITY_KIND_TO_ASSET_KIND: Partial<Record<CanonicalEntityKind, NaturalLanguageAssetKind>> = {
+  stock: "stock",
+  fund: "fund",
+  fx: "fx",
+  commodity: "commodity",
+  market_topic: "market",
+};
+
+/** Compatibility bridge while the existing scenario engine consumes its
+ * established intent shape. The model-facing contract is QuerySemanticFrameV1. */
+export function naturalLanguageIntentToFrame(intent: NaturalLanguageIntent): QuerySemanticFrameV1 {
+  const mentions = [] as QuerySemanticFrameV1["entityMentions"];
+  if (intent.entity) {
+    mentions.push({
+      text: intent.entity,
+      role: "primary",
+      expectedKinds: intent.assetKind ? [ASSET_KIND_TO_ENTITY_KIND[intent.assetKind]] : undefined,
+    });
+  }
+  if (intent.secondEntity) mentions.push({ text: intent.secondEntity, role: "secondary" });
+  return {
+    version: QUERY_CONTRACT_VERSION,
+    action: intent.intent,
+    confidence: intent.confidence,
+    entityMentions: mentions,
+    requestedMetrics: [],
+    parameters: {
+      scenarioKind: intent.scenarioKind,
+      amount: intent.amount,
+      currency: intent.currency,
+      percentage: intent.percentage,
+      secondPercentage: intent.secondPercentage,
+      periodDays: intent.periodDays,
+      periodMonths: intent.periodMonths,
+    },
+    contextReferences: [],
+    topic: intent.topic,
+    clarification: intent.clarification,
+  };
+}
+
+export function semanticFrameToNaturalLanguageIntent(
+  frame: QuerySemanticFrameV1,
+  entities: CanonicalFinancialEntity[] = [],
+): NaturalLanguageIntent {
+  const primary = entities[0];
+  const secondary = entities[1];
+  const firstMention = frame.entityMentions[0];
+  const primaryKind = primary?.kind ?? firstMention?.expectedKinds?.[0];
+  return {
+    intent: frame.action,
+    confidence: frame.confidence,
+    assetKind: primaryKind ? ENTITY_KIND_TO_ASSET_KIND[primaryKind] : undefined,
+    entity: primary ? (primary.kind === "fund" ? primary.displayLabel : primary.sourceKey) : firstMention?.text,
+    secondEntity: secondary ? (secondary.kind === "fund" ? secondary.displayLabel : secondary.sourceKey) : frame.entityMentions[1]?.text,
+    topic: frame.topic,
+    scenarioKind: frame.parameters.scenarioKind as NaturalLanguageScenarioKind | undefined,
+    amount: frame.parameters.amount,
+    currency: frame.parameters.currency,
+    percentage: frame.parameters.percentage,
+    secondPercentage: frame.parameters.secondPercentage,
+    periodDays: frame.parameters.periodDays,
+    periodMonths: frame.parameters.periodMonths,
+    clarification: frame.clarification,
+  };
+}
+
+export { QUERY_CONTRACT_VERSION, validateQuerySemanticFrame };
+export type { QuerySemanticFrameV1 };
+import {
+  QUERY_CONTRACT_VERSION,
+  validateQuerySemanticFrame,
+  type CanonicalEntityKind,
+  type CanonicalFinancialEntity,
+  type QuerySemanticFrameV1,
+} from "./universal-query.ts";

@@ -62,10 +62,12 @@ describe("ai-lab-assist public guardrails", () => {
     expect(source).toContain('rpc("check_rate_limit"');
     expect(source).toContain("hashIp(clientIp(req)");
     expect(source).not.toMatch(/console\.(log|warn|error)\([^)]*prompt/i);
-    expect(source).toContain("validateNaturalLanguageIntent");
+    expect(source).toContain("validateQuerySemanticFrame");
+    expect(source).toContain("resolveQuery");
     expect(source).toContain('Deno.env.get("GEMINI_API_KEY")');
     expect(source).toContain("responseMimeType: \"application/json\"");
-    expect(source).toContain("normalizeModelIntent");
+    expect(source).toContain("normalizeModelFrame");
+    expect(source).not.toContain("body.catalog");
     expect(source).toContain('topic "getting-started"');
     expect(source).toContain("asset-amount");
   });

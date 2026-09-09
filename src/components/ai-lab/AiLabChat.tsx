@@ -43,6 +43,7 @@ interface Props {
   compareStateByMessageId: Record<string, CompareState>;
   onLookbackChange: (messageId: string, days: LookbackDays) => void;
   onFeedback?: (messageId: string, value: "helpful" | "not-helpful") => void;
+  onClarificationSelect?: (messageId: string, entityId: string) => void;
 }
 
 const PromptChip = ({ label, onClick }: { label: string; onClick: () => void }) => (
@@ -99,6 +100,7 @@ const AiLabChat = ({
   compareStateByMessageId,
   onLookbackChange,
   onFeedback,
+  onClarificationSelect,
 }: Props) => {
   const [input, setInput] = useState("");
   const threadRef = useRef<HTMLDivElement>(null);
@@ -136,7 +138,7 @@ const AiLabChat = ({
       const target = turnRefs.current.get(anchorId);
       if (!container || !target) return;
       const top = target.offsetTop - container.offsetTop - 8;
-      container.scrollTo({ top: Math.max(0, top), behavior: "smooth" });
+      container.scrollTo?.({ top: Math.max(0, top), behavior: "smooth" });
     };
 
     scrollToTurn();
@@ -269,7 +271,26 @@ const AiLabChat = ({
                     />
                   )}
 
-                  {!isPending && msg.status !== "error" && onFeedback && (
+                  {!isPending && msg.clarification?.kind === "entity-choice" && msg.clarification.choices.length > 0 && (
+                    <div className="grid gap-2 sm:grid-cols-2" aria-label="Choose the intended financial product">
+                      {msg.clarification.choices.map((choice) => (
+                        <button
+                          key={choice.id}
+                          type="button"
+                          onClick={() => onClarificationSelect?.(msg.id, choice.id)}
+                          className="group flex min-h-14 items-center justify-between gap-3 rounded-xl border border-border bg-card px-3 py-2.5 text-left transition-colors hover:border-accent/50 hover:bg-muted/50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                        >
+                          <span className="min-w-0">
+                            <span className="block truncate text-sm font-semibold text-foreground">{choice.label}</span>
+                            <span className="block truncate text-xs text-muted-foreground">{choice.description}</span>
+                          </span>
+                          <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {!isPending && !msg.clarification && msg.status !== "error" && onFeedback && (
                     <div className="flex items-center gap-1.5 pt-1 text-[11px] text-muted-foreground">
                       <span className="mr-1">Was this helpful?</span>
                       <button

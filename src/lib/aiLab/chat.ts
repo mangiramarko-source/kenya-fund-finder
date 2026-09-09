@@ -15,16 +15,31 @@ import {
   isCapabilitiesPrompt,
 } from "./responseComposer";
 import { isMmfYieldRankingPrompt, isUnsupportedFilterLookupPrompt } from "./websiteLookup";
-import { applyLiveContext, findAsset, type MarketContext } from "./marketContext";
+import { applyLiveContext, fetchMarketContext, findAsset, type MarketContext } from "./marketContext";
 import type { NewsContext } from "./newsContext";
 import { resolveStockPerformanceLookup, resolveWebsiteLookup } from "./websiteLookup";
 import {
   interpretNaturalLanguage,
   inferCommonNaturalLanguageIntent,
+  isServerAuthoritativeAiLabEnabled,
   numberAppearsInPrompt,
   type NaturalLanguageIntent,
   type NaturalLanguageInterpretationResult,
 } from "./naturalLanguageIntent";
+import { semanticFrameToNaturalLanguageIntent } from "../../../supabase/functions/_shared/ai-lab-intent";
+import type { QueryResolutionResult } from "../../../supabase/functions/_shared/universal-query";
+import {
+  clarificationFromResolution,
+  continueMissingEntity,
+  isUniversalQueryResolverEnabled,
+  isUniversalQueryShadowMode,
+  preflightUniversalQuery,
+  selectClarificationCandidate,
+  type QueryClarification,
+} from "./universalQueryResolver";
+import { recordQueryResolutionTelemetry } from "./queryResolutionTelemetry";
+import { findMarketAssetByCanonicalId } from "./canonicalCatalog";
+import { compareAssets } from "./scenarios";
 
 export type AiLabChatRole = "user" | "assistant" | "system";
 
@@ -47,15 +62,19 @@ export interface AiLabChatMessage {
   contextNote?: string;
   followUps?: string[];
   feedback?: "helpful" | "not-helpful";
+  clarification?: QueryClarification;
 }
 
 export interface AiLabSessionContext {
   lastAmount?: number;
   lastAssetQuery?: string;
   lastYieldPct?: number;
+  lastFromYieldPct?: number;
+  lastToYieldPct?: number;
   lastCurrency?: string;
   lastScenarioKind?: string;
   lastAssetKind?: "stock" | "fund" | "fx" | "commodity";
+  pendingClarification?: QueryClarification;
 }
 
 export interface ClarifyingResponse {
@@ -88,6 +107,7 @@ const FUND_CONTEXT_RE =
 const NAMED_STOCK_PATTERN =
   /\b(scom|eqty|kcb|scbk|safaricom|equity group|kcb group|britam|eabl|kengen|ncba|co-op)\b/i;
 const CURRENCY_RE = /\b(usd|eur|gbp|chf|cad|aud|jpy|cny)\b/i;
+const LIVE_CROSS_ASSET_RE = /\b(?:usd|eur|gbp|chf|cad|aud|jpy|cny|dollar|euro|pound|gold|silver|brent|crude|oil|coffee|tea)\b/i;
 
 const EXPLICIT_LOOKUP_RE =
   /\b(?:show|what(?:'s| is)|current|latest|data for|details for|tell me about)\b.*\b(?:price|yield|rate|value|data|details?|information)\b/i;
@@ -155,9 +175,22 @@ function hasScenarioSignal(prompt: string): boolean {
 function isAmountOnlyPrompt(prompt: string, ctx?: MarketContext | null): boolean {
   const amount = parseAmount(prompt);
   if (amount == null) return false;
+  // A phrase such as "put 10k in USD" is a complete amount scenario, even
+  // when the broad fuzzy matcher cannot isolate USD from the whole sentence.
+  // Let the asset-aware router handle it rather than replacing it with the
+  // generic amount-only question before the router runs.
+  if (/\b(?:put|invest|buy|allocate|spend)\b|\b(?:in|into|to|with)\b/i.test(prompt)) return false;
   if (findAsset(prompt, ctx?.assets ?? [])) return false;
   if (hasScenarioSignal(prompt)) return false;
   return true;
+}
+
+function needsNamedAssetAmount(prompt: string, ctx?: MarketContext | null): string | null {
+  if (parseAmount(prompt) != null || detectAdviceIntent(prompt)) return null;
+  if (!/\b(?:put|invest|buy|allocate|spend)\b/i.test(prompt)) return null;
+  const asset = findAsset(prompt, ctx?.assets ?? []);
+  if (!asset) return null;
+  return asset.name;
 }
 
 function extractGenericStockTerm(prompt: string): string | null {
@@ -231,6 +264,7 @@ export function createAssistantMessage(args: {
   status?: AiLabChatStatus;
   contextNote?: string;
   followUps?: string[];
+  clarification?: QueryClarification;
 }): AiLabChatMessage {
   const status = args.status ?? statusFromResult(args.result);
   return {
@@ -242,6 +276,7 @@ export function createAssistantMessage(args: {
     status,
     contextNote: args.contextNote,
     followUps: args.followUps,
+    clarification: args.clarification,
   };
 }
 
@@ -249,6 +284,8 @@ export function deriveSessionContext(
   messages: AiLabChatMessage[],
 ): AiLabSessionContext {
   const ctx: AiLabSessionContext = {};
+  const lastAssistant = [...messages].reverse().find((message) => message.role === "assistant");
+  if (lastAssistant?.clarification) ctx.pendingClarification = lastAssistant.clarification;
 
   for (let i = messages.length - 1; i >= 0; i -= 1) {
     const msg = messages[i];
@@ -267,10 +304,21 @@ export function deriveSessionContext(
       } else if (msg.result.kind === "fx-conversion") {
         ctx.lastAssetQuery = msg.result.inputs.toCurrency;
         ctx.lastAssetKind = "fx";
+      } else if (msg.result.kind === "mmf-yield-change") {
+        ctx.lastFromYieldPct = msg.result.inputs.fromYieldPct;
+        ctx.lastToYieldPct = msg.result.inputs.toYieldPct;
+        ctx.lastYieldPct = msg.result.inputs.toYieldPct;
       }
     }
 
     if (msg.role === "user") {
+      if (ctx.lastFromYieldPct == null || ctx.lastToYieldPct == null) {
+        const yields = [...msg.text.matchAll(/(-?\d+(?:\.\d+)?)\s*%/g)].map((match) => Number(match[1]));
+        if (yields.length >= 2) {
+          ctx.lastFromYieldPct ??= yields[0];
+          ctx.lastToYieldPct ??= yields[1];
+        }
+      }
       if (ctx.lastAmount == null) {
         const amount = parseAmount(msg.text);
         if (amount != null) ctx.lastAmount = amount;
@@ -338,6 +386,19 @@ export function buildClarifyingResponse(
     return { ...composed, disclaimer: STANDARD_DISCLAIMER };
   }
 
+  const namedAsset = needsNamedAssetAmount(prompt, ctx);
+  if (namedAsset) {
+    const composed = composeClarifyingResponse({
+      text: `I can illustrate ${namedAsset} using current KenyaFundFinder data. How much KES would you like to model?`,
+      followUps: [
+        "KES 10,000 in USD",
+        "KES 10,000 in Gold",
+        "KES 10,000 in SCOM",
+      ],
+    });
+    return { ...composed, disclaimer: STANDARD_DISCLAIMER };
+  }
+
   if (isAmountOnlyPrompt(prompt, ctx)) {
     const amount = parseAmount(prompt) ?? sessionContext?.lastAmount;
     const amountPhrase = amount != null ? formatKesAmount(amount) : "that amount";
@@ -376,6 +437,8 @@ export type AiLabPromptRoute =
   | "clarifying"
   | "website-lookup"
   | "natural-language"
+  | "server-authoritative"
+  | "universal-query"
   | "router";
 
 export interface AiLabPromptOutput {
@@ -384,6 +447,7 @@ export interface AiLabPromptOutput {
   result?: RouterResult;
   followUps?: string[];
   contextNote?: string;
+  clarification?: QueryClarification;
 }
 
 export interface AiLabPromptOptions {
@@ -394,6 +458,73 @@ export interface AiLabPromptOptions {
     ctx: MarketContext | null,
     session?: AiLabSessionContext,
   ) => Promise<NaturalLanguageInterpretationResult>;
+}
+
+function outputFromServerInterpretation(
+  prompt: string,
+  interpretation: NaturalLanguageInterpretationResult,
+): AiLabPromptOutput | null {
+  if (!interpretation.ok) return null;
+  if (interpretation.serverResult?.text) {
+    const structured = interpretation.serverResult.data?.routerResult;
+    const result = structured && typeof structured === "object" && typeof (structured as { kind?: unknown }).kind === "string"
+      ? structured as RouterResult
+      : undefined;
+    return {
+      route: "server-authoritative",
+      text: interpretation.serverResult.text,
+      result,
+      followUps: [],
+      contextNote: interpretation.serverResult.freshness
+        ? `Server data fetched ${new Date(interpretation.serverResult.freshness.fetchedAt).toLocaleString("en-KE")}.`
+        : undefined,
+    };
+  }
+  if (interpretation.clarification) {
+    const clarification: QueryClarification = {
+      kind: interpretation.clarification.choices.length ? "entity-choice" : "missing-entity",
+      question: interpretation.clarification.question,
+      continuationToken: interpretation.clarification.continuationToken,
+      choices: interpretation.clarification.choices,
+      originalQuery: prompt,
+    };
+    return {
+      route: "universal-query",
+      text: interpretation.clarification.question,
+      followUps: [],
+      clarification,
+    };
+  }
+  if (interpretation.resolution?.status === "resolved" && !interpretation.resolution.ready) {
+    const known = interpretation.resolution.entities[0]?.displayLabel;
+    const question = interpretation.resolution.frame.action === "compare"
+      ? `What would you like to compare${known ? ` ${known}` : " it"} with?`
+      : "Which product do you mean?";
+    return {
+      route: "universal-query",
+      text: question,
+      followUps: [],
+      clarification: {
+        kind: "missing-entity",
+        question,
+        continuationToken: interpretation.resolution.continuationToken ?? "",
+        choices: [],
+        originalQuery: prompt,
+      },
+    };
+  }
+  if (interpretation.resolution?.status === "not_found") {
+    return {
+      route: "clarifying",
+      text: "I could not match that to a supported KenyaFundFinder product. Try a ticker, full fund name, currency, or commodity.",
+      followUps: ["KCB stock", "KCB MMF", "KES 10,000 in USD"],
+    };
+  }
+  return {
+    route: "clarifying",
+    text: "I could not confidently interpret that request. Please name the product, amount, or scenario you want to use.",
+    followUps: ["KCB stock", "KES 10,000 in USD", "What can I ask?"],
+  };
 }
 
 function canonicalAmount(amount: number | undefined): string {
@@ -439,6 +570,12 @@ function buildNaturalLanguageClarification() {
       "Show Etica MMF yield",
     ],
   });
+}
+
+function mayNeedLiveCrossAssetCatalog(prompt: string): boolean {
+  return LIVE_CROSS_ASSET_RE.test(prompt) && (
+    parseAmount(prompt) != null || /\b(?:put|invest|buy|allocate|spend)\b/i.test(prompt)
+  );
 }
 
 async function executeNaturalLanguageIntent(
@@ -550,6 +687,105 @@ async function executeNaturalLanguageIntent(
   return { route: "natural-language", result, ...composed };
 }
 
+async function executeUniversalResolution(
+  prompt: string,
+  resolution: QueryResolutionResult,
+  ctx: MarketContext | null,
+  news: NewsContext | null,
+  session?: AiLabSessionContext,
+): Promise<AiLabPromptOutput | null> {
+  if (resolution.status === "not_found") {
+    void recordQueryResolutionTelemetry({
+      query: prompt,
+      frame: resolution.frame,
+      outcome: "not_found",
+    });
+    return null;
+  }
+
+  const clarification = clarificationFromResolution(resolution, prompt);
+  if (clarification) {
+    void recordQueryResolutionTelemetry({
+      query: prompt,
+      frame: resolution.frame,
+      outcome: resolution.status === "ambiguous" ? "ambiguous" : "resolved",
+      candidateIds: clarification.choices.map((choice) => choice.id),
+    });
+    const composed = composeClarifyingResponse({ text: clarification.question, followUps: [] });
+    return { route: "universal-query", ...composed, clarification };
+  }
+
+  if (resolution.status !== "resolved" || !resolution.ready) return null;
+  void recordQueryResolutionTelemetry({
+    query: prompt,
+    frame: resolution.frame,
+    outcome: "resolved",
+    candidateIds: resolution.entities.map((entity) => entity.id),
+  });
+  if (resolution.frame.action === "compare" && resolution.entities.length >= 2) {
+    const left = findMarketAssetByCanonicalId(resolution.entities[0].id, ctx);
+    const right = findMarketAssetByCanonicalId(resolution.entities[1].id, ctx);
+    if (left && right && left.symbol !== right.symbol) {
+      const result = compareAssets(left, right);
+      const composed = composeAssistantResponse({ prompt, result, sessionContext: session });
+      return { route: "universal-query", result, ...composed };
+    }
+  }
+  const intent = semanticFrameToNaturalLanguageIntent(resolution.frame, resolution.entities);
+  const output = await executeNaturalLanguageIntent(prompt, intent, ctx, news, session);
+  return output ? { ...output, route: "universal-query" } : null;
+}
+
+export async function processAiLabClarificationSelection(
+  clarification: QueryClarification,
+  entityId: string,
+  ctx: MarketContext | null,
+  news: NewsContext | null = null,
+  session?: AiLabSessionContext,
+): Promise<AiLabPromptOutput> {
+  if (isServerAuthoritativeAiLabEnabled()) {
+    const server = await interpretNaturalLanguage(
+      clarification.originalQuery,
+      null,
+      { ...(session ?? {}), pendingClarification: clarification },
+      entityId,
+    );
+    const output = outputFromServerInterpretation(clarification.originalQuery, server);
+    if (output) return output;
+    return {
+      route: "clarifying",
+      text: "The AI Lab server is temporarily unavailable. Please try again in a moment.",
+      followUps: [],
+    };
+  }
+  const resolution = selectClarificationCandidate(
+    clarification.continuationToken,
+    entityId,
+    ctx,
+  );
+  if (resolution) {
+    void recordQueryResolutionTelemetry({
+      query: clarification.originalQuery,
+      frame: resolution.frame,
+      outcome: "clarification_selected",
+      selectedEntityId: entityId,
+    });
+    const output = await executeUniversalResolution(
+      clarification.originalQuery,
+      resolution,
+      ctx,
+      news,
+      session,
+    );
+    if (output) return output;
+  }
+  const composed = composeClarifyingResponse({
+    text: "That option is no longer available in the current market catalogue. Please enter the product name again.",
+    followUps: [],
+  });
+  return { route: "clarifying", ...composed };
+}
+
 /** Mirrors AiLabPage handleSubmit routing for integration tests and debugging. */
 export async function processAiLabUserPrompt(
   prompt: string,
@@ -563,6 +799,38 @@ export async function processAiLabUserPrompt(
     const result = buildRefusal();
     const composed = composeAssistantResponse({ prompt, result, sessionContext });
     return { route: "router", result, ...composed };
+  }
+
+  // In the browser, the server is authoritative for interpretation, entity
+  // resolution, and market execution. The local snapshot is intentionally not
+  // consulted for the final answer on this path.
+  if (options.naturalLanguage && isServerAuthoritativeAiLabEnabled()) {
+    const interpreted = await interpretNaturalLanguage(prompt, null, sessionContext);
+    const serverOutput = outputFromServerInterpretation(prompt, interpreted);
+    if (serverOutput) return serverOutput;
+    return {
+      route: "clarifying",
+      text: "The AI Lab server is temporarily unavailable. Please try again in a moment.",
+      followUps: [],
+    };
+  }
+
+  if (isUniversalQueryResolverEnabled() && sessionContext?.pendingClarification) {
+    const resumed = continueMissingEntity(
+      sessionContext.pendingClarification.continuationToken,
+      prompt,
+      ctx,
+    );
+    if (resumed) {
+      const output = await executeUniversalResolution(
+        sessionContext.pendingClarification.originalQuery,
+        resumed,
+        ctx,
+        news,
+        sessionContext,
+      );
+      if (output) return output;
+    }
   }
   if (isUnsupportedFilterLookupPrompt(prompt)) {
     const composed = composeFilterUnsupportedResponse();
@@ -578,6 +846,20 @@ export async function processAiLabUserPrompt(
     return { route: "capabilities", ...composed };
   }
 
+  const universalPreflight = isUniversalQueryResolverEnabled()
+    ? preflightUniversalQuery(contextualPrompt, ctx)
+    : null;
+  if (universalPreflight && !isUniversalQueryShadowMode()) {
+    const universal = await executeUniversalResolution(
+      prompt,
+      universalPreflight,
+      ctx,
+      news,
+      sessionContext,
+    );
+    if (universal) return universal;
+  }
+
   const clarifying = buildClarifyingResponse(contextualPrompt, sessionContext, ctx);
   if (clarifying) {
     return { route: "clarifying", text: clarifying.text, followUps: clarifying.followUps };
@@ -585,6 +867,45 @@ export async function processAiLabUserPrompt(
 
   const { prompt: enriched, note } = applyLiveContext(contextualPrompt, ctx);
   const result = routePrompt(enriched, ctx, news);
+
+  // The page normally carries a complete snapshot, but a stale/partial client
+  // snapshot must not turn a clear "10k in USD" or "10k in gold" request into
+  // a generic question. Refresh only these explicit FX/commodity scenarios.
+  if (result.kind === "unknown" && mayNeedLiveCrossAssetCatalog(contextualPrompt)) {
+    try {
+      const refreshedContext = await fetchMarketContext();
+      const refreshedClarifying = buildClarifyingResponse(contextualPrompt, sessionContext, refreshedContext);
+      if (refreshedClarifying) {
+        return { route: "clarifying", text: refreshedClarifying.text, followUps: refreshedClarifying.followUps };
+      }
+      const refreshed = routePrompt(contextualPrompt, refreshedContext, news);
+      if (refreshed.kind !== "unknown") {
+        const composed = composeAssistantResponse({ prompt, result: refreshed, sessionContext });
+        return { route: "router", result: refreshed, ...composed };
+      }
+    } catch {
+      // Keep the normal safe clarification path when live market data is not
+      // available; this retry is an enhancement, never a dependency.
+    }
+  }
+
+  if (universalPreflight && isUniversalQueryShadowMode()) {
+    const shadowWouldAnswer = universalPreflight.status === "resolved" && universalPreflight.ready;
+    const currentAnswered = result.kind !== "unknown";
+    if (shadowWouldAnswer !== currentAnswered || universalPreflight.status === "ambiguous") {
+      void recordQueryResolutionTelemetry({
+        query: prompt,
+        frame: universalPreflight.frame,
+        outcome: "shadow_disagreement",
+        candidateIds: universalPreflight.status === "ambiguous"
+          ? universalPreflight.candidates.map((candidate) => candidate.id)
+          : universalPreflight.status === "resolved"
+            ? universalPreflight.entities.map((entity) => entity.id)
+            : [],
+        shadowResult: { universal: universalPreflight.status, current: result.kind },
+      });
+    }
+  }
 
   // Calculators, explainers, news, and explicit lookup requests are fast and
   // unambiguous, so keep them local and avoid a model request.
@@ -609,6 +930,16 @@ export async function processAiLabUserPrompt(
       ? { ok: true, intent: common }
       : await (options.interpreter ?? interpretNaturalLanguage)(prompt, ctx, sessionContext);
     if (interpreted.ok && interpreted.intent) {
+      if (interpreted.resolution) {
+        const universal = await executeUniversalResolution(
+          prompt,
+          interpreted.resolution,
+          ctx,
+          news,
+          sessionContext,
+        );
+        if (universal) return universal;
+      }
       const natural = await executeNaturalLanguageIntent(prompt, interpreted.intent, ctx, news, sessionContext);
       if (natural) return natural;
     }

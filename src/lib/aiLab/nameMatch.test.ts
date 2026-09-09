@@ -46,6 +46,11 @@ describe("normalizeInstrumentQuery", () => {
     expect(normalizeInstrumentQuery("Britam MMF")).toBe("britam");
     expect(normalizeInstrumentQuery("  KCB Group plc  ")).toBe("kcb");
   });
+
+  it("strips amount-scenario prose before matching a named asset", () => {
+    expect(normalizeInstrumentQuery("put 10k in USD")).toBe("usd");
+    expect(normalizeInstrumentQuery("invest 10,000 in gold")).toBe("gold");
+  });
 });
 
 describe("resolveAssetMatch fuzzy lookup", () => {
@@ -72,6 +77,17 @@ describe("resolveAssetMatch fuzzy lookup", () => {
     const result = resolveAssetMatch("cic mmf", assets);
     expect(result.status).toBe("match");
     expect(result.asset?.name).toContain("CIC");
+  });
+
+  it("prefers an exact FX code over a longer overlapping commodity symbol", () => {
+    const crossAssetCandidates: ComparableAsset[] = [
+      { kind: "fx", symbol: "USD", name: "US Dollar", value: 129, valueLabel: "KES per 1 unit", changePct: null, aliases: ["usd", "dollar"] },
+      { kind: "commodity", symbol: "USD/KG", name: "Fertilizer", value: 1, valueLabel: "Price (USD/KG)", changePct: null, aliases: ["usd", "fertilizer"] },
+    ];
+    const result = resolveAssetMatch("put 10k in USD", crossAssetCandidates);
+    expect(result.status).toBe("match");
+    expect(result.asset?.kind).toBe("fx");
+    expect(result.asset?.symbol).toBe("USD");
   });
 });
 
