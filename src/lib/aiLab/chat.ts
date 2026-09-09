@@ -813,6 +813,18 @@ export async function processAiLabUserPrompt(
     }
   }
 
+  // Keep deterministic portfolio splits local so they remain available even
+  // when the server-authoritative interpreter does not recognize this intent.
+  // This also keeps the established split calculator and market snapshot as
+  // the single source of truth for the scenario output.
+  if (isPortfolioSplitIntent(prompt.toLowerCase(), prompt)) {
+    const result = routePrompt(contextualPrompt, ctx, news);
+    if (result.kind === "portfolio-split") {
+      const composed = composeAssistantResponse({ prompt, result, sessionContext });
+      return { route: "router", result, ...composed };
+    }
+  }
+
   // In the browser, the server is authoritative for interpretation, entity
   // resolution, and market execution. The local snapshot is intentionally not
   // consulted for the final answer on this path.

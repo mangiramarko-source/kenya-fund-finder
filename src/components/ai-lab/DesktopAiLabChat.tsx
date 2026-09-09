@@ -5,7 +5,7 @@ import AiLabChat, { type CompareState } from "./AiLabChat";
 import { useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
 import { fetchAssetHistory, type AssetHistory, type LookbackDays } from "@/lib/aiLab/history";
-import { createAssistantMessage, createUserMessage, deriveSessionContext, processAiLabUserPrompt } from "@/lib/aiLab/chat";
+import { createAssistantMessage, createUserMessage, deriveSessionContext, processAiLabClarificationSelection, processAiLabUserPrompt } from "@/lib/aiLab/chat";
 import { canUseGeminiEducationalAssist } from "@/lib/aiLab/geminiEligibility";
 import { generateGeminiEducationalAnswer, isGeminiEducationalEnabled } from "@/lib/aiLab/generateGeminiEducationalAnswer";
 import { useAuth } from "@/hooks/useAuth";
@@ -77,10 +77,49 @@ export default function DesktopAiLabChat() {
     })();
   }, [market.data, news.data, messages, user]);
 
-  const selectClarification = useCallback((_messageId: string, _entityId: string) => {
-    // Clarification actions remain available in the full AI Lab; the popup hands off for advanced flows.
-    navigate("/ai-lab");
-  }, [navigate]);
+  const selectClarification = useCallback((messageId: string, entityId: string) => {
+    const sourceMessage = messages.find((message) => message.id === messageId);
+    const clarification = sourceMessage?.clarification;
+    const choice = clarification?.choices.find((candidate) => candidate.id === entityId);
+    if (!clarification || !choice) return;
+
+    const userMessage = createUserMessage(choice.label);
+    const pendingMessage = createAssistantMessage({ text: "", status: "pending" });
+    setMessages((prev) => [
+      ...prev.map((message) => message.id === messageId ? { ...message, clarification: undefined } : message),
+      userMessage,
+      pendingMessage,
+    ]);
+
+    void (async () => {
+      try {
+        const output = await processAiLabClarificationSelection(
+          clarification,
+          entityId,
+          market.data,
+          news.data,
+          deriveSessionContext(messages),
+        );
+        const result = output.result;
+        setMessages((prev) => prev.map((message) => message.id === pendingMessage.id
+          ? {
+              ...createAssistantMessage({
+                text: output.text,
+                result: result?.kind === "refusal" || result?.kind === "unknown" ? undefined : result,
+                followUps: output.followUps,
+                contextNote: output.contextNote,
+                clarification: output.clarification,
+              }),
+              id: pendingMessage.id,
+            }
+          : message));
+      } catch {
+        setMessages((prev) => prev.map((message) => message.id === pendingMessage.id
+          ? { ...createAssistantMessage({ text: "I couldn't continue that comparison. Please enter the full product name and try again.", status: "error" }), id: pendingMessage.id }
+          : message));
+      }
+    })();
+  }, [messages, market.data, news.data]);
 
   if (!open) return <button type="button" onClick={() => setOpen(true)} aria-label="Open AI Lab chat" className="fixed bottom-5 right-5 z-50 hidden items-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/25 transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 md:flex"><Sparkles className="h-4 w-4" aria-hidden="true" />Ask AI Lab</button>;
 
@@ -88,7 +127,7 @@ export default function DesktopAiLabChat() {
     <div className="fixed inset-0 z-50 hidden bg-black/5 md:block" onClick={() => setOpen(false)} aria-hidden="true" />
     <section role="dialog" aria-modal="false" aria-label="AI Lab chat" className="fixed bottom-5 right-5 z-[51] hidden h-[min(620px,calc(100vh-2.5rem))] w-[min(410px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-[24px] border border-border/80 bg-background shadow-2xl md:flex">
       <header className="flex shrink-0 items-center justify-between border-b border-border/70 bg-card/80 px-4 py-3.5"><div className="flex min-w-0 items-center gap-2.5"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500"><Sparkles className="h-4 w-4" /></span><div className="min-w-0"><p className="truncate text-sm font-bold">AI Lab</p><p className="text-[11px] text-muted-foreground">Ask about Kenyan markets</p></div></div><div className="flex items-center gap-1"><button type="button" onClick={clearMessages} disabled={messages.length === 0} aria-label="Clear AI Lab conversation" className="inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" /><span>Clear</span></button><button type="button" onClick={() => navigate("/ai-lab")} aria-label="Open full AI Lab" className="rounded-full p-2 text-muted-foreground hover:bg-muted"><ExternalLink className="h-4 w-4" /></button><button type="button" onClick={() => setOpen(false)} aria-label="Close AI Lab chat" className="rounded-full p-2 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div></header>
-      <div className="ai-lab-compact min-h-0 flex-1"><AiLabChat messages={messages} onSubmit={submit} compareStateByMessageId={compareStateByMessageId} onLookbackChange={(id, days) => setLookbacks((prev) => ({ ...prev, [id]: days }))} onFeedback={(id, value) => setMessages((prev) => prev.map((m) => m.id === id ? { ...m, feedback: value } : m))} onClarificationSelect={selectClarification} /></div>
+      <div className="ai-lab-compact min-h-0 flex-1"><AiLabChat messages={messages} onSubmit={submit} compareStateByMessageId={compareStateByMessageId} onLookbackChange={(id, days) => setLookbacks((prev) => ({ ...prev, [id]: days }))} onFeedback={(id, value) => setMessages((prev) => prev.map((m) => m.id === id ? { ...m, feedback: value } : m))} onClarificationSelect={selectClarification} headlineClassName="text-2xl md:text-3xl font-extrabold tracking-tight font-heading text-foreground leading-[1.05]" heroSubtextClassName="text-[11px] text-muted-foreground max-w-lg leading-relaxed font-medium" /></div>
     </section>
   </>;
 }

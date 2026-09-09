@@ -387,17 +387,15 @@ const AiLabPage = () => {
 
   return (
     <div className={AI_LAB_PAGE}>
-      <aside className="pointer-events-none fixed left-3 top-24 z-30 hidden space-y-2 lg:block" aria-label="AI Lab information">
-        <div className="flex items-center gap-2 rounded-xl border border-border/60 bg-background/90 p-2 shadow-sm backdrop-blur-sm">
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold leading-none text-foreground">AI Lab</span>
-              <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-1.5 py-0.5 text-[8px] font-semibold text-emerald-600">BETA</span>
-            </div>
-            <p className="mt-0.5 max-w-[150px] text-[9px] leading-snug text-muted-foreground">{AI_LAB_SAFETY_LINE}</p>
+      <aside className="pointer-events-none fixed inset-x-0 top-20 z-30 hidden items-start justify-between px-6 lg:flex" aria-label="AI Lab information">
+        <div className="rounded-2xl bg-background/90 px-4 py-3 shadow-sm backdrop-blur-sm">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-bold leading-none text-foreground">AI Lab</span>
+            <span className="rounded-full border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-[10px] font-semibold text-emerald-600">BETA</span>
           </div>
+          <p className="mt-1 max-w-[220px] text-[10px] leading-snug text-muted-foreground">{AI_LAB_SAFETY_LINE}</p>
         </div>
-        <button type="button" onClick={clearMessages} disabled={messages.length === 0} aria-label="Clear AI Lab conversation" className="pointer-events-auto inline-flex items-center gap-1.5 rounded-lg border border-border/60 bg-background/90 px-2.5 py-2 text-[10px] font-semibold text-muted-foreground shadow-sm transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" aria-hidden="true" />Clear conversation</button>
+        <button type="button" onClick={clearMessages} disabled={messages.length === 0} aria-label="Clear AI Lab conversation" className="pointer-events-auto inline-flex items-center gap-1.5 rounded-2xl border border-border/60 bg-background/90 px-3 py-2 text-[11px] font-semibold text-muted-foreground shadow-sm backdrop-blur-sm transition-colors hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" aria-hidden="true" />Clear conversation</button>
       </aside>
       <div className={AI_LAB_PAGE_INNER}>
         <header className="relative flex shrink-0 items-center justify-between gap-2 border-b border-border/40 py-1 pb-2 md:hidden md:py-2 md:pb-3">
@@ -429,6 +427,7 @@ const AiLabPage = () => {
             onLookbackChange={handleLookbackChange}
             onFeedback={handleFeedback}
             onClarificationSelect={handleClarificationSelect}
+            centerEmptyState
           />
         </main>
       </div>

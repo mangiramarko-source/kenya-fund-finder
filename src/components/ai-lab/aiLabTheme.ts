@@ -1,7 +1,7 @@
 // Phase 13C/13D + UI polish — AI Lab scoped tokens aligned with site CSS variables.
 
 export const AI_LAB_PAGE =
-  "fixed inset-0 flex flex-col min-h-0 overflow-hidden bg-background h-[var(--ai-lab-vvh,100dvh)] max-h-[var(--ai-lab-vvh,100dvh)] overscroll-none";
+  "fixed inset-0 md:top-14 md:bottom-0 md:h-auto md:max-h-none flex flex-col min-h-0 overflow-hidden bg-background h-[var(--ai-lab-vvh,100dvh)] max-h-[var(--ai-lab-vvh,100dvh)] overscroll-none";
 export const AI_LAB_PAGE_INNER =
   "flex flex-col flex-1 min-h-0 h-full w-full gap-2 md:gap-4 container pt-2 md:pt-4 pb-0 max-w-3xl overflow-hidden px-3 md:px-4";
 
@@ -78,10 +78,16 @@ export const AI_LAB_DOCK_DISCLAIMER_TEXT =
 export const AI_LAB_INPUT_PLACEHOLDER = "Ask Ai lab";
 
 export const AI_LAB_SAFE_PROMPT_CHIPS = [
+  // MMF scenarios
   "Put 100k in an MMF for 12 months",
-  "What if yield drops from 11% to 9%?",
   "Put 500k in Etica MMF for 2 years",
+  "What if yield drops from 11% to 9%?",
+  // Stocks and market data
   "Invest 1m in Safaricom shares for 5 years",
+  "What is SCOM trading at today?",
   "What is the USD/KES rate?",
+  "What is the price of gold today?",
+  // Portfolio planning and education
   "Split 100k between MMF and SCOM at 11% yield",
+  "What is a stock?",
 ] as const;

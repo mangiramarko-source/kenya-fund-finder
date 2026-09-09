@@ -45,6 +45,12 @@ interface Props {
   onLookbackChange: (messageId: string, days: LookbackDays) => void;
   onFeedback?: (messageId: string, value: "helpful" | "not-helpful") => void;
   onClarificationSelect?: (messageId: string, entityId: string) => void;
+  /** Allows compact hosts (such as the desktop popup) to tune the empty-state headline. */
+  headlineClassName?: string;
+  /** Allows compact hosts to tune the supporting copy without changing the full-page layout. */
+  heroSubtextClassName?: string;
+  /** Centers the empty state for the full desktop page without affecting compact hosts. */
+  centerEmptyState?: boolean;
 }
 
 const PromptChip = ({ label, onClick }: { label: string; onClick: () => void }) => (
@@ -102,6 +108,9 @@ const AiLabChat = ({
   onLookbackChange,
   onFeedback,
   onClarificationSelect,
+  headlineClassName,
+  heroSubtextClassName,
+  centerEmptyState = false,
 }: Props) => {
   const [input, setInput] = useState("");
   const threadRef = useRef<HTMLDivElement>(null);
@@ -168,10 +177,10 @@ const AiLabChat = ({
     <div className={AI_LAB_CHAT_SHELL}>
       <div ref={threadRef} className={AI_LAB_THREAD}>
         {!hasMessages ? (
-          <div className="max-w-2xl mx-auto space-y-8 pt-4 md:pt-12 pb-6">
+          <div className={`max-w-2xl mx-auto space-y-8 pt-4 ${centerEmptyState ? "md:flex md:flex-col md:justify-center md:min-h-full md:pt-0" : "md:pt-12"} pb-6`}>
             <div className="space-y-3">
-              <h2 className={AI_LAB_HEADLINE}>{AI_LAB_HERO_HEADLINE}</h2>
-              <p className={AI_LAB_HERO_SUBTEXT_CLASS}>{AI_LAB_HERO_SUBTEXT}</p>
+              <h2 className={headlineClassName ?? AI_LAB_HEADLINE}>{AI_LAB_HERO_HEADLINE}</h2>
+              <p className={heroSubtextClassName ?? AI_LAB_HERO_SUBTEXT_CLASS}>{AI_LAB_HERO_SUBTEXT}</p>
             </div>
             <form onSubmit={handleSubmit}>
               <PromptInput
@@ -187,7 +196,7 @@ const AiLabChat = ({
                 <PromptChip key={chip} label={chip} onClick={() => submitPrompt(chip)} />
               ))}
             </div>
-            <p className={`${AI_LAB_DOCK_DISCLAIMER} md:hidden`}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
+            <p className={AI_LAB_DOCK_DISCLAIMER}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
           </div>
         ) : (
           <div className="max-w-3xl w-full mx-auto space-y-6">
@@ -347,7 +356,7 @@ const AiLabChat = ({
                 onInputFocus={scrollInputIntoThread}
               />
             </form>
-            <p className={`${AI_LAB_DOCK_DISCLAIMER} mt-1.5 md:hidden`}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
+            <p className={`${AI_LAB_DOCK_DISCLAIMER} mt-1.5`}>{AI_LAB_DOCK_DISCLAIMER_TEXT}</p>
           </div>
         </div>
       )}
