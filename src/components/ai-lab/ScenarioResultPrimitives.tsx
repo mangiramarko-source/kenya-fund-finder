@@ -48,14 +48,16 @@ export const SummaryMetricCard = ({
   valueClassName = "",
   sublabel,
   sublabelClassName = "",
+  className = "",
 }: {
   label: string;
   value: React.ReactNode;
   valueClassName?: string;
   sublabel?: string;
   sublabelClassName?: string;
+  className?: string;
 }) => (
-  <div className="rounded-2xl border border-border/70 bg-card p-3.5 md:p-4 shadow-sm space-y-1">
+  <div className={`rounded-2xl border border-border/70 bg-card p-3.5 md:p-4 shadow-sm space-y-1 ${className}`}>
     <p className="text-[10px] md:text-[11px] uppercase tracking-wider font-bold text-muted-foreground">{label}</p>
     <p className={`text-lg md:text-xl font-extrabold text-foreground ${valueClassName}`}>{value}</p>
     {sublabel && <p className={`text-xs font-semibold ${sublabelClassName || "text-muted-foreground"}`}>{sublabel}</p>}
@@ -66,12 +68,14 @@ export const Section = ({
   icon,
   title,
   children,
+  className = "",
 }: {
   icon: React.ReactNode;
   title: string;
   children: React.ReactNode;
+  className?: string;
 }) => (
-  <div className={AI_LAB_SECTION}>
+  <div className={`${AI_LAB_SECTION} ${className}`}>
     <div className="flex items-center gap-1.5 mb-3 text-muted-foreground">
       {icon}
       <span className={AI_LAB_LABEL}>{title}</span>
@@ -83,11 +87,13 @@ export const Section = ({
 export const CollapsibleDetails = ({
   title,
   children,
+  className = "",
 }: {
   title: string;
   children: React.ReactNode;
+  className?: string;
 }) => (
-  <details className={AI_LAB_COLLAPSIBLE}>
+  <details className={`${AI_LAB_COLLAPSIBLE} ${className}`}>
     <summary className="cursor-pointer font-medium text-foreground">{title}</summary>
     <div className="mt-2 space-y-1">{children}</div>
   </details>

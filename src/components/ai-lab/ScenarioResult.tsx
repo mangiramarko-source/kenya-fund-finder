@@ -866,9 +866,9 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   const metricCards =
     result.kind === "mmf" ? (
       <SummaryMetricGrid>
-        <SummaryMetricCard label="Projected gross" value={fmtKES(result.projectedGross)} />
-        <SummaryMetricCard label="Monthly equivalent" value={fmtKES2(result.monthlyEquivalent)} />
-        <SummaryMetricCard label="Annual yield" value={`${result.inputs.annualYieldPct}%`} sublabel={fmtKES(result.inputs.amount)} />
+        <SummaryMetricCard className="border-0 bg-muted/30 shadow-none" label="Projected gross" value={fmtKES(result.projectedGross)} />
+        <SummaryMetricCard className="border-0 bg-muted/30 shadow-none" label="Monthly equivalent" value={fmtKES2(result.monthlyEquivalent)} />
+        <SummaryMetricCard className="border-0 bg-muted/30 shadow-none" label="Annual yield" value={`${result.inputs.annualYieldPct}%`} sublabel={fmtKES(result.inputs.amount)} />
       </SummaryMetricGrid>
     ) : result.kind === "stock-move" ? (
       <SummaryMetricGrid>
@@ -879,13 +879,13 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     ) : null;
 
   return (
-    <ResultShell>
+    <ResultShell className={result.kind === "mmf" ? "border-0 bg-transparent p-0 shadow-none" : ""}>
       {metricCards}
-      <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
+      <Section className={result.kind === "mmf" ? "border-0 bg-transparent p-1 shadow-none" : ""} icon={<Calculator className="h-3 w-3" />} title="Calculations">
         <div>{calcs}</div>
       </Section>
       
-        <CollapsibleDetails title="Assumptions">
+        <CollapsibleDetails className={result.kind === "mmf" ? "border-0 bg-muted/30 shadow-none" : ""} title="Assumptions">
 <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
           {result.assumptions.map((a, i) => (
             <li key={i}>{sanitizeOutput(a)}</li>
@@ -893,7 +893,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
         </ul>
         </CollapsibleDetails>
       
-        <CollapsibleDetails title="Notes">
+        <CollapsibleDetails className={result.kind === "mmf" ? "border-0 bg-muted/30 shadow-none" : ""} title="Notes">
 {importantNotes}
         </CollapsibleDetails>
       <Disclaimer text={result.disclaimer} />
