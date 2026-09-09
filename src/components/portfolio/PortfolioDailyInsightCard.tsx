@@ -54,7 +54,7 @@ export function portfolioDailyInsight(notification: AppNotification | null | und
   };
 }
 
-export default function PortfolioDailyInsightCard({ notification }: { notification?: AppNotification | null }) {
+export default function PortfolioDailyInsightCard({ notification, showUpdatedAt = true }: { notification?: AppNotification | null; showUpdatedAt?: boolean }) {
   const insight = portfolioDailyInsight(notification);
   const gain = insight.status === "gain";
   const loss = insight.status === "loss";
@@ -75,7 +75,7 @@ export default function PortfolioDailyInsightCard({ notification }: { notificati
     <p className="mt-4 text-base leading-relaxed text-muted-foreground">{insight.explanation}</p>
     <div className="mt-5 border-t border-border/70 pt-4">
       <p className="flex items-start gap-3 text-base font-semibold leading-relaxed text-foreground"><span className={`mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full text-white ${circle}`}><Icon className="h-4 w-4" aria-hidden="true" /></span>{insight.mover}</p>
-      <p className="mt-4 flex items-center gap-1.5 text-sm font-medium text-muted-foreground"><Clock3 className="h-4 w-4" />{insight.updatedAt}</p>
+      {showUpdatedAt && <p className="mt-4 flex items-center gap-1.5 text-sm font-medium text-muted-foreground"><Clock3 className="h-4 w-4" />{insight.updatedAt}</p>}
     </div>
   </article>;
 }

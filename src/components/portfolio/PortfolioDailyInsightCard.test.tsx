@@ -24,4 +24,9 @@ describe("PortfolioDailyInsightCard", () => {
     expect(screen.getByText("Your first portfolio update is on the way")).toBeInTheDocument();
     expect(screen.queryByText(/KES 10,000/)).not.toBeInTheDocument();
   });
+
+  it("can place the update time in a shared portfolio-card footer", () => {
+    render(<PortfolioDailyInsightCard notification={base} showUpdatedAt={false} />);
+    expect(screen.queryByText(/Last market update:/)).not.toBeInTheDocument();
+  });
 });

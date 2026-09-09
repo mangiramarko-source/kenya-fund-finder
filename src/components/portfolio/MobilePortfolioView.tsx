@@ -1,13 +1,13 @@
 import { useState, useMemo } from "react";
 import { usePortfolio, getCurrentValue, getPnL, getPnLPercent, ASSET_TYPE_LABELS, AssetType, PortfolioItem } from "@/hooks/usePortfolio";
 import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
-import { Plus, ShieldCheck, Sparkles, TrendingUp, TrendingDown, Minus, SlidersHorizontal, ArrowUpRight } from "lucide-react";
+import { Clock3, Plus, ShieldCheck, Sparkles, TrendingUp, TrendingDown, Minus, SlidersHorizontal, ArrowUpRight } from "lucide-react";
 import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
 import EditHoldingModal from "@/components/portfolio/EditHoldingModal";
 import PortfolioSummaryModal from "@/components/portfolio/PortfolioSummaryModal";
 import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
 import KoraIllustration from "@/components/kora/KoraIllustration";
-import PortfolioDailyInsightCard from "@/components/portfolio/PortfolioDailyInsightCard";
+import PortfolioDailyInsightCard, { portfolioDailyInsight } from "@/components/portfolio/PortfolioDailyInsightCard";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 
 interface MobilePortfolioViewProps {
@@ -84,6 +84,7 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
     () => notifications.find((notification) => notification.type === "portfolio_daily") ?? null,
     [notifications],
   );
+  const dailyInsight = useMemo(() => portfolioDailyInsight(latestPortfolioUpdate), [latestPortfolioUpdate]);
 
   return (
     <div className="px-4 py-5 space-y-5 pb-20">
@@ -102,8 +103,6 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
           Add
         </button>
       </div>
-
-      <PortfolioDailyInsightCard notification={latestPortfolioUpdate} />
 
       {/* ─── 1. Total Value Summary Card ─── */}
       <div className="bg-card border border-border/75 rounded-3xl p-5 shadow-sm space-y-4 dark:bg-neutral-900/90 dark:border-white/10">
@@ -174,6 +173,8 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
           </div>
         </div>
 
+        <PortfolioDailyInsightCard notification={latestPortfolioUpdate} showUpdatedAt={false} />
+
         {/* Multi-segment Allocation Bar */}
         {allocationShares.length > 0 && (
           <div>
@@ -224,10 +225,10 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
           </button>
         </div>
 
-        {/* Sub-note */}
-        <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground/80 pt-3 border-t border-border/40">
-          <ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" />
-          <span>100% mock — no real money, live Kenyan market data.</span>
+        {/* Shared footer for the total portfolio and daily insight. */}
+        <div className="space-y-2 border-t border-border/40 pt-3 text-[11px] text-muted-foreground/80">
+          <div className="flex items-center gap-1.5"><Clock3 className="h-3.5 w-3.5 shrink-0" /><span>{dailyInsight.updatedAt}</span></div>
+          <div className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400 shrink-0" /><span>100% mock — no real money, live Kenyan market data.</span></div>
         </div>
       </div>
 
