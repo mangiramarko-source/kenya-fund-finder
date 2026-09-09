@@ -632,6 +632,36 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
                 ))}
               </tbody>
             </BreakdownTable>
+            {result.projection && (
+              <div className="pt-2">
+                <p className="mb-2 text-xs font-semibold text-foreground">
+                  {result.projection.months % 12 === 0
+                    ? `${result.projection.months / 12}-year illustrative outcomes`
+                    : `${result.projection.months}-month illustrative outcomes`}
+                </p>
+                <p className="mb-2 text-[11px] text-muted-foreground">
+                  Uses compound annual share-price-change assumptions, not a forecast.
+                </p>
+                <BreakdownTable>
+                  <thead>
+                    <TableHeadRow>
+                      <TableHeadCell>Annual price change</TableHeadCell>
+                      <TableHeadCell align="right">Estimated value</TableHeadCell>
+                      <TableHeadCell align="right">Est. gain/loss</TableHeadCell>
+                    </TableHeadRow>
+                  </thead>
+                  <tbody>
+                    {result.projection.scenarios.map((scenario) => (
+                      <TableRow key={scenario.annualPriceChangePct}>
+                        <TableCell>{fmtMovement(scenario.annualPriceChangePct)}</TableCell>
+                        <TableCell align="right" className="font-semibold">{fmtKES(scenario.projectedValue)}</TableCell>
+                        <TableCell align="right">{fmtGainLoss(scenario.projectedGainLoss)}</TableCell>
+                      </TableRow>
+                    ))}
+                  </tbody>
+                </BreakdownTable>
+              </div>
+            )}
           </div>
         </Section>
         

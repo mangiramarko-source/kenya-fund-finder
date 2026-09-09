@@ -48,6 +48,14 @@ describe("calculateStockAmountScenario", () => {
     expect(row?.estimatedValue).toBe(9_000);
   });
 
+  it("adds compound five-year illustrations only when the user gives a horizon", () => {
+    const r = calculateStockAmountScenario(1_000_000, asset, 60);
+    const upFive = r.projection?.scenarios.find((scenario) => scenario.annualPriceChangePct === 5);
+    expect(r.projection?.months).toBe(60);
+    expect(upFive?.projectedValue).toBe(1_276_282);
+    expect(upFive?.projectedGainLoss).toBe(276_282);
+  });
+
   it("summary states this does not predict profit", () => {
     const r = calculateStockAmountScenario(10_000, asset);
     expect(r.summary.toLowerCase()).toContain("does not predict profit");

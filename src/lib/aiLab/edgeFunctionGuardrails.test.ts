@@ -71,4 +71,13 @@ describe("ai-lab-assist public guardrails", () => {
     expect(source).toContain('topic "getting-started"');
     expect(source).toContain("asset-amount");
   });
+
+  it("returns the complete stock-amount card shape expected by the client", () => {
+    const source = readProjectFile("supabase/functions/ai-lab-assist/index.ts");
+    expect(source).toContain("name: quote.name, latestPrice: quote.value");
+    expect(source).toContain("approximateShares: shares");
+    expect(source).toContain("rows,");
+    expect(source).toContain("projection,");
+    expect(source).toContain("importantNotes:");
+  });
 });

@@ -44,6 +44,7 @@ import {
   type NewsContext,
 } from "./newsContext";
 import { buildHypotheticalScenarioResponse } from "./hypotheticalScenarios";
+import { findInvestmentEducation } from "@/data/investmentEducation";
 
 export type { UnknownPayload } from "./routerTypes";
 export { UNKNOWN_FALLBACK_MSG, UNKNOWN_FALLBACK_SUGGESTIONS } from "./routerTypes";
@@ -222,7 +223,7 @@ function tryStockAmountRoute(
       disclaimer: STANDARD_DISCLAIMER,
     };
   }
-  return calculateStockAmountScenario(amount, asset);
+  return calculateStockAmountScenario(amount, asset, parseMonths(prompt));
 }
 
 function isNeutralAmountAssetPrompt(prompt: string, lower: string): boolean {
@@ -286,7 +287,7 @@ function tryAssetAmountRoute(
 
   switch (asset.kind) {
     case "stock":
-      return calculateStockAmountScenario(amount, asset);
+      return calculateStockAmountScenario(amount, asset, parseMonths(prompt));
     case "fund":
       return calculateMmfScenario(amount, asset.value, parseMonths(prompt) ?? 12, [
         `Uses ${asset.name}'s latest published annual yield from KenyaFundFinder.`,
@@ -781,31 +782,44 @@ function routeExplainer(lower: string): ScenarioResult | null {
     return EXPLAINERS["getting-started"];
   }
   const isExp = /explain|what is|what's|define/.test(lower);
-  if (!isExp) return null;
+  if (isExp) {
+    if (/\b(?:mmf|money market)\b.*\b(?:vs|versus|difference|stock|share)\b|\b(?:stock|share)\b.*\b(?:vs|versus|difference|mmf|money market)\b/.test(lower)) {
+      return EXPLAINERS["stock-vs-mmf"];
+    }
+    if (/\b(?:investment|investing)\s+risk\b|\brisk\s+of\s+investing\b/.test(lower)) {
+      return EXPLAINERS["investment-risk"];
+    }
+    if (/(t-?bill|treasury bill)/.test(lower)) return EXPLAINERS["t-bills"];
+    if (/withholding/.test(lower)) return EXPLAINERS["withholding-tax"];
+    if (/dividend yield/.test(lower)) return EXPLAINERS["dividend-yield"];
+    if (/\bnav\b|net asset value/.test(lower)) return EXPLAINERS.nav;
+    if (/expense ratio/.test(lower)) return EXPLAINERS["expense-ratio"];
+    if (/compound|compounding/.test(lower)) return EXPLAINERS.compounding;
+    if (/unit trust/.test(lower)) return EXPLAINERS["unit-trust"];
+    if (/\betf\b|exchange traded fund/.test(lower)) return EXPLAINERS.etf;
+    if (/capital gain/.test(lower)) return EXPLAINERS["capital-gain"];
+    if (/downside risk/.test(lower)) return EXPLAINERS["downside-risk"];
+    if (/(fund fee|management fee|fees)/.test(lower)) return EXPLAINERS.fees;
+    if (/liquidity/.test(lower)) return EXPLAINERS.liquidity;
+    if (/volatil/.test(lower)) return EXPLAINERS.volatility;
+    if (/(gross vs net|gross versus net|net vs gross|net versus gross|gross return vs net)/.test(lower)) {
+      return EXPLAINERS["gross-vs-net"];
+    }
+    if (/(yield|mmf|money market)/.test(lower)) return EXPLAINERS["mmf-yield"];
+  }
 
-  if (/\b(?:mmf|money market)\b.*\b(?:vs|versus|difference|stock|share)\b|\b(?:stock|share)\b.*\b(?:vs|versus|difference|mmf|money market)\b/.test(lower)) {
-    return EXPLAINERS["stock-vs-mmf"];
+  const academyMatch = findInvestmentEducation(lower);
+  if (academyMatch) {
+    return {
+      kind: "explainer",
+      title: academyMatch.title,
+      paragraphs: [academyMatch.answer],
+      assumptions: [
+        "This explanation comes from KenyaFundFinder's Learn Academy and is general education, not a personal recommendation.",
+      ],
+      disclaimer: STANDARD_DISCLAIMER,
+    };
   }
-  if (/\b(?:investment|investing)\s+risk\b|\brisk\s+of\s+investing\b/.test(lower)) {
-    return EXPLAINERS["investment-risk"];
-  }
-  if (/(t-?bill|treasury bill)/.test(lower)) return EXPLAINERS["t-bills"];
-  if (/withholding/.test(lower)) return EXPLAINERS["withholding-tax"];
-  if (/dividend yield/.test(lower)) return EXPLAINERS["dividend-yield"];
-  if (/\bnav\b|net asset value/.test(lower)) return EXPLAINERS.nav;
-  if (/expense ratio/.test(lower)) return EXPLAINERS["expense-ratio"];
-  if (/compound|compounding/.test(lower)) return EXPLAINERS.compounding;
-  if (/unit trust/.test(lower)) return EXPLAINERS["unit-trust"];
-  if (/\betf\b|exchange traded fund/.test(lower)) return EXPLAINERS.etf;
-  if (/capital gain/.test(lower)) return EXPLAINERS["capital-gain"];
-  if (/downside risk/.test(lower)) return EXPLAINERS["downside-risk"];
-  if (/(fund fee|management fee|fees)/.test(lower)) return EXPLAINERS.fees;
-  if (/liquidity/.test(lower)) return EXPLAINERS.liquidity;
-  if (/volatil/.test(lower)) return EXPLAINERS.volatility;
-  if (/(gross vs net|gross versus net|net vs gross|net versus gross|gross return vs net)/.test(lower)) {
-    return EXPLAINERS["gross-vs-net"];
-  }
-  if (/(yield|mmf|money market)/.test(lower)) return EXPLAINERS["mmf-yield"];
   return null;
 }
 

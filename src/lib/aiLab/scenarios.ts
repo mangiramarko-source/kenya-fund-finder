@@ -597,6 +597,14 @@ export interface StockAmountScenarioResult {
   inputs: { amount: number; symbol: string; name: string; latestPrice: number };
   approximateShares: number;
   rows: StockAmountScenarioRow[];
+  projection?: {
+    months: number;
+    scenarios: Array<{
+      annualPriceChangePct: number;
+      projectedValue: number;
+      projectedGainLoss: number;
+    }>;
+  };
   assumptions: string[];
   importantNotes: string[];
   disclaimer: string;
@@ -719,6 +727,7 @@ export function calculatePortfolioSplitScenario(
 export function calculateStockAmountScenario(
   amount: number,
   asset: ComparableAsset,
+  projectionMonths?: number | null,
 ): StockAmountScenarioResult {
   const latestPrice = asset.value;
   const approximateShares = Math.round((amount / latestPrice) * 100) / 100;
@@ -733,6 +742,18 @@ export function calculateStockAmountScenario(
       estimatedGainLoss: estimatedValue - amount,
     };
   });
+  const months = projectionMonths != null && projectionMonths > 0 ? projectionMonths : null;
+  const projection = months == null ? undefined : {
+    months,
+    scenarios: [-5, 0, 5, 10].map((annualPriceChangePct) => {
+      const projectedValue = Math.round(amount * Math.pow(1 + annualPriceChangePct / 100, months / 12));
+      return {
+        annualPriceChangePct,
+        projectedValue,
+        projectedGainLoss: projectedValue - amount,
+      };
+    }),
+  };
 
   return {
     kind: "stock-amount",
@@ -745,6 +766,7 @@ export function calculateStockAmountScenario(
     },
     approximateShares,
     rows,
+    projection,
     assumptions: [
       "Uses the latest available KenyaFundFinder price.",
       "Fees, taxes, spreads, commissions, and dividends are not included.",

@@ -835,6 +835,30 @@ async function executeServerFrame(
   }
   if (entity.kind === "stock") {
     const shares = Math.round((amount / quote.value) * 10000) / 10000;
+    const projectionMonths = frame.parameters.periodMonths;
+    const rows = [-10, -5, 0, 5, 10].map((movementPct) => {
+      const estimatedPrice = Math.round(quote.value * (1 + movementPct / 100) * 100) / 100;
+      const estimatedValue = Math.round(amount * (1 + movementPct / 100) * 100) / 100;
+      return {
+        movementPct,
+        estimatedPrice,
+        estimatedValue,
+        estimatedGainLoss: Math.round((estimatedValue - amount) * 100) / 100,
+      };
+    });
+    const projection = projectionMonths != null && projectionMonths > 0
+      ? {
+          months: projectionMonths,
+          scenarios: [-5, 0, 5, 10].map((annualPriceChangePct) => {
+            const projectedValue = Math.round(amount * Math.pow(1 + annualPriceChangePct / 100, projectionMonths / 12));
+            return {
+              annualPriceChangePct,
+              projectedValue,
+              projectedGainLoss: projectedValue - amount,
+            };
+          }),
+        }
+      : undefined;
     return {
       result: {
         kind: "stock-amount",
@@ -843,7 +867,13 @@ async function executeServerFrame(
           entity, quote, amount, estimatedShares: shares,
           routerResult: {
             kind: "stock-amount", summary: "This is an illustrative stock exposure using the latest available KenyaFundFinder price.",
-            inputs: { amount, symbol: quote.symbol, latestPrice: quote.value }, estimatedShares: shares, assumptions: ["Approximate shares are illustrative only.", "Excludes brokerage fees, taxes, spreads, liquidity, and settlement rules."], disclaimer: standardDisclaimer(),
+            inputs: { amount, symbol: quote.symbol, name: quote.name, latestPrice: quote.value },
+            approximateShares: shares,
+            rows,
+            projection,
+            assumptions: ["Uses the latest available KenyaFundFinder price.", "Fees, taxes, spreads, commissions, and dividends are not included.", "Share prices can rise or fall.", "This is a scenario, not a prediction."],
+            importantNotes: ["Approximate shares are illustrative only — fractional lots, board lots, fees, taxes, spreads, liquidity, settlement rules, and price movement are not fully modeled.", "This assistant cannot place orders or execute trades."],
+            disclaimer: standardDisclaimer(),
           },
         },
         freshness: serverFreshness(),

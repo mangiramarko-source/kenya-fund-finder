@@ -40,6 +40,7 @@ import {
 import { recordQueryResolutionTelemetry } from "./queryResolutionTelemetry";
 import { findMarketAssetByCanonicalId } from "./canonicalCatalog";
 import { compareAssets } from "./scenarios";
+import { findInvestmentEducation } from "@/data/investmentEducation";
 
 export type AiLabChatRole = "user" | "assistant" | "system";
 
@@ -799,6 +800,17 @@ export async function processAiLabUserPrompt(
     const result = buildRefusal();
     const composed = composeAssistantResponse({ prompt, result, sessionContext });
     return { route: "router", result, ...composed };
+  }
+
+  // Learn Academy answers are deterministic and already maintained in the
+  // client bundle. Resolve them before the server-authoritative interpretation
+  // path so the full page and desktop popup return the same grounded lesson.
+  if (findInvestmentEducation(contextualPrompt)) {
+    const result = routePrompt(contextualPrompt, ctx, news);
+    if (result.kind === "explainer") {
+      const composed = composeAssistantResponse({ prompt, result, sessionContext });
+      return { route: "router", result, ...composed };
+    }
   }
 
   // In the browser, the server is authoritative for interpretation, entity

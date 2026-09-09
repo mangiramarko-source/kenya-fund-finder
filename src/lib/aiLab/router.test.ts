@@ -117,6 +117,15 @@ describe("routePrompt", () => {
       }
     });
 
+    it("shows labelled five-year illustrations when a stock prompt includes a horizon", () => {
+      const r = routePrompt("Invest KES 1m in Safaricom shares for 5 years", stockCtx);
+      expect(r.kind).toBe("stock-amount");
+      if (r.kind === "stock-amount") {
+        expect(r.projection?.months).toBe(60);
+        expect(r.projection?.scenarios.find((scenario) => scenario.annualPriceChangePct === 5)?.projectedValue).toBe(1_276_282);
+      }
+    });
+
     it("reframes 'How much will I make if I put KES 10,000 in Safaricom?' as stock-amount", () => {
       const r = routePrompt("How much will I make if I put KES 10,000 in Safaricom?", stockCtx);
       expect(r.kind).toBe("stock-amount");

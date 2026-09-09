@@ -6,39 +6,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { FUND_TYPE_LABELS, type FundType } from "@/lib/api";
 import { getDisclaimer } from "@/lib/disclaimers";
 import { Input } from "@/components/ui/input";
-
-const GLOSSARY: { term: string; definition: string }[] = [
-  { term: "Annual Effective Yield", definition: "The total return on an investment over one year, accounting for compounding. Expressed as a percentage." },
-  { term: "Asset Allocation", definition: "The strategy of spreading investments across different asset classes (equities, bonds, cash) to balance risk and return." },
-  { term: "Basis Point (bp)", definition: "One hundredth of a percentage point (0.01%). Used to express small changes in yields or interest rates." },
-  { term: "Blue Chip", definition: "A well-established, financially stable company with a history of reliable performance. On the NSE, examples include Safaricom and Equity Group." },
-  { term: "Capital Gains Tax (CGT)", definition: "A 5% tax on the profit made from selling shares listed on the NSE. Calculated on net gains after deducting purchase costs." },
-  { term: "CDS Account", definition: "Central Depository & Settlement Corporation account. Required to hold and trade shares electronically on the Nairobi Securities Exchange." },
-  { term: "CMA", definition: "Capital Markets Authority — the regulatory body overseeing securities markets, fund managers, and collective investment schemes in Kenya." },
-  { term: "Coupon Rate", definition: "The annual interest rate paid on a bond, expressed as a percentage of the face value." },
-  { term: "Daily Yield", definition: "The return earned on an investment in a single day. For Money Market Funds, this is how interest accrues daily before compounding." },
-  { term: "Diversification", definition: "Spreading investments across different assets, sectors, or geographies to reduce the impact of any single investment's poor performance." },
-  { term: "Dividend", definition: "A portion of a company's profits distributed to shareholders, usually expressed as a per-share amount." },
-  { term: "Dividend Yield", definition: "Annual dividend per share divided by the share price, expressed as a percentage. Indicates income return from a stock." },
-  { term: "Ex-Dividend Date", definition: "The cut-off date for dividend eligibility. You must own shares before this date to receive the declared dividend." },
-  { term: "Face Value / Par Value", definition: "The nominal value of a bond or share as stated by the issuer. For Kenyan government bonds, typically KES 50,000." },
-  { term: "Fund Manager", definition: "A licensed professional or firm that makes investment decisions on behalf of a fund's investors, regulated by the CMA in Kenya." },
-  { term: "Gross Yield", definition: "Investment return before deducting taxes and fees. Most Kenyan fund yields are quoted gross, before the 15% withholding tax." },
-  { term: "KDIC", definition: "Kenya Deposit Insurance Corporation — insures bank deposits up to KES 500,000 per depositor per institution. Does not cover fund investments." },
-  { term: "Liquidity", definition: "How quickly and easily an investment can be converted to cash without significant loss of value." },
-  { term: "Management Fee", definition: "An annual fee charged by the fund manager for managing the fund, expressed as a percentage of assets under management." },
-  { term: "Market Capitalisation", definition: "The total value of a company's outstanding shares (share price × number of shares). Used to classify companies by size." },
-  { term: "Maturity", definition: "The date on which a bond or fixed-term investment reaches its end and the principal is repaid to the investor." },
-  { term: "NAV (Net Asset Value)", definition: "The per-unit value of a fund's total assets minus liabilities. Used to price purchases and redemptions of fund units." },
-  { term: "NSE", definition: "Nairobi Securities Exchange — Kenya's principal stock exchange where equities, bonds, and other securities are traded." },
-  { term: "P/E Ratio", definition: "Price-to-Earnings ratio — the share price divided by earnings per share. A common valuation metric; higher P/E may indicate growth expectations." },
-  { term: "Portfolio", definition: "The collection of investments held by an individual or a fund, including stocks, bonds, and other assets." },
-  { term: "T-Bill (Treasury Bill)", definition: "A short-term government security (91, 182, or 364 days) sold at a discount and redeemed at face value. Low risk, used by MMFs." },
-  { term: "Treasury Bond", definition: "A long-term government debt security (2–30 years) paying periodic interest (coupons). Considered low credit risk in Kenya." },
-  { term: "Volatility", definition: "The degree of variation in an investment's price over time. Higher volatility means greater price swings and perceived risk." },
-  { term: "Withholding Tax", definition: "A 15% tax deducted at source on interest and dividend income from investments in Kenya." },
-  { term: "Yield Curve", definition: "A graph showing interest rates across different maturities. A normal (upward-sloping) curve means longer-term rates exceed short-term rates." },
-];
+import { INVESTMENT_GLOSSARY } from "@/data/investmentEducation";
 
 const TABS: { key: FundType | "general" | "stocks" | "glossary"; label: string; icon: React.ElementType }[] = [
   { key: "general", label: "Overview", icon: BookOpen },
@@ -75,15 +43,15 @@ const LearnPage = () => {
   const isGlossary = activeTab === "glossary";
 
   const filteredGlossary = glossarySearch
-    ? GLOSSARY.filter(
+    ? INVESTMENT_GLOSSARY.filter(
         (g) =>
           g.term.toLowerCase().includes(glossarySearch.toLowerCase()) ||
           g.definition.toLowerCase().includes(glossarySearch.toLowerCase())
       )
-    : GLOSSARY;
+    : INVESTMENT_GLOSSARY;
 
   // Group glossary by first letter
-  const glossaryByLetter = filteredGlossary.reduce<Record<string, typeof GLOSSARY>>((acc, item) => {
+  const glossaryByLetter = filteredGlossary.reduce<Record<string, typeof INVESTMENT_GLOSSARY>>((acc, item) => {
     const letter = item.term[0].toUpperCase();
     if (!acc[letter]) acc[letter] = [];
     acc[letter].push(item);

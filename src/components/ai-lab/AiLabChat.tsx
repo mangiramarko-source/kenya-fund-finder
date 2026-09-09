@@ -30,6 +30,7 @@ import type { AiLabChatMessage } from "@/lib/aiLab/chat";
 import type { AssetHistory, LookbackDays } from "@/lib/aiLab/history";
 import { LOOKBACK_OPTIONS } from "@/lib/aiLab/history";
 import { capFollowUps } from "@/lib/aiLab/responseComposer";
+import { isRenderableAiLabResult } from "@/lib/aiLab/resultGuards";
 
 export interface CompareState {
   lookbackDays: LookbackDays;
@@ -91,7 +92,7 @@ const PromptInput = ({
 const shouldShowResultCard = (msg: AiLabChatMessage): boolean => {
   if (!msg.result) return false;
   if (msg.result.kind === "refusal" || msg.result.kind === "unknown") return false;
-  return true;
+  return isRenderableAiLabResult(msg.result);
 };
 
 const AiLabChat = ({
