@@ -89,6 +89,23 @@ describe("NotificationRow", () => {
     rerender(<NotificationRow notification={{ ...notification, assetType: "currency", assetSymbol: "AUD", assetName: "AUD/KES · Australian Dollar" }} onOpen={vi.fn()} onDelete={vi.fn()} />);
     expect(screen.getByRole("img", { name: "AUD flag" })).toHaveAttribute("src", expect.stringContaining("/au.png"));
   });
+
+  it("presents a portfolio daily result with its portfolio visual", () => {
+    const onOpen = vi.fn();
+    const portfolioNotification: AppNotification = {
+      ...notification,
+      id: "portfolio-1",
+      title: "Portfolio up today",
+      type: "portfolio_daily",
+      metadata: { opening_value: 100000, closing_value: 110000, change: 10000, percent_change: 10 },
+    };
+    render(<NotificationRow notification={portfolioNotification} onOpen={onOpen} onDelete={vi.fn()} />);
+    expect(screen.getByLabelText("Portfolio")).toBeInTheDocument();
+    expect(screen.getByText("+KES 10,000.00 (+10.00%)")).toBeInTheDocument();
+    expect(screen.getByText("KES 110,000.00")).toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: /Open alert: Portfolio up today/ }));
+    expect(onOpen).toHaveBeenCalledOnce();
+  });
 });
 
 describe("Notification drawer", () => {

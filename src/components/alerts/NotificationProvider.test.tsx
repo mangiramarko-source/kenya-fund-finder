@@ -1,5 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react";
-import { MemoryRouter } from "react-router-dom";
+import { MemoryRouter, useLocation } from "react-router-dom";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import type { AppNotification } from "./NotificationProvider";
 
@@ -54,7 +54,7 @@ vi.mock("./LivePriceAlertCard", () => ({
   LivePriceAlertCard: ({ notification, onDismiss }: { notification: AppNotification | null; onDismiss: () => void }) => notification ? <><div role="alertdialog">{notification.id}</div><button type="button" onClick={onDismiss}>Dismiss live alert</button></> : null,
 }));
 
-import { NotificationProvider } from "./NotificationProvider";
+import { NotificationProvider, useNotifications } from "./NotificationProvider";
 
 const notification: AppNotification = {
   id: "alert-1",
@@ -69,6 +69,12 @@ const notification: AppNotification = {
 
 function renderProvider() {
   return render(<MemoryRouter><NotificationProvider><div>App</div></NotificationProvider></MemoryRouter>);
+}
+
+function PortfolioNotificationOpener() {
+  const { notifications, openNotification } = useNotifications();
+  const location = useLocation();
+  return <><button type="button" onClick={() => void openNotification(notifications[0])}>Open portfolio notification</button><output>{location.pathname}</output></>;
 }
 
 describe("NotificationProvider price-alert modals", () => {
@@ -110,5 +116,15 @@ describe("NotificationProvider price-alert modals", () => {
 
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     expect(state.update).not.toHaveBeenCalled();
+  });
+
+  it("keeps portfolio summaries out of the price modal and opens the portfolio", async () => {
+    state.notificationRows = [{ ...notification, id: "portfolio-1", title: "Portfolio up today", type: "portfolio_daily", is_read: true, metadata: { closing_value: 110000, change: 10000 } }];
+    render(<MemoryRouter><NotificationProvider><PortfolioNotificationOpener /></NotificationProvider></MemoryRouter>);
+
+    await screen.findByRole("button", { name: "Open portfolio notification" });
+    expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
+    fireEvent.click(screen.getByRole("button", { name: "Open portfolio notification" }));
+    await waitFor(() => expect(screen.getByText("/portfolio")).toBeInTheDocument());
   });
 });

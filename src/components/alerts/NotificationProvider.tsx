@@ -18,7 +18,7 @@ export interface AppNotification {
   created_at: string;
   assetName?: string;
   assetSymbol?: string;
-  assetType?: "stock" | "fund" | "currency" | "commodity";
+  assetType?: "stock" | "fund" | "currency" | "commodity" | "portfolio";
   assetVisualUrl?: string;
 }
 
@@ -124,6 +124,7 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const openNotification = useCallback(async (notification: AppNotification) => {
     if (!notification.is_read) await markAsRead(notification.id);
     if (notification.type === "price_alert") navigate("/alerts");
+    if (notification.type === "portfolio_daily") navigate("/portfolio");
   }, [markAsRead, navigate]);
 
   useEffect(() => {

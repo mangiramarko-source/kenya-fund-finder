@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Bell, Check, ChevronRight, Coffee, Trash2, X } from "lucide-react";
+import { Bell, Check, ChevronRight, Coffee, Trash2, WalletCards, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { useAuth } from "@/hooks/useAuth";
@@ -7,6 +7,7 @@ import { ScrollArea } from "@/components/ui/scroll-area";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { priceAlertPresentation } from "./priceAlertPresentation";
+import { portfolioDailyPresentation } from "./portfolioDailyPresentation";
 import { getCurrencyFlagUrl } from "@/lib/currencyBranding";
 
 const NotificationBell = () => {
@@ -50,7 +51,7 @@ const NotificationBell = () => {
       <SheetContent side="bottom" className="inset-x-0 bottom-0 flex max-h-[78dvh] flex-col rounded-t-[28px] border-x border-t bg-background p-0 [&>button]:hidden">
         <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-muted" />
         <div className="flex items-center gap-2 border-b border-border/80 px-5 py-3">
-          <div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold text-foreground">Notifications</SheetTitle><p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alert${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
+          <div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold text-foreground">Notifications</SheetTitle><p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new notification${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
           {unreadCount > 0 && (
             <Button variant="ghost" size="sm" className="text-xs h-8 px-2 text-emerald-600 hover:text-emerald-700" onClick={markAllRead}>
               <Check className="h-3.5 w-3.5 mr-1" /> Read all
@@ -65,7 +66,7 @@ const NotificationBell = () => {
             <div className="px-5 py-10 text-center">
               <Bell className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
               <p className="text-sm font-medium text-foreground">No notifications yet</p>
-              <p className="mt-1 text-xs text-muted-foreground">Price alerts will appear here when they are triggered.</p>
+              <p className="mt-1 text-xs text-muted-foreground">Market alerts and portfolio updates will appear here.</p>
             </div>
           ) : (
             <div className="w-full max-w-full divide-y divide-border/60 overflow-x-hidden">
@@ -90,6 +91,8 @@ function NotificationAssetVisual({ notification, symbol }: { notification: Retur
   const flagUrl = notification.assetType === "currency" ? getCurrencyFlagUrl(symbol) : undefined;
   const label = notification.assetName ?? notification.title;
 
+  if (notification.type === "portfolio_daily") return <WalletCards className="h-5 w-5 text-emerald-600 dark:text-emerald-400" aria-label="Portfolio" />;
+
   if (notification.assetVisualUrl && !imageFailed) {
     return <img src={notification.assetVisualUrl} alt={`${label} logo`} className="h-full w-full object-contain p-1.5" onError={() => setImageFailed(true)} />;
   }
@@ -113,14 +116,15 @@ function notificationTime(value: string | null) {
 
 export function NotificationRow({ notification, onOpen, onDelete }: { notification: ReturnType<typeof useNotifications>["notifications"][number]; onOpen: () => void; onDelete: () => void }) {
   const details = notification.type === "price_alert" ? priceAlertPresentation(notification) : null;
+  const portfolioDetails = notification.type === "portfolio_daily" ? portfolioDailyPresentation(notification) : null;
   const assetName = details?.assetName ?? notification.title;
   const symbol = details?.symbol ?? notification.assetSymbol ?? null;
   return <div className={`group relative box-border flex w-full max-w-full min-w-0 items-center gap-2 overflow-hidden px-4 py-4 transition ${notification.is_read ? "hover:bg-muted/40" : "bg-emerald-500/[0.045] hover:bg-emerald-500/[0.08]"}`}>
     {!notification.is_read && <span className="absolute inset-y-3 left-0 w-0.5 rounded-r-full bg-emerald-500" aria-label="Unread" />}
     <button type="button" onClick={onOpen} aria-label={`Open alert: ${assetName}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm"><NotificationAssetVisual notification={notification} symbol={symbol} /></span>
-      <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-foreground">{assetName}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{details?.target ?? notification.message}</span></span>
-      <span className="flex shrink-0 items-center gap-1.5 text-right"><span><span className="block text-sm font-bold tabular-nums text-foreground">{details?.currentPrice ?? "View update"}</span><span className="mt-0.5 block text-xs text-muted-foreground">{notificationTime(details?.observedAt ?? notification.created_at)}</span></span><ChevronRight className="h-4 w-4 text-muted-foreground" /></span>
+      <span className="min-w-0 flex-1"><span className="block truncate text-sm font-bold text-foreground">{assetName}</span><span className="mt-0.5 block truncate text-xs text-muted-foreground">{details?.target ?? portfolioDetails?.target ?? notification.message}</span></span>
+      <span className="flex shrink-0 items-center gap-1.5 text-right"><span><span className="block text-sm font-bold tabular-nums text-foreground">{details?.currentPrice ?? portfolioDetails?.currentPrice ?? "View update"}</span><span className="mt-0.5 block text-xs text-muted-foreground">{notificationTime(details?.observedAt ?? portfolioDetails?.observedAt ?? notification.created_at)}</span></span><ChevronRight className="h-4 w-4 text-muted-foreground" /></span>
     </button>
     <Button variant="ghost" size="icon" className="h-8 w-8 shrink-0 text-muted-foreground opacity-100 sm:opacity-0 sm:group-hover:opacity-100 hover:text-destructive" onClick={onDelete} aria-label={`Delete notification: ${notification.title}`}><Trash2 className="h-3.5 w-3.5" /></Button>
   </div>;
