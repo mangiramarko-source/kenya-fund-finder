@@ -24,6 +24,8 @@ import PortfolioSummaryModal from "@/components/portfolio/PortfolioSummaryModal"
 import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
 import DesktopPortfolioHero from "@/components/portfolio/DesktopPortfolioHero";
 import MobilePortfolioView from "@/components/portfolio/MobilePortfolioView";
+import { useNotifications } from "@/components/alerts/NotificationProvider";
+import { usePortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeName } from "@/lib/assetMatch";
 import { formatDistanceToNow } from "date-fns";
@@ -70,6 +72,8 @@ const PortfolioPage = () => {
 
   const { user } = useAuth();
   const { changes, loading: changesLoading } = usePortfolioChanges(items);
+  const { movement: liveMovement } = usePortfolioLiveMovement(items);
+  const { notifications } = useNotifications();
   const metrics = usePortfolioMetrics(items);
   const { alerts } = usePriceAlerts();
   const { events: activityEvents, isLoading: activityLoading } = usePortfolioEvents(50);
@@ -161,6 +165,10 @@ const PortfolioPage = () => {
     if (!valid.length) return null;
     return valid.reduce((s, c) => s + (c.deltaPct || 0), 0) / valid.length;
   }, [changes]);
+  const latestPortfolioUpdate = useMemo(
+    () => notifications.find((notification) => notification.type === "portfolio_daily") ?? null,
+    [notifications],
+  );
 
   const lastSynced = useMemo(() => {
     if (!items.length) return null;
@@ -229,6 +237,8 @@ const PortfolioPage = () => {
           totalPnL={totalPnL}
           totalPnLPercent={totalPnLPercent}
           recentChangePct={recentChangePct}
+          liveMovement={liveMovement}
+          portfolioNotification={latestPortfolioUpdate}
           currency={currency}
           setCurrency={setCurrency}
           allocation={allocation}

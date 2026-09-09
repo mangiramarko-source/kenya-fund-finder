@@ -1,12 +1,17 @@
 import { useMemo } from "react";
-import { Plus, ShieldCheck, TrendingUp, TrendingDown } from "lucide-react";
+import { Clock3, Plus, ShieldCheck, TrendingUp, TrendingDown } from "lucide-react";
 import { AssetType, ASSET_TYPE_LABELS } from "@/hooks/usePortfolio";
+import PortfolioDailyInsightCard, { portfolioInsight } from "@/components/portfolio/PortfolioDailyInsightCard";
+import type { AppNotification } from "@/components/alerts/NotificationProvider";
+import type { PortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
 
 interface DesktopPortfolioHeroProps {
   totalValue: number;
   totalPnL: number;
   totalPnLPercent: number;
   recentChangePct: number | null;
+  liveMovement: PortfolioLiveMovement | null;
+  portfolioNotification: AppNotification | null;
   currency: "KES" | "USD";
   setCurrency: (c: "KES" | "USD") => void;
   allocation: Record<AssetType, number>;
@@ -36,12 +41,16 @@ export default function DesktopPortfolioHero({
   totalPnL,
   totalPnLPercent,
   recentChangePct,
+  liveMovement,
+  portfolioNotification,
   currency,
   setCurrency,
   allocation,
   onOpenAddModal,
   onOpenReportModal,
 }: DesktopPortfolioHeroProps) {
+  const insight = portfolioInsight(portfolioNotification, liveMovement);
+  const displayChangePct = liveMovement?.percentChange ?? recentChangePct;
   // Calculate allocation percentages
   const allocationShares = useMemo(() => {
     const total = Object.values(allocation).reduce((a, b) => a + b, 0);
@@ -96,21 +105,21 @@ export default function DesktopPortfolioHero({
             {fmtCurrency(totalValue, currency)}
           </div>
           <div className="flex items-center gap-2 mt-1.5">
-            {recentChangePct != null ? (
+            {displayChangePct != null ? (
               <span
                 className={`inline-flex items-center gap-1 text-sm font-bold ${
-                  recentChangePct >= 0
+                  displayChangePct >= 0
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-rose-600 dark:text-rose-400"
                 }`}
               >
-                {recentChangePct >= 0 ? (
+                {displayChangePct >= 0 ? (
                   <TrendingUp className="h-4 w-4" />
                 ) : (
                   <TrendingDown className="h-4 w-4" />
                 )}
-                {recentChangePct >= 0 ? "+" : ""}
-                {recentChangePct.toFixed(2)}% today
+                {displayChangePct >= 0 ? "+" : ""}
+                {displayChangePct.toFixed(2)}% {liveMovement ? "past 24h" : "today"}
               </span>
             ) : (
               <span
@@ -150,6 +159,8 @@ export default function DesktopPortfolioHero({
         </div>
       </div>
 
+      <PortfolioDailyInsightCard notification={portfolioNotification} movement={liveMovement} showUpdatedAt={false} />
+
       {/* Multi-segment Allocation Bar */}
       {allocationShares.length > 0 && (
         <div className="space-y-3 pt-1">
@@ -183,9 +194,9 @@ export default function DesktopPortfolioHero({
       )}
 
       {/* Sub-note */}
-      <div className="flex items-center gap-1.5 text-xs text-muted-foreground/80 pt-3 border-t border-border/40">
-        <ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" />
-        <span>100% mock — no real money, live Kenyan market data.</span>
+      <div className="space-y-2 pt-3 text-xs text-muted-foreground/80 border-t border-border/40">
+        <div className="flex items-center gap-1.5"><Clock3 className="h-4 w-4 shrink-0" /><span>{insight.updatedAt}</span></div>
+        <div className="flex items-center gap-1.5"><ShieldCheck className="h-4 w-4 text-emerald-600 dark:text-emerald-400 shrink-0" /><span>100% mock — no real money, live Kenyan market data.</span></div>
       </div>
     </div>
   );
