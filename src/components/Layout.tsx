@@ -6,6 +6,7 @@ import CurrencyTicker from "./CurrencyTicker";
 import DesktopTopBar from "./DesktopTopBar";
 import OfflineBanner from "./OfflineBanner";
 import MobileAiLabFab from "./MobileAiLabFab";
+import DesktopAiLabChat from "@/components/ai-lab/DesktopAiLabChat";
 import { usePageView } from "@/hooks/usePageView";
 
 function shouldShowMobileAiLabFab(pathname: string): boolean {
@@ -73,6 +74,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
           </div>
         )}
         {showMobileAiLabFab && <MobileAiLabFab />}
+        {!isAiLab && !isAuthPage && <DesktopAiLabChat />}
       </div>
     </div>
   );
