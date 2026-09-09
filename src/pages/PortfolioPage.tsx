@@ -343,6 +343,7 @@ const PortfolioPage = () => {
                         totalValue={totalValue}
                         change={itemChange}
                         compact={true}
+                        presentation="desktop"
                         onClick={(item) => setEditItem(item)}
                         className="w-[245px] sm:w-[260px] shrink-0 snap-start min-h-[135px]"
                       />

@@ -1,11 +1,15 @@
 import { useState, useMemo } from "react";
 import { usePortfolio, getCurrentValue, getPnL, getPnLPercent, ASSET_TYPE_LABELS, AssetType, PortfolioItem } from "@/hooks/usePortfolio";
 import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
+import { usePortfolioMetrics } from "@/hooks/usePortfolioMetrics";
 import { Clock3, Plus, ShieldCheck, Sparkles, TrendingUp, TrendingDown, Minus, SlidersHorizontal, ArrowUpRight } from "lucide-react";
 import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
 import EditHoldingModal from "@/components/portfolio/EditHoldingModal";
 import PortfolioSummaryModal from "@/components/portfolio/PortfolioSummaryModal";
 import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
+import PortfolioCharts from "@/components/portfolio/PortfolioCharts";
+import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
+import PortfolioWeeklyChanges from "@/components/portfolio/PortfolioWeeklyChanges";
 import KoraIllustration from "@/components/kora/KoraIllustration";
 import PortfolioDailyInsightCard, { portfolioInsight } from "@/components/portfolio/PortfolioDailyInsightCard";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
@@ -44,7 +48,8 @@ const fmtCurrency = (val: number, curr: "KES" | "USD" = "KES") => {
 
 export default function MobilePortfolioView({ currency, setCurrency }: MobilePortfolioViewProps) {
   const { items, isLoading, addItem, updateItem, deleteItem, totalValue, totalPnL, totalPnLPercent, allocation } = usePortfolio();
-  const { changes } = usePortfolioChanges(items);
+  const { changes, loading: changesLoading } = usePortfolioChanges(items);
+  const metrics = usePortfolioMetrics(items);
   const { movement: liveMovement } = usePortfolioLiveMovement(items);
   const { notifications } = useNotifications();
 
@@ -176,7 +181,7 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
           </div>
         </div>
 
-        <PortfolioDailyInsightCard notification={latestPortfolioUpdate} movement={liveMovement} showUpdatedAt={false} />
+        <PortfolioDailyInsightCard notification={latestPortfolioUpdate} movement={liveMovement} showUpdatedAt={false} mobile />
 
         {/* Multi-segment Allocation Bar */}
         {allocationShares.length > 0 && (
@@ -269,7 +274,7 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
           })}
         </div>
 
-        {/* Holdings Cards List */}
+        {/* Swipeable holdings strip — mirrors the mobile home portfolio carousel. */}
         {isEmpty ? (
           <div className="relative overflow-hidden bg-card border border-dashed border-border rounded-2xl p-6 text-center text-sm text-muted-foreground space-y-3 dark:bg-neutral-900/50">
             <KoraIllustration pose="neutral" className="absolute bottom-0 right-2 h-28 w-28 opacity-90" />
@@ -282,7 +287,7 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
             </button>
           </div>
         ) : (
-          <div className="space-y-2.5">
+          <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">
             {filteredItems.map((item) => {
               const itemChange = changes.find((c) => c.itemId === item.id);
               return (
@@ -292,11 +297,33 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
                   currency={currency}
                   totalValue={totalValue}
                   change={itemChange}
+                  presentation="mobile"
                   onClick={(item) => setEditItem(item)}
                 />
               );
             })}
           </div>
+        )}
+
+        {!isEmpty && (
+          <section aria-label="Portfolio analytics" className="space-y-3 pt-3">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-base font-bold text-foreground">Analytics</h2>
+              <span className="text-xs font-medium text-muted-foreground">Portfolio overview</span>
+            </div>
+            <PortfolioCharts
+              allocation={allocation}
+              totalValue={totalValue}
+              currency={currency}
+              weightedAvgYield={metrics.weightedAvgYield}
+              monthlyIncome={metrics.monthlyIncome}
+              hasFunds={metrics.hasFunds}
+            />
+            <div className="space-y-3">
+              <LiquidityBreakdown items={items} variant="dashboard" />
+              <PortfolioWeeklyChanges changes={changes} loading={changesLoading} />
+            </div>
+          </section>
         )}
       </div>
 

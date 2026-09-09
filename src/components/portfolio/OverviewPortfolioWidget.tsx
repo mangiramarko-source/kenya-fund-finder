@@ -69,6 +69,7 @@ export default function OverviewPortfolioWidget() {
               totalValue={isDemoFallback ? 15250 : totalValue}
               change={itemChange}
               compact={true}
+              presentation="desktop"
               onClick={() => navigate("/portfolio")}
               className="w-[245px] sm:w-[260px] shrink-0 snap-start min-h-[135px]"
             />
