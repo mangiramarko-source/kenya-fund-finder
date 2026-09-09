@@ -67,6 +67,15 @@
   .animate-pulse-soft {
     animation: pulse-soft 1.8s ease-in-out infinite;
   }
+
+  /* Keep structured AI results readable inside the compact desktop popup. */
+  .ai-lab-compact .text-xl { font-size: 1rem !important; line-height: 1.35 !important; }
+  .ai-lab-compact .text-lg { font-size: 0.95rem !important; line-height: 1.35 !important; }
+  .ai-lab-compact .text-base { font-size: 0.875rem !important; }
+  .ai-lab-compact .p-4 { padding: 0.75rem !important; }
+  .ai-lab-compact .p-3\.5 { padding: 0.625rem !important; }
+  .ai-lab-compact .gap-3 { gap: 0.5rem !important; }
+  .ai-lab-compact .text-foreground { overflow-wrap: anywhere; }
 }
 
 @layer base {
