@@ -4,6 +4,7 @@ import {
   Bell,
   Check,
   ChevronRight,
+  Coffee,
   Clock3,
   Menu,
   Moon,
@@ -24,12 +25,14 @@ type PreviewNotification = {
   target: string;
   time: string;
   read: boolean;
+  visual: { kind: "logo"; src: string } | { kind: "flag"; value: string } | { kind: "commodity" };
 };
 
 const seedNotifications: PreviewNotification[] = [
-  { id: "scom", symbol: "SCOM", asset: "Safaricom PLC", price: "KES 37.05", target: "Above KES 36.90", time: "Just now", read: false },
-  { id: "eqty", symbol: "EQTY", asset: "Equity Group", price: "KES 93.25", target: "Above KES 92.00", time: "Yesterday", read: false },
-  { id: "kcb", symbol: "KCB", asset: "KCB Group", price: "KES 51.50", target: "Below KES 52.00", time: "Tue", read: true },
+  { id: "absa", symbol: "ABSA", asset: "Absa Bank Kenya", price: "KES 15.10", target: "Above KES 15.00", time: "Just now", read: false, visual: { kind: "logo", src: "https://caawgzuofnujrznwbuxk.supabase.co/storage/v1/object/public/market-logos/stocks/ABSA-provided-v3.webp" } },
+  { id: "scom", symbol: "SCOM", asset: "Safaricom PLC", price: "KES 37.05", target: "Above KES 36.90", time: "12 min ago", read: false, visual: { kind: "logo", src: "/images/stocks/safaricom.png" } },
+  { id: "aud", symbol: "AUD", asset: "AUD/KES · Australian Dollar", price: "KES 93.37", target: "Above KES 93.00", time: "Yesterday", read: true, visual: { kind: "flag", value: "🇦🇺" } },
+  { id: "coffee", symbol: "COFFEE", asset: "Coffee (USD/KG)", price: "KES 292.90", target: "Below KES 310.00", time: "Mon", read: true, visual: { kind: "commodity" } },
 ];
 
 export default function DevNotificationPreviewPage() {
@@ -57,7 +60,7 @@ export default function DevNotificationPreviewPage() {
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-emerald-600">Development preview</p>
             <h1 className="mt-1 text-2xl font-bold tracking-tight">Market-signal notifications</h1>
-            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Synthetic Safaricom price-alert data only. Nothing is read from or written to your account.</p>
+            <p className="mt-1 max-w-2xl text-sm text-muted-foreground">Synthetic alert data previews branded stocks, FX and commodity rows. Nothing is read from or written to your account.</p>
           </div>
           <div className="flex flex-wrap gap-2">
             <PreviewButton active={theme === "dark"} onClick={() => setTheme("dark")} label="Dark"><Moon className="h-3.5 w-3.5" /> Dark</PreviewButton>
@@ -163,11 +166,42 @@ function LiveAlertCard({ notification, onDismiss, onView }: { notification: Prev
   </div>;
 }
 
+function NotificationVisual({ notification }: { notification: PreviewNotification }) {
+  const [imageFailed, setImageFailed] = useState(false);
+  if (notification.visual.kind === "logo" && !imageFailed) {
+    return <img src={notification.visual.src} alt={`${notification.asset} logo`} className="h-full w-full object-contain p-1.5" onError={() => setImageFailed(true)} />;
+  }
+  if (notification.visual.kind === "flag") return <span className="text-xl leading-none" aria-label={`${notification.asset} flag`}>{notification.visual.value}</span>;
+  if (notification.visual.kind === "commodity") return <Coffee className="h-5 w-5 text-amber-600 dark:text-amber-400" aria-label="Commodity" />;
+  return <span className="text-xs font-black tracking-wide text-foreground">{notification.symbol.slice(0, 3)}</span>;
+}
+
 function NotificationDrawer({ device, notifications, unreadCount, onClose, onMarkAllRead, onOpen }: { device: Device; notifications: PreviewNotification[]; unreadCount: number; onClose: () => void; onMarkAllRead: () => void; onOpen: (id: string) => void }) {
   const mobile = device === "mobile";
-  return <div className="absolute inset-0 z-30 bg-slate-950/35" onClick={onClose} role="presentation"><section role="dialog" aria-modal="true" aria-label="Notification centre" onClick={(event) => event.stopPropagation()} className={`absolute bg-background shadow-2xl ${mobile ? "inset-x-0 bottom-0 max-h-[78%] rounded-t-[28px] border-t border-border" : "right-0 top-0 h-full w-[390px] border-l border-border"}`}>
-    {mobile && <div className="mx-auto mt-3 h-1.5 w-11 rounded-full bg-muted" />}
-    <header className="flex items-center justify-between border-b border-border px-5 py-4"><div><p className="text-lg font-bold">Notifications</p><p className="mt-0.5 text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alerts` : "You're all caught up"}</p></div><div className="flex items-center gap-1"><button type="button" onClick={onMarkAllRead} disabled={!unreadCount} className="rounded-lg px-2.5 py-2 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500/10 disabled:opacity-40"><Check className="mr-1 inline h-3.5 w-3.5" />Read all</button><button type="button" onClick={onClose} aria-label="Close notifications" className="rounded-lg p-2 transition hover:bg-muted"><X className="h-4 w-4" /></button></div></header>
-    <div className="max-h-[calc(78vh-78px)] overflow-y-auto p-3 sm:max-h-[calc(100vh-80px)]">{notifications.map((notification) => <button type="button" key={notification.id} onClick={() => onOpen(notification.id)} className={`mb-2 w-full rounded-2xl border p-4 text-left transition hover:border-emerald-500/40 hover:bg-emerald-500/[0.04] ${notification.read ? "border-border bg-card" : "border-emerald-500/35 bg-emerald-500/[0.08]"}`}><div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><span className="mt-0.5 grid h-9 w-9 shrink-0 place-items-center rounded-xl bg-emerald-500 text-xs font-black text-slate-950">{notification.symbol.slice(0, 2)}</span><div><p className="text-sm font-bold leading-tight">{notification.asset}</p><p className="mt-1 text-xs text-muted-foreground">{notification.target} · {notification.time}</p></div></div>{!notification.read && <span className="mt-1.5 h-2.5 w-2.5 shrink-0 rounded-full bg-emerald-500" />}</div><div className="mt-3 flex items-center justify-between border-t border-border/70 pt-3"><p className="text-base font-bold tabular-nums">{notification.price}</p><span className="inline-flex items-center text-xs font-bold text-emerald-600">View alert <ChevronRight className="h-3.5 w-3.5" /></span></div></button>)}</div>
-  </section></div>;
+  return (
+    <div className="absolute inset-0 z-30 bg-slate-950/35" onClick={onClose} role="presentation">
+      <section role="dialog" aria-modal="true" aria-label="Notification centre" onClick={(event) => event.stopPropagation()} className={`absolute flex flex-col overflow-hidden bg-background shadow-2xl ${mobile ? "inset-x-0 bottom-0 max-h-[78%] rounded-t-[28px] border-t border-border" : "right-0 top-0 h-full w-[420px] border-l border-border"}`}>
+        {mobile && <div className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-muted" />}
+        <header className="flex items-center justify-between gap-3 border-b border-border/70 px-5 py-4">
+          <div className="min-w-0"><p className="text-lg font-bold tracking-tight">Notifications</p><p className="mt-0.5 text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alert${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
+          <div className="flex shrink-0 items-center gap-1">
+            <button type="button" onClick={onMarkAllRead} disabled={!unreadCount} className="rounded-full px-3 py-2 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500/10 disabled:opacity-40"><Check className="mr-1 inline h-3.5 w-3.5" />Read all</button>
+            <button type="button" onClick={onClose} aria-label="Close notifications" className="rounded-full p-2.5 transition hover:bg-muted"><X className="h-4 w-4" /></button>
+          </div>
+        </header>
+        <div className="min-h-0 flex-1 overflow-y-auto">
+          <div className="divide-y divide-border/60">
+            {notifications.map((notification) => (
+              <button type="button" key={notification.id} onClick={() => onOpen(notification.id)} className={`relative flex w-full items-center gap-3 px-5 py-4 text-left transition active:bg-muted/60 ${notification.read ? "hover:bg-muted/40" : "bg-emerald-500/[0.045] hover:bg-emerald-500/[0.08]"}`}>
+                {!notification.read && <span className="absolute inset-y-3 left-0 w-0.5 rounded-r-full bg-emerald-500" aria-label="Unread" />}
+                <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm"><NotificationVisual notification={notification} /></span>
+                <span className="min-w-0 flex-1"><span className="block truncate text-[13px] font-bold text-foreground">{notification.asset}</span><span className="mt-0.5 block truncate text-[11px] text-muted-foreground">{notification.target}</span></span>
+                <span className="flex shrink-0 items-center gap-1.5 text-right"><span><span className="block text-[13px] font-bold tabular-nums text-foreground">{notification.price}</span><span className="mt-0.5 block text-[10px] font-medium text-muted-foreground">{notification.time}</span></span><ChevronRight className="h-4 w-4 text-muted-foreground" /></span>
+              </button>
+            ))}
+          </div>
+        </div>
+      </section>
+    </div>
+  );
 }
