@@ -7,8 +7,9 @@ import EditHoldingModal from "@/components/portfolio/EditHoldingModal";
 import PortfolioSummaryModal from "@/components/portfolio/PortfolioSummaryModal";
 import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
 import KoraIllustration from "@/components/kora/KoraIllustration";
-import PortfolioDailyInsightCard, { portfolioDailyInsight } from "@/components/portfolio/PortfolioDailyInsightCard";
+import PortfolioDailyInsightCard, { portfolioInsight } from "@/components/portfolio/PortfolioDailyInsightCard";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
+import { usePortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
 
 interface MobilePortfolioViewProps {
   currency: "KES" | "USD";
@@ -44,6 +45,7 @@ const fmtCurrency = (val: number, curr: "KES" | "USD" = "KES") => {
 export default function MobilePortfolioView({ currency, setCurrency }: MobilePortfolioViewProps) {
   const { items, isLoading, addItem, updateItem, deleteItem, totalValue, totalPnL, totalPnLPercent, allocation } = usePortfolio();
   const { changes } = usePortfolioChanges(items);
+  const { movement: liveMovement } = usePortfolioLiveMovement(items);
   const { notifications } = useNotifications();
 
   const [activeCategory, setActiveCategory] = useState<"all" | AssetType>("all");
@@ -78,13 +80,14 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
     if (!valid.length) return null;
     return valid.reduce((s, c) => s + (c.deltaPct || 0), 0) / valid.length;
   }, [changes]);
+  const displayChangePct = liveMovement?.percentChange ?? recentChangePct;
 
   const isEmpty = !isLoading && items.length === 0;
   const latestPortfolioUpdate = useMemo(
     () => notifications.find((notification) => notification.type === "portfolio_daily") ?? null,
     [notifications],
   );
-  const dailyInsight = useMemo(() => portfolioDailyInsight(latestPortfolioUpdate), [latestPortfolioUpdate]);
+  const dailyInsight = useMemo(() => portfolioInsight(latestPortfolioUpdate, liveMovement), [latestPortfolioUpdate, liveMovement]);
 
   return (
     <div className="px-4 py-5 space-y-5 pb-20">
@@ -139,20 +142,20 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
             {fmtCurrency(totalValue, currency)}
           </div>
           <div className="flex items-center gap-1.5 mt-1">
-            {recentChangePct != null ? (
+            {displayChangePct != null ? (
               <span
                 className={`inline-flex items-center gap-1 text-xs font-bold ${
-                  recentChangePct >= 0
+                  displayChangePct >= 0
                     ? "text-emerald-600 dark:text-emerald-400"
                     : "text-rose-600 dark:text-rose-400"
                 }`}
               >
-                {recentChangePct >= 0 ? (
+                {displayChangePct >= 0 ? (
                   <TrendingUp className="h-3.5 w-3.5" />
                 ) : (
                   <TrendingDown className="h-3.5 w-3.5" />)}
-                {recentChangePct >= 0 ? "+" : ""}
-                {recentChangePct.toFixed(2)}% today
+                {displayChangePct >= 0 ? "+" : ""}
+                {displayChangePct.toFixed(2)}% {liveMovement ? "past 24h" : "today"}
               </span>
             ) : (
               <span
@@ -173,7 +176,7 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
           </div>
         </div>
 
-        <PortfolioDailyInsightCard notification={latestPortfolioUpdate} showUpdatedAt={false} />
+        <PortfolioDailyInsightCard notification={latestPortfolioUpdate} movement={liveMovement} showUpdatedAt={false} />
 
         {/* Multi-segment Allocation Bar */}
         {allocationShares.length > 0 && (

@@ -1,7 +1,8 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it } from "vitest";
-import PortfolioDailyInsightCard, { portfolioDailyInsight } from "./PortfolioDailyInsightCard";
+import PortfolioDailyInsightCard, { portfolioDailyInsight, portfolioInsight } from "./PortfolioDailyInsightCard";
 import type { AppNotification } from "@/components/alerts/NotificationProvider";
+import type { PortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
 
 const base: AppNotification = { id: "daily", user_id: "user", title: "Portfolio up today", message: "", type: "portfolio_daily", is_read: false, created_at: "2026-09-09T14:15:00.000Z", metadata: { opening_value: 100000, closing_value: 110000, change: 10000, percent_change: 10, movers: [{ asset_name: "ABSA Bank Kenya", change: 5000 }] } };
 
@@ -19,10 +20,21 @@ describe("PortfolioDailyInsightCard", () => {
     expect(portfolioDailyInsight({ ...base, metadata: { ...base.metadata, change: 0, percent_change: 0, movers: [] } }).mover).toMatch(/No material market movement/);
   });
 
-  it("renders a pending state when no verified daily summary exists", () => {
+  it("shows a precise tracking state when a 24-hour baseline is unavailable", () => {
     render(<PortfolioDailyInsightCard notification={null} />);
-    expect(screen.getByText("Your first portfolio update is on the way")).toBeInTheDocument();
+    expect(screen.getByText("Portfolio movement is building")).toBeInTheDocument();
     expect(screen.queryByText(/KES 10,000/)).not.toBeInTheDocument();
+  });
+
+  it("uses a live estimate until today's verified close is available", () => {
+    const movement: PortfolioLiveMovement = {
+      openingValue: 100_000, closingValue: 101_500, change: 1_500, percentChange: 1.5,
+      movers: [{ assetName: "USD/KES", change: 900 }], observedAt: "2026-09-09T14:00:00.000Z", comparedHoldings: 2,
+    };
+    const insight = portfolioInsight(null, movement);
+    expect(insight.label).toBe("Live estimate");
+    expect(insight.title).toContain("last 24 hours");
+    expect(insight.mover).toContain("USD/KES");
   });
 
   it("can place the update time in a shared portfolio-card footer", () => {

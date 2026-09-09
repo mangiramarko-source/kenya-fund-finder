@@ -531,6 +531,11 @@ Deno.serve(async (req) => {
   const results: string[] = [];
   let stockRunReport: Record<string, unknown> | null = null;
   let stockWriteErrors = 0;
+  const observedAt = new Date().toISOString();
+  const quoteObservations: Array<{ asset_type: "stock" | "fx" | "commodity"; asset_id: string; value: number; observed_at: string }> = [];
+  const recordQuote = (assetType: "stock" | "fx" | "commodity", assetId: string, value: number) => {
+    if (Number.isFinite(value) && value > 0) quoteObservations.push({ asset_type: assetType, asset_id: assetId, value, observed_at: observedAt });
+  };
   console.log(`[fetch-market-data] Starting data fetch cycle... (type: ${fetchType || "all"})`);
 
   const shouldFetchFx = !fetchType || fetchType === "fx";
@@ -575,6 +580,7 @@ Deno.serve(async (req) => {
                     .update({ updated_at: new Date().toISOString() })
                     .eq("id", row.id);
                 }
+                recordQuote("fx", row.id, newRate);
               }
             }
           }
@@ -642,6 +648,7 @@ Deno.serve(async (req) => {
                   .update({ updated_at: new Date().toISOString() })
                   .eq("id", row.id);
               }
+              if (newPrice) recordQuote("commodity", row.id, Number(newPrice));
             }
           } else {
             results.push(`CoinGecko returned non-OK status`);
@@ -698,6 +705,7 @@ Deno.serve(async (req) => {
               .update({ updated_at: new Date().toISOString() })
               .eq("id", row.id);
           }
+          recordQuote("commodity", row.id, rounded);
         }
       }
 
@@ -777,6 +785,7 @@ Deno.serve(async (req) => {
           if (written.stockWritten) {
             stocksUpdated++;
             successfulStockIds.add(row.id);
+            recordQuote("stock", row.id, quote.price);
           }
           if (written.historyWritten) historyUpdated++;
           for (const failure of written.errors) {
@@ -850,6 +859,17 @@ Deno.serve(async (req) => {
       console.info("[fetch-market-data] Stock run summary", stockRunReport);
     }
     } // end shouldFetchStocks
+
+    if (quoteObservations.length) {
+      const { error: observationsError } = await supabase
+        .from("portfolio_market_quote_observations")
+        .insert(quoteObservations);
+      if (observationsError) {
+        console.error("[fetch-market-data] Quote observation write failed", { code: observationsError.code });
+      } else {
+        results.push(`Recorded ${quoteObservations.length} portfolio quote observations`);
+      }
+    }
 
     const completion = stockWriteErrors ? "Completed with stock write errors"
       : stockRunReport?.status === "degraded" ? "Completed with degraded stock data" : "Completed successfully";
