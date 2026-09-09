@@ -28,7 +28,9 @@ export function isFundsAndFixedIncomeArticle(article: ArticleLikeForClassificati
 
   const title = (article.title || "").trim();
   const summary = (article.summary || "").trim();
-  const text = `${title} ${summary}`;
+  const content = (article.content || "").trim();
+  const category = (article.category || "").trim();
+  const text = `${title} ${summary} ${content}`;
 
   if (text.length < 5) return false;
 
@@ -38,9 +40,9 @@ export function isFundsAndFixedIncomeArticle(article: ArticleLikeForClassificati
   }
 
   // Strong positive compound phrase check on title and summary
-  const hasMmfCis = MMF_CIS_PHRASES.test(title) || (summary.length > 0 && MMF_CIS_PHRASES.test(summary));
-  const hasGovSec = GOV_SECURITIES_PHRASES.test(title) || (summary.length > 0 && GOV_SECURITIES_PHRASES.test(summary));
-  const hasBondMarket = BOND_FIXED_INCOME_PHRASES.test(title) || (summary.length > 0 && BOND_FIXED_INCOME_PHRASES.test(summary));
+  const hasMmfCis = MMF_CIS_PHRASES.test(text) || /funds?|unit trusts?|money market/i.test(category);
+  const hasGovSec = GOV_SECURITIES_PHRASES.test(text) || /treasury|fixed income|bonds?/i.test(category);
+  const hasBondMarket = BOND_FIXED_INCOME_PHRASES.test(text);
 
   return hasMmfCis || hasGovSec || hasBondMarket;
 }
