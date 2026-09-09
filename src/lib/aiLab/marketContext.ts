@@ -27,10 +27,6 @@ export interface ComparableAsset {
   extras?: Array<{ label: string; value: string }>;
   /** Lowercase tokens used by the lookup helper */
   aliases: string[];
-  /** Server observation timestamp for provenance-aware comparisons. */
-  updatedAt?: string | null;
-  /** Explicit marker used when a resolved product has no usable server value. */
-  dataUnavailable?: boolean;
 }
 
 export interface MarketContext {

@@ -3,12 +3,6 @@
 
 import type { NewsArticle, NewsQueryKind } from "./newsContext";
 import type { ComparableAsset } from "./marketContext";
-import {
-  buildStructuredComparison,
-  calculateDeterministicMmfYieldChange,
-  type DeterministicMmfYieldChangeResult,
-  type StructuredComparisonResult,
-} from "../../../supabase/functions/_shared/server-financial-results";
 
 export const STANDARD_DISCLAIMER = "Data only. Not personal financial advice.";
 
@@ -34,14 +28,7 @@ export const MMF_DEFAULT_ASSUMPTIONS = [
 export interface MmfScenarioResult {
   kind: "mmf";
   summary: string;
-  inputs: {
-    amount: number;
-    annualYieldPct: number;
-    months: number;
-    productName?: string;
-    fundType?: string;
-    yieldUnit?: string;
-  };
+  inputs: { amount: number; annualYieldPct: number; months: number };
   grossYearly: number;
   monthlyEquivalent: number;
   dailyEquivalent: number;
@@ -50,7 +37,18 @@ export interface MmfScenarioResult {
   disclaimer: string;
 }
 
-export type MmfYieldChangeScenarioResult = DeterministicMmfYieldChangeResult;
+export interface MmfYieldChangeScenarioResult {
+  kind: "mmf-yield-change";
+  summary: string;
+  inputs: { amount: number; fromYieldPct: number; toYieldPct: number; months: number };
+  fromGrossYearly: number;
+  toGrossYearly: number;
+  fromMonthly: number;
+  toMonthly: number;
+  deltaYearly: number;
+  assumptions: string[];
+  disclaimer: string;
+}
 
 export function getMmfUserText(result: MmfScenarioResult | MmfYieldChangeScenarioResult): string {
   return [result.summary, ...result.assumptions].join(" ");
@@ -85,7 +83,27 @@ export function calculateMmfYieldChangeScenario(
   toYieldPct: number,
   months: number = 12,
 ): MmfYieldChangeScenarioResult {
-  return calculateDeterministicMmfYieldChange(amount, fromYieldPct, toYieldPct, months);
+  const fromGrossYearly = amount * (fromYieldPct / 100);
+  const toGrossYearly = amount * (toYieldPct / 100);
+  const fromMonthly = fromGrossYearly / 12;
+  const toMonthly = toGrossYearly / 12;
+  return {
+    kind: "mmf-yield-change",
+    summary:
+      "This projection compares two yield assumptions for the same amount. It does not predict future returns.",
+    inputs: { amount, fromYieldPct, toYieldPct, months },
+    fromGrossYearly,
+    toGrossYearly,
+    fromMonthly,
+    toMonthly,
+    deltaYearly: toGrossYearly - fromGrossYearly,
+    assumptions: [
+      ...MMF_DEFAULT_ASSUMPTIONS,
+      MMF_ILLUSTRATIVE_LIMITATION,
+      `Period: ${months} months at each yield assumption.`,
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
 }
 
 export interface StockMoveScenarioResult {
@@ -1037,7 +1055,14 @@ export const EXPLAINERS: Record<string, ExplainerResult> = {
 
 };
 
-export type CompareScenarioResult = StructuredComparisonResult;
+export interface CompareScenarioResult {
+  kind: "compare";
+  assets: ComparableAsset[];
+  /** Rows describing differences (e.g. price gap, yield gap). */
+  diff: Array<{ label: string; value: string }>;
+  assumptions: string[];
+  disclaimer: string;
+}
 
 const fmtPct = (n: number | null) =>
   n == null ? "—" : `${n > 0 ? "+" : ""}${n.toFixed(2)}%`;
@@ -1046,11 +1071,44 @@ const fmtNumber = (n: number) =>
   new Intl.NumberFormat("en-KE", { maximumFractionDigits: 2 }).format(n);
 
 export function compareAssets(a: ComparableAsset, b: ComparableAsset): CompareScenarioResult {
-  return buildStructuredComparison([a, b]);
-}
+  const diff: Array<{ label: string; value: string }> = [];
 
-export function compareManyAssets(assets: ComparableAsset[]): CompareScenarioResult {
-  return buildStructuredComparison(assets);
+  if (a.valueLabel === b.valueLabel) {
+    const delta = b.value - a.value;
+    const pct = a.value !== 0 ? (delta / a.value) * 100 : null;
+    diff.push({
+      label: `${b.symbol} vs ${a.symbol} (${a.valueLabel})`,
+      value: `${delta >= 0 ? "+" : ""}${fmtNumber(delta)}${
+        pct != null ? ` (${pct >= 0 ? "+" : ""}${pct.toFixed(2)}%)` : ""
+      }`,
+    });
+  } else {
+    diff.push({
+      label: "Note",
+      value: `${a.symbol} and ${b.symbol} use different units (${a.valueLabel} vs ${b.valueLabel}); direct numeric comparison is not meaningful.`,
+    });
+  }
+
+  if (a.changePct != null && b.changePct != null) {
+    diff.push({
+      label: "Recent move gap",
+      value: `${a.symbol} ${fmtPct(a.changePct)} vs ${b.symbol} ${fmtPct(b.changePct)} (gap ${fmtPct(
+        b.changePct - a.changePct,
+      )})`,
+    });
+  }
+
+  return {
+    kind: "compare",
+    assets: [a, b],
+    diff,
+    assumptions: [
+      "Values are point-in-time from the latest available snapshot.",
+      "Percentage changes use the previous published value (intraday for stocks, last update for FX/commodities).",
+      "Cross-category comparisons (e.g. a stock price vs a fund yield) are presented side-by-side for context only — they measure different things.",
+    ],
+    disclaimer: STANDARD_DISCLAIMER,
+  };
 }
 
 

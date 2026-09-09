@@ -45,9 +45,6 @@ describe("calculateMmfYieldChangeScenario", () => {
     expect(r.fromGrossYearly).toBe(11_000);
     expect(r.toGrossYearly).toBe(9_000);
     expect(r.deltaYearly).toBe(-2_000);
-    expect(r.deltaMonthly).toBeCloseTo(-166.67, 1);
-    expect(r.percentagePointChange).toBe(-2);
-    expect(r.relativeYieldChangePct).toBeCloseTo(-18.18, 1);
     expect(r.fromMonthly).toBeCloseTo(916.67, 1);
     expect(r.toMonthly).toBeCloseTo(750, 1);
     expect(r.summary.toLowerCase()).not.toContain("guarantee");

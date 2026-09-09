@@ -9,7 +9,6 @@ import {
   clarifyingTextIsSafe,
 } from "./chat";
 import { STANDARD_DISCLAIMER } from "./safety";
-import { calculateMmfYieldChangeScenario } from "./scenarios";
 import type { MarketContext } from "./marketContext";
 
 const ctx: MarketContext = {
@@ -58,20 +57,6 @@ describe("createAssistantMessage", () => {
 });
 
 describe("deriveSessionContext", () => {
-  it("preserves both yields from a completed yield-change result for a follow-up amount", () => {
-    const messages: AiLabChatMessage[] = [{
-      id: "yield-result",
-      role: "assistant",
-      text: "Yield comparison",
-      createdAt: new Date().toISOString(),
-      status: "answered",
-      result: calculateMmfYieldChangeScenario(100_000, 11, 9),
-    }];
-    const session = deriveSessionContext(messages);
-    expect(session.lastFromYieldPct).toBe(11);
-    expect(session.lastToYieldPct).toBe(9);
-    expect(session.lastYieldPct).toBe(9);
-  });
   it("extracts latest amount from a user prompt", () => {
     const messages = [
       createUserMessage("I have 100k"),
