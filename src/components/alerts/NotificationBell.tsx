@@ -9,12 +9,14 @@ import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/s
 import { priceAlertPresentation } from "./priceAlertPresentation";
 import { portfolioDailyPresentation } from "./portfolioDailyPresentation";
 import { getCurrencyFlagUrl } from "@/lib/currencyBranding";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const NotificationBell = () => {
   const { user } = useAuth();
   const { notifications, unreadCount, markAllRead, deleteNotification, openNotification } = useNotifications();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
+  const isMobile = useIsMobile();
 
   // For non-authenticated users on mobile, show bell that prompts sign-up
   if (!user) {
@@ -48,8 +50,8 @@ const NotificationBell = () => {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side="bottom" className="inset-x-0 bottom-0 flex max-h-[78dvh] flex-col rounded-t-[28px] border-x border-t bg-background p-0 [&>button]:hidden">
-        <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-muted" />
+      <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "inset-x-0 bottom-0 flex max-h-[78dvh] flex-col rounded-t-[28px] border-x border-t bg-background p-0 [&>button]:hidden" : "flex h-full w-[min(420px,calc(100vw-1rem))] flex-col border-l border-border bg-background p-0 [&>button]:hidden sm:max-w-none"}>
+        {isMobile && <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-muted" />}
         <div className="flex items-center gap-2 border-b border-border/80 px-5 py-3">
           <div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold text-foreground">Notifications</SheetTitle><p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new notification${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
           {unreadCount > 0 && (
