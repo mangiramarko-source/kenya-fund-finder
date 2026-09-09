@@ -1,6 +1,6 @@
 import { afterEach, describe, it, expect, vi } from "vitest";
 import React from "react";
-import { render, screen, fireEvent } from "@testing-library/react";
+import { render, screen, fireEvent, within } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import Navbar from "./Navbar";
 import DesktopTopBar from "./DesktopTopBar";
@@ -38,7 +38,7 @@ vi.mock("@/components/alerts/NotificationProvider", () => ({
 describe("Mobile & Desktop Navigation Verification", () => {
   afterEach(() => { notificationState.unreadCount = 0; });
 
-  it("keeps mobile notifications in the navigation sidebar", () => {
+  it("keeps notifications out of the mobile navigation sidebar", () => {
     render(
       <MemoryRouter>
         <Navbar />
@@ -53,7 +53,8 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(menuButtons[0]).not.toHaveClass("bg-destructive/10");
     fireEvent.click(menuButtons[0]);
 
-    expect(screen.getByRole("button", { name: /notifications/i })).toBeInTheDocument();
+    const navigationDrawer = screen.getByRole("dialog", { name: "Navigation menu" });
+    expect(within(navigationDrawer).queryByRole("button", { name: /notifications/i })).not.toBeInTheDocument();
 
     // Market News should NOT be present anywhere in the mobile navigation drawer
     expect(screen.queryByText("Market News")).not.toBeInTheDocument();
@@ -64,20 +65,15 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.getByText("Calculators")).toBeInTheDocument();
     expect(screen.getByText("Alerts")).toBeInTheDocument();
 
-    fireEvent.click(screen.getByRole("button", { name: /notifications/i }));
-    expect(screen.getByText("Notifications")).toBeInTheDocument();
-    expect(screen.getByText("No notifications yet")).toBeInTheDocument();
-
-    expect(screen.queryByRole("button", { name: /back to menu/i })).not.toBeInTheDocument();
+    expect(within(navigationDrawer).queryByText("Notifications")).not.toBeInTheDocument();
   });
 
-  it("shows a red unread count and glow on both mobile hamburger variants", () => {
+  it("shows unread state on the dedicated mobile notification button, not the hamburger", () => {
     notificationState.unreadCount = 12;
     const { unmount } = render(<MemoryRouter><Navbar /></MemoryRouter>);
 
-    const standardMenu = screen.getByRole("button", { name: "Open menu, 12 unread notifications" });
-    expect(standardMenu).toHaveClass("bg-destructive/10", "motion-safe:animate-pulse");
-    expect(standardMenu).toHaveTextContent("9+");
+    expect(screen.getByRole("button", { name: "Open notifications, 12 unread" })).toHaveTextContent("9+");
+    expect(screen.getByRole("button", { name: "Open menu" })).not.toHaveClass("bg-destructive/10");
     unmount();
 
     notificationState.unreadCount = 1;

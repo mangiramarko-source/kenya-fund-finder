@@ -7,7 +7,7 @@ import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
-import { NotificationRow } from "@/components/alerts/NotificationBell";
+import NotificationBell, { NotificationRow } from "@/components/alerts/NotificationBell";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
@@ -244,13 +244,6 @@ function MobileSidebarDrawer({
 
         {/* ── Scrollable Content ── */}
         <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
-
-          <div className="pt-2 pb-1">
-            <SidebarRow icon={Bell} label="Notifications" onClick={() => {
-              if (user) setView("notifications");
-              else { close(); navigate("/auth"); }
-            }} badge={unreadCount || null} />
-          </div>
 
           <SidebarSection title="MARKETS" isFirst>
             <SidebarRow icon={TrendingUp}  label="NSE Stocks"     to="/stocks"      onClick={close} />
@@ -512,16 +505,17 @@ const Navbar = () => {
         className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md"
       >
         <nav className="flex h-14 items-center justify-between px-4">
-          {/* Left: Search */}
-          <SearchDialog variant="icon" />
-
-          {/* Center: KFF Logo */}
+          {/* Left: KFF logo */}
           <Link to="/" className="font-mono text-xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400">
             KFF
           </Link>
 
-          {/* Right: mobile menu */}
-          <div className="flex items-center gap-1"><MobileMenuButton unreadCount={unreadCount} onClick={() => setOpen(true)} /></div>
+          {/* Right: search, notifications, then navigation menu */}
+          <div className="flex items-center gap-1">
+            <SearchDialog variant="icon" />
+            <NotificationBell />
+            <MobileMenuButton unreadCount={0} onClick={() => setOpen(true)} />
+          </div>
         </nav>
 
         {/* Full-width scrollable tab bar */}
