@@ -7,6 +7,8 @@ import EditHoldingModal from "@/components/portfolio/EditHoldingModal";
 import PortfolioSummaryModal from "@/components/portfolio/PortfolioSummaryModal";
 import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
 import KoraIllustration from "@/components/kora/KoraIllustration";
+import PortfolioDailyInsightCard from "@/components/portfolio/PortfolioDailyInsightCard";
+import { useNotifications } from "@/components/alerts/NotificationProvider";
 
 interface MobilePortfolioViewProps {
   currency: "KES" | "USD";
@@ -42,6 +44,7 @@ const fmtCurrency = (val: number, curr: "KES" | "USD" = "KES") => {
 export default function MobilePortfolioView({ currency, setCurrency }: MobilePortfolioViewProps) {
   const { items, isLoading, addItem, updateItem, deleteItem, totalValue, totalPnL, totalPnLPercent, allocation } = usePortfolio();
   const { changes } = usePortfolioChanges(items);
+  const { notifications } = useNotifications();
 
   const [activeCategory, setActiveCategory] = useState<"all" | AssetType>("all");
   const [editItem, setEditItem] = useState<PortfolioItem | null>(null);
@@ -77,6 +80,10 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
   }, [changes]);
 
   const isEmpty = !isLoading && items.length === 0;
+  const latestPortfolioUpdate = useMemo(
+    () => notifications.find((notification) => notification.type === "portfolio_daily") ?? null,
+    [notifications],
+  );
 
   return (
     <div className="px-4 py-5 space-y-5 pb-20">
@@ -95,6 +102,8 @@ export default function MobilePortfolioView({ currency, setCurrency }: MobilePor
           Add
         </button>
       </div>
+
+      <PortfolioDailyInsightCard notification={latestPortfolioUpdate} />
 
       {/* ─── 1. Total Value Summary Card ─── */}
       <div className="bg-card border border-border/75 rounded-3xl p-5 shadow-sm space-y-4 dark:bg-neutral-900/90 dark:border-white/10">
