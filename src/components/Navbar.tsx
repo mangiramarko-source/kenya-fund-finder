@@ -506,14 +506,14 @@ const Navbar = () => {
       >
         <nav className="flex h-14 items-center justify-between px-4">
           {/* Left: KFF logo */}
-          <Link to="/" className="font-mono text-xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400">
+          <Link to="/" className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400">
             KFF
           </Link>
 
           {/* Right: search, notifications, then navigation menu */}
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 [&>button]:h-11 [&>button]:w-11 [&>button]:text-[inherit] [&>button>svg]:h-6 [&>button>svg]:w-6 [&>div>button]:h-11 [&>div>button]:w-11 [&>div>button>svg]:h-6 [&>div>button>svg]:w-6">
             <SearchDialog variant="icon" />
-            <NotificationBell />
+            <div><NotificationBell /></div>
             <MobileMenuButton unreadCount={0} onClick={() => setOpen(true)} />
           </div>
         </nav>
