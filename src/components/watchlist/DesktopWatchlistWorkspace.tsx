@@ -227,7 +227,7 @@ export default function DesktopWatchlistWorkspace({ active }: { active: Workspac
                 <div><h2 className="text-sm font-bold">Saved assets</h2><p className="mt-0.5 text-xs text-muted-foreground">Live values are refreshed with the latest published market data.</p></div>
                 <Button variant="ghost" size="sm" onClick={() => setIsReordering((value) => !value)} className={cn("gap-1.5 rounded-lg text-xs font-bold", isReordering && "bg-muted text-foreground")}><SlidersHorizontal className="h-3.5 w-3.5" /> {isReordering ? "Done" : "Reorder"}</Button>
               </div>
-              {filteredRows.length === 0 ? <div className="px-5 py-12 text-center"><p className="text-sm font-bold">No matching saved assets</p><p className="mt-1 text-sm text-muted-foreground">Try another search term or select a different asset type.</p></div> : <div className="divide-y divide-border/60">
+              {filteredRows.length === 0 ? <div className="px-5 py-12 text-center"><p className="text-sm font-bold">No matching saved assets</p><p className="mt-1 text-sm text-muted-foreground">Try another search term or select a different asset type.</p></div> : <div className="grid gap-3 p-4 lg:grid-cols-2 xl:grid-cols-3">
                 {filteredRows.map((row) => {
                   const alert = alerts.find((item) => item.asset_type === row.type && item.asset_id === row.entry.item_id);
                   return <AssetListRow key={row.entry.id} row={row} alert={alert} reordering={isReordering} canMoveUp={items[0]?.id !== row.entry.id} canMoveDown={items[items.length - 1]?.id !== row.entry.id} onMove={move} onAlert={() => { setEditing(row); setEditingAlert(alert ?? null); }} onRemove={() => void removeAsset(row)} />;
@@ -277,7 +277,7 @@ function AssetListRow({ row, alert, reordering, canMoveUp, canMoveDown, onMove, 
   const isPositive = (row.change ?? 0) >= 0;
   const deltaTone = row.change == null ? "border-border/70 bg-muted/50 text-muted-foreground" : isPositive ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "border-destructive/20 bg-destructive/10 text-destructive";
 
-  return <article className="group flex items-center gap-4 px-5 py-4 transition-colors hover:bg-muted/25">
+  return <article className="group flex min-w-0 items-center gap-3 rounded-2xl border border-border/70 bg-background px-4 py-4 shadow-sm transition-colors hover:border-emerald-500/30 hover:bg-muted/25">
     <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-full border", deltaTone)}><AssetIcon type={row.type} /></div>
     <div className="min-w-0 flex-1"><div className="flex items-center gap-2"><Link to={row.href ?? "/watchlist"} className="truncate text-sm font-bold tracking-tight hover:text-emerald-600 dark:hover:text-emerald-400">{row.title}</Link><span className="rounded-full border border-border/70 px-2 py-0.5 text-[10px] font-bold capitalize text-muted-foreground">{row.type}</span></div><p className="mt-0.5 truncate text-xs text-muted-foreground">{row.subtitle}</p></div>
     <div className="hidden text-right sm:block"><p className="text-sm font-bold tabular-nums">{formatValue(row.value, row.unit)}</p><p className={cn("mt-0.5 text-xs font-bold tabular-nums", row.change == null ? "text-muted-foreground" : isPositive ? "text-emerald-600 dark:text-emerald-400" : "text-destructive")}>{row.change == null ? "No daily change" : `${isPositive ? "+" : ""}${row.change.toFixed(2)}% today`}</p></div>
