@@ -1,25 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { ExternalLink, Sparkles, X } from "lucide-react";
+import { ExternalLink, Sparkles, Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AiLabChat, { type CompareState } from "./AiLabChat";
 import { useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
 import { fetchAssetHistory, type AssetHistory, type LookbackDays } from "@/lib/aiLab/history";
-import { createAssistantMessage, createUserMessage, deriveSessionContext, processAiLabUserPrompt, type AiLabChatMessage } from "@/lib/aiLab/chat";
+import { createAssistantMessage, createUserMessage, deriveSessionContext, processAiLabUserPrompt } from "@/lib/aiLab/chat";
 import { canUseGeminiEducationalAssist } from "@/lib/aiLab/geminiEligibility";
 import { generateGeminiEducationalAnswer, isGeminiEducationalEnabled } from "@/lib/aiLab/generateGeminiEducationalAnswer";
 import { useAuth } from "@/hooks/useAuth";
+import { useAiLabConversationStorage } from "@/hooks/useAiLabConversationStorage";
 
-const STORAGE_KEY = "ai-lab-messages-v1";
 const DEFAULT_LOOKBACK: LookbackDays = 30;
-
-function loadMessages(): AiLabChatMessage[] {
-  try {
-    const raw = window.localStorage.getItem(STORAGE_KEY);
-    const parsed = raw ? JSON.parse(raw) : [];
-    return Array.isArray(parsed) ? parsed.filter((m) => m && m.status !== "pending") : [];
-  } catch { return []; }
-}
 
 export default function DesktopAiLabChat() {
   const navigate = useNavigate();
@@ -27,12 +19,11 @@ export default function DesktopAiLabChat() {
   const market = useMarketContext();
   const news = useNewsContext();
   const [open, setOpen] = useState(false);
-  const [messages, setMessages] = useState<AiLabChatMessage[]>(loadMessages);
+  const { messages, setMessages, clearMessages } = useAiLabConversationStorage();
   const [lookbacks, setLookbacks] = useState<Record<string, LookbackDays>>({});
   const [history, setHistory] = useState<Record<string, Record<string, AssetHistory> | null>>({});
   const [historyLoading, setHistoryLoading] = useState<Record<string, boolean>>({});
 
-  useEffect(() => { window.localStorage.setItem(STORAGE_KEY, JSON.stringify(messages.slice(-50))); }, [messages]);
   useEffect(() => {
     if (!open) return;
     const close = (event: KeyboardEvent) => { if (event.key === "Escape") setOpen(false); };
@@ -96,7 +87,7 @@ export default function DesktopAiLabChat() {
   return <>
     <div className="fixed inset-0 z-50 hidden bg-black/5 md:block" onClick={() => setOpen(false)} aria-hidden="true" />
     <section role="dialog" aria-modal="false" aria-label="AI Lab chat" className="fixed bottom-5 right-5 z-[51] hidden h-[min(620px,calc(100vh-2.5rem))] w-[min(410px,calc(100vw-2.5rem))] flex-col overflow-hidden rounded-[24px] border border-border/80 bg-background shadow-2xl md:flex">
-      <header className="flex shrink-0 items-center justify-between border-b border-border/70 bg-card/80 px-4 py-3.5"><div className="flex min-w-0 items-center gap-2.5"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500"><Sparkles className="h-4 w-4" /></span><div className="min-w-0"><p className="truncate text-sm font-bold">AI Lab</p><p className="text-[11px] text-muted-foreground">Ask about Kenyan markets</p></div></div><div className="flex items-center gap-1"><button type="button" onClick={() => navigate("/ai-lab")} aria-label="Open full AI Lab" className="rounded-full p-2 text-muted-foreground hover:bg-muted"><ExternalLink className="h-4 w-4" /></button><button type="button" onClick={() => setOpen(false)} aria-label="Close AI Lab chat" className="rounded-full p-2 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div></header>
+      <header className="flex shrink-0 items-center justify-between border-b border-border/70 bg-card/80 px-4 py-3.5"><div className="flex min-w-0 items-center gap-2.5"><span className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/15 text-emerald-500"><Sparkles className="h-4 w-4" /></span><div className="min-w-0"><p className="truncate text-sm font-bold">AI Lab</p><p className="text-[11px] text-muted-foreground">Ask about Kenyan markets</p></div></div><div className="flex items-center gap-1"><button type="button" onClick={clearMessages} disabled={messages.length === 0} aria-label="Clear AI Lab conversation" className="inline-flex items-center gap-1 rounded-full px-2 py-1.5 text-[11px] font-semibold text-muted-foreground hover:bg-muted hover:text-foreground disabled:cursor-not-allowed disabled:opacity-40"><Trash2 className="h-3.5 w-3.5" /><span>Clear</span></button><button type="button" onClick={() => navigate("/ai-lab")} aria-label="Open full AI Lab" className="rounded-full p-2 text-muted-foreground hover:bg-muted"><ExternalLink className="h-4 w-4" /></button><button type="button" onClick={() => setOpen(false)} aria-label="Close AI Lab chat" className="rounded-full p-2 text-muted-foreground hover:bg-muted"><X className="h-4 w-4" /></button></div></header>
       <div className="ai-lab-compact min-h-0 flex-1"><AiLabChat messages={messages} onSubmit={submit} compareStateByMessageId={compareStateByMessageId} onLookbackChange={(id, days) => setLookbacks((prev) => ({ ...prev, [id]: days }))} onFeedback={(id, value) => setMessages((prev) => prev.map((m) => m.id === id ? { ...m, feedback: value } : m))} onClarificationSelect={selectClarification} /></div>
     </section>
   </>;
