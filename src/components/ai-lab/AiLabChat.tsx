@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
-import { ArrowRight, ArrowUp, Plus, Search, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
+import { ArrowRight, ArrowUp, Search, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "@/lib/remarkGfmSafe";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
@@ -73,13 +73,6 @@ const PromptInput = ({
   onInputFocus?: (input: HTMLInputElement) => void;
 }) => (
   <div className={AI_LAB_INPUT_WRAP}>
-    <button
-      type="button"
-      className="h-8 w-8 md:h-9 md:w-9 rounded-full bg-muted/60 text-muted-foreground flex items-center justify-center shrink-0 hover:bg-muted transition-colors"
-      aria-label="Action options"
-    >
-      <Plus className="h-4 w-4 text-muted-foreground" />
-    </button>
     <input
       type="text"
       value={value}
