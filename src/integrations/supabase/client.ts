@@ -3,13 +3,40 @@ import { createClient } from '@supabase/supabase-js';
 import type { Database } from './types';
 import { getValidatedSupabaseConfig } from '@/lib/supabase-config';
 
+type AuthStorage = Pick<Storage, 'getItem' | 'setItem' | 'removeItem'>;
+
+function createMemoryStorage(): AuthStorage {
+  const values = new Map<string, string>();
+
+  return {
+    getItem: (key) => values.get(key) ?? null,
+    setItem: (key, value) => {
+      values.set(key, value);
+    },
+    removeItem: (key) => {
+      values.delete(key);
+    },
+  };
+}
+
+// Safari can throw SecurityError merely when localStorage is accessed (for
+// example when website data is blocked). Do not let that prevent the app from
+// mounting; authentication will remain available for this browser session.
+function getAuthStorage(): AuthStorage {
+  try {
+    return window.localStorage;
+  } catch {
+    return createMemoryStorage();
+  }
+}
+
 const { supabaseUrl, supabasePublishableKey, supabaseProjectId } = getValidatedSupabaseConfig();
 
 export const SUPABASE_PROJECT_ID = supabaseProjectId;
 
 export const supabase = createClient<Database>(supabaseUrl, supabasePublishableKey, {
   auth: {
-    storage: localStorage,
+    storage: getAuthStorage(),
     persistSession: true,
     autoRefreshToken: true,
     detectSessionInUrl: true,
