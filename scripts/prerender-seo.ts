@@ -114,6 +114,16 @@ async function supaSelect<T>(resource: string, query: string): Promise<T[]> {
   return rows;
 }
 
+async function publicStocks<T>(): Promise<T[]> {
+  const response = await fetch(`${SUPABASE_URL}/functions/v1/public-data/stocks?select=symbol,name,sector,price,day_change,day_change_percent,volume,market_cap,pe_ratio,dividend_yield,year_high,year_low,updated_at,is_active&order=sort_order.asc&limit=200`);
+  if (!response.ok) {
+    const detail = (await response.text()).slice(0, 300);
+    throw new Error(`public-data stocks returned HTTP ${response.status}: ${detail}`);
+  }
+  const payload = await response.json() as { data?: T[] };
+  return payload.data ?? [];
+}
+
 function validSegment(value: string | null): value is string {
   return Boolean(value && /^[A-Za-z0-9_-]+$/.test(value));
 }
@@ -534,7 +544,7 @@ function writePage(template: string, page: SeoPageDefinition): void {
 
 async function loadDynamicPages(): Promise<SeoPageDefinition[]> {
   const [stocks, funds, news, sitePages] = await Promise.all([
-    supaSelect<StockRow>("stocks_public", "select=symbol,name,sector,price,day_change,day_change_percent,volume,market_cap,pe_ratio,dividend_yield,year_high,year_low,updated_at,is_active&is_active=eq.true&order=sort_order.asc"),
+    publicStocks<StockRow>(),
     supaSelect<FundRow>("funds_public", "select=slug,name,manager,annual_yield,daily_yield,minimum_investment,management_fee,withdrawal_time,description,fund_type,yield_unit,cma_licensed,is_published,updated_at,logo_url&is_published=eq.true&order=name.asc"),
     supaSelect<NewsRow>("news_articles_public", "select=id,title,summary,content,source,date_published,source_published_at,created_at,updated_at,image_url,category,read_time,status&status=eq.published&order=source_published_at.desc.nullslast,date_published.desc.nullslast"),
     supaSelect<SitePageRow>("site_pages_public", "select=slug,title,content,meta,updated_at&order=slug.asc"),

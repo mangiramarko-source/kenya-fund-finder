@@ -61,6 +61,19 @@ async function supaSelect<T>(path: string): Promise<T[]> {
   return (await res.json()) as T[];
 }
 
+// Stock data is intentionally exposed through the hardened public-data
+// gateway. This avoids relying on direct table/view grants during static SEO
+// generation while keeping the query restricted to public fields.
+async function publicStocks<T>(select: string): Promise<T[]> {
+  const res = await fetch(`${SUPABASE_URL}/functions/v1/public-data/stocks?select=${encodeURIComponent(select)}&order=symbol.asc&limit=200`);
+  if (!res.ok) {
+    console.warn(`[sitemap] public-data stocks -> ${res.status}; skipping`);
+    return [];
+  }
+  const payload = await res.json() as { data?: T[] };
+  return payload.data ?? [];
+}
+
 async function fetchDynamic(): Promise<SitemapEntry[]> {
   const [funds, news, pages, stocks] = await Promise.all([
     supaSelect<{ slug: string; updated_at: string }>(
@@ -72,9 +85,7 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     supaSelect<{ slug: string; updated_at: string }>(
       "site_pages_public?select=slug,updated_at",
     ),
-    supaSelect<{ symbol: string; updated_at: string }>(
-      "stocks_public?select=symbol,updated_at&is_active=eq.true&order=symbol.asc",
-    ),
+    publicStocks<{ symbol: string; updated_at: string }>("symbol,updated_at"),
   ]);
 
   const fundEntries: SitemapEntry[] = funds.map((f) => ({
