@@ -12,6 +12,7 @@ import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
 import NotificationBell from "@/components/alerts/NotificationBell";
+import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
 
 function AccountDrawerRow({ icon: Icon, label, tone, onClick }: { icon: React.ElementType; label: string; tone?: "accent" | "destructive"; onClick: () => void }) {
   const iconClass = tone === "destructive" ? "text-destructive" : tone === "accent" ? "text-emerald-600" : "text-foreground/70";
@@ -32,8 +33,7 @@ const DesktopTopBar = () => {
   const [displayName, setDisplayName] = useState("");
   const [accountOpen, setAccountOpen] = useState(false);
   const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined" || typeof localStorage === "undefined") return true;
-    const saved = localStorage.getItem("theme");
+    const saved = getStoredTheme();
     if (saved) return saved === "dark";
     return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
   });
@@ -49,13 +49,13 @@ const DesktopTopBar = () => {
       isInitialMount.current = false;
       return; 
     }
-    localStorage.setItem("theme", dark ? "dark" : "light");
+    saveTheme(dark ? "dark" : "light");
   }, [dark]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => {
-      if (!localStorage.getItem("theme")) setDark(e.matches);
+      if (!getStoredTheme()) setDark(e.matches);
     };
     mq.addEventListener?.("change", handler);
     return () => mq.removeEventListener?.("change", handler);

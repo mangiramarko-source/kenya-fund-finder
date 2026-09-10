@@ -9,6 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
 import NotificationBell, { NotificationRow } from "@/components/alerts/NotificationBell";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
+import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
 import { ScrollArea } from "@/components/ui/scroll-area";
 
 const navLinks = [
@@ -326,8 +327,7 @@ const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [mobileHeaderHeight, setMobileHeaderHeight] = useState(156);
   const [dark, setDark] = useState(() => {
-    if (typeof window === "undefined" || typeof localStorage === "undefined") return true;
-    const saved = localStorage.getItem("theme");
+    const saved = getStoredTheme();
     if (saved) return saved === "dark";
     return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
   });
@@ -371,13 +371,13 @@ const Navbar = () => {
       themeInitial.current = false;
       return;
     }
-    localStorage.setItem("theme", dark ? "dark" : "light");
+    saveTheme(dark ? "dark" : "light");
   }, [dark]);
 
   useEffect(() => {
     const mq = window.matchMedia("(prefers-color-scheme: dark)");
     const handler = (e: MediaQueryListEvent) => {
-      if (!localStorage.getItem("theme")) setDark(e.matches);
+      if (!getStoredTheme()) setDark(e.matches);
     };
     mq.addEventListener?.("change", handler);
     return () => mq.removeEventListener?.("change", handler);
