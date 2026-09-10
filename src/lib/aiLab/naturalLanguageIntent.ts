@@ -14,6 +14,8 @@ import type { AiLabSessionContext } from "./chat";
 import type { MarketContext } from "./marketContext";
 import { findAsset } from "./marketContext";
 import { detectAdviceIntent } from "./safety";
+import { isMarketNewsBriefResult } from "../../../supabase/functions/_shared/market-news-brief";
+import { isDailyMarketSummaryResult } from "../../../supabase/functions/_shared/daily-market-summary";
 
 export type { NaturalLanguageIntent } from "../../../supabase/functions/_shared/ai-lab-intent";
 export {
@@ -92,6 +94,13 @@ export async function interpretNaturalLanguage(
     const serverResult = payload.result && typeof payload.result === "object" && typeof (payload.result as { text?: unknown }).text === "string"
       ? payload.result as NaturalLanguageInterpretationResult["serverResult"]
       : undefined;
+    const routerResult = serverResult?.data?.routerResult;
+    if (routerResult && typeof routerResult === "object" && (routerResult as { kind?: unknown }).kind === "market-news-brief" && !isMarketNewsBriefResult(routerResult)) {
+      return { ok: false, reason: "server_result_validation" };
+    }
+    if (routerResult && typeof routerResult === "object" && (routerResult as { kind?: unknown }).kind === "daily-market-summary" && !isDailyMarketSummaryResult(routerResult)) {
+      return { ok: false, reason: "server_result_validation" };
+    }
     const clarification = payload.clarification && typeof payload.clarification === "object"
       ? payload.clarification as NaturalLanguageInterpretationResult["clarification"]
       : undefined;

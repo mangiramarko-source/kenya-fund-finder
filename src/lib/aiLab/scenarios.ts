@@ -3,6 +3,8 @@
 
 import type { NewsArticle, NewsQueryKind } from "./newsContext";
 import type { ComparableAsset } from "./marketContext";
+import type { MarketNewsBriefResult } from "../../../supabase/functions/_shared/market-news-brief";
+import type { DailyMarketSummaryResult } from "../../../supabase/functions/_shared/daily-market-summary";
 import {
   buildStructuredComparison,
   calculateDeterministicMmfYieldChange,
@@ -1112,6 +1114,8 @@ export type ScenarioResult =
   | CommodityMoveScenarioResult
   | CommodityAmountScenarioResult
   | NewsSummaryScenarioResult
+  | MarketNewsBriefResult
+  | DailyMarketSummaryResult
   | PortfolioSplitScenarioResult
   | ExplainerResult
   | CompareScenarioResult

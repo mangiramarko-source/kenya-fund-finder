@@ -18,6 +18,8 @@ import {
   buildStructuredComparison,
   calculateDeterministicMmfYieldChange,
 } from "../_shared/server-financial-results.ts";
+import type { MarketNewsBriefResult } from "../_shared/market-news-brief.ts";
+import type { DailyMarketSummaryResult, DailyMarketSummarySection } from "../_shared/daily-market-summary.ts";
 
 const AI_GATEWAY_URL = "https://ai.gateway.lovable.dev/v1/chat/completions";
 const GEMINI_API_URL = "https://generativelanguage.googleapis.com/v1beta/models";
@@ -68,7 +70,7 @@ Allowed parameter keys: scenarioKind, amount, currency, percentage, secondPercen
 Allowed contextReferences: last_entity, last_amount, last_percentage, last_currency. Include one only when the user's words actually refer to recent context.
 Use explainer topic "getting-started" for safe beginner education such as "I am new to investing", "how do I start investing", "I know nothing about shares", or "nataka kuanza investing". This is general education, not investment selection.
 Use refusal for requests to recommend, choose, tell the user whether to buy/sell/hold, predict, or identify the best/safest investment. A factual request for the highest published yield or largest recorded move is a lookup, not advice.
-For a request such as "stocks report today", "MMF summary today", "FX rates brief", "commodities update", or "daily market report", use action "overview", no entity mentions, and topic "daily-market-report:stocks", "daily-market-report:mmf", "daily-market-report:fx", "daily-market-report:commodities", or "daily-market-report:all". This asks for a factual server-data brief, not advice.
+For a request such as "stocks report today", "MMF summary today", "FX rates brief", "commodities update", "market news summary", "market brief", or "daily market report", use action "overview", no entity mentions, and topic "daily-market-report:stocks", "daily-market-report:mmf", "daily-market-report:fx", "daily-market-report:commodities", "daily-market-report:news", or "daily-market-report:all". This asks for a factual server-data brief, not advice.
 Use asset-amount for a neutral amount paired with a catalog asset, such as "put 100k in ABSA", "buy dollars with 50k", or "invest 50k in gold". This is an illustration, not a recommendation.
 Use mmf-yield-change for explicit old/new yield comparisons such as "yield drops from 11% to 9%" or "Fund A at 11% versus Fund B at 9%". Put the old yield in percentage and the new yield in secondPercentage. Do not require a catalogue entity for a hypothetical yield comparison.
 For "compare KCB", keep action compare with one primary entity mention; do not invent the second item. For a bare brand such as "KCB", do not decide whether it is a stock or fund.
@@ -343,13 +345,14 @@ function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanB
   return null;
 }
 
-type DailyMarketReportTopic = "stocks" | "mmf" | "fx" | "commodities" | "all";
+type DailyMarketReportTopic = "stocks" | "mmf" | "fx" | "commodities" | "news" | "all";
 
 function dailyMarketReportTopic(prompt: string): DailyMarketReportTopic | null {
   const lower = prompt.toLowerCase();
   const asksForBrief = /\b(?:report|summary|brief|recap|update|overview)\b/.test(lower);
   const asksForToday = /\b(?:today|daily|for the day)\b/.test(lower);
   if (!asksForBrief && !asksForToday) return null;
+  if (/\b(?:market\s+brief|market\s+news|news\s+report|news\s+summary|headlines?)\b/.test(lower)) return "news";
   const topics = [
     [/\b(?:stock|stocks|shares?|nse)\b/, "stocks"],
     [/\b(?:mmf|mmfs|money market|money-market)\b/, "mmf"],
@@ -503,10 +506,69 @@ function signedPercent(value: number | null): string {
   return value == null ? "change unavailable" : `${value >= 0 ? "+" : ""}${formatNumber(value, 2)}%`;
 }
 
+function trendForChange(value: number | null): "positive" | "negative" | "neutral" {
+  return value == null || value === 0 ? "neutral" : value > 0 ? "positive" : "negative";
+}
+
+async function buildMarketNewsBrief(client: ResolverClient): Promise<MarketNewsBriefResult> {
+  const [overviewResult, newsResult] = await Promise.all([
+    client
+      .from("market_overviews")
+      .select("market_date,narrative,deterministic_summary,generated_at,source_as_of")
+      .eq("status", "ready")
+      .order("market_date", { ascending: false })
+      .limit(1)
+      .maybeSingle(),
+    client
+      .from("news_articles")
+      .select("id,title,summary,source,category,date_published,source_published_at")
+      .eq("status", "published")
+      .not("quality_checked_at", "is", null)
+      .order("source_published_at", { ascending: false, nullsFirst: false })
+      .limit(10),
+  ]);
+
+  const overview = overviewResult.data;
+  const articles = (newsResult.data ?? []).map((row: Record<string, unknown>) => {
+    const id = cleanText(row.id, 100);
+    if (!id) return null;
+    return {
+      id,
+      category: cleanText(row.category, 80) ?? "Market news",
+      source: cleanText(row.source, 120) ?? "KenyaFundFinder",
+      publishedAt: cleanText(row.source_published_at, 40) ?? cleanText(row.date_published, 40) ?? null,
+      title: cleanText(row.title, 500) ?? "Market update",
+      summary: cleanText(row.summary, 1_000) ?? "Stored article summary is unavailable.",
+      articlePath: `/news/${encodeURIComponent(id)}`,
+    };
+  }).filter((article): article is NonNullable<typeof article> => article != null);
+
+  const marketContext = cleanText(overview?.narrative, 2_000) ?? cleanText(overview?.deterministic_summary, 2_000) ?? null;
+  return {
+    kind: "market-news-brief",
+    title: "Kenya Market Brief",
+    reportDate: cleanText(overview?.market_date, 40) ?? null,
+    overview: marketContext,
+    overviewUnavailable: marketContext == null,
+    articles,
+    disclaimer: standardDisclaimer(),
+  };
+}
+
 async function buildDailyMarketReport(
   client: ResolverClient,
   topic: DailyMarketReportTopic,
 ): Promise<ServerResult> {
+  if (topic === "news") {
+    const newsBrief = await buildMarketNewsBrief(client);
+    return {
+      kind: "market-news-brief",
+      text: "Here is the latest available Market News Brief.",
+      data: { routerResult: newsBrief },
+      freshness: serverFreshness(),
+    };
+  }
+
   const wants = (kind: DailyMarketReportTopic) => topic === "all" || topic === kind;
   const [stocksResult, fundsResult, ratesResult, commoditiesResult] = await Promise.all([
     wants("stocks") ? client.from("stocks").select("symbol,name,price,day_change_percent,updated_at").eq("is_active", true).limit(100) : Promise.resolve({ data: [] }),
@@ -515,15 +577,23 @@ async function buildDailyMarketReport(
     wants("commodities") ? client.from("commodities").select("symbol,name,price,previous_price,unit,updated_at").eq("is_active", true).limit(40) : Promise.resolve({ data: [] }),
   ]);
 
-  const sections: string[] = [];
+  const summarySections: DailyMarketSummarySection[] = [];
   const sourceMetadata: Array<{ source: string; observedAt: string | null; records: number }> = [];
+  const newsBrief = wants("news") ? await buildMarketNewsBrief(client) : null;
 
   if (wants("stocks")) {
     const rows = (stocksResult.data ?? []).map((row: Record<string, unknown>) => ({
       symbol: cleanText(row.symbol, 30), name: cleanText(row.name, 100), price: parseNumber(row.price), change: parseNumber(row.day_change_percent), updated_at: row.updated_at,
     })).filter((row) => row.symbol && row.price != null);
     const movers = rows.filter((row) => row.change != null).sort((a, b) => Math.abs(b.change!) - Math.abs(a.change!)).slice(0, 3);
-    sections.push(`Stocks\n${rows.length ? `Latest available NSE snapshot: ${rows.length} priced stocks. ${movers.length ? `Largest recorded moves: ${movers.map((row) => `${row.symbol} ${signedPercent(row.change)} (KES ${formatNumber(row.price!)})`).join("; ")}.` : "Day-change data is unavailable for the current snapshot."}` : "No active stock snapshot is currently available."}`);
+    summarySections.push({
+      kind: "stocks",
+      title: "Stocks summary",
+      summary: rows.length ? "Latest available NSE stock snapshot." : "No active stock snapshot is currently available.",
+      metrics: [{ label: "Priced stocks", value: String(rows.length), detail: "Latest available NSE snapshot" }],
+      highlights: movers.length ? movers.map((row) => `${row.symbol} ${signedPercent(row.change)} · KES ${formatNumber(row.price!)}`) : rows.length ? ["Day-change data is unavailable for the current snapshot."] : [],
+      unavailable: rows.length === 0,
+    });
     sourceMetadata.push({ source: "stocks", observedAt: latestObservedAt(rows), records: rows.length });
   }
 
@@ -532,23 +602,48 @@ async function buildDailyMarketReport(
       .filter((row) => row.name && row.yield != null && row.yield! > 0 && row.yield! < 100)
       .sort((a, b) => b.yield! - a.yield!);
     const average = rows.length ? rows.reduce((sum, row) => sum + row.yield!, 0) / rows.length : null;
-    sections.push(`MMFs\n${rows.length ? `Published annual-yield snapshot: ${rows.length} MMFs. Average ${formatNumber(average!, 2)}%; stored range ${formatNumber(rows[rows.length - 1].yield!, 2)}%–${formatNumber(rows[0].yield!, 2)}%. Highest stored entries: ${rows.slice(0, 3).map((row) => `${row.name} ${formatNumber(row.yield!, 2)}%`).join("; ")}. Yields are published figures and can change.` : "No published MMF-yield snapshot is currently available."}`);
+    summarySections.push({
+      kind: "mmf",
+      title: "MMF summary",
+      summary: rows.length ? "Published annual-yield snapshot. Yields are published figures and can change." : "No published MMF-yield snapshot is currently available.",
+      metrics: rows.length ? [
+        { label: "Published MMFs", value: String(rows.length) },
+        { label: "Average yield", value: `${formatNumber(average!, 2)}%` },
+        { label: "Stored range", value: `${formatNumber(rows[rows.length - 1].yield!, 2)}%–${formatNumber(rows[0].yield!, 2)}%` },
+      ] : [],
+      highlights: rows.slice(0, 3).map((row) => `${row.name} · ${formatNumber(row.yield!, 2)}%`),
+      unavailable: rows.length === 0,
+    });
     sourceMetadata.push({ source: "funds", observedAt: latestObservedAt(rows), records: rows.length });
   }
 
   if (wants("fx")) {
-    const preferred = new Set(["USD", "EUR", "GBP", "ZAR"]);
+    const preferredOrder = ["USD", "EUR", "GBP", "ZAR"];
+    const preferredRank = new Map(
+      preferredOrder.map((code, index) => [code, index]),
+    );
     const rows = (ratesResult.data ?? []).map((row: Record<string, unknown>) => {
       const rate = parseNumber(row.rate);
       const previous = parseNumber(row.previous_rate);
       return { code: cleanText(row.currency_code, 20), rate, previous, updated_at: row.updated_at };
     }).filter((row) => row.code && row.rate != null && row.rate! > 0)
-      .sort((a, b) => (preferred.has(a.code!) ? 0 : 1) - (preferred.has(b.code!) ? 0 : 1) || a.code!.localeCompare(b.code!));
-    const display = rows.slice(0, 4).map((row) => {
+      .sort((a, b) =>
+        (preferredRank.get(a.code!) ?? preferredOrder.length) -
+          (preferredRank.get(b.code!) ?? preferredOrder.length) ||
+        a.code!.localeCompare(b.code!),
+      );
+    const metrics = rows.slice(0, 4).map((row) => {
       const change = row.previous && row.previous !== 0 ? ((row.rate! - row.previous) / row.previous) * 100 : null;
-      return `${row.code}/KES ${formatNumber(row.rate!, 4)} (${signedPercent(change)})`;
+      return { label: `${row.code}/KES`, value: formatNumber(row.rate!, 4), detail: signedPercent(change), trend: trendForChange(change) };
     });
-    sections.push(`FX rates\n${display.length ? `Latest available rates: ${display.join("; ")}. Rates are KES per 1 unit; movement is versus the stored previous rate where available.` : "No active FX-rate snapshot is currently available."}`);
+    summarySections.push({
+      kind: "fx",
+      title: "FX rate summary",
+      summary: metrics.length ? "Rates are KES per 1 unit. Movement is versus the stored previous rate where available." : "No active FX-rate snapshot is currently available.",
+      metrics,
+      highlights: [],
+      unavailable: metrics.length === 0,
+    });
     sourceMetadata.push({ source: "exchange_rates", observedAt: latestObservedAt(rows), records: rows.length });
   }
 
@@ -558,18 +653,38 @@ async function buildDailyMarketReport(
       const previous = parseNumber(row.previous_price);
       return { symbol: cleanText(row.symbol, 30), name: cleanText(row.name, 100), price, previous, unit: cleanText(row.unit, 50), updated_at: row.updated_at };
     }).filter((row) => row.symbol && row.price != null && row.price! > 0).slice(0, 4);
-    const display = rows.map((row) => {
+    const metrics = rows.map((row) => {
       const change = row.previous && row.previous !== 0 ? ((row.price! - row.previous) / row.previous) * 100 : null;
-      return `${row.symbol} ${formatNumber(row.price!, 4)}${row.unit ? ` ${row.unit}` : ""} (${signedPercent(change)})`;
+      return { label: row.symbol!, value: `${formatNumber(row.price!, 4)}${row.unit ? ` ${row.unit}` : ""}`, detail: signedPercent(change), trend: trendForChange(change) };
     });
-    sections.push(`Commodities\n${display.length ? `Latest available quotes: ${display.join("; ")}. Movement is versus the stored previous price where available.` : "No active commodity snapshot is currently available."}`);
+    summarySections.push({
+      kind: "commodities",
+      title: "Commodities summary",
+      summary: metrics.length ? "Latest available commodity quotes. Movement is versus the stored previous price where available." : "No active commodity snapshot is currently available.",
+      metrics,
+      highlights: [],
+      unavailable: metrics.length === 0,
+    });
     sourceMetadata.push({ source: "commodities", observedAt: latestObservedAt(rows), records: rows.length });
   }
 
+  if (newsBrief) {
+    sourceMetadata.push({ source: "news_articles", observedAt: newsBrief.reportDate, records: newsBrief.articles.length });
+  }
+
+  const title = topic === "all" ? "Daily market summary" : topic === "mmf" ? "MMF summary" : topic === "fx" ? "FX rate summary" : topic === "stocks" ? "Stocks summary" : "Commodities summary";
+  const routerResult: DailyMarketSummaryResult = {
+    kind: "daily-market-summary",
+    title,
+    sections: summarySections,
+    ...(newsBrief ? { newsBrief } : {}),
+    disclaimer: standardDisclaimer(),
+  };
+
   return {
     kind: "daily-market-report",
-    text: [`Daily ${topic === "all" ? "market" : topic === "mmf" ? "MMF" : topic} report`, ...sections, "Source: KenyaFundFinder server data. This is a factual snapshot, not a recommendation."].join("\n\n"),
-    data: { topic, sourceMetadata },
+    text: `${title}. Structured server summary shown below.`,
+    data: { topic, sourceMetadata, routerResult },
     freshness: serverFreshness(),
   };
 }
@@ -655,7 +770,7 @@ async function executeServerFrame(
   if (frame.action === "refusal") return { result: { kind: "refusal", text: refusalText(), freshness: serverFreshness() } };
   if (frame.action === "overview" && frame.topic?.startsWith("daily-market-report:")) {
     const topic = frame.topic.slice("daily-market-report:".length) as DailyMarketReportTopic;
-    if (["stocks", "mmf", "fx", "commodities", "all"].includes(topic)) {
+    if (["stocks", "mmf", "fx", "commodities", "news", "all"].includes(topic)) {
       return { result: await buildDailyMarketReport(client, topic) };
     }
   }

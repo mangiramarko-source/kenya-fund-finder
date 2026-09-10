@@ -442,6 +442,102 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     );
   }
 
+  if (result.kind === "market-news-brief") {
+    const fmtDate = (iso: string | null) => {
+      if (!iso) return null;
+      const date = new Date(iso);
+      if (Number.isNaN(date.getTime())) return null;
+      return date.toLocaleDateString("en-KE", {
+        timeZone: "Africa/Nairobi",
+        day: "numeric",
+        month: "short",
+        year: "numeric",
+      });
+    };
+
+    return (
+      <ResultShell className="space-y-4">
+        <div className="flex items-start justify-between gap-3">
+          <div>
+            <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-600">Market news brief</p>
+            <h3 className="mt-1 text-base font-bold text-foreground">{sanitizeOutput(result.title)}</h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              Latest available site news · {result.articles.length} {result.articles.length === 1 ? "article" : "articles"}
+            </p>
+          </div>
+          {fmtDate(result.reportDate) && <span className="shrink-0 text-[11px] text-muted-foreground">{fmtDate(result.reportDate)}</span>}
+        </div>
+
+        <Section icon={<FileText className="h-3 w-3" />} title="Today’s context">
+          <p className="text-sm leading-relaxed text-foreground/90">
+            {sanitizeOutput(result.overview ?? "Market overview is unavailable. The articles below are the latest available stored site news.")}
+          </p>
+        </Section>
+
+        <Section icon={<Newspaper className="h-3 w-3" />} title="Top stories">
+          <div className="space-y-2.5">
+            {result.articles.length ? result.articles.map((article) => (
+              <Link
+                key={article.id}
+                to={article.articlePath}
+                className="group block rounded-xl border border-border bg-muted/20 p-3 transition-colors hover:border-emerald-500/40 hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              >
+                <p className="text-[10px] font-bold uppercase tracking-wider text-emerald-600">
+                  {sanitizeOutput(article.category)} · {sanitizeOutput(article.source)}{fmtDate(article.publishedAt) ? ` · ${fmtDate(article.publishedAt)}` : ""}
+                </p>
+                <p className="mt-1 text-sm font-semibold leading-snug text-foreground group-hover:text-emerald-700 dark:group-hover:text-emerald-300">{sanitizeOutput(article.title)}</p>
+                <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">{sanitizeOutput(article.summary)}</p>
+                <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-emerald-700 dark:text-emerald-300">
+                  Open article <ExternalLink className="h-3 w-3" />
+                </span>
+              </Link>
+            )) : <p className="text-sm text-muted-foreground">No approved market news articles are currently available.</p>}
+          </div>
+        </Section>
+        <Disclaimer text={result.disclaimer} />
+      </ResultShell>
+    );
+  }
+
+  if (result.kind === "daily-market-summary") {
+    return (
+      <ResultShell className="space-y-4">
+        <div>
+          <p className="text-[10px] font-bold uppercase tracking-[0.16em] text-emerald-600">Server market data</p>
+          <h3 className="mt-1 text-base font-bold text-foreground">{sanitizeOutput(result.title)}</h3>
+        </div>
+
+        {result.sections.map((section) => (
+          <Section key={section.kind} icon={<Database className="h-3 w-3" />} title={section.title}>
+            <p className="mb-3 text-sm leading-relaxed text-foreground/90">{sanitizeOutput(section.summary)}</p>
+            {section.metrics.length > 0 && (
+              <div className="grid grid-cols-2 gap-3">
+                {section.metrics.map((metric) => (
+                  <SummaryMetricCard
+                    key={metric.label}
+                    label={metric.label}
+                    value={metric.value}
+                    sublabel={metric.detail}
+                    sublabelClassName={metric.trend === "positive" ? "text-success" : metric.trend === "negative" ? "text-destructive" : "text-muted-foreground"}
+                    className="rounded-xl p-3 shadow-none"
+                  />
+                ))}
+              </div>
+            )}
+            {section.highlights.length > 0 && (
+              <ul className="mt-3 space-y-1.5 text-xs text-muted-foreground">
+                {section.highlights.map((highlight) => <li key={highlight} className="rounded-lg bg-muted/40 px-2.5 py-2">{sanitizeOutput(highlight)}</li>)}
+              </ul>
+            )}
+          </Section>
+        ))}
+
+        {result.newsBrief && <ScenarioResult result={result.newsBrief} />}
+        <Disclaimer text={result.disclaimer} />
+      </ResultShell>
+    );
+  }
+
   const fmtMovement = (n: number) => (n > 0 ? `+${n}%` : `${n}%`);
   const fmtSigned = (n: number, prefix = "") =>
     `${n >= 0 ? "+" : ""}${prefix}${n.toLocaleString("en-KE", { maximumFractionDigits: 2 })}`;

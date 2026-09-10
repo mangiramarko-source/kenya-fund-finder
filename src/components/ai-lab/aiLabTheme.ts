@@ -86,7 +86,9 @@ export const AI_LAB_SAFE_PROMPT_CHIPS = [
   "Invest 1m in Safaricom shares for 5 years",
   "What is SCOM trading at today?",
   "What is the USD/KES rate?",
+  "Show today’s FX rate summary",
   "What is the price of gold today?",
+  "Show today’s market news brief",
   // Portfolio planning and education
   "Split 100k between MMF and SCOM at 11% yield",
   "What is a stock?",
