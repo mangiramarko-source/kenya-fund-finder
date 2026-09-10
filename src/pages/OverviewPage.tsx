@@ -1051,7 +1051,11 @@ const OverviewPage = () => {
   });
 
   useEffect(() => {
-    localStorage.setItem('kf_selected_fx_rates', JSON.stringify(selectedFxRates));
+    try {
+      localStorage.setItem('kf_selected_fx_rates', JSON.stringify(selectedFxRates));
+    } catch {
+      // Safari may block website storage; keep the in-memory selection.
+    }
   }, [selectedFxRates]);
 
   const toggleFxRate = (code: string) => {
