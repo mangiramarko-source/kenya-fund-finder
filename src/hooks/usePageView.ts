@@ -3,11 +3,22 @@ import { useLocation } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { safeUUID } from "@/lib/safeUUID";
 
-let sessionId = sessionStorage.getItem("pv_session");
-if (!sessionId) {
-  sessionId = safeUUID();
-  sessionStorage.setItem("pv_session", sessionId);
+function getPageViewSessionId() {
+  try {
+    const storedSessionId = window.sessionStorage.getItem("pv_session");
+    if (storedSessionId) return storedSessionId;
+
+    const newSessionId = safeUUID();
+    window.sessionStorage.setItem("pv_session", newSessionId);
+    return newSessionId;
+  } catch {
+    // Safari can block website storage. Analytics must never prevent the app
+    // itself from mounting, so use a session-only identifier in that case.
+    return safeUUID();
+  }
 }
+
+const sessionId = getPageViewSessionId();
 
 export const usePageView = () => {
   const location = useLocation();
