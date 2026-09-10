@@ -32,6 +32,7 @@ export interface FeedItem {
     id: string;
     symbol: string;
     name: string;
+    logoUrl?: string | null;
     price: number;
     previousPrice: number | null;
     changePercent: number;

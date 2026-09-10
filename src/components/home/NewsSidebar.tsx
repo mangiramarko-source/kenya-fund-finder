@@ -41,7 +41,7 @@ const NewsSkeleton = () => (
 
 const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean }) => {
   const CatIcon = categoryIcons[article.category] || Megaphone;
-  const imgSrc = getNewsImage(article.image_url, article.category, article.id, isFirst);
+  const imgSrc = getNewsImage(article.image_url, article.category, article.id, isFirst, article.source);
 
   if (isFirst) {
     return (

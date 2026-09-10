@@ -33,6 +33,8 @@ const getDomainFromUrl = (url?: string) => {
 
 const getCustomSourceLogo = (authorName: string, domain?: string | null) => {
   const normName = authorName.toLowerCase();
+  if (normName.includes("kbc")) return "/images/news-sources/kbc.png";
+  if (normName.includes("standard media")) return "/images/news-sources/standard.png";
   if (normName.includes("business daily") || domain?.includes("businessdailyafrica")) {
     return "/images/sources/business-daily.png";
   }
@@ -235,7 +237,7 @@ export const DemoSocialFeedCard = ({
       {(item.mediaUrl || item.rawItem?.image_url) && (
         <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#202024] max-h-[260px] aspect-[16/9]">
           <img
-            src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id) || (item.mediaUrl || item.rawItem?.image_url)}
+            src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id, false, item.rawItem?.source) || (item.mediaUrl || item.rawItem?.image_url)}
             alt=""
             className="w-full h-full object-cover"
             onError={handleNewsImageError}

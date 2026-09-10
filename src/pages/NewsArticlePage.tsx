@@ -494,7 +494,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     );
   }
 
-  const heroImage = getNewsImage(article.image_url, article.category, article.id);
+  const heroImage = getNewsImage(article.image_url, article.category, article.id, false, article.source);
 
   const getSourceDomain = (url?: string | null, sourceName?: string) => {
     if (sourceName) return sourceName;

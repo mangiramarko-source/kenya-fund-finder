@@ -16,6 +16,16 @@ const INTERNATIONAL_SOURCES = new Set([
 export const isInternationalArticle = (article: NewsFromDB) =>
   article.category === "International" || INTERNATIONAL_SOURCES.has(article.source);
 
+function findMentionedStock(article: NewsFromDB, stocks: PublicStock[]): PublicStock | undefined {
+  const searchableText = `${article.title} ${article.summary || ""}`;
+  return stocks.find((candidate) => {
+    const aliases = [candidate.symbol, candidate.name]
+      .filter(Boolean)
+      .map((alias) => alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
+    return aliases.some((alias) => new RegExp(`\\b${alias}\\b`, "i").test(searchableText));
+  });
+}
+
 export function filterNewsArticles(articles: NewsFromDB[], tab: NewsTab, query: string) {
   let result = articles.filter((article) => {
     const normalizedQuery = query.trim().toLowerCase();
@@ -40,7 +50,8 @@ export function buildNewsFeedItems(articles: NewsFromDB[], stocks: PublicStock[]
   const stocksById = new Map(stocks.map((stock) => [stock.id, stock]));
 
   return articles.map((article) => {
-    const stock = article.related_stock_id ? stocksById.get(article.related_stock_id) : undefined;
+    const stock = (article.related_stock_id ? stocksById.get(article.related_stock_id) : undefined)
+      || findMentionedStock(article, stocks);
     const presentation = getNewsPresentation({
       title: decodeHtmlEntities(article.title),
       summary: decodeHtmlEntities(article.summary || ""),
@@ -69,6 +80,7 @@ export function buildNewsFeedItems(articles: NewsFromDB[], stocks: PublicStock[]
         id: stock.id,
         symbol: stock.symbol,
         name: stock.name,
+        ...(stock.logo_url ? { logoUrl: stock.logo_url } : {}),
         price: Number(stock.price) || 0,
         previousPrice: stock.previous_price == null ? null : Number(stock.previous_price),
         changePercent: Number(stock.day_change_percent) || 0,

@@ -1450,7 +1450,7 @@ const OverviewPage = () => {
   const displayName = profileName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
 
-  const [activeUpdateCategory, setActiveUpdateCategory] = useState("Stocks");
+  const [activeUpdateCategory, setActiveUpdateCategory] = useState("All");
 
   const sortedStocks = useMemo(() => {
     if (!stocks) return [];

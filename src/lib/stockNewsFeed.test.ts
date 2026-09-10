@@ -121,6 +121,14 @@ describe("stock news feed", () => {
     expect(item.relatedStock).toBeNull();
   });
 
+  it("joins an unlinked stock article by an explicit symbol or company name", () => {
+    const [item] = buildNewsFeedItems(
+      [article({ related_stock_id: null, title: "Safaricom PLC expands M-PESA services" })],
+      [stock],
+    );
+    expect(item.relatedStock?.symbol).toBe("SCOM");
+  });
+
   it("filters the Stocks tab and keeps newest-first ordering", () => {
     const unrelated = article({ id: "article-2", related_stock_id: null, created_at: "2026-08-11T09:00:00.000Z" });
     expect(filterNewsArticles([unrelated, article()], "Stocks", "").map((item) => item.id)).toEqual(["article-1"]);

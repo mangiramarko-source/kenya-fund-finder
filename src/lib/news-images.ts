@@ -85,11 +85,15 @@ export function getNewsImage(
   imageUrl?: string | null,
   category?: string,
   id?: string,
-  large = false
+  large = false,
+  source?: string | null,
 ): string | null {
   if (imageUrl && imageUrl.trim().length > 0) {
     return optimizeImageUrl(imageUrl, large);
   }
+  const normalizedSource = (source || "").toLowerCase();
+  if (normalizedSource.includes("kbc")) return "/images/news-sources/kbc.png";
+  if (normalizedSource.includes("standard media")) return "/images/news-sources/standard.png";
   return null;
 }
 
@@ -104,4 +108,3 @@ export function handleNewsImageError(
     img.style.display = "none";
   }
 }
-

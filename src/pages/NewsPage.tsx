@@ -18,6 +18,8 @@ import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 import { matchesNewsTab } from "@/lib/newsTabMatching";
 import { dedupeNewsByUrl } from "@/lib/newsDedupe";
 
+const DEFAULT_NEWS_TAB = "All";
+
 export default function NewsPage() {
   useDocumentTitle(
     "Kenya Investment News – Stocks, MMFs, FX & Market Updates",
@@ -57,7 +59,7 @@ export default function NewsPage() {
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [stocks, setStocks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeNavTab, setActiveNavTab] = useState<string>("All");
+  const [activeNavTab, setActiveNavTab] = useState<string>(DEFAULT_NEWS_TAB);
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [offset, setOffset] = useState(0);
@@ -97,9 +99,8 @@ export default function NewsPage() {
         setOffset(0);
         setHasMore(more);
         setLoading(false);
-        // Immediately fill the default tab ("All") — also primes for quick tab switches
-        // For "All" this exits instantly (60 ≥ 15), but runs the infrastructure correctly
-        triggerFillForTab("All", newsData, 0, more, resolved);
+        // Immediately fill the default tab — also primes quick tab switches.
+        triggerFillForTab(DEFAULT_NEWS_TAB, newsData, 0, more, resolved);
       })
       .catch(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -315,7 +316,7 @@ export default function NewsPage() {
       <div className="relative mb-6 border-b border-border dark:border-white/10">
         <div className="flex overflow-x-auto gap-6 sm:gap-8 pb-2.5 hide-scrollbar text-sm font-medium">
           {[
-            "All",
+            DEFAULT_NEWS_TAB,
             "Kenyan",
             "International",
             "Stocks",

@@ -36,6 +36,8 @@ const getDomainFromUrl = (url?: string) => {
 
 const getCustomSourceLogo = (authorName: string, domain?: string | null) => {
   const normName = authorName.toLowerCase();
+  if (normName.includes("kbc")) return "/images/news-sources/kbc.png";
+  if (normName.includes("standard media")) return "/images/news-sources/standard.png";
   if (normName.includes("business daily") || domain?.includes("businessdailyafrica")) {
     return "/images/sources/business-daily.png";
   }
@@ -166,7 +168,7 @@ export const SocialFeedCard = ({
     }
   };
 
-  const stockLogo = isStockBranded ? getStockLogoUrl(item.relatedStock!.symbol) : null;
+  const stockLogo = isStockBranded ? getStockLogoUrl(item.relatedStock!.symbol, item.relatedStock!.logoUrl) : null;
 
   return (
     <div
@@ -344,7 +346,7 @@ export const SocialFeedCard = ({
       {(item.mediaUrl || item.rawItem?.image_url) && (
         <div className="relative left-1/2 w-screen -translate-x-1/2 overflow-hidden border-y border-border/80 bg-muted/40 aspect-[16/9] md:left-auto md:-mx-6 md:w-[calc(100%+3rem)] md:translate-x-0 md:border-x-0 md:max-h-[340px]">
           <img
-            src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id) || (item.mediaUrl || item.rawItem?.image_url)}
+                src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id, false, item.rawItem?.source) || (item.mediaUrl || item.rawItem?.image_url)}
             alt=""
             className="w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
             onError={handleNewsImageError}

@@ -174,7 +174,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
           const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
           const cleanAuthor = isSocialPost ? item.authorName.replace(/^X\s*-\s*/, '') : item.authorName;
           const stock = item.relatedStock;
-          const stockLogoUrl = stock ? getStockLogoUrl(stock.symbol) : "";
+          const stockLogoUrl = stock ? getStockLogoUrl(stock.symbol, stock.logoUrl) : "";
           return (
             <div className="p-6 border-b border-border dark:border-white/10 relative">
               <div className="flex items-center justify-between gap-4 pr-8">
@@ -264,7 +264,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
               {(item.mediaUrl || item.rawItem?.image_url) && (
                 <div className="relative mt-4 mb-2 rounded-xl overflow-hidden border border-border bg-muted/40 max-h-[350px]">
                   <img
-                    src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id) || (item.mediaUrl || item.rawItem?.image_url)}
+                    src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id, false, item.rawItem?.source) || (item.mediaUrl || item.rawItem?.image_url)}
                     alt=""
                     className="w-full h-full object-cover"
                     onError={handleNewsImageError}

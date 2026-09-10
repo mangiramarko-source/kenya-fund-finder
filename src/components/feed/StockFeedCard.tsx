@@ -35,7 +35,7 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
   const articlePath = `/news/${rawArticleId(item)}`;
   const shareUrl = `${window.location.origin}${articlePath}`;
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
-  const avatarUrl = getStockLogoUrl(stock.symbol);
+  const avatarUrl = getStockLogoUrl(stock.symbol, stock.logoUrl);
 
   const openArticle = (event?: MouseEvent) => {
     event?.stopPropagation();
