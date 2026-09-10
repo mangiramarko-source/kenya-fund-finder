@@ -25,15 +25,17 @@ const fxSummary: DailyMarketSummaryResult = {
 };
 
 describe("ScenarioResult daily market summary", () => {
-  it("renders the four server-provided FX metrics", () => {
-    render(<MemoryRouter><ScenarioResult result={fxSummary} /></MemoryRouter>);
+  it("renders the four server-provided FX metrics in the MMF-style floating tiles", () => {
+    const { container } = render(<MemoryRouter><ScenarioResult result={fxSummary} /></MemoryRouter>);
 
-    expect(screen.getAllByText("FX rate summary")).toHaveLength(2);
+    expect(screen.getByText("FX rate summary")).toBeInTheDocument();
     for (const label of ["USD/KES", "EUR/KES", "GBP/KES", "ZAR/KES"]) {
       expect(screen.getByText(label)).toBeInTheDocument();
     }
     expect(screen.getByText("129.4666")).toBeInTheDocument();
     expect(screen.getByText("-0.05%")).toBeInTheDocument();
+    expect(container.firstElementChild).toHaveClass("border-0", "bg-transparent", "p-0", "shadow-none");
+    expect(screen.getByText("USD/KES").parentElement).toHaveClass("border-0", "bg-muted/30", "shadow-none");
   });
 
   it("renders a combined daily summary with the market news brief", () => {

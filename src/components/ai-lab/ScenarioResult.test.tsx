@@ -27,13 +27,14 @@ const brief: MarketNewsBriefResult = {
 
 describe("ScenarioResult market news brief", () => {
   it("renders article metadata and the internal article route", () => {
-    render(<MemoryRouter><ScenarioResult result={brief} /></MemoryRouter>);
+    const { container } = render(<MemoryRouter><ScenarioResult result={brief} /></MemoryRouter>);
 
     expect(screen.getByText("Market news brief")).toBeInTheDocument();
     expect(screen.getByText(/Latest available site news/)).toHaveTextContent("1 article");
     expect(screen.getByText("Stored market headline")).toBeInTheDocument();
     expect(screen.getByText("Stored article summary for the market brief.")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: /Stored market headline/i })).toHaveAttribute("href", "/news/article-1");
+    expect(container.firstElementChild).toHaveClass("border-0", "bg-transparent", "p-0", "shadow-none");
   });
 
   it("states when the market overview is unavailable", () => {
