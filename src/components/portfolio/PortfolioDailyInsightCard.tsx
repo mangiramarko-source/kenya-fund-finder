@@ -83,8 +83,9 @@ function isTodayDailyClose(notification: AppNotification | null | undefined) {
 }
 
 export function portfolioInsight(notification: AppNotification | null | undefined, movement?: PortfolioLiveMovement | null): PortfolioDailyInsight {
-  if (isTodayDailyClose(notification)) return portfolioDailyInsight(notification);
-  return movement ? liveInsight(movement) : portfolioDailyInsight(null);
+  // Keep the card continuous: a verified daily close is the fallback, while a
+  // fresher, source-backed rolling estimate remains visible when available.
+  return movement ? liveInsight(movement) : isTodayDailyClose(notification) ? portfolioDailyInsight(notification) : portfolioDailyInsight(null);
 }
 
 export default function PortfolioDailyInsightCard({ notification, movement, showUpdatedAt = true, mobile = false }: { notification?: AppNotification | null; movement?: PortfolioLiveMovement | null; showUpdatedAt?: boolean; mobile?: boolean }) {

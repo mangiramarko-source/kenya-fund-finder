@@ -47,6 +47,16 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES", orie
 
   const isPositiveTotal = totalPnL >= 0;
   const changeLookup = new Map(changes.map(c => [c.itemId, c]));
+  const oneDay = items.reduce<{ change: number; opening: number; count: number }>((total, item) => {
+    const change = changeLookup.get(item.id);
+    if (!change || change.unit !== "KES" || change.delta == null || !Number.isFinite(change.delta)) return total;
+    const amountChange = change.delta * item.units;
+    const opening = getCurrentValue(item) - amountChange;
+    if (!Number.isFinite(amountChange) || !Number.isFinite(opening) || opening < 0) return total;
+    return { change: total.change + amountChange, opening: total.opening + opening, count: total.count + 1 };
+  }, { change: 0, opening: 0, count: 0 });
+  const oneDayPct = oneDay.opening > 0 ? (oneDay.change / oneDay.opening) * 100 : null;
+  const oneDayPositive = oneDay.change >= 0;
 
   const wrapperClass = orientation === "horizontal"
     ? `no-scrollbar -mx-4 px-4 mb-6 flex gap-3 overflow-x-auto py-1 ${className}`
@@ -156,17 +166,16 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES", orie
 
           <div className="text-xs text-muted-foreground flex items-center gap-2 font-medium">
             <span>1D</span>
-            <span className={`font-semibold flex items-center gap-0.5 ${isPositiveTotal ? "text-emerald-500" : "text-red-500"}`}>
-              {isPositiveTotal ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-              {items.length > 0 ? `${isPositiveTotal ? '+' : ''}${(totalPnLPercent * 0.05).toFixed(2)}%` : 'n/a'}
-            </span>
-            <span className="truncate">{items.length > 0 ? fmtCurrency(totalPnL * 0.05, currency) : 'n/a'}</span>
+            {oneDayPct != null ? <><span className={`font-semibold flex items-center gap-0.5 ${oneDayPositive ? "text-emerald-500" : "text-red-500"}`}>
+              {oneDayPositive ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+              {oneDayPositive ? '+' : ''}{oneDayPct.toFixed(2)}%
+            </span><span className="truncate">{oneDayPositive ? '+' : ''}{fmtCurrency(oneDay.change, currency)}</span></> : <span className="text-muted-foreground/60">n/a</span>}
           </div>
         </div>
 
         <div className="mt-3">
           <div className="border-t border-border/50 pt-2.5 flex items-center justify-between text-xs text-muted-foreground font-medium">
-            <span>3M</span>
+            <span>Overall</span>
             <div className="flex items-center gap-1.5">
               <span className={`font-semibold flex items-center gap-0.5 ${isPositiveTotal ? "text-emerald-500" : "text-red-500"}`}>
                 {isPositiveTotal ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
@@ -227,7 +236,7 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES", orie
                       {chg.deltaPct >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                       {chg.deltaPct.toFixed(2)}%
                     </span>
-                    <span className="truncate">{chg.delta != null ? `${chg.delta > 0 ? '+' : ''}${chg.delta}` : ''}</span>
+                    <span className="truncate">{chg.delta != null ? `${chg.delta * item.units > 0 ? '+' : ''}${fmtCurrency(chg.delta * item.units, currency)}` : ''}</span>
                   </>
                 ) : (
                   <span className="text-muted-foreground/60">n/a</span>

@@ -35,6 +35,8 @@ export function usePortfolioChanges(items: PortfolioItem[]) {
 
       const funds = items.filter((i) => i.asset_type === "mmf");
       const stocks = items.filter((i) => i.asset_type === "stock");
+      const fx = items.filter((i) => i.asset_type === "fx");
+      const commodities = items.filter((i) => i.asset_type === "commodity");
 
       // ─── Funds ────────────────────────────────────────────────
       if (funds.length) {
@@ -92,13 +94,14 @@ export function usePortfolioChanges(items: PortfolioItem[]) {
       if (stocks.length) {
         const { data: stockRows } = await supabase
           .from("stocks_public")
-          .select("id, name, symbol, price")
+          .select("id, name, symbol, price, previous_price")
           .eq("is_active", true);
         const records = (stockRows || []).map((r: any) => ({
           id: r.id as string,
           name: r.name as string,
           symbol: r.symbol as string | null,
           current: Number(r.price) || 0,
+          previous: r.previous_price == null ? null : Number(r.previous_price),
         }));
         const idx = buildNameIndex(records, "name");
 
@@ -129,13 +132,45 @@ export function usePortfolioChanges(items: PortfolioItem[]) {
             });
             return;
           }
-          const previous = prev.get(match.id);
+          const previous = match.previous ?? prev.get(match.id);
           const delta = previous != null ? match.current - previous : null;
           const deltaPct = previous != null && previous !== 0
             ? ((match.current - previous) / previous) * 100 : null;
           out.push({
             itemId: holding.id, assetType: "stock", assetName: holding.asset_name,
             current: match.current, previous: previous ?? null, delta, deltaPct, unit: "KES",
+          });
+        });
+      }
+
+      // ─── FX and commodities ──────────────────────────────────
+      // These markets publish a current and previous quote directly. Using
+      // them keeps the card's 1D movement aligned with the source quote.
+      const quoteGroups = [
+        { type: "fx" as const, holdings: fx, table: "exchange_rates_public", fields: "id, currency_code, currency_name, rate, previous_rate", currentField: "rate", previousField: "previous_rate", name: (row: any) => `KES / ${row.currency_code}`, ticker: (row: any) => `KES/${row.currency_code}` },
+        { type: "commodity" as const, holdings: commodities, table: "commodities_public", fields: "id, name, symbol, price, previous_price", currentField: "price", previousField: "previous_price", name: (row: any) => row.name, ticker: (row: any) => row.symbol },
+      ];
+      for (const group of quoteGroups) {
+        if (!group.holdings.length) continue;
+        const { data: rows } = await supabase.from(group.table as any).select(group.fields);
+        const records = (rows ?? []).map((row: any) => ({
+          id: row.id as string,
+          name: group.name(row) as string,
+          ticker: group.ticker(row) as string | null,
+          current: Number(row[group.currentField]) || 0,
+          previous: row[group.previousField] == null ? null : Number(row[group.previousField]),
+        }));
+        const idx = buildNameIndex(records, "name");
+        group.holdings.forEach((holding) => {
+          const match = resolveAsset({ asset_id: holding.asset_id ?? null, asset_name: holding.asset_name, ticker: holding.ticker }, records, idx);
+          const previous = match?.previous ?? null;
+          const current = match?.current ?? holding.current_price;
+          const delta = previous != null ? current - previous : null;
+          out.push({
+            itemId: holding.id, assetType: group.type, assetName: holding.asset_name,
+            current, previous, delta,
+            deltaPct: previous != null && previous !== 0 ? (delta! / previous) * 100 : null,
+            unit: "KES",
           });
         });
       }
@@ -151,7 +186,7 @@ export function usePortfolioChanges(items: PortfolioItem[]) {
     });
     return () => { cancelled = true; };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [items.map((i) => `${i.id}:${i.asset_name}`).join("|")]);
+  }, [items.map((i) => `${i.id}:${i.asset_name}:${i.asset_id ?? ""}:${i.ticker ?? ""}:${i.current_price}:${i.current_yield}`).join("|")]);
 
   return { changes, loading };
 }

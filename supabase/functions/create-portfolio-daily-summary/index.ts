@@ -31,7 +31,7 @@ Deno.serve(async (request) => {
     const today = nairobiDate();
     const now = new Date();
     const { data: holdings, error: holdingsError } = await supabase.from("mock_portfolios")
-      .select("id,user_id,asset_id,asset_type,asset_name,ticker,units,buy_price,buy_date").in("asset_type", ["stock", "currency", "commodity", "mmf"]);
+      .select("id,user_id,asset_id,asset_type,asset_name,ticker,units,buy_price,buy_date").in("asset_type", ["stock", "fx", "commodity", "mmf"]);
     if (holdingsError) throw holdingsError;
     const activeHoldings = (holdings ?? []) as PortfolioHolding[];
     if (!activeHoldings.length) return new Response(JSON.stringify({ users: 0, notifications: 0 }), { headers });

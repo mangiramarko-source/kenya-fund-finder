@@ -37,6 +37,14 @@ describe("PortfolioDailyInsightCard", () => {
     expect(insight.mover).toContain("USD/KES");
   });
 
+  it("keeps showing a fresher live estimate after a daily close", () => {
+    const movement: PortfolioLiveMovement = {
+      openingValue: 110_000, closingValue: 111_000, change: 1_000, percentChange: 0.91,
+      movers: [{ assetName: "Safaricom PLC", change: 1_000 }], observedAt: "2026-09-09T15:00:00.000Z", comparedHoldings: 1,
+    };
+    expect(portfolioInsight(base, movement).label).toBe("Live estimate");
+  });
+
   it("can place the update time in a shared portfolio-card footer", () => {
     render(<PortfolioDailyInsightCard notification={base} showUpdatedAt={false} />);
     expect(screen.queryByText(/Last market update:/)).not.toBeInTheDocument();
