@@ -325,9 +325,12 @@ export function decodeContinuationToken(token: string): ContinuationStateV1 | nu
   }
 }
 
-function requiredEntityCount(action: QueryAction): number {
-  if (action === "compare") return 2;
-  if (["overview", "lookup"].includes(action)) return 1;
+function requiredEntityCount(frame: QuerySemanticFrameV1): number {
+  if (frame.action === "compare") return 2;
+  // A daily market report is a market-wide overview, not a lookup for one
+  // entity. It can execute directly against server market tables.
+  if (frame.action === "overview" && frame.topic?.startsWith("daily-market-report:")) return 0;
+  if (["overview", "lookup"].includes(frame.action)) return 1;
   return 0;
 }
 
@@ -425,7 +428,7 @@ function resolveWithState(
     resolved.push(result.entity);
   }
 
-  const needed = requiredEntityCount(frame.action);
+  const needed = requiredEntityCount(frame);
   if (resolved.length < needed) {
     const role = resolved.length === 0 ? "primary" : "secondary";
     return {

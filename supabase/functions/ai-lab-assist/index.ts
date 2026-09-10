@@ -68,6 +68,7 @@ Allowed parameter keys: scenarioKind, amount, currency, percentage, secondPercen
 Allowed contextReferences: last_entity, last_amount, last_percentage, last_currency. Include one only when the user's words actually refer to recent context.
 Use explainer topic "getting-started" for safe beginner education such as "I am new to investing", "how do I start investing", "I know nothing about shares", or "nataka kuanza investing". This is general education, not investment selection.
 Use refusal for requests to recommend, choose, tell the user whether to buy/sell/hold, predict, or identify the best/safest investment. A factual request for the highest published yield or largest recorded move is a lookup, not advice.
+For a request such as "stocks report today", "MMF summary today", "FX rates brief", "commodities update", or "daily market report", use action "overview", no entity mentions, and topic "daily-market-report:stocks", "daily-market-report:mmf", "daily-market-report:fx", "daily-market-report:commodities", or "daily-market-report:all". This asks for a factual server-data brief, not advice.
 Use asset-amount for a neutral amount paired with a catalog asset, such as "put 100k in ABSA", "buy dollars with 50k", or "invest 50k in gold". This is an illustration, not a recommendation.
 Use mmf-yield-change for explicit old/new yield comparisons such as "yield drops from 11% to 9%" or "Fund A at 11% versus Fund B at 9%". Put the old yield in percentage and the new yield in secondPercentage. Do not require a catalogue entity for a hypothetical yield comparison.
 For "compare KCB", keep action compare with one primary entity mention; do not invent the second item. For a bare brand such as "KCB", do not decide whether it is a stock or fund.
@@ -227,6 +228,10 @@ function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanB
   if (/\b(?:should i|best|safest|recommend|what should i buy|tell me what to choose)\b/i.test(text)) {
     return { version: QUERY_CONTRACT_VERSION, action: "refusal", confidence: "high", entityMentions: [], requestedMetrics: [], parameters: {}, contextReferences: [] };
   }
+  const reportTopic = dailyMarketReportTopic(text);
+  if (reportTopic) {
+    return dailyMarketReportFrame(reportTopic);
+  }
   const amount = parseAmountToken(text);
   const yieldPair = parseYieldPair(text);
   if (yieldPair) {
@@ -336,6 +341,42 @@ function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanB
     };
   }
   return null;
+}
+
+type DailyMarketReportTopic = "stocks" | "mmf" | "fx" | "commodities" | "all";
+
+function dailyMarketReportTopic(prompt: string): DailyMarketReportTopic | null {
+  const lower = prompt.toLowerCase();
+  const asksForBrief = /\b(?:report|summary|brief|recap|update|overview)\b/.test(lower);
+  const asksForToday = /\b(?:today|daily|for the day)\b/.test(lower);
+  if (!asksForBrief && !asksForToday) return null;
+  const topics = [
+    [/\b(?:stock|stocks|shares?|nse)\b/, "stocks"],
+    [/\b(?:mmf|mmfs|money market|money-market)\b/, "mmf"],
+    [/\b(?:fx|forex|exchange rates?|currenc(?:y|ies)|usd\s*\/\s*kes)\b/, "fx"],
+    [/\b(?:commodit(?:y|ies)|gold|silver|brent|crude|oil|coffee|tea)\b/, "commodities"],
+  ] as const;
+  const matches = topics.filter(([pattern]) => pattern.test(lower)).map(([, topic]) => topic);
+  if (matches.length === 1) return matches[0];
+  return /\b(?:market|markets|all)\b/.test(lower) || matches.length > 1 ? "all" : null;
+}
+
+function dailyMarketReportFrame(topic: DailyMarketReportTopic): QuerySemanticFrameV1 {
+  return {
+    version: QUERY_CONTRACT_VERSION,
+    action: "overview",
+    confidence: "high",
+    entityMentions: [],
+    requestedMetrics: ["latest available market snapshot"],
+    parameters: {},
+    contextReferences: [],
+    topic: `daily-market-report:${topic}`,
+  };
+}
+
+function applyDeterministicDailyReportFrame(prompt: string, frame: QuerySemanticFrameV1): QuerySemanticFrameV1 {
+  const topic = dailyMarketReportTopic(prompt);
+  return topic ? dailyMarketReportFrame(topic) : frame;
 }
 
 async function requestParserModel(prompt: string, safeInput: ReturnType<typeof cleanBody>): Promise<unknown> {
@@ -451,6 +492,88 @@ function standardDisclaimer(): string {
   return "Data only. Not personal financial advice.";
 }
 
+function latestObservedAt(rows: Array<{ updated_at?: unknown }>): string | null {
+  const timestamps = rows
+    .map((row) => typeof row.updated_at === "string" ? Date.parse(row.updated_at) : NaN)
+    .filter((value) => Number.isFinite(value));
+  return timestamps.length ? new Date(Math.max(...timestamps)).toISOString() : null;
+}
+
+function signedPercent(value: number | null): string {
+  return value == null ? "change unavailable" : `${value >= 0 ? "+" : ""}${formatNumber(value, 2)}%`;
+}
+
+async function buildDailyMarketReport(
+  client: ResolverClient,
+  topic: DailyMarketReportTopic,
+): Promise<ServerResult> {
+  const wants = (kind: DailyMarketReportTopic) => topic === "all" || topic === kind;
+  const [stocksResult, fundsResult, ratesResult, commoditiesResult] = await Promise.all([
+    wants("stocks") ? client.from("stocks").select("symbol,name,price,day_change_percent,updated_at").eq("is_active", true).limit(100) : Promise.resolve({ data: [] }),
+    wants("mmf") ? client.from("funds").select("name,annual_yield,fund_type,updated_at").eq("is_published", true).eq("fund_type", "money_market").limit(100) : Promise.resolve({ data: [] }),
+    wants("fx") ? client.from("exchange_rates").select("currency_code,currency_name,rate,previous_rate,updated_at").eq("is_active", true).limit(40) : Promise.resolve({ data: [] }),
+    wants("commodities") ? client.from("commodities").select("symbol,name,price,previous_price,unit,updated_at").eq("is_active", true).limit(40) : Promise.resolve({ data: [] }),
+  ]);
+
+  const sections: string[] = [];
+  const sourceMetadata: Array<{ source: string; observedAt: string | null; records: number }> = [];
+
+  if (wants("stocks")) {
+    const rows = (stocksResult.data ?? []).map((row: Record<string, unknown>) => ({
+      symbol: cleanText(row.symbol, 30), name: cleanText(row.name, 100), price: parseNumber(row.price), change: parseNumber(row.day_change_percent), updated_at: row.updated_at,
+    })).filter((row) => row.symbol && row.price != null);
+    const movers = rows.filter((row) => row.change != null).sort((a, b) => Math.abs(b.change!) - Math.abs(a.change!)).slice(0, 3);
+    sections.push(`Stocks\n${rows.length ? `Latest available NSE snapshot: ${rows.length} priced stocks. ${movers.length ? `Largest recorded moves: ${movers.map((row) => `${row.symbol} ${signedPercent(row.change)} (KES ${formatNumber(row.price!)})`).join("; ")}.` : "Day-change data is unavailable for the current snapshot."}` : "No active stock snapshot is currently available."}`);
+    sourceMetadata.push({ source: "stocks", observedAt: latestObservedAt(rows), records: rows.length });
+  }
+
+  if (wants("mmf")) {
+    const rows = (fundsResult.data ?? []).map((row: Record<string, unknown>) => ({ name: cleanText(row.name, 120), yield: parseNumber(row.annual_yield), updated_at: row.updated_at }))
+      .filter((row) => row.name && row.yield != null && row.yield! > 0 && row.yield! < 100)
+      .sort((a, b) => b.yield! - a.yield!);
+    const average = rows.length ? rows.reduce((sum, row) => sum + row.yield!, 0) / rows.length : null;
+    sections.push(`MMFs\n${rows.length ? `Published annual-yield snapshot: ${rows.length} MMFs. Average ${formatNumber(average!, 2)}%; stored range ${formatNumber(rows[rows.length - 1].yield!, 2)}%–${formatNumber(rows[0].yield!, 2)}%. Highest stored entries: ${rows.slice(0, 3).map((row) => `${row.name} ${formatNumber(row.yield!, 2)}%`).join("; ")}. Yields are published figures and can change.` : "No published MMF-yield snapshot is currently available."}`);
+    sourceMetadata.push({ source: "funds", observedAt: latestObservedAt(rows), records: rows.length });
+  }
+
+  if (wants("fx")) {
+    const preferred = new Set(["USD", "EUR", "GBP", "ZAR"]);
+    const rows = (ratesResult.data ?? []).map((row: Record<string, unknown>) => {
+      const rate = parseNumber(row.rate);
+      const previous = parseNumber(row.previous_rate);
+      return { code: cleanText(row.currency_code, 20), rate, previous, updated_at: row.updated_at };
+    }).filter((row) => row.code && row.rate != null && row.rate! > 0)
+      .sort((a, b) => (preferred.has(a.code!) ? 0 : 1) - (preferred.has(b.code!) ? 0 : 1) || a.code!.localeCompare(b.code!));
+    const display = rows.slice(0, 4).map((row) => {
+      const change = row.previous && row.previous !== 0 ? ((row.rate! - row.previous) / row.previous) * 100 : null;
+      return `${row.code}/KES ${formatNumber(row.rate!, 4)} (${signedPercent(change)})`;
+    });
+    sections.push(`FX rates\n${display.length ? `Latest available rates: ${display.join("; ")}. Rates are KES per 1 unit; movement is versus the stored previous rate where available.` : "No active FX-rate snapshot is currently available."}`);
+    sourceMetadata.push({ source: "exchange_rates", observedAt: latestObservedAt(rows), records: rows.length });
+  }
+
+  if (wants("commodities")) {
+    const rows = (commoditiesResult.data ?? []).map((row: Record<string, unknown>) => {
+      const price = parseNumber(row.price);
+      const previous = parseNumber(row.previous_price);
+      return { symbol: cleanText(row.symbol, 30), name: cleanText(row.name, 100), price, previous, unit: cleanText(row.unit, 50), updated_at: row.updated_at };
+    }).filter((row) => row.symbol && row.price != null && row.price! > 0).slice(0, 4);
+    const display = rows.map((row) => {
+      const change = row.previous && row.previous !== 0 ? ((row.price! - row.previous) / row.previous) * 100 : null;
+      return `${row.symbol} ${formatNumber(row.price!, 4)}${row.unit ? ` ${row.unit}` : ""} (${signedPercent(change)})`;
+    });
+    sections.push(`Commodities\n${display.length ? `Latest available quotes: ${display.join("; ")}. Movement is versus the stored previous price where available.` : "No active commodity snapshot is currently available."}`);
+    sourceMetadata.push({ source: "commodities", observedAt: latestObservedAt(rows), records: rows.length });
+  }
+
+  return {
+    kind: "daily-market-report",
+    text: [`Daily ${topic === "all" ? "market" : topic === "mmf" ? "MMF" : topic} report`, ...sections, "Source: KenyaFundFinder server data. This is a factual snapshot, not a recommendation."].join("\n\n"),
+    data: { topic, sourceMetadata },
+    freshness: serverFreshness(),
+  };
+}
+
 async function fetchEntityQuote(client: ResolverClient, entity: CanonicalFinancialEntity): Promise<{
   value: number;
   label: string;
@@ -530,6 +653,12 @@ async function executeServerFrame(
   entities: CanonicalFinancialEntity[],
 ): Promise<ServerExecutionResponse> {
   if (frame.action === "refusal") return { result: { kind: "refusal", text: refusalText(), freshness: serverFreshness() } };
+  if (frame.action === "overview" && frame.topic?.startsWith("daily-market-report:")) {
+    const topic = frame.topic.slice("daily-market-report:".length) as DailyMarketReportTopic;
+    if (["stocks", "mmf", "fx", "commodities", "all"].includes(topic)) {
+      return { result: await buildDailyMarketReport(client, topic) };
+    }
+  }
   if (frame.action === "capabilities" || frame.action === "explainer") {
     return { result: { kind: "explanation", text: "Ask about a stock, fund, FX rate, commodity, comparison, news item, or a neutral amount scenario.", freshness: serverFreshness() } };
   }
@@ -1039,7 +1168,8 @@ Deno.serve(async (req) => {
       validated = validateQuerySemanticFrame(fallback);
     }
     if (!validated.ok) return json(200, { ok: false, reason: `invalid_frame:${validated.reason}` });
-    const comparisonFrame = applyDeterministicComparisonFrame(prompt, validated.frame);
+    const dailyReportFrame = applyDeterministicDailyReportFrame(prompt, validated.frame);
+    const comparisonFrame = applyDeterministicComparisonFrame(prompt, dailyReportFrame);
     validated = validateQuerySemanticFrame(applyDeterministicYieldFrame(prompt, comparisonFrame, safeInput.context));
     if (!validated.ok) return json(200, { ok: false, reason: `invalid_frame:${validated.reason}` });
 

@@ -111,6 +111,19 @@ describe("universal financial query resolver", () => {
     }
   });
 
+  it("allows a market-wide daily report without inventing an entity", () => {
+    const result = resolveQuery({
+      ...frame("overview", []),
+      topic: "daily-market-report:stocks",
+      requestedMetrics: ["latest available market snapshot"],
+    }, catalog);
+    expect(result.status).toBe("resolved");
+    if (result.status === "resolved") {
+      expect(result.ready).toBe(true);
+      expect(result.entities).toEqual([]);
+    }
+  });
+
   it("rejects model-created IDs and market facts at the semantic-frame boundary", () => {
     expect(validateQuerySemanticFrame({ ...frame("lookup", ["KCB"]), price: 50 }).ok).toBe(false);
     expect(validateQuerySemanticFrame({
