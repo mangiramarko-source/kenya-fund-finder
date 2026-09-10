@@ -10,7 +10,16 @@ import DesktopAiLabChat from "@/components/ai-lab/DesktopAiLabChat";
 import { usePageView } from "@/hooks/usePageView";
 
 function shouldShowMobileAiLabFab(pathname: string): boolean {
-  return pathname === "/" || pathname === "/overview";
+  return [
+    "/",
+    "/portfolio",
+    "/watchlist",
+    "/stocks",
+    "/funds",
+    "/treasury",
+    "/rates",
+    "/commodities",
+  ].includes(pathname);
 }
 
 const Layout = ({ children }: { children: React.ReactNode }) => {

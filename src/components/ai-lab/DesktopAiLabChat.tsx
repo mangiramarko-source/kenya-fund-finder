@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ExternalLink, Sparkles, Trash2, X } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import AiLabChat, { type CompareState } from "./AiLabChat";
+import KoraAiLauncher from "./KoraAiLauncher";
 import { useMarketContext } from "@/lib/aiLab/marketContext";
 import { useNewsContext } from "@/lib/aiLab/newsContext";
 import { fetchAssetHistory, type AssetHistory, type LookbackDays } from "@/lib/aiLab/history";
@@ -121,7 +122,7 @@ export default function DesktopAiLabChat() {
     })();
   }, [messages, market.data, news.data]);
 
-  if (!open) return <button type="button" onClick={() => setOpen(true)} aria-label="Open AI Lab chat" className="fixed bottom-5 right-5 z-50 hidden items-center gap-2 rounded-full bg-emerald-600 px-4 py-3 text-sm font-bold text-white shadow-lg shadow-emerald-900/25 transition hover:bg-emerald-700 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-400 md:flex"><Sparkles className="h-4 w-4" aria-hidden="true" />Ask AI Lab</button>;
+  if (!open) return <KoraAiLauncher onActivate={() => setOpen(true)} className="fixed bottom-5 right-5 z-50 hidden md:flex" />;
 
   return <>
     <div className="fixed inset-0 z-50 hidden bg-black/5 md:block" onClick={() => setOpen(false)} aria-hidden="true" />
