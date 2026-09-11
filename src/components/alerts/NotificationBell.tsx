@@ -50,7 +50,7 @@ const NotificationBell = () => {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "inset-x-0 bottom-0 flex max-h-[88dvh] flex-col overflow-hidden rounded-t-[28px] border-x border-t bg-background p-0 [&>button]:hidden" : "flex h-full w-[min(420px,calc(100vw-1rem))] flex-col border-l border-border bg-background p-0 [&>button]:hidden sm:max-w-none"}>
+      <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "inset-x-2 bottom-[max(env(safe-area-inset-bottom),0.75rem)] flex max-h-[82svh] flex-col overflow-hidden rounded-[28px] border bg-background p-0 [&>button]:hidden" : "flex h-full w-[min(420px,calc(100vw-1rem))] flex-col border-l border-border bg-background p-0 [&>button]:hidden sm:max-w-none"}>
         {isMobile && <div aria-hidden="true" className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-muted" />}
         <div className="flex items-center gap-2 border-b border-border/80 px-5 py-2.5 md:py-3">
           <div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold text-foreground">Notifications</SheetTitle><p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new notification${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
@@ -63,7 +63,7 @@ const NotificationBell = () => {
             <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
           </button>
         </div>
-        <ScrollArea className={isMobile ? "max-h-[calc(88dvh-6.5rem)] flex-none" : "min-h-0 flex-1"}>
+        <ScrollArea className={isMobile ? "max-h-[calc(82svh-6.5rem)] flex-none" : "min-h-0 flex-1"}>
           {notifications.length === 0 ? (
             <div className="px-5 py-10 text-center">
               <Bell className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
