@@ -126,7 +126,7 @@ export function initAnalytics(apiKeyOverride?: string): void {
   }
 
   const apiKey = apiKeyOverride || import.meta.env.VITE_POSTHOG_KEY;
-  const apiHost = import.meta.env.VITE_POSTHOG_HOST || "https://us.i.posthog.com";
+  const apiHost = import.meta.env.VITE_POSTHOG_HOST || "https://eu.i.posthog.com";
 
   if (apiKey) {
     posthog.init(apiKey, {
