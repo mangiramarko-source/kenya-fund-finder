@@ -59,11 +59,11 @@ Sentry.init({
     return breadcrumb;
   },
 });
-
-posthog.init(import.meta.env.VITE_POSTHOG_KEY, {
-  api_host: import.meta.env.VITE_POSTHOG_HOST,
-});
-
+posthog.init(import.meta.env.VITE_POSTHOG_KEY, {  
+ api_host: import.meta.env.VITE_POSTHOG_HOST,  
+});  
+console.log('PostHog key:', import.meta.env.VITE_POSTHOG_KEY);  
+console.log('PostHog host:', import.meta.env.VITE_POSTHOG_HOST);  
 // Install BEFORE React renders so any script tag that attempts to load is
 // inspected against the synchronous consent gate.
 installConsentScriptGuard();
