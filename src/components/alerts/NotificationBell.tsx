@@ -50,9 +50,9 @@ const NotificationBell = () => {
           )}
         </Button>
       </SheetTrigger>
-      <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "inset-x-0 bottom-0 flex max-h-[78dvh] flex-col rounded-t-[28px] border-x border-t bg-background p-0 [&>button]:hidden" : "flex h-full w-[min(420px,calc(100vw-1rem))] flex-col border-l border-border bg-background p-0 [&>button]:hidden sm:max-w-none"}>
-        {isMobile && <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-muted" />}
-        <div className="flex items-center gap-2 border-b border-border/80 px-5 py-3">
+      <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "inset-x-0 bottom-0 flex min-h-[46dvh] max-h-[88dvh] flex-col rounded-t-[28px] border-x border-t bg-background p-0 [&>button]:hidden" : "flex h-full w-[min(420px,calc(100vw-1rem))] flex-col border-l border-border bg-background p-0 [&>button]:hidden sm:max-w-none"}>
+        {isMobile && <div aria-hidden="true" className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-muted" />}
+        <div className="flex items-center gap-2 border-b border-border/80 px-5 py-2.5 md:py-3">
           <div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold text-foreground">Notifications</SheetTitle><p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new notification${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
           {unreadCount > 0 && (
             <Button variant="ghost" size="sm" className="text-xs h-8 px-2 text-emerald-600 hover:text-emerald-700" onClick={markAllRead}>
@@ -121,7 +121,7 @@ export function NotificationRow({ notification, onOpen, onDelete }: { notificati
   const portfolioDetails = notification.type === "portfolio_daily" ? portfolioDailyPresentation(notification) : null;
   const assetName = details?.assetName ?? notification.title;
   const symbol = details?.symbol ?? notification.assetSymbol ?? null;
-  return <div className={`group relative box-border flex w-full max-w-full min-w-0 items-center gap-2 overflow-hidden px-4 py-4 transition ${notification.is_read ? "hover:bg-muted/40" : "bg-emerald-500/[0.045] hover:bg-emerald-500/[0.08]"}`}>
+  return <div className={`group relative box-border flex w-full max-w-full min-w-0 items-center gap-2 overflow-hidden px-4 py-3 md:py-4 transition ${notification.is_read ? "hover:bg-muted/40" : "bg-emerald-500/[0.045] hover:bg-emerald-500/[0.08]"}`}>
     {!notification.is_read && <span className="absolute inset-y-3 left-0 w-0.5 rounded-r-full bg-emerald-500" aria-label="Unread" />}
     <button type="button" onClick={onOpen} aria-label={`Open alert: ${assetName}`} className="flex min-w-0 flex-1 items-center gap-3 text-left">
       <span className="flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-[14px] border border-border/70 bg-card shadow-sm"><NotificationAssetVisual notification={notification} symbol={symbol} /></span>
