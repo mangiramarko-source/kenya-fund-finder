@@ -37,6 +37,13 @@ interface ScenarioResultProps {
   lookbackDays?: LookbackDays;
 }
 
+type DurationProjection = NonNullable<Extract<RouterResult, { kind: "stock-amount" }>["projection"]>;
+
+const formatProjectionPeriod = (months: number) =>
+  months % 12 === 0
+    ? `${months / 12}-year`
+    : `${months}-month`;
+
 const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: ScenarioResultProps) => {
   const effectiveLookbackDays = lookbackDays ?? 30;
   if (!result) {
@@ -536,6 +543,38 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   const fmtMovement = (n: number) => (n > 0 ? `+${n}%` : `${n}%`);
   const fmtSigned = (n: number, prefix = "") =>
     `${n >= 0 ? "+" : ""}${prefix}${n.toLocaleString("en-KE", { maximumFractionDigits: 2 })}`;
+  const renderDurationProjection = (
+    projection: DurationProjection,
+    title = `${formatProjectionPeriod(projection.months)} illustrative outcomes`,
+  ) => (
+    <div className="pt-2">
+      <p className="mb-1 text-xs font-semibold text-foreground">{title}</p>
+      <p className="mb-2 text-[11px] leading-relaxed text-muted-foreground">
+        How to read this: each row asks what the starting amount could look like after {projection.months} month{projection.months === 1 ? "" : "s"} if it kept moving at that yearly example. +15% means up 15% per year; -15% means down 15% per year. This is not a forecast, and fees, taxes, dividends, spreads, and provider charges are not included.
+      </p>
+      <BreakdownTable>
+        <thead>
+          <TableHeadRow>
+            <TableHeadCell>Annual movement example</TableHeadCell>
+            <TableHeadCell align="right">Estimated end value</TableHeadCell>
+            <TableHeadCell align="right">Estimated gain/loss</TableHeadCell>
+          </TableHeadRow>
+        </thead>
+        <tbody>
+          {projection.scenarios.map((scenario) => {
+            const annualMovementPct = scenario.annualMovementPct ?? scenario.annualPriceChangePct;
+            return (
+              <TableRow key={annualMovementPct}>
+                <TableCell>{fmtMovement(annualMovementPct)}</TableCell>
+                <TableCell align="right" className="font-semibold">{fmtKES(scenario.projectedValue)}</TableCell>
+                <TableCell align="right">{fmtGainLoss(scenario.projectedGainLoss)}</TableCell>
+              </TableRow>
+            );
+          })}
+        </tbody>
+      </BreakdownTable>
+    </div>
+  );
 
   if (result.kind === "fx-conversion") {
     const { inputs } = result;
@@ -570,7 +609,11 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <KV k="To currency" v={inputs.toCurrency} />
           <KV k="Rate used" v={`${inputs.rate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} (${inputs.rateLabel})`} />
           <KV k="Estimated converted amount" v={convertedLabel} />
-          {inputs.holdingMonths != null && <KV k="Holding period" v={`${inputs.holdingMonths} month${inputs.holdingMonths === 1 ? "" : "s"} (not a rate forecast)`} />}
+          {inputs.holdingMonths != null && <KV k="Holding period" v={`${inputs.holdingMonths} month${inputs.holdingMonths === 1 ? "" : "s"} (examples, not a rate forecast)`} />}
+          {result.projection && renderDurationProjection(
+            result.projection,
+            `${formatProjectionPeriod(result.projection.months)} FX value examples`,
+          )}
         </Section>
         
         <CollapsibleDetails title="Notes">
@@ -671,7 +714,11 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           {inputs.fxRate != null && <KV k="FX rate used" v={`${inputs.fxRate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} KES per ${inputs.quoteCurrency}`} />}
           <KV k="Quote-currency exposure" v={quoteAmount} />
           <KV k="Estimated quoted units" v={result.estimatedUnits.toLocaleString("en-KE", { maximumFractionDigits: 4 })} />
-          {inputs.holdingMonths != null && <KV k="Holding period" v={`${inputs.holdingMonths} month${inputs.holdingMonths === 1 ? "" : "s"} (not a price forecast)`} />}
+          {inputs.holdingMonths != null && <KV k="Holding period" v={`${inputs.holdingMonths} month${inputs.holdingMonths === 1 ? "" : "s"} (examples, not a price forecast)`} />}
+          {result.projection && renderDurationProjection(
+            result.projection,
+            `${formatProjectionPeriod(result.projection.months)} commodity value examples`,
+          )}
         </Section>
         <CollapsibleDetails title="Notes">
           <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
@@ -727,36 +774,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
                 ))}
               </tbody>
             </BreakdownTable>
-            {result.projection && (
-              <div className="pt-2">
-                <p className="mb-2 text-xs font-semibold text-foreground">
-                  {result.projection.months % 12 === 0
-                    ? `${result.projection.months / 12}-year illustrative outcomes`
-                    : `${result.projection.months}-month illustrative outcomes`}
-                </p>
-                <p className="mb-2 text-[11px] text-muted-foreground">
-                  Uses compound annual share-price-change assumptions, not a forecast.
-                </p>
-                <BreakdownTable>
-                  <thead>
-                    <TableHeadRow>
-                      <TableHeadCell>Annual price change</TableHeadCell>
-                      <TableHeadCell align="right">Estimated value</TableHeadCell>
-                      <TableHeadCell align="right">Est. gain/loss</TableHeadCell>
-                    </TableHeadRow>
-                  </thead>
-                  <tbody>
-                    {result.projection.scenarios.map((scenario) => (
-                      <TableRow key={scenario.annualPriceChangePct}>
-                        <TableCell>{fmtMovement(scenario.annualPriceChangePct)}</TableCell>
-                        <TableCell align="right" className="font-semibold">{fmtKES(scenario.projectedValue)}</TableCell>
-                        <TableCell align="right">{fmtGainLoss(scenario.projectedGainLoss)}</TableCell>
-                      </TableRow>
-                    ))}
-                  </tbody>
-                </BreakdownTable>
-              </div>
-            )}
+            {result.projection && renderDurationProjection(result.projection)}
           </div>
         </Section>
         

@@ -75,8 +75,10 @@ describe("ai-lab-assist public guardrails", () => {
     expect(source).toContain("A parser/provider failure or an unfamiliar question is not an outage");
     expect(source).toContain("function parsePeriodMonths");
     expect(source).toContain("applyDeterministicDurationFrame");
-    expect(source).toContain("current-rate holding snapshot, not a future exchange-rate forecast");
-    expect(source).toContain("current-value holding snapshot, not a future price or FX-rate forecast");
+    expect(source).toContain("DURATION_PROJECTION_ANNUAL_MOVEMENTS = [-30, -15, 0, 15, 30]");
+    expect(source).toContain("buildDurationProjection");
+    expect(source).toContain("This means we are asking what that starting amount could look like");
+    expect(source).toContain("This is not a forecast");
   });
 
   it("returns the complete stock-amount card shape expected by the client", () => {
@@ -85,6 +87,7 @@ describe("ai-lab-assist public guardrails", () => {
     expect(source).toContain("approximateShares: shares");
     expect(source).toContain("rows,");
     expect(source).toContain("projection,");
+    expect(source).toContain("annualMovementPct");
     expect(source).toContain("importantNotes:");
   });
 });

@@ -152,6 +152,43 @@ const COMMODITY_MOVE_ASSUMPTIONS = [
   "This is not commodity trading advice.",
 ];
 
+export const DURATION_PROJECTION_ANNUAL_MOVEMENTS = [-30, -15, 0, 15, 30] as const;
+
+export interface DurationProjectionScenario {
+  annualMovementPct: number;
+  /** Kept for stock callers/tests that already speak in share-price terms. */
+  annualPriceChangePct: number;
+  projectedValue: number;
+  projectedGainLoss: number;
+}
+
+export interface DurationProjection {
+  months: number;
+  scenarios: DurationProjectionScenario[];
+}
+
+export function buildDurationProjection(
+  startingValue: number,
+  months?: number | null,
+): DurationProjection | undefined {
+  const projectionMonths = months != null && months > 0 ? months : null;
+  if (projectionMonths == null) return undefined;
+  return {
+    months: projectionMonths,
+    scenarios: DURATION_PROJECTION_ANNUAL_MOVEMENTS.map((annualMovementPct) => {
+      const projectedValue = Math.round(
+        startingValue * Math.pow(1 + annualMovementPct / 100, projectionMonths / 12),
+      );
+      return {
+        annualMovementPct,
+        annualPriceChangePct: annualMovementPct,
+        projectedValue,
+        projectedGainLoss: projectedValue - startingValue,
+      };
+    }),
+  };
+}
+
 export interface FxConversionScenarioResult {
   kind: "fx-conversion";
   summary: string;
@@ -165,6 +202,7 @@ export interface FxConversionScenarioResult {
     holdingMonths?: number;
   };
   convertedAmount: number;
+  projection?: DurationProjection;
   assumptions: string[];
   importantNotes: string[];
   disclaimer: string;
@@ -219,6 +257,7 @@ export interface CommodityAmountScenarioResult {
   };
   quoteAmount: number;
   estimatedUnits: number;
+  projection?: DurationProjection;
   assumptions: string[];
   importantNotes: string[];
   disclaimer: string;
@@ -251,11 +290,12 @@ export function calculateFxConversionScenario(
       ...(holdingMonths != null && holdingMonths > 0 ? { holdingMonths } : {}),
     },
     convertedAmount,
+    projection: buildDurationProjection(amount, holdingMonths),
     assumptions: [...FX_CONVERSION_ASSUMPTIONS],
     importantNotes: [
       "Mid-rate estimate only — bank, forex bureau, and mobile money rates may differ.",
       ...(holdingMonths != null && holdingMonths > 0
-        ? [`The ${holdingMonths}-month duration is a current-rate holding snapshot, not a future exchange-rate forecast.`]
+        ? [`The ${holdingMonths}-month examples show what the starting amount could be worth if the exchange rate moved by the stated annual examples. They are not a future exchange-rate forecast.`]
         : []),
     ],
     disclaimer: STANDARD_DISCLAIMER,
@@ -349,6 +389,7 @@ export function calculateCommodityAmountScenario(
     },
     quoteAmount,
     estimatedUnits,
+    projection: buildDurationProjection(amountKes, holdingMonths),
     assumptions: [
       "Uses the latest available KenyaFundFinder commodity price.",
       quoteCurrency === "KES"
@@ -361,7 +402,7 @@ export function calculateCommodityAmountScenario(
       "Commodity units are an estimate based on the published quote unit.",
       "Actual commodity products and provider prices can differ materially from the quoted benchmark.",
       ...(holdingMonths != null && holdingMonths > 0
-        ? [`The ${holdingMonths}-month duration shows the current estimated exposure only; it does not predict the commodity price or FX rate at that time.`]
+        ? [`The ${holdingMonths}-month examples show what the starting amount could be worth if the commodity quote moved by the stated annual examples. They are not a future commodity-price or FX-rate forecast.`]
         : []),
     ],
     disclaimer: STANDARD_DISCLAIMER,
@@ -619,14 +660,7 @@ export interface StockAmountScenarioResult {
   inputs: { amount: number; symbol: string; name: string; latestPrice: number };
   approximateShares: number;
   rows: StockAmountScenarioRow[];
-  projection?: {
-    months: number;
-    scenarios: Array<{
-      annualPriceChangePct: number;
-      projectedValue: number;
-      projectedGainLoss: number;
-    }>;
-  };
+  projection?: DurationProjection;
   assumptions: string[];
   importantNotes: string[];
   disclaimer: string;
@@ -764,22 +798,13 @@ export function calculateStockAmountScenario(
       estimatedGainLoss: estimatedValue - amount,
     };
   });
-  const months = projectionMonths != null && projectionMonths > 0 ? projectionMonths : null;
-  const projection = months == null ? undefined : {
-    months,
-    scenarios: [-5, 0, 5, 10].map((annualPriceChangePct) => {
-      const projectedValue = Math.round(amount * Math.pow(1 + annualPriceChangePct / 100, months / 12));
-      return {
-        annualPriceChangePct,
-        projectedValue,
-        projectedGainLoss: projectedValue - amount,
-      };
-    }),
-  };
+  const projection = buildDurationProjection(amount, projectionMonths);
 
   return {
     kind: "stock-amount",
-    summary: `This scenario does not predict profit. It shows what ${fmtKESAmount(amount)} exposure to ${asset.symbol} could look like if the share price rises or falls.`,
+    summary: projection
+      ? `This means we are asking: if you put ${fmtKESAmount(amount)} into ${asset.symbol} today, what could it look like after ${projection.months} month${projection.months === 1 ? "" : "s"} under different price-change examples? This is not a forecast.`
+      : `This scenario does not predict profit. It shows what ${fmtKESAmount(amount)} exposure to ${asset.symbol} could look like if the share price rises or falls.`,
     inputs: {
       amount,
       symbol: asset.symbol,
@@ -794,6 +819,9 @@ export function calculateStockAmountScenario(
       "Fees, taxes, spreads, commissions, and dividends are not included.",
       "Share prices can rise or fall.",
       "This is a scenario, not a prediction.",
+      ...(projection
+        ? ["+15% means the price rises by 15% per year; -15% means the price falls by 15% per year. The app converts that yearly movement into the selected number of months."]
+        : []),
       "Actual results can differ because of liquidity, timing, fees, taxes, dividends, and market conditions.",
     ],
     importantNotes: [

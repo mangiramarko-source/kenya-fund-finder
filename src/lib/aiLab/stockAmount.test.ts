@@ -48,18 +48,26 @@ describe("calculateStockAmountScenario", () => {
     expect(row?.estimatedValue).toBe(9_000);
   });
 
-  it("adds compound five-year illustrations only when the user gives a horizon", () => {
+  it("adds balanced five-year illustrations only when the user gives a horizon", () => {
     const r = calculateStockAmountScenario(1_000_000, asset, 60);
-    const upFive = r.projection?.scenarios.find((scenario) => scenario.annualPriceChangePct === 5);
+    const upFifteen = r.projection?.scenarios.find((scenario) => scenario.annualMovementPct === 15);
     expect(r.projection?.months).toBe(60);
-    expect(upFive?.projectedValue).toBe(1_276_282);
-    expect(upFive?.projectedGainLoss).toBe(276_282);
+    expect(r.projection?.scenarios.map((scenario) => scenario.annualMovementPct)).toEqual([-30, -15, 0, 15, 30]);
+    expect(upFifteen?.projectedValue).toBe(2_011_357);
+    expect(upFifteen?.projectedGainLoss).toBe(1_011_357);
   });
 
   it("summary states this does not predict profit", () => {
     const r = calculateStockAmountScenario(10_000, asset);
     expect(r.summary.toLowerCase()).toContain("does not predict profit");
     expect(r.summary).toContain("SCOM");
+  });
+
+  it("uses simple duration wording when a horizon is present", () => {
+    const r = calculateStockAmountScenario(100_000, asset, 10);
+    expect(r.summary).toContain("what could it look like after 10 months");
+    expect(r.summary).toContain("This is not a forecast");
+    expect(r.assumptions.join(" ")).toContain("+15% means the price rises by 15% per year");
   });
 
   it("includes the standard disclaimer", () => {

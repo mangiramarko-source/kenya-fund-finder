@@ -58,7 +58,7 @@ const PERCENT_RE = /([0-9]+(?:\.[0-9]+)?)\s*%/;
 const FUND_CONTEXT_RE = /\b(mmf|money market|unit trust|mutual fund|money market fund)\b/i;
 
 const STOCK_AMOUNT_UNKNOWN_MSG =
-  "I could not confidently match that stock to available KenyaFundFinder data yet. Try a ticker or company name shown on the platform.";
+  "Which stock should I use for this scenario? Try a ticker or company name shown on KenyaFundFinder.";
 
 const STOCK_AMOUNT_SUGGESTIONS = [
   "KES 10,000 in SCOM",

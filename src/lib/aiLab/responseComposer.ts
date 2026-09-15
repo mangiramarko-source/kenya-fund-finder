@@ -165,16 +165,32 @@ function rowForMovement(
   return rows.find((r) => r.movementPct === movementPct);
 }
 
+function projectionRowForMovement(
+  projection: StockAmountScenarioResult["projection"],
+  movementPct: number,
+) {
+  return projection?.scenarios.find((scenario) =>
+    (scenario.annualMovementPct ?? scenario.annualPriceChangePct) === movementPct,
+  );
+}
+
 function composeHypotheticalNarrative(result: RouterResult): string | null {
   switch (result.kind) {
     case "stock-amount": {
       const { inputs, approximateShares, rows } = result;
       const up5 = rowForMovement(rows, 5);
       const down5 = rowForMovement(rows, -5);
+      const up15 = projectionRowForMovement(result.projection, 15);
+      const down15 = projectionRowForMovement(result.projection, -15);
       const shareLabel = approximateShares.toLocaleString("en-KE", {
         maximumFractionDigits: 2,
       });
-      let resultBody = `At an illustrative price of ${fmtKes(inputs.latestPrice)} per ${inputs.symbol} share, ${fmtKes(inputs.amount)} would represent approximately ${shareLabel} shares before fees, taxes, spreads, and settlement considerations.`;
+      let resultBody = result.projection
+        ? `This means we are asking: if you put ${fmtKes(inputs.amount)} into ${inputs.symbol} today, what could it look like after ${result.projection.months} month${result.projection.months === 1 ? "" : "s"} under different price-change examples? At the latest KenyaFundFinder price of ${fmtKes(inputs.latestPrice)} per share, that amount represents about ${shareLabel} shares before fees and taxes.`
+        : `At an illustrative price of ${fmtKes(inputs.latestPrice)} per ${inputs.symbol} share, ${fmtKes(inputs.amount)} would represent approximately ${shareLabel} shares before fees, taxes, spreads, and settlement considerations.`;
+      if (result.projection && up15 && down15) {
+        resultBody += ` If it kept moving at +15% per year for that period, the estimated end value would be about ${fmtKes(up15.projectedValue)}; at -15% per year, about ${fmtKes(down15.projectedValue)}.`;
+      }
       if (up5 && down5) {
         resultBody += ` If the share price moved up 5%, the position value would be about ${fmtKes(up5.estimatedValue)}; if it moved down 5%, about ${fmtKes(down5.estimatedValue)}.`;
       }
@@ -185,7 +201,7 @@ function composeHypotheticalNarrative(result: RouterResult): string | null {
           `Instrument: ${inputs.symbol} (${inputs.name})`,
           `Price basis: ${fmtKes(inputs.latestPrice)} per share (latest available KenyaFundFinder price)`,
           result.projection
-            ? `Projection period: ${result.projection.months} month${result.projection.months === 1 ? "" : "s"}, using illustrative annual share-price-change assumptions (not a forecast)`
+            ? `Projection period: ${result.projection.months} month${result.projection.months === 1 ? "" : "s"}; +15% means up 15% per year and -15% means down 15% per year. This is not a forecast`
             : "Period: current exposure snapshot (not a holding-period forecast)",
         ],
         whatCouldChange: STOCK_WHAT_COULD_CHANGE,
@@ -296,6 +312,9 @@ function composeHypotheticalNarrative(result: RouterResult): string | null {
 function composeIntro(result: RouterResult, prompt: string): string {
   switch (result.kind) {
     case "stock-amount":
+      if (result.projection) {
+        return `This means we are asking what ${fmtKes(result.inputs.amount)} in ${result.inputs.symbol} could look like after ${result.projection.months} month${result.projection.months === 1 ? "" : "s"} under different yearly price-change examples. This is not a forecast or a recommendation.`;
+      }
       return `Here's a neutral stock exposure scenario using the latest available KenyaFundFinder data for ${result.inputs.symbol}. The table below shows possible values if the share price moves by the stated percentages. This is a data view, not a recommendation.`;
 
     case "stock-move": {
@@ -325,7 +344,7 @@ function composeIntro(result: RouterResult, prompt: string): string {
       return `Here's an educational explainer on "${result.title.replace(/\?$/, "")}". This is general information — not personal financial advice.`;
 
     case "fx-conversion":
-      return `Here's an estimated currency conversion using the latest available FX rate shown in KenyaFundFinder (${result.inputs.rateLabel}).${result.inputs.holdingMonths != null ? ` Your ${result.inputs.holdingMonths}-month duration is shown as a current-rate holding snapshot, not a future exchange-rate forecast.` : ""} Actual provider rates may differ.`;
+      return `Here's an estimated currency conversion using the latest available FX rate shown in KenyaFundFinder (${result.inputs.rateLabel}).${result.projection ? ` The ${result.projection.months}-month table shows what the starting amount could be worth if the exchange rate moved by each yearly example. This is not a forecast.` : ""} Actual provider rates may differ.`;
 
     case "fx-move":
       return `Here's a hypothetical FX move scenario for ${result.inputs.pair} if the rate moves by ${result.inputs.movementPct}%. It does not predict future exchange rates.`;
@@ -334,7 +353,7 @@ function composeIntro(result: RouterResult, prompt: string): string {
       return `Here's a hypothetical ${result.inputs.name} scenario if the value moves by ${result.inputs.movementPct}%. It does not predict future commodity prices.`;
 
     case "commodity-amount":
-      return `Here's an estimated ${result.inputs.name} exposure using the latest available KenyaFundFinder commodity price${result.inputs.fxRate == null ? "" : " and FX rate"}.${result.inputs.holdingMonths != null ? ` Your ${result.inputs.holdingMonths}-month duration is a current-value snapshot, not a future commodity-price forecast.` : ""} It does not predict future commodity prices.`;
+      return `Here's an estimated ${result.inputs.name} exposure using the latest available KenyaFundFinder commodity price${result.inputs.fxRate == null ? "" : " and FX rate"}.${result.projection ? ` The ${result.projection.months}-month table shows what the starting amount could be worth if the commodity price moved by each yearly example. This is not a forecast.` : ""} It does not predict future commodity prices.`;
 
     case "news-summary":
       return `Here are matching stored news items from KenyaFundFinder data${result.articles.length > 0 ? ` (${result.articles.length} article${result.articles.length === 1 ? "" : "s"})` : ""}. This does not predict price movement.`;

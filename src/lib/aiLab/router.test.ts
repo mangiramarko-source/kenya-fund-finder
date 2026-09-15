@@ -122,7 +122,8 @@ describe("routePrompt", () => {
       expect(r.kind).toBe("stock-amount");
       if (r.kind === "stock-amount") {
         expect(r.projection?.months).toBe(60);
-        expect(r.projection?.scenarios.find((scenario) => scenario.annualPriceChangePct === 5)?.projectedValue).toBe(1_276_282);
+        expect(r.projection?.scenarios.map((scenario) => scenario.annualMovementPct)).toEqual([-30, -15, 0, 15, 30]);
+        expect(r.projection?.scenarios.find((scenario) => scenario.annualMovementPct === 15)?.projectedValue).toBe(2_011_357);
       }
     });
 
@@ -155,7 +156,7 @@ describe("routePrompt", () => {
       const r = routePrompt("KES 10,000 in UNKNOWNSTOCK", stockCtx);
       expect(r.kind).toBe("unknown");
       if (r.kind === "unknown") {
-        expect(r.message).toMatch(/could not confidently match/i);
+        expect(r.message).toMatch(/which stock/i);
         expect(r.suggestions).toContain("KES 10,000 in SCOM");
       }
     });

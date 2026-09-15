@@ -46,7 +46,7 @@ describe("AI Lab retention controls", () => {
 
   it("loads the same history in the desktop popup and exposes an accessible clear action", async () => {
     render(<MemoryRouter><DesktopAiLabChat /></MemoryRouter>);
-    fireEvent.click(screen.getByRole("button", { name: "Open AI Lab chat" }));
+    fireEvent.click(screen.getByRole("button", { name: "Open Kora AI assistant" }));
 
     expect(screen.getByTestId("conversation-count")).toHaveTextContent("1");
     const clear = screen.getByRole("button", { name: "Clear AI Lab conversation" });

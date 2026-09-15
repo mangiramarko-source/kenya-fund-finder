@@ -59,6 +59,7 @@ describe("asset-aware amount scenarios", () => {
     expect(result.kind).toBe("stock-amount");
     if (result.kind === "stock-amount") {
       expect(result.projection?.months).toBe(months);
+      expect(result.projection?.scenarios.map((scenario) => scenario.annualMovementPct)).toEqual([-30, -15, 0, 15, 30]);
     }
   });
 
@@ -73,6 +74,10 @@ describe("asset-aware amount scenarios", () => {
       expect(result.inputs.fromCurrency).toBe("KES");
       expect(result.inputs.toCurrency).toBe("USD");
       expect(result.inputs.holdingMonths).toBe(holdingMonths);
+      if (holdingMonths) {
+        expect(result.projection?.months).toBe(holdingMonths);
+        expect(result.projection?.scenarios.map((scenario) => scenario.annualMovementPct)).toEqual([-30, -15, 0, 15, 30]);
+      }
     }
   });
 
@@ -85,6 +90,16 @@ describe("asset-aware amount scenarios", () => {
       expect(result.inputs.holdingMonths).toBe(12);
       expect(result.quoteAmount).toBe(800);
       expect(result.estimatedUnits).toBeCloseTo(0.32, 4);
+      expect(result.projection?.months).toBe(12);
+      expect(result.projection?.scenarios.map((scenario) => scenario.annualMovementPct)).toEqual([-30, -15, 0, 15, 30]);
+    }
+  });
+
+  it("asks which stock when the user gives an amount and duration but no named stock", () => {
+    const result = routePrompt("3000 ksh in stock for 10 months", ctx);
+    expect(result.kind).toBe("unknown");
+    if (result.kind === "unknown") {
+      expect(result.message).toMatch(/which stock/i);
     }
   });
 
