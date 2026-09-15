@@ -922,6 +922,53 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     );
   }
 
+  if (result.kind === "mmf") {
+    return (
+      <ResultShell>
+        <SummaryMetricGrid>
+          <SummaryMetricCard label="Starting amount" value={fmtKES(result.inputs.amount)} />
+          <SummaryMetricCard label="Annual yield" value={`${result.inputs.annualYieldPct}%`} sublabel={result.inputs.productName ?? "Published fund yield"} />
+          <SummaryMetricCard label="Monthly estimate" value={fmtKES2(result.monthlyEquivalent)} />
+          <SummaryMetricCard label="Projected gross value" value={fmtKES(result.projectedGross)} sublabel={`${result.inputs.months} month${result.inputs.months === 1 ? "" : "s"}`} />
+        </SummaryMetricGrid>
+
+        <CollapsibleDetails title="Assumptions">
+          <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+            {result.assumptions.map((a, i) => (
+              <li key={i}>{sanitizeOutput(a)}</li>
+            ))}
+          </ul>
+        </CollapsibleDetails>
+
+        <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
+          <div className="space-y-3">
+            <div>
+              {result.inputs.productName && <KV k="Selected fund" v={result.inputs.productName} />}
+              {result.inputs.fundType && <KV k="Fund type" v={result.inputs.fundType.replace(/_/g, " ")} />}
+              <KV k="Starting amount" v={fmtKES(result.inputs.amount)} />
+              <KV k="Annual yield" v={`${result.inputs.annualYieldPct}%`} />
+              <KV k="Period" v={`${result.inputs.months} month${result.inputs.months === 1 ? "" : "s"}`} />
+              <KV k="Estimated annual gross income" v={fmtKES(result.grossYearly)} />
+              <KV k="Estimated monthly gross equivalent" v={fmtKES2(result.monthlyEquivalent)} />
+              <KV k="Estimated daily gross equivalent" v={fmtKES2(result.dailyEquivalent)} />
+              <KV k="Projected gross value" v={fmtKES(result.projectedGross)} />
+            </div>
+            <div className="rounded-xl border border-border/60 bg-muted/30 px-3 py-2.5 text-xs leading-relaxed text-muted-foreground">
+              How to read this: annual yield is the yearly rate shown by the fund. The monthly estimate is a rough split of the yearly gross return. Projected gross value is only an estimate before fees, taxes, and future yield changes.
+            </div>
+          </div>
+        </Section>
+
+        <CollapsibleDetails title="Notes">
+          <p className="text-xs text-muted-foreground">
+            This is a projection, not a guarantee. Actual fund distributions can differ because of fees, taxes, compounding methods, and changing yields.
+          </p>
+        </CollapsibleDetails>
+        <Disclaimer text={result.disclaimer} />
+      </ResultShell>
+    );
+  }
+
   // Numeric scenario layout
   let calcs: React.ReactNode = null;
   let importantNotes: React.ReactNode = (
@@ -931,27 +978,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     </p>
   );
 
-  if (result.kind === "mmf") {
-    calcs = (
-      <>
-        {result.inputs.productName && <KV k="Selected fund" v={result.inputs.productName} />}
-        {result.inputs.fundType && <KV k="Fund type" v={result.inputs.fundType.replace(/_/g, " ")} />}
-        <KV k="Initial amount" v={fmtKES(result.inputs.amount)} />
-        <KV k="Annual yield" v={`${result.inputs.annualYieldPct}%`} />
-        <KV k="Period" v={`${result.inputs.months} months`} />
-        <KV k="Estimated annual gross income" v={fmtKES(result.grossYearly)} />
-        <KV k="Estimated monthly gross equivalent" v={fmtKES2(result.monthlyEquivalent)} />
-        <KV k="Estimated daily gross equivalent (365-day simple estimate)" v={fmtKES2(result.dailyEquivalent)} />
-        <KV k="Projected gross value" v={fmtKES(result.projectedGross)} />
-      </>
-    );
-    importantNotes = (
-      <p className="text-xs text-muted-foreground">
-        This is a projection, not a guarantee. Actual fund distributions can differ because of
-        fees, taxes, compounding methods, and changing yields.
-      </p>
-    );
-  } else if (result.kind === "stock-move") {
+  if (result.kind === "stock-move") {
     const Icon = result.direction === "up" ? TrendingUp : TrendingDown;
     const color = result.direction === "up" ? "text-success" : "text-destructive";
     calcs = (
@@ -977,13 +1004,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
   }
 
   const metricCards =
-    result.kind === "mmf" ? (
-      <SummaryMetricGrid>
-        <SummaryMetricCard className="border-0 bg-muted/30 shadow-none" label="Projected gross" value={fmtKES(result.projectedGross)} />
-        <SummaryMetricCard className="border-0 bg-muted/30 shadow-none" label="Monthly equivalent" value={fmtKES2(result.monthlyEquivalent)} />
-        <SummaryMetricCard className="border-0 bg-muted/30 shadow-none" label="Annual yield" value={`${result.inputs.annualYieldPct}%`} sublabel={fmtKES(result.inputs.amount)} />
-      </SummaryMetricGrid>
-    ) : result.kind === "stock-move" ? (
+    result.kind === "stock-move" ? (
       <SummaryMetricGrid>
         <SummaryMetricCard label="New value" value={fmtKES(result.newValue)} />
         <SummaryMetricCard label="Profit / loss" value={`${result.delta >= 0 ? "+" : ""}${fmtKES(result.delta)}`} valueClassName={signedColorClass(result.delta)} />
@@ -992,23 +1013,23 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
     ) : null;
 
   return (
-    <ResultShell className={result.kind === "mmf" ? "border-0 bg-transparent p-0 shadow-none" : ""}>
+    <ResultShell>
       {metricCards}
-      <Section className={result.kind === "mmf" ? "border-0 bg-transparent p-1 shadow-none" : ""} icon={<Calculator className="h-3 w-3" />} title="Calculations">
+      <Section icon={<Calculator className="h-3 w-3" />} title="Calculations">
         <div>{calcs}</div>
       </Section>
-      
-        <CollapsibleDetails className={result.kind === "mmf" ? "border-0 bg-muted/30 shadow-none" : ""} title="Assumptions">
-<ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
+
+      <CollapsibleDetails title="Assumptions">
+        <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
           {result.assumptions.map((a, i) => (
             <li key={i}>{sanitizeOutput(a)}</li>
           ))}
         </ul>
-        </CollapsibleDetails>
-      
-        <CollapsibleDetails className={result.kind === "mmf" ? "border-0 bg-muted/30 shadow-none" : ""} title="Notes">
-{importantNotes}
-        </CollapsibleDetails>
+      </CollapsibleDetails>
+
+      <CollapsibleDetails title="Notes">
+        {importantNotes}
+      </CollapsibleDetails>
       <Disclaimer text={result.disclaimer} />
     </ResultShell>
   );
