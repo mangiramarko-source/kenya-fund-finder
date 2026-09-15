@@ -302,6 +302,7 @@ const AiLabPage = () => {
               result:
                 result?.kind === "refusal" || result?.kind === "unknown" ? undefined : result,
               followUps: output.followUps,
+              actions: output.actions,
               contextNote: output.contextNote,
               clarification: output.clarification,
             }),
@@ -352,6 +353,7 @@ const AiLabPage = () => {
                 text: output.text,
                 result: result?.kind === "refusal" || result?.kind === "unknown" ? undefined : result,
                 followUps: output.followUps,
+                actions: output.actions,
                 contextNote: output.contextNote,
                 clarification: output.clarification,
               }),

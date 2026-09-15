@@ -184,7 +184,9 @@ function composeHypotheticalNarrative(result: RouterResult): string | null {
           `Amount: ${fmtKes(inputs.amount)}`,
           `Instrument: ${inputs.symbol} (${inputs.name})`,
           `Price basis: ${fmtKes(inputs.latestPrice)} per share (latest available KenyaFundFinder price)`,
-          "Period: current exposure snapshot (not a holding-period forecast)",
+          result.projection
+            ? `Projection period: ${result.projection.months} month${result.projection.months === 1 ? "" : "s"}, using illustrative annual share-price-change assumptions (not a forecast)`
+            : "Period: current exposure snapshot (not a holding-period forecast)",
         ],
         whatCouldChange: STOCK_WHAT_COULD_CHANGE,
         important: NOT_RECOMMENDATION_LINE,
@@ -219,6 +221,9 @@ function composeHypotheticalNarrative(result: RouterResult): string | null {
           inputs.fxRate == null
             ? "No FX conversion required"
             : `FX rate: ${inputs.fxRate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} KES per ${inputs.quoteCurrency}`,
+          ...(inputs.holdingMonths != null
+            ? [`Holding period: ${inputs.holdingMonths} month${inputs.holdingMonths === 1 ? "" : "s"} at the current snapshot; no future price or FX rate is assumed`]
+            : []),
         ],
         whatCouldChange: [
           "Commodity benchmark prices can rise or fall",
@@ -314,10 +319,13 @@ function composeIntro(result: RouterResult, prompt: string): string {
     }
 
     case "explainer":
+      if (result.title === "Getting started with investing") {
+        return "Start with five simple words: stock, MMF, yield, dividend, and risk. Use Learn for short lessons, Stocks to explore published share information, and MMFs to compare fund information. Then use AI Lab to ask what any word means or to see a neutral example.";
+      }
       return `Here's an educational explainer on "${result.title.replace(/\?$/, "")}". This is general information — not personal financial advice.`;
 
     case "fx-conversion":
-      return `Here's an estimated currency conversion using the latest available FX rate shown in KenyaFundFinder (${result.inputs.rateLabel}). Actual provider rates may differ.`;
+      return `Here's an estimated currency conversion using the latest available FX rate shown in KenyaFundFinder (${result.inputs.rateLabel}).${result.inputs.holdingMonths != null ? ` Your ${result.inputs.holdingMonths}-month duration is shown as a current-rate holding snapshot, not a future exchange-rate forecast.` : ""} Actual provider rates may differ.`;
 
     case "fx-move":
       return `Here's a hypothetical FX move scenario for ${result.inputs.pair} if the rate moves by ${result.inputs.movementPct}%. It does not predict future exchange rates.`;
@@ -326,7 +334,7 @@ function composeIntro(result: RouterResult, prompt: string): string {
       return `Here's a hypothetical ${result.inputs.name} scenario if the value moves by ${result.inputs.movementPct}%. It does not predict future commodity prices.`;
 
     case "commodity-amount":
-      return `Here's an estimated ${result.inputs.name} exposure using the latest available KenyaFundFinder commodity price${result.inputs.fxRate == null ? "" : " and FX rate"}. It does not predict future commodity prices.`;
+      return `Here's an estimated ${result.inputs.name} exposure using the latest available KenyaFundFinder commodity price${result.inputs.fxRate == null ? "" : " and FX rate"}.${result.inputs.holdingMonths != null ? ` Your ${result.inputs.holdingMonths}-month duration is a current-value snapshot, not a future commodity-price forecast.` : ""} It does not predict future commodity prices.`;
 
     case "news-summary":
       return `Here are matching stored news items from KenyaFundFinder data${result.articles.length > 0 ? ` (${result.articles.length} article${result.articles.length === 1 ? "" : "s"})` : ""}. This does not predict price movement.`;
@@ -423,10 +431,11 @@ function followUpsForResult(result: RouterResult, prompt: string): string[] {
     case "explainer":
       if (result.title === "Getting started with investing") {
         return capFollowUps([
-          "Explain MMFs in simple language",
-          "What is the difference between an MMF and a stock?",
-          "Explain investment risk",
-        ]);
+          "What is a stock?",
+          "What is an MMF?",
+          "Explain risk",
+          "Explain dividend",
+        ], 4);
       }
       return capFollowUps([
         "KES 10,000 in SCOM",
@@ -537,6 +546,8 @@ export function composeAssistantResponse(args: {
 export function composeCapabilitiesGuide(): { text: string; followUps: string[] } {
   const text = withBubbleDisclaimer(
     [
+      "KenyaFundFinder helps Kenyan investors learn about and compare unit trusts and MMFs, NSE stocks, exchange rates, commodities, market news, calculators, and neutral scenarios.",
+      "",
       "You can ask about:",
       "",
       "1. Data lookups",

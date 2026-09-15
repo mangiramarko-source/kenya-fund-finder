@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useRef, useState, type FormEvent } from "react";
 import { ArrowRight, ArrowUp, Search, Sparkles, ThumbsDown, ThumbsUp } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { Link } from "react-router-dom";
 import remarkGfm from "@/lib/remarkGfmSafe";
 import ScenarioResult from "@/components/ai-lab/ScenarioResult";
 import {
@@ -207,7 +208,7 @@ const AiLabChat = ({
               }
 
               const compareState = compareStateByMessageId[msg.id];
-              const followUps = capFollowUps(msg.followUps ?? []);
+              const followUps = capFollowUps(msg.followUps ?? [], 4);
               const showResult = shouldShowResultCard(msg);
               const isPending = msg.status === "pending";
 
@@ -315,6 +316,20 @@ const AiLabChat = ({
                         <ThumbsDown className="h-3.5 w-3.5" />
                       </button>
                     </div>
+                  )}
+
+                  {!isPending && (msg.actions?.length ?? 0) > 0 && (
+                    <nav className="flex flex-wrap gap-2 pt-1" aria-label="Explore KenyaFundFinder">
+                      {msg.actions!.map((action) => (
+                        <Link
+                          key={action.to}
+                          to={action.to}
+                          className="inline-flex items-center rounded-full border border-emerald-500/30 bg-emerald-500/10 px-3 py-1.5 text-xs font-semibold text-emerald-700 transition-colors hover:bg-emerald-500/20 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:text-emerald-300"
+                        >
+                          {action.label}
+                        </Link>
+                      ))}
+                    </nav>
                   )}
 
                   {followUps.length > 0 && (

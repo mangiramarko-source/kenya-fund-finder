@@ -70,6 +70,13 @@ describe("ai-lab-assist public guardrails", () => {
     expect(source).not.toContain("body.catalog");
     expect(source).toContain('topic "getting-started"');
     expect(source).toContain("asset-amount");
+    expect(source).toContain("const PLATFORM_GUIDE_TEXT");
+    expect(source).toContain('action: "capabilities"');
+    expect(source).toContain("A parser/provider failure or an unfamiliar question is not an outage");
+    expect(source).toContain("function parsePeriodMonths");
+    expect(source).toContain("applyDeterministicDurationFrame");
+    expect(source).toContain("current-rate holding snapshot, not a future exchange-rate forecast");
+    expect(source).toContain("current-value holding snapshot, not a future price or FX-rate forecast");
   });
 
   it("returns the complete stock-amount card shape expected by the client", () => {

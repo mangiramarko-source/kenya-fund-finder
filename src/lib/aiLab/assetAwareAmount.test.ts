@@ -41,34 +41,48 @@ describe("asset-aware amount scenarios", () => {
   });
 
   it("uses the matched fund's published yield rather than the average", () => {
-    const result = routePrompt("put 100k in Etica MMF", ctx);
+    const result = routePrompt("put 100k in Etica MMF for 12 months", ctx);
     expect(result.kind).toBe("mmf");
     if (result.kind === "mmf") {
       expect(result.inputs.annualYieldPct).toBe(12);
+      expect(result.inputs.months).toBe(12);
       expect(result.grossYearly).toBe(12_000);
       expect(result.assumptions.join(" ")).toContain("Etica Money Market Fund");
     }
   });
 
   it.each([
-    ["put 100k in USD", 100_000],
+    ["put 3000ksh in SCOM for 2 months", 2],
+    ["KES 3,000 in Safaricom for 1 year", 12],
+  ])("keeps a stated stock duration for %s", (prompt, months) => {
+    const result = routePrompt(prompt, ctx);
+    expect(result.kind).toBe("stock-amount");
+    if (result.kind === "stock-amount") {
+      expect(result.projection?.months).toBe(months);
+    }
+  });
+
+  it.each([
+    ["put 100k in USD for 2 months", 100_000, 2],
     ["buy dollars with 50k", 50_000],
-  ])("defaults an FX amount prompt to a KES conversion: %s", (prompt, amount) => {
+  ])("defaults an FX amount prompt to a KES conversion: %s", (prompt, amount, holdingMonths?) => {
     const result = routePrompt(prompt, ctx);
     expect(result.kind).toBe("fx-conversion");
     if (result.kind === "fx-conversion") {
       expect(result.inputs.amount).toBe(amount);
       expect(result.inputs.fromCurrency).toBe("KES");
       expect(result.inputs.toCurrency).toBe("USD");
+      expect(result.inputs.holdingMonths).toBe(holdingMonths);
     }
   });
 
   it("converts KES through the catalog FX rate before estimating commodity units", () => {
-    const result = routePrompt("invest 100k in gold", ctx);
+    const result = routePrompt("invest 100k in gold for 12 months", ctx);
     expect(result.kind).toBe("commodity-amount");
     if (result.kind === "commodity-amount") {
       expect(result.inputs.quoteCurrency).toBe("USD");
       expect(result.inputs.fxRate).toBe(125);
+      expect(result.inputs.holdingMonths).toBe(12);
       expect(result.quoteAmount).toBe(800);
       expect(result.estimatedUnits).toBeCloseTo(0.32, 4);
     }

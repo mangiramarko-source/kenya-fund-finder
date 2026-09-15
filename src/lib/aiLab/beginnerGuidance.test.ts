@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, it, vi } from "vitest";
 import { processAiLabUserPrompt } from "./chat";
 import { findResponseQualityIssue } from "./safety";
 import { getExplainerText } from "./scenarios";
@@ -21,6 +21,7 @@ const ctx: MarketContext = {
 
 const BEGINNER_PROMPTS = [
   "I am new to investing, what do I do?",
+  "I’m new to investing. Where should I start learning?",
   "i'm new to investing",
   "I am new to stocks",
   "how do I start investing?",
@@ -60,15 +61,30 @@ describe("beginner investing guidance", () => {
   }
 
   it("returns beginner follow-ups that lead to maintained explainers", async () => {
-    const out = await processAiLabUserPrompt("I am new to investing, what do I do?", ctx, null, { naturalLanguage: true });
+    const interpreter = vi.fn();
+    const out = await processAiLabUserPrompt("I’m new to investing. Where should I start learning?", ctx, null, {
+      naturalLanguage: true,
+      serverAuthoritative: true,
+      interpreter,
+    });
     expect(out.result?.kind).toBe("explainer");
+    expect(out.text).toContain("Start with five simple words");
     expect(out.followUps).toEqual([
-      "Explain MMFs in simple language",
-      "What is the difference between an MMF and a stock?",
-      "Explain investment risk",
+      "What is a stock?",
+      "What is an MMF?",
+      "Explain risk",
+      "Explain dividend",
     ]);
+    expect(out.actions).toEqual([
+      { label: "Open Learn", to: "/learn" },
+      { label: "Explore Stocks", to: "/stocks" },
+      { label: "Explore MMFs", to: "/funds" },
+    ]);
+    expect(interpreter).not.toHaveBeenCalled();
+    expect(routePrompt(out.followUps![0], ctx).kind).toBe("explainer");
     expect(routePrompt(out.followUps![1], ctx).kind).toBe("explainer");
     expect(routePrompt(out.followUps![2], ctx).kind).toBe("explainer");
+    expect(routePrompt(out.followUps![3], ctx).kind).toBe("explainer");
   });
 
   it("keeps product-selection questions behind the refusal boundary", () => {

@@ -161,6 +161,8 @@ export interface FxConversionScenarioResult {
     toCurrency: string;
     rate: number;
     rateLabel: string;
+    /** A stated holding duration is informational only; no future rate is assumed. */
+    holdingMonths?: number;
   };
   convertedAmount: number;
   assumptions: string[];
@@ -212,6 +214,8 @@ export interface CommodityAmountScenarioResult {
     valueLabel: string;
     quoteCurrency: string;
     fxRate: number | null;
+    /** A stated holding duration is informational only; no future price is assumed. */
+    holdingMonths?: number;
   };
   quoteAmount: number;
   estimatedUnits: number;
@@ -226,6 +230,7 @@ export function calculateFxConversionScenario(
   toCurrency: string,
   rate: number,
   rateLabel: string,
+  holdingMonths?: number | null,
 ): FxConversionScenarioResult {
   const from = fromCurrency.toUpperCase();
   const to = toCurrency.toUpperCase();
@@ -237,11 +242,21 @@ export function calculateFxConversionScenario(
   return {
     kind: "fx-conversion",
     summary: FX_CONVERSION_SUMMARY,
-    inputs: { amount, fromCurrency: from, toCurrency: to, rate, rateLabel },
+    inputs: {
+      amount,
+      fromCurrency: from,
+      toCurrency: to,
+      rate,
+      rateLabel,
+      ...(holdingMonths != null && holdingMonths > 0 ? { holdingMonths } : {}),
+    },
     convertedAmount,
     assumptions: [...FX_CONVERSION_ASSUMPTIONS],
     importantNotes: [
       "Mid-rate estimate only — bank, forex bureau, and mobile money rates may differ.",
+      ...(holdingMonths != null && holdingMonths > 0
+        ? [`The ${holdingMonths}-month duration is a current-rate holding snapshot, not a future exchange-rate forecast.`]
+        : []),
     ],
     disclaimer: STANDARD_DISCLAIMER,
   };
@@ -312,6 +327,7 @@ export function calculateCommodityAmountScenario(
   asset: ComparableAsset,
   quoteCurrency: string,
   fxRate: number | null,
+  holdingMonths?: number | null,
 ): CommodityAmountScenarioResult {
   const quoteAmount = quoteCurrency === "KES"
     ? amountKes
@@ -329,6 +345,7 @@ export function calculateCommodityAmountScenario(
       valueLabel: asset.valueLabel,
       quoteCurrency,
       fxRate,
+      ...(holdingMonths != null && holdingMonths > 0 ? { holdingMonths } : {}),
     },
     quoteAmount,
     estimatedUnits,
@@ -343,6 +360,9 @@ export function calculateCommodityAmountScenario(
     importantNotes: [
       "Commodity units are an estimate based on the published quote unit.",
       "Actual commodity products and provider prices can differ materially from the quoted benchmark.",
+      ...(holdingMonths != null && holdingMonths > 0
+        ? [`The ${holdingMonths}-month duration shows the current estimated exposure only; it does not predict the commodity price or FX rate at that time.`]
+        : []),
     ],
     disclaimer: STANDARD_DISCLAIMER,
   };
@@ -1019,10 +1039,10 @@ export const EXPLAINERS: Record<string, ExplainerResult> = {
     kind: "explainer",
     title: "Getting started with investing",
     paragraphs: [
-      "Starting does not require picking a product immediately. Begin by naming a goal, the amount you can afford to set aside, and when you may need the money.",
-      "Keep an emergency buffer for near-term needs before taking investment risk. Then learn how money market funds, treasury bills, bonds, and shares differ in risk, access to cash, fees, and how their values can change.",
-      "Use KenyaFundFinder to compare current published information such as yields, fees, liquidity terms, and share-price movement. Read the relevant product documents before making a decision.",
-      "Take one topic at a time: start with how an MMF works, then compare it with shares, and learn how risk, fees, taxes, and time horizon affect an outcome.",
+      "You do not need to pick an investment immediately. Start by naming a goal, the amount you can afford to set aside, and when you may need the money.",
+      "Learn five useful words first: a stock is part-ownership of a company; an MMF is a pooled fund holding short-term investments; yield is the return shown as a percentage; a dividend is money a company may pay shareholders; and risk is the chance that an outcome differs from what you expected.",
+      "Then explore KenyaFundFinder one step at a time: use Learn for plain-language lessons, Stocks for published share information, and MMFs for fund information and comparisons. Use AI Lab to ask what each word means or to see neutral examples.",
+      "Keep an emergency buffer for near-term needs before taking investment risk. Compare risk, access to cash, fees, taxes, and time horizon, then read the relevant product documents before making a decision.",
     ],
     assumptions: [
       "This is general education, not a personal recommendation or a suitability assessment.",

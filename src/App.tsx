@@ -11,6 +11,7 @@ import Layout from "@/components/Layout";
 import { ScrollToTop } from "./components/ScrollToTop";
 import CompareBar from "./components/compare/CompareBar";
 import { Analytics } from "@vercel/analytics/react";
+import { SpeedInsights } from "@vercel/speed-insights/react";
 import AnalyticsTracker from "./components/AnalyticsTracker";
 import MarketPageLoader from "./components/MarketPageLoader";
 import { getPageLoadingMessage } from "./lib/pageLoadingMessage";
@@ -179,6 +180,7 @@ const App = () => (
                 </Suspense>
                 <CookieConsent />
                 <Analytics />
+                <SpeedInsights />
               </NotificationProvider>
             </BrowserRouter>
           </CompareProvider>

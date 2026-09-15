@@ -293,7 +293,14 @@ function tryAssetAmountRoute(
         `Uses ${asset.name}'s latest published annual yield from KenyaFundFinder.`,
       ]);
     case "fx":
-      return calculateFxConversionScenario(amount, "KES", asset.symbol, asset.value, asset.valueLabel);
+      return calculateFxConversionScenario(
+        amount,
+        "KES",
+        asset.symbol,
+        asset.value,
+        asset.valueLabel,
+        parseMonths(prompt),
+      );
     case "commodity": {
       const quoteCurrency = commodityQuoteCurrency(asset.valueLabel);
       if (!quoteCurrency) {
@@ -307,7 +314,7 @@ function tryAssetAmountRoute(
           `I found ${asset.name}, but I need the current ${quoteCurrency}/KES rate to estimate units from KES.`,
         );
       }
-      return calculateCommodityAmountScenario(amount, asset, quoteCurrency, rate);
+      return calculateCommodityAmountScenario(amount, asset, quoteCurrency, rate, parseMonths(prompt));
     }
   }
 }
@@ -786,7 +793,8 @@ function routeExplainer(lower: string): ScenarioResult | null {
     if (/\b(?:mmf|money market)\b.*\b(?:vs|versus|difference|stock|share)\b|\b(?:stock|share)\b.*\b(?:vs|versus|difference|mmf|money market)\b/.test(lower)) {
       return EXPLAINERS["stock-vs-mmf"];
     }
-    if (/\b(?:investment|investing)\s+risk\b|\brisk\s+of\s+investing\b/.test(lower)) {
+    if (/downside risk/.test(lower)) return EXPLAINERS["downside-risk"];
+    if (/\b(?:explain\s+)?risk\b|\b(?:investment|investing)\s+risk\b|\brisk\s+of\s+investing\b/.test(lower)) {
       return EXPLAINERS["investment-risk"];
     }
     if (/(t-?bill|treasury bill)/.test(lower)) return EXPLAINERS["t-bills"];
@@ -798,7 +806,6 @@ function routeExplainer(lower: string): ScenarioResult | null {
     if (/unit trust/.test(lower)) return EXPLAINERS["unit-trust"];
     if (/\betf\b|exchange traded fund/.test(lower)) return EXPLAINERS.etf;
     if (/capital gain/.test(lower)) return EXPLAINERS["capital-gain"];
-    if (/downside risk/.test(lower)) return EXPLAINERS["downside-risk"];
     if (/(fund fee|management fee|fees)/.test(lower)) return EXPLAINERS.fees;
     if (/liquidity/.test(lower)) return EXPLAINERS.liquidity;
     if (/volatil/.test(lower)) return EXPLAINERS.volatility;

@@ -554,6 +554,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <SummaryMetricCard label="Amount in" value={amountLabel} />
           <SummaryMetricCard label="Converted out" value={convertedLabel} />
           <SummaryMetricCard label="Rate used" value={inputs.rate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} sublabel={inputs.rateLabel} />
+          {inputs.holdingMonths != null && <SummaryMetricCard label="Holding period" value={`${inputs.holdingMonths} month${inputs.holdingMonths === 1 ? "" : "s"}`} sublabel="Current-rate snapshot" />}
         </SummaryMetricGrid>
         
         <CollapsibleDetails title="Assumptions">
@@ -569,6 +570,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <KV k="To currency" v={inputs.toCurrency} />
           <KV k="Rate used" v={`${inputs.rate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} (${inputs.rateLabel})`} />
           <KV k="Estimated converted amount" v={convertedLabel} />
+          {inputs.holdingMonths != null && <KV k="Holding period" v={`${inputs.holdingMonths} month${inputs.holdingMonths === 1 ? "" : "s"} (not a rate forecast)`} />}
         </Section>
         
         <CollapsibleDetails title="Notes">
@@ -655,6 +657,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           <SummaryMetricCard label="Starting amount" value={fmtKES(inputs.amountKes)} />
           <SummaryMetricCard label="Quote-currency exposure" value={quoteAmount} />
           <SummaryMetricCard label="Estimated quoted units" value={result.estimatedUnits.toLocaleString("en-KE", { maximumFractionDigits: 4 })} sublabel={inputs.symbol} />
+          {inputs.holdingMonths != null && <SummaryMetricCard label="Holding period" value={`${inputs.holdingMonths} month${inputs.holdingMonths === 1 ? "" : "s"}`} sublabel="Current-value snapshot" />}
         </SummaryMetricGrid>
         <CollapsibleDetails title="Assumptions">
           <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">
@@ -668,6 +671,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
           {inputs.fxRate != null && <KV k="FX rate used" v={`${inputs.fxRate.toLocaleString("en-KE", { maximumFractionDigits: 4 })} KES per ${inputs.quoteCurrency}`} />}
           <KV k="Quote-currency exposure" v={quoteAmount} />
           <KV k="Estimated quoted units" v={result.estimatedUnits.toLocaleString("en-KE", { maximumFractionDigits: 4 })} />
+          {inputs.holdingMonths != null && <KV k="Holding period" v={`${inputs.holdingMonths} month${inputs.holdingMonths === 1 ? "" : "s"} (not a price forecast)`} />}
         </Section>
         <CollapsibleDetails title="Notes">
           <ul className="list-disc pl-4 space-y-1 text-xs text-muted-foreground">

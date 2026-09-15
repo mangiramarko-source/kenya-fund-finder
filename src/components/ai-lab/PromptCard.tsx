@@ -3,7 +3,7 @@ import { Send } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
-export const SUGGESTED_PROMPTS = [
+const SUGGESTED_PROMPTS = [
   "KES 10,000 in SCOM",
   "KES 100,000 to USD",
   "Latest news about Safaricom",

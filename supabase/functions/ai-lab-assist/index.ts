@@ -29,6 +29,12 @@ const MAX_INPUT_CHARS = 1024;
 const RATE_WINDOW_SECONDS = 60;
 const RATE_MAX_REQUESTS = 10;
 
+const PLATFORM_GUIDE_TEXT = [
+  "KenyaFundFinder is a financial education and market-comparison platform for Kenyan investors.",
+  "You can explore unit trusts and MMFs, NSE stocks, exchange rates, commodities, market news, comparisons, calculators, neutral scenarios, and Learn Academy explanations.",
+  "Tell me the company, fund, currency, amount, or topic you want to explore, and I will help with a data lookup, education, or a neutral illustration.",
+].join(" ");
+
 interface ServerResult {
   kind: string;
   text: string;
@@ -72,6 +78,7 @@ Use explainer topic "getting-started" for safe beginner education such as "I am 
 Use refusal for requests to recommend, choose, tell the user whether to buy/sell/hold, predict, or identify the best/safest investment. A factual request for the highest published yield or largest recorded move is a lookup, not advice.
 For a request such as "stocks report today", "MMF summary today", "FX rates brief", "commodities update", "market news summary", "market brief", or "daily market report", use action "overview", no entity mentions, and topic "daily-market-report:stocks", "daily-market-report:mmf", "daily-market-report:fx", "daily-market-report:commodities", "daily-market-report:news", or "daily-market-report:all". This asks for a factual server-data brief, not advice.
 Use asset-amount for a neutral amount paired with a catalog asset, such as "put 100k in ABSA", "buy dollars with 50k", or "invest 50k in gold". This is an illustration, not a recommendation.
+When a neutral scenario includes a duration such as "for 2 months", "for 12 months", or "for 1 year", always extract it as periodMonths. A stock result may show clearly labelled illustrative annual-price-change outcomes. For FX and commodities, duration means a current-value holding snapshot only: never predict a future rate or price unless the user explicitly supplies a hypothetical percentage movement.
 Use mmf-yield-change for explicit old/new yield comparisons such as "yield drops from 11% to 9%" or "Fund A at 11% versus Fund B at 9%". Put the old yield in percentage and the new yield in secondPercentage. Do not require a catalogue entity for a hypothetical yield comparison.
 For "compare KCB", keep action compare with one primary entity mention; do not invent the second item. For a bare brand such as "KCB", do not decide whether it is a stock or fund.
 Never answer the question. Never create canonical IDs. Never supply prices, yields, returns, volume, market cap, summaries, URLs, or facts. Extract numeric assumptions only when explicitly present in the user prompt or supplied context. Output JSON only.`;
@@ -160,6 +167,23 @@ function parseAmountToken(prompt: string): number | undefined {
   return base * (match[2]?.toLowerCase() === "k" ? 1_000 : match[2]?.toLowerCase() === "m" ? 1_000_000 : 1);
 }
 
+/** Convert explicit duration wording to months without treating the amount as a duration. */
+function parsePeriodMonths(prompt: string): number | undefined {
+  const explicitMonths = prompt.match(/\b(?:for\s+)?(\d{1,4})\s*(?:months?|mos?\.?|mths?)\b/i);
+  if (explicitMonths) {
+    const months = Number(explicitMonths[1]);
+    return Number.isInteger(months) && months >= 1 && months <= 1200 ? months : undefined;
+  }
+  const explicitYears = prompt.match(/\b(?:for\s+)?(\d{1,3})\s*(?:years?|yrs?\.?)\b/i);
+  if (explicitYears) {
+    const years = Number(explicitYears[1]);
+    const months = years * 12;
+    return Number.isInteger(years) && years >= 1 && months <= 1200 ? months : undefined;
+  }
+  if (/\bfor\s+(?:a|one)\s+year\b/i.test(prompt)) return 12;
+  return undefined;
+}
+
 function parseYieldPair(prompt: string): [number, number] | null {
   const fromTo = prompt.match(/\bfrom\s+(-?\d+(?:\.\d+)?)\s*%?\s+(?:to|down to|up to)\s+(-?\d+(?:\.\d+)?)\s*%/i);
   if (fromTo) return [Number(fromTo[1]), Number(fromTo[2])];
@@ -223,6 +247,16 @@ function applyDeterministicComparisonFrame(
   };
 }
 
+/** Do not depend on the model to preserve an explicit duration from the user. */
+function applyDeterministicDurationFrame(prompt: string, frame: QuerySemanticFrameV1): QuerySemanticFrameV1 {
+  const periodMonths = parsePeriodMonths(prompt);
+  if (periodMonths == null || frame.action !== "scenario") return frame;
+  return {
+    ...frame,
+    parameters: { ...frame.parameters, periodMonths },
+  };
+}
+
 function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanBody>["context"]): QuerySemanticFrameV1 | null {
   const text = prompt.trim();
   const lower = text.toLowerCase();
@@ -235,6 +269,7 @@ function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanB
     return dailyMarketReportFrame(reportTopic);
   }
   const amount = parseAmountToken(text);
+  const periodMonths = parsePeriodMonths(text);
   const yieldPair = parseYieldPair(text);
   if (yieldPair) {
     return {
@@ -247,7 +282,7 @@ function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanB
         amount,
         percentage: yieldPair[0],
         secondPercentage: yieldPair[1],
-        periodMonths: 12,
+        periodMonths: periodMonths ?? 12,
         scenarioKind: "mmf-yield-change",
       },
       contextReferences: [],
@@ -265,7 +300,7 @@ function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanB
         amount: amount ?? context.lastAmount,
         percentage: context.lastFromYieldPct,
         secondPercentage: context.lastToYieldPct,
-        periodMonths: 12,
+        periodMonths: periodMonths ?? 12,
         scenarioKind: "mmf-yield-change",
       },
       contextReferences: ["last_percentage"],
@@ -288,7 +323,7 @@ function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanB
       confidence: "high",
       entityMentions: [],
       requestedMetrics: [],
-      parameters: { amount, currency: context.lastCurrency ?? "KES" },
+      parameters: { amount, currency: context.lastCurrency ?? "KES", ...(periodMonths != null ? { periodMonths } : {}) },
       contextReferences: ["last_entity"],
     };
   }
@@ -315,6 +350,7 @@ function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanB
         percentage: downward ? -magnitude : magnitude,
         scenarioKind: currency ? "fx-move" : commodity ? "commodity-move" : "stock-move",
         amount: context.lastAmount,
+        ...(periodMonths != null ? { periodMonths } : {}),
       }, contextReferences: context.lastEntity && !commodity && !currency && !stock ? ["last_entity"] : [],
     };
   }
@@ -327,6 +363,7 @@ function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanB
       requestedMetrics: [], parameters: {
         amount, currency: detectedCurrency ?? "KES",
         scenarioKind: currency ? "fx-conversion" : "asset-amount",
+        ...(periodMonths != null ? { periodMonths } : {}),
       }, contextReferences: [],
     };
   }
@@ -338,11 +375,26 @@ function fallbackSemanticFrame(prompt: string, context: ReturnType<typeof cleanB
       action: /\b(?:price|rate|yield|value|how much|details?|information|iko aje|bei)\b/i.test(lower) ? "lookup" : "scenario",
       confidence: "medium",
       entityMentions: [{ text: entity, role: "primary", expectedKinds: expectedKinds as CanonicalFinancialEntity["kind"][] | undefined }],
-      requestedMetrics: [], parameters: { amount, currency: currency ?? context.lastCurrency },
+      requestedMetrics: [], parameters: {
+        amount,
+        currency: currency ?? context.lastCurrency,
+        ...(periodMonths != null ? { periodMonths } : {}),
+      },
       contextReferences: context.lastEntity && !commodity && !currency && !stock && !fund ? ["last_entity"] : [],
     };
   }
-  return null;
+  // A parser/provider failure or an unfamiliar question is not an outage. It
+  // is a valid capabilities request that the deterministic server can answer
+  // without inventing market facts or requiring a model response.
+  return {
+    version: QUERY_CONTRACT_VERSION,
+    action: "capabilities",
+    confidence: "low",
+    entityMentions: [],
+    requestedMetrics: [],
+    parameters: {},
+    contextReferences: [],
+  };
 }
 
 type DailyMarketReportTopic = "stocks" | "mmf" | "fx" | "commodities" | "news" | "all";
@@ -775,7 +827,13 @@ async function executeServerFrame(
     }
   }
   if (frame.action === "capabilities" || frame.action === "explainer") {
-    return { result: { kind: "explanation", text: "Ask about a stock, fund, FX rate, commodity, comparison, news item, or a neutral amount scenario.", freshness: serverFreshness() } };
+    return {
+      result: {
+        kind: "explanation",
+        text: `${PLATFORM_GUIDE_TEXT} ${standardDisclaimer()}`,
+        freshness: serverFreshness(),
+      },
+    };
   }
   if (frame.action === "compare") {
     if (entities.length < 2) return { error: "unsupported" };
@@ -968,17 +1026,18 @@ async function executeServerFrame(
   }
   if (scenarioKind === "fx-conversion" || entity.kind === "fx") {
     const converted = Math.round((amount / quote.value) * 100) / 100;
+    const holdingMonths = frame.parameters.periodMonths;
     return {
       result: {
         kind: "fx-conversion",
-        text: `${formatKes(amount)} is approximately ${formatNumber(converted)} ${quote.symbol} at ${formatNumber(quote.value, 4)} KES per 1 ${quote.symbol}. This is an illustrative mid-rate conversion, not a trading recommendation.`,
+        text: `${formatKes(amount)} is approximately ${formatNumber(converted)} ${quote.symbol} at ${formatNumber(quote.value, 4)} KES per 1 ${quote.symbol}.${holdingMonths != null ? ` The ${holdingMonths}-month duration is a current-rate holding snapshot, not a future exchange-rate forecast.` : ""} This is an illustrative mid-rate conversion, not a trading recommendation.`,
         data: {
           entity, quote, amount, convertedAmount: converted, fromCurrency: "KES", toCurrency: quote.symbol,
           routerResult: {
             kind: "fx-conversion", summary: "This scenario estimates a currency conversion using the latest available rate shown in KenyaFundFinder. Actual conversion amounts can differ.",
-            inputs: { amount, fromCurrency: "KES", toCurrency: quote.symbol, rate: quote.value, rateLabel: quote.label }, convertedAmount: converted,
+            inputs: { amount, fromCurrency: "KES", toCurrency: quote.symbol, rate: quote.value, rateLabel: quote.label, ...(holdingMonths != null ? { holdingMonths } : {}) }, convertedAmount: converted,
             assumptions: ["Uses latest available KenyaFundFinder FX data.", "This is an estimated conversion, not a live quote.", "Actual conversion can differ because of spreads, fees, timing, and provider rates."],
-            importantNotes: ["Mid-rate estimate only — bank, forex bureau, and mobile money rates may differ."], disclaimer: standardDisclaimer(),
+            importantNotes: ["Mid-rate estimate only — bank, forex bureau, and mobile money rates may differ.", ...(holdingMonths != null ? [`The ${holdingMonths}-month duration is a current-rate holding snapshot, not a future exchange-rate forecast.`] : [])], disclaimer: standardDisclaimer(),
           },
         },
         freshness: serverFreshness(),
@@ -986,6 +1045,7 @@ async function executeServerFrame(
     };
   }
   if (entity.kind === "commodity") {
+    const holdingMonths = frame.parameters.periodMonths;
     let fxRate: number | null = null;
     if (quote.quoteCurrency !== "KES") {
       const fxEntity = entities.find((candidate) => candidate.kind === "fx" && candidate.sourceKey.toUpperCase() === quote.quoteCurrency);
@@ -1001,14 +1061,14 @@ async function executeServerFrame(
     return {
       result: {
         kind: "commodity-amount",
-        text: `${formatKes(amount)} is approximately ${formatNumber(quoteAmount)} ${quote.quoteCurrency}, or an estimated ${formatNumber(units, 4)} quoted units of ${quote.name}. Quote: ${formatNumber(quote.value)} ${quote.label}${fxRate == null ? "" : `; FX: ${formatNumber(fxRate, 4)} KES per ${quote.quoteCurrency}`}. This is an illustrative exposure, not a prediction.`,
+        text: `${formatKes(amount)} is approximately ${formatNumber(quoteAmount)} ${quote.quoteCurrency}, or an estimated ${formatNumber(units, 4)} quoted units of ${quote.name}. Quote: ${formatNumber(quote.value)} ${quote.label}${fxRate == null ? "" : `; FX: ${formatNumber(fxRate, 4)} KES per ${quote.quoteCurrency}`}.${holdingMonths != null ? ` The ${holdingMonths}-month duration is a current-value exposure snapshot, not a future commodity-price or FX-rate forecast.` : ""} This is an illustrative exposure, not a prediction.`,
         data: {
           entity, quote, amountKes: amount, quoteAmount, estimatedUnits: units, fxRate,
           routerResult: {
             kind: "commodity-amount", summary: `This is an estimated ${quote.name} exposure using the latest available KenyaFundFinder prices and exchange rates. It does not predict future commodity prices.`,
-            inputs: { amountKes: amount, symbol: quote.symbol, name: quote.name, currentValue: quote.value, valueLabel: quote.label, quoteCurrency: quote.quoteCurrency, fxRate }, quoteAmount, estimatedUnits: units,
+            inputs: { amountKes: amount, symbol: quote.symbol, name: quote.name, currentValue: quote.value, valueLabel: quote.label, quoteCurrency: quote.quoteCurrency, fxRate, ...(holdingMonths != null ? { holdingMonths } : {}) }, quoteAmount, estimatedUnits: units,
             assumptions: ["Uses the latest available KenyaFundFinder commodity price.", quote.quoteCurrency === "KES" ? "The commodity price is already quoted in Kenyan shillings." : `Converts KES to ${quote.quoteCurrency} using the latest available KenyaFundFinder FX rate.`, "Excludes product premiums, spreads, storage, taxes, fees, and provider costs."],
-            importantNotes: ["Commodity units are an estimate based on the published quote unit.", "Actual commodity products and provider prices can differ materially from the quoted benchmark."], disclaimer: standardDisclaimer(),
+            importantNotes: ["Commodity units are an estimate based on the published quote unit.", "Actual commodity products and provider prices can differ materially from the quoted benchmark.", ...(holdingMonths != null ? [`The ${holdingMonths}-month duration is a current-value holding snapshot, not a future price or FX-rate forecast.`] : [])], disclaimer: standardDisclaimer(),
           },
         },
         freshness: serverFreshness(),
@@ -1285,7 +1345,8 @@ Deno.serve(async (req) => {
     if (!validated.ok) return json(200, { ok: false, reason: `invalid_frame:${validated.reason}` });
     const dailyReportFrame = applyDeterministicDailyReportFrame(prompt, validated.frame);
     const comparisonFrame = applyDeterministicComparisonFrame(prompt, dailyReportFrame);
-    validated = validateQuerySemanticFrame(applyDeterministicYieldFrame(prompt, comparisonFrame, safeInput.context));
+    const yieldFrame = applyDeterministicYieldFrame(prompt, comparisonFrame, safeInput.context);
+    validated = validateQuerySemanticFrame(applyDeterministicDurationFrame(prompt, yieldFrame));
     if (!validated.ok) return json(200, { ok: false, reason: `invalid_frame:${validated.reason}` });
 
     const context = safeInput.context;

@@ -6,6 +6,7 @@ import {
   trackEvent,
 } from "@/lib/analytics";
 import { initMetaPixel } from "@/lib/metaPixel";
+import * as Sentry from "@sentry/react";
 
 const SESSION_LANDED_KEY = "kff_session_landed";
 
@@ -49,6 +50,12 @@ export const AnalyticsTracker = () => {
     if (lastPathRef.current === path) return;
     lastPathRef.current = path;
 
+    Sentry.metrics.count("kff_page_view", 1, { attributes: { route: path } });
+    const routeStartedAt = performance.now();
+    const routePaint = window.requestAnimationFrame(() => {
+      Sentry.metrics.distribution("kff_route_render_ms", performance.now() - routeStartedAt, { attributes: { route: path } });
+    });
+
     if (path === "/" || path === "/overview") {
       trackEvent("market_page_viewed", { section: "overview" });
     } else if (path === "/funds") {
@@ -91,6 +98,8 @@ export const AnalyticsTracker = () => {
     } else if (path === "/auth") {
       trackEvent("signup_started", { entrypoint: "auth_page" });
     }
+
+    return () => window.cancelAnimationFrame(routePaint);
   }, [location.pathname]);
 
   return null;

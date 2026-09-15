@@ -71,7 +71,7 @@ export default function DesktopAiLabChat() {
             return;
           }
         }
-        setMessages((prev) => prev.map((m) => m.id === pending.id ? { ...createAssistantMessage({ text: output.text, result: output.result?.kind === "refusal" || output.result?.kind === "unknown" ? undefined : output.result, followUps: output.followUps, contextNote: output.contextNote, clarification: output.clarification }), id: pending.id } : m));
+        setMessages((prev) => prev.map((m) => m.id === pending.id ? { ...createAssistantMessage({ text: output.text, result: output.result?.kind === "refusal" || output.result?.kind === "unknown" ? undefined : output.result, followUps: output.followUps, actions: output.actions, contextNote: output.contextNote, clarification: output.clarification }), id: pending.id } : m));
       } catch {
         setMessages((prev) => prev.map((m) => m.id === pending.id ? { ...createAssistantMessage({ text: "Something went wrong while generating that scenario. Please try again.", status: "error" }), id: pending.id } : m));
       }
@@ -108,6 +108,7 @@ export default function DesktopAiLabChat() {
                 text: output.text,
                 result: result?.kind === "refusal" || result?.kind === "unknown" ? undefined : result,
                 followUps: output.followUps,
+                actions: output.actions,
                 contextNote: output.contextNote,
                 clarification: output.clarification,
               }),

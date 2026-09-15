@@ -29,6 +29,8 @@ import { fetchFunds, fetchPublishedNews, type FundFromDB, type NewsFromDB } from
 import { supabase } from "@/integrations/supabase/client";
 import SaveToWatchlistButton from "@/components/watchlist/SaveToWatchlistButton";
 import { trackEvent } from "@/lib/analytics";
+import { canonicalEntityFromSearch } from "@/lib/aiLab/canonicalCatalog";
+import { rankCanonicalEntities } from "../../supabase/functions/_shared/universal-query";
 
 interface SearchDialogProps {
   variant?: "default" | "topbar" | "icon";
@@ -177,29 +179,85 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
   const q = query.trim().toLowerCase();
   const showCat = (c: Category) => category === "all" || category === c;
 
+  const searchCatalog = useMemo(() => [
+    ...funds.map((fund) => canonicalEntityFromSearch({
+      id: fund.id,
+      kind: "fund",
+      subtype: fund.fund_type ?? "money_market",
+      label: fund.name,
+      sourceKey: fund.slug,
+      manager: fund.manager,
+      aliases: [fund.manager, fund.fund_type],
+    })),
+    ...stocks.map((stock) => canonicalEntityFromSearch({
+      id: stock.id,
+      kind: "stock",
+      label: stock.name,
+      sourceKey: stock.symbol,
+      market: "NSE",
+    })),
+    ...rates.map((rate) => canonicalEntityFromSearch({
+      id: rate.id,
+      kind: "fx",
+      label: rate.currency_name,
+      sourceKey: rate.currency_code,
+      market: "KES",
+    })),
+    ...commodities.map((commodity) => canonicalEntityFromSearch({
+      id: commodity.id,
+      kind: "commodity",
+      label: commodity.name,
+      sourceKey: commodity.symbol,
+    })),
+    ...news.map((article) => canonicalEntityFromSearch({
+      id: article.id,
+      kind: "news_topic",
+      subtype: article.category ?? "market_news",
+      label: article.title,
+      sourceKey: String(article.id),
+      aliases: [article.category, article.summary],
+    })),
+    ...PAGES.map((page) => canonicalEntityFromSearch({
+      id: page.path,
+      kind: page.path === "/calculator" ? "calculator" : page.path === "/portfolio" || page.path === "/watchlist" ? "portfolio" : "market_topic",
+      label: page.label,
+      sourceKey: page.path,
+      aliases: [page.keywords],
+    })),
+  ], [funds, stocks, rates, commodities, news]);
+
+  const rankedIds = useMemo(
+    () => new Set(rankCanonicalEntities(q, searchCatalog, 120).map((entity) => entity.id)),
+    [q, searchCatalog],
+  );
+  const hasRanked = useCallback((kind: string, id: string) => !q || rankedIds.has(`${kind}:${id}`), [q, rankedIds]);
+
   const filteredFunds = useMemo(
-    () => (showCat("funds") ? funds.filter((f) => !q || f.name.toLowerCase().includes(q) || f.manager?.toLowerCase().includes(q) || f.slug?.toLowerCase().includes(q)).slice(0, 25) : []),
-    [funds, q, category]
+    () => (showCat("funds") ? funds.filter((f) => hasRanked("fund", f.id)).slice(0, 25) : []),
+    [funds, category, hasRanked]
   );
   const filteredStocks = useMemo(
-    () => (showCat("stocks") ? stocks.filter((s) => !q || s.symbol.toLowerCase().includes(q) || s.name.toLowerCase().includes(q)).slice(0, 25) : []),
-    [stocks, q, category]
+    () => (showCat("stocks") ? stocks.filter((s) => hasRanked("stock", s.id)).slice(0, 25) : []),
+    [stocks, category, hasRanked]
   );
   const filteredRates = useMemo(
-    () => (showCat("rates") ? rates.filter((r) => !q || r.currency_code.toLowerCase().includes(q) || r.currency_name.toLowerCase().includes(q)).slice(0, 25) : []),
-    [rates, q, category]
+    () => (showCat("rates") ? rates.filter((r) => hasRanked("fx", r.id)).slice(0, 25) : []),
+    [rates, category, hasRanked]
   );
   const filteredCommodities = useMemo(
-    () => (showCat("commodities") ? commodities.filter((c) => !q || c.symbol.toLowerCase().includes(q) || c.name.toLowerCase().includes(q)).slice(0, 25) : []),
-    [commodities, q, category]
+    () => (showCat("commodities") ? commodities.filter((c) => hasRanked("commodity", c.id)).slice(0, 25) : []),
+    [commodities, category, hasRanked]
   );
   const filteredNews = useMemo(
-    () => (showCat("news") ? news.filter((n) => !q || n.title.toLowerCase().includes(q) || n.category?.toLowerCase().includes(q) || n.summary?.toLowerCase().includes(q)).slice(0, 25) : []),
-    [news, q, category]
+    () => (showCat("news") ? news.filter((n) => hasRanked("news_topic", n.id)).slice(0, 25) : []),
+    [news, category, hasRanked]
   );
   const filteredPages = useMemo(
-    () => (showCat("pages") ? PAGES.filter((p) => !q || p.label.toLowerCase().includes(q) || p.keywords.includes(q)) : []),
-    [q, category]
+    () => (showCat("pages") ? PAGES.filter((p) => {
+      const kind = p.path === "/calculator" ? "calculator" : p.path === "/portfolio" || p.path === "/watchlist" ? "portfolio" : "market_topic";
+      return hasRanked(kind, p.path);
+    }) : []),
+    [category, hasRanked]
   );
 
   const hasAnyResults =

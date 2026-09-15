@@ -53,6 +53,12 @@ export type AiLabChatStatus =
   | "pending"
   | "error";
 
+/** A deliberately small allow-list of internal learning destinations. */
+export interface AiLabNavigationAction {
+  label: string;
+  to: "/learn" | "/stocks" | "/funds";
+}
+
 export interface AiLabChatMessage {
   id: string;
   role: AiLabChatRole;
@@ -62,6 +68,7 @@ export interface AiLabChatMessage {
   status?: AiLabChatStatus;
   contextNote?: string;
   followUps?: string[];
+  actions?: AiLabNavigationAction[];
   feedback?: "helpful" | "not-helpful";
   clarification?: QueryClarification;
 }
@@ -265,6 +272,7 @@ export function createAssistantMessage(args: {
   status?: AiLabChatStatus;
   contextNote?: string;
   followUps?: string[];
+  actions?: AiLabNavigationAction[];
   clarification?: QueryClarification;
 }): AiLabChatMessage {
   const status = args.status ?? statusFromResult(args.result);
@@ -277,6 +285,7 @@ export function createAssistantMessage(args: {
     status,
     contextNote: args.contextNote,
     followUps: args.followUps,
+    actions: args.actions,
     clarification: args.clarification,
   };
 }
@@ -447,6 +456,7 @@ export interface AiLabPromptOutput {
   text: string;
   result?: RouterResult;
   followUps?: string[];
+  actions?: AiLabNavigationAction[];
   contextNote?: string;
   clarification?: QueryClarification;
 }
@@ -454,6 +464,8 @@ export interface AiLabPromptOutput {
 export interface AiLabPromptOptions {
   sessionContext?: AiLabSessionContext;
   naturalLanguage?: boolean;
+  /** Test and resilience override for the production server-first path. */
+  serverAuthoritative?: boolean;
   interpreter?: (
     prompt: string,
     ctx: MarketContext | null,
@@ -558,13 +570,63 @@ function isExactKnownAssetPrompt(prompt: string, ctx: MarketContext | null): boo
   return [asset.symbol, asset.name, ...asset.aliases].some((name) => name.toLowerCase() === normalized);
 }
 
+/**
+ * Treat platform-help wording as a first-class intent. This is a category of
+ * request (learn how the service works), not a list of memorised sentences.
+ */
+function isPlatformLearningPrompt(prompt: string): boolean {
+  const normalized = prompt.toLowerCase();
+  const mentionsPlatform = /\b(?:kenyafundfinder|kenya fund finder|website|site|platform)\b/.test(normalized);
+  const hasLearningPurpose = /\b(?:learn|teach|understand|help|what|how|guide|about|new)\b/.test(normalized);
+  return mentionsPlatform && hasLearningPurpose;
+}
+
+/** Match catalog aliases in a sentence so a generic glossary entry never hides a named asset. */
+function mentionsKnownAsset(prompt: string, ctx: MarketContext | null): boolean {
+  const normalizedPrompt = ` ${prompt.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim()} `;
+  return (ctx?.assets ?? []).some((asset) =>
+    [asset.symbol, asset.name, ...asset.aliases].some((alias) => {
+      const normalizedAlias = alias.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim();
+      return normalizedAlias.length >= 2 && normalizedPrompt.includes(` ${normalizedAlias} `);
+    }),
+  );
+}
+
 function isClearlyStructuredLookup(prompt: string, ctx: MarketContext | null): boolean {
   return isExactKnownAssetPrompt(prompt, ctx) || EXPLICIT_LOOKUP_RE.test(prompt) || isMmfYieldRankingPrompt(prompt);
 }
 
+function isNamedAssetLookupPrompt(prompt: string, ctx: MarketContext | null): boolean {
+  return mentionsKnownAsset(prompt, ctx) && (
+    EXPLICIT_LOOKUP_RE.test(prompt) ||
+    /\b(?:stock|stocks|share|shares|fund|funds|mmf|yield|price|rate|performance|details?|information)\b/i.test(prompt)
+  );
+}
+
+const BEGINNER_LEARNING_ACTIONS: AiLabNavigationAction[] = [
+  { label: "Open Learn", to: "/learn" },
+  { label: "Explore Stocks", to: "/stocks" },
+  { label: "Explore MMFs", to: "/funds" },
+];
+
+function beginnerLearningOutput(
+  prompt: string,
+  ctx: MarketContext | null,
+  news: NewsContext | null,
+  sessionContext?: AiLabSessionContext,
+): AiLabPromptOutput | null {
+  const result = routePrompt(prompt, ctx, news);
+  if (result.kind !== "explainer" || result.title !== "Getting started with investing") return null;
+  const composed = composeAssistantResponse({ prompt, result, sessionContext });
+  return { route: "router", result, ...composed, actions: BEGINNER_LEARNING_ACTIONS };
+}
+
 function buildNaturalLanguageClarification() {
   return composeClarifyingResponse({
-    text: "I can help with market data, news, a simple investing explanation, or a scenario. Which company, fund, currency, amount, or topic do you mean?",
+    text: [
+      "KenyaFundFinder is a financial education and market-comparison platform for Kenyan investors. You can explore unit trusts and MMFs, NSE stocks, exchange rates, commodities, market news, comparisons, calculators, and Learn Academy explanations.",
+      "I can help with current market data, a simple investing explanation, or a neutral scenario. Which company, fund, currency, amount, or topic do you mean?",
+    ].join("\n\n"),
     followUps: [
       "Help me get started with investing",
       "How is Safaricom doing?",
@@ -637,11 +699,11 @@ async function executeNaturalLanguageIntent(
     switch (intent.scenarioKind) {
       case "asset-amount":
         if (!entity || amount == null) return null;
-        canonical = `${canonicalAmount(amount)} in ${entity}`;
+        canonical = `${canonicalAmount(amount)} in ${entity}${intent.periodMonths ? ` for ${intent.periodMonths} months` : ""}`;
         break;
       case "stock-amount":
         if (!entity || amount == null) return null;
-        canonical = `${canonicalAmount(amount)} in ${entity}`;
+        canonical = `${canonicalAmount(amount)} in ${entity}${intent.periodMonths ? ` for ${intent.periodMonths} months` : ""}`;
         break;
       case "stock-move":
         if (!entity || percentage == null) return null;
@@ -660,7 +722,7 @@ async function executeNaturalLanguageIntent(
         break;
       case "fx-conversion":
         if (amount == null) return null;
-        canonical = `${canonicalAmount(amount)} to ${intent.currency ?? entity ?? session?.lastCurrency ?? "USD"}`;
+        canonical = `${canonicalAmount(amount)} to ${intent.currency ?? entity ?? session?.lastCurrency ?? "USD"}${intent.periodMonths ? ` for ${intent.periodMonths} months` : ""}`;
         break;
       case "fx-move":
         if (percentage == null) return null;
@@ -753,11 +815,6 @@ export async function processAiLabClarificationSelection(
     );
     const output = outputFromServerInterpretation(clarification.originalQuery, server);
     if (output) return output;
-    return {
-      route: "clarifying",
-      text: "The AI Lab server is temporarily unavailable. Please try again in a moment.",
-      followUps: [],
-    };
   }
   const resolution = selectClarificationCandidate(
     clarification.continuationToken,
@@ -802,14 +859,36 @@ export async function processAiLabUserPrompt(
     return { route: "router", result, ...composed };
   }
 
+  // Beginner guidance is maintained locally, safe, and more useful than the
+  // generic server capabilities answer. Handle it before server interpretation
+  // so wording such as “Where should I start learning?” gets the real roadmap.
+  const beginner = beginnerLearningOutput(contextualPrompt, ctx, news, sessionContext);
+  if (beginner) return beginner;
+
+  if (isPlatformLearningPrompt(contextualPrompt)) {
+    const composed = composeCapabilitiesGuide();
+    return { route: "capabilities", ...composed };
+  }
+
   // Learn Academy answers are deterministic and already maintained in the
   // client bundle. Resolve them before the server-authoritative interpretation
   // path so the full page and desktop popup return the same grounded lesson.
-  if (findInvestmentEducation(contextualPrompt)) {
+  if (findInvestmentEducation(contextualPrompt) && !mentionsKnownAsset(contextualPrompt, ctx)) {
     const result = routePrompt(contextualPrompt, ctx, news);
     if (result.kind === "explainer") {
       const composed = composeAssistantResponse({ prompt, result, sessionContext });
       return { route: "router", result, ...composed };
+    }
+  }
+
+  // A named catalog asset is a data request, even if it also contains a
+  // general education word such as "stock". Resolve it before a glossary
+  // definition can replace the requested live product information.
+  if (isNamedAssetLookupPrompt(contextualPrompt, ctx)) {
+    const lookup = await resolveWebsiteLookup(contextualPrompt, ctx);
+    if (lookup) {
+      const composed = composeAssistantResponse({ prompt, result: lookup, sessionContext });
+      return { route: "website-lookup", result: lookup, ...composed };
     }
   }
 
@@ -825,18 +904,17 @@ export async function processAiLabUserPrompt(
     }
   }
 
-  // In the browser, the server is authoritative for interpretation, entity
-  // resolution, and market execution. The local snapshot is intentionally not
-  // consulted for the final answer on this path.
-  if (options.naturalLanguage && isServerAuthoritativeAiLabEnabled()) {
-    const interpreted = await interpretNaturalLanguage(prompt, null, sessionContext);
+  // In production the server is preferred for interpretation, entity
+  // resolution, and market execution. A parser outage or malformed response
+  // must not turn an ordinary question into a false service-outage message:
+  // the deterministic local path below remains the safe fallback.
+  const serverAuthoritative = options.serverAuthoritative ?? isServerAuthoritativeAiLabEnabled();
+  let serverInterpretationUnavailable = false;
+  if (options.naturalLanguage && serverAuthoritative) {
+    const interpreted = await (options.interpreter ?? interpretNaturalLanguage)(prompt, null, sessionContext);
     const serverOutput = outputFromServerInterpretation(prompt, interpreted);
     if (serverOutput) return serverOutput;
-    return {
-      route: "clarifying",
-      text: "The AI Lab server is temporarily unavailable. Please try again in a moment.",
-      followUps: [],
-    };
+    serverInterpretationUnavailable = true;
   }
 
   if (isUniversalQueryResolverEnabled() && sessionContext?.pendingClarification) {
@@ -952,7 +1030,9 @@ export async function processAiLabUserPrompt(
     const common = inferCommonNaturalLanguageIntent(contextualPrompt, ctx, sessionContext);
     const interpreted = common
       ? { ok: true, intent: common }
-      : await (options.interpreter ?? interpretNaturalLanguage)(prompt, ctx, sessionContext);
+      : serverInterpretationUnavailable
+        ? { ok: false, reason: "server_interpretation_unavailable" }
+        : await (options.interpreter ?? interpretNaturalLanguage)(prompt, ctx, sessionContext);
     if (interpreted.ok && interpreted.intent) {
       if (interpreted.resolution) {
         const universal = await executeUniversalResolution(

@@ -117,6 +117,35 @@ describe("natural-language AI Lab flow", () => {
     expect(out.text).not.toMatch(/rate.?limit|technical|gemini/i);
   });
 
+  it.each([
+    "Help me learn about KenyaFundFinder",
+    "What can I do on this website?",
+    "I'm new here—how does this platform work?",
+    "pls teach me bout this investment site",
+    "totally unfamiliar words with no market meaning",
+  ])("keeps %s useful when the server parser is unavailable", async (prompt) => {
+    const out = await processAiLabUserPrompt(prompt, ctx, null, {
+      naturalLanguage: true,
+      serverAuthoritative: true,
+      interpreter: async () => ({ ok: false, reason: "malformed_or_rate_limited" }),
+    });
+
+    expect(out.text).toContain("KenyaFundFinder");
+    expect(out.text).not.toMatch(/server is temporarily unavailable|malformed|rate.?limit|technical|gemini/i);
+    expect(out.followUps).toContain("Help me get started with investing");
+  });
+
+  it("keeps advice refusal ahead of a failed server parser", async () => {
+    const out = await processAiLabUserPrompt("What is the best investment for me?", ctx, null, {
+      naturalLanguage: true,
+      serverAuthoritative: true,
+      interpreter: async () => ({ ok: false, reason: "network_error" }),
+    });
+
+    expect(out.result?.kind).toBe("refusal");
+    expect(out.text).not.toMatch(/server is temporarily unavailable|network_error/i);
+  });
+
   it("keeps a direct structured prompt local without calling the interpreter", async () => {
     const interpreter = vi.fn(async () => ({ ok: true, intent: { intent: "refusal", confidence: "high" } as NaturalLanguageIntent }));
     const out = await processAiLabUserPrompt("KES 10,000 in SCOM", ctx, null, { naturalLanguage: true, interpreter });
@@ -143,6 +172,27 @@ describe("natural-language AI Lab flow", () => {
     expect(interpreter).toHaveBeenCalledOnce();
     expect(out.result?.kind).toBe("stock-amount");
     if (out.result?.kind === "stock-amount") expect(out.result.inputs.symbol).toBe("SCOM");
+  });
+
+  it("preserves an interpreter-supplied holding duration for an asset scenario", async () => {
+    const interpreter = async () => ({
+      ok: true,
+      intent: {
+        intent: "scenario",
+        confidence: "high",
+        assetKind: "stock",
+        entity: "SCOM",
+        scenarioKind: "asset-amount",
+        amount: 3_000,
+        periodMonths: 2,
+      } as NaturalLanguageIntent,
+    });
+    const out = await processAiLabUserPrompt("map 3000 on SCOM for 2 months", ctx, null, {
+      naturalLanguage: true,
+      interpreter,
+    });
+    expect(out.result?.kind).toBe("stock-amount");
+    if (out.result?.kind === "stock-amount") expect(out.result.projection?.months).toBe(2);
   });
 
   it("handles plain performance wording locally before lookup", async () => {
