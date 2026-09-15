@@ -184,6 +184,71 @@ function parsePeriodMonths(prompt: string): number | undefined {
   return undefined;
 }
 
+function escapeRegExp(value: string): string {
+  return value.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+}
+
+function mentionsCatalogEntity(prompt: string, entity: CanonicalFinancialEntity): boolean {
+  const terms = [
+    entity.sourceKey,
+    entity.shortLabel,
+    entity.displayLabel,
+    ...entity.aliases,
+  ]
+    .filter((term): term is string => typeof term === "string" && term.trim().length >= 2)
+    .sort((a, b) => b.length - a.length);
+
+  return terms.some((term) => {
+    const normalized = term.trim();
+    if (/^[a-z0-9]{2,8}$/i.test(normalized)) {
+      return new RegExp(`\\b${escapeRegExp(normalized)}\\b`, "i").test(prompt);
+    }
+    return prompt.toLowerCase().includes(normalized.toLowerCase());
+  });
+}
+
+function applyDeterministicAssetAmountFrame(
+  prompt: string,
+  frame: QuerySemanticFrameV1,
+  catalog: CanonicalFinancialEntity[],
+): QuerySemanticFrameV1 {
+  if (/\b(?:should i|recommend|best|safest|which .* should i|tell me what to choose)\b/i.test(prompt)) {
+    return frame;
+  }
+  const amount = parseAmountToken(prompt);
+  if (amount == null) return frame;
+  if (!/\b(?:put|invest|buy|allocate|spend|in|into|with|stocks?|shares?|fx|forex|rate|gold|silver|oil|coffee|tea)\b/i.test(prompt)) {
+    return frame;
+  }
+
+  const matches = catalog.filter((entity) =>
+    ["stock", "fund", "fx", "commodity"].includes(entity.kind) &&
+    mentionsCatalogEntity(prompt, entity)
+  );
+  if (matches.length !== 1) return frame;
+
+  const entity = matches[0];
+  const periodMonths = parsePeriodMonths(prompt);
+  return {
+    ...frame,
+    action: "scenario",
+    confidence: "high",
+    entityMentions: [{
+      text: entity.shortLabel ?? entity.sourceKey ?? entity.displayLabel,
+      role: "primary",
+      expectedKinds: [entity.kind],
+    }],
+    requestedMetrics: [],
+    parameters: {
+      ...frame.parameters,
+      amount,
+      currency: entity.kind === "fx" ? entity.sourceKey.toUpperCase() : frame.parameters.currency ?? "KES",
+      scenarioKind: entity.kind === "fx" ? "fx-conversion" : "asset-amount",
+      ...(periodMonths != null ? { periodMonths } : {}),
+    },
+  };
+}
+
 function parseYieldPair(prompt: string): [number, number] | null {
   const fromTo = prompt.match(/\bfrom\s+(-?\d+(?:\.\d+)?)\s*%?\s+(?:to|down to|up to)\s+(-?\d+(?:\.\d+)?)\s*%/i);
   if (fromTo) return [Number(fromTo[1]), Number(fromTo[2])];
@@ -1361,7 +1426,8 @@ Deno.serve(async (req) => {
     const dailyReportFrame = applyDeterministicDailyReportFrame(prompt, validated.frame);
     const comparisonFrame = applyDeterministicComparisonFrame(prompt, dailyReportFrame);
     const yieldFrame = applyDeterministicYieldFrame(prompt, comparisonFrame, safeInput.context);
-    validated = validateQuerySemanticFrame(applyDeterministicDurationFrame(prompt, yieldFrame));
+    const assetAmountFrame = applyDeterministicAssetAmountFrame(prompt, yieldFrame, catalog);
+    validated = validateQuerySemanticFrame(applyDeterministicDurationFrame(prompt, assetAmountFrame));
     if (!validated.ok) return json(200, { ok: false, reason: `invalid_frame:${validated.reason}` });
 
     const context = safeInput.context;

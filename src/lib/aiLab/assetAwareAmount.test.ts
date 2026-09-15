@@ -54,6 +54,7 @@ describe("asset-aware amount scenarios", () => {
   it.each([
     ["put 3000ksh in SCOM for 2 months", 2],
     ["KES 3,000 in Safaricom for 1 year", 12],
+    ["100 in AbsA STOCKS 10months", 10],
   ])("keeps a stated stock duration for %s", (prompt, months) => {
     const result = routePrompt(prompt, ctx);
     expect(result.kind).toBe("stock-amount");
