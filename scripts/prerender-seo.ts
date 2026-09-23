@@ -213,7 +213,8 @@ function staticRoutes(): SeoPageDefinition[] {
       title: "Compare Investment Funds in Kenya | Kenya Fund Finder",
       description: "Compare Kenyan money market funds and unit trusts side by side by yield, fees, minimum investment and withdrawal period.",
       heading: "Compare Kenyan investment funds",
-      contentHtml: paragraph("Select published funds to compare their yields, fees and investment requirements side by side."),
+      contentHtml: `${paragraph("Select published funds to compare their yields, fees and investment requirements side by side.")}<p>Start with the <a href="/funds">fund directory</a>, then use the <a href="/checklist">investment fund checklist</a> to review regulation, fees and withdrawal terms before choosing a fund.</p>`,
+      jsonLd: { "@context": "https://schema.org", "@type": "WebPage", name: "Compare Kenyan investment funds", url: canonicalUrl("/compare") },
     },
     {
       path: "/rates",
@@ -290,7 +291,8 @@ function staticRoutes(): SeoPageDefinition[] {
       title: "Kenya Investment Fund Checklist",
       description: "Use this checklist to compare regulation, returns, fees, liquidity and minimum investment before selecting a Kenyan investment fund.",
       heading: "Investment fund checklist",
-      contentHtml: paragraph("Review key fund details before making an investment decision."),
+      contentHtml: `${paragraph("Review regulation, returns, fees, liquidity and minimum investment before making an investment decision.")}<p>Use the <a href="/funds">fund directory</a> to compare published products and read the <a href="/learn/how-to-invest-in-money-market-funds-kenya">money market fund guide</a> before investing.</p>`,
+      jsonLd: { "@context": "https://schema.org", "@type": "WebPage", name: "Kenya Investment Fund Checklist", url: canonicalUrl("/checklist") },
     },
     {
       path: "/treasury",

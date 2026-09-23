@@ -1,5 +1,5 @@
 {
-  "buildCommand": "npm run build:ci",
+  "buildCommand": "npm run build && npm run verify:launch-surface",
   "outputDirectory": "dist",
   "git": {
     "deploymentEnabled": {
@@ -41,11 +41,6 @@
     }
   ],
   "rewrites": [
-    { "source": "/stocks/:symbol", "destination": "/index" },
-    { "source": "/compare/:slug", "destination": "/index" },
-    { "source": "/news/archive/:page", "destination": "/index" },
-    { "source": "/news/:id", "destination": "/index" },
-    { "source": "/page/:slug", "destination": "/index" },
     { "source": "/(.*)", "destination": "/index" }
   ],
   "headers": [
