@@ -297,7 +297,7 @@ export const SocialFeedCard = ({
               <img 
                 src={avatarSrc!} 
                 alt={authorName}
-                className="w-full h-full object-cover bg-white"
+                className={`w-full h-full bg-white ${customLogo ? "object-contain p-1" : "object-cover"}`}
                 onError={() => setAvatarError(true)}
               />
             ) : (

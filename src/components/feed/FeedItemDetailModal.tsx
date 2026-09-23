@@ -88,6 +88,15 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
   const formattedDate = format(item.timestamp, "d MMM yyyy");
   const readTime = item.rawItem?.read_time;
   const readableContent = splitReadableParagraphs(item.content).join("\n\n");
+  // Desktop opens this modal instead of the full article route. Keep its hero
+  // media aligned with that route so the story is not visually incomplete.
+  const heroImage = getNewsImage(
+    item.rawItem?.image_url || item.mediaUrl,
+    item.rawItem?.category || item.authorLabel,
+    item.rawItem?.id || item.id,
+    false,
+    item.rawItem?.source,
+  ) || item.rawItem?.image_url || item.mediaUrl || null;
   const briefing = item.rawItem
     ? buildInvestorBriefing(item.rawItem as NewsFromDB, {
         stock: item.relatedStock
@@ -257,7 +266,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
         {/* Modal Body */}
         <div className="p-6 space-y-6">
           {briefing ? (
-            <InvestorBriefing briefing={briefing} showTitle={false} />
+            <InvestorBriefing briefing={briefing} heroImage={heroImage} showTitle={false} />
           ) : (
             <>
               {/* Media Box */}

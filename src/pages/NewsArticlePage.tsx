@@ -513,11 +513,14 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
   const relativeTime = isNaN(pubDate.getTime()) ? "now" : formatDistanceToNow(pubDate, { addSuffix: true }).replace("about ", "");
   const stockLogoUrl = relatedStock ? getStockLogoUrl(relatedStock.symbol) : "";
   const sourceDomain = (() => {
+    if ((article.source || "").toLowerCase().includes("kbc")) return "kbc-local";
     if ((article.source || "").toLowerCase().includes("business daily")) return "businessdailyafrica.com";
     if (!article.url) return "";
     try { return new URL(article.url).hostname; } catch { return ""; }
   })();
-  const sourceLogoUrl = sourceDomain ? `https://www.google.com/s2/favicons?domain=${sourceDomain}&sz=128` : "";
+  const sourceLogoUrl = sourceDomain === "kbc-local"
+    ? "/images/news-sources/kbc.png"
+    : sourceDomain ? `https://www.google.com/s2/favicons?domain=${sourceDomain}&sz=128` : "";
   const briefing = article ? buildInvestorBriefing(article, {
     stock: relatedStock,
     mmf: relatedMmf,
@@ -584,7 +587,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
                 <img
                   src={sourceLogoUrl}
                   alt={`${article.source} logo`}
-                  className="h-full w-full object-cover bg-white"
+                  className="h-full w-full object-contain bg-white p-1"
                   onError={() => setSourceLogoError(true)}
                 />
               ) : relatedStock ? (

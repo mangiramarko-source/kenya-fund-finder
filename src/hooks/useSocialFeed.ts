@@ -84,6 +84,23 @@ const safeNum = (val: any) => {
   return isNaN(num) ? 0 : num;
 };
 
+const KNOWN_MARKET_SYMBOLS = [
+  "SCOM", "EQTY", "KCB", "EABL", "BAT", "COOP", "NCBA",
+  "USD/KES", "EUR/KES", "GBP/KES", "Oil", "Gold",
+] as const;
+
+/**
+ * Only recognise a market symbol when it is written as its own token. A plain
+ * substring check turns ordinary words such as "exacerbate" into a false BAT
+ * match, which makes the feed card look like it belongs to the wrong asset.
+ */
+export function findExplicitMarketSymbols(text: string): string[] {
+  return KNOWN_MARKET_SYMBOLS.filter((symbol) => {
+    const escapedSymbol = symbol.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+    return new RegExp(`\\b${escapedSymbol}\\b`, "i").test(text);
+  });
+}
+
 export function useSocialFeed(
   news: NewsFromDB[],
   stocks: Stock[],
@@ -109,15 +126,7 @@ export function useSocialFeed(
       const parsedAnalysis = n.parsed_ai_analysis || parseNewsAiAnalysis(n.ai_insight);
       const analysisText = getNewsAiAnalysisDisplayText(parsedAnalysis);
 
-      const knownSymbols = ["SCOM", "EQTY", "KCB", "EABL", "BAT", "COOP", "NCBA", "USD/KES", "EUR/KES", "GBP/KES", "Oil", "Gold"];
-      const relatedSymbols: string[] = [];
-      const contentUpper = cleanedContent.toUpperCase();
-      const titleUpper = cleanedTitle.toUpperCase();
-      knownSymbols.forEach(sym => {
-        if (titleUpper.includes(sym.toUpperCase()) || contentUpper.includes(sym.toUpperCase())) {
-          relatedSymbols.push(sym);
-        }
-      });
+      const relatedSymbols = findExplicitMarketSymbols(`${cleanedTitle} ${cleanedContent}`);
       let relatedStock = null;
       if (n.related_stock_id) {
         relatedStock = stocks.find((s: any) => s.id === n.related_stock_id) || null;

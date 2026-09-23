@@ -69,4 +69,24 @@ describe("FeedItemDetailModal headline deduplication", () => {
     // Verify it is inside the DialogTitle / DialogHeader
     expect(matchingHeadings[0].tagName.toLowerCase()).toBe("h2"); // DialogTitle renders as h2 by radix-ui/shadcn
   });
+
+  it("keeps the article hero image in the desktop modal", () => {
+    render(
+      <MemoryRouter>
+        <FeedItemDetailModal
+          item={{
+            ...mockFeedItem,
+            rawItem: { ...mockFeedItem.rawItem, image_url: "https://images.example.com/kbc-story.jpg" },
+          }}
+          open={true}
+          onOpenChange={vi.fn()}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(screen.getByRole("img", { name: mockFeedItem.title })).toHaveAttribute(
+      "src",
+      "https://images.example.com/kbc-story.jpg",
+    );
+  });
 });
