@@ -68,6 +68,37 @@ let isPosthogInitialized = false;
 let consentListenerRegistered = false;
 
 /**
+ * Loopback and local development hosts. PostHog must stay off on these, because
+ * a developer machine otherwise files crashes as production error-tracking issues.
+ */
+function isLocalHost(hostname: string): boolean {
+  return (
+    hostname === "localhost" ||
+    hostname === "127.0.0.1" ||
+    hostname === "0.0.0.0" ||
+    hostname === "::1" ||
+    hostname.endsWith(".local") ||
+    hostname.endsWith(".localhost")
+  );
+}
+
+/**
+ * Decide whether PostHog may initialize. It runs only for real visitors on a
+ * production build. It is skipped on a developer machine (localhost) and in any
+ * non-production build. The test runner is exempt, so the analytics pipeline
+ * stays verifiable in unit tests.
+ */
+export function shouldInitializeAnalytics(
+  env: { MODE?: string; PROD?: boolean } = import.meta.env,
+  hostname: string = typeof window !== "undefined" ? window.location.hostname : ""
+): boolean {
+  if (env.MODE === "test") return true;
+  if (env.PROD !== true) return false;
+  if (hostname && isLocalHost(hostname)) return false;
+  return true;
+}
+
+/**
  * Handle consent revocation by opting out and resetting user session in PostHog.
  */
 export function handleConsentRevoked(): void {
@@ -110,6 +141,11 @@ export function initAnalytics(apiKeyOverride?: string): void {
 
   // Strictly block initialization if analytics consent is not granted
   if (!hasConsent("analytics")) {
+    return;
+  }
+
+  // Never initialize on a developer machine or in a non-production build.
+  if (!shouldInitializeAnalytics()) {
     return;
   }
 
