@@ -497,7 +497,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
 
       <div className="hidden md:block xl:grid xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start xl:gap-5">
         <div className="rounded-[22px] border border-border bg-card shadow-sm overflow-hidden">
-          <div className="w-full overflow-x-auto border-b border-border bg-black px-7 pt-3 scrollbar-hide">
+          <div className="w-full overflow-x-auto border-b border-border bg-card px-7 pt-3 scrollbar-hide dark:bg-black">
           <div className="flex min-w-max items-center gap-8">
             {categories.map((cat) => {
               const active = activeTab === cat;
@@ -530,8 +530,8 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
               {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
-              <tr className="border-b border-border bg-muted/50 text-[10px] uppercase tracking-[0.16em] text-muted-foreground dark:bg-[#1b1c1f]">
-                <th className="bg-background/60 text-left px-4 py-3 font-semibold dark:bg-[#151619]">
+              <tr className="border-b border-border bg-muted/60 text-[10px] uppercase tracking-[0.16em] text-muted-foreground dark:bg-[#1b1c1f]">
+                <th className="bg-muted/35 text-left px-4 py-3 font-semibold dark:bg-[#151619]">
                   <SortHeader label="FUNDS" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
                 </th>
                 <th className="text-right px-3 py-3 font-semibold">
@@ -559,7 +559,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                   onClick={() => navigate(`/compare/${fund.slug}`)}
                   className="group cursor-pointer bg-card transition-colors hover:bg-muted/35"
                 >
-                  <td className="bg-muted/35 px-4 py-4 align-middle dark:bg-[#151619]">
+                  <td className="bg-muted/25 px-4 py-4 align-middle dark:bg-[#151619]">
                     <Link
                       to={`/compare/${fund.slug}`}
                       onClick={(e) => e.stopPropagation()}

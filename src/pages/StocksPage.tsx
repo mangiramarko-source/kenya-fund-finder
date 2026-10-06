@@ -741,7 +741,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                     {user && <col style={{ width: "4%" }} />}
                   </colgroup>
                   <thead>
-                    <tr className="bg-background text-[12px] text-muted-foreground border-b border-border/40">
+                    <tr className="border-b border-border/60 bg-muted/55 text-[12px] text-muted-foreground dark:bg-muted/10">
                       <th className="text-left pl-5 pr-2 py-3 font-normal cursor-pointer hover:text-foreground" onClick={() => toggleSort("symbol")}>
                         <span className="inline-flex items-center gap-1">Company {sortKey === "symbol" && <ArrowUpDown className="h-3 w-3 text-accent" />}</span>
                       </th>
@@ -950,7 +950,7 @@ const MobileInspiredDesktopDemo = ({
             <div className="overflow-x-auto">
               <table className="w-full min-w-[1240px] text-sm">
                 <colgroup><col style={{ width: "18%" }} /><col style={{ width: "8%" }} /><col style={{ width: "7%" }} /><col style={{ width: "7%" }} /><col style={{ width: "7%" }} /><col style={{ width: "7%" }} /><col style={{ width: "10%" }} /><col style={{ width: "8%" }} /><col style={{ width: "9%" }} /><col style={{ width: "7%" }} /><col style={{ width: "7%" }} />{signedIn && <col style={{ width: "4%" }} stroke-none="true" />}</colgroup>
-                <thead><tr className="border-b border-border/40 bg-background text-[12px] text-muted-foreground">
+                <thead><tr className="border-b border-border/60 bg-muted/55 text-[12px] text-muted-foreground dark:bg-muted/10">
                   <th className="cursor-pointer py-3 pl-5 pr-2 text-left font-normal hover:text-foreground" onClick={() => toggleSort("symbol")}>Company {sortKey === "symbol" && <ArrowUpDown className="ml-1 inline h-3 w-3 text-accent" />}</th>
                   <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("price")}>Last Price</th>
                   <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("day_change_percent")}>1D Return</th>

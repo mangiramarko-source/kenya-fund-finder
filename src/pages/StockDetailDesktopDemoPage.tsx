@@ -197,7 +197,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
               </div>
 
               <div className="overflow-hidden rounded-[22px] border border-border bg-card shadow-sm">
-                <div className="flex gap-8 overflow-x-auto border-b border-border bg-black px-7 pt-3 scrollbar-hide">
+                <div className="flex gap-8 overflow-x-auto border-b border-border bg-card px-7 pt-3 scrollbar-hide dark:bg-black">
                   {sectors.map((item) => (
                     <button key={item} onClick={() => setSector(item)} className={`relative shrink-0 pb-3 text-[13px] font-semibold transition-colors ${sector === item ? "text-emerald-500" : "text-muted-foreground hover:text-foreground"}`}>
                       {item}
@@ -207,9 +207,9 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
                 </div>
                 <div>
                   <table className="w-full table-fixed text-left">
-                    <thead className="border-b border-border bg-muted/50 text-xs uppercase tracking-[0.18em] text-muted-foreground dark:bg-[#1b1c1f]">
+                    <thead className="border-b border-border bg-muted/60 text-xs uppercase tracking-[0.18em] text-muted-foreground dark:bg-[#1b1c1f]">
                       <tr>
-                        <th className="w-[18%] bg-background/60 px-4 py-3 font-semibold dark:bg-[#151619]">Company</th>
+                        <th className="w-[18%] bg-muted/35 px-4 py-3 font-semibold dark:bg-[#151619]">Company</th>
                         <th className="w-[12%] px-2 py-3 text-center font-semibold">Last Price</th>
                         <th className="w-[7%] px-2 py-3 text-right font-semibold">1D</th>
                         <th className="w-[7%] px-2 py-3 text-right font-semibold">7D</th>
