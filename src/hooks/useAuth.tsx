@@ -101,7 +101,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           checkAdmin(session.user.id);
         } else {
           setIsAdmin(false);
-          resetUser();
+          // Guests get INITIAL_SESSION with no session on every page load.
+          // Only a real sign-out may reset the analytics identity.
+          if (event === 'SIGNED_OUT') resetUser();
         }
       }
     );
