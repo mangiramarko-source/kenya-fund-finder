@@ -7,10 +7,11 @@
   "scripts": {
     "predev": "tsx scripts/generate-sitemap.ts",
     "dev": "vite",
-    "prebuild": "tsx scripts/generate-sitemap.ts",
-    "build": "vite build && tsx scripts/prerender-seo.ts",
+    "build": "vite build && tsx scripts/generate-sitemap.ts --build-output && tsx scripts/prerender-seo.ts && npm run verify:seo && npm run verify:crawlability",
     "build:ci": "vite build && SEO_PRERENDER_SKIP_DYNAMIC=true tsx scripts/prerender-seo.ts && npm run verify:launch-surface",
     "verify:crawlability": "tsx scripts/verify-crawlability.ts",
+    "verify:seo": "tsx scripts/verify-seo-growth.ts",
+    "verify:seo:live": "tsx scripts/verify-seo-growth.ts --live https://kenyafundfinder.com",
     "verify:launch-surface": "node scripts/verify-production-launch-surface.mjs",
     "build:dev": "vite build --mode development",
     "lint": "eslint .",

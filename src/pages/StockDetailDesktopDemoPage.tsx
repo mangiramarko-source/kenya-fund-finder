@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
+import ResearchLinks from "@/components/ResearchLinks";
 import { useNavigate, useParams } from "react-router-dom";
 import {
   Minus,
@@ -232,6 +233,7 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
             </section>
           </div>
         )}
+        {production && <ResearchLinks pillar="stocks" />}
       </main>
     </div>
   );

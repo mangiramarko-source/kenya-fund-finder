@@ -1,4 +1,5 @@
 import { useState } from "react";
+import ResearchLinks from "@/components/ResearchLinks";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
 import { BookOpen, Landmark, BarChart3, PieChart, TrendingUp, Banknote, LineChart, Search } from "lucide-react";
 import { faqByFundType } from "@/data/faq";
@@ -69,6 +70,7 @@ const LearnPage = () => {
       </div>
 
       {/* Featured guide */}
+      <ResearchLinks pillar="all" />
       <a
         href="/learn/how-to-invest-in-money-market-funds-kenya"
         className="block mb-5 rounded-xl border border-border bg-card hover:border-accent/40 transition-colors p-4"

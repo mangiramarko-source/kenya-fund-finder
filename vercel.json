@@ -41,6 +41,20 @@
     }
   ],
   "rewrites": [
+    { "source": "/stocks", "destination": "/stocks.html" },
+    { "source": "/stocks/:symbol", "destination": "/stocks/:symbol.html" },
+    { "source": "/funds", "destination": "/funds.html" },
+    { "source": "/compare/:slug", "destination": "/compare/:slug.html" },
+    { "source": "/money-market-funds-kenya", "destination": "/money-market-funds-kenya.html" },
+    { "source": "/mmf-calculator", "destination": "/mmf-calculator.html" },
+    { "source": "/learn/:slug", "destination": "/learn/:slug.html" },
+    { "source": "/page/about", "destination": "/page/about.html" },
+    { "source": "/page/contact", "destination": "/page/contact.html" },
+    { "source": "/page/editorial-standards", "destination": "/page/editorial-standards.html" },
+    { "source": "/page/market-data-methodology", "destination": "/page/market-data-methodology.html" },
+    { "source": "/page/source-policy", "destination": "/page/source-policy.html" },
+    { "source": "/page/corrections", "destination": "/page/corrections.html" },
+    { "source": "/page/financial-disclaimer", "destination": "/page/financial-disclaimer.html" },
     { "source": "/(.*)", "destination": "/index" }
   ],
   "headers": [

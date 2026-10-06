@@ -1,4 +1,5 @@
 import { useParams, Link, useNavigate } from "react-router-dom";
+import FundResearchSources from "@/components/FundResearchSources";
 import { useEffect, useState, useMemo } from "react";
 import { ArrowLeft, ExternalLink, BarChart3, Shield, Clock, Wallet, TrendingUp, ChevronRight, PiggyBank, GitCompareArrows, Bell, MoreHorizontal, Link2, Twitter, Facebook } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -354,6 +355,7 @@ const FundDetailPage = () => {
           <DisclaimerBlock extra={getDisclaimer(fund.fund_type)} />
         </TabsContent>
       </Tabs>
+      <FundResearchSources fund={fund} />
     </div>
 
     <div className="container hidden max-w-5xl space-y-5 py-8 md:block">
@@ -647,6 +649,7 @@ const FundDetailPage = () => {
           )}
 
           {/* ━━━ Report incorrect data ━━━ */}
+          <FundResearchSources fund={fund} />
           <div className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 px-4 py-2.5">
             <p className="text-[11px] text-muted-foreground">
               Spotted out-of-date or incorrect information on this page?

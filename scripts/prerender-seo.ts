@@ -22,14 +22,14 @@ import {
 import { isIndexableSitePageSlug } from "../src/lib/seoSitePageEligibility";
 import { faqByFundType, type FaqItem } from "../src/data/faq";
 import { mmfGuideFaq } from "../src/data/mmfGuideFaq";
+import { RESEARCH_ARTICLES, articleSeo, researchLinksHtml } from "../src/data/seoGrowthContent";
+import { MMF_CALCULATOR_SEO, mmfHubSeo, reportedYield, sourceDate, sourceLink } from "../src/lib/seoMarketContent";
+import { seoPublicData, SEO_SUPABASE_URL, SEO_SUPABASE_KEY } from "./seo-public-data";
 
 const DIST_DIR = resolve("dist");
 const TEMPLATE_PATH = join(DIST_DIR, "index.html");
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "https://caawgzuofnujrznwbuxk.supabase.co";
-const SUPABASE_ANON_KEY =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.VITE_SUPABASE_ANON_KEY ||
-  "sb_publishable_6snC3do-2emXAMEp7-C9AA_3_kb-GkC";
+const SUPABASE_URL = SEO_SUPABASE_URL;
+const SUPABASE_ANON_KEY = SEO_SUPABASE_KEY;
 const STRICT = process.env.VERCEL === "1" || process.env.SEO_PRERENDER_STRICT === "true";
 const SKIP_DYNAMIC = process.env.SEO_PRERENDER_SKIP_DYNAMIC === "true";
 
@@ -48,6 +48,10 @@ interface StockRow {
   year_low: number | null;
   updated_at: string | null;
   is_active: boolean | null;
+  provider_updated_at?: string | null;
+  quote_source?: string | null;
+  company_summary?: string | null;
+  official_website?: string | null;
 }
 
 interface FundRow {
@@ -66,6 +70,8 @@ interface FundRow {
   is_published: boolean | null;
   updated_at: string | null;
   logo_url: string | null;
+  fact_sheet_date?: string | null;
+  website?: string | null;
 }
 
 interface NewsRow {
@@ -99,9 +105,10 @@ async function supaSelect<T>(resource: string, query: string): Promise<T[]> {
     const response = await fetch(`${SUPABASE_URL}/rest/v1/${resource}?${query}`, {
       headers: {
         apikey: SUPABASE_ANON_KEY,
-        Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+        ...(SUPABASE_ANON_KEY.startsWith("eyJ") ? { Authorization: `Bearer ${SUPABASE_ANON_KEY}` } : {}),
         Range: `${offset}-${offset + pageSize - 1}`,
       },
+      signal: AbortSignal.timeout(30_000),
     });
     if (!response.ok) {
       const detail = (await response.text()).slice(0, 300);
@@ -115,13 +122,7 @@ async function supaSelect<T>(resource: string, query: string): Promise<T[]> {
 }
 
 async function publicStocks<T>(): Promise<T[]> {
-  const response = await fetch(`${SUPABASE_URL}/functions/v1/public-data/stocks?select=symbol,name,sector,price,day_change,day_change_percent,volume,market_cap,pe_ratio,dividend_yield,year_high,year_low,updated_at,is_active&order=sort_order.asc&limit=200`);
-  if (!response.ok) {
-    const detail = (await response.text()).slice(0, 300);
-    throw new Error(`public-data stocks returned HTTP ${response.status}: ${detail}`);
-  }
-  const payload = await response.json() as { data?: T[] };
-  return payload.data ?? [];
+  return seoPublicData<T>("stocks", "symbol,name,sector,price,day_change,day_change_percent,volume,market_cap,pe_ratio,dividend_yield,year_high,year_low,updated_at,provider_updated_at,quote_source,company_summary,official_website", "sort_order.asc");
 }
 
 function validSegment(value: string | null): value is string {
@@ -179,6 +180,8 @@ function faqContentHtml(items: FaqItem[]): string {
 
 function staticRoutes(): SeoPageDefinition[] {
   return [
+    MMF_CALCULATOR_SEO,
+    ...RESEARCH_ARTICLES.map(articleSeo),
     {
       path: "/",
       title: "Kenya Fund Finder – NSE Stocks, Money Market Funds & FX",
@@ -192,7 +195,7 @@ function staticRoutes(): SeoPageDefinition[] {
         '<section><h2>Learn before you invest</h2><p>Read current <a href="/news">Kenyan market news</a>, browse plain-language answers in the <a href="/learn">investing learning centre</a>, or follow the practical guide on <a href="/learn/how-to-invest-in-money-market-funds-kenya">how to invest in a Kenyan money market fund</a>. Verify product details with the fund manager and the relevant regulator before investing.</p></section>',
         '<section><h2>About and policies</h2><p>Learn <a href="/page/about">about Kenya Fund Finder</a>, <a href="/page/contact">contact the team</a>, and review the <a href="/privacy">privacy policy</a> and <a href="/terms">terms of use</a>.</p></section>',
       ].join(""),
-      jsonLd: { "@context": "https://schema.org", "@type": "WebPage", name: "Kenya Fund Finder Market Overview", url: canonicalUrl("/") },
+      jsonLd: [{ "@context": "https://schema.org", "@type": "WebPage", name: "Kenya Fund Finder Market Overview", url: canonicalUrl("/") }, { "@context": "https://schema.org", "@type": "Organization", name: "Kenya Fund Finder", url: SEO_SITE_URL, logo: `${SEO_SITE_URL}/apple-touch-icon.png` }],
     },
     {
       path: "/funds",
@@ -256,7 +259,7 @@ function staticRoutes(): SeoPageDefinition[] {
       title: "Learn About Investing in Kenya | Kenya Fund Finder",
       description: "Educational guides about Kenyan money market funds, unit trusts, NSE stocks, investment fees and market terminology.",
       heading: "Learn about investing in Kenya",
-      contentHtml: `${paragraph("Read practical educational guides about Kenyan investment products and markets.")}${faqContentHtml(faqByFundType.general)}`,
+      contentHtml: `${paragraph("Read practical educational guides about Kenyan investment products and markets.")}${researchLinksHtml("stocks")}${researchLinksHtml("mmf")}${researchLinksHtml("trust")}${faqContentHtml(faqByFundType.general)}`,
       jsonLd: faqSchema(faqByFundType.general),
     },
     {
@@ -322,7 +325,7 @@ function privateRoutes(): SeoPageDefinition[] {
   }));
 }
 
-function stockPage(stock: StockRow): SeoPageDefinition | null {
+function stockPage(stock: StockRow, stocks: StockRow[] = []): SeoPageDefinition | null {
   if (!validSegment(stock.symbol) || !stock.name) return null;
   const path = `/stocks/${stock.symbol.toUpperCase()}`;
   const price = money(stock.price);
@@ -332,16 +335,19 @@ function stockPage(stock: StockRow): SeoPageDefinition | null {
     title: `${stock.symbol.toUpperCase()} Share Price Today – ${stock.name} Stock Chart`,
     description,
     heading: `${stock.name} (${stock.symbol.toUpperCase()}) share price`,
-    contentHtml: `${paragraph(`${stock.name} is listed on the Nairobi Securities Exchange${stock.sector ? ` in the ${stock.sector} sector` : ""}.`)}${definitionList([
+    contentHtml: `${paragraph(`${stock.name} is listed on the Nairobi Securities Exchange${stock.sector ? ` in the ${stock.sector} sector` : ""}.`)}${paragraph(stock.company_summary)}${definitionList([
       ["Current share price", price],
-      ["Daily change", stock.day_change == null ? null : `${money(stock.day_change)} (${percent(stock.day_change_percent)})`],
+      ["Daily change", stock.day_change == null ? null : `${money(stock.day_change)} (${percent(stock.day_change_percent) || "percentage unavailable"})`],
       ["Market capitalisation", money(stock.market_cap)],
       ["Trading volume", compactNumber(stock.volume)],
       ["P/E ratio", stock.pe_ratio],
       ["Dividend yield", percent(stock.dividend_yield)],
       ["52-week high", money(stock.year_high)],
       ["52-week low", money(stock.year_low)],
-    ])}<p><a href="/stocks">View all NSE stocks</a></p>`,
+      ["Quote source", stock.quote_source || "Public market-data feed; confirm executable prices with your broker"],
+      ["Quote timestamp", sourceDate(stock.provider_updated_at || stock.updated_at)],
+      ["Record updated", sourceDate(stock.updated_at)],
+    ])}<p>Quotes may be delayed. Missing metrics are unavailable. <a href="/page/market-data-methodology">Read the data methodology</a>.</p><section><h2>Related companies in ${escapeHtml(stock.sector || "the NSE")}</h2><ul>${stocks.filter(s => s.symbol !== stock.symbol && s.sector === stock.sector && validSegment(s.symbol) && s.name).slice(0, 6).map(s => `<li><a href="/stocks/${encodeURIComponent(s.symbol!.toUpperCase())}">${escapeHtml(s.name)}</a></li>`).join("")}</ul></section>${researchLinksHtml("stocks")}<p><a href="/stocks">View all NSE stocks</a> · <a href="/news">Market news</a></p>`,
     jsonLd: [
       {
         "@context": "https://schema.org",
@@ -362,21 +368,22 @@ function stockPage(stock: StockRow): SeoPageDefinition | null {
 function fundPage(fund: FundRow): SeoPageDefinition | null {
   if (!validSegment(fund.slug) || !fund.name || !fund.manager) return null;
   const path = `/compare/${fund.slug}`;
-  const yieldLabel = fund.annual_yield == null ? null : `${percent(fund.annual_yield)} annual yield`;
-  const description = `${fund.name} by ${fund.manager}${yieldLabel ? ` currently shows a ${yieldLabel}` : ""}. Compare fees, minimum investment and withdrawal time.`;
+  const yieldLabel = fund.annual_yield == null ? null : `${reportedYield(fund)} published figure`;
+  const description = `${fund.name} by ${fund.manager}${yieldLabel ? ` shows ${yieldLabel}` : ""}. Compare fees, minimum investment and withdrawal time.`;
   return {
     path,
     title: buildFundSeoTitle(fund.name, fund.slug),
     description,
     heading: fund.name,
     contentHtml: `${paragraph(`${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as CMA regulated" : ""}.`)}${paragraph(fund.description)}${definitionList([
-      ["Annual yield", percent(fund.annual_yield)],
-      ["Daily yield", percent(fund.daily_yield)],
-      ["Minimum investment", money(fund.minimum_investment)],
+      ["Published figure (confirm gross/net basis)", reportedYield(fund)],
+      ["Minimum investment (reported amount; confirm currency)", fund.minimum_investment],
       ["Management fee", percent(fund.management_fee)],
       ["Withdrawal time", fund.withdrawal_time],
       ["Fund type", fund.fund_type?.replaceAll("_", " ")],
-    ])}<p><a href="/funds">Compare all investment funds</a></p>`,
+      ["Fact-sheet date", sourceDate(fund.fact_sheet_date)],
+      ["Record updated", sourceDate(fund.updated_at)],
+    ])}<p>${sourceLink(fund.website)}</p><p>A record update is not independent source verification. Confirm currency, yield basis and current terms with the manager.</p>${researchLinksHtml("mmf")}<p><a href="/funds">Compare all investment funds</a> · <a href="/page/source-policy">Source policy</a></p>`,
     jsonLd: [
       {
         "@context": "https://schema.org",
@@ -385,7 +392,7 @@ function fundPage(fund: FundRow): SeoPageDefinition | null {
         description: truncateDescription(description),
         provider: { "@type": "Organization", name: fund.manager },
         url: canonicalUrl(path),
-        ...(fund.annual_yield == null ? {} : { interestRate: { "@type": "QuantitativeValue", value: fund.annual_yield, unitText: "percent per annum" } }),
+        ...(fund.annual_yield == null || fund.yield_unit !== "%" ? {} : { interestRate: { "@type": "QuantitativeValue", value: fund.annual_yield, unitText: "percent per annum" } }),
       },
       breadcrumb([
         { name: "Home", path: "/" },
@@ -460,7 +467,7 @@ function fundDirectoryPage(funds: FundRow[]): SeoPageDefinition {
   }
   const groups = [...grouped.entries()].map(([label, rows]) => (
     `<section><h2>${escapeHtml(label)}</h2><ul>${rows.map((fund) => (
-      `<li><a href="/compare/${encodeURIComponent(fund.slug!)}">${escapeHtml(fund.name)}</a> — ${escapeHtml(fund.manager)}</li>`
+      `<li><a href="/compare/${encodeURIComponent(fund.slug!)}">${escapeHtml(fund.name)}</a> — ${escapeHtml(fund.manager)}; published figure: ${reportedYield(fund)}; fact sheet: ${escapeHtml(sourceDate(fund.fact_sheet_date))}; record updated: ${escapeHtml(sourceDate(fund.updated_at))}</li>`
     )).join("")}</ul></section>`
   )).join("");
 
@@ -469,21 +476,20 @@ function fundDirectoryPage(funds: FundRow[]): SeoPageDefinition {
     title: "Money Market Funds in Kenya – Compare Yields & Fees",
     description: "Compare CMA-regulated money market funds and unit trusts in Kenya by annual yield, fees, minimum investment and withdrawal time.",
     heading: "Money market funds and unit trusts in Kenya",
-    contentHtml: `${paragraph(`Browse ${validFunds.length} published Kenyan unit trust funds. Compare current terms on each fund page and verify details with the manager before investing.`)}${groups}<p><a href="/calculator">Estimate possible returns</a> · <a href="/checklist">Use the fund checklist</a> · <a href="/learn/how-to-invest-in-money-market-funds-kenya">Read the money market fund guide</a></p>`,
+    contentHtml: `${paragraph(`Browse ${validFunds.length} published Kenyan unit trust funds. Compare current terms on each fund page and verify details with the manager before investing.`)}<p><a href="/money-market-funds-kenya">Compare Kenyan MMF yields, costs and source dates</a> · <a href="/mmf-calculator">Kenya MMF calculator</a></p>${groups}${researchLinksHtml("mmf")}<p><a href="/learn/how-to-invest-in-money-market-funds-kenya">Read the money market fund guide</a></p>`,
   };
 }
 
 function stockDirectoryPage(stocks: StockRow[]): SeoPageDefinition {
   const validStocks = stocks.filter((stock) => validSegment(stock.symbol) && stock.name);
-  const links = validStocks.map((stock) => (
-    `<li><a href="/stocks/${encodeURIComponent(stock.symbol!)}">${escapeHtml(stock.name)} (${escapeHtml(stock.symbol!.toUpperCase())})</a>${stock.sector ? ` — ${escapeHtml(stock.sector)}` : ""}</li>`
-  )).join("");
+  const sectors = [...new Set(validStocks.map(s => s.sector || "Other"))].sort();
+  const links = sectors.map(sector => `<section><h2>${escapeHtml(sector)}</h2><ul>${validStocks.filter(s => (s.sector || "Other") === sector).map(stock => `<li><a href="/stocks/${encodeURIComponent(stock.symbol!.toUpperCase())}">${escapeHtml(stock.name)} (${escapeHtml(stock.symbol!.toUpperCase())})</a> — ${escapeHtml(money(stock.price) || "Price unavailable")}; daily movement ${escapeHtml(percent(stock.day_change_percent) || "unavailable")}; volume ${escapeHtml(compactNumber(stock.volume) || "unavailable")}; quote date ${escapeHtml(sourceDate(stock.provider_updated_at || stock.updated_at))}; source ${escapeHtml(stock.quote_source || "public market-data feed")}</li>`).join("")}</ul></section>`).join("");
   return {
     path: "/stocks",
-    title: "NSE Share Prices Today – Kenyan Stocks Market Data",
+    title: "Kenyan Stocks & NSE Share Prices Today | Kenya Fund Finder",
     description: "Track Nairobi Securities Exchange share prices, daily changes, market capitalisation, dividend yields and price charts for Kenyan listed companies.",
-    heading: "Nairobi Securities Exchange share prices",
-    contentHtml: `${paragraph(`Browse ${validStocks.length} active NSE listings with current market data and company detail pages.`)}<section><h2>NSE company directory</h2><ul>${links}</ul></section><p><a href="/markets">Open the markets dashboard</a> · <a href="/news">Read market news</a></p>`,
+    heading: "Kenyan Stocks: NSE Share Prices Today",
+    contentHtml: `${paragraph(`Browse ${validStocks.length} NSE listings, reported prices and company detail pages. Quotes may be delayed; use the date on each listing.`)}<section><h2>NSE company directory by sector</h2>${links}</section><section><h2>Understanding market metrics</h2><p>Share price is the last reported value per share. Daily movement compares it with the feed's reference price. Volume counts traded shares; market cap measures share price times shares outstanding. These measures use reported data and do not guarantee execution prices.</p><a href="/page/market-data-methodology">Data sources and methodology</a></section>${researchLinksHtml("stocks")}<p><a href="/markets">Open the markets dashboard</a> · <a href="/news">Read market news</a></p>`,
   };
 }
 
@@ -545,19 +551,28 @@ function writePage(template: string, page: SeoPageDefinition): void {
 }
 
 async function loadDynamicPages(): Promise<SeoPageDefinition[]> {
-  const [stocks, funds, news, sitePages] = await Promise.all([
+  const [stocks, funds] = await Promise.all([
     publicStocks<StockRow>(),
-    supaSelect<FundRow>("funds_public", "select=slug,name,manager,annual_yield,daily_yield,minimum_investment,management_fee,withdrawal_time,description,fund_type,yield_unit,cma_licensed,is_published,updated_at,logo_url&is_published=eq.true&order=name.asc"),
+    seoPublicData<FundRow>("funds", "slug,name,manager,annual_yield,daily_yield,minimum_investment,management_fee,withdrawal_time,description,fund_type,yield_unit,cma_licensed,is_published,updated_at,logo_url,fact_sheet_date,website", "name.asc"),
+  ]);
+  if (!stocks.some(s => validSegment(s.symbol) && s.name) || !funds.some(f => validSegment(f.slug) && f.name && f.manager) || !funds.some(f => f.fund_type === "money_market")) {
+    throw new Error("SEO requires populated stock, fund and MMF directories");
+  }
+  const optional = await Promise.allSettled([
     supaSelect<NewsRow>("news_articles_public", "select=id,title,summary,content,source,date_published,source_published_at,created_at,updated_at,image_url,category,read_time,status&status=eq.published&order=source_published_at.desc.nullslast,date_published.desc.nullslast"),
     supaSelect<SitePageRow>("site_pages_public", "select=slug,title,content,meta,updated_at&order=slug.asc"),
   ]);
+  const news: NewsRow[] = optional[0].status === "fulfilled" ? optional[0].value as NewsRow[] : [];
+  const sitePages: SitePageRow[] = optional[1].status === "fulfilled" ? optional[1].value as SitePageRow[] : [];
+  optional.forEach(result => { if (result.status === "rejected") console.warn("[seo-prerender] optional content unavailable:", result.reason); });
 
   return [
     fundDirectoryPage(funds),
     stockDirectoryPage(stocks),
+    mmfHubSeo(funds),
     newsDirectoryPage(news),
     ...newsArchivePages(news),
-    ...stocks.map(stockPage),
+    ...stocks.map(stock => stockPage(stock, stocks)),
     ...funds.map(fundPage),
     ...news.map(newsPage),
     ...sitePages
@@ -569,12 +584,13 @@ async function loadDynamicPages(): Promise<SeoPageDefinition[]> {
 async function main() {
   const template = readFileSync(TEMPLATE_PATH, "utf8");
   let dynamicPages: SeoPageDefinition[] = [];
+  if (STRICT && SKIP_DYNAMIC) throw new Error("Production SEO builds cannot skip market data");
   if (!SKIP_DYNAMIC) {
     try {
       dynamicPages = await loadDynamicPages();
     } catch (error) {
       console.error("[seo-prerender] dynamic content fetch failed", error);
-      if (STRICT) process.exitCode = 1;
+      throw error;
     }
   }
 

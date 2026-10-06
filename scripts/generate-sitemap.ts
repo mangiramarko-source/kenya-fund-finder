@@ -7,13 +7,14 @@ import { resolve } from "path";
 import { isIndexableNewsArticle, type SeoNewsArticleLike } from "../src/lib/seoNewsEligibility";
 import { getNewsArchivePageCount, getNewsArchivePath } from "../src/lib/newsArchive";
 import { isIndexableSitePageSlug } from "../src/lib/seoSitePageEligibility";
+import { RESEARCH_ARTICLES, articlePath } from "../src/data/seoGrowthContent";
+import { seoPublicData, SEO_SUPABASE_URL, SEO_SUPABASE_KEY } from "./seo-public-data";
 
 const BASE_URL = "https://kenyafundfinder.com";
-const SUPABASE_URL = process.env.VITE_SUPABASE_URL || "https://caawgzuofnujrznwbuxk.supabase.co";
-const SUPABASE_ANON_KEY =
-  process.env.VITE_SUPABASE_PUBLISHABLE_KEY ||
-  process.env.VITE_SUPABASE_ANON_KEY ||
-  "sb_publishable_6snC3do-2emXAMEp7-C9AA_3_kb-GkC";
+const SUPABASE_URL = SEO_SUPABASE_URL;
+const SUPABASE_ANON_KEY = SEO_SUPABASE_KEY;
+const buildOutput = process.argv.includes("--build-output");
+const strict = buildOutput || process.env.VERCEL === "1";
 
 // Cap to keep sitemap well under the 50k URL / 50MB limit.
 const NEWS_LIMIT = 2000;
@@ -30,6 +31,9 @@ interface NewsSitemapRow extends SeoNewsArticleLike {
 }
 
 const staticEntries: SitemapEntry[] = [
+  { path: "/money-market-funds-kenya", changefreq: "weekly", priority: "0.9" },
+  { path: "/mmf-calculator", changefreq: "monthly", priority: "0.8" },
+  ...RESEARCH_ARTICLES.map(a => ({ path: articlePath(a), changefreq: "monthly" as const, priority: "0.7" })),
   { path: "/", changefreq: "daily", priority: "1.0" },
   { path: "/funds", changefreq: "daily", priority: "0.9" },
   { path: "/stocks", changefreq: "daily", priority: "0.9" },
@@ -51,8 +55,9 @@ async function supaSelect<T>(path: string): Promise<T[]> {
   const res = await fetch(`${SUPABASE_URL}/rest/v1/${path}`, {
     headers: {
       apikey: SUPABASE_ANON_KEY,
-      Authorization: `Bearer ${SUPABASE_ANON_KEY}`,
+      ...(SUPABASE_ANON_KEY.startsWith("eyJ") ? { Authorization: `Bearer ${SUPABASE_ANON_KEY}` } : {}),
     },
+    signal: AbortSignal.timeout(30_000),
   });
   if (!res.ok) {
     console.warn(`[sitemap] supabase ${path} -> ${res.status}; skipping`);
@@ -65,20 +70,12 @@ async function supaSelect<T>(path: string): Promise<T[]> {
 // gateway. This avoids relying on direct table/view grants during static SEO
 // generation while keeping the query restricted to public fields.
 async function publicStocks<T>(select: string): Promise<T[]> {
-  const res = await fetch(`${SUPABASE_URL}/functions/v1/public-data/stocks?select=${encodeURIComponent(select)}&order=symbol.asc&limit=200`);
-  if (!res.ok) {
-    console.warn(`[sitemap] public-data stocks -> ${res.status}; skipping`);
-    return [];
-  }
-  const payload = await res.json() as { data?: T[] };
-  return payload.data ?? [];
+  return seoPublicData<T>("stocks", select, "symbol.asc");
 }
 
 async function fetchDynamic(): Promise<SitemapEntry[]> {
   const [funds, news, pages, stocks] = await Promise.all([
-    supaSelect<{ slug: string; updated_at: string }>(
-      "funds_public?select=slug,updated_at&is_published=eq.true&order=name.asc",
-    ),
+    seoPublicData<{ slug: string; updated_at: string }>("funds", "slug,updated_at", "name.asc"),
     supaSelect<NewsSitemapRow>(
       `news_articles_public?select=id,title,summary,content,status,date_published,source_published_at,created_at,updated_at&status=eq.published&order=source_published_at.desc.nullslast,date_published.desc.nullslast&limit=${NEWS_LIMIT}`,
     ),
@@ -87,6 +84,7 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     ),
     publicStocks<{ symbol: string; updated_at: string }>("symbol,updated_at"),
   ]);
+  if (!funds.length || !stocks.length) throw new Error("Sitemap requires populated stock and fund directories");
 
   const fundEntries: SitemapEntry[] = funds.map((f) => ({
     path: `/compare/${f.slug}`,
@@ -153,13 +151,14 @@ async function main() {
   try {
     dynamic = await fetchDynamic();
   } catch (err) {
+    if (strict) throw err;
     console.warn("[sitemap] dynamic fetch failed; writing static-only sitemap", err);
   }
   const all = Array.from(new Map([...staticEntries, ...dynamic].map((entry) => [entry.path, entry])).values());
-  writeFileSync(resolve("public/sitemap.xml"), render(all));
+  writeFileSync(resolve(buildOutput ? "dist/sitemap.xml" : "public/sitemap.xml"), render(all));
   console.log(
     `sitemap.xml written (${all.length} entries: ${staticEntries.length} static, ${dynamic.length} dynamic)`,
   );
 }
 
-main();
+main().catch(error => { console.error("[sitemap] failed", error); process.exitCode = 1; });

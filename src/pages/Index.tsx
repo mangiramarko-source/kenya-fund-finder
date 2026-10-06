@@ -1,6 +1,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, type FundFromDB, type YieldSnapshot } from "@/lib/api";
+import ResearchLinks from "@/components/ResearchLinks";
 import { useFundWatchlist } from "@/hooks/useFundWatchlist";
 import { useAuth } from "@/hooks/useAuth";
 import FundGrid from "@/components/home/FundGrid";
@@ -179,6 +180,7 @@ const Index = () => {
         onToggleFavourite={user ? toggle : undefined}
       />
       <FundBuyerQuestions />
+      <ResearchLinks pillar="mmf" />
     </div>
   );
 };

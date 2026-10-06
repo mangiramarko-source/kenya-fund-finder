@@ -3,7 +3,7 @@ import { join, resolve } from "node:path";
 
 const SITE_ORIGIN = "https://kenyafundfinder.com";
 const DIST_DIR = resolve("dist");
-const SITEMAP_PATH = resolve("public/sitemap.xml");
+const SITEMAP_PATH = resolve("dist/sitemap.xml");
 
 function normalizePath(value: string): string | null {
   try {
@@ -77,4 +77,3 @@ if (missingFiles.length || orphans.length) {
   if (orphans.length) console.error(`[crawlability] orphans:\n${orphans.join("\n")}`);
   process.exitCode = 1;
 }
-

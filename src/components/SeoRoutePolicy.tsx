@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { useLocation } from "react-router-dom";
+import { RESEARCH_ARTICLES, articlePath } from "@/data/seoGrowthContent";
 
 const INDEXABLE_PATHS = [
   /^\/$/,
@@ -26,7 +27,8 @@ export default function SeoRoutePolicy() {
       meta.name = "robots";
       document.head.appendChild(meta);
     }
-    const indexable = INDEXABLE_PATHS.some((pattern) => pattern.test(pathname));
+    const indexable = INDEXABLE_PATHS.some((pattern) => pattern.test(pathname)) ||
+      ["/money-market-funds-kenya", "/mmf-calculator", ...RESEARCH_ARTICLES.map(articlePath)].includes(pathname.replace(/\/$/, ""));
     meta.content = indexable
       ? "index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1"
       : "noindex, nofollow, noarchive";

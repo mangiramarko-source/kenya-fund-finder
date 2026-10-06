@@ -1,4 +1,5 @@
 import { useEffect, useState, useMemo, useRef } from "react";
+import ResearchLinks from "@/components/ResearchLinks";
 import { useParams, useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import MarketPageLoader from "@/components/MarketPageLoader";
@@ -769,6 +770,7 @@ const StockDetailPage = () => {
         </TabsContent>
       </Tabs>
 
+      <ResearchLinks pillar="stocks" />
       <div className="mt-4 rounded-[24px] border border-dashed border-border bg-muted/30 p-5 md:mt-6 md:rounded-lg md:border-solid md:border-border/50 md:p-3">
         <p className="text-xs leading-relaxed text-muted-foreground md:text-[10px]">
           Stock prices shown are indicative and may be delayed. Data is sourced from the Kenyan stock market.

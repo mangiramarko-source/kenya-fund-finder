@@ -101,6 +101,8 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
               <li><Link to="/news" className="hover:text-foreground transition-colors">News</Link></li>
               <li><Link to="/learn" className="hover:text-foreground transition-colors">Learn</Link></li>
               <li><Link to="/compare" className="hover:text-foreground transition-colors">Compare Funds</Link></li>
+              <li><Link to="/money-market-funds-kenya" className="hover:text-foreground transition-colors">Kenyan MMF comparison</Link></li>
+              <li><Link to="/mmf-calculator" className="hover:text-foreground transition-colors">MMF Calculator</Link></li>
               <li><Link to="/watchlist" className="hover:text-foreground transition-colors">Watchlist</Link></li>
               <li><Link to="/page/about" className="hover:text-foreground transition-colors">About</Link></li>
             </ul>
@@ -112,6 +114,11 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/privacy" className="hover:text-foreground transition-colors">Privacy Policy</Link></li>
               <li><Link to="/terms" className="hover:text-foreground transition-colors">Terms of Use</Link></li>
+              <li><Link to="/page/editorial-standards" className="hover:text-foreground transition-colors">Editorial standards</Link></li>
+              <li><Link to="/page/market-data-methodology" className="hover:text-foreground transition-colors">Data methodology</Link></li>
+              <li><Link to="/page/source-policy" className="hover:text-foreground transition-colors">Sources</Link></li>
+              <li><Link to="/page/corrections" className="hover:text-foreground transition-colors">Corrections</Link></li>
+              <li><Link to="/page/financial-disclaimer" className="hover:text-foreground transition-colors">Financial disclaimer</Link></li>
               <li>
                 <button
                   type="button"
