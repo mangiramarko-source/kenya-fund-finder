@@ -1,6 +1,6 @@
 import { useMemo, useId, useEffect } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal, X, Check, GitCompareArrows, Plus } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -11,6 +11,7 @@ import FundLogo from "./FundLogo";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import type { FundFromDB, FundType, YieldSnapshot } from "@/lib/api";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
+import { useCompare } from "@/hooks/useCompare";
 
 type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee" | "change";
 type SortDir = "asc" | "desc";
@@ -63,8 +64,8 @@ const SortHeader = ({
 );
 
 /* ─── Sparkline ─── */
-const SPARK_W = 120;
-const SPARK_H = 36;
+const SPARK_W = 84;
+const SPARK_H = 30;
 
 const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
   const uid = useId();
@@ -157,6 +158,7 @@ type Movement = typeof VALID_MOVEMENT[number];
 const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, isFavourite, onToggleFavourite }: FundGridProps) => {
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
+  const { selected, add, remove, isSelected, setIsOpen } = useCompare();
 
   const activeTab = searchParams.get("category") || "money_market";
   const search = searchParams.get("q") || "";
@@ -309,7 +311,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
         </div>
 
         <div className="flex items-center gap-3 pr-1">
-          <div className="relative w-80 shrink-0">
+          <div className="relative w-[300px] shrink-0 2xl:w-[340px]">
             <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
             <Input
               placeholder="Search fund or manager"
@@ -493,8 +495,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
       </div>
 
 
-      <div className="hidden md:block rounded-[22px] border border-border bg-card shadow-sm overflow-hidden">
-        <div className="w-full overflow-x-auto border-b border-border bg-black px-7 pt-3 scrollbar-hide">
+      <div className="hidden md:block xl:grid xl:grid-cols-[minmax(0,1fr)_300px] 2xl:grid-cols-[minmax(0,1fr)_340px] xl:items-start xl:gap-5">
+        <div className="rounded-[22px] border border-border bg-card shadow-sm overflow-hidden">
+          <div className="w-full overflow-x-auto border-b border-border bg-black px-7 pt-3 scrollbar-hide">
           <div className="flex min-w-max items-center gap-8">
             {categories.map((cat) => {
               const active = activeTab === cat;
@@ -513,30 +516,23 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
             })}
           </div>
         </div>
-        <div className="overflow-x-auto">
-          <table className="w-full table-fixed min-w-[1100px] text-left text-sm">
+          <div className="overflow-x-auto">
+            <table className="w-full table-fixed min-w-[830px] text-left text-sm">
             <colgroup>
-              <col style={{ width: "24%" }} />
-              <col style={{ width: "7%" }} />
-              <col style={{ width: "8%" }} />
-              <col style={{ width: "8%" }} />
-              <col style={{ width: "8%" }} />
-              <col style={{ width: "110px" }} />
-              <col style={{ width: "9%" }} />
-              <col style={{ width: "6%" }} />
+              <col style={{ width: "20%" }} />
+              <col style={{ width: "12%" }} />
               <col style={{ width: "11%" }} />
+              <col style={{ width: "86px" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "7%" }} />
+              <col style={{ width: "11%" }} />
+              <col style={{ width: "92px" }} />
               {onToggleFavourite && <col style={{ width: "3%" }} />}
             </colgroup>
             <thead>
               <tr className="border-b border-border bg-muted/50 text-[10px] uppercase tracking-[0.16em] text-muted-foreground dark:bg-[#1b1c1f]">
-                <th className="bg-background/60 text-left px-6 py-3 font-semibold dark:bg-[#151619]">
+                <th className="bg-background/60 text-left px-4 py-3 font-semibold dark:bg-[#151619]">
                   <SortHeader label="FUNDS" field="name" sortKey={sortKey} onToggleSort={toggleSort} />
-                </th>
-                <th className="text-right px-3 py-3 font-semibold">
-                  <SortHeader label="DAILY" field="daily_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
-                </th>
-                <th className="text-right px-2 py-3 font-semibold" title="vs prior snapshot">
-                  <span className="sr-only">Daily </span>Change
                 </th>
                 <th className="text-right px-3 py-3 font-semibold">
                   <SortHeader label="ANNUAL" field="annual_yield" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
@@ -552,6 +548,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                   <SortHeader label="FEE" field="management_fee" sortKey={sortKey} onToggleSort={toggleSort} className="justify-end" />
                 </th>
                 <th className="text-right pr-5 pl-2 py-3 font-semibold">WITHDRAW</th>
+                <th className="px-2 py-3 text-center font-semibold">COMPARE</th>
                 {onToggleFavourite && <th className="w-8 pr-3 py-3 font-semibold" aria-label="Watch" />}
               </tr>
             </thead>
@@ -562,7 +559,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                   onClick={() => navigate(`/compare/${fund.slug}`)}
                   className="group cursor-pointer bg-card transition-colors hover:bg-muted/35"
                 >
-                  <td className="bg-muted/35 px-6 py-4 align-middle dark:bg-[#151619]">
+                  <td className="bg-muted/35 px-4 py-4 align-middle dark:bg-[#151619]">
                     <Link
                       to={`/compare/${fund.slug}`}
                       onClick={(e) => e.stopPropagation()}
@@ -582,25 +579,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                         <div className="text-[11px] text-muted-foreground truncate mt-1">{fund.manager}</div>
                       </div>
                     </Link>
-                  </td>
-                  <td className="px-3 py-4 text-right tabular-nums whitespace-nowrap align-middle">
-                    <span className="font-black text-foreground text-[13px]">
-                      {fmtYield(fund.daily_yield, fund.yield_unit)}
-                    </span>
-                  </td>
-                  <td className="px-2 py-4 text-right whitespace-nowrap align-middle">
-                    <div className="flex justify-end">
-                      {snapshots[fund.id] ? (
-                        <YieldChange
-                          current={fund.daily_yield}
-                          previous={snapshots[fund.id]?.daily_yield}
-                          unit={fund.yield_unit}
-                          className="text-[13px]"
-                        />
-                      ) : (
-                        <span className="text-[13px] text-muted-foreground">—</span>
-                      )}
-                    </div>
                   </td>
                   <td className="px-3 py-4 text-right whitespace-nowrap tabular-nums align-middle">
                     <span className="font-black text-foreground text-[13px]">
@@ -637,6 +615,33 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                   <td className="pr-5 pl-2 py-4 text-right text-[13px] font-semibold text-foreground truncate max-w-[120px] align-middle" title={fund.withdrawal_time}>
                     {fund.withdrawal_time}
                   </td>
+                  <td className="px-2 py-4 text-center align-middle">
+                    {(() => {
+                      const selectedForCompare = isSelected(fund.id);
+                      const compareFull = selected.length >= 4 && !selectedForCompare;
+                      return (
+                        <button
+                          type="button"
+                          disabled={compareFull}
+                          onClick={(event) => {
+                            event.stopPropagation();
+                            if (selectedForCompare) remove(fund.id);
+                            else add(fund);
+                          }}
+                          className={`inline-flex h-8 items-center justify-center gap-1 rounded-full border px-2.5 text-[11px] font-semibold transition-colors ${
+                            selectedForCompare
+                              ? "border-emerald-500 bg-emerald-500 text-white"
+                              : "border-border bg-background text-muted-foreground hover:border-emerald-500/50 hover:text-emerald-500 disabled:cursor-not-allowed disabled:opacity-40"
+                          }`}
+                          aria-label={selectedForCompare ? `Remove ${fund.name} from comparison` : `Add ${fund.name} to comparison`}
+                          title={compareFull ? "You can compare up to four funds" : undefined}
+                        >
+                          {selectedForCompare ? <Check className="h-3.5 w-3.5" /> : <Plus className="h-3.5 w-3.5" />}
+                          <span>{selectedForCompare ? "Added" : "Add"}</span>
+                        </button>
+                      );
+                    })()}
+                  </td>
                   {onToggleFavourite && (
                     <td className="pr-3 py-4 text-center align-middle">
                       <button
@@ -658,7 +663,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
 
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={onToggleFavourite ? 10 : 9} className="text-center py-14">
+                    <td colSpan={onToggleFavourite ? 9 : 8} className="text-center py-14">
                     <div className="flex flex-col items-center gap-3">
                       <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
                         <span className="text-2xl">📊</span>
@@ -678,7 +683,81 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
               )}
             </tbody>
           </table>
+          </div>
         </div>
+
+        <aside className="mt-5 xl:sticky xl:top-5 xl:mt-0 rounded-[22px] border border-border bg-card p-5 shadow-sm">
+          <div className="flex items-start justify-between gap-3 border-b border-border pb-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <GitCompareArrows className="h-4 w-4 text-emerald-500" />
+                <h2 className="text-sm font-bold text-foreground">Compare funds</h2>
+              </div>
+              <p className="mt-1 text-xs leading-relaxed text-muted-foreground">Choose up to four funds from the table.</p>
+            </div>
+            <span className="rounded-full bg-muted px-2 py-1 text-[11px] font-semibold tabular-nums text-muted-foreground">{selected.length}/4</span>
+          </div>
+
+          {selected.length === 0 ? (
+            <div className="flex min-h-[226px] flex-col items-center justify-center px-3 text-center">
+              <div className="flex h-11 w-11 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-500">
+                <GitCompareArrows className="h-5 w-5" />
+              </div>
+              <p className="mt-4 text-sm font-semibold text-foreground">Build a short list</p>
+              <p className="mt-1 max-w-[220px] text-xs leading-relaxed text-muted-foreground">Use Add beside any fund to compare yield, fees, minimum investment, and withdrawal time.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 pt-4">
+              <div className="space-y-2">
+                {selected.map((fund) => (
+                  <div key={fund.id} className="flex items-center gap-2 rounded-xl border border-border/70 bg-muted/25 p-2.5">
+                    <FundLogo name={fund.name} logoUrl={getFundManagerLogoUrl(fund.manager, fund.logo_url)} size={32} />
+                    <div className="min-w-0 flex-1">
+                      <p className="truncate text-xs font-semibold text-foreground">{fund.name}</p>
+                      <p className="mt-0.5 text-[11px] font-medium text-emerald-500">{fmtYield(fund.annual_yield, fund.yield_unit)} annual</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => remove(fund.id)}
+                      className="rounded-md p-1 text-muted-foreground transition-colors hover:bg-background hover:text-foreground"
+                      aria-label={`Remove ${fund.name} from comparison`}
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+
+              {selected.length >= 2 && (
+                <div className="space-y-2 rounded-xl bg-muted/40 p-3 text-xs">
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Highest annual yield</span>
+                    <span className="max-w-[140px] truncate text-right font-semibold text-foreground">
+                      {selected.reduce((best, fund) => fund.annual_yield > best.annual_yield ? fund : best).name}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-3">
+                    <span className="text-muted-foreground">Lowest fee</span>
+                    <span className="max-w-[140px] truncate text-right font-semibold text-foreground">
+                      {selected.reduce((best, fund) => fund.management_fee < best.management_fee ? fund : best).name}
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <button
+                type="button"
+                disabled={selected.length < 2}
+                onClick={() => setIsOpen(true)}
+                className="inline-flex h-10 w-full items-center justify-center gap-2 rounded-full bg-emerald-500 px-4 text-xs font-bold text-white transition-colors hover:bg-emerald-600 disabled:cursor-not-allowed disabled:bg-muted disabled:text-muted-foreground"
+              >
+                <GitCompareArrows className="h-4 w-4" />
+                Compare selected {selected.length >= 2 ? `(${selected.length})` : ""}
+              </button>
+              {selected.length < 2 && <p className="text-center text-[11px] text-muted-foreground">Add one more fund to compare.</p>}
+            </div>
+          )}
+        </aside>
       </div>
 
       {/* Summary footer */}

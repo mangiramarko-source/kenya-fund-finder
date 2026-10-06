@@ -4,6 +4,8 @@ import { Button } from "@/components/ui/button";
 import { useCompare } from "@/hooks/useCompare";
 import { formatYield } from "@/components/YieldChange";
 import DisclaimerBlock from "@/components/DisclaimerBlock";
+import FundLogo from "@/components/home/FundLogo";
+import { getFundManagerLogoUrl } from "@/lib/fundBranding";
 
 type Extreme = "highest" | "lowest" | null;
 
@@ -54,7 +56,7 @@ const CompareModal = () => {
 
   return (
     <div className="fixed inset-0 z-[60] bg-background/80 backdrop-blur-sm flex items-start justify-center pt-8 sm:pt-16 px-4 overflow-y-auto">
-      <div className="w-full max-w-4xl bg-card border border-border rounded-2xl shadow-2xl mb-8 animate-in fade-in zoom-in-95">
+      <div className="w-full max-w-5xl bg-card border border-border rounded-2xl shadow-2xl mb-8 animate-in fade-in zoom-in-95">
         {/* Header */}
         <div className="flex items-center justify-between p-4 sm:p-6 border-b border-border">
           <div>
@@ -76,19 +78,30 @@ const CompareModal = () => {
           <table className="w-full">
             <thead>
               <tr className="border-b border-border">
-                <th className="text-left p-4 text-xs font-medium text-muted-foreground uppercase tracking-wider w-[140px] sm:w-[160px]">
+                <th className="text-left p-5 text-xs font-medium text-muted-foreground uppercase tracking-wider w-[140px] sm:w-[170px]">
                   Metric
                 </th>
                 {selected.map((fund) => (
-                  <th key={fund.id} className="p-4 text-left min-w-[160px]">
-                    <Link
-                      to={`/compare/${fund.slug}`}
-                      onClick={() => setIsOpen(false)}
-                      className="text-sm font-semibold hover:text-accent transition-colors line-clamp-2"
-                    >
-                      {fund.name}
-                    </Link>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">{fund.manager}</p>
+                  <th key={fund.id} className="p-5 text-left min-w-[210px]">
+                    <div className="flex items-center gap-3">
+                      <FundLogo
+                        name={fund.name}
+                        logoUrl={getFundManagerLogoUrl(fund.manager, fund.logo_url)}
+                        size={48}
+                        className="shrink-0"
+                      />
+                      <div className="min-w-0">
+                        <Link
+                          to={`/compare/${fund.slug}`}
+                          onClick={() => setIsOpen(false)}
+                          className="block truncate text-lg font-bold leading-tight text-foreground hover:text-accent transition-colors"
+                          title={fund.name}
+                        >
+                          {fund.name}
+                        </Link>
+                        <p className="mt-1 truncate text-xs font-medium text-muted-foreground">{fund.manager}</p>
+                      </div>
+                    </div>
                   </th>
                 ))}
               </tr>
