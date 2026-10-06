@@ -73,3 +73,14 @@ describe("welcome signup integration", () => {
     expect(screen.getByRole("checkbox", { name: "Price alert emails" })).not.toBeChecked();
   });
 });
+describe("guest introduction", () => {
+  it("renders a large close button that closes the dialog", async () => {
+    mocks.user = null; mocks.needsWelcome = false; mocks.choice = "accepted";
+    render(view());
+    await screen.findByRole("dialog", { name: "Kenya Fund Finder" });
+    const close = screen.getAllByRole("button", { name: "Close" }).find(button => button.classList.contains("h-10"));
+    expect(close).toHaveClass("w-10", "rounded-full");
+    fireEvent.click(close!);
+    await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
+  });
+});
