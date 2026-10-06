@@ -74,13 +74,11 @@ describe("welcome signup integration", () => {
   });
 });
 describe("guest introduction", () => {
-  it("renders a large close button that closes the dialog", async () => {
+  it("closes from the header close button", async () => {
     mocks.user = null; mocks.needsWelcome = false; mocks.choice = "accepted";
     render(view());
     await screen.findByRole("dialog", { name: "Kenya Fund Finder" });
-    const close = screen.getAllByRole("button", { name: "Close" }).find(button => button.classList.contains("h-10"));
-    expect(close).toHaveClass("w-10", "rounded-full");
-    fireEvent.click(close!);
+    fireEvent.click(screen.getAllByRole("button", { name: "Close" })[0]);
     await waitFor(() => expect(screen.queryByRole("dialog")).not.toBeInTheDocument());
   });
 });

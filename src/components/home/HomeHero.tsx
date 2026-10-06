@@ -95,17 +95,17 @@ const LegacyHomeHero = () => {
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-[380px] gap-5 sm:gap-6 rounded-[2rem] sm:rounded-[2.5rem] border-border/70 bg-card p-5 sm:p-6 [&>button]:hidden">
         {/* Header row: icon chip + status pill + close */}
-        <div className="flex items-center justify-between gap-3">
-          <div className="flex items-center gap-3">
-            <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-              <PieChart className="h-5 w-5" />
-            </span>
-            <span className="rounded-full border border-warning/30 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-warning">
-              Market Data
-            </span>
-          </div>
-          <DialogClose aria-label="Close" className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-muted/70 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus:outline-none focus-visible:ring-2 focus-visible:ring-ring">
-            <X className="h-4 w-4 stroke-[2.5]" />
+        <div className="flex items-center gap-3">
+          <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <PieChart className="h-5 w-5" />
+          </span>
+          <span className="rounded-full border border-warning/30 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-warning">
+            Market Data
+          </span>
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon" aria-label="Close" className="ml-auto shrink-0 rounded-full bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground">
+              <X className="stroke-[2.5]" />
+            </Button>
           </DialogClose>
         </div>
 
