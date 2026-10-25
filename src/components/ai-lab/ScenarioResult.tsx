@@ -24,11 +24,13 @@ import {
   TableHeadRow,
   TableRow,
   fmtGainLoss,
+  fmtPctColored,
+} from "@/components/ai-lab/ScenarioResultPrimitives";
+import {
   fmtKES,
   fmtKES2,
-  fmtPctColored,
   signedColorClass,
-} from "@/components/ai-lab/ScenarioResultPrimitives";
+} from "@/components/ai-lab/aiLabTheme";
 
 interface ScenarioResultProps {
   result: RouterResult | null;
@@ -971,7 +973,7 @@ const ScenarioResult = ({ result, history, historyLoading, lookbackDays }: Scena
 
   // Numeric scenario layout
   let calcs: React.ReactNode = null;
-  let importantNotes: React.ReactNode = (
+  const importantNotes: React.ReactNode = (
     <p className="text-xs text-muted-foreground">
       This is a projection, not a guarantee. Possible trade-offs include changing yields, market
       volatility, fees, and withholding tax on interest income.

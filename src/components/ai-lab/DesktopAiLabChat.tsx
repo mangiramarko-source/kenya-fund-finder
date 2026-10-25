@@ -76,7 +76,7 @@ export default function DesktopAiLabChat() {
         setMessages((prev) => prev.map((m) => m.id === pending.id ? { ...createAssistantMessage({ text: "Something went wrong while generating that scenario. Please try again.", status: "error" }), id: pending.id } : m));
       }
     })();
-  }, [market.data, news.data, messages, user]);
+  }, [market.data, news.data, messages, setMessages, user]);
 
   const selectClarification = useCallback((messageId: string, entityId: string) => {
     const sourceMessage = messages.find((message) => message.id === messageId);
@@ -121,7 +121,7 @@ export default function DesktopAiLabChat() {
           : message));
       }
     })();
-  }, [messages, market.data, news.data]);
+  }, [messages, market.data, news.data, setMessages]);
 
   if (!open) return <KoraAiLauncher onActivate={() => setOpen(true)} className="fixed bottom-5 right-5 z-50 hidden md:flex" />;
 

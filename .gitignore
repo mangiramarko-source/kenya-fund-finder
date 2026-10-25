@@ -26,3 +26,12 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Local scratch, agent artifacts, and Python bytecode
+scratch/
+.claude/
+*.webarchive
+posthog-self-driving-report.md
+__pycache__/
+*.py[cod]
+data_pipeline/venv/

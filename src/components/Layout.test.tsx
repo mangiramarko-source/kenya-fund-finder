@@ -10,6 +10,7 @@ vi.mock("./SkipToContent", () => ({ default: () => null }));
 vi.mock("./DesktopTopBar", () => ({ default: () => null }));
 vi.mock("./OfflineBanner", () => ({ default: () => null }));
 vi.mock("./MobileAiLabFab", () => ({ default: () => null }));
+vi.mock("@/components/ai-lab/DesktopAiLabChat", () => ({ default: () => null }));
 vi.mock("./CurrencyTicker", () => ({ default: () => <div data-testid="currency-ticker" /> }));
 vi.mock("@/hooks/usePageView", () => ({ usePageView: vi.fn() }));
 

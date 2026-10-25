@@ -40,6 +40,23 @@ export const AI_LAB_METRIC_LG =
 export const AI_LAB_POSITIVE = "text-success";
 export const AI_LAB_NEGATIVE = "text-destructive";
 
+export const fmtKES = (n: number) =>
+  new Intl.NumberFormat("en-KE", {
+    style: "currency",
+    currency: "KES",
+    maximumFractionDigits: 0,
+  }).format(n);
+
+export const fmtKES2 = (n: number) =>
+  new Intl.NumberFormat("en-KE", {
+    style: "currency",
+    currency: "KES",
+    maximumFractionDigits: 2,
+  }).format(n);
+
+export const signedColorClass = (n: number) =>
+  n > 0 ? AI_LAB_POSITIVE : n < 0 ? AI_LAB_NEGATIVE : "text-muted-foreground";
+
 export const AI_LAB_CHIP =
   "text-xs px-3.5 py-1.5 rounded-full border border-border/80 bg-card text-foreground/80 hover:text-foreground hover:bg-muted transition-colors text-left shadow-sm font-medium shrink-0";
 export const AI_LAB_USER_BUBBLE =

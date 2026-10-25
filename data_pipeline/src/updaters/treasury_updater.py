@@ -272,6 +272,59 @@ def validate_extracted_dates(date_info: dict, source_url: str) -> tuple[str, str
 # PDF processing pipeline
 # ──────────────────────────────────────────────────────────────────────────────
 
+def extract_issue_numbers(pdf_bytes: bytes, source_url: str) -> dict[int, str]:
+    """Extract per-tenor issue numbers from the PDF Section A header first,
+    falling back to the URL filename if a tenor is absent from the PDF header.
+
+    CBK occasionally mistypes an issue number in the published PDF filename
+    (e.g. 'RESULTS 2700-091 2675-182 2630-364 DATED 28-09-2026.pdf' whose
+    Section A header is 'ISSUES 2701/091, 2675/182 & 2630/364 DATED 28/09/2026').
+    """
+    import urllib.parse
+
+    url_issue_nums: dict[int, str] = {}
+    if source_url:
+        fn = urllib.parse.unquote(source_url.split("/")[-1])
+        for tenor in (91, 182, 364):
+            m = re.search(rf"\b(\d+)-0*{tenor}\b", fn)
+            if m:
+                url_issue_nums[tenor] = f"{m.group(1)}/{tenor:03d}"
+
+    pdf_issue_nums: dict[int, str] = {}
+    if pdf_bytes:
+        try:
+            with pdfplumber.open(io.BytesIO(pdf_bytes)) as pdf:
+                first_page_text = (pdf.pages[0].extract_text() or "") if pdf.pages else ""
+            header_region = re.split(
+                r"NEXT\s+TREASURY\s+BILLS\s+AUCTIONS",
+                first_page_text,
+                maxsplit=1,
+                flags=re.IGNORECASE,
+            )[0][:1500]
+            for tenor in (91, 182, 364):
+                m = re.search(rf"\b(\d+)\s*[/\-]\s*0*{tenor}\b", header_region)
+                if m:
+                    pdf_issue_nums[tenor] = f"{m.group(1)}/{tenor:03d}"
+        except Exception as e:
+            logger.warning(f"Could not inspect PDF header for issue numbers ({source_url}): {e}")
+
+    issue_nums: dict[int, str] = {}
+    for tenor in (91, 182, 364):
+        pdf_val = pdf_issue_nums.get(tenor)
+        url_val = url_issue_nums.get(tenor)
+        if pdf_val and url_val and pdf_val != url_val:
+            logger.warning(
+                f"ISSUE_NUMBER_FILENAME_MISMATCH for {tenor}d in {source_url}: "
+                f"URL has {url_val}, using authoritative PDF Section A header {pdf_val}"
+            )
+        if pdf_val:
+            issue_nums[tenor] = pdf_val
+        elif url_val:
+            issue_nums[tenor] = url_val
+
+    return issue_nums
+
+
 def process_and_upsert_pdf(
     pdf_bytes: bytes,
     source_url: str,
@@ -331,15 +384,9 @@ def process_and_upsert_pdf(
         return result
 
     # ── Step 3: Build records ──────────────────────────────────────────────────
-    # Extract issue numbers from source URL filename
-    # e.g. "RESULTS 2694-091 2668-182 2623-364 DATED 10-08-2026.pdf"
-    import urllib.parse
-    fn = urllib.parse.unquote(source_url.split("/")[-1])
-    issue_nums = {}
-    for tenor in (91, 182, 364):
-        m = re.search(rf'\b(\d+)-0*{tenor}\b', fn)
-        if m:
-            issue_nums[tenor] = f"{m.group(1)}/{tenor:03d}"
+    # Prefer authoritative issue numbers from the PDF Section A header and
+    # fall back to the URL filename if absent.
+    issue_nums = extract_issue_numbers(pdf_bytes, source_url)
 
     records_to_upsert = []
     for tenor in (91, 182, 364):

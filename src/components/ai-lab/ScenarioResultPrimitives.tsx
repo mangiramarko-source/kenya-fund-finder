@@ -3,30 +3,11 @@ import {
   AI_LAB_COLLAPSIBLE,
   AI_LAB_LABEL,
   AI_LAB_METRIC,
-  AI_LAB_METRIC_CARD,
-  AI_LAB_METRIC_LG,
-  AI_LAB_NEGATIVE,
-  AI_LAB_POSITIVE,
   AI_LAB_RESULT_SHELL,
   AI_LAB_SECTION,
+  fmtKES,
+  signedColorClass,
 } from "./aiLabTheme";
-
-export const fmtKES = (n: number) =>
-  new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: "KES",
-    maximumFractionDigits: 0,
-  }).format(n);
-
-export const fmtKES2 = (n: number) =>
-  new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: "KES",
-    maximumFractionDigits: 2,
-  }).format(n);
-
-export const signedColorClass = (n: number) =>
-  n > 0 ? AI_LAB_POSITIVE : n < 0 ? AI_LAB_NEGATIVE : "text-muted-foreground";
 
 export const ResultShell = ({
   children,

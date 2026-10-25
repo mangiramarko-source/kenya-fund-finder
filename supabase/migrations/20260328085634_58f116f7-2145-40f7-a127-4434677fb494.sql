@@ -17,11 +17,12 @@ WHERE is_published = true;
 
 DROP VIEW IF EXISTS public.stocks_public;
 CREATE VIEW public.stocks_public WITH (security_invoker = on) AS
-SELECT id, price, previous_price, day_change, day_change_percent,
+SELECT id, symbol, name, sector, price, previous_price, day_change, day_change_percent,
        volume, market_cap, year_high, year_low, pe_ratio, dividend_yield,
-       is_active, sort_order, updated_at, symbol, name, sector
+       is_active, sort_order, updated_at
 FROM public.stocks
 WHERE is_active = true;
+GRANT SELECT ON public.stocks_public TO anon, authenticated;
 
 DROP VIEW IF EXISTS public.exchange_rates_public;
 CREATE VIEW public.exchange_rates_public WITH (security_invoker = on) AS

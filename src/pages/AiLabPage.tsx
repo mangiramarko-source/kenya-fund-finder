@@ -235,7 +235,7 @@ const AiLabPage = () => {
       message.id === messageId ? { ...message, feedback: value } : message,
     ));
     trackEvent("ai_lab_answer_feedback", { rating: value });
-  }, []);
+  }, [setMessages]);
 
   const handleSubmit = useCallback(
     (prompt: string) => {
@@ -320,7 +320,7 @@ const AiLabPage = () => {
         }
       })();
     },
-    [messages, market.data, news.data, user],
+    [messages, market.data, news.data, setMessages, user],
   );
 
   const handleClarificationSelect = useCallback((messageId: string, entityId: string) => {
@@ -377,7 +377,7 @@ const AiLabPage = () => {
           : message));
       }
     })();
-  }, [messages, market.data, news.data]);
+  }, [messages, market.data, news.data, setMessages]);
 
   const showPageLoading = useMinimumLoadingDuration(loading);
 

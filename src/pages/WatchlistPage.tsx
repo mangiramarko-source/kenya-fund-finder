@@ -507,7 +507,7 @@ const WatchlistPage = () => {
         sub: commodity.symbol || commodity.unit,
         value: `${Number(commodity.price || 0).toLocaleString("en-US", { maximumFractionDigits: 2 })} ${commodity.unit || ""}`.trim(),
       }));
-  }, [addSearch, addType, commodities, funds, normalizedAddSearch, rates, stocks]);
+  }, [addType, commodities, funds, normalizedAddSearch, rates, stocks]);
   const groupedAddFundItems = useMemo(() => {
     const grouped: Record<string, AddSheetItem[]> = {};
     addSheetItems.forEach((item) => {

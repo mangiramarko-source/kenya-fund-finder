@@ -1,4 +1,6 @@
-import posthog from 'posthog-js';
+// Must be the first import: scrubs OAuth token fragments from the URL before
+// the Supabase client, analytics, or session recording read the address.
+import "./lib/scrubAuthUrlOnLoad";
 import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
@@ -59,11 +61,7 @@ Sentry.init({
     return breadcrumb;
   },
 });
-posthog.init(import.meta.env.VITE_POSTHOG_KEY, {  
- api_host: import.meta.env.VITE_POSTHOG_HOST,  
-});  
-console.log('PostHog key:', import.meta.env.VITE_POSTHOG_KEY);  
-console.log('PostHog host:', import.meta.env.VITE_POSTHOG_HOST);  
+
 // Install BEFORE React renders so any script tag that attempts to load is
 // inspected against the synchronous consent gate.
 installConsentScriptGuard();
