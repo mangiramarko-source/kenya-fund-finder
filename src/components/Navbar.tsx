@@ -11,6 +11,7 @@ import NotificationBell, { NotificationRow } from "@/components/alerts/Notificat
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
 import { ScrollArea } from "@/components/ui/scroll-area";
+import { isAiLabEnabled } from "@/lib/featureFlags";
 
 const navLinks = [
   { to: "/", label: "Home", icon: BarChart3 },
@@ -264,7 +265,9 @@ function MobileSidebarDrawer({
           <div className="h-px bg-border/60 mx-4 my-1" />
 
           <SidebarSection title="DISCOVER">
-            <SidebarRow icon={Sparkles}    label="AI Lab"          to="/ai-lab"    onClick={close} isNew />
+            {isAiLabEnabled() && (
+              <SidebarRow icon={Sparkles}    label="AI Lab"          to="/ai-lab"    onClick={close} isNew />
+            )}
             <SidebarRow icon={BookOpen}    label="Learn & Academy" to="/learn"     onClick={close} />
             <SidebarRow icon={Calculator}  label="Calculators"     to="/calculator" onClick={close} />
             <SidebarRow icon={CalendarDays} label="Alerts"         to={user ? "/alerts" : "/auth"} onClick={close} />
@@ -517,38 +520,8 @@ const Navbar = () => {
             <MobileMenuButton unreadCount={0} onClick={() => setOpen(true)} />
           </div>
         </nav>
-
-        {/* Full-width scrollable tab bar */}
-        <div className="no-scrollbar flex w-full min-w-0 max-w-full overflow-x-auto overscroll-x-contain border-b border-border px-4">
-          <div ref={mobileTabsScrollRef} className="flex w-max shrink-0 gap-6 py-3">
-            {mobileNavLinks.map((link) => {
-              const isActive = location.pathname === link.to;
-              return (
-                <Link
-                  key={link.to}
-                  to={link.to}
-                  ref={(el) => { mobileTabRefs.current[link.to] = el; }}
-                  onClick={(e) => {
-                    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
-                  }}
-                  className={`relative whitespace-nowrap text-sm font-medium transition-colors ${
-                    isActive
-                      ? "text-emerald-500 dark:text-emerald-400 font-bold"
-                      : "text-muted-foreground hover:text-foreground"
-                  }`}
-                >
-                  {link.label}
-                  {isActive && (
-                    <span className="absolute -bottom-3 left-0 h-0.5 w-full bg-emerald-500 dark:bg-emerald-400 shadow-[0_0_8px_rgba(16,185,129,0.5)]" />
-                  )}
-                </Link>
-              );
-            })}
-          </div>
-        </div>
-
       </header>
-      <div className="h-[101px]" aria-hidden="true" />
+      <div className="h-14" aria-hidden="true" />
     </div>
 
     <MobileSidebarDrawer {...sidebarProps} />

@@ -7,6 +7,8 @@ import DesktopTopBar from "./DesktopTopBar";
 import OfflineBanner from "./OfflineBanner";
 import MobileAiLabFab from "./MobileAiLabFab";
 import DesktopAiLabChat from "@/components/ai-lab/DesktopAiLabChat";
+import MobileBottomNav from "./mobile/MobileBottomNav";
+import { isAiLabEnabled } from "@/lib/featureFlags";
 import { usePageView } from "@/hooks/usePageView";
 
 function shouldShowMobileAiLabFab(pathname: string): boolean {
@@ -26,14 +28,26 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   usePageView();
   const { pathname } = useLocation();
   const showDesktopTicker = pathname === "/" || pathname === "/stocks";
-  const showMobileTicker = pathname === "/";
+  const showMobileTicker = pathname === "/" || pathname === "/stocks";
   // Immersive mobile view for news article pages: hide mobile navbar & footer
   const isNewsArticle = /^\/news\/[^/]+/.test(pathname);
   const isAuthPage = pathname === "/auth";
+  const isMobilePreview = pathname === "/mobile-preview";
   // AI Lab uses its own floating composer — hide global footer entirely
   const isAiLab = pathname === "/ai-lab" || pathname.startsWith("/ai-lab/");
   const isOverview = pathname === "/" || pathname === "/overview";
   const showMobileAiLabFab = shouldShowMobileAiLabFab(pathname);
+
+  if (isMobilePreview) {
+    return (
+      <div className="min-h-screen bg-slate-950">
+        <SkipToContent />
+        <main id="main-content" className="min-h-screen">
+          {children}
+        </main>
+      </div>
+    );
+  }
 
   return (
     <div className={`flex min-h-screen font-body bg-background overflow-x-hidden${isAiLab ? " h-dvh max-h-dvh overflow-hidden" : ""}`}>
@@ -53,8 +67,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         )}
         {showDesktopTicker && (
           <div
-            className={`fixed inset-x-0 z-40 w-full ${
-              showMobileTicker ? "top-[101px] md:top-14" : "top-14 hidden md:block"
+            className={`fixed inset-x-0 z-40 w-full top-14 ${
+              showMobileTicker ? "block" : "hidden md:block"
             }`}
           >
             <CurrencyTicker />
@@ -70,8 +84,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             isAiLab
               ? "flex-1 min-h-0 flex flex-col overflow-hidden"
               : isOverview
-                ? "flex-1 min-h-0 md:overflow-hidden"
-              : "flex-1 min-h-[80vh]"
+                ? "flex-1 min-h-0 md:overflow-hidden pb-20 md:pb-0"
+              : "flex-1 min-h-[80vh] pb-20 md:pb-0"
           }
         >
           {children}
@@ -82,8 +96,11 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <Footer />
           </div>
         )}
-        {showMobileAiLabFab && <MobileAiLabFab />}
-        {!isAiLab && !isAuthPage && <DesktopAiLabChat />}
+        {/* Mobile Bottom Navigation Bar (Android/iOS standard) */}
+        {!isAiLab && !isAuthPage && !isNewsArticle && <MobileBottomNav />}
+
+        {isAiLabEnabled() && showMobileAiLabFab && <MobileAiLabFab />}
+        {isAiLabEnabled() && !isAiLab && !isAuthPage && <DesktopAiLabChat />}
       </div>
     </div>
   );

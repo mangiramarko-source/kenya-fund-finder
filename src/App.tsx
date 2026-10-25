@@ -61,6 +61,8 @@ const MmfCalculatorPage = lazy(() => import("./pages/MmfCalculatorPage"));
 const ResearchArticlePage = lazy(() => import("./pages/ResearchArticlePage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const AiLabPage = lazy(() => import("./pages/AiLabPage"));
+const DevMobilePreviewPage = lazy(() => import("./pages/DevMobilePreviewPage"));
+import { isAiLabEnabled } from "@/lib/featureFlags";
 const DevOnlyPages = import.meta.env.DEV
   ? {
       ChecklistPage: lazy(() => import("./pages/ChecklistPage")),
@@ -157,7 +159,8 @@ const App = () => (
                     <Route path="/portfolio/summary" element={<PortfolioSummaryPage />} />
                     <Route path="/calculator" element={<CalculatorPage />} />
                     <Route path="/watchlist" element={<WatchlistPage />} />
-                    <Route path="/ai-lab" element={<AiLabPage />} />
+                    <Route path="/ai-lab" element={isAiLabEnabled() ? <AiLabPage /> : <Navigate to="/funds" replace />} />
+                    <Route path="/mobile-preview" element={<DevMobilePreviewPage />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin" element={<AdminPage />} />
                     {DevOnlyPages ? <>
