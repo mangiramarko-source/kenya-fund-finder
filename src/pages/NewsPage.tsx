@@ -186,7 +186,7 @@ export default function NewsPage() {
   };
 
   const filteredArticles = useMemo(() => {
-    let list = [...articles];
+    const list = [...articles];
 
     // Sort by Nav Tab (latest/oldest)
     if (activeNavTab === "Latest" || activeNavTab === "All" || ["Kenyan", "International", "Stocks", "MMFs", "FX Rates", "Commodities"].includes(activeNavTab)) {

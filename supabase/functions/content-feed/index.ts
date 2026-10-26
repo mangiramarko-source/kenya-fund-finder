@@ -160,9 +160,11 @@ Deno.serve(async (req) => {
       }
 
       // Rate limiting: 8 req/min per IP
+      const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
       const clientIp =
         req.headers.get("cf-connecting-ip") ||
         req.headers.get("x-real-ip") ||
+        forwarded ||
         "unknown";
       const ipHash = await hashIp(clientIp);
 

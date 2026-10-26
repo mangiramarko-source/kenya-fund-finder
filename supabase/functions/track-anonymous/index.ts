@@ -32,6 +32,16 @@ function getCorsHeaders(req: Request) {
   };
 }
 
+function clientIp(req: Request): string {
+  const forwarded = req.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  return (
+    req.headers.get("cf-connecting-ip") ||
+    req.headers.get("x-real-ip") ||
+    forwarded ||
+    "unknown"
+  );
+}
+
 async function hashIp(ip: string): Promise<string> {
   const encoder = new TextEncoder();
   const data = encoder.encode(ip + (Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") || "salt"));
@@ -81,12 +91,8 @@ Deno.serve(async (req) => {
   );
 
   // Rate limit: 8 req/min per IP
-  const clientIp =
-    req.headers.get("cf-connecting-ip") ||
-    req.headers.get("x-real-ip") ||
-    "unknown";
-
-  const ipHash = await hashIp(clientIp);
+  const ip = clientIp(req);
+  const ipHash = await hashIp(ip);
 
   const { data: allowed, error: rlError } = await supabaseAdmin.rpc("check_rate_limit", {
     p_ip_hash: ipHash,
