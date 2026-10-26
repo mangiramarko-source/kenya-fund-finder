@@ -3,11 +3,10 @@ import { Link } from "react-router-dom";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { fetchPublishedNews, fetchPublicStocks, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Archive, Search, Megaphone, Sparkles } from "lucide-react";
+import { Archive, Megaphone, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageLoadingGate from "@/components/PageLoadingGate";
-import { Input } from "@/components/ui/input";
 import { SocialFeedCard } from "@/components/feed/SocialFeed";
 import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
@@ -61,8 +60,6 @@ export default function NewsPage() {
   const [stocks, setStocks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [activeNavTab, setActiveNavTab] = useState<string>(DEFAULT_NEWS_TAB);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [showSearch, setShowSearch] = useState(false);
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -191,12 +188,6 @@ export default function NewsPage() {
   const filteredArticles = useMemo(() => {
     let list = [...articles];
 
-    // Filter by Search Query
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase();
-      list = list.filter(a => a.title.toLowerCase().includes(q) || (a.summary || "").toLowerCase().includes(q));
-    }
-
     // Sort by Nav Tab (latest/oldest)
     if (activeNavTab === "Latest" || activeNavTab === "All" || ["Kenyan", "International", "Stocks", "MMFs", "FX Rates", "Commodities"].includes(activeNavTab)) {
       list.sort((a, b) => getNewsPublishedTime(b) - getNewsPublishedTime(a));
@@ -205,7 +196,7 @@ export default function NewsPage() {
     }
 
     return list;
-  }, [articles, activeNavTab, searchQuery]);
+  }, [articles, activeNavTab]);
 
   const feedItems = useMemo(() => {
     const items: FeedItem[] = filteredArticles.map((a) => {
@@ -290,44 +281,7 @@ export default function NewsPage() {
             {newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredArticles.length} articles`}
           </span>
         </div>
-
-        {/* Search trigger icon */}
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => setShowSearch((prev) => !prev)}
-            aria-label="Toggle search"
-            className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
-              showSearch || searchQuery ? "bg-emerald-600 text-white shadow-xs" : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
-            }`}
-          >
-            <Search className="h-4 w-4" />
-          </button>
-        </div>
       </div>
-
-      {/* Expandable Search Input (Keeps header clean on mobile by default) */}
-      {(showSearch || searchQuery) && (
-        <div className="relative mb-3.5 animate-in fade-in slide-in-from-top-1 duration-200">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            autoFocus
-            placeholder="Search news by company, keyword, or topic..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 text-xs pl-8 pr-14 bg-card border-border rounded-full w-full"
-          />
-          {searchQuery && (
-            <button
-              type="button"
-              onClick={() => setSearchQuery("")}
-              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground hover:text-foreground"
-            >
-              Clear
-            </button>
-          )}
-        </div>
-      )}
 
       {/* Watchlist Briefing (For signed-in users) */}
       {user && (
