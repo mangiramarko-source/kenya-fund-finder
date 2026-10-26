@@ -9,6 +9,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageLoadingGate from "@/components/PageLoadingGate";
 import { Input } from "@/components/ui/input";
 import { SocialFeedCard } from "@/components/feed/SocialFeed";
+import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
@@ -61,6 +62,7 @@ export default function NewsPage() {
   const [loading, setLoading] = useState(true);
   const [activeNavTab, setActiveNavTab] = useState<string>(DEFAULT_NEWS_TAB);
   const [searchQuery, setSearchQuery] = useState("");
+  const [showSearch, setShowSearch] = useState(false);
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -266,91 +268,116 @@ export default function NewsPage() {
     return allItems;
   }, [filteredArticles, stocks, activeNavTab]);
 
+  const newTodayCount = useMemo(() => {
+    const now = Date.now();
+    const oneDayMs = 24 * 60 * 60 * 1000;
+    return (articles || []).filter((item) => {
+      const timeSource = getNewsPublishedAt(item);
+      if (!timeSource) return false;
+      const pubTime = new Date(timeSource).getTime();
+      return !isNaN(pubTime) && now - pubTime <= oneDayMs;
+    }).length;
+  }, [articles]);
+
   return (
     <PageLoadingGate isReady={!loading} message="Loading latest market news…" loaderClassName="min-h-screen">
-    <div className="max-w-4xl mx-auto px-4 md:px-6 py-6 min-h-screen">
-      {/* Header */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div className="flex items-center gap-3">
-          <h1 className="text-2xl sm:text-3xl font-extrabold tracking-tight text-foreground">Market News</h1>
-          <Badge variant="secondary" className="text-xs bg-muted/80">{filteredArticles.length} articles</Badge>
+    <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6 min-h-screen">
+      {/* Header matching original Market News section */}
+      <div className="mb-3.5 flex items-baseline justify-between mt-0">
+        <div className="flex items-baseline gap-2.5">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Market News</h1>
+          <span className="rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
+            {newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredArticles.length} articles`}
+          </span>
         </div>
 
-        {/* Search Input */}
-        <div className="relative w-full sm:w-64">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
-          <Input
-            placeholder="Search market news..."
-            value={searchQuery}
-            onChange={(e) => setSearchQuery(e.target.value)}
-            className="h-9 text-xs pl-8 bg-card border-border rounded-full w-full"
-          />
+        {/* Search trigger icon */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setShowSearch((prev) => !prev)}
+            aria-label="Toggle search"
+            className={`flex h-8 w-8 items-center justify-center rounded-full transition-colors ${
+              showSearch || searchQuery ? "bg-emerald-600 text-white shadow-xs" : "bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground"
+            }`}
+          >
+            <Search className="h-4 w-4" />
+          </button>
         </div>
       </div>
 
-      <Link
-        to="/news/archive"
-        className="mb-6 flex items-center justify-between gap-4 rounded-xl border border-border bg-card px-4 py-3 text-sm transition-colors hover:border-emerald-600/50 hover:bg-muted/35"
-      >
-        <span className="flex items-center gap-2 font-semibold text-foreground"><Archive className="h-4 w-4 text-emerald-700 dark:text-emerald-400" /> Browse the complete news archive</span>
-        <span className="text-xs text-muted-foreground">All indexed articles →</span>
-      </Link>
+      {/* Expandable Search Input (Keeps header clean on mobile by default) */}
+      {(showSearch || searchQuery) && (
+        <div className="relative mb-3.5 animate-in fade-in slide-in-from-top-1 duration-200">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+          <Input
+            autoFocus
+            placeholder="Search news by company, keyword, or topic..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="h-9 text-xs pl-8 pr-14 bg-card border-border rounded-full w-full"
+          />
+          {searchQuery && (
+            <button
+              type="button"
+              onClick={() => setSearchQuery("")}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs font-semibold text-muted-foreground hover:text-foreground"
+            >
+              Clear
+            </button>
+          )}
+        </div>
+      )}
 
-      {/* Watchlist Briefing */}
+      {/* Watchlist Briefing (For signed-in users) */}
       {user && (
-        <div className="mb-6 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 p-5">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="mb-4 rounded-2xl bg-emerald-500/5 border border-emerald-500/20 p-4">
+          <div className="flex items-center gap-2 mb-2">
             <Sparkles className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-emerald-700 dark:text-emerald-400">Your Watchlist Briefing</h2>
           </div>
-          <div className="space-y-3">
-            <p className="text-[14px] text-foreground/90 leading-relaxed">
-              <strong>KCB Group (KCB):</strong> H1 earnings beat expectations with 18% YoY growth, driven by non-funded revenue. Short-term outlook remains positive.
+          <div className="space-y-2 text-xs text-foreground/90 leading-relaxed">
+            <p>
+              <strong>KCB Group (KCB):</strong> H1 earnings beat expectations with 18% YoY growth, driven by non-funded revenue.
             </p>
-            <p className="text-[14px] text-foreground/90 leading-relaxed">
-              <strong>Equity Group (EQTY):</strong> Expansion into DRC announced via mobile API deployment. Potential long-term growth, but keep an eye on currency volatility risks.
+            <p>
+              <strong>Equity Group (EQTY):</strong> Expansion into regional markets continues with mobile API deployments.
             </p>
           </div>
         </div>
       )}
 
-      {/* Top Nav Filter Tabs */}
-      <div className="relative mb-6 border-b border-border dark:border-white/10">
-        <div className="flex overflow-x-auto gap-6 sm:gap-8 pb-2.5 hide-scrollbar text-sm font-medium">
-          {[
-            DEFAULT_NEWS_TAB,
-            "Kenyan",
-            "International",
-            "Stocks",
-            FUNDS_AND_FIXED_INCOME_TAB,
-            "FX Rates",
-            "Commodities",
-            "Latest",
-            "Oldest",
-          ].map((cat) => {
-            const isActive = activeNavTab === cat;
-            return (
-              <button
-                key={cat}
-                onClick={() => {
-                  setActiveNavTab(cat);
-                  // Pass current state directly — no closure staleness possible
-                  triggerFillForTab(cat, articles, offset, hasMore, stocks);
-                }}
-                className={`whitespace-nowrap transition-colors duration-200 relative pb-1 text-sm ${
-                  isActive
-                    ? "text-foreground font-bold dark:text-white"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {cat}
-                {isActive && (
-                  <span className="absolute bottom-[-11px] left-0 right-0 h-[2px] bg-emerald-500 rounded-full shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                )}
-              </button>
-            );
-          })}
-        </div>
+      {/* Category Filter Pills (Exact Match to Original Market News on Overview) */}
+      <div className="no-scrollbar mb-4 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1">
+        {[
+          DEFAULT_NEWS_TAB,
+          "Stocks",
+          "Kenyan",
+          "International",
+          FUNDS_AND_FIXED_INCOME_TAB,
+          "FX Rates",
+          "Commodities",
+          "Latest",
+          "Oldest",
+        ].map((f) => {
+          const isActive = activeNavTab === f;
+          return (
+            <button
+              key={f}
+              onClick={() => {
+                setActiveNavTab(f);
+                triggerFillForTab(f, articles, offset, hasMore, stocks);
+              }}
+              className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
+                isActive
+                  ? "bg-foreground text-background font-bold shadow-xs"
+                  : "border border-border bg-card text-muted-foreground hover:text-foreground hover:border-border/80"
+              }`}
+            >
+              {f}
+            </button>
+          );
+        })}
       </div>
 
       {/* Articles Feed */}
@@ -361,24 +388,49 @@ export default function NewsPage() {
           <p className="text-xs mt-1 text-muted-foreground/60">Try searching for something else or selecting a different tab.</p>
         </div>
       ) : (
-        <div className="flex flex-col gap-4 pb-20">
-          {feedItems.map((item) => (
-            <SocialFeedCard
-              key={item.id}
-              item={item}
-              onSelect={setSelectedFeedItem}
-            />
-          ))}
+        <div className="space-y-0 md:space-y-4 pb-20">
+          {feedItems.map((item, index) =>
+            item.relatedStock ? (
+              <StockFeedCard
+                key={item.id}
+                item={item}
+                index={index}
+                onSelect={setSelectedFeedItem}
+                interaction={getPostInteraction(item.id, item.likes || 0)}
+                onLikeToggle={toggleLike}
+              />
+            ) : (
+              <SocialFeedCard
+                key={item.id}
+                item={item}
+                index={index}
+                onSelect={setSelectedFeedItem}
+                interaction={getPostInteraction(item.id, item.likes || 0)}
+                onLikeToggle={toggleLike}
+              />
+            )
+          )}
           
           {hasMore && (
             <button
               onClick={loadMore}
               disabled={loadingMore}
-              className="mt-4 mx-auto block px-6 py-2 text-sm font-medium text-emerald-600 bg-emerald-50 dark:bg-emerald-900/20 dark:text-emerald-400 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors disabled:opacity-50"
+              className="mt-6 mx-auto block px-6 py-2 text-sm font-semibold text-emerald-600 bg-emerald-50 dark:bg-emerald-950/40 dark:text-emerald-400 border border-emerald-500/20 rounded-full hover:bg-emerald-100 dark:hover:bg-emerald-900/40 transition-colors disabled:opacity-50"
             >
-              {loadingMore ? "Loading..." : "Load More"}
+              {loadingMore ? "Loading more stories..." : "Load More Articles"}
             </button>
           )}
+
+          {/* Clean footer archive link */}
+          <div className="pt-8 pb-4 text-center">
+            <Link
+              to="/news/archive"
+              className="inline-flex items-center gap-2 rounded-xl border border-dashed border-border px-4 py-2 text-xs font-semibold text-muted-foreground hover:text-foreground hover:border-emerald-500/40 transition-all"
+            >
+              <Archive className="h-4 w-4 text-emerald-500" />
+              <span>Browse the complete news archive ({articles.length}+ articles) →</span>
+            </Link>
+          </div>
         </div>
       )}
 
