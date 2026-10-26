@@ -90,8 +90,10 @@ export default function NewsPage() {
   };
 
   useEffect(() => {
-    Promise.all([fetchPublishedNews(60, 0), fetchPublicStocks()])
-      .then(([newsData, stocksData]) => {
+    Promise.allSettled([fetchPublishedNews(60, 0), fetchPublicStocks()])
+      .then(([newsResult, stocksResult]) => {
+        const newsData = newsResult.status === "fulfilled" ? newsResult.value : [];
+        const stocksData = stocksResult.status === "fulfilled" ? stocksResult.value : [];
         const resolved = stocksData || [];
         const more = newsData.length === 60;
         setArticles(newsData);

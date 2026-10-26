@@ -506,21 +506,43 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
 }
 
 export async function fetchPublicStocks(): Promise<PublicStock[]> {
-  const { data, error } = await supabase
-    .from("stocks_public" as any)
-    .select("id, symbol, name, price, previous_price, day_change_percent")
-    .order("sort_order");
+  try {
+    const { data } = await fetchPublicData<any>("stocks", {
+      select: ["id", "symbol", "name", "price", "previous_price", "day_change_percent"],
+      order: "sort_order.asc",
+      limit: 100,
+    });
 
-  if (error) throw error;
+    return ((data as any[]) || []).map((stock) => ({
+      id: stock.id,
+      symbol: stock.symbol,
+      name: stock.name,
+      price: Number(stock.price) || 0,
+      previous_price: stock.previous_price == null ? null : Number(stock.previous_price),
+      day_change_percent: Number(stock.day_change_percent) || 0,
+    }));
+  } catch (err) {
+    console.warn("fetchPublicStocks gateway fetch failed, trying direct table fallback", err);
+    try {
+      const { data, error } = await supabase
+        .from("stocks")
+        .select("id, symbol, name, price, previous_price, day_change_percent")
+        .order("sort_order");
 
-  return ((data as any[]) || []).map((stock) => ({
-    id: stock.id,
-    symbol: stock.symbol,
-    name: stock.name,
-    price: Number(stock.price) || 0,
-    previous_price: stock.previous_price == null ? null : Number(stock.previous_price),
-    day_change_percent: Number(stock.day_change_percent) || 0,
-  }));
+      if (error) throw error;
+
+      return ((data as any[]) || []).map((stock) => ({
+        id: stock.id,
+        symbol: stock.symbol,
+        name: stock.name,
+        price: Number(stock.price) || 0,
+        previous_price: stock.previous_price == null ? null : Number(stock.previous_price),
+        day_change_percent: Number(stock.day_change_percent) || 0,
+      }));
+    } catch {
+      return [];
+    }
+  }
 }
 
 /** Fetch the previous yield snapshot per fund (the value before the most recent one).

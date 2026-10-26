@@ -62,16 +62,16 @@ export const StocksDemoPage: React.FC = () => {
     const loadData = async () => {
       setLoading(true);
       try {
-        const [stocksRes, newsRes] = await Promise.all([
+        const [stocksRes, newsRes] = await Promise.allSettled([
           fetchPublicData<Stock[]>("stocks"),
-          supabase.from("news_articles_public").select("*").order("published_at", { ascending: false }).limit(6),
+          supabase.from("news_articles_public").select("*").order("source_published_at", { ascending: false, nullsFirst: false }).limit(6),
         ]);
 
-        if (stocksRes.data) {
-          setStocks(stocksRes.data);
+        if (stocksRes.status === "fulfilled" && stocksRes.value.data) {
+          setStocks(stocksRes.value.data);
         }
-        if (newsRes.data) {
-          setNews(newsRes.data);
+        if (newsRes.status === "fulfilled" && newsRes.value.data) {
+          setNews(newsRes.value.data);
         }
       } catch (err) {
         console.error("Error loading demo stocks data:", err);
