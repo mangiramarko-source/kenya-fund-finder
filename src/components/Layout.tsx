@@ -28,7 +28,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
   usePageView();
   const { pathname } = useLocation();
   const showDesktopTicker = pathname === "/" || pathname === "/stocks";
-  const showMobileTicker = pathname === "/" || pathname === "/stocks";
+  const showMobileTicker = pathname === "/";
   // Immersive mobile view for news article pages: hide mobile navbar & footer
   const isNewsArticle = /^\/news\/[^/]+/.test(pathname);
   const isAuthPage = pathname === "/auth";
