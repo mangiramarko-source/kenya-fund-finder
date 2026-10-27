@@ -1,5 +1,6 @@
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
+import { FALLBACK_KENYAN_FUNDS } from "@/lib/fundDataFallback";
 import { isIndexableNewsArticle } from "@/lib/seoNewsEligibility";
 import { dedupeNewsByUrl } from "@/lib/newsDedupe";
 
@@ -190,13 +191,36 @@ const normalizeFund = (f: any): FundFromDB => ({
 });
 
 export async function fetchFunds(): Promise<FundFromDB[]> {
-  // Routed through the public-data gateway (rate-limited, paginated server-side).
-  const { data } = await fetchPublicData<any>("funds", {
-    select: FUND_COLUMNS,
-    order: "annual_yield.desc",
-    limit: 200,
-  });
-  return data.map(normalizeFund);
+  // 1. Routed through the public-data gateway (rate-limited, paginated server-side).
+  try {
+    const { data } = await fetchPublicData<any>("funds", {
+      select: FUND_COLUMNS,
+      order: "annual_yield.desc",
+      limit: 200,
+    });
+    if (Array.isArray(data) && data.length > 0) {
+      return data.map(normalizeFund);
+    }
+  } catch (err) {
+    console.warn("fetchFunds gateway failed, trying direct table fallback", err);
+  }
+
+  // 2. Direct Supabase table fallback
+  try {
+    const { data, error } = await supabase
+      .from("funds")
+      .select(FUND_COLUMNS.join(","))
+      .order("annual_yield", { ascending: false })
+      .limit(200);
+    if (!error && Array.isArray(data) && data.length > 0) {
+      return data.map(normalizeFund);
+    }
+  } catch (dbErr) {
+    console.warn("Direct funds table fallback failed", dbErr);
+  }
+
+  // 3. Bundled real funds fallback (guarantees UI never breaks)
+  return FALLBACK_KENYAN_FUNDS.map(normalizeFund);
 }
 
 export async function fetchFundBySlug(slug: string): Promise<FundFromDB | null> {
@@ -549,21 +573,45 @@ export async function fetchPublicStocks(): Promise<PublicStock[]> {
  *  bulk_sync writes a snapshot dated today carrying the NEW yields, which matches the
  *  current fund value and would produce a 0 delta. We skip that and return the prior. */
 export async function fetchLatestSnapshots(): Promise<YieldSnapshot[]> {
-  const { data } = await fetchPublicData<any>("fund-snapshots", {
-    select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
-    order: "snapshot_date.desc",
-    days: 90,
-    limit: 2000,
-  });
+  let rows: any[] = [];
+  try {
+    const { data } = await fetchPublicData<any>("fund-snapshots", {
+      select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
+      order: "snapshot_date.desc",
+      days: 90,
+      limit: 2000,
+    });
+    if (Array.isArray(data) && data.length > 0) {
+      rows = data;
+    }
+  } catch (err) {
+    console.warn("fetchLatestSnapshots gateway failed, trying direct table fallback", err);
+  }
+
+  if (rows.length === 0) {
+    try {
+      const { data, error } = await supabase
+        .from("fund_yield_snapshots")
+        .select("fund_id, annual_yield, daily_yield, snapshot_date")
+        .order("snapshot_date", { ascending: false })
+        .limit(2000);
+      if (!error && Array.isArray(data)) {
+        rows = data;
+      }
+    } catch (dbErr) {
+      console.warn("Direct fund_yield_snapshots query failed", dbErr);
+    }
+  }
+
   const buckets = new Map<string, any[]>();
-  for (const row of data) {
+  for (const row of rows) {
     const arr = buckets.get(row.fund_id) ?? [];
     if (arr.length < 2) arr.push(row);
     buckets.set(row.fund_id, arr);
   }
   const result: YieldSnapshot[] = [];
-  for (const [fund_id, rows] of buckets) {
-    const prev = rows[1] ?? rows[0];
+  for (const [fund_id, bRows] of buckets) {
+    const prev = bRows[1] ?? bRows[0];
     result.push({
       fund_id,
       annual_yield: Number(prev.annual_yield),
@@ -592,14 +640,38 @@ export async function fetchFundSnapshots(fundId: string): Promise<YieldSnapshot[
 
 /** Fetch recent yield snapshots for all funds (for sparklines) — last ~30 days only */
 export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnapshot[]>> {
-  const { data } = await fetchPublicData<any>("fund-snapshots", {
-    select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
-    order: "snapshot_date.asc",
-    days: 180,
-    limit: 5000,
-  });
+  let rows: any[] = [];
+  try {
+    const { data } = await fetchPublicData<any>("fund-snapshots", {
+      select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
+      order: "snapshot_date.asc",
+      days: 30,
+      limit: 2000,
+    });
+    if (Array.isArray(data) && data.length > 0) {
+      rows = data;
+    }
+  } catch (err) {
+    console.warn("fetchAllFundSnapshots gateway failed, trying direct table fallback", err);
+  }
+
+  if (rows.length === 0) {
+    try {
+      const { data, error } = await supabase
+        .from("fund_yield_snapshots")
+        .select("fund_id, annual_yield, daily_yield, snapshot_date")
+        .order("snapshot_date", { ascending: true })
+        .limit(2000);
+      if (!error && Array.isArray(data)) {
+        rows = data;
+      }
+    } catch (dbErr) {
+      console.warn("Direct fund_yield_snapshots sparkline query failed", dbErr);
+    }
+  }
+
   const grouped: Record<string, YieldSnapshot[]> = {};
-  for (const row of data) {
+  for (const row of rows) {
     const snap: YieldSnapshot = {
       fund_id: row.fund_id,
       annual_yield: Number(row.annual_yield),

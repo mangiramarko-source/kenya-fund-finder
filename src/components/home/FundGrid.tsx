@@ -1,6 +1,6 @@
-import { useMemo, useId, useEffect } from "react";
+import { useMemo, useId, useEffect, useState } from "react";
 import { Link, useNavigate, useSearchParams } from "react-router-dom";
-import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal, X, Check, GitCompareArrows, Plus } from "lucide-react";
+import { ArrowUpDown, Search, TrendingUp, TrendingDown, Minus, Star, SlidersHorizontal, X, Check, GitCompareArrows, Plus, ChevronDown } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
@@ -17,6 +17,7 @@ type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | 
 type SortDir = "asc" | "desc";
 
 const categoryLabels: Record<string, string> = {
+  all: "All Categories",
   money_market: "Money Market",
   fixed_income: "Fixed Income",
   balanced: "Balanced",
@@ -159,6 +160,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
   const navigate = useNavigate();
   const [searchParams, setSearchParams] = useSearchParams();
   const { selected, add, remove, isSelected, setIsOpen } = useCompare();
+  const [categorySheetOpen, setCategorySheetOpen] = useState(false);
 
   const activeTab = searchParams.get("category") || "money_market";
   const search = searchParams.get("q") || "";
@@ -208,7 +210,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
   }, [funds]);
 
   const categoryFunds = useMemo(
-    () => funds.filter((f) => f.fund_type === activeTab),
+    () => activeTab === "all" ? funds : funds.filter((f) => f.fund_type === activeTab),
     [funds, activeTab],
   );
 
@@ -226,7 +228,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
 
   useEffect(() => {
     if (categories.length === 0) return;
-    if (!categories.includes(activeTab as FundType) || (categoryCount[activeTab] ?? 0) === 0) {
+    if (activeTab !== "all" && (!categories.includes(activeTab as FundType) || (categoryCount[activeTab] ?? 0) === 0)) {
       updateParams({ category: categories[0] });
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -323,121 +325,29 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
         </div>
       </div>
 
-      {/* Mobile: combined search + filter button */}
-      <div className="md:hidden flex items-center gap-2.5 mb-4">
-        <div className="relative flex-1">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/80" />
-          <Input
-            placeholder="Search funds..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-10 h-11 rounded-full bg-card border-border/80 w-full text-[15px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:ring-1"
-          />
-        </div>
-        <Sheet>
-          <SheetTrigger asChild>
-            <button
-              type="button"
-              className="relative inline-flex items-center justify-center gap-1.5 h-11 px-4 shrink-0 rounded-full border border-border/80 bg-card text-foreground text-sm font-semibold shadow-sm transition-colors active:scale-95"
-              aria-label="Filters"
-            >
-              <SlidersHorizontal className="h-4 w-4 text-foreground/80" />
-              <span>Filter</span>
-              {(activeTab !== "money_market" || movement !== "all") && (
-                <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
-              )}
-            </button>
-          </SheetTrigger>
-          <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto p-5">
-            <SheetHeader className="text-left pb-2 border-b border-border/50">
-              <SheetTitle className="text-base font-bold">Filters</SheetTitle>
-            </SheetHeader>
+      {/* Mobile: Filter Pills Row (Category Pill + Movement Chips) */}
+      <div className="md:hidden mb-4 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+        {/* 1. Category Pill (triggers Bottom Sheet) */}
+        <button
+          type="button"
+          onClick={() => setCategorySheetOpen(true)}
+          className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+            activeTab !== "money_market"
+              ? "bg-emerald-600 text-white shadow-sm"
+              : movement === "all"
+                ? "bg-foreground text-background shadow-sm"
+                : "border border-border bg-background text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+          }`}
+        >
+          <span>{categoryLabels[activeTab] || activeTab}</span>
+          <ChevronDown className={`h-3.5 w-3.5 ${activeTab !== "money_market" || movement === "all" ? "opacity-90" : "opacity-60"}`} />
+          <span className={`text-[11px] tabular-nums font-normal ${activeTab !== "money_market" || movement === "all" ? "text-inherit opacity-90" : "text-muted-foreground/80"}`}>
+            {activeTab === "all" ? funds.length : (categoryCount[activeTab] || 0)}
+          </span>
+        </button>
 
-            <div className="mt-4 space-y-5">
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                  Category
-                </h4>
-                <div className="flex flex-wrap gap-2">
-                  {categories.map((cat) => {
-                    const active = activeTab === cat;
-                    return (
-                      <button
-                        key={cat}
-                        type="button"
-                        onClick={() => {
-                          updateParams({ category: cat, q: "", sort: "annual_yield", dir: "desc", movement: "all" });
-                        }}
-                        className={`px-3.5 py-2 rounded-full text-xs font-semibold transition-all ${
-                          active
-                            ? "bg-emerald-600 dark:bg-emerald-600 text-white shadow-sm"
-                            : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        }`}
-                      >
-                        {categoryLabels[cat] || cat}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <div>
-                <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">
-                  Movement
-                </h4>
-                <div className="grid grid-cols-2 gap-2">
-                  {([
-                    { key: "all", label: "All", count: categoryFunds.length },
-                    { key: "gainers", label: "Gainers", count: movementCounts.gainers },
-                    { key: "losers", label: "Losers", count: movementCounts.losers },
-                    { key: "unchanged", label: "Unchanged", count: movementCounts.unchanged },
-                  ] as const).map((opt) => {
-                    const active = movement === opt.key;
-                    return (
-                      <button
-                        key={opt.key}
-                        type="button"
-                        onClick={() => {
-                          if (opt.key === "gainers") updateParams({ movement: opt.key, sort: "change", dir: "desc" });
-                          else if (opt.key === "losers") updateParams({ movement: opt.key, sort: "change", dir: "asc" });
-                          else updateParams({ movement: opt.key });
-                        }}
-                        className={`inline-flex items-center justify-center gap-1.5 h-10 rounded-full text-xs font-semibold transition-all ${
-                          active
-                            ? "bg-foreground text-background shadow-sm"
-                            : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                        }`}
-                      >
-                        {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
-                        {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
-                        {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5 text-muted-foreground" />}
-                        <span>{opt.label}</span>
-                        <span className={`text-[11px] tabular-nums font-normal ${active ? "text-background/80" : "text-muted-foreground/80"}`}>
-                          {opt.count}
-                        </span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              <SheetClose asChild>
-                <button
-                  type="button"
-                  className="w-full h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors mt-4"
-                >
-                  Apply Filters
-                </button>
-              </SheetClose>
-            </div>
-          </SheetContent>
-        </Sheet>
-      </div>
-
-      {/* Mobile movement pills */}
-      <div className="md:hidden mb-4 flex gap-2 overflow-x-auto no-scrollbar py-0.5">
+        {/* 2. Movement Quick Filters: Gainers, Losers, Unchanged */}
         {([
-          { key: "all", label: "All", count: categoryFunds.length },
           { key: "gainers", label: "Gainers", count: movementCounts.gainers },
           { key: "losers", label: "Losers", count: movementCounts.losers },
           { key: "unchanged", label: "Unchanged", count: movementCounts.unchanged },
@@ -446,15 +356,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
           return (
             <button
               key={opt.key}
-              onClick={(e) => {
+              type="button"
+              onClick={() => {
                 if (opt.key === "gainers") updateParams({ movement: opt.key, sort: "change", dir: "desc" });
                 else if (opt.key === "losers") updateParams({ movement: opt.key, sort: "change", dir: "asc" });
                 else updateParams({ movement: opt.key });
-                e.currentTarget.scrollIntoView({
-                  behavior: "smooth",
-                  inline: "center",
-                  block: "nearest",
-                });
               }}
               className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
                 active
@@ -473,6 +379,105 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
           );
         })}
       </div>
+
+      {/* Category Picker Bottom Sheet for Mobile (1-Tap Selection) */}
+      <Sheet open={categorySheetOpen} onOpenChange={setCategorySheetOpen}>
+        <SheetContent side="bottom" className="rounded-t-3xl border-border max-h-[80vh] overflow-y-auto px-5 pt-4 pb-8">
+          <SheetHeader className="text-left pb-3 border-b border-border/50">
+            <div className="flex items-center justify-between">
+              <div>
+                <SheetTitle className="text-base font-bold text-foreground">Filter by Category</SheetTitle>
+                <p className="text-xs text-muted-foreground mt-0.5">Select a fund category to filter unit trusts</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setCategorySheetOpen(false)}
+                className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            </div>
+          </SheetHeader>
+
+          <div className="mt-4 space-y-4">
+            <div className="grid grid-cols-1 gap-1.5">
+              {/* 1. All Categories Option */}
+              {(() => {
+                const active = activeTab === "all";
+                return (
+                  <button
+                    key="all"
+                    type="button"
+                    onClick={() => {
+                      updateParams({ category: "all", movement: "all" });
+                      setCategorySheetOpen(false);
+                    }}
+                    className={`flex items-center justify-between w-full px-4 py-3 rounded-2xl text-left text-sm font-semibold transition-all ${
+                      active
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "bg-muted/40 hover:bg-muted text-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={`h-2 w-2 rounded-full ${active ? "bg-white" : "bg-emerald-500"}`} />
+                      <span>All Categories</span>
+                    </div>
+                    <span className={`text-xs tabular-nums px-2 py-0.5 rounded-full font-medium ${
+                      active ? "bg-white/20 text-white" : "bg-background text-muted-foreground"
+                    }`}>
+                      {funds.length}
+                    </span>
+                  </button>
+                );
+              })()}
+
+              {/* 2. Specific Categories */}
+              {categories.map((cat) => {
+                const active = activeTab === cat;
+                const count = categoryCount[cat] || 0;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => {
+                      updateParams({ category: cat, movement: "all" });
+                      setCategorySheetOpen(false);
+                    }}
+                    className={`flex items-center justify-between w-full px-4 py-3 rounded-2xl text-left text-sm font-semibold transition-all ${
+                      active
+                        ? "bg-emerald-600 text-white shadow-sm"
+                        : "bg-muted/40 hover:bg-muted text-foreground"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <span className={`h-2 w-2 rounded-full ${active ? "bg-white" : "bg-emerald-500"}`} />
+                      <span>{categoryLabels[cat] || cat}</span>
+                    </div>
+                    <span className={`text-xs tabular-nums px-2 py-0.5 rounded-full font-medium ${
+                      active ? "bg-white/20 text-white" : "bg-background text-muted-foreground"
+                    }`}>
+                      {count}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
+
+            {activeTab !== "money_market" && (
+              <button
+                type="button"
+                onClick={() => {
+                  updateParams({ category: "money_market", movement: "all" });
+                  setCategorySheetOpen(false);
+                }}
+                className="w-full h-10 rounded-full border border-border text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+              >
+                Reset to Money Market Funds ({categoryCount["money_market"] || 0})
+              </button>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
 
       {/* Mobile Live Status (Between filter pills and first card) */}
       <div className="md:hidden mb-3.5 flex items-center justify-between px-0.5">
