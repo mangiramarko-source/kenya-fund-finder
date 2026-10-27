@@ -382,7 +382,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
 
       {/* Category Picker Bottom Sheet for Mobile (1-Tap Selection) */}
       <Sheet open={categorySheetOpen} onOpenChange={setCategorySheetOpen}>
-        <SheetContent side="bottom" className="rounded-t-3xl border-border max-h-[80vh] overflow-y-auto px-5 pt-4 pb-8">
+        <SheetContent side="bottom" hideCloseButton className="rounded-t-3xl border-border max-h-[80vh] overflow-y-auto px-5 pt-4 pb-8">
           <SheetHeader className="text-left pb-3 border-b border-border/50">
             <div className="flex items-center justify-between">
               <div>

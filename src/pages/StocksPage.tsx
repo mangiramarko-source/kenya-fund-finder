@@ -682,26 +682,26 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
 
         {/* Sector Bottom Sheet */}
         <Sheet open={sectorSheetOpen} onOpenChange={setSectorSheetOpen}>
-          <SheetContent side="bottom" className="rounded-t-[28px] border-x border-t border-border max-h-[82dvh] overflow-y-auto p-0 pb-[max(1.2rem,env(safe-area-inset-bottom))]">
-            {/* Grab handle */}
-            <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-muted-foreground/30" />
+          <SheetContent side="bottom" hideCloseButton className="rounded-t-3xl border-border max-h-[80vh] overflow-y-auto px-5 pt-4 pb-8">
+            <SheetHeader className="text-left pb-3 border-b border-border/50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <SheetTitle className="text-base font-bold text-foreground">Filter by Sector</SheetTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Select an industry to filter listed companies</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSectorSheetOpen(false)}
+                  className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </SheetHeader>
 
-            <div className="flex items-center justify-between border-b border-border/70 px-5 py-3">
-              <SheetHeader className="text-left p-0">
-                <SheetTitle className="text-base font-bold text-foreground">Filter by Sector</SheetTitle>
-              </SheetHeader>
-              <button
-                type="button"
-                onClick={() => setSectorSheetOpen(false)}
-                className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-                aria-label="Close"
-              >
-                <X className="h-4 w-4 stroke-[2.5]" />
-              </button>
-            </div>
-
-            <div className="p-5 space-y-4">
-              <div className="flex flex-wrap gap-2">
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-1 gap-1.5">
                 {sectors.map((s) => {
                   const active = sector === s;
                   const count = s === "All" ? stocks.length : (sectorStockCounts[s] || 0);
@@ -714,15 +714,18 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                         if (s === "All") setMobileMovement("all");
                         setSectorSheetOpen(false);
                       }}
-                      className={`inline-flex items-center gap-1.5 px-4 py-2.5 rounded-full text-xs font-semibold transition-all ${
+                      className={`flex items-center justify-between w-full px-4 py-3 rounded-2xl text-left text-sm font-semibold transition-all ${
                         active
-                          ? "bg-emerald-600 text-white shadow-xs"
-                          : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground border border-border/40"
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : "bg-muted/40 hover:bg-muted text-foreground"
                       }`}
                     >
-                      <span>{s === "All" ? "All Sectors" : s}</span>
-                      <span className={`text-[10px] tabular-nums px-1.5 py-0.5 rounded-full ${
-                        active ? "bg-white/20 text-white" : "bg-background/80 text-muted-foreground"
+                      <div className="flex items-center gap-2.5">
+                        <span className={`h-2 w-2 rounded-full ${active ? "bg-white" : "bg-emerald-500"}`} />
+                        <span>{s === "All" ? "All Sectors" : s}</span>
+                      </div>
+                      <span className={`text-xs tabular-nums px-2 py-0.5 rounded-full font-medium ${
+                        active ? "bg-white/20 text-white" : "bg-background text-muted-foreground"
                       }`}>
                         {count}
                       </span>
