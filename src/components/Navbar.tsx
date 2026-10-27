@@ -1,348 +1,67 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { Menu, TrendingUp, BarChart3, Moon, Sun, User, LogOut, Shield, Settings, Info, Mail, Scale, FileText, LineChart, Bell, Landmark, Calculator, ArrowLeft, GraduationCap, Sparkles, X, ChevronRight, Star, Wallet, BarChart2, DollarSign, Tag, BookOpen, CalendarDays, HelpCircle, Package, Check } from "lucide-react";
+import { BarChart3, ArrowLeft, User } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Sheet, SheetContent } from "@/components/ui/sheet";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
-import NotificationBell, { NotificationRow } from "@/components/alerts/NotificationBell";
-import { useNotifications } from "@/components/alerts/NotificationProvider";
+import NotificationBell from "@/components/alerts/NotificationBell";
 import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
-import { ScrollArea } from "@/components/ui/scroll-area";
-import { isAiLabEnabled } from "@/lib/featureFlags";
+import MobileAccountSheet from "@/components/mobile/MobileAccountSheet";
 
-const navLinks = [
-  { to: "/", label: "Home", icon: BarChart3 },
-  { to: "/stocks", label: "Stocks", icon: TrendingUp },
-  { to: "/markets", label: "Market", icon: LineChart },
-];
-
-const mobileNavLinks = [
-  { to: "/", label: "Overview" },
-  { to: "/portfolio", label: "Portfolio" },
-  { to: "/watchlist", label: "Watchlist" },
-  { to: "/stocks", label: "Stocks" },
-  { to: "/funds", label: "MMF" },
-  { to: "/treasury", label: "T-Bills" },
-  { to: "/rates", label: "Fx rates" },
-  { to: "/commodities", label: "Commodities" },
-];
-
-
-// ─── Sidebar Row ─────────────────────────────────────────────────────────────
-function SidebarRow({
-  icon: Icon,
-  label,
-  to,
-  onClick,
-  badge,
-  isNew,
-  isDestructive,
-}: {
-  icon: React.ElementType;
-  label: string;
-  to?: string;
-  onClick?: () => void;
-  badge?: number | null;
-  isNew?: boolean;
-  isDestructive?: boolean;
-}) {
-  const inner = (
-    <>
-      <Icon className={`h-5 w-5 shrink-0 stroke-[1.8] ${isDestructive ? "text-destructive" : "text-foreground/70"}`} />
-      <span className={`flex-1 text-left text-[15px] font-bold tracking-tight ${
-        isDestructive ? "text-destructive" : "text-foreground"
-      }`}>{label}</span>
-      {isNew && (
-        <span className="text-[11px] font-bold px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950 dark:text-emerald-300">New</span>
-      )}
-      {badge != null && badge > 0 && (
-        <span className="flex h-5 px-2 items-center justify-center rounded-full bg-emerald-100 text-emerald-800 dark:bg-emerald-950/80 dark:text-emerald-300 text-xs font-extrabold">{badge}</span>
-      )}
-      <ChevronRight className="h-4 w-4 text-muted-foreground/40 shrink-0 stroke-[2]" />
-    </>
-  );
-
-  const cls = "flex items-center gap-3.5 w-full px-4 py-3 rounded-xl text-left hover:bg-muted/60 active:bg-muted transition-colors";
-
-  if (to) {
-    return <Link to={to} onClick={onClick} className={cls}>{inner}</Link>;
-  }
-  return <button type="button" onClick={onClick} className={cls}>{inner}</button>;
-}
-
-function SidebarSection({ title, children, isFirst }: { title: string; children: React.ReactNode; isFirst?: boolean }) {
-  return (
-    <div className={isFirst ? "pt-2 pb-1" : "pt-3.5 pb-1"}>
-      <p className="px-4 pb-1.5 text-[11px] font-bold uppercase tracking-wider text-muted-foreground/70">{title}</p>
-      <div className="space-y-0.5">{children}</div>
-    </div>
-  );
-}
-
-function MobileMenuButton({ unreadCount, onClick, rounded = "rounded-md" }: { unreadCount: number; onClick: () => void; rounded?: "rounded-md" | "rounded-full" }) {
-  const hasUnread = unreadCount > 0;
-  const count = unreadCount > 9 ? "9+" : unreadCount;
-  return (
-    <button
-      type="button"
-      onClick={onClick}
-      className={`relative grid h-9 w-9 place-items-center ${rounded} transition-colors ${hasUnread ? "bg-destructive/10 text-destructive shadow-[0_0_0_1px_hsl(var(--destructive)/0.4),0_0_16px_hsl(var(--destructive)/0.55)] motion-safe:animate-pulse" : "text-foreground hover:bg-muted"}`}
-      aria-label={hasUnread ? `Open menu, ${unreadCount} unread notification${unreadCount === 1 ? "" : "s"}` : "Open menu"}
-    >
-      <Menu className="h-5 w-5" />
-      {hasUnread && <span aria-hidden="true" className="absolute -right-1.5 -top-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[9px] font-bold leading-none text-destructive-foreground shadow-sm">{count}</span>}
-    </button>
-  );
-}
-
-// ─── Main Mobile Sidebar Drawer ──────────────────────────────────────────────
-function MobileSidebarDrawer({
-  open,
-  onClose,
+function MobileProfileButton({
   user,
   displayName,
   avatarUrl,
-  isAdmin,
-  dark,
-  setDark,
-  signOut,
-  navigate,
+  onClick,
 }: {
-  open: boolean;
-  onClose: () => void;
   user: any;
   displayName: string;
   avatarUrl: string;
-  isAdmin: boolean;
-  dark: boolean;
-  setDark: (v: boolean) => void;
-  signOut: () => Promise<void>;
-  navigate: (to: string) => void;
+  onClick: () => void;
 }) {
-  const { notifications, unreadCount, markAllRead, deleteNotification, openNotification } = useNotifications();
-  const [view, setView] = useState<"menu" | "notifications">("menu");
-
-  useEffect(() => {
-    if (!open) setView("menu");
-  }, [open]);
-
-  // Watchlist count from localStorage
-  const [watchlistCount, setWatchlistCount] = useState(0);
-  useEffect(() => {
-    const refresh = () => {
-      try {
-        const raw = localStorage.getItem("kf_local_watchlist");
-        if (!raw) { setWatchlistCount(0); return; }
-        const parsed = JSON.parse(raw);
-        setWatchlistCount(Array.isArray(parsed) ? parsed.length : 0);
-      } catch { setWatchlistCount(0); }
-    };
-    refresh();
-    window.addEventListener("storage", refresh);
-    window.addEventListener("kff:portfolio:changed", refresh);
-    return () => {
-      window.removeEventListener("storage", refresh);
-      window.removeEventListener("kff:portfolio:changed", refresh);
-    };
-  }, []);
-
-  const close = () => {
-    setView("menu");
-    onClose();
-  };
-
-  const openNotificationItem = (notification: typeof notifications[number]) => {
-    void openNotification(notification);
-    close();
-  };
-
   const initials = user
     ? (displayName || user.email || "U").slice(0, 2).toUpperCase()
     : "";
 
   return (
-    <Sheet open={open} onOpenChange={(v) => !v && close()}>
-      <SheetContent
-        side={view === "notifications" ? "bottom" : "right"}
-        className={view === "notifications"
-          ? "inset-x-0 bottom-0 flex max-h-[78dvh] flex-col rounded-t-[28px] border-x border-t bg-background p-0 [&>button]:hidden"
-          : "flex w-[88vw] flex-col border-l border-border bg-background p-0 sm:max-w-sm [&>button]:hidden"}
-        aria-label={view === "notifications" ? "Notifications" : "Navigation menu"}
-      >
-        {view === "notifications" ? (
-          <>
-            <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-11 shrink-0 rounded-full bg-muted" />
-            <div className="flex items-center gap-2 border-b border-border/80 px-5 py-3">
-              <div className="min-w-0 flex-1">
-                <p className="text-base font-bold text-foreground">Notifications</p>
-                <p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new price alert${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p>
-              </div>
-              {unreadCount > 0 && (
-                <Button variant="ghost" size="sm" className="h-8 px-2 text-xs text-emerald-600 hover:text-emerald-700" onClick={() => void markAllRead()}>
-                  <Check className="mr-1 h-3.5 w-3.5" /> Read all
-                </Button>
-              )}
-              <button onClick={close} aria-label="Close menu" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 hover:bg-muted transition-colors">
-                <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
-              </button>
-            </div>
-            <ScrollArea className="min-h-0 flex-1">
-              {notifications.length === 0 ? (
-                <div className="px-5 py-10 text-center">
-                  <Bell className="mx-auto mb-2 h-6 w-6 text-muted-foreground" />
-                  <p className="text-sm font-medium text-foreground">No notifications yet</p>
-                  <p className="mt-1 text-xs text-muted-foreground">Price alerts will appear here when they are triggered.</p>
-                </div>
-              ) : (
-                <div className="w-full max-w-full divide-y divide-border/60 overflow-x-hidden">
-                  {notifications.map((notification) => (
-                    <NotificationRow
-                      key={notification.id}
-                      notification={notification}
-                      onOpen={() => openNotificationItem(notification)}
-                      onDelete={() => void deleteNotification(notification.id)}
-                    />
-                  ))}
-                </div>
-              )}
-            </ScrollArea>
-          </>
-        ) : <>
-        {/* ── Header ── */}
-        <div className="flex items-center gap-3.5 px-5 py-3 border-b border-border/80">
-          {user ? (
-            <>
-              <Avatar className="h-11 w-11 shrink-0 border border-emerald-500/30">
-                <AvatarImage src={avatarUrl} alt={displayName} />
-                <AvatarFallback className="bg-emerald-600 text-white font-extrabold text-base">{initials}</AvatarFallback>
-              </Avatar>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-bold truncate text-foreground leading-snug">{displayName || "User"}</p>
-                <p className="text-xs text-muted-foreground truncate font-medium">Free plan · Nairobi</p>
-              </div>
-            </>
-          ) : (
-            <>
-              <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-white font-extrabold text-base">
-                MA
-              </div>
-              <div className="flex-1 min-w-0">
-                <p className="text-base font-bold text-foreground leading-snug">Guest User</p>
-                <p className="text-xs text-muted-foreground font-medium">Free plan · Nairobi</p>
-              </div>
-            </>
-          )}
-          <button
-            onClick={close}
-            aria-label="Close menu"
-            className="ml-auto flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 hover:bg-muted transition-colors"
-          >
-            <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
-          </button>
-        </div>
-
-        {/* ── Scrollable Content ── */}
-        <nav className="flex-1 overflow-y-auto px-2 pb-4 space-y-0.5">
-
-          <SidebarSection title="MARKETS" isFirst>
-            <SidebarRow icon={TrendingUp}  label="NSE Stocks"     to="/stocks"      onClick={close} />
-            <SidebarRow icon={BarChart2}   label="Unit Trusts"    to="/funds"       onClick={close} />
-            <SidebarRow icon={DollarSign}  label="FX Rates"       to="/rates"       onClick={close} />
-            <SidebarRow icon={Package}     label="Commodities"    to="/commodities" onClick={close} />
-            <SidebarRow icon={Landmark}    label="Bonds & T-Bills" to="/treasury"   onClick={close} />
-          </SidebarSection>
-
-          <div className="h-px bg-border/60 mx-4 my-1" />
-
-          <SidebarSection title="MY SPACE">
-            <SidebarRow icon={Wallet}      label="Portfolio"  to="/portfolio"   onClick={close} />
-            <SidebarRow icon={Star}        label="Watchlist"  to="/watchlist"   onClick={close} badge={watchlistCount || null} />
-          </SidebarSection>
-
-          <div className="h-px bg-border/60 mx-4 my-1" />
-
-          <SidebarSection title="DISCOVER">
-            {isAiLabEnabled() && (
-              <SidebarRow icon={Sparkles}    label="AI Lab"          to="/ai-lab"    onClick={close} isNew />
-            )}
-            <SidebarRow icon={BookOpen}    label="Learn & Academy" to="/learn"     onClick={close} />
-            <SidebarRow icon={Calculator}  label="Calculators"     to="/calculator" onClick={close} />
-            <SidebarRow icon={CalendarDays} label="Alerts"         to={user ? "/alerts" : "/auth"} onClick={close} />
-          </SidebarSection>
-
-          <div className="h-px bg-border/60 mx-4 my-1" />
-
-          <SidebarSection title="ACCOUNT">
-            {user && (
-              <SidebarRow icon={Settings} label="Settings" to="/profile" onClick={close} />
-            )}
-            <SidebarRow
-              icon={dark ? Sun : Moon}
-              label={dark ? "Light Mode" : "Dark Mode"}
-              onClick={() => setDark(!dark)}
-            />
-            <SidebarRow icon={HelpCircle} label="Help & Support" to="/page/contact" onClick={close} />
-            {isAdmin && (
-              <SidebarRow icon={Shield} label="Admin Panel" to="/admin" onClick={close} />
-            )}
-          </SidebarSection>
-
-          <div className="h-px bg-border/60 mx-4 my-1" />
-
-          <SidebarSection title="LEGAL">
-            <SidebarRow icon={FileText} label="Privacy Policy" to="/privacy" onClick={close} />
-            <SidebarRow icon={FileText} label="Terms of Use" to="/terms" onClick={close} />
-          </SidebarSection>
-
-        </nav>
-
-        {/* ── Fixed Bottom CTA ── */}
-        <div className="p-4 border-t border-border/80 shrink-0 bg-background">
-          {user ? (
-            <button
-              onClick={async () => { await signOut(); close(); navigate("/"); }}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-destructive/10 py-3.5 text-sm font-bold text-destructive hover:bg-destructive/20 transition-colors"
-            >
-              <LogOut className="h-4 w-4" /> Sign Out
-            </button>
-          ) : (
-            <Link
-              to="/auth"
-              onClick={close}
-              className="flex w-full items-center justify-center gap-2 rounded-2xl bg-emerald-600 py-3.5 text-sm font-bold text-white hover:bg-emerald-700 transition-colors shadow-sm"
-            >
-              <User className="h-4 w-4" /> Sign In / Sign Up
-            </Link>
-          )}
-        </div>
-        </>}
-      </SheetContent>
-    </Sheet>
+    <button
+      type="button"
+      onClick={onClick}
+      className="inline-flex items-center justify-center h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors relative"
+      aria-label={user ? "Open account & settings" : "Sign in to account"}
+    >
+      {user ? (
+        <Avatar className="h-7 w-7 border border-border/80">
+          <AvatarImage src={avatarUrl} alt={displayName} />
+          <AvatarFallback className="bg-emerald-600 text-white font-bold text-[10px]">
+            {initials}
+          </AvatarFallback>
+        </Avatar>
+      ) : (
+        <User className="h-5 w-5" />
+      )}
+    </button>
   );
 }
 
 // ─── Navbar ───────────────────────────────────────────────────────────────────
 const Navbar = () => {
-  const [open, setOpen] = useState(false);
+  const [accountOpen, setAccountOpen] = useState(false);
   const [scrolled, setScrolled] = useState(false);
-  const [mobileHeaderHeight, setMobileHeaderHeight] = useState(156);
+  const [mobileHeaderHeight, setMobileHeaderHeight] = useState(56);
   const [dark, setDark] = useState(() => {
     const saved = getStoredTheme();
     if (saved) return saved === "dark";
     return window.matchMedia?.("(prefers-color-scheme: dark)")?.matches ?? true;
   });
   const headerRef = useRef<HTMLElement | null>(null);
-  const mobileTabsScrollRef = useRef<HTMLDivElement | null>(null);
-  const mobileTabRefs = useRef<Record<string, HTMLAnchorElement | null>>({});
   const [avatarUrl, setAvatarUrl] = useState("");
   const [displayName, setDisplayName] = useState("");
   const location = useLocation();
   const navigate = useNavigate();
   const { user, isAdmin, signOut } = useAuth();
-  const { unreadCount } = useNotifications();
 
   useEffect(() => {
     if (user) {
@@ -394,17 +113,6 @@ const Navbar = () => {
   }, []);
 
   useEffect(() => {
-    const activeEl = mobileTabRefs.current[location.pathname];
-    const container = mobileTabsScrollRef.current;
-    if (!activeEl || !container) return;
-    const elRect = activeEl.getBoundingClientRect();
-    const containerRect = container.getBoundingClientRect();
-    const offset =
-      activeEl.offsetLeft - container.offsetLeft - (containerRect.width / 2) + (elRect.width / 2);
-    container.scrollTo?.({ left: Math.max(0, offset), behavior: "smooth" });
-  }, [location.pathname]);
-
-  useEffect(() => {
     const element = headerRef.current;
     if (!element) return;
     const updateHeight = () => {
@@ -423,8 +131,6 @@ const Navbar = () => {
       window.removeEventListener("resize", updateHeight);
     };
   }, []);
-
-  const closeMobile = () => setOpen(false);
 
   const minimalRoutes = [
     "/calculator",
@@ -447,19 +153,6 @@ const Navbar = () => {
 
   if (hasCustomDetailHeader) return null;
 
-  const sidebarProps = {
-    open,
-    onClose: closeMobile,
-    user,
-    displayName,
-    avatarUrl,
-    isAdmin,
-    dark,
-    setDark,
-    signOut,
-    navigate,
-  };
-
   if (isMinimal) {
     return (
       <>
@@ -467,7 +160,7 @@ const Navbar = () => {
           ref={headerRef}
           className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border"
         >
-          <div className="container flex h-16 items-center justify-between">
+          <div className="container flex h-14 items-center justify-between px-4">
             {isDetailPage ? (
               <Button
                 variant="ghost"
@@ -491,40 +184,77 @@ const Navbar = () => {
                 <span className="text-sm font-medium">Home</span>
               </Button>
             )}
-            <div className="flex items-center gap-1"><MobileMenuButton unreadCount={unreadCount} onClick={() => setOpen(true)} rounded="rounded-full" /></div>
+            <div className="flex items-center gap-1.5">
+              <MobileProfileButton
+                user={user}
+                displayName={displayName}
+                avatarUrl={avatarUrl}
+                onClick={() => setAccountOpen(true)}
+              />
+            </div>
           </div>
         </header>
-        <div className="md:hidden h-16" aria-hidden="true" />
-        <MobileSidebarDrawer {...sidebarProps} />
+        <div className="md:hidden h-14" aria-hidden="true" />
+        <MobileAccountSheet
+          open={accountOpen}
+          onOpenChange={setAccountOpen}
+          user={user}
+          displayName={displayName}
+          avatarUrl={avatarUrl}
+          isAdmin={isAdmin}
+          dark={dark}
+          setDark={setDark}
+          signOut={signOut}
+          navigate={navigate}
+        />
       </>
     );
   }
 
   return (
     <>
-    <div className="md:hidden">
-      <header
-        ref={headerRef}
-        className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md"
-      >
-        <nav className="flex h-14 items-center justify-between px-4">
-          {/* Left: KFF logo */}
-          <Link to="/" className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400">
-            KFF
-          </Link>
+      <div className="md:hidden">
+        <header
+          ref={headerRef}
+          className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md"
+        >
+          <nav className="flex h-14 items-center justify-between px-4">
+            {/* Left: KFF logo */}
+            <Link
+              to="/"
+              className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400"
+            >
+              KFF
+            </Link>
 
-          {/* Right: search, notifications, then navigation menu */}
-          <div className="flex items-center gap-1 [&>button]:h-11 [&>button]:w-11 [&>button]:text-[inherit] [&>button>svg]:h-6 [&>button>svg]:w-6 [&>div>button]:h-11 [&>div>button]:w-11 [&>div>button>svg]:h-6 [&>div>button>svg]:w-6">
-            <SearchDialog variant="icon" />
-            <div><NotificationBell /></div>
-            <MobileMenuButton unreadCount={0} onClick={() => setOpen(true)} />
-          </div>
-        </nav>
-      </header>
-      <div className="h-14" aria-hidden="true" />
-    </div>
+            {/* Right: search, notifications, then profile avatar */}
+            <div className="flex items-center gap-1.5">
+              <SearchDialog variant="icon" />
+              <NotificationBell />
+              <MobileProfileButton
+                user={user}
+                displayName={displayName}
+                avatarUrl={avatarUrl}
+                onClick={() => setAccountOpen(true)}
+              />
+            </div>
+          </nav>
+        </header>
+        <div className="h-14" aria-hidden="true" />
+      </div>
 
-    <MobileSidebarDrawer {...sidebarProps} />
+      <MobileAccountSheet
+        open={accountOpen}
+        onOpenChange={setAccountOpen}
+        user={user}
+        displayName={displayName}
+        avatarUrl={avatarUrl}
+        isAdmin={isAdmin}
+        dark={dark}
+        setDark={setDark}
+        signOut={signOut}
+        navigate={navigate}
+      />
     </>
   );
 };

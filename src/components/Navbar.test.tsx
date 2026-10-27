@@ -38,7 +38,7 @@ vi.mock("@/components/alerts/NotificationProvider", () => ({
 describe("Mobile & Desktop Navigation Verification", () => {
   afterEach(() => { notificationState.unreadCount = 0; });
 
-  it("keeps notifications out of the mobile navigation sidebar", () => {
+  it("renders mobile top header with search, notifications, and profile button", () => {
     render(
       <MemoryRouter>
         <Navbar />
@@ -47,40 +47,28 @@ describe("Mobile & Desktop Navigation Verification", () => {
 
     expect(screen.queryByRole("button", { name: /sign in for notifications/i })).not.toBeInTheDocument();
 
-    // Open mobile sidebar drawer
-    const menuButtons = screen.getAllByRole("button", { name: /Open menu/i });
-    expect(menuButtons.length).toBeGreaterThanOrEqual(1);
-    expect(menuButtons[0]).not.toHaveClass("bg-destructive/10");
-    fireEvent.click(menuButtons[0]);
+    // Profile button opens account sheet
+    const profileButton = screen.getByRole("button", { name: /open account & settings/i });
+    expect(profileButton).toBeInTheDocument();
+    fireEvent.click(profileButton);
 
-    const navigationDrawer = screen.getByRole("dialog", { name: "Navigation menu" });
-    expect(within(navigationDrawer).queryByRole("button", { name: /notifications/i })).not.toBeInTheDocument();
-
-    // Market News should NOT be present anywhere in the mobile navigation drawer
-    expect(screen.queryByText("Market News")).not.toBeInTheDocument();
-
-    // Verify other DISCOVER items are rendered cleanly
-    expect(screen.getByText("AI Lab")).toBeInTheDocument();
-    expect(screen.getByText("Learn & Academy")).toBeInTheDocument();
-    expect(screen.getByText("Calculators")).toBeInTheDocument();
-    expect(screen.getByText("Alerts")).toBeInTheDocument();
-
-    expect(within(navigationDrawer).queryByText("Notifications")).not.toBeInTheDocument();
+    const accountSheet = screen.getByRole("dialog", { name: /account and settings/i });
+    expect(accountSheet).toBeInTheDocument();
+    expect(within(accountSheet).getByText("Account & Settings")).toBeInTheDocument();
+    expect(within(accountSheet).getByText("Dark Appearance")).toBeInTheDocument();
+    expect(within(accountSheet).getByText("Price Alerts")).toBeInTheDocument();
   });
 
-  it("shows unread state on the dedicated mobile notification button, not the hamburger", () => {
+  it("shows unread state on the dedicated mobile notification button", () => {
     notificationState.unreadCount = 12;
     const { unmount } = render(<MemoryRouter><Navbar /></MemoryRouter>);
 
     expect(screen.getByRole("button", { name: "Open notifications, 12 unread" })).toHaveTextContent("9+");
-    expect(screen.getByRole("button", { name: "Open menu" })).not.toHaveClass("bg-destructive/10");
     unmount();
 
     notificationState.unreadCount = 1;
     render(<MemoryRouter initialEntries={["/alerts"]}><Navbar /></MemoryRouter>);
-    const minimalMenu = screen.getByRole("button", { name: "Open menu, 1 unread notification" });
-    expect(minimalMenu).toHaveClass("bg-destructive/10", "motion-safe:animate-pulse");
-    expect(minimalMenu).toHaveTextContent("1");
+    expect(screen.getByRole("button", { name: /open account & settings/i })).toBeInTheDocument();
   });
 
   it("renders desktop navigation links cleanly on desktop bar", () => {

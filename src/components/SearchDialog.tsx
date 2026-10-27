@@ -272,7 +272,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
           className="inline-flex items-center justify-center h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors"
           aria-label="Search"
         >
-          <Search className="h-[18px] w-[18px]" />
+          <Search className="h-5 w-5" />
         </button>
       ) : variant === "topbar" ? (
         <button

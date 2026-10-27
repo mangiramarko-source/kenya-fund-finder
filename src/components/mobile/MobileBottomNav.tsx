@@ -91,7 +91,11 @@ export default function MobileBottomNav() {
                   : "text-muted-foreground group-hover:text-foreground"
               }`}
             >
-              <MoreHorizontal className="h-5 w-5 stroke-[2.2]" />
+              <MoreHorizontal
+                className={`h-5 w-5 ${
+                  activeTab === "more" || moreOpen ? "stroke-[2.2]" : "stroke-[1.8]"
+                }`}
+              />
             </div>
             <span
               className={`text-[10px] tracking-tight transition-colors ${

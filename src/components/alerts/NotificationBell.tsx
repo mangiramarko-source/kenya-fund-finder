@@ -21,34 +21,32 @@ const NotificationBell = () => {
   // For non-authenticated users on mobile, show bell that prompts sign-up
   if (!user) {
     return (
-      <Button
-        variant="ghost"
-        size="sm"
-        className="relative h-9 w-9 p-0"
+      <button
+        type="button"
+        className="inline-flex items-center justify-center relative h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors"
         onClick={() => navigate("/auth")}
         aria-label="Sign in for notifications"
       >
-        <Bell className="h-4 w-4" />
-      </Button>
+        <Bell className="h-5 w-5" />
+      </button>
     );
   }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
       <SheetTrigger asChild>
-        <Button
-          variant="ghost"
-          size="sm"
-          className="relative h-9 w-9 p-0"
+        <button
+          type="button"
+          className="inline-flex items-center justify-center relative h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors"
           aria-label={unreadCount > 0 ? `Open notifications, ${unreadCount} unread` : "Open notifications"}
         >
-          <Bell className="h-4 w-4" />
+          <Bell className="h-5 w-5" />
           {unreadCount > 0 && (
             <span className="absolute -top-0.5 -right-0.5 bg-destructive text-destructive-foreground text-[9px] font-bold rounded-full h-4 min-w-4 px-1 flex items-center justify-center">
               {unreadCount > 9 ? "9+" : unreadCount}
             </span>
           )}
-        </Button>
+        </button>
       </SheetTrigger>
       <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "inset-x-2 bottom-[max(env(safe-area-inset-bottom),0.75rem)] flex max-h-[82svh] flex-col overflow-hidden rounded-[28px] border bg-background p-0 [&>button]:hidden" : "flex h-full w-[min(420px,calc(100vw-1rem))] flex-col border-l border-border bg-background p-0 [&>button]:hidden sm:max-w-none"}>
         {isMobile && <div aria-hidden="true" className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-muted" />}
