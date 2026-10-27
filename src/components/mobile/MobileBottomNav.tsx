@@ -42,9 +42,9 @@ export default function MobileBottomNav() {
     <>
       <nav
         aria-label="Mobile Bottom Navigation"
-        className="fixed bottom-0 inset-x-0 z-50 md:hidden border-t border-border bg-background/95 backdrop-blur-xl pb-[max(0.4rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.4)]"
+        className="fixed bottom-0 inset-x-0 z-50 md:hidden border-t border-border/30 bg-background/95 backdrop-blur-xl pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
       >
-        <div className="flex h-14 items-center justify-around px-2">
+        <div className="flex h-16 items-center justify-around px-2">
           {/* 1. News */}
           <NavTab
             to="/news"
@@ -82,7 +82,7 @@ export default function MobileBottomNav() {
             type="button"
             onClick={() => setMoreOpen(true)}
             aria-label="Open more tools and markets menu"
-            className="group flex flex-1 flex-col items-center justify-center py-1 transition-all"
+            className="group flex flex-1 flex-col items-center justify-center py-0.5 transition-all"
           >
             <div
               className={`relative flex h-8 w-11 items-center justify-center rounded-full transition-all duration-200 ${
@@ -98,7 +98,7 @@ export default function MobileBottomNav() {
               />
             </div>
             <span
-              className={`text-[10px] tracking-tight transition-colors ${
+              className={`text-[10px] tracking-tight mt-0.5 transition-colors ${
                 activeTab === "more" || moreOpen
                   ? "font-bold text-emerald-600 dark:text-emerald-400"
                   : "font-medium text-muted-foreground group-hover:text-foreground"
@@ -130,7 +130,7 @@ function NavTab({
   return (
     <Link
       to={to}
-      className="group flex flex-1 flex-col items-center justify-center py-1 transition-all"
+      className="group flex flex-1 flex-col items-center justify-center py-0.5 transition-all"
     >
       <div
         className={`relative flex h-8 w-11 items-center justify-center rounded-full transition-all duration-200 ${
@@ -142,7 +142,7 @@ function NavTab({
         <Icon className={`h-5 w-5 ${isActive ? "stroke-[2.4]" : "stroke-[1.8]"}`} />
       </div>
       <span
-        className={`text-[10px] tracking-tight transition-colors ${
+        className={`text-[10px] tracking-tight mt-0.5 transition-colors ${
           isActive
             ? "font-bold text-emerald-600 dark:text-emerald-400"
             : "font-medium text-muted-foreground group-hover:text-foreground"

@@ -21,9 +21,7 @@ function MobileProfileButton({
   avatarUrl: string;
   onClick: () => void;
 }) {
-  const initials = user
-    ? (displayName || user.email || "U").slice(0, 2).toUpperCase()
-    : "";
+  const initials = (displayName || user?.email || "MA").slice(0, 2).toUpperCase();
 
   return (
     <button
@@ -32,16 +30,12 @@ function MobileProfileButton({
       className="inline-flex items-center justify-center h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors relative"
       aria-label={user ? "Open account & settings" : "Sign in to account"}
     >
-      {user ? (
-        <Avatar className="h-7 w-7 border border-border/80">
-          <AvatarImage src={avatarUrl} alt={displayName} />
-          <AvatarFallback className="bg-emerald-600 text-white font-bold text-[10px]">
-            {initials}
-          </AvatarFallback>
-        </Avatar>
-      ) : (
-        <User className="h-5 w-5" />
-      )}
+      <Avatar className="h-8 w-8 border border-emerald-500/40">
+        {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName || "User"} /> : null}
+        <AvatarFallback className="bg-emerald-600 text-white font-bold text-xs tracking-wider">
+          {initials}
+        </AvatarFallback>
+      </Avatar>
     </button>
   );
 }
