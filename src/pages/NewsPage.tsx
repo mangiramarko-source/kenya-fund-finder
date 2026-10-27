@@ -277,14 +277,12 @@ export default function NewsPage() {
       {/* User Portfolio Cards */}
       <OverviewPortfolioWidget />
 
-      {/* Header matching original Market News section */}
+      {/* Header */}
       <div className="mb-3.5 flex items-baseline justify-between mt-0">
-        <div className="flex items-baseline gap-2.5">
-          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Market News</h1>
-          <span className="rounded-full bg-emerald-500/10 dark:bg-emerald-500/20 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-700 dark:text-emerald-400">
-            {newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredArticles.length} articles`}
-          </span>
-        </div>
+        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Market News</h1>
+        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+          {newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredArticles.length} articles`}
+        </span>
       </div>
 
       {/* Watchlist Briefing (For signed-in users) */}

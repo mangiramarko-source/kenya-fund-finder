@@ -1631,7 +1631,7 @@ const OverviewPage = () => {
             >
               <div className="mb-4 flex items-baseline justify-between mt-0">
                 <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
-                <span className="rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
                   {newTodayCount} new today
                 </span>
               </div>
