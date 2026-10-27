@@ -7,6 +7,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
 import { startMarketRefresh } from "@/lib/marketRefresh";
 import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
+import { FALLBACK_KENYAN_STOCKS } from "@/lib/stockDataFallback";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
@@ -224,11 +225,15 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
   const [initialPageMemory] = useState(() => getMarketPageMemory<StocksPageMemory>("stocks"));
   const [cachedStocks] = useState(() => stockCache.loadStocks());
-  const [stocks, setStocks] = useState<Stock[]>(initialPageMemory?.stocks ?? cachedStocks?.stocks ?? []);
+  const [stocks, setStocks] = useState<Stock[]>(() => {
+    if (initialPageMemory?.stocks && initialPageMemory.stocks.length > 0) return initialPageMemory.stocks;
+    if (cachedStocks?.stocks && cachedStocks.stocks.length > 0) return cachedStocks.stocks;
+    return FALLBACK_KENYAN_STOCKS;
+  });
   const [marketHistory, setMarketHistory] = useState<any[]>(initialPageMemory?.marketHistory ?? []);
-  const [loading, setLoading] = useState(() => !initialPageMemory);
-  const [marketHistoryReady, setMarketHistoryReady] = useState(() => Boolean(initialPageMemory));
-  const [sparklineHistoryReady, setSparklineHistoryReady] = useState(() => Boolean(initialPageMemory));
+  const [loading, setLoading] = useState(false);
+  const [marketHistoryReady, setMarketHistoryReady] = useState(true);
+  const [sparklineHistoryReady, setSparklineHistoryReady] = useState(true);
   const [search, setSearch] = useState("");
   const [sector, setSector] = useState("All");
   const [sortKey, setSortKey] = useState<SortKey>("market_cap");
@@ -251,23 +256,59 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
       if (fetchingStocks || disposed) return;
       fetchingStocks = true;
       try {
-        const { data } = await fetchPublicData<any>("stocks", {
-          select: [
-            "id", "symbol", "name", "sector", "price", "previous_price",
-            "day_change", "day_change_percent", "volume", "market_cap",
-            "year_high", "year_low", "pe_ratio", "dividend_yield", "logo_url", "updated_at",
-          ],
-          order: "sort_order.asc",
-          limit: 200,
-        });
-        const normalized = data.map(normalizeStock);
-        if (normalized.length === 0) throw new Error("No stock data returned");
+        let fetchedData: any[] = [];
+
+        // 1. Primary: Edge function gateway
+        try {
+          const { data } = await fetchPublicData<any>("stocks", {
+            select: [
+              "id", "symbol", "name", "sector", "price", "previous_price",
+              "day_change", "day_change_percent", "volume", "market_cap",
+              "year_high", "year_low", "pe_ratio", "dividend_yield", "logo_url", "updated_at",
+            ],
+            order: "sort_order.asc",
+            limit: 200,
+          });
+          if (Array.isArray(data) && data.length > 0) {
+            fetchedData = data;
+          }
+        } catch (gwErr) {
+          console.warn("fetchPublicData gateway failed, trying direct table fallback:", gwErr);
+        }
+
+        // 2. Direct Supabase table fallback if gateway failed
+        if (fetchedData.length === 0) {
+          try {
+            const { data, error } = await supabase
+              .from("stocks")
+              .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, logo_url, updated_at")
+              .order("sort_order", { ascending: true })
+              .limit(200);
+            if (!error && Array.isArray(data) && data.length > 0) {
+              fetchedData = data;
+            }
+          } catch (dbErr) {
+            console.warn("Direct stocks query failed:", dbErr);
+          }
+        }
+
+        // 3. Cached or curated fallback if offline
+        if (fetchedData.length === 0) {
+          const cached = stockCache.loadStocks();
+          if (cached?.stocks && cached.stocks.length > 0) {
+            fetchedData = cached.stocks;
+          } else {
+            fetchedData = FALLBACK_KENYAN_STOCKS;
+          }
+        }
+
+        const normalized = fetchedData.map(normalizeStock);
+        if (normalized.length === 0) throw new Error("No stock data returned from any source");
         if (disposed) return;
         setStocks(normalized);
         stockCache.saveStocks(normalized);
       } catch (e) {
         console.error("Failed to load stocks", e);
-        // Keep the latest successful prices on a temporary refresh failure.
       } finally {
         fetchingStocks = false;
         if (!disposed) setLoading(false);
@@ -305,31 +346,25 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
 
   // Preload sparkline data for all stocks (recent window via gateway).
   useEffect(() => {
-    if (loading) return;
-    if (stocks.length === 0) {
-      setSparklineHistoryReady(true);
-      return;
-    }
+    if (stocks.length === 0) return;
     let cancelled = false;
     const fetchAllHistory = async () => {
       try {
-        // Use a 90-day window so sparsely-updated stocks (e.g. KPC, BAMB)
-        // still have ≥2 price points to render a sparkline. The snapshot
-        // trigger only records on price change, so low-volume tickers can
-        // go weeks without a new row.
         const { data } = await fetchPublicData<any>("stock-history-bulk", {
           select: ["stock_id", "price", "snapshot_date"],
           order: "snapshot_date.desc",
-          days: 90,
-          limit: 5000,
+          days: 30,
+          limit: 1500,
         });
-        const grouped: Record<string, PriceHistory[]> = {};
-        data.forEach((d: any) => {
-          const sid = d.stock_id;
-          if (!grouped[sid]) grouped[sid] = [];
-          grouped[sid].push({ snapshot_date: d.snapshot_date, price: Number(d.price) });
-        });
-        if (!cancelled) setHistory(grouped);
+        if (Array.isArray(data)) {
+          const grouped: Record<string, PriceHistory[]> = {};
+          data.forEach((d: any) => {
+            const sid = d.stock_id;
+            if (!grouped[sid]) grouped[sid] = [];
+            grouped[sid].push({ snapshot_date: d.snapshot_date, price: Number(d.price) });
+          });
+          if (!cancelled) setHistory(grouped);
+        }
       } catch (e) {
         console.error("Failed to load stock sparkline data", e);
       } finally {
@@ -340,7 +375,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     return () => {
       cancelled = true;
     };
-  }, [loading, stocks]);
+  }, [stocks.length]);
 
   const toggleExpand = async (stockId: string) => {
     if (expanded === stockId) {
@@ -475,19 +510,12 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
   return (
     <div className="min-h-screen animate-in fade-in-50 duration-500">
       <div className="px-4 md:px-6 py-5 md:py-6">
-        {/* Desktop & Mobile Header */}
-        <div className="mb-4">
-          <div className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 mb-4 md:mb-6">
-            <div>
-              <h1 className="text-2xl md:text-3xl font-bold text-foreground tracking-tight">Kenyan Stocks</h1>
-              <p className="text-sm md:text-[14px] text-muted-foreground mt-1">
-                Track Kenyan stock market prices, market cap, volumes, and performance.
-              </p>
-            </div>
-            <div className="hidden md:block">
-              <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
-            </div>
-          </div>
+        {/* Semantic title for A11y & SEO */}
+        <h1 className="sr-only">Kenyan Stocks</h1>
+
+        {/* Desktop Header Live Status */}
+        <div className="hidden md:flex justify-end items-center mb-4">
+          <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
         </div>
         
         {/* Market Summary for Desktop */}
@@ -926,11 +954,8 @@ const MobileInspiredDesktopDemo = ({
   return (
     <div className="min-h-screen bg-background px-6 py-7 text-foreground">
       <div className="mx-auto max-w-[1500px]">
-        <div className="mb-5 flex items-start justify-between gap-6">
-          <div>
-            <h1 className="text-3xl font-bold tracking-tight">Kenyan Stocks</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Track Kenyan stock market prices, market cap, volumes, and performance.</p>
-          </div>
+        <h1 className="sr-only">Kenyan Stocks</h1>
+        <div className="mb-5 flex items-center justify-end">
           <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />
         </div>
 

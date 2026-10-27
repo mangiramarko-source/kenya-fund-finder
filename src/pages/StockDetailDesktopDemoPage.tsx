@@ -18,6 +18,8 @@ import { useAuth } from "@/hooks/useAuth";
 import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
 import { fetchPublicData } from "@/lib/gateway";
 import { normalizeStock, stockCache, type CachedStock } from "@/lib/stockCache";
+import { FALLBACK_KENYAN_STOCKS } from "@/lib/stockDataFallback";
+import { supabase } from "@/integrations/supabase/client";
 import { calculateDemoReturn, fetchCompleteDemoHistory, filterDemoStocks, findDemoStock, stockProductionPath, type DemoHistoryRow, type DemoPricePoint } from "@/lib/stockDetailDemo";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import MarketPageLoader from "@/components/MarketPageLoader";
@@ -63,15 +65,41 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
       setLoading(true);
       setLoadError(false);
       try {
-        const response = await fetchPublicData<CachedStock>("stocks", {
-          select: [
-            "id", "symbol", "name", "sector", "price", "previous_price", "day_change",
-            "day_change_percent", "volume", "market_cap", "pe_ratio", "dividend_yield",
-            "logo_url", "updated_at",
-          ],
-          limit: 200,
-        });
-        const normalized = response.data.map(normalizeStock);
+        let rows: any[] = [];
+        try {
+          const response = await fetchPublicData<CachedStock>("stocks", {
+            select: [
+              "id", "symbol", "name", "sector", "price", "previous_price", "day_change",
+              "day_change_percent", "volume", "market_cap", "pe_ratio", "dividend_yield",
+              "logo_url", "updated_at",
+            ],
+            limit: 200,
+          });
+          if (Array.isArray(response.data) && response.data.length > 0) {
+            rows = response.data;
+          }
+        } catch (gwErr) {
+          console.warn("Desktop demo gateway failed, trying direct table fallback:", gwErr);
+        }
+
+        if (rows.length === 0) {
+          try {
+            const { data, error } = await supabase
+              .from("stocks")
+              .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, logo_url, updated_at")
+              .order("sort_order", { ascending: true })
+              .limit(200);
+            if (!error && Array.isArray(data) && data.length > 0) {
+              rows = data;
+            } else {
+              rows = FALLBACK_KENYAN_STOCKS;
+            }
+          } catch {
+            rows = FALLBACK_KENYAN_STOCKS;
+          }
+        }
+
+        const normalized = rows.map(normalizeStock);
         if (!cancelled) {
           setStocks(normalized);
           stockCache.saveStocks(normalized);
@@ -80,7 +108,8 @@ export default function StockDetailDesktopDemoPage({ production = false }: { pro
       } catch (error) {
         console.error("Failed to load desktop stock demo", error);
         if (!cancelled) {
-          setLoadError(cachedStocks.length === 0);
+          setStocks(FALLBACK_KENYAN_STOCKS);
+          setLoadError(false);
         }
       } finally {
         if (!cancelled) setLoading(false);

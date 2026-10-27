@@ -2,6 +2,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
+import { FALLBACK_KENYAN_STOCKS } from "@/lib/stockDataFallback";
 import {
   TrendingUp,
   TrendingDown,
@@ -67,14 +68,31 @@ export const StocksDemoPage: React.FC = () => {
           supabase.from("news_articles_public").select("*").order("source_published_at", { ascending: false, nullsFirst: false }).limit(6),
         ]);
 
-        if (stocksRes.status === "fulfilled" && stocksRes.value.data) {
+        if (stocksRes.status === "fulfilled" && Array.isArray(stocksRes.value.data) && stocksRes.value.data.length > 0) {
           setStocks(stocksRes.value.data);
+        } else {
+          // Direct table query fallback
+          try {
+            const { data, error } = await supabase
+              .from("stocks")
+              .select("id, symbol, name, sector, price, previous_price, day_change, day_change_percent, volume, market_cap, year_high, year_low, pe_ratio, dividend_yield, logo_url, updated_at")
+              .order("sort_order", { ascending: true })
+              .limit(200);
+            if (!error && Array.isArray(data) && data.length > 0) {
+              setStocks(data as unknown as Stock[]);
+            } else {
+              setStocks(FALLBACK_KENYAN_STOCKS as unknown as Stock[]);
+            }
+          } catch {
+            setStocks(FALLBACK_KENYAN_STOCKS as unknown as Stock[]);
+          }
         }
         if (newsRes.status === "fulfilled" && newsRes.value.data) {
           setNews(newsRes.value.data);
         }
       } catch (err) {
         console.error("Error loading demo stocks data:", err);
+        setStocks(FALLBACK_KENYAN_STOCKS as unknown as Stock[]);
       } finally {
         setLoading(false);
       }
