@@ -158,7 +158,7 @@ const Navbar = () => {
       <>
         <header
           ref={headerRef}
-          className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md border-b border-border"
+          className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md"
         >
           <div className="container flex h-14 items-center justify-between px-4">
             {isDetailPage ? (
@@ -216,7 +216,7 @@ const Navbar = () => {
       <div className="md:hidden">
         <header
           ref={headerRef}
-          className="fixed inset-x-0 top-0 z-50 border-b border-border bg-background/95 backdrop-blur-md"
+          className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md"
         >
           <nav className="flex h-14 items-center justify-between px-4">
             {/* Left: KFF logo */}

@@ -17,6 +17,7 @@ import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/
 import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 import { matchesNewsTab } from "@/lib/newsTabMatching";
 import { dedupeNewsByUrl } from "@/lib/newsDedupe";
+import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
 
 const DEFAULT_NEWS_TAB = "All";
 
@@ -273,6 +274,9 @@ export default function NewsPage() {
   return (
     <PageLoadingGate isReady={!loading} message="Loading latest market news…" loaderClassName="min-h-screen">
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6 min-h-screen">
+      {/* User Portfolio Cards */}
+      <OverviewPortfolioWidget />
+
       {/* Header matching original Market News section */}
       <div className="mb-3.5 flex items-baseline justify-between mt-0">
         <div className="flex items-baseline gap-2.5">
