@@ -177,11 +177,11 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
             </p>
             <div className="grid grid-cols-2 gap-2.5">
               <DrawerTile
-                to="/watchlist"
+                to="/portfolio?tab=watchlist"
                 icon={Star}
                 title="Watchlist"
                 subtitle="Saved assets"
-                active={location.pathname === "/watchlist"}
+                active={location.pathname === "/watchlist" || (location.pathname === "/portfolio" && location.search.includes("tab=watchlist"))}
                 onClick={close}
               />
               <DrawerTile

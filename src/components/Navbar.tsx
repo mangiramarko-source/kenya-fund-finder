@@ -63,7 +63,7 @@ export function getMobileNavTitleInfo(pathname: string): MobileNavTitleInfo {
     case "/money-market-funds-kenya":
       return { type: "title", title: "MMFs" };
     case "/portfolio":
-      return { type: "title", title: "Portfolio" };
+      return { type: "title", title: "My Assets" };
     case "/rates":
       return { type: "title", title: "FX Rates" };
     case "/commodities":
@@ -73,7 +73,7 @@ export function getMobileNavTitleInfo(pathname: string): MobileNavTitleInfo {
     case "/bonds":
       return { type: "title", title: "Treasury Bills" };
     case "/watchlist":
-      return { type: "title", title: "Watchlist" };
+      return { type: "title", title: "My Assets" };
     case "/calculator":
     case "/mmf-calculator":
       return { type: "title", title: "Calculator" };

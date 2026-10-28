@@ -1,11 +1,12 @@
 import { useState, useMemo, useEffect } from "react";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 import { usePortfolio, type PortfolioItem, type AssetType } from "@/hooks/usePortfolio";
 import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
 import { usePortfolioMetrics } from "@/hooks/usePortfolioMetrics";
 import { usePortfolioEvents } from "@/hooks/usePortfolioEvents";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useAuth } from "@/hooks/useAuth";
+import { useUnifiedWatchlist } from "@/hooks/useUnifiedWatchlist";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -24,6 +25,7 @@ import PortfolioSummaryModal from "@/components/portfolio/PortfolioSummaryModal"
 import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
 import DesktopPortfolioHero from "@/components/portfolio/DesktopPortfolioHero";
 import MobilePortfolioView from "@/components/portfolio/MobilePortfolioView";
+import MobileWatchlistView from "@/components/watchlist/MobileWatchlistView";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { usePortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
 import { supabase } from "@/integrations/supabase/client";
@@ -57,6 +59,38 @@ const PortfolioPage = () => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [showSummaryModal, setShowSummaryModal] = useState(false);
   const [showPortfolioValues, setShowPortfolioValues] = useState(false);
+
+  const [searchParams, setSearchParams] = useSearchParams();
+  const { items: watchlistItems } = useUnifiedWatchlist();
+
+  const [mobileTab, setMobileTab] = useState<"portfolio" | "watchlist">(() => {
+    const param = searchParams.get("tab");
+    if (param === "watchlist" || param === "portfolio") return param;
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("kff_assets_mobile_tab");
+      if (saved === "watchlist" || saved === "portfolio") return saved;
+    }
+    return "portfolio";
+  });
+
+  useEffect(() => {
+    const param = searchParams.get("tab");
+    if (param === "watchlist" || param === "portfolio") {
+      setMobileTab(param);
+    }
+  }, [searchParams]);
+
+  const handleMobileTabChange = (tab: "portfolio" | "watchlist") => {
+    setMobileTab(tab);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("kff_assets_mobile_tab", tab);
+    }
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      next.set("tab", tab);
+      return next;
+    }, { replace: true });
+  };
 
   const {
     items,
@@ -188,14 +222,65 @@ const PortfolioPage = () => {
 
   return (
     <>
-      {/* Mobile View Only */}
+      {/* Mobile View Only: Unified "My Assets" */}
       <div className="block md:hidden">
-        <MobilePortfolioView
-          currency={currency}
-          setCurrency={setCurrency}
-          showPortfolioValues={showPortfolioValues}
-          onTogglePortfolioValues={() => setShowPortfolioValues((visible) => !visible)}
-        />
+        {/* Sticky Top Segmented Pill Bar */}
+        <div className="sticky top-14 z-30 bg-background/95 backdrop-blur-md px-4 pt-2.5 pb-2 border-b border-border/60">
+          <div className="grid grid-cols-2 p-1 bg-muted/70 rounded-full max-w-sm mx-auto shadow-xs border border-border/40">
+            <button
+              type="button"
+              onClick={() => handleMobileTabChange("portfolio")}
+              className={`flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                mobileTab === "portfolio"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span>Portfolio</span>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
+                  mobileTab === "portfolio"
+                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {items.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleMobileTabChange("watchlist")}
+              className={`flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer ${
+                mobileTab === "watchlist"
+                  ? "bg-background text-foreground shadow-xs"
+                  : "text-muted-foreground hover:text-foreground"
+              }`}
+            >
+              <span>Watchlist</span>
+              <span
+                className={`text-[10px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
+                  mobileTab === "watchlist"
+                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {watchlistItems.length}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {mobileTab === "portfolio" ? (
+          <MobilePortfolioView
+            currency={currency}
+            setCurrency={setCurrency}
+            showPortfolioValues={showPortfolioValues}
+            onTogglePortfolioValues={() => setShowPortfolioValues((visible) => !visible)}
+          />
+        ) : (
+          <MobileWatchlistView />
+        )}
       </div>
 
       {/* Desktop View Only */}

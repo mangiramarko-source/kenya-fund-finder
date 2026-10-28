@@ -89,13 +89,13 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
     unmountFunds();
 
-    // 4. /portfolio renders "Portfolio"
+    // 4. /portfolio renders "My Assets"
     const { unmount: unmountPortfolio } = render(
       <MemoryRouter initialEntries={["/portfolio"]}>
         <Navbar />
       </MemoryRouter>
     );
-    expect(screen.getByText("Portfolio")).toBeInTheDocument();
+    expect(screen.getByText("My Assets")).toBeInTheDocument();
     expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
     unmountPortfolio();
 

@@ -1,5 +1,6 @@
 import { useEffect, useState, useMemo, useCallback } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, Navigate } from "react-router-dom";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   Star, TrendingUp, TrendingDown, Minus, DollarSign, Gem, BarChart3, Landmark,
   ArrowRight, Settings2, Search, SlidersHorizontal, Plus,
@@ -525,6 +526,11 @@ const WatchlistPage = () => {
       items: grouped[key],
     }));
   }, [addSheetItems]);
+
+  const isMobile = useIsMobile();
+  if (isMobile) {
+    return <Navigate to="/portfolio?tab=watchlist" replace />;
+  }
 
   if (authLoading) {
     return (

@@ -33,7 +33,7 @@ export default function MobileBottomNav() {
     if (pathname === "/news" || pathname.startsWith("/news/")) return "news";
     if (pathname === "/stocks" || pathname.startsWith("/stocks/")) return "stocks";
     if (pathname === "/funds" || pathname === "/money-market-funds-kenya" || pathname.startsWith("/compare/")) return "funds";
-    if (pathname === "/portfolio" || pathname.startsWith("/portfolio/")) return "portfolio";
+    if (pathname === "/portfolio" || pathname.startsWith("/portfolio/") || pathname === "/watchlist") return "portfolio";
     if (MORE_ROUTES.has(pathname)) return "more";
     return "";
   }, [pathname]);
@@ -69,11 +69,11 @@ export default function MobileBottomNav() {
             isActive={activeTab === "funds"}
           />
 
-          {/* 4. Portfolio */}
+          {/* 4. My Assets (Portfolio & Watchlist) */}
           <NavTab
             to="/portfolio"
             icon={PieChart}
-            label="Portfolio"
+            label="My Assets"
             isActive={activeTab === "portfolio"}
           />
 
