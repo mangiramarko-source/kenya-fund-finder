@@ -10,6 +10,7 @@ import PageLoadingGate from "@/components/PageLoadingGate";
 import { SocialFeedCard } from "@/components/feed/SocialFeed";
 import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
+import { MarketEntertainmentWidget } from "@/components/feed/MarketEntertainmentWidget";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { useAuth } from "@/hooks/useAuth";
@@ -286,6 +287,9 @@ export default function NewsPage() {
           </span>
         </div>
       </div>
+
+      {/* Interactive Entertainment & Sentiment Hub (Demo) */}
+      <MarketEntertainmentWidget />
 
       {/* Watchlist Briefing (For signed-in users) */}
       {user && (
