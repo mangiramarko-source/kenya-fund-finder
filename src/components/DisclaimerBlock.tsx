@@ -1,4 +1,5 @@
 import { Info } from "lucide-react";
+import { openMobileLegalSheet } from "@/components/mobile/MobileLegalSheet";
 
 interface DisclaimerBlockProps {
   /** Optional extra paragraph appended after the shared notice (e.g. fund-type specific). */
@@ -17,6 +18,14 @@ const DisclaimerBlock = ({ extra, className = "", variant = "default" }: Disclai
         <Info className="inline h-3 w-3 mr-1 -mt-0.5 text-muted-foreground/60" />
         {SHARED_DISCLAIMER}
         {extra ? ` ${extra}` : ""}
+        {" "}
+        <button
+          type="button"
+          onClick={openMobileLegalSheet}
+          className="underline hover:text-foreground transition-colors cursor-pointer"
+        >
+          Read full CMA disclosure.
+        </button>
       </p>
     );
   }
@@ -29,6 +38,15 @@ const DisclaimerBlock = ({ extra, className = "", variant = "default" }: Disclai
             <strong className="text-foreground/80">Important:</strong> {SHARED_DISCLAIMER}
           </p>
           {extra && <p>{extra}</p>}
+          <div>
+            <button
+              type="button"
+              onClick={openMobileLegalSheet}
+              className="text-emerald-600 dark:text-emerald-400 font-medium underline underline-offset-2 hover:text-foreground transition-colors cursor-pointer"
+            >
+              Read full CMA regulatory & tax disclosures →
+            </button>
+          </div>
         </div>
       </div>
     </div>

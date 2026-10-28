@@ -8,6 +8,8 @@ import OfflineBanner from "./OfflineBanner";
 import MobileAiLabFab from "./MobileAiLabFab";
 import DesktopAiLabChat from "@/components/ai-lab/DesktopAiLabChat";
 import MobileBottomNav from "./mobile/MobileBottomNav";
+import MobileAppWatermark from "./mobile/MobileAppWatermark";
+import MobileLegalSheet from "./mobile/MobileLegalSheet";
 import UniversalCompareBar from "@/components/compare/UniversalCompareBar";
 import UniversalCompareModal from "@/components/compare/UniversalCompareModal";
 import { isAiLabEnabled } from "@/lib/featureFlags";
@@ -92,14 +94,23 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         >
           {children}
         </main>
-        {/* Footer hidden on mobile news article pages, auth page, and entirely on the AI Lab */}
-        {!isAiLab && !isAuthPage && (
-          <div className={`${isNewsArticle ? "hidden md:block" : ""}${isOverview ? " md:hidden" : ""}`}>
+        {/* Desktop Web Footer: visible only on desktop (md+). Hidden on mobile for native app feel, AI Lab, Auth, and Overview */}
+        {!isAiLab && !isAuthPage && !isOverview && (
+          <div className="hidden md:block">
             <Footer />
           </div>
         )}
+
+        {/* Mobile App Watermark: sleek, unobtrusive legal notice above bottom nav on mobile */}
+        {!isAiLab && !isAuthPage && !isNewsArticle && (
+          <MobileAppWatermark />
+        )}
+
         {/* Mobile Bottom Navigation Bar (Android/iOS standard) */}
         {!isAiLab && !isAuthPage && !isNewsArticle && <MobileBottomNav />}
+
+        {/* Global Mobile Legal & CMA Disclaimers Sheet */}
+        <MobileLegalSheet />
 
         {/* Mobile In-Page Asset Comparison Bar & Slide-Up Sheet */}
         {!isAiLab && !isAuthPage && !isNewsArticle && (

@@ -106,10 +106,18 @@ export const UniversalCompareProvider = ({ children }: { children: ReactNode }) 
   );
 };
 
+const DEFAULT_COMPARE_CONTEXT: UniversalCompareContextType = {
+  selected: [],
+  category: null,
+  add: () => {},
+  remove: () => {},
+  clear: () => {},
+  isSelected: () => false,
+  isOpen: false,
+  setIsOpen: () => {},
+};
+
 export const useUniversalCompare = () => {
   const ctx = useContext(UniversalCompareContext);
-  if (!ctx) {
-    throw new Error("useUniversalCompare must be used within UniversalCompareProvider");
-  }
-  return ctx;
+  return ctx || DEFAULT_COMPARE_CONTEXT;
 };

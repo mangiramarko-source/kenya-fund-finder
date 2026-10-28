@@ -22,11 +22,15 @@ import {
   ChevronRight,
   LogOut,
   Sparkles,
+  ShieldAlert,
+  FileText,
+  Lock,
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
 import { isAiLabEnabled } from "@/lib/featureFlags";
+import { openMobileLegalSheet } from "./MobileLegalSheet";
 
 interface MobileMoreDrawerProps {
   open: boolean;
@@ -255,6 +259,63 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
                 </button>
               )}
             </div>
+          </div>
+
+          {/* Section 4: Legal & Disclaimers */}
+          <div>
+            <p className="px-1 pb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
+              Legal & Compliance
+            </p>
+            <div className="space-y-1.5 rounded-2xl border border-border bg-card/60 p-2">
+              <button
+                type="button"
+                onClick={() => {
+                  close();
+                  openMobileLegalSheet();
+                }}
+                className="flex w-full items-center gap-3 rounded-xl px-3 py-2.5 text-left hover:bg-muted/60 transition-colors cursor-pointer"
+              >
+                <ShieldAlert className="h-4 w-4 text-emerald-500 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-foreground">CMA & Regulatory Disclaimers</p>
+                  <p className="text-[11px] text-muted-foreground truncate">Important risk & 15% WHT disclosures</p>
+                </div>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+              </button>
+
+              <Link
+                to="/terms"
+                onClick={close}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-muted/60 transition-colors"
+              >
+                <FileText className="h-4 w-4 text-blue-500 shrink-0" />
+                <span className="flex-1 text-sm font-semibold text-foreground">Terms of Use</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+              </Link>
+
+              <Link
+                to="/privacy"
+                onClick={close}
+                className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-muted/60 transition-colors"
+              >
+                <Lock className="h-4 w-4 text-slate-400 shrink-0" />
+                <span className="flex-1 text-sm font-semibold text-foreground">Privacy Policy</span>
+                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
+              </Link>
+            </div>
+          </div>
+
+          {/* App Metadata & Footer */}
+          <div className="pt-2 pb-6 text-center space-y-1">
+            <p className="text-[11px] font-semibold text-muted-foreground">
+              Kenya Fund Finder <span className="font-mono text-[10px] text-muted-foreground/70">v1.2.0</span>
+            </p>
+            <p className="text-[10px] text-muted-foreground/60 leading-tight max-w-xs mx-auto">
+              Operated by Elyon Innovation LTD. Regulated CIS data via CMA Kenya. Not personal financial advice.
+            </p>
+            <p className="text-[10px] text-muted-foreground/40">
+              © {new Date().getFullYear()} Kenya Fund Finder. All rights reserved.
+            </p>
           </div>
         </div>
       </SheetContent>
