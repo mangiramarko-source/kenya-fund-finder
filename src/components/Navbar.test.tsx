@@ -52,11 +52,62 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(profileButton).toBeInTheDocument();
     fireEvent.click(profileButton);
 
-    const accountSheet = screen.getByRole("dialog", { name: /account and settings/i });
+    const accountSheet = screen.getByRole("dialog", { name: /account (&|and) settings/i });
     expect(accountSheet).toBeInTheDocument();
     expect(within(accountSheet).getByText("Account & Settings")).toBeInTheDocument();
     expect(within(accountSheet).getByText("Dark Appearance")).toBeInTheDocument();
     expect(within(accountSheet).getByText("Price Alerts")).toBeInTheDocument();
+  });
+
+  it("dynamically replaces KFF brand logo with page title on mobile subpages", () => {
+    // 1. Home / Overview renders KFF
+    const { unmount: unmountHome } = render(
+      <MemoryRouter initialEntries={["/"]}>
+        <Navbar />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("link", { name: "KFF" })).toBeInTheDocument();
+    unmountHome();
+
+    // 2. /stocks renders "Stocks"
+    const { unmount: unmountStocks } = render(
+      <MemoryRouter initialEntries={["/stocks"]}>
+        <Navbar />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("Stocks")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
+    unmountStocks();
+
+    // 3. /funds renders "MMFs"
+    const { unmount: unmountFunds } = render(
+      <MemoryRouter initialEntries={["/funds"]}>
+        <Navbar />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("MMFs")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
+    unmountFunds();
+
+    // 4. /portfolio renders "Portfolio"
+    const { unmount: unmountPortfolio } = render(
+      <MemoryRouter initialEntries={["/portfolio"]}>
+        <Navbar />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("Portfolio")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
+    unmountPortfolio();
+
+    // 5. Nested detail route renders Back button and Title
+    const { unmount: unmountSummary } = render(
+      <MemoryRouter initialEntries={["/portfolio/summary"]}>
+        <Navbar />
+      </MemoryRouter>
+    );
+    expect(screen.getByRole("button", { name: /go back/i })).toBeInTheDocument();
+    expect(screen.getByText("Summary")).toBeInTheDocument();
+    unmountSummary();
   });
 
   it("shows unread state on the dedicated mobile notification button", () => {

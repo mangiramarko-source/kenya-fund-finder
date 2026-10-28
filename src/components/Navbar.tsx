@@ -1,7 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { BarChart3, ArrowLeft, User } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { ArrowLeft } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -9,6 +8,93 @@ import SearchDialog from "@/components/SearchDialog";
 import NotificationBell from "@/components/alerts/NotificationBell";
 import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
 import MobileAccountSheet from "@/components/mobile/MobileAccountSheet";
+
+export const mobileNavLinks = [
+  { to: "/", label: "Overview" },
+  { to: "/stocks", label: "Stocks" },
+  { to: "/funds", label: "MMF" },
+  { to: "/portfolio", label: "Portfolio" },
+  { to: "/treasury", label: "T-Bills" },
+  { to: "/rates", label: "FX Rates" },
+  { to: "/commodities", label: "Commodities" },
+  { to: "/watchlist", label: "Watchlist" },
+];
+
+export type MobileNavTitleInfo =
+  | { type: "logo" }
+  | { type: "title"; title: string }
+  | { type: "detail"; title: string; backTo?: string };
+
+export function getMobileNavTitleInfo(pathname: string): MobileNavTitleInfo {
+  const cleanPath = pathname.length > 1 && pathname.endsWith("/") ? pathname.slice(0, -1) : pathname;
+
+  // 1. Home feed / News home feed keeps the KFF brand logo
+  if (!cleanPath || cleanPath === "/" || cleanPath === "/overview" || cleanPath === "/news") {
+    return { type: "logo" };
+  }
+
+  // 2. Nested sub-pages with back buttons
+  if (cleanPath === "/portfolio/summary") {
+    return { type: "detail", title: "Summary", backTo: "/portfolio" };
+  }
+  if (cleanPath.startsWith("/learn/")) {
+    return { type: "detail", title: "Learn", backTo: "/learn" };
+  }
+  if (cleanPath.startsWith("/page/")) {
+    const slug = cleanPath.replace("/page/", "");
+    const title = slug.charAt(0).toUpperCase() + slug.slice(1).replace(/-/g, " ");
+    return { type: "detail", title, backTo: "/" };
+  }
+  if (cleanPath === "/privacy" || cleanPath === "/privacy-policy") {
+    return { type: "detail", title: "Privacy", backTo: "/" };
+  }
+  if (cleanPath === "/terms" || cleanPath === "/terms-of-service") {
+    return { type: "detail", title: "Terms", backTo: "/" };
+  }
+  if (cleanPath === "/news/archive" || cleanPath.startsWith("/news/archive/")) {
+    return { type: "detail", title: "Archive", backTo: "/news" };
+  }
+
+  // 3. Top-level subpages
+  switch (cleanPath) {
+    case "/stocks":
+      return { type: "title", title: "Stocks" };
+    case "/funds":
+    case "/money-market-funds-kenya":
+      return { type: "title", title: "MMFs" };
+    case "/portfolio":
+      return { type: "title", title: "Portfolio" };
+    case "/rates":
+      return { type: "title", title: "FX Rates" };
+    case "/commodities":
+      return { type: "title", title: "Commodities" };
+    case "/treasury":
+    case "/tbills":
+    case "/bonds":
+      return { type: "title", title: "Treasury Bills" };
+    case "/watchlist":
+      return { type: "title", title: "Watchlist" };
+    case "/calculator":
+    case "/mmf-calculator":
+      return { type: "title", title: "Calculator" };
+    case "/compare":
+      return { type: "title", title: "Compare" };
+    case "/alerts":
+      return { type: "title", title: "Alerts" };
+    case "/learn":
+      return { type: "title", title: "Learn" };
+    case "/profile":
+      return { type: "title", title: "Profile" };
+    case "/markets":
+      return { type: "title", title: "Markets" };
+    case "/admin":
+      return { type: "title", title: "Admin" };
+    case "/admin/login":
+      return { type: "title", title: "Admin Login" };
+    default:
+      return { type: "logo" };
+  }
+}
 
 function MobileProfileButton({
   user,
@@ -126,84 +212,14 @@ const Navbar = () => {
     };
   }, []);
 
-  const minimalRoutes = [
-    "/calculator",
-    "/learn",
-    "/alerts",
-    "/profile",
-    "/privacy",
-    "/terms",
-    "/admin",
-    "/page/",
-  ];
-  const detailRoutePatterns = [
-    /^\/stocks\/[^/]+/,
-    /^\/compare\/[^/]+/,
-    /^\/funds\/[^/]+/,
-  ];
-  const isDetailPage = detailRoutePatterns.some((re) => re.test(location.pathname));
-  const hasCustomDetailHeader = /^\/stocks\/[^/]+/.test(location.pathname) || /^\/compare\/[^/]+/.test(location.pathname);
-  const isMinimal = isDetailPage || minimalRoutes.some((p) => location.pathname.startsWith(p));
+  const hasCustomDetailHeader =
+    /^\/stocks\/[^/]+/.test(location.pathname) ||
+    /^\/compare\/[^/]+/.test(location.pathname) ||
+    /^\/funds\/[^/]+/.test(location.pathname);
 
   if (hasCustomDetailHeader) return null;
 
-  if (isMinimal) {
-    return (
-      <>
-        <header
-          ref={headerRef}
-          className="md:hidden fixed inset-x-0 top-0 z-50 bg-card/95 backdrop-blur-md"
-        >
-          <div className="container flex h-14 items-center justify-between px-4">
-            {isDetailPage ? (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate(-1)}
-                className="rounded-full h-9 px-2 gap-1.5 text-foreground hover:bg-muted"
-                aria-label="Go back"
-              >
-                <ArrowLeft className="h-5 w-5" />
-                <span className="text-sm font-medium">Back</span>
-              </Button>
-            ) : (
-              <Button
-                variant="ghost"
-                size="sm"
-                onClick={() => navigate("/")}
-                className="rounded-full h-9 px-2 gap-1.5 text-foreground hover:bg-muted"
-                aria-label="Go home"
-              >
-                <BarChart3 className="h-5 w-5" />
-                <span className="text-sm font-medium">Home</span>
-              </Button>
-            )}
-            <div className="flex items-center gap-1.5">
-              <MobileProfileButton
-                user={user}
-                displayName={displayName}
-                avatarUrl={avatarUrl}
-                onClick={() => setAccountOpen(true)}
-              />
-            </div>
-          </div>
-        </header>
-        <div className="md:hidden h-14" aria-hidden="true" />
-        <MobileAccountSheet
-          open={accountOpen}
-          onOpenChange={setAccountOpen}
-          user={user}
-          displayName={displayName}
-          avatarUrl={avatarUrl}
-          isAdmin={isAdmin}
-          dark={dark}
-          setDark={setDark}
-          signOut={signOut}
-          navigate={navigate}
-        />
-      </>
-    );
-  }
+  const navTitle = getMobileNavTitleInfo(location.pathname);
 
   return (
     <>
@@ -213,13 +229,35 @@ const Navbar = () => {
           className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md"
         >
           <nav className="flex h-14 items-center justify-between px-4">
-            {/* Left: KFF logo */}
-            <Link
-              to="/"
-              className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400"
-            >
-              KFF
-            </Link>
+            {/* Left: Dynamic title or KFF logo */}
+            <div className="flex items-center min-w-0">
+              {navTitle.type === "logo" ? (
+                <Link
+                  to="/"
+                  className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400"
+                >
+                  KFF
+                </Link>
+              ) : navTitle.type === "detail" ? (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <button
+                    type="button"
+                    onClick={() => (navTitle.backTo ? navigate(navTitle.backTo) : navigate(-1))}
+                    className="-ml-2 inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted active:scale-95 transition-all"
+                    aria-label="Go back"
+                  >
+                    <ArrowLeft className="h-5 w-5" />
+                  </button>
+                  <span className="truncate text-lg font-bold tracking-tight text-foreground">
+                    {navTitle.title}
+                  </span>
+                </div>
+              ) : (
+                <span className="truncate text-lg font-bold tracking-tight text-foreground">
+                  {navTitle.title}
+                </span>
+              )}
+            </div>
 
             {/* Right: search, notifications, then profile avatar */}
             <div className="flex items-center gap-1.5">
