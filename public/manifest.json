@@ -1,0 +1,25 @@
+{
+  "short_name": "KFF",
+  "name": "Kenya Fund Finder",
+  "description": "Compare CMA-regulated unit trusts, NSE stocks, FX rates, and commodities in Kenya.",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "type": "image/svg+xml",
+      "sizes": "any"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "type": "image/png",
+      "sizes": "180x180",
+      "purpose": "any maskable"
+    }
+  ],
+  "start_url": "/",
+  "background_color": "#0a0f1d",
+  "theme_color": "#0a0f1d",
+  "display": "standalone",
+  "orientation": "portrait-primary",
+  "scope": "/",
+  "categories": ["finance", "business"]
+}

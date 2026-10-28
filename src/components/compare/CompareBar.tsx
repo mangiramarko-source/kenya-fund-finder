@@ -10,7 +10,7 @@ const CompareBar = () => {
   if (selected.length === 0) return null;
 
   return (
-    <div className={`${location.pathname === "/funds" ? "md:hidden " : ""}fixed bottom-0 inset-x-0 z-50 border-t border-border bg-card/95 backdrop-blur-md shadow-lg animate-in slide-in-from-bottom-4`}>
+    <div className={`${location.pathname === "/funds" ? "md:hidden " : ""}fixed bottom-20 md:bottom-0 inset-x-0 z-40 md:z-50 border-t border-border bg-card/95 backdrop-blur-md shadow-lg animate-in slide-in-from-bottom-4`}>
       <div className="container max-w-7xl py-3 flex items-center gap-3">
         <div className="flex items-center gap-1.5 mr-2">
           <BarChart3 className="h-4 w-4 text-accent" />
