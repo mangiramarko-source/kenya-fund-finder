@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
@@ -83,9 +84,14 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
   const [rates, setRates] = useState<RateRow[]>([]);
   const [commodities, setCommodities] = useState<CommodityRow[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
+  const [mounted, setMounted] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const mobileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   // Cmd+K shortcut
   useEffect(() => {
@@ -567,15 +573,15 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
       )}
 
       {/* ─── Mobile Full-Page Search Screen (< md) ─── */}
-      {open && isMobile && (
+      {mounted && open && isMobile && typeof document !== "undefined" && createPortal(
         <div
           role="dialog"
           aria-modal="true"
           aria-label="Search"
-          className="fixed inset-0 z-50 flex flex-col bg-background text-foreground md:hidden animate-in fade-in duration-200"
+          className="fixed inset-0 z-[100] flex flex-col w-screen h-[100dvh] bg-background text-foreground md:hidden animate-in fade-in duration-200"
         >
           {/* Mobile Top Header */}
-          <div className="flex items-center gap-2 px-3 pt-3 pb-2.5 border-b border-border/80 bg-background/95 backdrop-blur-md shrink-0">
+          <div className="flex items-center gap-2 px-3 pt-3 pb-2.5 border-b border-border bg-background shrink-0">
             <button
               type="button"
               onClick={() => setOpen(false)}
@@ -629,7 +635,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
           </div>
 
           {/* Scrollable Content Body */}
-          <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-6">
+          <div className="flex-1 overflow-y-auto overscroll-contain px-4 py-4 space-y-6 pb-28 bg-background">
             {!q ? (
               /* ─── Empty State: Recent Searches + Suggested For You ─── */
               <div className="space-y-6">
@@ -989,7 +995,8 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
               </div>
             )}
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {/* ─── Desktop Centered Command Palette (md: and up) ─── */}
