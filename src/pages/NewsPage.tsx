@@ -10,7 +10,6 @@ import PageLoadingGate from "@/components/PageLoadingGate";
 import { SocialFeedCard } from "@/components/feed/SocialFeed";
 import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
-import { MarketEspressoHeader } from "@/components/feed/MarketEspressoHeader";
 import { FeedPollCard } from "@/components/feed/FeedPollCard";
 import { FeedTriviaCard } from "@/components/feed/FeedTriviaCard";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
@@ -289,9 +288,6 @@ export default function NewsPage() {
           </span>
         </div>
       </div>
-
-      {/* 60s Market Espresso: Summary for Stocks, Commodities, T-Bills/Bonds, MMFs, FX Rates */}
-      <MarketEspressoHeader />
 
       {/* Watchlist Briefing (For signed-in users) */}
       {user && (
