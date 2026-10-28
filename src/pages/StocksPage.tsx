@@ -513,6 +513,12 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
         {/* Semantic title for A11y & SEO */}
         <h1 className="sr-only">Kenyan Stocks</h1>
 
+        <div className="md:hidden mb-3">
+          <p className="text-sm text-muted-foreground">
+            Live Nairobi Securities Exchange (NSE) share prices and daily market movements.
+          </p>
+        </div>
+
         {/* Desktop Header Live Status */}
         <div className="hidden md:flex justify-end items-center mb-4">
           <SectionLiveStatus section="stocks" fallbackDate={latestUpdate} isLoading={loading} />

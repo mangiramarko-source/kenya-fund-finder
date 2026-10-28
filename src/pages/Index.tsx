@@ -130,6 +130,12 @@ const Index = () => {
         {/* Semantic title for A11y & SEO */}
         <h1 className="sr-only">Money Market Funds</h1>
 
+        <div className="md:hidden mb-3">
+          <p className="text-sm text-muted-foreground">
+            Compare CMA-regulated Money Market Funds and unit trust yields in Kenya.
+          </p>
+        </div>
+
         <div className="hidden md:flex items-end justify-between gap-6 mb-7">
           <div>
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">Kenyan Investment Funds</p>

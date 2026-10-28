@@ -102,6 +102,10 @@ export default function MobilePortfolioView({ currency, setCurrency, showPortfol
       {/* Semantic title for A11y & SEO */}
       <h1 className="sr-only">Portfolio</h1>
 
+      <p className="text-sm text-muted-foreground -mt-1 mb-1">
+        Track your investments, net worth, and daily asset performance.
+      </p>
+
       {/* ─── 1. Total Value Summary Card ─── */}
       <div className="bg-card border border-border/75 rounded-3xl p-5 shadow-sm space-y-4 dark:bg-neutral-900/90 dark:border-white/10">
         <div className="flex items-center justify-between">

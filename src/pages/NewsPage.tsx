@@ -278,11 +278,16 @@ export default function NewsPage() {
       <OverviewPortfolioWidget />
 
       {/* Header */}
-      <div className="mb-3.5 flex items-baseline justify-between mt-0">
-        <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Market News</h1>
-        <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-          {newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredArticles.length} articles`}
-        </span>
+      <div className="mb-3.5 mt-0">
+        <div className="flex items-baseline justify-between">
+          <h1 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Market News</h1>
+          <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+            {newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredArticles.length} articles`}
+          </span>
+        </div>
+        <p className="text-sm text-muted-foreground mt-1 md:hidden">
+          Latest financial news, company disclosures, and market updates in Kenya.
+        </p>
       </div>
 
       {/* Watchlist Briefing (For signed-in users) */}
