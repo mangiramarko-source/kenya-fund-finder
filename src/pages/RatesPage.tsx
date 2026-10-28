@@ -342,7 +342,7 @@ const RatesPage = () => {
             <SectionLiveStatus section="rates" fallbackDate={latestUpdate} isLoading={loading} />
           </div>
           <div className="md:hidden">
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">FX Rates</h1>
+            <h1 className="sr-only">FX Rates</h1>
             <p className="text-sm text-muted-foreground mt-1">Live exchange rates against the Kenyan Shilling (KES).</p>
           </div>
         </div>

@@ -205,8 +205,8 @@ const AlertsPage = () => {
       <main className="mx-auto max-w-3xl space-y-6 px-4 py-4 pb-28 md:hidden">
         <header>
           <div className="mb-4">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Alerts</h1>
-            <p className="mt-1 text-sm text-muted-foreground">Monitor saved-asset targets and manage how you are notified.</p>
+            <h1 className="sr-only">Alerts</h1>
+            <p className="text-sm text-muted-foreground">Monitor saved-asset targets and manage how you are notified.</p>
           </div>
           <div className="relative mb-4">
             <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground/80" />

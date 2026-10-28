@@ -299,7 +299,7 @@ const CommoditiesPage = () => {
             <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />
           </div>
           <div className="md:hidden">
-            <h1 className="text-2xl font-bold text-foreground tracking-tight">Commodities</h1>
+            <h1 className="sr-only">Commodities</h1>
             <p className="text-sm text-muted-foreground mt-1">Global commodity prices and daily movements.</p>
           </div>
         </div>

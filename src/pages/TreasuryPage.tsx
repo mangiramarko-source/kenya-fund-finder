@@ -174,7 +174,7 @@ export default function TreasuryPage() {
           {/* ── Section 1: Main Page Header ── */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-2 border-b border-border/60 pb-3">
             <div className="space-y-1">
-              <h1 className="text-2xl md:text-4xl font-black tracking-tight text-foreground">
+              <h1 className="sr-only md:not-sr-only md:text-4xl font-black tracking-tight text-foreground">
                 Treasury Bills & Bonds
               </h1>
               <p className="text-sm md:text-base text-muted-foreground max-w-3xl">

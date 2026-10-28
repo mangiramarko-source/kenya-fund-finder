@@ -63,7 +63,7 @@ const LearnPage = () => {
     <div className="px-4 md:px-6 py-6">
       {/* Header */}
       <div className="mb-4">
-        <h1 className="text-xl md:text-2xl font-bold text-foreground">Learn</h1>
+        <h1 className="sr-only md:not-sr-only md:text-2xl font-bold text-foreground">Learn</h1>
         <p className="text-sm text-muted-foreground mt-1">
           Understand how different investment types work, their risks, returns &amp; regulation in Kenya.
         </p>

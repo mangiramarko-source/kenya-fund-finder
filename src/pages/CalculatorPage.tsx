@@ -17,16 +17,15 @@ const CalculatorPage = () => {
 
   return (
     <div className="container max-w-4xl mx-auto px-4 md:px-6 py-6 md:py-8">
-      <header className="mb-5 md:mb-6">
-        <div className="flex items-center gap-2.5">
+      <header className="mb-4 md:mb-6">
+        <div className="hidden md:flex items-center gap-2.5 mb-1">
           <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-accent/10 text-accent">
             <CalcIcon className="h-4.5 w-4.5" />
           </div>
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold tracking-tight">Calculator</h1>
-            <p className="text-xs md:text-sm text-muted-foreground">Investment, currency, and KRA PAYE estimates</p>
-          </div>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Calculator</h1>
         </div>
+        <h1 className="sr-only md:hidden">Calculator</h1>
+        <p className="text-xs md:text-sm text-muted-foreground">Investment, currency, and KRA PAYE estimates</p>
       </header>
 
       <Tabs defaultValue="investment" className="w-full">

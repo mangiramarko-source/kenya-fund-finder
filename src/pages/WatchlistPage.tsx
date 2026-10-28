@@ -542,8 +542,8 @@ const WatchlistPage = () => {
       <div>
         <div className="md:hidden mb-4">
           <div className="mb-4">
-            <h1 className="text-2xl font-bold tracking-tight text-foreground">Watchlist</h1>
-            <p className="mt-1 text-sm text-muted-foreground">
+            <h1 className="sr-only">Watchlist</h1>
+            <p className="text-sm text-muted-foreground">
               Track your saved funds, stocks, FX rates, and commodities in one place.
             </p>
             {showingGuestDemo && (
