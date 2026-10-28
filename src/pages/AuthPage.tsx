@@ -403,6 +403,19 @@ const AuthPage = () => {
                 <span>{loading ? "Please wait..." : isSignUp ? "Create Account" : "Sign In"}</span>
                 <ArrowRight className="h-5 w-5" />
               </Button>
+
+              {/* Legal Terms & Privacy Consent Notice */}
+              <p className="text-[11px] text-center text-muted-foreground/80 leading-relaxed px-1 pt-1">
+                By continuing, you agree to Kenya Fund Finder's{" "}
+                <Link to="/terms" className="text-emerald-500 hover:underline font-medium">
+                  Terms of Use
+                </Link>{" "}
+                and acknowledge our{" "}
+                <Link to="/privacy" className="text-emerald-500 hover:underline font-medium">
+                  Privacy Policy
+                </Link>
+                .
+              </p>
             </form>
 
             {/* Toggle Sign In / Sign Up */}

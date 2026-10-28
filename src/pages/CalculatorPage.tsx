@@ -2,6 +2,7 @@ import { useState } from "react";
 import CurrencyConverter from "@/components/calculator/CurrencyConverter";
 import PayeCalculator from "@/components/calculator/PayeCalculator";
 import InvestmentCalculator from "@/components/calculator/InvestmentCalculator";
+import DisclaimerBlock from "@/components/DisclaimerBlock";
 import { TrendingUp, ArrowRightLeft, Receipt, Calculator as CalcIcon } from "lucide-react";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 
@@ -69,6 +70,11 @@ const CalculatorPage = () => {
         {activeTab === "investment" && <InvestmentCalculator />}
         {activeTab === "currency" && <CurrencyConverter />}
         {activeTab === "paye" && <PayeCalculator />}
+      </div>
+
+      {/* Educational & Calculation Disclaimer */}
+      <div className="pt-4">
+        <DisclaimerBlock extra="All calculator results, projections, and tax estimates are purely hypothetical illustrations for educational purposes. Projections assume constant yield rates and do not guarantee future returns. Actual returns fluctuate based on prevailing market interest rates, fund manager charges, and statutory tax deductions (e.g. 15% withholding tax)." />
       </div>
     </div>
   );

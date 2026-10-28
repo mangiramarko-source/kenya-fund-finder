@@ -65,9 +65,12 @@ const TermsOfUsePage = () => (
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-2">7. Intellectual Property</h2>
+        <h2 className="text-lg font-semibold mb-2">7. Intellectual Property & Trademark Fair Use</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
-          All content, design, and code on this Platform are the property of <strong>Elyon Innovation LTD</strong> or their respective owners. You may not reproduce, distribute, or create derivative works without prior written consent. Fund names, logos, and trademarks belong to their respective fund managers.
+          All original content, design, typography, icons, and code on this Platform are the intellectual property of <strong>Elyon Innovation LTD</strong>. You may not reproduce, distribute, or create derivative works without prior written consent.
+        </p>
+        <p className="text-sm text-muted-foreground leading-relaxed mt-2">
+          All product names, logos, stock symbols, fund manager trademarks, and commercial brand marks (including NSE-listed companies, commercial banks, licensed Collective Investment Scheme managers, and media publications) are the property of their respective owners. Their display on Kenya Fund Finder is strictly for nominative identification, news reporting, and public comparison purposes under fair use doctrines, and does not imply any affiliation, sponsorship, or endorsement by those entity owners.
         </p>
       </section>
 
@@ -105,21 +108,28 @@ const TermsOfUsePage = () => (
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-2">12. Governing Law</h2>
+        <h2 className="text-lg font-semibold mb-2">12. Market News Aggregation & Fair Dealing</h2>
+        <p className="text-sm text-muted-foreground leading-relaxed">
+          Kenya Fund Finder curates and indexes publicly available financial headlines, summaries, and news links from Kenyan and international media outlets for commentary, educational research, and news reporting under the fair dealing provisions of the <strong>Kenya Copyright Act (Cap 130)</strong>. Full articles remain the exclusive intellectual property of their respective publishers, and users are provided links to original publisher sources. Kenya Fund Finder does not warrant the accuracy of external reporting and disclaims liability for any actions taken in reliance on third-party news.
+        </p>
+      </section>
+
+      <section>
+        <h2 className="text-lg font-semibold mb-2">13. Governing Law</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
           These Terms of Use shall be governed by and construed in accordance with the laws of the Republic of Kenya. Any disputes arising from use of the Platform shall be subject to the exclusive jurisdiction of the courts of Kenya.
         </p>
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-2">13. Changes to These Terms</h2>
+        <h2 className="text-lg font-semibold mb-2">14. Changes to These Terms</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
           We reserve the right to modify these Terms of Use at any time. Changes will be effective immediately upon posting to this page. Your continued use of the Platform after any modifications constitutes acceptance of the updated terms.
         </p>
       </section>
 
       <section>
-        <h2 className="text-lg font-semibold mb-2">14. Contact</h2>
+        <h2 className="text-lg font-semibold mb-2">15. Contact</h2>
         <p className="text-sm text-muted-foreground leading-relaxed">
           If you have any questions about these Terms of Use, please contact us through the Platform.
         </p>
