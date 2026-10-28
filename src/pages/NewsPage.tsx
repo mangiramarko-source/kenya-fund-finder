@@ -285,9 +285,6 @@ export default function NewsPage() {
             {newTodayCount > 0 ? `${newTodayCount} new today` : `${filteredArticles.length} articles`}
           </span>
         </div>
-        <p className="text-sm text-muted-foreground mt-1 md:hidden">
-          Latest financial news, company disclosures, and market updates in Kenya.
-        </p>
       </div>
 
       {/* Watchlist Briefing (For signed-in users) */}
