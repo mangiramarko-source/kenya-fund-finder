@@ -17,11 +17,12 @@ const CalculatorPage = () => {
   const [activeTab, setActiveTab] = useState<CalculatorTab>("investment");
 
   useDocumentTitle(
-    "Investment, Currency & KRA PAYE Calculator | Kenya Fund Finder",
-    "Free Kenyan calculators — estimate unit trust returns, convert KES/USD/GBP, and calculate KRA PAYE tax using the latest tax bands.",
+    "Kenya MMF Calculator: Estimate Investment Returns | Kenya Fund Finder",
+    "Estimate Kenyan MMF returns with an initial deposit, monthly contributions, yield, period, fees and an illustrative withholding-tax deduction.",
     {
-      title: "Investment, Currency & KRA PAYE Calculator",
-      description: "Free Kenyan calculators for investment returns, currency conversion, and KRA PAYE tax.",
+      title: "Kenya MMF Calculator: Estimate Investment Returns",
+      description:
+        "Estimate Kenyan MMF returns with an initial deposit, monthly contributions, yield, period, fees and an illustrative withholding-tax deduction.",
     }
   );
 
@@ -32,11 +33,11 @@ const CalculatorPage = () => {
           <div className="flex items-center justify-center h-9 w-9 rounded-lg bg-accent/10 text-accent">
             <CalcIcon className="h-4.5 w-4.5" />
           </div>
-          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Calculator</h1>
+          <h1 className="text-xl md:text-2xl font-bold tracking-tight">Kenya MMF Calculator</h1>
         </div>
-        <h1 className="sr-only md:hidden">Calculator</h1>
+        <h1 className="sr-only md:hidden">Kenya MMF Calculator</h1>
         <p className="text-sm text-muted-foreground">
-          Investment return projections, currency conversions, and KRA PAYE tax estimates.
+          Estimate Kenyan MMF returns with an initial deposit, monthly contributions, yield, period, fees and an illustrative withholding-tax deduction.
         </p>
       </header>
 

@@ -206,6 +206,7 @@ const InvestmentCalculator = () => {
             id="amount"
             type="number"
             inputMode="numeric"
+            aria-label="Initial amount (KES)"
             value={amount || ""}
             onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))}
             className="h-11 rounded-xl bg-background border-border/80 text-sm font-semibold"
@@ -243,6 +244,7 @@ const InvestmentCalculator = () => {
             id="monthly"
             type="number"
             inputMode="numeric"
+            aria-label="Monthly top-up (KES)"
             value={monthly || ""}
             onChange={(e) => setMonthly(Math.max(0, Number(e.target.value)))}
             className="h-11 rounded-xl bg-background border-border/80 text-sm font-semibold"
@@ -280,6 +282,7 @@ const InvestmentCalculator = () => {
             id="yield"
             type="number"
             inputMode="decimal"
+            aria-label="Annual yield (%)"
             step="0.1"
             value={annualYield || ""}
             onChange={(e) => setAnnualYield(Math.max(0, Number(e.target.value)))}
@@ -349,6 +352,7 @@ const InvestmentCalculator = () => {
                 id="fee"
                 type="number"
                 inputMode="decimal"
+                aria-label="Mgmt fee (% p.a.)"
                 step="0.1"
                 value={fee}
                 onChange={(e) => setFee(Math.max(0, Number(e.target.value)))}
