@@ -3,7 +3,7 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star, SlidersHorizontal } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star, SlidersHorizontal, X } from "lucide-react";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -140,6 +140,18 @@ const CommoditiesPage = () => {
   const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
   type SortKey = "default" | "price_desc" | "price_asc" | "change_desc" | "change_asc" | "name_asc" | "name_desc";
   const [mobileSort, setMobileSort] = useState<SortKey>("default");
+  const [sortSheetOpen, setSortSheetOpen] = useState(false);
+
+  const COMMODITY_SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
+    { key: "default", label: "Default order" },
+    { key: "price_desc", label: "Price: High → Low" },
+    { key: "price_asc", label: "Price: Low → High" },
+    { key: "change_desc", label: "Change %: High → Low" },
+    { key: "change_asc", label: "Change %: Low → High" },
+    { key: "name_asc", label: "Name: A → Z" },
+    { key: "name_desc", label: "Name: Z → A" },
+  ];
+  const currentSortLabel = COMMODITY_SORT_OPTIONS.find((o) => o.key === mobileSort)?.label || "All";
 
   useEffect(() => {
     const fetchData = async () => {
@@ -353,100 +365,42 @@ const CommoditiesPage = () => {
           </div>
         </div>
 
-        {/* Mobile: combined search + filter button */}
-        <div
-          aria-hidden={loading}
-          className={`md:hidden items-center gap-2.5 mb-4 transition-opacity ${loading ? "invisible opacity-0 flex" : "flex opacity-100"}`}
-        >
-          <div className="relative flex-1">
-            <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/80" />
-            <Input
-              placeholder="Search commodities..."
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              className="pl-10 h-11 rounded-full bg-card border-border/80 w-full text-[15px] shadow-sm placeholder:text-muted-foreground/60 focus-visible:ring-1"
-            />
-          </div>
-          <Sheet>
-            <SheetTrigger asChild>
-              <button
-                type="button"
-                className="relative inline-flex items-center justify-center gap-1.5 h-11 px-4 shrink-0 rounded-full border border-border/80 bg-card text-foreground text-sm font-semibold shadow-sm transition-colors active:scale-95"
-                aria-label="Filters"
-              >
-                <SlidersHorizontal className="h-4 w-4 text-foreground/80" />
-                <span>Filter</span>
-                {mobileSort !== "default" && (
-                  <span className="absolute top-1 right-1 h-2 w-2 rounded-full bg-emerald-500" />
-                )}
-              </button>
-            </SheetTrigger>
-            <SheetContent side="bottom" className="rounded-t-2xl border-border max-h-[80vh] overflow-y-auto p-5">
-              <SheetHeader className="text-left pb-2 border-b border-border/50">
-                <SheetTitle className="text-base font-bold">Sort & Filter</SheetTitle>
-              </SheetHeader>
-              <div className="mt-4 space-y-5">
-                <div>
-                  <h4 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground mb-3">Sort by</h4>
-                  <div className="grid grid-cols-1 gap-2">
-                    {([
-                      { key: "default", label: "Default order" },
-                      { key: "price_desc", label: "Price: High → Low" },
-                      { key: "price_asc", label: "Price: Low → High" },
-                      { key: "change_desc", label: "Change %: High → Low" },
-                      { key: "change_asc", label: "Change %: Low → High" },
-                      { key: "name_asc", label: "Name: A → Z" },
-                      { key: "name_desc", label: "Name: Z → A" },
-                    ] as const).map((opt) => {
-                      const active = mobileSort === opt.key;
-                      return (
-                        <button
-                          key={opt.key}
-                          type="button"
-                          onClick={() => setMobileSort(opt.key)}
-                          className={`inline-flex items-center justify-between px-4 h-11 rounded-full text-xs font-semibold transition-all ${
-                            active
-                              ? "bg-foreground text-background shadow-sm"
-                              : "bg-muted/60 text-muted-foreground hover:bg-muted hover:text-foreground"
-                          }`}
-                        >
-                          <span>{opt.label}</span>
-                          {active && <span className="text-[10px] opacity-80">Selected</span>}
-                        </button>
-                      );
-                    })}
-                  </div>
-                </div>
 
-                <SheetClose asChild>
-                  <button
-                    type="button"
-                    className="w-full h-11 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-semibold shadow-sm transition-colors mt-4"
-                  >
-                    Apply Filters
-                  </button>
-                </SheetClose>
-              </div>
-            </SheetContent>
-          </Sheet>
-        </div>
 
-        {/* Mobile movement pills */}
-        <div
-          aria-hidden={loading}
-          className={`md:hidden mb-4 gap-2 overflow-x-auto no-scrollbar py-0.5 transition-opacity ${loading ? "invisible opacity-0 flex" : "flex opacity-100"}`}
-        >
+        {/* Mobile: Filter Pills Row */}
+        <div className="md:hidden mb-4 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          {/* 1. All / Sort Pill (triggers Bottom Sheet) */}
+          <button
+            type="button"
+            onClick={() => setSortSheetOpen(true)}
+            className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+              mobileSort !== "default"
+                ? "bg-emerald-600 text-white shadow-sm"
+                : mobileMovement === "all"
+                  ? "bg-foreground text-background shadow-sm"
+                  : "border border-border bg-background text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+            }`}
+          >
+            <span>{mobileSort !== "default" ? currentSortLabel : "All"}</span>
+            <ChevronDown className={`h-3.5 w-3.5 ${mobileSort !== "default" || mobileMovement === "all" ? "opacity-90" : "opacity-60"}`} />
+            <span className={`text-[11px] tabular-nums font-normal ${mobileSort !== "default" || mobileMovement === "all" ? "text-inherit opacity-90" : "text-muted-foreground/80"}`}>
+              {commodities.length}
+            </span>
+          </button>
+
+          {/* 2. Movement Quick Filters: Gainers, Losers, Unchanged */}
           {([
-            { key: "all", label: "All", count: commodities.length },
             { key: "gainers", label: "Gainers", count: gainers },
             { key: "losers", label: "Losers", count: losers },
             { key: "unchanged", label: "Unchanged", count: unchanged },
           ] as const).map((opt) => {
-            const active = mobileMovement === opt.key;
+            const active = mobileMovement === opt.key && mobileSort === "default";
             return (
               <button
                 key={opt.key}
+                type="button"
                 onClick={(e) => {
+                  setMobileSort("default");
                   setMobileMovement(opt.key);
                   e.currentTarget.scrollIntoView({
                     behavior: "smooth",
@@ -454,7 +408,7 @@ const CommoditiesPage = () => {
                     block: "nearest",
                   });
                 }}
-                className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
+                className={`shrink-0 inline-flex items-center gap-1.5 px-3.5 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap ${
                   active
                     ? "bg-foreground text-background shadow-sm"
                     : "border border-border bg-background text-muted-foreground hover:bg-muted/30 hover:text-foreground"
@@ -471,6 +425,74 @@ const CommoditiesPage = () => {
             );
           })}
         </div>
+
+        {/* Mobile: Sort & Filter Bottom Sheet */}
+        <Sheet open={sortSheetOpen} onOpenChange={setSortSheetOpen}>
+          <SheetContent side="bottom" hideCloseButton className="rounded-t-3xl border-border max-h-[80vh] overflow-y-auto px-5 pt-4 pb-8">
+            <SheetHeader className="text-left pb-3 border-b border-border/50">
+              <div className="flex items-center justify-between">
+                <div>
+                  <SheetTitle className="text-base font-bold text-foreground">Sort & Filter</SheetTitle>
+                  <p className="text-xs text-muted-foreground mt-0.5">Customize commodity sorting and order</p>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => setSortSheetOpen(false)}
+                  className="h-8 w-8 rounded-full border border-border flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                  aria-label="Close"
+                >
+                  <X className="h-4 w-4" />
+                </button>
+              </div>
+            </SheetHeader>
+
+            <div className="mt-4 space-y-4">
+              <div className="grid grid-cols-1 gap-1.5">
+                {COMMODITY_SORT_OPTIONS.map((opt) => {
+                  const active = mobileSort === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => {
+                        setMobileSort(opt.key);
+                        setSortSheetOpen(false);
+                      }}
+                      className={`flex items-center justify-between w-full px-4 py-3 rounded-2xl text-left text-sm font-semibold transition-all ${
+                        active
+                          ? "bg-emerald-600 text-white shadow-sm"
+                          : "bg-muted/40 hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      <div className="flex items-center gap-2.5">
+                        <span className={`h-2 w-2 rounded-full ${active ? "bg-white" : "bg-emerald-500"}`} />
+                        <span>{opt.label}</span>
+                      </div>
+                      {active && (
+                        <span className="text-xs font-medium bg-white/20 text-white px-2 py-0.5 rounded-full">
+                          Active
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+
+              {mobileSort !== "default" && (
+                <button
+                  type="button"
+                  onClick={() => {
+                    setMobileSort("default");
+                    setSortSheetOpen(false);
+                  }}
+                  className="w-full h-10 rounded-full border border-border text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                  Reset to Default
+                </button>
+              )}
+            </div>
+          </SheetContent>
+        </Sheet>
 
         {/* Mobile Live Status (Between filter pills and first card) */}
         <div className="md:hidden mb-3.5 flex items-center justify-between px-0.5">
