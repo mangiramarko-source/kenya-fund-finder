@@ -13,8 +13,7 @@ import {
   Gem,
   Star,
   Calculator,
-  Scale,
-  BookOpen,
+  GraduationCap,
   Bell,
   Sun,
   Moon,
@@ -190,11 +189,11 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
                 onClick={close}
               />
               <DrawerTile
-                to="/compare"
-                icon={Scale}
-                title="Compare Funds"
-                subtitle="Side-by-side yields"
-                active={location.pathname === "/compare"}
+                to="/learn"
+                icon={GraduationCap}
+                title="Learn"
+                subtitle="Guides & FAQs"
+                active={location.pathname === "/learn"}
                 onClick={close}
               />
               <DrawerTile
@@ -208,22 +207,12 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
             </div>
           </div>
 
-          {/* Section 3: Learn & Settings */}
+          {/* Section 3: Preferences & More */}
           <div>
             <p className="px-1 pb-2 text-[11px] font-bold uppercase tracking-wider text-muted-foreground">
-              Learn & Preferences
+              Preferences & More
             </p>
             <div className="space-y-1.5 rounded-2xl border border-border bg-card/60 p-2">
-              <Link
-                to="/learn"
-                onClick={close}
-                className="flex items-center gap-3 rounded-xl px-3 py-2.5 hover:bg-muted/60 transition-colors"
-              >
-                <BookOpen className="h-4 w-4 text-emerald-500 shrink-0" />
-                <span className="flex-1 text-sm font-semibold text-foreground">Investment Guides & FAQ</span>
-                <ChevronRight className="h-4 w-4 text-muted-foreground/50 shrink-0" />
-              </Link>
-
               {isAiLabEnabled() && (
                 <Link
                   to="/ai-lab"
