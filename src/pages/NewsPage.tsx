@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from "react";
+import { Fragment, useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { fetchPublishedNews, fetchPublicStocks, type NewsFromDB } from "@/lib/api";
@@ -10,7 +10,9 @@ import PageLoadingGate from "@/components/PageLoadingGate";
 import { SocialFeedCard } from "@/components/feed/SocialFeed";
 import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
-import { MarketEntertainmentWidget } from "@/components/feed/MarketEntertainmentWidget";
+import { MarketEspressoHeader } from "@/components/feed/MarketEspressoHeader";
+import { FeedPollCard } from "@/components/feed/FeedPollCard";
+import { FeedTriviaCard } from "@/components/feed/FeedTriviaCard";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { useAuth } from "@/hooks/useAuth";
@@ -288,8 +290,8 @@ export default function NewsPage() {
         </div>
       </div>
 
-      {/* Interactive Entertainment & Sentiment Hub (Demo) */}
-      <MarketEntertainmentWidget />
+      {/* 60s Market Espresso: Summary for Stocks, Commodities, T-Bills/Bonds, MMFs, FX Rates */}
+      <MarketEspressoHeader />
 
       {/* Watchlist Briefing (For signed-in users) */}
       {user && (
@@ -351,8 +353,8 @@ export default function NewsPage() {
         </div>
       ) : (
         <div className="space-y-0 md:space-y-4 pb-20">
-          {feedItems.map((item, index) =>
-            item.relatedStock ? (
+          {feedItems.map((item, index) => {
+            const card = item.relatedStock ? (
               <StockFeedCard
                 key={item.id}
                 item={item}
@@ -370,8 +372,16 @@ export default function NewsPage() {
                 interaction={getPostInteraction(item.id, item.likes || 0)}
                 onLikeToggle={toggleLike}
               />
-            )
-          )}
+            );
+
+            return (
+              <Fragment key={`feed-frag-${item.id}`}>
+                {card}
+                {index === 2 && <FeedPollCard key="in-feed-poll" index={index + 1} />}
+                {index === 6 && <FeedTriviaCard key="in-feed-trivia" index={index + 1} />}
+              </Fragment>
+            );
+          })}
           
           {hasMore && (
             <button
