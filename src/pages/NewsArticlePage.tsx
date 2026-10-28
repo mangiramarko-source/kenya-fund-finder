@@ -530,7 +530,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
 
   return (
     <PageLoadingGate isReady={!loading && Boolean(article)} message="Loading market news…" resetKey={id} loaderClassName="min-h-screen">
-    <div className="min-h-screen bg-background text-foreground pb-20 md:pb-8">
+    <div className="min-h-screen bg-background text-foreground pb-28 md:pb-24">
       {/* ─── 1. Top Navigation Bar (Fixed top header below main navbar) ─── */}
       <header className="fixed inset-x-0 top-0 z-50 flex h-[58px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md md:sticky md:z-40 md:h-12 md:px-4">
         <button
@@ -732,27 +732,29 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
       </div>
 
       {/* ─── 10. Reply Composer (Fixed to bottom of screen) ─── */}
-      <div className="sticky bottom-0 z-40 bg-background/95 backdrop-blur-md border-t border-border px-4 py-3 max-w-[430px] mx-auto">
-        <form onSubmit={handleArticleCommentSubmit} className="flex items-center gap-3 bg-card border border-border rounded-full px-2.5 py-2 shadow-sm md:px-3.5 md:py-1.5">
-          <div className="w-9 h-9 md:w-7 md:h-7 rounded-full bg-cyan-950 text-cyan-400 font-bold text-sm md:text-xs flex items-center justify-center shrink-0">
-            {user ? (user.email || "U").slice(0, 1).toUpperCase() : "M"}
-          </div>
-          <input
-            type="text"
-            placeholder="Post your reply"
-            value={newCommentInput}
-            onChange={(e) => setNewCommentInput(e.target.value)}
-            className="flex-1 bg-transparent text-sm md:text-xs text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
-          />
-          <Button
-            type="submit"
-            size="sm"
-            disabled={!newCommentInput.trim()}
-            className="h-9 px-5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-all disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 md:h-7 md:px-3 md:text-xs"
-          >
-            Reply
-          </Button>
-        </form>
+      <div className="fixed inset-x-0 bottom-0 z-40 bg-background/95 backdrop-blur-md border-t border-border">
+        <div className="max-w-[430px] md:max-w-xl mx-auto px-4 py-2.5 sm:py-3">
+          <form onSubmit={handleArticleCommentSubmit} className="flex items-center gap-3 bg-card border border-border rounded-full px-2.5 py-2 shadow-xs md:px-3.5 md:py-1.5">
+            <div className="w-9 h-9 md:w-8 md:h-8 rounded-full bg-cyan-950 text-cyan-400 font-bold text-sm md:text-xs flex items-center justify-center shrink-0">
+              {user ? (user.email || "U").slice(0, 1).toUpperCase() : "M"}
+            </div>
+            <input
+              type="text"
+              placeholder="Post your reply"
+              value={newCommentInput}
+              onChange={(e) => setNewCommentInput(e.target.value)}
+              className="flex-1 bg-transparent text-sm md:text-xs text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!newCommentInput.trim()}
+              className="h-9 px-5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-all disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 md:h-8 md:px-4 md:text-xs shrink-0"
+            >
+              Reply
+            </Button>
+          </form>
+        </div>
       </div>
     </div>
     </PageLoadingGate>

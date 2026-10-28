@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import ReactMarkdown from 'react-markdown';
 import remarkGfm from '@/lib/remarkGfmSafe';
 import { useNavigate } from "react-router-dom";
@@ -71,6 +71,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
   const [commentText, setCommentText] = useState("");
   const [localCommentsList, setLocalCommentsList] = useState<string[]>([]);
   const [stockLogoError, setStockLogoError] = useState(false);
+  const commentsRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     setStockLogoError(false);
@@ -173,11 +174,14 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
     }
     setCommentText("");
     toast.success("Comment added!");
+    setTimeout(() => {
+      commentsRef.current?.scrollIntoView({ behavior: "smooth" });
+    }, 100);
   };
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto bg-card text-card-foreground border border-border p-0 rounded-2xl shadow-2xl hide-scrollbar dark:bg-neutral-900/95 dark:border-white/10 dark:text-foreground">
+      <DialogContent className="flex flex-col max-w-2xl h-[92vh] max-h-[92vh] sm:h-[85vh] sm:max-h-[85vh] overflow-hidden bg-card text-card-foreground border border-border p-0 rounded-2xl shadow-2xl dark:bg-neutral-900 dark:border-white/10 dark:text-foreground">
         {/* Header bar */}
         {(() => {
           const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
@@ -185,7 +189,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
           const stock = item.relatedStock;
           const stockLogoUrl = stock ? getStockLogoUrl(stock.symbol, stock.logoUrl) : "";
           return (
-            <div className="p-6 border-b border-border dark:border-white/10 relative">
+            <div className="p-4 sm:p-6 border-b border-border dark:border-white/10 relative shrink-0 bg-card dark:bg-neutral-900">
               <div className="flex items-center justify-between gap-4 pr-8">
                 <div className="flex items-center gap-3">
                   <div className={`w-11 h-11 flex items-center justify-center shrink-0 border overflow-hidden ${stock ? "rounded-xl bg-white text-emerald-700 border-border" : `rounded-full ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)}`}`}>
@@ -356,8 +360,12 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
           </div>
 
           {/* Social Interactions Bar */}
-          <div className="flex items-center justify-between py-1 text-sm text-muted-foreground font-medium">
-            <button type="button" className="flex items-center gap-2 hover:text-foreground transition-colors">
+          <div className="flex items-center justify-between py-1 text-sm text-muted-foreground font-medium border-t border-b border-border/40 my-2">
+            <button
+              type="button"
+              onClick={() => commentsRef.current?.scrollIntoView({ behavior: "smooth" })}
+              className="flex items-center gap-2 hover:text-foreground transition-colors cursor-pointer"
+            >
               <MessageSquare className="h-5 w-5" />
               <span>{totalComments}</span>
             </button>
@@ -375,37 +383,57 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
             </button>
           </div>
 
-          {/* Comment Section */}
-          <div className="space-y-3">
-            <form onSubmit={handleAddComment} className="flex items-center gap-3 rounded-full border border-border bg-background/60 px-2.5 py-2">
-              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-cyan-950 text-sm font-bold text-cyan-400">
-                {user ? (user.email || "U").slice(0, 1).toUpperCase() : "M"}
-              </div>
-              <input
-                type="text"
-                placeholder="Post your reply"
-                value={commentText}
-                onChange={(e) => setCommentText(e.target.value)}
-                className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
-              />
-              <Button type="submit" size="sm" disabled={!commentText.trim()} className="h-9 rounded-full bg-emerald-600 px-5 text-sm font-bold text-white hover:bg-emerald-700 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100">
-                Reply
-              </Button>
-            </form>
+          {/* Comments Section (Inside scrollable body) */}
+          <div ref={commentsRef} className="space-y-3 pt-2">
+            <div className="flex items-center justify-between">
+              <h4 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Replies ({totalComments})
+              </h4>
+            </div>
 
-            {commentsList.length > 0 && (
-              <div className="space-y-2 pt-2">
+            {commentsList.length > 0 ? (
+              <div className="space-y-2 pt-1">
                 {commentsList.map((cmt, idx) => (
-                  <div key={idx} className="p-3 rounded-xl bg-muted/50 border border-border text-xs text-foreground dark:bg-white/5 dark:border-white/5">
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400 block mb-0.5">
+                  <div key={idx} className="p-3.5 rounded-xl bg-muted/40 border border-border/80 text-xs text-foreground dark:bg-white/5 dark:border-white/5 space-y-1">
+                    <span className="font-semibold text-emerald-600 dark:text-emerald-400 block">
                       {typeof cmt === "object" && (cmt as any).authorName ? (cmt as any).authorName : "Community Member"}
                     </span>
-                    {typeof cmt === "object" ? (cmt as any).content : cmt}
+                    <p className="leading-relaxed">
+                      {typeof cmt === "object" ? (cmt as any).content : cmt}
+                    </p>
                   </div>
                 ))}
               </div>
+            ) : (
+              <p className="text-xs text-muted-foreground italic py-2">
+                No replies yet. Be the first to share your thoughts below!
+              </p>
             )}
           </div>
+        </div>
+
+        {/* ─── Fixed Reply Composer (Docked at bottom of modal) ─── */}
+        <div className="shrink-0 border-t border-border bg-card/95 backdrop-blur-md px-3.5 py-2.5 sm:px-6 sm:py-3.5 dark:bg-neutral-900/95">
+          <form onSubmit={handleAddComment} className="flex items-center gap-2.5 sm:gap-3 rounded-full border border-border bg-background/80 px-2.5 py-1.5 sm:py-2 shadow-xs">
+            <div className="flex h-8 w-8 sm:h-9 sm:w-9 shrink-0 items-center justify-center rounded-full bg-cyan-950 text-xs sm:text-sm font-bold text-cyan-400">
+              {user ? (user.email || "U").slice(0, 1).toUpperCase() : "M"}
+            </div>
+            <input
+              type="text"
+              placeholder="Post your reply"
+              value={commentText}
+              onChange={(e) => setCommentText(e.target.value)}
+              className="flex-1 bg-transparent text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+            />
+            <Button
+              type="submit"
+              size="sm"
+              disabled={!commentText.trim()}
+              className="h-8 sm:h-9 rounded-full bg-emerald-600 px-4 sm:px-5 text-xs sm:text-sm font-bold text-white hover:bg-emerald-700 disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 transition-all shrink-0"
+            >
+              Reply
+            </Button>
+          </form>
         </div>
       </DialogContent>
     </Dialog>
