@@ -1,24 +1,17 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
 import {
-  GraduationCap,
   Banknote,
   LineChart,
   ShieldCheck,
   BookMarked,
-  Search,
-  X,
   ArrowRight,
   Clock,
-  Sparkles,
-  ExternalLink,
-  ChevronDown,
 } from "lucide-react";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion";
-import { Input } from "@/components/ui/input";
 import { faqByFundType, type FaqItem } from "@/data/faq";
-import { RESEARCH_ARTICLES, articlePath, type ResearchArticle } from "@/data/seoGrowthContent";
-import { INVESTMENT_GLOSSARY, type InvestmentGlossaryEntry } from "@/data/investmentEducation";
+import { RESEARCH_ARTICLES, articlePath } from "@/data/seoGrowthContent";
+import { INVESTMENT_GLOSSARY } from "@/data/investmentEducation";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 
 // ─── 4 Primary Topics ───
@@ -106,7 +99,6 @@ const getReadTime = (slug: string) => {
 
 export const LearnPage = () => {
   const [activeTopic, setActiveTopic] = useState<TopicKey>("mmf");
-  const [searchQuery, setSearchQuery] = useState("");
   const [glossaryLetter, setGlossaryLetter] = useState<string>("ALL");
 
   useDocumentTitle(
@@ -168,47 +160,6 @@ export const LearnPage = () => {
     };
   }, []);
 
-  // ─── Search Across All Content ───
-  const searchResults = useMemo(() => {
-    const q = searchQuery.trim().toLowerCase();
-    if (!q) return null;
-
-    const matchedGuides = [
-      ...topicGuides.mmf,
-      ...topicGuides.stocks,
-      ...topicGuides.tax_safety,
-    ].filter(
-      (g, idx, arr) =>
-        arr.findIndex((x) => x.slug === g.slug) === idx &&
-        (g.title.toLowerCase().includes(q) || g.description.toLowerCase().includes(q))
-    );
-
-    const allFaqs = [
-      ...topicFaqs.mmf,
-      ...topicFaqs.stocks,
-      ...topicFaqs.tax_safety,
-    ];
-    const matchedFaqs = allFaqs.filter(
-      (f, idx, arr) =>
-        arr.findIndex((x) => x.question === f.question) === idx &&
-        (f.question.toLowerCase().includes(q) || f.answer.toLowerCase().includes(q))
-    );
-
-    const matchedGlossary = INVESTMENT_GLOSSARY.filter(
-      (g) =>
-        g.term.toLowerCase().includes(q) ||
-        g.definition.toLowerCase().includes(q) ||
-        g.aliases?.some((a) => a.toLowerCase().includes(q))
-    );
-
-    return {
-      guides: matchedGuides,
-      faqs: matchedFaqs,
-      glossary: matchedGlossary,
-      totalCount: matchedGuides.length + matchedFaqs.length + matchedGlossary.length,
-    };
-  }, [searchQuery, topicGuides, topicFaqs]);
-
   // ─── Glossary Letter Filtering ───
   const glossaryLetters = useMemo(() => {
     const letters = new Set(INVESTMENT_GLOSSARY.map((i) => i.term[0].toUpperCase()));
@@ -237,190 +188,16 @@ export const LearnPage = () => {
   );
 
   return (
-    <div className="container max-w-4xl mx-auto px-4 md:px-6 py-6 pb-28 space-y-6 animate-in fade-in-50 duration-500">
-      {/* ─── Hero Header ─── */}
-      <div className="space-y-1.5">
-        <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold border border-emerald-500/20">
-          <GraduationCap className="h-3.5 w-3.5" />
-          <span>Investor Academy</span>
+    <div className="container max-w-4xl mx-auto px-4 md:px-6 py-5 sm:py-6 pb-28 space-y-6 animate-in fade-in-50 duration-500">
+      <h1 className="sr-only">Learn About Investing in Kenya</h1>
+
+      {/* ─── 4 Segmented Topic Cards (2x2 Grid on Mobile) ─── */}
+      <div>
+        <div className="flex items-center justify-between px-1 mb-2.5">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+            Select a Topic
+          </h2>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-black tracking-tight text-foreground">
-          Learn About Investing in Kenya
-        </h1>
-        <p className="text-sm text-muted-foreground max-w-2xl leading-relaxed">
-          Clear, jargon-free guides on Money Market Funds, NSE shares, 15% withholding tax, and CMA investor protections.
-        </p>
-      </div>
-
-      {/* ─── Live Instant Search Bar ─── */}
-      <div className="relative">
-        <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground pointer-events-none" />
-        <Input
-          type="search"
-          placeholder="Search questions, guides, or terms (e.g. tax, CDSC, yield)..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="h-11 rounded-full border-border bg-card pl-11 pr-10 text-sm shadow-xs placeholder:text-muted-foreground/60 focus-visible:ring-1"
-        />
-        {searchQuery && (
-          <button
-            type="button"
-            onClick={() => setSearchQuery("")}
-            className="absolute right-3.5 top-1/2 -translate-y-1/2 h-5 w-5 rounded-full bg-muted flex items-center justify-center text-muted-foreground hover:text-foreground"
-            aria-label="Clear search"
-          >
-            <X className="h-3 w-3" />
-          </button>
-        )}
-      </div>
-
-      {/* ─── Search Results View (Active When Typing) ─── */}
-      {searchResults ? (
-        <div className="space-y-6 pt-2">
-          <div className="flex items-center justify-between pb-2 border-b border-border/60">
-            <p className="text-sm font-semibold text-foreground">
-              Search results for <strong className="text-emerald-600 dark:text-emerald-400 font-bold">"{searchQuery}"</strong>
-            </p>
-            <span className="text-xs text-muted-foreground font-medium">
-              {searchResults.totalCount} {searchResults.totalCount === 1 ? "match" : "matches"}
-            </span>
-          </div>
-
-          {searchResults.totalCount === 0 ? (
-            <div className="text-center py-12 rounded-2xl border border-dashed border-border bg-muted/20 p-6">
-              <p className="text-sm font-semibold text-foreground">No matches found for "{searchQuery}"</p>
-              <p className="text-xs text-muted-foreground mt-1">Try searching for terms like "tax", "MMF", "yield", or "CDSC".</p>
-              <button
-                type="button"
-                onClick={() => setSearchQuery("")}
-                className="mt-3 inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-muted text-xs font-bold text-foreground hover:bg-muted/80"
-              >
-                Clear search
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {/* Matched Guides */}
-              {searchResults.guides.length > 0 && (
-                <div className="space-y-2.5">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
-                    In-Depth Guides ({searchResults.guides.length})
-                  </h3>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
-                    {searchResults.guides.map((guide) => (
-                      <Link
-                        key={guide.slug}
-                        to={guide.customUrl}
-                        className="rounded-2xl border border-border/80 bg-card p-4 hover:border-emerald-500/40 transition-all flex flex-col justify-between group shadow-xs"
-                      >
-                        <div>
-                          <div className="flex items-center justify-between gap-2 mb-1.5">
-                            <span className="inline-flex items-center gap-1 text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
-                              <Clock className="h-2.5 w-2.5" /> {getReadTime(guide.slug)}
-                            </span>
-                            <ArrowRight className="h-3.5 w-3.5 text-muted-foreground group-hover:text-emerald-600 transition-colors" />
-                          </div>
-                          <h4 className="font-bold text-sm text-foreground group-hover:text-emerald-600 transition-colors line-clamp-2">
-                            {guide.title}
-                          </h4>
-                          <p className="text-xs text-muted-foreground mt-1 line-clamp-2 leading-relaxed">
-                            {guide.description}
-                          </p>
-                        </div>
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Matched FAQs */}
-              {searchResults.faqs.length > 0 && (
-                <div className="space-y-2.5">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
-                    Questions & Answers ({searchResults.faqs.length})
-                  </h3>
-                  <div className="rounded-2xl border border-border/80 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
-                    <Accordion type="single" collapsible>
-                      {searchResults.faqs.map((faq, i) => (
-                        <AccordionItem key={i} value={`search-faq-${i}`} className="border-0">
-                          <AccordionTrigger className="text-left text-sm font-bold text-foreground px-4 py-3.5 hover:no-underline hover:bg-muted/40 transition-colors">
-                            {faq.question}
-                          </AccordionTrigger>
-                          <AccordionContent className="text-xs text-muted-foreground leading-relaxed px-4 pb-4">
-                            {faq.answer}
-                          </AccordionContent>
-                        </AccordionItem>
-                      ))}
-                    </Accordion>
-                  </div>
-                </div>
-              )}
-
-              {/* Matched Glossary */}
-              {searchResults.glossary.length > 0 && (
-                <div className="space-y-2.5">
-                  <h3 className="text-xs font-bold uppercase tracking-wider text-muted-foreground px-1">
-                    Glossary Terms ({searchResults.glossary.length})
-                  </h3>
-                  <div className="rounded-2xl border border-border/80 bg-card overflow-hidden divide-y divide-border/60 shadow-xs">
-                    {searchResults.glossary.map((item) => (
-                      <div key={item.term} className="p-3.5">
-                        <span className="font-extrabold text-sm text-foreground block">
-                          {item.term}
-                        </span>
-                        <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-                          {item.definition}
-                        </p>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-          )}
-        </div>
-      ) : (
-        /* ─── Standard Modular Topic Hub View ─── */
-        <div className="space-y-6">
-          {/* Start Here: Featured MMF Guide Banner */}
-          <Link
-            to="/learn/how-to-invest-in-money-market-funds-kenya"
-            className="block rounded-2xl border border-emerald-500/30 bg-emerald-500/[0.04] p-4.5 hover:border-emerald-500/50 hover:bg-emerald-500/[0.07] transition-all group shadow-xs"
-          >
-            <div className="flex items-center justify-between gap-3">
-              <div className="flex items-center gap-2">
-                <div className="h-7 w-7 rounded-lg bg-emerald-600 text-white flex items-center justify-center shrink-0">
-                  <Banknote className="h-4 w-4" />
-                </div>
-                <span className="text-[11px] font-black uppercase tracking-wider text-emerald-600 dark:text-emerald-400">
-                  Start Here · Beginner Guide
-                </span>
-              </div>
-              <span className="inline-flex items-center gap-1 text-[11px] font-bold text-muted-foreground">
-                <Clock className="h-3 w-3" /> 4 min read
-              </span>
-            </div>
-
-            <h3 className="font-extrabold text-base text-foreground mt-2 group-hover:text-emerald-600 transition-colors">
-              How to Invest in Money Market Funds in Kenya (2026 Step-by-Step)
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1 leading-relaxed">
-              Understand minimum deposits, compound daily interest, CMA license verification, and how to withdraw your money safely.
-            </p>
-
-            <div className="mt-3 flex items-center gap-1.5 text-xs font-bold text-emerald-600 dark:text-emerald-400">
-              <span>Read complete guide</span>
-              <ArrowRight className="h-3.5 w-3.5 group-hover:translate-x-1 transition-transform" />
-            </div>
-          </Link>
-
-          {/* ─── 4 Segmented Topic Cards (2x2 Grid on Mobile) ─── */}
-          <div>
-            <div className="flex items-center justify-between px-1 mb-2.5">
-              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
-                Select a Topic
-              </h2>
-            </div>
 
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
               {TOPICS.map((topic) => {
@@ -601,8 +378,6 @@ export const LearnPage = () => {
               Content on Kenya Fund Finder is for educational purposes only and does not constitute financial, investment, or tax advice. Past returns are not guaranteed. Always verify fund schemes on the Capital Markets Authority (CMA) registry.
             </p>
           </div>
-        </div>
-      )}
     </div>
   );
 };
