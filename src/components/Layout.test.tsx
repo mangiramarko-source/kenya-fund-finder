@@ -15,7 +15,7 @@ vi.mock("@/components/ai-lab/DesktopAiLabChat", () => ({ default: () => null }))
 vi.mock("./CurrencyTicker", () => ({ default: () => <div data-testid="currency-ticker" /> }));
 vi.mock("@/hooks/usePageView", () => ({ usePageView: vi.fn() }));
 
-function renderLayout(path: "/" | "/stocks") {
+function renderLayout(path: "/" | "/stocks" | "/news") {
   render(
     <MemoryRouter initialEntries={[path]}>
       <Routes>
@@ -26,7 +26,7 @@ function renderLayout(path: "/" | "/stocks") {
 }
 
 describe("Layout ticker placement", () => {
-  it.each(["/", "/stocks"] as const)("mounts one ticker on %s", (path) => {
+  it.each(["/", "/stocks", "/news"] as const)("mounts one ticker on %s", (path) => {
     renderLayout(path);
     expect(screen.getAllByTestId("currency-ticker")).toHaveLength(1);
   });

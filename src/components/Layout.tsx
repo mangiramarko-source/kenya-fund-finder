@@ -31,8 +31,9 @@ function shouldShowMobileAiLabFab(pathname: string): boolean {
 const Layout = ({ children }: { children: React.ReactNode }) => {
   usePageView();
   const { pathname } = useLocation();
-  const showDesktopTicker = pathname === "/" || pathname === "/stocks";
-  const showMobileTicker = pathname === "/";
+  const isHomeOrNews = pathname === "/" || pathname === "/news";
+  const showDesktopTicker = isHomeOrNews || pathname === "/stocks";
+  const showMobileTicker = isHomeOrNews;
   // Immersive mobile view for news article pages: hide mobile navbar & footer
   const isNewsArticle = /^\/news\/[^/]+/.test(pathname);
   const isAuthPage = pathname === "/auth";

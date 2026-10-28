@@ -13,8 +13,20 @@ interface TickerItem {
   sparkData?: number[];
 }
 
+const DEFAULT_TICKER_ITEMS: TickerItem[] = [
+  { id: "fx-usd", label: "USD/KES", value: 129.20, previousValue: 129.35 },
+  { id: "stk-scom", label: "SCOM", value: 15.65, previousValue: 15.45 },
+  { id: "fx-eur", label: "EUR/KES", value: 139.80, previousValue: 140.10 },
+  { id: "stk-eqty", label: "EQTY", value: 42.50, previousValue: 42.15 },
+  { id: "fx-gbp", label: "GBP/KES", value: 167.40, previousValue: 167.85 },
+  { id: "stk-kcb", label: "KCB", value: 38.25, previousValue: 37.90 },
+  { id: "cmd-gold", label: "Gold", value: 2745.50, previousValue: 2735.00, unit: "USD/oz" },
+  { id: "stk-eabl", label: "EABL", value: 145.00, previousValue: 144.00 },
+  { id: "cmd-oil", label: "Crude Oil", value: 74.80, previousValue: 75.20, unit: "USD/bbl" },
+];
+
 const CurrencyTicker = () => {
-  const [items, setItems] = useState<TickerItem[]>([]);
+  const [items, setItems] = useState<TickerItem[]>(DEFAULT_TICKER_ITEMS);
   const scrollRef = useRef<HTMLDivElement>(null);
   const isMobile = useIsMobile();
   const [paused, setPaused] = useState(false);
