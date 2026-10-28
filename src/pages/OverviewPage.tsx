@@ -50,7 +50,6 @@ import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { buildNewsFeedItems } from "@/lib/stockNewsFeed";
 import { getCurrencyFlag } from "@/lib/currencyFlags";
-import { getPinnedMarketNewsBounds } from "@/lib/pinnedMarketNews";
 import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/fundsFixedIncomeNews";
 
 const INTERNATIONAL_SOURCES = new Set([
@@ -1183,15 +1182,6 @@ const OverviewPage = () => {
     });
   }, [feedItems, news, stocks]);
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
-  const marketNewsNavRef = useRef<HTMLDivElement | null>(null);
-  const marketNewsPanelRef = useRef<HTMLDivElement | null>(null);
-  const [marketNewsNavPin, setMarketNewsNavPin] = useState({
-    pinned: false,
-    left: 0,
-    top: 0,
-    width: 0,
-    height: 0,
-  });
   const [watchlistPromptOpen, setWatchlistPromptOpen] = useState(false);
 
   const [alertDialog, setAlertDialog] = useState<{
@@ -1513,72 +1503,6 @@ const OverviewPage = () => {
     }).length;
   }, [news]);
 
-  useEffect(() => {
-    let frame = 0;
-
-    const updateMarketNewsNavPin = () => {
-      frame = 0;
-      const nav = marketNewsNavRef.current;
-      if (!nav) return;
-
-      const isDesktop = window.matchMedia("(min-width: 768px)").matches;
-      if (isDesktop) {
-        setMarketNewsNavPin((current) =>
-          current.pinned || current.left || current.top || current.width || current.height
-            ? { pinned: false, left: 0, top: 0, width: 0, height: 0 }
-            : current
-        );
-        return;
-      }
-
-      const top = 137;
-      const rect = nav.getBoundingClientRect();
-      const pinned = rect.top <= top;
-      const bounds = getPinnedMarketNewsBounds({
-        left: rect.left,
-        width: rect.width,
-        viewportWidth: window.innerWidth,
-        bleed: 16,
-      });
-
-      setMarketNewsNavPin((current) => {
-        const next = {
-          pinned,
-          left: bounds.left,
-          top,
-          width: bounds.width,
-          height: marketNewsPanelRef.current?.offsetHeight || nav.offsetHeight,
-        };
-
-        if (
-          current.pinned === next.pinned &&
-          Math.abs(current.left - next.left) < 1 &&
-          Math.abs(current.top - next.top) < 1 &&
-          Math.abs(current.width - next.width) < 1 &&
-          Math.abs(current.height - next.height) < 1
-        ) {
-          return current;
-        }
-
-        return next;
-      });
-    };
-
-    const scheduleUpdate = () => {
-      if (frame) return;
-      frame = window.requestAnimationFrame(updateMarketNewsNavPin);
-    };
-
-    updateMarketNewsNavPin();
-    window.addEventListener("scroll", scheduleUpdate, { passive: true });
-    window.addEventListener("resize", scheduleUpdate);
-
-    return () => {
-      if (frame) window.cancelAnimationFrame(frame);
-      window.removeEventListener("scroll", scheduleUpdate);
-      window.removeEventListener("resize", scheduleUpdate);
-    };
-  }, []);
 
   const showPageLoading = useMinimumLoadingDuration(loading);
 
@@ -1606,54 +1530,31 @@ const OverviewPage = () => {
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 
-          <div
-            ref={marketNewsNavRef}
-            className="md:sticky md:top-0 md:z-30"
-            style={marketNewsNavPin.pinned ? { height: marketNewsNavPin.height } : undefined}
-          >
-            <div
-              ref={marketNewsPanelRef}
-              className={cn(
-                "border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md md:px-2 md:pt-1 md:shadow-sm",
-                marketNewsNavPin.pinned
-                  ? "fixed max-w-full z-40 shadow-sm"
-                  : "-mx-4 md:-mx-2"
-              )}
-              style={
-                marketNewsNavPin.pinned
-                  ? {
-                      top: marketNewsNavPin.top,
-                      left: marketNewsNavPin.left,
-                      width: marketNewsNavPin.width,
-                    }
-                  : undefined
-              }
-            >
-              <div className="mb-4 flex items-baseline justify-between mt-0">
-                <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
-                <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                  {newTodayCount} new today
-                </span>
-              </div>
+          <div className="border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md -mx-4 md:mx-0 md:px-2 md:pt-1 md:shadow-sm md:sticky md:top-0 md:z-30">
+            <div className="mb-4 flex items-baseline justify-between mt-0">
+              <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
+              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
+                {newTodayCount} new today
+              </span>
+            </div>
 
-              <div className="no-scrollbar mb-2 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 md:mb-3">
-                {["All", "Stocks", "Kenyan", "International", FUNDS_AND_FIXED_INCOME_TAB, "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => (
-                  <button
-                    key={f}
-                    onClick={() => {
-                      setActiveUpdateCategory(f);
-                      triggerFillForCategory(f, news, newsOffset, newsHasMore, stocks);
-                    }}
-                    className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-                      activeUpdateCategory === f
-                        ? "bg-foreground text-background"
-                        : "border border-border bg-card text-muted-foreground"
-                    }`}
-                  >
-                    {f}
-                  </button>
-                ))}
-              </div>
+            <div className="no-scrollbar mb-2 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 md:mb-3">
+              {["All", "Stocks", "Kenyan", "International", FUNDS_AND_FIXED_INCOME_TAB, "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => (
+                <button
+                  key={f}
+                  onClick={() => {
+                    setActiveUpdateCategory(f);
+                    triggerFillForCategory(f, news, newsOffset, newsHasMore, stocks);
+                  }}
+                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
+                    activeUpdateCategory === f
+                      ? "bg-foreground text-background"
+                      : "border border-border bg-card text-muted-foreground"
+                  }`}
+                >
+                  {f}
+                </button>
+              ))}
             </div>
           </div>
 
