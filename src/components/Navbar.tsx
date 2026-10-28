@@ -78,6 +78,7 @@ export function getMobileNavTitleInfo(pathname: string): MobileNavTitleInfo {
     case "/mmf-calculator":
       return { type: "title", title: "Calculator" };
     case "/compare":
+    case "/dev/compare-demo":
       return { type: "title", title: "Compare" };
     case "/alerts":
       return { type: "title", title: "Alerts" };

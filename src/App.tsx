@@ -77,6 +77,7 @@ const DevOnlyPages = import.meta.env.DEV
       DevPortfolioChangePreviewPage: lazy(() => import("./pages/DevPortfolioChangePreviewPage")),
       DevAiLabPopupPreviewPage: lazy(() => import("./pages/DevAiLabPopupPreviewPage")),
       DevAiResultCardPreviewPage: lazy(() => import("./pages/DevAiResultCardPreviewPage")),
+      DevCompareDemoPage: lazy(() => import("./pages/DevCompareDemoPage")),
     }
   : null;
 const NotFound = lazy(() => import("./pages/NotFound"));
@@ -176,6 +177,7 @@ const App = () => (
                       <Route path="/dev/portfolio-change-preview" element={<DevOnlyPages.DevPortfolioChangePreviewPage />} />
                       <Route path="/dev/ai-lab-popup-preview" element={<DevOnlyPages.DevAiLabPopupPreviewPage />} />
                       <Route path="/dev/ai-result-card-preview" element={<DevOnlyPages.DevAiResultCardPreviewPage />} />
+                      <Route path="/dev/compare-demo" element={<DevOnlyPages.DevCompareDemoPage />} />
                     </> : null}
                     <Route path="*" element={<NotFound />} />
                   </Routes>
