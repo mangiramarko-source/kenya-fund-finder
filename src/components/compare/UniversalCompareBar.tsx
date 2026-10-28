@@ -18,7 +18,7 @@ export const UniversalCompareBar = () => {
   const canCompare = selected.length >= 2;
 
   return (
-    <div className="fixed bottom-20 md:bottom-6 inset-x-4 max-w-xl mx-auto z-40 animate-in slide-in-from-bottom-5 duration-300">
+    <div className="fixed bottom-20 inset-x-4 max-w-xl mx-auto z-40 md:hidden animate-in slide-in-from-bottom-5 duration-300">
       <div className="rounded-2xl border border-border/80 bg-card/95 backdrop-blur-md p-2.5 shadow-2xl flex items-center gap-2 dark:bg-neutral-900/95 dark:border-white/10">
         {/* Category Indicator Badge */}
         <div className="shrink-0 flex items-center gap-1.5 pl-1.5 pr-2 border-r border-border/60">

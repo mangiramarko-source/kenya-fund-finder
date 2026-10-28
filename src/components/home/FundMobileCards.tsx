@@ -1,10 +1,11 @@
 import { useMemo } from "react";
 import { Link } from "react-router-dom";
-import { TrendingUp, TrendingDown, Minus, Star, WalletCards, BadgePercent } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, Star, WalletCards, BadgePercent, GitCompareArrows, Check } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
+import { useUniversalCompare } from "@/hooks/useUniversalCompare";
 import FundLogo from "./FundLogo";
 
 interface FundMobileCardsProps {
@@ -102,112 +103,152 @@ const EmptyState = ({ hasSearch, onClearSearch }: { hasSearch: boolean; onClearS
 );
 
 const FundMobileCards = ({ funds, snapshots, allSnapshots, loading, onClearSearch, hasSearch, isFavourite, onToggleFavourite }: FundMobileCardsProps) => {
+  const { add, remove, isSelected } = useUniversalCompare();
+
   if (loading) return <CardSkeleton />;
 
   if (funds.length === 0) return <EmptyState hasSearch={hasSearch} onClearSearch={onClearSearch} />;
 
   return (
     <div className="space-y-3 w-full overflow-hidden">
-      {funds.map((fund) => (
-        <Link 
-          key={fund.id} 
-          to={`/compare/${fund.slug}`} 
-          className="block rounded-[22px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all active:scale-[0.99] overflow-hidden"
-        >
-          {/* Top Row: Brand, fund details, sparkline, then annual yield. */}
-          <div className="flex items-center gap-3">
-            <FundLogo
-              name={fund.name}
-              logoUrl={getFundManagerLogoUrl(fund.manager, fund.logo_url)}
-              size={48}
-              fullBleed
-              className="shrink-0"
-            />
+      {funds.map((fund) => {
+        const isCompared = isSelected(fund.id);
 
-            <div className="min-w-0 flex-1">
-              <span className="font-extrabold text-foreground text-[17px] tracking-tight truncate block">
-                {fund.name}
-              </span>
-              <p className="text-sm text-muted-foreground truncate mt-0.5">{fund.manager}</p>
-            </div>
+        const handleToggleCompare = (e: React.MouseEvent) => {
+          e.preventDefault();
+          e.stopPropagation();
+          if (isCompared) {
+            remove(fund.id);
+          } else {
+            add({
+              id: fund.id,
+              category: "fund",
+              title: fund.name,
+              subtitle: fund.manager,
+              data: fund,
+            });
+          }
+        };
 
-            <div className="shrink-0 px-1">
-              <CardSparkline history={allSnapshots?.[fund.id]} currentValue={fund.annual_yield} />
-            </div>
+        return (
+          <Link 
+            key={fund.id} 
+            to={`/compare/${fund.slug}`} 
+            className={`block rounded-[22px] border bg-card p-4 shadow-sm transition-all active:scale-[0.99] overflow-hidden ${
+              isCompared
+                ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.02]"
+                : "border-border/80 hover:border-emerald-500/30"
+            }`}
+          >
+            {/* Top Row: Brand, fund details, sparkline, then annual yield. */}
+            <div className="flex items-center gap-3">
+              <FundLogo
+                name={fund.name}
+                logoUrl={getFundManagerLogoUrl(fund.manager, fund.logo_url)}
+                size={48}
+                fullBleed
+                className="shrink-0"
+              />
 
-            <div className="text-right shrink-0">
-              <p className="font-extrabold text-foreground text-[17px] tabular-nums">
-                {fmtYield(fund.annual_yield, fund.yield_unit)}
-              </p>
-              <div className="mt-0.5 flex justify-end">
-                {(() => {
-                  const prev = snapshots[fund.id]?.annual_yield;
-                  if (prev === undefined) return <span className="text-[11px] text-muted-foreground">Annual</span>;
-                  const diff = fund.annual_yield - prev;
-                  const isFlat = Math.abs(diff) < 0.0001;
-                  const isUp = diff > 0;
-                  const Icon = isFlat ? Minus : isUp ? TrendingUp : TrendingDown;
-                  const colorClass = isFlat
-                    ? "text-muted-foreground"
-                    : isUp
-                    ? "text-emerald-600 dark:text-emerald-400"
-                    : "text-red-500 dark:text-red-400";
-                  const sign = isFlat ? "" : isUp ? "+" : "";
-                  return (
-                    <span className={`inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums ${colorClass}`}>
-                      <Icon className="h-3 w-3" />
-                      <span>{sign}{diff.toFixed(2)}%</span>
-                    </span>
-                  );
-                })()}
+              <div className="min-w-0 flex-1">
+                <span className="font-extrabold text-foreground text-[17px] tracking-tight truncate block">
+                  {fund.name}
+                </span>
+                <p className="text-sm text-muted-foreground truncate mt-0.5">{fund.manager}</p>
+              </div>
+
+              <div className="shrink-0 px-1">
+                <CardSparkline history={allSnapshots?.[fund.id]} currentValue={fund.annual_yield} />
+              </div>
+
+              <div className="text-right shrink-0">
+                <p className="font-extrabold text-foreground text-[17px] tabular-nums">
+                  {fmtYield(fund.annual_yield, fund.yield_unit)}
+                </p>
+                <div className="mt-0.5 flex justify-end">
+                  {(() => {
+                    const prev = snapshots[fund.id]?.annual_yield;
+                    if (prev === undefined) return <span className="text-[11px] text-muted-foreground">Annual</span>;
+                    const diff = fund.annual_yield - prev;
+                    const isFlat = Math.abs(diff) < 0.0001;
+                    const isUp = diff > 0;
+                    const Icon = isFlat ? Minus : isUp ? TrendingUp : TrendingDown;
+                    const colorClass = isFlat
+                      ? "text-muted-foreground"
+                      : isUp
+                      ? "text-emerald-600 dark:text-emerald-400"
+                      : "text-red-500 dark:text-red-400";
+                    const sign = isFlat ? "" : isUp ? "+" : "";
+                    return (
+                      <span className={`inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums ${colorClass}`}>
+                        <Icon className="h-3 w-3" />
+                        <span>{sign}{diff.toFixed(2)}%</span>
+                      </span>
+                    );
+                  })()}
+                </div>
               </div>
             </div>
-          </div>
 
-          <div className="border-t border-border/40 my-3.5" />
+            <div className="border-t border-border/40 my-3.5" />
 
-          {/* Bottom Row: key fund details and category. */}
-          <div className="flex items-center justify-between text-xs">
-            <div className="flex items-center gap-3.5 text-muted-foreground">
-              <span className="inline-flex items-center gap-1.5">
-                <WalletCards className="h-3.5 w-3.5" aria-hidden="true" />
-                Min <strong className="font-semibold text-foreground">KES {fund.minimum_investment.toLocaleString()}</strong>
-              </span>
-              {fund.management_fee > 0 && (
+            {/* Bottom Row: key fund details on left, compare action & favourite star on right */}
+            <div className="flex items-center justify-between text-xs">
+              <div className="flex items-center gap-3.5 text-muted-foreground">
                 <span className="inline-flex items-center gap-1.5">
-                  <BadgePercent className="h-3.5 w-3.5" aria-hidden="true" />
-                  Fee <strong className="font-semibold text-foreground">{fund.management_fee}%</strong>
+                  <WalletCards className="h-3.5 w-3.5" aria-hidden="true" />
+                  Min <strong className="font-semibold text-foreground">KES {fund.minimum_investment.toLocaleString()}</strong>
                 </span>
-              )}
-            </div>
+                {fund.management_fee > 0 && (
+                  <span className="inline-flex items-center gap-1.5">
+                    <BadgePercent className="h-3.5 w-3.5" aria-hidden="true" />
+                    Fee <strong className="font-semibold text-foreground">{fund.management_fee}%</strong>
+                  </span>
+                )}
+              </div>
 
-            <div className="flex items-center gap-2">
-              <span className="px-3 py-1 rounded-full bg-muted/70 text-muted-foreground text-[11px] font-medium tracking-wide">
-                {categoryLabels[fund.fund_type] || fund.fund_type}
-              </span>
-
-              {onToggleFavourite && (
+              <div className="flex items-center gap-2">
                 <button
                   type="button"
-                  onClick={(e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    onToggleFavourite(fund.id, fund.name);
-                  }}
-                  aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
-                  className="p-1 -mr-1"
+                  onClick={handleToggleCompare}
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+                    isCompared
+                      ? "bg-emerald-600 text-white shadow-xs"
+                      : "border border-border/80 bg-muted/40 text-foreground hover:bg-muted"
+                  }`}
+                  aria-label={isCompared ? `Remove ${fund.name} from compare` : `Compare ${fund.name}`}
                 >
-                  <Star
-                    className={`h-4 w-4 transition-colors ${
-                      isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30 hover:text-yellow-500"
-                    }`}
-                  />
+                  {isCompared ? (
+                    <Check className="h-3.5 w-3.5" />
+                  ) : (
+                    <GitCompareArrows className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+                  )}
+                  <span>{isCompared ? "Added" : "Compare"}</span>
                 </button>
-              )}
+
+                {onToggleFavourite && (
+                  <button
+                    type="button"
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      onToggleFavourite(fund.id, fund.name);
+                    }}
+                    aria-label={isFavourite?.(fund.id) ? "Remove from watchlist" : "Add to watchlist"}
+                    className="p-1 -mr-1"
+                  >
+                    <Star
+                      className={`h-4 w-4 transition-colors ${
+                        isFavourite?.(fund.id) ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30 hover:text-yellow-500"
+                      }`}
+                    />
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
-        </Link>
-      ))}
+          </Link>
+        );
+      })}
     </div>
   );
 };

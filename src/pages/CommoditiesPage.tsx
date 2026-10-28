@@ -3,7 +3,8 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star, SlidersHorizontal, X } from "lucide-react";
+import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star, SlidersHorizontal, X, GitCompareArrows, Check } from "lucide-react";
+import { useUniversalCompare } from "@/hooks/useUniversalCompare";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -634,13 +635,36 @@ const MobileCommodityCard = ({
   isFavourite?: boolean;
   onToggleFavourite?: () => void;
 }) => {
+  const { add, remove, isSelected } = useUniversalCompare();
+  const isCompared = isSelected(c.id);
+
+  const handleToggleCompare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isCompared) {
+      remove(c.id);
+    } else {
+      add({
+        id: c.id,
+        category: "commodity",
+        title: c.name,
+        subtitle: c.symbol,
+        data: c,
+      });
+    }
+  };
+
   const change = c.previous_price != null ? c.price - c.previous_price : null;
   const changePct = c.previous_price != null && c.previous_price !== 0
     ? ((change! / c.previous_price) * 100)
     : null;
 
   return (
-    <div className="block rounded-[20px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all overflow-hidden mb-3">
+    <div className={`block rounded-[20px] border bg-card p-4 shadow-sm transition-all overflow-hidden mb-3 ${
+      isCompared
+        ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.02]"
+        : "border-border/80 hover:border-emerald-500/30"
+    }`}>
       <button
         type="button"
         onClick={onToggle}
@@ -675,7 +699,7 @@ const MobileCommodityCard = ({
         {/* Thin Divider Line */}
         <div className="border-t border-border/40 my-3" />
 
-        {/* Bottom Row: Unit & Prev Price (Left) and Watchlist / Expand Chevron (Right) */}
+        {/* Bottom Row: Unit & Prev Price (Left) and Compare / Watchlist / Expand Chevron (Right) */}
         <div className="flex items-center justify-between text-xs">
           <div className="flex items-center gap-3 text-muted-foreground">
             <span>
@@ -687,6 +711,24 @@ const MobileCommodityCard = ({
           </div>
 
           <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleToggleCompare}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+                isCompared
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "border border-border/80 bg-muted/40 text-foreground hover:bg-muted"
+              }`}
+              aria-label={isCompared ? `Remove ${c.symbol} from compare` : `Compare ${c.symbol}`}
+            >
+              {isCompared ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <GitCompareArrows className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              )}
+              <span>{isCompared ? "Added" : "Compare"}</span>
+            </button>
+
             {onToggleFavourite !== undefined && (
               <span
                 role="button"

@@ -11,6 +11,7 @@ import { FALLBACK_KENYAN_STOCKS } from "@/lib/stockDataFallback";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
+import { useUniversalCompare } from "@/hooks/useUniversalCompare";
 import {
   TrendingUp,
   TrendingDown,
@@ -26,6 +27,8 @@ import {
   LayoutGrid,
   List,
   X,
+  GitCompareArrows,
+  Check,
 } from "lucide-react";
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger, SheetClose } from "@/components/ui/sheet";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
@@ -1437,83 +1440,127 @@ const MobileStockCard = ({
   history?: PriceHistory[];
   isFavourite?: boolean;
   onToggleFavourite?: () => void;
-}) => (
-  <Link
-    to={`/stocks/${s.symbol}`}
-    className="block rounded-[20px] border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/30 transition-all active:scale-[0.99] overflow-hidden mb-3"
-  >
-    {/* Top Row: Symbol/Name (Left), Sparkline (Center), Price/Return (Right) */}
-    <div className="flex items-center justify-between gap-2.5">
-      {/* Symbol + Name */}
-      <div className="flex min-w-0 flex-1 items-center gap-3">
-        <StockLogoAvatar stock={s} />
-        <div className="min-w-0">
-          <span className="block truncate font-extrabold text-base tracking-tight text-foreground">{s.symbol}</span>
-          <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.name}</p>
+}) => {
+  const { add, remove, isSelected } = useUniversalCompare();
+  const isCompared = isSelected(s.id);
+
+  const handleToggleCompare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isCompared) {
+      remove(s.id);
+    } else {
+      add({
+        id: s.id,
+        category: "stock",
+        title: s.name,
+        subtitle: s.symbol,
+        data: s,
+      });
+    }
+  };
+
+  return (
+    <Link
+      to={`/stocks/${s.symbol}`}
+      className={`block rounded-[20px] border bg-card p-4 shadow-sm transition-all active:scale-[0.99] overflow-hidden mb-3 ${
+        isCompared
+          ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.02]"
+          : "border-border/80 hover:border-emerald-500/30"
+      }`}
+    >
+      {/* Top Row: Symbol/Name (Left), Sparkline (Center), Price/Return (Right) */}
+      <div className="flex items-center justify-between gap-2.5">
+        {/* Symbol + Name */}
+        <div className="flex min-w-0 flex-1 items-center gap-3">
+          <StockLogoAvatar stock={s} />
+          <div className="min-w-0">
+            <div className="flex items-center gap-1.5">
+              <span className="block truncate font-extrabold text-base tracking-tight text-foreground">{s.symbol}</span>
+              {s.sector && (
+                <span className="text-[11px] font-medium text-muted-foreground truncate">
+                  · {s.sector.replace(/Telecommunication(s?)/gi, "Telecom")}
+                </span>
+              )}
+            </div>
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.name}</p>
+          </div>
+        </div>
+
+        {/* Sparkline in Center */}
+        <div className="shrink-0 px-1">
+          <MiniSparkline
+            data={history || []}
+            trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"}
+            price={s.price}
+            dayChange={s.day_change}
+          />
+        </div>
+
+        {/* Price + Return % */}
+        <div className="text-right shrink-0">
+          <p className="font-extrabold text-foreground text-base tabular-nums">KES {formatNumber(s.price)}</p>
+          <div className="mt-0.5 flex justify-end">
+            <ChangeCell change={s.day_change} pct={s.day_change_percent} />
+          </div>
         </div>
       </div>
 
-      {/* Sparkline in Center */}
-      <div className="shrink-0 px-1">
-        <MiniSparkline
-          data={history || []}
-          trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"}
-          price={s.price}
-          dayChange={s.day_change}
-        />
-      </div>
+      {/* Thin Divider Line */}
+      <div className="border-t border-border/40 my-3" />
 
-      {/* Price + Return % */}
-      <div className="text-right shrink-0">
-        <p className="font-extrabold text-foreground text-base tabular-nums">KES {formatNumber(s.price)}</p>
-        <div className="mt-0.5 flex justify-end">
-          <ChangeCell change={s.day_change} pct={s.day_change_percent} />
-        </div>
-      </div>
-    </div>
-
-    {/* Thin Divider Line */}
-    <div className="border-t border-border/40 my-3" />
-
-    {/* Bottom Row: Vol, Cap (Left) and Sector Pill (Right) */}
-    <div className="flex items-center justify-between text-xs">
-      <div className="flex items-center gap-3 text-muted-foreground">
-        <span>
-          Vol <strong className="font-semibold text-foreground ml-0.5">{formatVolume(s.volume)}</strong>
-        </span>
-        <span>
-          Cap <strong className="font-semibold text-foreground ml-0.5">{formatMarketCap(s.market_cap)}</strong>
-        </span>
-      </div>
-
-      <div className="flex items-center gap-2">
-        {s.sector && (
-          <span className="px-3 py-1 rounded-full bg-muted/70 text-muted-foreground text-[11px] font-medium tracking-wide">
-            {s.sector.replace(/Telecommunication(s?)/gi, "Telecom")}
+      {/* Bottom Row: Vol, Cap (Left) and Compare Button & Star (Right) */}
+      <div className="flex items-center justify-between text-xs">
+        <div className="flex items-center gap-3 text-muted-foreground">
+          <span>
+            Vol <strong className="font-semibold text-foreground ml-0.5">{formatVolume(s.volume)}</strong>
           </span>
-        )}
+          <span>
+            Cap <strong className="font-semibold text-foreground ml-0.5">{formatMarketCap(s.market_cap)}</strong>
+          </span>
+        </div>
 
-        {onToggleFavourite !== undefined && (
+        <div className="flex items-center gap-2">
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              onToggleFavourite();
-            }}
-            className="p-1 -mr-1"
-            aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+            type="button"
+            onClick={handleToggleCompare}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+              isCompared
+                ? "bg-emerald-600 text-white shadow-xs"
+                : "border border-border/80 bg-muted/40 text-foreground hover:bg-muted"
+            }`}
+            aria-label={isCompared ? `Remove ${s.symbol} from compare` : `Compare ${s.symbol}`}
           >
-            <Star
-              className={`h-4 w-4 transition-colors ${
-                isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30 hover:text-yellow-500"
-              }`}
-            />
+            {isCompared ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <GitCompareArrows className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            )}
+            <span>{isCompared ? "Added" : "Compare"}</span>
           </button>
-        )}
+
+          {onToggleFavourite !== undefined && (
+            <button
+              onClick={(e) => {
+                e.preventDefault();
+                e.stopPropagation();
+                onToggleFavourite();
+              }}
+              className="p-1 -mr-1"
+              aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+            >
+              <Star
+                className={`h-4 w-4 transition-colors ${
+                  isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30 hover:text-yellow-500"
+                }`}
+              />
+            </button>
+          )}
+        </div>
       </div>
-    </div>
-  </Link>
-);
+    </Link>
+  );
+};
 /* ─── Shared components ─── */
 const StatCard = ({
   label,

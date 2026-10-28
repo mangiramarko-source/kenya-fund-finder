@@ -7,6 +7,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
 import { CompareProvider } from "@/hooks/useCompare";
+import { UniversalCompareProvider } from "@/hooks/useUniversalCompare";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Layout from "@/components/Layout";
 import { ScrollToTop } from "./components/ScrollToTop";
@@ -108,9 +109,10 @@ const App = () => (
           <PortfolioAccountSync />
           <PortfolioImportPrompt />
           <CompareProvider>
-            <Toaster />
-            <Sonner />
-            <BrowserRouter>
+            <UniversalCompareProvider>
+              <Toaster />
+              <Sonner />
+              <BrowserRouter>
               <NotificationProvider>
                 <AnalyticsTracker />
                 <ScrollToTop />
@@ -195,7 +197,8 @@ const App = () => (
                 <SpeedInsights />
               </NotificationProvider>
             </BrowserRouter>
-          </CompareProvider>
+          </UniversalCompareProvider>
+        </CompareProvider>
         </AuthProvider>
       </TooltipProvider>
     </QueryClientProvider>

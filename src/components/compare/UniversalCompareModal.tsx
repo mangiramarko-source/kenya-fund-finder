@@ -259,16 +259,40 @@ export const UniversalCompareModal = () => {
         <div className="rounded-2xl border border-border/70 bg-card p-4 space-y-3 dark:bg-neutral-900/80">
           <div className="text-xs font-bold text-foreground">Exchange Rate against KES</div>
           <div className={`grid ${getGridColsClass(items.length)} gap-2 pt-1 border-t border-border/40`}>
-            {items.map((item) => (
-              <div key={item.id} className="rounded-xl bg-muted/40 p-3 text-center">
-                <span className="text-xs font-bold text-muted-foreground block mb-1">
-                  1 {item.subtitle}
-                </span>
-                <span className="text-lg font-black text-foreground tabular-nums">
-                  KSh {Number(item.data.rate || 0).toFixed(2)}
-                </span>
-              </div>
-            ))}
+            {items.map((item) => {
+              const currentRate = Number(item.data.rate || 0);
+              const prevRate = item.data.previous_rate != null ? Number(item.data.previous_rate) : null;
+              const diff = prevRate != null ? currentRate - prevRate : null;
+              const pct = prevRate != null && prevRate !== 0 ? (diff! / prevRate) * 100 : null;
+              return (
+                <div key={item.id} className="rounded-xl bg-muted/40 p-3 text-center space-y-1">
+                  <span className="text-xs font-bold text-muted-foreground block">
+                    {item.subtitle || item.title}
+                  </span>
+                  <span className="text-lg font-black text-foreground tabular-nums block">
+                    KSh {currentRate.toFixed(2)}
+                  </span>
+                  {pct != null && (
+                    <span
+                      className={`text-[11px] font-bold tabular-nums block ${
+                        pct > 0
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : pct < 0
+                          ? "text-rose-600 dark:text-rose-400"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {pct > 0 ? `+${pct.toFixed(2)}%` : `${pct.toFixed(2)}%`}
+                    </span>
+                  )}
+                  {prevRate != null && (
+                    <span className="text-[10px] text-muted-foreground block">
+                      Prev: KSh {prevRate.toFixed(2)}
+                    </span>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>
@@ -281,19 +305,38 @@ export const UniversalCompareModal = () => {
         <div className="rounded-2xl border border-border/70 bg-card p-4 space-y-3 dark:bg-neutral-900/80">
           <div className="text-xs font-bold text-foreground">Global Spot Prices</div>
           <div className={`grid ${getGridColsClass(items.length)} gap-2 pt-1 border-t border-border/40`}>
-            {items.map((item) => (
-              <div key={item.id} className="rounded-xl bg-muted/40 p-3 text-center">
-                <span className="text-xs font-bold text-muted-foreground block mb-1">
-                  {item.title}
-                </span>
-                <span className="text-lg font-black text-foreground tabular-nums">
-                  ${Number(item.data.price || 0).toLocaleString()}
-                </span>
-                <span className="text-[10px] text-muted-foreground block mt-1">
-                  {item.data.unit || "per unit"}
-                </span>
-              </div>
-            ))}
+            {items.map((item) => {
+              const price = Number(item.data.price || 0);
+              const prevPrice = item.data.previous_price != null ? Number(item.data.previous_price) : null;
+              const diff = prevPrice != null ? price - prevPrice : null;
+              const pct = prevPrice != null && prevPrice !== 0 ? (diff! / prevPrice) * 100 : null;
+              return (
+                <div key={item.id} className="rounded-xl bg-muted/40 p-3 text-center space-y-1">
+                  <span className="text-xs font-bold text-muted-foreground block">
+                    {item.title}
+                  </span>
+                  <span className="text-lg font-black text-foreground tabular-nums block">
+                    ${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                  </span>
+                  {pct != null && (
+                    <span
+                      className={`text-[11px] font-bold tabular-nums block ${
+                        pct > 0
+                          ? "text-emerald-600 dark:text-emerald-400"
+                          : pct < 0
+                          ? "text-rose-600 dark:text-rose-400"
+                          : "text-muted-foreground"
+                      }`}
+                    >
+                      {pct > 0 ? `+${pct.toFixed(2)}%` : `${pct.toFixed(2)}%`}
+                    </span>
+                  )}
+                  <span className="text-[10px] text-muted-foreground block">
+                    {item.data.unit || "per unit"}
+                  </span>
+                </div>
+              );
+            })}
           </div>
         </div>
       </div>

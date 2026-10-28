@@ -8,6 +8,8 @@ import OfflineBanner from "./OfflineBanner";
 import MobileAiLabFab from "./MobileAiLabFab";
 import DesktopAiLabChat from "@/components/ai-lab/DesktopAiLabChat";
 import MobileBottomNav from "./mobile/MobileBottomNav";
+import UniversalCompareBar from "@/components/compare/UniversalCompareBar";
+import UniversalCompareModal from "@/components/compare/UniversalCompareModal";
 import { isAiLabEnabled } from "@/lib/featureFlags";
 import { usePageView } from "@/hooks/usePageView";
 
@@ -98,6 +100,14 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         )}
         {/* Mobile Bottom Navigation Bar (Android/iOS standard) */}
         {!isAiLab && !isAuthPage && !isNewsArticle && <MobileBottomNav />}
+
+        {/* Mobile In-Page Asset Comparison Bar & Slide-Up Sheet */}
+        {!isAiLab && !isAuthPage && !isNewsArticle && (
+          <>
+            <UniversalCompareBar />
+            <UniversalCompareModal />
+          </>
+        )}
 
         {isAiLabEnabled() && showMobileAiLabFab && <MobileAiLabFab />}
         {isAiLabEnabled() && !isAiLab && !isAuthPage && <DesktopAiLabChat />}
