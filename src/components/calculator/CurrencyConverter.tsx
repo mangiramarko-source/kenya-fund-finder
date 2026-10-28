@@ -1,11 +1,11 @@
 import { useState, useMemo, useEffect } from "react";
-import { ArrowRightLeft, RefreshCw } from "lucide-react";
+import { ArrowRightLeft, RefreshCw, TrendingUp } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
 import { supabase } from "@/integrations/supabase/client";
+import { getCurrencyFlagUrl, KENYA_FLAG_URL } from "@/lib/currencyBranding";
 
 interface Rate {
   id: string;
@@ -26,15 +26,31 @@ const PERIOD_OPTIONS = [
   { label: "7D", days: 7 },
   { label: "30D", days: 30 },
   { label: "90D", days: 90 },
-  { label: "All", days: 365 },
+  { label: "1Y", days: 365 },
 ] as const;
+
+const AMOUNT_PRESETS = [
+  { label: "1K", value: 1_000 },
+  { label: "5K", value: 5_000 },
+  { label: "10K", value: 10_000 },
+  { label: "50K", value: 50_000 },
+  { label: "100K", value: 100_000 },
+];
+
+function CurrencyFlag({ code }: { code: string }) {
+  const url = code === "KES" ? KENYA_FLAG_URL : getCurrencyFlagUrl(code);
+  if (!url) {
+    return <span className="h-4 w-5 rounded bg-muted flex items-center justify-center text-[9px] font-bold">{code.slice(0, 2)}</span>;
+  }
+  return <img src={url} alt={code} className="h-3.5 w-5 rounded-xs object-cover shrink-0" />;
+}
 
 const CurrencyConverter = () => {
   const [rates, setRates] = useState<Rate[]>([]);
   const [loading, setLoading] = useState(true);
   const [amount, setAmount] = useState(1000);
-  const [fromCurrency, setFromCurrency] = useState("KES");
-  const [toCurrency, setToCurrency] = useState("USD");
+  const [fromCurrency, setFromCurrency] = useState("USD");
+  const [toCurrency, setToCurrency] = useState("KES");
   const [history, setHistory] = useState<HistoryPoint[]>([]);
   const [historyLoading, setHistoryLoading] = useState(false);
   const [chartCurrency, setChartCurrency] = useState("USD");
@@ -55,7 +71,6 @@ const CurrencyConverter = () => {
       });
   }, []);
 
-  // Fetch history when chartCurrency or period changes
   useEffect(() => {
     if (chartCurrency === "KES" || rates.length === 0) return;
     setHistoryLoading(true);
@@ -74,7 +89,6 @@ const CurrencyConverter = () => {
       });
   }, [chartCurrency, period, rates]);
 
-  // Build chart data — append current rate as today if not already in history
   const chartData = useMemo(() => {
     const currentRate = rates.find((r) => r.currency_code === chartCurrency);
     const points = history.map((h) => ({
@@ -123,11 +137,14 @@ const CurrencyConverter = () => {
     setToCurrency(fromCurrency);
   };
 
-  const lastUpdated = rates[0]?.updated_at ? new Date(rates[0].updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" }) : null;
+  const lastUpdated = rates[0]?.updated_at
+    ? new Date(rates[0].updated_at).toLocaleDateString("en-KE", { day: "numeric", month: "short", year: "numeric" })
+    : null;
 
   const formatNum = (n: number) =>
-    n >= 1 ? n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
-           : n.toLocaleString("en-KE", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
+    n >= 1
+      ? n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+      : n.toLocaleString("en-KE", { minimumFractionDigits: 4, maximumFractionDigits: 6 });
 
   const formatDate = (d: string) => {
     const date = new Date(d + "T00:00:00");
@@ -142,110 +159,154 @@ const CurrencyConverter = () => {
     );
   }
 
-  if (rates.length === 0) {
-    return (
-      <div className="text-center py-20 text-muted-foreground text-sm">
-        No exchange rates available yet.
-      </div>
-    );
-  }
-
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
-      {/* Converter card */}
-      <div className="rounded-xl border-2 border-border bg-card p-6 space-y-6">
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-4 items-end">
-          {/* From */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">From</Label>
-            <Select value={fromCurrency} onValueChange={setFromCurrency}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {currencyOptions.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
-                    {c.code} — {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <Input
-              type="number"
-              value={amount}
-              onChange={(e) => setAmount(Number(e.target.value))}
-              min={0}
-              className="text-lg font-semibold h-12"
-              placeholder="Amount"
-            />
-          </div>
+    <div className="space-y-4">
+      {/* ─── 1. Currency Converter Card ─── */}
+      <div className="rounded-3xl border border-border/75 bg-card p-5 shadow-sm space-y-4 dark:bg-neutral-900/90 dark:border-white/10">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            Currency Exchange
+          </span>
+          <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+            1 {fromCurrency} = {formatNum(exchangeRate)} {toCurrency}
+          </span>
+        </div>
 
-          {/* Swap button */}
-          <div className="flex justify-center pb-2">
-            <Button variant="outline" size="icon" onClick={swap} className="rounded-full h-10 w-10">
-              <ArrowRightLeft className="h-4 w-4" />
-            </Button>
-          </div>
-
-          {/* To */}
-          <div className="space-y-2">
-            <Label className="text-xs font-medium">To</Label>
-            <Select value={toCurrency} onValueChange={setToCurrency}>
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                {currencyOptions.map((c) => (
-                  <SelectItem key={c.code} value={c.code}>
-                    {c.code} — {c.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-            <div className="flex items-center h-12 px-3 rounded-md border border-border bg-muted/50">
-              <span className="text-lg font-bold text-accent">{formatNum(convertedAmount)}</span>
-              <span className="ml-2 text-sm text-muted-foreground">{toCurrency}</span>
-            </div>
+        {/* Amount Input */}
+        <div className="space-y-2">
+          <Label className="text-xs font-semibold text-foreground">Amount to Convert</Label>
+          <Input
+            type="number"
+            value={amount || ""}
+            onChange={(e) => setAmount(Math.max(0, Number(e.target.value)))}
+            min={0}
+            className="h-11 rounded-xl bg-background border-border/80 text-base font-semibold"
+            placeholder="e.g. 1000"
+          />
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pt-0.5">
+            {AMOUNT_PRESETS.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() => setAmount(p.value)}
+                className={`px-3 py-1 rounded-full text-xs font-semibold transition-all shrink-0 ${
+                  amount === p.value
+                    ? "bg-foreground text-background shadow-xs font-bold"
+                    : "border border-border bg-muted/40 text-muted-foreground hover:bg-muted hover:text-foreground"
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
           </div>
         </div>
 
-        {/* Exchange rate display */}
-        <div className="flex items-center justify-between pt-2 border-t border-border">
-          <p className="text-xs text-muted-foreground">
-            1 {fromCurrency} = {formatNum(exchangeRate)} {toCurrency}
+        {/* Currency Pair with Centered Floating Swap */}
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] gap-3 items-center pt-1">
+          {/* From */}
+          <div className="space-y-1.5">
+            <span className="text-xs font-medium text-muted-foreground">From Currency</span>
+            <Select value={fromCurrency} onValueChange={setFromCurrency}>
+              <SelectTrigger className="h-11 rounded-xl bg-background border-border/80 font-semibold text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {currencyOptions.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    <div className="flex items-center gap-2">
+                      <CurrencyFlag code={c.code} />
+                      <span className="font-bold">{c.code}</span>
+                      <span className="text-muted-foreground text-xs">— {c.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Swap button */}
+          <div className="flex justify-center sm:pt-5">
+            <button
+              type="button"
+              onClick={swap}
+              aria-label="Swap currencies"
+              className="h-10 w-10 rounded-full border border-border bg-card shadow-sm hover:bg-muted active:scale-95 transition-all flex items-center justify-center text-foreground"
+            >
+              <ArrowRightLeft className="h-4 w-4" />
+            </button>
+          </div>
+
+          {/* To */}
+          <div className="space-y-1.5">
+            <span className="text-xs font-medium text-muted-foreground">To Currency</span>
+            <Select value={toCurrency} onValueChange={setToCurrency}>
+              <SelectTrigger className="h-11 rounded-xl bg-background border-border/80 font-semibold text-sm">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {currencyOptions.map((c) => (
+                  <SelectItem key={c.code} value={c.code}>
+                    <div className="flex items-center gap-2">
+                      <CurrencyFlag code={c.code} />
+                      <span className="font-bold">{c.code}</span>
+                      <span className="text-muted-foreground text-xs">— {c.name}</span>
+                    </div>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+        </div>
+
+        {/* Converted Result Banner */}
+        <div className="rounded-2xl border border-emerald-500/30 bg-emerald-500/5 p-4 space-y-1">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+            Converted Total
           </p>
+          <div className="flex items-baseline gap-2">
+            <span className="text-3xl font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
+              {formatNum(convertedAmount)}
+            </span>
+            <span className="text-sm font-bold text-foreground">{toCurrency}</span>
+          </div>
           {lastUpdated && (
-            <p className="text-xs text-muted-foreground">Updated: {lastUpdated}</p>
+            <p className="text-[10px] text-muted-foreground pt-1">
+              Indicative exchange rate · Updated {lastUpdated}
+            </p>
           )}
         </div>
       </div>
 
-      {/* Rate History Chart */}
-      <div className="rounded-xl border border-border bg-card p-4 md:p-5">
-        <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
-          <div className="flex items-center gap-3">
-            <h3 className="text-sm font-semibold">Rate History</h3>
+      {/* ─── 2. Rate History Chart Card ─── */}
+      <div className="rounded-3xl border border-border/75 bg-card p-5 shadow-sm space-y-4 dark:bg-neutral-900/90 dark:border-white/10">
+        <div className="flex items-center justify-between flex-wrap gap-2">
+          <div className="flex items-center gap-2">
+            <TrendingUp className="h-4 w-4 text-emerald-500" />
+            <h3 className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Rate History</h3>
             <Select value={chartCurrency} onValueChange={setChartCurrency}>
-              <SelectTrigger className="h-8 w-[140px] text-xs">
+              <SelectTrigger className="h-8 w-[120px] rounded-lg text-xs font-bold bg-background">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
                 {rates.map((r) => (
                   <SelectItem key={r.currency_code} value={r.currency_code}>
-                    {r.currency_code}/{" "}KES
+                    {r.currency_code}/KES
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
           </div>
+
+          {/* Time range pills */}
           <div className="flex items-center gap-1">
             {PERIOD_OPTIONS.map((opt) => (
               <button
                 key={opt.days}
+                type="button"
                 onClick={() => setPeriod(opt.days)}
-                className={`text-xs font-medium px-2.5 py-1 rounded-md transition-all ${
+                className={`text-xs font-semibold px-2.5 py-1 rounded-full transition-all ${
                   period === opt.days
-                    ? "bg-accent text-accent-foreground shadow-sm"
+                    ? "bg-foreground text-background shadow-xs font-bold"
                     : "text-muted-foreground hover:text-foreground hover:bg-muted"
                 }`}
               >
@@ -256,82 +317,58 @@ const CurrencyConverter = () => {
         </div>
 
         {historyLoading ? (
-          <div className="flex items-center justify-center h-48">
-            <RefreshCw className="h-4 w-4 animate-spin text-muted-foreground" />
+          <div className="h-48 flex items-center justify-center text-xs text-muted-foreground">
+            <RefreshCw className="h-4 w-4 animate-spin mr-2" /> Loading chart…
           </div>
-        ) : chartData.length < 2 ? (
-          <div className="flex items-center justify-center h-48 text-sm text-muted-foreground">
-            Not enough data yet — rates will be tracked as they change.
-          </div>
-        ) : (
-          <div className="h-56 md:h-64">
+        ) : chartData.length > 1 ? (
+          <div className="h-48 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <LineChart data={chartData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+              <LineChart data={chartData} margin={{ top: 8, right: 8, bottom: 0, left: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" className="stroke-border/40" vertical={false} />
                 <XAxis
                   dataKey="date"
-                  tick={{ fontSize: 11 }}
-                  stroke="hsl(var(--muted-foreground))"
                   tickFormatter={formatDate}
+                  tick={{ fontSize: 10, fill: "currentColor" }}
+                  tickLine={false}
+                  axisLine={false}
+                  className="text-muted-foreground"
                 />
                 <YAxis
-                  tick={{ fontSize: 11 }}
-                  stroke="hsl(var(--muted-foreground))"
-                  domain={["dataMin", "dataMax"]}
-                  tickFormatter={(v) => v.toFixed(2)}
+                  domain={["auto", "auto"]}
+                  tick={{ fontSize: 10, fill: "currentColor" }}
+                  tickLine={false}
+                  axisLine={false}
+                  tickFormatter={(v) => v.toFixed(1)}
+                  className="text-muted-foreground"
+                  width={38}
                 />
                 <Tooltip
-                  formatter={(v: number) => [`KES ${v.toFixed(2)}`, `1 ${chartCurrency}`]}
-                  labelFormatter={formatDate}
                   contentStyle={{
-                    borderRadius: "8px",
-                    border: "1px solid hsl(var(--border))",
+                    backgroundColor: "hsl(var(--card))",
+                    borderColor: "hsl(var(--border))",
+                    borderRadius: "1rem",
                     fontSize: "12px",
                   }}
+                  formatter={(val: number) => [`${formatNum(val)} KES`, chartCurrency]}
+                  labelFormatter={(l) => formatDate(String(l))}
                 />
                 <Line
                   type="monotone"
                   dataKey="rate"
-                  stroke="hsl(var(--accent))"
+                  stroke="#10b981"
                   strokeWidth={2}
-                  dot={chartData.length <= 30}
-                  activeDot={{ r: 4, strokeWidth: 2 }}
+                  dot={false}
+                  activeDot={{ r: 4, fill: "#10b981" }}
                 />
               </LineChart>
             </ResponsiveContainer>
           </div>
+        ) : (
+          <div className="h-32 flex items-center justify-center text-xs text-muted-foreground">
+            No history available for this period.
+          </div>
         )}
       </div>
-
-      {/* Quick reference table */}
-      <div className="rounded-xl border border-border bg-card p-4">
-        <h3 className="text-sm font-semibold mb-3">KES Exchange Rates</h3>
-        <div className="divide-y divide-border">
-          {rates.map((r) => {
-            const change = r.previous_rate ? ((r.rate - r.previous_rate) / r.previous_rate) * 100 : 0;
-            return (
-              <div key={r.id} className="flex items-center justify-between py-2.5">
-                <div>
-                  <span className="text-sm font-medium">{r.currency_code}</span>
-                  <span className="text-xs text-muted-foreground ml-2">{r.currency_name}</span>
-                </div>
-                <div className="flex items-center gap-3">
-                  <span className="text-sm font-semibold tabular-nums">{Number(r.rate).toFixed(2)}</span>
-                  {change !== 0 && (
-                    <span className={`text-xs tabular-nums ${change > 0 ? "text-green-600" : "text-red-500"}`}>
-                      {change > 0 ? "+" : ""}{change.toFixed(2)}%
-                    </span>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      <p className="text-[10px] text-muted-foreground text-center">
-        Exchange rates are indicative and sourced from market data. Actual rates may vary by provider.
-      </p>
     </div>
   );
 };
