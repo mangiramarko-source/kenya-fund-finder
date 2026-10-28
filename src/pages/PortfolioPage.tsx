@@ -224,23 +224,23 @@ const PortfolioPage = () => {
     <>
       {/* Mobile View Only: Unified "My Assets" */}
       <div className="block md:hidden">
-        {/* Sticky Top Segmented Pill Bar */}
-        <div className="sticky top-14 z-30 bg-background/95 backdrop-blur-md px-4 pt-2.5 pb-2 border-b border-border/60">
-          <div className="grid grid-cols-2 p-1 bg-muted/70 rounded-full max-w-sm mx-auto shadow-xs border border-border/40">
+        {/* Sticky Top Filter Pills Bar (matches overall app pill styling) */}
+        <div className="sticky top-14 z-30 bg-background/95 backdrop-blur-md px-4 py-2.5 border-b border-border/60">
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             <button
               type="button"
               onClick={() => handleMobileTabChange("portfolio")}
-              className={`flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer ${
+              className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                 mobileTab === "portfolio"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-foreground text-background shadow-xs"
+                  : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/30 hover:text-foreground"
               }`}
             >
               <span>Portfolio</span>
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
                   mobileTab === "portfolio"
-                    ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                    ? "bg-background/20 text-background"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
@@ -251,17 +251,17 @@ const PortfolioPage = () => {
             <button
               type="button"
               onClick={() => handleMobileTabChange("watchlist")}
-              className={`flex items-center justify-center gap-1.5 py-1.5 text-xs font-bold rounded-full transition-all cursor-pointer ${
+              className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all cursor-pointer ${
                 mobileTab === "watchlist"
-                  ? "bg-background text-foreground shadow-xs"
-                  : "text-muted-foreground hover:text-foreground"
+                  ? "bg-foreground text-background shadow-xs"
+                  : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/30 hover:text-foreground"
               }`}
             >
               <span>Watchlist</span>
               <span
                 className={`text-[10px] px-2 py-0.5 rounded-full font-bold tabular-nums ${
                   mobileTab === "watchlist"
-                    ? "bg-amber-500/15 text-amber-600 dark:text-amber-400"
+                    ? "bg-background/20 text-background"
                     : "bg-muted text-muted-foreground"
                 }`}
               >
