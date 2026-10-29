@@ -103,8 +103,10 @@ export default function NewsPage() {
         setOffset(0);
         setHasMore(more);
         setLoading(false);
-        // Immediately fill the default tab — also primes quick tab switches.
-        triggerFillForTab(DEFAULT_NEWS_TAB, newsData, 0, more, resolved);
+        // Only trigger extra fill batches if the default tab requires filtering beyond "All"
+        if (DEFAULT_NEWS_TAB !== "All") {
+          triggerFillForTab(DEFAULT_NEWS_TAB, newsData, 0, more, resolved);
+        }
       })
       .catch(() => setLoading(false));
   // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -274,7 +276,7 @@ export default function NewsPage() {
   }, [articles]);
 
   return (
-    <PageLoadingGate isReady={!loading} message="Loading latest market news…" loaderClassName="min-h-screen">
+    <PageLoadingGate isReady={!loading} message="Loading latest market news…" minimumDuration={0} loaderClassName="min-h-screen">
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6 min-h-screen">
       {/* User Portfolio Cards */}
       <OverviewPortfolioWidget />

@@ -52,7 +52,7 @@
       // request would otherwise only fire after main bundle parses & React mounts.
       (function () {
         try {
-          if (location.pathname !== "/" && location.pathname !== "/index.html") return;
+          if (location.pathname !== "/" && location.pathname !== "/index.html" && location.pathname !== "/news") return;
           var SUPABASE_URL = "https://caawgzuofnujrznwbuxk.supabase.co";
           var SUPABASE_KEY = "sb_publishable_6snC3do-2emXAMEp7-C9AA_3_kb-GkC";
           var url = SUPABASE_URL + "/rest/v1/news_articles_public?select=id,title,summary,source,date_published,source_published_at,created_at,url,category,read_time,is_featured,status,image_url&order=source_published_at.desc.nullslast,date_published.desc.nullslast,created_at.desc&limit=4";

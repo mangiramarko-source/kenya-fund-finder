@@ -90,7 +90,7 @@ export default function NewsArchivePage() {
   if (!loading && !error && page > pageCount) return <Navigate to={getNewsArchivePath(pageCount)} replace />;
 
   return (
-    <PageLoadingGate isReady={!loading} message="Loading news archive…" resetKey={page} loaderClassName="min-h-screen">
+    <PageLoadingGate isReady={!loading} message="Loading news archive…" resetKey={page} minimumDuration={0} loaderClassName="min-h-screen">
     <main className="mx-auto min-h-screen w-full max-w-5xl px-4 py-8 md:px-6 md:py-10">
       <nav aria-label="Breadcrumb" className="mb-6 text-sm text-muted-foreground">
         <Link to="/" className="hover:text-foreground">Home</Link>

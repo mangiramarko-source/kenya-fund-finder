@@ -31,7 +31,9 @@ const PageLoadingGate = ({
   const previousResetKey = useRef(resetKey);
   const routeChanged = previousResetKey.current !== resetKey;
   previousResetKey.current = resetKey;
-  const showLoading = useMinimumLoadingDuration(!isReady || routeChanged, minimumDuration);
+  const isPending = !isReady || routeChanged;
+  const minimumDurationActive = useMinimumLoadingDuration(isPending, Math.max(0, minimumDuration));
+  const showLoading = minimumDuration > 0 ? minimumDurationActive : isPending;
 
   if (showLoading) {
     return <MarketPageLoader message={message} className={loaderClassName} />;

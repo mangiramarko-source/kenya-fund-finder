@@ -297,27 +297,18 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     setStockLogoError(false);
     setSourceLogoError(false);
 
-    const loadDemoArticle = async () => {
-      let fxRates: any[] = [];
-      let commodities: any[] = [];
-      let funds: any[] = [];
-      
-      try {
-        const [fxRes, cmdRes, fndRes] = await Promise.all([
-          supabase.from("exchange_rates_public" as any).select("*"),
-          supabase.from("commodities_public" as any).select("*"),
-          fetchFunds()
-        ]);
-        fxRates = (fxRes.data || []).map((r: any) => ({ ...r, rate: Number(r.rate), previous_rate: r.previous_rate ? Number(r.previous_rate) : null }));
-        commodities = (cmdRes.data || []).map((c: any) => ({ ...c, price: Number(c.price), previous_price: c.previous_price ? Number(c.previous_price) : null }));
-        funds = fndRes || [];
-      } catch (e) {
-        // Fallback to empty arrays on error
+    const isDemoId = id.startsWith("demo-") || id.includes("safaricom") || id.includes("eqty") || id.includes("kcb");
+
+    if (isDemoId) {
+      const synthetic = getSyntheticArticle(id);
+      if (synthetic) {
+        setArticle(synthetic);
+        setLoading(false);
+        return () => clearTimeout(timer);
       }
 
-      const demoArticles = getDemoArticles(undefined, fxRates, commodities, funds);
+      const demoArticles = getDemoArticles();
       const demoMatch = demoArticles.find(a => a.id === id);
-
       if (demoMatch) {
         setArticle(demoMatch.rawItem);
         setRelatedStock(demoMatch.relatedStock || null);
@@ -325,78 +316,76 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         setRelatedFx(demoMatch.relatedFx || null);
         setRelatedCommodity(demoMatch.relatedCommodity || null);
         setLoading(false);
-        return true;
+        return () => clearTimeout(timer);
       }
-      return false;
-    };
+    }
 
-    loadDemoArticle().then(matched => {
-      if (matched) return;
+    const synthetic = getSyntheticArticle(id);
+    if (synthetic) {
+      setArticle(synthetic);
+      setLoading(false);
+      return () => clearTimeout(timer);
+    }
 
-      const synthetic = getSyntheticArticle(id!);
-      if (synthetic) {
-        setArticle(synthetic);
-        setLoading(false);
-        return;
-      }
-
-      fetchNewsById(id!)
-        .then(async (a) => {
-          if (a) {
-            setArticle(a);
-            if (a.related_stock_id) {
-              fetchPublicStockById(a.related_stock_id)
-                .then(setRelatedStock)
-                .catch(() => setRelatedStock(null));
-            }
-            const presentation = getNewsPresentation(a);
-            Promise.all([
-              fetchFunds().catch(() => []),
-              supabase.from("exchange_rates_public" as any).select("*"),
-              supabase.from("commodities_public" as any).select("*"),
-            ]).then(([fundRows, fxRes, commodityRes]) => {
-              const fxRates = ((fxRes as any)?.data || []).map((rate: any) => ({
-                ...rate,
-                rate: Number(rate.rate) || 0,
-                previous_rate: rate.previous_rate == null ? null : Number(rate.previous_rate),
-                day_change_percent: rate.day_change_percent == null ? null : Number(rate.day_change_percent),
-              }));
-              const commodities = ((commodityRes as any)?.data || []).map((commodity: any) => ({
-                ...commodity,
-                price: Number(commodity.price) || 0,
-                previous_price: commodity.previous_price == null ? null : Number(commodity.previous_price),
-                day_change_percent: commodity.day_change_percent == null ? null : Number(commodity.day_change_percent),
-              }));
-              const marketLinks = buildRelatedMarketLinks(
-                presentation.title,
-                presentation.body,
-                fundRows,
-                fxRates,
-                commodities,
-              );
-              setRelatedMmf(marketLinks.relatedMmf);
-              setRelatedFx(marketLinks.relatedFx);
-              setRelatedCommodity(marketLinks.relatedCommodity);
-            }).catch(() => {});
-            fetchRelatedNews(a.category, a.id, 3)
-              .then(setRelated)
-              .catch(() => {});
-          } else {
-            const syn = getSyntheticArticle(id!);
-            setArticle(syn);
-          }
-        })
-        .catch(() => {
-          const syn = getSyntheticArticle(id!);
-          setArticle(syn);
-        })
-        .finally(() => {
+    // Immediately fetch the real article by ID
+    fetchNewsById(id)
+      .then((a) => {
+        if (a) {
+          setArticle(a);
           setLoading(false);
           window.scrollTo(0, 0);
-          document.documentElement.scrollTop = 0;
-          document.body.scrollTop = 0;
-        });
-    });
+
+          if (a.related_stock_id) {
+            fetchPublicStockById(a.related_stock_id)
+              .then(setRelatedStock)
+              .catch(() => setRelatedStock(null));
+          }
+
+          // Asynchronously enrich with related links & news in background without blocking
+          const presentation = getNewsPresentation(a);
+          Promise.all([
+            fetchFunds().catch(() => []),
+            supabase.from("exchange_rates_public" as any).select("*"),
+            supabase.from("commodities_public" as any).select("*"),
+          ]).then(([fundRows, fxRes, commodityRes]) => {
+            const fxRates = ((fxRes as any)?.data || []).map((rate: any) => ({
+              ...rate,
+              rate: Number(rate.rate) || 0,
+              previous_rate: rate.previous_rate == null ? null : Number(rate.previous_rate),
+              day_change_percent: rate.day_change_percent == null ? null : Number(rate.day_change_percent),
+            }));
+            const commodities = ((commodityRes as any)?.data || []).map((commodity: any) => ({
+              ...commodity,
+              price: Number(commodity.price) || 0,
+              previous_price: commodity.previous_price == null ? null : Number(commodity.previous_price),
+              day_change_percent: commodity.day_change_percent == null ? null : Number(commodity.day_change_percent),
+            }));
+            const marketLinks = buildRelatedMarketLinks(
+              presentation.title,
+              presentation.body,
+              fundRows,
+              fxRates,
+              commodities,
+            );
+            setRelatedMmf(marketLinks.relatedMmf);
+            setRelatedFx(marketLinks.relatedFx);
+            setRelatedCommodity(marketLinks.relatedCommodity);
+          }).catch(() => {});
+
+          fetchRelatedNews(a.category, a.id, 3)
+            .then(setRelated)
+            .catch(() => {});
+        } else {
+          const syn = getSyntheticArticle(id);
+          setArticle(syn);
+          setLoading(false);
+        }
+      })
+      .catch(() => {
+        const syn = getSyntheticArticle(id);
+        setArticle(syn);
+        setLoading(false);
+      });
 
     return () => clearTimeout(timer);
   }, [id]);
@@ -482,7 +471,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
 
   if (!article) {
     return (
-      <PageLoadingGate isReady={!loading} message="Loading market news…" resetKey={id} loaderClassName="min-h-screen">
+      <PageLoadingGate isReady={!loading} message="Loading market news…" resetKey={id} minimumDuration={0} loaderClassName="min-h-screen">
         <div className="max-w-3xl mx-auto py-20 text-center px-4">
           <h1 className="text-2xl font-bold mb-4">Post Not Found</h1>
           <p className="text-muted-foreground mb-6">This post may have been removed or the link is incorrect.</p>
@@ -529,7 +518,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
   }) : null;
 
   return (
-    <PageLoadingGate isReady={!loading && Boolean(article)} message="Loading market news…" resetKey={id} loaderClassName="min-h-screen">
+    <PageLoadingGate isReady={!loading && Boolean(article)} message="Loading market news…" resetKey={id} minimumDuration={0} loaderClassName="min-h-screen">
     <div className="min-h-screen bg-background text-foreground pb-28 md:pb-24">
       {/* ─── 1. Top Navigation Bar (Fixed top header below main navbar) ─── */}
       <header className="fixed inset-x-0 top-0 z-50 flex h-[58px] items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md md:sticky md:z-40 md:h-12 md:px-4">

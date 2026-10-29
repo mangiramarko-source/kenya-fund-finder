@@ -440,7 +440,7 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
   try {
     const { data, error } = await supabase
       .from("news_articles_public")
-      .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+      .select("id, title, summary, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
       .order("source_published_at", { ascending: false, nullsFirst: false })
       .order("date_published", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
@@ -454,7 +454,7 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
         id: d.id,
         title: d.title,
         summary: d.summary,
-        content: d.content || null,
+        content: null,
         source: d.source,
         date_published: d.date_published,
         source_published_at: d.source_published_at || null,
