@@ -85,7 +85,10 @@ const CurrencyTicker = () => {
       previousValue: c.previous_price,
       unit: c.unit,
     }));
-    setItems([...stocks, ...rates, ...commodities]);
+    const combined = [...stocks, ...rates, ...commodities];
+    if (combined.length > 0) {
+      setItems(combined);
+    }
   };
 
   useEffect(() => {
@@ -107,7 +110,8 @@ const CurrencyTicker = () => {
 
   return (
     <div
-      className="flex h-9 w-full min-w-0 max-w-full items-center overflow-hidden border-b border-border/80 bg-card px-4 text-card-foreground shadow-sm"
+      data-testid="currency-ticker-track"
+      className="flex h-9 w-full min-w-0 max-w-full items-center overflow-hidden border-y border-zinc-200/90 dark:border-border/80 bg-zinc-100 dark:bg-card px-4 text-zinc-900 dark:text-card-foreground shadow-sm"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
       onTouchStart={() => setPaused(true)}
@@ -135,21 +139,21 @@ const CurrencyTicker = () => {
               key={`${item.id}-${i}`}
               className="flex items-center gap-2 text-xs font-medium"
             >
-              <span className="text-muted-foreground font-semibold">
+              <span className="text-zinc-700 dark:text-muted-foreground font-semibold tracking-tight">
                 {item.label}
               </span>
-              <span className="text-foreground font-bold">
+              <span className="text-zinc-950 dark:text-foreground font-bold tabular-nums">
                 {item.value.toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                   maximumFractionDigits: 2,
                 })}
               </span>
               {pct != null ? (
-                <span className={isUp ? "text-emerald-500 font-bold" : isDown ? "text-red-500 font-bold" : "text-muted-foreground font-medium"}>
+                <span className={isUp ? "text-emerald-600 dark:text-emerald-400 font-bold tabular-nums" : isDown ? "text-red-600 dark:text-red-400 font-bold tabular-nums" : "text-zinc-500 dark:text-muted-foreground font-medium tabular-nums"}>
                   {isUp ? "+" : ""}{pct}%
                 </span>
               ) : (
-                <span className="text-muted-foreground">0.00%</span>
+                <span className="text-zinc-500 dark:text-muted-foreground font-medium tabular-nums">0.00%</span>
               )}
             </div>
           );
