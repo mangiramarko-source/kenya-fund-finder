@@ -9,21 +9,6 @@ import {
 } from "lucide-react";
 import MobileMoreDrawer from "./MobileMoreDrawer";
 
-const MORE_ROUTES = new Set([
-  "/",
-  "/overview",
-  "/treasury",
-  "/rates",
-  "/commodities",
-  "/watchlist",
-  "/calculator",
-  "/mmf-calculator",
-  "/compare",
-  "/alerts",
-  "/learn",
-  "/profile",
-]);
-
 export default function MobileBottomNav() {
   const location = useLocation();
   const [moreOpen, setMoreOpen] = useState(false);
@@ -34,7 +19,6 @@ export default function MobileBottomNav() {
     if (pathname === "/stocks" || pathname.startsWith("/stocks/")) return "stocks";
     if (pathname === "/funds" || pathname === "/money-market-funds-kenya" || pathname.startsWith("/compare/")) return "funds";
     if (pathname === "/portfolio" || pathname.startsWith("/portfolio/") || pathname === "/watchlist") return "portfolio";
-    if (MORE_ROUTES.has(pathname)) return "more";
     return "";
   }, [pathname]);
 
@@ -86,20 +70,20 @@ export default function MobileBottomNav() {
           >
             <div
               className={`relative flex h-8 w-11 items-center justify-center rounded-full transition-all duration-200 ${
-                activeTab === "more" || moreOpen
+                moreOpen
                   ? "bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/25 dark:text-emerald-400 font-bold"
                   : "text-muted-foreground group-hover:text-foreground"
               }`}
             >
               <MoreHorizontal
                 className={`h-5 w-5 ${
-                  activeTab === "more" || moreOpen ? "stroke-[2.2]" : "stroke-[1.8]"
+                  moreOpen ? "stroke-[2.2]" : "stroke-[1.8]"
                 }`}
               />
             </div>
             <span
               className={`text-[10px] tracking-tight mt-0.5 transition-colors ${
-                activeTab === "more" || moreOpen
+                moreOpen
                   ? "font-bold text-emerald-600 dark:text-emerald-400"
                   : "font-medium text-muted-foreground group-hover:text-foreground"
               }`}

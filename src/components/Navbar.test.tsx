@@ -6,6 +6,7 @@ import Navbar from "./Navbar";
 import DesktopTopBar from "./DesktopTopBar";
 
 const notificationState = vi.hoisted(() => ({ unreadCount: 0 }));
+const authState = vi.hoisted(() => ({ user: { id: "user-1", email: "test@example.com" } as any }));
 
 // Mock Supabase
 vi.mock("@/integrations/supabase/client", () => ({
@@ -26,7 +27,7 @@ vi.mock("@/integrations/supabase/client", () => ({
 }));
 
 vi.mock("@/hooks/useAuth", () => ({
-  useAuth: () => ({ user: { id: "user-1", email: "test@example.com" }, isAdmin: false, signOut: vi.fn() }),
+  useAuth: () => ({ user: authState.user, isAdmin: false, signOut: vi.fn() }),
 }));
 
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn(), trackPageView: vi.fn() }));
@@ -145,5 +146,20 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.getAllByText("My Alerts").length).toBeGreaterThan(0);
     fireEvent.click(screen.getByRole("button", { name: "Close account menu" }));
     expect(screen.queryByRole("dialog", { name: "User" })).not.toBeInTheDocument();
+  });
+
+  it("renders guest user button without any hardcoded MA initials when not signed in", () => {
+    authState.user = null;
+    render(
+      <MemoryRouter>
+        <Navbar />
+      </MemoryRouter>
+    );
+
+    const button = screen.getByRole("button", { name: /open account & settings/i });
+    expect(button).toBeInTheDocument();
+    // Ensure "MA" is not present anywhere in the profile button or navbar
+    expect(within(button).queryByText("MA")).not.toBeInTheDocument();
+    expect(screen.queryByText("MA")).not.toBeInTheDocument();
   });
 });

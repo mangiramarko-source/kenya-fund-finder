@@ -1,6 +1,6 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { ArrowLeft } from "lucide-react";
+import { ArrowLeft, User } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
@@ -108,14 +108,27 @@ function MobileProfileButton({
   avatarUrl: string;
   onClick: () => void;
 }) {
-  const initials = (displayName || user?.email || "MA").slice(0, 2).toUpperCase();
+  if (!user) {
+    return (
+      <button
+        type="button"
+        onClick={onClick}
+        className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-border/70 bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        aria-label="Open account & settings"
+      >
+        <User className="h-4 w-4" />
+      </button>
+    );
+  }
+
+  const initials = (displayName || user.email || "U").slice(0, 2).toUpperCase();
 
   return (
     <button
       type="button"
       onClick={onClick}
       className="inline-flex items-center justify-center h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors relative"
-      aria-label={user ? "Open account & settings" : "Sign in to account"}
+      aria-label="Open account & settings"
     >
       <Avatar className="h-8 w-8 border border-emerald-500/40">
         {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName || "User"} /> : null}
