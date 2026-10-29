@@ -1549,7 +1549,7 @@ const OverviewPage = () => {
                   className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
                     activeUpdateCategory === f
                       ? "bg-foreground text-background"
-                      : "border border-border bg-card text-muted-foreground"
+                      : "border border-border/80 bg-background text-zinc-800 dark:text-muted-foreground hover:bg-muted/50"
                   }`}
                 >
                   {f}

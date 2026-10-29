@@ -97,7 +97,7 @@
 
 @layer base {
   :root {
-    --background: 215 16% 96%;
+    --background: 0 0% 100%;
     --foreground: 220 30% 12%;
 
     --card: 0 0% 100%;
@@ -109,10 +109,10 @@
     --primary: 220 60% 20%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 215 16% 93%;
+    --secondary: 215 16% 96%;
     --secondary-foreground: 220 30% 12%;
 
-    --muted: 215 16% 92%;
+    --muted: 215 16% 95%;
     --muted-foreground: 215 18% 35%;
 
     --accent: 152 62% 30%;
@@ -121,19 +121,19 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 215 16% 88%;
-    --input: 215 16% 88%;
+    --border: 215 16% 90%;
+    --input: 215 16% 90%;
     --ring: 220 60% 20%;
 
     --radius: 0.625rem;
 
-    --sidebar-background: 215 16% 96%;
+    --sidebar-background: 0 0% 100%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 215 16% 92%;
+    --sidebar-accent: 215 16% 95%;
     --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 215 16% 88%;
+    --sidebar-border: 215 16% 90%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Custom tokens */
@@ -150,7 +150,7 @@
     /* Market direction + mobile surface tokens */
     --up: 152 62% 32%;
     --down: 0 72% 51%;
-    --surface: 215 16% 94%;
+    --surface: 0 0% 100%;
     --surface-foreground: 220 30% 12%;
     --shadow-soft: 0 1px 2px hsl(220 30% 15% / 0.04), 0 8px 24px -12px hsl(220 30% 15% / 0.12);
   }

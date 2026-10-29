@@ -331,7 +331,7 @@ export default function NewsPage() {
               className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
                 isActive
                   ? "bg-foreground text-background font-bold shadow-xs"
-                  : "border border-border bg-card text-muted-foreground hover:text-foreground hover:border-border/80"
+                  : "border border-border/80 bg-background text-zinc-800 dark:text-muted-foreground hover:text-foreground hover:bg-muted/50"
               }`}
             >
               {f}
