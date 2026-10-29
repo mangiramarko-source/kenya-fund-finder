@@ -71,8 +71,8 @@ export default function MobileWatchlistView() {
     items: watchlist,
     loading: watchlistLoading,
     hasLocalState: hasLocalWatchlistState,
-    addToWatchlist,
-    removeFromWatchlist,
+    add: addWatchlistItem,
+    remove: removeWatchlistItem,
   } = useUnifiedWatchlist();
   const { alerts, deleteAlert, toggleAlert } = usePriceAlerts();
 
@@ -134,12 +134,33 @@ export default function MobileWatchlistView() {
   const removeByTypeAndId = async (itemType: string, itemId: string) => {
     const entry = watchlist.find((w) => w.item_type === itemType && w.item_id === itemId);
     if (!entry) return;
-    const res = await removeFromWatchlist(entry.id);
+    const res = await removeWatchlistItem(entry.id);
     if (res.ok) {
       toast.success("Removed from watchlist");
     } else {
       toast.error("Failed to remove item");
     }
+  };
+
+  const addToWatchlist = async (type: AddWatchlistType, itemId: string, itemName: string) => {
+    if (!itemId) {
+      toast.error("This item cannot be added yet");
+      return;
+    }
+
+    const result = await addWatchlistItem(type, itemId, itemName);
+    if (!result.ok) {
+      toast.error("Failed to add to watchlist");
+      return;
+    }
+    if (result.duplicate) {
+      toast.info(`${itemName} is already in your watchlist`);
+      return;
+    }
+
+    toast.success(`Added ${itemName} to watchlist`);
+    setShowAddSheet(false);
+    setAddSearch("");
   };
 
   const demoWatchlist = useMemo<WatchlistItem[]>(() => {
