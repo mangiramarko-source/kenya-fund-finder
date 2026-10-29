@@ -6,7 +6,6 @@ import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Archive, Megaphone, Sparkles } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
-import PageLoadingGate from "@/components/PageLoadingGate";
 import { SocialFeedCard } from "@/components/feed/SocialFeed";
 import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
@@ -276,7 +275,6 @@ export default function NewsPage() {
   }, [articles]);
 
   return (
-    <PageLoadingGate isReady={!loading} message="Loading latest market news…" minimumDuration={0} loaderClassName="min-h-screen">
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6 min-h-screen">
       {/* User Portfolio Cards */}
       <OverviewPortfolioWidget />
@@ -344,11 +342,27 @@ export default function NewsPage() {
 
       {/* Articles Feed */}
       {feedItems.length === 0 ? (
-        <div className="text-center py-20 text-muted-foreground border border-dashed border-border rounded-2xl">
-          <Megaphone className="h-8 w-8 mx-auto mb-3 text-muted-foreground/40" />
-          <p className="text-sm font-medium">No articles found matching your criteria.</p>
-          <p className="text-xs mt-1 text-muted-foreground/60">Try searching for something else or selecting a different tab.</p>
-        </div>
+        loading ? (
+          <div className="space-y-3 pb-20">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="rounded-xl border border-border/70 bg-card p-4 space-y-3">
+                <div className="flex justify-between items-center">
+                  <Skeleton className="h-3 w-20" />
+                  <Skeleton className="h-4 w-12 rounded-full" />
+                </div>
+                <Skeleton className="h-5 w-4/5" />
+                <Skeleton className="h-4 w-full" />
+                <Skeleton className="h-4 w-2/3" />
+              </div>
+            ))}
+          </div>
+        ) : (
+          <div className="text-center py-20 text-muted-foreground border border-dashed border-border rounded-2xl">
+            <Megaphone className="h-8 w-8 mx-auto mb-3 text-muted-foreground/40" />
+            <p className="text-sm font-medium">No articles found matching your criteria.</p>
+            <p className="text-xs mt-1 text-muted-foreground/60">Try searching for something else or selecting a different tab.</p>
+          </div>
+        )
       ) : (
         <div className="space-y-0 md:space-y-4 pb-20">
           {feedItems.map((item, index) => {
@@ -416,6 +430,5 @@ export default function NewsPage() {
         onAddComment={addComment}
       />
     </div>
-    </PageLoadingGate>
   );
 }

@@ -70,35 +70,40 @@ export function useMarketData() {
   const fetchData = useCallback(async (showLoading = false) => {
     if (showLoading) setLoading(true);
 
-    const [ratesRes, commoditiesRes, stocksRes] = await Promise.all([
-      fetchPublicData<ExchangeRate>("rates", { limit: 200 }),
-      fetchPublicData<Commodity>("commodities", { limit: 200 }),
-      fetchPublicData<Stock>("stocks", { limit: 500 }),
-    ]);
-    setRates(
-      ((ratesRes.data || []).map((r) => ({
-        ...r,
-        rate: Number(r.rate),
-        previous_rate: r.previous_rate != null ? Number(r.previous_rate) : null,
-      })) as ExchangeRate[])
-    );
-    setCommodities(
-      ((commoditiesRes.data || []).map((c) => ({
-        ...c,
-        price: Number(c.price),
-        previous_price: c.previous_price != null ? Number(c.previous_price) : null,
-      })) as Commodity[])
-    );
-    setStocks(
-      ((stocksRes.data || []).map((s) => ({
-        ...s,
-        price: Number(s.price),
-        previous_price: s.previous_price != null ? Number(s.previous_price) : null,
-        day_change: Number(s.day_change),
-        day_change_percent: Number(s.day_change_percent),
-      })) as Stock[])
-    );
-    setLoading(false);
+    try {
+      const [ratesRes, commoditiesRes, stocksRes] = await Promise.all([
+        fetchPublicData<ExchangeRate>("rates", { limit: 200 }),
+        fetchPublicData<Commodity>("commodities", { limit: 200 }),
+        fetchPublicData<Stock>("stocks", { limit: 500 }),
+      ]);
+      setRates(
+        ((ratesRes.data || []).map((r) => ({
+          ...r,
+          rate: Number(r.rate),
+          previous_rate: r.previous_rate != null ? Number(r.previous_rate) : null,
+        })) as ExchangeRate[])
+      );
+      setCommodities(
+        ((commoditiesRes.data || []).map((c) => ({
+          ...c,
+          price: Number(c.price),
+          previous_price: c.previous_price != null ? Number(c.previous_price) : null,
+        })) as Commodity[])
+      );
+      setStocks(
+        ((stocksRes.data || []).map((s) => ({
+          ...s,
+          price: Number(s.price),
+          previous_price: s.previous_price != null ? Number(s.previous_price) : null,
+          day_change: Number(s.day_change),
+          day_change_percent: Number(s.day_change_percent),
+        })) as Stock[])
+      );
+    } catch (err) {
+      console.warn("useMarketData gateway fetch failed:", err);
+    } finally {
+      setLoading(false);
+    }
   }, []);
 
   useEffect(() => {

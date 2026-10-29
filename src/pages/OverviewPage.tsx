@@ -9,7 +9,6 @@ import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
-import MarketPageLoader from "@/components/MarketPageLoader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -1203,9 +1202,6 @@ const OverviewPage = () => {
 
   const hasWatchlist = watchedStocks.length > 0 || watchedRates.length > 0 || watchedCommoditiesList.length > 0 || watchedFunds.length > 0;
 
-  // Primary critical data needed to render the feed and market overview
-  const loading = newsLoading || marketLoading;
-
   // Best performers
   const bestStock = useMemo(() => stocks.length ? [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [stocks]);
   const topGainers = useMemo(
@@ -1309,11 +1305,6 @@ const OverviewPage = () => {
     }).length;
   }, [news]);
 
-
-  if (loading) {
-    return <MarketPageLoader message="Loading latest market overview…" className="min-h-screen" />;
-  }
-
   return (
     <>
       <main className="w-full min-w-0 max-w-full px-4 py-6 md:grid md:h-[calc(100dvh-5.75rem)] md:grid-cols-12 md:gap-6 md:overflow-hidden md:px-6">
@@ -1401,7 +1392,7 @@ const OverviewPage = () => {
                 />
               ))
             ) : (
-              <SocialFeed items={filteredFeedItems} loading={loading || newsCategoryLoading} />
+              <SocialFeed items={filteredFeedItems} loading={newsLoading || newsCategoryLoading} />
             )}
           </div>
         </div>
