@@ -158,6 +158,19 @@ const isGenericFiller = (text?: string | null): boolean => {
 
 // ─── Deterministic Content Extractors ───
 
+/**
+ * Splits text into sentences at punctuation boundaries (. ! ?) or newlines.
+ * Avoids RegExp lookbehinds (`(?<=...)`) to prevent fatal SyntaxError on Safari < 16.4 (iOS 15 / iPhone 7).
+ */
+function splitSentencesCompat(text: string): string[] {
+  if (!text) return [];
+  return text
+    .replace(/([.!?])\s+/g, "$1\n")
+    .split(/\n+/)
+    .map((s) => s.trim())
+    .filter(Boolean);
+}
+
 function extractFactualSentencesFromText(
   rawText: string,
   takeaway: string[],
@@ -171,8 +184,7 @@ function extractFactualSentencesFromText(
     .replace(/^#+\s+/gm, "")
     .replace(/^[-•]\s+/gm, "");
 
-  const sentences = clean
-    .split(/(?<=[.!?])\s+|\n+/)
+  const sentences = splitSentencesCompat(clean)
     .map((s) => s.trim().replace(/^[-•\d.]+\s*/, ""))
     .filter((s) => s.length >= 25 && s.length <= 260);
 
@@ -227,7 +239,7 @@ function deriveWhyThisMatters(
 
   // 1. Look for analytical relevance sentences in source content
   if (rawContent && rawContent.length > 80) {
-    const sentences = rawContent.split(/(?<=[.!?])\s+|\n+/).map((s) => s.trim()).filter((s) => s.length > 40 && s.length < 250);
+    const sentences = splitSentencesCompat(rawContent).filter((s) => s.length > 40 && s.length < 250);
     for (const s of sentences) {
       if (/aimed at|designed to|allows the|opportunity to|significance of|strategy to|critical for|widens the/i.test(s)) {
         const cleaned = cleanPrefixes(decodeHtmlEntities(s));

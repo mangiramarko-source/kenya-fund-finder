@@ -384,4 +384,14 @@ describe("isSemanticallySimilar Audit", () => {
     const interpretation = "The CBR rate pause helps commercial banks maintain lending margins.";
     expect(isSemanticallySimilar(confirmedFact, interpretation)).toBe(false);
   });
+
+  it("contains no RegExp lookbehind assertions to ensure compatibility with Safari < 16.4 / iOS 15 (iPhone 7)", async () => {
+    const fs = await import("fs");
+    const path = await import("path");
+    const source = fs.readFileSync(path.resolve(__dirname, "./newsBriefingMapper.ts"), "utf-8");
+    const codeLines = source.split("\n").filter((line) => !line.trim().startsWith("*") && !line.trim().startsWith("//"));
+    const code = codeLines.join("\n");
+    expect(code).not.toContain("(?<=");
+    expect(code).not.toContain("(?<!");
+  });
 });
