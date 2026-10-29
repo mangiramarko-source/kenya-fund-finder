@@ -72,12 +72,12 @@ export default function MobileBottomNav() {
               className={`relative flex h-8 w-11 items-center justify-center rounded-full transition-all duration-200 ${
                 moreOpen
                   ? "bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/25 dark:text-emerald-400 font-bold"
-                  : "text-muted-foreground group-hover:text-foreground"
+                  : "text-zinc-950 dark:text-muted-foreground group-hover:text-foreground"
               }`}
             >
               <MoreHorizontal
                 className={`h-5 w-5 ${
-                  moreOpen ? "stroke-[2.2]" : "stroke-[1.8]"
+                  moreOpen ? "stroke-[2.2]" : "stroke-[2]"
                 }`}
               />
             </div>
@@ -85,7 +85,7 @@ export default function MobileBottomNav() {
               className={`text-[10px] tracking-tight mt-0.5 transition-colors ${
                 moreOpen
                   ? "font-bold text-emerald-600 dark:text-emerald-400"
-                  : "font-medium text-muted-foreground group-hover:text-foreground"
+                  : "font-semibold text-zinc-950 dark:text-muted-foreground dark:font-medium group-hover:text-foreground"
               }`}
             >
               More
@@ -120,16 +120,16 @@ function NavTab({
         className={`relative flex h-8 w-11 items-center justify-center rounded-full transition-all duration-200 ${
           isActive
             ? "bg-emerald-500/15 text-emerald-600 dark:bg-emerald-500/25 dark:text-emerald-400 font-bold"
-            : "text-muted-foreground group-hover:text-foreground"
+            : "text-zinc-950 dark:text-muted-foreground group-hover:text-foreground"
         }`}
       >
-        <Icon className={`h-5 w-5 ${isActive ? "stroke-[2.4]" : "stroke-[1.8]"}`} />
+        <Icon className={`h-5 w-5 ${isActive ? "stroke-[2.4]" : "stroke-[2]"}`} />
       </div>
       <span
         className={`text-[10px] tracking-tight mt-0.5 transition-colors ${
           isActive
             ? "font-bold text-emerald-600 dark:text-emerald-400"
-            : "font-medium text-muted-foreground group-hover:text-foreground"
+            : "font-semibold text-zinc-950 dark:text-muted-foreground dark:font-medium group-hover:text-foreground"
         }`}
       >
         {label}

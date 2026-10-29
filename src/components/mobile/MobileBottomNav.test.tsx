@@ -98,7 +98,7 @@ describe("MobileBottomNav Tab Highlighting Verification", () => {
       // More label should NOT have active emerald text
       const moreLabel = screen.getByText("More");
       expect(moreLabel).not.toHaveClass("text-emerald-600");
-      expect(moreLabel).toHaveClass("text-muted-foreground");
+      expect(moreLabel).toHaveClass("text-zinc-950");
       unmount();
     }
   });

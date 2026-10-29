@@ -609,7 +609,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
                   {relatedStock?.name || relatedMmf?.name || relatedFx?.pair || relatedCommodity?.name || article.source || "KenyaFundFinder"}
                 </span>
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
-                <span className="truncate text-[10px] uppercase tracking-[0.18em] text-muted-foreground">
+                <span className="truncate text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-muted-foreground font-semibold">
                   {relatedStock ? "Stock" : relatedMmf ? "MMF" : relatedFx ? "FX Rate" : relatedCommodity ? "Commodity" : article.category || "Market News"}
                 </span>
                 
@@ -630,7 +630,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
                   </span>
                 )}
               </div>
-              <span className="text-[13px] text-muted-foreground">
+              <span className="text-[13px] text-zinc-700 dark:text-muted-foreground">
                 {relativeTime}
               </span>
             </div>
@@ -646,7 +646,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         )}
 
         {/* ─── 6. Metadata ─── */}
-        <div className="border-b border-border/60 pb-4 pt-1 text-[11px] uppercase tracking-[0.2em] text-muted-foreground flex items-center gap-2 md:border-t md:border-b-0 md:pb-0 md:text-xs md:normal-case md:tracking-normal">
+        <div className="border-b border-border/60 pb-4 pt-1 text-[11px] uppercase tracking-[0.2em] text-zinc-700 dark:text-muted-foreground flex items-center gap-2 md:border-t md:border-b-0 md:pb-0 md:text-xs md:normal-case md:tracking-normal font-semibold">
           <span>{formattedTime}</span>
           <span>•</span>
           <span>{formattedDate}</span>

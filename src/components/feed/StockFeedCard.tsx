@@ -85,7 +85,7 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
         aria-label={`View ${stock.name}`}
       >
         <span className="font-bold text-foreground">{stock.symbol}</span>
-        <span className="text-muted-foreground">KES {stock.price.toFixed(2)}</span>
+        <span className="text-zinc-800 dark:text-muted-foreground">KES {stock.price.toFixed(2)}</span>
         <span className={`flex items-center font-medium ${isUp ? "text-emerald-500" : isDown ? "text-rose-500" : "text-muted-foreground"}`}>
           {isUp ? <TrendingUp className="w-3 h-3 mr-0.5" /> : isDown ? <TrendingDown className="w-3 h-3 mr-0.5" /> : <Minus className="w-3 h-3 mr-0.5" />}
           {Math.abs(stock.changePercent).toFixed(1)}%
@@ -109,9 +109,9 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
           <div className="flex items-center gap-2 min-w-0">
             <p className="font-bold text-foreground text-sm truncate">{stock.name}</p>
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
-            <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground">Stock</span>
+            <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-muted-foreground font-semibold">Stock</span>
           </div>
-          <p className="text-[13px] text-muted-foreground">{timeAgo}</p>
+          <p className="text-[13px] text-zinc-700 dark:text-muted-foreground">{timeAgo}</p>
         </div>
         <button type="button" onClick={openArticle} className="p-1 text-muted-foreground hover:text-foreground" aria-label="More options">
           <MoreHorizontal className="h-5 w-5" />
@@ -139,7 +139,7 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
               </span>
             )}
             {analysis.clustered_count > 1 && (
-              <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground ring-1 ring-inset ring-border">
+              <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-700 dark:text-muted-foreground ring-1 ring-inset ring-border">
                 +{analysis.clustered_count} sources
               </span>
             )}
@@ -154,7 +154,7 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
       ) : (
         <>
           <h2 className="font-heading font-extrabold text-base text-foreground leading-snug tracking-tight">{item.title}</h2>
-          <p className="font-body text-sm text-muted-foreground/90 leading-relaxed line-clamp-3 font-normal">
+          <p className="font-body text-sm text-zinc-900 dark:text-muted-foreground/90 leading-relaxed line-clamp-3 font-normal">
             {item.aiInsight || item.content}
           </p>
         </>
@@ -165,7 +165,7 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
         <ArrowRight className="h-4 w-4" />
       </button>
 
-      <footer className="flex items-center justify-between gap-3 pt-2 text-muted-foreground">
+      <footer className="flex items-center justify-between gap-3 pt-2 text-zinc-700 dark:text-muted-foreground">
         <div className="flex items-center gap-5">
           <button type="button" onClick={openArticle} className="flex items-baseline gap-1.5">
             <span className="text-sm tabular-nums">{commentsCount}</span><span className="text-[10px] uppercase tracking-[0.16em]">Comments</span>

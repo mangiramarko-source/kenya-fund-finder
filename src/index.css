@@ -97,23 +97,23 @@
 
 @layer base {
   :root {
-    --background: 210 20% 98%;
-    --foreground: 220 30% 15%;
+    --background: 215 16% 96%;
+    --foreground: 220 30% 12%;
 
     --card: 0 0% 100%;
-    --card-foreground: 220 30% 15%;
+    --card-foreground: 220 30% 12%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 220 30% 15%;
+    --popover-foreground: 220 30% 12%;
 
     --primary: 220 60% 20%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 20% 96%;
-    --secondary-foreground: 220 30% 15%;
+    --secondary: 215 16% 93%;
+    --secondary-foreground: 220 30% 12%;
 
-    --muted: 210 15% 94%;
-    --muted-foreground: 215 14% 46%;
+    --muted: 215 16% 92%;
+    --muted-foreground: 215 18% 35%;
 
     --accent: 152 62% 30%;
     --accent-foreground: 0 0% 100%;
@@ -121,19 +121,19 @@
     --destructive: 0 84% 60%;
     --destructive-foreground: 210 40% 98%;
 
-    --border: 214 20% 90%;
-    --input: 214 20% 90%;
+    --border: 215 16% 88%;
+    --input: 215 16% 88%;
     --ring: 220 60% 20%;
 
     --radius: 0.625rem;
 
-    --sidebar-background: 0 0% 98%;
+    --sidebar-background: 215 16% 96%;
     --sidebar-foreground: 240 5.3% 26.1%;
     --sidebar-primary: 240 5.9% 10%;
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent: 215 16% 92%;
     --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
+    --sidebar-border: 215 16% 88%;
     --sidebar-ring: 217.2 91.2% 59.8%;
 
     /* Custom tokens */
@@ -150,8 +150,8 @@
     /* Market direction + mobile surface tokens */
     --up: 152 62% 32%;
     --down: 0 72% 51%;
-    --surface: 210 20% 96%;
-    --surface-foreground: 220 30% 15%;
+    --surface: 215 16% 94%;
+    --surface-foreground: 220 30% 12%;
     --shadow-soft: 0 1px 2px hsl(220 30% 15% / 0.04), 0 8px 24px -12px hsl(220 30% 15% / 0.12);
   }
 

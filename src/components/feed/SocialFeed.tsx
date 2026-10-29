@@ -185,7 +185,7 @@ export const SocialFeedCard = ({
             className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs hover:bg-muted transition-colors font-sans"
           >
             <strong className="font-bold text-foreground">{item.relatedStock.symbol}</strong>
-            <span className="text-muted-foreground">KES {(Number(item.relatedStock.price) || 0).toFixed(2)}</span>
+            <span className="text-zinc-800 dark:text-muted-foreground">KES {(Number(item.relatedStock.price) || 0).toFixed(2)}</span>
             <span className={`inline-flex items-center font-semibold ${(Number(item.relatedStock.changePercent) || 0) >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
               {(Number(item.relatedStock.changePercent) || 0) >= 0 ? (
                 <TrendingUp className="mr-0.5 h-3 w-3" />
@@ -204,7 +204,7 @@ export const SocialFeedCard = ({
             className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-sans"
           >
             <strong className="font-bold text-foreground">{item.relatedMmf!.name}</strong>
-            <span className="text-muted-foreground">{item.relatedMmf!.yield.toFixed(2)}% Yield</span>
+            <span className="text-zinc-800 dark:text-muted-foreground">{item.relatedMmf!.yield.toFixed(2)}% Yield</span>
             <span className={`inline-flex items-center font-semibold ${item.relatedMmf!.changePercent >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
               {item.relatedMmf!.changePercent >= 0 ? (
                 <TrendingUp className="mr-0.5 h-3 w-3" />
@@ -223,7 +223,7 @@ export const SocialFeedCard = ({
             className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-sans"
           >
             <strong className="font-bold text-foreground">{item.relatedFx!.pair}</strong>
-            <span className="text-muted-foreground">{item.relatedFx!.rate.toFixed(2)}</span>
+            <span className="text-zinc-800 dark:text-muted-foreground">{item.relatedFx!.rate.toFixed(2)}</span>
             <span className={`inline-flex items-center font-semibold ${item.relatedFx!.changePercent >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
               {item.relatedFx!.changePercent >= 0 ? (
                 <TrendingUp className="mr-0.5 h-3 w-3" />
@@ -242,7 +242,7 @@ export const SocialFeedCard = ({
             className="inline-flex items-center gap-2 rounded-md border border-border bg-muted/60 px-2.5 py-1 text-xs font-sans"
           >
             <strong className="font-bold text-foreground">{item.relatedCommodity!.name}</strong>
-            <span className="text-muted-foreground">{item.relatedCommodity!.price.toFixed(2)} {item.relatedCommodity!.unit}</span>
+            <span className="text-zinc-800 dark:text-muted-foreground">{item.relatedCommodity!.price.toFixed(2)} {item.relatedCommodity!.unit}</span>
             <span className={`inline-flex items-center font-semibold ${item.relatedCommodity!.changePercent >= 0 ? "text-emerald-500" : "text-rose-500"}`}>
               {item.relatedCommodity!.changePercent >= 0 ? (
                 <TrendingUp className="mr-0.5 h-3 w-3" />
@@ -269,9 +269,9 @@ export const SocialFeedCard = ({
             <div className="flex items-center gap-2">
               <h2 className="truncate text-sm font-bold text-foreground">{item.relatedStock!.name}</h2>
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground shrink-0">Stock</span>
+              <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-muted-foreground font-semibold shrink-0">Stock</span>
             </div>
-            <p className="text-[13px] text-muted-foreground">{authorName} · {timeAgo}</p>
+            <p className="text-[13px] text-zinc-700 dark:text-muted-foreground">{authorName} · {timeAgo}</p>
           </div>
           <button
             type="button"
@@ -310,10 +310,10 @@ export const SocialFeedCard = ({
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-bold text-foreground text-sm truncate">{authorName}</span>
               <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
-              <span className="text-[10px] uppercase tracking-[0.18em] text-muted-foreground truncate">{item.authorLabel || "Market"}</span>
+              <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-muted-foreground font-semibold truncate">{item.authorLabel || "Market"}</span>
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-[13px]">
-              <span className="text-muted-foreground whitespace-nowrap">{timeAgo}</span>
+              <span className="text-zinc-700 dark:text-muted-foreground whitespace-nowrap">{timeAgo}</span>
             </div>
           </div>
 
@@ -359,7 +359,7 @@ export const SocialFeedCard = ({
       {!item.isHeadlineOnly && (
         <div
           ref={contentRef}
-          className="font-body text-sm text-muted-foreground/90 leading-relaxed line-clamp-2 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
+          className="font-body text-sm text-zinc-900 dark:text-muted-foreground/90 leading-relaxed line-clamp-2 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
         >
           <ReactMarkdown remarkPlugins={[remarkGfm]}>
             {item.content || ""}
@@ -382,7 +382,7 @@ export const SocialFeedCard = ({
         </button>
       </div>
 
-      <div className="flex items-center justify-between gap-3 pt-2 text-muted-foreground">
+      <div className="flex items-center justify-between gap-3 pt-2 text-zinc-700 dark:text-muted-foreground">
         <div className="flex items-center gap-5">
           <button type="button" onClick={(e) => { e.stopPropagation(); handleCardClick(); }} className="flex items-baseline gap-1.5">
             <span className="text-sm tabular-nums">{commentsCount}</span><span className="text-[10px] uppercase tracking-[0.16em]">Comments</span>
