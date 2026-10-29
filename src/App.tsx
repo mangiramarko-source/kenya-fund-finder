@@ -44,6 +44,7 @@ const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
 const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
 const AdminPage = lazy(() => import("./pages/AdminPage"));
 const ProfilePage = lazy(() => import("./pages/ProfilePage"));
+const DeleteAccountPage = lazy(() => import("./pages/DeleteAccountPage"));
 const SitePage = lazy(() => import("./pages/SitePage"));
 const RatesPage = lazy(() => import("./pages/RatesPage"));
 const CommoditiesPage = lazy(() => import("./pages/CommoditiesPage"));
@@ -146,6 +147,8 @@ const App = () => (
                     <Route path="/auth/callback" element={<AuthCallback />} />
                     <Route path="/reset-password" element={<ResetPasswordPage />} />
                     <Route path="/profile" element={<ProfilePage />} />
+                    <Route path="/delete-account" element={<DeleteAccountPage />} />
+                    <Route path="/account-deletion" element={<Navigate to="/delete-account" replace />} />
                     <Route path="/page/:slug" element={<SitePage />} />
                     <Route path="/treasury" element={<TreasuryPage />} />
                     <Route path="/tbills" element={<Navigate to="/treasury" replace />} />
