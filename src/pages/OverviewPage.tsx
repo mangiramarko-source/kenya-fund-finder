@@ -10,7 +10,6 @@ import { useDeviceNotifications } from "@/hooks/useDeviceNotifications";
 import { supabase } from "@/integrations/supabase/client";
 import { Skeleton } from "@/components/ui/skeleton";
 import MarketPageLoader from "@/components/MarketPageLoader";
-import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -79,9 +78,6 @@ const isInternationalFeedItem = (item: any): boolean => {
 };
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
-interface FundYieldSnapshot { snapshot_date: string; annual_yield: number; fund_id: string; }
-interface RateHistory { snapshot_date: string; rate: number; currency_code: string; }
-interface StockPriceHistory { snapshot_date: string; price: number; stock_id: string; }
 
 /* ─── Change Indicator ─── */
 const trendOf = (current: number, previous: number | null | undefined): "up" | "down" | "flat" | undefined => {
@@ -561,27 +557,6 @@ const AssetGroup = ({
  * Pass color="auto" to derive stroke from data trend (green up / red down).
  * Pass an explicit trend prop to override auto detection (keeps line in sync
  * with an external % change indicator).
- *
- * Uses lightweight SVG Sparkline (no recharts) to keep the homepage critical
- * JS path small and improve Speed Index / LCP.
- */
-const MiniChart = ({ data, color = "hsl(var(--accent))", trend }: { data: { snapshot_date: string; rate: number }[]; color?: string; trend?: "up" | "down" | "flat" }) => {
-  if (data.length < 2) return null;
-  const series = data.map((d) => d.rate);
-  return (
-    <div className="w-full" style={{ height: 60 }}>
-      <Sparkline
-        data={series}
-        width={300}
-        height={60}
-        color={color}
-        trend={trend}
-        className="w-full h-full"
-      />
-    </div>
-  );
-};
-
 /* ─── Detailed Highlight Card (desktop) ─── */
 /**
  * Compact highlight card matching the reference design:
@@ -846,144 +821,6 @@ const HighlightColumn = ({ icon: Icon, label, link, children }: {
   </div>
 );
 
-/* ─── Watchlist (grouped by asset type) ─── */
-const WatchlistSubGroup = ({ label, count, children }: { label: string; count: number; children: React.ReactNode }) => (
-  <div>
-    <div className="flex items-center gap-2 mb-2">
-      <p className="text-[10px] font-semibold text-muted-foreground uppercase tracking-wider">{label}</p>
-      <span className="text-[10px] text-muted-foreground/70">·</span>
-      <span className="text-[10px] text-muted-foreground/70">{count}</span>
-    </div>
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-3">
-      {children}
-    </div>
-  </div>
-);
-
-const WatchlistGroupedSection = ({
-  watchedFunds, watchedStocks, watchedRates, watchedCommoditiesList,
-  getFundHistory, getStockHistory, getStockSparkData, getHistory,
-  openAlert, toggleAsset,
-}: {
-  watchedFunds: FundFromDB[];
-  watchedStocks: Stock[];
-  watchedRates: ExchangeRate[];
-  watchedCommoditiesList: Commodity[];
-  getFundHistory: (id: string) => { snapshot_date: string; rate: number }[];
-  getStockHistory: (id: string) => { snapshot_date: string; rate: number }[];
-  getStockSparkData: (id: string) => number[] | undefined;
-  getHistory: (code: string) => { snapshot_date: string; rate: number }[];
-  openAlert: (type: "stock" | "currency" | "commodity", id: string, name: string, price: number, unit?: string) => void;
-  toggleAsset: (type: string, id: string, name: string) => void;
-}) => {
-  // Group funds by fund_type for clearer organisation
-  const fundsByType = useMemo(() => {
-    const grouped: Record<string, FundFromDB[]> = {};
-    watchedFunds.forEach((f) => {
-      const key = f.fund_type || "other";
-      if (!grouped[key]) grouped[key] = [];
-      grouped[key].push(f);
-    });
-    return grouped;
-  }, [watchedFunds]);
-
-  const total =
-    watchedFunds.length + watchedStocks.length + watchedRates.length + watchedCommoditiesList.length;
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <h2 className="text-sm font-semibold text-foreground flex items-center gap-2">
-          <Star className="h-4 w-4 text-warning" /> Your Watchlist
-        </h2>
-        <span className="text-[10px] text-muted-foreground">{total} items</span>
-      </div>
-
-      <div className="space-y-5">
-        {/* Funds (grouped by type) */}
-        {watchedFunds.length > 0 && (
-          <div className="space-y-4">
-            {Object.entries(fundsByType).map(([type, list]) => {
-              const label = FUND_TYPE_LABELS[type as FundType] || type.replace("_", " ");
-              return (
-                <WatchlistSubGroup key={type} label={label} count={list.length}>
-                  {list.map((f) => {
-                    const fHistory = getFundHistory(f.id);
-                    const fundTrend: "up" | "down" | "flat" | undefined = fHistory.length >= 2
-                      ? (fHistory[fHistory.length - 1].rate > fHistory[0].rate ? "up" : fHistory[fHistory.length - 1].rate < fHistory[0].rate ? "down" : "flat")
-                      : undefined;
-                    return (
-                      <WatchCard key={f.id} title={f.name} sub={f.manager} value={`${Number(f.annual_yield || 0).toFixed(2)}%`}
-                        change={<span className="text-[11px] text-muted-foreground">Daily: {Number(f.daily_yield || 0).toFixed(4)}%</span>}
-                        chart={fHistory.length > 2 ? <MiniChart data={fHistory} color="hsl(var(--primary))" /> : undefined}
-                        sparkData={fHistory.length > 2 ? fHistory.map(h => h.rate) : undefined}
-                        trend={fundTrend}
-                        linkTo={`/compare/${f.slug}`}
-                        onRemove={() => toggleAsset("fund", f.id, f.name)} />
-                    );
-                  })}
-                </WatchlistSubGroup>
-              );
-            })}
-          </div>
-        )}
-
-        {/* Stocks */}
-        {watchedStocks.length > 0 && (
-          <WatchlistSubGroup label="Stocks" count={watchedStocks.length}>
-            {watchedStocks.map(s => {
-              const sHistory = getStockHistory(s.id);
-              return (
-                <WatchCard key={s.id} title={s.symbol} sub={s.name} value={`KES ${Number(s.price || 0).toFixed(2)}`}
-                  change={<Change current={Number(s.price || 0)} previous={s.previous_price ? Number(s.previous_price) : null} />}
-                  chart={sHistory.length > 2 ? <MiniChart data={sHistory} /> : undefined}
-                  sparkData={getStockSparkData(s.id)}
-                  trend={trendOf(s.price, s.previous_price)}
-                  linkTo={`/stocks/${s.symbol}`}
-                  onAlert={() => openAlert("stock", s.id, s.name, s.price, "KES")}
-                  onRemove={() => toggleAsset("stock", s.id, s.name)} />
-              );
-            })}
-          </WatchlistSubGroup>
-        )}
-
-        {/* FX Rates */}
-        {watchedRates.length > 0 && (
-          <WatchlistSubGroup label="FX Rates" count={watchedRates.length}>
-            {watchedRates.map(r => {
-              const history = getHistory(r.currency_code);
-              return (
-                <WatchCard key={r.id} title={`${r.currency_code}/KES`} sub={r.currency_name} value={`KES ${Number(r.rate).toFixed(2)}`}
-                  change={<Change current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />}
-                  chart={history.length > 2 ? <MiniChart data={history} /> : undefined}
-                  sparkData={history.length > 2 ? history.map(h => h.rate) : undefined}
-                  trend={trendOf(Number(r.rate), r.previous_rate != null ? Number(r.previous_rate) : null)}
-                  linkTo="/rates"
-                  onAlert={() => openAlert("currency", r.id, `${r.currency_code}/KES`, Number(r.rate), "KES")}
-                  onRemove={() => toggleAsset("currency", r.id, `${r.currency_code}/KES`)} />
-              );
-            })}
-          </WatchlistSubGroup>
-        )}
-
-        {/* Commodities */}
-        {watchedCommoditiesList.length > 0 && (
-          <WatchlistSubGroup label="Commodities" count={watchedCommoditiesList.length}>
-            {watchedCommoditiesList.map(c => (
-              <WatchCard key={c.id} title={c.name} sub={c.symbol} value={`${Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${c.unit}`}
-                change={<Change current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />}
-                trend={trendOf(Number(c.price), c.previous_price != null ? Number(c.previous_price) : null)}
-                linkTo="/commodities"
-                onAlert={() => openAlert("commodity", c.id, c.name, Number(c.price), c.unit)}
-                onRemove={() => toggleAsset("commodity", c.id, c.name)} />
-            ))}
-          </WatchlistSubGroup>
-        )}
-      </div>
-    </div>
-  );
-};
-
 /* ─── Main Page ─── */
 const OverviewPage = () => {
   useDocumentTitle(
@@ -1030,10 +867,6 @@ const OverviewPage = () => {
   const [newsOffset, setNewsOffset] = useState(0);
   const [newsHasMore, setNewsHasMore] = useState(true);
   const [newsCategoryLoading, setNewsCategoryLoading] = useState(false);
-  const [rateHistory, setRateHistory] = useState<RateHistory[]>([]);
-  const [fundSnapshots, setFundSnapshots] = useState<FundYieldSnapshot[]>([]);
-  const [stockHistory, setStockHistory] = useState<StockPriceHistory[]>([]);
-  const [historyReady, setHistoryReady] = useState(false);
   const [watchlist, setWatchlist] = useState<WatchlistItem[]>([]);
 
   const [watchlistLoading, setWatchlistLoading] = useState(true);
@@ -1218,28 +1051,6 @@ const OverviewPage = () => {
       setNewsOffset(0);
       setNewsHasMore(n.length === 60);
     }).catch(() => {}).finally(() => setNewsLoading(false));
-    // 90-day window for history (much smaller payloads than limit=500/1000 unfiltered)
-    const since = new Date(Date.now() - 90 * 24 * 60 * 60 * 1000).toISOString().slice(0, 10);
-    const historyRequests = [
-      supabase.from("exchange_rate_history_public" as any)
-      .select("snapshot_date, rate, currency_code")
-      .gte("snapshot_date", since)
-      .order("snapshot_date", { ascending: true }),
-      supabase.from("fund_yield_snapshots")
-      .select("snapshot_date, annual_yield, fund_id")
-      .gte("snapshot_date", since)
-      .order("snapshot_date", { ascending: true }),
-      supabase.from("stock_price_history" as any)
-      .select("snapshot_date, price, stock_id")
-      .gte("snapshot_date", since)
-      .order("snapshot_date", { ascending: true }),
-    ];
-    void Promise.allSettled(historyRequests).then(([ratesResult, fundsResult, stocksResult]) => {
-      if (ratesResult.status === "fulfilled") setRateHistory(((ratesResult.value.data as any) || []).map((h: any) => ({ ...h, rate: Number(h.rate) })));
-      if (fundsResult.status === "fulfilled") setFundSnapshots(((fundsResult.value.data as any) || []).map((s: any) => ({ ...s, annual_yield: Number(s.annual_yield) })));
-      if (stocksResult.status === "fulfilled") setStockHistory(((stocksResult.value.data as any) || []).map((h: any) => ({ ...h, price: Number(h.price) })));
-      setHistoryReady(true);
-    });
   }, []);
 
   useEffect(() => {
@@ -1392,8 +1203,8 @@ const OverviewPage = () => {
 
   const hasWatchlist = watchedStocks.length > 0 || watchedRates.length > 0 || watchedCommoditiesList.length > 0 || watchedFunds.length > 0;
 
-  // Keep every initially visible market panel out of view until its data has settled.
-  const loading = marketLoading || fundsLoading || newsLoading || !historyReady || (!!user && watchlistLoading);
+  // Primary critical data needed to render the feed and market overview
+  const loading = newsLoading || marketLoading;
 
   // Best performers
   const bestStock = useMemo(() => stocks.length ? [...stocks].sort((a, b) => b.day_change_percent - a.day_change_percent)[0] : null, [stocks]);
@@ -1435,11 +1246,6 @@ const OverviewPage = () => {
   const mmFunds = useMemo(() => funds.filter(f => f.fund_type === "money_market"), [funds]);
   const fiFunds = useMemo(() => funds.filter(f => f.fund_type === "fixed_income"), [funds]);
   const bestMMYield = useMemo(() => mmFunds.length ? Math.max(...mmFunds.map(f => f.annual_yield)) : 0, [mmFunds]);
-
-  const getHistory = (code: string) => rateHistory.filter(h => h.currency_code === code).slice(-30);
-  const getFundHistory = (fundId: string) => fundSnapshots.filter(s => s.fund_id === fundId).slice(-30).map(s => ({ snapshot_date: s.snapshot_date, rate: s.annual_yield }));
-  const getStockHistory = (stockId: string) => stockHistory.filter(h => h.stock_id === stockId).slice(-30).map(h => ({ snapshot_date: h.snapshot_date, rate: h.price }));
-  const getStockSparkData = (stockId: string) => stockHistory.filter(h => h.stock_id === stockId).slice(-30).map(h => h.price);
 
   const displayName = profileName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
@@ -1504,9 +1310,7 @@ const OverviewPage = () => {
   }, [news]);
 
 
-  const showPageLoading = useMinimumLoadingDuration(loading);
-
-  if (showPageLoading) {
+  if (loading) {
     return <MarketPageLoader message="Loading latest market overview…" className="min-h-screen" />;
   }
 
