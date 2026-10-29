@@ -15,7 +15,7 @@ export default function MobileBottomNav() {
   const pathname = location.pathname;
 
   const activeTab = useMemo(() => {
-    if (pathname === "/news" || pathname.startsWith("/news/")) return "news";
+    if (pathname === "/" || pathname === "/overview" || pathname === "/news" || pathname.startsWith("/news/")) return "news";
     if (pathname === "/stocks" || pathname.startsWith("/stocks/")) return "stocks";
     if (pathname === "/funds" || pathname === "/money-market-funds-kenya" || pathname.startsWith("/compare/")) return "funds";
     if (pathname === "/portfolio" || pathname.startsWith("/portfolio/") || pathname === "/watchlist") return "portfolio";
@@ -31,7 +31,7 @@ export default function MobileBottomNav() {
         <div className="flex h-16 items-center justify-around px-2">
           {/* 1. News */}
           <NavTab
-            to="/news"
+            to="/"
             icon={Newspaper}
             label="News"
             isActive={activeTab === "news"}

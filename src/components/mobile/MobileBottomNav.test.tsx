@@ -10,7 +10,25 @@ vi.mock("@/hooks/useAuth", () => ({
 
 describe("MobileBottomNav Tab Highlighting Verification", () => {
   it("highlights the corresponding tab for core routes", () => {
-    // 1. News route
+    // 1. Root / home route (starts with news feed)
+    const { unmount: unmountRoot } = render(
+      <MemoryRouter initialEntries={["/"]}>
+        <MobileBottomNav />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("News")).toHaveClass("text-emerald-600");
+    unmountRoot();
+
+    // 2. /overview route
+    const { unmount: unmountOverview } = render(
+      <MemoryRouter initialEntries={["/overview"]}>
+        <MobileBottomNav />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("News")).toHaveClass("text-emerald-600");
+    unmountOverview();
+
+    // 3. /news route
     const { unmount: unmountNews } = render(
       <MemoryRouter initialEntries={["/news"]}>
         <MobileBottomNav />
@@ -19,7 +37,16 @@ describe("MobileBottomNav Tab Highlighting Verification", () => {
     expect(screen.getByText("News")).toHaveClass("text-emerald-600");
     unmountNews();
 
-    // 2. Stocks route
+    // 4. /news/:id article detail route
+    const { unmount: unmountNewsArticle } = render(
+      <MemoryRouter initialEntries={["/news/kenya-economy-update-2026"]}>
+        <MobileBottomNav />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("News")).toHaveClass("text-emerald-600");
+    unmountNewsArticle();
+
+    // 5. Stocks route
     const { unmount: unmountStocks } = render(
       <MemoryRouter initialEntries={["/stocks"]}>
         <MobileBottomNav />
@@ -28,7 +55,7 @@ describe("MobileBottomNav Tab Highlighting Verification", () => {
     expect(screen.getByText("Stocks")).toHaveClass("text-emerald-600");
     unmountStocks();
 
-    // 3. MMFs route
+    // 6. MMFs route
     const { unmount: unmountFunds } = render(
       <MemoryRouter initialEntries={["/funds"]}>
         <MobileBottomNav />
@@ -37,7 +64,7 @@ describe("MobileBottomNav Tab Highlighting Verification", () => {
     expect(screen.getByText("MMFs")).toHaveClass("text-emerald-600");
     unmountFunds();
 
-    // 4. Portfolio route
+    // 7. Portfolio route
     const { unmount: unmountPortfolio } = render(
       <MemoryRouter initialEntries={["/portfolio"]}>
         <MobileBottomNav />
