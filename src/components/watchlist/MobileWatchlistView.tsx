@@ -16,6 +16,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import WatchCard, { type AlertState } from "@/components/watchlist/WatchCard";
+import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
 import { computeAlertSummary } from "@/lib/watchlistAlertSummary";
@@ -507,6 +508,7 @@ export default function MobileWatchlistView() {
                             key={f.id}
                             title={f.name}
                             sub={f.manager}
+                            visual={<WatchlistAssetAvatar type="fund" name={f.name} manager={f.manager} logoUrl={f.logo_url} size={36} />}
                             value={`${f.annual_yield.toFixed(2)}%`}
                             change={
                               <span className="text-[11px] text-muted-foreground">
@@ -546,6 +548,7 @@ export default function MobileWatchlistView() {
                       key={s.id}
                       title={s.name}
                       sub={s.symbol}
+                      visual={<WatchlistAssetAvatar type="stock" symbol={s.symbol} name={s.name} logoUrl={s.logo_url} size={36} />}
                       value={`KES ${Number(s.price).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
                       change={
                         <span className={`inline-flex items-center gap-0.5 font-bold ${isUp ? "text-emerald-500" : isDown ? "text-red-500" : "text-muted-foreground"}`}>
@@ -584,6 +587,7 @@ export default function MobileWatchlistView() {
                       key={r.id}
                       title={`${r.currency_code}/KES`}
                       sub={r.currency_name}
+                      visual={<WatchlistAssetAvatar type="currency" currencyCode={r.currency_code} name={r.currency_name} size={36} />}
                       value={`KES ${Number(r.rate).toLocaleString("en-US", { minimumFractionDigits: 2 })}`}
                       change={
                         pct != null ? (
@@ -623,6 +627,7 @@ export default function MobileWatchlistView() {
                       key={c.id}
                       title={c.name}
                       sub={c.symbol || c.unit}
+                      visual={<WatchlistAssetAvatar type="commodity" symbol={c.symbol} name={c.name} size={36} />}
                       value={`${Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2 })} ${c.unit || ""}`.trim()}
                       change={
                         pct != null ? (

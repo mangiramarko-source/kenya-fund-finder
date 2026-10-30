@@ -9,6 +9,7 @@ export interface WatchCardProps {
   sub: string;
   value: string;
   change: React.ReactNode;
+  visual?: React.ReactNode;
   /** Mobile-only optional richer chart (kept for backward compatibility with OverviewPage). */
   chart?: React.ReactNode;
   sparkData?: number[];
@@ -32,6 +33,7 @@ const WatchCard = ({
   sub,
   value,
   change,
+  visual,
   sparkData,
   trend,
   onAlert,
@@ -57,6 +59,7 @@ const WatchCard = ({
   const mobileMain = (
     <div className="flex min-w-0 flex-col gap-4">
       <div className="flex items-start gap-3">
+        {visual && <div className="shrink-0 pt-0.5">{visual}</div>}
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             <span className="text-[16px] font-semibold leading-tight text-foreground truncate">{title}</span>
@@ -91,6 +94,7 @@ const WatchCard = ({
 
   const desktopMain = (
     <div className="flex items-center gap-3 p-3.5">
+      {visual && <div className="shrink-0">{visual}</div>}
       <div className="flex-1 min-w-0">
         <span className="font-bold text-foreground text-sm truncate block">{title}</span>
         <p className="text-[11px] text-muted-foreground truncate">{sub}</p>

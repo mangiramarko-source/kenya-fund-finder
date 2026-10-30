@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Sheet, SheetClose, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import WatchCard, { type AlertState } from "@/components/watchlist/WatchCard";
+import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
 import { computeAlertSummary } from "@/lib/watchlistAlertSummary";
@@ -783,6 +784,7 @@ const WatchlistPage = () => {
                         key={f.id}
                         title={f.name}
                         sub={f.manager}
+                        visual={<WatchlistAssetAvatar type="fund" name={f.name} manager={f.manager} logoUrl={f.logo_url} size={36} />}
                         value={`${f.annual_yield.toFixed(2)}%`}
                         change={
                           <span className="text-[11px] text-muted-foreground">
@@ -821,6 +823,7 @@ const WatchlistPage = () => {
                   key={s.id}
                   title={s.symbol}
                   sub={s.name}
+                  visual={<WatchlistAssetAvatar type="stock" symbol={s.symbol} name={s.name} logoUrl={s.logo_url} size={36} />}
                   value={`KES ${s.price.toFixed(2)}`}
                   change={<Change current={s.price} previous={s.previous_price} />}
                   sparkData={spark.length > 2 ? spark : undefined}
@@ -855,6 +858,7 @@ const WatchlistPage = () => {
                   key={r.id}
                   title={`${r.currency_code}/KES`}
                   sub={r.currency_name}
+                  visual={<WatchlistAssetAvatar type="currency" currencyCode={r.currency_code} name={r.currency_name} size={36} />}
                   value={`KES ${Number(r.rate).toFixed(2)}`}
                   change={
                     <Change
@@ -892,6 +896,7 @@ const WatchlistPage = () => {
                 key={c.id}
                 title={c.name}
                 sub={c.symbol}
+                visual={<WatchlistAssetAvatar type="commodity" symbol={c.symbol} name={c.name} size={36} />}
                 value={`${Number(c.price).toLocaleString("en-US", {
                   minimumFractionDigits: 2,
                 })} ${c.unit}`}
