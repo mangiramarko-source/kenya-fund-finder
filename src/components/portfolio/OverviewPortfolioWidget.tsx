@@ -96,6 +96,8 @@ export default function OverviewPortfolioWidget() {
             unit: "KES",
           },
           assetType: "stock",
+          symbol: "SCOM",
+          logoUrl: scom?.logo_url,
           onClick: () => navigate("/portfolio"),
         },
       ];
@@ -109,6 +111,12 @@ export default function OverviewPortfolioWidget() {
       if (item.asset_type === "mmf") {
         const yld = item.current_yield || 14.5;
         const dailyInterest = (val * (yld / 100)) / 365;
+        const matchedFund = funds.find(
+          (f) =>
+            f.id === item.id ||
+            f.name.toLowerCase() === item.asset_name.toLowerCase() ||
+            (item.ticker && f.slug.toLowerCase().includes(item.ticker.toLowerCase()))
+        );
         return {
           type: "holding",
           title: item.asset_name,
@@ -127,6 +135,9 @@ export default function OverviewPortfolioWidget() {
             amountSuffix: "/day",
           },
           assetType: "mmf",
+          symbol: item.ticker || matchedFund?.slug?.substring(0, 4).toUpperCase() || "MMF",
+          logoUrl: matchedFund?.logo_url,
+          manager: matchedFund?.manager,
           onClick: () => navigate("/portfolio"),
         };
       }
@@ -142,6 +153,36 @@ export default function OverviewPortfolioWidget() {
           : item.asset_type === "fx" || item.asset_type === "currency"
           ? "FX"
           : item.asset_type.toUpperCase();
+
+      const matchedStock =
+        item.asset_type === "stock"
+          ? stocks.find(
+              (s) =>
+                s.id === item.id ||
+                (item.ticker && s.symbol.toUpperCase() === item.ticker.toUpperCase()) ||
+                s.name.toLowerCase() === item.asset_name.toLowerCase()
+            )
+          : undefined;
+
+      const matchedRate =
+        item.asset_type === "fx" || item.asset_type === "currency"
+          ? rates.find(
+              (r) =>
+                r.id === item.id ||
+                (item.ticker && r.currency_code.toUpperCase() === item.ticker.toUpperCase()) ||
+                r.currency_name.toLowerCase() === item.asset_name.toLowerCase()
+            )
+          : undefined;
+
+      const matchedCmd =
+        item.asset_type === "commodity"
+          ? commodities.find(
+              (c) =>
+                c.id === item.id ||
+                (item.ticker && c.symbol.toUpperCase() === item.ticker.toUpperCase()) ||
+                c.name.toLowerCase() === item.asset_name.toLowerCase()
+            )
+          : undefined;
 
       return {
         type: "holding",
@@ -162,10 +203,21 @@ export default function OverviewPortfolioWidget() {
           unit: "KES",
         },
         assetType: item.asset_type,
+        symbol:
+          item.ticker ||
+          matchedStock?.symbol ||
+          matchedRate?.currency_code ||
+          matchedCmd?.symbol,
+        logoUrl: matchedStock?.logo_url,
+        currencyCode:
+          matchedRate?.currency_code ||
+          (item.asset_type === "fx" || item.asset_type === "currency"
+            ? item.ticker?.split("/")[0]
+            : undefined),
         onClick: () => navigate("/portfolio"),
       };
     });
-  }, [portfolioItems, portfolioChanges, isPortfolioEmpty, stocks, navigate]);
+  }, [portfolioItems, portfolioChanges, isPortfolioEmpty, stocks, funds, rates, commodities, navigate]);
 
   // Transform Real Watchlist Assets into Unified Card Format (with Benchmark Fallbacks)
   const watchlistCards = useMemo<OverviewAssetCardProps[]>(() => {
@@ -206,6 +258,8 @@ export default function OverviewPortfolioWidget() {
             unit: "KES",
           },
           assetType: "stock",
+          symbol: "SCOM",
+          logoUrl: scom?.logo_url,
           onClick: () => navigate("/stocks/SCOM"),
         },
         {
@@ -225,6 +279,8 @@ export default function OverviewPortfolioWidget() {
             unit: "KES",
           },
           assetType: "stock",
+          symbol: "EQTY",
+          logoUrl: eqty?.logo_url,
           onClick: () => navigate("/stocks/EQTY"),
         },
       ];
@@ -248,6 +304,9 @@ export default function OverviewPortfolioWidget() {
             unit: "%",
           },
           assetType: "fund",
+          symbol: topMmf.slug?.substring(0, 4).toUpperCase() || "MMF",
+          logoUrl: topMmf.logo_url,
+          manager: topMmf.manager,
           onClick: () => navigate(`/compare/${topMmf.slug || ""}`),
         });
       }
@@ -269,6 +328,8 @@ export default function OverviewPortfolioWidget() {
           unit: "KES",
         },
         assetType: "currency",
+        symbol: "USD",
+        currencyCode: "USD",
         onClick: () => navigate("/rates"),
       });
 
@@ -301,6 +362,8 @@ export default function OverviewPortfolioWidget() {
             unit: "KES",
           },
           assetType: "stock",
+          symbol: stock?.symbol || item.item_name,
+          logoUrl: stock?.logo_url,
           onClick: () => navigate(`/stocks/${stock?.symbol || item.item_id}`),
         };
       }
@@ -328,6 +391,9 @@ export default function OverviewPortfolioWidget() {
             unit: "%",
           },
           assetType: "fund",
+          symbol: fund?.name?.substring(0, 4).toUpperCase() || "MMF",
+          logoUrl: fund?.logo_url,
+          manager: fund?.manager,
           onClick: () =>
             fund?.slug ? navigate(`/compare/${fund.slug}`) : navigate("/compare"),
         };
@@ -356,6 +422,8 @@ export default function OverviewPortfolioWidget() {
             unit: "KES",
           },
           assetType: "currency",
+          symbol: rate?.currency_code || "FX",
+          currencyCode: rate?.currency_code,
           onClick: () => navigate("/rates"),
         };
       }
@@ -383,6 +451,7 @@ export default function OverviewPortfolioWidget() {
             unit: "KES",
           },
           assetType: "commodity",
+          symbol: cmd?.symbol || item.item_name,
           onClick: () => navigate("/commodities"),
         };
       }
@@ -400,6 +469,7 @@ export default function OverviewPortfolioWidget() {
         statLabel: "1D Move",
         oneDay: { available: false, percent: null },
         assetType: item.item_type,
+        symbol: item.item_name,
         onClick: () => navigate("/watchlist"),
       };
     });

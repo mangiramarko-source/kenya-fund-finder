@@ -9,6 +9,7 @@ import {
   Gem,
   Landmark,
 } from "lucide-react";
+import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
 
 export type OverviewCardType = "holding" | "watching";
 
@@ -30,6 +31,11 @@ export interface OverviewAssetCardProps {
     amountSuffix?: string;
   };
   assetType?: "stock" | "fund" | "mmf" | "currency" | "fx" | "commodity" | "fixed_income" | string;
+  symbol?: string;
+  logoUrl?: string | null;
+  manager?: string | null;
+  currencyCode?: string;
+  visual?: React.ReactNode;
   onClick?: () => void;
   className?: string;
 }
@@ -80,6 +86,35 @@ const getAssetIcon = (assetType?: string) => {
   }
 };
 
+const isAvatarSupported = (assetType?: string): boolean => {
+  const norm = assetType?.toLowerCase();
+  return (
+    norm === "stock" ||
+    norm === "fund" ||
+    norm === "mmf" ||
+    norm === "unit_trust" ||
+    norm === "currency" ||
+    norm === "fx" ||
+    norm === "commodity"
+  );
+};
+
+const getWatchlistAssetType = (
+  assetType?: string
+): "stock" | "fund" | "currency" | "commodity" => {
+  const norm = assetType?.toLowerCase();
+  if (norm === "stock") return "stock";
+  if (norm === "fund" || norm === "mmf" || norm === "unit_trust") return "fund";
+  if (norm === "currency" || norm === "fx") return "currency";
+  if (norm === "commodity") return "commodity";
+  return "stock";
+};
+
+const isCurrencyType = (assetType?: string): boolean => {
+  const norm = assetType?.toLowerCase();
+  return norm === "currency" || norm === "fx";
+};
+
 const getBadgeStyles = (tone?: "emerald" | "amber" | "sky" | "purple") => {
   switch (tone) {
     case "emerald":
@@ -106,6 +141,11 @@ export default function OverviewAssetCard({
   statLabel = "1D Move",
   oneDay,
   assetType,
+  symbol,
+  logoUrl,
+  manager,
+  currencyCode,
+  visual,
   onClick,
   className = "",
 }: OverviewAssetCardProps) {
@@ -145,11 +185,30 @@ export default function OverviewAssetCard({
       {/* Top Header Row */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2 min-w-0">
-          <div
-            className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${iconConfig.bg}`}
-          >
-            <IconComponent className={`h-3.5 w-3.5 ${iconConfig.color}`} />
-          </div>
+          {visual ? (
+            <div className="shrink-0">{visual}</div>
+          ) : isAvatarSupported(assetType) ? (
+            <WatchlistAssetAvatar
+              type={getWatchlistAssetType(assetType)}
+              symbol={symbol || subtitle || title}
+              name={title}
+              manager={manager}
+              logoUrl={logoUrl}
+              currencyCode={
+                currencyCode ||
+                (isCurrencyType(assetType)
+                  ? (symbol || subtitle)?.split("/")[0]
+                  : undefined)
+              }
+              size={28}
+            />
+          ) : (
+            <div
+              className={`w-7 h-7 rounded-full border flex items-center justify-center shrink-0 ${iconConfig.bg}`}
+            >
+              <IconComponent className={`h-3.5 w-3.5 ${iconConfig.color}`} />
+            </div>
+          )}
           {subtitle && (
             <span className="text-[11px] font-bold tracking-wide text-zinc-400 group-hover:text-zinc-200 truncate transition-colors">
               {subtitle}

@@ -82,4 +82,17 @@ describe("OverviewAssetCard", () => {
     fireEvent.keyDown(card, { key: "Enter" });
     expect(onClick).toHaveBeenCalledTimes(1);
   });
+
+  it("renders with a custom visual element if provided", () => {
+    const props: OverviewAssetCardProps = {
+      type: "watching",
+      title: "Gold ETF",
+      categoryLabel: "COMMODITY",
+      primaryValue: "KES 3,200",
+      visual: <span data-testid="custom-visual">Custom Visual</span>,
+    };
+
+    render(<OverviewAssetCard {...props} />);
+    expect(screen.getByTestId("custom-visual")).toBeInTheDocument();
+  });
 });
