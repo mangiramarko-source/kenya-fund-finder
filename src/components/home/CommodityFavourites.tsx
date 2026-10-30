@@ -1,4 +1,4 @@
-import { Star, TrendingUp, TrendingDown, Minus } from "lucide-react";
+import { Star, TrendingUp, TrendingDown, Minus, Coins, Fuel, Sparkles, Coffee, Leaf, Wheat, Gem } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import type { WatchlistEntry } from "@/hooks/useAssetWatchlist";
 
@@ -18,6 +18,66 @@ interface CommodityFavouritesProps {
 
 const formatPrice = (n: number) =>
   n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const getCommodityVisual = (symbol: string, name: string) => {
+  const s = symbol.toLowerCase();
+  const n = name.toLowerCase();
+
+  if (s.includes("xau") || n.includes("gold")) {
+    return {
+      Icon: Coins,
+      className: "bg-amber-100 dark:bg-amber-950/60 text-amber-600 dark:text-amber-400 border-amber-200/80 dark:border-amber-800/40",
+    };
+  }
+  if (s.includes("brent") || s.includes("oil") || n.includes("oil") || n.includes("crude")) {
+    return {
+      Icon: Fuel,
+      className: "bg-slate-200 dark:bg-slate-800 text-slate-700 dark:text-slate-300 border-slate-300/80 dark:border-slate-700/40",
+    };
+  }
+  if (s.includes("xag") || n.includes("silver")) {
+    return {
+      Icon: Sparkles,
+      className: "bg-zinc-100 dark:bg-zinc-800 text-zinc-600 dark:text-zinc-300 border-zinc-300/80 dark:border-zinc-700/40",
+    };
+  }
+  if (s.includes("cof") || n.includes("coffee")) {
+    return {
+      Icon: Coffee,
+      className: "bg-amber-100/80 dark:bg-amber-950/80 text-amber-800 dark:text-amber-300 border-amber-200/80 dark:border-amber-900/40",
+    };
+  }
+  if (s.includes("tea") || n.includes("tea")) {
+    return {
+      Icon: Leaf,
+      className: "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-800/40",
+    };
+  }
+  if (s.includes("wheat") || n.includes("wheat") || s.includes("corn") || n.includes("maize")) {
+    return {
+      Icon: Wheat,
+      className: "bg-yellow-100 dark:bg-yellow-950/60 text-yellow-700 dark:text-yellow-400 border-yellow-200/80 dark:border-yellow-800/40",
+    };
+  }
+  return {
+    Icon: Gem,
+    className: "bg-indigo-100 dark:bg-indigo-950/60 text-indigo-600 dark:text-indigo-400 border-indigo-200/80 dark:border-indigo-800/40",
+  };
+};
+
+const CommodityAvatar = ({ symbol, name, size = 28 }: { symbol: string; name: string; size?: number }) => {
+  const { Icon, className } = getCommodityVisual(symbol, name);
+
+  return (
+    <div
+      aria-hidden
+      className={`rounded-full flex items-center justify-center border shrink-0 ${className}`}
+      style={{ width: size, height: size }}
+    >
+      <Icon className="h-3.5 w-3.5" />
+    </div>
+  );
+};
 
 const CommodityFavourites = ({ entries, commodities }: CommodityFavouritesProps) => {
   if (entries.length === 0) return null;
@@ -55,11 +115,14 @@ const CommodityFavourites = ({ entries, commodities }: CommodityFavouritesProps)
           return (
             <div
               key={c.id}
-              className="flex items-center justify-between gap-3 min-w-[170px] max-w-[220px] shrink-0 rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card px-3.5 py-2 hover:border-emerald-500/40 shadow-xs transition-all"
+              className="flex items-center justify-between gap-2.5 min-w-[190px] max-w-[240px] shrink-0 rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card px-3 py-2 hover:border-emerald-500/40 shadow-xs transition-all"
             >
-              <div className="min-w-0 flex-1">
-                <span className="text-xs font-bold text-foreground tracking-wide block truncate">{c.symbol}</span>
-                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{c.name}</p>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <CommodityAvatar symbol={c.symbol} name={c.name} size={28} />
+                <div className="min-w-0 flex-1">
+                  <span className="text-xs font-bold text-foreground tracking-wide block truncate">{c.symbol}</span>
+                  <p className="text-[10px] text-muted-foreground truncate mt-0.5">{c.name}</p>
+                </div>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-xs font-bold tabular-nums text-foreground">{formatPrice(c.price)}</p>

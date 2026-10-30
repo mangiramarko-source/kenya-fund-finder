@@ -1,6 +1,8 @@
+import { useState } from "react";
 import { Link } from "react-router-dom";
 import { Star, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getStockLogoUrl } from "@/lib/stockBranding";
 import type { WatchlistEntry } from "@/hooks/useFundWatchlist";
 
 interface Stock {
@@ -11,6 +13,7 @@ interface Stock {
   day_change: number;
   day_change_percent: number;
   sector: string;
+  logo_url?: string | null;
 }
 
 interface StockFavouritesProps {
@@ -20,6 +23,43 @@ interface StockFavouritesProps {
 
 const formatNumber = (n: number) =>
   n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+const StockAvatar = ({ symbol, logoUrl, size = 28 }: { symbol: string; logoUrl?: string | null; size?: number }) => {
+  const [failed, setFailed] = useState(false);
+  const resolvedLogo = getStockLogoUrl(symbol, logoUrl);
+
+  const hash = Array.from(symbol).reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const hue = hash % 360;
+  const bg = `hsl(${hue} 60% 90%)`;
+  const fg = `hsl(${hue} 50% 30%)`;
+  const initials = symbol.slice(0, 2).toUpperCase();
+
+  if (resolvedLogo && !failed) {
+    return (
+      <img
+        src={resolvedLogo}
+        alt=""
+        width={size}
+        height={size}
+        loading="lazy"
+        decoding="async"
+        onError={() => setFailed(true)}
+        className="rounded-full border border-border/40 bg-white object-contain p-0.5 shrink-0"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+
+  return (
+    <div
+      aria-hidden
+      className="rounded-full flex items-center justify-center font-bold border border-border/40 shrink-0"
+      style={{ width: size, height: size, background: bg, color: fg, fontSize: size * 0.38 }}
+    >
+      {initials}
+    </div>
+  );
+};
 
 const StockFavourites = ({ entries, stocks }: StockFavouritesProps) => {
   if (entries.length === 0) return null;
@@ -45,11 +85,16 @@ const StockFavourites = ({ entries, stocks }: StockFavouritesProps) => {
           <Link
             key={s.id}
             to={`/stocks/${s.symbol}`}
-            className="flex items-center justify-between gap-3 min-w-[170px] max-w-[220px] shrink-0 rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card px-3.5 py-2 hover:border-emerald-500/40 shadow-xs transition-all active:scale-[0.98] group"
+            className="flex items-center justify-between gap-2.5 min-w-[190px] max-w-[240px] shrink-0 rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card px-3 py-2 hover:border-emerald-500/40 shadow-xs transition-all active:scale-[0.98] group"
           >
-            <div className="min-w-0 flex-1">
-              <span className="text-xs font-bold text-foreground tracking-wide block truncate">{s.symbol}</span>
-              <p className="text-[10px] text-muted-foreground truncate mt-0.5">{s.name}</p>
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+              <StockAvatar symbol={s.symbol} logoUrl={s.logo_url} size={28} />
+              <div className="min-w-0 flex-1">
+                <span className="text-xs font-bold text-foreground tracking-wide block truncate group-hover:text-accent transition-colors">
+                  {s.symbol}
+                </span>
+                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{s.name}</p>
+              </div>
             </div>
             <div className="text-right shrink-0">
               <p className="text-xs font-bold tabular-nums text-foreground">

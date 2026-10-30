@@ -1,5 +1,7 @@
+import { useState } from "react";
 import { Star, TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { getCurrencyFlagUrl } from "@/lib/currencyBranding";
 import type { WatchlistEntry } from "@/hooks/useAssetWatchlist";
 
 interface Rate {
@@ -17,6 +19,37 @@ interface RateFavouritesProps {
 
 const formatRate = (n: number) =>
   n.toLocaleString("en-KE", { minimumFractionDigits: 2, maximumFractionDigits: 4 });
+
+const CurrencyAvatar = ({ currencyCode, size = 28 }: { currencyCode: string; size?: number }) => {
+  const [failed, setFailed] = useState(false);
+  const flagUrl = getCurrencyFlagUrl(currencyCode);
+
+  if (flagUrl && !failed) {
+    return (
+      <img
+        src={flagUrl}
+        alt=""
+        width={size}
+        height={size}
+        loading="lazy"
+        decoding="async"
+        onError={() => setFailed(true)}
+        className="rounded-full border border-border/40 object-cover shrink-0"
+        style={{ width: size, height: size }}
+      />
+    );
+  }
+
+  return (
+    <div
+      aria-hidden
+      className="rounded-full flex items-center justify-center font-bold border border-border/40 bg-muted text-muted-foreground shrink-0"
+      style={{ width: size, height: size, fontSize: size * 0.38 }}
+    >
+      {currencyCode.slice(0, 2).toUpperCase()}
+    </div>
+  );
+};
 
 const RateFavourites = ({ entries, rates }: RateFavouritesProps) => {
   if (entries.length === 0) return null;
@@ -54,11 +87,16 @@ const RateFavourites = ({ entries, rates }: RateFavouritesProps) => {
           return (
             <div
               key={r.id}
-              className="flex items-center justify-between gap-3 min-w-[170px] max-w-[220px] shrink-0 rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card px-3.5 py-2 hover:border-emerald-500/40 shadow-xs transition-all"
+              className="flex items-center justify-between gap-2.5 min-w-[190px] max-w-[240px] shrink-0 rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card px-3 py-2 hover:border-emerald-500/40 shadow-xs transition-all"
             >
-              <div className="min-w-0 flex-1">
-                <span className="text-xs font-bold text-foreground tracking-wide block truncate">{r.currency_code}/KES</span>
-                <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.currency_name}</p>
+              <div className="flex items-center gap-2 min-w-0 flex-1">
+                <CurrencyAvatar currencyCode={r.currency_code} size={28} />
+                <div className="min-w-0 flex-1">
+                  <span className="text-xs font-bold text-foreground tracking-wide block truncate">
+                    {r.currency_code}/KES
+                  </span>
+                  <p className="text-[10px] text-muted-foreground truncate mt-0.5">{r.currency_name}</p>
+                </div>
               </div>
               <div className="text-right shrink-0">
                 <p className="text-xs font-bold tabular-nums text-foreground">{formatRate(r.rate)}</p>
