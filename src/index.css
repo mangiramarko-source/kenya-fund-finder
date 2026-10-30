@@ -3,6 +3,23 @@
 @tailwind utilities;
 
 @layer utilities {
+  /* Safe-area inset utilities for iOS PWA / standalone notch & Dynamic Island */
+  .pt-safe {
+    padding-top: env(safe-area-inset-top, 0px);
+  }
+  .pb-safe {
+    padding-bottom: env(safe-area-inset-bottom, 0px);
+  }
+  .top-safe-nav {
+    top: calc(3.5rem + env(safe-area-inset-top, 0px));
+  }
+  .h-safe-nav {
+    height: calc(3.5rem + env(safe-area-inset-top, 0px));
+  }
+  .h-safe-detail-header {
+    height: calc(58px + env(safe-area-inset-top, 0px));
+  }
+
   .scrollbar-hide, .hide-scrollbar, .no-scrollbar {
     -ms-overflow-style: none;
     scrollbar-width: none;

@@ -240,7 +240,7 @@ const Navbar = () => {
       <div className="md:hidden">
         <header
           ref={headerRef}
-          className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md"
+          className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md pt-safe"
         >
           <nav className="flex h-14 items-center justify-between px-4">
             {/* Left: Dynamic title or KFF logo */}
@@ -286,7 +286,7 @@ const Navbar = () => {
             </div>
           </nav>
         </header>
-        <div className="h-14" aria-hidden="true" />
+        <div className="h-safe-nav" aria-hidden="true" />
       </div>
 
       <MobileAccountSheet

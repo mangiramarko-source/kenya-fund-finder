@@ -151,7 +151,7 @@ const AuthPage = () => {
   };
 
   return (
-    <div className="w-full max-w-full overflow-x-hidden min-h-[calc(100vh-5rem)] flex items-center justify-center py-6 lg:py-8 px-3.5 sm:px-4 relative">
+    <div className="w-full max-w-full overflow-x-hidden min-h-[calc(100vh-5rem)] flex items-center justify-center py-6 pt-[calc(1.5rem+env(safe-area-inset-top,0px))] lg:py-8 px-3.5 sm:px-4 relative">
       {/* Background ambient lighting - constrained on mobile to prevent horizontal overflow */}
       <div className="absolute top-1/4 left-1/2 -translate-x-1/2 w-[280px] sm:w-[550px] h-[300px] bg-emerald-500/10 rounded-full blur-[100px] pointer-events-none -z-10 overflow-hidden" />
 

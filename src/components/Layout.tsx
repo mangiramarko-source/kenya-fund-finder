@@ -72,7 +72,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
         )}
         {showDesktopTicker && (
           <div
-            className={`fixed inset-x-0 z-40 w-full top-14 ${
+            className={`fixed inset-x-0 z-40 w-full top-safe-nav md:top-14 ${
               showMobileTicker ? "block" : "hidden md:block"
             }`}
           >

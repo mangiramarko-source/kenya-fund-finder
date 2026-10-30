@@ -225,7 +225,7 @@ const PortfolioPage = () => {
       {/* Mobile View Only: Unified "My Assets" */}
       <div className="block md:hidden">
         {/* Sticky Top Filter Pills Bar (matches overall app pill styling) */}
-        <div className="sticky top-14 z-30 bg-background/95 backdrop-blur-md px-4 py-2.5 border-b border-border/60">
+        <div className="sticky top-safe-nav z-30 bg-background/95 backdrop-blur-md px-4 py-2.5 border-b border-border/60">
           <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
             <button
               type="button"

@@ -13,7 +13,7 @@ const OfflineBanner = () => {
     <div
       role="status"
       aria-live="polite"
-      className="sticky top-0 z-40 w-full border-b border-warning/40 bg-warning/10 backdrop-blur"
+      className="sticky top-safe-nav md:top-14 z-40 w-full border-b border-warning/40 bg-warning/10 backdrop-blur"
     >
       <div className="mx-auto flex max-w-screen-2xl items-center gap-2 px-4 py-2 text-xs md:text-sm">
         <WifiOff className="h-3.5 w-3.5 text-warning" />

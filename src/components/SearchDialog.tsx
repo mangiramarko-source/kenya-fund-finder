@@ -581,7 +581,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
           className="fixed inset-0 z-[100] flex flex-col w-screen h-[100dvh] bg-background text-foreground md:hidden animate-in fade-in duration-200"
         >
           {/* Mobile Top Header */}
-          <div className="flex items-center gap-2 px-3 pt-3 pb-2.5 border-b border-border bg-background shrink-0">
+          <div className="flex items-center gap-2 px-3 pt-[calc(0.75rem+env(safe-area-inset-top,0px))] pb-2.5 border-b border-border bg-background shrink-0">
             <button
               type="button"
               onClick={() => setOpen(false)}
