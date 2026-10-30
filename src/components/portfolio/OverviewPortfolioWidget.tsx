@@ -9,8 +9,6 @@ import { useMarketData } from "@/components/home/MarketTicker";
 import { fetchFunds, type FundFromDB } from "@/lib/api";
 import { ArrowRight, Briefcase, Plus } from "lucide-react";
 
-type WidgetTab = "all" | "portfolio" | "watchlist";
-
 const fmtCurrency = (val: number, curr: "KES" | "USD" = "KES") =>
   new Intl.NumberFormat("en-KE", {
     style: "currency",
@@ -48,7 +46,6 @@ const matchWatchlistItem = (
 
 export default function OverviewPortfolioWidget() {
   const navigate = useNavigate();
-  const [activeTab, setActiveTab] = useState<WidgetTab>("all");
   const [funds, setFunds] = useState<FundFromDB[]>([]);
 
   // Portfolio hooks (pulls authenticated database rows or guest local storage)
@@ -408,17 +405,13 @@ export default function OverviewPortfolioWidget() {
     });
   }, [watchlistItems, isWatchlistEmpty, stocks, rates, commodities, funds, navigate]);
 
-  // Combined cards based on selected tab and user data presence (Hybrid Stream)
+  // Combined cards: Hybrid Stream showing portfolio holdings first, followed by watchlist items
   const displayCards = useMemo<OverviewAssetCardProps[]>(() => {
-    if (activeTab === "portfolio") return portfolioCards;
-    if (activeTab === "watchlist") return watchlistCards;
-
-    // activeTab === "all":
-    // 1. User with real portfolio but empty watchlist: show real holdings + 3 suggested benchmarks
+    // 1. User with real portfolio but empty watchlist: show real holdings + 3 live market benchmarks
     if (!isPortfolioEmpty && isWatchlistEmpty) {
       return [...portfolioCards.slice(0, 7), ...watchlistCards.slice(0, 3)];
     }
-    // 2. User with real watchlist but empty portfolio: show demo holding + real watchlist
+    // 2. User with real watchlist but empty portfolio: show live Safaricom holding + real watchlist
     if (isPortfolioEmpty && !isWatchlistEmpty) {
       return [...portfolioCards.slice(0, 1), ...watchlistCards.slice(0, 9)];
     }
@@ -426,64 +419,31 @@ export default function OverviewPortfolioWidget() {
     if (!isPortfolioEmpty && !isWatchlistEmpty) {
       return [...portfolioCards, ...watchlistCards].slice(0, 10);
     }
-    // 4. Guest with neither: show demo holding + suggested benchmarks
+    // 4. Guest with neither: show live Safaricom holding + live market benchmarks
     return [...portfolioCards, ...watchlistCards];
-  }, [activeTab, portfolioCards, watchlistCards, isPortfolioEmpty, isWatchlistEmpty]);
+  }, [portfolioCards, watchlistCards, isPortfolioEmpty, isWatchlistEmpty]);
 
   const totalPortfolioCount = portfolioItems.length;
   const totalWatchlistCount = watchlistItems.length;
   const combinedCount = totalPortfolioCount + totalWatchlistCount;
-
-  // Determine whether to show "See More" or "Add" in action card
-  const isAllMore = combinedCount > 10;
-  const isPortfolioMore = totalPortfolioCount > 10;
-  const isWatchlistMore = totalWatchlistCount > 10;
+  const isMore = combinedCount > 10;
 
   return (
     <div className="mb-6 space-y-3">
-      {/* Header Row with Segmented Control on the Right */}
-      <div className="flex items-center justify-between gap-2.5 px-1">
+      {/* Header Row: Title on Left, Manage Link on Right */}
+      <div className="flex items-center justify-between px-1">
         <h2 className="text-base font-bold text-foreground flex items-center gap-1.5 shrink-0">
           <Briefcase className="h-4 w-4 text-[#00A651]" />
           <span>Portfolio &amp; Watchlist</span>
         </h2>
 
-        {/* Segmented Pill Tabs on the Right */}
-        <div className="inline-flex items-center bg-[#1c1c1f] border border-zinc-800/90 rounded-full p-1 text-xs">
-          <button
-            type="button"
-            onClick={() => setActiveTab("all")}
-            className={`px-3 py-1 rounded-full font-semibold transition-all ${
-              activeTab === "all"
-                ? "bg-[#2c2c30] text-white shadow-xs"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            All
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("portfolio")}
-            className={`px-3 py-1 rounded-full font-semibold transition-all ${
-              activeTab === "portfolio"
-                ? "bg-[#2c2c30] text-white shadow-xs"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            Portfolio
-          </button>
-          <button
-            type="button"
-            onClick={() => setActiveTab("watchlist")}
-            className={`px-3 py-1 rounded-full font-semibold transition-all ${
-              activeTab === "watchlist"
-                ? "bg-[#2c2c30] text-white shadow-xs"
-                : "text-zinc-400 hover:text-zinc-200"
-            }`}
-          >
-            Watchlist
-          </button>
-        </div>
+        <Link
+          to="/portfolio"
+          className="text-xs font-bold text-[#00A651] hover:underline flex items-center gap-0.5"
+        >
+          <span>{isPortfolioEmpty ? "Create Portfolio" : "Manage"}</span>
+          <ArrowRight className="h-3.5 w-3.5" />
+        </Link>
       </div>
 
       {/* Horizontal Scroll Carousel */}
@@ -497,70 +457,28 @@ export default function OverviewPortfolioWidget() {
 
         {/* End-of-Carousel Quick Action Card */}
         <div className="w-[170px] sm:w-[180px] shrink-0 snap-start min-h-[148px]">
-          {activeTab === "watchlist" ? (
-            <Link
-              to="/watchlist"
-              className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[148px] bg-[#131316]/80 border border-zinc-800 hover:border-amber-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all group select-none"
-            >
-              <div className="w-8 h-8 rounded-full bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
-                {isWatchlistMore ? <ArrowRight className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+          <Link
+            to={isPortfolioEmpty ? "/portfolio" : isWatchlistEmpty ? "/watchlist" : "/portfolio"}
+            className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[148px] bg-[#131316]/80 border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all group select-none"
+          >
+            <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
+              {isMore ? <ArrowRight className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
+            </div>
+            <div>
+              <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
+                {isMore
+                  ? `See More (${combinedCount - 10} more)`
+                  : isPortfolioEmpty
+                  ? "Add Investment"
+                  : "Add Asset"}
               </div>
-              <div>
-                <div className="text-xs font-bold text-white group-hover:text-amber-400 transition-colors">
-                  {isWatchlistMore
-                    ? `See More (${totalWatchlistCount - 10} more)`
-                    : "Add to Watchlist"}
-                </div>
-                <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">
-                  {isWatchlistMore
-                    ? "View full watchlist"
-                    : "Track Stocks & Funds"}
-                </div>
+              <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">
+                {isMore
+                  ? "View all holdings & markets"
+                  : "Track MMF, Stocks & FX"}
               </div>
-            </Link>
-          ) : activeTab === "portfolio" ? (
-            <Link
-              to="/portfolio"
-              className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[148px] bg-[#131316]/80 border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all group select-none"
-            >
-              <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-                {isPortfolioMore ? <ArrowRight className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-              </div>
-              <div>
-                <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
-                  {isPortfolioMore
-                    ? `See More (${totalPortfolioCount - 10} more)`
-                    : "Add Investment"}
-                </div>
-                <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">
-                  {isPortfolioMore
-                    ? "View all portfolio"
-                    : "Track MMF, Stocks & FX"}
-                </div>
-              </div>
-            </Link>
-          ) : (
-            <Link
-              to={isPortfolioEmpty ? "/portfolio" : "/watchlist"}
-              className="flex flex-col items-center justify-center gap-2 w-full h-full min-h-[148px] bg-[#131316]/80 border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all group select-none"
-            >
-              <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-                {isAllMore ? <ArrowRight className="h-4 w-4" /> : <Plus className="h-4 w-4" />}
-              </div>
-              <div>
-                <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
-                  {isAllMore
-                    ? `See More (${combinedCount - 10} more)`
-                    : "Add Asset"}
-                </div>
-                <div className="text-[10px] text-zinc-400 mt-0.5 leading-tight">
-                  {isAllMore
-                    ? "View all holdings & markets"
-                    : "Portfolio or Watchlist"}
-                </div>
-              </div>
-            </Link>
-          )}
+            </div>
+          </Link>
         </div>
       </div>
     </div>

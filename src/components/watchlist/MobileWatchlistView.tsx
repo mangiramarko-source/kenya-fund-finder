@@ -331,7 +331,7 @@ export default function MobileWatchlistView() {
     }));
   }, [addSheetItems]);
 
-  const watchCardStatusClass = "mt-2 pt-2 border-t border-border/60 text-[10px] text-muted-foreground";
+  const watchCardStatusClass = "flex-wrap gap-x-2 gap-y-1 [&>span]:text-[10px] [&>span]:leading-tight [&>span]:tracking-[0.12em] text-muted-foreground";
 
   return (
     <div className="space-y-4 px-4 py-3">
