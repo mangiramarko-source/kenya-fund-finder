@@ -660,9 +660,9 @@ const MobileCommodityCard = ({
     : null;
 
   return (
-    <div className={`block rounded-[20px] border bg-card p-4 shadow-sm transition-all overflow-hidden mb-3 ${
+    <div className={`block rounded-[20px] border bg-slate-50/80 dark:bg-card p-4 shadow-sm transition-all overflow-hidden mb-3 ${
       isCompared
-        ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.02]"
+        ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.04]"
         : "border-border/80 hover:border-emerald-500/30"
     }`}>
       <button

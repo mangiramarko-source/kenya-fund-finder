@@ -107,7 +107,7 @@ export default function MobilePortfolioView({ currency, setCurrency, showPortfol
       </p>
 
       {/* ─── 1. Total Value Summary Card ─── */}
-      <div className="bg-card border border-border/75 rounded-3xl p-5 shadow-sm space-y-4 dark:bg-neutral-900/90 dark:border-white/10">
+      <div className="bg-slate-50/80 border border-border/75 rounded-3xl p-5 shadow-sm space-y-4 dark:bg-neutral-900/90 dark:border-white/10">
         <div className="flex items-center justify-between">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Total value
@@ -273,7 +273,7 @@ export default function MobilePortfolioView({ currency, setCurrency, showPortfol
 
         {/* Swipeable holdings strip — mirrors the mobile home portfolio carousel. */}
         {isEmpty ? (
-          <div className="relative overflow-hidden bg-card border border-dashed border-border rounded-2xl p-6 text-center text-sm text-muted-foreground space-y-3 dark:bg-neutral-900/50">
+          <div className="relative overflow-hidden bg-slate-50/80 border border-dashed border-border rounded-2xl p-6 text-center text-sm text-muted-foreground space-y-3 dark:bg-neutral-900/50">
             <KoraIllustration pose="neutral" className="absolute bottom-0 right-2 h-28 w-28 opacity-90" />
             <p className="relative">No holdings added in this category.</p>
             <button

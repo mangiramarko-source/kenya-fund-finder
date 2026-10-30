@@ -666,7 +666,7 @@ const MobileStockHighlightCard = ({
   return (
     <Link
       to={linkTo}
-      className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
+      className="block rounded-xl border border-border bg-slate-50/80 dark:bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
     >
       <div className="flex items-center gap-3 p-3.5">
         <div className="flex-1 min-w-0">
@@ -711,7 +711,7 @@ const MobileFundHighlightCard = ({
   return (
     <Link
       to={linkTo}
-      className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
+      className="block rounded-xl border border-border bg-slate-50/80 dark:bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
     >
       <div className="flex items-center gap-3 p-3.5">
         <div className="flex-1 min-w-0">
@@ -1463,7 +1463,7 @@ const SectionPanel = ({ title, icon: Icon, link, linkLabel, count, sub, children
 const FundCardMobile = ({ fund, isBest }: { fund: FundFromDB; isBest?: boolean }) => (
   <Link
     to={`/compare/${fund.slug}`}
-    className="block rounded-xl border border-border bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
+    className="block rounded-xl border border-border bg-slate-50/80 dark:bg-card hover:border-accent/30 transition-all active:scale-[0.99] overflow-hidden"
   >
     <div className="flex items-center gap-3 p-3.5">
       <div className="flex-1 min-w-0">

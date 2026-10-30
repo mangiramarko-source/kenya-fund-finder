@@ -28,6 +28,7 @@ type NotificationContextValue = {
   markAsRead: (id: string) => Promise<void>;
   markAllRead: () => Promise<void>;
   deleteNotification: (id: string) => Promise<void>;
+  clearAllNotifications: () => Promise<void>;
   openNotification: (notification: AppNotification) => Promise<void>;
 };
 
@@ -121,6 +122,11 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
     await supabase.from("notifications").delete().eq("id", id);
     setNotifications((items) => items.filter((item) => item.id !== id));
   }, []);
+  const clearAllNotifications = useCallback(async () => {
+    if (!userId) return;
+    await supabase.from("notifications").delete().eq("user_id", userId);
+    setNotifications([]);
+  }, [userId]);
   const openNotification = useCallback(async (notification: AppNotification) => {
     if (!notification.is_read) await markAsRead(notification.id);
     if (notification.type === "price_alert") navigate("/alerts");
@@ -171,8 +177,8 @@ export function NotificationProvider({ children }: { children: React.ReactNode }
   const value = useMemo(() => ({
     notifications,
     unreadCount: notifications.filter((notification) => !notification.is_read).length,
-    markAsRead, markAllRead, deleteNotification, openNotification,
-  }), [deleteNotification, markAllRead, markAsRead, notifications, openNotification]);
+    markAsRead, markAllRead, deleteNotification, clearAllNotifications, openNotification,
+  }), [clearAllNotifications, deleteNotification, markAllRead, markAsRead, notifications, openNotification]);
   return <NotificationContext.Provider value={value}>{children}<LivePriceAlertCard notification={livePriceAlert} onDismiss={() => setLivePriceAlert(null)} onView={(notification) => { setLivePriceAlert(null); void openNotification(notification); }} /></NotificationContext.Provider>;
 }
 

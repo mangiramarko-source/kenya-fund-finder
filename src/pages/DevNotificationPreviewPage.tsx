@@ -10,6 +10,7 @@ import {
   Moon,
   RotateCcw,
   Sun,
+  Trash2,
   TrendingUp,
   WalletCards,
   X,
@@ -48,6 +49,7 @@ export default function DevNotificationPreviewPage() {
   if (!import.meta.env.DEV) return null;
 
   const markAllRead = () => setNotifications((items) => items.map((item) => ({ ...item, read: true })));
+  const clearAll = () => setNotifications([]);
   const openNotification = (id: string) => setNotifications((items) => items.map((item) => item.id === id ? { ...item, read: true } : item));
   const reset = () => {
     setNotifications(seedNotifications);
@@ -84,7 +86,7 @@ export default function DevNotificationPreviewPage() {
                 setAlertOpen={setAlertOpen}
                 notifications={notifications}
                 unreadCount={unreadCount}
-                onMarkAllRead={markAllRead}
+                onClearAll={clearAll}
                 onOpenNotification={openNotification}
               />
             </div>
@@ -113,7 +115,7 @@ function PreviewButton({ active, onClick, label, children }: { active: boolean; 
 }
 
 function PreviewFrame({
-  device, drawerOpen, setDrawerOpen, alertOpen, setAlertOpen, notifications, unreadCount, onMarkAllRead, onOpenNotification,
+  device, drawerOpen, setDrawerOpen, alertOpen, setAlertOpen, notifications, unreadCount, onClearAll, onOpenNotification,
 }: {
   device: Device;
   drawerOpen: boolean;
@@ -122,7 +124,7 @@ function PreviewFrame({
   setAlertOpen: (open: boolean) => void;
   notifications: PreviewNotification[];
   unreadCount: number;
-  onMarkAllRead: () => void;
+  onClearAll: () => void;
   onOpenNotification: (id: string) => void;
 }) {
   const isMobile = device === "mobile";
@@ -146,7 +148,7 @@ function PreviewFrame({
       </div>
 
       {alertOpen && <LiveAlertCard notification={liveAlert} onDismiss={() => setAlertOpen(false)} onView={() => { onOpenNotification(liveAlert.id); setAlertOpen(false); }} />}
-      {drawerOpen && <NotificationDrawer device={device} notifications={notifications} unreadCount={unreadCount} onClose={() => setDrawerOpen(false)} onMarkAllRead={onMarkAllRead} onOpen={onOpenNotification} />}
+      {drawerOpen && <NotificationDrawer device={device} notifications={notifications} unreadCount={unreadCount} onClose={() => setDrawerOpen(false)} onClearAll={onClearAll} onOpen={onOpenNotification} />}
     </div>
   );
 }
@@ -179,7 +181,7 @@ function NotificationVisual({ notification }: { notification: PreviewNotificatio
   return <span className="text-xs font-black tracking-wide text-foreground">{notification.symbol.slice(0, 3)}</span>;
 }
 
-function NotificationDrawer({ device, notifications, unreadCount, onClose, onMarkAllRead, onOpen }: { device: Device; notifications: PreviewNotification[]; unreadCount: number; onClose: () => void; onMarkAllRead: () => void; onOpen: (id: string) => void }) {
+function NotificationDrawer({ device, notifications, unreadCount, onClose, onClearAll, onOpen }: { device: Device; notifications: PreviewNotification[]; unreadCount: number; onClose: () => void; onClearAll: () => void; onOpen: (id: string) => void }) {
   const mobile = device === "mobile";
   return (
     <div className="absolute inset-0 z-30 bg-slate-950/35" onClick={onClose} role="presentation">
@@ -188,7 +190,9 @@ function NotificationDrawer({ device, notifications, unreadCount, onClose, onMar
         <header className="flex items-center justify-between gap-3 border-b border-border/70 px-5 py-4">
           <div className="min-w-0"><p className="text-lg font-bold tracking-tight">Notifications</p><p className="mt-0.5 text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new notification${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
           <div className="flex shrink-0 items-center gap-1">
-            <button type="button" onClick={onMarkAllRead} disabled={!unreadCount} className="rounded-full px-3 py-2 text-xs font-semibold text-emerald-600 transition hover:bg-emerald-500/10 disabled:opacity-40"><Check className="mr-1 inline h-3.5 w-3.5" />Read all</button>
+            {notifications.length > 0 && (
+              <button type="button" onClick={onClearAll} className="rounded-full px-3 py-2 text-xs font-semibold text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition"><Trash2 className="mr-1 inline h-3.5 w-3.5" />Clear all</button>
+            )}
             <button type="button" onClick={onClose} aria-label="Close notifications" className="rounded-full p-2.5 transition hover:bg-muted"><X className="h-4 w-4" /></button>
           </div>
         </header>

@@ -71,7 +71,7 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES", orie
         {/* ─── Mock Example Card (Shown only when user has no holdings) ─── */}
         <Link
           to={user ? "/portfolio" : "/auth"}
-          className={`group relative rounded-2xl border border-border/80 bg-card p-4 shadow-sm hover:border-emerald-500/40 transition-all flex flex-col justify-between cursor-pointer ${cardClass}`}
+          className={`group relative rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card p-4 shadow-sm hover:border-emerald-500/40 transition-all flex flex-col justify-between cursor-pointer ${cardClass}`}
         >
           <div>
             <div className="flex items-center justify-between mb-2">
@@ -127,7 +127,7 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES", orie
         {/* ─── Add Holding CTA Card ─── */}
         <Link
           to={user ? "/portfolio" : "/auth"}
-          className={`group relative rounded-2xl border border-dashed border-border/80 bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer ${ctaCardClass}`}
+          className={`group relative rounded-2xl border border-dashed border-border/80 bg-slate-50/80 dark:bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-slate-50/90 dark:hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer ${ctaCardClass}`}
         >
           <div className="w-12 h-12 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-800/30 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
             <Plus className="w-6 h-6 stroke-[2.2]" />
@@ -146,7 +146,7 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES", orie
       {/* ─── Total Portfolio Summary Card ─── */}
       <Link
         to="/portfolio/summary"
-        className={`group relative rounded-2xl border border-border/80 bg-card p-4 shadow-sm hover:border-accent/40 transition-all flex flex-col justify-between cursor-pointer ${cardClass}`}
+        className={`group relative rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card p-4 shadow-sm hover:border-accent/40 transition-all flex flex-col justify-between cursor-pointer ${cardClass}`}
       >
         <div>
           <div className="flex items-center justify-between mb-2">
@@ -199,7 +199,7 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES", orie
           <Link
             key={item.id}
             to={`/portfolio?item=${item.id}`}
-            className={`group relative rounded-2xl border border-border/80 bg-card p-4 shadow-sm hover:border-border transition-all flex flex-col justify-between cursor-pointer ${cardClass}`}
+            className={`group relative rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card p-4 shadow-sm hover:border-border transition-all flex flex-col justify-between cursor-pointer ${cardClass}`}
           >
             <div>
               <div className="flex items-center justify-between mb-2">
@@ -263,7 +263,7 @@ export const PortfolioCardsCarousel: React.FC<Props> = ({ currency = "KES", orie
       {/* ─── Add Holding CTA Card ─── */}
       <Link
         to="/portfolio"
-        className={`group relative rounded-2xl border border-dashed border-border/80 bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer ${ctaCardClass}`}
+        className={`group relative rounded-2xl border border-dashed border-border/80 bg-slate-50/80 dark:bg-card p-5 shadow-sm hover:border-emerald-500/50 hover:bg-slate-50/90 dark:hover:bg-card/80 transition-all flex flex-col items-center justify-center text-center space-y-2.5 cursor-pointer ${ctaCardClass}`}
       >
         <div className="w-12 h-12 rounded-full bg-emerald-950/40 text-emerald-400 border border-emerald-800/30 flex items-center justify-center shadow-inner group-hover:scale-105 transition-transform">
           <Plus className="w-6 h-6 stroke-[2.2]" />

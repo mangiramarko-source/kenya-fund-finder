@@ -1,19 +1,37 @@
 import { fireEvent, render, screen } from "@testing-library/react";
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, it, vi, beforeEach } from "vitest";
 import { MemoryRouter } from "react-router-dom";
 import { LivePriceAlertCard } from "./LivePriceAlertCard";
 import NotificationBell, { NotificationRow } from "./NotificationBell";
 import type { AppNotification } from "./NotificationProvider";
+import { toast } from "sonner";
+
+vi.mock("sonner", () => ({
+  toast: {
+    success: vi.fn(),
+    error: vi.fn(),
+  },
+}));
 
 vi.mock("@/hooks/useAuth", () => ({
   useAuth: () => ({ user: { id: "user-1", email: "test@example.com" } }),
 }));
 
+const mockClearAllNotifications = vi.fn();
+let mockNotifications: AppNotification[] = [];
+
 vi.mock("./NotificationProvider", async (importOriginal) => {
   const actual = await importOriginal<typeof import("./NotificationProvider")>();
   return {
     ...actual,
-    useNotifications: () => ({ notifications: [], unreadCount: 0, markAllRead: vi.fn(), deleteNotification: vi.fn(), openNotification: vi.fn() }),
+    useNotifications: () => ({
+      notifications: mockNotifications,
+      unreadCount: mockNotifications.filter((n) => !n.is_read).length,
+      markAllRead: vi.fn(),
+      deleteNotification: vi.fn(),
+      clearAllNotifications: mockClearAllNotifications,
+      openNotification: vi.fn(),
+    }),
   };
 });
 
@@ -109,14 +127,44 @@ describe("NotificationRow", () => {
 });
 
 describe("Notification drawer", () => {
+  beforeEach(() => {
+    mockNotifications = [];
+    mockClearAllNotifications.mockReset();
+    vi.mocked(toast.success).mockClear();
+  });
+
   it("opens the bottom notification sheet and closes from its own header", () => {
     render(<MemoryRouter><NotificationBell /></MemoryRouter>);
 
     fireEvent.click(screen.getByRole("button", { name: /open notifications/i }));
     expect(screen.getByRole("dialog", { name: "Notifications" })).toBeInTheDocument();
     expect(screen.getByText("No notifications yet")).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: /clear all/i })).not.toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: "Close notifications" }));
     expect(screen.queryByRole("dialog", { name: "Notifications" })).not.toBeInTheDocument();
+  });
+
+  it("renders Clear all when notifications exist and clears immediately with a toast", async () => {
+    mockNotifications = [notification];
+    render(<MemoryRouter><NotificationBell /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole("button", { name: /open notifications/i }));
+    const clearAllButton = screen.getByRole("button", { name: "Clear all notifications" });
+    expect(clearAllButton).toBeInTheDocument();
+
+    fireEvent.click(clearAllButton);
+    expect(mockClearAllNotifications).toHaveBeenCalledOnce();
+    expect(toast.success).toHaveBeenCalledWith("All notifications cleared");
+  });
+
+  it("renders the notification list in a touch-friendly native scroll container", () => {
+    mockNotifications = [notification];
+    render(<MemoryRouter><NotificationBell /></MemoryRouter>);
+
+    fireEvent.click(screen.getByRole("button", { name: /open notifications/i }));
+    const scrollContainer = screen.getByText("Safaricom PLC").closest(".overflow-y-auto");
+    expect(scrollContainer).toBeInTheDocument();
+    expect(scrollContainer).toHaveClass("overscroll-contain", "touch-pan-y", "min-h-0", "flex-1");
   });
 });

@@ -66,7 +66,7 @@ const CardSparkline = ({ history, currentValue }: { history?: YieldSnapshot[]; c
 const CardSkeleton = () => (
   <div className="space-y-3">
     {Array.from({ length: 4 }).map((_, i) => (
-      <div key={i} className="rounded-[20px] border border-border bg-card p-4">
+      <div key={i} className="rounded-[20px] border border-border bg-slate-50/80 dark:bg-card p-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-3 flex-1">
             <Skeleton className="h-12 w-12 rounded-full" />
@@ -134,9 +134,9 @@ const FundMobileCards = ({ funds, snapshots, allSnapshots, loading, onClearSearc
           <Link 
             key={fund.id} 
             to={`/compare/${fund.slug}`} 
-            className={`block rounded-[22px] border bg-card p-4 shadow-sm transition-all active:scale-[0.99] overflow-hidden ${
+            className={`block rounded-[22px] border bg-slate-50/80 dark:bg-card p-4 shadow-sm transition-all active:scale-[0.99] overflow-hidden ${
               isCompared
-                ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.02]"
+                ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.04]"
                 : "border-border/80 hover:border-emerald-500/30"
             }`}
           >

@@ -33,7 +33,7 @@ vi.mock("@/hooks/useAuth", () => ({
 vi.mock("@/lib/analytics", () => ({ trackEvent: vi.fn(), trackPageView: vi.fn() }));
 
 vi.mock("@/components/alerts/NotificationProvider", () => ({
-  useNotifications: () => ({ notifications: [], unreadCount: notificationState.unreadCount, markAllRead: vi.fn(), deleteNotification: vi.fn(), openNotification: vi.fn() }),
+  useNotifications: () => ({ notifications: [], unreadCount: notificationState.unreadCount, markAllRead: vi.fn(), deleteNotification: vi.fn(), clearAllNotifications: vi.fn(), openNotification: vi.fn() }),
 }));
 
 describe("Mobile & Desktop Navigation Verification", () => {

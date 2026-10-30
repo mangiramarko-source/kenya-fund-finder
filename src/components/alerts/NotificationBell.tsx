@@ -1,9 +1,9 @@
 import { useState } from "react";
-import { Bell, Check, ChevronRight, Coffee, Trash2, WalletCards, X } from "lucide-react";
+import { Bell, ChevronRight, Coffee, Trash2, WalletCards, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { useAuth } from "@/hooks/useAuth";
-import { ScrollArea } from "@/components/ui/scroll-area";
+import { toast } from "sonner";
 import { useNavigate } from "react-router-dom";
 import { Sheet, SheetContent, SheetTitle, SheetTrigger } from "@/components/ui/sheet";
 import { priceAlertPresentation } from "./priceAlertPresentation";
@@ -13,10 +13,15 @@ import { useIsMobile } from "@/hooks/use-mobile";
 
 const NotificationBell = () => {
   const { user } = useAuth();
-  const { notifications, unreadCount, markAllRead, deleteNotification, openNotification } = useNotifications();
+  const { notifications, unreadCount, clearAllNotifications, deleteNotification, openNotification } = useNotifications();
   const [open, setOpen] = useState(false);
   const navigate = useNavigate();
   const isMobile = useIsMobile();
+
+  const handleClearAll = async () => {
+    await clearAllNotifications();
+    toast.success("All notifications cleared");
+  };
 
   // For non-authenticated users on mobile, show bell that prompts sign-up
   if (!user) {
@@ -50,18 +55,24 @@ const NotificationBell = () => {
       </SheetTrigger>
       <SheetContent side={isMobile ? "bottom" : "right"} className={isMobile ? "inset-x-2 bottom-[max(env(safe-area-inset-bottom),0.75rem)] flex max-h-[82svh] flex-col overflow-hidden rounded-[28px] border bg-background p-0 [&>button]:hidden" : "flex h-full w-[min(420px,calc(100vw-1rem))] flex-col border-l border-border bg-background p-0 [&>button]:hidden sm:max-w-none"}>
         {isMobile && <div aria-hidden="true" className="mx-auto mt-2 h-1.5 w-10 shrink-0 rounded-full bg-muted" />}
-        <div className="flex items-center gap-2 border-b border-border/80 px-5 py-2.5 md:py-3">
+        <div className="flex items-center gap-2 border-b border-border/80 px-5 py-2.5 md:py-3 shrink-0">
           <div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold text-foreground">Notifications</SheetTitle><p className="text-xs text-muted-foreground">{unreadCount ? `${unreadCount} new notification${unreadCount === 1 ? "" : "s"}` : "You’re all caught up"}</p></div>
-          {unreadCount > 0 && (
-            <Button variant="ghost" size="sm" className="text-xs h-8 px-2 text-emerald-600 hover:text-emerald-700" onClick={markAllRead}>
-              <Check className="h-3.5 w-3.5 mr-1" /> Read all
+          {notifications.length > 0 && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="text-xs h-8 px-2 text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-colors"
+              onClick={handleClearAll}
+              aria-label="Clear all notifications"
+            >
+              <Trash2 className="h-3.5 w-3.5 mr-1" /> Clear all
             </Button>
           )}
           <button onClick={() => setOpen(false)} aria-label="Close notifications" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 hover:bg-muted transition-colors">
             <X className="h-4 w-4 text-muted-foreground stroke-[2.5]" />
           </button>
         </div>
-        <ScrollArea className={isMobile ? "max-h-[calc(82svh-6.5rem)] flex-none" : "min-h-0 flex-1"}>
+        <div className="min-h-0 flex-1 overflow-y-auto overscroll-contain touch-pan-y [-webkit-overflow-scrolling:touch]">
           {notifications.length === 0 ? (
             <div className="px-5 py-10 text-center">
               <Bell className="h-6 w-6 text-muted-foreground mx-auto mb-2" />
@@ -80,7 +91,7 @@ const NotificationBell = () => {
               ))}
             </div>
           )}
-        </ScrollArea>
+        </div>
       </SheetContent>
     </Sheet>
   );

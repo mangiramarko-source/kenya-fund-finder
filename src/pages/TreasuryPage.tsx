@@ -476,7 +476,7 @@ export default function TreasuryPage() {
                   {(data?.tbills || []).map((row) => (
                     <div
                       key={row.type}
-                      className="rounded-2xl border border-border/80 bg-card p-4 space-y-2.5 shadow-sm hover:border-emerald-500/40 transition-all"
+                      className="rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card p-4 space-y-2.5 shadow-sm hover:border-emerald-500/40 transition-all"
                     >
                       {/* Top Row: Title/Subtitle + Rate */}
                       <div className="flex items-center justify-between gap-2">
@@ -747,7 +747,7 @@ export default function TreasuryPage() {
                     <div
                       key={bond.issueNo}
                       onClick={() => setSelectedBond(bond as any)}
-                      className="rounded-2xl border border-border/80 bg-card p-4 space-y-2.5 shadow-sm hover:border-emerald-500/40 transition-all cursor-pointer group"
+                      className="rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card p-4 space-y-2.5 shadow-sm hover:border-emerald-500/40 transition-all cursor-pointer group"
                     >
                       {/* Top Row: Symbol/Name + Sparkline + Yield Rate */}
                       <div className="flex items-center justify-between gap-2">

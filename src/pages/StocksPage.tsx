@@ -1463,9 +1463,9 @@ const MobileStockCard = ({
   return (
     <Link
       to={`/stocks/${s.symbol}`}
-      className={`block rounded-[20px] border bg-card p-4 shadow-sm transition-all active:scale-[0.99] overflow-hidden mb-3 ${
+      className={`block rounded-[20px] border bg-slate-50/80 dark:bg-card p-4 shadow-sm transition-all active:scale-[0.99] overflow-hidden mb-3 ${
         isCompared
-          ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.02]"
+          ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.04]"
           : "border-border/80 hover:border-emerald-500/30"
       }`}
     >
@@ -1475,14 +1475,7 @@ const MobileStockCard = ({
         <div className="flex min-w-0 flex-1 items-center gap-3">
           <StockLogoAvatar stock={s} />
           <div className="min-w-0">
-            <div className="flex items-center gap-1.5">
-              <span className="block truncate font-extrabold text-base tracking-tight text-foreground">{s.symbol}</span>
-              {s.sector && (
-                <span className="text-[11px] font-medium text-muted-foreground truncate">
-                  · {s.sector.replace(/Telecommunication(s?)/gi, "Telecom")}
-                </span>
-              )}
-            </div>
+            <span className="block truncate font-extrabold text-base tracking-tight text-foreground">{s.symbol}</span>
             <p className="mt-0.5 truncate text-xs text-muted-foreground">{s.name}</p>
           </div>
         </div>
@@ -1509,35 +1502,17 @@ const MobileStockCard = ({
       {/* Thin Divider Line */}
       <div className="border-t border-border/40 my-3" />
 
-      {/* Bottom Row: Vol, Cap (Left) and Compare Button & Star (Right) */}
-      <div className="flex items-center justify-between text-xs">
-        <div className="flex items-center gap-3 text-muted-foreground">
-          <span>
-            Vol <strong className="font-semibold text-foreground ml-0.5">{formatVolume(s.volume)}</strong>
-          </span>
-          <span>
-            Cap <strong className="font-semibold text-foreground ml-0.5">{formatMarketCap(s.market_cap)}</strong>
-          </span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={handleToggleCompare}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
-              isCompared
-                ? "bg-emerald-600 text-white shadow-xs"
-                : "border border-border/80 bg-muted/40 text-foreground hover:bg-muted"
-            }`}
-            aria-label={isCompared ? `Remove ${s.symbol} from compare` : `Compare ${s.symbol}`}
-          >
-            {isCompared ? (
-              <Check className="h-3.5 w-3.5" />
-            ) : (
-              <GitCompareArrows className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
-            )}
-            <span>{isCompared ? "Added" : "Compare"}</span>
-          </button>
+      {/* Bottom Section: Vol & Cap (with Star on right), Sector & Compare below */}
+      <div className="space-y-2.5 text-xs">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <span>
+              Vol <strong className="font-semibold text-foreground ml-0.5">{formatVolume(s.volume)}</strong>
+            </span>
+            <span>
+              Cap <strong className="font-semibold text-foreground ml-0.5">{formatMarketCap(s.market_cap)}</strong>
+            </span>
+          </div>
 
           {onToggleFavourite !== undefined && (
             <button
@@ -1556,6 +1531,30 @@ const MobileStockCard = ({
               />
             </button>
           )}
+        </div>
+
+        <div className="flex items-center justify-between pt-0.5">
+          <span className="text-xs font-medium text-muted-foreground truncate max-w-[65%]">
+            {s.sector || "General"}
+          </span>
+
+          <button
+            type="button"
+            onClick={handleToggleCompare}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+              isCompared
+                ? "bg-emerald-600 text-white shadow-xs"
+                : "border border-border/80 bg-background text-foreground hover:bg-muted"
+            }`}
+            aria-label={isCompared ? `Remove ${s.symbol} from compare` : `Compare ${s.symbol}`}
+          >
+            {isCompared ? (
+              <Check className="h-3.5 w-3.5" />
+            ) : (
+              <GitCompareArrows className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+            )}
+            <span>{isCompared ? "Added" : "Compare"}</span>
+          </button>
         </div>
       </div>
     </Link>

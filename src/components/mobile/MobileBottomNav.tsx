@@ -26,7 +26,7 @@ export default function MobileBottomNav() {
     <>
       <nav
         aria-label="Mobile Bottom Navigation"
-        className="fixed bottom-0 inset-x-0 z-50 md:hidden border-t border-border/30 bg-background/95 backdrop-blur-xl pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
+        className="fixed bottom-0 inset-x-0 z-50 md:hidden border-t border-border/80 dark:border-border/20 bg-background/95 backdrop-blur-xl pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
       >
         <div className="flex h-16 items-center justify-around px-2">
           {/* 1. News */}

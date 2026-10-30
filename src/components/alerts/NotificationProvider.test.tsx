@@ -8,6 +8,8 @@ const state = vi.hoisted(() => {
     notificationRows: [] as AppNotification[],
     broadcastHandler: undefined as ((event: { payload: { id: string } }) => Promise<void>) | undefined,
     update: vi.fn(),
+    delete: vi.fn(),
+    eq: vi.fn(),
     setAuth: vi.fn(),
     channel: undefined as unknown as { on: ReturnType<typeof vi.fn>; subscribe: ReturnType<typeof vi.fn> },
   };
@@ -32,12 +34,18 @@ vi.mock("@/integrations/supabase/client", () => ({
       if (table === "notifications") {
         const query = {
           select: vi.fn(() => query),
-          eq: vi.fn(() => query),
+          eq: vi.fn((field?: string, val?: unknown) => {
+            if (field) state.eq(field, val);
+            return query;
+          }),
           order: vi.fn(() => query),
           limit: vi.fn(() => Promise.resolve({ data: state.notificationRows })),
           maybeSingle: vi.fn(() => Promise.resolve({ data: state.notificationRows[0] ?? null })),
           update: state.update,
-          delete: vi.fn(),
+          delete: vi.fn(() => {
+            state.delete();
+            return query;
+          }),
         };
         return query;
       }
@@ -75,6 +83,16 @@ function PortfolioNotificationOpener() {
   const { notifications, openNotification } = useNotifications();
   const location = useLocation();
   return <><button type="button" onClick={() => void openNotification(notifications[0])}>Open portfolio notification</button><output>{location.pathname}</output></>;
+}
+
+function NotificationClearAllTester() {
+  const { notifications, clearAllNotifications } = useNotifications();
+  return (
+    <>
+      <span data-testid="count">{notifications.length}</span>
+      <button type="button" onClick={() => void clearAllNotifications()}>Clear all now</button>
+    </>
+  );
 }
 
 describe("NotificationProvider price-alert modals", () => {
@@ -126,5 +144,16 @@ describe("NotificationProvider price-alert modals", () => {
     expect(screen.queryByRole("alertdialog")).not.toBeInTheDocument();
     fireEvent.click(screen.getByRole("button", { name: "Open portfolio notification" }));
     await waitFor(() => expect(screen.getByText("/portfolio")).toBeInTheDocument());
+  });
+
+  it("clears all notifications and removes them from database and state", async () => {
+    state.notificationRows = [notification];
+    render(<MemoryRouter><NotificationProvider><NotificationClearAllTester /></NotificationProvider></MemoryRouter>);
+
+    expect(await screen.findByTestId("count")).toHaveTextContent("1");
+    fireEvent.click(screen.getByRole("button", { name: "Clear all now" }));
+    await waitFor(() => expect(screen.getByTestId("count")).toHaveTextContent("0"));
+    expect(state.delete).toHaveBeenCalled();
+    expect(state.eq).toHaveBeenCalledWith("user_id", "user-1");
   });
 });
