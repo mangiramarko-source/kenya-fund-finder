@@ -91,14 +91,26 @@ const FundDetailPage = () => {
     toast({ title: "Link copied to clipboard" });
   };
 
-  const fundSeoTitle = fund ? buildFundSeoTitle(fund.name, fund.slug) : "Fund Details | Kenya Fund Finder";
+  const fundSeoTitle = fund
+    ? buildFundSeoTitle(fund.name, fund.slug, 60, fund.annual_yield)
+    : "Fund Details | Kenya Fund Finder";
+
+  const fundSeoDescription = useMemo(() => {
+    if (!fund) return undefined;
+    const isUsd = fund.yield_unit === "USD" || fund.slug.toLowerCase().includes("usd");
+    const netYield = (fund.annual_yield * 0.85).toFixed(2);
+    const minText = isUsd
+      ? `KES ${fund.minimum_investment.toLocaleString()} (USD MMF)`
+      : `KES ${fund.minimum_investment.toLocaleString()}`;
+    return `${fund.name} Money Market Fund by ${fund.manager}: ${fund.annual_yield}% annual yield (${fund.daily_yield}% daily, ~${netYield}% net after 15% WHT). Min deposit: ${minText}, fee: ${fund.management_fee}%. Updated Mon–Fri.`;
+  }, [fund]);
 
   useDocumentTitle(
     fundSeoTitle,
-    fund ? `${fund.name} by ${fund.manager}. Annual rate: ${fund.annual_yield}%. Compare unit trusts in Kenya.` : undefined,
+    fundSeoDescription,
     fund ? {
       title: fundSeoTitle,
-      description: `${fund.name} by ${fund.manager}. Annual rate: ${fund.annual_yield}%. Min investment: KES ${fund.minimum_investment.toLocaleString()}.`,
+      description: fundSeoDescription || `${fund.name} by ${fund.manager}. Annual rate: ${fund.annual_yield}%.`,
       type: "article",
     } : undefined
   );
@@ -106,12 +118,43 @@ const FundDetailPage = () => {
   useJsonLd(fund ? {
     "@context": "https://schema.org",
     "@type": "FinancialProduct",
-    name: fund.name,
-    description: fund.description,
+    name: `${fund.name} ${fund.fund_type === "money_market" ? "Money Market Fund" : "Unit Trust"}`,
+    description: fundSeoDescription || fund.description,
     provider: { "@type": "Organization", name: fund.manager },
     url: `https://kenyafundfinder.com/compare/${fund.slug}`,
     interestRate: { "@type": "QuantitativeValue", value: fund.annual_yield, unitText: "percent per annum" },
-    feesAndCommissionsSpecification: `Management fee: ${fund.management_fee}%`,
+    feesAndCommissionsSpecification: `Management fee: ${fund.management_fee}% p.a.`,
+  } : null);
+
+  useJsonLd(fund ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: `What is the current yield of ${fund.name} Money Market Fund in Kenya?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `${fund.name} (${fund.manager}) has a published effective annual yield of ${fund.annual_yield}% and a nominal daily yield of ${fund.daily_yield}% (estimated ~${(fund.annual_yield * 0.85).toFixed(2)}% net after 15% KRA withholding tax).`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `What is the minimum investment and management fee for ${fund.name}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `The reported minimum initial investment for ${fund.name} is KES ${fund.minimum_investment.toLocaleString()}, with an annual management fee of ${fund.management_fee}% and a typical withdrawal turnaround of ${fund.withdrawal_time}.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `Is ${fund.name} regulated by the Capital Markets Authority (CMA)?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as a CMA-licensed collective investment scheme in Kenya" : ""}. Always verify current scheme details on the official CMA register before investing.`,
+        },
+      },
+    ],
   } : null);
 
   useJsonLd(fund ? {
@@ -119,7 +162,7 @@ const FundDetailPage = () => {
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://kenyafundfinder.com/" },
-      { "@type": "ListItem", position: 2, name: "Unit Trusts", item: "https://kenyafundfinder.com/funds" },
+      { "@type": "ListItem", position: 2, name: "Money Market Funds", item: "https://kenyafundfinder.com/funds" },
       { "@type": "ListItem", position: 3, name: fund.name, item: `https://kenyafundfinder.com/compare/${fund.slug}` },
     ],
   } : null);

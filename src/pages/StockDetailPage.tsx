@@ -127,27 +127,82 @@ const StockDetailPage = () => {
     toast({ title: "Link copied to clipboard" });
   };
 
+  const stockSeoTitle = useMemo(() => {
+    if (!stock) return "Stock Detail | Kenya Fund Finder";
+    const priceLabel = Number.isFinite(stock.price) && stock.price > 0 ? ` (KSh ${stock.price.toLocaleString("en-KE", { maximumFractionDigits: 2 })})` : "";
+    return `${stock.symbol} Share Price Today${priceLabel} – ${stock.name} NSE Stock`;
+  }, [stock]);
+
+  const stockSeoDescription = useMemo(() => {
+    if (!stock) return "";
+    const parts = [
+      `${stock.name} (${stock.symbol}) share price on the Nairobi Securities Exchange (NSE) is KSh ${stock.price.toLocaleString("en-KE", { maximumFractionDigits: 2 })}`,
+    ];
+    if (stock.dividend_yield != null) parts.push(`dividend yield ${stock.dividend_yield}%`);
+    if (stock.pe_ratio != null) parts.push(`P/E ${stock.pe_ratio}`);
+    if (stock.market_cap != null) parts.push(`market cap ${fmtCap(stock.market_cap)}`);
+    return `${parts.join(", ")}. View live NSE stock chart, financials, and disclosures.`;
+  }, [stock]);
+
   useDocumentTitle(
-    stock ? `${stock.symbol} – ${stock.name} | Kenya Fund Finder` : "Stock Detail | Kenya Fund Finder",
-    stock ? `${stock.name} (${stock.symbol}) stock price KSh ${stock.price.toLocaleString()}, daily change, volume, P/E ratio, and dividend yield on the Nairobi Securities Exchange.` : "",
+    stockSeoTitle,
+    stockSeoDescription,
     stock ? {
-      title: `${stock.symbol} – ${stock.name} Stock Price | Kenya Fund Finder`,
-      description: `${stock.name} (${stock.symbol}) at KSh ${stock.price.toLocaleString()}. Track price history, volume, and financials.`,
+      title: stockSeoTitle,
+      description: stockSeoDescription,
     } : undefined
   );
   useJsonLd(stock ? {
     "@context": "https://schema.org",
+    "@type": "Corporation",
+    name: stock.name,
+    tickerSymbol: `NSE:${stock.symbol}`,
+    url: `https://kenyafundfinder.com/stocks/${stock.symbol}`,
+    ...(stock.company_summary ? { description: stock.company_summary } : {}),
+  } : null);
+  useJsonLd(stock ? {
+    "@context": "https://schema.org",
     "@type": "FinancialProduct",
     name: `${stock.name} (${stock.symbol})`,
-    description: `${stock.name} stock listed on the Nairobi Securities Exchange. Current price: KSh ${stock.price.toLocaleString()}.`,
+    description: stockSeoDescription,
     url: `https://kenyafundfinder.com/stocks/${stock.symbol}`,
+  } : null);
+  useJsonLd(stock ? {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      {
+        "@type": "Question",
+        name: `What is the ${stock.name} (${stock.symbol}) share price on the NSE today?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `${stock.name} (${stock.symbol}) is currently quoted at KSh ${stock.price.toLocaleString("en-KE", { maximumFractionDigits: 2 })} on the Nairobi Securities Exchange (NSE)${stock.year_high && stock.year_low ? `, with a 52-week range of KSh ${stock.year_low.toLocaleString("en-KE")} to KSh ${stock.year_high.toLocaleString("en-KE")}` : ""}.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `What is ${stock.name}'s (${stock.symbol}) dividend yield and P/E ratio?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `${stock.name} (${stock.symbol}) has a reported dividend yield of ${stock.dividend_yield != null ? `${stock.dividend_yield}%` : "unavailable"} and a price-to-earnings (P/E) ratio of ${stock.pe_ratio != null ? stock.pe_ratio : "unavailable"}.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `How do I buy ${stock.name} (${stock.symbol}) shares in Kenya?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `To buy ${stock.name} (${stock.symbol}) shares on the Nairobi Securities Exchange, open a Central Depository System (CDS) account through a CMA-licensed stockbroker or investment bank in Kenya, fund your trading account, and place a market or limit order for ticker ${stock.symbol}.`,
+        },
+      },
+    ],
   } : null);
   useJsonLd(stock ? {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: "https://kenyafundfinder.com/" },
-      { "@type": "ListItem", position: 2, name: "Stocks", item: "https://kenyafundfinder.com/stocks" },
+      { "@type": "ListItem", position: 2, name: "NSE Stocks", item: "https://kenyafundfinder.com/stocks" },
       { "@type": "ListItem", position: 3, name: `${stock.symbol} – ${stock.name}`, item: `https://kenyafundfinder.com/stocks/${stock.symbol}` },
     ],
   } : null);

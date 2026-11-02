@@ -45,7 +45,54 @@ export function mmfHubSeo(funds: ResearchFund[]): SeoPageDefinition {
       `<section><h2>Frequently asked questions</h2>${MMF_FAQ.map(f => `<h3>${escapeHtml(f.question)}</h3><p>${escapeHtml(f.answer)}</p>`).join("")}</section>`,
       '<p>Educational information, not financial advice. <a href="/page/financial-disclaimer">Read the disclaimer</a>.</p>',
     ].join(""),
-    jsonLd: [{ "@context": "https://schema.org", "@type": "FAQPage", mainEntity: MMF_FAQ.map(f => ({ "@type": "Question", name: f.question, acceptedAnswer: { "@type": "Answer", text: f.answer } })) }, { "@context": "https://schema.org", "@type": "BreadcrumbList", itemListElement: [{ "@type": "ListItem", position: 1, name: "Home", item: canonicalUrl("/") }, { "@type": "ListItem", position: 2, name: "Kenyan MMFs", item: canonicalUrl("/money-market-funds-kenya") }] }],
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        name: "Kenya Money Market Funds (MMF) Daily & Annual Yields",
+        description,
+        url: canonicalUrl("/money-market-funds-kenya"),
+        creator: { "@type": "Organization", name: "Kenya Fund Finder", url: canonicalUrl("/") },
+        keywords: [
+          "money market funds in kenya",
+          "best money market funds in kenya",
+          "mmf rates in kenya today",
+          "usd money market funds kenya",
+          "cma licensed money market funds",
+        ],
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "CMA-Regulated Money Market Funds in Kenya",
+        numberOfItems: mmfs.length,
+        itemListElement: [...mmfs]
+          .sort((a, b) => Number(b.annual_yield ?? 0) - Number(a.annual_yield ?? 0))
+          .map((f, index) => ({
+            "@type": "ListItem",
+            position: index + 1,
+            name: `${f.name} Money Market Fund (${f.manager})`,
+            url: canonicalUrl(`/compare/${encodeURIComponent(f.slug!)}`),
+          })),
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "FAQPage",
+        mainEntity: MMF_FAQ.map((f) => ({
+          "@type": "Question",
+          name: f.question,
+          acceptedAnswer: { "@type": "Answer", text: f.answer },
+        })),
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: canonicalUrl("/") },
+          { "@type": "ListItem", position: 2, name: "Kenyan MMFs", item: canonicalUrl("/money-market-funds-kenya") },
+        ],
+      },
+    ],
   };
 }
 

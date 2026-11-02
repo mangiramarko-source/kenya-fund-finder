@@ -43,7 +43,12 @@ export function truncateDescription(value: unknown, maxLength = 158): string {
   return `${clipped.slice(0, lastSpace > 100 ? lastSpace : clipped.length).trim()}…`;
 }
 
-export function buildFundSeoTitle(name: string, slug: string, maxLength = 60): string {
+export function buildFundSeoTitle(
+  name: string,
+  slug: string,
+  maxLength = 60,
+  annualYield?: number | null,
+): string {
   const cleanName = stripHtml(name).replace(/\s+/g, " ").trim();
   const nameTokens = new Set(
     cleanName.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean),
@@ -61,7 +66,9 @@ export function buildFundSeoTitle(name: string, slug: string, maxLength = 60): s
     .map(tokenLabel)
     .filter((token, index, tokens) => token !== tokens[index - 1]);
   const variant = variantTokens.join(" ");
-  const suffix = " – Yield & Fees";
+  const hasValidYield = typeof annualYield === "number" && Number.isFinite(annualYield) && annualYield > 0;
+  const yieldText = hasValidYield ? `${Number(annualYield).toFixed(2)}% ` : "";
+  const suffix = ` – ${yieldText}Yield & Fees`;
   const maxIdentityLength = Math.max(12, maxLength - suffix.length);
   let identity = [cleanName, variant].filter(Boolean).join(" ");
 

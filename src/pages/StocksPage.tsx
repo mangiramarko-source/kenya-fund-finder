@@ -211,20 +211,13 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   useDocumentTitle(
-    "Kenyan Stocks – Stock Market | Kenya Fund Finder",
-    "Track Kenyan stock market prices, market cap, volumes, and performance.",
+    "NSE Share Prices Today – Nairobi Securities Exchange Stocks (2026)",
+    "Track live Nairobi Securities Exchange (NSE) share prices today, daily gainers and losers, market cap, P/E ratios, and dividend yields for Safaricom (SCOM), Equity (EQTY), KCB, EABL, and all Kenyan listed stocks.",
     {
-      title: "Kenyan Stocks – Stock Market | Kenya Fund Finder",
-      description: "Track Kenyan stock prices, volumes, and daily performance.",
+      title: "NSE Share Prices Today – Kenyan Stocks & Dividend Yields",
+      description: "Track Nairobi Securities Exchange (NSE) share prices, daily movement, volume, market cap, P/E ratios, and dividend yields in Kenya.",
     },
   );
-  useJsonLd({
-    "@context": "https://schema.org",
-    "@type": "WebPage",
-    name: "Kenyan Stocks – Kenya Fund Finder",
-    description: "Track Kenyan stock market prices and performance.",
-    url: "https://kenyafundfinder.com/stocks",
-  });
 
   const { user, loading: authLoading } = useAuth();
   const isGated = !authLoading && !user && !isBotOrPrerender();
@@ -236,6 +229,36 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     if (cachedStocks?.stocks && cachedStocks.stocks.length > 0) return cachedStocks.stocks;
     return FALLBACK_KENYAN_STOCKS;
   });
+
+  const stocksJsonLd = useMemo(() => {
+    const sorted = [...stocks].sort((a, b) => Number(b.market_cap ?? 0) - Number(a.market_cap ?? 0));
+    return {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Dataset",
+          name: "Nairobi Securities Exchange (NSE) Share Prices & Market Data",
+          description:
+            "Daily share prices, price changes, trading volume, market capitalisation, P/E ratios, and dividend yields for companies listed on the Nairobi Securities Exchange (NSE) in Kenya.",
+          url: "https://kenyafundfinder.com/stocks",
+          creator: { "@type": "Organization", name: "Kenya Fund Finder", url: "https://kenyafundfinder.com/" },
+        },
+        {
+          "@type": "ItemList",
+          name: "Top Nairobi Securities Exchange (NSE) Companies by Market Cap",
+          numberOfItems: sorted.length,
+          itemListElement: sorted.slice(0, 50).map((s, idx) => ({
+            "@type": "ListItem",
+            position: idx + 1,
+            name: `${s.name} (${s.symbol})`,
+            url: `https://kenyafundfinder.com/stocks/${encodeURIComponent(s.symbol)}`,
+          })),
+        },
+      ],
+    };
+  }, [stocks]);
+
+  useJsonLd(stocksJsonLd);
   const [marketHistory, setMarketHistory] = useState<any[]>(initialPageMemory?.marketHistory ?? []);
   const [loading, setLoading] = useState(false);
   const [marketHistoryReady, setMarketHistoryReady] = useState(true);

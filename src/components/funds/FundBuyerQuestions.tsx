@@ -1,4 +1,5 @@
 import { Link } from "react-router-dom";
+import { useJsonLd } from "@/hooks/useDocumentTitle";
 
 const questions = [
   {
@@ -31,7 +32,21 @@ const questions = [
   },
 ];
 
+const faqJsonLd = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  mainEntity: questions.map((item) => ({
+    "@type": "Question",
+    name: item.question,
+    acceptedAnswer: {
+      "@type": "Answer",
+      text: item.answer,
+    },
+  })),
+};
+
 export default function FundBuyerQuestions() {
+  useJsonLd(faqJsonLd);
   return (
     <section aria-labelledby="fund-buyer-questions" className="mt-12 rounded-2xl border border-border bg-card p-5 md:p-8">
       <div className="max-w-3xl">

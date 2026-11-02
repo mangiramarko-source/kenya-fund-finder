@@ -8,6 +8,8 @@ import { isIndexableNewsArticle, type SeoNewsArticleLike } from "../src/lib/seoN
 import { getNewsArchivePageCount, getNewsArchivePath } from "../src/lib/newsArchive";
 import { isIndexableSitePageSlug } from "../src/lib/seoSitePageEligibility";
 import { RESEARCH_ARTICLES, articlePath } from "../src/data/seoGrowthContent";
+import { SERRARI_MMF_SNAPSHOT_2026_11_02 } from "../src/lib/serrariMmfSync";
+import { FALLBACK_KENYAN_STOCKS } from "../src/lib/stockDataFallback";
 import { seoPublicData, SEO_SUPABASE_URL, SEO_SUPABASE_KEY } from "./seo-public-data";
 
 const BASE_URL = "https://kenyafundfinder.com";
@@ -31,12 +33,12 @@ interface NewsSitemapRow extends SeoNewsArticleLike {
 }
 
 const staticEntries: SitemapEntry[] = [
-  { path: "/money-market-funds-kenya", changefreq: "weekly", priority: "0.9" },
-  { path: "/mmf-calculator", changefreq: "monthly", priority: "0.8" },
-  ...RESEARCH_ARTICLES.map(a => ({ path: articlePath(a), changefreq: "monthly" as const, priority: "0.7" })),
+  { path: "/money-market-funds-kenya", lastmod: "2026-11-02", changefreq: "daily", priority: "1.0" },
+  { path: "/mmf-calculator", changefreq: "monthly", priority: "0.9" },
+  ...RESEARCH_ARTICLES.map(a => ({ path: articlePath(a), changefreq: "monthly" as const, priority: "0.8" })),
   { path: "/", changefreq: "daily", priority: "1.0" },
-  { path: "/funds", changefreq: "daily", priority: "0.9" },
-  { path: "/stocks", changefreq: "daily", priority: "0.9" },
+  { path: "/funds", lastmod: "2026-11-02", changefreq: "daily", priority: "1.0" },
+  { path: "/stocks", changefreq: "daily", priority: "1.0" },
   { path: "/compare", changefreq: "daily", priority: "0.9" },
   { path: "/rates", changefreq: "daily", priority: "0.8" },
   { path: "/commodities", changefreq: "daily", priority: "0.8" },
@@ -86,11 +88,20 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
   ]);
   if (!funds.length || !stocks.length) throw new Error("Sitemap requires populated stock and fund directories");
 
-  const fundEntries: SitemapEntry[] = funds.map((f) => ({
+  const fundBySlug = new Map<string, { slug: string; updated_at: string }>();
+  for (const f of funds) {
+    if (f.slug) fundBySlug.set(f.slug.toLowerCase(), f);
+  }
+  for (const s of SERRARI_MMF_SNAPSHOT_2026_11_02) {
+    if (!fundBySlug.has(s.slug.toLowerCase())) {
+      fundBySlug.set(s.slug.toLowerCase(), { slug: s.slug, updated_at: s.asOfDate });
+    }
+  }
+  const fundEntries: SitemapEntry[] = Array.from(fundBySlug.values()).map((f) => ({
     path: `/compare/${f.slug}`,
     lastmod: f.updated_at?.slice(0, 10),
     changefreq: "daily",
-    priority: "0.7",
+    priority: "0.8",
   }));
   const indexableNews = news.filter(isIndexableNewsArticle);
   const newsEntries: SitemapEntry[] = indexableNews
@@ -116,11 +127,20 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
       changefreq: "monthly",
       priority: "0.5",
     }));
-  const stockEntries: SitemapEntry[] = stocks.map((s) => ({
+  const stockBySymbol = new Map<string, { symbol: string; updated_at: string }>();
+  for (const s of stocks) {
+    if (s.symbol) stockBySymbol.set(s.symbol.toUpperCase(), s);
+  }
+  for (const fb of FALLBACK_KENYAN_STOCKS) {
+    if (!stockBySymbol.has(fb.symbol.toUpperCase())) {
+      stockBySymbol.set(fb.symbol.toUpperCase(), { symbol: fb.symbol, updated_at: fb.updated_at });
+    }
+  }
+  const stockEntries: SitemapEntry[] = Array.from(stockBySymbol.values()).map((s) => ({
     path: `/stocks/${encodeURIComponent(s.symbol)}`,
     lastmod: s.updated_at?.slice(0, 10),
     changefreq: "daily",
-    priority: "0.6",
+    priority: "0.8",
   }));
   return [...fundEntries, ...newsArchiveEntries, ...newsEntries, ...pageEntries, ...stockEntries];
 }

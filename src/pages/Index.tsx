@@ -1,5 +1,5 @@
-import { useEffect, useState, useCallback } from "react";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useEffect, useState, useCallback, useMemo } from "react";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, type FundFromDB, type YieldSnapshot } from "@/lib/api";
 import { FALLBACK_KENYAN_FUNDS } from "@/lib/fundDataFallback";
 import ResearchLinks from "@/components/ResearchLinks";
@@ -25,11 +25,11 @@ interface FundsPageMemory {
 
 const Index = () => {
   useDocumentTitle(
-    "Unit Trust Funds in Kenya – Compare Yields | Kenya Fund Finder",
-    "Compare CMA-regulated unit trusts and money market funds in Kenya by yield, manager, and minimum investment. Updated daily.",
+    "Money Market Funds in Kenya (2026) – Compare 40 KES & USD Yields",
+    "Compare all 40 CMA-regulated Money Market Funds (27 KES & 13 USD) and unit trusts in Kenya by daily yield, annual EAR, net return after tax, management fee, and minimum investment. Updated Mon–Fri.",
     {
-      title: "Unit Trust Funds in Kenya – Compare Yields",
-      description: "Compare CMA-regulated unit trusts and MMFs in Kenya by yield, manager, and minimum investment. Updated daily.",
+      title: "Money Market Funds in Kenya – Compare 40 KES & USD Yields",
+      description: "Compare all 40 CMA-regulated Money Market Funds and unit trusts in Kenya by yield, manager, fee, and minimum deposit. Updated Mon–Fri.",
     }
   );
   const [initialPageMemory] = useState(() => getMarketPageMemory<FundsPageMemory>("funds"));
@@ -110,6 +110,39 @@ const Index = () => {
   }, [allSnapshots, funds, loading, snapshots]);
 
   const published = funds.filter((f) => f.is_published);
+
+  const mmfListSchema = useMemo(() => {
+    const mmfs = [...published]
+      .filter((f) => f.fund_type === "money_market")
+      .sort((a, b) => b.annual_yield - a.annual_yield);
+    if (mmfs.length === 0) return null;
+    return {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "Dataset",
+          name: "Money Market Funds in Kenya (KES & USD Yields)",
+          description:
+            "Daily and effective annual yields, management fees, and minimum investments for CMA-regulated Money Market Funds in Kenya.",
+          url: "https://kenyafundfinder.com/funds",
+          creator: { "@type": "Organization", name: "Kenya Fund Finder", url: "https://kenyafundfinder.com/" },
+        },
+        {
+          "@type": "ItemList",
+          name: "Top Money Market Funds in Kenya by Annual Yield",
+          numberOfItems: mmfs.length,
+          itemListElement: mmfs.slice(0, 40).map((f, idx) => ({
+            "@type": "ListItem",
+            position: idx + 1,
+            name: `${f.name} Money Market Fund (${f.manager})`,
+            url: `https://kenyafundfinder.com/compare/${encodeURIComponent(f.slug)}`,
+          })),
+        },
+      ],
+    };
+  }, [published]);
+
+  useJsonLd(mmfListSchema);
 
   const latestFundTimestamp = published.reduce<number>((maxTs, f) => {
     const candidate = f.fact_sheet_date

@@ -41,6 +41,10 @@ describe("SEO prerender helpers", () => {
     expect(titles.every((title) => title.length <= 60)).toBe(true);
     expect(titles[0]).toContain("Balanced KES");
     expect(titles[2]).toContain("Fixed Income KES");
+
+    const withYield = buildFundSeoTitle("Cytonn", "cytonn-sh-mmf", 60, 11.11);
+    expect(withYield).toContain("11.11% Yield & Fees");
+    expect(withYield.length).toBeLessThanOrEqual(60);
   });
 
   it("renders route-specific metadata and semantic content", () => {

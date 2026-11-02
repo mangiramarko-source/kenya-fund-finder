@@ -27,6 +27,8 @@ describe("SEO growth content", () => {
     expect(page.contentHtml).toContain("Record updated");
     expect(page.contentHtml).toContain(sourceDate(fund.fact_sheet_date));
     expect(page.contentHtml).toContain("Oct 2026");
+    const schemas = Array.isArray(page.jsonLd) ? page.jsonLd : [];
+    expect(schemas.map((s) => s["@type"])).toEqual(["Dataset", "ItemList", "FAQPage", "BreadcrumbList"]);
   });
   it("never presents a unit price as a percentage or adds tax estimates to it", () => {
     const html = mmfHubSeo([{ ...fund, annual_yield: 100, yield_unit: "USD" }]).contentHtml;

@@ -24,6 +24,8 @@ import { faqByFundType, type FaqItem } from "../src/data/faq";
 import { mmfGuideFaq } from "../src/data/mmfGuideFaq";
 import { RESEARCH_ARTICLES, articleSeo, researchLinksHtml } from "../src/data/seoGrowthContent";
 import { MMF_CALCULATOR_SEO, mmfHubSeo, reportedYield, sourceDate, sourceLink } from "../src/lib/seoMarketContent";
+import { SERRARI_MMF_SNAPSHOT_2026_11_02 } from "../src/lib/serrariMmfSync";
+import { FALLBACK_KENYAN_STOCKS } from "../src/lib/stockDataFallback";
 import { seoPublicData, SEO_SUPABASE_URL, SEO_SUPABASE_KEY } from "./seo-public-data";
 
 const DIST_DIR = resolve("dist");
@@ -199,10 +201,10 @@ function staticRoutes(): SeoPageDefinition[] {
     },
     {
       path: "/funds",
-      title: "Money Market Funds in Kenya – Compare Yields & Fees",
-      description: "Compare CMA-regulated money market funds and unit trusts in Kenya by annual yield, fees, minimum investment and withdrawal time.",
-      heading: "Money market funds and unit trusts in Kenya",
-      contentHtml: paragraph("Compare published fund yields, minimum investment amounts, management fees and withdrawal periods from Kenyan fund managers."),
+      title: "Money Market Funds in Kenya (2026) – Compare 40 KES & USD Yields",
+      description: "Compare all 40 CMA-regulated Money Market Funds (27 KES & 13 USD) and unit trusts in Kenya by daily yield, annual EAR, net return after tax, management fee, and minimum investment. Updated Mon–Fri.",
+      heading: "Money Market Funds and Unit Trusts in Kenya",
+      contentHtml: paragraph("Compare published Money Market Fund (MMF) daily and annual yields, minimum investment amounts, management fees and withdrawal periods from CMA-licensed Kenyan fund managers."),
     },
     {
       path: "/stocks",
@@ -327,14 +329,29 @@ function privateRoutes(): SeoPageDefinition[] {
 
 function stockPage(stock: StockRow, stocks: StockRow[] = []): SeoPageDefinition | null {
   if (!validSegment(stock.symbol) || !stock.name) return null;
-  const path = `/stocks/${stock.symbol.toUpperCase()}`;
+  const symbolUpper = stock.symbol.toUpperCase();
+  const path = `/stocks/${symbolUpper}`;
   const price = money(stock.price);
-  const description = `${stock.name} (${stock.symbol}) share price${price ? ` is ${price}` : ""}. View its NSE price chart, daily change, market cap, P/E ratio and dividend yield.`;
+  const description = `${stock.name} (${symbolUpper}) share price${price ? ` is ${price}` : ""}${stock.dividend_yield != null ? `, dividend yield ${percent(stock.dividend_yield)}` : ""}${stock.pe_ratio != null ? `, P/E ${stock.pe_ratio}` : ""}. View its NSE price chart, daily change, volume and market cap.`;
+  const stockFaqs: FaqItem[] = [
+    {
+      question: `What is the ${stock.name} (${symbolUpper}) share price on the NSE today?`,
+      answer: `${stock.name} (${symbolUpper}) has a last reported share price of ${price || "unavailable"} on the Nairobi Securities Exchange${stock.year_low != null && stock.year_high != null ? `, with a 52-week trading range of ${money(stock.year_low)} to ${money(stock.year_high)}` : ""}.`,
+    },
+    {
+      question: `What is ${stock.name}'s (${symbolUpper}) dividend yield and P/E ratio?`,
+      answer: `${stock.name} (${symbolUpper}) shows a reported dividend yield of ${percent(stock.dividend_yield) || "unavailable"}, a P/E ratio of ${stock.pe_ratio ?? "unavailable"}, and a market capitalisation of ${money(stock.market_cap) || "unavailable"}.`,
+    },
+    {
+      question: `How do I buy ${stock.name} (${symbolUpper}) shares in Kenya?`,
+      answer: `Open a CDS account with a CMA-licensed stockbroker or investment bank in Kenya, fund your account, and place an order for ticker ${symbolUpper} on the Nairobi Securities Exchange.`,
+    },
+  ];
   return {
     path,
-    title: `${stock.symbol.toUpperCase()} Share Price Today – ${stock.name} Stock Chart`,
+    title: `${symbolUpper} Share Price Today${price ? ` (${price})` : ""} – ${stock.name} Stock`,
     description,
-    heading: `${stock.name} (${stock.symbol.toUpperCase()}) share price`,
+    heading: `${stock.name} (${symbolUpper}) share price`,
     contentHtml: `${paragraph(`${stock.name} is listed on the Nairobi Securities Exchange${stock.sector ? ` in the ${stock.sector} sector` : ""}.`)}${paragraph(stock.company_summary)}${definitionList([
       ["Current share price", price],
       ["Daily change", stock.day_change == null ? null : `${money(stock.day_change)} (${percent(stock.day_change_percent) || "percentage unavailable"})`],
@@ -347,56 +364,107 @@ function stockPage(stock: StockRow, stocks: StockRow[] = []): SeoPageDefinition 
       ["Quote source", stock.quote_source || "Public market-data feed; confirm executable prices with your broker"],
       ["Quote timestamp", sourceDate(stock.provider_updated_at || stock.updated_at)],
       ["Record updated", sourceDate(stock.updated_at)],
-    ])}<p>Quotes may be delayed. Missing metrics are unavailable. <a href="/page/market-data-methodology">Read the data methodology</a>.</p><section><h2>Related companies in ${escapeHtml(stock.sector || "the NSE")}</h2><ul>${stocks.filter(s => s.symbol !== stock.symbol && s.sector === stock.sector && validSegment(s.symbol) && s.name).slice(0, 6).map(s => `<li><a href="/stocks/${encodeURIComponent(s.symbol!.toUpperCase())}">${escapeHtml(s.name)}</a></li>`).join("")}</ul></section>${researchLinksHtml("stocks")}<p><a href="/stocks">View all NSE stocks</a> · <a href="/news">Market news</a></p>`,
+    ])}<p>Quotes may be delayed. Missing metrics are unavailable. <a href="/page/market-data-methodology">Read the data methodology</a>.</p><section><h2>Related companies in ${escapeHtml(stock.sector || "the NSE")}</h2><ul>${stocks.filter(s => s.symbol !== stock.symbol && s.sector === stock.sector && validSegment(s.symbol) && s.name).slice(0, 6).map(s => `<li><a href="/stocks/${encodeURIComponent(s.symbol!.toUpperCase())}">${escapeHtml(s.name)} (${escapeHtml(s.symbol!.toUpperCase())})</a></li>`).join("")}</ul></section>${faqContentHtml(stockFaqs)}${researchLinksHtml("stocks")}<p><a href="/stocks">View all NSE stocks</a> · <a href="/news">Market news</a></p>`,
     jsonLd: [
       {
         "@context": "https://schema.org",
+        "@type": "Corporation",
+        name: stock.name,
+        tickerSymbol: `NSE:${symbolUpper}`,
+        url: canonicalUrl(path),
+      },
+      {
+        "@context": "https://schema.org",
         "@type": "FinancialProduct",
-        name: `${stock.name} (${stock.symbol.toUpperCase()})`,
+        name: `${stock.name} (${symbolUpper})`,
         description: truncateDescription(description),
         url: canonicalUrl(path),
       },
+      faqSchema(stockFaqs),
       breadcrumb([
         { name: "Home", path: "/" },
-        { name: "Stocks", path: "/stocks" },
-        { name: `${stock.name} (${stock.symbol.toUpperCase()})`, path },
+        { name: "NSE Stocks", path: "/stocks" },
+        { name: `${stock.name} (${symbolUpper})`, path },
       ]),
     ],
   };
 }
 
-function fundPage(fund: FundRow): SeoPageDefinition | null {
+function fundPage(fund: FundRow, allFunds: FundRow[] = []): SeoPageDefinition | null {
   if (!validSegment(fund.slug) || !fund.name || !fund.manager) return null;
   const path = `/compare/${fund.slug}`;
+  const isMmf = fund.fund_type === "money_market";
+  const isPct = fund.yield_unit === "%";
+  const netYield =
+    isPct && fund.annual_yield != null && Number.isFinite(Number(fund.annual_yield))
+      ? `${(Number(fund.annual_yield) * 0.85).toLocaleString("en-KE", { maximumFractionDigits: 2 })}%`
+      : null;
   const yieldLabel = fund.annual_yield == null ? null : `${reportedYield(fund)} published figure`;
-  const description = `${fund.name} by ${fund.manager}${yieldLabel ? ` shows ${yieldLabel}` : ""}. Compare fees, minimum investment and withdrawal time.`;
+  const description = isMmf && fund.annual_yield != null
+    ? `${fund.name} Money Market Fund by ${fund.manager}: ${reportedYield(fund)} annual yield${fund.daily_yield != null ? ` (${percent(fund.daily_yield)} daily)` : ""}${netYield ? `, ~${netYield} net after 15% WHT` : ""}. Compare fees, min deposit and withdrawal time.`
+    : `${fund.name} by ${fund.manager}${yieldLabel ? ` shows ${yieldLabel}` : ""}. Compare fees, minimum investment and withdrawal time.`;
+  const peerLinks = allFunds
+    .filter(
+      (peer) =>
+        peer.slug !== fund.slug &&
+        peer.fund_type === fund.fund_type &&
+        peer.yield_unit === fund.yield_unit &&
+        validSegment(peer.slug) &&
+        peer.name,
+    )
+    .sort((a, b) => Number(b.annual_yield ?? 0) - Number(a.annual_yield ?? 0))
+    .slice(0, 8)
+    .map(
+      (peer) =>
+        `<li><a href="/compare/${encodeURIComponent(peer.slug!)}">${escapeHtml(peer.name)}</a> — ${escapeHtml(peer.manager)} (${reportedYield(peer)})</li>`,
+    )
+    .join("");
+  const fundFaqs: FaqItem[] = [
+    {
+      question: `What is the current yield of ${fund.name} ${isMmf ? "Money Market Fund" : "Unit Trust"} in Kenya?`,
+      answer: `${fund.name} (${fund.manager}) has a published annual figure of ${reportedYield(fund)}${fund.daily_yield != null ? ` and a daily yield of ${percent(fund.daily_yield)}` : ""}${netYield ? `, with an estimated net return of ${netYield} after 15% KRA withholding tax` : ""}.`,
+    },
+    {
+      question: `What is the minimum investment and management fee for ${fund.name}?`,
+      answer: `The reported minimum investment is ${fund.minimum_investment ?? "unavailable"}, the management fee is ${percent(fund.management_fee) ?? "unavailable"}, and the stated withdrawal turnaround is ${fund.withdrawal_time ?? "unavailable"}.`,
+    },
+    {
+      question: `Is ${fund.name} regulated by the Capital Markets Authority (CMA)?`,
+      answer: `${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as a CMA-regulated scheme in Kenya" : ""}. Always verify current scheme details with the manager and the CMA register.`,
+    },
+  ];
   return {
     path,
-    title: buildFundSeoTitle(fund.name, fund.slug),
+    title: buildFundSeoTitle(fund.name, fund.slug, 60, fund.annual_yield),
     description,
-    heading: fund.name,
+    heading: isMmf && !/money market/i.test(fund.name) ? `${fund.name} Money Market Fund` : fund.name,
     contentHtml: `${paragraph(`${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as CMA regulated" : ""}.`)}${paragraph(fund.description)}${definitionList([
       ["Published figure (confirm gross/net basis)", reportedYield(fund)],
+      ["Nominal daily yield", percent(fund.daily_yield)],
+      ["Estimated net yield after 15% withholding tax", netYield],
       ["Minimum investment (reported amount; confirm currency)", fund.minimum_investment],
       ["Management fee", percent(fund.management_fee)],
       ["Withdrawal time", fund.withdrawal_time],
       ["Fund type", fund.fund_type?.replaceAll("_", " ")],
       ["Fact-sheet date", sourceDate(fund.fact_sheet_date)],
       ["Record updated", sourceDate(fund.updated_at)],
-    ])}<p>${sourceLink(fund.website)}</p><p>A record update is not independent source verification. Confirm currency, yield basis and current terms with the manager.</p>${researchLinksHtml("mmf")}<p><a href="/funds">Compare all investment funds</a> · <a href="/page/source-policy">Source policy</a></p>`,
+    ])}<p>${sourceLink(fund.website)}</p><p>A record update is not independent source verification. Confirm currency, yield basis and current terms with the manager.</p>${peerLinks ? `<section><h2>Compare related Kenyan ${isMmf ? "Money Market Funds" : "unit trusts"}</h2><ul>${peerLinks}</ul></section>` : ""}${faqContentHtml(fundFaqs)}${researchLinksHtml("mmf")}<p><a href="/funds">Compare all investment funds</a> · <a href="/money-market-funds-kenya">Kenya MMF comparison table</a> · <a href="/page/source-policy">Source policy</a></p>`,
     jsonLd: [
       {
         "@context": "https://schema.org",
         "@type": "FinancialProduct",
-        name: fund.name,
+        name: isMmf && !/money market/i.test(fund.name) ? `${fund.name} Money Market Fund` : fund.name,
         description: truncateDescription(description),
         provider: { "@type": "Organization", name: fund.manager },
         url: canonicalUrl(path),
-        ...(fund.annual_yield == null || fund.yield_unit !== "%" ? {} : { interestRate: { "@type": "QuantitativeValue", value: fund.annual_yield, unitText: "percent per annum" } }),
+        ...(fund.annual_yield == null || (fund.yield_unit !== "%" && fund.yield_unit !== "USD")
+          ? {}
+          : { interestRate: { "@type": "QuantitativeValue", value: fund.annual_yield, unitText: "percent per annum" } }),
       },
+      faqSchema(fundFaqs),
       breadcrumb([
         { name: "Home", path: "/" },
-        { name: "Funds", path: "/funds" },
+        { name: "Money Market Funds", path: "/funds" },
         { name: fund.name, path },
       ]),
     ],
@@ -460,6 +528,26 @@ function contentPage(page: SitePageRow): SeoPageDefinition | null {
 
 function fundDirectoryPage(funds: FundRow[]): SeoPageDefinition {
   const validFunds = funds.filter((fund) => validSegment(fund.slug) && fund.name && fund.manager);
+  const mmfs = [...validFunds]
+    .filter((f) => f.fund_type === "money_market")
+    .sort((a, b) => Number(b.annual_yield ?? 0) - Number(a.annual_yield ?? 0));
+  const kesMmfs = mmfs.filter((f) => f.yield_unit !== "USD");
+  const usdMmfs = mmfs.filter((f) => f.yield_unit === "USD");
+
+  const renderMmfTable = (caption: string, rows: FundRow[]) => {
+    if (!rows.length) return "";
+    const bodyRows = rows
+      .map((f, idx) => {
+        const net =
+          f.annual_yield != null && Number.isFinite(Number(f.annual_yield))
+            ? `${(Number(f.annual_yield) * 0.85).toFixed(2)}%`
+            : "Unavailable";
+        return `<tr><td>${idx + 1}</td><td><a href="/compare/${encodeURIComponent(f.slug!)}">${escapeHtml(f.name)}</a></td><td>${escapeHtml(f.manager)}</td><td>${escapeHtml(percent(f.annual_yield) || "Unavailable")}</td><td>${escapeHtml(percent(f.daily_yield) || "Unavailable")}</td><td>${escapeHtml(net)}</td><td>${escapeHtml(percent(f.management_fee) || "Unavailable")}</td><td>${escapeHtml(f.minimum_investment ?? "Unavailable")}</td><td>${escapeHtml(sourceDate(f.fact_sheet_date))}</td></tr>`;
+      })
+      .join("");
+    return `<section><h2>${escapeHtml(caption)}</h2><table><caption>${escapeHtml(caption)}</caption><thead><tr><th>Rank</th><th>Fund</th><th>Manager</th><th>Annual Yield (EAR)</th><th>Daily Yield</th><th>Est. Net (After 15% WHT)</th><th>Mgmt Fee</th><th>Min Deposit</th><th>Fact-Sheet Date</th></tr></thead><tbody>${bodyRows}</tbody></table></section>`;
+  };
+
   const grouped = new Map<string, FundRow[]>();
   for (const fund of validFunds) {
     const group = fund.fund_type?.replaceAll("_", " ") || "Other funds";
@@ -471,25 +559,105 @@ function fundDirectoryPage(funds: FundRow[]): SeoPageDefinition {
     )).join("")}</ul></section>`
   )).join("");
 
+  const description = "Compare all 40 CMA-regulated Money Market Funds (27 KES & 13 USD) and unit trusts in Kenya by daily yield, annual EAR, net return after tax, management fee, and minimum investment. Updated Mon–Fri.";
+
   return {
     path: "/funds",
-    title: "Money Market Funds in Kenya – Compare Yields & Fees",
-    description: "Compare CMA-regulated money market funds and unit trusts in Kenya by annual yield, fees, minimum investment and withdrawal time.",
-    heading: "Money market funds and unit trusts in Kenya",
-    contentHtml: `${paragraph(`Browse ${validFunds.length} published Kenyan unit trust funds. Compare current terms on each fund page and verify details with the manager before investing.`)}<p><a href="/money-market-funds-kenya">Compare Kenyan MMF yields, costs and source dates</a> · <a href="/mmf-calculator">Kenya MMF calculator</a></p>${groups}${researchLinksHtml("mmf")}<p><a href="/learn/how-to-invest-in-money-market-funds-kenya">Read the money market fund guide</a></p>`,
+    title: "Money Market Funds in Kenya (2026) – Compare 40 KES & USD Yields",
+    description,
+    heading: "Money Market Funds and Unit Trusts in Kenya",
+    contentHtml: `${paragraph(`Browse ${validFunds.length} published Kenyan collective investment schemes (${kesMmfs.length} KES Money Market Funds and ${usdMmfs.length} USD Money Market Funds). Compare current daily yields, effective annual rates (EAR), management fees, and minimum investment requirements on each fund page.`)}<p><a href="/money-market-funds-kenya">Compare Kenyan MMF yields, costs and source dates</a> · <a href="/mmf-calculator">Kenya MMF calculator</a></p>${renderMmfTable("KES Money Market Funds in Kenya Ranked by Yield", kesMmfs)}${renderMmfTable("USD Money Market Funds in Kenya (Dollar MMFs)", usdMmfs)}${groups}${faqContentHtml(faqByFundType.money_market)}${researchLinksHtml("mmf")}<p><a href="/learn/how-to-invest-in-money-market-funds-kenya">Read the money market fund guide</a></p>`,
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        name: "Money Market Funds in Kenya – Daily & Annual Yields (KES & USD)",
+        description,
+        url: canonicalUrl("/funds"),
+        creator: { "@type": "Organization", name: "Kenya Fund Finder", url: SEO_SITE_URL },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Money Market Funds in Kenya Ranked by Annual Yield",
+        numberOfItems: mmfs.length,
+        itemListElement: mmfs.map((f, idx) => ({
+          "@type": "ListItem",
+          position: idx + 1,
+          name: `${f.name} Money Market Fund (${f.manager})`,
+          url: canonicalUrl(`/compare/${encodeURIComponent(f.slug!)}`),
+        })),
+      },
+      faqSchema(faqByFundType.money_market),
+      breadcrumb([
+        { name: "Home", path: "/" },
+        { name: "Money Market Funds", path: "/funds" },
+      ]),
+    ],
   };
 }
 
 function stockDirectoryPage(stocks: StockRow[]): SeoPageDefinition {
   const validStocks = stocks.filter((stock) => validSegment(stock.symbol) && stock.name);
+  const sortedByCap = [...validStocks].sort((a, b) => Number(b.market_cap ?? 0) - Number(a.market_cap ?? 0));
+  const tableRows = sortedByCap
+    .map(
+      (stock) =>
+        `<tr><td><a href="/stocks/${encodeURIComponent(stock.symbol!.toUpperCase())}">${escapeHtml(stock.symbol!.toUpperCase())}</a></td><td><a href="/stocks/${encodeURIComponent(stock.symbol!.toUpperCase())}">${escapeHtml(stock.name)}</a></td><td>${escapeHtml(stock.sector || "Other")}</td><td>${escapeHtml(money(stock.price) || "Unavailable")}</td><td>${escapeHtml(percent(stock.day_change_percent) || "Unavailable")}</td><td>${escapeHtml(compactNumber(stock.volume) || "Unavailable")}</td><td>${escapeHtml(money(stock.market_cap) || "Unavailable")}</td><td>${escapeHtml(stock.pe_ratio ?? "Unavailable")}</td><td>${escapeHtml(percent(stock.dividend_yield) || "Unavailable")}</td></tr>`,
+    )
+    .join("");
+  const stockTable = `<section><h2>Nairobi Securities Exchange (NSE) Share Prices &amp; Valuation Table</h2><table><caption>NSE Listed Companies Ranked by Market Capitalisation</caption><thead><tr><th>Ticker</th><th>Company</th><th>Sector</th><th>Price (KSh)</th><th>Daily Change</th><th>Volume</th><th>Market Cap</th><th>P/E Ratio</th><th>Dividend Yield</th></tr></thead><tbody>${tableRows}</tbody></table></section>`;
+
   const sectors = [...new Set(validStocks.map(s => s.sector || "Other"))].sort();
   const links = sectors.map(sector => `<section><h2>${escapeHtml(sector)}</h2><ul>${validStocks.filter(s => (s.sector || "Other") === sector).map(stock => `<li><a href="/stocks/${encodeURIComponent(stock.symbol!.toUpperCase())}">${escapeHtml(stock.name)} (${escapeHtml(stock.symbol!.toUpperCase())})</a> — ${escapeHtml(money(stock.price) || "Price unavailable")}; daily movement ${escapeHtml(percent(stock.day_change_percent) || "unavailable")}; volume ${escapeHtml(compactNumber(stock.volume) || "unavailable")}; quote date ${escapeHtml(sourceDate(stock.provider_updated_at || stock.updated_at))}; source ${escapeHtml(stock.quote_source || "public market-data feed")}</li>`).join("")}</ul></section>`).join("");
+  const stockFaqs: FaqItem[] = [
+    {
+      question: "How do I buy shares on the Nairobi Securities Exchange (NSE)?",
+      answer: "Open a Central Depository System (CDS) account through a CMA-licensed stockbroker or investment bank in Kenya, fund your trading account, and place buy or sell orders for NSE-listed tickers.",
+    },
+    {
+      question: "What are the Nairobi Securities Exchange (NSE) trading hours?",
+      answer: "The NSE regular equity trading session runs Monday to Friday from 9:00 AM to 3:00 PM East Africa Time (EAT), excluding Kenyan public holidays.",
+    },
+    {
+      question: "How are dividends taxed on Kenyan NSE stocks?",
+      answer: "Dividends paid to resident retail investors on qualifying NSE shares are typically subject to a 5% withholding tax deducted at source. Verify current tax rules with KRA or your licensed broker.",
+    },
+  ];
+  const description = "Track live Nairobi Securities Exchange (NSE) share prices today, daily gainers and losers, market cap, P/E ratios, and dividend yields for Safaricom (SCOM), Equity (EQTY), KCB, EABL, and all Kenyan listed companies.";
   return {
     path: "/stocks",
-    title: "Kenyan Stocks & NSE Share Prices Today | Kenya Fund Finder",
-    description: "Track Nairobi Securities Exchange share prices, daily changes, market capitalisation, dividend yields and price charts for Kenyan listed companies.",
+    title: "NSE Share Prices Today – Nairobi Securities Exchange Stocks (2026)",
+    description,
     heading: "Kenyan Stocks: NSE Share Prices Today",
-    contentHtml: `${paragraph(`Browse ${validStocks.length} NSE listings, reported prices and company detail pages. Quotes may be delayed; use the date on each listing.`)}<section><h2>NSE company directory by sector</h2>${links}</section><section><h2>Understanding market metrics</h2><p>Share price is the last reported value per share. Daily movement compares it with the feed's reference price. Volume counts traded shares; market cap measures share price times shares outstanding. These measures use reported data and do not guarantee execution prices.</p><a href="/page/market-data-methodology">Data sources and methodology</a></section>${researchLinksHtml("stocks")}<p><a href="/markets">Open the markets dashboard</a> · <a href="/news">Read market news</a></p>`,
+    contentHtml: `${paragraph(`Browse ${validStocks.length} NSE listings, reported prices and company detail pages. Quotes may be delayed; use the date on each listing.`)}${stockTable}<section><h2>NSE company directory by sector</h2>${links}</section><section><h2>Understanding market metrics</h2><p>Share price is the last reported value per share. Daily movement compares it with the feed's reference price. Volume counts traded shares; market cap measures share price times shares outstanding. These measures use reported data and do not guarantee execution prices.</p><a href="/page/market-data-methodology">Data sources and methodology</a></section>${faqContentHtml(stockFaqs)}${researchLinksHtml("stocks")}<p><a href="/markets">Open the markets dashboard</a> · <a href="/news">Read market news</a></p>`,
+    jsonLd: [
+      {
+        "@context": "https://schema.org",
+        "@type": "Dataset",
+        name: "Nairobi Securities Exchange (NSE) Share Prices & Market Data",
+        description,
+        url: canonicalUrl("/stocks"),
+        creator: { "@type": "Organization", name: "Kenya Fund Finder", url: SEO_SITE_URL },
+      },
+      {
+        "@context": "https://schema.org",
+        "@type": "ItemList",
+        name: "Nairobi Securities Exchange (NSE) Listed Companies by Market Cap",
+        numberOfItems: sortedByCap.length,
+        itemListElement: sortedByCap.map((s, idx) => ({
+          "@type": "ListItem",
+          position: idx + 1,
+          name: `${s.name} (${s.symbol!.toUpperCase()})`,
+          url: canonicalUrl(`/stocks/${encodeURIComponent(s.symbol!.toUpperCase())}`),
+        })),
+      },
+      faqSchema(stockFaqs),
+      breadcrumb([
+        { name: "Home", path: "/" },
+        { name: "NSE Stocks", path: "/stocks" },
+      ]),
+    ],
   };
 }
 
@@ -551,10 +719,54 @@ function writePage(template: string, page: SeoPageDefinition): void {
 }
 
 async function loadDynamicPages(): Promise<SeoPageDefinition[]> {
-  const [stocks, funds] = await Promise.all([
+  const [dbStocks, dbFunds] = await Promise.all([
     publicStocks<StockRow>(),
     seoPublicData<FundRow>("funds", "slug,name,manager,annual_yield,daily_yield,minimum_investment,management_fee,withdrawal_time,description,fund_type,yield_unit,cma_licensed,is_published,updated_at,logo_url,fact_sheet_date,website", "name.asc"),
   ]);
+  const existingStockSymbols = new Set(dbStocks.map((s) => String(s.symbol ?? "").toUpperCase()));
+  const missingFallbackStocks: StockRow[] = FALLBACK_KENYAN_STOCKS
+    .filter((s) => !existingStockSymbols.has(s.symbol.toUpperCase()))
+    .map((s) => ({
+      symbol: s.symbol,
+      name: s.name,
+      sector: s.sector,
+      price: s.price,
+      day_change: s.day_change,
+      day_change_percent: s.day_change_percent,
+      volume: s.volume,
+      market_cap: s.market_cap,
+      pe_ratio: s.pe_ratio,
+      dividend_yield: s.dividend_yield,
+      year_high: s.year_high,
+      year_low: s.year_low,
+      updated_at: s.updated_at,
+      is_active: true,
+    }));
+  const stocks: StockRow[] = [...dbStocks, ...missingFallbackStocks];
+  const existingSlugs = new Set(dbFunds.map((f) => String(f.slug ?? "").toLowerCase()));
+  const missingSerrariFunds: FundRow[] = SERRARI_MMF_SNAPSHOT_2026_11_02
+    .filter((s) => !existingSlugs.has(s.slug.toLowerCase()))
+    .map((s) => ({
+      slug: s.slug,
+      name: s.name,
+      manager: s.manager,
+      annual_yield: s.annual_yield,
+      daily_yield: s.daily_yield,
+      minimum_investment: s.minimum_investment,
+      management_fee: s.management_fee,
+      withdrawal_time: s.withdrawal_time,
+      description: `The ${s.name} Money Market Fund (${s.currency}) is a CMA-regulated low-risk collective investment scheme managed by ${s.manager}, investing in short-term Kenyan money market instruments.`,
+      fund_type: "money_market",
+      yield_unit: s.yield_unit,
+      cma_licensed: true,
+      is_published: true,
+      updated_at: `${s.asOfDate}T09:00:00+03:00`,
+      logo_url: null,
+      fact_sheet_date: s.asOfDate,
+      website: s.website,
+    }));
+  const funds: FundRow[] = [...dbFunds, ...missingSerrariFunds];
+
   if (!stocks.some(s => validSegment(s.symbol) && s.name) || !funds.some(f => validSegment(f.slug) && f.name && f.manager) || !funds.some(f => f.fund_type === "money_market")) {
     throw new Error("SEO requires populated stock, fund and MMF directories");
   }
@@ -573,7 +785,7 @@ async function loadDynamicPages(): Promise<SeoPageDefinition[]> {
     newsDirectoryPage(news),
     ...newsArchivePages(news),
     ...stocks.map(stock => stockPage(stock, stocks)),
-    ...funds.map(fundPage),
+    ...funds.map(fund => fundPage(fund, funds)),
     ...news.map(newsPage),
     ...sitePages
       .filter((page) => ["privacy", "terms"].includes(page.slug || "") || isIndexableSitePageSlug(page.slug))
