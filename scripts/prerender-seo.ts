@@ -533,6 +533,18 @@ function fundDirectoryPage(funds: FundRow[]): SeoPageDefinition {
     .sort((a, b) => Number(b.annual_yield ?? 0) - Number(a.annual_yield ?? 0));
   const kesMmfs = mmfs.filter((f) => f.yield_unit !== "USD");
   const usdMmfs = mmfs.filter((f) => f.yield_unit === "USD");
+  const topKes = kesMmfs[0];
+  const topUsd = usdMmfs[0];
+  const lowMinKes = [...kesMmfs]
+    .filter((f) => f.minimum_investment != null && Number(f.minimum_investment) <= 1000)
+    .slice(0, 5);
+  const latestFactDate =
+    kesMmfs.map((f) => f.fact_sheet_date).find((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d))) ||
+    "2026-11-02";
+
+  const answerFirstHtml = `<p><strong>Market Summary (<time datetime="${escapeHtml(latestFactDate)}">${escapeHtml(sourceDate(latestFactDate))}</time>):</strong> Kenya Fund Finder tracks ${validFunds.length} CMA-regulated unit trusts in Kenya, including ${kesMmfs.length} KES Money Market Funds and ${usdMmfs.length} USD Money Market Funds.${topKes ? ` The highest-yielding KES MMF is <a href="/compare/${encodeURIComponent(topKes.slug!)}">${escapeHtml(topKes.name)}</a> (${escapeHtml(topKes.manager)}) at ${escapeHtml(percent(topKes.annual_yield) || "")} p.a. (${escapeHtml(percent(topKes.daily_yield) || "")} daily, ~${escapeHtml(((Number(topKes.annual_yield ?? 0) * 0.85)).toFixed(2))}% net after 15% withholding tax).` : ""}${topUsd ? ` Among USD dollar funds, <a href="/compare/${encodeURIComponent(topUsd.slug!)}">${escapeHtml(topUsd.name)}</a> leads at ${escapeHtml(percent(topUsd.annual_yield) || "")} p.a.` : ""} Verify current terms with each fund manager and the <a href="https://licensees.cma.or.ke/licenses/15/">Capital Markets Authority (CMA)</a> before investing.</p>`;
+
+  const fanOutHighlightsHtml = `<section><h2>Money Market Fund Categories in Kenya (KES, USD &amp; Low Minimum Deposit)</h2><ul>${topKes ? `<li><strong>Highest-Yielding KES MMFs:</strong> ${kesMmfs.slice(0, 5).map((f) => `<a href="/compare/${encodeURIComponent(f.slug!)}">${escapeHtml(f.name)}</a> (${escapeHtml(percent(f.annual_yield) || "")})`).join(", ")}.</li>` : ""}${topUsd ? `<li><strong>Top USD Dollar MMFs in Kenya:</strong> ${usdMmfs.slice(0, 5).map((f) => `<a href="/compare/${encodeURIComponent(f.slug!)}">${escapeHtml(f.name)}</a> (${escapeHtml(percent(f.annual_yield) || "")})`).join(", ")}.</li>` : ""}${lowMinKes.length ? `<li><strong>Low-Minimum &amp; M-Pesa Accessible MMFs (KSh 100 – KSh 1,000):</strong> ${lowMinKes.map((f) => `<a href="/compare/${encodeURIComponent(f.slug!)}">${escapeHtml(f.name)}</a> (min KSh ${escapeHtml(f.minimum_investment)})`).join(", ")}.</li>` : ""}</ul></section>`;
 
   const renderMmfTable = (caption: string, rows: FundRow[]) => {
     if (!rows.length) return "";
@@ -566,7 +578,7 @@ function fundDirectoryPage(funds: FundRow[]): SeoPageDefinition {
     title: "Money Market Funds in Kenya (2026) – Compare 40 KES & USD Yields",
     description,
     heading: "Money Market Funds and Unit Trusts in Kenya",
-    contentHtml: `${paragraph(`Browse ${validFunds.length} published Kenyan collective investment schemes (${kesMmfs.length} KES Money Market Funds and ${usdMmfs.length} USD Money Market Funds). Compare current daily yields, effective annual rates (EAR), management fees, and minimum investment requirements on each fund page.`)}<p><a href="/money-market-funds-kenya">Compare Kenyan MMF yields, costs and source dates</a> · <a href="/mmf-calculator">Kenya MMF calculator</a></p>${renderMmfTable("KES Money Market Funds in Kenya Ranked by Yield", kesMmfs)}${renderMmfTable("USD Money Market Funds in Kenya (Dollar MMFs)", usdMmfs)}${groups}${faqContentHtml(faqByFundType.money_market)}${researchLinksHtml("mmf")}<p><a href="/learn/how-to-invest-in-money-market-funds-kenya">Read the money market fund guide</a></p>`,
+    contentHtml: `${answerFirstHtml}<p><a href="/money-market-funds-kenya">Compare Kenyan MMF yields, costs and source dates</a> · <a href="/mmf-calculator">Kenya MMF calculator</a></p>${fanOutHighlightsHtml}${renderMmfTable("KES Money Market Funds in Kenya Ranked by Yield", kesMmfs)}${renderMmfTable("USD Money Market Funds in Kenya (Dollar MMFs)", usdMmfs)}${groups}${faqContentHtml(faqByFundType.money_market)}${researchLinksHtml("mmf")}<p><a href="/learn/how-to-invest-in-money-market-funds-kenya">Read the money market fund guide</a></p>`,
     jsonLd: [
       {
         "@context": "https://schema.org",
@@ -625,12 +637,17 @@ function stockDirectoryPage(stocks: StockRow[]): SeoPageDefinition {
     },
   ];
   const description = "Track live Nairobi Securities Exchange (NSE) share prices today, daily gainers and losers, market cap, P/E ratios, and dividend yields for Safaricom (SCOM), Equity (EQTY), KCB, EABL, and all Kenyan listed companies.";
+  const topCapStocks = sortedByCap.slice(0, 5);
+  const latestStockIso =
+    sortedByCap.map((s) => (s.provider_updated_at || s.updated_at)?.slice(0, 10)).find((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d))) ||
+    "2026-11-02";
+  const stockAnswerFirstHtml = `<p><strong>NSE Market Summary (<time datetime="${escapeHtml(latestStockIso)}">${escapeHtml(sourceDate(latestStockIso))}</time>):</strong> Track ${validStocks.length} companies listed on the Nairobi Securities Exchange (NSE) across banking, telecommunications, manufacturing, energy, and agriculture.${topCapStocks.length ? ` The largest NSE listings by market capitalisation include ${topCapStocks.map((s) => `<a href="/stocks/${encodeURIComponent(s.symbol!.toUpperCase())}">${escapeHtml(s.name)} (${escapeHtml(s.symbol!.toUpperCase())})</a> at ${escapeHtml(money(s.price) || "unavailable")}`).join(", ")}.` : ""} Quotes may be delayed; verify executable prices with a CMA-licensed stockbroker.</p>`;
   return {
     path: "/stocks",
     title: "NSE Share Prices Today – Nairobi Securities Exchange Stocks (2026)",
     description,
     heading: "Kenyan Stocks: NSE Share Prices Today",
-    contentHtml: `${paragraph(`Browse ${validStocks.length} NSE listings, reported prices and company detail pages. Quotes may be delayed; use the date on each listing.`)}${stockTable}<section><h2>NSE company directory by sector</h2>${links}</section><section><h2>Understanding market metrics</h2><p>Share price is the last reported value per share. Daily movement compares it with the feed's reference price. Volume counts traded shares; market cap measures share price times shares outstanding. These measures use reported data and do not guarantee execution prices.</p><a href="/page/market-data-methodology">Data sources and methodology</a></section>${faqContentHtml(stockFaqs)}${researchLinksHtml("stocks")}<p><a href="/markets">Open the markets dashboard</a> · <a href="/news">Read market news</a></p>`,
+    contentHtml: `${stockAnswerFirstHtml}${stockTable}<section><h2>NSE company directory by sector</h2>${links}</section><section><h2>Understanding market metrics</h2><p>Share price is the last reported value per share. Daily movement compares it with the feed's reference price. Volume counts traded shares; market cap measures share price times shares outstanding. These measures use reported data and do not guarantee execution prices.</p><a href="/page/market-data-methodology">Data sources and methodology</a></section>${faqContentHtml(stockFaqs)}${researchLinksHtml("stocks")}<p><a href="/markets">Open the markets dashboard</a> · <a href="/news">Read market news</a></p>`,
     jsonLd: [
       {
         "@context": "https://schema.org",
