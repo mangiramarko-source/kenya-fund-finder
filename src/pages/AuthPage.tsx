@@ -1,5 +1,5 @@
 import { useState, useCallback, useRef, useEffect } from "react";
-import { useNavigate, Link } from "react-router-dom";
+import { useNavigate, Link, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
@@ -30,6 +30,11 @@ const AuthPage = () => {
   const botFieldsRef = useRef<{ honeypot: string; formLoadedAt: number }>({ honeypot: "", formLoadedAt: Date.now() });
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
+
+  // Support ?redirect= or ?returnTo= query parameter, preventing open redirects
+  const rawRedirect = searchParams.get("redirect") || searchParams.get("returnTo") || "/";
+  const redirectTarget = rawRedirect.startsWith("/") && !rawRedirect.startsWith("//") ? rawRedirect : "/";
 
   const handleTurnstileVerify = useCallback((token: string) => {
     setTurnstileToken(token);
@@ -98,11 +103,11 @@ const AuthPage = () => {
         setError(error.message);
       } else {
         trackEvent("login_completed", { method: "email" });
-        navigate("/");
+        navigate(redirectTarget);
       }
     }
     setTurnstileToken(null);
-  }, [isSignUp, email, password, confirmPassword, signIn, signUp, navigate]);
+  }, [isSignUp, email, password, confirmPassword, signIn, signUp, navigate, redirectTarget]);
 
   // Auto-submit when Turnstile verification completes (after fields are filled)
   useEffect(() => {
@@ -132,7 +137,7 @@ const AuthPage = () => {
       const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${window.location.origin}/`,
+          redirectTo: `${window.location.origin}${redirectTarget}`,
         },
       });
       if (error) {

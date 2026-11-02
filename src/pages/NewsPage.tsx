@@ -14,6 +14,8 @@ import { FeedTriviaCard } from "@/components/feed/FeedTriviaCard";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { useAuth } from "@/hooks/useAuth";
+import InlineDataGate from "@/components/auth/InlineDataGate";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/fundsFixedIncomeNews";
 import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 import { matchesNewsTab } from "@/lib/newsTabMatching";
@@ -56,7 +58,8 @@ export default function NewsPage() {
     }
   });
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
   const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [stocks, setStocks] = useState<any[]>([]);
@@ -263,6 +266,8 @@ export default function NewsPage() {
     return allItems;
   }, [filteredArticles, stocks, activeNavTab]);
 
+  const displayFeedItems = isGated && feedItems.length > 3 ? feedItems.slice(0, 3) : feedItems;
+
   const newTodayCount = useMemo(() => {
     const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
@@ -365,7 +370,7 @@ export default function NewsPage() {
         )
       ) : (
         <div className="space-y-0 md:space-y-4 pb-20">
-          {feedItems.map((item, index) => {
+          {displayFeedItems.map((item, index) => {
             const card = item.relatedStock ? (
               <StockFeedCard
                 key={item.id}
@@ -389,13 +394,37 @@ export default function NewsPage() {
             return (
               <Fragment key={`feed-frag-${item.id}`}>
                 {card}
-                {index === 2 && <FeedPollCard key="in-feed-poll" index={index + 1} />}
+                {index === 2 && !isGated && <FeedPollCard key="in-feed-poll" index={index + 1} />}
                 {index === 6 && <FeedTriviaCard key="in-feed-trivia" index={index + 1} />}
               </Fragment>
             );
           })}
+
+          {isGated && feedItems.length > 3 && (
+            <div
+              aria-hidden="true"
+              className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border/70 bg-card p-4 space-y-3"
+            >
+              <div className="flex justify-between items-center">
+                <div className="h-3 w-20 bg-muted rounded" />
+                <div className="h-4 w-12 bg-muted rounded-full" />
+              </div>
+              <div className="h-5 w-4/5 bg-muted rounded" />
+              <div className="h-4 w-full bg-muted rounded" />
+            </div>
+          )}
+
+          {isGated && feedItems.length > 3 && (
+            <InlineDataGate
+              category="news"
+              totalCount={articles.length || feedItems.length}
+              visibleCount={3}
+              title="Unlock All Kenyan Market News & Disclosures"
+              description="Showing top 3 stories. Create a free account to read all market news, company earnings announcements, and analyst briefings."
+            />
+          )}
           
-          {hasMore && (
+          {!isGated && hasMore && (
             <button
               onClick={loadMore}
               disabled={loadingMore}

@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
+import InlineDataGate from "@/components/auth/InlineDataGate";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star, SlidersHorizontal, X, GitCompareArrows, Check } from "lucide-react";
@@ -127,7 +129,8 @@ const CommoditiesPage = () => {
     keywords: "gold price Kenya, oil price Kenya, commodity prices Kenya, Kenyan commodities, commodity market Kenya"
   });
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("commodity");
   const [initialPageMemory] = useState(() => getMarketPageMemory<CommoditiesPageMemory>("commodities"));
 
@@ -281,6 +284,8 @@ const CommoditiesPage = () => {
     }
     return result;
   }, [commodities, search, mobileMovement, mobileSort]);
+
+  const displayCommodities = isGated && filtered.length > 3 ? filtered.slice(0, 3) : filtered;
 
   const pageLoading = loading || !initialHistoryReady;
   const showPageLoading = useMinimumLoadingDuration(pageLoading);
@@ -541,7 +546,7 @@ const CommoditiesPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((c, i) => (
+                  {displayCommodities.map((c, i) => (
                     <CommodityRow
                       key={c.id}
                       commodity={c}
@@ -554,9 +559,37 @@ const CommoditiesPage = () => {
                       onToggleFavourite={user ? () => toggleFavourite(c.id, c.name) : undefined}
                     />
                   ))}
+                  {isGated && filtered.length > 3 && filtered.slice(3, 5).map((c, idx) => (
+                    <tr
+                      key={`comm-teaser-${c.id || idx}`}
+                      aria-hidden="true"
+                      className="pointer-events-none select-none blur-[2px] opacity-40 bg-card border-b border-border/40"
+                    >
+                      <td className="px-3 py-3 font-semibold text-foreground">{c.name}</td>
+                      <td className="px-3 py-3 font-semibold">${c.price.toFixed(2)}</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">Today</td>
+                      {user && <td />}
+                      <td />
+                    </tr>
+                  ))}
                 </tbody>
               </table>
               </div>
+            </div>
+          )}
+
+          {isGated && filtered.length > 3 && (
+            <div className="hidden md:block mt-4 mb-8">
+              <InlineDataGate
+                category="commodities"
+                totalCount={commodities.length}
+                visibleCount={3}
+                title="Unlock All Global Commodities & Energy Prices"
+                description="Showing top 3 commodities. Create a free account to track gold, crude oil, agricultural commodities, and live historical charts."
+              />
             </div>
           )}
         </div>
@@ -574,28 +607,55 @@ const CommoditiesPage = () => {
           ) : filtered.length === 0 ? (
             <EmptyState label="commodities" />
           ) : (
-            filtered.map((c) => {
-              const positive = c.previous_price != null ? c.price >= c.previous_price : true;
-              return (
-                <MobileCommodityCard
-                  key={c.id}
-                  commodity={c}
-                  history={history[c.id]}
-                  historyLoading={historyLoading === c.id}
-                  positive={positive}
-                  isExpanded={expanded === c.id}
-                  onToggle={() => toggleExpand(c.id)}
-                  isFavourite={user ? isFavourite(c.id) : undefined}
-                  onToggleFavourite={user ? () => toggleFavourite(c.id, c.name) : undefined}
+            <>
+              {displayCommodities.map((c) => {
+                const positive = c.previous_price != null ? c.price >= c.previous_price : true;
+                return (
+                  <MobileCommodityCard
+                    key={c.id}
+                    commodity={c}
+                    history={history[c.id]}
+                    historyLoading={historyLoading === c.id}
+                    positive={positive}
+                    isExpanded={expanded === c.id}
+                    onToggle={() => toggleExpand(c.id)}
+                    isFavourite={user ? isFavourite(c.id) : undefined}
+                    onToggleFavourite={user ? () => toggleFavourite(c.id, c.name) : undefined}
+                  />
+                );
+              })}
+              {isGated && filtered.length > 3 && (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-4 space-y-2"
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 w-28 bg-muted rounded" />
+                    <div className="h-5 w-16 bg-muted rounded" />
+                  </div>
+                  <div className="h-3 w-40 bg-muted rounded" />
+                </div>
+              )}
+              {isGated && filtered.length > 3 && (
+                <InlineDataGate
+                  category="commodities"
+                  totalCount={commodities.length}
+                  visibleCount={3}
+                  title="Unlock All Global Commodities & Energy Prices"
+                  description="Showing top 3 commodities. Create a free account to track gold, crude oil, agricultural commodities, and live historical charts."
                 />
-              );
-            })
+              )}
+            </>
           )}
         </div>
 
         {/* Summary footer */}
         <div className={`items-center justify-between text-xs text-muted-foreground mt-4 px-1 ${loading ? "hidden" : "flex"}`}>
-          <span>Showing {filtered.length} of {commodities.length} commodities</span>
+          <span>
+            {isGated && filtered.length > 3
+              ? `Showing 3 of ${commodities.length} commodities (preview)`
+              : `Showing ${filtered.length} of ${commodities.length} commodities`}
+          </span>
           {!loading && commodities.length > 0 && (
             <span className="hidden sm:inline">
               <span className="text-accent font-semibold">{gainers}</span> gainers ·{" "}

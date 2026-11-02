@@ -1,6 +1,8 @@
 import { useEffect, useState, useMemo } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
+import InlineDataGate from "@/components/auth/InlineDataGate";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
 import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star, SlidersHorizontal, X, GitCompareArrows, Check } from "lucide-react";
@@ -165,7 +167,8 @@ const RatesPage = () => {
     keywords: "Kenya exchange rates, USD KES, EUR KES, GBP KES, Kenyan Shilling, forex Kenya"
   });
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("currency");
   const [initialPageMemory] = useState(() => getMarketPageMemory<RatesPageMemory>("rates"));
 
@@ -325,6 +328,8 @@ const RatesPage = () => {
     return result;
   }, [rates, search, mobileMovement, mobileSort]);
 
+  const displayRates = isGated && filtered.length > 3 ? filtered.slice(0, 3) : filtered;
+
   const pageLoading = loading || !initialHistoryReady;
   const showPageLoading = useMinimumLoadingDuration(pageLoading);
 
@@ -447,7 +452,7 @@ const RatesPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filtered.map((r, i) => (
+                  {displayRates.map((r, i) => (
                     <RateRow
                       key={r.id}
                       rate={r}
@@ -460,9 +465,39 @@ const RatesPage = () => {
                       onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
                     />
                   ))}
+                  {isGated && filtered.length > 3 && filtered.slice(3, 5).map((r, idx) => (
+                    <tr
+                      key={`rate-teaser-${r.id || idx}`}
+                      aria-hidden="true"
+                      className="pointer-events-none select-none blur-[2px] opacity-40 bg-card border-b border-border/40"
+                    >
+                      <td className="px-3 py-3 font-semibold text-foreground">{r.currency_code}</td>
+                      <td className="px-3 py-3 text-muted-foreground">{r.currency_name}</td>
+                      <td className="px-3 py-3 font-semibold">KSh {r.rate.toFixed(2)}</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">Today</td>
+                      {user && <td />}
+                      <td />
+                    </tr>
+                  ))}
                 </tbody>
               </table>
               </div>
+            </div>
+          )}
+
+          {isGated && filtered.length > 3 && (
+            <div className="hidden md:block mt-4 mb-8">
+              <InlineDataGate
+                category="rates"
+                totalCount={rates.length}
+                visibleCount={3}
+                title="Unlock All 18+ Live FX Exchange Rates"
+                description="Showing top 3 currency pairs. Create a free account to track all African, Asian, and major global currencies against the Kenya Shilling (KES) with 90-day historical trends."
+              />
             </div>
           )}
         </div>
@@ -612,28 +647,55 @@ const RatesPage = () => {
           ) : filtered.length === 0 ? (
             <EmptyState label="exchange rates" />
           ) : (
-            filtered.map((r) => {
-              const positive = r.previous_rate != null ? r.rate >= r.previous_rate : true;
-              return (
-                <MobileRateCard
-                  key={r.id}
-                  rate={r}
-                  history={history[r.id]}
-                  historyLoading={historyLoading === r.id}
-                  positive={positive}
-                  isExpanded={expanded === r.id}
-                  onToggle={() => toggleExpand(r.id)}
-                  isFavourite={user ? isFavourite(r.id) : undefined}
-                  onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
+            <>
+              {displayRates.map((r) => {
+                const positive = r.previous_rate != null ? r.rate >= r.previous_rate : true;
+                return (
+                  <MobileRateCard
+                    key={r.id}
+                    rate={r}
+                    history={history[r.id]}
+                    historyLoading={historyLoading === r.id}
+                    positive={positive}
+                    isExpanded={expanded === r.id}
+                    onToggle={() => toggleExpand(r.id)}
+                    isFavourite={user ? isFavourite(r.id) : undefined}
+                    onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
+                  />
+                );
+              })}
+              {isGated && filtered.length > 3 && (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-4 space-y-2"
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 w-28 bg-muted rounded" />
+                    <div className="h-5 w-16 bg-muted rounded" />
+                  </div>
+                  <div className="h-3 w-40 bg-muted rounded" />
+                </div>
+              )}
+              {isGated && filtered.length > 3 && (
+                <InlineDataGate
+                  category="rates"
+                  totalCount={rates.length}
+                  visibleCount={3}
+                  title="Unlock All 18+ Live FX Exchange Rates"
+                  description="Showing top 3 currency pairs. Create a free account to track all African, Asian, and major global currencies against the Kenya Shilling (KES) with 90-day historical trends."
                 />
-              );
-            })
+              )}
+            </>
           )}
         </div>
 
         {/* Summary footer */}
         <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
-          <span>Showing {filtered.length} of {rates.length} currencies</span>
+          <span>
+            {isGated && filtered.length > 3
+              ? `Showing 3 of ${rates.length} currencies (preview)`
+              : `Showing ${filtered.length} of ${rates.length} currencies`}
+          </span>
         </div>
 
         <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">

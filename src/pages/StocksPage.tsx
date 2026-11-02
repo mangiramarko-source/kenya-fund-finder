@@ -3,6 +3,8 @@ import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import StockDetailDesktopDemoPage from "@/pages/StockDetailDesktopDemoPage";
 import { useAuth } from "@/hooks/useAuth";
+import InlineDataGate from "@/components/auth/InlineDataGate";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
 import { startMarketRefresh } from "@/lib/marketRefresh";
@@ -224,7 +226,8 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     url: "https://kenyafundfinder.com/stocks",
   });
 
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("stock");
   const [initialPageMemory] = useState(() => getMarketPageMemory<StocksPageMemory>("stocks"));
   const [cachedStocks] = useState(() => stockCache.loadStocks());
@@ -450,6 +453,8 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
       setSortDir(key === "symbol" ? "asc" : "desc");
     }
   };
+
+  const displayStocks = isGated && filtered.length > 3 ? filtered.slice(0, 3) : filtered;
 
   const gainers = useMemo(() => stocks.filter((s) => s.day_change > 0).length, [stocks]);
   const losers = useMemo(() => stocks.filter((s) => s.day_change < 0).length, [stocks]);
@@ -781,7 +786,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
             </div>
           ) : viewMode === "grid" ? (
             <div className="grid grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-              {filtered.map((s) => (
+              {displayStocks.map((s) => (
                 <DesktopStockCard
                   key={s.id}
                   stock={s}
@@ -791,6 +796,21 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                   onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
                 />
               ))}
+              {isGated && filtered.length > 3 && (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-5 h-[220px] flex flex-col justify-between"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-full bg-muted" />
+                    <div className="space-y-1">
+                      <div className="h-4 w-24 bg-muted rounded" />
+                      <div className="h-3 w-16 bg-muted rounded" />
+                    </div>
+                  </div>
+                  <div className="h-6 w-20 bg-muted rounded" />
+                </div>
+              )}
             </div>
           ) : (
             <div className="rounded-xl border border-border overflow-hidden bg-card shadow-sm">
@@ -839,7 +859,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                     </tr>
                   </thead>
                   <tbody>
-                    {filtered.map((s, i) => (
+                    {displayStocks.map((s, i) => (
                       <DesktopStockRow
                         key={s.id}
                         stock={s}
@@ -854,12 +874,47 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                         maxMarketCap={maxMarketCap}
                       />
                     ))}
+                    {isGated && filtered.length > 3 && filtered.slice(3, 5).map((s, idx) => (
+                      <tr
+                        key={`stock-teaser-${s.id || idx}`}
+                        aria-hidden="true"
+                        className="pointer-events-none select-none blur-[2px] opacity-40 bg-card border-b border-border/40"
+                      >
+                        <td className="pl-5 pr-2 py-3.5">
+                          <div className="font-semibold text-foreground text-sm">{s.symbol}</div>
+                          <div className="text-[11px] text-muted-foreground truncate">{s.name}</div>
+                        </td>
+                        <td className="px-3 py-3.5 font-semibold text-sm">KSh {formatNumber(s.price)}</td>
+                        <td className="px-3 py-3.5 font-semibold text-sm text-emerald-500">+{s.day_change_percent.toFixed(2)}%</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">—</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">—</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">—</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">—</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">{formatVolume(s.volume)}</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">{formatMarketCap(s.market_cap)}</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">{s.pe_ratio != null ? formatNumber(s.pe_ratio) : "—"}</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">{s.sector}</td>
+                        {user && <td />}
+                      </tr>
+                    ))}
                   </tbody>
                 </table>
               </div>
             </div>
           )}
         </div>
+
+        {isGated && filtered.length > 3 && (
+          <div className="hidden md:block mb-8">
+            <InlineDataGate
+              category="stocks"
+              totalCount={stocks.length}
+              visibleCount={3}
+              title="Unlock All 60+ NSE Stocks & Live Market Data"
+              description="Showing top 3 stocks. Create a free account to track live prices, price alerts, full valuation ratios, and daily market movers."
+            />
+          </div>
+        )}
 
         {/* Mobile Cards */}
         <div className="md:hidden space-y-2.5">
@@ -876,23 +931,48 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
               <p className="text-sm text-muted-foreground">No stocks found</p>
             </div>
           ) : (
-            filtered.map((s) => (
-              <MobileStockCard
-                key={s.id}
-                stock={s}
-                onNavigate={() => navigate(`/stocks/${s.symbol}`)}
-                history={history[s.id]}
-                isFavourite={user ? isFavourite(s.id) : undefined}
-                onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
-              />
-            ))
+            <>
+              {displayStocks.map((s) => (
+                <MobileStockCard
+                  key={s.id}
+                  stock={s}
+                  onNavigate={() => navigate(`/stocks/${s.symbol}`)}
+                  history={history[s.id]}
+                  isFavourite={user ? isFavourite(s.id) : undefined}
+                  onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
+                />
+              ))}
+              {isGated && filtered.length > 3 && (
+                <div
+                  aria-hidden="true"
+                  className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-4 space-y-2"
+                >
+                  <div className="flex justify-between items-center">
+                    <div className="h-4 w-28 bg-muted rounded" />
+                    <div className="h-5 w-16 bg-muted rounded" />
+                  </div>
+                  <div className="h-3 w-40 bg-muted rounded" />
+                </div>
+              )}
+              {isGated && filtered.length > 3 && (
+                <InlineDataGate
+                  category="stocks"
+                  totalCount={stocks.length}
+                  visibleCount={3}
+                  title="Unlock All 60+ NSE Stocks & Live Market Data"
+                  description="Showing top 3 stocks. Create a free account to track live prices, price alerts, full valuation ratios, and daily market movers."
+                />
+              )}
+            </>
           )}
         </div>
 
         {/* Summary footer */}
         <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
           <span>
-            Showing {filtered.length} of {stocks.length} stocks
+            {isGated && filtered.length > 3
+              ? `Showing 3 of ${stocks.length} stocks (preview)`
+              : `Showing ${filtered.length} of ${stocks.length} stocks`}
           </span>
         </div>
 
@@ -1026,9 +1106,59 @@ const MobileInspiredDesktopDemo = ({
                   <th className="cursor-pointer px-3 py-3 text-left font-normal hover:text-foreground" onClick={() => toggleSort("market_cap")}>Market Cap</th>
                   <th className="px-3 py-3 text-left font-normal">Valuation</th><th className="px-3 py-3 text-left font-normal">Industry</th>{signedIn && <th />}
                 </tr></thead>
-                <tbody>{filtered.map((stock, index) => <DesktopStockRow key={stock.id} stock={stock} index={index} isExpanded={false} onToggle={() => undefined} onNavigate={() => navigate(`/stocks/${stock.symbol}`)} history={history[stock.id]} historyLoading={false} isFavourite={signedIn ? isFavourite(stock.id) : undefined} onToggleFavourite={signedIn ? () => toggleFavourite(stock.id, `${stock.symbol} - ${stock.name}`) : undefined} maxMarketCap={maxMarketCap} />)}</tbody>
+                <tbody>
+                  {(signedIn ? filtered : filtered.slice(0, 3)).map((stock, index) => (
+                    <DesktopStockRow
+                      key={stock.id}
+                      stock={stock}
+                      index={index}
+                      isExpanded={false}
+                      onToggle={() => undefined}
+                      onNavigate={() => navigate(`/stocks/${stock.symbol}`)}
+                      history={history[stock.id]}
+                      historyLoading={false}
+                      isFavourite={signedIn ? isFavourite(stock.id) : undefined}
+                      onToggleFavourite={signedIn ? () => toggleFavourite(stock.id, `${stock.symbol} - ${stock.name}`) : undefined}
+                      maxMarketCap={maxMarketCap}
+                    />
+                  ))}
+                  {!signedIn && filtered.length > 3 && filtered.slice(3, 5).map((s, idx) => (
+                    <tr
+                      key={`demo-teaser-${s.id || idx}`}
+                      aria-hidden="true"
+                      className="pointer-events-none select-none blur-[2px] opacity-40 bg-card border-b border-border/40"
+                    >
+                      <td className="py-3 pl-5 pr-2">
+                        <div className="font-semibold text-foreground text-sm">{s.symbol}</div>
+                        <div className="text-[11px] text-muted-foreground truncate">{s.name}</div>
+                      </td>
+                      <td className="px-3 py-3 font-semibold text-sm">KSh {formatNumber(s.price)}</td>
+                      <td className="px-3 py-3 font-semibold text-sm text-emerald-500">+{s.day_change_percent.toFixed(2)}%</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">—</td>
+                      <td className="px-3 py-3 text-muted-foreground">{formatVolume(s.volume)}</td>
+                      <td className="px-3 py-3 text-muted-foreground">{formatMarketCap(s.market_cap)}</td>
+                      <td className="px-3 py-3 text-muted-foreground">{s.pe_ratio != null ? formatNumber(s.pe_ratio) : "—"}</td>
+                      <td className="px-3 py-3 text-muted-foreground">{s.sector}</td>
+                    </tr>
+                  ))}
+                </tbody>
               </table>
             </div>
+          </div>
+        )}
+
+        {!signedIn && filtered.length > 3 && (
+          <div className="mt-4 mb-4">
+            <InlineDataGate
+              category="stocks"
+              totalCount={stocks.length}
+              visibleCount={3}
+              title="Unlock All 60+ NSE Stocks & Live Market Data"
+              description="Showing top 3 stocks. Create a free account to track live prices, price alerts, full valuation ratios, and daily market movers."
+            />
           </div>
         )}
 

@@ -10,6 +10,9 @@ import {
   getNewsArchivePageCount,
   getNewsArchivePath,
 } from "@/lib/newsArchive";
+import { useAuth } from "@/hooks/useAuth";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
+import InlineDataGate from "@/components/auth/InlineDataGate";
 
 interface ArchiveArticle {
   id: string;
@@ -86,6 +89,10 @@ export default function NewsArchivePage() {
     [articles, page, validPage],
   );
 
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
+  const displayArticles = isGated && pageArticles.length > 3 ? pageArticles.slice(0, 3) : pageArticles;
+
   if (!validPage) return <Navigate to="/news/archive" replace />;
   if (!loading && !error && page > pageCount) return <Navigate to={getNewsArchivePath(pageCount)} replace />;
 
@@ -125,7 +132,7 @@ export default function NewsArchivePage() {
           </div>
 
           <ol className="divide-y divide-border overflow-hidden rounded-2xl border border-border bg-card">
-            {pageArticles.map((article) => (
+            {displayArticles.map((article) => (
               <li key={article.id} className="p-5 transition-colors hover:bg-muted/35 md:p-6">
                 <Link to={`/news/${article.id}`} className="group block">
                   <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
@@ -140,34 +147,66 @@ export default function NewsArchivePage() {
                 </Link>
               </li>
             ))}
+
+            {isGated && pageArticles.length > 3 && pageArticles.slice(3, 5).map((article, idx) => (
+              <li
+                key={`teaser-${article.id || idx}`}
+                aria-hidden="true"
+                className="pointer-events-none select-none blur-[2px] opacity-40 p-5 md:p-6"
+              >
+                <div className="mb-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                  <span className="inline-flex items-center gap-1.5"><CalendarDays className="h-3.5 w-3.5" />{publishedDate(article)}</span>
+                  {article.source && <span>{article.source}</span>}
+                  {article.category && <span className="rounded-full bg-muted px-2 py-0.5">{article.category}</span>}
+                </div>
+                <h2 className="text-lg font-bold leading-snug text-foreground">
+                  {article.title}
+                </h2>
+                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{article.summary}</p>
+              </li>
+            ))}
           </ol>
 
-          <nav aria-label="News archive pagination" className="mt-8 flex flex-wrap items-center justify-center gap-2">
-            {page > 1 && (
-              <Link to={getNewsArchivePath(page - 1)} className="inline-flex h-10 items-center gap-1 rounded-full border border-border px-4 text-sm font-semibold hover:bg-muted">
-                <ChevronLeft className="h-4 w-4" /> Previous
-              </Link>
-            )}
-            {Array.from({ length: pageCount }, (_, index) => index + 1).map((archivePage) => (
-              <Link
-                key={archivePage}
-                to={getNewsArchivePath(archivePage)}
-                aria-current={archivePage === page ? "page" : undefined}
-                className={`inline-flex h-10 min-w-10 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
-                  archivePage === page
-                    ? "border-emerald-700 bg-emerald-700 text-white dark:border-emerald-500 dark:bg-emerald-600"
-                    : "border-border hover:bg-muted"
-                }`}
-              >
-                {archivePage}
-              </Link>
-            ))}
-            {page < pageCount && (
-              <Link to={getNewsArchivePath(page + 1)} className="inline-flex h-10 items-center gap-1 rounded-full border border-border px-4 text-sm font-semibold hover:bg-muted">
-                Next <ChevronRight className="h-4 w-4" />
-              </Link>
-            )}
-          </nav>
+          {isGated && pageArticles.length > 3 && (
+            <div className="mt-6">
+              <InlineDataGate
+                category="news"
+                totalCount={articles.length}
+                visibleCount={3}
+                title="Unlock Complete Kenya Market News Archive"
+                description="Showing first 3 articles. Create a free account to search and read our complete archive of published market intelligence, NSE earnings, and regulatory updates."
+              />
+            </div>
+          )}
+
+          {(!isGated || pageArticles.length <= 3) && (
+            <nav aria-label="News archive pagination" className="mt-8 flex flex-wrap items-center justify-center gap-2">
+              {page > 1 && (
+                <Link to={getNewsArchivePath(page - 1)} className="inline-flex h-10 items-center gap-1 rounded-full border border-border px-4 text-sm font-semibold hover:bg-muted">
+                  <ChevronLeft className="h-4 w-4" /> Previous
+                </Link>
+              )}
+              {Array.from({ length: pageCount }, (_, index) => index + 1).map((archivePage) => (
+                <Link
+                  key={archivePage}
+                  to={getNewsArchivePath(archivePage)}
+                  aria-current={archivePage === page ? "page" : undefined}
+                  className={`inline-flex h-10 min-w-10 items-center justify-center rounded-full border px-3 text-sm font-semibold ${
+                    archivePage === page
+                      ? "border-emerald-700 bg-emerald-700 text-white dark:border-emerald-500 dark:bg-emerald-600"
+                      : "border-border hover:bg-muted"
+                  }`}
+                >
+                  {archivePage}
+                </Link>
+              ))}
+              {page < pageCount && (
+                <Link to={getNewsArchivePath(page + 1)} className="inline-flex h-10 items-center gap-1 rounded-full border border-border px-4 text-sm font-semibold hover:bg-muted">
+                  Next <ChevronRight className="h-4 w-4" />
+                </Link>
+              )}
+            </nav>
+          )}
         </>
       )}
     </main>

@@ -12,6 +12,8 @@ import { Badge } from "@/components/ui/badge";
 import PageLoadingGate from "@/components/PageLoadingGate";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import FundSubTable from "@/components/compare/FundSubTable";
+import { useAuth } from "@/hooks/useAuth";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 
 type SortKey = "annual_yield" | "minimum_investment" | "management_fee";
 
@@ -43,6 +45,8 @@ const ComparePage = () => {
   const [searchParams] = useSearchParams();
   const initialType = (searchParams.get("type") as FundType) || "money_market";
   const [activeType, setActiveType] = useState<FundType>(initialType);
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
   
 
   useEffect(() => {
@@ -172,7 +176,9 @@ const ComparePage = () => {
           </div>
         )}
         <div className="text-xs text-muted-foreground self-center hidden sm:block">
-          {sorted.length} fund{sorted.length !== 1 ? "s" : ""} shown
+          {isGated && sorted.length > 3
+            ? `Showing 3 of ${sorted.length} funds (preview)`
+            : `${sorted.length} fund${sorted.length !== 1 ? "s" : ""} shown`}
         </div>
       </div>
 
@@ -215,7 +221,10 @@ const ComparePage = () => {
 
           {/* Summary bar */}
           <div className="hidden md:flex items-center justify-between mt-3 px-2 text-xs text-muted-foreground">
-            <span>{sorted.length} fund{sorted.length !== 1 ? "s" : ""} · Sorted by {
+            <span>
+              {isGated && sorted.length > 3
+                ? `Showing 3 of ${sorted.length} funds (preview)`
+                : `${sorted.length} fund${sorted.length !== 1 ? "s" : ""}`} · Sorted by {
               sortKey === "annual_yield" ? "annual rate" : sortKey === "minimum_investment" ? "min. investment" : "mgmt fee"
             } ({sortDir === "desc" ? "highest first" : "lowest first"})</span>
             <span>Click column headers to sort · Click "Details" to view full fund info</span>

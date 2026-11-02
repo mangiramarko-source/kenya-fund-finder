@@ -44,12 +44,17 @@ import {
 import { useTreasuryData, TBillAuction, TreasuryBond } from "@/hooks/useTreasuryData";
 import MarketPageLoader from "@/components/MarketPageLoader";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
+import { useAuth } from "@/hooks/useAuth";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
+import InlineDataGate from "@/components/auth/InlineDataGate";
 
 export default function TreasuryPage() {
   useDocumentTitle("Treasury Bills & Bonds | Rates, Auction & Return Calculator | KenyaFundFinder");
 
   const { data, isLoading, isError } = useTreasuryData();
   const showLoading = useMinimumLoadingDuration(isLoading);
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
 
   // Top tab selection: "tbills" | "bonds"
   const [activeTab, setActiveTab] = useState<"tbills" | "bonds">("tbills");
@@ -101,6 +106,8 @@ export default function TreasuryPage() {
       });
   }, [data?.bonds, bondSearch, bondMaturityFilter, bondCouponFilter, bondSortBy]);
 
+  const displayBonds = isGated && filteredBonds.length > 3 ? filteredBonds.slice(0, 3) : filteredBonds;
+
   // Selected Security for Calculator
   const selectedCalcSecurity = useMemo(() => {
     const card = data?.tbills?.find((c) => c.id === calcSecurityId);
@@ -151,7 +158,7 @@ export default function TreasuryPage() {
     const latest = latestVal ? `${latestVal.toFixed(2)}%` : "—";
 
     return { high, low, latest, demand: "1.6×" };
-  }, [chartPeriod, visibleLines]);
+  }, [chartPeriod, visibleLines, data?.rateHistory]);
 
   return (
     <TooltipProvider>
@@ -197,7 +204,7 @@ export default function TreasuryPage() {
               return (
                 <button
                   key={tab.id}
-                  onClick={() => setActiveTab(tab.id as any)}
+                  onClick={() => setActiveTab(tab.id as "tbills" | "bonds")}
                   className={`px-4 py-1.5 text-xs md:text-sm font-bold rounded-full transition-all whitespace-nowrap ${
                     isActive
                       ? "bg-foreground text-background shadow-sm"
@@ -518,6 +525,16 @@ export default function TreasuryPage() {
                     </div>
                   ))}
                 </div>
+
+                {isGated && (
+                  <InlineDataGate
+                    category="treasury"
+                    totalCount={52}
+                    visibleCount={3}
+                    title="Unlock Weekly CBK Auction Bids & Full Rate History"
+                    description="Showing latest headline yields. Create a free account to track historical auction discount curves, investor bid-to-cover ratios, and yield drop alerts."
+                  />
+                )}
               </section>
             </div>
           )}
@@ -569,7 +586,7 @@ export default function TreasuryPage() {
                             <button
                               key={item.id}
                               type="button"
-                              onClick={() => setBondSortBy(item.id as any)}
+                              onClick={() => setBondSortBy(item.id as "maturity" | "coupon" | "yield")}
                               className={`rounded-full px-3.5 py-2 text-xs font-semibold transition-colors ${
                                 bondSortBy === item.id ? "bg-emerald-600 text-white" : "bg-muted/60 text-muted-foreground hover:text-foreground"
                               }`}
@@ -699,10 +716,10 @@ export default function TreasuryPage() {
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
-                      {(filteredBonds || []).map((bond) => (
+                      {(displayBonds || []).map((bond) => (
                         <tr
                           key={bond.issueNo}
-                          onClick={() => setSelectedBond(bond as any)}
+                          onClick={() => setSelectedBond(bond)}
                           className="hover:bg-muted/40 transition-colors cursor-pointer"
                         >
                           <td className="py-4 px-4">
@@ -737,16 +754,55 @@ export default function TreasuryPage() {
                           </td>
                         </tr>
                       ))}
+
+                      {isGated && filteredBonds.length > 3 && filteredBonds.slice(3, 5).map((bond, idx) => (
+                        <tr
+                          key={`teaser-bond-${bond.issueNo || idx}`}
+                          aria-hidden="true"
+                          className="pointer-events-none select-none blur-[2px] opacity-40 bg-card"
+                        >
+                          <td className="py-4 px-4">
+                            <p className="font-black text-foreground">{bond.issueNo}</p>
+                            <p className="text-xs text-muted-foreground truncate max-w-xs">{bond.name}</p>
+                          </td>
+                          <td className="py-4 px-4 text-right font-bold text-foreground">{bond.couponRate.toFixed(2)}%</td>
+                          <td className="py-4 px-4 text-right font-black text-emerald-600 dark:text-emerald-400">
+                            {bond.couponRate.toFixed(2)}%
+                          </td>
+                          <td className="py-4 px-4 text-muted-foreground">{bond.maturityDate}</td>
+                          <td className="py-4 px-4 text-right font-semibold text-foreground">{bond.yearsRemaining} yrs</td>
+                          <td className="py-4 px-4 text-center">
+                            <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border border-border bg-muted/60 text-muted-foreground">
+                              {bond.status}
+                            </span>
+                          </td>
+                          <td className="py-4 px-4 text-right">
+                            <span className="inline-block h-8 w-20 rounded-xl bg-muted/60" />
+                          </td>
+                        </tr>
+                      ))}
                     </tbody>
                   </table>
                 </div>
 
+                {isGated && filteredBonds.length > 3 && (
+                  <div className="hidden md:block">
+                    <InlineDataGate
+                      category="bonds"
+                      totalCount={filteredBonds.length}
+                      visibleCount={3}
+                      title="Unlock All Kenyan Treasury Bonds & IFBs"
+                      description="Showing top 3 bonds. Create a free account to compare all active Fixed Coupon & Infrastructure Bonds (IFB tax-free), yields, and remaining tenors."
+                    />
+                  </div>
+                )}
+
                 {/* Stock-style Treasury Bond Cards */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                  {(filteredBonds || []).map((bond) => (
+                  {(displayBonds || []).map((bond) => (
                     <div
                       key={bond.issueNo}
-                      onClick={() => setSelectedBond(bond as any)}
+                      onClick={() => setSelectedBond(bond)}
                       className="rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card p-4 space-y-2.5 shadow-sm hover:border-emerald-500/40 transition-all cursor-pointer group"
                     >
                       {/* Top Row: Symbol/Name + Sparkline + Yield Rate */}
@@ -810,7 +866,43 @@ export default function TreasuryPage() {
                       </div>
                     </div>
                   ))}
+
+                  {isGated && filteredBonds.length > 3 && filteredBonds.slice(3, 5).map((bond, idx) => (
+                    <div
+                      key={`teaser-card-${bond.issueNo || idx}`}
+                      aria-hidden="true"
+                      className="pointer-events-none select-none blur-[2px] opacity-40 rounded-2xl border border-border/80 bg-slate-50/80 dark:bg-card p-4 space-y-2.5"
+                    >
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <span className="font-black text-foreground text-base tracking-tight block truncate">
+                            {bond.issueNo}
+                          </span>
+                          <span className="text-xs text-muted-foreground truncate block">
+                            {bond.name}
+                          </span>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <span className="text-base sm:text-lg font-black text-foreground tabular-nums block">
+                            {bond.couponRate.toFixed(2)}%
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
                 </div>
+
+                {isGated && filteredBonds.length > 3 && (
+                  <div className="md:hidden">
+                    <InlineDataGate
+                      category="bonds"
+                      totalCount={filteredBonds.length}
+                      visibleCount={3}
+                      title="Unlock All Kenyan Treasury Bonds & IFBs"
+                      description="Showing top 3 bonds. Create a free account to compare all active Fixed Coupon & Infrastructure Bonds (IFB tax-free), yields, and remaining tenors."
+                    />
+                  </div>
+                )}
                 </>
                 )}
 </div>

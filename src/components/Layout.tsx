@@ -12,6 +12,7 @@ import MobileAppWatermark from "./mobile/MobileAppWatermark";
 import MobileLegalSheet from "./mobile/MobileLegalSheet";
 import UniversalCompareBar from "@/components/compare/UniversalCompareBar";
 import UniversalCompareModal from "@/components/compare/UniversalCompareModal";
+import TimedAuthWall from "./auth/TimedAuthWall";
 import { isAiLabEnabled } from "@/lib/featureFlags";
 import { usePageView } from "@/hooks/usePageView";
 
@@ -123,6 +124,7 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
 
         {isAiLabEnabled() && showMobileAiLabFab && <MobileAiLabFab />}
         {isAiLabEnabled() && !isAiLab && !isAuthPage && <DesktopAiLabChat />}
+        <TimedAuthWall />
       </div>
     </div>
   );

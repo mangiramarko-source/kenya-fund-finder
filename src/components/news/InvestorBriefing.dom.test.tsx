@@ -224,6 +224,28 @@ describe("InvestorBriefing DOM & Visual Verification", () => {
     expect(meaningRows[0].classList.contains("flex-col")).toBe(true);
     expect(meaningRows[0].classList.contains("md:grid")).toBe(true);
   });
+
+  it("gates sections 4+ and renders InlineDataGate when isGated is true", () => {
+    const briefing = buildInvestorBriefing(mockArticle, { stock: mockStock });
+    const { getByText, queryByRole } = render(
+      <MemoryRouter>
+        <InvestorBriefing briefing={briefing} isGated={true} />
+      </MemoryRouter>
+    );
+
+    // Sections 1 and 2 are visible
+    expect(getByText(/The Safaricom Platform Expands/i)).toBeInTheDocument();
+    expect(getByText(/Why This Matters/i)).toBeInTheDocument();
+
+    // InlineDataGate is rendered
+    expect(getByText(/Unlock Full Kenyan Market Briefing & Analysis/i)).toBeInTheDocument();
+    expect(getByText(/6\+ More Available/i)).toBeInTheDocument();
+
+    // Headings for sections 4+ are hidden
+    expect(queryByRole("heading", { name: /What We Know/i })).not.toBeInTheDocument();
+    expect(queryByRole("heading", { name: /What It Could Mean/i })).not.toBeInTheDocument();
+    expect(queryByRole("heading", { name: /Company Timeline/i })).not.toBeInTheDocument();
+  });
 });
 
 

@@ -30,6 +30,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/useAuth";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { formatDistanceToNow, format } from "date-fns";
 import { getNewsPublishedAt } from "@/lib/newsDate";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
@@ -57,7 +58,8 @@ interface CommentItem {
 const NewsArticlePage = () => {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
   const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   
   const { toast } = useToast();
@@ -631,6 +633,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
             briefing={briefing}
             heroImage={heroImage}
             onImageError={handleNewsImageError}
+            isGated={isGated}
           />
         )}
 
@@ -720,31 +723,33 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         </div>
       </div>
 
-      {/* ─── 10. Reply Composer (Fixed to bottom of screen) ─── */}
-      <div className="fixed inset-x-0 bottom-0 z-40 bg-background/95 backdrop-blur-md border-t border-border">
-        <div className="max-w-[430px] md:max-w-xl mx-auto px-4 py-2.5 sm:py-3">
-          <form onSubmit={handleArticleCommentSubmit} className="flex items-center gap-3 bg-card border border-border rounded-full px-2.5 py-2 shadow-xs md:px-3.5 md:py-1.5">
-            <div className="w-9 h-9 md:w-8 md:h-8 rounded-full bg-cyan-950 text-cyan-400 font-bold text-sm md:text-xs flex items-center justify-center shrink-0">
-              {user ? (user.email || "U").slice(0, 1).toUpperCase() : "M"}
-            </div>
-            <input
-              type="text"
-              placeholder="Post your reply"
-              value={newCommentInput}
-              onChange={(e) => setNewCommentInput(e.target.value)}
-              className="flex-1 bg-transparent text-sm md:text-xs text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
-            />
-            <Button
-              type="submit"
-              size="sm"
-              disabled={!newCommentInput.trim()}
-              className="h-9 px-5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-all disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 md:h-8 md:px-4 md:text-xs shrink-0"
-            >
-              Reply
-            </Button>
-          </form>
+      {/* ─── 10. Reply Composer (Fixed to bottom of screen for signed in users) ─── */}
+      {!isGated && (
+        <div className="fixed inset-x-0 bottom-0 z-40 bg-background/95 backdrop-blur-md border-t border-border">
+          <div className="max-w-[430px] md:max-w-xl mx-auto px-4 py-2.5 sm:py-3">
+            <form onSubmit={handleArticleCommentSubmit} className="flex items-center gap-3 bg-card border border-border rounded-full px-2.5 py-2 shadow-xs md:px-3.5 md:py-1.5">
+              <div className="w-9 h-9 md:w-8 md:h-8 rounded-full bg-cyan-950 text-cyan-400 font-bold text-sm md:text-xs flex items-center justify-center shrink-0">
+                {user ? (user.email || "U").slice(0, 1).toUpperCase() : "M"}
+              </div>
+              <input
+                type="text"
+                placeholder="Post your reply"
+                value={newCommentInput}
+                onChange={(e) => setNewCommentInput(e.target.value)}
+                className="flex-1 bg-transparent text-sm md:text-xs text-foreground placeholder:text-muted-foreground/70 focus:outline-none"
+              />
+              <Button
+                type="submit"
+                size="sm"
+                disabled={!newCommentInput.trim()}
+                className="h-9 px-5 text-sm font-bold bg-emerald-600 hover:bg-emerald-700 text-white rounded-full transition-all disabled:bg-muted disabled:text-muted-foreground disabled:opacity-100 md:h-8 md:px-4 md:text-xs shrink-0"
+              >
+                Reply
+              </Button>
+            </form>
+          </div>
         </div>
-      </div>
+      )}
     </div>
     </PageLoadingGate>
   );

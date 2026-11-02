@@ -1,8 +1,11 @@
 import { Link, useNavigate } from "react-router-dom";
-import { ArrowUpDown, ArrowUp, ArrowDown, Trophy, TrendingUp } from "lucide-react";
+import { ArrowUpDown, ArrowUp, ArrowDown, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import YieldChange, { formatYield } from "@/components/YieldChange";
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
+import { useAuth } from "@/hooks/useAuth";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
+import InlineDataGate from "@/components/auth/InlineDataGate";
 
 type SortKey = "annual_yield" | "minimum_investment" | "management_fee";
 
@@ -33,6 +36,10 @@ const FundSubTable = ({
   totalInCategory,
 }: FundSubTableProps) => {
   const navigate = useNavigate();
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
+  const displayFunds = isGated && funds.length > 3 ? funds.slice(0, 3) : funds;
+
   const yieldRange = (() => {
     if (funds.length === 0) return { min: 0, max: 1 };
     const yields = funds.map((f) => f.annual_yield);
@@ -61,7 +68,9 @@ const FundSubTable = ({
     <div className="mb-8">
       <div className="flex items-center gap-2 mb-3">
         <h2 className="text-base font-semibold">{title}</h2>
-        <Badge variant="secondary" className="text-[10px] h-5 px-1.5">{funds.length}</Badge>
+        <Badge variant="secondary" className="text-[10px] h-5 px-1.5">
+          {isGated && funds.length > 3 ? `3 of ${funds.length}` : funds.length}
+        </Badge>
       </div>
 
       {/* Desktop / Tablet table */}
@@ -90,7 +99,7 @@ const FundSubTable = ({
               </tr>
             </thead>
             <tbody>
-              {funds.map((fund, i) => {
+              {displayFunds.map((fund, i) => {
                 const isBest = fund.annual_yield === bestYield && totalInCategory > 1;
                 return (
                   <tr
@@ -153,14 +162,63 @@ const FundSubTable = ({
                   </tr>
                 );
               })}
+
+              {isGated && funds.length > 3 && funds.slice(3, 5).map((fund, idx) => (
+                <tr
+                  key={`teaser-${fund.id || idx}`}
+                  aria-hidden="true"
+                  className="pointer-events-none select-none blur-[2px] opacity-40 bg-card border-t border-border"
+                >
+                  <td className="px-5 py-3.5 text-xs text-muted-foreground font-medium">{4 + idx}</td>
+                  <td className="px-4 py-3.5">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{fund.name}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-0.5 lg:hidden">{fund.manager}</p>
+                  </td>
+                  <td className="px-4 py-3.5 text-muted-foreground hidden lg:table-cell">{fund.manager}</td>
+                  <td className="px-4 py-3.5 text-right text-muted-foreground tabular-nums hidden lg:table-cell">
+                    {formatYield(fund.daily_yield, fund.yield_unit)}
+                  </td>
+                  <td className="px-4 py-3.5 whitespace-nowrap">
+                    <div className="grid items-center gap-2" style={{ gridTemplateColumns: 'minmax(0, 80px) auto auto' }}>
+                      <div className="hidden xl:block h-2 bg-muted rounded-full overflow-hidden">
+                        <div className="h-full rounded-full bg-accent/60" style={{ width: "60%" }} />
+                      </div>
+                      <span className="font-bold tabular-nums text-right text-accent/80 min-w-[70px]">
+                        {formatYield(fund.annual_yield, fund.yield_unit)}
+                      </span>
+                    </div>
+                  </td>
+                  <td className="px-4 py-3.5 text-right tabular-nums">
+                    KES {fund.minimum_investment.toLocaleString()}
+                  </td>
+                  <td className="px-4 py-3.5 text-right tabular-nums">{fund.management_fee}%</td>
+                  <td className="px-4 py-3.5 text-muted-foreground hidden lg:table-cell">{fund.withdrawal_time}</td>
+                  <td className="px-4 py-3.5 text-right text-xs text-accent">Details →</td>
+                </tr>
+              ))}
             </tbody>
           </table>
         </div>
       </div>
 
+      {/* Desktop gate */}
+      {isGated && funds.length > 3 && (
+        <div className="hidden md:block mt-3">
+          <InlineDataGate
+            category="funds"
+            totalCount={totalInCategory || funds.length}
+            visibleCount={3}
+            title="Unlock All Funds in Side-by-Side Comparison"
+            description="Showing top 3 funds. Create a free account to compare all 35+ funds side-by-side with net yields after tax, fees, and minimum investments."
+          />
+        </div>
+      )}
+
       {/* Mobile cards */}
       <div className="md:hidden space-y-3">
-        {funds.map((fund) => {
+        {displayFunds.map((fund) => {
           const isBest = fund.annual_yield === bestYield && totalInCategory > 1;
           return (
             <Link
@@ -217,6 +275,41 @@ const FundSubTable = ({
             </Link>
           );
         })}
+
+        {isGated && funds.length > 3 && funds.slice(3, 5).map((fund, idx) => (
+          <div
+            key={`teaser-card-${fund.id || idx}`}
+            aria-hidden="true"
+            className="pointer-events-none select-none blur-[2px] opacity-40 block rounded-xl border border-border bg-card p-4 space-y-3"
+          >
+            <div className="flex justify-between items-start mb-3">
+              <div className="flex-1 min-w-0 mr-3">
+                <h3 className="font-semibold truncate">{fund.name}</h3>
+                <p className="text-xs text-muted-foreground">{fund.manager}</p>
+              </div>
+              <div className="text-right shrink-0">
+                <span className="text-accent font-bold text-xl">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
+                <p className="text-[10px] text-muted-foreground">annual</p>
+              </div>
+            </div>
+            <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
+              <div><span className="block font-medium text-foreground text-[11px]">Daily</span>{formatYield(fund.daily_yield, fund.yield_unit)}</div>
+              <div><span className="block font-medium text-foreground text-[11px]">Min</span>KES {fund.minimum_investment.toLocaleString()}</div>
+              <div><span className="block font-medium text-foreground text-[11px]">Fee</span>{fund.management_fee}%</div>
+              <div><span className="block font-medium text-foreground text-[11px]">Withdrawal</span>{fund.withdrawal_time}</div>
+            </div>
+          </div>
+        ))}
+
+        {isGated && funds.length > 3 && (
+          <InlineDataGate
+            category="funds"
+            totalCount={totalInCategory || funds.length}
+            visibleCount={3}
+            title="Unlock All Funds in Side-by-Side Comparison"
+            description="Showing top 3 funds. Create a free account to compare all 35+ funds side-by-side with net yields after tax, fees, and minimum investments."
+          />
+        )}
       </div>
     </div>
   );

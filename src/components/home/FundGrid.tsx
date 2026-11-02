@@ -12,6 +12,9 @@ import SectionLiveStatus from "@/components/SectionLiveStatus";
 import type { FundFromDB, FundType, YieldSnapshot } from "@/lib/api";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
 import { useCompare } from "@/hooks/useCompare";
+import { useAuth } from "@/hooks/useAuth";
+import InlineDataGate from "@/components/auth/InlineDataGate";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 
 type SortKey = "annual_yield" | "daily_yield" | "name" | "minimum_investment" | "management_fee" | "change";
 type SortDir = "asc" | "desc";
@@ -265,6 +268,10 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
     return Math.max(...catFunds.map((f) => f.annual_yield));
   }, [funds, activeTab]);
 
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
+  const displayFunds = isGated && filtered.length > 3 ? filtered.slice(0, 3) : filtered;
+
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
       updateParams({ dir: sortDir === "asc" ? "desc" : "asc" });
@@ -485,9 +492,9 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
       </div>
 
       {/* Mobile: card view */}
-      <div className="md:hidden">
+      <div className="md:hidden space-y-3">
         <FundMobileCards
-          funds={filtered}
+          funds={displayFunds}
           snapshots={snapshots}
           allSnapshots={allSnapshots}
           bestYield={bestYield}
@@ -497,6 +504,30 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
           isFavourite={isFavourite}
           onToggleFavourite={onToggleFavourite}
         />
+        {isGated && filtered.length > 3 && (
+          <div
+            aria-hidden="true"
+            className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-4 space-y-2"
+          >
+            <div className="flex items-center gap-3">
+              <div className="h-10 w-10 rounded-full bg-muted" />
+              <div className="space-y-1">
+                <div className="h-4 w-32 bg-muted rounded" />
+                <div className="h-3 w-20 bg-muted rounded" />
+              </div>
+            </div>
+            <div className="h-6 w-24 bg-muted rounded mt-2" />
+          </div>
+        )}
+        {isGated && filtered.length > 3 && (
+          <InlineDataGate
+            category="funds"
+            totalCount={categoryCount[activeTab] || filtered.length}
+            visibleCount={3}
+            title="Unlock All 35+ CMA-Regulated Kenyan Funds"
+            description="Showing top 3 funds. Create a free account to compare real yields after 15% tax, withdrawal times, and track daily rate changes across all funds."
+          />
+        )}
       </div>
 
 
@@ -558,7 +589,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
               </tr>
             </thead>
             <tbody className="divide-y divide-border bg-card">
-              {filtered.map((fund) => (
+              {displayFunds.map((fund) => (
                 <tr
                   key={fund.id}
                   onClick={() => navigate(`/compare/${fund.slug}`)}
@@ -666,6 +697,42 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                 </tr>
               ))}
 
+              {isGated && filtered.length > 3 && filtered.slice(3, 5).map((fund, idx) => (
+                <tr
+                  key={`teaser-${fund.id || idx}`}
+                  aria-hidden="true"
+                  className="pointer-events-none select-none blur-[2px] opacity-40 bg-card"
+                >
+                  <td className="bg-muted/25 px-4 py-4 align-middle dark:bg-[#151619]">
+                    <div className="flex items-center gap-3 min-w-0">
+                      <div className="w-11 h-11 rounded-full bg-muted shrink-0" />
+                      <div className="min-w-0">
+                        <div className="font-bold text-foreground truncate text-[14px]">{fund.name}</div>
+                        <div className="text-[11px] text-muted-foreground truncate mt-1">{fund.manager}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className="px-3 py-4 text-right whitespace-nowrap tabular-nums align-middle">
+                    <span className="font-black text-foreground text-[13px]">{fmtYield(fund.annual_yield, fund.yield_unit)}</span>
+                  </td>
+                  <td className="px-2 py-4 text-right align-middle text-muted-foreground">—</td>
+                  <td className="px-2 py-4 text-center align-middle text-muted-foreground">—</td>
+                  <td className="px-3 py-4 text-right text-[13px] font-semibold text-foreground whitespace-nowrap align-middle">
+                    KSh {fund.minimum_investment.toLocaleString()}
+                  </td>
+                  <td className="px-3 py-4 text-right text-[13px] font-semibold text-foreground whitespace-nowrap align-middle">
+                    {fund.management_fee}%
+                  </td>
+                  <td className="pr-5 pl-2 py-4 text-right text-[13px] font-semibold text-foreground align-middle">
+                    {fund.withdrawal_time}
+                  </td>
+                  <td className="px-2 py-4 text-center align-middle">
+                    <span className="inline-block h-8 w-16 rounded-full bg-muted/60" />
+                  </td>
+                  {onToggleFavourite && <td />}
+                </tr>
+              ))}
+
               {filtered.length === 0 && (
                 <tr>
                     <td colSpan={onToggleFavourite ? 9 : 8} className="text-center py-14">
@@ -765,10 +832,24 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
         </aside>
       </div>
 
+      {isGated && filtered.length > 3 && (
+        <div className="hidden md:block">
+          <InlineDataGate
+            category="funds"
+            totalCount={categoryCount[activeTab] || filtered.length}
+            visibleCount={3}
+            title="Unlock All 35+ CMA-Regulated Kenyan Funds"
+            description="Showing top 3 funds. Create a free account to compare real yields after 15% tax, withdrawal times, and track daily rate changes across all funds."
+          />
+        </div>
+      )}
+
       {/* Summary footer */}
       <div className="flex items-center text-xs text-muted-foreground px-1">
         <span>
-          Showing {filtered.length} of {categoryCount[activeTab] || 0} {categoryLabels[activeTab] || activeTab} funds
+          {isGated && filtered.length > 3
+            ? `Showing 3 of ${categoryCount[activeTab] || filtered.length} ${categoryLabels[activeTab] || activeTab} funds (preview)`
+            : `Showing ${filtered.length} of ${categoryCount[activeTab] || 0} ${categoryLabels[activeTab] || activeTab} funds`}
         </span>
       </div>
     </div>

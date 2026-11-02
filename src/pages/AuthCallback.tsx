@@ -38,14 +38,17 @@ export default function AuthCallback() {
         // Verify we actually got a session
         const { data: { session } } = await supabase.auth.getSession();
         if (session) {
-          // Clear hash and navigate to root
+          // Clear hash and navigate to intended destination
           window.location.hash = "";
-          navigate("/", { replace: true });
+          const params = new URLSearchParams(window.location.search);
+          const rawNext = params.get("redirect") || params.get("next") || params.get("returnTo") || "/";
+          const safeNext = rawNext.startsWith("/") && !rawNext.startsWith("//") ? rawNext : "/";
+          navigate(safeNext, { replace: true });
         } else {
           setError("Failed to retrieve session after authentication.");
         }
-      } catch (err: any) {
-        setError(err?.message || "Authentication failed");
+      } catch (err: unknown) {
+        setError(err instanceof Error ? err.message : "Authentication failed");
       }
     };
 

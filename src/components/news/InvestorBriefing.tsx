@@ -20,6 +20,7 @@ import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCa
 import { MmfArticleMarketCard } from "@/components/news/MmfArticleMarketCard";
 import { FxArticleMarketCard } from "@/components/news/FxArticleMarketCard";
 import { CommodityArticleMarketCard } from "@/components/news/CommodityArticleMarketCard";
+import InlineDataGate from "@/components/auth/InlineDataGate";
 
 interface InvestorBriefingProps {
   briefing: NormalizedInvestorBriefing;
@@ -27,6 +28,7 @@ interface InvestorBriefingProps {
   onImageError?: (e: React.SyntheticEvent<HTMLImageElement>) => void;
   inlineTransparent?: boolean;
   showTitle?: boolean;
+  isGated?: boolean;
 }
 
 export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
@@ -34,6 +36,7 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
   heroImage,
   onImageError,
   showTitle = true,
+  isGated = false,
 }) => {
   const [showChart, setShowChart] = useState(false);
 
@@ -95,8 +98,36 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
         />
       )}
 
+      {/* ─── Gated Teaser & Inline Gate for Unauthenticated Visitors ─── */}
+      {isGated && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none select-none blur-[2px] opacity-40 rounded-2xl border border-border/80 bg-card p-5 space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <div className="h-4 w-32 bg-muted rounded" />
+            <div className="h-4 w-20 bg-muted rounded-full" />
+          </div>
+          <div className="space-y-2 pt-1">
+            <div className="h-4 w-full bg-muted rounded" />
+            <div className="h-4 w-5/6 bg-muted rounded" />
+            <div className="h-4 w-3/4 bg-muted rounded" />
+          </div>
+        </div>
+      )}
+
+      {isGated && (
+        <InlineDataGate
+          category="news"
+          totalCount={9}
+          visibleCount={3}
+          title="Unlock Full Kenyan Market Briefing & Analysis"
+          description="Showing the executive takeaway. Create a free account to read all verified facts, analyst interpretations, risks, forward-looking catalysts, and full company timeline."
+        />
+      )}
+
       {/* ─── 4. What We Know (Short bullets of verified source facts only) ─── */}
-      {briefing.whatWeKnow.length > 0 && (
+      {!isGated && briefing.whatWeKnow.length > 0 && (
         <section className="space-y-3 border-t border-border/70 pt-5">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/90 flex items-center gap-2">
@@ -120,7 +151,7 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
       )}
 
       {/* ─── 5. What It Could Mean (2–4 compact statements, strictly distinct from facts) ─── */}
-      {briefing.whatItCouldMean.length > 0 && (
+      {!isGated && briefing.whatItCouldMean.length > 0 && (
         <section className="space-y-3 border-t border-border/70 pt-5">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/90 flex items-center gap-2">
@@ -141,7 +172,7 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
       )}
 
       {/* ─── 6. What We Don't Know (Single consolidated guardrail box) ─── */}
-      {briefing.whatWeDontKnow.length > 0 && (
+      {!isGated && briefing.whatWeDontKnow.length > 0 && (
         <section className="rounded-xl border border-border/80 bg-muted/40 p-4 space-y-2.5">
           <div className="flex items-center gap-2">
             <ShieldAlert className="h-4 w-4 text-amber-500 shrink-0" />
@@ -161,7 +192,7 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
       )}
 
       {/* ─── 7. Watch Next (3–4 practical items) ─── */}
-      {briefing.watchNext.length > 0 && (
+      {!isGated && briefing.watchNext.length > 0 && (
         <section className="space-y-3 border-t border-border/70 pt-5">
           <div className="flex items-center justify-between">
             <h2 className="text-xs font-bold uppercase tracking-[0.14em] text-foreground/90 flex items-center gap-2">
@@ -210,7 +241,7 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
       </section>
 
       {/* ─── 9. Company Timeline (Only for stock-linked stories) ─── */}
-      {briefing.timeline && briefing.timeline.length > 0 && (
+      {!isGated && briefing.timeline && briefing.timeline.length > 0 && (
         <section className="border-t border-border/70 pt-6 pb-2 space-y-4">
           <div className="flex items-center gap-2">
             <Calendar className="h-4 w-4 text-emerald-500" />

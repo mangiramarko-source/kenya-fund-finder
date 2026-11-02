@@ -28,6 +28,8 @@ import { StockDisclosuresTab } from "@/components/stocks/StockDisclosuresTab";
 import KoraIllustration from "@/components/kora/KoraIllustration";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { isIndexableNewsArticle } from "@/lib/seoNewsEligibility";
+import InlineDataGate from "@/components/auth/InlineDataGate";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
@@ -783,6 +785,8 @@ const StockDetailPage = () => {
 
 /* ─── News Tab Component ─── */
 const StockNewsTab = ({ stockId, symbol, name }: { stockId: string; symbol: string; name: string }) => {
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
   const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [news, setNews] = useState<any[]>([]);
@@ -891,9 +895,11 @@ const StockNewsTab = ({ stockId, symbol, name }: { stockId: string; symbol: stri
     setSelectedFeedItem(item);
   };
 
+  const displayNews = isGated && news.length > 3 ? news.slice(0, 3) : news;
+
   return (
     <div className="space-y-3">
-      {news.map((n) => (
+      {displayNews.map((n) => (
         <div
           key={n.id}
           onClick={() => handleOpenItem(n)}
@@ -917,7 +923,33 @@ const StockNewsTab = ({ stockId, symbol, name }: { stockId: string; symbol: stri
           </div>
         </div>
       ))}
-      {hasMore ? (
+
+      {isGated && news.length > 3 && (
+        <div
+          aria-hidden="true"
+          className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-4 space-y-2"
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-16 h-16 rounded-lg bg-muted shrink-0" />
+            <div className="flex-1 space-y-2">
+              <div className="h-4 w-4/5 bg-muted rounded" />
+              <div className="h-3 w-full bg-muted rounded" />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {isGated && news.length > 3 && (
+        <InlineDataGate
+          category="news"
+          totalCount={news.length}
+          visibleCount={3}
+          title={`Unlock All Market News for ${symbol}`}
+          description={`Showing top 3 articles. Create a free account to access all historical disclosures, earnings announcements, and updates for ${name}.`}
+        />
+      )}
+
+      {!isGated && hasMore ? (
         <div className="flex justify-center pt-2">
           <Button
             variant="outline"

@@ -25,6 +25,7 @@ import { Sparkline } from "./Sparkline";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/useAuth";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { toast } from "sonner";
 
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -63,7 +64,8 @@ const getAvatarBg = (type: FeedItem["type"]) => {
 };
 
 export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onLikeToggle, onAddComment }: FeedItemDetailModalProps) {
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
   const navigate = useNavigate();
   const isMobile = useIsMobile();
   const [localLiked, setLocalLiked] = useState(false);
@@ -270,7 +272,7 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
         {/* Modal Body */}
         <div className="p-6 space-y-6">
           {briefing ? (
-            <InvestorBriefing briefing={briefing} heroImage={heroImage} showTitle={false} />
+            <InvestorBriefing briefing={briefing} heroImage={heroImage} showTitle={false} isGated={isGated} />
           ) : (
             <>
               {/* Media Box */}
@@ -393,16 +395,21 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
 
             {commentsList.length > 0 ? (
               <div className="space-y-2 pt-1">
-                {commentsList.map((cmt, idx) => (
-                  <div key={idx} className="p-3.5 rounded-xl bg-muted/40 border border-border/80 text-xs text-foreground dark:bg-white/5 dark:border-white/5 space-y-1">
-                    <span className="font-semibold text-emerald-600 dark:text-emerald-400 block">
-                      {typeof cmt === "object" && (cmt as any).authorName ? (cmt as any).authorName : "Community Member"}
-                    </span>
-                    <p className="leading-relaxed">
-                      {typeof cmt === "object" ? (cmt as any).content : cmt}
-                    </p>
-                  </div>
-                ))}
+                {commentsList.map((cmt, idx) => {
+                  const commentObj = typeof cmt === "object" && cmt !== null ? (cmt as Record<string, unknown>) : null;
+                  const author = typeof commentObj?.authorName === "string" ? commentObj.authorName : "Community Member";
+                  const commentText = typeof commentObj?.content === "string" ? commentObj.content : String(cmt ?? "");
+                  return (
+                    <div key={idx} className="p-3.5 rounded-xl bg-muted/40 border border-border/80 text-xs text-foreground dark:bg-white/5 dark:border-white/5 space-y-1">
+                      <span className="font-semibold text-emerald-600 dark:text-emerald-400 block">
+                        {author}
+                      </span>
+                      <p className="leading-relaxed">
+                        {commentText}
+                      </p>
+                    </div>
+                  );
+                })}
               </div>
             ) : (
               <p className="text-xs text-muted-foreground italic py-2">

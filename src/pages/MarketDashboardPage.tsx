@@ -11,6 +11,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import PageLoadingGate from "@/components/PageLoadingGate";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
 import MiniCurrencyConverter from "@/components/calculator/MiniCurrencyConverter";
+import { useAuth } from "@/hooks/useAuth";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
+import InlineDataGate from "@/components/auth/InlineDataGate";
 
 
 /* ─── Types ─── */
@@ -150,6 +153,13 @@ const MarketDashboardPage = () => {
     : activeTab === "commodities" ? filteredCommodities.length
     : filteredStocks.length;
 
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
+
+  const displayRates = isGated && filteredRates.length > 3 ? filteredRates.slice(0, 3) : filteredRates;
+  const displayCommodities = isGated && filteredCommodities.length > 3 ? filteredCommodities.slice(0, 3) : filteredCommodities;
+  const displayStocks = isGated && filteredStocks.length > 3 ? filteredStocks.slice(0, 3) : filteredStocks;
+
   return (
     <PageLoadingGate isReady={!loading} message="Loading latest market data…" loaderClassName="min-h-screen">
     <div className="min-h-screen">
@@ -236,9 +246,34 @@ const MarketDashboardPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredRates.map((r, i) => (
+                      {displayRates.map((r, i) => (
                         <tr key={r.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
                           <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
+                          <td className="px-3 py-3">
+                            <span className="font-bold text-foreground text-xs tracking-wide">{r.currency_code}</span>
+                          </td>
+                          <td className="px-3 py-3 text-sm text-muted-foreground">{r.currency_name}</td>
+                          <td className="px-3 py-3 text-right">
+                            <span className="font-bold text-foreground text-[15px] tabular-nums">{Number(r.rate).toFixed(2)}</span>
+                          </td>
+                          <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
+                            {r.previous_rate != null ? Number(r.previous_rate).toFixed(2) : "—"}
+                          </td>
+                          <td className="hidden md:table-cell px-3 py-3 text-right">
+                            <ChangeIndicator current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />
+                          </td>
+                          <td className="hidden md:table-cell pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
+                            {r.updated_at ? formatMarketDate(r.updated_at, "en-KE", { day: "numeric", month: "short" }) : "—"}
+                          </td>
+                        </tr>
+                      ))}
+                      {isGated && filteredRates.length > 3 && filteredRates.slice(3, 5).map((r, idx) => (
+                        <tr
+                          key={`teaser-rate-${r.id || idx}`}
+                          aria-hidden="true"
+                          className="pointer-events-none select-none blur-[2px] opacity-40 border-t border-border/50"
+                        >
+                          <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{4 + idx}</td>
                           <td className="px-3 py-3">
                             <span className="font-bold text-foreground text-xs tracking-wide">{r.currency_code}</span>
                           </td>
@@ -262,6 +297,16 @@ const MarketDashboardPage = () => {
                   </table>
                 </div>
               </div>
+
+              {isGated && filteredRates.length > 3 && (
+                <InlineDataGate
+                  category="rates"
+                  totalCount={categoryCount.fx_rates || filteredRates.length}
+                  visibleCount={3}
+                  title="Unlock All Central Bank of Kenya FX Rates"
+                  description="Showing top 3 currency pairs. Create a free account to track all 25+ daily CBK exchange rates, previous closes, and historical trends."
+                />
+              )}
             </>
           )}
 
@@ -300,7 +345,7 @@ const MarketDashboardPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {filteredCommodities.map((c, i) => (
+                      {displayCommodities.map((c, i) => (
                         <tr key={c.id} className="border-t border-border/50 hover:bg-accent/5 transition-colors group">
                           <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{i + 1}</td>
                           <td className="px-3 py-3">
@@ -322,17 +367,56 @@ const MarketDashboardPage = () => {
                           </td>
                         </tr>
                       ))}
+                      {isGated && filteredCommodities.length > 3 && filteredCommodities.slice(3, 5).map((c, idx) => (
+                        <tr
+                          key={`teaser-comm-${c.id || idx}`}
+                          aria-hidden="true"
+                          className="pointer-events-none select-none blur-[2px] opacity-40 border-t border-border/50"
+                        >
+                          <td className="pl-4 pr-2 py-3 text-muted-foreground/60 text-xs tabular-nums">{4 + idx}</td>
+                          <td className="px-3 py-3">
+                            <span className="font-bold text-foreground text-xs tracking-wide">{c.symbol}</span>
+                          </td>
+                          <td className="px-3 py-3 text-sm text-muted-foreground">{c.name}</td>
+                          <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{c.unit}</td>
+                          <td className="px-3 py-3 text-right">
+                            <span className="font-bold text-foreground text-[15px] tabular-nums">
+                              {Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                            </span>
+                          </td>
+                          <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
+                            {c.previous_price != null ? Number(c.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                          </td>
+                          <td className="hidden md:table-cell px-3 py-3 text-right">
+                            <ChangeIndicator current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />
+                          </td>
+                          <td className="hidden md:table-cell pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
+                            {c.updated_at ? formatMarketDate(c.updated_at, "en-KE", { day: "numeric", month: "short" }) : "—"}
+                          </td>
+                        </tr>
+                      ))}
                       {filteredCommodities.length === 0 && <EmptyRow colSpan={8} search={search} onClear={() => setSearch("")} />}
                     </tbody>
                   </table>
                 </div>
               </div>
+
+              {isGated && filteredCommodities.length > 3 && (
+                <InlineDataGate
+                  category="commodities"
+                  totalCount={categoryCount.commodities || filteredCommodities.length}
+                  visibleCount={3}
+                  title="Unlock All Agricultural & Energy Commodities"
+                  description="Showing top 3 commodities. Create a free account to track global spot prices, tea, coffee, oil, and precious metals."
+                />
+              )}
             </>
           )}
 
           {/* ─── Stocks Table ─── */}
           {activeTab === "stocks" && (
-            <div className="rounded-xl border border-border overflow-hidden bg-card">
+            <>
+              <div className="rounded-xl border border-border overflow-hidden bg-card">
               <table className="w-full text-sm">
                 <colgroup>
                   <col style={{ width: "3%" }} />
@@ -353,7 +437,7 @@ const MarketDashboardPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {filteredStocks.map((s, i) => (
+                  {displayStocks.map((s, i) => (
                     <tr key={s.id} className="border-t border-border hover:bg-muted/30 transition-colors">
                       <td className="pl-5 pr-2 py-3 text-muted-foreground text-xs tabular-nums">{i + 1}</td>
                       <td className="px-3 py-3">
@@ -372,15 +456,53 @@ const MarketDashboardPage = () => {
                       </td>
                     </tr>
                   ))}
+                  {isGated && filteredStocks.length > 3 && filteredStocks.slice(3, 5).map((s, idx) => (
+                    <tr
+                      key={`teaser-stock-${s.id || idx}`}
+                      aria-hidden="true"
+                      className="pointer-events-none select-none blur-[2px] opacity-40 border-t border-border"
+                    >
+                      <td className="pl-5 pr-2 py-3 text-muted-foreground text-xs tabular-nums">{4 + idx}</td>
+                      <td className="px-3 py-3">
+                        <span className="font-semibold text-foreground">{s.symbol}</span>
+                        <span className="block text-[10px] text-muted-foreground truncate">{s.name}</span>
+                      </td>
+                      <td className="px-2 py-3 text-center text-[10px] text-muted-foreground">{s.sector}</td>
+                      <td className="px-3 py-3 text-right">
+                        <span className="font-bold text-foreground text-base tabular-nums">{s.price.toFixed(2)}</span>
+                      </td>
+                      <td className="px-3 py-3 text-right">
+                        <ChangeIndicator current={s.price} previous={s.previous_price} />
+                      </td>
+                      <td className="pr-5 px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
+                        {s.volume.toLocaleString()}
+                      </td>
+                    </tr>
+                  ))}
                   {filteredStocks.length === 0 && <EmptyRow colSpan={6} search={search} onClear={() => setSearch("")} />}
                 </tbody>
               </table>
             </div>
+
+            {isGated && filteredStocks.length > 3 && (
+              <InlineDataGate
+                category="stocks"
+                totalCount={categoryCount.stocks || filteredStocks.length}
+                visibleCount={3}
+                title="Unlock All 60+ Nairobi Securities Exchange Equities"
+                description="Showing top 3 stocks. Create a free account to track live NSE market pricing, volume movers, gainers, losers, and valuation metrics."
+              />
+            )}
+            </>
           )}
 
           {/* Summary footer */}
           <div className="flex items-center justify-between text-xs text-muted-foreground px-1">
-            <span>Showing {activeCount} {categoryLabels[activeTab].toLowerCase()}</span>
+            <span>
+              {isGated && activeCount > 3
+                ? `Showing 3 of ${activeCount} ${categoryLabels[activeTab].toLowerCase()} (preview)`
+                : `Showing ${activeCount} ${categoryLabels[activeTab].toLowerCase()}`}
+            </span>
             {activeTab === "stocks" && (
               <Link to="/stocks" className="text-accent hover:text-accent/80 font-medium transition-colors">View stock details →</Link>
             )}

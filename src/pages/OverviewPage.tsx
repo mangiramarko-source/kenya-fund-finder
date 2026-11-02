@@ -48,6 +48,8 @@ import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { buildNewsFeedItems } from "@/lib/stockNewsFeed";
 import { getCurrencyFlag } from "@/lib/currencyFlags";
+import InlineDataGate from "@/components/auth/InlineDataGate";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/fundsFixedIncomeNews";
 
 const INTERNATIONAL_SOURCES = new Set([
@@ -854,7 +856,8 @@ const OverviewPage = () => {
     inLanguage: "en-KE"
   });
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();
   const { alerts } = usePriceAlerts();
   const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
@@ -1294,6 +1297,8 @@ const OverviewPage = () => {
     return list;
   }, [allFeedItems, stockNewsFeedItems, activeUpdateCategory]);
 
+  const displayFeedItems = isGated && filteredFeedItems.length > 3 ? filteredFeedItems.slice(0, 3) : filteredFeedItems;
+
   const newTodayCount = useMemo(() => {
     const now = Date.now();
     const oneDayMs = 24 * 60 * 60 * 1000;
@@ -1360,7 +1365,7 @@ const OverviewPage = () => {
                   No stock-linked news is available yet.
                 </div>
               ) : (
-                filteredFeedItems.map((item, index) => (
+                displayFeedItems.map((item, index) => (
                   <StockFeedCard
                     key={item.id}
                     item={item}
@@ -1372,7 +1377,7 @@ const OverviewPage = () => {
                 ))
               )
             ) : activeUpdateCategory === "All" ? (
-              filteredFeedItems.map((item, index) => item.relatedStock ? (
+              displayFeedItems.map((item, index) => item.relatedStock ? (
                 <StockFeedCard
                   key={item.id}
                   item={item}
@@ -1392,7 +1397,31 @@ const OverviewPage = () => {
                 />
               ))
             ) : (
-              <SocialFeed items={filteredFeedItems} loading={newsLoading || newsCategoryLoading} />
+              <SocialFeed items={displayFeedItems} loading={newsLoading || newsCategoryLoading} />
+            )}
+
+            {isGated && filteredFeedItems.length > 3 && (
+              <div
+                aria-hidden="true"
+                className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border/70 bg-card p-4 space-y-3"
+              >
+                <div className="flex justify-between items-center">
+                  <div className="h-3 w-20 bg-muted rounded" />
+                  <div className="h-4 w-12 bg-muted rounded-full" />
+                </div>
+                <div className="h-5 w-4/5 bg-muted rounded" />
+                <div className="h-4 w-full bg-muted rounded" />
+              </div>
+            )}
+
+            {isGated && filteredFeedItems.length > 3 && (
+              <InlineDataGate
+                category="news"
+                totalCount={news.length || filteredFeedItems.length}
+                visibleCount={3}
+                title="Unlock All Kenyan Market News & Updates"
+                description="Showing top 3 stories. Create a free account to read all market news, company earnings announcements, and analyst briefings."
+              />
             )}
           </div>
         </div>
