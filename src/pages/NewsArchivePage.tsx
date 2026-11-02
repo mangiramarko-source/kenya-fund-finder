@@ -162,7 +162,9 @@ export default function NewsArchivePage() {
                 <h2 className="text-lg font-bold leading-snug text-foreground">
                   {article.title}
                 </h2>
-                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">{article.summary}</p>
+                <p className="mt-2 line-clamp-2 text-sm leading-relaxed text-muted-foreground">
+                  Sign up to read the full market intelligence summary and article analysis.
+                </p>
               </li>
             ))}
           </ol>

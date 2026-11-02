@@ -1321,7 +1321,13 @@ const OverviewPage = () => {
           <WatchlistSummaryCard
             items={derivedWatchlistItems}
             stocks={stocks as any}
-            onOpenCustomize={() => setWatchlistPromptOpen(true)}
+            onOpenCustomize={() => {
+              if (!user) {
+                navigate("/auth?mode=signup&redirect=%2F");
+                return;
+              }
+              setWatchlistPromptOpen(true);
+            }}
           />
         </div>
 
@@ -1430,7 +1436,13 @@ const OverviewPage = () => {
         <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 md:col-span-3 md:flex md:flex-col md:space-y-4">
           <ExchangeRatesCard
             rates={displayFxRates}
-            onOpenCustomize={() => setFxCustomizeOpen(true)}
+            onOpenCustomize={() => {
+              if (!user) {
+                navigate("/auth?mode=signup&redirect=%2F");
+                return;
+              }
+              setFxCustomizeOpen(true);
+            }}
           />
           <MarketMoversCard stocks={stocks as any} />
         </div>

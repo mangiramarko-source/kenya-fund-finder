@@ -27,14 +27,17 @@ export default function InlineDataGate({
   const handleGoogleSignIn = useCallback(async () => {
     trackEvent("signup_started", { method: "google", source: `inline_gate_${category}` });
     try {
-      await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}${currentFullPath}`,
         },
       });
+      if (error) {
+        window.location.href = `/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`;
+      }
     } catch {
-      window.location.href = `/auth?redirect=${encodeURIComponent(currentFullPath)}`;
+      window.location.href = `/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`;
     }
   }, [category, currentFullPath]);
 
@@ -80,11 +83,22 @@ export default function InlineDataGate({
             asChild
             className="w-full sm:w-auto h-11 px-6 text-xs sm:text-sm border-border/80 text-foreground rounded-xl hover:bg-muted/40"
           >
-            <Link to={`/auth?redirect=${encodeURIComponent(currentFullPath)}`}>
+            <Link to={`/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`}>
               Continue with Email
             </Link>
           </Button>
         </div>
+
+        {/* Existing member sign-in link */}
+        <p className="text-xs text-muted-foreground">
+          Already have an account?{" "}
+          <Link
+            to={`/auth?mode=signin&redirect=${encodeURIComponent(currentFullPath)}`}
+            className="text-emerald-400 font-semibold hover:underline"
+          >
+            Sign In
+          </Link>
+        </p>
 
         {/* Trust badge */}
         <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 pt-1">

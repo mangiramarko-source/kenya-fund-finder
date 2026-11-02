@@ -178,7 +178,7 @@ const FundSubTable = ({
                   </td>
                   <td className="px-4 py-3.5 text-muted-foreground hidden lg:table-cell">{fund.manager}</td>
                   <td className="px-4 py-3.5 text-right text-muted-foreground tabular-nums hidden lg:table-cell">
-                    {formatYield(fund.daily_yield, fund.yield_unit)}
+                    •.••%
                   </td>
                   <td className="px-4 py-3.5 whitespace-nowrap">
                     <div className="grid items-center gap-2" style={{ gridTemplateColumns: 'minmax(0, 80px) auto auto' }}>
@@ -186,15 +186,15 @@ const FundSubTable = ({
                         <div className="h-full rounded-full bg-accent/60" style={{ width: "60%" }} />
                       </div>
                       <span className="font-bold tabular-nums text-right text-accent/80 min-w-[70px]">
-                        {formatYield(fund.annual_yield, fund.yield_unit)}
+                        ••.••%
                       </span>
                     </div>
                   </td>
                   <td className="px-4 py-3.5 text-right tabular-nums">
-                    KES {fund.minimum_investment.toLocaleString()}
+                    KES •••,•••
                   </td>
-                  <td className="px-4 py-3.5 text-right tabular-nums">{fund.management_fee}%</td>
-                  <td className="px-4 py-3.5 text-muted-foreground hidden lg:table-cell">{fund.withdrawal_time}</td>
+                  <td className="px-4 py-3.5 text-right tabular-nums">•.••%</td>
+                  <td className="px-4 py-3.5 text-muted-foreground hidden lg:table-cell">•••</td>
                   <td className="px-4 py-3.5 text-right text-xs text-accent">Details →</td>
                 </tr>
               ))}
@@ -288,15 +288,15 @@ const FundSubTable = ({
                 <p className="text-xs text-muted-foreground">{fund.manager}</p>
               </div>
               <div className="text-right shrink-0">
-                <span className="text-accent font-bold text-xl">{formatYield(fund.annual_yield, fund.yield_unit)}</span>
+                <span className="text-accent font-bold text-xl">••.••%</span>
                 <p className="text-[10px] text-muted-foreground">annual</p>
               </div>
             </div>
             <div className="grid grid-cols-4 gap-2 text-xs text-muted-foreground">
-              <div><span className="block font-medium text-foreground text-[11px]">Daily</span>{formatYield(fund.daily_yield, fund.yield_unit)}</div>
-              <div><span className="block font-medium text-foreground text-[11px]">Min</span>KES {fund.minimum_investment.toLocaleString()}</div>
-              <div><span className="block font-medium text-foreground text-[11px]">Fee</span>{fund.management_fee}%</div>
-              <div><span className="block font-medium text-foreground text-[11px]">Withdrawal</span>{fund.withdrawal_time}</div>
+              <div><span className="block font-medium text-foreground text-[11px]">Daily</span>•.••%</div>
+              <div><span className="block font-medium text-foreground text-[11px]">Min</span>KES •••,•••</div>
+              <div><span className="block font-medium text-foreground text-[11px]">Fee</span>•.••%</div>
+              <div><span className="block font-medium text-foreground text-[11px]">Withdrawal</span>•••</div>
             </div>
           </div>
         ))}

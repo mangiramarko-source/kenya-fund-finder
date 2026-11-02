@@ -260,8 +260,14 @@ const CommoditiesPage = () => {
   const losers = useMemo(() => commodities.filter((c) => c.previous_price != null && c.price < c.previous_price).length, [commodities]);
   const unchanged = useMemo(() => commodities.filter((c) => c.previous_price == null || c.price === c.previous_price).length, [commodities]);
 
+  const isCommoditiesGated = isGated && commodities.length > 3;
+  const teaserCommodities = useMemo(
+    () => (isCommoditiesGated ? commodities.slice(3, 5) : []),
+    [isCommoditiesGated, commodities],
+  );
+
   const filtered = useMemo(() => {
-    let result = commodities;
+    let result = isCommoditiesGated ? commodities.slice(0, 3) : commodities;
     if (mobileMovement === "gainers") result = result.filter((c) => c.previous_price != null && c.price > c.previous_price);
     else if (mobileMovement === "losers") result = result.filter((c) => c.previous_price != null && c.price < c.previous_price);
     else if (mobileMovement === "unchanged") result = result.filter((c) => c.previous_price == null || c.price === c.previous_price);
@@ -283,9 +289,9 @@ const CommoditiesPage = () => {
       result = arr;
     }
     return result;
-  }, [commodities, search, mobileMovement, mobileSort]);
+  }, [commodities, isCommoditiesGated, search, mobileMovement, mobileSort]);
 
-  const displayCommodities = isGated && filtered.length > 3 ? filtered.slice(0, 3) : filtered;
+  const displayCommodities = isCommoditiesGated ? filtered.slice(0, 3) : filtered;
 
   const pageLoading = loading || !initialHistoryReady;
   const showPageLoading = useMinimumLoadingDuration(pageLoading);
@@ -559,14 +565,14 @@ const CommoditiesPage = () => {
                       onToggleFavourite={user ? () => toggleFavourite(c.id, c.name) : undefined}
                     />
                   ))}
-                  {isGated && filtered.length > 3 && filtered.slice(3, 5).map((c, idx) => (
+                  {isCommoditiesGated && teaserCommodities.map((c, idx) => (
                     <tr
                       key={`comm-teaser-${c.id || idx}`}
                       aria-hidden="true"
                       className="pointer-events-none select-none blur-[2px] opacity-40 bg-card border-b border-border/40"
                     >
                       <td className="px-3 py-3 font-semibold text-foreground">{c.name}</td>
-                      <td className="px-3 py-3 font-semibold">${c.price.toFixed(2)}</td>
+                      <td className="px-3 py-3 font-semibold">$•••.••</td>
                       <td className="px-3 py-3 text-muted-foreground">—</td>
                       <td className="px-3 py-3 text-muted-foreground">—</td>
                       <td className="px-3 py-3 text-muted-foreground">—</td>
@@ -581,7 +587,7 @@ const CommoditiesPage = () => {
             </div>
           )}
 
-          {isGated && filtered.length > 3 && (
+          {isCommoditiesGated && (
             <div className="hidden md:block mt-4 mb-8">
               <InlineDataGate
                 category="commodities"
@@ -624,7 +630,7 @@ const CommoditiesPage = () => {
                   />
                 );
               })}
-              {isGated && filtered.length > 3 && (
+              {isCommoditiesGated && (
                 <div
                   aria-hidden="true"
                   className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-4 space-y-2"
@@ -636,7 +642,7 @@ const CommoditiesPage = () => {
                   <div className="h-3 w-40 bg-muted rounded" />
                 </div>
               )}
-              {isGated && filtered.length > 3 && (
+              {isCommoditiesGated && (
                 <InlineDataGate
                   category="commodities"
                   totalCount={commodities.length}
@@ -652,8 +658,8 @@ const CommoditiesPage = () => {
         {/* Summary footer */}
         <div className={`items-center justify-between text-xs text-muted-foreground mt-4 px-1 ${loading ? "hidden" : "flex"}`}>
           <span>
-            {isGated && filtered.length > 3
-              ? `Showing 3 of ${commodities.length} commodities (preview)`
+            {isCommoditiesGated
+              ? `Showing ${displayCommodities.length} of ${commodities.length} commodities (preview)`
               : `Showing ${filtered.length} of ${commodities.length} commodities`}
           </span>
           {!loading && commodities.length > 0 && (

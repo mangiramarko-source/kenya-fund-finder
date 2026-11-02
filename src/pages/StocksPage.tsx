@@ -426,8 +426,18 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     return map;
   }, [stocks]);
 
+  const defaultSortedStocks = useMemo(
+    () => [...stocks].sort((a, b) => (b.market_cap ?? 0) - (a.market_cap ?? 0)),
+    [stocks],
+  );
+  const isStocksGated = isGated && defaultSortedStocks.length > 3;
+  const teaserStocks = useMemo(
+    () => (isStocksGated ? defaultSortedStocks.slice(3, 5) : []),
+    [isStocksGated, defaultSortedStocks],
+  );
+
   const filtered = useMemo(() => {
-    let result = stocks;
+    let result = isStocksGated ? defaultSortedStocks.slice(0, 3) : stocks;
     if (sector !== "All") result = result.filter((s) => s.sector === sector);
     if (mobileMovement === "gainers") result = result.filter((s) => s.day_change > 0);
     else if (mobileMovement === "losers") result = result.filter((s) => s.day_change < 0);
@@ -444,7 +454,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
       return mul * (av - bv);
     });
     return result;
-  }, [stocks, sector, search, sortKey, sortDir, mobileMovement]);
+  }, [stocks, defaultSortedStocks, isStocksGated, sector, search, sortKey, sortDir, mobileMovement]);
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -454,7 +464,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
     }
   };
 
-  const displayStocks = isGated && filtered.length > 3 ? filtered.slice(0, 3) : filtered;
+  const displayStocks = isStocksGated ? filtered.slice(0, 3) : filtered;
 
   const gainers = useMemo(() => stocks.filter((s) => s.day_change > 0).length, [stocks]);
   const losers = useMemo(() => stocks.filter((s) => s.day_change < 0).length, [stocks]);
@@ -796,7 +806,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                   onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
                 />
               ))}
-              {isGated && filtered.length > 3 && (
+              {isStocksGated && (
                 <div
                   aria-hidden="true"
                   className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-5 h-[220px] flex flex-col justify-between"
@@ -874,7 +884,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                         maxMarketCap={maxMarketCap}
                       />
                     ))}
-                    {isGated && filtered.length > 3 && filtered.slice(3, 5).map((s, idx) => (
+                    {isStocksGated && teaserStocks.map((s, idx) => (
                       <tr
                         key={`stock-teaser-${s.id || idx}`}
                         aria-hidden="true"
@@ -884,16 +894,16 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                           <div className="font-semibold text-foreground text-sm">{s.symbol}</div>
                           <div className="text-[11px] text-muted-foreground truncate">{s.name}</div>
                         </td>
-                        <td className="px-3 py-3.5 font-semibold text-sm">KSh {formatNumber(s.price)}</td>
-                        <td className="px-3 py-3.5 font-semibold text-sm text-emerald-500">+{s.day_change_percent.toFixed(2)}%</td>
+                        <td className="px-3 py-3.5 font-semibold text-sm">KSh •••.••</td>
+                        <td className="px-3 py-3.5 font-semibold text-sm text-emerald-500">+•.••%</td>
                         <td className="px-3 py-3.5 text-muted-foreground">—</td>
                         <td className="px-3 py-3.5 text-muted-foreground">—</td>
                         <td className="px-3 py-3.5 text-muted-foreground">—</td>
                         <td className="px-3 py-3.5 text-muted-foreground">—</td>
-                        <td className="px-3 py-3.5 text-muted-foreground">{formatVolume(s.volume)}</td>
-                        <td className="px-3 py-3.5 text-muted-foreground">{formatMarketCap(s.market_cap)}</td>
-                        <td className="px-3 py-3.5 text-muted-foreground">{s.pe_ratio != null ? formatNumber(s.pe_ratio) : "—"}</td>
-                        <td className="px-3 py-3.5 text-muted-foreground">{s.sector}</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">•••K</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">KSh ••.•B</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">••.•</td>
+                        <td className="px-3 py-3.5 text-muted-foreground">•••</td>
                         {user && <td />}
                       </tr>
                     ))}
@@ -904,7 +914,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
           )}
         </div>
 
-        {isGated && filtered.length > 3 && (
+        {isStocksGated && (
           <div className="hidden md:block mb-8">
             <InlineDataGate
               category="stocks"
@@ -942,7 +952,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                   onToggleFavourite={user ? () => toggleFavourite(s.id, `${s.symbol} - ${s.name}`) : undefined}
                 />
               ))}
-              {isGated && filtered.length > 3 && (
+              {isStocksGated && (
                 <div
                   aria-hidden="true"
                   className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-4 space-y-2"
@@ -954,7 +964,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
                   <div className="h-3 w-40 bg-muted rounded" />
                 </div>
               )}
-              {isGated && filtered.length > 3 && (
+              {isStocksGated && (
                 <InlineDataGate
                   category="stocks"
                   totalCount={stocks.length}
@@ -970,8 +980,8 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
         {/* Summary footer */}
         <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
           <span>
-            {isGated && filtered.length > 3
-              ? `Showing 3 of ${stocks.length} stocks (preview)`
+            {isStocksGated
+              ? `Showing ${displayStocks.length} of ${stocks.length} stocks (preview)`
               : `Showing ${filtered.length} of ${stocks.length} stocks`}
           </span>
         </div>
@@ -1122,7 +1132,7 @@ const MobileInspiredDesktopDemo = ({
                       maxMarketCap={maxMarketCap}
                     />
                   ))}
-                  {!signedIn && filtered.length > 3 && filtered.slice(3, 5).map((s, idx) => (
+                  {!signedIn && stocks.length > 3 && stocks.slice(3, 5).map((s, idx) => (
                     <tr
                       key={`demo-teaser-${s.id || idx}`}
                       aria-hidden="true"
@@ -1132,16 +1142,16 @@ const MobileInspiredDesktopDemo = ({
                         <div className="font-semibold text-foreground text-sm">{s.symbol}</div>
                         <div className="text-[11px] text-muted-foreground truncate">{s.name}</div>
                       </td>
-                      <td className="px-3 py-3 font-semibold text-sm">KSh {formatNumber(s.price)}</td>
-                      <td className="px-3 py-3 font-semibold text-sm text-emerald-500">+{s.day_change_percent.toFixed(2)}%</td>
+                      <td className="px-3 py-3 font-semibold text-sm">KSh •••.••</td>
+                      <td className="px-3 py-3 font-semibold text-sm text-emerald-500">+•.••%</td>
                       <td className="px-3 py-3 text-muted-foreground">—</td>
                       <td className="px-3 py-3 text-muted-foreground">—</td>
                       <td className="px-3 py-3 text-muted-foreground">—</td>
                       <td className="px-3 py-3 text-muted-foreground">—</td>
-                      <td className="px-3 py-3 text-muted-foreground">{formatVolume(s.volume)}</td>
-                      <td className="px-3 py-3 text-muted-foreground">{formatMarketCap(s.market_cap)}</td>
-                      <td className="px-3 py-3 text-muted-foreground">{s.pe_ratio != null ? formatNumber(s.pe_ratio) : "—"}</td>
-                      <td className="px-3 py-3 text-muted-foreground">{s.sector}</td>
+                      <td className="px-3 py-3 text-muted-foreground">•••K</td>
+                      <td className="px-3 py-3 text-muted-foreground">KSh ••.•B</td>
+                      <td className="px-3 py-3 text-muted-foreground">••.•</td>
+                      <td className="px-3 py-3 text-muted-foreground">•••</td>
                     </tr>
                   ))}
                 </tbody>

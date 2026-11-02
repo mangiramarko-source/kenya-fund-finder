@@ -18,7 +18,8 @@ import {
 import { trackEvent } from "@/lib/analytics";
 
 const AuthPage = () => {
-  const [isSignUp, setIsSignUp] = useState(false);
+  const [searchParams] = useSearchParams();
+  const [isSignUp, setIsSignUp] = useState(() => searchParams.get("mode") === "signup");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -30,7 +31,12 @@ const AuthPage = () => {
   const botFieldsRef = useRef<{ honeypot: string; formLoadedAt: number }>({ honeypot: "", formLoadedAt: Date.now() });
   const { signIn, signUp } = useAuth();
   const navigate = useNavigate();
-  const [searchParams] = useSearchParams();
+
+  useEffect(() => {
+    const mode = searchParams.get("mode");
+    if (mode === "signup") setIsSignUp(true);
+    else if (mode === "signin") setIsSignUp(false);
+  }, [searchParams]);
 
   // Support ?redirect= or ?returnTo= query parameter, preventing open redirects
   const rawRedirect = searchParams.get("redirect") || searchParams.get("returnTo") || "/";
@@ -83,10 +89,11 @@ const AuthPage = () => {
       setError("Security verification failed. Please try again.");
       setTurnstileToken(null);
       setLoading(false);
+      return;
     }
 
     if (isSignUp) {
-      const { error } = await signUp(email, password);
+      const { error } = await signUp(email, password, `${window.location.origin}${redirectTarget}`);
       setLoading(false);
       if (error) {
         setError(error.message);

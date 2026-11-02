@@ -35,7 +35,7 @@ describe("InlineDataGate Component", () => {
     expect(screen.getByText("Create a free account to compare real yields after 15% tax.")).toBeInTheDocument();
   });
 
-  it("links to /auth with preserved query string for email signup", () => {
+  it("links to /auth with mode=signup and preserved query string for email signup", () => {
     render(
       <MemoryRouter initialEntries={["/stocks?sector=Banking&sort=dividend"]}>
         <InlineDataGate
@@ -49,7 +49,16 @@ describe("InlineDataGate Component", () => {
     );
 
     const emailLink = screen.getByRole("link", { name: /continue with email/i });
-    expect(emailLink).toHaveAttribute("href", "/auth?redirect=%2Fstocks%3Fsector%3DBanking%26sort%3Ddividend");
+    expect(emailLink).toHaveAttribute(
+      "href",
+      "/auth?mode=signup&redirect=%2Fstocks%3Fsector%3DBanking%26sort%3Ddividend"
+    );
+
+    const signInLink = screen.getByRole("link", { name: /^sign in$/i });
+    expect(signInLink).toHaveAttribute(
+      "href",
+      "/auth?mode=signin&redirect=%2Fstocks%3Fsector%3DBanking%26sort%3Ddividend"
+    );
   });
 
   it("tracks analytics event when Google Sign In is clicked", () => {

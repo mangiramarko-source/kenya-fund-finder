@@ -303,8 +303,11 @@ const RatesPage = () => {
   ];
   const currentSortLabel = RATE_SORT_OPTIONS.find((o) => o.key === mobileSort)?.label || "All";
 
+  const isRatesGated = isGated && rates.length > 3;
+  const teaserRates = useMemo(() => (isRatesGated ? rates.slice(3, 5) : []), [isRatesGated, rates]);
+
   const filtered = useMemo(() => {
-    let result = rates;
+    let result = isRatesGated ? rates.slice(0, 3) : rates;
     if (mobileMovement === "gainers") result = result.filter((r) => r.previous_rate != null && r.rate < r.previous_rate);
     else if (mobileMovement === "losers") result = result.filter((r) => r.previous_rate != null && r.rate > r.previous_rate);
     else if (mobileMovement === "unchanged") result = result.filter((r) => r.previous_rate == null || r.rate === r.previous_rate);
@@ -326,9 +329,9 @@ const RatesPage = () => {
       result = arr;
     }
     return result;
-  }, [rates, search, mobileMovement, mobileSort]);
+  }, [rates, isRatesGated, search, mobileMovement, mobileSort]);
 
-  const displayRates = isGated && filtered.length > 3 ? filtered.slice(0, 3) : filtered;
+  const displayRates = isRatesGated ? filtered.slice(0, 3) : filtered;
 
   const pageLoading = loading || !initialHistoryReady;
   const showPageLoading = useMinimumLoadingDuration(pageLoading);
@@ -465,7 +468,7 @@ const RatesPage = () => {
                       onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
                     />
                   ))}
-                  {isGated && filtered.length > 3 && filtered.slice(3, 5).map((r, idx) => (
+                  {isRatesGated && teaserRates.map((r, idx) => (
                     <tr
                       key={`rate-teaser-${r.id || idx}`}
                       aria-hidden="true"
@@ -473,7 +476,7 @@ const RatesPage = () => {
                     >
                       <td className="px-3 py-3 font-semibold text-foreground">{r.currency_code}</td>
                       <td className="px-3 py-3 text-muted-foreground">{r.currency_name}</td>
-                      <td className="px-3 py-3 font-semibold">KSh {r.rate.toFixed(2)}</td>
+                      <td className="px-3 py-3 font-semibold">KSh •••.••</td>
                       <td className="px-3 py-3 text-muted-foreground">—</td>
                       <td className="px-3 py-3 text-muted-foreground">—</td>
                       <td className="px-3 py-3 text-muted-foreground">—</td>
@@ -489,7 +492,7 @@ const RatesPage = () => {
             </div>
           )}
 
-          {isGated && filtered.length > 3 && (
+          {isRatesGated && (
             <div className="hidden md:block mt-4 mb-8">
               <InlineDataGate
                 category="rates"
@@ -664,7 +667,7 @@ const RatesPage = () => {
                   />
                 );
               })}
-              {isGated && filtered.length > 3 && (
+              {isRatesGated && (
                 <div
                   aria-hidden="true"
                   className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-4 space-y-2"
@@ -676,7 +679,7 @@ const RatesPage = () => {
                   <div className="h-3 w-40 bg-muted rounded" />
                 </div>
               )}
-              {isGated && filtered.length > 3 && (
+              {isRatesGated && (
                 <InlineDataGate
                   category="rates"
                   totalCount={rates.length}
@@ -692,8 +695,8 @@ const RatesPage = () => {
         {/* Summary footer */}
         <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
           <span>
-            {isGated && filtered.length > 3
-              ? `Showing 3 of ${rates.length} currencies (preview)`
+            {isRatesGated
+              ? `Showing ${displayRates.length} of ${rates.length} currencies (preview)`
               : `Showing ${filtered.length} of ${rates.length} currencies`}
           </span>
         </div>

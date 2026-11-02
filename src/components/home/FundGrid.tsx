@@ -237,8 +237,22 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [categories, activeTab, categoryCount]);
 
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
+  const isCategoryGated = isGated && categoryFunds.length > 3;
+
+  const defaultSortedCategoryFunds = useMemo(
+    () => [...categoryFunds].sort((a, b) => b.annual_yield - a.annual_yield),
+    [categoryFunds],
+  );
+
+  const teaserFunds = useMemo(
+    () => (isCategoryGated ? defaultSortedCategoryFunds.slice(3, 5) : []),
+    [isCategoryGated, defaultSortedCategoryFunds],
+  );
+
   const filtered = useMemo(() => {
-    let result = categoryFunds;
+    let result = isCategoryGated ? defaultSortedCategoryFunds.slice(0, 3) : categoryFunds;
     if (movement === "gainers") result = result.filter((f) => movementForFund(f) === "gainer");
     else if (movement === "losers") result = result.filter((f) => movementForFund(f) === "loser");
     else if (movement === "unchanged") result = result.filter((f) => movementForFund(f) === "unchanged");
@@ -260,7 +274,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
     });
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryFunds, search, sortKey, sortDir, movement, snapshots]);
+  }, [categoryFunds, defaultSortedCategoryFunds, isCategoryGated, search, sortKey, sortDir, movement, snapshots]);
 
   const bestYield = useMemo(() => {
     const catFunds = funds.filter((f) => f.fund_type === activeTab);
@@ -268,9 +282,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
     return Math.max(...catFunds.map((f) => f.annual_yield));
   }, [funds, activeTab]);
 
-  const { user, loading: authLoading } = useAuth();
-  const isGated = !authLoading && !user && !isBotOrPrerender();
-  const displayFunds = isGated && filtered.length > 3 ? filtered.slice(0, 3) : filtered;
+  const displayFunds = isCategoryGated ? filtered.slice(0, 3) : filtered;
 
   const toggleSort = (key: SortKey) => {
     if (sortKey === key) {
@@ -504,7 +516,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
           isFavourite={isFavourite}
           onToggleFavourite={onToggleFavourite}
         />
-        {isGated && filtered.length > 3 && (
+        {isCategoryGated && (
           <div
             aria-hidden="true"
             className="pointer-events-none select-none blur-[2px] opacity-40 rounded-xl border border-border bg-card p-4 space-y-2"
@@ -519,10 +531,10 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
             <div className="h-6 w-24 bg-muted rounded mt-2" />
           </div>
         )}
-        {isGated && filtered.length > 3 && (
+        {isCategoryGated && (
           <InlineDataGate
             category="funds"
-            totalCount={categoryCount[activeTab] || filtered.length}
+            totalCount={categoryCount[activeTab] || categoryFunds.length}
             visibleCount={3}
             title="Unlock All 35+ CMA-Regulated Kenyan Funds"
             description="Showing top 3 funds. Create a free account to compare real yields after 15% tax, withdrawal times, and track daily rate changes across all funds."
@@ -697,7 +709,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                 </tr>
               ))}
 
-              {isGated && filtered.length > 3 && filtered.slice(3, 5).map((fund, idx) => (
+              {isCategoryGated && teaserFunds.map((fund, idx) => (
                 <tr
                   key={`teaser-${fund.id || idx}`}
                   aria-hidden="true"
@@ -713,18 +725,18 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                     </div>
                   </td>
                   <td className="px-3 py-4 text-right whitespace-nowrap tabular-nums align-middle">
-                    <span className="font-black text-foreground text-[13px]">{fmtYield(fund.annual_yield, fund.yield_unit)}</span>
+                    <span className="font-black text-foreground text-[13px]">••.••%</span>
                   </td>
                   <td className="px-2 py-4 text-right align-middle text-muted-foreground">—</td>
                   <td className="px-2 py-4 text-center align-middle text-muted-foreground">—</td>
                   <td className="px-3 py-4 text-right text-[13px] font-semibold text-foreground whitespace-nowrap align-middle">
-                    KSh {fund.minimum_investment.toLocaleString()}
+                    KSh •••,•••
                   </td>
                   <td className="px-3 py-4 text-right text-[13px] font-semibold text-foreground whitespace-nowrap align-middle">
-                    {fund.management_fee}%
+                    •.••%
                   </td>
                   <td className="pr-5 pl-2 py-4 text-right text-[13px] font-semibold text-foreground align-middle">
-                    {fund.withdrawal_time}
+                    •••
                   </td>
                   <td className="px-2 py-4 text-center align-middle">
                     <span className="inline-block h-8 w-16 rounded-full bg-muted/60" />
@@ -832,11 +844,11 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
         </aside>
       </div>
 
-      {isGated && filtered.length > 3 && (
+      {isCategoryGated && (
         <div className="hidden md:block">
           <InlineDataGate
             category="funds"
-            totalCount={categoryCount[activeTab] || filtered.length}
+            totalCount={categoryCount[activeTab] || categoryFunds.length}
             visibleCount={3}
             title="Unlock All 35+ CMA-Regulated Kenyan Funds"
             description="Showing top 3 funds. Create a free account to compare real yields after 15% tax, withdrawal times, and track daily rate changes across all funds."
@@ -847,8 +859,8 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
       {/* Summary footer */}
       <div className="flex items-center text-xs text-muted-foreground px-1">
         <span>
-          {isGated && filtered.length > 3
-            ? `Showing 3 of ${categoryCount[activeTab] || filtered.length} ${categoryLabels[activeTab] || activeTab} funds (preview)`
+          {isCategoryGated
+            ? `Showing ${displayFunds.length} of ${categoryCount[activeTab] || categoryFunds.length} ${categoryLabels[activeTab] || activeTab} funds (preview)`
             : `Showing ${filtered.length} of ${categoryCount[activeTab] || 0} ${categoryLabels[activeTab] || activeTab} funds`}
         </span>
       </div>

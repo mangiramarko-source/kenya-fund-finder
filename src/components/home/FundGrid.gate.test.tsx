@@ -13,10 +13,10 @@ const queryClient = new QueryClient({
   },
 });
 
-const renderWithProviders = (ui: React.ReactElement) => {
+const renderWithProviders = (ui: React.ReactElement, initialEntries = ["/funds"]) => {
   return render(
     <QueryClientProvider client={queryClient}>
-      <MemoryRouter initialEntries={["/funds"]}>
+      <MemoryRouter initialEntries={initialEntries}>
         {ui}
       </MemoryRouter>
     </QueryClientProvider>
@@ -197,9 +197,12 @@ describe("FundGrid Rule of 3 Gating Live Preview Test", () => {
     expect(screen.getAllByText("Beta High Yield Fund").length).toBeGreaterThan(0);
     expect(screen.getAllByText("Gamma Treasury Fund").length).toBeGreaterThan(0);
 
-    // Funds 4 and 5 appear in blurred teaser rows (aria-hidden)
+    // Funds 4 and 5 appear in blurred teaser rows (aria-hidden), with redacted numeric yields
     const teaserRow4 = screen.getAllByText("Delta Income Fund");
     expect(teaserRow4.length).toBeGreaterThan(0);
+    expect(screen.queryByText("13.5%")).not.toBeInTheDocument();
+    expect(screen.queryByText("12%")).not.toBeInTheDocument();
+    expect(screen.getAllByText("••.••%").length).toBeGreaterThan(0);
 
     // InlineDataGate is rendered with remaining count badge
     expect(screen.getAllByText("Unlock All 35+ CMA-Regulated Kenyan Funds").length).toBeGreaterThan(0);
@@ -207,6 +210,24 @@ describe("FundGrid Rule of 3 Gating Live Preview Test", () => {
 
     // Footer reflects 3 of 6 funds preview
     expect(screen.getByText(/showing 3 of 6 money market funds \(preview\)/i)).toBeInTheDocument();
+  });
+
+  it("prevents unauthenticated search or sort manipulation from revealing hidden funds (#4-#6)", () => {
+    mockUseAuth.mockReturnValue({ user: null, loading: false });
+    mockIsBotOrPrerender.mockReturnValue(false);
+
+    // Attempt to search for hidden fund #6 ("Zeta") or sort ascending
+    renderWithProviders(
+      <FundGrid funds={mockFunds} snapshots={{}} loading={false} />,
+      ["/funds?q=Zeta&sort=annual_yield&dir=asc"]
+    );
+
+    // Hidden fund #6 must NOT be revealed
+    expect(screen.queryByText("Zeta Stable Fund")).not.toBeInTheDocument();
+    expect(screen.queryByText("11.5%")).not.toBeInTheDocument();
+
+    // Gate remains enforced
+    expect(screen.getAllByText("Unlock All 35+ CMA-Regulated Kenyan Funds").length).toBeGreaterThan(0);
   });
 
   it("renders all 6 funds un-gated for logged in users without InlineDataGate", () => {

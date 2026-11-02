@@ -101,9 +101,15 @@ const MarketDashboardPage = () => {
     else { setSortKey(key); setSortDir(key === "name" ? "asc" : "desc"); }
   };
 
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
+  const isRatesGated = isGated && rates.length > 3;
+  const isCommoditiesGated = isGated && commodities.length > 3;
+  const isStocksGated = isGated && stocks.length > 3;
+
   // Filtered & sorted data
   const filteredRates = useMemo(() => {
-    let result = [...rates];
+    let result = isRatesGated ? rates.slice(0, 3) : [...rates];
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(r => r.currency_code.toLowerCase().includes(q) || r.currency_name.toLowerCase().includes(q));
@@ -115,10 +121,10 @@ const MarketDashboardPage = () => {
       return 0; // default order
     });
     return result;
-  }, [rates, search, sortKey, sortDir]);
+  }, [rates, isRatesGated, search, sortKey, sortDir]);
 
   const filteredCommodities = useMemo(() => {
-    let result = [...commodities];
+    let result = isCommoditiesGated ? commodities.slice(0, 3) : [...commodities];
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(c => c.name.toLowerCase().includes(q) || c.symbol.toLowerCase().includes(q));
@@ -130,10 +136,10 @@ const MarketDashboardPage = () => {
       return 0;
     });
     return result;
-  }, [commodities, search, sortKey, sortDir]);
+  }, [commodities, isCommoditiesGated, search, sortKey, sortDir]);
 
   const filteredStocks = useMemo(() => {
-    let result = [...stocks];
+    let result = isStocksGated ? stocks.slice(0, 3) : [...stocks];
     if (search.trim()) {
       const q = search.toLowerCase();
       result = result.filter(s => s.name.toLowerCase().includes(q) || s.symbol.toLowerCase().includes(q));
@@ -147,18 +153,15 @@ const MarketDashboardPage = () => {
       return 0;
     });
     return result;
-  }, [stocks, search, sortKey, sortDir]);
+  }, [stocks, isStocksGated, search, sortKey, sortDir]);
 
-  const activeCount = activeTab === "fx_rates" ? filteredRates.length
-    : activeTab === "commodities" ? filteredCommodities.length
-    : filteredStocks.length;
+  const activeCount = activeTab === "fx_rates" ? (isRatesGated ? rates.length : filteredRates.length)
+    : activeTab === "commodities" ? (isCommoditiesGated ? commodities.length : filteredCommodities.length)
+    : (isStocksGated ? stocks.length : filteredStocks.length);
 
-  const { user, loading: authLoading } = useAuth();
-  const isGated = !authLoading && !user && !isBotOrPrerender();
-
-  const displayRates = isGated && filteredRates.length > 3 ? filteredRates.slice(0, 3) : filteredRates;
-  const displayCommodities = isGated && filteredCommodities.length > 3 ? filteredCommodities.slice(0, 3) : filteredCommodities;
-  const displayStocks = isGated && filteredStocks.length > 3 ? filteredStocks.slice(0, 3) : filteredStocks;
+  const displayRates = isRatesGated ? filteredRates.slice(0, 3) : filteredRates;
+  const displayCommodities = isCommoditiesGated ? filteredCommodities.slice(0, 3) : filteredCommodities;
+  const displayStocks = isStocksGated ? filteredStocks.slice(0, 3) : filteredStocks;
 
   return (
     <PageLoadingGate isReady={!loading} message="Loading latest market data…" loaderClassName="min-h-screen">
@@ -267,7 +270,7 @@ const MarketDashboardPage = () => {
                           </td>
                         </tr>
                       ))}
-                      {isGated && filteredRates.length > 3 && filteredRates.slice(3, 5).map((r, idx) => (
+                      {isRatesGated && rates.slice(3, 5).map((r, idx) => (
                         <tr
                           key={`teaser-rate-${r.id || idx}`}
                           aria-hidden="true"
@@ -279,16 +282,16 @@ const MarketDashboardPage = () => {
                           </td>
                           <td className="px-3 py-3 text-sm text-muted-foreground">{r.currency_name}</td>
                           <td className="px-3 py-3 text-right">
-                            <span className="font-bold text-foreground text-[15px] tabular-nums">{Number(r.rate).toFixed(2)}</span>
+                            <span className="font-bold text-foreground text-[15px] tabular-nums">•••.••</span>
                           </td>
                           <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
-                            {r.previous_rate != null ? Number(r.previous_rate).toFixed(2) : "—"}
+                            —
                           </td>
-                          <td className="hidden md:table-cell px-3 py-3 text-right">
-                            <ChangeIndicator current={Number(r.rate)} previous={r.previous_rate != null ? Number(r.previous_rate) : null} />
+                          <td className="hidden md:table-cell px-3 py-3 text-right text-muted-foreground">
+                            —
                           </td>
                           <td className="hidden md:table-cell pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
-                            {r.updated_at ? formatMarketDate(r.updated_at, "en-KE", { day: "numeric", month: "short" }) : "—"}
+                            —
                           </td>
                         </tr>
                       ))}
@@ -298,10 +301,10 @@ const MarketDashboardPage = () => {
                 </div>
               </div>
 
-              {isGated && filteredRates.length > 3 && (
+              {isRatesGated && (
                 <InlineDataGate
                   category="rates"
-                  totalCount={categoryCount.fx_rates || filteredRates.length}
+                  totalCount={categoryCount.fx_rates || rates.length}
                   visibleCount={3}
                   title="Unlock All Central Bank of Kenya FX Rates"
                   description="Showing top 3 currency pairs. Create a free account to track all 25+ daily CBK exchange rates, previous closes, and historical trends."
@@ -367,7 +370,7 @@ const MarketDashboardPage = () => {
                           </td>
                         </tr>
                       ))}
-                      {isGated && filteredCommodities.length > 3 && filteredCommodities.slice(3, 5).map((c, idx) => (
+                      {isCommoditiesGated && commodities.slice(3, 5).map((c, idx) => (
                         <tr
                           key={`teaser-comm-${c.id || idx}`}
                           aria-hidden="true"
@@ -381,17 +384,17 @@ const MarketDashboardPage = () => {
                           <td className="px-2 py-3 text-center text-xs font-medium text-muted-foreground">{c.unit}</td>
                           <td className="px-3 py-3 text-right">
                             <span className="font-bold text-foreground text-[15px] tabular-nums">
-                              {Number(c.price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+                              •••.••
                             </span>
                           </td>
                           <td className="hidden md:table-cell px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
-                            {c.previous_price != null ? Number(c.previous_price).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+                            —
                           </td>
-                          <td className="hidden md:table-cell px-3 py-3 text-right">
-                            <ChangeIndicator current={Number(c.price)} previous={c.previous_price != null ? Number(c.previous_price) : null} />
+                          <td className="hidden md:table-cell px-3 py-3 text-right text-muted-foreground">
+                            —
                           </td>
                           <td className="hidden md:table-cell pr-4 px-3 py-3 text-right text-[10px] text-muted-foreground/60">
-                            {c.updated_at ? formatMarketDate(c.updated_at, "en-KE", { day: "numeric", month: "short" }) : "—"}
+                            —
                           </td>
                         </tr>
                       ))}
@@ -401,10 +404,10 @@ const MarketDashboardPage = () => {
                 </div>
               </div>
 
-              {isGated && filteredCommodities.length > 3 && (
+              {isCommoditiesGated && (
                 <InlineDataGate
                   category="commodities"
-                  totalCount={categoryCount.commodities || filteredCommodities.length}
+                  totalCount={categoryCount.commodities || commodities.length}
                   visibleCount={3}
                   title="Unlock All Agricultural & Energy Commodities"
                   description="Showing top 3 commodities. Create a free account to track global spot prices, tea, coffee, oil, and precious metals."
@@ -456,7 +459,7 @@ const MarketDashboardPage = () => {
                       </td>
                     </tr>
                   ))}
-                  {isGated && filteredStocks.length > 3 && filteredStocks.slice(3, 5).map((s, idx) => (
+                  {isStocksGated && stocks.slice(3, 5).map((s, idx) => (
                     <tr
                       key={`teaser-stock-${s.id || idx}`}
                       aria-hidden="true"
@@ -467,15 +470,15 @@ const MarketDashboardPage = () => {
                         <span className="font-semibold text-foreground">{s.symbol}</span>
                         <span className="block text-[10px] text-muted-foreground truncate">{s.name}</span>
                       </td>
-                      <td className="px-2 py-3 text-center text-[10px] text-muted-foreground">{s.sector}</td>
+                      <td className="px-2 py-3 text-center text-[10px] text-muted-foreground">•••</td>
                       <td className="px-3 py-3 text-right">
-                        <span className="font-bold text-foreground text-base tabular-nums">{s.price.toFixed(2)}</span>
+                        <span className="font-bold text-foreground text-base tabular-nums">•••.••</span>
                       </td>
-                      <td className="px-3 py-3 text-right">
-                        <ChangeIndicator current={s.price} previous={s.previous_price} />
+                      <td className="px-3 py-3 text-right text-muted-foreground">
+                        —
                       </td>
                       <td className="pr-5 px-3 py-3 text-right text-xs tabular-nums text-muted-foreground">
-                        {s.volume.toLocaleString()}
+                        •••,•••
                       </td>
                     </tr>
                   ))}
@@ -484,10 +487,10 @@ const MarketDashboardPage = () => {
               </table>
             </div>
 
-            {isGated && filteredStocks.length > 3 && (
+            {isStocksGated && (
               <InlineDataGate
                 category="stocks"
-                totalCount={categoryCount.stocks || filteredStocks.length}
+                totalCount={categoryCount.stocks || stocks.length}
                 visibleCount={3}
                 title="Unlock All 60+ Nairobi Securities Exchange Equities"
                 description="Showing top 3 stocks. Create a free account to track live NSE market pricing, volume movers, gainers, losers, and valuation metrics."

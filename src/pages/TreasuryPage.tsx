@@ -77,10 +77,20 @@ export default function TreasuryPage() {
   const [calcAmount, setCalcAmount] = useState<number>(100000);
   const [calcSecurityId, setCalcSecurityId] = useState<string>("364-day");
 
+  const defaultSortedBonds = useMemo(
+    () => [...(data?.bonds || [])].sort((a, b) => b.couponRate - a.couponRate),
+    [data?.bonds],
+  );
+  const isBondsGated = isGated && defaultSortedBonds.length > 3;
+  const teaserBonds = useMemo(
+    () => (isBondsGated ? defaultSortedBonds.slice(3, 5) : []),
+    [isBondsGated, defaultSortedBonds],
+  );
+
   // Filtered bonds
   const filteredBonds = useMemo(() => {
-    if (!data?.bonds) return [];
-    return data.bonds
+    const basePool = isBondsGated ? defaultSortedBonds.slice(0, 3) : (data?.bonds || []);
+    return basePool
       .filter((b) => {
         const matchesSearch =
           b.issueNo.toLowerCase().includes(bondSearch.toLowerCase()) ||
@@ -104,9 +114,9 @@ export default function TreasuryPage() {
         if (bondSortBy === "maturity") return a.tenorYears - b.tenorYears;
         return 0;
       });
-  }, [data?.bonds, bondSearch, bondMaturityFilter, bondCouponFilter, bondSortBy]);
+  }, [data?.bonds, defaultSortedBonds, isBondsGated, bondSearch, bondMaturityFilter, bondCouponFilter, bondSortBy]);
 
-  const displayBonds = isGated && filteredBonds.length > 3 ? filteredBonds.slice(0, 3) : filteredBonds;
+  const displayBonds = isBondsGated ? filteredBonds.slice(0, 3) : filteredBonds;
 
   // Selected Security for Calculator
   const selectedCalcSecurity = useMemo(() => {
@@ -755,7 +765,7 @@ export default function TreasuryPage() {
                         </tr>
                       ))}
 
-                      {isGated && filteredBonds.length > 3 && filteredBonds.slice(3, 5).map((bond, idx) => (
+                      {isBondsGated && teaserBonds.map((bond, idx) => (
                         <tr
                           key={`teaser-bond-${bond.issueNo || idx}`}
                           aria-hidden="true"
@@ -765,15 +775,15 @@ export default function TreasuryPage() {
                             <p className="font-black text-foreground">{bond.issueNo}</p>
                             <p className="text-xs text-muted-foreground truncate max-w-xs">{bond.name}</p>
                           </td>
-                          <td className="py-4 px-4 text-right font-bold text-foreground">{bond.couponRate.toFixed(2)}%</td>
+                          <td className="py-4 px-4 text-right font-bold text-foreground">••.••%</td>
                           <td className="py-4 px-4 text-right font-black text-emerald-600 dark:text-emerald-400">
-                            {bond.couponRate.toFixed(2)}%
+                            ••.••%
                           </td>
-                          <td className="py-4 px-4 text-muted-foreground">{bond.maturityDate}</td>
-                          <td className="py-4 px-4 text-right font-semibold text-foreground">{bond.yearsRemaining} yrs</td>
+                          <td className="py-4 px-4 text-muted-foreground">••• ••••</td>
+                          <td className="py-4 px-4 text-right font-semibold text-foreground">•• yrs</td>
                           <td className="py-4 px-4 text-center">
                             <span className="px-2.5 py-0.5 rounded-full text-xs font-bold border border-border bg-muted/60 text-muted-foreground">
-                              {bond.status}
+                              •••
                             </span>
                           </td>
                           <td className="py-4 px-4 text-right">
@@ -785,11 +795,11 @@ export default function TreasuryPage() {
                   </table>
                 </div>
 
-                {isGated && filteredBonds.length > 3 && (
+                {isBondsGated && (
                   <div className="hidden md:block">
                     <InlineDataGate
                       category="bonds"
-                      totalCount={filteredBonds.length}
+                      totalCount={defaultSortedBonds.length}
                       visibleCount={3}
                       title="Unlock All Kenyan Treasury Bonds & IFBs"
                       description="Showing top 3 bonds. Create a free account to compare all active Fixed Coupon & Infrastructure Bonds (IFB tax-free), yields, and remaining tenors."
@@ -867,7 +877,7 @@ export default function TreasuryPage() {
                     </div>
                   ))}
 
-                  {isGated && filteredBonds.length > 3 && filteredBonds.slice(3, 5).map((bond, idx) => (
+                  {isBondsGated && teaserBonds.map((bond, idx) => (
                     <div
                       key={`teaser-card-${bond.issueNo || idx}`}
                       aria-hidden="true"
@@ -884,7 +894,7 @@ export default function TreasuryPage() {
                         </div>
                         <div className="text-right shrink-0">
                           <span className="text-base sm:text-lg font-black text-foreground tabular-nums block">
-                            {bond.couponRate.toFixed(2)}%
+                            ••.••%
                           </span>
                         </div>
                       </div>
@@ -892,11 +902,11 @@ export default function TreasuryPage() {
                   ))}
                 </div>
 
-                {isGated && filteredBonds.length > 3 && (
+                {isBondsGated && (
                   <div className="md:hidden">
                     <InlineDataGate
                       category="bonds"
-                      totalCount={filteredBonds.length}
+                      totalCount={defaultSortedBonds.length}
                       visibleCount={3}
                       title="Unlock All Kenyan Treasury Bonds & IFBs"
                       description="Showing top 3 bonds. Create a free account to compare all active Fixed Coupon & Infrastructure Bonds (IFB tax-free), yields, and remaining tenors."

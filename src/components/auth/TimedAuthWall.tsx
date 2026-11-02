@@ -16,15 +16,18 @@ export default function TimedAuthWall() {
   const handleGoogleSignIn = useCallback(async () => {
     trackEvent("signup_started", { method: "google", source: "timed_soft_wall" });
     try {
-      await supabase.auth.signInWithOAuth({
+      const { error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
           redirectTo: `${window.location.origin}${currentFullPath}`,
         },
       });
+      if (error) {
+        window.location.href = `/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`;
+      }
     } catch {
       // Fallback redirect to /auth with preserved redirect parameter
-      window.location.href = `/auth?redirect=${encodeURIComponent(currentFullPath)}`;
+      window.location.href = `/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`;
     }
   }, [currentFullPath]);
 
@@ -124,7 +127,7 @@ export default function TimedAuthWall() {
             asChild
             className="w-full h-10 text-xs border-border/80 text-foreground rounded-xl hover:bg-muted/40"
           >
-            <Link to={`/auth?redirect=${encodeURIComponent(currentFullPath)}`}>
+            <Link to={`/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`}>
               Continue with Email or Sign In
             </Link>
           </Button>

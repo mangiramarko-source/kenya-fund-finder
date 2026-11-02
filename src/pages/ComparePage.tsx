@@ -64,6 +64,23 @@ const ComparePage = () => {
   const managers = useMemo(() => [...new Set(filteredByType.map((f) => f.manager))].sort(), [filteredByType]);
 
   const sorted = useMemo(() => {
+    const defaultSorted = [...filteredByType].sort((a, b) => b.annual_yield - a.annual_yield);
+    if (isGated && defaultSorted.length > 3) {
+      // Lock unauthenticated users to the top 3 visible + 2 redacted teaser rows
+      const top3 = defaultSorted.slice(0, 3);
+      const teasers = defaultSorted.slice(3, 5);
+      let visible = top3;
+      if (managerFilter !== "all") visible = visible.filter((f) => f.manager === managerFilter);
+      if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        visible = visible.filter((f) => f.name.toLowerCase().includes(q) || f.manager.toLowerCase().includes(q));
+      }
+      visible = [...visible].sort((a, b) => {
+        const diff = a[sortKey] - b[sortKey];
+        return sortDir === "desc" ? -diff : diff;
+      });
+      return visible.length > 0 ? [...visible, ...teasers] : [];
+    }
     let list = filteredByType;
     if (managerFilter !== "all") list = list.filter((f) => f.manager === managerFilter);
     if (searchQuery) {
@@ -74,7 +91,7 @@ const ComparePage = () => {
       const diff = a[sortKey] - b[sortKey];
       return sortDir === "desc" ? -diff : diff;
     });
-  }, [filteredByType, sortKey, sortDir, managerFilter, searchQuery]);
+  }, [filteredByType, isGated, sortKey, sortDir, managerFilter, searchQuery]);
 
   const lastUpdated = useMemo(() => {
     if (filteredByType.length === 0) return null;

@@ -11,12 +11,16 @@ interface AuthGateProps {
 }
 
 const getSessionId = () => {
-  let id = sessionStorage.getItem("pv_session");
-  if (!id) {
-    id = safeUUID();
-    sessionStorage.setItem("pv_session", id);
+  try {
+    let id = sessionStorage.getItem("pv_session");
+    if (!id) {
+      id = safeUUID();
+      sessionStorage.setItem("pv_session", id);
+    }
+    return id;
+  } catch {
+    return safeUUID();
   }
-  return id;
 };
 
 const AuthGate = ({
@@ -25,6 +29,7 @@ const AuthGate = ({
   source = "unknown",
 }: AuthGateProps) => {
   const location = useLocation();
+  const currentFullPath = `${location.pathname}${location.search}`;
 
   const trackClick = async (action: string) => {
     try {
@@ -53,12 +58,12 @@ const AuthGate = ({
       <p className="text-sm text-muted-foreground max-w-md mx-auto mb-6">{description}</p>
       <div className="flex flex-col sm:flex-row gap-3 justify-center">
         <Button asChild className="bg-accent text-accent-foreground hover:bg-accent/90 rounded-full px-8" onClick={() => trackClick("signup")}>
-          <Link to="/auth">
+          <Link to={`/auth?mode=signup&redirect=${encodeURIComponent(currentFullPath)}`}>
             <TrendingUp className="mr-2 h-4 w-4" /> Sign Up Free
           </Link>
         </Button>
         <Button asChild variant="outline" className="rounded-full px-8" onClick={() => trackClick("signin")}>
-          <Link to="/auth">Already have an account? Sign In</Link>
+          <Link to={`/auth?mode=signin&redirect=${encodeURIComponent(currentFullPath)}`}>Already have an account? Sign In</Link>
         </Button>
       </div>
     </div>
