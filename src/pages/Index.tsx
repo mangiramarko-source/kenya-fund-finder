@@ -111,9 +111,18 @@ const Index = () => {
 
   const published = funds.filter((f) => f.is_published);
 
-  const lastUpdate = lastUpdateDate 
-    ? new Date(lastUpdateDate) 
-    : null;
+  const latestFundTimestamp = published.reduce<number>((maxTs, f) => {
+    const candidate = f.fact_sheet_date
+      ? new Date(`${f.fact_sheet_date}T12:00:00+03:00`).getTime()
+      : f.updated_at
+        ? new Date(f.updated_at).getTime()
+        : 0;
+    return Number.isFinite(candidate) && candidate > maxTs ? candidate : maxTs;
+  }, 0);
+
+  const liveStatusTs = lastUpdateDate ? new Date(`${lastUpdateDate}T12:00:00+03:00`).getTime() : 0;
+  const bestTimestamp = Math.max(latestFundTimestamp, Number.isFinite(liveStatusTs) ? liveStatusTs : 0);
+  const lastUpdate = bestTimestamp > 0 ? new Date(bestTimestamp) : null;
   const showLoading = useMinimumLoadingDuration(loading);
 
   if (showLoading) {

@@ -6,12 +6,18 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
-import { AlertTriangle, CheckCircle2, Clipboard, Copy, Loader2, XCircle } from "lucide-react";
+import { AlertTriangle, CheckCircle2, Clipboard, Copy, Loader2, RefreshCw, Sparkles, XCircle } from "lucide-react";
 import {
   parseSimplePaste,
   type SimpleFundLookup,
   type SimpleParsedRow,
 } from "@/lib/simpleUnitTrustPaste";
+import {
+  SERRARI_MMF_SNAPSHOT_2026_11_02,
+  fetchLiveSerrariMmfRows,
+  formatSerrariForSimplePaste,
+  hasSerrariMmfChanged,
+} from "@/lib/serrariMmfSync";
 
 /**
  * Strict, going-forward-only paste tool for unit-trust yield updates.
@@ -23,6 +29,8 @@ const SimpleUnitTrustPaste = () => {
   const [date, setDate] = useState<string>(() => new Date().toISOString().slice(0, 10));
   const [acknowledgedDrift, setAcknowledgedDrift] = useState(false);
   const [syncing, setSyncing] = useState(false);
+  const [fetchingSerrari, setFetchingSerrari] = useState(false);
+  const [runningEdgeSync, setRunningEdgeSync] = useState(false);
 
   // Load unit trusts (all fund types are unit trusts in this app).
   useEffect(() => {
@@ -55,6 +63,86 @@ const SimpleUnitTrustPaste = () => {
     }
   };
 
+  const loadFromSerrari = async () => {
+    setFetchingSerrari(true);
+    const bySlug = new Map(funds.map((f) => [f.slug.toLowerCase(), f]));
+    try {
+      const live = await fetchLiveSerrariMmfRows();
+      const changedRows = live.allRows.filter((r) => {
+        const existing = bySlug.get(r.slug.toLowerCase());
+        if (!existing) return false;
+        return hasSerrariMmfChanged(existing, r);
+      });
+      setDate(live.asOfDate);
+      if (changedRows.length === 0) {
+        setRaw("");
+        toast.info(
+          `All ${live.allRows.length} Serrari MMFs match your current database — 0 rate changes as of ${live.asOfDate}`,
+        );
+      } else {
+        setRaw(formatSerrariForSimplePaste(changedRows));
+        toast.success(
+          `Loaded ${changedRows.length} changed MMF${changedRows.length === 1 ? "" : "s"} (${live.allRows.length - changedRows.length} unchanged skipped) for ${live.asOfDate}`,
+        );
+      }
+    } catch {
+      // Fallback to verified snapshot if live fetch is blocked
+      const changedFallback = SERRARI_MMF_SNAPSHOT_2026_11_02.filter((s) => {
+        const existing = bySlug.get(s.slug.toLowerCase());
+        if (!existing) return bySlug.size === 0;
+        return hasSerrariMmfChanged(existing, s);
+      });
+      setDate("2026-11-02");
+      if (changedFallback.length === 0) {
+        setRaw("");
+        toast.info("All Serrari MMFs match your current database — 0 rate changes to apply");
+      } else {
+        const fallbackLines = changedFallback.map(
+          (s) => `${s.slug}\t${s.daily_yield.toFixed(2)}\t${s.annual_yield.toFixed(2)}`,
+        );
+        setRaw(`# Serrari Group MMF Snapshot (2026-11-02)\n# fund_slug\tdaily\tannual\n${fallbackLines.join("\n")}`);
+        toast.info(`Loaded ${changedFallback.length} changed MMFs from verified Serrari snapshot`);
+      }
+    } finally {
+      setFetchingSerrari(false);
+    }
+  };
+
+  const runServerSerrariSync = async () => {
+    setRunningEdgeSync(true);
+    try {
+      const { data, error } = await supabase.functions.invoke("fetch-market-data", {
+        body: { fetch_type: "mmf" },
+      });
+      if (error) {
+        toast.error("Serrari Edge sync failed: " + error.message);
+        return;
+      }
+      const summary = Array.isArray((data as { results?: string[] })?.results)
+        ? (data as { results: string[] }).results.find((line) => line.startsWith("MMF (Serrari"))
+        : undefined;
+      toast.success(summary || "Checked Serrari Group MMF rates (only changed funds updated)");
+      const { data: refreshed } = await supabase
+        .from("funds")
+        .select("id, slug, manager, name, fund_type, yield_unit, annual_yield, daily_yield")
+        .order("manager");
+      if (refreshed) {
+        setFunds(
+          refreshed.map((f) => ({
+            ...f,
+            annual_yield: Number(f.annual_yield ?? 0),
+            daily_yield: Number(f.daily_yield ?? 0),
+          })) as SimpleFundLookup[],
+        );
+      }
+      if (data && Array.isArray((data as { results?: string[] }).results)) {
+        console.info("[Serrari Edge Sync]", (data as { results: string[] }).results);
+      }
+    } finally {
+      setRunningEdgeSync(false);
+    }
+  };
+
   const canSync =
     result.rows.length > 0 &&
     result.blockedCount === 0 &&
@@ -66,7 +154,13 @@ const SimpleUnitTrustPaste = () => {
     if (!canSync) return;
     setSyncing(true);
     const payload = result.rows
-      .filter((r) => r.status === "OK" && r.fund)
+      .filter(
+        (r) =>
+          r.status === "OK" &&
+          r.fund &&
+          (Math.abs((r.daily ?? 0) - r.fund.daily_yield) > 0.0001 ||
+            Math.abs((r.annual ?? 0) - r.fund.annual_yield) > 0.0001),
+      )
       .map((r) => ({
         action: "update",
         id: r.fund!.id,
@@ -75,6 +169,12 @@ const SimpleUnitTrustPaste = () => {
         yield_unit: r.fund!.yield_unit,
         fund_type: r.fund!.fund_type,
       }));
+
+    if (payload.length === 0) {
+      setSyncing(false);
+      toast.info("No yield changes detected — skipped updating unchanged funds");
+      return;
+    }
 
     const { data, error } = await supabase.rpc("bulk_sync_funds", {
       payload: payload as any,
@@ -121,10 +221,30 @@ const SimpleUnitTrustPaste = () => {
           Blank lines and lines starting with <code>#</code> are ignored. Never creates funds — use the Advanced Paste tool for new ones.
         </p>
         <div className="flex flex-wrap items-center gap-2 pt-1">
+          <Button
+            size="sm"
+            variant="default"
+            onClick={loadFromSerrari}
+            disabled={fetchingSerrari}
+            className="gap-1.5 h-8 bg-accent text-accent-foreground hover:bg-accent/90"
+          >
+            {fetchingSerrari ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Sparkles className="h-3.5 w-3.5" />}
+            Fetch from Serrari (Preview)
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            onClick={runServerSerrariSync}
+            disabled={runningEdgeSync}
+            className="gap-1.5 h-8"
+          >
+            {runningEdgeSync ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
+            1-Click Sync Serrari (KES + USD)
+          </Button>
           <Button size="sm" variant="outline" onClick={copyTemplate} className="gap-1.5 h-8">
             <Copy className="h-3.5 w-3.5" /> Copy fund-ID template
           </Button>
-          <span className="text-[11px] text-muted-foreground">Paste into a spreadsheet, fill in daily &amp; annual, paste back here.</span>
+          <span className="text-[11px] text-muted-foreground">Pull live KES + USD MMFs from serrarigroup.com/ke/mmf or paste rows manually.</span>
         </div>
       </div>
 

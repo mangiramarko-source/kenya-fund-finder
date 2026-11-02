@@ -19,15 +19,15 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
   const isGlobal = section === "rates" || section === "commodities";
   const s = sections[section];
 
+  const sDate = s?.last_update_date ? new Date(`${s.last_update_date}T12:00:00+03:00`) : null;
+  const fDate = fallbackDate ? new Date(fallbackDate) : null;
+
+  // For funds, strictly reflect the actual last data-change date (never today's wall clock when no data updated)
   const rawDate = isFunds
-    ? s?.last_update_date
-      ? new Date(`${s.last_update_date}T12:00:00+03:00`)
-      : fallbackDate
-        ? new Date(fallbackDate)
-        : null
-    : fallbackDate
-      ? new Date(fallbackDate)
-      : getNairobiMarketDate();
+    ? sDate && fDate
+      ? (fDate.getTime() > sDate.getTime() ? fDate : sDate)
+      : fDate ?? sDate ?? null
+    : fDate ?? getNairobiMarketDate();
 
   const marketOpen = isFunds ? s?.is_live === true : isGlobal ? isGlobalMarketOpen() : isKenyanMarketOpen();
 
@@ -58,7 +58,7 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
       )}
       {isFunds && (
         <span className="text-[12px] font-medium uppercase tracking-wider text-muted-foreground">
-          Updated monthly
+          Updated Mon–Fri
         </span>
       )}
       {!isFunds && !marketOpen && (

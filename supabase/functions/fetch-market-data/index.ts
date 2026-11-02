@@ -8,6 +8,7 @@ import {
 import { matchRapidApiStocks, parseRapidApiStockResponse, type QuoteSource, type StockQuote } from "./stock-quotes.ts";
 import { persistStockQuote, type StockWriteOperations } from "./stock-writes.ts";
 import { fetchNseSector, parseNseQuoteRows, parseNseSnapshotDate, summarizeNseFallback } from "./nse-fallback.ts";
+import { fetchSerrariMmfData, hasSerrariMmfChanged } from "./serrari-mmf.ts";
 
 const allowedOrigins = [
   "https://kenya-fund-finder.lovable.app",
@@ -542,6 +543,8 @@ Deno.serve(async (req) => {
   // The DB cron schedules 'fx' with the intent of fetching both FX and commodities every hour (lightweight)
   const shouldFetchCommodities = !fetchType || fetchType === "commodities" || fetchType === "fx";
   const shouldFetchStocks = !fetchType || fetchType === "stocks";
+  const shouldFetchMmf = !fetchType || fetchType === "mmf";
+  const allowHighDrift = Boolean((body as Record<string, unknown>)?.allow_high_drift);
 
   try {
     // ── 1. Fetch FX rates ──
@@ -859,6 +862,224 @@ Deno.serve(async (req) => {
       console.info("[fetch-market-data] Stock run summary", stockRunReport);
     }
     } // end shouldFetchStocks
+
+    // ── 4. Fetch Money Market Funds (Serrari Group KES + USD) ──
+    if (shouldFetchMmf) {
+      try {
+        const serrari = await fetchSerrariMmfData();
+        results.push(...serrari.notes);
+
+        const { data: existingFunds, error: fundsReadError } = await supabase
+          .from("funds")
+          .select("id, slug, annual_yield, daily_yield, management_fee, minimum_investment, yield_unit, fact_sheet_date, fund_type");
+
+        if (fundsReadError) {
+          throw new Error(`Funds read failed: ${fundsReadError.message}`);
+        }
+
+        const bySlug = new Map<
+          string,
+          {
+            id: string;
+            slug: string;
+            annual_yield: number;
+            daily_yield: number;
+            management_fee: number;
+            minimum_investment: number;
+            yield_unit: string;
+            fact_sheet_date: string | null;
+          }
+        >();
+        for (const f of existingFunds || []) {
+          bySlug.set(String(f.slug).toLowerCase(), {
+            id: f.id,
+            slug: f.slug,
+            annual_yield: Number(f.annual_yield ?? 0),
+            daily_yield: Number(f.daily_yield ?? 0),
+            management_fee: Number(f.management_fee ?? 0),
+            minimum_investment: Number(f.minimum_investment ?? 0),
+            yield_unit: String(f.yield_unit ?? "%"),
+            fact_sheet_date: f.fact_sheet_date ?? null,
+          });
+        }
+
+        let updatedMmfCount = 0;
+        let createdMmfCount = 0;
+        let unchangedMmfCount = 0;
+        let skippedDriftCount = 0;
+        const changedFunds: Array<{
+          slug: string;
+          prev_annual: number;
+          new_annual: number;
+          prev_daily: number;
+          new_daily: number;
+        }> = [];
+        const nowIso = new Date().toISOString();
+
+        for (const row of serrari.rows) {
+          const existing = bySlug.get(row.slug.toLowerCase());
+          if (existing) {
+            // Strictly skip updating database rows, timestamps, and yield snapshots when nothing changed
+            if (!hasSerrariMmfChanged(existing, row)) {
+              unchangedMmfCount++;
+              continue;
+            }
+
+            const prevAnnual = existing.annual_yield;
+            const driftPct = prevAnnual > 0
+              ? Math.abs((row.annual_yield - prevAnnual) / prevAnnual) * 100
+              : 0;
+
+            if (!allowHighDrift && prevAnnual > 0 && driftPct > 25) {
+              skippedDriftCount++;
+              results.push(`MMF skipped (>25% drift): ${row.slug} (${prevAnnual}% -> ${row.annual_yield}%)`);
+              continue;
+            }
+
+            const { error: updErr } = await supabase
+              .from("funds")
+              .update({
+                annual_yield: row.annual_yield,
+                daily_yield: row.daily_yield,
+                yield_unit: row.yield_unit,
+                minimum_investment: row.minimum_investment,
+                management_fee: row.management_fee,
+                fact_sheet_date: serrari.asOfDate,
+                updated_at: nowIso,
+              })
+              .eq("id", existing.id);
+
+            if (!updErr) {
+              updatedMmfCount++;
+              changedFunds.push({
+                slug: row.slug,
+                prev_annual: existing.annual_yield,
+                new_annual: row.annual_yield,
+                prev_daily: existing.daily_yield,
+                new_daily: row.daily_yield,
+              });
+              await supabase.from("fund_yield_snapshots").upsert(
+                {
+                  fund_id: existing.id,
+                  annual_yield: row.annual_yield,
+                  daily_yield: row.daily_yield,
+                  snapshot_date: serrari.asOfDate,
+                },
+                { onConflict: "fund_id,snapshot_date" },
+              );
+            }
+          } else {
+            const { data: inserted, error: insErr } = await supabase
+              .from("funds")
+              .insert({
+                slug: row.slug,
+                name: row.name,
+                manager: row.manager,
+                fund_type: "money_market",
+                yield_unit: row.yield_unit,
+                annual_yield: row.annual_yield,
+                daily_yield: row.daily_yield,
+                seven_day_yield: 0,
+                thirty_day_yield: 0,
+                minimum_investment: row.minimum_investment,
+                management_fee: row.management_fee,
+                withdrawal_time: row.withdrawal_time,
+                website: row.website,
+                fact_sheet_date: serrari.asOfDate,
+                cma_licensed: true,
+                is_published: true,
+                description: `The ${row.name} Money Market Fund (${row.currency}) is a CMA-regulated low-risk collective investment scheme managed by ${row.manager}, investing in short-term money market instruments including Kenyan Treasury bills, fixed deposits, and high-grade commercial paper.`,
+                updated_at: nowIso,
+              })
+              .select("id")
+              .maybeSingle();
+
+            if (!insErr && inserted?.id) {
+              createdMmfCount++;
+              changedFunds.push({
+                slug: row.slug,
+                prev_annual: 0,
+                new_annual: row.annual_yield,
+                prev_daily: 0,
+                new_daily: row.daily_yield,
+              });
+              await supabase.from("fund_yield_snapshots").upsert(
+                {
+                  fund_id: inserted.id,
+                  annual_yield: row.annual_yield,
+                  daily_yield: row.daily_yield,
+                  snapshot_date: serrari.asOfDate,
+                },
+                { onConflict: "fund_id,snapshot_date" },
+              );
+            }
+          }
+        }
+
+        // Always record that a verification check ran, but only advance last_update_date & log changes when data actually changed
+        await supabase
+          .from("section_live_status")
+          .upsert(
+            {
+              section_key: "funds",
+              is_live: true,
+              last_verified_at: nowIso,
+              ...(updatedMmfCount > 0 || createdMmfCount > 0 ? { updated_at: nowIso } : {}),
+            },
+            { onConflict: "section_key" },
+          );
+
+        if (updatedMmfCount > 0 || createdMmfCount > 0) {
+          // Keep site_pages (slug = 'live-status') in sync ONLY when at least one fund actually updated
+          const { data: liveStatusPage } = await supabase
+            .from("site_pages")
+            .select("meta")
+            .eq("slug", "live-status")
+            .maybeSingle();
+
+          if (liveStatusPage) {
+            const prevMeta = (liveStatusPage.meta as Record<string, unknown>) ?? {};
+            const prevSections = (prevMeta.sections as Record<string, Record<string, unknown>>) ?? {};
+            const nextMeta = {
+              ...prevMeta,
+              last_update_date: serrari.asOfDate,
+              sections: {
+                ...prevSections,
+                funds: {
+                  ...(prevSections.funds ?? {}),
+                  is_live: true,
+                  last_update_date: serrari.asOfDate,
+                },
+              },
+            };
+            await supabase
+              .from("site_pages")
+              .update({ meta: nextMeta, updated_at: nowIso })
+              .eq("slug", "live-status");
+          }
+
+          await supabase.from("change_log").insert({
+            entity_type: "fund",
+            action: "serrari_mmf_sync",
+            new_values: {
+              as_of_date: serrari.asOfDate,
+              updated_count: updatedMmfCount,
+              created_count: createdMmfCount,
+              unchanged_count: unchangedMmfCount,
+              changed_funds: changedFunds,
+            },
+          });
+        }
+
+        results.push(
+          `MMF (Serrari ${serrari.asOfDate}): updated ${updatedMmfCount}, created ${createdMmfCount}, unchanged ${unchangedMmfCount}, drift-skipped ${skippedDriftCount}`,
+        );
+      } catch (mmfErr) {
+        const msg = mmfErr instanceof Error ? mmfErr.message : String(mmfErr);
+        console.error("[fetch-market-data] Serrari MMF sync failed:", msg);
+        results.push(`MMF sync failed: ${msg}`);
+      }
+    } // end shouldFetchMmf
 
     if (quoteObservations.length) {
       const { error: observationsError } = await supabase

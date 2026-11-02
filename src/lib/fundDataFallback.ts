@@ -1,6 +1,7 @@
 import type { FundFromDB } from "./api";
+import { applySerrariSnapshotToFunds } from "./serrariMmfSync";
 
-export const FALLBACK_KENYAN_FUNDS: FundFromDB[] = [
+const RAW_FALLBACK_KENYAN_FUNDS: FundFromDB[] = [
   {
     "id": "e81a849d-12d0-4313-a4f8-89b2959ecbb6",
     "slug": "ncba-equity-sh",
@@ -1982,3 +1983,8 @@ export const FALLBACK_KENYAN_FUNDS: FundFromDB[] = [
     "updated_at": "2026-09-17T20:32:12.906107+00:00"
   }
 ];
+
+export const FALLBACK_KENYAN_FUNDS: FundFromDB[] = applySerrariSnapshotToFunds(
+  RAW_FALLBACK_KENYAN_FUNDS,
+  "2026-11-02",
+);
