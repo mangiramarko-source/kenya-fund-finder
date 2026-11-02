@@ -12,6 +12,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { Badge } from "@/components/ui/badge";
 import { Plus, Pencil, Trash2, Search, Upload, X, Loader2, RefreshCw } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { validateAndSanitizeImageUpload } from "@/lib/safeImageUpload";
 
 interface NewsRow {
   id: string;
@@ -127,28 +128,26 @@ const AdminNews = () => {
       return;
     }
 
-    const allowedTypes = ["image/jpeg", "image/png", "image/webp", "image/gif"];
-    if (!allowedTypes.includes(file.type)) {
-      toast({ title: "Unsupported image", description: "Use JPG, PNG, WEBP, or GIF.", variant: "destructive" });
-      return;
-    }
+    const validation = await validateAndSanitizeImageUpload(file, {
+      maxBytes: 5 * 1024 * 1024,
+      maxDimension: 1920,
+    });
 
-    if (file.size > 5 * 1024 * 1024) {
-      toast({ title: "Image too large", description: "Please upload an image under 5MB.", variant: "destructive" });
+    if (!validation.valid) {
+      toast({ title: "Unsupported image", description: validation.error, variant: "destructive" });
       return;
     }
 
     setIsUploadingImage(true);
 
-    const ext = (file.name.split(".").pop() || "jpg").toLowerCase();
-    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
+    const path = `${Date.now()}-${Math.random().toString(36).slice(2)}.${validation.ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("news-images")
-      .upload(path, file, {
+      .upload(path, validation.sanitizedBlob, {
         cacheControl: "3600",
         upsert: false,
-        contentType: file.type,
+        contentType: validation.mimeType,
       });
 
     if (uploadError) {

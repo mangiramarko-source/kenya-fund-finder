@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import SearchDialog from "@/components/SearchDialog";
 import NotificationBell from "@/components/alerts/NotificationBell";
 import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
+import { sanitizeAvatarUrl } from "@/lib/safeImageUpload";
 
 function AccountDrawerRow({ icon: Icon, label, tone, onClick }: { icon: React.ElementType; label: string; tone?: "accent" | "destructive"; onClick: () => void }) {
   const iconClass = tone === "destructive" ? "text-destructive" : tone === "accent" ? "text-emerald-600" : "text-foreground/70";
@@ -65,7 +66,7 @@ const DesktopTopBar = () => {
     if (user) {
       supabase.from("profiles").select("avatar_url, display_name").eq("user_id", user.id).maybeSingle()
         .then(({ data }) => {
-          if (data) { setAvatarUrl(data.avatar_url || ""); setDisplayName(data.display_name || ""); }
+          if (data) { setAvatarUrl(sanitizeAvatarUrl(data.avatar_url)); setDisplayName(data.display_name || ""); }
         });
     } else { setAvatarUrl(""); setDisplayName(""); }
   }, [user]);

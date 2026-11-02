@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useAuth } from "@/hooks/useAuth";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { sanitizeAvatarUrl } from "@/lib/safeImageUpload";
 import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
 import { isAiLabEnabled } from "@/lib/featureFlags";
 import { openMobileLegalSheet } from "./MobileLegalSheet";
@@ -64,7 +65,7 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
   const close = () => onOpenChange(false);
 
   const displayName = user?.user_metadata?.full_name || user?.email?.split("@")[0] || "";
-  const avatarUrl = user?.user_metadata?.avatar_url || "";
+  const avatarUrl = sanitizeAvatarUrl(user?.user_metadata?.avatar_url);
   const initials = user
     ? (displayName || user.email || "U").slice(0, 2).toUpperCase()
     : "";

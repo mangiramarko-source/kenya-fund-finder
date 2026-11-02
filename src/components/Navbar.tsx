@@ -8,6 +8,7 @@ import SearchDialog from "@/components/SearchDialog";
 import NotificationBell from "@/components/alerts/NotificationBell";
 import { getStoredTheme, saveTheme } from "@/lib/themeStorage";
 import MobileAccountSheet from "@/components/mobile/MobileAccountSheet";
+import { sanitizeAvatarUrl } from "@/lib/safeImageUpload";
 
 export const mobileNavLinks = [
   { to: "/", label: "Overview" },
@@ -166,7 +167,7 @@ const Navbar = () => {
         .maybeSingle()
         .then(({ data }) => {
           if (data) {
-            setAvatarUrl(data.avatar_url || "");
+            setAvatarUrl(sanitizeAvatarUrl(data.avatar_url));
             setDisplayName(data.display_name || "");
           }
         });

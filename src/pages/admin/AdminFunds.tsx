@@ -16,6 +16,7 @@ import AdminYieldHistory from "./AdminYieldHistory";
 
 import BulkFundPasteVerify from "@/components/admin/BulkFundPasteVerify";
 import SimpleUnitTrustPaste from "@/components/admin/SimpleUnitTrustPaste";
+import { SAFE_IMAGE_ACCEPT, validateAndSanitizeImageUpload } from "@/lib/safeImageUpload";
 
 interface FundRow {
   id: string;
@@ -275,14 +276,21 @@ const AdminFunds = () => {
 
   const handleLogoUpload = async (file: File) => {
     if (!file) return;
-    if (file.size > 2 * 1024 * 1024) {
-      toast({ title: "File too large", description: "Logo must be under 2 MB.", variant: "destructive" });
+    const validation = await validateAndSanitizeImageUpload(file, {
+      maxBytes: 2 * 1024 * 1024,
+      maxDimension: 512,
+    });
+    if (!validation.valid) {
+      toast({ title: "Invalid logo image", description: validation.error, variant: "destructive" });
       return;
     }
-    const ext = file.name.split(".").pop()?.toLowerCase() || "png";
-    const slug = editingFund.slug || `tmp-${Date.now()}`;
-    const path = `${slug}-${Date.now()}.${ext}`;
-    const { error } = await supabase.storage.from("fund-logos").upload(path, file, { upsert: true, cacheControl: "3600" });
+    const rawSlug = (editingFund.slug || `tmp-${Date.now()}`).replace(/[^a-zA-Z0-9_-]/g, "-");
+    const path = `${rawSlug}-${Date.now()}.${validation.ext}`;
+    const { error } = await supabase.storage.from("fund-logos").upload(path, validation.sanitizedBlob, {
+      upsert: true,
+      cacheControl: "3600",
+      contentType: validation.mimeType,
+    });
     if (error) { toast({ title: "Upload failed", description: error.message, variant: "destructive" }); return; }
     const { data } = supabase.storage.from("fund-logos").getPublicUrl(path);
     setEditingFund({ ...editingFund, logo_url: data.publicUrl });
@@ -320,7 +328,7 @@ const AdminFunds = () => {
                   <div className="flex items-center gap-2 mt-1">
                     <Input
                       type="file"
-                      accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                      accept={SAFE_IMAGE_ACCEPT}
                       onChange={(e) => { const f = e.target.files?.[0]; if (f) handleLogoUpload(f); e.target.value = ""; }}
                       className="text-xs"
                     />
@@ -330,7 +338,7 @@ const AdminFunds = () => {
                       </Button>
                     )}
                   </div>
-                  <p className="text-[10px] text-muted-foreground mt-1">PNG, JPG, WebP or SVG, max 2 MB. Square logos look best.</p>
+                  <p className="text-[10px] text-muted-foreground mt-1">PNG, JPG, WebP or GIF, max 2 MB. Square logos look best.</p>
                 </div>
               </div>
               <div className="grid grid-cols-2 gap-3">

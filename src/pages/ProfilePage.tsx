@@ -14,6 +14,12 @@ import CookiePreferences from "@/components/CookiePreferences";
 import MarketPageLoader from "@/components/MarketPageLoader";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import DeleteAccountCard from "@/components/profile/DeleteAccountCard";
+import {
+  SAFE_IMAGE_ACCEPT,
+  sanitizeAvatarUrl,
+  validateAndSanitizeImageUpload,
+  validateDisplayName,
+} from "@/lib/safeImageUpload";
 
 async function accountDeletionErrorMessage(error: unknown) {
   const context = (error as { context?: unknown } | null)?.context;
@@ -65,7 +71,7 @@ const ProfilePage = () => {
 
     if (data) {
       setDisplayName(data.display_name || "");
-      setAvatarUrl(data.avatar_url || "");
+      setAvatarUrl(sanitizeAvatarUrl(data.avatar_url));
     } else {
       // Profile doesn't exist yet (for pre-existing users), create one
       await supabase.from("profiles").insert({
@@ -79,26 +85,33 @@ const ProfilePage = () => {
 
   const handleAvatarUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
+    e.target.value = "";
     if (!file || !user) return;
 
-    const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
-    if (!ALLOWED_TYPES.includes(file.type)) {
-      toast({ title: "Invalid file type", description: "Only JPEG, PNG, GIF and WebP are allowed.", variant: "destructive" });
-      return;
-    }
+    const validation = await validateAndSanitizeImageUpload(file, {
+      maxBytes: 2 * 1024 * 1024,
+      maxDimension: 512,
+    });
 
-    if (file.size > 2 * 1024 * 1024) {
-      toast({ title: "File too large", description: "Max 2MB allowed", variant: "destructive" });
+    if (!validation.valid) {
+      toast({
+        title: "Invalid profile image",
+        description: validation.error,
+        variant: "destructive",
+      });
       return;
     }
 
     setUploading(true);
-    const ext = file.name.split(".").pop();
-    const path = `${user.id}/avatar.${ext}`;
+    const path = `${user.id}/avatar.${validation.ext}`;
 
     const { error: uploadError } = await supabase.storage
       .from("avatars")
-      .upload(path, file, { upsert: true });
+      .upload(path, validation.sanitizedBlob, {
+        upsert: true,
+        contentType: validation.mimeType,
+        cacheControl: "3600",
+      });
 
     if (uploadError) {
       toast({ title: "Upload failed", description: uploadError.message, variant: "destructive" });
@@ -107,26 +120,47 @@ const ProfilePage = () => {
     }
 
     const { data: urlData } = supabase.storage.from("avatars").getPublicUrl(path);
-    const url = `${urlData.publicUrl}?t=${Date.now()}`;
+    const safeUrl = sanitizeAvatarUrl(`${urlData.publicUrl}?t=${Date.now()}`);
+    if (!safeUrl) {
+      toast({ title: "Upload failed", description: "Could not verify image URL.", variant: "destructive" });
+      setUploading(false);
+      return;
+    }
 
-    await supabase.from("profiles").update({ avatar_url: url }).eq("user_id", user.id);
-    setAvatarUrl(url);
+    const { error: profileError } = await supabase
+      .from("profiles")
+      .update({ avatar_url: safeUrl })
+      .eq("user_id", user.id);
+
     setUploading(false);
+    if (profileError) {
+      toast({ title: "Could not update profile", description: profileError.message, variant: "destructive" });
+      return;
+    }
+
+    setAvatarUrl(safeUrl);
     toast({ title: "Avatar updated!" });
   };
 
   const handleSaveProfile = async () => {
     if (!user) return;
+    const nameCheck = validateDisplayName(displayName);
+    if (!nameCheck.valid) {
+      toast({ title: "Invalid display name", description: nameCheck.error, variant: "destructive" });
+      return;
+    }
+
     setSaving(true);
     const { error } = await supabase
       .from("profiles")
-      .update({ display_name: displayName.trim() })
+      .update({ display_name: nameCheck.sanitized })
       .eq("user_id", user.id);
 
     setSaving(false);
     if (error) {
       toast({ title: "Error saving", description: error.message, variant: "destructive" });
     } else {
+      setDisplayName(nameCheck.sanitized);
       toast({ title: "Profile updated!" });
     }
   };
@@ -203,7 +237,13 @@ const ProfilePage = () => {
                 <Camera className="h-5 w-5 text-background" />
               )}
             </button>
-            <input ref={fileInputRef} type="file" accept="image/*" className="hidden" onChange={handleAvatarUpload} />
+            <input
+              ref={fileInputRef}
+              type="file"
+              accept={SAFE_IMAGE_ACCEPT}
+              className="hidden"
+              onChange={handleAvatarUpload}
+            />
           </div>
           <div>
             <p className="font-medium">{displayName || "No name set"}</p>
@@ -225,6 +265,7 @@ const ProfilePage = () => {
               <Input
                 id="displayName"
                 value={displayName}
+                maxLength={80}
                 onChange={(e) => setDisplayName(e.target.value)}
                 className="pl-9"
                 placeholder="Your name"
