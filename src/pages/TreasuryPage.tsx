@@ -1,6 +1,6 @@
 import { useState, useMemo } from "react";
 import { Link } from "react-router-dom";
-import { useDocumentTitle } from "@/hooks/useDocumentTitle";
+import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -49,7 +49,63 @@ import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import InlineDataGate from "@/components/auth/InlineDataGate";
 
 export default function TreasuryPage() {
-  useDocumentTitle("Treasury Bills & Bonds | Rates, Auction & Return Calculator | KenyaFundFinder");
+  useDocumentTitle(
+    "CBK Treasury Bills & Bonds Kenya (2026) – 91, 182 & 364-Day Rates",
+    "Track the latest Central Bank of Kenya (CBK) 91-day, 182-day, and 364-day Treasury Bill auction rates, tax-free Infrastructure Bonds (IFBs), and DhowCSD net returns after withholding tax.",
+    {
+      title: "CBK Treasury Bills & Bonds Kenya – 91, 182 & 364-Day Rates",
+      description: "Compare Central Bank of Kenya (CBK) Treasury Bill auction rates, Treasury Bonds, and DhowCSD net returns after tax.",
+    },
+  );
+  useJsonLd({
+    "@context": "https://schema.org",
+    "@graph": [
+      {
+        "@type": "Dataset",
+        name: "Central Bank of Kenya (CBK) Treasury Bills & Bonds Rates",
+        description:
+          "Weekly 91-day, 182-day, and 364-day Kenyan Treasury Bill auction yields and active Kenyan Treasury and Infrastructure Bonds.",
+        url: "https://kenyafundfinder.com/treasury",
+        creator: { "@type": "Organization", name: "Kenya Fund Finder", url: "https://kenyafundfinder.com/" },
+      },
+      {
+        "@type": "FAQPage",
+        mainEntity: [
+          {
+            "@type": "Question",
+            name: "What is the minimum investment for CBK Treasury Bills and Bonds in Kenya?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "The minimum face-value investment for Central Bank of Kenya (CBK) 91-day, 182-day, and 364-day Treasury Bills and regular Treasury Bonds via DhowCSD is KSh 50,000, while Infrastructure Bonds (IFBs) typically require a minimum of KSh 100,000.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "How are Treasury Bills and Infrastructure Bonds taxed in Kenya?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Interest on 91-day, 182-day, and 364-day Treasury Bills and short-term Treasury Bonds is subject to 15% KRA withholding tax, 10-year+ bonds attract 10% withholding tax, and qualifying Infrastructure Bonds (IFBs) are exempt from withholding tax.",
+            },
+          },
+          {
+            "@type": "Question",
+            name: "How do I invest in Kenyan Treasury Bills online?",
+            acceptedAnswer: {
+              "@type": "Answer",
+              text: "Open a Central Bank of Kenya DhowCSD investor portal account (using your national ID, KRA PIN, and a Kenyan commercial bank account), select an open 91-day, 182-day, or 364-day T-Bill auction before Wednesday 4:00 PM EAT, and settle payment by Monday.",
+            },
+          },
+        ],
+      },
+      {
+        "@type": "BreadcrumbList",
+        itemListElement: [
+          { "@type": "ListItem", position: 1, name: "Home", item: "https://kenyafundfinder.com/" },
+          { "@type": "ListItem", position: 2, name: "Treasury Bills & Bonds", item: "https://kenyafundfinder.com/treasury" },
+        ],
+      },
+    ],
+  });
 
   const { data, isLoading, isError } = useTreasuryData();
   const showLoading = useMinimumLoadingDuration(isLoading);

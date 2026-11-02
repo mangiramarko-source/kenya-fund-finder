@@ -301,10 +301,56 @@ function staticRoutes(): SeoPageDefinition[] {
     },
     {
       path: "/treasury",
-      title: "Kenya Treasury Bills & Bonds – Compare CBK Rates & Yields",
-      description: "Track the latest 91-day, 182-day and 364-day Treasury Bill auction rates in Kenya. Compare Treasury Bonds, yields, and time to maturity.",
-      heading: "Treasury Bills & Bonds",
-      contentHtml: paragraph("Track the latest Central Bank of Kenya Treasury Bill auction results and active Treasury Bonds available in the secondary market."),
+      title: "CBK Treasury Bills & Bonds Kenya (2026) – 91, 182 & 364-Day Rates",
+      description: "Track the latest Central Bank of Kenya (CBK) 91-day, 182-day, and 364-day Treasury Bill auction rates, tax-free Infrastructure Bonds (IFBs), and DhowCSD net returns after withholding tax.",
+      heading: "Kenya Treasury Bills & Bonds (CBK Rates)",
+      contentHtml: [
+        paragraph("Track the latest Central Bank of Kenya (CBK) 91-day, 182-day, and 364-day Treasury Bill weekly auction rates, active fixed-coupon Treasury Bonds, and tax-free Infrastructure Bonds (IFBs) available via DhowCSD and the NSE secondary market."),
+        '<section><h2>Kenyan Government Securities Overview</h2><ul><li><strong>91-Day, 182-Day &amp; 364-Day Treasury Bills:</strong> Short-term discounted government securities auctioned weekly by the Central Bank of Kenya with a KSh 50,000 minimum face value and 15% KRA withholding tax on discount interest.</li><li><strong>Fixed-Coupon Treasury Bonds (FXD):</strong> Medium-to-long-term government bonds paying semi-annual coupon interest (15% WHT for tenors under 10 years; 10% WHT for 10+ years).</li><li><strong>Infrastructure Bonds (IFB):</strong> Tax-exempt Kenyan government bonds funding public infrastructure, typically requiring a KSh 100,000 minimum investment.</li></ul></section>',
+        faqContentHtml([
+          {
+            question: "What is the minimum investment for CBK Treasury Bills and Bonds in Kenya?",
+            answer: "The minimum face-value investment for Central Bank of Kenya 91-day, 182-day, and 364-day Treasury Bills and regular Treasury Bonds via DhowCSD is KSh 50,000, while Infrastructure Bonds (IFBs) typically require KSh 100,000.",
+          },
+          {
+            question: "How are Treasury Bills and Infrastructure Bonds taxed in Kenya?",
+            answer: "Interest on Treasury Bills and bonds under 10 years is subject to 15% withholding tax, bonds of 10 years or more attract 10% withholding tax, and qualifying Infrastructure Bonds (IFBs) are tax-free.",
+          },
+          {
+            question: "How do Treasury Bills compare with Money Market Funds (MMFs) in Kenya?",
+            answer: "Treasury Bills lock your capital for 91, 182, or 364 days with a KSh 50,000 minimum directly with CBK, while CMA-regulated Money Market Funds invest in T-Bills and bank deposits with minimums from KSh 100 and 1–3 day withdrawal liquidity.",
+          },
+        ]),
+        '<p><a href="/funds">Compare Money Market Funds in Kenya</a> · <a href="/calculator">Investment return calculator</a></p>',
+      ].join(""),
+      jsonLd: [
+        {
+          "@context": "https://schema.org",
+          "@type": "Dataset",
+          name: "Central Bank of Kenya (CBK) Treasury Bills & Bonds Rates",
+          description: "Weekly 91-day, 182-day, and 364-day Kenyan Treasury Bill auction yields and active Kenyan Treasury and Infrastructure Bonds.",
+          url: canonicalUrl("/treasury"),
+          creator: { "@type": "Organization", name: "Kenya Fund Finder", url: SEO_SITE_URL },
+        },
+        faqSchema([
+          {
+            question: "What is the minimum investment for CBK Treasury Bills and Bonds in Kenya?",
+            answer: "The minimum face-value investment for Central Bank of Kenya 91-day, 182-day, and 364-day Treasury Bills and regular Treasury Bonds via DhowCSD is KSh 50,000, while Infrastructure Bonds (IFBs) typically require KSh 100,000.",
+          },
+          {
+            question: "How are Treasury Bills and Infrastructure Bonds taxed in Kenya?",
+            answer: "Interest on Treasury Bills and bonds under 10 years is subject to 15% withholding tax, bonds of 10 years or more attract 10% withholding tax, and qualifying Infrastructure Bonds (IFBs) are tax-free.",
+          },
+          {
+            question: "How do Treasury Bills compare with Money Market Funds (MMFs) in Kenya?",
+            answer: "Treasury Bills lock your capital for 91, 182, or 364 days with a KSh 50,000 minimum directly with CBK, while CMA-regulated Money Market Funds invest in T-Bills and bank deposits with minimums from KSh 100 and 1–3 day withdrawal liquidity.",
+          },
+        ]),
+        breadcrumb([
+          { name: "Home", path: "/" },
+          { name: "Treasury Bills & Bonds", path: "/treasury" },
+        ]),
+      ],
     },
   ];
 }
