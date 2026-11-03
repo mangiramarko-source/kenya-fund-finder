@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogClose, DialogContent, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import {
   ArrowRight,
   LayoutDashboard,
@@ -10,6 +10,7 @@ import {
   CircleDollarSign,
   Newspaper,
   PieChart,
+  X,
 } from "lucide-react";
 import { useConsent } from "@/hooks/useConsent";
 import { useAuth } from "@/hooks/useAuth";
@@ -92,15 +93,20 @@ const LegacyHomeHero = () => {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-[380px] gap-5 sm:gap-6 rounded-[2rem] sm:rounded-[2.5rem] border-border/70 bg-card p-5 sm:p-6">
-        {/* Header row: icon chip + status pill */}
-        <div className="flex items-start justify-between">
+      <DialogContent className="w-[calc(100vw-2rem)] sm:w-full max-w-[380px] gap-5 sm:gap-6 rounded-[2rem] sm:rounded-[2.5rem] border-border/70 bg-card p-5 sm:p-6 [&>button]:hidden">
+        {/* Header row: icon chip + status pill + close */}
+        <div className="flex items-center gap-3">
           <span className="inline-flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
             <PieChart className="h-5 w-5" />
           </span>
           <span className="rounded-full border border-warning/30 px-3 py-1 font-mono text-[10px] font-bold uppercase tracking-[0.16em] text-warning">
             Market Data
           </span>
+          <DialogClose asChild>
+            <Button variant="ghost" size="icon" aria-label="Close" className="ml-auto shrink-0 rounded-full bg-muted/70 text-muted-foreground hover:bg-muted hover:text-foreground">
+              <X className="stroke-[2.5]" />
+            </Button>
+          </DialogClose>
         </div>
 
         {/* Headline */}
