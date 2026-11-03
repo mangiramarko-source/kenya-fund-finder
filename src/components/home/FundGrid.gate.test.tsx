@@ -1,9 +1,9 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import { MemoryRouter } from "react-router-dom";
 import { describe, expect, it, vi, beforeEach } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import FundGrid from "./FundGrid";
-import type { FundFromDB } from "@/lib/api";
+import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -269,5 +269,34 @@ describe("FundGrid Rule of 3 Gating Live Preview Test", () => {
     expect(screen.queryByText(/Unlock All/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/More Available/i)).not.toBeInTheDocument();
     expect(screen.getByText(/showing 2 of 2 money market funds/i)).toBeInTheDocument();
+  });
+  it("counts and filters movement only across the 3 funds a guest can see", () => {
+    mockUseAuth.mockReturnValue({ user: null, loading: false });
+    mockIsBotOrPrerender.mockReturnValue(false);
+
+    const snapshot = (fund_id: string, annual_yield: number) =>
+      ({ fund_id, annual_yield, daily_yield: annual_yield, snapshot_date: "2026-11-02" }) satisfies YieldSnapshot;
+    // Visible: fund-1 gainer, fund-2 loser, fund-3 unchanged. Hidden funds 4-6 are all gainers.
+    const snapshots = {
+      "fund-1": snapshot("fund-1", 16.0),
+      "fund-2": snapshot("fund-2", 16.0),
+      "fund-4": snapshot("fund-4", 13.0),
+      "fund-5": snapshot("fund-5", 11.0),
+      "fund-6": snapshot("fund-6", 11.0),
+    };
+
+    renderWithProviders(<FundGrid funds={mockFunds} snapshots={snapshots} loading={false} />);
+
+    const gainerButtons = screen.getAllByRole("button", { name: /^Gainers\s*1$/ });
+    expect(gainerButtons.length).toBeGreaterThan(0);
+    expect(screen.getAllByRole("button", { name: /^Losers\s*1$/ }).length).toBeGreaterThan(0);
+
+    fireEvent.click(gainerButtons[0]);
+
+    expect(screen.getAllByText("Alpha Money Market Fund").length).toBeGreaterThan(0);
+    expect(screen.queryByText("Beta High Yield Fund")).not.toBeInTheDocument();
+    expect(screen.queryByText("Gamma Treasury Fund")).not.toBeInTheDocument();
+    expect(screen.queryByText("Zeta Stable Fund")).not.toBeInTheDocument();
+    expect(screen.getAllByText("Unlock All 35+ CMA-Regulated Kenyan Funds").length).toBeGreaterThan(0);
   });
 });

@@ -26,6 +26,7 @@ const categoryLabels: Record<string, string> = {
   balanced: "Balanced",
   equity: "Equity",
   bond: "Bond",
+  special: "Special Fund",
 };
 
 const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
@@ -217,26 +218,6 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
     [funds, activeTab],
   );
 
-  const movementCounts = useMemo(() => {
-    const c = { gainers: 0, losers: 0, unchanged: 0 };
-    categoryFunds.forEach((f) => {
-      const m = movementForFund(f);
-      if (m === "gainer") c.gainers++;
-      else if (m === "loser") c.losers++;
-      else c.unchanged++;
-    });
-    return c;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryFunds, snapshots]);
-
-  useEffect(() => {
-    if (categories.length === 0) return;
-    if (activeTab !== "all" && (!categories.includes(activeTab as FundType) || (categoryCount[activeTab] ?? 0) === 0)) {
-      updateParams({ category: categories[0] });
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categories, activeTab, categoryCount]);
-
   const { user, loading: authLoading } = useAuth();
   const isGated = !authLoading && !user && !isBotOrPrerender();
   const isCategoryGated = isGated && categoryFunds.length > 3;
@@ -246,13 +227,39 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
     [categoryFunds],
   );
 
+  // Guests only see the top 3 funds, so movement counts and filters must use the same set.
+  const visibleCategoryFunds = useMemo(
+    () => (isCategoryGated ? defaultSortedCategoryFunds.slice(0, 3) : categoryFunds),
+    [isCategoryGated, defaultSortedCategoryFunds, categoryFunds],
+  );
+
   const teaserFunds = useMemo(
     () => (isCategoryGated ? defaultSortedCategoryFunds.slice(3, 5) : []),
     [isCategoryGated, defaultSortedCategoryFunds],
   );
 
+  const movementCounts = useMemo(() => {
+    const c = { gainers: 0, losers: 0, unchanged: 0 };
+    visibleCategoryFunds.forEach((f) => {
+      const m = movementForFund(f);
+      if (m === "gainer") c.gainers++;
+      else if (m === "loser") c.losers++;
+      else c.unchanged++;
+    });
+    return c;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [visibleCategoryFunds, snapshots]);
+
+  useEffect(() => {
+    if (categories.length === 0) return;
+    if (activeTab !== "all" && (!categories.includes(activeTab as FundType) || (categoryCount[activeTab] ?? 0) === 0)) {
+      updateParams({ category: categories[0] });
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [categories, activeTab, categoryCount]);
+
   const filtered = useMemo(() => {
-    let result = isCategoryGated ? defaultSortedCategoryFunds.slice(0, 3) : categoryFunds;
+    let result = visibleCategoryFunds;
     if (movement === "gainers") result = result.filter((f) => movementForFund(f) === "gainer");
     else if (movement === "losers") result = result.filter((f) => movementForFund(f) === "loser");
     else if (movement === "unchanged") result = result.filter((f) => movementForFund(f) === "unchanged");
@@ -274,7 +281,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
     });
     return result;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [categoryFunds, defaultSortedCategoryFunds, isCategoryGated, search, sortKey, sortDir, movement, snapshots]);
+  }, [visibleCategoryFunds, search, sortKey, sortDir, movement, snapshots]);
 
   const bestYield = useMemo(() => {
     const catFunds = funds.filter((f) => f.fund_type === activeTab);
@@ -302,7 +309,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
 
           <div className="inline-flex items-center gap-1">
             {([
-              { key: "all", label: "All", count: categoryFunds.length },
+              { key: "all", label: "All", count: visibleCategoryFunds.length },
               { key: "gainers", label: "Gainers", count: movementCounts.gainers },
               { key: "losers", label: "Losers", count: movementCounts.losers },
               { key: "unchanged", label: "Unchanged", count: movementCounts.unchanged },
