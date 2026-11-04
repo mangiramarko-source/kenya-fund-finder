@@ -17,14 +17,19 @@ DO $$ BEGIN
   END IF;
 END $$;
 
--- 2. Ensure change_log table exists
+-- 2. Ensure change_log table exists and supports bulk sync
 CREATE TABLE IF NOT EXISTS public.change_log (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   entity_type text NOT NULL,
+  entity_id uuid,
   action text NOT NULL,
+  old_values jsonb,
   new_values jsonb,
-  created_at timestamptz NOT NULL DEFAULT now()
+  changed_by uuid,
+  changed_at timestamptz NOT NULL DEFAULT now()
 );
+ALTER TABLE public.change_log ALTER COLUMN entity_id DROP NOT NULL;
+ALTER TABLE public.change_log ENABLE ROW LEVEL SECURITY;
 
 -- 3. Upsert all funds and record snapshots
 DO $sync$

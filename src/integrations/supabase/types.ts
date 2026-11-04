@@ -216,7 +216,7 @@ export type Database = {
           action: string
           changed_at: string
           changed_by: string | null
-          entity_id: string
+          entity_id: string | null
           entity_type: string
           id: string
           new_values: Json | null
@@ -226,7 +226,7 @@ export type Database = {
           action: string
           changed_at?: string
           changed_by?: string | null
-          entity_id: string
+          entity_id?: string | null
           entity_type: string
           id?: string
           new_values?: Json | null
@@ -236,7 +236,7 @@ export type Database = {
           action?: string
           changed_at?: string
           changed_by?: string | null
-          entity_id?: string
+          entity_id?: string | null
           entity_type?: string
           id?: string
           new_values?: Json | null
@@ -1249,6 +1249,27 @@ export type Database = {
           created_at?: string
           id?: string
           ip_hash?: string
+        }
+        Relationships: []
+      }
+      section_live_status: {
+        Row: {
+          is_live: boolean
+          last_verified_at: string
+          section_key: string
+          updated_at: string
+        }
+        Insert: {
+          is_live?: boolean
+          last_verified_at?: string
+          section_key: string
+          updated_at?: string
+        }
+        Update: {
+          is_live?: boolean
+          last_verified_at?: string
+          section_key?: string
+          updated_at?: string
         }
         Relationships: []
       }

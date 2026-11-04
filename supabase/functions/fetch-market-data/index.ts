@@ -952,6 +952,7 @@ Deno.serve(async (req) => {
             if (!updErr) {
               updatedFundCount++;
               changedFunds.push({
+                fund_id: existing.id,
                 slug: row.slug,
                 prev_annual: existing.annual_yield,
                 new_annual: row.annual_yield,
@@ -1008,6 +1009,7 @@ Deno.serve(async (req) => {
             if (!insErr && inserted?.id) {
               createdFundCount++;
               changedFunds.push({
+                fund_id: inserted.id,
                 slug: row.slug,
                 prev_annual: 0,
                 new_annual: row.annual_yield,
@@ -1069,8 +1071,9 @@ Deno.serve(async (req) => {
               .eq("slug", "live-status");
           }
 
-          await supabase.from("change_log").insert({
+          const { error: logErr } = await supabase.from("change_log").insert({
             entity_type: "fund",
+            entity_id: changedFunds[0]?.fund_id ?? null,
             action: "serrari_funds_sync",
             new_values: {
               as_of_date: serrari.asOfDate,
@@ -1080,6 +1083,9 @@ Deno.serve(async (req) => {
               changed_funds: changedFunds,
             },
           });
+          if (logErr) {
+            console.error("[fetch-market-data] Failed to write to change_log:", logErr);
+          }
         }
 
         results.push(
