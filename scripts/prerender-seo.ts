@@ -192,8 +192,8 @@ function staticRoutes(): SeoPageDefinition[] {
       image: SEO_DEFAULT_OG_IMAGE,
       contentHtml: [
         paragraph("Kenya Fund Finder brings public information about Kenyan investment funds and markets into one place so you can research options before making a decision."),
-        '<section><h2>Compare Kenyan investment options</h2><p>Review published yields, fees, minimum deposits and withdrawal periods on the <a href="/funds">fund directory</a>, compare selected products side by side with the <a href="/compare">fund comparison tool</a>, estimate possible returns using the <a href="/calculator">investment calculator</a>, and use the <a href="/checklist">fund checklist</a> when evaluating an option.</p></section>',
-        '<section><h2>Follow markets and rates</h2><p>Explore <a href="/stocks">Nairobi Securities Exchange stocks</a>, <a href="/treasury">Kenya Treasury bills and bonds</a>, <a href="/rates">foreign exchange rates</a>, <a href="/commodities">commodity prices</a>, or open the combined <a href="/markets">markets dashboard</a>.</p></section>',
+        '<section><h2>Compare Kenyan investment options</h2><p>Review published yields, fees, minimum deposits and withdrawal periods on the <a href="/funds">fund directory</a>, compare guaranteed returns on <a href="/savings">Bank Fixed Deposits & SACCOs</a>, compare selected products side by side with the <a href="/compare">fund comparison tool</a>, estimate possible returns using the <a href="/calculator">investment calculator</a>, and use the <a href="/checklist">fund checklist</a> when evaluating an option.</p></section>',
+        '<section><h2>Follow markets and rates</h2><p>Explore <a href="/stocks">Nairobi Securities Exchange stocks</a>, <a href="/treasury">Kenya Treasury bills and bonds</a>, <a href="/savings">bank fixed deposits & regulated SACCO rates</a>, <a href="/rates">foreign exchange rates</a>, <a href="/commodities">commodity prices</a>, or open the combined <a href="/markets">markets dashboard</a>.</p></section>',
         '<section><h2>Learn before you invest</h2><p>Read current <a href="/news">Kenyan market news</a>, browse plain-language answers in the <a href="/learn">investing learning centre</a>, or follow the practical guide on <a href="/learn/how-to-invest-in-money-market-funds-kenya">how to invest in a Kenyan money market fund</a>. Verify product details with the fund manager and the relevant regulator before investing.</p></section>',
         '<section><h2>About and policies</h2><p>Learn <a href="/page/about">about Kenya Fund Finder</a>, <a href="/page/contact">contact the team</a>, and review the <a href="/privacy">privacy policy</a> and <a href="/terms">terms of use</a>.</p></section>',
       ].join(""),
@@ -204,7 +204,7 @@ function staticRoutes(): SeoPageDefinition[] {
       title: "Money Market Funds in Kenya (2026) – Compare 40 KES & USD Yields",
       description: "Compare all 40 CMA-regulated Money Market Funds (27 KES & 13 USD) and unit trusts in Kenya by daily yield, annual EAR, net return after tax, management fee, and minimum investment. Updated Mon–Fri.",
       heading: "Money Market Funds and Unit Trusts in Kenya",
-      contentHtml: paragraph("Compare published Money Market Fund (MMF) daily and annual yields, minimum investment amounts, management fees and withdrawal periods from CMA-licensed Kenyan fund managers."),
+      contentHtml: `${paragraph("Compare published Money Market Fund (MMF) daily and annual yields, minimum investment amounts, management fees and withdrawal periods from CMA-licensed Kenyan fund managers.")}<p>Comparing fixed cash alternatives? Review guaranteed returns on <a href="/savings">Bank Fixed Deposits & SACCO rates</a>.</p>`,
     },
     {
       path: "/savings",

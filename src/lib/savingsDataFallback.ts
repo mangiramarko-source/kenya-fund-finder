@@ -464,7 +464,7 @@ export const FALLBACK_SACCO_RECORDS: SaccoRecord[] = [
     totalAssetsKesBillions: 13.50,
     reportingYear: 2025,
     headquarters: "Kibera Rd, Nairobi",
-    websiteUrl: "https://hazinasacco.or.ke",
+    websiteUrl: "https://www.hazinasacco.or.ke/",
     notes: "High dividend consistency over the past 5 consecutive fiscal years.",
   },
   {
@@ -486,7 +486,7 @@ export const FALLBACK_SACCO_RECORDS: SaccoRecord[] = [
   },
   {
     id: "sacco-safaricom",
-    name: "Safaricom DT SACCO",
+    name: "Safaricom DT SACCO (Qona)",
     code: "SAFARICOM",
     sasraLicense: "DT-SACCO",
     dividendOnSharesPct: 14.00,
@@ -499,8 +499,8 @@ export const FALLBACK_SACCO_RECORDS: SaccoRecord[] = [
     totalAssetsKesBillions: 11.80,
     reportingYear: 2025,
     headquarters: "HQ2 Safaricom, Nairobi",
-    websiteUrl: "https://safaricomsacco.com",
-    notes: "Premier tech and corporate worker SACCO with fully paperless onboarding.",
+    websiteUrl: "https://qonasacco.com",
+    notes: "Premier tech and corporate worker SACCO (rebranded to Qona SACCO) with fully paperless onboarding.",
   },
   {
     id: "sacco-sheria",
@@ -569,6 +569,6 @@ export const FALLBACK_SACCO_RECORDS: SaccoRecord[] = [
     totalAssetsKesBillions: 8.20,
     reportingYear: 2025,
     headquarters: "Nairobi",
-    websiteUrl: "https://mwitosacco.co.ke",
+    notes: "Serving tourism, wildlife, and public sector workers.",
   },
 ];

@@ -87,9 +87,10 @@ const Footer = forwardRef<HTMLElement>((_, ref) => {
             <ul className="space-y-2 text-sm text-muted-foreground">
               <li><Link to="/stocks" className="hover:text-foreground transition-colors">Stocks</Link></li>
               <li><Link to="/funds" className="hover:text-foreground transition-colors">Unit Trusts</Link></li>
+              <li><Link to="/savings" className="hover:text-foreground transition-colors">Bank Deposits & SACCOs</Link></li>
+              <li><Link to="/treasury" className="hover:text-foreground transition-colors">T-Bills & Bonds</Link></li>
               <li><Link to="/rates" className="hover:text-foreground transition-colors">FX Rates</Link></li>
               <li><Link to="/commodities" className="hover:text-foreground transition-colors">Commodities</Link></li>
-              
             </ul>
           </div>
 

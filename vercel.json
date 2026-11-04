@@ -38,9 +38,26 @@
       "source": "/about",
       "destination": "/page/about",
       "permanent": true
+    },
+    {
+      "source": "/fixed-deposits",
+      "destination": "/savings",
+      "permanent": false
+    },
+    {
+      "source": "/saccos",
+      "destination": "/savings?tab=saccos",
+      "permanent": false
+    },
+    {
+      "source": "/sacco",
+      "destination": "/savings?tab=saccos",
+      "permanent": false
     }
   ],
   "rewrites": [
+    { "source": "/savings", "destination": "/savings.html" },
+    { "source": "/treasury", "destination": "/treasury.html" },
     { "source": "/stocks", "destination": "/stocks.html" },
     { "source": "/stocks/:symbol", "destination": "/stocks/:symbol.html" },
     { "source": "/funds", "destination": "/funds.html" },

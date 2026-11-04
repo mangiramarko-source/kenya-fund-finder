@@ -126,7 +126,9 @@ const App = () => (
                     <Route path="/funds" element={<Index />} />
                     <Route path="/savings" element={<SavingsPage />} />
                     <Route path="/fixed-deposits" element={<Navigate to="/savings" replace />} />
-                    <Route path="/saccos" element={<Navigate to="/savings" replace />} />
+                    <Route path="/fixed-deposit" element={<Navigate to="/savings" replace />} />
+                    <Route path="/saccos" element={<Navigate to="/savings?tab=saccos" replace />} />
+                    <Route path="/sacco" element={<Navigate to="/savings?tab=saccos" replace />} />
                     <Route path="/money-market-funds-kenya" element={<MmfResearchPage />} />
                     <Route path="/mmf-calculator" element={<MmfCalculatorPage />} />
                     {RESEARCH_ARTICLES.map(article => <Route key={article.slug} path={articlePath(article)} element={<ResearchArticlePage />} />)}

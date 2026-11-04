@@ -10,7 +10,7 @@ import { fetchBankFixedDeposits, fetchSaccoRecords } from "@/lib/savingsApi";
 import type { BankFixedDeposit, SaccoRecord } from "@/types/savings";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import DisclaimerBlock from "@/components/DisclaimerBlock";
-import { Link } from "react-router-dom";
+import { Link, useSearchParams } from "react-router-dom";
 
 const SavingsPage = () => {
   useDocumentTitle(
@@ -30,7 +30,35 @@ const SavingsPage = () => {
     url: "https://kenyafundfinder.com/savings",
   });
 
-  const [activeTab, setActiveTab] = useState<"fixed-deposits" | "saccos">("fixed-deposits");
+  const [searchParams, setSearchParams] = useSearchParams();
+  const tabParam = searchParams.get("tab");
+  const [activeTab, setActiveTab] = useState<"fixed-deposits" | "saccos">(
+    tabParam === "saccos" ? "saccos" : "fixed-deposits"
+  );
+
+  useEffect(() => {
+    if (tabParam === "saccos" || tabParam === "fixed-deposits") {
+      setActiveTab(tabParam);
+    }
+  }, [tabParam]);
+
+  const handleTabChange = (val: string) => {
+    const nextTab = val as "fixed-deposits" | "saccos";
+    setActiveTab(nextTab);
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (nextTab === "saccos") {
+          next.set("tab", "saccos");
+        } else {
+          next.delete("tab");
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
   const [deposits, setDeposits] = useState<BankFixedDeposit[]>([]);
   const [saccos, setSaccos] = useState<SaccoRecord[]>([]);
   const [loading, setLoading] = useState(true);
@@ -100,7 +128,7 @@ const SavingsPage = () => {
       <div className="space-y-6">
         <Tabs
           value={activeTab}
-          onValueChange={(val) => setActiveTab(val as "fixed-deposits" | "saccos")}
+          onValueChange={handleTabChange}
           className="w-full"
         >
           <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
