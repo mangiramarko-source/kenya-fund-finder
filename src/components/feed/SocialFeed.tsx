@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect } from "react";
+import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { formatDistanceToNow } from "date-fns";
@@ -13,6 +13,7 @@ import ReactMarkdown from 'react-markdown';
 import remarkGfm from '@/lib/remarkGfmSafe';
 import { Loader2, TrendingUp, TrendingDown, Sparkles } from "lucide-react";
 import { enrichArticleLive, type NewsFromDB, type PublicStock } from "@/lib/api";
+import { classifyArticleCategory, getCategoryDotColor } from "@/lib/articleCategoryClassifier";
 
 import { useFeedInteractions, type PostInteraction } from "@/hooks/useFeedInteractions";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -116,9 +117,24 @@ export const SocialFeedCard = ({
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
   
   const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
-  const rawAuthor = item.authorName || "KenyaFundFinder Academy";
+  const rawAuthor = item.authorName || "Market News";
   const authorName = isSocialPost ? rawAuthor.replace(/^X\s*-\s*/, '') : rawAuthor;
   const initials = isSocialPost ? "X" : getInitials(authorName);
+
+  const displayCategory = useMemo(
+    () =>
+      classifyArticleCategory({
+        title: item.title,
+        summary: item.rawItem?.summary || item.content,
+        content: item.content,
+        category: item.rawItem?.category,
+        source: authorName || item.rawItem?.source,
+        authorLabel: item.authorLabel,
+        relatedStock: item.relatedStock,
+        related_stock_id: item.rawItem?.related_stock_id,
+      }),
+    [item.title, item.rawItem?.summary, item.content, item.rawItem?.category, authorName, item.rawItem?.source, item.authorLabel, item.relatedStock, item.rawItem?.related_stock_id]
+  );
   
   const domain = getDomainFromUrl(item.url || item.rawItem?.link);
   const customLogo = getCustomSourceLogo(authorName, domain);
@@ -309,8 +325,12 @@ export const SocialFeedCard = ({
           <div className="flex-1 min-w-0 text-xs">
             <div className="flex items-center gap-2 min-w-0">
               <span className="font-bold text-foreground text-sm truncate">{authorName}</span>
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
-              <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-muted-foreground font-semibold truncate">{item.authorLabel || "Market"}</span>
+              {displayCategory && (
+                <>
+                  <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${getCategoryDotColor(displayCategory)}`} />
+                  <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-muted-foreground font-semibold truncate">{displayCategory}</span>
+                </>
+              )}
             </div>
             <div className="mt-0.5 flex items-center gap-1.5 text-[13px]">
               <span className="text-zinc-700 dark:text-muted-foreground whitespace-nowrap">{timeAgo}</span>

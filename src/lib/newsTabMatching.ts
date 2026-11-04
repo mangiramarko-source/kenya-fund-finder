@@ -2,10 +2,10 @@ import type { NewsFromDB } from "@/lib/api";
 
 type StockReference = { id?: string; symbol?: string | null; name?: string | null };
 
-const INTERNATIONAL_SOURCE_PATTERN = /\b(reuters|bbc|financial times|bloomberg|al jazeera|cnbc|investing\.com|marketwatch|seeking alpha|african business|the africa report|further africa)\b/i;
-const FX_PATTERN = /\b(shilling|kes|usd\s*\/\s*kes|gbp\s*\/\s*kes|eur\s*\/\s*kes|forex|foreign exchange|currency|exchange rate)\b/i;
-const COMMODITIES_PATTERN = /\b(oil|crude( oil)?|brent|gold|silver|coffee|tea|cocoa|wheat|maize|fuel|agriculture|agricultural|opec|commodity|commodities)\b/i;
-const STOCK_MARKET_PATTERN = /\b(nse|nairobi securities exchange|stock|stocks|share|shares|equity|equities|listed compan(?:y|ies)|dividend|earnings per share|market cap)\b/i;
+export const INTERNATIONAL_SOURCE_PATTERN = /\b(reuters|bbc|financial times|bloomberg|al jazeera|cnbc|investing\.com|marketwatch|seeking alpha|african business|the africa report|further africa)\b/i;
+export const FX_PATTERN = /\b(shilling|kes|usd\s*\/\s*kes|gbp\s*\/\s*kes|eur\s*\/\s*kes|forex|foreign exchange|currency|exchange rate)\b/i;
+export const COMMODITIES_PATTERN = /\b(oil|crude( oil)?|brent|gold|silver|coffee|tea|cocoa|wheat|maize|fuel|agriculture|agricultural|opec|commodity|commodities)\b/i;
+export const STOCK_MARKET_PATTERN = /\b(nse|nairobi securities exchange|stock|stocks|share|shares|equity|equities|listed compan(?:y|ies)|dividend|earnings per share|market cap)\b/i;
 
 const articleText = (article: NewsFromDB) => [
   article.title,
@@ -15,10 +15,10 @@ const articleText = (article: NewsFromDB) => [
   article.source,
 ].filter(Boolean).join(" ");
 
-const categoryIs = (article: NewsFromDB, ...values: string[]) =>
+export const categoryIs = (article: { category?: string | null }, ...values: string[]) =>
   values.includes((article.category || "").trim().toLowerCase());
 
-export const isInternationalNews = (article: NewsFromDB) =>
+export const isInternationalNews = (article: { category?: string | null; source?: string | null }) =>
   categoryIs(article, "international", "global", "world") || INTERNATIONAL_SOURCE_PATTERN.test(article.source || "");
 
 export function matchesNewsTab(tab: string, article: NewsFromDB, stocks: StockReference[]): boolean {

@@ -5,6 +5,7 @@ import { decodeHtmlEntities } from "@/lib/utils";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
 import { getNewsPublishedAt } from "@/lib/newsDate";
 import { buildRelatedMarketLinks } from "@/lib/newsMarketLinks";
+import { classifyArticleCategory } from "@/lib/articleCategoryClassifier";
 
 export type FeedItemType = "NEWS" | "STOCK_INSIGHT" | "FUND_MILESTONE" | "FX_ALERT" | "EDUCATION";
 
@@ -32,10 +33,16 @@ export interface FeedItem {
     id: string;
     symbol: string;
     name: string;
+    sector?: string | null;
     logoUrl?: string | null;
     price: number;
     previousPrice: number | null;
     changePercent: number;
+    peRatio?: number | null;
+    dividendYield?: number | null;
+    yearLow?: number | null;
+    yearHigh?: number | null;
+    marketCap?: number | null;
   } | null;
   relatedMmf?: {
     id: string;
@@ -135,12 +142,21 @@ export function useSocialFeed(
         relatedStock = stocks.find((s: any) => s.symbol === relatedSymbols[0]) || null;
       }
       const marketLinks = buildRelatedMarketLinks(cleanedTitle, cleanedContent, funds, fxRates, commodities);
+      const displayCategory = classifyArticleCategory({
+        title: cleanedTitle,
+        summary: cleanedContent,
+        content: n.content,
+        category: n.category,
+        source: n.source,
+        relatedStock,
+        related_stock_id: n.related_stock_id,
+      });
       
       feed.push({
         id: `news-${n.id}`,
         type: "NEWS",
         authorName: n.source || "Market News",
-        authorLabel: n.category || "News",
+        authorLabel: displayCategory,
         title: cleanedTitle,
         content: analysisText || cleanedContent,
         aiInsight: analysisText || null,

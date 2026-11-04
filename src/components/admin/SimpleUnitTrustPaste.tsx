@@ -112,16 +112,16 @@ const SimpleUnitTrustPaste = () => {
     setRunningEdgeSync(true);
     try {
       const { data, error } = await supabase.functions.invoke("fetch-market-data", {
-        body: { fetch_type: "mmf" },
+        body: { fetch_type: "funds" },
       });
       if (error) {
         toast.error("Serrari Edge sync failed: " + error.message);
         return;
       }
       const summary = Array.isArray((data as { results?: string[] })?.results)
-        ? (data as { results: string[] }).results.find((line) => line.startsWith("MMF (Serrari"))
+        ? (data as { results: string[] }).results.find((line) => line.startsWith("Funds (Serrari") || line.startsWith("MMF (Serrari"))
         : undefined;
-      toast.success(summary || "Checked Serrari Group MMF rates (only changed funds updated)");
+      toast.success(summary || "Checked Serrari Group fund rates (MMFs, Fixed Income, Balanced, Equity)");
       const { data: refreshed } = await supabase
         .from("funds")
         .select("id, slug, manager, name, fund_type, yield_unit, annual_yield, daily_yield")
@@ -239,7 +239,7 @@ const SimpleUnitTrustPaste = () => {
             className="gap-1.5 h-8"
           >
             {runningEdgeSync ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <RefreshCw className="h-3.5 w-3.5" />}
-            1-Click Sync Serrari (KES + USD)
+            1-Click Sync Serrari (All ~85 Funds)
           </Button>
           <Button size="sm" variant="outline" onClick={copyTemplate} className="gap-1.5 h-8">
             <Copy className="h-3.5 w-3.5" /> Copy fund-ID template

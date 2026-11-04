@@ -1,5 +1,5 @@
 import { useNavigate } from "react-router-dom";
-import { useState, type MouseEvent } from "react";
+import { useMemo, useState, type MouseEvent } from "react";
 import { formatDistanceToNow } from "date-fns";
 import { Heart, TrendingUp, TrendingDown, Minus, ArrowRight, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
@@ -8,6 +8,8 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import type { FeedItem } from "@/hooks/useSocialFeed";
 import type { PostInteraction } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
+import { evaluateStockScorecard } from "@/lib/stockFundamentalScorecard";
+import { StockSnowflakeRadar } from "@/components/stocks/StockSnowflakeRadar";
 
 interface StockFeedCardProps {
   item: FeedItem;
@@ -25,7 +27,29 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
   const navigate = useNavigate();
   const [logoError, setLogoError] = useState(false);
   const stock = item.relatedStock;
-  if (!stock) return null;
+
+  const scorecard = useMemo(() => {
+    if (!stock) return null;
+    return evaluateStockScorecard(
+      {
+        id: stock.id,
+        symbol: stock.symbol,
+        name: stock.name,
+        sector: stock.sector ?? null,
+        price: stock.price,
+        previous_price: stock.previousPrice,
+        day_change_percent: stock.changePercent,
+        pe_ratio: stock.peRatio ?? null,
+        dividend_yield: stock.dividendYield ?? null,
+        year_low: stock.yearLow ?? null,
+        year_high: stock.yearHigh ?? null,
+        market_cap: stock.marketCap ?? null,
+      },
+      { impactScore: item.rawItem?.parsed_ai_analysis?.impact_score ?? null }
+    );
+  }, [stock, item.rawItem?.parsed_ai_analysis?.impact_score]);
+
+  if (!stock || !scorecard) return null;
 
   const isUp = stock.changePercent > 0;
   const isDown = stock.changePercent < 0;
@@ -75,22 +99,44 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
       className="animate-rise -mx-4 space-y-3 overflow-hidden border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:hover:border-border"
       style={{ animationDelay: `${index * 80}ms` }}
     >
-      <button
-        type="button"
-        onClick={(event) => {
-          event.stopPropagation();
-          navigate(`/stocks/${encodeURIComponent(stock.symbol)}`);
-        }}
-        className="flex items-center gap-2 text-xs bg-muted/60 hover:bg-muted border border-border/60 rounded-md px-2.5 py-1 w-fit transition-colors"
-        aria-label={`View ${stock.name}`}
-      >
-        <span className="font-bold text-foreground">{stock.symbol}</span>
-        <span className="text-zinc-800 dark:text-muted-foreground">KES {stock.price.toFixed(2)}</span>
-        <span className={`flex items-center font-medium ${isUp ? "text-emerald-500" : isDown ? "text-rose-500" : "text-muted-foreground"}`}>
-          {isUp ? <TrendingUp className="w-3 h-3 mr-0.5" /> : isDown ? <TrendingDown className="w-3 h-3 mr-0.5" /> : <Minus className="w-3 h-3 mr-0.5" />}
-          {Math.abs(stock.changePercent).toFixed(1)}%
-        </span>
-      </button>
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <button
+          type="button"
+          onClick={(event) => {
+            event.stopPropagation();
+            navigate(`/stocks/${encodeURIComponent(stock.symbol)}`);
+          }}
+          className="flex items-center gap-2 text-xs bg-muted/60 hover:bg-muted border border-border/60 rounded-md px-2.5 py-1 w-fit transition-colors"
+          aria-label={`View ${stock.name}`}
+        >
+          <span className="font-bold text-foreground">{stock.symbol}</span>
+          <span className="text-zinc-800 dark:text-muted-foreground">KES {stock.price.toFixed(2)}</span>
+          <span className={`flex items-center font-medium ${isUp ? "text-emerald-500" : isDown ? "text-rose-500" : "text-muted-foreground"}`}>
+            {isUp ? <TrendingUp className="w-3 h-3 mr-0.5" /> : isDown ? <TrendingDown className="w-3 h-3 mr-0.5" /> : <Minus className="w-3 h-3 mr-0.5" />}
+            {Math.abs(stock.changePercent).toFixed(1)}%
+          </span>
+        </button>
+
+        {/* Simply Wall St-style Mini Snowflake Score Badge */}
+        <div
+          className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/30 px-2.5 py-0.5 text-[11px]"
+          title={`${scorecard.passedScore} passed of ${scorecard.evaluatedCount} verified checks (${scorecard.unverifiedCount} disclosures pending) — ${scorecard.summaryThesis}`}
+        >
+          <StockSnowflakeRadar
+            pillars={scorecard.pillars}
+            tone={scorecard.tone}
+            size="sm"
+            className="h-4 w-4 text-foreground shrink-0"
+          />
+          <span className="font-extrabold tabular-nums text-foreground">
+            {scorecard.passedScore}/{scorecard.evaluatedCount} Verified
+          </span>
+          <span className="hidden sm:inline text-muted-foreground">·</span>
+          <span className="hidden sm:inline font-semibold text-muted-foreground">
+            {scorecard.ratingLabel}
+          </span>
+        </div>
+      </div>
 
       <header className="flex items-center gap-3">
         <div className="w-12 h-12 rounded-xl bg-white border border-border text-emerald-700 font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden">
@@ -111,7 +157,9 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
             <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
             <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-muted-foreground font-semibold">Stock</span>
           </div>
-          <p className="text-[13px] text-zinc-700 dark:text-muted-foreground">{timeAgo}</p>
+          <p className="text-[13px] text-zinc-700 dark:text-muted-foreground">
+            {item.authorName ? `${item.authorName} · ` : ""}{timeAgo}
+          </p>
         </div>
         <button type="button" onClick={openArticle} className="p-1 text-muted-foreground hover:text-foreground" aria-label="More options">
           <MoreHorizontal className="h-5 w-5" />
@@ -160,10 +208,52 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
         </>
       )}
 
-      <button type="button" onClick={openArticle} className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-sm">
-        <span>Continue reading</span>
-        <ArrowRight className="h-4 w-4" />
-      </button>
+      {/* Quantitative Fundamental Micro-Strip (Valuation, Yield & Benchmark Context) */}
+      {scorecard.feedChips.length > 0 && (
+        <div className="rounded-xl border border-border/60 bg-muted/25 p-2.5 space-y-2">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {scorecard.feedChips.map((chip) => (
+              <span
+                key={chip.id}
+                className={`inline-flex items-center gap-1 rounded-md px-2 py-0.5 text-[11px] font-semibold tabular-nums ${
+                  chip.tone === "positive"
+                    ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-300 border border-emerald-500/20"
+                    : chip.tone === "warning"
+                    ? "bg-amber-500/10 text-amber-700 dark:text-amber-300 border border-amber-500/20"
+                    : "bg-background/80 text-foreground/85 border border-border/60"
+                }`}
+              >
+                <span
+                  className={`h-1.5 w-1.5 rounded-full ${
+                    chip.tone === "positive"
+                      ? "bg-emerald-500"
+                      : chip.tone === "warning"
+                      ? "bg-amber-500"
+                      : "bg-cyan-500"
+                  }`}
+                />
+                {chip.label}
+              </span>
+            ))}
+          </div>
+
+          {scorecard.metrics.earningsYield != null && (
+            <p className="text-[11.5px] text-muted-foreground leading-snug">
+              <strong className="text-foreground/90">Kenyan Yield Lens:</strong>{" "}
+              {scorecard.metrics.earningsYield.toFixed(1)}% earnings yield (
+              {scorecard.metrics.dividendYield?.toFixed(1) ?? "0.0"}% cash dividend) vs ~
+              {scorecard.metrics.mmfBenchmarkYield.toFixed(1)}% {scorecard.metrics.mmfBenchmarkName}
+            </p>
+          )}
+        </div>
+      )}
+
+      <div>
+        <button type="button" onClick={openArticle} className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-sm">
+          <span>View full 5-pillar analysis</span>
+          <ArrowRight className="h-4 w-4" />
+        </button>
+      </div>
 
       <footer className="flex items-center justify-between gap-3 pt-2 text-zinc-700 dark:text-muted-foreground">
         <div className="flex items-center gap-5">

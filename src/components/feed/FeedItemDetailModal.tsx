@@ -105,8 +105,14 @@ export function FeedItemDetailModal({ item, open, onOpenChange, interaction, onL
         stock: item.relatedStock
           ? ({
               ...item.relatedStock,
+              sector: item.relatedStock.sector ?? null,
               day_change_percent: item.relatedStock.changePercent,
               previous_price: item.relatedStock.previousPrice,
+              pe_ratio: item.relatedStock.peRatio ?? null,
+              dividend_yield: item.relatedStock.dividendYield ?? null,
+              year_low: item.relatedStock.yearLow ?? null,
+              year_high: item.relatedStock.yearHigh ?? null,
+              market_cap: item.relatedStock.marketCap ?? null,
             } as PublicStock)
           : null,
         mmf: item.relatedMmf,

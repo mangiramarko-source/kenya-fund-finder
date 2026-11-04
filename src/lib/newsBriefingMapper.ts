@@ -2,6 +2,7 @@ import { parseNewsAiAnalysis, type NewsFromDB, type NewsAiAnalysis, type PublicS
 import { getNewsPublishedAt } from "@/lib/newsDate";
 import { decodeHtmlEntities, splitReadableParagraphs } from "@/lib/utils";
 import { cleanNewsTitle, getNewsPresentation } from "../../supabase/functions/_shared/news-text";
+import { evaluateStockScorecard, type StockScorecardResult } from "@/lib/stockFundamentalScorecard";
 
 export interface NormalizedMarketSnapshot {
   assetType: "stock" | "mmf" | "fx" | "commodity";
@@ -15,6 +16,7 @@ export interface NormalizedMarketSnapshot {
   impactReason?: string | null;
   href?: string;
   rawStock?: PublicStock;
+  scorecard?: StockScorecardResult | null;
 }
 
 export interface NormalizedTimelineEvent {
@@ -609,6 +611,7 @@ export function buildInvestorBriefing(
     const safeChange = Number(stock.day_change_percent) || 0;
     const rawScore = analysis?.impact_score;
     const impactScore = typeof rawScore === "number" && Number.isFinite(rawScore) && rawScore > 0 ? Math.min(5, Math.max(1, Math.round(rawScore))) : null;
+    const scorecard = evaluateStockScorecard(stock, { impactScore });
 
     marketSnapshot = {
       assetType: "stock",
@@ -622,6 +625,7 @@ export function buildInvestorBriefing(
       impactReason: analysis?.impact_reason || null,
       href: `/stocks/${encodeURIComponent(stock.symbol)}`,
       rawStock: stock,
+      scorecard,
     };
   } else if (mmf) {
     const safeYield = Number(mmf.annualYield ?? mmf.yield) || 0;

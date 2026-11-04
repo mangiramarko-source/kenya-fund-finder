@@ -20,6 +20,7 @@ import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/
 import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 import { matchesNewsTab } from "@/lib/newsTabMatching";
 import { dedupeNewsByUrl } from "@/lib/newsDedupe";
+import { classifyArticleCategory } from "@/lib/articleCategoryClassifier";
 import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
 
 const DEFAULT_NEWS_TAB = "All";
@@ -229,11 +230,21 @@ export default function NewsPage() {
         if (found) relatedStock = found;
       }
 
+      const displayCategory = classifyArticleCategory({
+        title: a.title,
+        summary: a.summary,
+        content: a.content,
+        category: a.category,
+        source: a.source,
+        relatedStock,
+        related_stock_id: a.related_stock_id,
+      });
+
       return {
         id: `news-${a.id}`,
         type: "NEWS" as const,
         authorName: a.source || "Market News",
-        authorLabel: a.category || "News",
+        authorLabel: displayCategory,
         title: decodeHtmlEntities(a.title),
         content: a.summary || a.content || "",
         mediaUrl: a.image_url || undefined,
@@ -247,9 +258,16 @@ export default function NewsPage() {
           id: relatedStock.id,
           symbol: relatedStock.symbol,
           name: relatedStock.name,
+          sector: relatedStock.sector ?? null,
+          logoUrl: relatedStock.logo_url ?? null,
           price: relatedStock.price || 35.75,
           previousPrice: relatedStock.previous_price || 35.0,
-          changePercent: relatedStock.day_change_percent || 1.2
+          changePercent: relatedStock.day_change_percent || 1.2,
+          peRatio: relatedStock.pe_ratio ?? null,
+          dividendYield: relatedStock.dividend_yield ?? null,
+          yearLow: relatedStock.year_low ?? null,
+          yearHigh: relatedStock.year_high ?? null,
+          marketCap: relatedStock.market_cap ?? null,
         } : null
       };
     });

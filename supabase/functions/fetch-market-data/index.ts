@@ -8,7 +8,7 @@ import {
 import { matchRapidApiStocks, parseRapidApiStockResponse, type QuoteSource, type StockQuote } from "./stock-quotes.ts";
 import { persistStockQuote, type StockWriteOperations } from "./stock-writes.ts";
 import { fetchNseSector, parseNseQuoteRows, parseNseSnapshotDate, summarizeNseFallback } from "./nse-fallback.ts";
-import { fetchSerrariMmfData, hasSerrariMmfChanged } from "./serrari-mmf.ts";
+import { fetchSerrariAllFundsData, hasFundChanged } from "./serrari-funds.ts";
 
 const allowedOrigins = [
   "https://kenya-fund-finder.lovable.app",
@@ -543,7 +543,7 @@ Deno.serve(async (req) => {
   // The DB cron schedules 'fx' with the intent of fetching both FX and commodities every hour (lightweight)
   const shouldFetchCommodities = !fetchType || fetchType === "commodities" || fetchType === "fx";
   const shouldFetchStocks = !fetchType || fetchType === "stocks";
-  const shouldFetchMmf = !fetchType || fetchType === "mmf";
+  const shouldFetchFunds = !fetchType || fetchType === "funds" || fetchType === "mmf";
   const allowHighDrift = Boolean((body as Record<string, unknown>)?.allow_high_drift);
 
   try {
@@ -863,10 +863,10 @@ Deno.serve(async (req) => {
     }
     } // end shouldFetchStocks
 
-    // ── 4. Fetch Money Market Funds (Serrari Group KES + USD) ──
-    if (shouldFetchMmf) {
+    // ── 4. Fetch All Funds (MMFs, Fixed Income, Balanced, Equity from Serrari Group) ──
+    if (shouldFetchFunds) {
       try {
-        const serrari = await fetchSerrariMmfData();
+        const serrari = await fetchSerrariAllFundsData();
         results.push(...serrari.notes);
 
         const { data: existingFunds, error: fundsReadError } = await supabase
@@ -903,9 +903,9 @@ Deno.serve(async (req) => {
           });
         }
 
-        let updatedMmfCount = 0;
-        let createdMmfCount = 0;
-        let unchangedMmfCount = 0;
+        let updatedFundCount = 0;
+        let createdFundCount = 0;
+        let unchangedFundCount = 0;
         let skippedDriftCount = 0;
         const changedFunds: Array<{
           slug: string;
@@ -920,8 +920,8 @@ Deno.serve(async (req) => {
           const existing = bySlug.get(row.slug.toLowerCase());
           if (existing) {
             // Strictly skip updating database rows, timestamps, and yield snapshots when nothing changed
-            if (!hasSerrariMmfChanged(existing, row)) {
-              unchangedMmfCount++;
+            if (!hasFundChanged(existing, row)) {
+              unchangedFundCount++;
               continue;
             }
 
@@ -932,7 +932,7 @@ Deno.serve(async (req) => {
 
             if (!allowHighDrift && prevAnnual > 0 && driftPct > 25) {
               skippedDriftCount++;
-              results.push(`MMF skipped (>25% drift): ${row.slug} (${prevAnnual}% -> ${row.annual_yield}%)`);
+              results.push(`Fund skipped (>25% drift): ${row.slug} (${prevAnnual} -> ${row.annual_yield})`);
               continue;
             }
 
@@ -950,7 +950,7 @@ Deno.serve(async (req) => {
               .eq("id", existing.id);
 
             if (!updErr) {
-              updatedMmfCount++;
+              updatedFundCount++;
               changedFunds.push({
                 slug: row.slug,
                 prev_annual: existing.annual_yield,
@@ -969,13 +969,24 @@ Deno.serve(async (req) => {
               );
             }
           } else {
+            // Auto-create new fund discovered on Serrari
+            const catDesc = row.fund_type === "money_market"
+              ? "short-term money market instruments including Kenyan Treasury bills, fixed deposits, and commercial paper"
+              : row.fund_type === "fixed_income" || row.fund_type === "bond"
+              ? "fixed income securities, government Treasury bonds, and corporate debt"
+              : row.fund_type === "balanced"
+              ? "a balanced portfolio of equities and fixed income securities"
+              : "listed equities on the Nairobi Securities Exchange (NSE)";
+
+            const description = `The ${row.name} is a CMA-regulated collective investment scheme managed by ${row.manager}, investing in ${catDesc}.`;
+
             const { data: inserted, error: insErr } = await supabase
               .from("funds")
               .insert({
                 slug: row.slug,
                 name: row.name,
                 manager: row.manager,
-                fund_type: "money_market",
+                fund_type: row.fund_type,
                 yield_unit: row.yield_unit,
                 annual_yield: row.annual_yield,
                 daily_yield: row.daily_yield,
@@ -988,14 +999,14 @@ Deno.serve(async (req) => {
                 fact_sheet_date: serrari.asOfDate,
                 cma_licensed: true,
                 is_published: true,
-                description: `The ${row.name} Money Market Fund (${row.currency}) is a CMA-regulated low-risk collective investment scheme managed by ${row.manager}, investing in short-term money market instruments including Kenyan Treasury bills, fixed deposits, and high-grade commercial paper.`,
+                description,
                 updated_at: nowIso,
               })
               .select("id")
               .maybeSingle();
 
             if (!insErr && inserted?.id) {
-              createdMmfCount++;
+              createdFundCount++;
               changedFunds.push({
                 slug: row.slug,
                 prev_annual: 0,
@@ -1024,12 +1035,12 @@ Deno.serve(async (req) => {
               section_key: "funds",
               is_live: true,
               last_verified_at: nowIso,
-              ...(updatedMmfCount > 0 || createdMmfCount > 0 ? { updated_at: nowIso } : {}),
+              ...(updatedFundCount > 0 || createdFundCount > 0 ? { updated_at: nowIso } : {}),
             },
             { onConflict: "section_key" },
           );
 
-        if (updatedMmfCount > 0 || createdMmfCount > 0) {
+        if (updatedFundCount > 0 || createdFundCount > 0) {
           // Keep site_pages (slug = 'live-status') in sync ONLY when at least one fund actually updated
           const { data: liveStatusPage } = await supabase
             .from("site_pages")
@@ -1060,26 +1071,26 @@ Deno.serve(async (req) => {
 
           await supabase.from("change_log").insert({
             entity_type: "fund",
-            action: "serrari_mmf_sync",
+            action: "serrari_funds_sync",
             new_values: {
               as_of_date: serrari.asOfDate,
-              updated_count: updatedMmfCount,
-              created_count: createdMmfCount,
-              unchanged_count: unchangedMmfCount,
+              updated_count: updatedFundCount,
+              created_count: createdFundCount,
+              unchanged_count: unchangedFundCount,
               changed_funds: changedFunds,
             },
           });
         }
 
         results.push(
-          `MMF (Serrari ${serrari.asOfDate}): updated ${updatedMmfCount}, created ${createdMmfCount}, unchanged ${unchangedMmfCount}, drift-skipped ${skippedDriftCount}`,
+          `Funds (Serrari ${serrari.asOfDate}): updated ${updatedFundCount}, created ${createdFundCount}, unchanged ${unchangedFundCount}, drift-skipped ${skippedDriftCount}`,
         );
-      } catch (mmfErr) {
-        const msg = mmfErr instanceof Error ? mmfErr.message : String(mmfErr);
-        console.error("[fetch-market-data] Serrari MMF sync failed:", msg);
-        results.push(`MMF sync failed: ${msg}`);
+      } catch (fundErr) {
+        const msg = fundErr instanceof Error ? fundErr.message : String(fundErr);
+        console.error("[fetch-market-data] Serrari funds sync failed:", msg);
+        results.push(`Funds sync failed: ${msg}`);
       }
-    } // end shouldFetchMmf
+    } // end shouldFetchFunds
 
     if (quoteObservations.length) {
       const { error: observationsError } = await supabase

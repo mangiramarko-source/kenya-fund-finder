@@ -63,6 +63,7 @@ const ResearchArticlePage = lazy(() => import("./pages/ResearchArticlePage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const AiLabPage = lazy(() => import("./pages/AiLabPage"));
 const DevMobilePreviewPage = lazy(() => import("./pages/DevMobilePreviewPage"));
+const IntroPreviewPage = lazy(() => import("./pages/preview/IntroPreviewPage"));
 import { isAiLabEnabled } from "@/lib/featureFlags";
 const DevOnlyPages = import.meta.env.DEV
   ? {
@@ -166,6 +167,11 @@ const App = () => (
                     <Route path="/watchlist" element={<WatchlistPage />} />
                     <Route path="/ai-lab" element={isAiLabEnabled() ? <AiLabPage /> : <Navigate to="/funds" replace />} />
                     <Route path="/mobile-preview" element={<DevMobilePreviewPage />} />
+                    <Route path="/preview/mobile-intros" element={<IntroPreviewPage />} />
+                    <Route path="/preview/intro-lifestyle" element={<IntroPreviewPage initialOption="lifestyle" />} />
+                    <Route path="/preview/intro-1" element={<IntroPreviewPage initialOption="1" />} />
+                    <Route path="/preview/intro-2" element={<IntroPreviewPage initialOption="2" />} />
+                    <Route path="/preview/intro-3" element={<IntroPreviewPage initialOption="3" />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin" element={<AdminPage />} />
                     {DevOnlyPages ? <>
@@ -174,6 +180,7 @@ const App = () => (
                       <Route path="/demo-stocks-feed" element={<DevOnlyPages.DemoStocksPage />} />
                       <Route path="/demo-feed" element={<DevOnlyPages.DemoStockFeedPage />} />
                       <Route path="/demo-stock-insights" element={<DevOnlyPages.StockDecisionFeedDemoPage />} />
+                      <Route path="/demo/stock-decision-feed" element={<DevOnlyPages.StockDecisionFeedDemoPage />} />
                       <Route path="/stocks/demo-2" element={<DevOnlyPages.StocksMobileDesktopDemoPage />} />
                       <Route path="/dev/email-preview" element={<DevOnlyPages.DevEmailPreviewPage />} />
                       <Route path="/dev/welcome-preview" element={<DevOnlyPages.DevWelcomePreviewPage />} />

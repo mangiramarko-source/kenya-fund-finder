@@ -152,10 +152,62 @@ export interface PublicStock {
   id: string;
   symbol: string;
   name: string;
+  sector?: string | null;
   logo_url?: string | null;
   price: number;
   previous_price: number | null;
+  day_change?: number | null;
   day_change_percent: number;
+  volume?: number | null;
+  market_cap?: number | null;
+  pe_ratio?: number | null;
+  dividend_yield?: number | null;
+  year_high?: number | null;
+  year_low?: number | null;
+  day_low?: number | null;
+  day_high?: number | null;
+}
+
+const PUBLIC_STOCK_COLUMNS = [
+  "id",
+  "symbol",
+  "name",
+  "sector",
+  "logo_url",
+  "price",
+  "previous_price",
+  "day_change",
+  "day_change_percent",
+  "volume",
+  "market_cap",
+  "pe_ratio",
+  "dividend_yield",
+  "year_high",
+  "year_low",
+  "day_low",
+  "day_high",
+];
+
+function normalizePublicStock(stock: any): PublicStock {
+  return {
+    id: stock.id,
+    symbol: stock.symbol,
+    name: stock.name,
+    sector: stock.sector ?? null,
+    logo_url: stock.logo_url ?? null,
+    price: Number(stock.price) || 0,
+    previous_price: stock.previous_price == null ? null : Number(stock.previous_price),
+    day_change: stock.day_change == null ? null : Number(stock.day_change),
+    day_change_percent: Number(stock.day_change_percent) || 0,
+    volume: stock.volume == null ? null : Number(stock.volume),
+    market_cap: stock.market_cap == null ? null : Number(stock.market_cap),
+    pe_ratio: stock.pe_ratio == null ? null : Number(stock.pe_ratio),
+    dividend_yield: stock.dividend_yield == null ? null : Number(stock.dividend_yield),
+    year_high: stock.year_high == null ? null : Number(stock.year_high),
+    year_low: stock.year_low == null ? null : Number(stock.year_low),
+    day_low: stock.day_low == null ? null : Number(stock.day_low),
+    day_high: stock.day_high == null ? null : Number(stock.day_high),
+  };
 }
 
 export interface HistoricalYield {
@@ -276,22 +328,14 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
 export async function fetchPublicStockById(id: string): Promise<PublicStock | null> {
   const { data, error } = await supabase
     .from("stocks_public" as any)
-    .select("id, symbol, name, price, previous_price, day_change_percent")
+    .select(PUBLIC_STOCK_COLUMNS.join(", "))
     .eq("id", id)
     .maybeSingle();
 
   if (error) throw error;
   if (!data) return null;
 
-  const stock = data as any;
-  return {
-    id: stock.id,
-    symbol: stock.symbol,
-    name: stock.name,
-    price: Number(stock.price) || 0,
-    previous_price: stock.previous_price == null ? null : Number(stock.previous_price),
-    day_change_percent: Number(stock.day_change_percent) || 0,
-  };
+  return normalizePublicStock(data);
 }
 
 export async function enrichArticleLive(articleId: string): Promise<string> {
@@ -532,37 +576,23 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
 export async function fetchPublicStocks(): Promise<PublicStock[]> {
   try {
     const { data } = await fetchPublicData<any>("stocks", {
-      select: ["id", "symbol", "name", "price", "previous_price", "day_change_percent"],
+      select: PUBLIC_STOCK_COLUMNS,
       order: "sort_order.asc",
       limit: 100,
     });
 
-    return ((data as any[]) || []).map((stock) => ({
-      id: stock.id,
-      symbol: stock.symbol,
-      name: stock.name,
-      price: Number(stock.price) || 0,
-      previous_price: stock.previous_price == null ? null : Number(stock.previous_price),
-      day_change_percent: Number(stock.day_change_percent) || 0,
-    }));
+    return ((data as any[]) || []).map(normalizePublicStock);
   } catch (err) {
     console.warn("fetchPublicStocks gateway fetch failed, trying direct table fallback", err);
     try {
       const { data, error } = await supabase
         .from("stocks")
-        .select("id, symbol, name, price, previous_price, day_change_percent")
+        .select(PUBLIC_STOCK_COLUMNS.join(", "))
         .order("sort_order");
 
       if (error) throw error;
 
-      return ((data as any[]) || []).map((stock) => ({
-        id: stock.id,
-        symbol: stock.symbol,
-        name: stock.name,
-        price: Number(stock.price) || 0,
-        previous_price: stock.previous_price == null ? null : Number(stock.previous_price),
-        day_change_percent: Number(stock.day_change_percent) || 0,
-      }));
+      return ((data as any[]) || []).map(normalizePublicStock);
     } catch {
       return [];
     }

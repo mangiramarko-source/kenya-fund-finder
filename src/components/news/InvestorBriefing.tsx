@@ -20,6 +20,7 @@ import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCa
 import { MmfArticleMarketCard } from "@/components/news/MmfArticleMarketCard";
 import { FxArticleMarketCard } from "@/components/news/FxArticleMarketCard";
 import { CommodityArticleMarketCard } from "@/components/news/CommodityArticleMarketCard";
+import { StockFundamentalAnalysisCard } from "@/components/news/StockFundamentalAnalysisCard";
 import InlineDataGate from "@/components/auth/InlineDataGate";
 
 interface InvestorBriefingProps {
@@ -96,6 +97,11 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
           showChart={showChart}
           onToggleChart={() => setShowChart((prev) => !prev)}
         />
+      )}
+
+      {/* ─── 3B. Kenyan 5-Pillar Fundamental Scorecard (Snowflake, Peer Multiples & MMF Opportunity Cost) ─── */}
+      {briefing.marketSnapshot?.scorecard && (
+        <StockFundamentalAnalysisCard scorecard={briefing.marketSnapshot.scorecard} />
       )}
 
       {/* ─── Gated Teaser & Inline Gate for Unauthenticated Visitors ─── */}

@@ -3,6 +3,7 @@ import type { FeedItem } from "@/hooks/useSocialFeed";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
 import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
+import { classifyArticleCategory } from "@/lib/articleCategoryClassifier";
 
 export type NewsTab = "All" | "Stocks" | "Kenyan" | "International" | "Latest" | "Oldest";
 
@@ -64,7 +65,15 @@ export function buildNewsFeedItems(articles: NewsFromDB[], stocks: PublicStock[]
       id: `news-${article.id}`,
       type: "NEWS" as const,
       authorName: article.source || "Market News",
-      authorLabel: article.category || "News",
+      authorLabel: classifyArticleCategory({
+        title: presentation.title,
+        summary: presentation.body,
+        content: article.content,
+        category: article.category,
+        source: article.source,
+        relatedStock: stock,
+        related_stock_id: article.related_stock_id,
+      }),
       title: presentation.title,
       content: aiInsight || presentation.body,
       mediaUrl: article.image_url || undefined,

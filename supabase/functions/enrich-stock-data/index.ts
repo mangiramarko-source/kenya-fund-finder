@@ -100,7 +100,7 @@ Deno.serve(async (req) => {
     // 2) Fetch available stocks to map against
     const { data: stocks, error: stocksErr } = await supabase
       .from("stocks")
-      .select("id, symbol, name");
+      .select("id, symbol, name, sector, price, pe_ratio, dividend_yield, year_low, year_high, market_cap");
       
     if (stocksErr) throw stocksErr;
 
@@ -137,8 +137,12 @@ Deno.serve(async (req) => {
     }
 
     // Build context for the AI
+    const matchedStockRow = (stocks || []).find((s) => s.id === deterministicMatch.stockId);
+    const matchedFundamentalsText = matchedStockRow
+      ? `Matched Stock Fundamentals (Verified NSE Data): Symbol=${matchedStockRow.symbol}, Name=${matchedStockRow.name}, Sector=${matchedStockRow.sector ?? "NSE"}, Share Price=KES ${matchedStockRow.price ?? "N/A"}, P/E Ratio=${matchedStockRow.pe_ratio ?? "N/A"}x, Dividend Yield=${matchedStockRow.dividend_yield ?? "N/A"}%, 52-Week Range=KES ${matchedStockRow.year_low ?? "N/A"} - KES ${matchedStockRow.year_high ?? "N/A"}`
+      : "";
     const stockListText = stocks?.map(s => `ID: ${s.id} | Symbol: ${s.symbol} | Name: ${s.name}`).join("\n");
-    const articleText = `Title: ${article.title}\nSummary: ${article.summary}\nContent: ${article.content?.substring(0, 5000) || ""}`;
+    const articleText = `${matchedFundamentalsText ? `${matchedFundamentalsText}\n\n` : ""}Title: ${article.title}\nSummary: ${article.summary}\nContent: ${article.content?.substring(0, 5000) || ""}`;
 
     // 3) Call Gemini AI for source-grounded market interpretation
     const systemPrompt = `You are an expert financial AI for the Kenyan market (Nairobi Securities Exchange).
