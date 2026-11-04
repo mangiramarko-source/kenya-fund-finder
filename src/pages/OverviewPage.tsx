@@ -1312,11 +1312,11 @@ const OverviewPage = () => {
 
   return (
     <>
-      <main className="w-full min-w-0 max-w-full px-4 py-6 md:grid md:h-[calc(100dvh-5.75rem)] md:grid-cols-12 md:gap-6 md:overflow-hidden md:px-6">
+      <main className="w-full min-w-0 max-w-7xl mx-auto px-4 py-6 md:grid md:h-[calc(100dvh-5.75rem)] md:grid-cols-[260px_minmax(0,1fr)] md:gap-6 md:overflow-hidden md:px-6 lg:grid-cols-[240px_minmax(0,1fr)_260px] lg:gap-6 xl:grid-cols-[280px_600px_320px] xl:justify-center">
         <h1 className="sr-only">KenyaFundFinder market overview</h1>
 
         {/* Left Column - Desktop Only */}
-        <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 md:col-span-3 md:flex md:flex-col md:space-y-4">
+        <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 md:flex md:flex-col md:space-y-4">
           <NseMarketStatusCard />
           <WatchlistSummaryCard
             items={derivedWatchlistItems}
@@ -1331,8 +1331,8 @@ const OverviewPage = () => {
           />
         </div>
 
-        {/* Middle Column - Feed */}
-        <div className="flex w-full min-w-0 max-w-full flex-col overflow-visible md:col-span-6 md:min-h-0 md:overflow-x-hidden md:overflow-y-auto">
+        {/* Middle Column - Feed (Twitter-style 600px reading width) */}
+        <div className="flex w-full min-w-0 max-w-full flex-col overflow-visible md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:max-w-[600px] md:mx-auto">
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 
@@ -1433,7 +1433,7 @@ const OverviewPage = () => {
         </div>
 
         {/* Right Column - Desktop Only */}
-        <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 md:col-span-3 md:flex md:flex-col md:space-y-4">
+        <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 lg:flex lg:flex-col lg:space-y-4">
           <ExchangeRatesCard
             rates={displayFxRates}
             onOpenCustomize={() => {
