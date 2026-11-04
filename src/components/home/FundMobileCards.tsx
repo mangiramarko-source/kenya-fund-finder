@@ -37,28 +37,54 @@ const fmtYield = (value: number, unit: string) => {
 };
 
 const CardSparkline = ({ history, currentValue }: { history?: YieldSnapshot[]; currentValue: number }) => {
-  const vals = useMemo(() => {
-    if (!history || history.length === 0) return [currentValue];
-    return [...history.map((d) => d.annual_yield), currentValue].slice(-10);
+  const result = useMemo(() => {
+    if (!history || history.length === 0) return null;
+
+    const cleanData = history
+      .filter((d) => Number.isFinite(d.annual_yield) && d.annual_yield > 0)
+      .sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+
+    if (cleanData.length === 0) return null;
+
+    const vals: number[] = cleanData.map((d) => d.annual_yield);
+    const lastSnap = cleanData[cleanData.length - 1];
+    const todayIso = new Date().toISOString().split("T")[0];
+
+    if (
+      Number.isFinite(currentValue) &&
+      currentValue > 0 &&
+      (!lastSnap || lastSnap.snapshot_date < todayIso || Math.abs(lastSnap.annual_yield - currentValue) > 0.001)
+    ) {
+      vals.push(currentValue);
+    }
+
+    if (vals.length < 2) return null;
+
+    const last10 = vals.slice(-10);
+    const min = Math.min(...last10);
+    const max = Math.max(...last10);
+    const range = max - min;
+    const isFlat = range < 0.0001;
+    const W = 64;
+    const H = 24;
+
+    const pts = last10.map((v, i) => ({
+      x: (i / (last10.length - 1)) * W,
+      y: isFlat ? H / 2 : H - ((v - min) / range) * (H - 4) - 2,
+    }));
+
+    const isUp = isFlat ? false : last10[last10.length - 1] > last10[0];
+    const stroke = isFlat ? "hsl(var(--muted-foreground))" : isUp ? "hsl(152 60% 42%)" : "hsl(0 72% 51%)";
+    const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+
+    return { pathD, stroke, W, H };
   }, [history, currentValue]);
 
-  if (vals.length < 2) return null;
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
-  const range = max - min || 1;
-  const W = 64;
-  const H = 24;
-  const pts = vals.map((v, i) => ({
-    x: (i / (vals.length - 1)) * W,
-    y: H - ((v - min) / range) * (H - 4) - 2,
-  }));
-  const isUp = vals[vals.length - 1] >= vals[0];
-  const stroke = isUp ? "hsl(152 60% 42%)" : "hsl(0 72% 51%)";
-  const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+  if (!result) return null;
 
   return (
-    <svg width={W} height={H} className="overflow-visible shrink-0">
-      <path d={pathD} fill="none" stroke={stroke} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
+    <svg width={result.W} height={result.H} className="overflow-visible shrink-0">
+      <path d={result.pathD} fill="none" stroke={result.stroke} strokeWidth="1.75" strokeLinecap="round" strokeLinejoin="round" />
     </svg>
   );
 };

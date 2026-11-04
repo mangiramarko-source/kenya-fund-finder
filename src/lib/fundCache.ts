@@ -10,6 +10,7 @@ import type { FundFromDB, YieldSnapshot } from "@/lib/api";
  */
 const FUNDS_KEY = "kff:cache:funds:v2";
 const SNAPSHOTS_KEY = "kff:cache:snapshots:v2";
+const ALL_SNAPSHOTS_KEY = "kff:cache:all-snapshots:v2";
 
 /** 6 hours in milliseconds */
 const MAX_AGE_MS = 6 * 60 * 60 * 1000;
@@ -50,6 +51,9 @@ export const fundCache = {
   saveSnapshots(snapshots: Record<string, YieldSnapshot>) {
     write(SNAPSHOTS_KEY, snapshots);
   },
+  saveAllSnapshots(allSnapshots: Record<string, YieldSnapshot[]>) {
+    write(ALL_SNAPSHOTS_KEY, allSnapshots);
+  },
   loadFunds(): { funds: FundFromDB[]; savedAt: number } | null {
     const c = read<FundFromDB[]>(FUNDS_KEY);
     return c ? { funds: c.data, savedAt: c.savedAt } : null;
@@ -57,5 +61,9 @@ export const fundCache = {
   loadSnapshots(): { snapshots: Record<string, YieldSnapshot>; savedAt: number } | null {
     const c = read<Record<string, YieldSnapshot>>(SNAPSHOTS_KEY);
     return c ? { snapshots: c.data, savedAt: c.savedAt } : null;
+  },
+  loadAllSnapshots(): { allSnapshots: Record<string, YieldSnapshot[]>; savedAt: number } | null {
+    const c = read<Record<string, YieldSnapshot[]>>(ALL_SNAPSHOTS_KEY);
+    return c ? { allSnapshots: c.data, savedAt: c.savedAt } : null;
   },
 };

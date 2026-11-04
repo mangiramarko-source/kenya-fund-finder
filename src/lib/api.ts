@@ -668,14 +668,14 @@ export async function fetchFundSnapshots(fundId: string): Promise<YieldSnapshot[
   }));
 }
 
-/** Fetch recent yield snapshots for all funds (for sparklines) — last ~30 days only */
+/** Fetch recent yield snapshots for all funds (for sparklines) — last 365 days */
 export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnapshot[]>> {
   let rows: any[] = [];
   try {
     const { data } = await fetchPublicData<any>("fund-snapshots", {
       select: ["fund_id", "annual_yield", "daily_yield", "snapshot_date"],
-      order: "snapshot_date.asc",
-      days: 30,
+      order: "snapshot_date.desc",
+      days: 365,
       limit: 2000,
     });
     if (Array.isArray(data) && data.length > 0) {
@@ -687,10 +687,12 @@ export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnaps
 
   if (rows.length === 0) {
     try {
+      const sinceStr = new Date(Date.now() - 365 * 86400000).toISOString().slice(0, 10);
       const { data, error } = await supabase
         .from("fund_yield_snapshots")
         .select("fund_id, annual_yield, daily_yield, snapshot_date")
-        .order("snapshot_date", { ascending: true })
+        .gte("snapshot_date", sinceStr)
+        .order("snapshot_date", { ascending: false })
         .limit(2000);
       if (!error && Array.isArray(data)) {
         rows = data;
@@ -711,5 +713,11 @@ export async function fetchAllFundSnapshots(): Promise<Record<string, YieldSnaps
     if (!grouped[row.fund_id]) grouped[row.fund_id] = [];
     grouped[row.fund_id].push(snap);
   }
+
+  // Sort each fund's snapshots chronologically ascending so the sparkline renders left-to-right
+  for (const fundId of Object.keys(grouped)) {
+    grouped[fundId].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+  }
+
   return grouped;
 }

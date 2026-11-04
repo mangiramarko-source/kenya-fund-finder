@@ -74,28 +74,55 @@ const SPARK_H = 30;
 const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue: number }) => {
   const uid = useId();
   const result = useMemo(() => {
-    const vals = [...data.map((d) => d.annual_yield), currentValue];
+    if (!data || data.length === 0) return null;
+
+    const cleanData = data
+      .filter((d) => Number.isFinite(d.annual_yield) && d.annual_yield > 0)
+      .sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+
+    if (cleanData.length === 0) return null;
+
+    const vals: number[] = cleanData.map((d) => d.annual_yield);
+    const lastSnap = cleanData[cleanData.length - 1];
+    const todayIso = new Date().toISOString().split("T")[0];
+
+    // Only append currentValue if it represents an update newer than the latest snapshot
+    // and is not a duplicate identical point of today's snapshot
+    if (
+      Number.isFinite(currentValue) &&
+      currentValue > 0 &&
+      (!lastSnap || lastSnap.snapshot_date < todayIso || Math.abs(lastSnap.annual_yield - currentValue) > 0.001)
+    ) {
+      vals.push(currentValue);
+    }
+
     if (vals.length < 2) return null;
+
     const last12 = vals.slice(-12);
     const min = Math.min(...last12);
     const max = Math.max(...last12);
-    const range = max - min || 1;
+    const range = max - min;
+    const isFlat = range < 0.0001;
     const pad = 3;
+
     const pts = last12.map((v, i) => ({
       x: pad + (i / (last12.length - 1)) * (SPARK_W - pad * 2),
-      y: pad + (1 - (v - min) / range) * (SPARK_H - pad * 2),
+      y: isFlat
+        ? SPARK_H / 2
+        : pad + (1 - (v - min) / range) * (SPARK_H - pad * 2),
     }));
-    const isUp = pts[pts.length - 1].y <= pts[0].y;
-    return { pts, isUp };
+
+    const isUp = isFlat ? false : pts[pts.length - 1].y < pts[0].y;
+    return { pts, isUp, isFlat };
   }, [data, currentValue]);
 
   if (!result) return <span className="text-[13px] text-muted-foreground">—</span>;
 
-  const { pts, isUp } = result;
-  const color = isUp ? "#10b981" : "hsl(var(--destructive))";
+  const { pts, isUp, isFlat } = result;
+  const color = isFlat ? "hsl(var(--muted-foreground))" : isUp ? "#10b981" : "hsl(var(--destructive))";
   const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
   const areaD = pathD + ` L${pts[pts.length - 1].x.toFixed(1)},${SPARK_H} L${pts[0].x.toFixed(1)},${SPARK_H} Z`;
-  const gradId = `${uid}-${isUp ? "up" : "dn"}`;
+  const gradId = `${uid}-${isFlat ? "flat" : isUp ? "up" : "dn"}`;
 
   return (
     <svg width={SPARK_W} height={SPARK_H} viewBox={`0 0 ${SPARK_W} ${SPARK_H}`} className="shrink-0 mx-auto">
@@ -105,7 +132,7 @@ const Sparkline = ({ data, currentValue }: { data: YieldSnapshot[]; currentValue
           <stop offset="100%" stopColor={color} stopOpacity="0" />
         </linearGradient>
       </defs>
-      <path d={areaD} fill={`url(#${gradId})`} />
+      {!isFlat && <path d={areaD} fill={`url(#${gradId})`} />}
       <path d={pathD} fill="none" stroke={color} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
       <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r="2.5" fill={color} />
     </svg>

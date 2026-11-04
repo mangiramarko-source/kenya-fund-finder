@@ -1,4 +1,6 @@
 import { useEffect, useState, useCallback, useMemo } from "react";
+import { Link } from "react-router-dom";
+import { PiggyBank, ArrowRight } from "lucide-react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { fetchFunds, fetchLatestSnapshots, fetchAllFundSnapshots, type FundFromDB, type YieldSnapshot } from "@/lib/api";
 import { FALLBACK_KENYAN_FUNDS } from "@/lib/fundDataFallback";
@@ -35,13 +37,14 @@ const Index = () => {
   const [initialPageMemory] = useState(() => getMarketPageMemory<FundsPageMemory>("funds"));
   const [cachedFunds] = useState(() => fundCache.loadFunds());
   const [cachedSnaps] = useState(() => fundCache.loadSnapshots());
+  const [cachedAllSnaps] = useState(() => fundCache.loadAllSnapshots());
   const [funds, setFunds] = useState<FundFromDB[]>(() => {
     if (initialPageMemory?.funds && initialPageMemory.funds.length > 0) return initialPageMemory.funds;
     if (cachedFunds?.funds && cachedFunds.funds.length > 0) return cachedFunds.funds;
     return FALLBACK_KENYAN_FUNDS;
   });
   const [snapshots, setSnapshots] = useState<Record<string, YieldSnapshot>>(initialPageMemory?.snapshots ?? cachedSnaps?.snapshots ?? {});
-  const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>(initialPageMemory?.allSnapshots ?? {});
+  const [allSnapshots, setAllSnapshots] = useState<Record<string, YieldSnapshot[]>>(initialPageMemory?.allSnapshots ?? cachedAllSnaps?.allSnapshots ?? {});
   const [loading, setLoading] = useState(false);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [usingCache, setUsingCache] = useState(false);
@@ -78,9 +81,11 @@ const Index = () => {
 
       if (allSnapshotsResult.status === "fulfilled") {
         setAllSnapshots(allSnapshotsResult.value);
+        fundCache.saveAllSnapshots(allSnapshotsResult.value);
       } else {
         console.error("Failed to load fund history", allSnapshotsResult.reason);
-        setAllSnapshots({});
+        if (cachedAllSnaps) setAllSnapshots(cachedAllSnaps.allSnapshots);
+        else setAllSnapshots({});
       }
 
       setUsingCache(false);
@@ -172,10 +177,20 @@ const Index = () => {
         {/* Semantic title for A11y & SEO */}
         <h1 className="sr-only">Money Market Funds</h1>
 
-        <div className="md:hidden mb-3">
+        <div className="md:hidden mb-3 space-y-2">
           <p className="text-sm text-muted-foreground">
             Compare CMA-regulated Money Market Funds and unit trust yields in Kenya.
           </p>
+          <div>
+            <Link
+              to="/savings"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-500/15 transition-all group"
+            >
+              <PiggyBank className="h-3.5 w-3.5" />
+              <span>Comparing fixed savings? View Bank Deposits & SACCOs</span>
+              <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+            </Link>
+          </div>
         </div>
 
         <div className="hidden md:flex items-end justify-between gap-6 mb-7">
@@ -183,6 +198,16 @@ const Index = () => {
             <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">Kenyan Investment Funds</p>
             <h1 className="mt-2 text-5xl font-black tracking-tight">Money Market Funds</h1>
             <p className="mt-3 max-w-3xl text-sm leading-relaxed text-muted-foreground">Track listed Money Market, Fixed Income, Bond, Balanced, Equity and Special funds in Kenya.</p>
+            <div className="mt-3">
+              <Link
+                to="/savings"
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-600 dark:text-emerald-400 text-xs font-bold hover:bg-emerald-500/15 transition-all group"
+              >
+                <PiggyBank className="h-3.5 w-3.5" />
+                <span>Looking for Bank Fixed Deposits or SACCO Dividends? View Savings Rates</span>
+                <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+              </Link>
+            </div>
           </div>
           <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} />
         </div>
