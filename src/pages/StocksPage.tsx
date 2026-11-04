@@ -1,4 +1,4 @@
-import { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo, useId } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import StockDetailDesktopDemoPage from "@/pages/StockDetailDesktopDemoPage";
@@ -46,7 +46,7 @@ import MarketPageLoader from "@/components/MarketPageLoader";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { useAssetWatchlist, type WatchlistEntry } from "@/hooks/useAssetWatchlist";
 import { useIsMobile } from "@/hooks/use-mobile";
-import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid, Area, ComposedChart } from "recharts";
+import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
 
 type Stock = CachedStock;
 
@@ -128,62 +128,120 @@ const StockLogoAvatar = ({ stock, size = 48 }: { stock: Stock; size?: number }) 
 };
 
 /* ─── Mini Sparkline ─── */
-const MiniSparkline = ({
+export const MiniSparkline = ({
   data,
   trend,
   price,
   dayChange,
+  width = 64,
+  height = 24,
 }: {
-  data: PriceHistory[];
-  trend: "up" | "down" | "flat";
+  data?: PriceHistory[];
+  trend?: "up" | "down" | "flat";
   price?: number;
   dayChange?: number;
+  width?: number;
+  height?: number;
 }) => {
-  let effectiveData = [...(data || [])];
-  
-  if (price !== undefined) {
+  const uid = useId();
+
+  const result = useMemo(() => {
+    // 1. Clean and sort historical points chronologically ascending
+    const cleanData = (data || [])
+      .filter((d) => Number.isFinite(d.price) && d.price > 0)
+      .sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+
     const todayIso = new Date().toISOString().split("T")[0];
-    if (effectiveData.length > 0) {
-      if (effectiveData[effectiveData.length - 1].snapshot_date < todayIso) {
-        effectiveData.push({ snapshot_date: todayIso, price });
+    const vals: number[] = cleanData.map((d) => d.price);
+    const lastSnap = cleanData[cleanData.length - 1];
+
+    // Only append live price if newer than the latest snapshot, or update today's point
+    if (price !== undefined && Number.isFinite(price) && price > 0) {
+      if (!lastSnap || lastSnap.snapshot_date < todayIso) {
+        vals.push(price);
+      } else if (lastSnap && lastSnap.snapshot_date === todayIso) {
+        vals[vals.length - 1] = price;
       }
-    } else {
-      const prevPrice = price - (dayChange || 0);
-      effectiveData = [
-        { snapshot_date: "1", price: prevPrice },
-        { snapshot_date: "2", price: price },
-      ] as any;
     }
+
+    // Fallback: If no multi-point history exists, use 1-day change if non-zero
+    if (vals.length < 2) {
+      if (price !== undefined && dayChange !== undefined && Math.abs(dayChange) > 0.001) {
+        vals.unshift(price - dayChange);
+      } else {
+        return null;
+      }
+    }
+
+    const recent = vals.slice(-30);
+    const min = Math.min(...recent);
+    const max = Math.max(...recent);
+    const range = max - min;
+    const isFlat = range < 0.0001;
+    const pad = 2;
+    const w = width - pad * 2;
+    const h = height - pad * 2;
+
+    const pts = recent.map((v, i) => ({
+      x: pad + (i / (recent.length - 1)) * w,
+      y: isFlat
+        ? height / 2
+        : pad + h - ((v - min) / range) * h,
+    }));
+
+    // Auto-detect direction unless overridden
+    const calculatedTrend: "up" | "down" | "flat" = isFlat
+      ? "flat"
+      : pts[pts.length - 1].y < pts[0].y
+      ? "up"
+      : "down";
+
+    const finalTrend = trend && trend !== "flat" ? trend : calculatedTrend;
+
+    const pathD = pts.map((p, i) => `${i === 0 ? "M" : "L"}${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
+    const areaD = pathD + ` L${pts[pts.length - 1].x.toFixed(1)},${height} L${pts[0].x.toFixed(1)},${height} Z`;
+
+    return { pts, finalTrend, isFlat, pathD, areaD };
+  }, [data, price, dayChange, trend, width, height]);
+
+  if (!result) {
+    return <span className="text-[13px] text-muted-foreground">—</span>;
   }
 
-  if (!effectiveData || effectiveData.length < 2) {
-    return null;
-  }
+  const { pts, finalTrend, isFlat, pathD, areaD } = result;
+  const color = isFlat
+    ? "hsl(var(--muted-foreground))"
+    : finalTrend === "up"
+    ? "hsl(152 60% 42%)"
+    : "hsl(var(--destructive))";
 
-  const color =
-    trend === "flat"
-      ? "hsl(var(--muted-foreground))"
-      : trend === "up"
-      ? "hsl(152 60% 42%)"
-      : "hsl(var(--destructive))";
-  const gradientId = `sparkline-fill-${trend}`;
+  const gradId = `${uid}-${finalTrend}`;
 
   return (
-    <div className="w-[60px] h-[24px]">
-      <ResponsiveContainer width="100%" height="100%">
-        <ComposedChart data={effectiveData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-          <defs>
-            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
-              <stop offset="100%" stopColor={color} stopOpacity={0} />
-            </linearGradient>
-          </defs>
-          <YAxis hide domain={["dataMin - 0.5", "dataMax + 0.5"]} />
-          <Area type="monotone" dataKey="price" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
-          <Line type="monotone" dataKey="price" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
-        </ComposedChart>
-      </ResponsiveContainer>
-    </div>
+    <svg
+      width={width}
+      height={height}
+      viewBox={`0 0 ${width} ${height}`}
+      className="shrink-0 overflow-visible"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id={gradId} x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity={isFlat ? 0.05 : 0.25} />
+          <stop offset="100%" stopColor={color} stopOpacity={0} />
+        </linearGradient>
+      </defs>
+      {!isFlat && <path d={areaD} fill={`url(#${gradId})`} />}
+      <path
+        d={pathD}
+        fill="none"
+        stroke={color}
+        strokeWidth="1.75"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+      />
+      <circle cx={pts[pts.length - 1].x} cy={pts[pts.length - 1].y} r="2" fill={color} />
+    </svg>
   );
 };
 
@@ -268,7 +326,16 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
   const [sortKey, setSortKey] = useState<SortKey>("market_cap");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [expanded, setExpanded] = useState<string | null>(null);
-  const [history, setHistory] = useState<Record<string, PriceHistory[]>>(initialPageMemory?.history ?? {});
+  const [history, setHistory] = useState<Record<string, PriceHistory[]>>(() => {
+    if (initialPageMemory?.history && Object.keys(initialPageMemory.history).length > 0) {
+      return initialPageMemory.history;
+    }
+    const cachedBulk = stockCache.loadStockHistoryBulk();
+    if (cachedBulk && Object.keys(cachedBulk).length > 0) {
+      return cachedBulk;
+    }
+    return {};
+  });
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
   const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
   const [sectorSheetOpen, setSectorSheetOpen] = useState(false);
@@ -383,7 +450,7 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
           select: ["stock_id", "price", "snapshot_date"],
           order: "snapshot_date.desc",
           days: 30,
-          limit: 1500,
+          limit: 3000,
         });
         if (Array.isArray(data)) {
           const grouped: Record<string, PriceHistory[]> = {};
@@ -392,6 +459,10 @@ export const StocksPage = ({ desktopDemo = false }: { desktopDemo?: boolean }) =
             if (!grouped[sid]) grouped[sid] = [];
             grouped[sid].push({ snapshot_date: d.snapshot_date, price: Number(d.price) });
           });
+          for (const sid of Object.keys(grouped)) {
+            grouped[sid].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+          }
+          stockCache.saveStockHistoryBulk(grouped);
           if (!cancelled) setHistory(grouped);
         }
       } catch (e) {
@@ -1377,12 +1448,13 @@ const DesktopStockCard = ({
       </div>
 
       <div className="flex-1 flex flex-col justify-center py-2">
-        <div className="h-[40px] w-full opacity-80 group-hover:opacity-100 transition-opacity">
+        <div className="h-[40px] w-full flex items-center justify-center opacity-80 group-hover:opacity-100 transition-opacity">
           <MiniSparkline
             data={history || []}
-            trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"}
             price={s.price}
             dayChange={s.day_change}
+            width={120}
+            height={36}
           />
         </div>
       </div>
@@ -1644,12 +1716,13 @@ const MobileStockCard = ({
         </div>
 
         {/* Sparkline in Center */}
-        <div className="shrink-0 px-1">
+        <div className="shrink-0 px-1 flex items-center justify-center min-w-[64px]">
           <MiniSparkline
             data={history || []}
-            trend={s.day_change > 0 ? "up" : s.day_change < 0 ? "down" : "flat"}
             price={s.price}
             dayChange={s.day_change}
+            width={64}
+            height={24}
           />
         </div>
 

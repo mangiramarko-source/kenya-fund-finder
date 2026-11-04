@@ -29,6 +29,12 @@ export interface CachedStock {
 }
 
 const STOCKS_KEY = "kff:cache:stocks:v2";
+const STOCK_HISTORY_BULK_KEY = "kff:cache:stock-history-bulk:v1";
+
+export interface StockHistoryPoint {
+  snapshot_date: string;
+  price: number;
+}
 
 /** 6 hours in milliseconds — stale cache triggers a live refetch */
 const MAX_AGE_MS = 6 * 60 * 60 * 1000;
@@ -90,5 +96,31 @@ export const stockCache = {
     const existing = readStocks()?.data ?? [];
     const next = existing.filter((item) => item.id !== stock.id && item.symbol !== stock.symbol);
     writeStocks([...next, stock]);
+  },
+  loadStockHistoryBulk(): Record<string, StockHistoryPoint[]> | null {
+    try {
+      const raw = localStorage.getItem(STOCK_HISTORY_BULK_KEY);
+      if (!raw) return null;
+      const envelope = JSON.parse(raw) as { savedAt: number; data: Record<string, StockHistoryPoint[]> };
+      if (Date.now() - envelope.savedAt > MAX_AGE_MS) {
+        localStorage.removeItem(STOCK_HISTORY_BULK_KEY);
+        return null;
+      }
+      return envelope.data;
+    } catch {
+      return null;
+    }
+  },
+  saveStockHistoryBulk(history: Record<string, StockHistoryPoint[]>) {
+    try {
+      if (history && Object.keys(history).length > 0) {
+        localStorage.setItem(
+          STOCK_HISTORY_BULK_KEY,
+          JSON.stringify({ savedAt: Date.now(), data: history })
+        );
+      }
+    } catch {
+      // Quota or private browsing mode.
+    }
   },
 };
