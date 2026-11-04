@@ -527,7 +527,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
 
       {/* Mobile Live Status (Between filter pills and first card) */}
       <div className="md:hidden mb-3.5 flex items-center justify-between px-0.5">
-        <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} className="w-full justify-between" />
+        <SectionLiveStatus section="funds" fallbackDate={lastUpdate} isLoading={loading} hideLive className="w-full justify-between" />
       </div>
 
       {/* Mobile: card view */}
