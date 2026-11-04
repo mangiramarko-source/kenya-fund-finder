@@ -3,6 +3,7 @@ const canonicalOrigin = (process.env.KFF_CANONICAL_ORIGIN || "https://kenyafundf
 const defaultRoutes = [
   "/",
   "/funds",
+  "/savings",
   "/stocks",
   "/rates",
   "/commodities",

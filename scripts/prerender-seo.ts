@@ -207,6 +207,14 @@ function staticRoutes(): SeoPageDefinition[] {
       contentHtml: paragraph("Compare published Money Market Fund (MMF) daily and annual yields, minimum investment amounts, management fees and withdrawal periods from CMA-licensed Kenyan fund managers."),
     },
     {
+      path: "/savings",
+      title: "Bank Fixed Deposits & SACCO Rates in Kenya (2026) – Compare Net Returns",
+      description: "Compare fixed deposit rates across Kenyan commercial banks (Tier 1 & Tier 2) and dividend yields across top SASRA-regulated SACCOs with net returns after 15% Withholding Tax.",
+      heading: "Bank Fixed Deposits and Regulated SACCO Rates in Kenya",
+      contentHtml: `${paragraph("Compare guaranteed interest rates across licensed commercial banks and member dividend yields across Kenya's premier SASRA-regulated DT-SACCOs.")}<p>Estimate your take-home earnings with the <a href="/savings">savings benchmark calculator</a> and compare rates against <a href="/funds">Money Market Funds</a> and <a href="/treasury">Treasury Bills</a>.</p>`,
+      jsonLd: { "@context": "https://schema.org", "@type": "CollectionPage", name: "Bank Fixed Deposits and SACCO Rates in Kenya", url: canonicalUrl("/savings") },
+    },
+    {
       path: "/stocks",
       title: "NSE Share Prices Today – Kenyan Stocks Market Data",
       description: "Track Nairobi Securities Exchange share prices, daily changes, market capitalisation, dividend yields and price charts for Kenyan listed companies.",

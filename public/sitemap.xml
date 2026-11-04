@@ -93,6 +93,11 @@
     <priority>1.0</priority>
   </url>
   <url>
+    <loc>https://kenyafundfinder.com/savings</loc>
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
     <loc>https://kenyafundfinder.com/stocks</loc>
     <changefreq>daily</changefreq>
     <priority>1.0</priority>
@@ -159,73 +164,79 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/african-alliance-fixed-income-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/african-alliance-balanced-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/african-alliance-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/african-alliance-equity-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/apollo-balanced-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/apollo-sh-mmf</loc>
-    <lastmod>2026-09-02</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/compare/arvocap-equity-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/arvocap-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/arvocap-equity-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/arvocap-fixed-income-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/britam-balanced-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/britam-bond-sh</loc>
-    <lastmod>2026-08-14</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/britam-equity-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/britam-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -248,32 +259,32 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/compare/cic-fixed-income-sh</loc>
-    <lastmod>2026-09-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/compare/cic-balanced-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/cic-equity-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/cic-fixed-income-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/cic-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/cic-dollar-usd-mmf</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -291,115 +302,133 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/coop-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/coop-bond-sh</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/coop-fixed-sh</loc>
-    <lastmod>2026-09-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/compare/cpf-bond-sh</loc>
-    <lastmod>2026-08-14</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/CPF-balanced-fund</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/cpf-bond-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/cpf-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/cpf-usd-mmf</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/cytonn-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/cytonn-usd-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/dry-associates-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/dry-associates-special-high-yield-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/dry-associates-usd-mmf</loc>
-    <lastmod>2026-09-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/equity-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/equity-balanced-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/etica-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/etica-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/etica-shariah-special-sh</loc>
-    <lastmod>2026-08-14</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/faulu-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/genafrica-sh-mmf</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/genafrica-fixed-income-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/genghis-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/globatec-fixed-income-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -411,7 +440,7 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/gulfcap-fixed-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -423,25 +452,25 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/icea-sh-fixed-income</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/icea-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/icea-equity-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/icea-balanced-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -453,61 +482,67 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/jubilee-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/jubilee-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/jubilee-usd-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/kcb-fixed-income-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/kcb-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/kcb-usd-mmf</loc>
-    <lastmod>2026-09-02</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/compare/kuza-fixed-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/kuza-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/kuza-fixed-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/kuza-momentum-special-kes</loc>
-    <lastmod>2026-08-14</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/kuza-usd-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/lofty-corban-bond-fund</loc>
-    <lastmod>2026-08-14</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -519,7 +554,7 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/lofty-corban-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -531,25 +566,31 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/lofty-corban-private-debt-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/lofty-corban-usd-mmf</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/madison-fixed-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/madison-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/madison-wealth-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -561,25 +602,31 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/mayfair-fixed-income-fund</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/nabo-fixed-income-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/nabo-equity-usd</loc>
-    <lastmod>2026-07-30</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/nabo-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/nabo-usd-mmf</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -590,62 +637,68 @@
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/compare/nabo-usd-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <loc>https://kenyafundfinder.com/compare/ncba-sh-mmf</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/ncba-fixed-income-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/ncba-equity-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/compare/ncba-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <loc>https://kenyafundfinder.com/compare/ncba-usd-mmf</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/old-mutual-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/old-mutual-usd-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/orient-hifadhi-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/orient-kasha-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/compare/sanlamallianz-balanced-sh</loc>
-    <lastmod>2026-09-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/compare/sanlamallianz-fixed-income-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/sanlamallianz-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/sanlamallianz-balanced-sh</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/sanlamallianz-fixed-income-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -662,8 +715,26 @@
     <priority>0.8</priority>
   </url>
   <url>
+    <loc>https://kenyafundfinder.com/compare/sanlam-usd-mmf</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/spearhead-africa-infrastructure-sh</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
     <loc>https://kenyafundfinder.com/compare/stanbic-sh-mmf</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>daily</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/compare/stanbic-usd-mmf</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -681,44 +752,19 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/ziidi-money-market-fund</loc>
-    <lastmod>2026-09-17</lastmod>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/compare/zimele-balanced-sh</loc>
-    <lastmod>2026-09-17</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/compare/zimele-fixed-income-sh</loc>
-    <lastmod>2026-08-14</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/compare/genafrica-sh-mmf</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/compare/lofty-corban-usd-mmf</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/compare/sanlam-usd-mmf</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/compare/stanbic-usd-mmf</loc>
-    <changefreq>daily</changefreq>
-    <priority>0.8</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/compare/ncba-usd-mmf</loc>
+    <loc>https://kenyafundfinder.com/compare/zimele-balanced-sh</loc>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
@@ -823,6 +869,264 @@
     <priority>0.6</priority>
   </url>
   <url>
+    <loc>https://kenyafundfinder.com/news/ac430569-8ec2-4771-b7d6-8ec096125235</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/565149e2-dc33-4eda-8ec5-c7b6b9ed242f</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/246b3180-0a0d-4b23-93f4-8de364d7a0d1</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/28fdd167-55c5-4099-9f8d-3f8209572c65</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/108e2c1e-1c66-47d5-96f2-30de75423f42</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/7d3ad39a-4aed-4aca-8715-8838b2879e9b</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/ca5be746-5c2d-4891-9399-b32c5feff54f</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/f696246e-dfc5-4678-8b23-d8b9cd0c35ea</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/377fc47c-9e74-495d-a89e-d2076cf89b32</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/69f50dfb-3e04-4cd0-b987-a730c1a73c69</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/398fdcf2-0b57-4a84-bfb7-26b56c205d35</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/6cfcd095-efde-4edb-b990-502b976a4c73</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/4ea4b7a0-3fa4-483a-8ddf-72a50da36ef0</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/bd763d01-2ca1-4b44-ab54-2ce7a0712958</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/eee3bbf1-9620-4ad8-ae8e-05284becb9dd</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/f5221b05-4870-4884-8a00-4e333f5d78d6</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/93bb694c-339a-45a7-8767-2111922af6af</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/b828c2e2-084a-4f4f-9da5-fdf0fc5cc345</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/cd8e9d85-b876-4221-9262-4a3cf5c5d67c</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/d431d846-a431-492b-811f-36e2368c52f4</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/c0a1e18a-8cb8-43d5-bd13-1c72cfdfa757</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/86549ca2-886d-4209-bc95-7bad216e7ab6</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/51664cc0-132c-40ed-af55-b21d2fbf0deb</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/0071e557-b898-4f79-b058-c00dac53d9ac</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/4d6a615d-87da-4caf-8d9b-f47ae04092e6</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/9ece245f-a681-4e0b-afb3-2ece0f0ad7f5</loc>
+    <lastmod>2026-11-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/fd9cd484-97a6-4b38-81b4-57db7343dc77</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/4c50d2a0-d690-4113-9dc6-707aef1230a0</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/b6d72660-1013-47ba-af68-5946980cc2e6</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/b5201595-6aeb-4781-b586-e2a7dd8d1e29</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/071cdfb1-25dd-4b1e-b51f-496f6f07401e</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/1d1570d3-4fbd-4e36-a213-129daef73b81</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/018533e0-a59f-4718-bd47-f69502d1a6d5</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/4be5ebde-c28a-410a-9f95-295842aed0e2</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/76a8bee5-c27e-467d-9fdd-52bf9b70a7d3</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/f7521bf5-7ec8-47f6-a52d-d036153bd0af</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/b303d69f-7279-4fc7-8f5a-1717359b3b78</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/87927a5b-6b4c-444d-88a9-f1d22408fbf1</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/99496353-5224-41a1-bd74-55a558e8f97b</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/05aa57e3-6df3-407b-a176-1946362a350f</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/52a16e9e-5513-490d-bdfa-d6b65a0ac5c6</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/4994b93c-9791-4cea-a313-9c34e1875f47</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/c053ae1e-75b6-49bd-bcef-ddca8affe70a</loc>
+    <lastmod>2026-11-03</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://kenyafundfinder.com/news/144f3867-bf02-454d-9fc8-d75e140d9a27</loc>
     <lastmod>2026-11-02</lastmod>
     <changefreq>weekly</changefreq>
@@ -835,13 +1139,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/29a590f7-32e1-4f2f-847f-565beda90441</loc>
+    <loc>https://kenyafundfinder.com/news/9da89797-6531-402e-9ad1-6caada0d5a77</loc>
     <lastmod>2026-11-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/9da89797-6531-402e-9ad1-6caada0d5a77</loc>
+    <loc>https://kenyafundfinder.com/news/29a590f7-32e1-4f2f-847f-565beda90441</loc>
     <lastmod>2026-11-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -901,13 +1205,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/43ce9f0b-47f2-4055-8711-455ec616854c</loc>
+    <loc>https://kenyafundfinder.com/news/84676a03-c254-4540-aa5b-0c66f6ff2193</loc>
     <lastmod>2026-11-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/84676a03-c254-4540-aa5b-0c66f6ff2193</loc>
+    <loc>https://kenyafundfinder.com/news/43ce9f0b-47f2-4055-8711-455ec616854c</loc>
     <lastmod>2026-11-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -1519,13 +1823,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/9fec01f9-365a-49c3-aefe-5125f7c6c1f1</loc>
+    <loc>https://kenyafundfinder.com/news/a8358535-7871-4838-b63e-9eb5f682081a</loc>
     <lastmod>2026-10-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/a8358535-7871-4838-b63e-9eb5f682081a</loc>
+    <loc>https://kenyafundfinder.com/news/9fec01f9-365a-49c3-aefe-5125f7c6c1f1</loc>
     <lastmod>2026-10-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -1555,25 +1859,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/eac3cdfd-2512-40ee-95c7-f0daef08331d</loc>
-    <lastmod>2026-10-23</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/f68103dd-7856-430f-baa8-7d19a4f962f2</loc>
     <lastmod>2026-10-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/fce3aab7-311d-4a08-baf6-3229860df154</loc>
+    <loc>https://kenyafundfinder.com/news/eac3cdfd-2512-40ee-95c7-f0daef08331d</loc>
     <lastmod>2026-10-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/bd9a7fcb-5472-44b9-a7e9-1edb0a2b9a6d</loc>
+    <lastmod>2026-10-23</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/fce3aab7-311d-4a08-baf6-3229860df154</loc>
     <lastmod>2026-10-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -1777,25 +2081,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/d3e2ef7a-2d67-4759-831c-a05a7645b73b</loc>
-    <lastmod>2026-10-22</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/a8d2979d-6b9e-43cd-9790-90940a2e51fe</loc>
     <lastmod>2026-10-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/b238a9c0-cc12-4fd0-9c9d-a4c932460ac1</loc>
+    <loc>https://kenyafundfinder.com/news/d3e2ef7a-2d67-4759-831c-a05a7645b73b</loc>
     <lastmod>2026-10-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/23de7ba5-23b3-4b37-a7c1-1aa98f4fd04f</loc>
+    <lastmod>2026-10-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/b238a9c0-cc12-4fd0-9c9d-a4c932460ac1</loc>
     <lastmod>2026-10-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -1861,25 +2165,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/ad4fd8c8-343c-4add-94a6-0383dc7b231e</loc>
-    <lastmod>2026-10-21</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/53813cdb-1a82-4bb9-b7c5-4efb5624ef48</loc>
     <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/8b06352c-f83c-4d6e-9de0-838df77d73c5</loc>
+    <loc>https://kenyafundfinder.com/news/ad4fd8c8-343c-4add-94a6-0383dc7b231e</loc>
     <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/7b5cded3-d4bc-45a6-b8ec-2c07e546999c</loc>
+    <lastmod>2026-10-21</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/8b06352c-f83c-4d6e-9de0-838df77d73c5</loc>
     <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -1897,13 +2201,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/b19c077a-a710-40a1-a0db-3218c89a70e7</loc>
+    <loc>https://kenyafundfinder.com/news/f59b023b-9c5b-4942-9dff-623d8ee57e75</loc>
     <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/f59b023b-9c5b-4942-9dff-623d8ee57e75</loc>
+    <loc>https://kenyafundfinder.com/news/b19c077a-a710-40a1-a0db-3218c89a70e7</loc>
     <lastmod>2026-10-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -1993,25 +2297,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/f63c18b5-5a29-4018-9527-46d1be3d947a</loc>
-    <lastmod>2026-10-20</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/c1c76138-9570-4289-9702-92d7196d729a</loc>
     <lastmod>2026-10-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/d7b3e484-ef0e-402a-92a1-3d38b38f344c</loc>
+    <loc>https://kenyafundfinder.com/news/f63c18b5-5a29-4018-9527-46d1be3d947a</loc>
     <lastmod>2026-10-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/cf14ef76-ca64-4b51-9e4b-cfa79926251f</loc>
+    <lastmod>2026-10-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/d7b3e484-ef0e-402a-92a1-3d38b38f344c</loc>
     <lastmod>2026-10-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2071,13 +2375,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/c6296879-ccb2-46d4-a89a-7c1eeea9c33e</loc>
+    <loc>https://kenyafundfinder.com/news/650f05aa-995b-42e1-acfe-53e3465830e9</loc>
     <lastmod>2026-10-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/650f05aa-995b-42e1-acfe-53e3465830e9</loc>
+    <loc>https://kenyafundfinder.com/news/c6296879-ccb2-46d4-a89a-7c1eeea9c33e</loc>
     <lastmod>2026-10-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2197,13 +2501,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/b611cbb0-e355-4c5f-b364-cb0b9938c7a7</loc>
+    <loc>https://kenyafundfinder.com/news/71f1989a-ad15-413c-812e-d048a11ce6bf</loc>
     <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/71f1989a-ad15-413c-812e-d048a11ce6bf</loc>
+    <loc>https://kenyafundfinder.com/news/b611cbb0-e355-4c5f-b364-cb0b9938c7a7</loc>
     <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2245,13 +2549,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/ea6e5fad-f739-459b-9305-73e089db6ce1</loc>
+    <loc>https://kenyafundfinder.com/news/4a269ba3-e92f-4d4b-aa9f-cc19a69b9d95</loc>
     <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/4a269ba3-e92f-4d4b-aa9f-cc19a69b9d95</loc>
+    <loc>https://kenyafundfinder.com/news/ea6e5fad-f739-459b-9305-73e089db6ce1</loc>
     <lastmod>2026-10-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2347,13 +2651,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/576d92b3-41d4-4910-9633-ad2bd6153674</loc>
+    <loc>https://kenyafundfinder.com/news/a3aec734-1a31-43b1-9343-402b6041febf</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/a3aec734-1a31-43b1-9343-402b6041febf</loc>
+    <loc>https://kenyafundfinder.com/news/576d92b3-41d4-4910-9633-ad2bd6153674</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2383,13 +2687,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/1f908321-b31f-45b5-9497-0aee589a4273</loc>
+    <loc>https://kenyafundfinder.com/news/214d6351-4ede-41b2-a6a0-ae3202f68a14</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/214d6351-4ede-41b2-a6a0-ae3202f68a14</loc>
+    <loc>https://kenyafundfinder.com/news/1f908321-b31f-45b5-9497-0aee589a4273</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2407,13 +2711,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/c755c578-a423-4f2b-8d8a-0eccf34fbd7a</loc>
+    <loc>https://kenyafundfinder.com/news/e4070be4-2d35-4cff-948e-cb50f3b34b93</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/e4070be4-2d35-4cff-948e-cb50f3b34b93</loc>
+    <loc>https://kenyafundfinder.com/news/c755c578-a423-4f2b-8d8a-0eccf34fbd7a</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2431,13 +2735,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/cd6cc7c2-0787-4eb2-8b29-ffc44c15b9f7</loc>
+    <loc>https://kenyafundfinder.com/news/3caa00e6-f038-4a6f-9c10-1d1e8d8f8353</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/3caa00e6-f038-4a6f-9c10-1d1e8d8f8353</loc>
+    <loc>https://kenyafundfinder.com/news/cd6cc7c2-0787-4eb2-8b29-ffc44c15b9f7</loc>
     <lastmod>2026-10-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2491,25 +2795,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/2165f74b-f205-4066-9308-1295a7461f2c</loc>
-    <lastmod>2026-10-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/93c7c68a-58da-4512-8fbc-06dffa0fbae4</loc>
     <lastmod>2026-10-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/f556d8c6-6721-49f8-a929-dc3e120bfc02</loc>
+    <loc>https://kenyafundfinder.com/news/2165f74b-f205-4066-9308-1295a7461f2c</loc>
     <lastmod>2026-10-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/efa59307-a630-486e-a716-b40002b1367f</loc>
+    <lastmod>2026-10-15</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/f556d8c6-6721-49f8-a929-dc3e120bfc02</loc>
     <lastmod>2026-10-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2539,13 +2843,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/9d77cd84-2c69-4255-bcb7-0686175b7e73</loc>
+    <loc>https://kenyafundfinder.com/news/fd498e11-c14c-44d0-8402-04583e080f04</loc>
     <lastmod>2026-10-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/fd498e11-c14c-44d0-8402-04583e080f04</loc>
+    <loc>https://kenyafundfinder.com/news/9d77cd84-2c69-4255-bcb7-0686175b7e73</loc>
     <lastmod>2026-10-15</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2605,13 +2909,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/0e2955be-e082-4b1e-850b-5a44732f1a16</loc>
+    <loc>https://kenyafundfinder.com/news/7d496655-6bd9-44d8-8812-4cd51278bbf4</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/7d496655-6bd9-44d8-8812-4cd51278bbf4</loc>
+    <loc>https://kenyafundfinder.com/news/0e2955be-e082-4b1e-850b-5a44732f1a16</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2647,13 +2951,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/26056feb-b3a9-4846-85ba-f98f0e27072e</loc>
+    <loc>https://kenyafundfinder.com/news/61febd7b-6373-4aaa-803b-abf0875ac6ab</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/61febd7b-6373-4aaa-803b-abf0875ac6ab</loc>
+    <loc>https://kenyafundfinder.com/news/26056feb-b3a9-4846-85ba-f98f0e27072e</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2701,13 +3005,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/7a927020-3e87-4217-a9da-6731e9f79d0f</loc>
+    <loc>https://kenyafundfinder.com/news/9d1df075-1366-4d75-b152-bc30faff8961</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/9d1df075-1366-4d75-b152-bc30faff8961</loc>
+    <loc>https://kenyafundfinder.com/news/7a927020-3e87-4217-a9da-6731e9f79d0f</loc>
     <lastmod>2026-10-14</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -2917,13 +3221,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/ca6ae37d-c08a-4caf-97dc-eba6a6b7694e</loc>
+    <loc>https://kenyafundfinder.com/news/82a25553-9059-4761-965d-99eceebbf3ab</loc>
     <lastmod>2026-10-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/82a25553-9059-4761-965d-99eceebbf3ab</loc>
+    <loc>https://kenyafundfinder.com/news/ca6ae37d-c08a-4caf-97dc-eba6a6b7694e</loc>
     <lastmod>2026-10-13</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3001,13 +3305,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/ac2176b2-4f74-4b24-bc42-4e841a846325</loc>
+    <loc>https://kenyafundfinder.com/news/8cd24c3f-38a9-4a1c-a855-732eec7caa1a</loc>
     <lastmod>2026-10-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/8cd24c3f-38a9-4a1c-a855-732eec7caa1a</loc>
+    <loc>https://kenyafundfinder.com/news/ac2176b2-4f74-4b24-bc42-4e841a846325</loc>
     <lastmod>2026-10-12</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3073,13 +3377,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/f1c7fc3d-431a-4933-8e18-d2348797ffb5</loc>
+    <loc>https://kenyafundfinder.com/news/bb555217-c1a1-40bb-8f40-0a6210c87348</loc>
     <lastmod>2026-10-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/bb555217-c1a1-40bb-8f40-0a6210c87348</loc>
+    <loc>https://kenyafundfinder.com/news/f1c7fc3d-431a-4933-8e18-d2348797ffb5</loc>
     <lastmod>2026-10-11</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3097,13 +3401,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/76c9257f-df3c-4363-b0d4-a1b4642d48d8</loc>
+    <loc>https://kenyafundfinder.com/news/29e605d0-7b19-44e8-882d-e9728df97f13</loc>
     <lastmod>2026-10-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/29e605d0-7b19-44e8-882d-e9728df97f13</loc>
+    <loc>https://kenyafundfinder.com/news/76c9257f-df3c-4363-b0d4-a1b4642d48d8</loc>
     <lastmod>2026-10-10</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3163,13 +3467,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/83b1e343-a3ef-417d-a383-78ab58a27e87</loc>
+    <loc>https://kenyafundfinder.com/news/7254dd80-ad94-4025-b2a9-97324bdbd7e7</loc>
     <lastmod>2026-10-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/7254dd80-ad94-4025-b2a9-97324bdbd7e7</loc>
+    <loc>https://kenyafundfinder.com/news/83b1e343-a3ef-417d-a383-78ab58a27e87</loc>
     <lastmod>2026-10-09</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3307,13 +3611,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/6a25d2c7-6b89-4619-b1a7-c2b94031bdf5</loc>
+    <loc>https://kenyafundfinder.com/news/e2783c4d-5de7-4263-9b7f-68355092f013</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/e2783c4d-5de7-4263-9b7f-68355092f013</loc>
+    <loc>https://kenyafundfinder.com/news/6a25d2c7-6b89-4619-b1a7-c2b94031bdf5</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3331,25 +3635,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/bf4e6366-84ac-4d7e-abba-5404a666b963</loc>
-    <lastmod>2026-10-08</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/eac35950-f8aa-4915-b9c7-3fc68cf81f90</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/54b15363-8439-4a42-a215-a4af74b9d64f</loc>
+    <loc>https://kenyafundfinder.com/news/bf4e6366-84ac-4d7e-abba-5404a666b963</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/4018436c-d630-477d-8a1d-6b12a1fe5ffa</loc>
+    <lastmod>2026-10-08</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/54b15363-8439-4a42-a215-a4af74b9d64f</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3403,13 +3707,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/df352fac-ae29-4e96-b03d-eef382f2500a</loc>
+    <loc>https://kenyafundfinder.com/news/1ade4555-3752-4996-90f5-51446a022317</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/1ade4555-3752-4996-90f5-51446a022317</loc>
+    <loc>https://kenyafundfinder.com/news/df352fac-ae29-4e96-b03d-eef382f2500a</loc>
     <lastmod>2026-10-08</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3517,13 +3821,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/906dd9fb-0e55-4e54-bb71-a0b81e5fdda4</loc>
+    <loc>https://kenyafundfinder.com/news/c0694a48-30c2-4c39-a9a2-c733f9d84b01</loc>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/c0694a48-30c2-4c39-a9a2-c733f9d84b01</loc>
+    <loc>https://kenyafundfinder.com/news/906dd9fb-0e55-4e54-bb71-a0b81e5fdda4</loc>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3667,25 +3971,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/95040eb5-4fd4-4e70-a8ba-66cfaadf1c25</loc>
-    <lastmod>2026-10-07</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/d0520237-7191-4446-943b-fb29a7380cc1</loc>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/c6e44c20-db32-40e3-acf0-b399d1f5f2cb</loc>
+    <loc>https://kenyafundfinder.com/news/95040eb5-4fd4-4e70-a8ba-66cfaadf1c25</loc>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/457df016-0e15-46f7-a51a-6a0d9df745e4</loc>
+    <lastmod>2026-10-07</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/c6e44c20-db32-40e3-acf0-b399d1f5f2cb</loc>
     <lastmod>2026-10-07</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3703,19 +4007,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/d9457cf6-9730-4085-9552-36f23be42366</loc>
-    <lastmod>2026-10-06</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/7924e776-2329-421d-acdc-cc0483689a79</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/b851861d-366f-4ab1-aa5c-751af9908e10</loc>
+    <loc>https://kenyafundfinder.com/news/d9457cf6-9730-4085-9552-36f23be42366</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3727,13 +4025,19 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/6c9c9bfd-ee53-4b8c-9254-9e65687de429</loc>
+    <loc>https://kenyafundfinder.com/news/b851861d-366f-4ab1-aa5c-751af9908e10</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/7c220a35-5001-40ab-b547-9f4c328ed924</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/6c9c9bfd-ee53-4b8c-9254-9e65687de429</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3781,13 +4085,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/a7278534-42c1-4af0-8786-0e71e521a094</loc>
+    <loc>https://kenyafundfinder.com/news/cf47f00e-3a58-4dba-83ff-c071e304c9f3</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/cf47f00e-3a58-4dba-83ff-c071e304c9f3</loc>
+    <loc>https://kenyafundfinder.com/news/a7278534-42c1-4af0-8786-0e71e521a094</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3817,13 +4121,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/442e32a6-b624-4779-8af9-14ca71f68ee1</loc>
+    <loc>https://kenyafundfinder.com/news/3e52c8f2-d76b-42b7-95d0-71e1b4e9e4db</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/3e52c8f2-d76b-42b7-95d0-71e1b4e9e4db</loc>
+    <loc>https://kenyafundfinder.com/news/442e32a6-b624-4779-8af9-14ca71f68ee1</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3889,19 +4193,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/465b339f-b917-45a2-b083-23fa156c211a</loc>
-    <lastmod>2026-10-06</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/2ea9075d-201a-4102-b0f5-b67ea98f56e6</loc>
     <lastmod>2026-10-06</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://kenyafundfinder.com/news/465b339f-b917-45a2-b083-23fa156c211a</loc>
+    <lastmod>2026-10-06</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://kenyafundfinder.com/news/b86fff2b-5a4e-402a-b819-f7781c48dc41</loc>
+    <lastmod>2026-10-05</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/88ad2aa4-af78-4a33-a586-7c78372f350a</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -3919,12 +4229,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/88ad2aa4-af78-4a33-a586-7c78372f350a</loc>
-    <lastmod>2026-10-05</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/69c94454-d399-433e-abb1-64b61a44d6ff</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
@@ -3937,13 +4241,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/c807d1d2-39ec-44be-ba03-bfc59207439a</loc>
+    <loc>https://kenyafundfinder.com/news/8eacd40c-aa95-48c3-b3b2-aeb5d54097b6</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/8eacd40c-aa95-48c3-b3b2-aeb5d54097b6</loc>
+    <loc>https://kenyafundfinder.com/news/c807d1d2-39ec-44be-ba03-bfc59207439a</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4027,13 +4331,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/40ae6370-45c0-4d75-a9e1-287fb599afb2</loc>
+    <loc>https://kenyafundfinder.com/news/db8218a7-5681-47e1-a59c-39db6d746ada</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/db8218a7-5681-47e1-a59c-39db6d746ada</loc>
+    <loc>https://kenyafundfinder.com/news/40ae6370-45c0-4d75-a9e1-287fb599afb2</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4051,13 +4355,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/e9c12ac5-a20b-45c5-8a02-80bf561aff44</loc>
+    <loc>https://kenyafundfinder.com/news/02a3f54a-e54f-4a68-8c20-d181d946c45c</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/02a3f54a-e54f-4a68-8c20-d181d946c45c</loc>
+    <loc>https://kenyafundfinder.com/news/e9c12ac5-a20b-45c5-8a02-80bf561aff44</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4075,25 +4379,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/2e7b82ca-0a77-444e-b4f6-ceacdfa093c0</loc>
-    <lastmod>2026-10-05</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/a238a558-31d0-4886-90d6-2660ea448a93</loc>
     <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/df5a47f8-b1aa-4b11-a405-247b8346033b</loc>
-    <lastmod>2026-10-04</lastmod>
+    <loc>https://kenyafundfinder.com/news/2e7b82ca-0a77-444e-b4f6-ceacdfa093c0</loc>
+    <lastmod>2026-10-05</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/993a1bc9-0a73-4f0d-8b27-e8a6fe2aea8d</loc>
+    <lastmod>2026-10-04</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/df5a47f8-b1aa-4b11-a405-247b8346033b</loc>
     <lastmod>2026-10-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4165,13 +4469,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/eb7be16b-184a-4edf-8ace-ecab19bee0dd</loc>
+    <loc>https://kenyafundfinder.com/news/212f628f-08d4-44bc-a1bf-4d4be53808be</loc>
     <lastmod>2026-10-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/212f628f-08d4-44bc-a1bf-4d4be53808be</loc>
+    <loc>https://kenyafundfinder.com/news/eb7be16b-184a-4edf-8ace-ecab19bee0dd</loc>
     <lastmod>2026-10-04</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4273,13 +4577,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/01d17406-8da5-4211-bb3c-460ab626db77</loc>
+    <loc>https://kenyafundfinder.com/news/4f5887b2-195d-4055-87e3-9ff15763e5a5</loc>
     <lastmod>2026-10-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/4f5887b2-195d-4055-87e3-9ff15763e5a5</loc>
+    <loc>https://kenyafundfinder.com/news/01d17406-8da5-4211-bb3c-460ab626db77</loc>
     <lastmod>2026-10-02</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4483,13 +4787,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/b758d095-baa5-4e27-a6a0-e2524293e53b</loc>
+    <loc>https://kenyafundfinder.com/news/2c8b6080-5c85-4d21-b7ab-39dd25379fdf</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/2c8b6080-5c85-4d21-b7ab-39dd25379fdf</loc>
+    <loc>https://kenyafundfinder.com/news/b758d095-baa5-4e27-a6a0-e2524293e53b</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4519,25 +4823,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/827ae2e5-e6b4-4a69-af3d-d2cab03c40b4</loc>
-    <lastmod>2026-09-30</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/3826b183-0a0d-4fc0-88f0-8d26bc322a52</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/dc71a23b-5e8e-487f-8d8e-f652a4695966</loc>
+    <loc>https://kenyafundfinder.com/news/827ae2e5-e6b4-4a69-af3d-d2cab03c40b4</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/aca177b7-601a-4850-9c12-5df79276112f</loc>
+    <lastmod>2026-09-30</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/dc71a23b-5e8e-487f-8d8e-f652a4695966</loc>
     <lastmod>2026-09-30</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4609,7 +4913,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/65fc9507-d335-4462-a84d-cb1efdfae44c</loc>
+    <loc>https://kenyafundfinder.com/news/d2e20df1-d436-4983-9c0b-148f788aab65</loc>
+    <lastmod>2026-09-29</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/a1c4e2df-5bc0-490d-b0a6-293579941d13</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4621,13 +4931,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/d2e20df1-d436-4983-9c0b-148f788aab65</loc>
-    <lastmod>2026-09-29</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/a1c4e2df-5bc0-490d-b0a6-293579941d13</loc>
+    <loc>https://kenyafundfinder.com/news/65fc9507-d335-4462-a84d-cb1efdfae44c</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4705,13 +5009,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/58e514b7-1be4-4711-9366-8cc352c8b49d</loc>
+    <loc>https://kenyafundfinder.com/news/4272d24a-a30a-4526-806b-099a17b2aeaa</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/4272d24a-a30a-4526-806b-099a17b2aeaa</loc>
+    <loc>https://kenyafundfinder.com/news/58e514b7-1be4-4711-9366-8cc352c8b49d</loc>
     <lastmod>2026-09-29</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4915,13 +5219,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/1f491b71-220c-418f-ab5c-d6bcb2fcb99d</loc>
+    <loc>https://kenyafundfinder.com/news/aee0d0f2-a7b2-4b33-8903-d6ced4b45df7</loc>
     <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/aee0d0f2-a7b2-4b33-8903-d6ced4b45df7</loc>
+    <loc>https://kenyafundfinder.com/news/1f491b71-220c-418f-ab5c-d6bcb2fcb99d</loc>
     <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -4969,13 +5273,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/40e20c77-277a-48cb-951b-ec22041ac720</loc>
+    <loc>https://kenyafundfinder.com/news/9e5b756c-9faa-4bc4-b6c9-8596c6c22ea4</loc>
     <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/9e5b756c-9faa-4bc4-b6c9-8596c6c22ea4</loc>
+    <loc>https://kenyafundfinder.com/news/40e20c77-277a-48cb-951b-ec22041ac720</loc>
     <lastmod>2026-09-25</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5107,13 +5411,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/1e535dd3-dd4f-4be8-bd5d-2f60815ee974</loc>
+    <loc>https://kenyafundfinder.com/news/d2f91222-7131-404c-a178-441dede78dce</loc>
     <lastmod>2026-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/d2f91222-7131-404c-a178-441dede78dce</loc>
+    <loc>https://kenyafundfinder.com/news/1e535dd3-dd4f-4be8-bd5d-2f60815ee974</loc>
     <lastmod>2026-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5167,13 +5471,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/00417b89-43da-4a2f-b248-5743f39e9fc7</loc>
+    <loc>https://kenyafundfinder.com/news/cbdc5e71-97ec-45fe-90b6-aeda11012b5e</loc>
     <lastmod>2026-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/8b09d7a3-d0dc-4625-ae48-5a253367d703</loc>
+    <loc>https://kenyafundfinder.com/news/00417b89-43da-4a2f-b248-5743f39e9fc7</loc>
     <lastmod>2026-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5185,7 +5489,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/cbdc5e71-97ec-45fe-90b6-aeda11012b5e</loc>
+    <loc>https://kenyafundfinder.com/news/8b09d7a3-d0dc-4625-ae48-5a253367d703</loc>
     <lastmod>2026-09-24</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5257,13 +5561,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/ecdb899d-ba2c-494b-9508-b8f6a7ff0830</loc>
+    <loc>https://kenyafundfinder.com/news/32465bcd-cd65-4bcd-b414-7bb72c38c9c6</loc>
     <lastmod>2026-09-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/32465bcd-cd65-4bcd-b414-7bb72c38c9c6</loc>
+    <loc>https://kenyafundfinder.com/news/ecdb899d-ba2c-494b-9508-b8f6a7ff0830</loc>
     <lastmod>2026-09-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5329,13 +5633,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/fcf37a21-369b-4ed6-a7bf-e27f0fbb66b7</loc>
+    <loc>https://kenyafundfinder.com/news/ff4423be-5418-4eaa-8988-1326a393fc5e</loc>
     <lastmod>2026-09-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/ff4423be-5418-4eaa-8988-1326a393fc5e</loc>
+    <loc>https://kenyafundfinder.com/news/fcf37a21-369b-4ed6-a7bf-e27f0fbb66b7</loc>
     <lastmod>2026-09-23</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5425,13 +5729,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/06b26635-f836-40b4-b655-b429c72a3c14</loc>
+    <loc>https://kenyafundfinder.com/news/69ed4dd1-2a77-4447-8f73-21adbf285d45</loc>
     <lastmod>2026-09-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/69ed4dd1-2a77-4447-8f73-21adbf285d45</loc>
+    <loc>https://kenyafundfinder.com/news/06b26635-f836-40b4-b655-b429c72a3c14</loc>
     <lastmod>2026-09-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5449,25 +5753,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/dc33c9df-a859-4999-9c29-29fa653c348e</loc>
-    <lastmod>2026-09-22</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/a9d2cc43-4828-4575-9f55-83a6c58933cd</loc>
     <lastmod>2026-09-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/ceccf220-30ac-4d80-b8eb-60285c37fad4</loc>
+    <loc>https://kenyafundfinder.com/news/dc33c9df-a859-4999-9c29-29fa653c348e</loc>
     <lastmod>2026-09-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/c2a61ef2-3bb7-4df9-b5fc-89dfa352b879</loc>
+    <lastmod>2026-09-22</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/ceccf220-30ac-4d80-b8eb-60285c37fad4</loc>
     <lastmod>2026-09-22</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5551,13 +5855,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/0d9fd0b2-4696-4a70-b4d7-2f277c462a52</loc>
+    <loc>https://kenyafundfinder.com/news/b276b09d-b216-416c-a3b3-1c941cadeebc</loc>
     <lastmod>2026-09-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/b276b09d-b216-416c-a3b3-1c941cadeebc</loc>
+    <loc>https://kenyafundfinder.com/news/0d9fd0b2-4696-4a70-b4d7-2f277c462a52</loc>
     <lastmod>2026-09-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5587,13 +5891,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/fe2170ac-3f80-4166-b7b4-d99c7db51dc5</loc>
+    <loc>https://kenyafundfinder.com/news/c6de2f3d-726e-4edd-9586-0e2bd3161e92</loc>
     <lastmod>2026-09-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/c6de2f3d-726e-4edd-9586-0e2bd3161e92</loc>
+    <loc>https://kenyafundfinder.com/news/fe2170ac-3f80-4166-b7b4-d99c7db51dc5</loc>
     <lastmod>2026-09-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5617,13 +5921,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/ffd6e6e9-dd83-4268-9dab-1d30bf3742fa</loc>
+    <loc>https://kenyafundfinder.com/news/9f2a794a-a00c-494f-8691-1efa45c2fe11</loc>
     <lastmod>2026-09-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/9f2a794a-a00c-494f-8691-1efa45c2fe11</loc>
+    <loc>https://kenyafundfinder.com/news/ffd6e6e9-dd83-4268-9dab-1d30bf3742fa</loc>
     <lastmod>2026-09-21</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5731,25 +6035,25 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/0b19f10a-596b-4d56-b72e-a29d297eade7</loc>
-    <lastmod>2026-09-19</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/b239acc4-938d-4207-ad2c-885c4841ba64</loc>
     <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/7023ff8b-1913-455e-86ca-7ddb71415801</loc>
-    <lastmod>2026-09-20</lastmod>
+    <loc>https://kenyafundfinder.com/news/0b19f10a-596b-4d56-b72e-a29d297eade7</loc>
+    <lastmod>2026-09-19</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/63b24fa7-86ed-4788-b4ec-a6fb8e593530</loc>
+    <lastmod>2026-09-20</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/7023ff8b-1913-455e-86ca-7ddb71415801</loc>
     <lastmod>2026-09-20</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -5845,13 +6149,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/a506bacc-a9a8-48f2-af44-5816f57f4a00</loc>
+    <loc>https://kenyafundfinder.com/news/c25e4191-1b3b-4c11-b66b-4159440608f4</loc>
     <lastmod>2026-09-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/c25e4191-1b3b-4c11-b66b-4159440608f4</loc>
+    <loc>https://kenyafundfinder.com/news/a506bacc-a9a8-48f2-af44-5816f57f4a00</loc>
     <lastmod>2026-09-18</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -6067,6 +6371,18 @@
     <priority>0.5</priority>
   </url>
   <url>
+    <loc>https://kenyafundfinder.com/news/b6fd5653-4a4c-49c6-9a19-3a5cca5e0b0b</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/e73d61bc-bbf4-453b-adaf-79f1101e6590</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
     <loc>https://kenyafundfinder.com/news/9d77e53d-817a-439d-a5e0-4925b4b83b2e</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
@@ -6079,13 +6395,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/e73d61bc-bbf4-453b-adaf-79f1101e6590</loc>
-    <lastmod>2026-09-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/b6fd5653-4a4c-49c6-9a19-3a5cca5e0b0b</loc>
+    <loc>https://kenyafundfinder.com/news/35d7fc25-c6f1-4236-b43b-8aa9d7ac78bd</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -6097,19 +6407,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/35d7fc25-c6f1-4236-b43b-8aa9d7ac78bd</loc>
+    <loc>https://kenyafundfinder.com/news/f98c0b52-6b2b-494e-85d6-b314c39caa70</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/news/6cf413b9-857b-4fe7-b3f6-22748f780260</loc>
-    <lastmod>2026-09-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/f98c0b52-6b2b-494e-85d6-b314c39caa70</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -6175,13 +6479,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/750434d1-3e9c-4fc4-8285-a54e6ae1f966</loc>
+    <loc>https://kenyafundfinder.com/news/f372fa38-5438-4dcb-a0d4-c73db11ea05b</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/f372fa38-5438-4dcb-a0d4-c73db11ea05b</loc>
+    <loc>https://kenyafundfinder.com/news/750434d1-3e9c-4fc4-8285-a54e6ae1f966</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -6205,7 +6509,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/ddb7b384-7c2a-4c43-8b59-188068236044</loc>
+    <loc>https://kenyafundfinder.com/news/aae2ca7f-fe32-4b2c-9b42-0f24aa61598d</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -6217,7 +6521,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/aae2ca7f-fe32-4b2c-9b42-0f24aa61598d</loc>
+    <loc>https://kenyafundfinder.com/news/ddb7b384-7c2a-4c43-8b59-188068236044</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -6259,13 +6563,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/b5fa528c-e7ed-4e02-bebc-acd1ff31f855</loc>
+    <loc>https://kenyafundfinder.com/news/bd613bb7-d2d4-4d20-9a6e-6ec43016bed0</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/bd613bb7-d2d4-4d20-9a6e-6ec43016bed0</loc>
+    <loc>https://kenyafundfinder.com/news/b5fa528c-e7ed-4e02-bebc-acd1ff31f855</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -6283,13 +6587,7 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/3a36007b-f739-4826-9c5b-82a3c23f9e1d</loc>
-    <lastmod>2026-09-16</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/ac7ecf49-46a7-4bf9-bfe0-922fef2b2af9</loc>
+    <loc>https://kenyafundfinder.com/news/2a094991-b988-44f6-87b1-357cb12d0fdb</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -6301,7 +6599,13 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/2a094991-b988-44f6-87b1-357cb12d0fdb</loc>
+    <loc>https://kenyafundfinder.com/news/ac7ecf49-46a7-4bf9-bfe0-922fef2b2af9</loc>
+    <lastmod>2026-09-16</lastmod>
+    <changefreq>weekly</changefreq>
+    <priority>0.5</priority>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/3a36007b-f739-4826-9c5b-82a3c23f9e1d</loc>
     <lastmod>2026-09-16</lastmod>
     <changefreq>weekly</changefreq>
     <priority>0.5</priority>
@@ -6319,270 +6623,6 @@
     <priority>0.5</priority>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/b81467f8-88c5-4658-8569-6b9e6851decd</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/6cfca865-f496-47a4-afe3-6d1d00f63355</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/7763cfe9-2619-4ec8-ba10-cd2efeeb00ca</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/0e4254b7-e6ee-40c7-8464-6e05709aab80</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/edb085c9-3c59-4fd0-b69c-8f92b2600dc2</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/8f7995dc-7901-438f-a51c-c77c244b8b81</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/02792584-81d1-48d2-b21e-ce88c717709c</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/710002dd-fe96-4025-90cc-fa945fa2dd1f</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/ec4a88cc-9b64-4578-97ed-855fbafd7f2c</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/c642451f-3854-4882-91cd-8fede0c3d354</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/449fe393-571c-4228-b5e8-58a0f1aad0a2</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/7157c7d2-c4a2-43f1-a18c-031bba551376</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/1583f306-8cb2-4865-a534-05dcb32e29ba</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/69e2ffeb-4343-4ec3-b2b2-e9be8e9f5933</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/635ba475-0d7e-4626-8a86-fe175d558cc2</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/c2928b02-18d4-4762-a063-9f3c9deb913c</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/3a4c2263-d15f-4830-99ef-b339aa193685</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/133c191c-d878-4aed-a1e3-191ae5b480e5</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/d74b5eab-49f6-4638-9c45-b68502e3eddd</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/ae5f796c-320e-4240-87f9-9723779739ad</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/c1169e46-09cc-4687-abb6-020bf6637b34</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/822e9cef-db54-4efa-808d-e092b37fd4cf</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/87239c30-4bdf-479b-82b3-f33768d26826</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/78f77d4e-cc8c-4dd6-ba77-a16c52a84e94</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/aaafb624-1f75-471c-9f7e-65a39ff2d644</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/cdb3635d-0760-4c0e-a795-404aeccaf70b</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/03cede28-1c87-4c8a-a3dd-62409b46df62</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/dbd8a4ff-1254-48b2-bce4-c8480941cf18</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/aa76bd32-f5ff-4a07-88ee-52633ce8ef7f</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/0eb2c3cc-739f-4df2-beec-6ab76c292f45</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/25fe67a2-8e86-4f26-a5b0-bb99ddb5c666</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/08a7c78f-b551-4165-aa3c-9aecb9a9e495</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/3cd62c91-97a9-4b72-962d-2aeaf135ac5f</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/5a3d0c4f-99d0-4d3d-af3c-d8d5ac5e8eeb</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/904ed54b-211e-468a-a9c9-b1f8e3ab1dc1</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/1682f9e9-d0b5-4aaa-b70a-2e84b9d14097</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/13eb86af-072d-4d6b-a04f-1bf855cabbcc</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/cbbdbbe7-2f50-4723-854b-7274334e166d</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/a23e9e4b-b970-4c76-bebc-7e098cd27932</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/21f61e9c-ff30-4e98-8dce-a755bd27f55c</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/ad0ed3aa-53af-4258-b20e-71ca3948d924</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/603f68e0-547c-41f3-b059-f6991796f75b</loc>
-    <lastmod>2026-09-15</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/85e5badf-b16c-4ad7-ac32-01e899140c62</loc>
-    <lastmod>2026-09-13</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
-    <loc>https://kenyafundfinder.com/news/2a948d91-830f-4790-9f23-f12720bbf070</loc>
-    <lastmod>2026-09-14</lastmod>
-    <changefreq>weekly</changefreq>
-    <priority>0.5</priority>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/page/contact</loc>
     <lastmod>2026-07-30</lastmod>
     <changefreq>monthly</changefreq>
@@ -6596,271 +6636,271 @@
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/ABSA</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/BAMB</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/BAT</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/BKG</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/BOC</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/BRIT</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/CARB</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/CGEN</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/CIC</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/COOP</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/CRWN</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/CTUM</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/DTK</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/EABL</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/EQTY</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/HFCK</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/IMH</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/JUB</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/KAPC</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/KCB</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/KEGN</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/KNRE</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/KPC</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/KPLC</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/KQ</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/KUKZ</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/LBTY</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/LKL</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/NCBA</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/NMG</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/NSE20</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/PORT</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/SASN</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/SBIC</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/SCBK</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/SCOM</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/SGL</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/SLAM</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/SMER</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/TCL</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/TOTL</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/TPSE</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/UMME</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/UNGA</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>
   <url>
     <loc>https://kenyafundfinder.com/stocks/WTK</loc>
-    <lastmod>2026-11-02</lastmod>
+    <lastmod>2026-11-04</lastmod>
     <changefreq>daily</changefreq>
     <priority>0.8</priority>
   </url>

@@ -19,6 +19,7 @@ import {
   ArrowLeft,
   ArrowRight,
   Sparkles,
+  PiggyBank,
 } from "lucide-react";
 import {
   CommandDialog,
@@ -53,6 +54,7 @@ const MAX_RECENT = 6;
 const PAGES = [
   { label: "Overview", path: "/", icon: LayoutGrid, keywords: "home dashboard market overview" },
   { label: "Unit Trusts", path: "/funds", icon: TrendingUp, keywords: "funds money market mmf cma" },
+  { label: "Bank Deposits & SACCOs", path: "/savings", icon: PiggyBank, keywords: "savings fixed deposits saccos bank rates yield interest" },
   { label: "Stocks", path: "/stocks", icon: LineChart, keywords: "nse equities shares" },
   { label: "FX Rates", path: "/rates", icon: ArrowRightLeft, keywords: "currency forex exchange usd kes" },
   { label: "Commodities", path: "/commodities", icon: Coins, keywords: "gold oil silver" },

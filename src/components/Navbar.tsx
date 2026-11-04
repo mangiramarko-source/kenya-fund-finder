@@ -14,6 +14,7 @@ export const mobileNavLinks = [
   { to: "/", label: "Overview" },
   { to: "/stocks", label: "Stocks" },
   { to: "/funds", label: "MMF" },
+  { to: "/savings", label: "Savings" },
   { to: "/portfolio", label: "Portfolio" },
   { to: "/treasury", label: "T-Bills" },
   { to: "/rates", label: "FX Rates" },
@@ -63,6 +64,10 @@ export function getMobileNavTitleInfo(pathname: string): MobileNavTitleInfo {
     case "/funds":
     case "/money-market-funds-kenya":
       return { type: "title", title: "MMFs" };
+    case "/savings":
+    case "/fixed-deposits":
+    case "/saccos":
+      return { type: "title", title: "Savings & SACCOs" };
     case "/portfolio":
       return { type: "title", title: "My Assets" };
     case "/rates":

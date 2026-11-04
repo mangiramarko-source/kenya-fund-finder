@@ -343,6 +343,114 @@ export const UniversalCompareModal = () => {
     );
   };
 
+  const renderSavingsMetrics = (items: CompareItem[]) => {
+    const highestGross = Math.max(
+      ...items.map((i) => Number(i.data.grossYieldPct || i.data.interestOnDepositsPct) || 0)
+    );
+
+    const rows: Array<{
+      label: string;
+      sublabel?: string;
+      getValue: (i: CompareItem) => React.ReactNode;
+      isWinner?: (i: CompareItem) => boolean;
+      winnerBadge?: string;
+    }> = [
+      {
+        label: "Gross Annual Return",
+        sublabel: "Quoted yield or rebate rate",
+        getValue: (i) => {
+          const rate = Number(i.data.grossYieldPct || i.data.interestOnDepositsPct || 0);
+          return (
+            <span className="text-base font-black text-foreground tabular-nums">
+              {rate.toFixed(2)}%
+            </span>
+          );
+        },
+        isWinner: (i) => {
+          const rate = Number(i.data.grossYieldPct || i.data.interestOnDepositsPct || 0);
+          return rate === highestGross && highestGross > 0;
+        },
+        winnerBadge: "Highest Rate",
+      },
+      {
+        label: "Estimated Net Return",
+        sublabel: "After 15% Withholding Tax",
+        getValue: (i) => {
+          const net = Number(i.data.netYieldPct || i.data.netInterestPct || 0);
+          return (
+            <span className="font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums">
+              {net.toFixed(2)}%
+            </span>
+          );
+        },
+      },
+      {
+        label: "Minimum Requirement",
+        getValue: (i) => {
+          const min = Number(i.data.minDeposit || i.data.minMonthlyContribution || 0);
+          const curr = i.data.currency || "KES";
+          return (
+            <span className="font-semibold text-foreground tabular-nums">
+              {curr} {min.toLocaleString()}
+            </span>
+          );
+        },
+      },
+      {
+        label: "Tenor / Payout",
+        getValue: (i) => {
+          if (i.data.tenorMonths) {
+            return (
+              <span className="text-xs font-semibold text-foreground">
+                {i.data.tenorMonths} Months ({i.data.payoutFrequency || "maturity"})
+              </span>
+            );
+          }
+          return (
+            <span className="text-xs font-semibold text-foreground">
+              Annual AGM Payout
+            </span>
+          );
+        },
+      },
+      {
+        label: "Regulation & Security",
+        getValue: (i) => (
+          <span className="text-xs font-bold text-muted-foreground">
+            {i.data.sasraLicense ? "SASRA Regulated SACCO" : "CBK / KDIC Insured"}
+          </span>
+        ),
+      },
+    ];
+
+    return (
+      <div className="space-y-4">
+        {rows.map((row, idx) => (
+          <div key={idx} className="rounded-2xl border border-border/70 bg-card p-4 space-y-3 dark:bg-neutral-900/80">
+            <div>
+              <div className="text-xs font-bold text-foreground">{row.label}</div>
+              {row.sublabel && <div className="text-[11px] text-muted-foreground">{row.sublabel}</div>}
+            </div>
+            <div className={`grid ${getGridColsClass(items.length)} gap-2 pt-1 border-t border-border/40`}>
+              {items.map((item) => (
+                <div key={item.id} className="relative rounded-xl bg-muted/40 p-3 text-center">
+                  {row.isWinner?.(item) && row.winnerBadge && (
+                    <span className="absolute -top-2 left-1/2 -translate-x-1/2 inline-flex items-center gap-1 rounded-full bg-emerald-500/15 border border-emerald-500/30 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+                      <Sparkles className="h-2.5 w-2.5" />
+                      {row.winnerBadge}
+                    </span>
+                  )}
+                  {row.getValue(item)}
+                </div>
+              ))}
+            </div>
+          </div>
+        ))}
+      </div>
+    );
+  };
+
+
   return (
     <Sheet open={isOpen} onOpenChange={setIsOpen}>
       <SheetContent
@@ -358,7 +466,7 @@ export const UniversalCompareModal = () => {
               </div>
               <div>
                 <SheetTitle className="text-base font-bold text-foreground">
-                  Side-by-Side {category === "fund" ? "Fund" : category === "stock" ? "Stock" : category === "currency" ? "FX" : "Commodity"} Comparison
+                  Side-by-Side {category === "fund" ? "Fund" : category === "stock" ? "Stock" : category === "currency" ? "FX" : category === "commodity" ? "Commodity" : "Savings & SACCO"} Comparison
                 </SheetTitle>
                 <p className="text-xs text-muted-foreground">
                   Comparing {selected.length} peer {selected.length === 1 ? "asset" : "assets"}
@@ -418,6 +526,7 @@ export const UniversalCompareModal = () => {
           {category === "stock" && renderStockMetrics(selected)}
           {category === "currency" && renderCurrencyMetrics(selected)}
           {category === "commodity" && renderCommodityMetrics(selected)}
+          {category === "savings" && renderSavingsMetrics(selected)}
         </div>
       </SheetContent>
     </Sheet>

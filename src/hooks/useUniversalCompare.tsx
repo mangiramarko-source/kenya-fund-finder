@@ -1,7 +1,7 @@
 import { createContext, useContext, useState, useCallback, type ReactNode } from "react";
 import { toast } from "sonner";
 
-export type CompareAssetCategory = "fund" | "stock" | "currency" | "commodity";
+export type CompareAssetCategory = "fund" | "stock" | "currency" | "commodity" | "savings";
 
 export interface CompareItem {
   id: string;
@@ -33,7 +33,9 @@ const CATEGORY_NAMES: Record<CompareAssetCategory, string> = {
   stock: "Stocks",
   currency: "FX Rates",
   commodity: "Commodities",
+  savings: "Savings & SACCOs",
 };
+
 
 export const UniversalCompareProvider = ({ children }: { children: ReactNode }) => {
   const [selected, setSelected] = useState<CompareItem[]>([]);

@@ -146,6 +146,14 @@ const LegacyHomeHero = () => {
             divider
           />
           <HeroTile
+            to="/savings"
+            label="Bank Deposits & SACCOs"
+            sub="Guaranteed rates & rebates"
+            meta="Yields"
+            onClick={(e) => handleNavigate(e, "/savings", "Bank Deposits & SACCOs")}
+            divider
+          />
+          <HeroTile
             to="/stocks"
             label="Stocks, T-Bills & FX"
             sub="NSE markets"

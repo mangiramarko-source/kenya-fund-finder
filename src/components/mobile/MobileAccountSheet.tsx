@@ -18,6 +18,7 @@ import {
   ChevronRight,
   ExternalLink,
   Sparkles,
+  PiggyBank,
 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
@@ -187,6 +188,24 @@ export default function MobileAccountSheet({
                 <div>
                   <p className="text-xs font-semibold text-foreground">Price Alerts</p>
                   <p className="text-[11px] text-muted-foreground">Manage notifications for NSE stocks & rates</p>
+                </div>
+              </div>
+              <ChevronRight className="h-4 w-4 text-muted-foreground" />
+            </button>
+
+            {/* Bank Deposits & SACCOs link */}
+            <button
+              type="button"
+              onClick={() => handleNav("/savings")}
+              className="w-full flex items-center justify-between px-4 py-3 text-left hover:bg-muted/50 transition-colors"
+            >
+              <div className="flex items-center gap-3">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-muted text-foreground">
+                  <PiggyBank className="h-4 w-4 text-emerald-600 dark:text-emerald-400" />
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-foreground">Bank Deposits & SACCOs</p>
+                  <p className="text-[11px] text-muted-foreground">Fixed deposit rates & dividend yields</p>
                 </div>
               </div>
               <ChevronRight className="h-4 w-4 text-muted-foreground" />

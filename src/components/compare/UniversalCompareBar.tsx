@@ -7,6 +7,7 @@ const CATEGORY_TAGS: Record<CompareAssetCategory, string> = {
   stock: "Stocks",
   currency: "FX",
   commodity: "Commodities",
+  savings: "Savings",
 };
 
 export const UniversalCompareBar = () => {

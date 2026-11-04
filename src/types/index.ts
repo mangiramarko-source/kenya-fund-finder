@@ -76,3 +76,6 @@ export interface NewsArticle {
   read_time: string;
   is_featured: boolean;
 }
+
+export * from "./savings";
+

@@ -59,6 +59,7 @@ const OverviewPage = lazy(() => import("./pages/OverviewPage"));
 const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
 const MmfResearchPage = lazy(() => import("./pages/MmfResearchPage"));
 const MmfCalculatorPage = lazy(() => import("./pages/MmfCalculatorPage"));
+const SavingsPage = lazy(() => import("./pages/SavingsPage"));
 const ResearchArticlePage = lazy(() => import("./pages/ResearchArticlePage"));
 const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
 const AiLabPage = lazy(() => import("./pages/AiLabPage"));
@@ -123,6 +124,9 @@ const App = () => (
                   <Routes>
                     <Route path="/" element={<OverviewPage />} />
                     <Route path="/funds" element={<Index />} />
+                    <Route path="/savings" element={<SavingsPage />} />
+                    <Route path="/fixed-deposits" element={<Navigate to="/savings" replace />} />
+                    <Route path="/saccos" element={<Navigate to="/savings" replace />} />
                     <Route path="/money-market-funds-kenya" element={<MmfResearchPage />} />
                     <Route path="/mmf-calculator" element={<MmfCalculatorPage />} />
                     {RESEARCH_ARTICLES.map(article => <Route key={article.slug} path={articlePath(article)} element={<ResearchArticlePage />} />)}

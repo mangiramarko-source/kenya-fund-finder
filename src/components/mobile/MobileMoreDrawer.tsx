@@ -11,6 +11,7 @@ import {
   Shield,
   DollarSign,
   Gem,
+  PiggyBank,
   Star,
   Calculator,
   GraduationCap,
@@ -150,6 +151,14 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
                 title="T-Bills & Bonds"
                 subtitle="CBK auction rates"
                 active={location.pathname === "/treasury"}
+                onClick={close}
+              />
+              <DrawerTile
+                to="/savings"
+                icon={PiggyBank}
+                title="Deposits & SACCOs"
+                subtitle="Bank yields & rebates"
+                active={location.pathname === "/savings"}
                 onClick={close}
               />
               <DrawerTile

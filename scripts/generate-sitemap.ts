@@ -38,6 +38,7 @@ const staticEntries: SitemapEntry[] = [
   ...RESEARCH_ARTICLES.map(a => ({ path: articlePath(a), changefreq: "monthly" as const, priority: "0.8" })),
   { path: "/", changefreq: "daily", priority: "1.0" },
   { path: "/funds", lastmod: "2026-11-02", changefreq: "daily", priority: "1.0" },
+  { path: "/savings", changefreq: "daily", priority: "0.9" },
   { path: "/stocks", changefreq: "daily", priority: "1.0" },
   { path: "/compare", changefreq: "daily", priority: "0.9" },
   { path: "/rates", changefreq: "daily", priority: "0.8" },
