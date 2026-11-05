@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Landmark, Users, Calculator } from "lucide-react";
+import { Landmark, Users, Calculator, X } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -8,6 +8,14 @@ import {
   DialogTitle,
   DialogDescription,
 } from "@/components/ui/dialog";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetDescription,
+} from "@/components/ui/sheet";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { SavingsBenchmarkCalculator } from "@/components/savings/SavingsBenchmarkCalculator";
 import { FixedDepositTable } from "@/components/savings/FixedDepositTable";
 import { SaccoTable } from "@/components/savings/SaccoTable";
@@ -68,6 +76,7 @@ const SavingsPage = () => {
   const [saccos, setSaccos] = useState<SaccoRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [calcOpen, setCalcOpen] = useState(false);
+  const isMobile = useIsMobile();
 
   useEffect(() => {
     let mounted = true;
@@ -94,8 +103,8 @@ const SavingsPage = () => {
       {/* Semantic title for A11y & SEO */}
       <h1 className="sr-only">Bank Fixed Deposits & Regulated SACCO Rates in Kenya</h1>
 
-      {/* Description directly below top navigation */}
-      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+      {/* Description directly below top navigation (matches MMF typography) */}
+      <p className="text-sm text-muted-foreground">
         Compare KDIC bank fixed deposit rates and SASRA SACCO dividend yields.
       </p>
 
@@ -251,40 +260,83 @@ const SavingsPage = () => {
 
       <DisclaimerBlock />
 
-      {/* Floating Action Button (FAB) for Return Simulator */}
+      {/* Floating Action Button (FAB) for Return Simulator — positioned above MobileBottomNav on small screens */}
       <button
         type="button"
         onClick={() => setCalcOpen(true)}
         aria-label="Open Savings Return Calculator"
-        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-40 flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs md:text-sm font-bold border border-emerald-400/30 cursor-pointer"
+        className="fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-8 right-4 md:right-8 z-40 flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs md:text-sm font-bold border border-emerald-400/30 cursor-pointer"
       >
         <Calculator className="h-4 w-4 stroke-[2.5]" />
         <span>Compare Calculator</span>
       </button>
 
-      {/* Return & Benchmark Calculator Popup Dialog */}
-      <Dialog open={calcOpen} onOpenChange={setCalcOpen}>
-        <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-3xl max-h-[90vh] flex flex-col bg-background border-border/80">
-          <DialogHeader className="p-5 pb-3 border-b border-border/60 bg-muted/30">
-            <div className="flex items-center gap-2.5">
-              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
-                <Calculator className="h-4 w-4" />
+      {/* Return & Benchmark Calculator Popup (Bottom Sheet on Mobile, Dialog on Desktop) */}
+      {isMobile ? (
+        <Sheet open={calcOpen} onOpenChange={setCalcOpen}>
+          <SheetContent
+            side="bottom"
+            className="inset-x-0 bottom-0 flex max-h-[88dvh] flex-col rounded-t-[28px] border-x border-t border-border bg-background p-0 shadow-2xl [&>button]:hidden z-50"
+            aria-label="Cross-Asset Return & Tax Simulator"
+          >
+            {/* Grab handle indicator */}
+            <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-muted-foreground/30" />
+
+            {/* Header */}
+            <div className="flex items-center justify-between border-b border-border/80 px-5 py-3">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <Calculator className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <SheetTitle className="text-base font-bold text-foreground">
+                    Compare Calculator
+                  </SheetTitle>
+                  <SheetDescription className="text-[11px] text-muted-foreground mt-0.5">
+                    Simulate net take-home returns after 15% Withholding Tax
+                  </SheetDescription>
+                </div>
               </div>
-              <div className="text-left">
-                <DialogTitle className="text-lg font-black text-foreground">
-                  Cross-Asset Return & Tax Simulator
-                </DialogTitle>
-                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                  Simulate net take-home returns after Kenya's 15% Withholding Tax across MMF, T-Bills, Bank Fixed Deposits, and SACCOs
-                </DialogDescription>
-              </div>
+              <button
+                onClick={() => setCalcOpen(false)}
+                type="button"
+                aria-label="Close calculator"
+                className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer"
+              >
+                <X className="h-4 w-4 stroke-[2.5]" />
+              </button>
             </div>
-          </DialogHeader>
-          <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain">
-            <SavingsBenchmarkCalculator embedded />
-          </div>
-        </DialogContent>
-      </Dialog>
+
+            {/* Scrollable Calculator Body */}
+            <div className="flex-1 overflow-y-auto overscroll-contain p-4 pb-[max(1.5rem,env(safe-area-inset-bottom))]">
+              <SavingsBenchmarkCalculator embedded />
+            </div>
+          </SheetContent>
+        </Sheet>
+      ) : (
+        <Dialog open={calcOpen} onOpenChange={setCalcOpen}>
+          <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-3xl max-h-[90vh] flex flex-col bg-background border-border/80">
+            <DialogHeader className="p-5 pb-3 border-b border-border/60 bg-muted/30">
+              <div className="flex items-center gap-2.5">
+                <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                  <Calculator className="h-4 w-4" />
+                </div>
+                <div className="text-left">
+                  <DialogTitle className="text-lg font-black text-foreground">
+                    Cross-Asset Return & Tax Simulator
+                  </DialogTitle>
+                  <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                    Simulate net take-home returns after Kenya's 15% Withholding Tax across MMF, T-Bills, Bank Fixed Deposits, and SACCOs
+                  </DialogDescription>
+                </div>
+              </div>
+            </DialogHeader>
+            <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain">
+              <SavingsBenchmarkCalculator embedded />
+            </div>
+          </DialogContent>
+        </Dialog>
+      )}
     </div>
   );
 };
