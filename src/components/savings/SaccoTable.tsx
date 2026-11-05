@@ -28,7 +28,7 @@ export const SaccoTable = ({ saccos }: SaccoTableProps) => {
       if (sortKey === "assets") return b.totalAssetsKesBillions - a.totalAssetsKesBillions;
       return 0;
     });
-  }, [saccos, publicOnly, search, sortKey]);
+  }, [saccos, publicOnly, sortKey]);
 
   const handleToggleCompare = (s: SaccoRecord) => {
     if (isSelected(s.id)) {
@@ -124,7 +124,7 @@ export const SaccoTable = ({ saccos }: SaccoTableProps) => {
             {filteredAndSorted.length === 0 ? (
               <tr>
                 <td colSpan={7} className="py-8 text-center text-muted-foreground">
-                  No SACCOs match your selected search or filter.
+                  No SACCOs match your selected filter.
                 </td>
               </tr>
             ) : (
@@ -234,7 +234,7 @@ export const SaccoTable = ({ saccos }: SaccoTableProps) => {
       <div className="md:hidden space-y-2.5">
         {filteredAndSorted.length === 0 ? (
           <div className="py-8 text-center text-xs text-muted-foreground rounded-2xl border border-dashed border-border p-6">
-            No SACCOs match your selected search or filter.
+            No SACCOs match your selected filter.
           </div>
         ) : (
           filteredAndSorted.map((sacco) => {
