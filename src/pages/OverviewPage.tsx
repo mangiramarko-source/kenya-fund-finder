@@ -1356,13 +1356,29 @@ const OverviewPage = () => {
 
           <div className="space-y-0 md:space-y-4">
             {activeUpdateCategory === "Stocks" ? (
-              filteredFeedItems.length === 0 && !newsLoading && !newsCategoryLoading ? (
-                <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
-                  No stock-linked news is available yet.
-                </div>
+              filteredFeedItems.length === 0 ? (
+                newsLoading || newsCategoryLoading ? (
+                  <SocialFeed items={[]} loading />
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
+                    No stock-linked news is available yet.
+                  </div>
+                )
               ) : (
-                displayFeedItems.map((item, index) => (
+                displayFeedItems.map((item, index) => item.relatedStock ? (
                   <StockFeedCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onSelect={setSelectedFeedItem}
+                    interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
+                    onLikeToggle={toggleLike}
+                    onUpvoteToggle={toggleUpvote}
+                    onBookmarkToggle={toggleBookmark}
+                    onRecordView={recordView}
+                  />
+                ) : (
+                  <SocialFeedCard
                     key={item.id}
                     item={item}
                     index={index}
