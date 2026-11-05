@@ -232,7 +232,7 @@ const SavingsPage = () => {
             }`}
           >
             <Users className="h-3.5 w-3.5" />
-            <span>Regulated SACCOs</span>
+            <span>SACCOs</span>
             <span
               className={`text-[11px] px-1.5 py-0.5 rounded-full font-normal tabular-nums ${
                 activeTab === "saccos"
