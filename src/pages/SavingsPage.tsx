@@ -1,9 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Landmark, Users, ShieldCheck, PiggyBank, ArrowRight, Info, Sparkles, Calculator } from "lucide-react";
-import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
+import { Landmark, Users, Calculator } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -18,7 +15,7 @@ import { fetchBankFixedDeposits, fetchSaccoRecords } from "@/lib/savingsApi";
 import type { BankFixedDeposit, SaccoRecord } from "@/types/savings";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import DisclaimerBlock from "@/components/DisclaimerBlock";
-import { Link, useSearchParams } from "react-router-dom";
+import { useSearchParams } from "react-router-dom";
 
 const SavingsPage = () => {
   useDocumentTitle(
@@ -93,100 +90,135 @@ const SavingsPage = () => {
   }, []);
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 sm:px-6 py-6 sm:py-8 space-y-8 animate-in fade-in duration-300">
-      {/* Top Banner & Header */}
-      <div className="space-y-3">
-        <div className="flex flex-wrap items-center justify-between gap-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold">
-            <PiggyBank className="h-3.5 w-3.5" />
-            Kenya Fixed Savings & Co-operative Intelligence
+    <div className="container max-w-7xl mx-auto px-4 sm:px-6 py-5 md:py-6 space-y-5 animate-in fade-in duration-300">
+      {/* Semantic title for A11y & SEO */}
+      <h1 className="sr-only">Bank Fixed Deposits & Regulated SACCO Rates in Kenya</h1>
+
+      {/* Main Tabbed Comparison View — starts directly from the pills */}
+      <div className="space-y-4">
+        {/* Desktop toolbar: Pill navigation + Live status */}
+        <div className="hidden md:flex items-center justify-between gap-4 mb-4">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleTabChange("fixed-deposits")}
+              className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === "fixed-deposits"
+                  ? "border-foreground bg-foreground text-background shadow-sm"
+                  : "border-border bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              }`}
+            >
+              <Landmark className="h-4 w-4" />
+              <span>Bank Fixed Deposits</span>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-normal tabular-nums ${
+                  activeTab === "fixed-deposits"
+                    ? "bg-background/20 text-background"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {deposits.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange("saccos")}
+              className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === "saccos"
+                  ? "border-foreground bg-foreground text-background shadow-sm"
+                  : "border-border bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              }`}
+            >
+              <Users className="h-4 w-4" />
+              <span>Regulated SACCOs</span>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-normal tabular-nums ${
+                  activeTab === "saccos"
+                    ? "bg-background/20 text-background"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {saccos.length}
+              </span>
+            </button>
           </div>
+
+          <div className="flex items-center gap-3">
+            <SectionLiveStatus
+              section="funds"
+              fallbackDate={new Date()}
+              isLoading={loading}
+            />
+          </div>
+        </div>
+
+        {/* Mobile: Filter Pills Row (Exact Match to MMF FundGrid) */}
+        <div className="md:hidden mb-2.5 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <button
+            type="button"
+            onClick={() => handleTabChange("fixed-deposits")}
+            className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === "fixed-deposits"
+                ? "border-foreground bg-foreground text-background shadow-sm"
+                : "border border-border bg-card text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+            }`}
+          >
+            <Landmark className="h-3.5 w-3.5" />
+            <span>Bank Fixed Deposits</span>
+            <span
+              className={`text-[11px] px-1.5 py-0.5 rounded-full font-normal tabular-nums ${
+                activeTab === "fixed-deposits"
+                  ? "bg-background/20 text-background"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {deposits.length}
+            </span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("saccos")}
+            className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === "saccos"
+                ? "border-foreground bg-foreground text-background shadow-sm"
+                : "border border-border bg-card text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+            }`}
+          >
+            <Users className="h-3.5 w-3.5" />
+            <span>Regulated SACCOs</span>
+            <span
+              className={`text-[11px] px-1.5 py-0.5 rounded-full font-normal tabular-nums ${
+                activeTab === "saccos"
+                  ? "bg-background/20 text-background"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {saccos.length}
+            </span>
+          </button>
+        </div>
+
+        {/* Mobile Live Status (Between filter pills and table, matching MMF FundGrid) */}
+        <div className="md:hidden mb-3.5 flex items-center justify-between px-0.5">
           <SectionLiveStatus
-            sourceText="KDIC & SASRA Regulated"
-            status="live"
-            lastUpdate={new Date()}
+            section="funds"
+            fallbackDate={new Date()}
+            isLoading={loading}
+            hideLive
+            className="w-full justify-between"
           />
         </div>
 
-        <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-          <div>
-            <h1 className="text-2xl sm:text-4xl font-black tracking-tight text-foreground">
-              Bank Fixed Deposits & SACCOs
-            </h1>
-            <p className="text-sm sm:text-base text-muted-foreground mt-1 max-w-2xl">
-              Compare guaranteed interest rates across licensed commercial banks and member dividend yields across Kenya's premier SASRA-regulated DT-SACCOs.
-            </p>
-          </div>
-
-          <div className="flex items-center gap-2 text-xs">
-            <Link
-              to="/funds"
-              className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
-            >
-              Comparing Unit Trusts? View Money Market Funds
-              <ArrowRight className="h-3 w-3" />
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Main Tabbed Comparison View — starts directly from the pills */}
-      <div className="space-y-6">
-        <Tabs
-          value={activeTab}
-          onValueChange={handleTabChange}
-          className="w-full"
-        >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
-            <TabsList className="bg-muted/70 p-1 rounded-2xl h-11 border border-border/50 self-start sm:self-auto">
-              <TabsTrigger
-                value="fixed-deposits"
-                className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-              >
-                <Landmark className="h-4 w-4 mr-1.5" />
-                Bank Fixed Deposits
-                <Badge variant="secondary" className="ml-2 text-[10px] py-0 px-1.5 font-bold">
-                  {deposits.length}
-                </Badge>
-              </TabsTrigger>
-              <TabsTrigger
-                value="saccos"
-                className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
-              >
-                <Users className="h-4 w-4 mr-1.5" />
-                Regulated SACCOs
-                <Badge variant="secondary" className="ml-2 text-[10px] py-0 px-1.5 font-bold">
-                  {saccos.length}
-                </Badge>
-              </TabsTrigger>
-            </TabsList>
-
-            <div className="flex items-center gap-2.5">
-              <div className="text-xs text-muted-foreground hidden lg:flex items-center gap-1.5 mr-2">
-                <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                <span className="font-medium">15% WHT Applied</span>
-              </div>
-
-              <Button
-                type="button"
-                onClick={() => setCalcOpen(true)}
-                variant="outline"
-                className="h-10 px-3.5 rounded-2xl border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 font-bold text-xs sm:text-sm gap-2 shadow-xs transition-all"
-              >
-                <Calculator className="h-4 w-4" />
-                <span>Compare Calculator</span>
-              </Button>
-            </div>
-          </div>
-
-          <TabsContent value="fixed-deposits" className="mt-5 space-y-4">
+        {/* Selected View Table */}
+        <div className="space-y-4">
+          {activeTab === "fixed-deposits" ? (
             <FixedDepositTable deposits={deposits} />
-          </TabsContent>
-
-          <TabsContent value="saccos" className="mt-5 space-y-4">
+          ) : (
             <SaccoTable saccos={saccos} />
-          </TabsContent>
-        </Tabs>
+          )}
+        </div>
       </div>
 
       {/* Regulatory & Safety Guide Card */}
@@ -214,12 +246,12 @@ const SavingsPage = () => {
 
       <DisclaimerBlock />
 
-      {/* Mobile Sticky Floating Action Button (FAB) */}
+      {/* Floating Action Button (FAB) for Return Simulator */}
       <button
         type="button"
         onClick={() => setCalcOpen(true)}
         aria-label="Open Savings Return Calculator"
-        className="fixed bottom-20 right-4 z-40 md:hidden flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs font-bold border border-emerald-400/30"
+        className="fixed bottom-20 md:bottom-8 right-4 md:right-8 z-40 flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs md:text-sm font-bold border border-emerald-400/30 cursor-pointer"
       >
         <Calculator className="h-4 w-4 stroke-[2.5]" />
         <span>Compare Calculator</span>
