@@ -1,0 +1,1221 @@
+import { useEffect, useState, useMemo, useRef } from "react";
+import { useAuth } from "@/hooks/useAuth";
+import InlineDataGate from "@/components/auth/InlineDataGate";
+import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
+import { supabase } from "@/integrations/supabase/client";
+import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
+  Search,
+  Star,
+  SlidersHorizontal,
+  X,
+  GitCompareArrows,
+  Check,
+} from "lucide-react";
+import { useUniversalCompare } from "@/hooks/useUniversalCompare";
+import SectionLiveStatus from "@/components/SectionLiveStatus";
+import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
+import { Skeleton } from "@/components/ui/skeleton";
+import { Input } from "@/components/ui/input";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+  SheetClose,
+} from "@/components/ui/sheet";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  CartesianGrid,
+  Area,
+  ComposedChart,
+} from "recharts";
+import ActiveAlertsCard from "@/components/alerts/ActiveAlertsCard";
+import CommodityFavourites from "@/components/home/CommodityFavourites";
+import { useAssetWatchlist } from "@/hooks/useAssetWatchlist";
+import MarketPageLoader from "@/components/MarketPageLoader";
+import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
+import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
+
+export interface Commodity {
+  id: string;
+  name: string;
+  symbol: string;
+  price: number;
+  previous_price: number | null;
+  unit: string;
+  updated_at: string;
+}
+
+export interface PriceHistory {
+  snapshot_date: string;
+  price: number;
+}
+
+interface CommoditiesPageMemory {
+  commodities: Commodity[];
+  history: Record<string, PriceHistory[]>;
+}
+
+const ChangeIndicator = ({ current, previous }: { current: number; previous: number | null }) => {
+  if (previous == null) return <span className="text-muted-foreground text-sm">—</span>;
+  const diff = current - previous;
+  const pct = previous !== 0 ? ((diff / previous) * 100).toFixed(2) : "0.00";
+  if (diff > 0)
+    return (
+      <span className="inline-flex items-center gap-1 text-emerald-500 dark:text-emerald-400 text-sm font-semibold">
+        <TrendingUp className="h-3.5 w-3.5" /> +{pct}%
+      </span>
+    );
+  if (diff < 0)
+    return (
+      <span className="inline-flex items-center gap-1 text-destructive text-sm font-semibold">
+        <TrendingDown className="h-3.5 w-3.5" /> {pct}%
+      </span>
+    );
+  return (
+    <span className="inline-flex items-center gap-1 text-muted-foreground text-sm">
+      <Minus className="h-3.5 w-3.5" /> 0.00%
+    </span>
+  );
+};
+
+/* ─── Mini Sparkline ─── */
+const MiniSparkline = ({
+  data,
+  positive,
+  livePoint,
+}: {
+  data: PriceHistory[];
+  positive: boolean;
+  livePoint?: { snapshot_date: string; price: number };
+}) => {
+  const effectiveData = useMemo(() => {
+    if (!data?.length) return [];
+    const arr = [...data];
+    if (livePoint && arr.length > 0 && arr[arr.length - 1].snapshot_date < livePoint.snapshot_date) {
+      arr.push(livePoint);
+    }
+    return arr;
+  }, [data, livePoint]);
+
+  if (effectiveData.length < 2) return null;
+  const color = positive ? "hsl(152 60% 42%)" : "hsl(var(--destructive))";
+  const gradientId = `commodity-sparkline-fill-${positive ? "up" : "down"}`;
+
+  return (
+    <div className="w-[60px] h-[24px]">
+      <ResponsiveContainer width="100%" height="100%">
+        <ComposedChart data={effectiveData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
+          <defs>
+            <linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity={0.25} />
+              <stop offset="100%" stopColor={color} stopOpacity={0} />
+            </linearGradient>
+          </defs>
+          <YAxis hide domain={["dataMin", "dataMax"]} />
+          <Area type="monotone" dataKey="price" stroke="none" fill={`url(#${gradientId})`} isAnimationActive={false} />
+          <Line type="monotone" dataKey="price" stroke={color} strokeWidth={2} dot={false} isAnimationActive={false} />
+        </ComposedChart>
+      </ResponsiveContainer>
+    </div>
+  );
+};
+
+interface CommoditiesViewProps {
+  highlightItem?: string | null;
+}
+
+export function CommoditiesView({ highlightItem }: CommoditiesViewProps) {
+  const { user, loading: authLoading } = useAuth();
+  const isGated = !authLoading && !user && !isBotOrPrerender();
+  const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("commodity");
+  const [initialPageMemory] = useState(() => getMarketPageMemory<CommoditiesPageMemory>("commodities"));
+
+  const [commodities, setCommodities] = useState<Commodity[]>(initialPageMemory?.commodities ?? []);
+  const [loading, setLoading] = useState(() => !initialPageMemory);
+  const [initialHistoryReady, setInitialHistoryReady] = useState(() => Boolean(initialPageMemory));
+  const [search, setSearch] = useState("");
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [history, setHistory] = useState<Record<string, PriceHistory[]>>(initialPageMemory?.history ?? {});
+  const [historyLoading, setHistoryLoading] = useState<string | null>(null);
+  const [mobileMovement, setMobileMovement] = useState<"all" | "gainers" | "losers" | "unchanged">("all");
+  type SortKey = "default" | "price_desc" | "price_asc" | "change_desc" | "change_asc" | "name_asc" | "name_desc";
+  const [mobileSort, setMobileSort] = useState<SortKey>("default");
+  const [sortSheetOpen, setSortSheetOpen] = useState(false);
+  const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
+
+  const COMMODITY_SORT_OPTIONS: Array<{ key: SortKey; label: string }> = [
+    { key: "default", label: "Default order" },
+    { key: "price_desc", label: "Price: High → Low" },
+    { key: "price_asc", label: "Price: Low → High" },
+    { key: "change_desc", label: "Change %: High → Low" },
+    { key: "change_asc", label: "Change %: Low → High" },
+    { key: "name_asc", label: "Name: A → Z" },
+    { key: "name_desc", label: "Name: Z → A" },
+  ];
+  const currentSortLabel = COMMODITY_SORT_OPTIONS.find((o) => o.key === mobileSort)?.label || "All";
+
+  useEffect(() => {
+    const fetchData = async () => {
+      try {
+        const { data } = await supabase
+          .from("commodities_public" as any)
+          .select("id, name, symbol, price, previous_price, unit, updated_at")
+          .order("sort_order");
+        setCommodities(
+          ((data as any) || []).map((c: any) => ({
+            ...c,
+            price: Number(c.price),
+            previous_price: c.previous_price != null ? Number(c.previous_price) : null,
+          }))
+        );
+      } catch (error) {
+        console.error("Failed to load commodities", error);
+        setCommodities([]);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchData();
+
+    const ch = supabase
+      .channel("commodities-view-rt")
+      .on("postgres_changes", { event: "*", schema: "public", table: "commodities" }, () => {
+        fetchData();
+      })
+      .subscribe();
+    return () => {
+      supabase.removeChannel(ch);
+    };
+  }, []);
+
+  // Preload sparkline history for all commodities (last ~90 days)
+  useEffect(() => {
+    if (loading) return;
+    if (commodities.length === 0) {
+      setInitialHistoryReady(true);
+      return;
+    }
+    let cancelled = false;
+    const fetchAllHistory = async () => {
+      try {
+        const sinceIso = new Date(Date.now() - 95 * 24 * 60 * 60 * 1000)
+          .toISOString()
+          .slice(0, 10);
+        const { data } = await supabase
+          .from("commodity_price_history_public" as any)
+          .select("commodity_id, price, snapshot_date")
+          .gte("snapshot_date", sinceIso)
+          .order("snapshot_date", { ascending: false })
+          .limit(2000);
+        if (cancelled || !data) return;
+        const grouped: Record<string, PriceHistory[]> = {};
+        (data as any[]).forEach((d) => {
+          const cid = d.commodity_id;
+          if (!grouped[cid]) grouped[cid] = [];
+          grouped[cid].push({ snapshot_date: d.snapshot_date, price: Number(d.price) });
+        });
+        Object.keys(grouped).forEach((k) => {
+          grouped[k].sort((a, b) => a.snapshot_date.localeCompare(b.snapshot_date));
+        });
+        setHistory(grouped);
+      } catch (error) {
+        console.error("Failed to load commodity sparkline data", error);
+      } finally {
+        if (!cancelled) setInitialHistoryReady(true);
+      }
+    };
+    fetchAllHistory();
+    const intervalId = window.setInterval(() => void fetchAllHistory(), 5 * 60 * 1000);
+    return () => {
+      cancelled = true;
+      window.clearInterval(intervalId);
+    };
+  }, [commodities, loading]);
+
+  // Deep-link auto-scroll and highlight logic
+  useEffect(() => {
+    if (!highlightItem || loading) return;
+    const cleanTarget = highlightItem.toLowerCase().trim();
+
+    const timer = setTimeout(() => {
+      const selector = `[data-commodity-id="${cleanTarget}"], [data-commodity-symbol="${cleanTarget}"]`;
+      const targetEl = document.querySelector(selector);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        setActiveHighlight(cleanTarget);
+        const clearTimer = setTimeout(() => setActiveHighlight(null), 3000);
+        return () => clearTimeout(clearTimer);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [highlightItem, loading, commodities]);
+
+  const toggleExpand = async (commodityId: string) => {
+    if (expanded === commodityId) {
+      setExpanded(null);
+      return;
+    }
+    setExpanded(commodityId);
+    if (!history[commodityId]) {
+      setHistoryLoading(commodityId);
+      const { data } = await supabase
+        .from("commodity_price_history_public" as any)
+        .select("id, commodity_id, price, snapshot_date")
+        .eq("commodity_id", commodityId)
+        .order("snapshot_date", { ascending: false })
+        .limit(90);
+      const points = ((data as any) || [])
+        .map((d: any) => ({ snapshot_date: d.snapshot_date, price: Number(d.price) }))
+        .sort((a: PriceHistory, b: PriceHistory) => a.snapshot_date.localeCompare(b.snapshot_date));
+      setHistory((prev) => ({ ...prev, [commodityId]: points }));
+      setHistoryLoading(null);
+    }
+  };
+
+  const latestUpdate =
+    commodities.length > 0
+      ? toLastWeekday(commodities.reduce((l, c) => (c.updated_at > l ? c.updated_at : l), commodities[0].updated_at))
+      : null;
+
+  const gainers = useMemo(
+    () => commodities.filter((c) => c.previous_price != null && c.price > c.previous_price).length,
+    [commodities]
+  );
+  const losers = useMemo(
+    () => commodities.filter((c) => c.previous_price != null && c.price < c.previous_price).length,
+    [commodities]
+  );
+  const unchanged = useMemo(
+    () => commodities.filter((c) => c.previous_price == null || c.price === c.previous_price).length,
+    [commodities]
+  );
+
+  const isCommoditiesGated = isGated && commodities.length > 3;
+  const teaserCommodities = useMemo(() => (isCommoditiesGated ? commodities.slice(3, 5) : []), [isCommoditiesGated, commodities]);
+
+  const filtered = useMemo(() => {
+    let result = isCommoditiesGated ? commodities.slice(0, 3) : commodities;
+
+    if (mobileMovement === "gainers") {
+      result = result.filter((c) => c.previous_price != null && c.price > c.previous_price);
+    } else if (mobileMovement === "losers") {
+      result = result.filter((c) => c.previous_price != null && c.price < c.previous_price);
+    } else if (mobileMovement === "unchanged") {
+      result = result.filter((c) => c.previous_price == null || c.price === c.previous_price);
+    }
+
+    if (search.trim()) {
+      const q = search.toLowerCase();
+      result = result.filter((c) => c.name.toLowerCase().includes(q) || c.symbol.toLowerCase().includes(q));
+    }
+
+    if (mobileSort !== "default") {
+      const pct = (c: Commodity) =>
+        c.previous_price != null && c.previous_price !== 0
+          ? ((c.price - c.previous_price) / c.previous_price) * 100
+          : 0;
+      const arr = [...result];
+      switch (mobileSort) {
+        case "price_desc":
+          arr.sort((a, b) => b.price - a.price);
+          break;
+        case "price_asc":
+          arr.sort((a, b) => a.price - b.price);
+          break;
+        case "change_desc":
+          arr.sort((a, b) => pct(b) - pct(a));
+          break;
+        case "change_asc":
+          arr.sort((a, b) => pct(a) - pct(b));
+          break;
+        case "name_asc":
+          arr.sort((a, b) => a.name.localeCompare(b.name));
+          break;
+        case "name_desc":
+          arr.sort((a, b) => b.name.localeCompare(a.name));
+          break;
+      }
+      result = arr;
+    }
+
+    return result;
+  }, [commodities, isCommoditiesGated, search, mobileMovement, mobileSort]);
+
+  const displayCommodities = isCommoditiesGated ? filtered.slice(0, 3) : filtered;
+
+  const pageLoading = loading || !initialHistoryReady;
+  const showPageLoading = useMinimumLoadingDuration(pageLoading);
+
+  useEffect(() => {
+    if (!pageLoading) {
+      setMarketPageMemory<CommoditiesPageMemory>("commodities", { commodities, history });
+    }
+  }, [history, pageLoading, commodities]);
+
+  if (showPageLoading) {
+    return (
+      <div className="py-6">
+        <MarketPageLoader message="Loading latest commodity market data…" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4 animate-in fade-in duration-300">
+      <ActiveAlertsCard assetType="commodity" />
+
+      {user && favEntries.length > 0 && <CommodityFavourites entries={favEntries} commodities={commodities} />}
+
+      {/* Desktop Toolbar */}
+      <div className="hidden md:flex items-center justify-between gap-4 mb-4 mt-2">
+        <div className="flex items-center gap-3 pl-1">
+          <div className="inline-flex items-center gap-1">
+            {([
+              { key: "all", label: "All", count: commodities.length },
+              { key: "gainers", label: "Gainers", count: gainers },
+              { key: "losers", label: "Losers", count: losers },
+              { key: "unchanged", label: "Unchanged", count: unchanged },
+            ] as const).map((opt) => {
+              const active = mobileMovement === opt.key;
+              return (
+                <button
+                  key={opt.key}
+                  onClick={() => setMobileMovement(opt.key)}
+                  className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-colors whitespace-nowrap ${
+                    active
+                      ? "border-foreground bg-foreground text-background shadow-xs"
+                      : "border-border bg-card text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {opt.key === "gainers" && <TrendingUp className="h-3.5 w-3.5 text-emerald-500" />}
+                  {opt.key === "losers" && <TrendingDown className="h-3.5 w-3.5 text-destructive" />}
+                  {opt.key === "unchanged" && <Minus className="h-3.5 w-3.5" />}
+                  {opt.label}
+                  <span
+                    className={`font-normal tabular-nums ${active ? "text-background/70" : "text-muted-foreground"}`}
+                  >
+                    {opt.count}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="flex items-center gap-3 pr-1">
+          <div className="relative w-80 shrink-0">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+            <Input
+              placeholder="Search commodities (Gold, Brent, Tea...)"
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="h-11 rounded-full border-border bg-card pl-11 text-sm shadow-none placeholder:text-muted-foreground/60 focus-visible:ring-1"
+            />
+          </div>
+          <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} />
+        </div>
+      </div>
+
+      {/* Desktop Table */}
+      <div className="hidden md:block">
+        {loading ? (
+          <TableSkeleton />
+        ) : filtered.length === 0 ? (
+          <EmptyState label="commodities" />
+        ) : (
+          <div className="rounded-[22px] border border-border overflow-hidden bg-card shadow-xs">
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm table-fixed min-w-[900px] lg:min-w-0">
+                <colgroup>
+                  <col style={{ width: "3%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "15%" }} />
+                  <col style={{ width: "12%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "8%" }} />
+                  <col style={{ width: "10%" }} />
+                  <col style={{ width: "10%" }} />
+                  {user && <col style={{ width: "3%" }} />}
+                  <col style={{ width: "3%" }} />
+                </colgroup>
+                <thead>
+                  <tr className="bg-background text-[12px] text-muted-foreground border-b border-border/40">
+                    <th className="text-left pl-4 pr-2 py-3 font-normal">#</th>
+                    <th className="text-left px-3 py-3 font-normal">Symbol</th>
+                    <th className="text-left px-3 py-3 font-normal">Commodity</th>
+                    <th className="text-left px-3 py-3 font-normal">Price</th>
+                    <th className="text-left px-3 py-3 font-normal">Unit</th>
+                    <th className="text-left px-3 py-3 font-normal">Previous</th>
+                    <th className="text-left px-3 py-3 font-normal">Change</th>
+                    <th className="text-left px-3 py-3 font-normal">Change %</th>
+                    <th className="text-left px-3 py-3 font-normal">90D Trend</th>
+                    <th className="text-left px-3 py-3 font-normal">Updated</th>
+                    {user && <th className="text-center px-2 py-3 font-normal">★</th>}
+                    <th className="text-center px-2 py-3 font-normal"></th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-border/30">
+                  {displayCommodities.map((c, idx) => {
+                    const positive = c.previous_price != null ? c.price >= c.previous_price : true;
+                    const isRowHighlighted =
+                      Boolean(activeHighlight) &&
+                      (c.symbol.toLowerCase() === activeHighlight ||
+                        c.id.toLowerCase() === activeHighlight ||
+                        c.name.toLowerCase().includes(activeHighlight!));
+                    return (
+                      <CommodityTableRow
+                        key={c.id}
+                        index={idx + 1}
+                        commodity={c}
+                        history={history[c.id]}
+                        historyLoading={historyLoading === c.id}
+                        positive={positive}
+                        isExpanded={expanded === c.id}
+                        isHighlighted={isRowHighlighted}
+                        onToggle={() => toggleExpand(c.id)}
+                        isFavourite={user ? isFavourite(c.id) : undefined}
+                        onToggleFavourite={
+                          user ? () => toggleFavourite(c.id, `${c.symbol} - ${c.name}`) : undefined
+                        }
+                      />
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            {isCommoditiesGated && (
+              <InlineDataGate
+                category="commodities"
+                totalCount={commodities.length}
+                visibleCount={3}
+                title="Unlock Complete Commodity & Energy Pricing"
+                description="Showing top 3 commodities. Create a free account to track gold, crude oil, EPRA fuel prices, and historical charts."
+              />
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Mobile Toolbar & Search */}
+      <div className="md:hidden space-y-2.5">
+        <div className="relative">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            placeholder="Search commodities..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="h-10 rounded-full border-border bg-card pl-10 text-xs shadow-none placeholder:text-muted-foreground/60"
+          />
+        </div>
+
+        <div className="flex items-center justify-between gap-1 overflow-x-auto no-scrollbar py-0.5">
+          <div className="flex items-center gap-1.5 shrink-0">
+            {([
+              { key: "all", label: "All" },
+              { key: "gainers", label: "Gainers" },
+              { key: "losers", label: "Losers" },
+              { key: "unchanged", label: "Unchanged" },
+            ] as const).map((opt) => (
+              <button
+                key={opt.key}
+                type="button"
+                onClick={() => setMobileMovement(opt.key)}
+                className={`px-3 py-1.5 rounded-full text-xs font-semibold whitespace-nowrap transition-colors ${
+                  mobileMovement === opt.key
+                    ? "bg-foreground text-background shadow-xs"
+                    : "border border-border bg-card text-muted-foreground"
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          <Sheet open={sortSheetOpen} onOpenChange={setSortSheetOpen}>
+            <SheetTrigger asChild>
+              <button
+                type="button"
+                className="shrink-0 inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-semibold border border-border bg-card text-muted-foreground"
+              >
+                <SlidersHorizontal className="h-3 w-3" />
+                <span>{currentSortLabel}</span>
+              </button>
+            </SheetTrigger>
+            <SheetContent side="bottom" className="rounded-t-[20px] px-4 pb-6 pt-3">
+              <SheetHeader className="mb-3">
+                <SheetTitle className="text-sm font-bold">Sort Commodities</SheetTitle>
+              </SheetHeader>
+              <div className="space-y-1.5">
+                {COMMODITY_SORT_OPTIONS.map((opt) => {
+                  const active = mobileSort === opt.key;
+                  return (
+                    <button
+                      key={opt.key}
+                      type="button"
+                      onClick={() => {
+                        setMobileSort(opt.key);
+                        setSortSheetOpen(false);
+                      }}
+                      className={`w-full flex items-center justify-between px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-colors ${
+                        active ? "bg-emerald-600 text-white" : "bg-muted/40 hover:bg-muted text-foreground"
+                      }`}
+                    >
+                      <span>{opt.label}</span>
+                      {active && <Check className="h-3.5 w-3.5 text-white" />}
+                    </button>
+                  );
+                })}
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
+
+        {/* Mobile Live Status */}
+        <div className="flex items-center justify-between px-0.5">
+          <SectionLiveStatus section="commodities" fallbackDate={latestUpdate} isLoading={loading} className="w-full justify-between" />
+        </div>
+
+        {/* Mobile Cards */}
+        <div className="space-y-2.5">
+          {loading ? (
+            Array.from({ length: 4 }).map((_, i) => (
+              <div key={i} className="rounded-xl border border-border bg-card p-3.5">
+                <Skeleton className="h-5 w-20 mb-2" />
+                <Skeleton className="h-4 w-40 mb-3" />
+                <Skeleton className="h-10 rounded-lg" />
+              </div>
+            ))
+          ) : filtered.length === 0 ? (
+            <EmptyState label="commodities" />
+          ) : (
+            <>
+              {displayCommodities.map((c) => {
+                const positive = c.previous_price != null ? c.price >= c.previous_price : true;
+                const isCardHighlighted =
+                  Boolean(activeHighlight) &&
+                  (c.symbol.toLowerCase() === activeHighlight ||
+                    c.id.toLowerCase() === activeHighlight ||
+                    c.name.toLowerCase().includes(activeHighlight!));
+                return (
+                  <MobileCommodityCard
+                    key={c.id}
+                    commodity={c}
+                    history={history[c.id]}
+                    historyLoading={historyLoading === c.id}
+                    positive={positive}
+                    isExpanded={expanded === c.id}
+                    isHighlighted={isCardHighlighted}
+                    onToggle={() => toggleExpand(c.id)}
+                    isFavourite={user ? isFavourite(c.id) : undefined}
+                    onToggleFavourite={
+                      user ? () => toggleFavourite(c.id, `${c.symbol} - ${c.name}`) : undefined
+                    }
+                  />
+                );
+              })}
+
+              {isCommoditiesGated && (
+                <InlineDataGate
+                  category="commodities"
+                  totalCount={commodities.length}
+                  visibleCount={3}
+                  title="Unlock All Commodities"
+                  description="Showing top 3 commodities. Create a free account to track gold, crude oil, EPRA fuel prices, and historical charts."
+                />
+              )}
+            </>
+          )}
+        </div>
+      </div>
+
+      {/* Summary footer */}
+      <div className="flex items-center justify-between text-xs text-muted-foreground mt-4 px-1">
+        <span>
+          {isCommoditiesGated
+            ? `Showing ${displayCommodities.length} of ${commodities.length} commodities (preview)`
+            : `Showing ${filtered.length} of ${commodities.length} commodities`}
+        </span>
+      </div>
+
+      <div className="mt-4 rounded-lg bg-muted/40 border border-border/50 p-3">
+        <p className="text-[10px] leading-relaxed text-muted-foreground">
+          Commodity prices shown are indicative and sourced from global commodity exchanges and local auctions (including the Mombasa Tea Auction, Nairobi Coffee Exchange, and EPRA Kenya). This information is for educational purposes only.
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ─── Mobile Card ─── */
+const MobileCommodityCard = ({
+  commodity: c,
+  history,
+  historyLoading,
+  positive,
+  isExpanded,
+  isHighlighted,
+  onToggle,
+  isFavourite,
+  onToggleFavourite,
+}: {
+  commodity: Commodity;
+  history?: PriceHistory[];
+  historyLoading?: boolean;
+  positive: boolean;
+  isExpanded?: boolean;
+  isHighlighted?: boolean;
+  onToggle?: () => void;
+  isFavourite?: boolean;
+  onToggleFavourite?: () => void;
+}) => {
+  const { add, remove, isSelected } = useUniversalCompare();
+  const isCompared = isSelected(c.id);
+
+  const handleToggleCompare = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (isCompared) {
+      remove(c.id);
+    } else {
+      add({
+        id: c.id,
+        category: "commodity",
+        title: c.name,
+        subtitle: c.symbol,
+        data: c,
+      });
+    }
+  };
+
+  const change = c.previous_price != null ? c.price - c.previous_price : null;
+  const changePct =
+    c.previous_price != null && c.previous_price !== 0 ? (change! / c.previous_price) * 100 : null;
+
+  return (
+    <div
+      data-commodity-id={c.id.toLowerCase()}
+      data-commodity-symbol={c.symbol.toLowerCase()}
+      id={`commodity-card-${c.symbol.toLowerCase()}`}
+      className={`block rounded-[20px] border bg-slate-50/80 dark:bg-card p-4 shadow-xs transition-all overflow-hidden mb-3 ${
+        isHighlighted
+          ? "ring-2 ring-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15 transition-all duration-500 animate-pulse"
+          : isCompared
+          ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.04]"
+          : "border-border/80 hover:border-emerald-500/30"
+      }`}
+    >
+      <button type="button" onClick={onToggle} className="w-full text-left" aria-expanded={isExpanded}>
+        <div className="flex items-center justify-between gap-2">
+          <div className="min-w-0 flex-1">
+            <span className="font-extrabold text-foreground text-base tracking-tight">{c.symbol}</span>
+            <p className="text-xs text-muted-foreground truncate mt-0.5">{c.name}</p>
+          </div>
+
+          <div className="shrink-0 px-1">
+            <MiniSparkline
+              data={history || []}
+              positive={positive}
+              livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], price: c.price }}
+            />
+          </div>
+
+          <div className="text-right shrink-0">
+            <p className="font-extrabold text-foreground text-base tabular-nums">
+              {c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              <span className="text-muted-foreground ml-1 text-[10px]">{c.unit}</span>
+            </p>
+            <div className="mt-0.5 flex justify-end">
+              <ChangeIndicator current={c.price} previous={c.previous_price} />
+            </div>
+          </div>
+        </div>
+
+        <div className="border-t border-border/40 my-3" />
+
+        <div className="flex items-center justify-between text-xs">
+          <div className="flex items-center gap-3 text-muted-foreground">
+            <span>
+              Unit <strong className="font-semibold text-foreground ml-0.5">{c.unit}</strong>
+            </span>
+            <span>
+              Prev{" "}
+              <strong className="font-semibold text-foreground ml-0.5">
+                {c.previous_price != null
+                  ? c.previous_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  : "—"}
+              </strong>
+            </span>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={handleToggleCompare}
+              className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full text-xs font-bold transition-all active:scale-95 ${
+                isCompared
+                  ? "bg-emerald-600 text-white shadow-xs"
+                  : "border border-border/80 bg-muted/40 text-foreground hover:bg-muted"
+              }`}
+              aria-label={isCompared ? `Remove ${c.symbol} from compare` : `Compare ${c.symbol}`}
+            >
+              {isCompared ? (
+                <Check className="h-3.5 w-3.5" />
+              ) : (
+                <GitCompareArrows className="h-3.5 w-3.5 text-emerald-600 dark:text-emerald-400" />
+              )}
+              <span>{isCompared ? "Added" : "Compare"}</span>
+            </button>
+
+            {onToggleFavourite !== undefined && (
+              <span
+                role="button"
+                tabIndex={0}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  onToggleFavourite();
+                }}
+                className="p-1"
+                aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+              >
+                <Star
+                  className={`h-4 w-4 transition-colors ${
+                    isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/30 hover:text-yellow-500"
+                  }`}
+                />
+              </span>
+            )}
+
+            <span className="text-muted-foreground p-1">
+              {isExpanded ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}
+            </span>
+          </div>
+        </div>
+      </button>
+
+      {isExpanded && (
+        <div className="border-t border-border bg-muted/20 p-3 space-y-3 mt-3">
+          <div className="grid grid-cols-2 gap-2">
+            <DetailBox
+              label="Current Price"
+              value={c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+            />
+            <DetailBox
+              label="Previous Price"
+              value={
+                c.previous_price != null
+                  ? c.previous_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                  : "—"
+              }
+            />
+            <DetailBox
+              label="Change (Abs)"
+              value={change != null ? `${change > 0 ? "+" : ""}${change.toFixed(2)}` : "—"}
+              color={
+                change != null
+                  ? change > 0
+                    ? "text-emerald-500 dark:text-emerald-400"
+                    : change < 0
+                    ? "text-destructive"
+                    : undefined
+                  : undefined
+              }
+            />
+            <DetailBox
+              label="Change (%)"
+              value={changePct != null ? `${changePct > 0 ? "+" : ""}${changePct.toFixed(2)}%` : "—"}
+              color={
+                changePct != null
+                  ? changePct > 0
+                    ? "text-emerald-500 dark:text-emerald-400"
+                    : changePct < 0
+                    ? "text-destructive"
+                    : undefined
+                  : undefined
+              }
+            />
+          </div>
+
+          <div className="rounded-lg border border-border bg-card p-3">
+            <div className="flex items-center gap-2 mb-2">
+              <BarChart3 className="h-3.5 w-3.5 text-muted-foreground" />
+              <span className="text-[11px] font-semibold text-foreground">Price History (Last 90 Days)</span>
+            </div>
+            {historyLoading ? (
+              <div className="h-[180px] flex items-center justify-center">
+                <Skeleton className="h-full w-full rounded-lg" />
+              </div>
+            ) : !history || history.length === 0 ? (
+              <div className="h-[180px] flex items-center justify-center text-xs text-muted-foreground">
+                No historical data available yet
+              </div>
+            ) : (
+              <ResponsiveContainer width="100%" height={180}>
+                {(() => {
+                  const todayIso = new Date().toISOString().split("T")[0];
+                  const effectiveHistory = [...history];
+                  if (
+                    effectiveHistory.length > 0 &&
+                    effectiveHistory[effectiveHistory.length - 1].snapshot_date < todayIso
+                  ) {
+                    effectiveHistory.push({ snapshot_date: todayIso, price: c.price });
+                  }
+                  return (
+                    <LineChart data={effectiveHistory}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                      <XAxis
+                        dataKey="snapshot_date"
+                        tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                        tickFormatter={(v) => formatMarketDate(v, "en-KE", { month: "short", day: "numeric" })}
+                      />
+                      <YAxis
+                        domain={["auto", "auto"]}
+                        tick={{ fontSize: 9, fill: "hsl(var(--muted-foreground))" }}
+                        width={55}
+                        tickFormatter={(v) => v.toLocaleString()}
+                      />
+                      <Tooltip
+                        contentStyle={{
+                          backgroundColor: "hsl(var(--card))",
+                          border: "1px solid hsl(var(--border))",
+                          borderRadius: "8px",
+                          fontSize: "11px",
+                        }}
+                        itemStyle={{ color: "#10b981" }}
+                        labelFormatter={(v) =>
+                          formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })
+                        }
+                        formatter={(value: number) => [
+                          `${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}`,
+                          "Price",
+                        ]}
+                      />
+                      <Line
+                        type="monotone"
+                        dataKey="price"
+                        stroke="#10b981"
+                        strokeWidth={2}
+                        dot={false}
+                        activeDot={{ fill: "#10b981", stroke: "#10b981" }}
+                      />
+                    </LineChart>
+                  );
+                })()}
+              </ResponsiveContainer>
+            )}
+          </div>
+
+          <div className="flex items-center justify-between pt-1">
+            <p className="text-[10px] text-muted-foreground">Last updated: {formatMarketDateTime(c.updated_at)}</p>
+            <CreateAlertDialog
+              assetType="commodity"
+              assetId={c.id}
+              assetName={c.name}
+              currentPrice={c.price}
+              unit={c.unit}
+            />
+          </div>
+        </div>
+      )}
+    </div>
+  );
+};
+
+/* ─── Desktop Table Row ─── */
+const CommodityTableRow = ({
+  index,
+  commodity: c,
+  history,
+  historyLoading,
+  positive,
+  isExpanded,
+  isHighlighted,
+  onToggle,
+  isFavourite,
+  onToggleFavourite,
+}: {
+  index: number;
+  commodity: Commodity;
+  history?: PriceHistory[];
+  historyLoading?: boolean;
+  positive: boolean;
+  isExpanded: boolean;
+  isHighlighted?: boolean;
+  onToggle: () => void;
+  isFavourite?: boolean;
+  onToggleFavourite?: () => void;
+}) => {
+  const change = c.previous_price != null ? c.price - c.previous_price : null;
+  const changePct =
+    c.previous_price != null && c.previous_price !== 0 ? (change! / c.previous_price) * 100 : null;
+
+  const updatedShort = toLastWeekday(c.updated_at);
+
+  return (
+    <>
+      <tr
+        data-commodity-id={c.id.toLowerCase()}
+        data-commodity-symbol={c.symbol.toLowerCase()}
+        id={`commodity-row-${c.symbol.toLowerCase()}`}
+        onClick={onToggle}
+        className={`hover:bg-muted/40 transition-colors cursor-pointer ${
+          isHighlighted
+            ? "ring-2 ring-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15 duration-500 animate-pulse"
+            : isExpanded
+            ? "bg-muted/30"
+            : ""
+        }`}
+      >
+        <td className="pl-4 pr-2 py-4 text-xs text-muted-foreground">{index}</td>
+        <td className="px-3 py-4 font-mono font-bold text-foreground text-sm whitespace-nowrap">{c.symbol}</td>
+        <td className="px-3 py-4">
+          <span className="font-semibold text-foreground text-sm">{c.name}</span>
+        </td>
+        <td className="px-3 py-4 tabular-nums whitespace-nowrap">
+          <span className="font-bold text-foreground text-sm">
+            {c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+          </span>
+        </td>
+        <td className="px-3 py-4 whitespace-nowrap text-sm text-muted-foreground">{c.unit}</td>
+        <td className="px-3 py-4 tabular-nums whitespace-nowrap text-sm text-muted-foreground">
+          {c.previous_price != null
+            ? c.previous_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+            : "—"}
+        </td>
+        <td className="px-3 py-4 tabular-nums whitespace-nowrap text-sm">
+          {change == null ? (
+            <span className="text-muted-foreground">—</span>
+          ) : change > 0 ? (
+            <span className="text-emerald-500 dark:text-emerald-400 font-semibold">+{change.toFixed(2)}</span>
+          ) : change < 0 ? (
+            <span className="text-destructive font-semibold">{change.toFixed(2)}</span>
+          ) : (
+            <span className="text-muted-foreground">0.00</span>
+          )}
+        </td>
+        <td className="px-3 py-4">
+          <ChangeIndicator current={c.price} previous={c.previous_price} />
+        </td>
+        <td className="px-3 py-4">
+          {history && history.length >= 2 ? (
+            <MiniSparkline
+              data={history}
+              positive={positive}
+              livePoint={{ snapshot_date: new Date().toISOString().split("T")[0], price: c.price }}
+            />
+          ) : (
+            <span className="text-xs text-muted-foreground">—</span>
+          )}
+        </td>
+        <td className="px-3 py-4 text-sm text-muted-foreground whitespace-nowrap">{updatedShort}</td>
+        {onToggleFavourite !== undefined && (
+          <td className="px-2 py-4 text-center">
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onToggleFavourite();
+              }}
+              className="p-1 rounded-md hover:bg-muted transition-colors"
+              aria-label={isFavourite ? "Remove from watchlist" : "Add to watchlist"}
+            >
+              <Star
+                className={`h-4 w-4 transition-colors ${
+                  isFavourite ? "text-yellow-500 fill-yellow-500" : "text-muted-foreground/40 hover:text-yellow-500"
+                }`}
+              />
+            </button>
+          </td>
+        )}
+        <td className="px-2 py-4 text-center">
+          {isExpanded ? <ChevronUp className="h-4 w-4 text-muted-foreground" /> : <ChevronDown className="h-4 w-4 text-muted-foreground" />}
+        </td>
+      </tr>
+      {isExpanded && (
+        <tr className="border-t border-border bg-muted/20">
+          <td colSpan={onToggleFavourite !== undefined ? 12 : 11} className="p-4">
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+              <DetailBox
+                label="Current Price"
+                value={`${c.price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}`}
+              />
+              <DetailBox
+                label="Previous Price"
+                value={
+                  c.previous_price != null
+                    ? `${c.previous_price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}`
+                    : "—"
+                }
+              />
+              <DetailBox
+                label="Change (Abs)"
+                value={change != null ? `${change > 0 ? "+" : ""}${change.toFixed(2)}` : "—"}
+                color={
+                  change != null
+                    ? change > 0
+                      ? "text-emerald-500 dark:text-emerald-400"
+                      : change < 0
+                      ? "text-destructive"
+                      : undefined
+                    : undefined
+                }
+              />
+              <DetailBox
+                label="Change (%)"
+                value={changePct != null ? `${changePct > 0 ? "+" : ""}${changePct.toFixed(2)}%` : "—"}
+                color={
+                  changePct != null
+                    ? changePct > 0
+                      ? "text-emerald-500 dark:text-emerald-400"
+                      : changePct < 0
+                      ? "text-destructive"
+                      : undefined
+                    : undefined
+                }
+              />
+            </div>
+
+            <div className="rounded-lg border border-border bg-card p-3">
+              <div className="flex items-center gap-2 mb-3">
+                <BarChart3 className="h-4 w-4 text-muted-foreground" />
+                <span className="text-xs font-semibold text-foreground">Price History (Last 90 Days)</span>
+              </div>
+              {historyLoading ? (
+                <div className="h-[200px] flex items-center justify-center">
+                  <Skeleton className="h-full w-full rounded-lg" />
+                </div>
+              ) : !history || history.length === 0 ? (
+                <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">
+                  No historical data available yet
+                </div>
+              ) : (
+                <ResponsiveContainer width="100%" height={200}>
+                  {(() => {
+                    const todayIso = new Date().toISOString().split("T")[0];
+                    const effectiveHistory = [...history];
+                    if (
+                      effectiveHistory.length > 0 &&
+                      effectiveHistory[effectiveHistory.length - 1].snapshot_date < todayIso
+                    ) {
+                      effectiveHistory.push({ snapshot_date: todayIso, price: c.price });
+                    }
+                    return (
+                      <LineChart data={effectiveHistory}>
+                        <CartesianGrid strokeDasharray="3 3" stroke="hsl(var(--border))" />
+                        <XAxis
+                          dataKey="snapshot_date"
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          tickFormatter={(v) => formatMarketDate(v, "en-KE", { month: "short", day: "numeric" })}
+                        />
+                        <YAxis
+                          domain={["auto", "auto"]}
+                          tick={{ fontSize: 10, fill: "hsl(var(--muted-foreground))" }}
+                          width={65}
+                          tickFormatter={(v) => v.toLocaleString()}
+                        />
+                        <Tooltip
+                          contentStyle={{
+                            backgroundColor: "hsl(var(--card))",
+                            border: "1px solid hsl(var(--border))",
+                            borderRadius: "8px",
+                            fontSize: "12px",
+                          }}
+                          itemStyle={{ color: "#10b981" }}
+                          labelFormatter={(v) =>
+                            formatMarketDate(v, "en-KE", { month: "long", day: "numeric", year: "numeric" })
+                          }
+                          formatter={(value: number) => [
+                            `${value.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })} ${c.unit}`,
+                            "Price",
+                          ]}
+                        />
+                        <Line
+                          type="monotone"
+                          dataKey="price"
+                          stroke="#10b981"
+                          strokeWidth={2}
+                          dot={false}
+                          activeDot={{ fill: "#10b981", stroke: "#10b981" }}
+                        />
+                      </LineChart>
+                    );
+                  })()}
+                </ResponsiveContainer>
+              )}
+            </div>
+
+            <div className="flex items-center justify-between mt-2">
+              <p className="text-[10px] text-muted-foreground">Last updated: {formatMarketDateTime(c.updated_at)}</p>
+              <CreateAlertDialog
+                assetType="commodity"
+                assetId={c.id}
+                assetName={c.name}
+                currentPrice={c.price}
+                unit={c.unit}
+              />
+            </div>
+          </td>
+        </tr>
+      )}
+    </>
+  );
+};
+
+const DetailBox = ({ label, value, color }: { label: string; value: string; color?: string }) => (
+  <div className="bg-muted/40 rounded-lg px-3 py-2">
+    <p className="text-[10px] text-muted-foreground mb-0.5">{label}</p>
+    <p className={`font-semibold text-sm tabular-nums ${color || "text-foreground"}`}>{value}</p>
+  </div>
+);
+
+const TableSkeleton = () => (
+  <div className="rounded-xl border border-border overflow-hidden bg-card">
+    <div className="bg-muted/60 px-4 py-3">
+      <div className="flex gap-4">
+        <Skeleton className="h-4 w-8" />
+        <Skeleton className="h-4 w-32" />
+        <Skeleton className="h-4 w-24 ml-auto" />
+        <Skeleton className="h-4 w-20" />
+      </div>
+    </div>
+    {Array.from({ length: 6 }).map((_, i) => (
+      <div key={i} className="flex items-center gap-4 px-4 py-3.5 border-t border-border">
+        <Skeleton className="h-4 w-5" />
+        <div className="flex-1">
+          <Skeleton className="h-4 w-40 mb-1.5" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+        <Skeleton className="h-5 w-16" />
+        <Skeleton className="h-4 w-14" />
+      </div>
+    ))}
+  </div>
+);
+
+const EmptyState = ({ label }: { label: string }) => (
+  <div className="rounded-xl border border-border bg-card text-center py-14">
+    <div className="flex flex-col items-center gap-3">
+      <div className="w-12 h-12 rounded-full bg-muted flex items-center justify-center">
+        <span className="text-2xl">📊</span>
+      </div>
+      <p className="text-sm text-muted-foreground font-medium">No {label} available</p>
+    </div>
+  </div>
+);

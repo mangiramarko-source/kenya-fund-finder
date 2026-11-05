@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Landmark, Users, Calculator, X } from "lucide-react";
+import { Landmark, Users, Calculator, X, ShieldCheck } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -19,52 +19,61 @@ import { useIsMobile } from "@/hooks/use-mobile";
 import { SavingsBenchmarkCalculator } from "@/components/savings/SavingsBenchmarkCalculator";
 import { FixedDepositTable } from "@/components/savings/FixedDepositTable";
 import { SaccoTable } from "@/components/savings/SaccoTable";
+import { TreasurySavingsTable } from "@/components/savings/TreasurySavingsTable";
 import { fetchBankFixedDeposits, fetchSaccoRecords } from "@/lib/savingsApi";
 import type { BankFixedDeposit, SaccoRecord } from "@/types/savings";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import DisclaimerBlock from "@/components/DisclaimerBlock";
 import { useSearchParams } from "react-router-dom";
 
+type SavingsTab = "fixed-deposits" | "saccos" | "tbills";
+
 const SavingsPage = () => {
   useDocumentTitle(
-    "Bank Fixed Deposits & SACCO Rates in Kenya (2026) – Compare Net Returns",
-    "Compare fixed deposit rates across Kenyan commercial banks (Tier 1 & Tier 2) and dividend yields across top SASRA-regulated SACCOs with net returns after 15% Withholding Tax.",
+    "Bank Fixed Deposits, SACCOs & T-Bills in Kenya (2026) – Compare Net Returns",
+    "Compare guaranteed fixed deposit rates from KDIC banks, annual member dividends from SASRA SACCOs, and CBK Treasury Bill benchmark yields after tax.",
     {
-      title: "Bank Fixed Deposits & SACCO Rates in Kenya – Compare Net Returns",
-      description: "Compare fixed deposit rates across Kenyan commercial banks and SASRA SACCO dividend yields after tax. Updated for 2026.",
+      title: "Bank Fixed Deposits, SACCOs & T-Bills in Kenya – Compare Net Returns",
+      description: "Compare fixed deposit rates, SACCO dividend yields, and Central Bank Treasury Bill yields after tax. Updated for 2026.",
     }
   );
 
   useJsonLd({
     "@context": "https://schema.org",
     "@type": "CollectionPage",
-    name: "Bank Fixed Deposits & SACCO Rates in Kenya",
-    description: "Compare commercial bank fixed deposit rates and SASRA-regulated SACCO dividend yields in Kenya.",
+    name: "Bank Fixed Deposits, Regulated SACCOs & T-Bills in Kenya",
+    description: "Compare commercial bank fixed deposits, SASRA SACCO dividends, and CBK Treasury Bills in Kenya.",
     url: "https://kenyafundfinder.com/savings",
   });
 
   const [searchParams, setSearchParams] = useSearchParams();
   const tabParam = searchParams.get("tab");
-  const [activeTab, setActiveTab] = useState<"fixed-deposits" | "saccos">(
-    tabParam === "saccos" ? "saccos" : "fixed-deposits"
-  );
+  const [activeTab, setActiveTab] = useState<SavingsTab>(() => {
+    if (tabParam === "saccos") return "saccos";
+    if (tabParam === "tbills" || tabParam === "t-bills" || tabParam === "treasury") return "tbills";
+    return "fixed-deposits";
+  });
 
   useEffect(() => {
-    if (tabParam === "saccos" || tabParam === "fixed-deposits") {
-      setActiveTab(tabParam);
+    if (tabParam === "saccos") {
+      setActiveTab("saccos");
+    } else if (tabParam === "tbills" || tabParam === "t-bills" || tabParam === "treasury") {
+      setActiveTab("tbills");
+    } else if (tabParam === "fixed-deposits") {
+      setActiveTab("fixed-deposits");
     }
   }, [tabParam]);
 
   const handleTabChange = (val: string) => {
-    const nextTab = val as "fixed-deposits" | "saccos";
+    const nextTab = val as SavingsTab;
     setActiveTab(nextTab);
     setSearchParams(
       (prev) => {
         const next = new URLSearchParams(prev);
-        if (nextTab === "saccos") {
-          next.set("tab", "saccos");
-        } else {
+        if (nextTab === "fixed-deposits") {
           next.delete("tab");
+        } else {
+          next.set("tab", nextTab);
         }
         return next;
       },
@@ -105,7 +114,7 @@ const SavingsPage = () => {
 
       {/* Description directly below top navigation (matches MMF typography) */}
       <p className="text-sm text-muted-foreground !mt-0">
-        Compare KDIC bank fixed deposit rates and SASRA SACCO dividend yields.
+        Compare guaranteed KDIC bank fixed deposit rates, SASRA SACCO dividends, and Central Bank Treasury Bills.
       </p>
 
       {/* Main Tabbed Comparison View — starts directly from the pills */}
@@ -154,6 +163,28 @@ const SavingsPage = () => {
                 }`}
               >
                 {saccos.length}
+              </span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleTabChange("tbills")}
+              className={`inline-flex h-11 items-center gap-2 rounded-full border px-5 text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                activeTab === "tbills"
+                  ? "border-foreground bg-foreground text-background shadow-sm"
+                  : "border-border bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              }`}
+            >
+              <ShieldCheck className="h-4 w-4" />
+              <span>Treasury Bills & Bonds</span>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-normal tabular-nums ${
+                  activeTab === "tbills"
+                    ? "bg-background/20 text-background"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                CBK
               </span>
             </button>
           </div>
@@ -212,6 +243,28 @@ const SavingsPage = () => {
               {saccos.length}
             </span>
           </button>
+
+          <button
+            type="button"
+            onClick={() => handleTabChange("tbills")}
+            className={`shrink-0 inline-flex items-center gap-1.5 px-4 py-2 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === "tbills"
+                ? "border-foreground bg-foreground text-background shadow-sm"
+                : "border border-border bg-card text-muted-foreground hover:bg-muted/30 hover:text-foreground"
+            }`}
+          >
+            <ShieldCheck className="h-3.5 w-3.5" />
+            <span>T-Bills & Bonds</span>
+            <span
+              className={`text-[11px] px-1.5 py-0.5 rounded-full font-normal tabular-nums ${
+                activeTab === "tbills"
+                  ? "bg-background/20 text-background"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              CBK
+            </span>
+          </button>
         </div>
 
         {/* Mobile Live Status (Between filter pills and table, matching MMF FundGrid) */}
@@ -229,8 +282,10 @@ const SavingsPage = () => {
         <div className="space-y-4">
           {activeTab === "fixed-deposits" ? (
             <FixedDepositTable deposits={deposits} />
-          ) : (
+          ) : activeTab === "saccos" ? (
             <SaccoTable saccos={saccos} />
+          ) : (
+            <TreasurySavingsTable />
           )}
         </div>
       </div>

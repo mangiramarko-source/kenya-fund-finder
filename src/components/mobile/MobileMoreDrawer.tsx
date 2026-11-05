@@ -146,11 +146,11 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
                 onClick={close}
               />
               <DrawerTile
-                to="/treasury"
+                to="/savings?tab=tbills"
                 icon={Shield}
                 title="T-Bills & Bonds"
                 subtitle="CBK auction rates"
-                active={location.pathname === "/treasury"}
+                active={location.pathname === "/treasury" || location.search.includes("tab=tbills")}
                 onClick={close}
               />
               <DrawerTile
@@ -158,23 +158,23 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
                 icon={PiggyBank}
                 title="Deposits & SACCOs"
                 subtitle="Bank yields & rebates"
-                active={location.pathname === "/savings"}
+                active={location.pathname === "/savings" && !location.search.includes("tab=tbills")}
                 onClick={close}
               />
               <DrawerTile
-                to="/rates"
+                to="/rates?tab=fx"
                 icon={DollarSign}
                 title="FX Rates"
                 subtitle="USDKES, EUR, GBP"
-                active={location.pathname === "/rates"}
+                active={location.pathname === "/rates" && !location.search.includes("tab=commodities")}
                 onClick={close}
               />
               <DrawerTile
-                to="/commodities"
+                to="/rates?tab=commodities"
                 icon={Gem}
                 title="Commodities"
                 subtitle="Gold, Oil, Tea"
-                active={location.pathname === "/commodities"}
+                active={location.pathname === "/commodities" || location.search.includes("tab=commodities")}
                 onClick={close}
               />
             </div>

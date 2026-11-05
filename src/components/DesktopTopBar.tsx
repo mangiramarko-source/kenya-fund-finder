@@ -80,26 +80,28 @@ const DesktopTopBar = () => {
       return location.pathname.startsWith("/funds") || /^\/compare\/[^/]+\/?$/.test(location.pathname);
     }
     if (path === "/savings") {
-      return location.pathname.startsWith("/savings") || location.pathname.startsWith("/fixed-deposits") || location.pathname.startsWith("/saccos");
+      return (
+        location.pathname.startsWith("/savings") ||
+        location.pathname.startsWith("/fixed-deposits") ||
+        location.pathname.startsWith("/saccos") ||
+        location.pathname.startsWith("/treasury") ||
+        location.pathname.startsWith("/tbills") ||
+        location.pathname.startsWith("/bonds")
+      );
     }
-    if (path === "/treasury") {
-      return location.pathname.startsWith("/treasury") || location.pathname.startsWith("/tbills") || location.pathname.startsWith("/bonds");
+    if (path === "/rates") {
+      return location.pathname.startsWith("/rates") || location.pathname.startsWith("/commodities");
     }
     return location.pathname.startsWith(path);
   };
 
   const NAV_LINKS = [
     { to: "/", label: "Overview" },
-    { to: "/portfolio", label: "Portfolio" },
-    { to: "/watchlist", label: "Watchlist" },
-    { to: "/ai-lab", label: "AI Lab" },
     { to: "/stocks", label: "Stocks" },
-    { to: "/funds", label: "MMF" },
-    { to: "/savings", label: "Savings" },
-    { to: "/treasury", label: "T-Bills" },
-    { to: "/rates", label: "FX Rates" },
-    { to: "/commodities", label: "Commodities" },
-    { to: "/calculator", label: "Calculator" },
+    { to: "/funds", label: "MMFs" },
+    { to: "/savings", label: "Banking" },
+    { to: "/rates", label: "FX & Commodities" },
+    { to: "/portfolio", label: "Portfolio" },
   ];
 
   return (

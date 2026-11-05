@@ -32,17 +32,27 @@ function shouldShowMobileAiLabFab(pathname: string): boolean {
 const Layout = ({ children }: { children: React.ReactNode }) => {
   usePageView();
   const { pathname } = useLocation();
-  const isHomeOrNews = pathname === "/" || pathname === "/news";
-  const showDesktopTicker = isHomeOrNews || pathname === "/stocks";
-  const showMobileTicker = isHomeOrNews;
-  // Immersive mobile view for news article pages: hide mobile navbar & footer
+  const isMarketPage = [
+    "/",
+    "/overview",
+    "/news",
+    "/stocks",
+    "/funds",
+    "/money-market-funds-kenya",
+    "/savings",
+    "/fixed-deposits",
+    "/saccos",
+    "/rates",
+    "/commodities",
+    "/treasury",
+  ].some((route) => pathname === route || pathname.startsWith(`${route}/`));
   const isNewsArticle = /^\/news\/[^/]+/.test(pathname);
   const isAuthPage = pathname === "/auth";
   const isMobilePreview = pathname === "/mobile-preview" || pathname.startsWith("/preview/");
-  // AI Lab uses its own floating composer — hide global footer entirely
   const isAiLab = pathname === "/ai-lab" || pathname.startsWith("/ai-lab/");
   const isOverview = pathname === "/" || pathname === "/overview";
   const showMobileAiLabFab = shouldShowMobileAiLabFab(pathname);
+  const showTicker = isMarketPage && !isNewsArticle && !isAiLab && !isAuthPage && !isMobilePreview;
 
   if (isMobilePreview) {
     return (
@@ -71,17 +81,13 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             <Navbar />
           </div>
         )}
-        {showDesktopTicker && (
-          <div
-            className={`fixed inset-x-0 z-40 w-full top-safe-nav md:top-14 ${
-              showMobileTicker ? "block" : "hidden md:block"
-            }`}
-          >
+        {showTicker && (
+          <div className="fixed inset-x-0 z-40 w-full top-safe-nav md:top-14 block">
             <CurrencyTicker />
           </div>
         )}
-        {showDesktopTicker && (
-          <div className={`${showMobileTicker ? "h-9" : "hidden md:block h-9"} shrink-0`} aria-hidden="true" />
+        {showTicker && (
+          <div className="h-9 shrink-0" aria-hidden="true" />
         )}
 
         <main

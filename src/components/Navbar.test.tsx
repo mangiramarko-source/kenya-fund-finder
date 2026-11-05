@@ -132,12 +132,10 @@ describe("Mobile & Desktop Navigation Verification", () => {
 
     expect(screen.getByText("Overview")).toBeInTheDocument();
     expect(screen.getByText("Stocks")).toBeInTheDocument();
-    expect(screen.getByText("MMF")).toBeInTheDocument();
-    expect(screen.getByText("T-Bills")).toBeInTheDocument();
-    expect(screen.getByText("FX Rates")).toBeInTheDocument();
-    expect(screen.getByText("Commodities")).toBeInTheDocument();
+    expect(screen.getByText("MMFs")).toBeInTheDocument();
+    expect(screen.getByText("Banking")).toBeInTheDocument();
+    expect(screen.getByText("FX & Commodities")).toBeInTheDocument();
     expect(screen.getByText("Portfolio")).toBeInTheDocument();
-    expect(screen.getByText("Calculator")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /open account menu/i }));
     const drawer = screen.getByRole("dialog", { name: "User" });

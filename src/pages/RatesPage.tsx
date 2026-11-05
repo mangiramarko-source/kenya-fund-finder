@@ -1,11 +1,27 @@
 import { useEffect, useState, useMemo } from "react";
+import { useSearchParams, useLocation, useNavigate } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import InlineDataGate from "@/components/auth/InlineDataGate";
 import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { supabase } from "@/integrations/supabase/client";
 import { formatMarketDate, formatMarketDateTime, toLastWeekday } from "@/lib/utils";
-import { TrendingUp, TrendingDown, Minus, ChevronDown, ChevronUp, BarChart3, Search, Star, SlidersHorizontal, X, GitCompareArrows, Check } from "lucide-react";
+import {
+  TrendingUp,
+  TrendingDown,
+  Minus,
+  ChevronDown,
+  ChevronUp,
+  BarChart3,
+  Search,
+  Star,
+  SlidersHorizontal,
+  X,
+  GitCompareArrows,
+  Check,
+  Coins,
+  Fuel,
+} from "lucide-react";
 import { useUniversalCompare } from "@/hooks/useUniversalCompare";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
@@ -20,6 +36,7 @@ import MarketPageLoader from "@/components/MarketPageLoader";
 import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
 import { getCurrencyFlagUrl, KENYA_FLAG_URL } from "@/lib/currencyBranding";
+import { CommoditiesView } from "@/components/rates/CommoditiesView";
 
 interface Rate {
   id: string;
@@ -135,37 +152,121 @@ const MiniSparkline = ({ data, positive, livePoint }: { data: RateHistory[]; pos
   );
 };
 
-const RatesPage = () => {
+export type MacroTab = "fx" | "commodities";
+
+export interface RatesPageProps {
+  initialTab?: MacroTab;
+}
+
+const RatesPage = ({ initialTab }: RatesPageProps = {}) => {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const location = useLocation();
+  const navigate = useNavigate();
+  const tabParam = searchParams.get("tab");
+  const itemParam = searchParams.get("item");
+
+  const [activeTab, setActiveTab] = useState<MacroTab>(() => {
+    if (initialTab) return initialTab;
+    if (tabParam === "commodities" || tabParam === "commodity" || location.pathname === "/commodities") return "commodities";
+    return "fx";
+  });
+
+  useEffect(() => {
+    if (tabParam === "commodities" || tabParam === "commodity" || location.pathname === "/commodities") {
+      setActiveTab("commodities");
+    } else if (tabParam === "fx" || tabParam === "rates") {
+      setActiveTab("fx");
+    }
+  }, [tabParam, location.pathname]);
+
+  const handleTabChange = (val: MacroTab) => {
+    setActiveTab(val);
+    if (location.pathname === "/commodities" && val === "fx") {
+      navigate("/rates", { replace: true });
+      return;
+    }
+    setSearchParams(
+      (prev) => {
+        const next = new URLSearchParams(prev);
+        if (val === "fx") {
+          next.delete("tab");
+        } else {
+          next.set("tab", val);
+        }
+        return next;
+      },
+      { replace: true }
+    );
+  };
+
   useDocumentTitle(
-    "Kenya FX Exchange Rates – Live USD, EUR, GBP to KES Today",
-    "Live foreign exchange rates against the Kenya Shilling (KES). Track USD/KES, EUR/KES, GBP/KES and more. Updated daily from market data.",
+    activeTab === "fx"
+      ? "Kenya FX Exchange Rates – Live USD, EUR, GBP to KES Today"
+      : "Kenya Commodity Prices – Gold, Oil & More Today",
+    activeTab === "fx"
+      ? "Live foreign exchange rates against the Kenya Shilling (KES). Track USD/KES, EUR/KES, GBP/KES and more. Updated daily from market data."
+      : "Track gold, crude oil, and other commodity prices in Kenya. Indicative commodity pricing updated regularly for Kenyan investors and traders.",
     {
-      title: "Kenya FX Exchange Rates – Live USD, EUR, GBP to KES Today",
-      description: "Live KES exchange rates: USD, EUR, GBP, and more. Updated daily.",
+      title:
+        activeTab === "fx"
+          ? "Kenya FX Exchange Rates – Live USD, EUR, GBP to KES Today"
+          : "Kenya Commodity Prices – Gold, Oil & More Today",
+      description:
+        activeTab === "fx"
+          ? "Live KES exchange rates: USD, EUR, GBP, and more. Updated daily."
+          : "Live commodity prices in Kenya: gold, crude oil, and more. Updated regularly.",
     }
   );
-  useJsonLd({
-    "@context": "https://schema.org",
-    "@type": "Dataset",
-    name: "Kenya Foreign Exchange Rates – KES",
-    description: "Live foreign exchange rates against the Kenyan Shilling (KES), including USD/KES, EUR/KES, GBP/KES and other major currency pairs. Updated daily.",
-    url: "https://kenyafundfinder.com/rates",
-    publisher: {
-      "@type": "Organization",
-      name: "Kenya Fund Finder",
-      url: "https://kenyafundfinder.com"
-    },
-    spatialCoverage: { "@type": "Country", name: "Kenya", identifier: "KE" },
-    temporalCoverage: "2024/..",
-    variableMeasured: [
-      { "@type": "PropertyValue", name: "USD/KES Rate", unitText: "Kenya Shilling per US Dollar" },
-      { "@type": "PropertyValue", name: "EUR/KES Rate", unitText: "Kenya Shilling per Euro" },
-      { "@type": "PropertyValue", name: "GBP/KES Rate", unitText: "Kenya Shilling per British Pound" }
-    ],
-    license: "https://kenyafundfinder.com/terms",
-    isAccessibleForFree: true,
-    keywords: "Kenya exchange rates, USD KES, EUR KES, GBP KES, Kenyan Shilling, forex Kenya"
-  });
+
+  useJsonLd(
+    activeTab === "fx"
+      ? {
+          "@context": "https://schema.org",
+          "@type": "Dataset",
+          name: "Kenya Foreign Exchange Rates – KES",
+          description:
+            "Live foreign exchange rates against the Kenyan Shilling (KES), including USD/KES, EUR/KES, GBP/KES and other major currency pairs. Updated daily.",
+          url: "https://kenyafundfinder.com/rates",
+          publisher: {
+            "@type": "Organization",
+            name: "Kenya Fund Finder",
+            url: "https://kenyafundfinder.com",
+          },
+          spatialCoverage: { "@type": "Country", name: "Kenya", identifier: "KE" },
+          temporalCoverage: "2024/..",
+          variableMeasured: [
+            { "@type": "PropertyValue", name: "USD/KES Rate", unitText: "Kenya Shilling per US Dollar" },
+            { "@type": "PropertyValue", name: "EUR/KES Rate", unitText: "Kenya Shilling per Euro" },
+            { "@type": "PropertyValue", name: "GBP/KES Rate", unitText: "Kenya Shilling per British Pound" },
+          ],
+          license: "https://kenyafundfinder.com/terms",
+          isAccessibleForFree: true,
+          keywords: "Kenya exchange rates, USD KES, EUR KES, GBP KES, Kenyan Shilling, forex Kenya",
+        }
+      : {
+          "@context": "https://schema.org",
+          "@type": "Dataset",
+          name: "Kenya Commodity Prices",
+          description:
+            "Indicative commodity prices tracked for Kenyan investors, including gold, crude oil, and other key commodities. Updated regularly.",
+          url: "https://kenyafundfinder.com/commodities",
+          publisher: {
+            "@type": "Organization",
+            name: "Kenya Fund Finder",
+            url: "https://kenyafundfinder.com",
+          },
+          spatialCoverage: { "@type": "Country", name: "Kenya", identifier: "KE" },
+          temporalCoverage: "2024/..",
+          variableMeasured: [
+            { "@type": "PropertyValue", name: "Gold Price", unitText: "USD per troy ounce" },
+            { "@type": "PropertyValue", name: "Crude Oil Price", unitText: "USD per barrel" },
+            { "@type": "PropertyValue", name: "Commodity Price Index", unitText: "USD" },
+          ],
+          license: "https://kenyafundfinder.com/terms",
+          isAccessibleForFree: true,
+          keywords: "gold price Kenya, oil price Kenya, commodity prices Kenya, Kenyan commodities, commodity market Kenya",
+        }
+  );
 
   const { user, loading: authLoading } = useAuth();
   const isGated = !authLoading && !user && !isBotOrPrerender();
@@ -179,6 +280,7 @@ const RatesPage = () => {
   const [expanded, setExpanded] = useState<string | null>(null);
   const [history, setHistory] = useState<Record<string, RateHistory[]>>(initialPageMemory?.history ?? {});
   const [historyLoading, setHistoryLoading] = useState<string | null>(null);
+  const [activeHighlight, setActiveHighlight] = useState<string | null>(null);
 
   useEffect(() => {
     const fetch = async () => {
@@ -342,7 +444,26 @@ const RatesPage = () => {
     }
   }, [history, pageLoading, rates]);
 
-  if (showPageLoading) {
+  // Deep-link auto-scroll and highlight logic
+  useEffect(() => {
+    if (!itemParam || loading || activeTab !== "fx") return;
+    const cleanTarget = itemParam.toLowerCase().trim();
+
+    const timer = setTimeout(() => {
+      const selector = `[data-asset-id="${cleanTarget}"], #rate-row-${cleanTarget}, #rate-card-${cleanTarget}`;
+      const targetEl = document.querySelector(selector);
+      if (targetEl) {
+        targetEl.scrollIntoView({ behavior: "smooth", block: "center" });
+        setActiveHighlight(cleanTarget);
+        const clearTimer = setTimeout(() => setActiveHighlight(null), 3000);
+        return () => clearTimeout(clearTimer);
+      }
+    }, 200);
+
+    return () => clearTimeout(timer);
+  }, [itemParam, loading, displayRates, activeTab]);
+
+  if (showPageLoading && activeTab === "fx") {
     return (
       <div className="min-h-screen px-4 md:px-6 py-5 md:py-6">
         <MarketPageLoader message="Loading latest FX rate data…" />
@@ -353,24 +474,90 @@ const RatesPage = () => {
   return (
     <div className="min-h-screen animate-in fade-in-50 duration-500">
       <div className="px-4 md:px-6 py-5 md:py-6">
-        <div className="mb-4">
-          <div className="hidden md:flex items-end justify-between gap-6 mb-7">
+        {/* Top Header */}
+        <div className="mb-3.5">
+          <div className="hidden md:flex items-end justify-between gap-6 mb-5">
             <div>
-              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">Global Currency Market</p>
-              <h1 className="mt-2 text-5xl font-black tracking-tight">FX Rates</h1>
-              <p className="mt-3 max-w-2xl text-sm leading-relaxed text-muted-foreground">Live exchange rates against the Kenyan Shilling (KES).</p>
+              <p className="text-xs font-bold uppercase tracking-[0.2em] text-emerald-500">
+                Macroeconomic Intelligence
+              </p>
+              <h1 className="mt-2 text-4xl lg:text-5xl font-black tracking-tight">
+                {activeTab === "fx" ? "Foreign Exchange (FX)" : "Commodities & Energy"}
+              </h1>
+              <p className="mt-2.5 max-w-2xl text-sm leading-relaxed text-muted-foreground">
+                {activeTab === "fx"
+                  ? "Live Central Bank of Kenya exchange rates against the Kenyan Shilling (KES) and commercial bank benchmarks."
+                  : "Live global benchmarks, local agricultural auctions (tea & coffee), and EPRA pump prices."}
+              </p>
             </div>
-            <SectionLiveStatus section="rates" fallbackDate={latestUpdate} isLoading={loading} />
+            {activeTab === "fx" && (
+              <SectionLiveStatus section="rates" fallbackDate={latestUpdate} isLoading={loading} />
+            )}
           </div>
           <div className="md:hidden">
-            <h1 className="sr-only">FX Rates</h1>
-            <p className="text-sm text-muted-foreground mt-1">Live exchange rates against the Kenyan Shilling (KES).</p>
+            <h1 className="sr-only">{activeTab === "fx" ? "FX Rates" : "Commodity Prices"}</h1>
+            <p className="text-sm text-muted-foreground mt-0">
+              {activeTab === "fx"
+                ? "Live exchange rates against the Kenyan Shilling (KES)."
+                : "Live gold, crude oil, EPRA fuel, and agricultural commodity prices."}
+            </p>
           </div>
         </div>
 
-        <ActiveAlertsCard assetType="currency" />
+        {/* Tab Switcher Pills */}
+        <div className="mb-5 flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          <button
+            type="button"
+            onClick={() => handleTabChange("fx")}
+            className={`shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === "fx"
+                ? "border-foreground bg-foreground text-background shadow-xs"
+                : "border border-border bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+            }`}
+          >
+            <Coins className="h-4 w-4" />
+            <span>Foreign Exchange (FX)</span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-normal tabular-nums ${
+                activeTab === "fx"
+                  ? "bg-background/20 text-background"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              {rates.length > 0 ? rates.length : "18+"}
+            </span>
+          </button>
 
-        {user && favEntries.length > 0 && <RateFavourites entries={favEntries} rates={rates} />}
+          <button
+            type="button"
+            onClick={() => handleTabChange("commodities")}
+            className={`shrink-0 inline-flex items-center gap-2 px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap cursor-pointer ${
+              activeTab === "commodities"
+                ? "border-foreground bg-foreground text-background shadow-xs"
+                : "border border-border bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+            }`}
+          >
+            <Fuel className="h-4 w-4" />
+            <span>Commodities & Energy</span>
+            <span
+              className={`text-xs px-2 py-0.5 rounded-full font-normal tabular-nums ${
+                activeTab === "commodities"
+                  ? "bg-background/20 text-background"
+                  : "bg-muted text-muted-foreground"
+              }`}
+            >
+              Markets
+            </span>
+          </button>
+        </div>
+
+        {activeTab === "commodities" ? (
+          <CommoditiesView highlightItem={itemParam} />
+        ) : (
+          <>
+            <ActiveAlertsCard assetType="currency" />
+
+            {user && favEntries.length > 0 && <RateFavourites entries={favEntries} rates={rates} />}
 
         {/* Desktop Premium Toolbar */}
         <div className="hidden md:flex items-center justify-between gap-4 mb-5 mt-7">
@@ -455,19 +642,27 @@ const RatesPage = () => {
                   </tr>
                 </thead>
                 <tbody>
-                  {displayRates.map((r, i) => (
-                    <RateRow
-                      key={r.id}
-                      rate={r}
-                      index={i}
-                      isExpanded={expanded === r.id}
-                      onToggle={() => toggleExpand(r.id)}
-                      history={history[r.id]}
-                      historyLoading={historyLoading === r.id}
-                      isFavourite={user ? isFavourite(r.id) : undefined}
-                      onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
-                    />
-                  ))}
+                  {displayRates.map((r, i) => {
+                    const isRowHighlighted =
+                      Boolean(activeHighlight) &&
+                      (r.currency_code.toLowerCase() === activeHighlight ||
+                        r.id.toLowerCase() === activeHighlight ||
+                        activeHighlight.includes(r.currency_code.toLowerCase()));
+                    return (
+                      <RateRow
+                        key={r.id}
+                        rate={r}
+                        index={i}
+                        isExpanded={expanded === r.id}
+                        isHighlighted={isRowHighlighted}
+                        onToggle={() => toggleExpand(r.id)}
+                        history={history[r.id]}
+                        historyLoading={historyLoading === r.id}
+                        isFavourite={user ? isFavourite(r.id) : undefined}
+                        onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
+                      />
+                    );
+                  })}
                   {isRatesGated && teaserRates.map((r, idx) => (
                     <tr
                       key={`rate-teaser-${r.id || idx}`}
@@ -653,6 +848,11 @@ const RatesPage = () => {
             <>
               {displayRates.map((r) => {
                 const positive = r.previous_rate != null ? r.rate >= r.previous_rate : true;
+                const isCardHighlighted =
+                  Boolean(activeHighlight) &&
+                  (r.currency_code.toLowerCase() === activeHighlight ||
+                    r.id.toLowerCase() === activeHighlight ||
+                    activeHighlight.includes(r.currency_code.toLowerCase()));
                 return (
                   <MobileRateCard
                     key={r.id}
@@ -661,6 +861,7 @@ const RatesPage = () => {
                     historyLoading={historyLoading === r.id}
                     positive={positive}
                     isExpanded={expanded === r.id}
+                    isHighlighted={isCardHighlighted}
                     onToggle={() => toggleExpand(r.id)}
                     isFavourite={user ? isFavourite(r.id) : undefined}
                     onToggleFavourite={user ? () => toggleFavourite(r.id, `${r.currency_code} - ${r.currency_name}`) : undefined}
@@ -707,6 +908,8 @@ const RatesPage = () => {
             Click on any currency to view historical rate trends. This information is for educational purposes only.
           </p>
         </div>
+          </>
+        )}
       </div>
     </div>
   );
@@ -719,6 +922,7 @@ const MobileRateCard = ({
   historyLoading,
   positive,
   isExpanded,
+  isHighlighted,
   onToggle,
   isFavourite,
   onToggleFavourite,
@@ -728,6 +932,7 @@ const MobileRateCard = ({
   historyLoading?: boolean;
   positive: boolean;
   isExpanded?: boolean;
+  isHighlighted?: boolean;
   onToggle?: () => void;
   isFavourite?: boolean;
   onToggleFavourite?: () => void;
@@ -755,11 +960,16 @@ const MobileRateCard = ({
   const changePct = r.previous_rate != null && r.previous_rate !== 0 ? ((change! / r.previous_rate) * 100) : null;
 
   return (
-    <div className={`block rounded-[22px] border bg-slate-50/80 dark:bg-card p-4 shadow-sm transition-all overflow-hidden mb-3 ${
-      isCompared
-        ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.04]"
-        : "border-border/80 hover:border-emerald-500/30"
-    }`}>
+    <div
+      data-asset-id={r.currency_code.toLowerCase()}
+      id={`rate-card-${r.currency_code.toLowerCase()}`}
+      className={`block rounded-[22px] border bg-slate-50/80 dark:bg-card p-4 shadow-sm transition-all overflow-hidden mb-3 ${
+        isHighlighted
+          ? "ring-2 ring-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15 transition-all duration-500 animate-pulse"
+          : isCompared
+          ? "border-emerald-500 ring-2 ring-emerald-500/20 dark:border-emerald-400 bg-emerald-500/[0.04]"
+          : "border-border/80 hover:border-emerald-500/30"
+      }`}>
       <button
         type="button"
         onClick={onToggle}
@@ -940,9 +1150,9 @@ const MobileRateCard = ({
 };
 
 const RateRow = ({
-  rate, index, isExpanded, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
+  rate, index, isExpanded, isHighlighted, onToggle, history, historyLoading, isFavourite, onToggleFavourite,
 }: {
-  rate: Rate; index: number; isExpanded: boolean; onToggle: () => void;
+  rate: Rate; index: number; isExpanded: boolean; isHighlighted?: boolean; onToggle: () => void;
   history?: RateHistory[]; historyLoading: boolean;
   isFavourite?: boolean; onToggleFavourite?: () => void;
 }) => {
@@ -963,7 +1173,15 @@ const RateRow = ({
   return (
     <>
       <tr
-        className="border-b border-border/40 hover:bg-accent/5 transition-colors cursor-pointer group"
+        data-asset-id={rate.currency_code.toLowerCase()}
+        id={`rate-row-${rate.currency_code.toLowerCase()}`}
+        className={`border-b border-border/40 hover:bg-accent/5 transition-colors cursor-pointer group ${
+          isHighlighted
+            ? "ring-2 ring-emerald-500 bg-emerald-500/10 dark:bg-emerald-500/15 duration-500 animate-pulse"
+            : isExpanded
+            ? "bg-muted/30"
+            : ""
+        }`}
         onClick={onToggle}
       >
         <td className="pl-4 pr-2 py-4 text-muted-foreground/60 text-sm tabular-nums">{index + 1}</td>
