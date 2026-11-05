@@ -1373,7 +1373,7 @@ const OverviewPage = () => {
 
           <div className="space-y-0 md:space-y-4">
             {activeUpdateCategory === "Stocks" ? (
-              filteredFeedItems.length === 0 && !loading && !newsCategoryLoading ? (
+              filteredFeedItems.length === 0 && !newsLoading && !newsCategoryLoading ? (
                 <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
                   No stock-linked news is available yet.
                 </div>
