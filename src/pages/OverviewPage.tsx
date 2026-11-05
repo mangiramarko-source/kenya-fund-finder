@@ -860,7 +860,14 @@ const OverviewPage = () => {
   const isGated = !authLoading && !user && !isBotOrPrerender();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();
   const { alerts } = usePriceAlerts();
-  const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
+  const {
+    toggleLike,
+    toggleUpvote,
+    toggleBookmark,
+    recordView,
+    addComment,
+    getPostInteraction
+  } = useFeedInteractions();
 
   const [funds, setFunds] = useState<FundFromDB[]>([]);
   const [fundsLoading, setFundsLoading] = useState(true);
@@ -1377,8 +1384,11 @@ const OverviewPage = () => {
                     item={item}
                     index={index}
                     onSelect={setSelectedFeedItem}
-                    interaction={getPostInteraction(item.id, item.likes || 0)}
+                    interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
                     onLikeToggle={toggleLike}
+                    onUpvoteToggle={toggleUpvote}
+                    onBookmarkToggle={toggleBookmark}
+                    onRecordView={recordView}
                   />
                 ))
               )
@@ -1389,8 +1399,11 @@ const OverviewPage = () => {
                   item={item}
                   index={index}
                   onSelect={setSelectedFeedItem}
-                  interaction={getPostInteraction(item.id, item.likes || 0)}
+                  interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
                   onLikeToggle={toggleLike}
+                  onUpvoteToggle={toggleUpvote}
+                  onBookmarkToggle={toggleBookmark}
+                  onRecordView={recordView}
                 />
               ) : (
                 <SocialFeedCard
@@ -1398,8 +1411,11 @@ const OverviewPage = () => {
                   item={item}
                   index={index}
                   onSelect={setSelectedFeedItem}
-                  interaction={getPostInteraction(item.id, item.likes || 0)}
+                  interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
                   onLikeToggle={toggleLike}
+                  onUpvoteToggle={toggleUpvote}
+                  onBookmarkToggle={toggleBookmark}
+                  onRecordView={recordView}
                 />
               ))
             ) : (
@@ -1454,8 +1470,11 @@ const OverviewPage = () => {
         onOpenChange={(open) => {
           if (!open) setSelectedFeedItem(null);
         }}
-        interaction={selectedFeedItem ? getPostInteraction(selectedFeedItem.id, selectedFeedItem.likes || 0) : undefined}
+        interaction={selectedFeedItem ? getPostInteraction(selectedFeedItem.id, selectedFeedItem.likes || 0, selectedFeedItem.timestamp) : undefined}
         onLikeToggle={toggleLike}
+        onUpvoteToggle={toggleUpvote}
+        onBookmarkToggle={toggleBookmark}
+        onRecordView={recordView}
         onAddComment={addComment}
       />
 

@@ -3,7 +3,7 @@ import { Link } from "react-router-dom";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { fetchPublishedNews, fetchPublicStocks, type NewsFromDB } from "@/lib/api";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Archive, Megaphone, Sparkles } from "lucide-react";
+import { Archive, Megaphone, Sparkles, Bookmark } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { SocialFeedCard } from "@/components/feed/SocialFeed";
@@ -21,6 +21,7 @@ import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 import { matchesNewsTab } from "@/lib/newsTabMatching";
 import { dedupeNewsByUrl } from "@/lib/newsDedupe";
 import { classifyArticleCategory } from "@/lib/articleCategoryClassifier";
+import { calculateRankScore } from "@/lib/feedEngagement";
 import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
 
 const DEFAULT_NEWS_TAB = "All";
@@ -61,7 +62,15 @@ export default function NewsPage() {
 
   const { user, loading: authLoading } = useAuth();
   const isGated = !authLoading && !user && !isBotOrPrerender();
-  const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
+  const {
+    toggleLike,
+    toggleUpvote,
+    toggleBookmark,
+    recordView,
+    addComment,
+    getPostInteraction,
+    userBookmarks,
+  } = useFeedInteractions();
   const [articles, setArticles] = useState<NewsFromDB[]>([]);
   const [stocks, setStocks] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
@@ -197,7 +206,7 @@ export default function NewsPage() {
     const list = [...articles];
 
     // Sort by Nav Tab (latest/oldest)
-    if (activeNavTab === "Latest" || activeNavTab === "All" || ["Kenyan", "International", "Stocks", "MMFs", "FX Rates", "Commodities"].includes(activeNavTab)) {
+    if (activeNavTab === "Latest" || activeNavTab === "All" || activeNavTab === "Top Ranked" || activeNavTab === "Saved" || ["Kenyan", "International", "Stocks", "MMFs", "FX Rates", "Commodities"].includes(activeNavTab)) {
       list.sort((a, b) => getNewsPublishedTime(b) - getNewsPublishedTime(a));
     } else if (activeNavTab === "Oldest") {
       list.sort((a, b) => getNewsPublishedTime(a) - getNewsPublishedTime(b));
@@ -274,15 +283,37 @@ export default function NewsPage() {
 
     let allItems = [...items];
     
-    // Now perform filtering on allItems based on activeNavTab
-    if (["Kenyan", "International", "Stocks", "FX Rates", "Commodities"].includes(activeNavTab)) {
+    // Perform filtering / sorting on allItems based on activeNavTab
+    if (activeNavTab === "Saved") {
+      allItems = allItems.filter(
+        a => userBookmarks[a.id] || (a.rawItem?.id && userBookmarks[a.rawItem.id]) || userBookmarks[`news-${a.rawItem?.id}`]
+      );
+    } else if (activeNavTab === "Top Ranked") {
+      allItems.sort((a, b) => {
+        const interA = getPostInteraction(a.id, a.likes || 0, a.timestamp);
+        const interB = getPostInteraction(b.id, b.likes || 0, b.timestamp);
+        const scoreA = calculateRankScore({
+          upvotes: interA.upvoteCount,
+          likes: interA.likeCount,
+          comments: interA.comments.length || a.comments || 0,
+          views: interA.viewsCount,
+        });
+        const scoreB = calculateRankScore({
+          upvotes: interB.upvoteCount,
+          likes: interB.likeCount,
+          comments: interB.comments.length || b.comments || 0,
+          views: interB.viewsCount,
+        });
+        return scoreB - scoreA;
+      });
+    } else if (["Kenyan", "International", "Stocks", "FX Rates", "Commodities"].includes(activeNavTab)) {
       allItems = allItems.filter(a => matchesNewsTab(activeNavTab, a.rawItem || a, stocks));
     } else if (activeNavTab === FUNDS_AND_FIXED_INCOME_TAB || activeNavTab === "MMFs") {
       allItems = allItems.filter(a => isFundsAndFixedIncomeArticle(a.rawItem || a));
     }
 
     return allItems;
-  }, [filteredArticles, stocks, activeNavTab]);
+  }, [filteredArticles, stocks, activeNavTab, userBookmarks, getPostInteraction]);
 
   const displayFeedItems = isGated && feedItems.length > 3 ? feedItems.slice(0, 3) : feedItems;
 
@@ -334,6 +365,8 @@ export default function NewsPage() {
       <div className="no-scrollbar mb-4 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1">
         {[
           DEFAULT_NEWS_TAB,
+          "Top Ranked",
+          "Saved",
           "Stocks",
           "Kenyan",
           "International",
@@ -379,6 +412,23 @@ export default function NewsPage() {
               </div>
             ))}
           </div>
+        ) : activeNavTab === "Saved" ? (
+          <div className="text-center py-16 px-4 border border-dashed border-border rounded-2xl bg-card/40 space-y-3">
+            <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/10 text-amber-500">
+              <Bookmark className="h-6 w-6" />
+            </div>
+            <h3 className="text-base font-bold text-foreground">No saved stories yet</h3>
+            <p className="text-xs text-muted-foreground max-w-sm mx-auto leading-relaxed">
+              Tap the bookmark icon on any article in your feed to save it for quick reference and offline reading.
+            </p>
+            <button
+              type="button"
+              onClick={() => setActiveNavTab(DEFAULT_NEWS_TAB)}
+              className="mt-2 inline-flex items-center gap-1.5 px-4 py-2 rounded-full bg-foreground text-background text-xs font-semibold hover:opacity-90 transition-opacity cursor-pointer"
+            >
+              Browse All News
+            </button>
+          </div>
         ) : (
           <div className="text-center py-20 text-muted-foreground border border-dashed border-border rounded-2xl">
             <Megaphone className="h-8 w-8 mx-auto mb-3 text-muted-foreground/40" />
@@ -395,8 +445,11 @@ export default function NewsPage() {
                 item={item}
                 index={index}
                 onSelect={setSelectedFeedItem}
-                interaction={getPostInteraction(item.id, item.likes || 0)}
+                interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
                 onLikeToggle={toggleLike}
+                onUpvoteToggle={toggleUpvote}
+                onBookmarkToggle={toggleBookmark}
+                onRecordView={recordView}
               />
             ) : (
               <SocialFeedCard
@@ -404,8 +457,11 @@ export default function NewsPage() {
                 item={item}
                 index={index}
                 onSelect={setSelectedFeedItem}
-                interaction={getPostInteraction(item.id, item.likes || 0)}
+                interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
                 onLikeToggle={toggleLike}
+                onUpvoteToggle={toggleUpvote}
+                onBookmarkToggle={toggleBookmark}
+                onRecordView={recordView}
               />
             );
 
@@ -472,8 +528,11 @@ export default function NewsPage() {
         onOpenChange={(open) => {
           if (!open) setSelectedFeedItem(null);
         }}
-        interaction={selectedFeedItem ? getPostInteraction(selectedFeedItem.id, selectedFeedItem.likes || 0) : undefined}
+        interaction={selectedFeedItem ? getPostInteraction(selectedFeedItem.id, selectedFeedItem.likes || 0, selectedFeedItem.timestamp) : undefined}
         onLikeToggle={toggleLike}
+        onUpvoteToggle={toggleUpvote}
+        onBookmarkToggle={toggleBookmark}
+        onRecordView={recordView}
         onAddComment={addComment}
       />
     </div>

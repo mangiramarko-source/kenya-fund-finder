@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useMemo, useState, type MouseEvent } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, TrendingUp, TrendingDown, Minus, ArrowRight, MoreHorizontal, MessageCircle, Share2 } from "lucide-react";
+import { Heart, TrendingUp, TrendingDown, Minus, ArrowRight, MoreHorizontal, MessageCircle, Share2, ArrowBigUp, BarChart2, Bookmark } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -16,12 +16,24 @@ interface StockFeedCardProps {
   onSelect: (item: FeedItem) => void;
   interaction?: PostInteraction;
   onLikeToggle?: (itemId: string, defaultLikes?: number) => void;
+  onUpvoteToggle?: (itemId: string, defaultUpvotes?: number) => void;
+  onBookmarkToggle?: (itemId: string) => void;
+  onRecordView?: (itemId: string) => void;
   index?: number;
 }
 
 const rawArticleId = (item: FeedItem) => item.id.startsWith("news-") ? item.id.slice(5) : item.id;
 
-export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index = 0 }: StockFeedCardProps) {
+export function StockFeedCard({
+  item,
+  onSelect,
+  interaction,
+  onLikeToggle,
+  onUpvoteToggle,
+  onBookmarkToggle,
+  onRecordView,
+  index = 0,
+}: StockFeedCardProps) {
   const { user } = useAuth();
   const isMobile = useIsMobile();
   const navigate = useNavigate();
@@ -55,7 +67,13 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
   const isDown = stock.changePercent < 0;
   const isLiked = interaction?.liked ?? false;
   const likeCount = interaction?.likeCount ?? item.likes;
-  const commentsCount = item.comments + (interaction?.comments.length || 0);
+  const commentsCount = item.comments + (interaction?.comments?.length || 0);
+  const isUpvoted = interaction?.upvoted ?? false;
+  const upvoteCount = interaction?.upvoteCount ?? 0;
+  const isBookmarked = interaction?.bookmarked ?? false;
+  const viewsCount = interaction?.viewsCount ?? 160;
+  const formattedViews = interaction?.formattedViews ?? "160";
+
   const articlePath = `/news/${rawArticleId(item)}`;
   const shareUrl = `${window.location.origin}${articlePath}`;
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
@@ -63,6 +81,7 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
 
   const openArticle = (event?: MouseEvent) => {
     event?.stopPropagation();
+    onRecordView?.(item.id);
     if (isMobile) navigate(articlePath);
     else onSelect(item);
   };
@@ -77,6 +96,16 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
     }
     onLikeToggle?.(item.id, item.likes);
     if (!isLiked) toast.success("Liked post");
+  };
+
+  const handleUpvote = (event: MouseEvent) => {
+    event.stopPropagation();
+    onUpvoteToggle?.(item.id, upvoteCount);
+  };
+
+  const handleBookmark = (event: MouseEvent) => {
+    event.stopPropagation();
+    onBookmarkToggle?.(item.id);
   };
 
   const handleShare = async (event: MouseEvent) => {
@@ -277,44 +306,86 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
           </button>
         </div>
 
-        {/* ─── Bottom Actions Row: Distinct Rounded Pill Chips (Twitter / X Format) ─── */}
-        <div className="flex items-center gap-2 pt-1.5 flex-wrap">
+        {/* ─── Bottom Actions Row: 6 Distinct Rounded Pill Chips (Twitter / X Format) ─── */}
+        <div className="flex items-center justify-between w-full min-w-0 gap-1 sm:gap-2 pt-2 flex-wrap sm:flex-nowrap">
           {/* Comments Pill */}
           <button
             type="button"
             onClick={openArticle}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
+            aria-label={`${commentsCount} comments`}
           >
-            <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="tabular-nums">{commentsCount}</span>
-            <span className="hidden sm:inline text-[11px] font-normal text-muted-foreground">Comments</span>
+            <MessageCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="tabular-nums text-[11px] sm:text-xs">{commentsCount}</span>
+            <span className="hidden md:inline text-[11px] font-normal text-muted-foreground">Comments</span>
           </button>
 
           {/* Likes Pill */}
           <button
             type="button"
             onClick={handleLike}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all active:scale-95 cursor-pointer ${
+            className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border text-xs font-semibold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0 ${
               isLiked
                 ? "border-rose-500/40 bg-rose-500/10 text-rose-500 shadow-xs"
                 : "border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
             }`}
             aria-label={isLiked ? "Unlike article" : "Like article"}
           >
-            <Heart className={`h-3.5 w-3.5 ${isLiked ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`} />
-            <span className="tabular-nums">{likeCount}</span>
-            <span className="hidden sm:inline text-[11px] font-normal text-muted-foreground">Likes</span>
+            <Heart className={`h-3.5 w-3.5 shrink-0 ${isLiked ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`} />
+            <span className="tabular-nums text-[11px] sm:text-xs">{likeCount}</span>
+            <span className="hidden md:inline text-[11px] font-normal text-muted-foreground">Likes</span>
+          </button>
+
+          {/* Rank / Upvote Pill */}
+          <button
+            type="button"
+            onClick={handleUpvote}
+            className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border text-xs font-semibold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0 ${
+              isUpvoted
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-xs"
+                : "border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+            aria-label={isUpvoted ? "Remove upvote" : "Upvote story"}
+          >
+            <ArrowBigUp className={`h-4 w-4 shrink-0 ${isUpvoted ? "fill-emerald-500 text-emerald-500" : "text-muted-foreground"}`} />
+            <span className="tabular-nums text-[11px] sm:text-xs">{upvoteCount}</span>
+            <span className="hidden md:inline text-[11px] font-normal text-muted-foreground">Rank</span>
+          </button>
+
+          {/* Views Metric Chip */}
+          <div
+            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border border-border/70 bg-muted/20 text-muted-foreground text-xs font-medium whitespace-nowrap shrink-0"
+            title={`${viewsCount.toLocaleString()} total views`}
+          >
+            <BarChart2 className="h-3.5 w-3.5 text-muted-foreground/80 shrink-0" />
+            <span className="tabular-nums text-[11px] sm:text-xs">{formattedViews}</span>
+            <span className="hidden lg:inline text-[11px] font-normal text-muted-foreground">Views</span>
+          </div>
+
+          {/* Bookmark Pill */}
+          <button
+            type="button"
+            onClick={handleBookmark}
+            className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border text-xs font-semibold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0 ${
+              isBookmarked
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-xs"
+                : "border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+            aria-label={isBookmarked ? "Remove bookmark" : "Bookmark article"}
+          >
+            <Bookmark className={`h-3.5 w-3.5 shrink-0 ${isBookmarked ? "fill-amber-500 text-amber-500" : "text-muted-foreground"}`} />
+            <span className="hidden sm:inline text-[11px] font-normal">Save</span>
           </button>
 
           {/* Share Pill */}
           <button
             type="button"
             onClick={handleShare}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-1.5 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
             aria-label="Share article"
           >
-            <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
-            <span>Share</span>
+            <Share2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="hidden sm:inline text-[11px] font-normal">Share</span>
           </button>
         </div>
       </div>

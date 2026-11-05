@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MoreHorizontal, BarChart3, Newspaper, DollarSign, Wallet, ArrowRight, MessageCircle, Share2 } from "lucide-react";
+import { Heart, MoreHorizontal, BarChart3, Newspaper, DollarSign, Wallet, ArrowRight, MessageCircle, Share2, ArrowBigUp, BarChart2, Bookmark } from "lucide-react";
 import { Sparkline } from "./Sparkline";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { FeedItemDetailModal } from "./FeedItemDetailModal";
@@ -65,12 +65,18 @@ export const SocialFeedCard = ({
   index = 0,
   interaction,
   onLikeToggle,
+  onUpvoteToggle,
+  onBookmarkToggle,
+  onRecordView,
 }: {
   item: FeedItem;
   onSelect: (item: FeedItem) => void;
   index?: number;
   interaction?: PostInteraction;
   onLikeToggle?: (itemId: string, defaultLikes?: number) => void;
+  onUpvoteToggle?: (itemId: string, defaultUpvotes?: number) => void;
+  onBookmarkToggle?: (itemId: string) => void;
+  onRecordView?: (itemId: string) => void;
 }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
@@ -96,23 +102,28 @@ export const SocialFeedCard = ({
 
     const timeoutId = setTimeout(checkOverflow, 150);
 
-    const resizeObserver = new ResizeObserver(() => {
-      checkOverflow();
-    });
-
-    if (contentRef.current) {
+    let resizeObserver: ResizeObserver | null = null;
+    if (typeof ResizeObserver !== "undefined" && contentRef.current) {
+      resizeObserver = new ResizeObserver(() => {
+        checkOverflow();
+      });
       resizeObserver.observe(contentRef.current);
     }
 
     return () => {
       clearTimeout(timeoutId);
-      resizeObserver.disconnect();
+      resizeObserver?.disconnect();
     };
   }, [item.content]);
 
   const isLiked = interaction?.liked ?? false;
   const likeCount = interaction?.likeCount ?? (item.likes || 0);
   const commentsCount = (item.comments || 0) + (interaction?.comments?.length || 0);
+  const isUpvoted = interaction?.upvoted ?? false;
+  const upvoteCount = interaction?.upvoteCount ?? 0;
+  const isBookmarked = interaction?.bookmarked ?? false;
+  const viewsCount = interaction?.viewsCount ?? 160;
+  const formattedViews = interaction?.formattedViews ?? "160";
 
   const timeAgo = formatDistanceToNow(item.timestamp, { addSuffix: true }).replace("about ", "");
   
@@ -142,6 +153,7 @@ export const SocialFeedCard = ({
   const showFavicon = !isSocialPost && avatarSrc && !avatarError;
 
   const handleCardClick = () => {
+    onRecordView?.(item.id);
     if (isMobile) {
       const rawId = item.id.startsWith("news-") ? item.id.slice(5) : item.id;
       navigate(`/news/${rawId}`);
@@ -167,6 +179,20 @@ export const SocialFeedCard = ({
     }
     if (!isLiked) {
       toast.success("Liked post");
+    }
+  };
+
+  const handleUpvote = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onUpvoteToggle) {
+      onUpvoteToggle(item.id, upvoteCount);
+    }
+  };
+
+  const handleBookmark = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (onBookmarkToggle) {
+      onBookmarkToggle(item.id);
     }
   };
 
@@ -394,8 +420,8 @@ export const SocialFeedCard = ({
           </button>
         </div>
 
-        {/* ─── Bottom Actions Row: Distinct Rounded Pill Chips (Twitter / X Format) ─── */}
-        <div className="flex items-center gap-2 pt-1.5 flex-wrap">
+        {/* ─── Bottom Actions Row: 6 Distinct Rounded Pill Chips (Twitter / X Format) ─── */}
+        <div className="flex items-center justify-between w-full min-w-0 gap-1 sm:gap-2 pt-2 flex-wrap sm:flex-nowrap">
           {/* Comments Pill */}
           <button
             type="button"
@@ -403,38 +429,80 @@ export const SocialFeedCard = ({
               e.stopPropagation();
               handleCardClick();
             }}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
+            aria-label={`${commentsCount} comments`}
           >
-            <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
-            <span className="tabular-nums">{commentsCount}</span>
-            <span className="hidden sm:inline text-[11px] font-normal text-muted-foreground">Comments</span>
+            <MessageCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="tabular-nums text-[11px] sm:text-xs">{commentsCount}</span>
+            <span className="hidden md:inline text-[11px] font-normal text-muted-foreground">Comments</span>
           </button>
 
           {/* Likes Pill */}
           <button
             type="button"
             onClick={handleLike}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all active:scale-95 cursor-pointer ${
+            className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border text-xs font-semibold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0 ${
               isLiked
                 ? "border-rose-500/40 bg-rose-500/10 text-rose-500 shadow-xs"
-                : "border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
+                : "border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
             }`}
             aria-label={isLiked ? "Unlike article" : "Like article"}
           >
-            <Heart className={`h-3.5 w-3.5 ${isLiked ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`} />
-            <span className="tabular-nums">{likeCount}</span>
-            <span className="hidden sm:inline text-[11px] font-normal text-muted-foreground">Likes</span>
+            <Heart className={`h-3.5 w-3.5 shrink-0 ${isLiked ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`} />
+            <span className="tabular-nums text-[11px] sm:text-xs">{likeCount}</span>
+            <span className="hidden md:inline text-[11px] font-normal text-muted-foreground">Likes</span>
+          </button>
+
+          {/* Rank / Upvote Pill */}
+          <button
+            type="button"
+            onClick={handleUpvote}
+            className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border text-xs font-semibold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0 ${
+              isUpvoted
+                ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shadow-xs"
+                : "border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+            aria-label={isUpvoted ? "Remove upvote" : "Upvote story"}
+          >
+            <ArrowBigUp className={`h-4 w-4 shrink-0 ${isUpvoted ? "fill-emerald-500 text-emerald-500" : "text-muted-foreground"}`} />
+            <span className="tabular-nums text-[11px] sm:text-xs">{upvoteCount}</span>
+            <span className="hidden md:inline text-[11px] font-normal text-muted-foreground">Rank</span>
+          </button>
+
+          {/* Views Metric Chip */}
+          <div
+            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border border-border/70 bg-muted/20 text-muted-foreground text-xs font-medium whitespace-nowrap shrink-0"
+            title={`${viewsCount.toLocaleString()} total views`}
+          >
+            <BarChart2 className="h-3.5 w-3.5 text-muted-foreground/80 shrink-0" />
+            <span className="tabular-nums text-[11px] sm:text-xs">{formattedViews}</span>
+            <span className="hidden lg:inline text-[11px] font-normal text-muted-foreground">Views</span>
+          </div>
+
+          {/* Bookmark Pill */}
+          <button
+            type="button"
+            onClick={handleBookmark}
+            className={`inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-full border text-xs font-semibold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0 ${
+              isBookmarked
+                ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400 shadow-xs"
+                : "border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+            aria-label={isBookmarked ? "Remove bookmark" : "Bookmark article"}
+          >
+            <Bookmark className={`h-3.5 w-3.5 shrink-0 ${isBookmarked ? "fill-amber-500 text-amber-500" : "text-muted-foreground"}`} />
+            <span className="hidden sm:inline text-[11px] font-normal">Save</span>
           </button>
 
           {/* Share Pill */}
           <button
             type="button"
             onClick={handleShare}
-            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+            className="inline-flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3.5 py-1.5 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-all active:scale-95 cursor-pointer whitespace-nowrap shrink-0"
             aria-label="Share article"
           >
-            <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
-            <span>Share</span>
+            <Share2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+            <span className="hidden sm:inline text-[11px] font-normal">Share</span>
           </button>
         </div>
       </div>
@@ -443,7 +511,14 @@ export const SocialFeedCard = ({
 };
 
 export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: boolean }) {
-  const { toggleLike, addComment, getPostInteraction } = useFeedInteractions();
+  const {
+    toggleLike,
+    toggleUpvote,
+    toggleBookmark,
+    recordView,
+    addComment,
+    getPostInteraction,
+  } = useFeedInteractions();
   const [selectedItem, setSelectedItem] = useState<FeedItem | null>(null);
   const [displayCount, setDisplayCount] = useState(15);
 
@@ -484,8 +559,11 @@ export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: bo
             item={item}
             onSelect={setSelectedItem}
             index={i}
-            interaction={getPostInteraction(item.id, item.likes || 0)}
+            interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
             onLikeToggle={toggleLike}
+            onUpvoteToggle={toggleUpvote}
+            onBookmarkToggle={toggleBookmark}
+            onRecordView={recordView}
           />
         ))}
 
@@ -506,8 +584,10 @@ export function SocialFeed({ items, loading }: { items: FeedItem[], loading?: bo
         onOpenChange={(open) => {
           if (!open) setSelectedItem(null);
         }}
-        interaction={selectedItem ? getPostInteraction(selectedItem.id, selectedItem.likes || 0) : undefined}
+        interaction={selectedItem ? getPostInteraction(selectedItem.id, selectedItem.likes || 0, selectedItem.timestamp) : undefined}
         onLikeToggle={toggleLike}
+        onUpvoteToggle={toggleUpvote}
+        onBookmarkToggle={toggleBookmark}
         onAddComment={addComment}
       />
     </>

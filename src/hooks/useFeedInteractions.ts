@@ -1,20 +1,36 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/useAuth";
+import { toast } from "sonner";
+import {
+  getDeterministicBaselineViews,
+  getDeterministicBaselineUpvotes,
+  formatViewCount,
+} from "@/lib/feedEngagement";
 
 export interface PostInteraction {
   liked: boolean;
   likeCount: number;
+  upvoted: boolean;
+  upvoteCount: number;
+  bookmarked: boolean;
+  viewsCount: number;
+  formattedViews: string;
   comments: (string | { authorName?: string; content: string })[];
 }
 
 interface StoredFeedData {
   [itemId: string]: {
     likes?: number;
+    upvotes?: number;
+    views?: number;
     likedBy?: string[];
     comments?: (string | { authorName?: string; content: string })[];
   };
 }
+
+// Session-level viewed cache prevents double counting in the same session
+const sessionViewedArticles = new Set<string>();
 
 // Supabase reuses a channel when its topic name matches an existing one. Feed
 // pages can briefly overlap while routes change, so a shared topic lets a new
@@ -27,6 +43,9 @@ function nextFeedRealtimeChannelName() {
 }
 
 function getGuestToken(): string {
+  if (typeof window === "undefined") {
+    return "gt_prerender_token";
+  }
   try {
     let token = localStorage.getItem("kf_guest_token");
     if (!token) {
@@ -41,25 +60,63 @@ function getGuestToken(): string {
   }
 }
 
+function getSafeLocalStorage<T>(key: string, fallback: T): T {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const saved = localStorage.getItem(key);
+    return saved ? JSON.parse(saved) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function setSafeLocalStorage<T>(key: string, value: T): void {
+  if (typeof window === "undefined") return;
+  try {
+    localStorage.setItem(key, JSON.stringify(value));
+  } catch {
+    // Ignore storage quota or access errors
+  }
+}
+
 export function useFeedInteractions() {
   const { user } = useAuth();
   const [globalStore, setGlobalStore] = useState<StoredFeedData>({});
   
   // Track personal likes locally so UI updates instantly and we know if *we* liked it
-  const [userLikes, setUserLikes] = useState<Record<string, boolean>>(() => {
-    try {
-      const saved = localStorage.getItem("kf_user_likes");
-      return saved ? JSON.parse(saved) : {};
-    } catch {
-      return {};
-    }
-  });
+  const [userLikes, setUserLikes] = useState<Record<string, boolean>>(() =>
+    getSafeLocalStorage<Record<string, boolean>>("kf_user_likes", {})
+  );
+
+  // Track user upvotes (community rank) locally
+  const [userUpvotes, setUserUpvotes] = useState<Record<string, boolean>>(() =>
+    getSafeLocalStorage<Record<string, boolean>>("kf_user_upvotes", {})
+  );
+
+  // Track user bookmarks locally
+  const [userBookmarks, setUserBookmarks] = useState<Record<string, boolean>>(() =>
+    getSafeLocalStorage<Record<string, boolean>>("kf_user_bookmarks", {})
+  );
+
+  // Track recorded views per article
+  const [articleViews, setArticleViews] = useState<Record<string, number>>(() =>
+    getSafeLocalStorage<Record<string, number>>("kf_article_views", {})
+  );
 
   const storeRef = useRef(globalStore);
   storeRef.current = globalStore;
 
   const userLikesRef = useRef(userLikes);
   userLikesRef.current = userLikes;
+
+  const userUpvotesRef = useRef(userUpvotes);
+  userUpvotesRef.current = userUpvotes;
+
+  const userBookmarksRef = useRef(userBookmarks);
+  userBookmarksRef.current = userBookmarks;
+
+  const articleViewsRef = useRef(articleViews);
+  articleViewsRef.current = articleViews;
   
   const guestToken = getGuestToken();
 
@@ -93,7 +150,7 @@ export function useFeedInteractions() {
       }
 
       // If guest, sync liked state from database using guestToken
-      if (!user && guestToken) {
+      if (!user && guestToken && typeof window !== "undefined") {
         const { data: guestLikes } = await supabase.rpc("get_guest_liked_posts", {
           p_guest_token: guestToken,
         });
@@ -179,14 +236,25 @@ export function useFeedInteractions() {
     };
   }, [user, guestToken]);
 
-  // Sync user likes to localStorage for persistence across reloads for guests
+  // Sync user likes to localStorage for persistence across reloads
   useEffect(() => {
-    try {
-      localStorage.setItem("kf_user_likes", JSON.stringify(userLikes));
-    } catch {
-      // Likes remain available in memory when local storage is unavailable.
-    }
+    setSafeLocalStorage("kf_user_likes", userLikes);
   }, [userLikes]);
+
+  // Sync user upvotes to localStorage
+  useEffect(() => {
+    setSafeLocalStorage("kf_user_upvotes", userUpvotes);
+  }, [userUpvotes]);
+
+  // Sync user bookmarks to localStorage
+  useEffect(() => {
+    setSafeLocalStorage("kf_user_bookmarks", userBookmarks);
+  }, [userBookmarks]);
+
+  // Sync article views to localStorage
+  useEffect(() => {
+    setSafeLocalStorage("kf_article_views", articleViews);
+  }, [articleViews]);
 
   const toggleLike = useCallback(async (itemId: string, defaultLikes: number = 0) => {
     const isCurrentlyLiked = !!userLikesRef.current[itemId];
@@ -234,6 +302,55 @@ export function useFeedInteractions() {
     }
   }, [user, guestToken]);
 
+  const toggleUpvote = useCallback((itemId: string, defaultUpvotes?: number) => {
+    const isCurrentlyUpvoted = !!userUpvotesRef.current[itemId];
+    const newUpvotedState = !isCurrentlyUpvoted;
+
+    setUserUpvotes(prev => ({ ...prev, [itemId]: newUpvotedState }));
+
+    setGlobalStore(prev => {
+      const currentItem = prev[itemId] || { likes: 0, comments: [] };
+      const baseline = defaultUpvotes != null ? defaultUpvotes : getDeterministicBaselineUpvotes(itemId);
+      const currentCount = currentItem.upvotes != null ? currentItem.upvotes : baseline;
+      const nextCount = newUpvotedState ? currentCount + 1 : Math.max(0, currentCount - 1);
+      return {
+        ...prev,
+        [itemId]: { ...currentItem, upvotes: nextCount }
+      };
+    });
+
+    return newUpvotedState;
+  }, []);
+
+  const toggleBookmark = useCallback((itemId: string) => {
+    const isCurrentlyBookmarked = !!userBookmarksRef.current[itemId];
+    const newBookmarkedState = !isCurrentlyBookmarked;
+
+    setUserBookmarks(prev => ({ ...prev, [itemId]: newBookmarkedState }));
+
+    if (newBookmarkedState) {
+      toast.success("Saved to Bookmarks", {
+        description: "You can find this story in your Saved tab.",
+      });
+    } else {
+      toast.info("Removed from Bookmarks");
+    }
+
+    return newBookmarkedState;
+  }, []);
+
+  const recordView = useCallback((itemId: string) => {
+    if (!itemId) return;
+    // Guardrail 3: Session Deduplication prevents double counting
+    if (sessionViewedArticles.has(itemId)) return;
+    sessionViewedArticles.add(itemId);
+
+    setArticleViews(prev => {
+      const nextCount = (prev[itemId] || 0) + 1;
+      return { ...prev, [itemId]: nextCount };
+    });
+  }, []);
+
   const addComment = useCallback(async (itemId: string, text: string, authorName?: string) => {
     if (!text.trim()) return;
 
@@ -263,18 +380,56 @@ export function useFeedInteractions() {
     if (error) console.error("Error adding comment:", error);
   }, [user]);
 
-  const getPostInteraction = useCallback((itemId: string, defaultLikes: number = 0): PostInteraction => {
+  const getPostInteraction = useCallback((
+    itemId: string,
+    defaultLikes: number = 0,
+    publishedAt?: string | Date | number | null
+  ): PostInteraction => {
     const currentItem = globalStore[itemId];
     const isLiked = !!userLikes[itemId];
-    const count = currentItem?.likes != null ? currentItem.likes : defaultLikes;
+    const likeCount = currentItem?.likes != null ? currentItem.likes : defaultLikes;
     const commentsList = currentItem?.comments || [];
+
+    // Upvote calculation
+    const isUpvoted = !!userUpvotes[itemId];
+    const baselineUpvotes = getDeterministicBaselineUpvotes(itemId, likeCount);
+    const upvoteCount = currentItem?.upvotes != null
+      ? currentItem.upvotes
+      : (isUpvoted ? baselineUpvotes + 1 : baselineUpvotes);
+
+    // Bookmark status
+    const isBookmarked = !!userBookmarks[itemId];
+
+    // Views calculation (baseline + recorded clicks)
+    const extraClicks = articleViews[itemId] || 0;
+    const viewsCount = getDeterministicBaselineViews(
+      itemId,
+      publishedAt,
+      likeCount,
+      commentsList.length
+    ) + extraClicks;
 
     return {
       liked: isLiked,
-      likeCount: count,
+      likeCount,
+      upvoted: isUpvoted,
+      upvoteCount,
+      bookmarked: isBookmarked,
+      viewsCount,
+      formattedViews: formatViewCount(viewsCount),
       comments: commentsList,
     };
-  }, [globalStore, userLikes]);
+  }, [globalStore, userLikes, userUpvotes, userBookmarks, articleViews]);
 
-  return { toggleLike, addComment, getPostInteraction, globalStore };
+  return {
+    toggleLike,
+    toggleUpvote,
+    toggleBookmark,
+    recordView,
+    addComment,
+    getPostInteraction,
+    userBookmarks,
+    userUpvotes,
+    globalStore
+  };
 }

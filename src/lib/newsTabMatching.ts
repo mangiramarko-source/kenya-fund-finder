@@ -22,7 +22,7 @@ export const isInternationalNews = (article: { category?: string | null; source?
   categoryIs(article, "international", "global", "world") || INTERNATIONAL_SOURCE_PATTERN.test(article.source || "");
 
 export function matchesNewsTab(tab: string, article: NewsFromDB, stocks: StockReference[]): boolean {
-  if (["All", "Latest", "Oldest"].includes(tab)) return true;
+  if (["All", "Latest", "Oldest", "Top Ranked", "Saved"].includes(tab)) return true;
 
   const text = articleText(article);
   if (tab === "Kenyan") return !isInternationalNews(article);
