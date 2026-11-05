@@ -47,6 +47,7 @@ import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { buildNewsFeedItems } from "@/lib/stockNewsFeed";
+import { matchesNewsTab } from "@/lib/newsTabMatching";
 import { getCurrencyFlag } from "@/lib/currencyFlags";
 import InlineDataGate from "@/components/auth/InlineDataGate";
 import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
@@ -918,31 +919,10 @@ const OverviewPage = () => {
     if (tab === "All" || tab === "Latest" || tab === "Oldest") return true;
     if (tab === "Kenyan") return !isInternationalFeedItem(a);
     if (tab === "International") return isInternationalFeedItem(a);
-    if (tab === "Stocks") {
-      if (a.related_stock_id) return true;
-      return stocksList.some(s => {
-        const cleanName = s.name.replace(/Group|Holdings|Plc|Ltd|Limited/gi, '').trim();
-        const aliases = [s.symbol, s.name];
-        if (cleanName.length > 3 && cleanName.toLowerCase() !== 'kenya') aliases.push(cleanName);
-        if (cleanName.toLowerCase() === 'equity') aliases.push('Equity Bank');
-        if (cleanName.toLowerCase() === 'co-operative') aliases.push('Co-op Bank');
-        if (s.symbol === 'SCOM') aliases.push('Safaricom');
-        const escaped = aliases.map((x: string) => x.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-        return new RegExp(`\\b(${escaped.join('|')})\\b`, 'i').test(a.title);
-      });
-    }
     if (tab === FUNDS_AND_FIXED_INCOME_TAB || tab === "MMFs") {
       return isFundsAndFixedIncomeArticle(a);
     }
-    if (tab === "FX Rates") {
-      const rx = /\b(shilling|kes|usd\/kes|gbp\/kes|eur\/kes|forex|foreign exchange|currency|exchange rate)\b/i;
-      return a.category === "FX & Currency" || rx.test(a.title) || (!!a.summary && rx.test(a.summary)) || (!!a.content && rx.test(a.content));
-    }
-    if (tab === "Commodities") {
-      const rx = /\b(oil|crude( oil)?|brent|gold|coffee|tea|fuel|agriculture|agricultural|commodity|commodities)\b/i;
-      return rx.test(a.title) || (!!a.summary && rx.test(a.summary)) || (!!a.content && rx.test(a.content));
-    }
-    return true;
+    return matchesNewsTab(tab, a, stocksList);
   };
 
   const fillCategoryNews = async (
@@ -1010,10 +990,6 @@ const OverviewPage = () => {
   };
 
   const feedItems = useSocialFeed(news, stocks, funds, rates, commodities);
-  const stockNewsFeedItems = useMemo(
-    () => buildNewsFeedItems(news, stocks).filter(item => Boolean(item.relatedStock)),
-    [news, stocks],
-  );
   const allFeedItems = useMemo(() => {
     const enrichedById = new Map(buildNewsFeedItems(news, stocks).map(item => [item.id, item]));
     return feedItems.map(item => {
@@ -1023,6 +999,13 @@ const OverviewPage = () => {
         : item;
     });
   }, [feedItems, news, stocks]);
+  const stockNewsFeedItems = useMemo(() => {
+    return allFeedItems.filter(item => {
+      if (item.relatedStock) return true;
+      const raw = (item.rawItem || item) as NewsFromDB;
+      return matchesNewsTab("Stocks", raw, stocks);
+    });
+  }, [allFeedItems, stocks]);
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [watchlistPromptOpen, setWatchlistPromptOpen] = useState(false);
 

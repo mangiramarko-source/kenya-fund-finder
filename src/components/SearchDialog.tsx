@@ -597,14 +597,14 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
               <input
                 ref={mobileInputRef}
                 type="text"
-                inputMode="search"
+                enterKeyHint="search"
                 autoComplete="off"
                 autoCorrect="off"
                 spellCheck={false}
                 placeholder="Search funds, stocks, FX, news..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="h-10 w-full rounded-full bg-muted/80 pl-10 pr-9 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 [&::-webkit-search-cancel-button]:hidden [&::-webkit-search-cancel-button]:appearance-none"
+                className="h-10 w-full rounded-full bg-muted/80 pl-10 pr-9 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
               />
               {query && (
                 <button
