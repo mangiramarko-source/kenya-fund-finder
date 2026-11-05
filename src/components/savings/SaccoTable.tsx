@@ -57,54 +57,75 @@ export const SaccoTable = ({ saccos }: SaccoTableProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Controls & Filter Bar */}
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-card/60 p-3.5 rounded-2xl border border-border/70 backdrop-blur-md">
+      {/* Search & Filter Controls */}
+      <div className="bg-card/60 p-3 sm:p-4 rounded-2xl border border-border/70 backdrop-blur-md space-y-3">
         {/* Search */}
-        <div className="relative flex-1 max-w-xs">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             placeholder="Search SACCO name or sector..."
-            className="pl-9 h-9 text-xs rounded-xl bg-background border-border/80"
+            className="pl-10 h-9 sm:h-10 text-xs sm:text-sm rounded-full bg-background border-border/80"
           />
         </div>
 
-        {/* Toggles & Sort */}
-        <div className="flex flex-wrap items-center gap-2">
-          {/* Public Eligibility Toggle */}
-          <button
-            type="button"
-            onClick={() => setPublicOnly(!publicOnly)}
-            className={`px-3 py-1.5 text-xs font-bold rounded-xl border transition-all ${
-              publicOnly
-                ? "bg-emerald-600 border-emerald-600 text-white"
-                : "border-border/70 bg-card hover:bg-muted text-muted-foreground"
-            }`}
-          >
-            {publicOnly ? "✓ Open to Public" : "All SACCOs"}
-          </button>
+        {/* Filter Section */}
+        <div className="space-y-1.5">
+          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pl-1">
+            Filter
+          </span>
 
-          {/* Sort Selector */}
-          <div className="flex items-center rounded-xl bg-muted/60 p-0.5 border border-border/50">
+          {/* Horizontal Scrolling Pill Buttons */}
+          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+            {/* Eligibility Pills */}
+            <button
+              type="button"
+              onClick={() => setPublicOnly(false)}
+              className={`shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                !publicOnly
+                  ? "bg-foreground text-background shadow-xs"
+                  : "border border-border/80 bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              }`}
+            >
+              All SACCOs
+            </button>
+            <button
+              type="button"
+              onClick={() => setPublicOnly(true)}
+              className={`shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                publicOnly
+                  ? "bg-foreground text-background shadow-xs"
+                  : "border border-border/80 bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              }`}
+            >
+              Open to Public
+            </button>
+
+            <div className="h-4 w-[1px] bg-border/70 shrink-0 mx-0.5" />
+
+            {/* Sort Selector */}
             {[
               { label: "Interest on Deposits", key: "interest" as const },
               { label: "Dividend on Shares", key: "dividend" as const },
               { label: "Asset Size", key: "assets" as const },
-            ].map((s) => (
-              <button
-                key={s.key}
-                type="button"
-                onClick={() => setSortKey(s.key)}
-                className={`px-2.5 py-1 text-xs font-bold rounded-lg transition-all ${
-                  sortKey === s.key
-                    ? "bg-background text-foreground shadow-sm dark:bg-neutral-800"
-                    : "text-muted-foreground hover:text-foreground"
-                }`}
-              >
-                {s.label}
-              </button>
-            ))}
+            ].map((s) => {
+              const active = sortKey === s.key;
+              return (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setSortKey(s.key)}
+                  className={`shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                    active
+                      ? "bg-foreground text-background shadow-xs"
+                      : "border border-border/80 bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                  }`}
+                >
+                  {s.label}
+                </button>
+              );
+            })}
           </div>
         </div>
       </div>

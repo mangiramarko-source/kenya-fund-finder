@@ -211,6 +211,11 @@ const SavingsPage = () => {
           />
         </div>
 
+        {/* Description (simple 2 lines max) */}
+        <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed max-w-3xl">
+          Compare guaranteed fixed deposit rates from KDIC-insured commercial banks and annual member dividend yields across premier SASRA-regulated SACCOs in Kenya.
+        </p>
+
         {/* Selected View Table */}
         <div className="space-y-4">
           {activeTab === "fixed-deposits" ? (
