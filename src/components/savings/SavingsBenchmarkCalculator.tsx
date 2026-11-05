@@ -12,7 +12,11 @@ const TENOR_OPTIONS = [
   { label: "12 Months (1 Year)", value: 12 },
 ];
 
-export const SavingsBenchmarkCalculator = () => {
+export interface SavingsBenchmarkCalculatorProps {
+  embedded?: boolean;
+}
+
+export const SavingsBenchmarkCalculator = ({ embedded = false }: SavingsBenchmarkCalculatorProps) => {
   const [amount, setAmount] = useState<number>(100000);
   const [duration, setDuration] = useState<number>(12);
 
@@ -25,15 +29,23 @@ export const SavingsBenchmarkCalculator = () => {
   }, [benchmark]);
 
   return (
-    <section className="rounded-3xl border border-border/80 bg-gradient-to-b from-card/90 to-card/50 backdrop-blur-xl p-5 sm:p-7 shadow-lg shadow-black/[0.03] dark:shadow-black/20">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-5 border-b border-border/60">
+    <section
+      className={
+        embedded
+          ? "space-y-4"
+          : "rounded-3xl border border-border/80 bg-gradient-to-b from-card/90 to-card/50 backdrop-blur-xl p-5 sm:p-7 shadow-lg shadow-black/[0.03] dark:shadow-black/20"
+      }
+    >
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-border/60">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold mb-2">
-            <Calculator className="h-3.5 w-3.5" />
-            Cross-Asset Return & Tax Simulator
-          </div>
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-foreground">
-            Compare What Your Savings Will Earn
+          {!embedded && (
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-xs font-bold mb-2">
+              <Calculator className="h-3.5 w-3.5" />
+              Cross-Asset Return & Tax Simulator
+            </div>
+          )}
+          <h2 className="text-lg sm:text-xl font-black tracking-tight text-foreground">
+            {embedded ? "Simulate Net Earnings" : "Compare What Your Savings Will Earn"}
           </h2>
           <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
             Side-by-side projected net return after Kenya's 15% Withholding Tax (WHT).

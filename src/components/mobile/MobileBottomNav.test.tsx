@@ -64,7 +64,25 @@ describe("MobileBottomNav Tab Highlighting Verification", () => {
     expect(screen.getByText("MMFs")).toHaveClass("text-emerald-600");
     unmountFunds();
 
-    // 7. Portfolio route
+    // 7. Banking / Savings route
+    const { unmount: unmountSavings } = render(
+      <MemoryRouter initialEntries={["/savings"]}>
+        <MobileBottomNav />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("Banking")).toHaveClass("text-emerald-600");
+    unmountSavings();
+
+    // 8. /saccos route
+    const { unmount: unmountSaccos } = render(
+      <MemoryRouter initialEntries={["/saccos"]}>
+        <MobileBottomNav />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("Banking")).toHaveClass("text-emerald-600");
+    unmountSaccos();
+
+    // 9. Portfolio route
     const { unmount: unmountPortfolio } = render(
       <MemoryRouter initialEntries={["/portfolio"]}>
         <MobileBottomNav />

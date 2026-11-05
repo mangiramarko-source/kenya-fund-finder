@@ -1,8 +1,16 @@
 import { useState, useEffect } from "react";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
-import { Landmark, Users, ShieldCheck, PiggyBank, ArrowRight, Info, Sparkles } from "lucide-react";
+import { Landmark, Users, ShieldCheck, PiggyBank, ArrowRight, Info, Sparkles, Calculator } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { SavingsBenchmarkCalculator } from "@/components/savings/SavingsBenchmarkCalculator";
 import { FixedDepositTable } from "@/components/savings/FixedDepositTable";
 import { SaccoTable } from "@/components/savings/SaccoTable";
@@ -62,6 +70,7 @@ const SavingsPage = () => {
   const [deposits, setDeposits] = useState<BankFixedDeposit[]>([]);
   const [saccos, setSaccos] = useState<SaccoRecord[]>([]);
   const [loading, setLoading] = useState(true);
+  const [calcOpen, setCalcOpen] = useState(false);
 
   useEffect(() => {
     let mounted = true;
@@ -121,18 +130,15 @@ const SavingsPage = () => {
         </div>
       </div>
 
-      {/* Cross-Asset Benchmark Calculator */}
-      <SavingsBenchmarkCalculator />
-
-      {/* Main Tabbed Comparison View */}
+      {/* Main Tabbed Comparison View — starts directly from the pills */}
       <div className="space-y-6">
         <Tabs
           value={activeTab}
           onValueChange={handleTabChange}
           className="w-full"
         >
-          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-2 border-b border-border/60">
-            <TabsList className="bg-muted/70 p-1 rounded-2xl h-11 border border-border/50">
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pb-3 border-b border-border/60">
+            <TabsList className="bg-muted/70 p-1 rounded-2xl h-11 border border-border/50 self-start sm:self-auto">
               <TabsTrigger
                 value="fixed-deposits"
                 className="rounded-xl font-bold text-xs sm:text-sm data-[state=active]:bg-background data-[state=active]:text-foreground data-[state=active]:shadow-sm"
@@ -155,11 +161,21 @@ const SavingsPage = () => {
               </TabsTrigger>
             </TabsList>
 
-            <div className="text-xs text-muted-foreground hidden sm:flex items-center gap-2">
-              <span className="flex items-center gap-1 font-medium">
+            <div className="flex items-center gap-2.5">
+              <div className="text-xs text-muted-foreground hidden lg:flex items-center gap-1.5 mr-2">
                 <ShieldCheck className="h-3.5 w-3.5 text-emerald-500" />
-                15% Withholding Tax Applied
-              </span>
+                <span className="font-medium">15% WHT Applied</span>
+              </div>
+
+              <Button
+                type="button"
+                onClick={() => setCalcOpen(true)}
+                variant="outline"
+                className="h-10 px-3.5 rounded-2xl border-emerald-500/30 text-emerald-600 dark:text-emerald-400 bg-emerald-500/5 hover:bg-emerald-500/10 font-bold text-xs sm:text-sm gap-2 shadow-xs transition-all"
+              >
+                <Calculator className="h-4 w-4" />
+                <span>Compare Calculator</span>
+              </Button>
             </div>
           </div>
 
@@ -197,6 +213,41 @@ const SavingsPage = () => {
       </div>
 
       <DisclaimerBlock />
+
+      {/* Mobile Sticky Floating Action Button (FAB) */}
+      <button
+        type="button"
+        onClick={() => setCalcOpen(true)}
+        aria-label="Open Savings Return Calculator"
+        className="fixed bottom-20 right-4 z-40 md:hidden flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs font-bold border border-emerald-400/30"
+      >
+        <Calculator className="h-4 w-4 stroke-[2.5]" />
+        <span>Compare Calculator</span>
+      </button>
+
+      {/* Return & Benchmark Calculator Popup Dialog */}
+      <Dialog open={calcOpen} onOpenChange={setCalcOpen}>
+        <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-3xl max-h-[90vh] flex flex-col bg-background border-border/80">
+          <DialogHeader className="p-5 pb-3 border-b border-border/60 bg-muted/30">
+            <div className="flex items-center gap-2.5">
+              <div className="flex h-9 w-9 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0">
+                <Calculator className="h-4 w-4" />
+              </div>
+              <div className="text-left">
+                <DialogTitle className="text-lg font-black text-foreground">
+                  Cross-Asset Return & Tax Simulator
+                </DialogTitle>
+                <DialogDescription className="text-xs text-muted-foreground mt-0.5">
+                  Simulate net take-home returns after Kenya's 15% Withholding Tax across MMF, T-Bills, Bank Fixed Deposits, and SACCOs
+                </DialogDescription>
+              </div>
+            </div>
+          </DialogHeader>
+          <div className="p-4 sm:p-6 overflow-y-auto overscroll-contain">
+            <SavingsBenchmarkCalculator embedded />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -4,6 +4,7 @@ import {
   Newspaper,
   TrendingUp,
   Landmark,
+  PiggyBank,
   PieChart,
   MoreHorizontal,
 } from "lucide-react";
@@ -18,6 +19,7 @@ export default function MobileBottomNav() {
     if (pathname === "/" || pathname === "/overview" || pathname === "/news" || pathname.startsWith("/news/")) return "news";
     if (pathname === "/stocks" || pathname.startsWith("/stocks/")) return "stocks";
     if (pathname === "/funds" || pathname === "/money-market-funds-kenya" || pathname.startsWith("/compare/")) return "funds";
+    if (pathname === "/savings" || pathname === "/fixed-deposits" || pathname === "/saccos" || pathname.startsWith("/savings")) return "banking";
     if (pathname === "/portfolio" || pathname.startsWith("/portfolio/") || pathname === "/watchlist") return "portfolio";
     return "";
   }, [pathname]);
@@ -28,7 +30,7 @@ export default function MobileBottomNav() {
         aria-label="Mobile Bottom Navigation"
         className="fixed bottom-0 inset-x-0 z-50 md:hidden border-t border-border/80 dark:border-border/20 bg-background/95 backdrop-blur-xl pt-2 pb-[max(0.6rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.04)] dark:shadow-[0_-4px_20px_rgba(0,0,0,0.3)]"
       >
-        <div className="flex h-16 items-center justify-around px-2">
+        <div className="flex h-16 items-center justify-around px-1 sm:px-2">
           {/* 1. News */}
           <NavTab
             to="/"
@@ -53,7 +55,15 @@ export default function MobileBottomNav() {
             isActive={activeTab === "funds"}
           />
 
-          {/* 4. My Assets (Portfolio & Watchlist) */}
+          {/* 4. Banking (Fixed Deposits & SACCOs) */}
+          <NavTab
+            to="/savings"
+            icon={PiggyBank}
+            label="Banking"
+            isActive={activeTab === "banking"}
+          />
+
+          {/* 5. My Assets (Portfolio & Watchlist) */}
           <NavTab
             to="/portfolio"
             icon={PieChart}
@@ -61,7 +71,7 @@ export default function MobileBottomNav() {
             isActive={activeTab === "portfolio"}
           />
 
-          {/* 5. More */}
+          {/* 6. More */}
           <button
             type="button"
             onClick={() => setMoreOpen(true)}
