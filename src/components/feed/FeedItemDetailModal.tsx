@@ -402,22 +402,23 @@ export function FeedItemDetailModal({
             )}
           </div>
 
-          {/* Social Interactions Bar */}
-          <div className="flex items-center justify-between py-1.5 text-xs text-muted-foreground font-medium border-t border-b border-border/40 my-2 gap-2 flex-wrap sm:flex-nowrap">
+          {/* Social Interactions Bar: Mobile-identical compact pills */}
+          <div className="flex items-center justify-between py-1.5 text-xs text-muted-foreground font-medium border-t border-b border-border/40 my-2 gap-2 flex-nowrap">
             <button
               type="button"
               onClick={() => commentsRef.current?.scrollIntoView({ behavior: "smooth" })}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground font-semibold transition-all cursor-pointer whitespace-nowrap"
+              aria-label={`${totalComments} comments`}
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0"
             >
               <MessageSquare className="h-4 w-4" />
               <span>{totalComments}</span>
-              <span className="hidden sm:inline font-normal text-[11px]">Comments</span>
             </button>
 
             <button
               type="button"
               onClick={handleLikeToggle}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              aria-label={isLiked ? "Unlike article" : "Like article"}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 isLiked
                   ? "border-rose-500/40 bg-rose-500/10 text-rose-500"
                   : "border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -425,13 +426,13 @@ export function FeedItemDetailModal({
             >
               <Heart className={`h-4 w-4 ${isLiked ? "fill-rose-500 text-rose-500" : ""}`} />
               <span>{likesCount}</span>
-              <span className="hidden sm:inline font-normal text-[11px]">Likes</span>
             </button>
 
             <button
               type="button"
               onClick={handleUpvoteToggle}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              aria-label={isUpvoted ? "Remove upvote" : "Upvote story"}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 isUpvoted
                   ? "border-emerald-500/40 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
                   : "border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
@@ -439,38 +440,36 @@ export function FeedItemDetailModal({
             >
               <ArrowBigUp className={`h-4 w-4 ${isUpvoted ? "fill-emerald-500 text-emerald-500" : ""}`} />
               <span>{upvoteCount}</span>
-              <span className="hidden sm:inline font-normal text-[11px]">Rank</span>
             </button>
 
             <div
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border/70 bg-muted/20 text-muted-foreground font-medium whitespace-nowrap"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border/70 bg-muted/20 text-muted-foreground font-medium whitespace-nowrap shrink-0"
               title={`${viewsCount.toLocaleString()} total views`}
             >
               <BarChart2 className="h-4 w-4 text-muted-foreground/80" />
               <span>{formattedViews}</span>
-              <span className="hidden sm:inline font-normal text-[11px]">Views</span>
             </div>
 
             <button
               type="button"
               onClick={handleBookmarkToggle}
-              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-semibold transition-all cursor-pointer whitespace-nowrap ${
+              aria-label={isBookmarked ? "Remove bookmark" : "Bookmark article"}
+              className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0 ${
                 isBookmarked
                   ? "border-amber-500/40 bg-amber-500/10 text-amber-600 dark:text-amber-400"
                   : "border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
               }`}
             >
               <Bookmark className={`h-4 w-4 ${isBookmarked ? "fill-amber-500 text-amber-500" : ""}`} />
-              <span className="hidden sm:inline font-normal text-[11px]">Save</span>
             </button>
 
             <button
               type="button"
               onClick={handleShare}
-              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground font-semibold transition-all cursor-pointer whitespace-nowrap"
+              aria-label="Share article"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground font-semibold transition-all cursor-pointer whitespace-nowrap shrink-0"
             >
               <Share2 className="h-4 w-4" />
-              <span className="hidden sm:inline font-normal text-[11px]">Share</span>
             </button>
           </div>
 

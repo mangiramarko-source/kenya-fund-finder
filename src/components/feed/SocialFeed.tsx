@@ -420,8 +420,8 @@ export const SocialFeedCard = ({
           </button>
         </div>
 
-        {/* ─── Bottom Actions Row: 6 Distinct Rounded Pill Chips (Twitter / X Format) ─── */}
-        <div className="flex items-center justify-between w-full min-w-0 gap-1 sm:gap-2 pt-2 flex-wrap sm:flex-nowrap">
+        {/* ─── Bottom Actions Row: 6 Distinct Rounded Pill Chips (Mobile-identical compact format) ─── */}
+        <div className="flex items-center justify-between w-full min-w-0 gap-1 sm:gap-2 pt-2 flex-nowrap">
           {/* Comments Pill */}
           <button
             type="button"
@@ -434,7 +434,6 @@ export const SocialFeedCard = ({
           >
             <MessageCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
             <span className="tabular-nums text-[11px] sm:text-xs">{commentsCount}</span>
-            <span className="hidden md:inline text-[11px] font-normal text-muted-foreground">Comments</span>
           </button>
 
           {/* Likes Pill */}
@@ -450,7 +449,6 @@ export const SocialFeedCard = ({
           >
             <Heart className={`h-3.5 w-3.5 shrink-0 ${isLiked ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`} />
             <span className="tabular-nums text-[11px] sm:text-xs">{likeCount}</span>
-            <span className="hidden md:inline text-[11px] font-normal text-muted-foreground">Likes</span>
           </button>
 
           {/* Rank / Upvote Pill */}
@@ -466,7 +464,6 @@ export const SocialFeedCard = ({
           >
             <ArrowBigUp className={`h-4 w-4 shrink-0 ${isUpvoted ? "fill-emerald-500 text-emerald-500" : "text-muted-foreground"}`} />
             <span className="tabular-nums text-[11px] sm:text-xs">{upvoteCount}</span>
-            <span className="hidden md:inline text-[11px] font-normal text-muted-foreground">Rank</span>
           </button>
 
           {/* Views Metric Chip */}
@@ -476,7 +473,6 @@ export const SocialFeedCard = ({
           >
             <BarChart2 className="h-3.5 w-3.5 text-muted-foreground/80 shrink-0" />
             <span className="tabular-nums text-[11px] sm:text-xs">{formattedViews}</span>
-            <span className="hidden lg:inline text-[11px] font-normal text-muted-foreground">Views</span>
           </div>
 
           {/* Bookmark Pill */}
@@ -491,7 +487,6 @@ export const SocialFeedCard = ({
             aria-label={isBookmarked ? "Remove bookmark" : "Bookmark article"}
           >
             <Bookmark className={`h-3.5 w-3.5 shrink-0 ${isBookmarked ? "fill-amber-500 text-amber-500" : "text-muted-foreground"}`} />
-            <span className="hidden sm:inline text-[11px] font-normal">Save</span>
           </button>
 
           {/* Share Pill */}
@@ -502,7 +497,6 @@ export const SocialFeedCard = ({
             aria-label="Share article"
           >
             <Share2 className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <span className="hidden sm:inline text-[11px] font-normal">Share</span>
           </button>
         </div>
       </div>
