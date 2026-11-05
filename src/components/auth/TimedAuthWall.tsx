@@ -136,7 +136,7 @@ export default function TimedAuthWall() {
         {/* Footer reassurance & Snooze Link */}
         <div className="flex items-center justify-between text-[11px] text-muted-foreground pt-1 px-1">
           <span className="flex items-center gap-1">
-            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> Free forever • No spam
+            <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" /> No spam
           </span>
           <button
             onClick={handleSnooze}

@@ -103,7 +103,7 @@ export default function InlineDataGate({
         {/* Trust badge */}
         <p className="text-[11px] text-muted-foreground flex items-center justify-center gap-1.5 pt-1">
           <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
-          <span>Free forever • No credit card required • Instant access</span>
+          <span>No credit card required • Instant access</span>
         </p>
       </div>
     </div>
