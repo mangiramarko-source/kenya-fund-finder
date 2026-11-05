@@ -88,8 +88,9 @@ describe("Fund Sparklines", () => {
   });
 
   it("does not render a fake flat 2-point line when only a single snapshot exists", () => {
+    const todayIso = new Date().toISOString().split("T")[0];
     const singleSnapshot: YieldSnapshot[] = [
-      { fund_id: "fund-test-1", annual_yield: 12.5, daily_yield: 12.0, snapshot_date: "2026-11-04" },
+      { fund_id: "fund-test-1", annual_yield: 12.5, daily_yield: 12.0, snapshot_date: todayIso },
     ];
 
     const { container } = render(

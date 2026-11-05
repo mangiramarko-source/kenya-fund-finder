@@ -32,7 +32,8 @@ import { ExchangeRatesCard } from "@/components/desktop/ExchangeRatesCard";
 import { MarketMoversCard } from "@/components/desktop/MarketMoversCard";
 import { toast } from "sonner";
 import { safeUUID } from "@/lib/safeUUID";
-import { fetchPublishedNews, fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
+import { fetchPublishedNews, fetchStockLinkedNews, fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
+import { dedupeNewsByUrl } from "@/lib/newsDedupe";
 import { getNewsPublishedAt } from "@/lib/newsDate";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
@@ -952,13 +953,12 @@ const OverviewPage = () => {
       if (batch.length > 0) {
         const existingIds = new Set(accumulated.map(a => a.id));
         const fresh = batch.filter(a => !existingIds.has(a.id));
-        accumulated = [...accumulated, ...fresh];
+        accumulated = dedupeNewsByUrl([...accumulated, ...fresh]);
         currentOffset = nextOffset;
-      }
-      if (batch.length < 60) {
+      } else {
         hasMoreRemote = false;
+        break;
       }
-      if (batch.length === 0) break;
     }
 
     return { articles: accumulated, offset: currentOffset, hasMore: hasMoreRemote };
@@ -1037,11 +1037,18 @@ const OverviewPage = () => {
       })
       .then(undefined, () => {})
       .then(() => setFundsLoading(false));
-    fetchPublishedNews(60, 0).then(n => {
-      setNews(n);
-      setNewsOffset(0);
-      setNewsHasMore(n.length === 60);
-    }).catch(() => {}).finally(() => setNewsLoading(false));
+    Promise.all([fetchPublishedNews(60, 0), fetchStockLinkedNews(40)])
+      .then(([generalNews, stockNews]) => {
+        const merged = dedupeNewsByUrl([
+          ...generalNews,
+          ...stockNews.filter((s) => !generalNews.some((g) => g.id === s.id)),
+        ]);
+        setNews(merged);
+        setNewsOffset(0);
+        setNewsHasMore(generalNews.length > 0);
+      })
+      .catch(() => {})
+      .finally(() => setNewsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -1057,8 +1064,17 @@ const OverviewPage = () => {
 
   useEffect(() => {
     const refreshNews = () => {
-      fetchPublishedNews()
-        .then(setNews)
+      Promise.all([fetchPublishedNews(60, 0), fetchStockLinkedNews(40)])
+        .then(([latest, stockNews]) => {
+          setNews(current => {
+            const incoming = [...latest, ...stockNews];
+            const incomingIds = new Set(incoming.map(a => a.id));
+            return dedupeNewsByUrl([
+              ...incoming,
+              ...current.filter(a => !incomingIds.has(a.id)),
+            ]);
+          });
+        })
         .catch(() => {});
     };
     const newsInterval = window.setInterval(refreshNews, 3 * 60_000);

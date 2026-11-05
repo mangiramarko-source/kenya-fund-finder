@@ -63,7 +63,7 @@ describe("News Gating Verification", () => {
     // Visible: Takeaway, Why This Matters, Market Snapshot
     expect(screen.getByText("Safaricom Expands Platform")).toBeInTheDocument();
     expect(screen.getByText(/Why This Matters/i)).toBeInTheDocument();
-    expect(screen.getByText(/KES 18.50/i)).toBeInTheDocument();
+    expect(screen.getAllByText(/KES 18.50/i).length).toBeGreaterThan(0);
 
     // InlineDataGate is rendered with 6+ more available
     expect(screen.getByText(/Unlock Full Kenyan Market Briefing & Analysis/i)).toBeInTheDocument();

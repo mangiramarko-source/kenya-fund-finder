@@ -53,6 +53,10 @@ export interface Stock {
   day_change_percent: number;
   volume: number;
   market_cap: number | null;
+  pe_ratio?: number | null;
+  dividend_yield?: number | null;
+  year_low?: number | null;
+  year_high?: number | null;
   logo_url?: string | null;
   updated_at: string;
 }
@@ -91,12 +95,17 @@ export function useMarketData() {
         })) as Commodity[])
       );
       setStocks(
-        ((stocksRes.data || []).map((s) => ({
+        ((stocksRes.data || []).map((s: any) => ({
           ...s,
           price: Number(s.price),
           previous_price: s.previous_price != null ? Number(s.previous_price) : null,
           day_change: Number(s.day_change),
           day_change_percent: Number(s.day_change_percent),
+          pe_ratio: s.pe_ratio != null ? Number(s.pe_ratio) : null,
+          dividend_yield: s.dividend_yield != null ? Number(s.dividend_yield) : null,
+          year_low: s.year_low != null ? Number(s.year_low) : null,
+          year_high: s.year_high != null ? Number(s.year_high) : null,
+          market_cap: s.market_cap != null ? Number(s.market_cap) : null,
         })) as Stock[])
       );
     } catch (err) {

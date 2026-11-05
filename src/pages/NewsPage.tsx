@@ -1,7 +1,8 @@
 import { Fragment, useState, useEffect, useMemo } from "react";
 import { Link } from "react-router-dom";
 import { decodeHtmlEntities } from "@/lib/utils";
-import { fetchPublishedNews, fetchPublicStocks, type NewsFromDB } from "@/lib/api";
+import { fetchPublishedNews, fetchStockLinkedNews, fetchPublicStocks, type NewsFromDB } from "@/lib/api";
+import { findMentionedStock } from "@/lib/stockNewsFeed";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { Archive, Megaphone, Sparkles, Bookmark } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
@@ -88,7 +89,9 @@ export default function NewsPage() {
     currentHasMore: boolean,
     currentStocks: any[]
   ) => {
-    const matching = currentArticles.filter(a => matchesNewsTab(tab, a, currentStocks));
+    const matching = currentArticles.filter(a =>
+      tab === "Stocks" ? Boolean(findMentionedStock(a, currentStocks)) : matchesNewsTab(tab, a, currentStocks)
+    );
     if (matching.length >= 15 || !currentHasMore) return;
     setLoadingMore(true);
     try {
@@ -104,20 +107,25 @@ export default function NewsPage() {
   };
 
   useEffect(() => {
-    Promise.allSettled([fetchPublishedNews(60, 0), fetchPublicStocks()])
-      .then(([newsResult, stocksResult]) => {
+    Promise.allSettled([fetchPublishedNews(60, 0), fetchStockLinkedNews(40), fetchPublicStocks()])
+      .then(([newsResult, stockNewsResult, stocksResult]) => {
         const newsData = newsResult.status === "fulfilled" ? newsResult.value : [];
+        const stockNewsData = stockNewsResult.status === "fulfilled" ? stockNewsResult.value : [];
         const stocksData = stocksResult.status === "fulfilled" ? stocksResult.value : [];
         const resolved = stocksData || [];
-        const more = newsData.length === 60;
-        setArticles(newsData);
+        const mergedNews = dedupeNewsByUrl([
+          ...newsData,
+          ...stockNewsData.filter((s) => !newsData.some((g) => g.id === s.id)),
+        ]);
+        const more = newsData.length > 0;
+        setArticles(mergedNews);
         setStocks(resolved);
         setOffset(0);
         setHasMore(more);
         setLoading(false);
         // Only trigger extra fill batches if the default tab requires filtering beyond "All"
         if (DEFAULT_NEWS_TAB !== "All") {
-          triggerFillForTab(DEFAULT_NEWS_TAB, newsData, 0, more, resolved);
+          triggerFillForTab(DEFAULT_NEWS_TAB, mergedNews, 0, more, resolved);
         }
       })
       .catch(() => setLoading(false));
@@ -127,12 +135,16 @@ export default function NewsPage() {
   useEffect(() => {
     const refreshLatest = async () => {
       try {
-        const latest = await fetchPublishedNews(60, 0);
+        const [latest, stockNews] = await Promise.all([
+          fetchPublishedNews(60, 0),
+          fetchStockLinkedNews(40),
+        ]);
         setArticles(current => {
-          const latestIds = new Set(latest.map(article => article.id));
+          const incoming = [...latest, ...stockNews];
+          const incomingIds = new Set(incoming.map(article => article.id));
           return dedupeNewsByUrl([
-            ...latest,
-            ...current.filter(article => !latestIds.has(article.id)),
+            ...incoming,
+            ...current.filter(article => !incomingIds.has(article.id)),
           ]);
         });
       } catch {
@@ -164,7 +176,9 @@ export default function NewsPage() {
     let batches = 0;
 
     while (hasMoreRemote && batches < MAX_BATCHES) {
-      const matching = accumulated.filter(a => matchesNewsTab(tab, a, stocksList));
+      const matching = accumulated.filter(a =>
+        tab === "Stocks" ? Boolean(findMentionedStock(a, stocksList)) : matchesNewsTab(tab, a, stocksList)
+      );
       if (matching.length >= target) break;
 
       const nextOffset = currentOffset + 60;
@@ -176,11 +190,10 @@ export default function NewsPage() {
         const fresh = batch.filter(a => !existingIds.has(a.id));
         accumulated = dedupeNewsByUrl([...accumulated, ...fresh]);
         currentOffset = nextOffset;
-      }
-      if (batch.length < 60) {
+      } else {
         hasMoreRemote = false;
+        break;
       }
-      if (batch.length === 0) break;
     }
 
     return { articles: accumulated, offset: currentOffset, hasMore: hasMoreRemote };
@@ -217,27 +230,8 @@ export default function NewsPage() {
 
   const feedItems = useMemo(() => {
     const items: FeedItem[] = filteredArticles.map((a) => {
-      // Find related stock if present
-      let relatedStock: any = null;
-      if (a.related_stock_id) {
-        relatedStock = stocks.find(s => s.id === a.related_stock_id);
-      }
-      if (!relatedStock) {
-        const found = stocks.find(s => {
-          const cleanName = s.name.replace(/Group|Holdings|Plc|Ltd|Limited/gi, '').trim();
-          const brandAliases = [s.symbol, s.name];
-          if (cleanName.length > 3 && cleanName.toLowerCase() !== 'kenya') brandAliases.push(cleanName);
-          if (cleanName.toLowerCase() === 'equity') brandAliases.push('Equity Bank');
-          if (cleanName.toLowerCase() === 'co-operative') brandAliases.push('Co-op Bank');
-          if (s.symbol === 'SCOM') brandAliases.push('Safaricom');
-          
-          // Escape aliases for regex
-          const escapedAliases = brandAliases.map(alias => alias.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'));
-          const regex = new RegExp(`\\b(${escapedAliases.join('|')})\\b`, 'i');
-          return regex.test(a.title);
-        });
-        if (found) relatedStock = found;
-      }
+      // Find related stock if present (explicit link first, then ticker/brand mention in title or summary)
+      const relatedStock: any = findMentionedStock(a, stocks) || null;
 
       const displayCategory = classifyArticleCategory({
         title: a.title,
@@ -306,7 +300,9 @@ export default function NewsPage() {
         });
         return scoreB - scoreA;
       });
-    } else if (["Kenyan", "International", "Stocks", "FX Rates", "Commodities"].includes(activeNavTab)) {
+    } else if (activeNavTab === "Stocks") {
+      allItems = allItems.filter(a => Boolean(a.relatedStock));
+    } else if (["Kenyan", "International", "FX Rates", "Commodities"].includes(activeNavTab)) {
       allItems = allItems.filter(a => matchesNewsTab(activeNavTab, a.rawItem || a, stocks));
     } else if (activeNavTab === FUNDS_AND_FIXED_INCOME_TAB || activeNavTab === "MMFs") {
       allItems = allItems.filter(a => isFundsAndFixedIncomeArticle(a.rawItem || a));

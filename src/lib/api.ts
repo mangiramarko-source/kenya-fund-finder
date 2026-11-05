@@ -573,6 +573,52 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
   }
 }
 
+/**
+ * Fetches published articles that are explicitly linked to a listed stock (`related_stock_id IS NOT NULL`)
+ * so that the Stocks feed tab always has stock-specific analytical cards even when the latest 60
+ * general news items are macro/world stories.
+ */
+export async function fetchStockLinkedNews(limit: number = 40): Promise<NewsFromDB[]> {
+  try {
+    const { data, error } = await supabase
+      .from("news_articles_public")
+      .select("id, title, summary, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+      .not("related_stock_id", "is", null)
+      .order("source_published_at", { ascending: false, nullsFirst: false })
+      .order("date_published", { ascending: false, nullsFirst: false })
+      .order("created_at", { ascending: false })
+      .limit(limit);
+
+    if (error) throw error;
+
+    return dedupeNewsByUrl((data || []).map((d: any) => {
+      const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight);
+      return {
+        id: d.id,
+        title: d.title,
+        summary: d.summary,
+        content: null,
+        source: d.source,
+        date_published: d.date_published,
+        source_published_at: d.source_published_at || null,
+        created_at: d.created_at,
+        url: d.url,
+        category: d.category,
+        read_time: d.read_time,
+        is_featured: d.is_featured,
+        status: d.status,
+        image_url: d.image_url || null,
+        related_stock_id: d.related_stock_id || null,
+        ai_insight: d.ai_insight || null,
+        parsed_ai_analysis,
+      };
+    }));
+  } catch (err) {
+    console.warn("fetchStockLinkedNews failed:", err);
+    return [];
+  }
+}
+
 export async function fetchPublicStocks(): Promise<PublicStock[]> {
   try {
     const { data } = await fetchPublicData<any>("stocks", {
