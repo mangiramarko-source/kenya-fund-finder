@@ -1,4 +1,5 @@
-import { lazy, Suspense } from "react";
+import { Suspense } from "react";
+import { lazyWithRetry } from "@/lib/lazyWithRetry";
 import { RESEARCH_ARTICLES, articlePath } from "./data/seoGrowthContent";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
@@ -6,7 +7,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Navigate, Routes, Route, useLocation } from "react-router-dom";
 import { AuthProvider } from "@/hooks/useAuth";
-import { CompareProvider } from "@/hooks/useCompare";
+import { CompareProvider, useCompare } from "@/hooks/useCompare";
 import { UniversalCompareProvider } from "@/hooks/useUniversalCompare";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import Layout from "@/components/Layout";
@@ -26,64 +27,80 @@ import PortfolioAccountSync from "./components/portfolio/PortfolioAccountSync";
 import PortfolioImportPrompt from "./components/portfolio/PortfolioImportPrompt";
 
 // Defer heavy/non-critical UI to shrink initial JS bundle
-const CompareModal = lazy(() => import("./components/compare/CompareModal"));
+const CompareModal = lazyWithRetry(() => import("./components/compare/CompareModal"), "CompareModal");
 
-// Lazy-loaded routes
-const Index = lazy(() => import("./pages/Index"));
-const ComparePage = lazy(() => import("./pages/ComparePage"));
-const FundDetailPage = lazy(() => import("./pages/FundDetailPage"));
+/**
+ * Host component for CompareModal.
+ * Only mounts and dynamically fetches the CompareModal bundle when the user has actually
+ * opened the modal with 2 or more funds selected. This prevents unconditionally downloading
+ * CompareModal on initial page load across the entire site.
+ */
+const CompareModalHost = () => {
+  const { selected, isOpen } = useCompare();
+  if (!isOpen || selected.length < 2) return null;
+  return (
+    <Suspense fallback={null}>
+      <CompareModal />
+    </Suspense>
+  );
+};
 
-const NewsPage = lazy(() => import("./pages/NewsPage"));
-const NewsArchivePage = lazy(() => import("./pages/NewsArchivePage"));
-const NewsArticlePage = lazy(() => import("./pages/NewsArticlePage"));
-const LearnPage = lazy(() => import("./pages/LearnPage"));
-const MmfGuidePage = lazy(() => import("./pages/MmfGuidePage"));
-const AuthPage = lazy(() => import("./pages/AuthPage"));
-const AuthCallback = lazy(() => import("./pages/AuthCallback"));
-const ResetPasswordPage = lazy(() => import("./pages/ResetPasswordPage"));
-const AdminLoginPage = lazy(() => import("./pages/AdminLoginPage"));
-const AdminPage = lazy(() => import("./pages/AdminPage"));
-const ProfilePage = lazy(() => import("./pages/ProfilePage"));
-const DeleteAccountPage = lazy(() => import("./pages/DeleteAccountPage"));
-const SitePage = lazy(() => import("./pages/SitePage"));
-const RatesPage = lazy(() => import("./pages/RatesPage"));
-const CommoditiesPage = lazy(() => import("./pages/CommoditiesPage"));
-const StocksPage = lazy(() => import("./pages/StocksPage"));
-const TreasuryPage = lazy(() => import("./pages/TreasuryPage"));
-const StockDetailPage = lazy(() => import("./pages/StockDetailPage"));
-const MarketDashboardPage = lazy(() => import("./pages/MarketDashboardPage"));
-const AlertsPage = lazy(() => import("./pages/AlertsPage"));
-const PortfolioPage = lazy(() => import("./pages/PortfolioPage"));
-const PortfolioSummaryPage = lazy(() => import("./pages/PortfolioSummaryPage"));
-const OverviewPage = lazy(() => import("./pages/OverviewPage"));
-const CalculatorPage = lazy(() => import("./pages/CalculatorPage"));
-const MmfResearchPage = lazy(() => import("./pages/MmfResearchPage"));
-const MmfCalculatorPage = lazy(() => import("./pages/MmfCalculatorPage"));
-const SavingsPage = lazy(() => import("./pages/SavingsPage"));
-const ResearchArticlePage = lazy(() => import("./pages/ResearchArticlePage"));
-const WatchlistPage = lazy(() => import("./pages/WatchlistPage"));
-const AiLabPage = lazy(() => import("./pages/AiLabPage"));
-const DevMobilePreviewPage = lazy(() => import("./pages/DevMobilePreviewPage"));
-const IntroPreviewPage = lazy(() => import("./pages/preview/IntroPreviewPage"));
+// Lazy-loaded routes with stale-chunk auto-retry
+const Index = lazyWithRetry(() => import("./pages/Index"), "Index");
+const ComparePage = lazyWithRetry(() => import("./pages/ComparePage"), "ComparePage");
+const FundDetailPage = lazyWithRetry(() => import("./pages/FundDetailPage"), "FundDetailPage");
+
+const NewsPage = lazyWithRetry(() => import("./pages/NewsPage"), "NewsPage");
+const NewsArchivePage = lazyWithRetry(() => import("./pages/NewsArchivePage"), "NewsArchivePage");
+const NewsArticlePage = lazyWithRetry(() => import("./pages/NewsArticlePage"), "NewsArticlePage");
+const LearnPage = lazyWithRetry(() => import("./pages/LearnPage"), "LearnPage");
+const MmfGuidePage = lazyWithRetry(() => import("./pages/MmfGuidePage"), "MmfGuidePage");
+const AuthPage = lazyWithRetry(() => import("./pages/AuthPage"), "AuthPage");
+const AuthCallback = lazyWithRetry(() => import("./pages/AuthCallback"), "AuthCallback");
+const ResetPasswordPage = lazyWithRetry(() => import("./pages/ResetPasswordPage"), "ResetPasswordPage");
+const AdminLoginPage = lazyWithRetry(() => import("./pages/AdminLoginPage"), "AdminLoginPage");
+const AdminPage = lazyWithRetry(() => import("./pages/AdminPage"), "AdminPage");
+const ProfilePage = lazyWithRetry(() => import("./pages/ProfilePage"), "ProfilePage");
+const DeleteAccountPage = lazyWithRetry(() => import("./pages/DeleteAccountPage"), "DeleteAccountPage");
+const SitePage = lazyWithRetry(() => import("./pages/SitePage"), "SitePage");
+const RatesPage = lazyWithRetry(() => import("./pages/RatesPage"), "RatesPage");
+const CommoditiesPage = lazyWithRetry(() => import("./pages/CommoditiesPage"), "CommoditiesPage");
+const StocksPage = lazyWithRetry(() => import("./pages/StocksPage"), "StocksPage");
+const TreasuryPage = lazyWithRetry(() => import("./pages/TreasuryPage"), "TreasuryPage");
+const StockDetailPage = lazyWithRetry(() => import("./pages/StockDetailPage"), "StockDetailPage");
+const MarketDashboardPage = lazyWithRetry(() => import("./pages/MarketDashboardPage"), "MarketDashboardPage");
+const AlertsPage = lazyWithRetry(() => import("./pages/AlertsPage"), "AlertsPage");
+const PortfolioPage = lazyWithRetry(() => import("./pages/PortfolioPage"), "PortfolioPage");
+const PortfolioSummaryPage = lazyWithRetry(() => import("./pages/PortfolioSummaryPage"), "PortfolioSummaryPage");
+const OverviewPage = lazyWithRetry(() => import("./pages/OverviewPage"), "OverviewPage");
+const CalculatorPage = lazyWithRetry(() => import("./pages/CalculatorPage"), "CalculatorPage");
+const MmfResearchPage = lazyWithRetry(() => import("./pages/MmfResearchPage"), "MmfResearchPage");
+const MmfCalculatorPage = lazyWithRetry(() => import("./pages/MmfCalculatorPage"), "MmfCalculatorPage");
+const SavingsPage = lazyWithRetry(() => import("./pages/SavingsPage"), "SavingsPage");
+const ResearchArticlePage = lazyWithRetry(() => import("./pages/ResearchArticlePage"), "ResearchArticlePage");
+const WatchlistPage = lazyWithRetry(() => import("./pages/WatchlistPage"), "WatchlistPage");
+const AiLabPage = lazyWithRetry(() => import("./pages/AiLabPage"), "AiLabPage");
+const DevMobilePreviewPage = lazyWithRetry(() => import("./pages/DevMobilePreviewPage"), "DevMobilePreviewPage");
+const IntroPreviewPage = lazyWithRetry(() => import("./pages/preview/IntroPreviewPage"), "IntroPreviewPage");
 import { isAiLabEnabled } from "@/lib/featureFlags";
 const DevOnlyPages = import.meta.env.DEV
   ? {
-      ChecklistPage: lazy(() => import("./pages/ChecklistPage")),
-      StocksDemoPage: lazy(() => import("./pages/StocksDemoPage")),
-      DemoStocksPage: lazy(() => import("./pages/DemoStocksPage")),
-      DemoStockFeedPage: lazy(() => import("./pages/DemoStockFeedPage")),
-      StockDecisionFeedDemoPage: lazy(() => import("./pages/StockDecisionFeedDemoPage")),
-      StocksMobileDesktopDemoPage: lazy(() => import("./pages/StocksMobileDesktopDemoPage")),
-      DevEmailPreviewPage: lazy(() => import("./pages/DevEmailPreviewPage")),
-      DevWelcomePreviewPage: lazy(() => import("./pages/DevWelcomePreviewPage")),
-      DevNotificationPreviewPage: lazy(() => import("./pages/DevNotificationPreviewPage")),
-      DevPortfolioChangePreviewPage: lazy(() => import("./pages/DevPortfolioChangePreviewPage")),
-      DevAiLabPopupPreviewPage: lazy(() => import("./pages/DevAiLabPopupPreviewPage")),
-      DevAiResultCardPreviewPage: lazy(() => import("./pages/DevAiResultCardPreviewPage")),
-      DevCompareDemoPage: lazy(() => import("./pages/DevCompareDemoPage")),
+      ChecklistPage: lazyWithRetry(() => import("./pages/ChecklistPage"), "ChecklistPage"),
+      StocksDemoPage: lazyWithRetry(() => import("./pages/StocksDemoPage"), "StocksDemoPage"),
+      DemoStocksPage: lazyWithRetry(() => import("./pages/DemoStocksPage"), "DemoStocksPage"),
+      DemoStockFeedPage: lazyWithRetry(() => import("./pages/DemoStockFeedPage"), "DemoStockFeedPage"),
+      StockDecisionFeedDemoPage: lazyWithRetry(() => import("./pages/StockDecisionFeedDemoPage"), "StockDecisionFeedDemoPage"),
+      StocksMobileDesktopDemoPage: lazyWithRetry(() => import("./pages/StocksMobileDesktopDemoPage"), "StocksMobileDesktopDemoPage"),
+      DevEmailPreviewPage: lazyWithRetry(() => import("./pages/DevEmailPreviewPage"), "DevEmailPreviewPage"),
+      DevWelcomePreviewPage: lazyWithRetry(() => import("./pages/DevWelcomePreviewPage"), "DevWelcomePreviewPage"),
+      DevNotificationPreviewPage: lazyWithRetry(() => import("./pages/DevNotificationPreviewPage"), "DevNotificationPreviewPage"),
+      DevPortfolioChangePreviewPage: lazyWithRetry(() => import("./pages/DevPortfolioChangePreviewPage"), "DevPortfolioChangePreviewPage"),
+      DevAiLabPopupPreviewPage: lazyWithRetry(() => import("./pages/DevAiLabPopupPreviewPage"), "DevAiLabPopupPreviewPage"),
+      DevAiResultCardPreviewPage: lazyWithRetry(() => import("./pages/DevAiResultCardPreviewPage"), "DevAiResultCardPreviewPage"),
+      DevCompareDemoPage: lazyWithRetry(() => import("./pages/DevCompareDemoPage"), "DevCompareDemoPage"),
     }
   : null;
-const NotFound = lazy(() => import("./pages/NotFound"));
+const NotFound = lazyWithRetry(() => import("./pages/NotFound"), "NotFound");
 
 
 const queryClient = new QueryClient({
@@ -201,9 +218,9 @@ const App = () => (
                 </Suspense>
                 </Layout>
                 <CompareBar />
-                <Suspense fallback={null}>
-                  <CompareModal />
-                </Suspense>
+                <ErrorBoundary fallback={null}>
+                  <CompareModalHost />
+                </ErrorBoundary>
                 <CookieConsent />
                 <Analytics />
                 <SpeedInsights />

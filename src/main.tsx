@@ -5,7 +5,21 @@ import { createRoot } from "react-dom/client";
 import App from "./App.tsx";
 import "./index.css";
 import { installConsentScriptGuard } from "./lib/consent-guard";
+import { forceReloadWithCacheBust } from "./lib/lazyWithRetry";
 import * as Sentry from "@sentry/react";
+
+// Automatically recover from stale chunks during new deployments
+if (typeof window !== "undefined") {
+  window.addEventListener("vite:preloadError", () => {
+    const key = "kff_vite_preload_retry";
+    const lastRetry = sessionStorage.getItem(key);
+    const now = Date.now();
+    if (!lastRetry || now - Number(lastRetry) > 15_000) {
+      sessionStorage.setItem(key, String(now));
+      forceReloadWithCacheBust();
+    }
+  });
+}
 
 Sentry.init({
   dsn: import.meta.env.VITE_SENTRY_DSN,
