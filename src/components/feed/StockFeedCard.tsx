@@ -1,7 +1,7 @@
 import { useNavigate } from "react-router-dom";
 import { useMemo, useState, type MouseEvent } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, TrendingUp, TrendingDown, Minus, ArrowRight, MoreHorizontal } from "lucide-react";
+import { Heart, TrendingUp, TrendingDown, Minus, ArrowRight, MoreHorizontal, MessageCircle, Share2 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -96,50 +96,12 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
   return (
     <article
       onClick={openArticle}
-      className="animate-rise -mx-4 space-y-3 overflow-hidden border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:hover:border-border"
+      className="animate-rise relative -mx-4 flex items-start gap-3 border-0 border-b border-border/80 bg-transparent px-4 py-3.5 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:gap-4 hover:bg-muted/15"
       style={{ animationDelay: `${index * 80}ms` }}
     >
-      <div className="flex flex-wrap items-center justify-between gap-2">
-        <button
-          type="button"
-          onClick={(event) => {
-            event.stopPropagation();
-            navigate(`/stocks/${encodeURIComponent(stock.symbol)}`);
-          }}
-          className="flex items-center gap-2 text-xs bg-muted/60 hover:bg-muted border border-border/60 rounded-md px-2.5 py-1 w-fit transition-colors"
-          aria-label={`View ${stock.name}`}
-        >
-          <span className="font-bold text-foreground">{stock.symbol}</span>
-          <span className="text-zinc-800 dark:text-muted-foreground">KES {stock.price.toFixed(2)}</span>
-          <span className={`flex items-center font-medium ${isUp ? "text-emerald-500" : isDown ? "text-rose-500" : "text-muted-foreground"}`}>
-            {isUp ? <TrendingUp className="w-3 h-3 mr-0.5" /> : isDown ? <TrendingDown className="w-3 h-3 mr-0.5" /> : <Minus className="w-3 h-3 mr-0.5" />}
-            {Math.abs(stock.changePercent).toFixed(1)}%
-          </span>
-        </button>
-
-        {/* Simply Wall St-style Mini Snowflake Score Badge */}
-        <div
-          className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/30 px-2.5 py-0.5 text-[11px]"
-          title={`${scorecard.passedScore} passed of ${scorecard.evaluatedCount} verified checks (${scorecard.unverifiedCount} disclosures pending) — ${scorecard.summaryThesis}`}
-        >
-          <StockSnowflakeRadar
-            pillars={scorecard.pillars}
-            tone={scorecard.tone}
-            size="sm"
-            className="h-4 w-4 text-foreground shrink-0"
-          />
-          <span className="font-extrabold tabular-nums text-foreground">
-            {scorecard.passedScore}/{scorecard.evaluatedCount} Verified
-          </span>
-          <span className="hidden sm:inline text-muted-foreground">·</span>
-          <span className="hidden sm:inline font-semibold text-muted-foreground">
-            {scorecard.ratingLabel}
-          </span>
-        </div>
-      </div>
-
-      <header className="flex items-center gap-3">
-        <div className="w-12 h-12 rounded-xl bg-white border border-border text-emerald-700 font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden">
+      {/* ─── 1. Left Avatar Column (Twitter / X Style) ─── */}
+      <div className="shrink-0 pt-0.5">
+        <div className="w-10 h-10 md:w-11 md:h-11 rounded-full bg-white border border-border text-emerald-700 font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
           {avatarUrl && !logoError ? (
             <img
               src={avatarUrl}
@@ -151,20 +113,75 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
             stock.symbol.slice(0, 3).toUpperCase()
           )}
         </div>
-        <div className="min-w-0 flex-1">
-          <div className="flex items-center gap-2 min-w-0">
-            <p className="font-bold text-foreground text-sm truncate">{stock.name}</p>
-            <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
-            <span className="text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-muted-foreground font-semibold">Stock</span>
+      </div>
+
+      {/* ─── 2. Right Content Column (All Text & Elements Off-Aligned) ─── */}
+      <div className="flex-1 min-w-0 space-y-2.5">
+        {/* Header: Company Name • NSE Symbol • Timestamp • More (...) */}
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
+            <span className="font-bold text-foreground text-sm truncate">{stock.name}</span>
+            <span className="text-[11px] font-mono text-muted-foreground">${stock.symbol}</span>
+            <span className="text-muted-foreground/50 text-xs">·</span>
+            <span className="inline-flex items-center gap-1 text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+              <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
+              Stock
+            </span>
+            <span className="text-muted-foreground/50 text-xs">·</span>
+            <span className="text-xs text-muted-foreground whitespace-nowrap">{timeAgo}</span>
           </div>
-          <p className="text-[13px] text-zinc-700 dark:text-muted-foreground">
-            {item.authorName ? `${item.authorName} · ` : ""}{timeAgo}
-          </p>
+
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              openArticle();
+            }}
+            className="p-1 text-muted-foreground hover:text-foreground transition-colors rounded-full hover:bg-muted/40 shrink-0 -mr-1"
+            aria-label="More options"
+          >
+            <MoreHorizontal className="h-4 w-4" />
+          </button>
         </div>
-        <button type="button" onClick={openArticle} className="p-1 text-muted-foreground hover:text-foreground" aria-label="More options">
-          <MoreHorizontal className="h-5 w-5" />
-        </button>
-      </header>
+
+        {/* Top Ticker Pill & Mini Snowflake Score Badge */}
+        <div className="flex flex-wrap items-center gap-2">
+          <button
+            type="button"
+            onClick={(event) => {
+              event.stopPropagation();
+              navigate(`/stocks/${encodeURIComponent(stock.symbol)}`);
+            }}
+            className="flex items-center gap-2 text-xs bg-muted/60 hover:bg-muted border border-border/60 rounded-md px-2.5 py-1 w-fit transition-colors font-sans"
+            aria-label={`View ${stock.name}`}
+          >
+            <span className="font-bold text-foreground">{stock.symbol}</span>
+            <span className="text-zinc-800 dark:text-muted-foreground">KES {stock.price.toFixed(2)}</span>
+            <span className={`flex items-center font-medium ${isUp ? "text-emerald-500" : isDown ? "text-rose-500" : "text-muted-foreground"}`}>
+              {isUp ? <TrendingUp className="w-3 h-3 mr-0.5" /> : isDown ? <TrendingDown className="w-3 h-3 mr-0.5" /> : <Minus className="w-3 h-3 mr-0.5" />}
+              {Math.abs(stock.changePercent).toFixed(1)}%
+            </span>
+          </button>
+
+          <div
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/30 px-2.5 py-0.5 text-[11px]"
+            title={`${scorecard.passedScore} passed of ${scorecard.evaluatedCount} verified checks (${scorecard.unverifiedCount} disclosures pending) — ${scorecard.summaryThesis}`}
+          >
+            <StockSnowflakeRadar
+              pillars={scorecard.pillars}
+              tone={scorecard.tone}
+              size="sm"
+              className="h-4 w-4 text-foreground shrink-0"
+            />
+            <span className="font-extrabold tabular-nums text-foreground">
+              {scorecard.passedScore}/{scorecard.evaluatedCount} Verified
+            </span>
+            <span className="hidden sm:inline text-muted-foreground">·</span>
+            <span className="hidden sm:inline font-semibold text-muted-foreground">
+              {scorecard.ratingLabel}
+            </span>
+          </div>
+        </div>
 
       {(() => {
         const analysis = item.rawItem?.parsed_ai_analysis || {
@@ -248,30 +265,59 @@ export function StockFeedCard({ item, onSelect, interaction, onLikeToggle, index
         </div>
       )}
 
-      <div>
-        <button type="button" onClick={openArticle} className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-sm">
-          <span>View full 5-pillar analysis</span>
-          <ArrowRight className="h-4 w-4" />
-        </button>
+        {/* Continue / View full analysis */}
+        <div>
+          <button
+            type="button"
+            onClick={openArticle}
+            className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-xs md:text-sm transition-colors cursor-pointer"
+          >
+            <span>View full 5-pillar analysis</span>
+            <ArrowRight className="h-3.5 w-3.5" />
+          </button>
+        </div>
+
+        {/* ─── Bottom Actions Row: Distinct Rounded Pill Chips (Twitter / X Format) ─── */}
+        <div className="flex items-center gap-2 pt-1.5 flex-wrap">
+          {/* Comments Pill */}
+          <button
+            type="button"
+            onClick={openArticle}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+          >
+            <MessageCircle className="h-3.5 w-3.5 text-muted-foreground" />
+            <span className="tabular-nums">{commentsCount}</span>
+            <span className="hidden sm:inline text-[11px] font-normal text-muted-foreground">Comments</span>
+          </button>
+
+          {/* Likes Pill */}
+          <button
+            type="button"
+            onClick={handleLike}
+            className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border text-xs font-semibold transition-all active:scale-95 cursor-pointer ${
+              isLiked
+                ? "border-rose-500/40 bg-rose-500/10 text-rose-500 shadow-xs"
+                : "border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground"
+            }`}
+            aria-label={isLiked ? "Unlike article" : "Like article"}
+          >
+            <Heart className={`h-3.5 w-3.5 ${isLiked ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`} />
+            <span className="tabular-nums">{likeCount}</span>
+            <span className="hidden sm:inline text-[11px] font-normal text-muted-foreground">Likes</span>
+          </button>
+
+          {/* Share Pill */}
+          <button
+            type="button"
+            onClick={handleShare}
+            className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border border-border/80 bg-muted/40 hover:bg-muted text-muted-foreground hover:text-foreground text-xs font-semibold transition-all active:scale-95 cursor-pointer"
+            aria-label="Share article"
+          >
+            <Share2 className="h-3.5 w-3.5 text-muted-foreground" />
+            <span>Share</span>
+          </button>
+        </div>
       </div>
-
-      <footer className="flex items-center justify-between gap-3 pt-2 text-zinc-700 dark:text-muted-foreground">
-        <div className="flex items-center gap-5">
-          <button type="button" onClick={openArticle} className="flex items-baseline gap-1.5">
-            <span className="text-sm tabular-nums">{commentsCount}</span><span className="text-[10px] uppercase tracking-[0.16em]">Comments</span>
-          </button>
-          <button type="button" onClick={handleLike} className={`flex items-baseline gap-1.5 ${isLiked ? "text-rose-500" : ""}`}>
-            <span className="text-sm tabular-nums">{likeCount}</span><span className="text-[10px] uppercase tracking-[0.16em]">Likes</span>
-          </button>
-        </div>
-        <div className="flex items-center gap-3">
-          <button type="button" onClick={handleLike} className={`flex h-10 w-10 items-center justify-center rounded-full border border-border ${isLiked ? "border-rose-500/40 text-rose-500" : "text-muted-foreground"}`} aria-label={isLiked ? "Unlike article" : "Like article"}>
-            <Heart className={`h-4 w-4 ${isLiked ? "fill-rose-500" : ""}`} />
-          </button>
-          <button type="button" onClick={handleShare} className="rounded-full bg-foreground px-5 py-2.5 text-xs font-extrabold uppercase tracking-wider text-background">Share</button>
-        </div>
-      </footer>
-
     </article>
   );
 }
