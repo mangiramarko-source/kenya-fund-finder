@@ -99,12 +99,12 @@ const SavingsPage = () => {
   }, []);
 
   return (
-    <div className="container max-w-7xl mx-auto px-4 sm:px-6 py-5 md:py-6 space-y-4 animate-in fade-in duration-300">
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 pt-2 pb-6 md:py-6 space-y-3.5 md:space-y-4 animate-in fade-in duration-300">
       {/* Semantic title for A11y & SEO */}
       <h1 className="sr-only">Bank Fixed Deposits & Regulated SACCO Rates in Kenya</h1>
 
       {/* Description directly below top navigation (matches MMF typography) */}
-      <p className="text-sm text-muted-foreground">
+      <p className="text-sm text-muted-foreground !mt-0">
         Compare KDIC bank fixed deposit rates and SASRA SACCO dividend yields.
       </p>
 
