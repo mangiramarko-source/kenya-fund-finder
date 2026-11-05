@@ -46,7 +46,7 @@ import { SocialFeed, SocialFeedCard } from "@/components/feed/SocialFeed";
 import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
-import { buildNewsFeedItems } from "@/lib/stockNewsFeed";
+import { buildNewsFeedItems, findMentionedStock } from "@/lib/stockNewsFeed";
 import { matchesNewsTab } from "@/lib/newsTabMatching";
 import { getCurrencyFlag } from "@/lib/currencyFlags";
 import InlineDataGate from "@/components/auth/InlineDataGate";
@@ -922,6 +922,8 @@ const OverviewPage = () => {
     if (tab === FUNDS_AND_FIXED_INCOME_TAB || tab === "MMFs") {
       return isFundsAndFixedIncomeArticle(a);
     }
+    // Stocks tab shows analytical stock cards only, so pagination must look for stock-linked articles.
+    if (tab === "Stocks") return Boolean(findMentionedStock(a, stocksList));
     return matchesNewsTab(tab, a, stocksList);
   };
 
@@ -999,13 +1001,10 @@ const OverviewPage = () => {
         : item;
     });
   }, [feedItems, news, stocks]);
-  const stockNewsFeedItems = useMemo(() => {
-    return allFeedItems.filter(item => {
-      if (item.relatedStock) return true;
-      const raw = (item.rawItem || item) as NewsFromDB;
-      return matchesNewsTab("Stocks", raw, stocks);
-    });
-  }, [allFeedItems, stocks]);
+  const stockNewsFeedItems = useMemo(
+    () => allFeedItems.filter(item => Boolean(item.relatedStock)),
+    [allFeedItems],
+  );
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [watchlistPromptOpen, setWatchlistPromptOpen] = useState(false);
 

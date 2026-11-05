@@ -33,7 +33,7 @@ const stock: PublicStock = {
 describe("stock news feed", () => {
   it("joins an article to normalized live stock data", () => {
     const [item] = buildNewsFeedItems([article()], [stock]);
-    expect(item.relatedStock).toEqual({
+    expect(item.relatedStock).toMatchObject({
       id: "stock-1",
       symbol: "SCOM",
       name: "Safaricom PLC",
@@ -41,6 +41,8 @@ describe("stock news feed", () => {
       previousPrice: 25,
       changePercent: 1.6,
     });
+    expect(item.relatedStock).toHaveProperty("peRatio");
+    expect(item.relatedStock).toHaveProperty("dividendYield");
     expect(item.content).toBe("Profit growth was driven by M-PESA.");
   });
 

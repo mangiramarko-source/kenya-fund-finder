@@ -17,14 +17,30 @@ const INTERNATIONAL_SOURCES = new Set([
 export const isInternationalArticle = (article: NewsFromDB) =>
   article.category === "International" || INTERNATIONAL_SOURCES.has(article.source);
 
-function findMentionedStock(article: NewsFromDB, stocks: PublicStock[]): PublicStock | undefined {
+function stockAliases(stock: PublicStock): string[] {
+  const name = stock.name || "";
+  const cleanName = name.replace(/\b(Group|Holdings|Plc|Ltd|Limited|Company|Kenya)\b/gi, "").replace(/\s+/g, " ").trim();
+  const aliases = [stock.symbol, name];
+  if (cleanName.length > 3) aliases.push(cleanName);
+  const lower = cleanName.toLowerCase();
+  if (lower === "equity") aliases.push("Equity Bank");
+  if (lower === "co-operative" || lower === "co-operative bank of") aliases.push("Co-op Bank", "Co-operative Bank");
+  if (stock.symbol === "SCOM") aliases.push("Safaricom");
+  return aliases.filter((alias): alias is string => Boolean(alias) && alias.length > 1);
+}
+
+/** Finds the listed stock an article is about (explicit link first, then name/ticker mention). */
+export function findMentionedStock(article: NewsFromDB, stocks: PublicStock[]): PublicStock | undefined {
+  if (article.related_stock_id) {
+    const linked = stocks.find((stock) => stock.id === article.related_stock_id);
+    if (linked) return linked;
+  }
   const searchableText = `${article.title} ${article.summary || ""}`;
-  return stocks.find((candidate) => {
-    const aliases = [candidate.symbol, candidate.name]
-      .filter(Boolean)
-      .map((alias) => alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"));
-    return aliases.some((alias) => new RegExp(`\\b${alias}\\b`, "i").test(searchableText));
-  });
+  return stocks.find((candidate) =>
+    stockAliases(candidate).some((alias) =>
+      new RegExp(`\\b${alias.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\b`, "i").test(searchableText),
+    ),
+  );
 }
 
 export function filterNewsArticles(articles: NewsFromDB[], tab: NewsTab, query: string) {
@@ -90,9 +106,15 @@ export function buildNewsFeedItems(articles: NewsFromDB[], stocks: PublicStock[]
         symbol: stock.symbol,
         name: stock.name,
         ...(stock.logo_url ? { logoUrl: stock.logo_url } : {}),
+        sector: stock.sector ?? null,
         price: Number(stock.price) || 0,
         previousPrice: stock.previous_price == null ? null : Number(stock.previous_price),
         changePercent: Number(stock.day_change_percent) || 0,
+        peRatio: stock.pe_ratio ?? null,
+        dividendYield: stock.dividend_yield ?? null,
+        yearLow: stock.year_low ?? null,
+        yearHigh: stock.year_high ?? null,
+        marketCap: stock.market_cap ?? null,
       } : null,
     };
   });
