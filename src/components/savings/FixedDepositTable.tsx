@@ -1,6 +1,5 @@
 import { useState, useMemo } from "react";
-import { Search, SlidersHorizontal, Plus, Check, Landmark, ExternalLink, Shield } from "lucide-react";
-import { Input } from "@/components/ui/input";
+import { Plus, Check, Landmark, ExternalLink, Shield } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import type { BankFixedDeposit } from "@/types/savings";
@@ -11,7 +10,6 @@ interface FixedDepositTableProps {
 }
 
 export const FixedDepositTable = ({ deposits }: FixedDepositTableProps) => {
-  const [search, setSearch] = useState("");
   const [currency, setCurrency] = useState<"KES" | "USD">("KES");
   const [tenorFilter, setTenorFilter] = useState<number | "all">(12);
   const [tierFilter, setTierFilter] = useState<number | "all">("all");
@@ -22,13 +20,9 @@ export const FixedDepositTable = ({ deposits }: FixedDepositTableProps) => {
       if (d.currency !== currency) return false;
       if (tenorFilter !== "all" && d.tenorMonths !== tenorFilter) return false;
       if (tierFilter !== "all" && d.bankTier !== tierFilter) return false;
-      if (search) {
-        const q = search.toLowerCase();
-        return d.bankName.toLowerCase().includes(q) || (d.bankCode && d.bankCode.toLowerCase().includes(q));
-      }
       return true;
     });
-  }, [deposits, currency, tenorFilter, tierFilter, search]);
+  }, [deposits, currency, tenorFilter, tierFilter]);
 
   const handleToggleCompare = (d: BankFixedDeposit) => {
     if (isSelected(d.id)) {
@@ -47,97 +41,83 @@ export const FixedDepositTable = ({ deposits }: FixedDepositTableProps) => {
 
   return (
     <div className="space-y-4">
-      {/* Search & Filter Controls */}
-      <div className="bg-card/60 p-3 sm:p-4 rounded-2xl border border-border/70 backdrop-blur-md space-y-3">
-        {/* Search */}
-        <div className="relative w-full max-w-md">
-          <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search bank name..."
-            className="pl-10 h-9 sm:h-10 text-xs sm:text-sm rounded-full bg-background border-border/80"
-          />
-        </div>
+      {/* Filter Section */}
+      <div className="space-y-1.5">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pl-1">
+          Filter
+        </span>
 
-        {/* Filter Section */}
-        <div className="space-y-1.5">
-          <span className="text-[11px] font-bold uppercase tracking-wider text-muted-foreground block pl-1">
-            Filter
-          </span>
+        {/* Horizontal Scrolling Pill Buttons */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
+          {/* Currency Pills */}
+          {(["KES", "USD"] as const).map((curr) => {
+            const active = currency === curr;
+            return (
+              <button
+                key={curr}
+                type="button"
+                onClick={() => setCurrency(curr)}
+                className={`shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                  active
+                    ? "bg-foreground text-background shadow-xs"
+                    : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                }`}
+              >
+                {curr}
+              </button>
+            );
+          })}
 
-          {/* Horizontal Scrolling Pill Buttons */}
-          <div className="flex items-center gap-2 overflow-x-auto no-scrollbar py-0.5">
-            {/* Currency Pills */}
-            {(["KES", "USD"] as const).map((curr) => {
-              const active = currency === curr;
-              return (
-                <button
-                  key={curr}
-                  type="button"
-                  onClick={() => setCurrency(curr)}
-                  className={`shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                    active
-                      ? "bg-foreground text-background shadow-xs"
-                      : "border border-border/80 bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                  }`}
-                >
-                  {curr}
-                </button>
-              );
-            })}
+          <div className="h-4 w-[1px] bg-border/70 shrink-0 mx-0.5" />
 
-            <div className="h-4 w-[1px] bg-border/70 shrink-0 mx-0.5" />
+          {/* Tenor Pills */}
+          {[
+            { label: "All Tenors", val: "all" as const },
+            { label: "3M", val: 3 as const },
+            { label: "6M", val: 6 as const },
+            { label: "12M", val: 12 as const },
+          ].map((t) => {
+            const active = tenorFilter === t.val;
+            return (
+              <button
+                key={String(t.val)}
+                type="button"
+                onClick={() => setTenorFilter(t.val)}
+                className={`shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                  active
+                    ? "bg-foreground text-background shadow-xs"
+                    : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                }`}
+              >
+                {t.label}
+              </button>
+            );
+          })}
 
-            {/* Tenor Pills */}
-            {[
-              { label: "All Tenors", val: "all" as const },
-              { label: "3M", val: 3 as const },
-              { label: "6M", val: 6 as const },
-              { label: "12M", val: 12 as const },
-            ].map((t) => {
-              const active = tenorFilter === t.val;
-              return (
-                <button
-                  key={String(t.val)}
-                  type="button"
-                  onClick={() => setTenorFilter(t.val)}
-                  className={`shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                    active
-                      ? "bg-foreground text-background shadow-xs"
-                      : "border border-border/80 bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                  }`}
-                >
-                  {t.label}
-                </button>
-              );
-            })}
+          <div className="h-4 w-[1px] bg-border/70 shrink-0 mx-0.5" />
 
-            <div className="h-4 w-[1px] bg-border/70 shrink-0 mx-0.5" />
-
-            {/* Tier Filter Pills */}
-            {[
-              { label: "All Tiers", val: "all" as const },
-              { label: "Tier 1", val: 1 as const },
-              { label: "Tier 2", val: 2 as const },
-            ].map((tier) => {
-              const active = tierFilter === tier.val;
-              return (
-                <button
-                  key={String(tier.val)}
-                  type="button"
-                  onClick={() => setTierFilter(tier.val)}
-                  className={`shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
-                    active
-                      ? "bg-foreground text-background shadow-xs"
-                      : "border border-border/80 bg-background text-muted-foreground hover:bg-muted/40 hover:text-foreground"
-                  }`}
-                >
-                  {tier.label}
-                </button>
-              );
-            })}
-          </div>
+          {/* Tier Filter Pills */}
+          {[
+            { label: "All Tiers", val: "all" as const },
+            { label: "Tier 1", val: 1 as const },
+            { label: "Tier 2", val: 2 as const },
+          ].map((tier) => {
+            const active = tierFilter === tier.val;
+            return (
+              <button
+                key={String(tier.val)}
+                type="button"
+                onClick={() => setTierFilter(tier.val)}
+                className={`shrink-0 inline-flex items-center px-3.5 py-1.5 rounded-full text-xs font-semibold transition-all whitespace-nowrap cursor-pointer ${
+                  active
+                    ? "bg-foreground text-background shadow-xs"
+                    : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+                }`}
+              >
+                {tier.label}
+              </button>
+            );
+          })}
         </div>
       </div>
 
