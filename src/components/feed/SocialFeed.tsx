@@ -223,7 +223,7 @@ export const SocialFeedCard = ({
         {isStockBranded ? (
           <div className="flex h-10 w-10 md:h-11 md:w-11 items-center justify-center overflow-hidden rounded-full border border-border bg-white shadow-xs">
             {stockLogo ? (
-              <img src={stockLogo} alt={item.relatedStock!.name} className="h-full w-full object-contain p-1" />
+              <img src={stockLogo} alt={item.relatedStock!.name} className="h-full w-full object-contain p-1" referrerPolicy="no-referrer" />
             ) : (
               <span className="font-bold text-emerald-700 text-xs md:text-sm">{item.relatedStock!.symbol}</span>
             )}
@@ -244,6 +244,7 @@ export const SocialFeedCard = ({
                 alt={authorName}
                 className={`w-full h-full bg-white ${customLogo ? "object-contain p-1" : "object-cover"}`}
                 onError={() => setAvatarError(true)}
+                referrerPolicy="no-referrer"
               />
             ) : (
               initials
@@ -393,17 +394,28 @@ export const SocialFeedCard = ({
         )}
 
         {/* Real Article Image (contained in right column, Twitter style) */}
-        {(item.mediaUrl || item.rawItem?.image_url) && (
-          <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-muted/30 aspect-[16/9] w-full max-h-[320px]">
-            <img
-              src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id, false, item.rawItem?.source) || (item.mediaUrl || item.rawItem?.image_url)}
-              alt=""
-              className="w-full h-full object-cover transition-transform duration-300 hover:scale-102"
-              onError={handleNewsImageError}
-              loading="lazy"
-            />
-          </div>
-        )}
+        {(() => {
+          const cardImage = getNewsImage(
+            item.mediaUrl || item.rawItem?.image_url,
+            item.authorLabel,
+            item.id,
+            false,
+            item.rawItem?.source
+          );
+          if (!cardImage) return null;
+          return (
+            <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-muted/30 aspect-[16/9] w-full max-h-[320px]">
+              <img
+                src={cardImage}
+                alt=""
+                className="w-full h-full object-cover transition-transform duration-300 hover:scale-102"
+                onError={handleNewsImageError}
+                referrerPolicy="no-referrer"
+                loading="lazy"
+              />
+            </div>
+          );
+        })()}
 
         {/* Continue Reading Link */}
         <div>

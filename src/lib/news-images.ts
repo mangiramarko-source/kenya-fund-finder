@@ -31,14 +31,14 @@ const UNSPLASH_POOL = [
 ];
 
 /** Final safety-net image, always available, deterministic per article id. */
-function picsumFallback(id: string, large = false): string {
+export function picsumFallback(id: string, large = false): string {
   const w = large ? 1040 : 560;
   const h = large ? 650 : 350;
   const seed = encodeURIComponent(id || "kenya-fund-finder");
   return `https://picsum.photos/seed/${seed}/${w}/${h}`;
 }
 
-function getCategoryImage(category: string, id: string, large = false): string {
+export function getCategoryImage(category: string, id: string, large = false): string {
   const w = large ? 1040 : 560;
   const h = large ? 650 : 350;
   
@@ -87,21 +87,47 @@ export function getNewsImage(
   id?: string,
   large = false,
   source?: string | null,
-): string | null {
+): string {
   if (imageUrl && imageUrl.trim().length > 0) {
     return optimizeImageUrl(imageUrl, large);
   }
   const normalizedSource = (source || "").toLowerCase();
   if (normalizedSource.includes("kbc")) return "/images/news-sources/kbc.png";
   if (normalizedSource.includes("standard media")) return "/images/news-sources/standard.png";
-  return null;
+  return getCategoryImage(category || "Market News", String(id || "kenya-fund-finder"), large);
 }
 
-/** onError handler — hides image container if image fails to load */
+/** onError handler — gracefully falls back to curated finance visual, then Picsum, before hiding */
 export function handleNewsImageError(
-  e: React.SyntheticEvent<HTMLImageElement>
+  e: React.SyntheticEvent<HTMLImageElement>,
+  category?: string,
+  id?: string
 ) {
   const img = e.currentTarget;
+  const stage = img.dataset.fallbackStage || "0";
+  const isLarge = img.naturalWidth > 500 || img.clientWidth > 400;
+  const fallbackId = id || img.dataset.articleId || "kenya-fund-finder";
+  const fallbackCat = category || img.dataset.articleCategory || "Market News";
+
+  if (stage === "0") {
+    img.dataset.fallbackStage = "1";
+    const next = getCategoryImage(fallbackCat, fallbackId, isLarge);
+    if (img.src !== next) {
+      img.src = next;
+      return;
+    }
+  }
+
+  if (stage === "1") {
+    img.dataset.fallbackStage = "2";
+    const next = picsumFallback(fallbackId, isLarge);
+    if (img.src !== next) {
+      img.src = next;
+      return;
+    }
+  }
+
+  // Final failure: gracefully hide the image container
   if (img.parentElement) {
     img.parentElement.style.display = "none";
   } else {

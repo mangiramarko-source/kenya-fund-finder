@@ -52,6 +52,7 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
             alt={briefing.title}
             className="w-full aspect-[16/9] object-cover"
             onError={onImageError}
+            referrerPolicy="no-referrer"
             loading="eager"
           />
         </div>

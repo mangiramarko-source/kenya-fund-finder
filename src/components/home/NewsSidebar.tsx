@@ -58,6 +58,7 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
                 fetchPriority="high"
                 decoding="async"
                 onError={handleNewsImageError}
+                referrerPolicy="no-referrer"
               />
             </div>
           )}
@@ -106,6 +107,7 @@ const NewsCard = ({ article, isFirst }: { article: NewsFromDB; isFirst: boolean 
                 loading="lazy"
                 decoding="async"
                 onError={handleNewsImageError}
+                referrerPolicy="no-referrer"
               />
             </div>
           )}

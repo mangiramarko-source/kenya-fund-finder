@@ -40,6 +40,7 @@ export const RichStockNewsCard: React.FC<RichStockNewsCardProps> = ({ article, s
             src={displayImage}
             alt={article.title}
             onError={(e) => handleNewsImageError(e, article.title)}
+            referrerPolicy="no-referrer"
             className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
           />
         </div>

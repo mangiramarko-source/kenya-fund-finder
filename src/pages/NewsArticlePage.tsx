@@ -511,7 +511,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     );
   }
 
-  const heroImage = getNewsImage(article.image_url, article.category, article.id, false, article.source);
+  const heroImage = getNewsImage(article.image_url, article.category, article.id, true, article.source);
 
   const getSourceDomain = (url?: string | null, sourceName?: string) => {
     if (sourceName) return sourceName;
@@ -599,6 +599,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
                   alt={`${relatedStock.name} logo`}
                   className="h-full w-full object-contain p-1"
                   onError={() => setStockLogoError(true)}
+                  referrerPolicy="no-referrer"
                 />
               ) : !(relatedStock || relatedMmf || relatedFx || relatedCommodity) && sourceLogoUrl && !sourceLogoError ? (
                 <img
@@ -606,6 +607,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
                   alt={`${article.source} logo`}
                   className="h-full w-full object-contain bg-white p-1"
                   onError={() => setSourceLogoError(true)}
+                  referrerPolicy="no-referrer"
                 />
               ) : relatedStock ? (
                 relatedStock.symbol.slice(0, 3).toUpperCase()

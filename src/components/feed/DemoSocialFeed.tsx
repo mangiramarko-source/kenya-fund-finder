@@ -234,17 +234,22 @@ export const DemoSocialFeedCard = ({
       )}
 
       {/* Real Article Image */}
-      {(item.mediaUrl || item.rawItem?.image_url) && (
-        <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#202024] max-h-[260px] aspect-[16/9]">
-          <img
-            src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id, false, item.rawItem?.source) || (item.mediaUrl || item.rawItem?.image_url)}
-            alt=""
-            className="w-full h-full object-cover"
-            onError={handleNewsImageError}
-            loading="lazy"
-          />
-        </div>
-      )}
+      {(() => {
+        const cardImage = getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id, false, item.rawItem?.source);
+        if (!cardImage) return null;
+        return (
+          <div className="relative overflow-hidden rounded-xl border border-white/10 bg-[#202024] max-h-[260px] aspect-[16/9]">
+            <img
+              src={cardImage}
+              alt=""
+              className="w-full h-full object-cover"
+              onError={handleNewsImageError}
+              referrerPolicy="no-referrer"
+              loading="lazy"
+            />
+          </div>
+        );
+      })()}
 
       {/* Text Body Content */}
       <div

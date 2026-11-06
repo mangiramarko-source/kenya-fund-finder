@@ -126,9 +126,9 @@ export function FeedItemDetailModal({
     item.rawItem?.image_url || item.mediaUrl,
     item.rawItem?.category || item.authorLabel,
     item.rawItem?.id || item.id,
-    false,
+    true,
     item.rawItem?.source,
-  ) || item.rawItem?.image_url || item.mediaUrl || null;
+  );
 
   const cachedStocks = stockCache.loadStocks()?.stocks || [];
   const matchedStock: PublicStock | null = item.relatedStock
@@ -146,6 +146,8 @@ export function FeedItemDetailModal({
     : item.rawItem && cachedStocks.length > 0
     ? ((findMentionedStock(item.rawItem as NewsFromDB, cachedStocks as any) as any) as PublicStock) || null
     : null;
+
+  const stock = item.relatedStock || matchedStock;
 
   const briefing = item.rawItem
     ? buildInvestorBriefing(item.rawItem as NewsFromDB, {
@@ -232,24 +234,24 @@ export function FeedItemDetailModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex flex-col max-w-2xl h-[92vh] max-h-[92vh] sm:h-[85vh] sm:max-h-[85vh] overflow-hidden bg-card text-card-foreground border border-border p-0 rounded-2xl shadow-2xl dark:bg-neutral-900 dark:border-white/10 dark:text-foreground">
+      <DialogContent className="flex flex-col max-w-2xl h-[92vh] max-h-[92vh] sm:h-[88vh] sm:max-h-[88vh] overflow-hidden bg-card text-card-foreground border border-border p-0 rounded-2xl shadow-2xl dark:bg-neutral-900 dark:border-white/10 dark:text-foreground">
         {/* Header bar */}
         {(() => {
           const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
           const cleanAuthor = isSocialPost ? item.authorName.replace(/^X\s*-\s*/, '') : item.authorName;
-          const stock = item.relatedStock || matchedStock;
           const stockLogoUrl = stock ? getStockLogoUrl(stock.symbol, (stock as any).logoUrl || (stock as any).logo_url) : "";
           return (
-            <div className="p-4 sm:p-6 border-b border-border dark:border-white/10 relative shrink-0 bg-card dark:bg-neutral-900">
+            <div className="p-3.5 sm:p-5 border-b border-border dark:border-white/10 relative shrink-0 bg-card dark:bg-neutral-900">
               <div className="flex items-center justify-between gap-4 pr-8">
                 <div className="flex items-center gap-3">
-                  <div className={`w-11 h-11 flex items-center justify-center shrink-0 border overflow-hidden ${stock ? "rounded-xl bg-white text-emerald-700 border-border" : `rounded-full ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)}`}`}>
+                  <div className={`w-10 h-10 flex items-center justify-center shrink-0 border overflow-hidden ${stock ? "rounded-xl bg-white text-emerald-700 border-border" : `rounded-full ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)}`}`}>
                     {stock && stockLogoUrl && !stockLogoError ? (
                       <img
                         src={stockLogoUrl}
                         alt={`${stock.name} logo`}
                         className="h-full w-full object-contain p-1"
                         onError={() => setStockLogoError(true)}
+                        referrerPolicy="no-referrer"
                       />
                     ) : stock ? (
                       <span className="font-bold text-xs tracking-wider">{stock.symbol.slice(0, 3).toUpperCase()}</span>
@@ -263,7 +265,7 @@ export function FeedItemDetailModal({
                   </div>
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <span className="font-semibold text-foreground text-base tracking-tight">{stock?.name || cleanAuthor}</span>
+                      <span className="font-semibold text-foreground text-sm sm:text-base tracking-tight">{stock?.name || cleanAuthor}</span>
                       {isSocialPost && (
                         <span className="inline-flex items-center gap-1 text-[10px] font-medium bg-black/5 dark:bg-white/10 text-foreground dark:text-white px-2 py-0.5 rounded-full border border-border/60">
                           <svg className="w-2.5 h-2.5 fill-current" viewBox="0 0 24 24">
@@ -281,9 +283,41 @@ export function FeedItemDetailModal({
                   </div>
                 </div>
 
+                {/* Optional Ticker Badge */}
+                {item.type === "STOCK_INSIGHT" && item.rawItem ? (
+                  <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted border border-border px-3 py-1 rounded-full backdrop-blur-md dark:bg-white/5 dark:border-white/10">
+                    <span className="text-foreground">{item.rawItem.symbol}</span>
+                    <span className="text-muted-foreground/40 dark:text-white/20">|</span>
+                    <span className={Number(item.rawItem.change_pct) >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
+                      {Number(item.rawItem.change_pct) >= 0 ? "+" : ""}{item.rawItem.change_pct != null ? Number(item.rawItem.change_pct).toFixed(1) : "-"}%
+                    </span>
+                  </div>
+                ) : (
+                  <Badge variant="secondary" className="bg-muted border border-border text-foreground text-xs px-3 py-1 font-medium dark:bg-white/10 dark:border-white/10 dark:text-white">
+                    {stock?.symbol || (item.type === "NEWS" ? "Live Feed" : item.authorLabel)}
+                  </Badge>
+                )}
+              </div>
+            </div>
+          );
+        })()}
+
+        {/* Modal Scrollable Body */}
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-6 overscroll-contain">
+          {/* Article Title & Sparklines (Scrolls with content for maximal viewport reading) */}
+          <div className="space-y-3">
+            <DialogHeader className="text-left">
+              <DialogTitle className={item.isHeadlineOnly
+                ? "text-base sm:text-lg font-normal text-foreground/90 leading-relaxed"
+                : "text-xl sm:text-2xl font-bold text-foreground leading-snug tracking-tight"
+              }>
+                {item.title}
+              </DialogTitle>
+            </DialogHeader>
+
             {/* Related Symbols Sparklines */}
             {((item.relatedSymbols && item.relatedSymbols.length > 0) || stock) && (
-              <div className="flex flex-wrap items-center gap-2 mt-4 pt-1">
+              <div className="flex flex-wrap items-center gap-2 pt-1">
                 {(item.relatedSymbols && item.relatedSymbols.length > 0
                   ? item.relatedSymbols
                   : stock ? [stock.symbol] : []
@@ -292,49 +326,27 @@ export function FeedItemDetailModal({
                 ))}
               </div>
             )}
-              
-            {/* Optional Ticker Badge */}
-            {item.type === "STOCK_INSIGHT" && item.rawItem ? (
-              <div className="flex items-center gap-1.5 text-xs font-semibold text-muted-foreground bg-muted border border-border px-3 py-1 rounded-full backdrop-blur-md dark:bg-white/5 dark:border-white/10">
-                <span className="text-foreground">{item.rawItem.symbol}</span>
-                <span className="text-muted-foreground/40 dark:text-white/20">|</span>
-                <span className={Number(item.rawItem.change_pct) >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-rose-600 dark:text-rose-400"}>
-                  {Number(item.rawItem.change_pct) >= 0 ? "+" : ""}{item.rawItem.change_pct != null ? Number(item.rawItem.change_pct).toFixed(1) : "-"}%
-                </span>
-              </div>
-            ) : (
-              <Badge variant="secondary" className="bg-muted border border-border text-foreground text-xs px-3 py-1 font-medium dark:bg-white/10 dark:border-white/10 dark:text-white">
-                {stock?.symbol || (item.type === "NEWS" ? "Live Feed" : item.authorLabel)}
-              </Badge>
-            )}
           </div>
 
-          <DialogHeader className="mt-4 text-left">
-            <DialogTitle className={item.isHeadlineOnly
-              ? "text-base font-normal text-foreground/90 leading-relaxed"
-              : "text-xl sm:text-2xl font-bold text-foreground leading-snug tracking-tight"
-            }>
-              {item.title}
-            </DialogTitle>
-          </DialogHeader>
-        </div>
-        );
-      })()}
-
-        {/* Modal Body */}
-        <div className="p-6 space-y-6">
           {briefing ? (
-            <InvestorBriefing briefing={briefing} heroImage={heroImage} showTitle={false} isGated={isGated} />
+            <InvestorBriefing
+              briefing={briefing}
+              heroImage={heroImage}
+              onImageError={handleNewsImageError}
+              showTitle={false}
+              isGated={isGated}
+            />
           ) : (
             <>
               {/* Media Box */}
-              {(item.mediaUrl || item.rawItem?.image_url) && (
-                <div className="relative mt-4 mb-2 rounded-xl overflow-hidden border border-border bg-muted/40 max-h-[350px]">
+              {heroImage && (
+                <div className="relative mt-2 mb-2 rounded-xl overflow-hidden border border-border bg-muted/40 max-h-[350px]">
                   <img
-                    src={getNewsImage(item.mediaUrl || item.rawItem?.image_url, item.authorLabel, item.id, false, item.rawItem?.source) || (item.mediaUrl || item.rawItem?.image_url)}
+                    src={heroImage}
                     alt=""
                     className="w-full h-full object-cover"
                     onError={handleNewsImageError}
+                    referrerPolicy="no-referrer"
                     loading="lazy"
                   />
                 </div>
