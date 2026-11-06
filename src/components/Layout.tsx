@@ -96,8 +96,8 @@ const Layout = ({ children }: { children: React.ReactNode }) => {
             isAiLab
               ? "flex-1 min-h-0 flex flex-col overflow-hidden"
               : isOverview
-                ? "flex-1 min-h-0 md:overflow-hidden pb-20 md:pb-0"
-              : "flex-1 min-h-[80vh] pb-20 md:pb-0"
+                ? "flex-1 min-h-0 md:overflow-hidden pb-6 md:pb-0"
+              : "flex-1 min-h-[80vh] pb-6 md:pb-0"
           }
         >
           {children}

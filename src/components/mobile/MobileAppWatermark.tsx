@@ -3,7 +3,7 @@ import { openMobileLegalSheet } from "./MobileLegalSheet";
 export default function MobileAppWatermark() {
   return (
     <footer
-      className="md:hidden pt-6 pb-8 px-4 text-center select-none"
+      className="md:hidden pt-4 pb-[calc(6.25rem+env(safe-area-inset-bottom,0px))] px-4 text-center select-none"
       aria-label="Mobile app legal notice"
     >
       <p className="text-[11px] font-semibold text-muted-foreground/80 tracking-tight">
