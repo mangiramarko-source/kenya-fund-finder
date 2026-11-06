@@ -67,7 +67,7 @@ export function getMobileNavTitleInfo(pathname: string): MobileNavTitleInfo {
     case "/savings":
     case "/fixed-deposits":
     case "/saccos":
-      return { type: "title", title: "Savings & SACCOs" };
+      return { type: "title", title: "T-Bills / Banking / SACCOs" };
     case "/portfolio":
       return { type: "title", title: "My Assets" };
     case "/rates":

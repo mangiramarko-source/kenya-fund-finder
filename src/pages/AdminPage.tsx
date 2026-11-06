@@ -1,9 +1,10 @@
-import { Navigate } from "react-router-dom";
+import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote, Share2, Landmark } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote, Share2, Landmark, Activity } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
 import AdminFunds from "./admin/AdminFunds";
+import AdminMmfInspector from "./admin/AdminMmfInspector";
 import AdminNews from "./admin/AdminNews";
 import AdminChangeLog from "./admin/AdminChangeLog";
 import AdminPages from "./admin/AdminPages";
@@ -19,6 +20,8 @@ import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 
 const AdminPage = () => {
   const { isAdmin, loading, user } = useAuth();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const currentTab = searchParams.get("tab") || "dashboard";
 
   const showPageLoading = useMinimumLoadingDuration(loading);
 
@@ -39,8 +42,14 @@ const AdminPage = () => {
 
   return (
     <div className="container py-6">
-      <Tabs defaultValue="dashboard" className="space-y-6">
-         <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-12 md:max-w-7xl justify-start md:justify-stretch">
+      <Tabs
+        value={currentTab}
+        onValueChange={(tab) => {
+          setSearchParams(tab === "dashboard" ? {} : { tab }, { replace: true });
+        }}
+        className="space-y-6"
+      >
+         <TabsList className="flex w-full overflow-x-auto md:grid md:grid-cols-[repeat(13,minmax(0,1fr))] md:max-w-7xl justify-start md:justify-stretch">
           <TabsTrigger value="dashboard" className="gap-1.5">
             <LayoutDashboard className="h-4 w-4" />
             <span className="hidden sm:inline">Dashboard</span>
@@ -48,6 +57,10 @@ const AdminPage = () => {
           <TabsTrigger value="funds" className="gap-1.5">
             <BarChart3 className="h-4 w-4" />
             <span className="hidden sm:inline">Funds</span>
+          </TabsTrigger>
+          <TabsTrigger value="mmf-inspect" className="gap-1.5">
+            <Activity className="h-4 w-4" />
+            <span className="hidden sm:inline">MMF Inspect</span>
           </TabsTrigger>
           <TabsTrigger value="news" className="gap-1.5">
             <Newspaper className="h-4 w-4" />
@@ -93,6 +106,7 @@ const AdminPage = () => {
 
         <TabsContent value="dashboard"><AdminDashboard /></TabsContent>
         <TabsContent value="funds"><AdminFunds /></TabsContent>
+        <TabsContent value="mmf-inspect"><AdminMmfInspector /></TabsContent>
         
         <TabsContent value="news"><AdminNews /></TabsContent>
         <TabsContent value="enrichment"><AdminNewsEnrichment /></TabsContent>

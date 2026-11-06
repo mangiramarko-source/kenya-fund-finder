@@ -100,7 +100,17 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
     unmountPortfolio();
 
-    // 5. Nested detail route renders Back button and Title
+    // 5. /savings renders "T-Bills / Banking / SACCOs"
+    const { unmount: unmountSavings } = render(
+      <MemoryRouter initialEntries={["/savings"]}>
+        <Navbar />
+      </MemoryRouter>
+    );
+    expect(screen.getByText("T-Bills / Banking / SACCOs")).toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
+    unmountSavings();
+
+    // 6. Nested detail route renders Back button and Title
     const { unmount: unmountSummary } = render(
       <MemoryRouter initialEntries={["/portfolio/summary"]}>
         <Navbar />

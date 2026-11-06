@@ -197,6 +197,9 @@ const App = () => (
                     <Route path="/preview/intro-3" element={<IntroPreviewPage initialOption="3" />} />
                     <Route path="/admin/login" element={<AdminLoginPage />} />
                     <Route path="/admin" element={<AdminPage />} />
+                    <Route path="/admin/mmf" element={<Navigate to="/admin?tab=mmf-inspect" replace />} />
+                    <Route path="/admin/mmf-inspect" element={<Navigate to="/admin?tab=mmf-inspect" replace />} />
+                    <Route path="/admin/mmf-inspection" element={<Navigate to="/admin?tab=mmf-inspect" replace />} />
                     {DevOnlyPages ? <>
                       <Route path="/checklist" element={<DevOnlyPages.ChecklistPage />} />
                       <Route path="/stocks-demo" element={<DevOnlyPages.StocksDemoPage />} />

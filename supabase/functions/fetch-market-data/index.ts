@@ -545,6 +545,9 @@ Deno.serve(async (req) => {
   const shouldFetchStocks = !fetchType || fetchType === "stocks";
   const shouldFetchFunds = !fetchType || fetchType === "funds" || fetchType === "mmf";
   const allowHighDrift = Boolean((body as Record<string, unknown>)?.allow_high_drift);
+  // Inspection mode: parse the source and diff against the DB without writing anything.
+  const dryRun = Boolean((body as Record<string, unknown>)?.dry_run);
+  let fundInspection: Record<string, unknown> | null = null;
 
   try {
     // ── 1. Fetch FX rates ──
@@ -903,11 +906,42 @@ Deno.serve(async (req) => {
           });
         }
 
+        if (dryRun) {
+          const seen = new Set<string>();
+          const rows = serrari.rows.map((row) => {
+            const key = row.slug.toLowerCase();
+            seen.add(key);
+            const existing = bySlug.get(key);
+            if (!existing) {
+              return { slug: row.slug, name: row.name, fund_type: row.fund_type, currency: row.currency, status: "would_create", source_annual: row.annual_yield, source_daily: row.daily_yield, db_annual: null, db_daily: null, db_fact_sheet_date: null, drift_pct: null };
+            }
+            const prevAnnual = existing.annual_yield;
+            const driftPct = prevAnnual > 0 ? Math.abs((row.annual_yield - prevAnnual) / prevAnnual) * 100 : 0;
+            const status = !hasFundChanged(existing, row)
+              ? "unchanged"
+              : !allowHighDrift && prevAnnual > 0 && driftPct > 25
+              ? "drift_blocked"
+              : "would_update";
+            return {
+              slug: row.slug, name: row.name, fund_type: row.fund_type, currency: row.currency, status,
+              source_annual: row.annual_yield, source_daily: row.daily_yield,
+              db_annual: existing.annual_yield, db_daily: existing.daily_yield,
+              db_fact_sheet_date: existing.fact_sheet_date,
+              drift_pct: Math.round(driftPct * 100) / 100,
+            };
+          });
+          const missingFromSource = (existingFunds || [])
+            .filter((f) => f.fund_type === "money_market" && !seen.has(String(f.slug).toLowerCase()))
+            .map((f) => ({ slug: f.slug, db_annual: Number(f.annual_yield ?? 0), db_fact_sheet_date: f.fact_sheet_date ?? null }));
+          fundInspection = { source_as_of: serrari.asOfDate, notes: serrari.notes, rows, missing_from_source: missingFromSource };
+          results.push(`Funds dry run: ${rows.length} source rows inspected, nothing written`);
+        } else {
         let updatedFundCount = 0;
         let createdFundCount = 0;
         let unchangedFundCount = 0;
         let skippedDriftCount = 0;
         const changedFunds: Array<{
+          fund_id: string;
           slug: string;
           prev_annual: number;
           new_annual: number;
@@ -1091,6 +1125,7 @@ Deno.serve(async (req) => {
         results.push(
           `Funds (Serrari ${serrari.asOfDate}): updated ${updatedFundCount}, created ${createdFundCount}, unchanged ${unchangedFundCount}, drift-skipped ${skippedDriftCount}`,
         );
+        } // end !dryRun
       } catch (fundErr) {
         const msg = fundErr instanceof Error ? fundErr.message : String(fundErr);
         console.error("[fetch-market-data] Serrari funds sync failed:", msg);
@@ -1112,7 +1147,7 @@ Deno.serve(async (req) => {
     const completion = stockWriteErrors ? "Completed with stock write errors"
       : stockRunReport?.status === "degraded" ? "Completed with degraded stock data" : "Completed successfully";
     console.log(`[fetch-market-data] ${completion}: ${results.length} operations`);
-    return new Response(JSON.stringify({ success: stockWriteErrors === 0, results, ...(stockRunReport ? { stocks: stockRunReport } : {}) }), {
+    return new Response(JSON.stringify({ success: stockWriteErrors === 0, results, ...(stockRunReport ? { stocks: stockRunReport } : {}), ...(fundInspection ? { fund_inspection: fundInspection } : {}) }), {
       status: stockWriteErrors ? 500 : 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

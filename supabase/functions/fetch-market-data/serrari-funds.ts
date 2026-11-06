@@ -207,6 +207,7 @@ export function hasFundChanged(
     management_fee?: number | null;
     minimum_investment?: number | null;
     yield_unit?: string | null;
+    fact_sheet_date?: string | null;
   },
   incoming: {
     annual_yield: number;
@@ -214,12 +215,19 @@ export function hasFundChanged(
     management_fee?: number | null;
     minimum_investment?: number | null;
     yield_unit?: string | null;
+    asOfDate?: string | null;
   },
 ): boolean {
   const numDiff = (a: number | null | undefined, b: number | null | undefined) =>
     Math.abs(Number(a ?? 0) - Number(b ?? 0)) > 0.0001;
 
+  const dateDiff = Boolean(
+    incoming.asOfDate &&
+    (!existing.fact_sheet_date || String(existing.fact_sheet_date).trim() !== String(incoming.asOfDate).trim())
+  );
+
   return (
+    dateDiff ||
     numDiff(existing.annual_yield, incoming.annual_yield) ||
     numDiff(existing.daily_yield, incoming.daily_yield) ||
     (existing.management_fee != null && numDiff(existing.management_fee, incoming.management_fee)) ||

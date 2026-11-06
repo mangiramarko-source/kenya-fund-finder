@@ -129,5 +129,14 @@ describe("serrariFundSync", () => {
     expect(hasFundChanged(existing, { ...existing })).toBe(false);
     expect(hasFundChanged(existing, { ...existing, annual_yield: 10.95 })).toBe(true);
     expect(hasFundChanged(existing, { ...existing, minimum_investment: 5000 })).toBe(true);
+
+    // Advances when source date is newer or existing date is missing/null, even if yield is flat
+    const dated = { ...existing, fact_sheet_date: "2026-11-04" };
+    expect(hasFundChanged(dated, { ...existing, asOfDate: "2026-11-04" })).toBe(false);
+    expect(hasFundChanged(dated, { ...existing, asOfDate: "2026-11-06" })).toBe(true);
+    expect(hasFundChanged({ ...existing, fact_sheet_date: null }, { ...existing, asOfDate: "2026-11-06" })).toBe(true);
+    expect(hasFundChanged({ ...existing, fact_sheet_date: undefined }, { ...existing, asOfDate: "2026-11-06" })).toBe(true);
+    expect(hasFundChanged({ ...existing, fact_sheet_date: "  " }, { ...existing, asOfDate: "2026-11-06" })).toBe(true);
+    expect(hasFundChanged(dated, { ...existing, asOfDate: null })).toBe(false);
   });
 });
