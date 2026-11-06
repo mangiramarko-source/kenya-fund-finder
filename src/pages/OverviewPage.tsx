@@ -1346,7 +1346,7 @@ const OverviewPage = () => {
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 
-          <div className="border-b border-border/60 bg-background/95 px-4 pt-2 pb-1 backdrop-blur-md -mx-4 md:mx-0 md:px-2 md:pt-1 md:shadow-sm md:sticky md:top-0 md:z-30">
+          <div className="border-b border-border/60 bg-background px-4 pt-2 pb-1 -mx-4 md:mx-0 md:px-2 md:pt-1 md:shadow-sm md:sticky md:top-0 md:z-30 md:bg-background/95 md:backdrop-blur-md">
             <div className="mb-4 flex items-baseline justify-between mt-0">
               <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
               <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">

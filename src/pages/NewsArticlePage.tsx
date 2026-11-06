@@ -549,7 +549,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     <PageLoadingGate isReady={!loading && Boolean(article)} message="Loading market news…" resetKey={id} minimumDuration={0} loaderClassName="min-h-screen">
     <div className="min-h-screen bg-background text-foreground pb-28 md:pb-24">
       {/* ─── 1. Top Navigation Bar (Fixed top header below main navbar) ─── */}
-      <header className="fixed inset-x-0 top-0 z-50 flex h-safe-detail-header pt-safe items-center justify-between border-b border-border bg-background/95 px-5 backdrop-blur-md md:sticky md:z-40 md:h-12 md:px-4 md:pt-0">
+      <header className="fixed inset-x-0 top-0 z-50 flex h-safe-detail-header pt-safe items-center justify-between border-b border-border bg-background px-5 md:sticky md:z-40 md:h-12 md:px-4 md:pt-0">
         <button
           type="button"
           onClick={() => navigate(-1)}

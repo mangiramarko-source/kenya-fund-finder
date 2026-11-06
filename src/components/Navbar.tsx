@@ -246,7 +246,7 @@ const Navbar = () => {
       <div className="md:hidden">
         <header
           ref={headerRef}
-          className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md pt-safe"
+          className="fixed inset-x-0 top-0 z-50 bg-background pt-safe"
         >
           <nav className="flex h-14 items-center justify-between px-4">
             {/* Left: Dynamic title or KFF logo */}
