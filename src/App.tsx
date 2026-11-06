@@ -200,6 +200,9 @@ const App = () => (
                     <Route path="/admin/mmf" element={<Navigate to="/admin?tab=mmf-inspect" replace />} />
                     <Route path="/admin/mmf-inspect" element={<Navigate to="/admin?tab=mmf-inspect" replace />} />
                     <Route path="/admin/mmf-inspection" element={<Navigate to="/admin?tab=mmf-inspect" replace />} />
+                    <Route path="/admin/stocks" element={<Navigate to="/admin?tab=stocks-inspect" replace />} />
+                    <Route path="/admin/stocks-inspect" element={<Navigate to="/admin?tab=stocks-inspect" replace />} />
+                    <Route path="/admin/stocks-inspection" element={<Navigate to="/admin?tab=stocks-inspect" replace />} />
                     {DevOnlyPages ? <>
                       <Route path="/checklist" element={<DevOnlyPages.ChecklistPage />} />
                       <Route path="/stocks-demo" element={<DevOnlyPages.StocksDemoPage />} />

@@ -37,6 +37,8 @@ import { getStockLogoUrl } from "@/lib/stockBranding";
 import { InvestorBriefing } from "@/components/news/InvestorBriefing";
 import { buildInvestorBriefing } from "@/lib/newsBriefingMapper";
 import { type NewsFromDB, type PublicStock } from "@/lib/api";
+import { findMentionedStock } from "@/lib/stockNewsFeed";
+import { stockCache } from "@/lib/stockCache";
 import { splitReadableParagraphs } from "@/lib/utils";
 
 interface FeedItemDetailModalProps {
@@ -127,21 +129,27 @@ export function FeedItemDetailModal({
     false,
     item.rawItem?.source,
   ) || item.rawItem?.image_url || item.mediaUrl || null;
+
+  const cachedStocks = stockCache.loadStocks()?.stocks || [];
+  const matchedStock: PublicStock | null = item.relatedStock
+    ? ({
+        ...item.relatedStock,
+        sector: item.relatedStock.sector ?? null,
+        day_change_percent: item.relatedStock.changePercent,
+        previous_price: item.relatedStock.previousPrice,
+        pe_ratio: item.relatedStock.peRatio ?? null,
+        dividend_yield: item.relatedStock.dividendYield ?? null,
+        year_low: item.relatedStock.yearLow ?? null,
+        year_high: item.relatedStock.yearHigh ?? null,
+        market_cap: item.relatedStock.marketCap ?? null,
+      } as PublicStock)
+    : item.rawItem && cachedStocks.length > 0
+    ? ((findMentionedStock(item.rawItem as NewsFromDB, cachedStocks as any) as any) as PublicStock) || null
+    : null;
+
   const briefing = item.rawItem
     ? buildInvestorBriefing(item.rawItem as NewsFromDB, {
-        stock: item.relatedStock
-          ? ({
-              ...item.relatedStock,
-              sector: item.relatedStock.sector ?? null,
-              day_change_percent: item.relatedStock.changePercent,
-              previous_price: item.relatedStock.previousPrice,
-              pe_ratio: item.relatedStock.peRatio ?? null,
-              dividend_yield: item.relatedStock.dividendYield ?? null,
-              year_low: item.relatedStock.yearLow ?? null,
-              year_high: item.relatedStock.yearHigh ?? null,
-              market_cap: item.relatedStock.marketCap ?? null,
-            } as PublicStock)
-          : null,
+        stock: matchedStock,
         mmf: item.relatedMmf,
         fx: item.relatedFx,
         commodity: item.relatedCommodity,
@@ -229,8 +237,8 @@ export function FeedItemDetailModal({
         {(() => {
           const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
           const cleanAuthor = isSocialPost ? item.authorName.replace(/^X\s*-\s*/, '') : item.authorName;
-          const stock = item.relatedStock;
-          const stockLogoUrl = stock ? getStockLogoUrl(stock.symbol, stock.logoUrl) : "";
+          const stock = item.relatedStock || matchedStock;
+          const stockLogoUrl = stock ? getStockLogoUrl(stock.symbol, (stock as any).logoUrl || (stock as any).logo_url) : "";
           return (
             <div className="p-4 sm:p-6 border-b border-border dark:border-white/10 relative shrink-0 bg-card dark:bg-neutral-900">
               <div className="flex items-center justify-between gap-4 pr-8">
@@ -274,9 +282,12 @@ export function FeedItemDetailModal({
                 </div>
 
             {/* Related Symbols Sparklines */}
-            {item.relatedSymbols && item.relatedSymbols.length > 0 && (
+            {((item.relatedSymbols && item.relatedSymbols.length > 0) || stock) && (
               <div className="flex flex-wrap items-center gap-2 mt-4 pt-1">
-                {item.relatedSymbols.map(sym => (
+                {(item.relatedSymbols && item.relatedSymbols.length > 0
+                  ? item.relatedSymbols
+                  : stock ? [stock.symbol] : []
+                ).map(sym => (
                   <Sparkline key={sym} symbol={sym} />
                 ))}
               </div>

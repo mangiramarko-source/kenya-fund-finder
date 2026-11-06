@@ -997,7 +997,12 @@ const OverviewPage = () => {
     return feedItems.map(item => {
       const enriched = enrichedById.get(item.id);
       return enriched?.relatedStock
-        ? { ...item, aiInsight: enriched.aiInsight, relatedStock: enriched.relatedStock }
+        ? {
+            ...item,
+            aiInsight: enriched.aiInsight,
+            relatedStock: enriched.relatedStock,
+            relatedSymbols: item.relatedSymbols?.length ? item.relatedSymbols : [enriched.relatedStock.symbol],
+          }
         : item;
     });
   }, [feedItems, news, stocks]);

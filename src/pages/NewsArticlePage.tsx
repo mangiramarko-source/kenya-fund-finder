@@ -25,7 +25,8 @@ import {
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageLoadingGate from "@/components/PageLoadingGate";
-import { fetchNewsById, fetchPublicStockById, fetchRelatedNews, fetchFunds, getNewsAiAnalysisDisplayText, type NewsFromDB, type PublicStock } from "@/lib/api";
+import { fetchNewsById, fetchPublicStockById, fetchPublicStocks, fetchRelatedNews, fetchFunds, getNewsAiAnalysisDisplayText, type NewsFromDB, type PublicStock } from "@/lib/api";
+import { findMentionedStock } from "@/lib/stockNewsFeed";
 import { supabase } from "@/integrations/supabase/client";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useToast } from "@/hooks/use-toast";
@@ -305,6 +306,12 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
       const synthetic = getSyntheticArticle(id);
       if (synthetic) {
         setArticle(synthetic);
+        fetchPublicStocks()
+          .then((stocks) => {
+            const matched = findMentionedStock(synthetic, stocks) || null;
+            if (matched) setRelatedStock(matched);
+          })
+          .catch(() => {});
         setLoading(false);
         return () => clearTimeout(timer);
       }
@@ -325,22 +332,41 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     const synthetic = getSyntheticArticle(id);
     if (synthetic) {
       setArticle(synthetic);
+      fetchPublicStocks()
+        .then((stocks) => {
+          const matched = findMentionedStock(synthetic, stocks) || null;
+          if (matched) setRelatedStock(matched);
+        })
+        .catch(() => {});
       setLoading(false);
       return () => clearTimeout(timer);
     }
 
-    // Immediately fetch the real article by ID
-    fetchNewsById(id)
-      .then((a) => {
+    // Immediately fetch the real article by ID and public stocks in parallel
+    Promise.all([
+      fetchNewsById(id),
+      fetchPublicStocks().catch(() => []),
+    ])
+      .then(([a, stocks]) => {
         if (a) {
           setArticle(a);
           setLoading(false);
           window.scrollTo(0, 0);
 
+          let matchedStock: PublicStock | null = null;
           if (a.related_stock_id) {
-            fetchPublicStockById(a.related_stock_id)
-              .then(setRelatedStock)
-              .catch(() => setRelatedStock(null));
+            matchedStock = (stocks || []).find((s) => s.id === a.related_stock_id) || null;
+            if (!matchedStock) {
+              fetchPublicStockById(a.related_stock_id)
+                .then(setRelatedStock)
+                .catch(() => {});
+            }
+          }
+          if (!matchedStock && stocks && stocks.length > 0) {
+            matchedStock = findMentionedStock(a, stocks) || null;
+          }
+          if (matchedStock) {
+            setRelatedStock(matchedStock);
           }
 
           // Asynchronously enrich with related links & news in background without blocking

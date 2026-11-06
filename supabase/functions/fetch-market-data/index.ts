@@ -5,7 +5,7 @@ import {
   getSupabasePublishableKey,
   getSupabaseSecretKey,
 } from "../_shared/supabase-keys.ts";
-import { matchRapidApiStocks, parseRapidApiStockResponse, type QuoteSource, type StockQuote } from "./stock-quotes.ts";
+import { evaluateStockQuoteDrift, matchRapidApiStocks, parseRapidApiStockResponse, type QuoteSource, type StockQuote } from "./stock-quotes.ts";
 import { persistStockQuote, type StockWriteOperations } from "./stock-writes.ts";
 import { fetchNseSector, parseNseQuoteRows, parseNseSnapshotDate, summarizeNseFallback } from "./nse-fallback.ts";
 import { fetchSerrariAllFundsData, hasFundChanged } from "./serrari-funds.ts";
@@ -230,6 +230,8 @@ function normalizeText(value: string) {
 type StockCacheRow = {
   id: string;
   symbol: string;
+  name?: string;
+  is_active?: boolean;
   price: number;
   previous_price: number | null;
   day_change: number;
@@ -548,6 +550,7 @@ Deno.serve(async (req) => {
   // Inspection mode: parse the source and diff against the DB without writing anything.
   const dryRun = Boolean((body as Record<string, unknown>)?.dry_run);
   let fundInspection: Record<string, unknown> | null = null;
+  let stockInspection: Record<string, unknown> | null = null;
 
   try {
     // ── 1. Fetch FX rates ──
@@ -721,15 +724,17 @@ Deno.serve(async (req) => {
 
     // ── 3. Fetch Kenyan stock prices (RapidAPI primary, official NSE fallback) ──
     if (shouldFetchStocks) {
-    const { data: stockRows, error: stocksReadError } = await supabase
+    const { data: stockRowsData, error: stocksReadError } = await supabase
       .from("stocks")
-      .select("id, symbol, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, year_high, year_low, updated_at, provider_updated_at, quote_source")
-      .eq("is_active", true);
+      .select("id, symbol, name, price, previous_price, day_change, day_change_percent, volume, market_cap, pe_ratio, year_high, year_low, updated_at, provider_updated_at, quote_source, is_active");
     if (stocksReadError) throw new Error(`Stock read failed: ${stocksReadError.code}`);
 
-    if (stockRows && stockRows.length > 0) {
+    const stockRows = stockRowsData || [];
+
+    if (stockRows.length > 0) {
       let stocksUpdated = 0;
       let historyUpdated = 0;
+      let skippedDriftCount = 0;
       const successfulStockIds = new Set<string>();
       const writeFailures: Array<{ symbol: string; step: string; code: string }> = [];
       const stockWriter: StockWriteOperations = {
@@ -743,97 +748,254 @@ Deno.serve(async (req) => {
 
       results.push(...stockData.notes);
 
-      // Fetch 52-week price history for year_high/year_low calculation
-      const oneYearAgo = new Date();
-      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
-      const { data: priceHistRows } = await supabase
-        .from("stock_price_history")
-        .select("stock_id, price")
-        .gte("snapshot_date", oneYearAgo.toISOString().split("T")[0]);
-
-      // Build lookup: stock_id → { high, low }
-      const yearRanges = new Map<string, { high: number; low: number }>();
-      if (priceHistRows) {
-        for (const ph of priceHistRows) {
-          const existing = yearRanges.get(ph.stock_id);
-          if (existing) {
-            if (ph.price > existing.high) existing.high = ph.price;
-            if (ph.price < existing.low) existing.low = ph.price;
-          } else {
-            yearRanges.set(ph.stock_id, { high: ph.price, low: ph.price });
-          }
-        }
-      }
-
-      // Update stocks from fresh data, falling back to cached DB values when providers fail
-      for (const row of stockRows) {
-        const sym = (row.symbol || "").toUpperCase();
-        const quote = stockData.quotes.get(sym);
-
-        if (quote && quote.price > 0) {
-          if (quote.source === "cache") {
-            continue;
-          }
-
-          // Calculate year_high / year_low including current price
-          const hist = yearRanges.get(row.id);
-          let yearHigh = row.year_high;
-          let yearLow = row.year_low;
-          if (hist) {
-            yearHigh = Math.max(hist.high, quote.price);
-            yearLow = Math.min(hist.low, quote.price);
-          } else {
-            yearHigh = yearHigh ? Math.max(yearHigh, quote.price) : quote.price;
-            yearLow = yearLow ? Math.min(yearLow, quote.price) : quote.price;
-          }
-
-          const written = await persistStockQuote(row.id, quote, { yearHigh, yearLow }, stockWriter);
-          if (written.stockWritten) {
-            stocksUpdated++;
-            successfulStockIds.add(row.id);
-            recordQuote("stock", row.id, quote.price);
-          }
-          if (written.historyWritten) historyUpdated++;
-          for (const failure of written.errors) {
-            writeFailures.push({ symbol: sym, ...failure });
-            console.error("[fetch-market-data] Stock write failed", { stock_id: row.id, symbol: sym, ...failure });
-          }
-        }
-      }
-
-      // Calculate Market Aggregates for today
-      if (stocksUpdated > 0 || fallbackCount > 0) {
-        const summaryRows = stockRows.map((row) => {
+      if (dryRun) {
+        const inspectionRows = stockRows.map((row) => {
           const sym = (row.symbol || "").toUpperCase();
           const quote = stockData.quotes.get(sym);
+          const hasQuote = Boolean(quote && typeof quote.price === "number" && Number.isFinite(quote.price) && quote.price > 0);
+          const isCached = quote?.source === "cache";
+
+          const { driftPct, status } = evaluateStockQuoteDrift({
+            dbPrice: row.price,
+            dbVolume: row.volume,
+            dbDayChange: row.day_change,
+            quote,
+            allowHighDrift,
+          });
+
           return {
-            dayChange: successfulStockIds.has(row.id) ? quote!.dayChange : row.day_change,
-            marketCap: row.market_cap,
-            peRatio: row.pe_ratio,
+            id: row.id,
+            symbol: sym,
+            name: row.name,
+            is_active: row.is_active,
+            status,
+            quote_source: quote?.quoteSource ?? (isCached ? "cache" : null),
+            source_price: hasQuote ? quote!.price : null,
+            source_previous_price: hasQuote ? quote!.previousPrice : null,
+            source_day_change: hasQuote ? quote!.dayChange : null,
+            source_day_change_percent: hasQuote ? quote!.dayChangePct : null,
+            source_volume: hasQuote ? quote!.volume : null,
+            db_price: row.price,
+            db_day_change: row.day_change,
+            db_day_change_percent: row.day_change_percent,
+            db_volume: row.volume,
+            drift_pct: driftPct,
+            provider_updated_at: quote?.providerUpdatedAt ?? null,
+            db_updated_at: row.updated_at,
           };
         });
-        const { totalMarketCap, averagePE, advances, declines, unchanged } =
-          calculateMarketSummary(summaryRows);
-        const snapshotDate = new Date().toISOString().split("T")[0];
 
-        const { error: summaryError } = await supabase.from("market_summary_history").upsert(
-          {
-            date: snapshotDate,
-            total_market_cap: totalMarketCap,
-            average_pe: averagePE,
-            advances,
-            declines,
-            unchanged,
-          },
-          { onConflict: "date" }
+        const missingFromSource = stockRows
+          .filter((row) => {
+            const sym = (row.symbol || "").toUpperCase();
+            const quote = stockData.quotes.get(sym);
+            return !quote || quote.source === "cache" || !quote.price || quote.price <= 0;
+          })
+          .map((row) => ({
+            symbol: row.symbol,
+            name: row.name,
+            is_active: row.is_active,
+            db_price: row.price,
+            db_updated_at: row.updated_at,
+          }));
+
+        const count = (s: string) => inspectionRows.filter((r) => r.status === s).length;
+        const summary = {
+          total: inspectionRows.length,
+          unchanged: count("unchanged"),
+          would_update: count("would_update"),
+          drift_blocked: count("drift_blocked"),
+          cached: count("cached"),
+          missing: count("missing"),
+          unpriced_or_new: count("unpriced_or_new"),
+        };
+
+        stockInspection = {
+          source_as_of: stockData.cacheTimestamp || observedAt,
+          provider_updated_at: stockData.quotes.values().next().value?.providerUpdatedAt || null,
+          source: stockData.source,
+          notes: stockData.notes,
+          summary,
+          rows: inspectionRows,
+          missing_from_source: missingFromSource,
+        };
+
+        results.push(
+          `Stocks dry run: ${inspectionRows.length} stocks inspected (${summary.would_update} would update, ${summary.unchanged} unchanged, ${summary.drift_blocked} drift blocked, ${summary.cached} cached, ${summary.missing} missing)`,
         );
-        if (summaryError) {
-          writeFailures.push({ symbol: "market_summary", step: "summary_upsert", code: summaryError.code });
-          console.error("[fetch-market-data] Stock summary write failed", { code: summaryError.code });
-        } else {
-          results.push(`Inserted daily market summary history for ${snapshotDate}`);
+      } else {
+        // Fetch 52-week price history for year_high/year_low calculation
+        const oneYearAgo = new Date();
+        oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+        const { data: priceHistRows } = await supabase
+          .from("stock_price_history")
+          .select("stock_id, price")
+          .gte("snapshot_date", oneYearAgo.toISOString().split("T")[0]);
+
+        // Build lookup: stock_id → { high, low }
+        const yearRanges = new Map<string, { high: number; low: number }>();
+        if (priceHistRows) {
+          for (const ph of priceHistRows) {
+            const existing = yearRanges.get(ph.stock_id);
+            if (existing) {
+              if (ph.price > existing.high) existing.high = ph.price;
+              if (ph.price < existing.low) existing.low = ph.price;
+            } else {
+              yearRanges.set(ph.stock_id, { high: ph.price, low: ph.price });
+            }
+          }
         }
-      }
+
+        // Only update active stocks in live mode
+        const targetStockRows = stockRows.filter((r) => r.is_active);
+
+        // Update stocks from fresh data, falling back to cached DB values when providers fail
+        for (const row of targetStockRows) {
+          const sym = (row.symbol || "").toUpperCase();
+          const quote = stockData.quotes.get(sym);
+
+          if (quote && quote.price > 0) {
+            if (quote.source === "cache") {
+              continue;
+            }
+
+            // Drift safety guard
+            const { driftPct, status: driftStatus } = evaluateStockQuoteDrift({
+              dbPrice: row.price,
+              dbVolume: row.volume,
+              dbDayChange: row.day_change,
+              quote,
+              allowHighDrift,
+            });
+            if (driftStatus === "drift_blocked") {
+              skippedDriftCount++;
+              results.push(`Stock ${sym}: drift ${driftPct}% > 20% guard (${row.price} → ${quote.price}), skipped`);
+              console.warn(`[fetch-market-data] Stock ${sym} skipped by drift guard`, { db: row.price, source: quote.price, driftPct });
+              continue;
+            }
+
+            // Calculate year_high / year_low including current price
+            const hist = yearRanges.get(row.id);
+            let yearHigh = row.year_high;
+            let yearLow = row.year_low;
+            if (hist) {
+              yearHigh = Math.max(hist.high, quote.price);
+              yearLow = Math.min(hist.low, quote.price);
+            } else {
+              yearHigh = yearHigh ? Math.max(yearHigh, quote.price) : quote.price;
+              yearLow = yearLow ? Math.min(yearLow, quote.price) : quote.price;
+            }
+
+            const written = await persistStockQuote(row.id, quote, { yearHigh, yearLow }, stockWriter);
+            if (written.stockWritten) {
+              stocksUpdated++;
+              successfulStockIds.add(row.id);
+              recordQuote("stock", row.id, quote.price);
+            }
+            if (written.historyWritten) historyUpdated++;
+            for (const failure of written.errors) {
+              writeFailures.push({ symbol: sym, ...failure });
+              console.error("[fetch-market-data] Stock write failed", { stock_id: row.id, symbol: sym, ...failure });
+            }
+          }
+        }
+
+        // Calculate Market Aggregates for today
+        if (stocksUpdated > 0 || fallbackCount > 0) {
+          const summaryRows = targetStockRows.map((row) => {
+            const sym = (row.symbol || "").toUpperCase();
+            const quote = stockData.quotes.get(sym);
+            return {
+              dayChange: successfulStockIds.has(row.id) ? quote!.dayChange : row.day_change,
+              marketCap: row.market_cap,
+              peRatio: row.pe_ratio,
+            };
+          });
+          const { totalMarketCap, averagePE, advances, declines, unchanged } =
+            calculateMarketSummary(summaryRows);
+          const snapshotDate = new Date().toISOString().split("T")[0];
+
+          const { error: summaryError } = await supabase.from("market_summary_history").upsert(
+            {
+              date: snapshotDate,
+              total_market_cap: totalMarketCap,
+              average_pe: averagePE,
+              advances,
+              declines,
+              unchanged,
+            },
+            { onConflict: "date" }
+          );
+          if (summaryError) {
+            writeFailures.push({ symbol: "market_summary", step: "summary_upsert", code: summaryError.code });
+            console.error("[fetch-market-data] Stock summary write failed", { code: summaryError.code });
+          } else {
+            results.push(`Inserted daily market summary history for ${snapshotDate}`);
+          }
+        }
+
+        const nowIso = new Date().toISOString();
+        // Always record verification heartbeat in section_live_status
+        await supabase
+          .from("section_live_status")
+          .upsert(
+            {
+              section_key: "stocks",
+              is_live: true,
+              last_verified_at: nowIso,
+              ...(stocksUpdated > 0 ? { updated_at: nowIso } : {}),
+            },
+            { onConflict: "section_key" },
+          );
+
+        if (stocksUpdated > 0 || skippedDriftCount > 0) {
+          // Keep site_pages (slug = 'live-status') in sync when prices update
+          const { data: liveStatusPage } = await supabase
+            .from("site_pages")
+            .select("meta")
+            .eq("slug", "live-status")
+            .maybeSingle();
+
+          if (liveStatusPage) {
+            const prevMeta = (liveStatusPage.meta as Record<string, unknown>) ?? {};
+            const prevSections = (prevMeta.sections as Record<string, Record<string, unknown>>) ?? {};
+            const nextMeta = {
+              ...prevMeta,
+              last_update_date: nowIso.split("T")[0],
+              sections: {
+                ...prevSections,
+                stocks: {
+                  ...(prevSections.stocks ?? {}),
+                  is_live: true,
+                  last_update_date: nowIso.split("T")[0],
+                },
+              },
+            };
+            await supabase
+              .from("site_pages")
+              .update({ meta: nextMeta, updated_at: nowIso })
+              .eq("slug", "live-status");
+          }
+
+          const { error: logErr } = await supabase.from("change_log").insert({
+            entity_type: "stock",
+            entity_id: Array.from(successfulStockIds)[0] ?? null,
+            action: "stock_quotes_sync",
+            new_values: {
+              as_of_date: nowIso.split("T")[0],
+              updated_count: stocksUpdated,
+              cached_count: fallbackCount,
+              total_count: targetStockRows.length,
+              drift_skipped_count: skippedDriftCount,
+              provider_source: stockData.source,
+              write_errors: writeFailures.length,
+            },
+          });
+          if (logErr) {
+            console.error("[fetch-market-data] Failed to write stock sync to change_log:", logErr);
+          }
+        }
+      } // end !dryRun
 
       const stillMissing = stockRows
         .map((row) => (row.symbol || "").toUpperCase())
@@ -1147,7 +1309,13 @@ Deno.serve(async (req) => {
     const completion = stockWriteErrors ? "Completed with stock write errors"
       : stockRunReport?.status === "degraded" ? "Completed with degraded stock data" : "Completed successfully";
     console.log(`[fetch-market-data] ${completion}: ${results.length} operations`);
-    return new Response(JSON.stringify({ success: stockWriteErrors === 0, results, ...(stockRunReport ? { stocks: stockRunReport } : {}), ...(fundInspection ? { fund_inspection: fundInspection } : {}) }), {
+    return new Response(JSON.stringify({
+      success: stockWriteErrors === 0,
+      results,
+      ...(stockRunReport ? { stocks: stockRunReport } : {}),
+      ...(stockInspection ? { stock_inspection: stockInspection } : {}),
+      ...(fundInspection ? { fund_inspection: fundInspection } : {}),
+    }), {
       status: stockWriteErrors ? 500 : 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

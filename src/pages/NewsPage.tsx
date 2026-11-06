@@ -271,7 +271,8 @@ export default function NewsPage() {
           yearLow: relatedStock.year_low ?? null,
           yearHigh: relatedStock.year_high ?? null,
           marketCap: relatedStock.market_cap ?? null,
-        } : null
+        } : null,
+        relatedSymbols: relatedStock ? [relatedStock.symbol] : undefined,
       };
     });
 

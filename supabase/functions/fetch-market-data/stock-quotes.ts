@@ -111,3 +111,46 @@ export function matchRapidApiStocks(symbols: string[], providerQuotes: Map<strin
   }
   return { quotes, rejectedAliases };
 }
+
+export type StockDriftStatus = "unchanged" | "would_update" | "drift_blocked" | "cached" | "missing" | "unpriced_or_new";
+
+export function evaluateStockQuoteDrift(params: {
+  dbPrice: number | null | undefined;
+  dbVolume: number | null | undefined;
+  dbDayChange: number | null | undefined;
+  quote: StockQuote | null | undefined;
+  allowHighDrift?: boolean;
+}): {
+  driftPct: number | null;
+  status: StockDriftStatus;
+} {
+  const { dbPrice, dbVolume, dbDayChange, quote, allowHighDrift = false } = params;
+  const hasQuote = Boolean(quote && typeof quote.price === "number" && Number.isFinite(quote.price) && quote.price > 0);
+  const isCached = quote?.source === "cache";
+
+  if (!quote || !hasQuote) {
+    return { driftPct: null, status: isCached ? "cached" : "missing" };
+  }
+  if (isCached) {
+    return { driftPct: null, status: "cached" };
+  }
+  if (dbPrice == null || !Number.isFinite(dbPrice) || dbPrice <= 0) {
+    return { driftPct: null, status: "unpriced_or_new" };
+  }
+
+  const rawDrift = Math.abs((quote.price - dbPrice) / dbPrice) * 100;
+  const driftPct = Number(rawDrift.toFixed(2));
+
+  if (driftPct > 20 && !allowHighDrift) {
+    return { driftPct, status: "drift_blocked" };
+  }
+  if (
+    quote.price === dbPrice &&
+    (quote.volume === dbVolume || quote.volume === 0) &&
+    quote.dayChange === dbDayChange
+  ) {
+    return { driftPct, status: "unchanged" };
+  }
+
+  return { driftPct, status: "would_update" };
+}

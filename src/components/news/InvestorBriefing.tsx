@@ -21,6 +21,7 @@ import { MmfArticleMarketCard } from "@/components/news/MmfArticleMarketCard";
 import { FxArticleMarketCard } from "@/components/news/FxArticleMarketCard";
 import { CommodityArticleMarketCard } from "@/components/news/CommodityArticleMarketCard";
 import { StockFundamentalAnalysisCard } from "@/components/news/StockFundamentalAnalysisCard";
+import { Sparkline } from "@/components/feed/Sparkline";
 import InlineDataGate from "@/components/auth/InlineDataGate";
 
 interface InvestorBriefingProps {
@@ -310,7 +311,11 @@ const MarketSnapshotCard: React.FC<{
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
+          {snapshot.assetType === "stock" && (
+            <Sparkline symbol={snapshot.symbolOrName} />
+          )}
+
           {snapshot.changeText && (
             <div
               className={`flex items-center gap-1 text-xs font-bold px-2.5 py-1 rounded-lg ${
