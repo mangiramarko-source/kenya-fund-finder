@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { usePortfolio, getCurrentValue, getPnL, getPnLPercent, ASSET_TYPE_LABELS, AssetType, PortfolioItem } from "@/hooks/usePortfolio";
 import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
 import { usePortfolioMetrics } from "@/hooks/usePortfolioMetrics";
-import { Clock3, Plus, ShieldCheck, Sparkles, TrendingUp, TrendingDown, Minus, SlidersHorizontal, ArrowUpRight } from "lucide-react";
+import { Clock3, Plus, ShieldCheck, Sparkles, TrendingUp, TrendingDown, Minus, SlidersHorizontal, ArrowUpRight, RefreshCw } from "lucide-react";
 import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
 import EditHoldingModal from "@/components/portfolio/EditHoldingModal";
 import PortfolioSummaryModal from "@/components/portfolio/PortfolioSummaryModal";
@@ -15,10 +15,17 @@ import PortfolioDailyInsightCard, { portfolioInsight } from "@/components/portfo
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { usePortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
 import PortfolioValueToggle, { PortfolioSensitiveValue } from "@/components/portfolio/PortfolioValueVisibility";
+import type { ExchangeRate } from "@/components/home/MarketTicker";
+import {
+  formatPortfolioCurrency,
+  getActiveExchangeRate,
+  SUPPORTED_CORE_CURRENCIES,
+} from "@/lib/portfolioCurrency";
 
 interface MobilePortfolioViewProps {
-  currency: "KES" | "USD";
-  setCurrency: (c: "KES" | "USD") => void;
+  currency: string;
+  setCurrency: (c: string) => void;
+  rates?: ExchangeRate[];
   showPortfolioValues: boolean;
   onTogglePortfolioValues: () => void;
 }
@@ -40,21 +47,13 @@ const CATEGORY_CHIPS: Array<{ key: "all" | AssetType; label: string }> = [
   { key: "commodity", label: "Commodities" },
 ];
 
-const fmtCurrency = (val: number, curr: "KES" | "USD" = "KES") => {
-  return new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: curr,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(val);
-};
-
-export default function MobilePortfolioView({ currency, setCurrency, showPortfolioValues, onTogglePortfolioValues }: MobilePortfolioViewProps) {
+export default function MobilePortfolioView({ currency, setCurrency, rates, showPortfolioValues, onTogglePortfolioValues }: MobilePortfolioViewProps) {
   const { items, isLoading, addItem, updateItem, deleteItem, totalValue, totalPnL, totalPnLPercent, allocation } = usePortfolio();
   const { changes, loading: changesLoading } = usePortfolioChanges(items);
   const metrics = usePortfolioMetrics(items);
   const { movement: liveMovement } = usePortfolioLiveMovement(items);
   const { notifications } = useNotifications();
+  const activeRate = useMemo(() => getActiveExchangeRate(currency, rates), [currency, rates]);
 
   const [activeCategory, setActiveCategory] = useState<"all" | AssetType>("all");
   const [editItem, setEditItem] = useState<PortfolioItem | null>(null);
@@ -108,42 +107,38 @@ export default function MobilePortfolioView({ currency, setCurrency, showPortfol
 
       {/* ─── 1. Total Value Summary Card ─── */}
       <div className="bg-slate-50/80 border border-border/75 rounded-3xl p-5 shadow-sm space-y-4 dark:bg-neutral-900/90 dark:border-white/10">
-        <div className="flex items-center justify-between">
+        <div className="flex items-center justify-between gap-2 flex-wrap">
           <span className="text-xs font-semibold text-muted-foreground uppercase tracking-wider">
             Total value
           </span>
-          <div className="flex bg-muted rounded-full p-0.5 border border-border/50 text-[11px] font-semibold dark:bg-neutral-800">
-            <button
-              onClick={() => setCurrency("KES")}
-              className={`px-3 py-1 rounded-full transition-all ${
-                currency === "KES"
-                  ? "bg-card text-foreground shadow-xs font-bold dark:bg-neutral-700"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              KES
-            </button>
-            <button
-              onClick={() => setCurrency("USD")}
-              className={`px-3 py-1 rounded-full transition-all ${
-                currency === "USD"
-                  ? "bg-card text-foreground shadow-xs font-bold dark:bg-neutral-700"
-                  : "text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              USD
-            </button>
+          <div className="flex items-center gap-1 bg-muted rounded-full p-0.5 border border-border/50 text-[11px] font-semibold dark:bg-neutral-800">
+            {SUPPORTED_CORE_CURRENCIES.map((code) => {
+              const isSelected = currency.toUpperCase() === code;
+              return (
+                <button
+                  key={code}
+                  onClick={() => setCurrency(code)}
+                  className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
+                    isSelected
+                      ? "bg-card text-foreground shadow-xs font-bold dark:bg-neutral-700"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                >
+                  {code}
+                </button>
+              );
+            })}
           </div>
         </div>
 
         <div>
           <div className="flex items-center gap-2">
             <div className="text-2xl sm:text-3xl font-extrabold text-foreground tracking-tight tabular-nums">
-              <PortfolioSensitiveValue value={fmtCurrency(totalValue, currency)} visible={showPortfolioValues} />
+              <PortfolioSensitiveValue value={formatPortfolioCurrency(totalValue, currency, rates)} visible={showPortfolioValues} />
             </div>
             <PortfolioValueToggle visible={showPortfolioValues} onToggle={onTogglePortfolioValues} />
           </div>
-          <div className="flex items-center gap-1.5 mt-1">
+          <div className="flex items-center gap-1.5 mt-1 flex-wrap">
             {displayChangePct != null ? (
               <span
                 className={`inline-flex items-center gap-1 text-xs font-bold ${
@@ -173,9 +168,17 @@ export default function MobilePortfolioView({ currency, setCurrency, showPortfol
               </span>
             )}
             <span className="text-xs text-muted-foreground font-medium">
-              (<PortfolioSensitiveValue value={fmtCurrency(totalPnL, currency)} visible={showPortfolioValues} />)
+              (<PortfolioSensitiveValue value={formatPortfolioCurrency(totalPnL, currency, rates)} visible={showPortfolioValues} />)
             </span>
           </div>
+
+          {currency.toUpperCase() !== "KES" && (
+            <div className="inline-flex items-center gap-1.5 mt-2 px-2.5 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-[11px] font-semibold">
+              <RefreshCw className="h-3 w-3 shrink-0" />
+              <span>{activeRate.label}</span>
+              {activeRate.isLive && <span className="text-[9px] opacity-75">(Live)</span>}
+            </div>
+          )}
         </div>
 
         <PortfolioDailyInsightCard notification={latestPortfolioUpdate} movement={liveMovement} showUpdatedAt={false} mobile />
@@ -292,6 +295,7 @@ export default function MobilePortfolioView({ currency, setCurrency, showPortfol
                   key={item.id}
                   item={item}
                   currency={currency}
+                  rates={rates}
                   totalValue={totalValue}
                   change={itemChange}
                   presentation="mobile"
@@ -312,6 +316,7 @@ export default function MobilePortfolioView({ currency, setCurrency, showPortfol
               allocation={allocation}
               totalValue={totalValue}
               currency={currency}
+              rates={rates}
               weightedAvgYield={metrics.weightedAvgYield}
               monthlyIncome={metrics.monthlyIncome}
               hasFunds={metrics.hasFunds}
@@ -361,6 +366,7 @@ export default function MobilePortfolioView({ currency, setCurrency, showPortfol
         open={showSummaryModal}
         onOpenChange={setShowSummaryModal}
         currency={currency}
+        rates={rates}
       />
     </div>
   );

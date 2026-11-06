@@ -6,20 +6,18 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import { buildWeeklyBuckets } from "@/lib/portfolioWeeklyBuckets";
 import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
 import { TrendingUp, TrendingDown, FileText } from "lucide-react";
+import type { ExchangeRate } from "@/components/home/MarketTicker";
+import { formatPortfolioCurrency } from "@/lib/portfolioCurrency";
 
 interface Props {
   open: boolean;
   onOpenChange: (open: boolean) => void;
-  currency?: "KES" | "USD";
+  currency?: string;
+  rates?: ExchangeRate[];
 }
 
-const fmtCurrency = (val: number, curr: "KES" | "USD" = "KES") => {
-  return new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: curr,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(val);
+const fmtCurrency = (val: number, curr: string = "KES", rates?: ExchangeRate[]) => {
+  return formatPortfolioCurrency(val, curr, rates);
 };
 
 const KV = ({ label, value, sub }: { label: string; value: string; sub?: string }) => (
@@ -56,7 +54,7 @@ const ChangeLine = ({
   );
 };
 
-export default function PortfolioSummaryModal({ open, onOpenChange, currency = "KES" }: Props) {
+export default function PortfolioSummaryModal({ open, onOpenChange, currency = "KES", rates }: Props) {
   const { items, totalValue, totalPnL, totalPnLPercent, allocation } = usePortfolio();
   const metrics = usePortfolioMetrics(items);
   const { changes } = usePortfolioChanges(items);
@@ -102,11 +100,11 @@ export default function PortfolioSummaryModal({ open, onOpenChange, currency = "
                 Overview
               </h3>
               <div className="grid grid-cols-2 gap-2.5">
-                <KV label="Total Portfolio Value" value={fmtCurrency(totalValue, currency)} />
+                <KV label="Total Portfolio Value" value={fmtCurrency(totalValue, currency, rates)} />
                 <KV
                   label="Overall P/L"
                   value={`${totalPnL >= 0 ? "+" : ""}${totalPnLPercent.toFixed(2)}%`}
-                  sub={fmtCurrency(totalPnL, currency)}
+                  sub={fmtCurrency(totalPnL, currency, rates)}
                 />
                 <KV
                   label="Weighted Avg Yield"
@@ -114,7 +112,7 @@ export default function PortfolioSummaryModal({ open, onOpenChange, currency = "
                 />
                 <KV
                   label="Est. Monthly Income"
-                  value={metrics.hasFunds ? fmtCurrency(metrics.monthlyIncome, currency) : "N/A"}
+                  value={metrics.hasFunds ? fmtCurrency(metrics.monthlyIncome, currency, rates) : "N/A"}
                 />
               </div>
             </section>
@@ -138,7 +136,7 @@ export default function PortfolioSummaryModal({ open, onOpenChange, currency = "
                       {allocationRows.map((r) => (
                         <tr key={r.type}>
                           <td className="py-2 font-medium text-foreground">{r.label}</td>
-                          <td className="py-2 text-right tabular-nums">{fmtCurrency(r.value, currency)}</td>
+                          <td className="py-2 text-right tabular-nums">{fmtCurrency(r.value, currency, rates)}</td>
                           <td className="py-2 text-right tabular-nums font-semibold">{r.pct.toFixed(1)}%</td>
                         </tr>
                       ))}

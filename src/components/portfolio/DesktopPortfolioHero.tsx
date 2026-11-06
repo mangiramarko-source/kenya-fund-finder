@@ -1,10 +1,22 @@
 import { useMemo } from "react";
-import { Clock3, Plus, ShieldCheck, TrendingUp, TrendingDown } from "lucide-react";
+import { Clock3, Plus, ShieldCheck, TrendingUp, TrendingDown, RefreshCw, ChevronDown } from "lucide-react";
 import { AssetType, ASSET_TYPE_LABELS } from "@/hooks/usePortfolio";
 import PortfolioDailyInsightCard, { portfolioInsight } from "@/components/portfolio/PortfolioDailyInsightCard";
 import type { AppNotification } from "@/components/alerts/NotificationProvider";
 import type { PortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
 import PortfolioValueToggle, { PortfolioSensitiveValue } from "@/components/portfolio/PortfolioValueVisibility";
+import type { ExchangeRate } from "@/components/home/MarketTicker";
+import {
+  formatPortfolioCurrency,
+  getActiveExchangeRate,
+  SUPPORTED_CORE_CURRENCIES,
+} from "@/lib/portfolioCurrency";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 
 interface DesktopPortfolioHeroProps {
   totalValue: number;
@@ -13,8 +25,9 @@ interface DesktopPortfolioHeroProps {
   recentChangePct: number | null;
   liveMovement: PortfolioLiveMovement | null;
   portfolioNotification: AppNotification | null;
-  currency: "KES" | "USD";
-  setCurrency: (c: "KES" | "USD") => void;
+  currency: string;
+  setCurrency: (c: string) => void;
+  rates?: ExchangeRate[];
   allocation: Record<AssetType, number>;
   onOpenAddModal: () => void;
   onOpenReportModal: () => void;
@@ -30,15 +43,6 @@ const CATEGORY_COLORS: Record<AssetType, string> = {
   commodity: "#6B7280",    // Slate Grey
 };
 
-const fmtCurrency = (val: number, curr: "KES" | "USD" = "KES") => {
-  return new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency: curr,
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  }).format(val);
-};
-
 export default function DesktopPortfolioHero({
   totalValue,
   totalPnL,
@@ -48,6 +52,7 @@ export default function DesktopPortfolioHero({
   portfolioNotification,
   currency,
   setCurrency,
+  rates,
   allocation,
   onOpenAddModal,
   onOpenReportModal,
@@ -56,6 +61,13 @@ export default function DesktopPortfolioHero({
 }: DesktopPortfolioHeroProps) {
   const insight = portfolioInsight(portfolioNotification, liveMovement);
   const displayChangePct = liveMovement?.percentChange ?? recentChangePct;
+  const activeRate = useMemo(() => getActiveExchangeRate(currency, rates), [currency, rates]);
+  const otherRates = useMemo(() => {
+    return (rates || []).filter(
+      (r) => !SUPPORTED_CORE_CURRENCIES.includes(r.currency_code.toUpperCase() as any)
+    );
+  }, [rates]);
+
   // Calculate allocation percentages
   const allocationShares = useMemo(() => {
     const total = Object.values(allocation).reduce((a, b) => a + b, 0);
@@ -75,31 +87,57 @@ export default function DesktopPortfolioHero({
   return (
     <div className="bg-card border border-border/75 rounded-3xl p-6 shadow-sm space-y-5 dark:bg-neutral-900/90 dark:border-white/10">
       {/* Top Row: TOTAL VALUE & Currency Toggle */}
-      <div className="flex items-center justify-between">
+      <div className="flex items-center justify-between gap-2 flex-wrap">
         <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
           TOTAL VALUE
         </span>
-        <div className="flex bg-muted rounded-full p-1 border border-border/50 text-xs font-semibold dark:bg-neutral-800">
-          <button
-            onClick={() => setCurrency("KES")}
-            className={`px-3.5 py-1 rounded-full transition-all ${
-              currency === "KES"
-                ? "bg-card text-foreground shadow-xs font-bold dark:bg-neutral-700"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            KES
-          </button>
-          <button
-            onClick={() => setCurrency("USD")}
-            className={`px-3.5 py-1 rounded-full transition-all ${
-              currency === "USD"
-                ? "bg-card text-foreground shadow-xs font-bold dark:bg-neutral-700"
-                : "text-muted-foreground hover:text-foreground"
-            }`}
-          >
-            USD
-          </button>
+        <div className="flex items-center gap-1 bg-muted rounded-full p-1 border border-border/50 text-xs font-semibold dark:bg-neutral-800">
+          {SUPPORTED_CORE_CURRENCIES.map((code) => {
+            const isSelected = currency.toUpperCase() === code;
+            return (
+              <button
+                key={code}
+                onClick={() => setCurrency(code)}
+                className={`px-3 py-1 rounded-full transition-all cursor-pointer ${
+                  isSelected
+                    ? "bg-card text-foreground shadow-xs font-bold dark:bg-neutral-700"
+                    : "text-muted-foreground hover:text-foreground"
+                }`}
+              >
+                {code}
+              </button>
+            );
+          })}
+          {otherRates.length > 0 && (
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <button
+                  type="button"
+                  className={`px-2.5 py-1 rounded-full text-xs font-semibold flex items-center gap-1 transition-all cursor-pointer ${
+                    !SUPPORTED_CORE_CURRENCIES.includes(currency.toUpperCase() as any)
+                      ? "bg-card text-foreground shadow-xs font-bold dark:bg-neutral-700"
+                      : "text-muted-foreground hover:text-foreground"
+                  }`}
+                  title="More currencies"
+                >
+                  <span>{!SUPPORTED_CORE_CURRENCIES.includes(currency.toUpperCase() as any) ? currency : "More"}</span>
+                  <ChevronDown className="h-3 w-3" />
+                </button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end" className="w-48 max-h-56 overflow-y-auto">
+                {otherRates.map((r) => (
+                  <DropdownMenuItem
+                    key={r.currency_code}
+                    onClick={() => setCurrency(r.currency_code)}
+                    className="flex items-center justify-between cursor-pointer"
+                  >
+                    <span className="font-bold">{r.currency_code}</span>
+                    <span className="text-xs text-muted-foreground">{Number(r.rate).toFixed(2)} KES</span>
+                  </DropdownMenuItem>
+                ))}
+              </DropdownMenuContent>
+            </DropdownMenu>
+          )}
         </div>
       </div>
 
@@ -108,11 +146,15 @@ export default function DesktopPortfolioHero({
         <div>
           <div className="flex items-center gap-2">
             <div className="text-3xl sm:text-4xl font-black text-foreground tracking-tight tabular-nums">
-              <PortfolioSensitiveValue value={fmtCurrency(totalValue, currency)} visible={showPortfolioValues} />
+              <PortfolioSensitiveValue
+                value={formatPortfolioCurrency(totalValue, currency, rates)}
+                visible={showPortfolioValues}
+              />
             </div>
             <PortfolioValueToggle visible={showPortfolioValues} onToggle={onTogglePortfolioValues} />
           </div>
-          <div className="flex items-center gap-2 mt-1.5">
+
+          <div className="flex items-center gap-2 mt-1.5 flex-wrap">
             {displayChangePct != null ? (
               <span
                 className={`inline-flex items-center gap-1 text-sm font-bold ${
@@ -143,16 +185,27 @@ export default function DesktopPortfolioHero({
               </span>
             )}
             <span className="text-sm text-muted-foreground font-medium">
-              (<PortfolioSensitiveValue value={fmtCurrency(totalPnL, currency)} visible={showPortfolioValues} />)
+              (<PortfolioSensitiveValue
+                value={formatPortfolioCurrency(totalPnL, currency, rates)}
+                visible={showPortfolioValues}
+              />)
             </span>
           </div>
+
+          {currency.toUpperCase() !== "KES" && (
+            <div className="inline-flex items-center gap-1.5 mt-2.5 px-3 py-1 rounded-full bg-emerald-500/10 dark:bg-emerald-500/15 border border-emerald-500/20 text-emerald-700 dark:text-emerald-400 text-xs font-semibold">
+              <RefreshCw className="h-3 w-3 shrink-0" />
+              <span>{activeRate.label}</span>
+              {activeRate.isLive && <span className="text-[10px] opacity-75">(Live rate)</span>}
+            </div>
+          )}
         </div>
 
         {/* Action Buttons */}
         <div className="flex items-center gap-3">
           <button
             onClick={onOpenAddModal}
-            className="bg-[#00A651] hover:bg-[#008f45] active:scale-[0.99] text-white font-semibold rounded-full px-6 py-2.5 text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
+            className="bg-[#00A651] hover:bg-[#008f45] active:scale-[0.99] text-white font-semibold rounded-full px-5 py-2.5 text-sm flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
           >
             <Plus className="h-4 w-4 stroke-[3]" />
             Add investment
@@ -160,7 +213,7 @@ export default function DesktopPortfolioHero({
 
           <button
             onClick={onOpenReportModal}
-            className="border border-border/90 hover:bg-muted/50 active:scale-[0.99] text-foreground font-semibold rounded-full px-5 py-2.5 text-sm flex items-center justify-center transition-all cursor-pointer dark:border-white/20"
+            className="border border-border/90 hover:bg-muted/50 active:scale-[0.99] text-foreground font-semibold rounded-full px-4 py-2.5 text-sm flex items-center justify-center transition-all cursor-pointer dark:border-white/20"
           >
             Report
           </button>

@@ -3,6 +3,8 @@ import {
   Area, AreaChart, CartesianGrid, ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from "recharts";
 import { AssetType, ASSET_TYPE_LABELS } from "@/hooks/usePortfolio";
+import type { ExchangeRate } from "@/components/home/MarketTicker";
+import { convertFromKes, formatPortfolioCurrency } from "@/lib/portfolioCurrency";
 
 const PIE_COLORS = [
   "hsl(152, 55%, 35%)",  // accent green
@@ -15,21 +17,15 @@ const PIE_COLORS = [
 interface Props {
   allocation: Record<AssetType, number>;
   totalValue: number;
-  currency: "KES" | "USD";
+  currency: string;
+  rates?: ExchangeRate[];
   weightedAvgYield: number | null;
   monthlyIncome: number;
   hasFunds: boolean;
 }
 
-const fmtValue = (value: number, currency: "KES" | "USD", compact = false) => {
-  const normalized = currency === "USD" ? value / 130 : value;
-  return new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency,
-    notation: compact ? "compact" : "standard",
-    maximumFractionDigits: compact ? 1 : 2,
-    minimumFractionDigits: compact ? 0 : 2,
-  }).format(normalized);
+const fmtValue = (value: number, currency: string, rates?: ExchangeRate[], compact = false) => {
+  return formatPortfolioCurrency(value, currency, rates, { compact });
 };
 
 const tooltipStyle = {
@@ -44,6 +40,7 @@ const PortfolioCharts = ({
   allocation,
   totalValue,
   currency,
+  rates,
   weightedAvgYield,
   monthlyIncome,
   hasFunds,
@@ -52,7 +49,7 @@ const PortfolioCharts = ({
     .filter(([, v]) => v > 0)
     .map(([key, value]) => ({
       name: ASSET_TYPE_LABELS[key as AssetType],
-      value: currency === "USD" ? value / 130 : value,
+      value: convertFromKes(value, currency, rates),
     }));
 
   // Mock 30-day growth trend
@@ -62,7 +59,7 @@ const PortfolioCharts = ({
     const val = totalValue * (0.95 + (i / 30) * 0.05) * (1 + factor * 0.01);
     return {
       day: `Day ${i + 1}`,
-      value: currency === "USD" ? val / 130 : val,
+      value: convertFromKes(val, currency, rates),
     };
   });
 
@@ -83,7 +80,7 @@ const PortfolioCharts = ({
           ) : (
             <>
               <p className="text-2xl font-bold tracking-tight tabular-nums text-foreground sm:text-3xl">
-                {fmtValue(totalValue, currency, true)}
+                {fmtValue(totalValue, currency, rates, true)}
               </p>
               <div className="mt-3 h-[136px]">
                 <ResponsiveContainer width="100%" height="100%">
@@ -104,7 +101,15 @@ const PortfolioCharts = ({
                     />
                     <YAxis hide domain={["dataMin", "dataMax"]} />
                     <Tooltip
-                      formatter={(value: number) => [fmtValue(value, currency), "Portfolio value"]}
+                      formatter={(value: number) => [
+                        new Intl.NumberFormat("en-KE", {
+                          style: "currency",
+                          currency: currency.toUpperCase(),
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(value),
+                        "Portfolio value",
+                      ]}
                       contentStyle={tooltipStyle}
                     />
                     <Area
@@ -128,7 +133,7 @@ const PortfolioCharts = ({
                 <div className="pl-3">
                   <p className="text-[10px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">Monthly income</p>
                   <p className="mt-1 text-base font-semibold tabular-nums text-foreground">
-                    {hasFunds ? fmtValue(monthlyIncome, currency) : "—"}
+                    {hasFunds ? fmtValue(monthlyIncome, currency, rates) : "—"}
                   </p>
                 </div>
               </div>

@@ -1,10 +1,13 @@
 import { ArrowDownRight, ArrowUpRight, Minus, PieChart } from "lucide-react";
 import { PortfolioItem, getCurrentValue, getPnL, getPnLPercent } from "@/hooks/usePortfolio";
 import type { ChangeRow } from "@/hooks/usePortfolioChanges";
+import type { ExchangeRate } from "@/components/home/MarketTicker";
+import { formatPortfolioCurrency } from "@/lib/portfolioCurrency";
 
 interface PortfolioHoldingCardProps {
   item: PortfolioItem;
-  currency: "KES" | "USD";
+  currency: string;
+  rates?: ExchangeRate[];
   totalValue?: number;
   change?: ChangeRow;
   compact?: boolean;
@@ -50,7 +53,7 @@ function PerformanceValue({ value, direction }: { value: number; direction: Perf
 }
 
 export default function PortfolioHoldingCard({
-  item, currency, change, compact = false, presentation, onClick, className = "",
+  item, currency, rates, change, compact = false, presentation, onClick, className = "",
 }: PortfolioHoldingCardProps) {
   const val = getCurrentValue(item);
   const pnlPct = getPnLPercent(item);
@@ -78,7 +81,7 @@ export default function PortfolioHoldingCard({
       <div className={mobilePresentation ? "mt-2" : compact ? "mt-1.5" : "mt-2"}>
         <h3 className={`text-white font-bold leading-tight tracking-tight truncate ${mobilePresentation ? "text-sm" : compact ? "text-xs" : "text-xs sm:text-sm"}`}>{item.asset_name}</h3>
         <div className={`flex items-baseline flex-wrap ${mobilePresentation ? "gap-1 mt-1" : "gap-1 mt-0.5"}`}>
-          <span className={`text-white font-extrabold tracking-tight tabular-nums ${mobilePresentation ? "text-lg" : compact ? "text-sm sm:text-base" : "text-base sm:text-lg"}`}>{fmtCurrency(val, currency)}</span>
+          <span className={`text-white font-extrabold tracking-tight tabular-nums ${mobilePresentation ? "text-lg" : compact ? "text-sm sm:text-base" : "text-base sm:text-lg"}`}>{formatPortfolioCurrency(val, currency, rates)}</span>
           {!mobilePresentation && <span className="text-zinc-500 text-[10px]">·</span>}
           <span data-testid="overall-return-summary" data-direction={overallDirection} className={mobilePresentation ? "text-[11px]" : "text-[10px] sm:text-[11px]"}>
             <PerformanceValue value={pnlPct} direction={overallDirection} />
@@ -93,7 +96,7 @@ export default function PortfolioHoldingCard({
           {oneDay.available && oneDay.percent != null && oneDay.amount != null ? (
             <div data-testid="one-day-performance" data-direction={oneDayDirection} className="flex items-center gap-1.5 tabular-nums">
               <PerformanceValue value={oneDay.percent} direction={oneDayDirection} />
-              <span className="text-zinc-200 font-medium">{fmtCurrency(Math.abs(oneDay.amount), currency)}</span>
+              <span className="text-zinc-200 font-medium">{formatPortfolioCurrency(Math.abs(oneDay.amount), currency, rates)}</span>
             </div>
           ) : <span aria-label="No verified 1-day performance data" className="text-zinc-500 font-medium">Unavailable</span>}
         </div>
@@ -101,7 +104,7 @@ export default function PortfolioHoldingCard({
           <span className="text-zinc-400 font-medium">Overall</span>
           <div data-testid="overall-performance" data-direction={overallDirection} className="flex items-center gap-1.5 tabular-nums">
             <PerformanceValue value={pnlPct} direction={overallDirection} />
-            <span className="text-zinc-200 font-medium">{fmtCurrency(Math.abs(pnl), currency)}</span>
+            <span className="text-zinc-200 font-medium">{formatPortfolioCurrency(Math.abs(pnl), currency, rates)}</span>
           </div>
         </div>
       </div>

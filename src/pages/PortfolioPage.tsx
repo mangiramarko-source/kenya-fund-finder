@@ -29,6 +29,7 @@ import MobileWatchlistView from "@/components/watchlist/MobileWatchlistView";
 import DesktopWatchlistWorkspace from "@/components/watchlist/DesktopWatchlistWorkspace";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { usePortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
+import { useMarketData } from "@/components/home/MarketTicker";
 import { supabase } from "@/integrations/supabase/client";
 import { normalizeName } from "@/lib/assetMatch";
 import { formatDistanceToNow } from "date-fns";
@@ -54,7 +55,21 @@ const PortfolioPage = () => {
       description: "Simulate and track a Kenyan investment portfolio across unit trusts, stocks, and FX with compounding returns.",
     }
   );
-  const [currency, setCurrency] = useState<"KES" | "USD">("KES");
+  const { rates } = useMarketData();
+  const [currency, setCurrencyState] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("kff_portfolio_currency");
+      if (saved) return saved;
+    }
+    return "KES";
+  });
+
+  const setCurrency = (c: string) => {
+    setCurrencyState(c);
+    if (typeof window !== "undefined") {
+      localStorage.setItem("kff_portfolio_currency", c);
+    }
+  };
   const [activeCategory, setActiveCategory] = useState<"all" | AssetType>("all");
   const [viewMode, setViewMode] = useState<"cards" | "table">("cards");
   const [showAddModal, setShowAddModal] = useState(false);
@@ -276,6 +291,7 @@ const PortfolioPage = () => {
           <MobilePortfolioView
             currency={currency}
             setCurrency={setCurrency}
+            rates={rates}
             showPortfolioValues={showPortfolioValues}
             onTogglePortfolioValues={() => setShowPortfolioValues((visible) => !visible)}
           />
@@ -285,9 +301,9 @@ const PortfolioPage = () => {
       </div>
 
       {/* Desktop View Only */}
-      <div className="hidden md:block px-4 md:px-6 py-6 space-y-6 max-w-7xl mx-auto">
+      <div className="hidden md:block px-4 md:px-6 py-6 space-y-6 max-w-6xl mx-auto">
         {/* Desktop Tab Switcher (Portfolio & Watchlist) */}
-        <div className="flex items-center justify-between border-b border-border pb-4">
+        <div className="flex items-center justify-between border-b border-border pb-4 gap-4 flex-wrap">
           <div className="flex items-center gap-2">
             <button
               type="button"
@@ -332,26 +348,14 @@ const PortfolioPage = () => {
               </span>
             </button>
           </div>
-        </div>
 
-        {mobileTab === "watchlist" ? (
-          <DesktopWatchlistWorkspace active="watchlist" />
-        ) : (
-          <>
-            {/* Sync Indicator Header */}
-            <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
-            <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
-              <Briefcase className="h-5 w-5 text-[#00A651]" /> Portfolio Tracker
-            </h1>
             {lastSynced && (
-              <span className="text-[11px] text-muted-foreground flex items-center gap-1">
+              <span className="text-[11px] text-muted-foreground flex items-center gap-1 mr-1">
                 <RefreshCw className="h-3 w-3" />
                 Synced {formatDistanceToNow(lastSynced, { addSuffix: true })}
               </span>
             )}
-          </div>
-          <div className="flex items-center gap-2">
             {hasUnlinkedHoldings && (
               <Button
                 size="sm"
@@ -373,27 +377,9 @@ const PortfolioPage = () => {
           </div>
         </div>
 
-        {isDemo && items.length > 0 && <SaveDemoBanner itemCount={items.length} />}
-
-        {/* ─── 1. Desktop Total Value Hero Card ─── */}
-        <DesktopPortfolioHero
-          totalValue={totalValue}
-          totalPnL={totalPnL}
-          totalPnLPercent={totalPnLPercent}
-          recentChangePct={recentChangePct}
-          liveMovement={liveMovement}
-          portfolioNotification={latestPortfolioUpdate}
-          currency={currency}
-          setCurrency={setCurrency}
-          allocation={allocation}
-          onOpenAddModal={() => setShowAddModal(true)}
-          onOpenReportModal={() => setShowSummaryModal(true)}
-          showPortfolioValues={showPortfolioValues}
-          onTogglePortfolioValues={() => setShowPortfolioValues((visible) => !visible)}
-        />
-
-        {/* Empty State vs Full Portfolio */}
-        {isEmpty ? (
+        {mobileTab === "watchlist" ? (
+          <DesktopWatchlistWorkspace active="watchlist" />
+        ) : isEmpty ? (
           <Card className="border-border bg-gradient-to-br from-card to-muted/30 p-8">
             <div className="grid md:grid-cols-2 gap-6 items-center">
               <div className="space-y-3">
@@ -421,103 +407,110 @@ const PortfolioPage = () => {
             </div>
           </Card>
         ) : (
-          <>
-            {/* ─── 2. Holdings Section Header & Filter Chips ─── */}
-            <div className="space-y-4">
-              <div className="flex items-center justify-between flex-wrap gap-3">
-                <div className="flex items-center gap-2">
-                  <h2 className="text-lg font-bold text-foreground">
-                    Holdings <span className="text-muted-foreground font-semibold text-sm">({filteredItems.length})</span>
-                  </h2>
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+            {/* ─── Left Column (Sticky Overview & Actions) ─── */}
+            <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-20 space-y-4">
+              {isDemo && items.length > 0 && <SaveDemoBanner itemCount={items.length} />}
+
+              {/* ─── 1. Desktop Total Value Hero Card ─── */}
+              <DesktopPortfolioHero
+                totalValue={totalValue}
+                totalPnL={totalPnL}
+                totalPnLPercent={totalPnLPercent}
+                recentChangePct={recentChangePct}
+                liveMovement={liveMovement}
+                portfolioNotification={latestPortfolioUpdate}
+                currency={currency}
+                setCurrency={setCurrency}
+                rates={rates}
+                allocation={allocation}
+                onOpenAddModal={() => setShowAddModal(true)}
+                onOpenReportModal={() => setShowSummaryModal(true)}
+                showPortfolioValues={showPortfolioValues}
+                onTogglePortfolioValues={() => setShowPortfolioValues((visible) => !visible)}
+              />
+            </div>
+
+            {/* ─── Right Column (Holdings, Analytics & Activity) ─── */}
+            <div className="lg:col-span-7 xl:col-span-8 space-y-6">
+              {/* ─── 2. Holdings Section Header & Filter Chips ─── */}
+              <div className="space-y-4">
+                <div className="flex items-center justify-between flex-wrap gap-3">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-lg font-bold text-foreground">
+                      Holdings <span className="text-muted-foreground font-semibold text-sm">({filteredItems.length})</span>
+                    </h2>
+                  </div>
+
+                  <div className="flex items-center gap-3">
+                    {/* Category Chips */}
+                    <div className="flex items-center gap-1.5 overflow-x-auto">
+                      {CATEGORY_CHIPS.map((chip) => {
+                        const isActive = activeCategory === chip.key;
+                        return (
+                          <button
+                            key={chip.key}
+                            onClick={() => setActiveCategory(chip.key)}
+                            className={`whitespace-nowrap rounded-full px-3.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
+                              isActive
+                                ? "bg-[#00A651] text-white shadow-xs"
+                                : "bg-card border border-border/80 text-muted-foreground hover:text-foreground dark:bg-neutral-900 dark:border-white/10"
+                            }`}
+                          >
+                            {chip.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+
+                    {/* View Mode Toggle: Cards Grid vs Table */}
+                    <div className="flex rounded-full border border-border overflow-hidden text-xs bg-muted/50 p-0.5">
+                      <button
+                        onClick={() => setViewMode("cards")}
+                        className={`px-3 py-1 rounded-full font-medium transition-colors flex items-center gap-1.5 cursor-pointer ${
+                          viewMode === "cards" ? "bg-card text-foreground shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        title="Cards View"
+                      >
+                        <LayoutGrid className="h-3.5 w-3.5" /> Cards
+                      </button>
+                      <button
+                        onClick={() => setViewMode("table")}
+                        className={`px-3 py-1 rounded-full font-medium transition-colors flex items-center gap-1.5 cursor-pointer ${
+                          viewMode === "table" ? "bg-card text-foreground shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
+                        }`}
+                        title="Table View"
+                      >
+                        <TableIcon className="h-3.5 w-3.5" /> Table
+                      </button>
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex items-center gap-3">
-                  {/* Category Chips */}
-                  <div className="flex items-center gap-1.5 overflow-x-auto">
-                    {CATEGORY_CHIPS.map((chip) => {
-                      const isActive = activeCategory === chip.key;
+                {/* Holdings Cards Grid or Table */}
+                {viewMode === "cards" ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    {filteredItems.map((item) => {
+                      const itemChange = changes.find((c) => c.itemId === item.id);
                       return (
-                        <button
-                          key={chip.key}
-                          onClick={() => setActiveCategory(chip.key)}
-                          className={`whitespace-nowrap rounded-full px-3.5 py-1 text-xs font-semibold transition-all cursor-pointer ${
-                            isActive
-                              ? "bg-[#00A651] text-white shadow-xs"
-                              : "bg-card border border-border/80 text-muted-foreground hover:text-foreground dark:bg-neutral-900 dark:border-white/10"
-                          }`}
-                        >
-                          {chip.label}
-                        </button>
+                        <PortfolioHoldingCard
+                          key={item.id}
+                          item={item}
+                          currency={currency}
+                          rates={rates}
+                          totalValue={totalValue}
+                          change={itemChange}
+                          compact={true}
+                          presentation="desktop"
+                          onClick={(item) => setEditItem(item)}
+                          className="w-full min-h-[135px]"
+                        />
                       );
                     })}
-                  </div>
 
-                  {/* View Mode Toggle: Cards Grid vs Table */}
-                  <div className="flex rounded-full border border-border overflow-hidden text-xs bg-muted/50 p-0.5">
-                    <button
-                      onClick={() => setViewMode("cards")}
-                      className={`px-3 py-1 rounded-full font-medium transition-colors flex items-center gap-1.5 cursor-pointer ${
-                        viewMode === "cards" ? "bg-card text-foreground shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      title="Cards View"
-                    >
-                      <LayoutGrid className="h-3.5 w-3.5" /> Cards
-                    </button>
-                    <button
-                      onClick={() => setViewMode("table")}
-                      className={`px-3 py-1 rounded-full font-medium transition-colors flex items-center gap-1.5 cursor-pointer ${
-                        viewMode === "table" ? "bg-card text-foreground shadow-xs font-bold" : "text-muted-foreground hover:text-foreground"
-                      }`}
-                      title="Table View"
-                    >
-                      <TableIcon className="h-3.5 w-3.5" /> Table
-                    </button>
-                  </div>
-                </div>
-              </div>
-
-              {/* Holdings Cards Horizontal Scroll or Table */}
-              {viewMode === "cards" ? (
-                <div className="flex overflow-x-auto gap-3 pb-2 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent snap-x snap-mandatory -mx-1 px-1">
-                  {filteredItems.slice(0, 5).map((item) => {
-                    const itemChange = changes.find((c) => c.itemId === item.id);
-                    return (
-                      <PortfolioHoldingCard
-                        key={item.id}
-                        item={item}
-                        currency={currency}
-                        totalValue={totalValue}
-                        change={itemChange}
-                        compact={true}
-                        presentation="desktop"
-                        onClick={(item) => setEditItem(item)}
-                        className="w-[245px] sm:w-[260px] shrink-0 snap-start min-h-[135px]"
-                      />
-                    );
-                  })}
-
-                  {/* See More Card (if > 5 items) or Add Investment Dashed Card */}
-                  {filteredItems.length > 5 ? (
-                    <div
-                      onClick={() => setViewMode("table")}
-                      className="flex flex-col items-center justify-center gap-2 w-[170px] sm:w-[180px] shrink-0 snap-start min-h-[135px] bg-[#131316] border border-zinc-800 hover:border-emerald-500/50 hover:bg-[#18181c] rounded-xl p-3 text-center transition-all cursor-pointer group"
-                    >
-                      <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
-                        <ArrowRight className="h-4 w-4" />
-                      </div>
-                      <div>
-                        <div className="text-xs font-bold text-white group-hover:text-emerald-400 transition-colors">
-                          See More ({filteredItems.length - 5} more)
-                        </div>
-                        <div className="text-[10px] text-zinc-400 mt-0.5">
-                          View all in table
-                        </div>
-                      </div>
-                    </div>
-                  ) : (
                     <div
                       onClick={() => setShowAddModal(true)}
-                      className="flex flex-col items-center justify-center gap-2 w-[170px] sm:w-[180px] shrink-0 snap-start min-h-[135px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-xl p-3 text-center transition-all cursor-pointer group"
+                      className="flex flex-col items-center justify-center gap-2 min-h-[135px] bg-[#131316]/60 border-2 border-dashed border-zinc-800 hover:border-emerald-500/50 hover:bg-[#131316] rounded-xl p-3 text-center transition-all cursor-pointer group"
                     >
                       <div className="w-8 h-8 rounded-full bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-500 group-hover:scale-110 transition-transform">
                         <Plus className="h-4 w-4 stroke-[2.5]" />
@@ -531,63 +524,63 @@ const PortfolioPage = () => {
                         </div>
                       </div>
                     </div>
-                  )}
-                </div>
-              ) : (
-                <Card className="border-border bg-card">
-                  <CardContent className="p-4">
-                    <PortfolioTable
-                      items={filteredItems}
-                      currency={currency}
-                      onDelete={(id) => deleteItem.mutate(id)}
-                      onEdit={(item) => setEditItem(item)}
-                      changes={changes}
-                      alerts={alerts}
-                      liquidityByName={liquidityByName}
-                      liquidityById={liquidityById}
-                      onOpenAlert={openAlertForHolding}
-                    />
-                  </CardContent>
-                </Card>
-              )}
+                  </div>
+                ) : (
+                  <Card className="border-border bg-card">
+                    <CardContent className="p-4">
+                      <PortfolioTable
+                        items={filteredItems}
+                        currency={currency}
+                        rates={rates}
+                        onDelete={(id) => deleteItem.mutate(id)}
+                        onEdit={(item) => setEditItem(item)}
+                        changes={changes}
+                        alerts={alerts}
+                        liquidityByName={liquidityByName}
+                        liquidityById={liquidityById}
+                        onOpenAlert={openAlertForHolding}
+                      />
+                    </CardContent>
+                  </Card>
+                )}
+              </div>
+
+              {/* ─── 3. Portfolio insights ─── */}
+              <PortfolioCharts
+                allocation={allocation}
+                totalValue={totalValue}
+                currency={currency}
+                rates={rates}
+                weightedAvgYield={metrics.weightedAvgYield}
+                monthlyIncome={metrics.monthlyIncome}
+                hasFunds={metrics.hasFunds}
+              />
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <LiquidityBreakdown items={items} variant="dashboard" />
+                <PortfolioWeeklyChanges changes={changes} loading={changesLoading} />
+              </div>
+
+              {/* ─── 5. Activity Log ─── */}
+              <Card className="rounded-[22px] border-border/80 bg-card shadow-sm">
+                <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 px-5 pb-1 pt-5">
+                  <CardTitle className="text-sm font-semibold tracking-tight text-foreground">Portfolio activity</CardTitle>
+                  <span className="rounded-full border border-border/80 bg-muted/30 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">{activityEvents.length} events logged</span>
+                </CardHeader>
+                <CardContent className="px-5 pb-5 pt-3">
+                  <PortfolioActivity
+                    events={activityEvents}
+                    isLoading={activityLoading}
+                    currency={currency}
+                  />
+                </CardContent>
+              </Card>
+
+              <p className="text-[11px] text-muted-foreground">
+                This portfolio summary is based on user-entered holdings and available market/fund data. It is general information only and is not personal financial advice. Estimates assume 15% withholding tax on yield-bearing fund holdings; actual returns may differ.
+              </p>
             </div>
-
-            {/* ─── 3. Portfolio insights ─── */}
-            <PortfolioCharts
-              allocation={allocation}
-              totalValue={totalValue}
-              currency={currency}
-              weightedAvgYield={metrics.weightedAvgYield}
-              monthlyIncome={metrics.monthlyIncome}
-              hasFunds={metrics.hasFunds}
-            />
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <LiquidityBreakdown items={items} variant="dashboard" />
-              <PortfolioWeeklyChanges changes={changes} loading={changesLoading} />
-            </div>
-
-            {/* ─── 5. Activity Log ─── */}
-            <Card className="rounded-[22px] border-border/80 bg-card shadow-sm">
-              <CardHeader className="flex flex-row flex-wrap items-center justify-between gap-2 px-5 pb-1 pt-5">
-                <CardTitle className="text-sm font-semibold tracking-tight text-foreground">Portfolio activity</CardTitle>
-                <span className="rounded-full border border-border/80 bg-muted/30 px-2.5 py-1 text-[11px] font-medium text-muted-foreground">{activityEvents.length} events logged</span>
-              </CardHeader>
-              <CardContent className="px-5 pb-5 pt-3">
-                <PortfolioActivity
-                  events={activityEvents}
-                  isLoading={activityLoading}
-                  currency={currency}
-                />
-              </CardContent>
-            </Card>
-
-            <p className="text-[11px] text-muted-foreground">
-              This portfolio summary is based on user-entered holdings and available market/fund data. It is general information only and is not personal financial advice. Estimates assume 15% withholding tax on yield-bearing fund holdings; actual returns may differ.
-            </p>
-          </>
-        )}
-          </>
+          </div>
         )}
 
         {/* Controlled Modals */}
@@ -621,6 +614,7 @@ const PortfolioPage = () => {
           open={showSummaryModal}
           onOpenChange={setShowSummaryModal}
           currency={currency}
+          rates={rates}
         />
 
         {alertDialog && (

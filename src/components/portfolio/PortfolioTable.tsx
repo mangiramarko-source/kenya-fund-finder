@@ -6,13 +6,16 @@ import {
   getCurrentValue, getCostBasis, getPnL, getPnLPercent,
 } from "@/hooks/usePortfolio";
 import type { ChangeRow } from "@/hooks/usePortfolioChanges";
+import type { ExchangeRate } from "@/components/home/MarketTicker";
+import { formatPortfolioCurrency } from "@/lib/portfolioCurrency";
 import { getHoldingAlertState, type MinimalAlert } from "@/lib/portfolioAlertBadge";
 import { normalizeName } from "@/lib/assetMatch";
 import { formatDistanceToNow } from "date-fns";
 
 interface Props {
   items: PortfolioItem[];
-  currency: "KES" | "USD";
+  currency: string;
+  rates?: ExchangeRate[];
   onDelete: (id: string) => void;
   onEdit?: (item: PortfolioItem) => void;
   changes?: ChangeRow[];
@@ -22,14 +25,8 @@ interface Props {
   onOpenAlert?: (item: PortfolioItem) => void;
 }
 
-const fmt = (val: number, currency: "KES" | "USD") => {
-  const v = currency === "USD" ? val / 130 : val;
-  return new Intl.NumberFormat("en-KE", {
-    style: "currency",
-    currency,
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
-  }).format(v);
+const fmt = (val: number, currency: string, rates?: ExchangeRate[]) => {
+  return formatPortfolioCurrency(val, currency, rates);
 };
 
 const TYPE_DOT: Record<AssetType, string> = {
@@ -55,7 +52,7 @@ export const liquidityBucketLabel = (days: number | null | undefined): string =>
   return "4+ d";
 };
 
-const RecentChange = ({ row, currency }: { row: ChangeRow | undefined; currency: "KES" | "USD" }) => {
+const RecentChange = ({ row, currency, rates }: { row: ChangeRow | undefined; currency: string; rates?: ExchangeRate[] }) => {
   if (!row || row.delta == null) {
     return <span className="text-[11px] text-muted-foreground">—</span>;
   }
@@ -65,7 +62,7 @@ const RecentChange = ({ row, currency }: { row: ChangeRow | undefined; currency:
   const sign = v > 0 ? "+" : "";
   const display = row.unit === "%"
     ? `${sign}${v.toFixed(2)}%`
-    : `${sign}${fmt(v, currency)}`;
+    : `${sign}${fmt(v, currency, rates)}`;
   return (
     <span className={`inline-flex items-center gap-1 text-xs font-semibold tabular-nums whitespace-nowrap ${tone}`}>
       <Icon className="h-3 w-3" />
@@ -121,7 +118,7 @@ const AlertCell = ({
 };
 
 const PortfolioTable = ({
-  items, currency, onDelete, onEdit,
+  items, currency, rates, onDelete, onEdit,
   changes = [], alerts = [],
   liquidityByName, liquidityById,
   onOpenAlert,
@@ -163,7 +160,7 @@ const PortfolioTable = ({
                     {item.asset_name}
                   </span>
                   <span className="text-sm font-semibold tabular-nums text-foreground whitespace-nowrap">
-                    {fmt(getCurrentValue(item), currency)}
+                    {fmt(getCurrentValue(item), currency, rates)}
                   </span>
                 </div>
                 {/* Row 2: type/ticker + P&L */}
@@ -177,7 +174,7 @@ const PortfolioTable = ({
                     )}
                   </span>
                   <span className={`text-[11px] tabular-nums font-medium whitespace-nowrap ${isUp ? "text-accent" : "text-destructive"}`}>
-                    {isUp ? "+" : ""}{fmt(pnl, currency)}
+                    {isUp ? "+" : ""}{fmt(pnl, currency, rates)}
                     <span className="ml-1 text-muted-foreground/80 font-normal">
                       ({isUp ? "+" : ""}{pnlPct.toFixed(2)}%)
                     </span>
@@ -186,7 +183,7 @@ const PortfolioTable = ({
                 {/* Row 3: recent change + actions */}
                 <div className="flex items-center justify-between gap-2 mt-2">
                   <div className="flex items-center gap-2 min-w-0">
-                    <RecentChange row={recent} currency={currency} />
+                    <RecentChange row={recent} currency={currency} rates={rates} />
                     <span className="text-[10px] text-muted-foreground/70 truncate">
                       {formatDistanceToNow(new Date(item.updated_at), { addSuffix: true })}
                     </span>
@@ -270,11 +267,11 @@ const PortfolioTable = ({
               meta.push(`Yield ${item.current_yield?.toFixed(2) ?? "—"}%`);
               meta.push(`Liq ${liquidityBucketLabel(liquidityDays)}`);
               if (monthlyIncome != null && monthlyIncome > 0) {
-                meta.push(`Est/mo ${fmt(monthlyIncome, currency)}`);
+                meta.push(`Est/mo ${fmt(monthlyIncome, currency, rates)}`);
               }
             } else if (item.asset_type === "stock") {
               meta.push(`${item.units.toLocaleString()} units`);
-              meta.push(`@ ${fmt(item.current_price, currency)}`);
+              meta.push(`@ ${fmt(item.current_price, currency, rates)}`);
             } else {
               meta.push(`${item.units.toLocaleString()} units`);
             }
@@ -317,10 +314,10 @@ const PortfolioTable = ({
                 {/* Value / P&L stacked */}
                 <TableCell className="text-right py-3 whitespace-nowrap">
                   <div className="text-sm font-semibold tabular-nums text-foreground">
-                    {fmt(getCurrentValue(item), currency)}
+                    {fmt(getCurrentValue(item), currency, rates)}
                   </div>
                   <div className={`text-[11px] tabular-nums font-medium mt-0.5 ${isUp ? "text-accent" : "text-destructive"}`}>
-                    {isUp ? "+" : ""}{fmt(pnl, currency)}
+                    {isUp ? "+" : ""}{fmt(pnl, currency, rates)}
                     <span className="ml-1 text-muted-foreground/80 font-normal">
                       ({isUp ? "+" : ""}{pnlPct.toFixed(2)}%)
                     </span>
@@ -329,7 +326,7 @@ const PortfolioTable = ({
 
                 {/* Recent change */}
                 <TableCell className="text-right py-3">
-                  <RecentChange row={recent} currency={currency} />
+                  <RecentChange row={recent} currency={currency} rates={rates} />
                 </TableCell>
 
                 {/* Alert — icon only */}
