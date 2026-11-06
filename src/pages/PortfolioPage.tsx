@@ -11,7 +11,7 @@ import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Briefcase, RefreshCw, ShieldCheck, LineChart, Wallet, Wand2, Plus, ArrowRight, LayoutGrid, Table as TableIcon } from "lucide-react";
+import { Briefcase, RefreshCw, ShieldCheck, LineChart, Wallet, Wand2, Plus, ArrowRight, LayoutGrid, Table as TableIcon, Star } from "lucide-react";
 import PortfolioCharts from "@/components/portfolio/PortfolioCharts";
 import PortfolioTable from "@/components/portfolio/PortfolioTable";
 import AddInvestmentModal from "@/components/portfolio/AddInvestmentModal";
@@ -26,6 +26,7 @@ import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
 import DesktopPortfolioHero from "@/components/portfolio/DesktopPortfolioHero";
 import MobilePortfolioView from "@/components/portfolio/MobilePortfolioView";
 import MobileWatchlistView from "@/components/watchlist/MobileWatchlistView";
+import DesktopWatchlistWorkspace from "@/components/watchlist/DesktopWatchlistWorkspace";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { usePortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
 import { supabase } from "@/integrations/supabase/client";
@@ -285,8 +286,60 @@ const PortfolioPage = () => {
 
       {/* Desktop View Only */}
       <div className="hidden md:block px-4 md:px-6 py-6 space-y-6 max-w-7xl mx-auto">
-        {/* Sync Indicator Header */}
-        <div className="flex items-center justify-between flex-wrap gap-2">
+        {/* Desktop Tab Switcher (Portfolio & Watchlist) */}
+        <div className="flex items-center justify-between border-b border-border pb-4">
+          <div className="flex items-center gap-2">
+            <button
+              type="button"
+              onClick={() => handleMobileTabChange("portfolio")}
+              className={`inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold transition-all cursor-pointer ${
+                mobileTab === "portfolio"
+                  ? "bg-foreground text-background shadow-xs"
+                  : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              }`}
+            >
+              <Briefcase className="h-4 w-4 text-[#00A651]" />
+              <span>Portfolio Tracker</span>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-bold tabular-nums ${
+                  mobileTab === "portfolio"
+                    ? "bg-background/20 text-background"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {items.length}
+              </span>
+            </button>
+            <button
+              type="button"
+              onClick={() => handleMobileTabChange("watchlist")}
+              className={`inline-flex items-center gap-2 px-5 py-2 rounded-full text-sm font-bold transition-all cursor-pointer ${
+                mobileTab === "watchlist"
+                  ? "bg-foreground text-background shadow-xs"
+                  : "border border-border/80 bg-card text-muted-foreground hover:bg-muted/40 hover:text-foreground"
+              }`}
+            >
+              <Star className="h-4 w-4 text-amber-500" />
+              <span>Watchlist</span>
+              <span
+                className={`text-xs px-2 py-0.5 rounded-full font-bold tabular-nums ${
+                  mobileTab === "watchlist"
+                    ? "bg-background/20 text-background"
+                    : "bg-muted text-muted-foreground"
+                }`}
+              >
+                {watchlistItems.length}
+              </span>
+            </button>
+          </div>
+        </div>
+
+        {mobileTab === "watchlist" ? (
+          <DesktopWatchlistWorkspace active="watchlist" />
+        ) : (
+          <>
+            {/* Sync Indicator Header */}
+            <div className="flex items-center justify-between flex-wrap gap-2">
           <div className="flex items-center gap-2">
             <h1 className="text-xl font-bold text-foreground flex items-center gap-2">
               <Briefcase className="h-5 w-5 text-[#00A651]" /> Portfolio Tracker
@@ -532,6 +585,8 @@ const PortfolioPage = () => {
             <p className="text-[11px] text-muted-foreground">
               This portfolio summary is based on user-entered holdings and available market/fund data. It is general information only and is not personal financial advice. Estimates assume 15% withholding tax on yield-bearing fund holdings; actual returns may differ.
             </p>
+          </>
+        )}
           </>
         )}
 
