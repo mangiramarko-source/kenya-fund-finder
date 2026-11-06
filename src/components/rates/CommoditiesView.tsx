@@ -967,7 +967,7 @@ const CommodityTableRow = ({
   const changePct =
     c.previous_price != null && c.previous_price !== 0 ? (change! / c.previous_price) * 100 : null;
 
-  const updatedShort = toLastWeekday(c.updated_at);
+  const updatedShort = formatMarketDate(c.updated_at);
 
   return (
     <>
