@@ -119,7 +119,7 @@ function MobileProfileButton({
       <button
         type="button"
         onClick={onClick}
-        className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-border/70 bg-card text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+        className="inline-flex items-center justify-center h-8 w-8 rounded-full border border-emerald-500/40 dark:border-emerald-500/45 bg-emerald-500/10 dark:bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 hover:bg-emerald-500/20 dark:hover:bg-emerald-500/25 transition-colors shrink-0 shadow-2xs dark:shadow-[0_0_8px_rgba(16,185,129,0.15)]"
         aria-label="Open account & settings"
       >
         <User className="h-4 w-4" />
@@ -133,10 +133,10 @@ function MobileProfileButton({
     <button
       type="button"
       onClick={onClick}
-      className="inline-flex items-center justify-center h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors relative"
+      className="inline-flex items-center justify-center h-8 w-8 rounded-full text-foreground hover:bg-muted transition-colors relative shrink-0"
       aria-label="Open account & settings"
     >
-      <Avatar className="h-8 w-8 border border-emerald-500/40">
+      <Avatar className="h-8 w-8 border border-emerald-500/40 dark:border-emerald-400/50 shadow-2xs dark:shadow-[0_0_8px_rgba(16,185,129,0.2)]">
         {avatarUrl ? <AvatarImage src={avatarUrl} alt={displayName || "User"} /> : null}
         <AvatarFallback className="bg-emerald-600 text-white font-bold text-xs tracking-wider">
           {initials}
@@ -246,50 +246,60 @@ const Navbar = () => {
       <div className="md:hidden">
         <header
           ref={headerRef}
-          className="fixed inset-x-0 top-0 z-50 bg-background pt-safe"
+          className="fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md border-b border-border/50 pt-safe"
         >
-          <nav className="flex h-14 items-center justify-between px-4">
-            {/* Left: Dynamic title or KFF logo */}
-            <div className="flex items-center min-w-0">
-              {navTitle.type === "logo" ? (
-                <Link
-                  to="/"
-                  className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400"
-                >
-                  KFF
-                </Link>
-              ) : navTitle.type === "detail" ? (
+          <nav className="flex h-14 items-center px-3">
+            {navTitle.type === "detail" ? (
+              <div className="flex h-full w-full items-center justify-between">
                 <div className="flex items-center gap-1.5 min-w-0">
                   <button
                     type="button"
                     onClick={() => (navTitle.backTo ? navigate(navTitle.backTo) : navigate(-1))}
-                    className="-ml-2 inline-flex h-9 w-9 items-center justify-center rounded-full text-foreground hover:bg-muted active:scale-95 transition-all"
+                    className="-ml-1 inline-flex h-8 w-8 items-center justify-center rounded-full text-foreground hover:bg-muted active:scale-95 transition-all"
                     aria-label="Go back"
                   >
                     <ArrowLeft className="h-5 w-5" />
                   </button>
-                  <span className="truncate text-lg font-bold tracking-tight text-foreground">
+                  <span className="truncate text-base font-bold tracking-tight text-foreground">
                     {navTitle.title}
                   </span>
                 </div>
-              ) : (
-                <span className="truncate text-lg font-bold tracking-tight text-foreground">
-                  {navTitle.title}
-                </span>
-              )}
-            </div>
 
-            {/* Right: search, notifications, then profile avatar */}
-            <div className="flex items-center gap-1.5">
-              <SearchDialog variant="icon" />
-              <NotificationBell />
-              <MobileProfileButton
-                user={user}
-                displayName={displayName}
-                avatarUrl={avatarUrl}
-                onClick={() => setAccountOpen(true)}
-              />
-            </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <SearchDialog variant="icon" />
+                  <NotificationBell />
+                  <MobileProfileButton
+                    user={user}
+                    displayName={displayName}
+                    avatarUrl={avatarUrl}
+                    onClick={() => setAccountOpen(true)}
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className="flex h-full w-full items-center justify-between">
+                {/* 1. Far left: KFF text logo */}
+                <Link
+                  to="/"
+                  className="shrink-0 font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400 transition-transform active:scale-95"
+                  aria-label="KenyaFundFinder Home"
+                >
+                  KFF
+                </Link>
+
+                {/* Right side cluster: circular Search, Notifications, Profile */}
+                <div className="flex items-center gap-2 shrink-0 ml-auto">
+                  <SearchDialog variant="round" />
+                  <NotificationBell variant="round" />
+                  <MobileProfileButton
+                    user={user}
+                    displayName={displayName}
+                    avatarUrl={avatarUrl}
+                    onClick={() => setAccountOpen(true)}
+                  />
+                </div>
+              </div>
+            )}
           </nav>
         </header>
         <div className="h-safe-nav" aria-hidden="true" />

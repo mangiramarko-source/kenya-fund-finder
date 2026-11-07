@@ -39,7 +39,7 @@ import { rankCanonicalEntities } from "../../supabase/functions/_shared/universa
 import { useIsMobile } from "@/hooks/use-mobile";
 
 interface SearchDialogProps {
-  variant?: "default" | "topbar" | "icon";
+  variant?: "default" | "topbar" | "icon" | "mobile-pill" | "round";
 }
 
 type Category = "all" | "funds" | "stocks" | "rates" | "commodities" | "news" | "pages";
@@ -563,6 +563,25 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
             ⌘K
           </kbd>
         </button>
+      ) : variant === "round" ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white dark:bg-muted/60 border border-border/80 dark:border-border/70 text-muted-foreground hover:text-foreground hover:bg-zinc-50 dark:hover:bg-muted transition-colors shrink-0 shadow-2xs dark:shadow-none"
+          aria-label="Search"
+        >
+          <Search className="h-4 w-4" />
+        </button>
+      ) : variant === "mobile-pill" ? (
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="flex items-center gap-1.5 h-8 w-28 sm:w-32 px-2.5 sm:px-3 rounded-full bg-white dark:bg-muted/60 border border-border/80 dark:border-border/60 text-muted-foreground text-xs hover:bg-zinc-50 dark:hover:bg-muted/80 transition-all shrink-0 shadow-2xs dark:shadow-none"
+          aria-label="Search"
+        >
+          <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <span className="truncate text-xs font-normal text-muted-foreground">Search</span>
+        </button>
       ) : (
         <button
           onClick={() => setOpen(true)}
@@ -604,7 +623,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
                 placeholder="Search funds, stocks, FX, news..."
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                className="h-10 w-full rounded-full bg-muted/80 pl-10 pr-9 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-emerald-500/50"
+                className="h-10 w-full rounded-full bg-white dark:bg-muted/80 border border-border/80 dark:border-transparent pl-10 pr-9 text-sm text-foreground placeholder:text-muted-foreground/70 focus:outline-none focus:ring-1 focus:ring-emerald-500/50 shadow-2xs dark:shadow-none"
               />
               {query && (
                 <button
