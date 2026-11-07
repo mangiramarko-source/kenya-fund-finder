@@ -80,7 +80,7 @@ export function FeedPollCard({
       {/* Top author/badge row */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white font-extrabold text-sm shadow-xs shrink-0">
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white font-extrabold text-sm shadow-xs shrink-0">
             KFF
           </div>
           <div className="min-w-0">

@@ -130,7 +130,7 @@ export function StockFeedCard({
     >
       {/* ─── 1. Left Avatar Column (Twitter / X Style) ─── */}
       <div className="shrink-0 pt-0.5">
-        <div className="w-10 h-10 rounded-full bg-white border border-border text-emerald-700 font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+        <div className="w-12 h-12 rounded-full bg-white border border-border text-emerald-700 font-extrabold text-sm flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
           {avatarUrl && !logoError ? (
             <img
               src={avatarUrl}

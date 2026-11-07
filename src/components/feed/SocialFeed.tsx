@@ -222,21 +222,21 @@ export const SocialFeedCard = ({
       {/* ─── 1. Left Avatar Column (Twitter / X Style) ─── */}
       <div className="shrink-0 pt-0.5">
         {isStockBranded ? (
-          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-border bg-white shadow-xs">
+          <div className="flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-border bg-white shadow-xs">
             {stockLogo ? (
               <img src={stockLogo} alt={item.relatedStock!.name} className="h-full w-full object-contain p-1" referrerPolicy="no-referrer" />
             ) : (
-              <span className="font-bold text-emerald-700 text-xs md:text-sm">{item.relatedStock!.symbol}</span>
+              <span className="font-extrabold text-emerald-700 text-sm">{item.relatedStock!.symbol}</span>
             )}
           </div>
         ) : (
           <div
-            className={`w-10 h-10 rounded-full border ${
+            className={`w-12 h-12 rounded-full border ${
               isSocialPost ? "bg-black dark:bg-white/10 text-white border-black/10" : getAvatarBg(item.type)
-            } text-white font-bold text-xs md:text-sm flex items-center justify-center shadow-xs overflow-hidden`}
+            } text-white font-bold text-sm flex items-center justify-center shadow-xs overflow-hidden`}
           >
             {isSocialPost ? (
-              <svg className="w-4 h-4 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
+              <svg className="w-5 h-5 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
                 <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
               </svg>
             ) : showFavicon ? (

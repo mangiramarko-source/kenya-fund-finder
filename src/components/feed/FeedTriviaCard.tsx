@@ -84,8 +84,8 @@ export function FeedTriviaCard({ id = "trivia-1", index = 7 }: FeedTriviaCardPro
       {/* Top author row */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold text-sm shadow-xs shrink-0">
-            <Award className="h-5 w-5" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold text-sm shadow-xs shrink-0">
+            <Award className="h-6 w-6" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
