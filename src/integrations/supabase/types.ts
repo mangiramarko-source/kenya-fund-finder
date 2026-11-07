@@ -14,6 +14,98 @@ export type Database = {
   }
   public: {
     Tables: {
+      admin_personas: {
+        Row: {
+          avatar_url: string
+          badge_title: string | null
+          created_at: string
+          id: string
+          is_default: boolean
+          name: string
+        }
+        Insert: {
+          avatar_url: string
+          badge_title?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name: string
+        }
+        Update: {
+          avatar_url?: string
+          badge_title?: string | null
+          created_at?: string
+          id?: string
+          is_default?: boolean
+          name?: string
+        }
+        Relationships: []
+      }
+      admin_posts: {
+        Row: {
+          author_user_id: string | null
+          category: string
+          content: string
+          created_at: string
+          custom_author_name: string | null
+          custom_avatar_url: string | null
+          disclaimer_type: string
+          expires_at: string | null
+          id: string
+          is_published: boolean
+          media: Json
+          persona_id: string | null
+          post_type: string
+          title: string | null
+          updated_at: string
+          view_count: number
+        }
+        Insert: {
+          author_user_id?: string | null
+          category?: string
+          content: string
+          created_at?: string
+          custom_author_name?: string | null
+          custom_avatar_url?: string | null
+          disclaimer_type?: string
+          expires_at?: string | null
+          id?: string
+          is_published?: boolean
+          media?: Json
+          persona_id?: string | null
+          post_type?: string
+          title?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Update: {
+          author_user_id?: string | null
+          category?: string
+          content?: string
+          created_at?: string
+          custom_author_name?: string | null
+          custom_avatar_url?: string | null
+          disclaimer_type?: string
+          expires_at?: string | null
+          id?: string
+          is_published?: boolean
+          media?: Json
+          persona_id?: string | null
+          post_type?: string
+          title?: string | null
+          updated_at?: string
+          view_count?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "admin_posts_persona_id_fkey"
+            columns: ["persona_id"]
+            isOneToOne: false
+            referencedRelation: "admin_personas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       ad_events: {
         Row: {
           ad_id: string
@@ -2441,6 +2533,12 @@ export type Database = {
       }
     }
     Functions: {
+      increment_admin_post_view: {
+        Args: {
+          p_post_id: string
+        }
+        Returns: undefined
+      }
       backfill_my_portfolio_asset_ids: { Args: never; Returns: Json }
       claim_communication_batch: {
         Args: { p_lease_seconds?: number; p_limit?: number }

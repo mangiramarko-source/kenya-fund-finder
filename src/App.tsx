@@ -79,6 +79,7 @@ const MmfCalculatorPage = lazyWithRetry(() => import("./pages/MmfCalculatorPage"
 const SavingsPage = lazyWithRetry(() => import("./pages/SavingsPage"), "SavingsPage");
 const ResearchArticlePage = lazyWithRetry(() => import("./pages/ResearchArticlePage"), "ResearchArticlePage");
 const WatchlistPage = lazyWithRetry(() => import("./pages/WatchlistPage"), "WatchlistPage");
+const UpdatesPage = lazyWithRetry(() => import("./pages/UpdatesPage"), "UpdatesPage");
 const AiLabPage = lazyWithRetry(() => import("./pages/AiLabPage"), "AiLabPage");
 const DevMobilePreviewPage = lazyWithRetry(() => import("./pages/DevMobilePreviewPage"), "DevMobilePreviewPage");
 const IntroPreviewPage = lazyWithRetry(() => import("./pages/preview/IntroPreviewPage"), "IntroPreviewPage");
@@ -182,6 +183,9 @@ const App = () => (
                     <Route path="/stocks" element={<StocksPage />} />
                     <Route path="/stocks/:symbol" element={<StockDetailPage />} />
                     <Route path="/markets" element={<MarketDashboardPage />} />
+                    <Route path="/updates" element={<UpdatesPage />} />
+                    <Route path="/stories" element={<Navigate to="/updates" replace />} />
+                    <Route path="/broadcasts" element={<Navigate to="/updates" replace />} />
                     <Route path="/overview" element={<Navigate to="/" replace />} />
                     <Route path="/alerts" element={<AlertsPage />} />
                     <Route path="/portfolio" element={<PortfolioPage />} />

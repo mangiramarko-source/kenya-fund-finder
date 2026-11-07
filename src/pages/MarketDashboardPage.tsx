@@ -14,6 +14,7 @@ import MiniCurrencyConverter from "@/components/calculator/MiniCurrencyConverter
 import { useAuth } from "@/hooks/useAuth";
 import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import InlineDataGate from "@/components/auth/InlineDataGate";
+import StoriesHeader from "@/components/stories/StoriesHeader";
 
 
 /* ─── Types ─── */
@@ -167,6 +168,7 @@ const MarketDashboardPage = () => {
     <PageLoadingGate isReady={!loading} message="Loading latest market data…" loaderClassName="min-h-screen">
     <div className="min-h-screen">
       <div className="px-4 md:px-6 py-6">
+        <StoriesHeader className="mb-4" />
         <div className="mb-4">
           <h1 className="sr-only md:not-sr-only md:text-2xl font-bold text-foreground">Market Dashboard</h1>
           <p className="text-sm text-muted-foreground mt-1">

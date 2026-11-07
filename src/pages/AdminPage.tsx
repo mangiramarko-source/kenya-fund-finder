@@ -1,8 +1,9 @@
 import { Navigate, useSearchParams } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote, Share2, Landmark, Activity, TrendingUp } from "lucide-react";
+import { BarChart3, Newspaper, ClipboardList, LayoutDashboard, FileText, Megaphone, Globe, MessageSquare, Sparkles, Quote, Share2, Landmark, Activity, TrendingUp, Radio } from "lucide-react";
 import AdminDashboard from "./admin/AdminDashboard";
+import AdminPostsManager from "./admin/AdminPostsManager";
 import AdminFunds from "./admin/AdminFunds";
 import AdminMmfInspector from "./admin/AdminMmfInspector";
 import AdminStocksInspector from "./admin/AdminStocksInspector";
@@ -79,6 +80,10 @@ const AdminPage = () => {
             <Share2 className="h-4 w-4" />
             <span className="hidden sm:inline">Social</span>
           </TabsTrigger>
+          <TabsTrigger value="posts" className="gap-1.5">
+            <Radio className="h-4 w-4" />
+            <span className="hidden sm:inline">Broadcasts</span>
+          </TabsTrigger>
           <TabsTrigger value="ads" className="gap-1.5">
             <Megaphone className="h-4 w-4" />
             <span className="hidden sm:inline">Ads</span>
@@ -117,6 +122,7 @@ const AdminPage = () => {
         <TabsContent value="news"><AdminNews /></TabsContent>
         <TabsContent value="enrichment"><AdminNewsEnrichment /></TabsContent>
         <TabsContent value="social"><SocialIndex /></TabsContent>
+        <TabsContent value="posts"><AdminPostsManager /></TabsContent>
         <TabsContent value="ads"><AdminAds /></TabsContent>
         <TabsContent value="pages"><AdminPages /></TabsContent>
         <TabsContent value="markets"><AdminMarkets /></TabsContent>
