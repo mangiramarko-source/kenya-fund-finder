@@ -30,11 +30,10 @@ const PRESET_SCREENS = [
   { path: "/stocks", label: "NSE Stocks", icon: TrendingUp, tab: "Tab 2" },
   { path: "/funds", label: "MMFs Ranking", icon: Landmark, tab: "Tab 3" },
   { path: "/portfolio", label: "Portfolio", icon: PieChart, tab: "Tab 4" },
-  { path: "/", label: "Market Overview", icon: Layers, tab: "In More" },
   { path: "/treasury", label: "T-Bills & Bonds", icon: Layers, tab: "In More" },
   { path: "/rates", label: "FX Rates", icon: Layers, tab: "In More" },
   { path: "/commodities", label: "Commodities", icon: Layers, tab: "In More" },
-  { path: "/mmf-calculator", label: "MMF Calculator", icon: Layers, tab: "In More" },
+  { path: "/calculator", label: "Calculator", icon: Layers, tab: "In More" },
 ];
 
 export default function DevMobilePreviewPage() {

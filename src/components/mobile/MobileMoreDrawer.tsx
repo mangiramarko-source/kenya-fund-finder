@@ -7,7 +7,6 @@ import {
   SheetTitle,
 } from "@/components/ui/sheet";
 import {
-  LayoutDashboard,
   Shield,
   DollarSign,
   Gem,
@@ -138,14 +137,6 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
             </p>
             <div className="grid grid-cols-2 gap-2.5">
               <DrawerTile
-                to="/"
-                icon={LayoutDashboard}
-                title="Market Overview"
-                subtitle="Movers & indices"
-                active={location.pathname === "/"}
-                onClick={close}
-              />
-              <DrawerTile
                 to="/savings?tab=tbills"
                 icon={Shield}
                 title="T-Bills & Bonds"
@@ -195,11 +186,11 @@ export default function MobileMoreDrawer({ open, onOpenChange }: MobileMoreDrawe
                 onClick={close}
               />
               <DrawerTile
-                to="/mmf-calculator"
+                to="/calculator"
                 icon={Calculator}
-                title="MMF Calculator"
-                subtitle="Compound interest"
-                active={location.pathname === "/mmf-calculator" || location.pathname === "/calculator"}
+                title="Calculator"
+                subtitle="MMFs, T-Bills & Stocks"
+                active={location.pathname === "/calculator" || location.pathname === "/mmf-calculator"}
                 onClick={close}
               />
               <DrawerTile
