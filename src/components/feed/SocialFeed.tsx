@@ -216,13 +216,13 @@ export const SocialFeedCard = ({
   return (
     <div
       onClick={handleCardClick}
-      className="animate-rise relative -mx-4 flex items-start gap-2.5 border-0 border-b border-border/80 bg-transparent px-3 py-3.5 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:gap-4 hover:bg-muted/15"
+      className="animate-rise relative -mx-4 flex items-start gap-3 border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:gap-3.5 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       {/* ─── 1. Left Avatar Column (Twitter / X Style) ─── */}
       <div className="shrink-0 pt-0.5">
         {isStockBranded ? (
-          <div className="flex h-11 w-11 items-center justify-center overflow-hidden rounded-full border border-border bg-white shadow-xs">
+          <div className="flex h-10 w-10 items-center justify-center overflow-hidden rounded-full border border-border bg-white shadow-xs">
             {stockLogo ? (
               <img src={stockLogo} alt={item.relatedStock!.name} className="h-full w-full object-contain p-1" referrerPolicy="no-referrer" />
             ) : (
@@ -231,7 +231,7 @@ export const SocialFeedCard = ({
           </div>
         ) : (
           <div
-            className={`w-11 h-11 rounded-full border ${
+            className={`w-10 h-10 rounded-full border ${
               isSocialPost ? "bg-black dark:bg-white/10 text-white border-black/10" : getAvatarBg(item.type)
             } text-white font-bold text-xs md:text-sm flex items-center justify-center shadow-xs overflow-hidden`}
           >
@@ -259,25 +259,25 @@ export const SocialFeedCard = ({
         {/* Header Bar: Author Name • Category • Time • Options */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-            <span className="font-bold text-foreground text-[15px] md:text-sm truncate">
+            <span className="font-bold text-foreground text-[15px] leading-5 truncate hover:underline">
               {isStockBranded ? item.relatedStock!.name : authorName}
             </span>
             {isStockBranded && (
-              <span className="text-[12px] md:text-[11px] font-mono text-muted-foreground">
+              <span className="text-[15px] font-normal leading-5 font-mono text-muted-foreground">
                 ${item.relatedStock!.symbol}
               </span>
             )}
-            <span className="text-muted-foreground/50 text-xs">·</span>
+            <span className="text-muted-foreground/60 text-[15px] leading-5 select-none">·</span>
             {displayCategory && (
               <>
-                <span className="inline-flex items-center gap-1 text-[12px] md:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+                <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">
                   <span className={`h-1.5 w-1.5 rounded-full shrink-0 ${getCategoryDotColor(displayCategory)}`} />
                   {displayCategory}
                 </span>
-                <span className="text-muted-foreground/50 text-xs">·</span>
+                <span className="text-muted-foreground/60 text-[15px] leading-5 select-none">·</span>
               </>
             )}
-            <span className="text-[13px] md:text-xs text-muted-foreground whitespace-nowrap">{timeAgo}</span>
+            <span className="text-[15px] font-normal leading-5 text-muted-foreground whitespace-nowrap hover:underline">{timeAgo}</span>
           </div>
 
           <button
@@ -375,8 +375,8 @@ export const SocialFeedCard = ({
         {/* Main Title / Headline */}
         {item.id !== "daily-market-summary" && (
           <h3 className={item.isHeadlineOnly
-            ? "font-body text-[15px] md:text-sm font-normal text-foreground/90 leading-relaxed"
-            : "font-heading font-extrabold text-[16px] md:text-base text-foreground leading-snug tracking-tight"
+            ? "font-body text-[15px] font-normal text-foreground/90 leading-5"
+            : "font-heading font-extrabold text-[16px] md:text-[17px] text-foreground leading-snug tracking-tight"
           }>
             {item.title}
           </h3>
@@ -386,7 +386,7 @@ export const SocialFeedCard = ({
         {!item.isHeadlineOnly && (
           <div
             ref={contentRef}
-            className="font-body text-[13px] md:text-sm text-zinc-900 dark:text-muted-foreground/90 leading-relaxed line-clamp-2 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
+            className="font-body text-[15px] leading-5 text-zinc-900 dark:text-muted-foreground/90 line-clamp-2 prose dark:prose-invert font-normal [&_*]:inline [&_*]:m-0 [&_p]:inline [&_p]:m-0 [&_p]:after:content-['\20\20'] [&_h3]:inline [&_h3]:m-0 [&_h3]:font-bold [&_h3]:after:content-['\20\20']"
           >
             <ReactMarkdown remarkPlugins={[remarkGfm]}>
               {item.content || ""}
@@ -429,7 +429,7 @@ export const SocialFeedCard = ({
               e.stopPropagation();
               handleCardClick();
             }}
-            className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-[13px] md:text-sm transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-[14px] transition-colors cursor-pointer"
           >
             <span>Continue reading</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -449,7 +449,7 @@ export const SocialFeedCard = ({
             aria-label={`${commentsCount} comments`}
           >
             <MessageCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <span className="tabular-nums text-[11px] sm:text-xs">{commentsCount}</span>
+            <span className="tabular-nums text-[13px] leading-4">{commentsCount}</span>
           </button>
 
           {/* Likes Pill */}
@@ -464,7 +464,7 @@ export const SocialFeedCard = ({
             aria-label={isLiked ? "Unlike article" : "Like article"}
           >
             <Heart className={`h-3.5 w-3.5 shrink-0 ${isLiked ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`} />
-            <span className="tabular-nums text-[11px] sm:text-xs">{likeCount}</span>
+            <span className="tabular-nums text-[13px] leading-4">{likeCount}</span>
           </button>
 
           {/* Rank / Upvote Pill */}
@@ -479,7 +479,7 @@ export const SocialFeedCard = ({
             aria-label={isUpvoted ? "Remove upvote" : "Upvote story"}
           >
             <ArrowBigUp className={`h-4 w-4 shrink-0 ${isUpvoted ? "fill-emerald-500 text-emerald-500" : "text-muted-foreground"}`} />
-            <span className="tabular-nums text-[11px] sm:text-xs">{upvoteCount}</span>
+            <span className="tabular-nums text-[13px] leading-4">{upvoteCount}</span>
           </button>
 
           {/* Views Metric Chip */}
@@ -488,7 +488,7 @@ export const SocialFeedCard = ({
             title={`${viewsCount.toLocaleString()} total views`}
           >
             <BarChart2 className="h-3.5 w-3.5 text-muted-foreground/80 shrink-0" />
-            <span className="tabular-nums text-[11px] sm:text-xs">{formattedViews}</span>
+            <span className="tabular-nums text-[13px] leading-4">{formattedViews}</span>
           </div>
 
           {/* Bookmark Pill */}

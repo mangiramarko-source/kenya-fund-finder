@@ -125,12 +125,12 @@ export function StockFeedCard({
   return (
     <article
       onClick={openArticle}
-      className="animate-rise relative -mx-4 flex items-start gap-2.5 border-0 border-b border-border/80 bg-transparent px-3 py-3.5 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:gap-4 hover:bg-muted/15"
+      className="animate-rise relative -mx-4 flex items-start gap-3 border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none cursor-pointer transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-5 md:shadow-sm md:gap-3.5 hover:bg-black/[0.02] dark:hover:bg-white/[0.02]"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       {/* ─── 1. Left Avatar Column (Twitter / X Style) ─── */}
       <div className="shrink-0 pt-0.5">
-        <div className="w-11 h-11 rounded-full bg-white border border-border text-emerald-700 font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
+        <div className="w-10 h-10 rounded-full bg-white border border-border text-emerald-700 font-extrabold text-xs flex items-center justify-center shrink-0 overflow-hidden shadow-xs">
           {avatarUrl && !logoError ? (
             <img
               src={avatarUrl}
@@ -149,15 +149,15 @@ export function StockFeedCard({
         {/* Header: Company Name • NSE Symbol • Timestamp • More (...) */}
         <div className="flex items-center justify-between gap-2">
           <div className="flex items-center gap-1.5 min-w-0 flex-wrap">
-            <span className="font-bold text-foreground text-[15px] md:text-sm truncate">{stock.name}</span>
-            <span className="text-[12px] md:text-[11px] font-mono text-muted-foreground">${stock.symbol}</span>
-            <span className="text-muted-foreground/50 text-xs">·</span>
-            <span className="inline-flex items-center gap-1 text-[12px] md:text-[11px] font-semibold text-muted-foreground uppercase tracking-wider">
+            <span className="font-bold text-foreground text-[15px] leading-5 truncate hover:underline">{stock.name}</span>
+            <span className="text-[15px] font-normal leading-5 font-mono text-muted-foreground">${stock.symbol}</span>
+            <span className="text-muted-foreground/60 text-[15px] leading-5 select-none">·</span>
+            <span className="inline-flex items-center gap-1 text-[12px] font-semibold text-muted-foreground uppercase tracking-wider">
               <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
               Stock
             </span>
-            <span className="text-muted-foreground/50 text-xs">·</span>
-            <span className="text-[13px] md:text-xs text-muted-foreground whitespace-nowrap">{timeAgo}</span>
+            <span className="text-muted-foreground/60 text-[15px] leading-5 select-none">·</span>
+            <span className="text-[15px] font-normal leading-5 text-muted-foreground whitespace-nowrap hover:underline">{timeAgo}</span>
           </div>
 
           <button
@@ -181,7 +181,7 @@ export function StockFeedCard({
               event.stopPropagation();
               navigate(`/stocks/${encodeURIComponent(stock.symbol)}`);
             }}
-            className="flex items-center gap-2 text-[13px] md:text-xs bg-muted/60 hover:bg-muted border border-border/60 rounded-md px-2.5 py-1 w-fit transition-colors font-sans"
+            className="flex items-center gap-2 text-xs bg-muted/60 hover:bg-muted border border-border/60 rounded-md px-2.5 py-1 w-fit transition-colors font-sans"
             aria-label={`View ${stock.name}`}
           >
             <span className="font-bold text-foreground">{stock.symbol}</span>
@@ -193,7 +193,7 @@ export function StockFeedCard({
           </button>
 
           <div
-            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/30 px-2.5 py-0.5 text-[12px] md:text-[11px]"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border/70 bg-muted/30 px-2.5 py-0.5 text-[11px]"
             title={`${scorecard.passedScore} passed of ${scorecard.evaluatedCount} verified checks (${scorecard.unverifiedCount} disclosures pending) — ${scorecard.summaryThesis}`}
           >
             <StockSnowflakeRadar
@@ -223,17 +223,17 @@ export function StockFeedCard({
         return (
           <div className="flex flex-wrap items-center gap-2 mb-1">
             {analysis.event_label && (
-              <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-0.5 text-[11px] md:text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
+              <span className="inline-flex items-center rounded-md bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-emerald-600 dark:text-emerald-400 ring-1 ring-inset ring-emerald-500/20">
                 {analysis.event_label}
               </span>
             )}
             {analysis.impact_horizon && (
-              <span className="inline-flex items-center rounded-md bg-blue-500/10 px-2 py-0.5 text-[11px] md:text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 ring-1 ring-inset ring-blue-500/20">
+              <span className="inline-flex items-center rounded-md bg-blue-500/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-blue-600 dark:text-blue-400 ring-1 ring-inset ring-blue-500/20">
                 {analysis.impact_horizon}
               </span>
             )}
             {analysis.clustered_count > 1 && (
-              <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[11px] md:text-[10px] font-bold uppercase tracking-wider text-zinc-700 dark:text-muted-foreground ring-1 ring-inset ring-border">
+              <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-700 dark:text-muted-foreground ring-1 ring-inset ring-border">
                 +{analysis.clustered_count} sources
               </span>
             )}
@@ -242,13 +242,13 @@ export function StockFeedCard({
       })()}
 
       {item.isHeadlineOnly ? (
-        <h2 className="font-body text-[15px] md:text-sm font-normal text-foreground/90 leading-relaxed">
+        <h2 className="font-body text-[15px] leading-5 font-normal text-foreground/90">
           {item.title}
         </h2>
       ) : (
         <>
-          <h2 className="font-heading font-extrabold text-[16px] md:text-base text-foreground leading-snug tracking-tight">{item.title}</h2>
-          <p className="font-body text-[13px] md:text-sm text-zinc-900 dark:text-muted-foreground/90 leading-relaxed line-clamp-2 font-normal">
+          <h2 className="font-heading font-extrabold text-[16px] md:text-[17px] text-foreground leading-snug tracking-tight">{item.title}</h2>
+          <p className="font-body text-[15px] leading-5 text-zinc-900 dark:text-muted-foreground/90 line-clamp-2 font-normal">
             {item.aiInsight || item.content}
           </p>
         </>
@@ -299,7 +299,7 @@ export function StockFeedCard({
           <button
             type="button"
             onClick={openArticle}
-            className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-[13px] md:text-sm transition-colors cursor-pointer"
+            className="inline-flex items-center gap-1.5 font-heading text-emerald-500 hover:text-emerald-400 font-semibold text-[14px] transition-colors cursor-pointer"
           >
             <span>View full 5-pillar analysis</span>
             <ArrowRight className="h-3.5 w-3.5" />
@@ -316,7 +316,7 @@ export function StockFeedCard({
             aria-label={`${commentsCount} comments`}
           >
             <MessageCircle className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
-            <span className="tabular-nums text-[11px] sm:text-xs">{commentsCount}</span>
+            <span className="tabular-nums text-[13px] leading-4">{commentsCount}</span>
           </button>
 
           {/* Likes Pill */}
@@ -331,7 +331,7 @@ export function StockFeedCard({
             aria-label={isLiked ? "Unlike article" : "Like article"}
           >
             <Heart className={`h-3.5 w-3.5 shrink-0 ${isLiked ? "fill-rose-500 text-rose-500" : "text-muted-foreground"}`} />
-            <span className="tabular-nums text-[11px] sm:text-xs">{likeCount}</span>
+            <span className="tabular-nums text-[13px] leading-4">{likeCount}</span>
           </button>
 
           {/* Rank / Upvote Pill */}
@@ -346,7 +346,7 @@ export function StockFeedCard({
             aria-label={isUpvoted ? "Remove upvote" : "Upvote story"}
           >
             <ArrowBigUp className={`h-4 w-4 shrink-0 ${isUpvoted ? "fill-emerald-500 text-emerald-500" : "text-muted-foreground"}`} />
-            <span className="tabular-nums text-[11px] sm:text-xs">{upvoteCount}</span>
+            <span className="tabular-nums text-[13px] leading-4">{upvoteCount}</span>
           </button>
 
           {/* Views Metric Chip */}
@@ -355,7 +355,7 @@ export function StockFeedCard({
             title={`${viewsCount.toLocaleString()} total views`}
           >
             <BarChart2 className="h-3.5 w-3.5 text-muted-foreground/80 shrink-0" />
-            <span className="tabular-nums text-[11px] sm:text-xs">{formattedViews}</span>
+            <span className="tabular-nums text-[13px] leading-4">{formattedViews}</span>
           </div>
 
           {/* Bookmark Pill */}

@@ -78,25 +78,25 @@ export function FeedTriviaCard({ id = "trivia-1", index = 7 }: FeedTriviaCardPro
 
   return (
     <div
-      className="animate-rise relative -mx-4 space-y-3.5 border-0 border-b border-border/80 bg-transparent px-3 py-4 shadow-none transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-6 md:shadow-xs"
+      className="animate-rise relative -mx-4 space-y-3.5 border-0 border-b border-border/80 bg-transparent px-4 py-3 shadow-none transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-6 md:shadow-xs"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       {/* Top author row */}
       <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold text-sm shadow-xs shrink-0">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-amber-500/20 text-amber-600 dark:text-amber-400 font-extrabold text-sm shadow-xs shrink-0">
             <Award className="h-5 w-5" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-bold text-[15px] sm:text-sm text-foreground truncate">
+              <span className="font-bold text-[15px] leading-5 text-foreground truncate">
                 Kenya Market Trivia
               </span>
               <span className="inline-flex items-center gap-1 rounded-full bg-amber-500/10 px-2 py-0.5 text-[11px] font-bold text-amber-600 dark:text-amber-400">
                 <HelpCircle className="h-2.5 w-2.5" /> Daily Challenge
               </span>
             </div>
-            <span className="text-[12px] md:text-[11px] text-muted-foreground">{TRIVIA_DATA.category}</span>
+            <span className="text-[15px] leading-5 text-muted-foreground">{TRIVIA_DATA.category}</span>
           </div>
         </div>
 
@@ -107,10 +107,10 @@ export function FeedTriviaCard({ id = "trivia-1", index = 7 }: FeedTriviaCardPro
 
       {/* Question */}
       <div>
-        <h3 className="text-[16px] sm:text-base font-bold text-foreground leading-snug">
+        <h3 className="text-[16px] md:text-[17px] font-bold text-foreground leading-snug">
           {TRIVIA_DATA.question}
         </h3>
-        <p className="text-[13px] md:text-xs text-muted-foreground mt-1">
+        <p className="text-[15px] leading-5 text-muted-foreground mt-1">
           Pick the correct answer to test your financial knowledge and boost your daily streak.
         </p>
       </div>
