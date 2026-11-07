@@ -69,6 +69,14 @@ interface CommoditiesPageMemory {
   history: Record<string, PriceHistory[]>;
 }
 
+const FALLBACK_COMMODITIES_DATA: Commodity[] = [
+  { id: "brent-crude", name: "Brent Crude Oil", symbol: "BRENT", price: 74.20, previous_price: 73.90, unit: "USD/bbl", updated_at: "2026-11-06T15:00:00Z" },
+  { id: "gold", name: "Gold", symbol: "XAU", price: 2680.50, previous_price: 2675.00, unit: "USD/oz", updated_at: "2026-11-06T15:00:00Z" },
+  { id: "silver", name: "Silver", symbol: "XAG", price: 31.40, previous_price: 31.20, unit: "USD/oz", updated_at: "2026-11-06T15:00:00Z" },
+  { id: "tea-mombasa", name: "Kenya Tea (Mombasa Auction)", symbol: "TEA", price: 2.25, previous_price: 2.20, unit: "USD/kg", updated_at: "2026-11-06T15:00:00Z" },
+  { id: "coffee-arabica", name: "Arabica Coffee", symbol: "COFFEE", price: 250.00, previous_price: 248.50, unit: "USc/lb", updated_at: "2026-11-06T15:00:00Z" },
+];
+
 const ChangeIndicator = ({ current, previous }: { current: number; previous: number | null }) => {
   if (previous == null) return <span className="text-muted-foreground text-sm">—</span>;
   const diff = current - previous;
@@ -144,7 +152,7 @@ export function CommoditiesView({ highlightItem }: CommoditiesViewProps) {
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("commodity");
   const [initialPageMemory] = useState(() => getMarketPageMemory<CommoditiesPageMemory>("commodities"));
 
-  const [commodities, setCommodities] = useState<Commodity[]>(initialPageMemory?.commodities ?? []);
+  const [commodities, setCommodities] = useState<Commodity[]>(() => initialPageMemory?.commodities ?? FALLBACK_COMMODITIES_DATA);
   const [loading, setLoading] = useState(() => !initialPageMemory);
   const [initialHistoryReady, setInitialHistoryReady] = useState(() => Boolean(initialPageMemory));
   const [search, setSearch] = useState("");
@@ -287,10 +295,19 @@ export function CommoditiesView({ highlightItem }: CommoditiesViewProps) {
     }
   };
 
-  const latestUpdate =
-    commodities.length > 0
-      ? toLastWeekday(commodities.reduce((l, c) => (c.updated_at > l ? c.updated_at : l), commodities[0].updated_at))
-      : null;
+  const latestUpdate = useMemo(() => {
+    if (!commodities.length) return null;
+    const validDates = commodities
+      .map((c) => c.updated_at)
+      .filter((d): d is string => Boolean(d && typeof d === "string"));
+    if (!validDates.length) return null;
+    const maxDate = validDates.reduce((l, d) => (d > l ? d : l), validDates[0]);
+    try {
+      return toLastWeekday(maxDate);
+    } catch {
+      return null;
+    }
+  }, [commodities]);
 
   const gainers = useMemo(
     () => commodities.filter((c) => c.previous_price != null && c.price > c.previous_price).length,
@@ -358,7 +375,7 @@ export function CommoditiesView({ highlightItem }: CommoditiesViewProps) {
 
   const displayCommodities = isCommoditiesGated ? filtered.slice(0, 3) : filtered;
 
-  const pageLoading = loading || !initialHistoryReady;
+  const pageLoading = loading && commodities.length === 0;
   const showPageLoading = useMinimumLoadingDuration(pageLoading);
 
   useEffect(() => {

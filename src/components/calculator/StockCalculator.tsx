@@ -60,7 +60,7 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
     return FALLBACK_KENYAN_STOCKS;
   });
 
-  const [selectedSymbol, setSelectedSymbol] = useState<string>(() => initialSymbol || "SCOM");
+  const [selectedSymbol, setSelectedSymbol] = useState<string | null>(() => initialSymbol || null);
   const [sectorFilter, setSectorFilter] = useState<SectorFilter>("all");
   const [stockSearch, setStockSearch] = useState<string>("");
   const [isSelectorOpen, setIsSelectorOpen] = useState<boolean>(false);
@@ -85,7 +85,7 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
 
   // When selected symbol changes, sync defaults
   useEffect(() => {
-    if (selectedSymbol === "CUSTOM") return;
+    if (!selectedSymbol || selectedSymbol === "CUSTOM") return;
     const stock = stocks.find((s) => s.symbol.toUpperCase() === selectedSymbol.toUpperCase());
     if (stock) {
       if (typeof stock.price === "number" && stock.price > 0) {
@@ -100,9 +100,17 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
   }, [selectedSymbol, stocks]);
 
   const activeStock = useMemo(() => {
-    if (selectedSymbol === "CUSTOM") return null;
+    if (!selectedSymbol || selectedSymbol === "CUSTOM") return null;
     return stocks.find((s) => s.symbol.toUpperCase() === selectedSymbol.toUpperCase()) || null;
   }, [selectedSymbol, stocks]);
+
+  // Top popular Kenyan stocks for quick 1-tap selection on the card
+  const popularStocks = useMemo(() => {
+    const symbols = ["SCOM", "EQTY", "KCB", "EABL", "COOP"];
+    return symbols
+      .map((sym) => stocks.find((s) => s.symbol.toUpperCase() === sym))
+      .filter(Boolean) as CachedStock[];
+  }, [stocks]);
 
   const handleSelectStock = (stk: CachedStock | null) => {
     if (!stk) {
@@ -266,64 +274,138 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
     <div className="space-y-6">
       {/* ─── 1. STOCK SELECTOR (POP-UP FROM BOTTOM ON CLICK) ─── */}
       <div className="rounded-2xl border border-border/80 bg-card p-3 sm:p-4 shadow-xs">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={() => setIsSelectorOpen(true)}
-            className="flex-1 flex items-center justify-between gap-3 text-left hover:opacity-90 transition-opacity min-w-0"
+            aria-label="Open stock selector"
+            className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 border transition-opacity hover:opacity-90 ${
+              activeStock
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                : selectedSymbol === "CUSTOM"
+                ? "bg-muted text-muted-foreground border-border/80"
+                : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+            }`}
           >
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
-                <BarChart3 className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                    {activeStock ? (activeStock.sector || "Equities") : "Custom Equity"}
+            {activeStock ? (
+              <BarChart3 className="h-5 w-5" />
+            ) : selectedSymbol === "CUSTOM" ? (
+              <Sparkles className="h-5 w-5" />
+            ) : (
+              <TrendingUp className="h-5 w-5" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsSelectorOpen(true)}
+            className="flex-1 h-10 px-3 sm:px-3.5 rounded-xl border border-border/80 bg-background hover:bg-muted/50 flex items-center justify-between gap-2 text-left transition-colors min-w-0 shadow-2xs"
+          >
+            <div className="min-w-0 pr-2">
+              {activeStock ? (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 shrink-0">
+                    {activeStock.symbol}
                   </span>
-                  <span>•</span>
-                  <span className="truncate">
-                    {activeStock ? `NSE: ${activeStock.symbol}` : "Manual Assumptions"}
+                  <span className="text-xs sm:text-sm font-bold text-foreground truncate">
+                    {activeStock.name}
                   </span>
                 </div>
-                <p className="text-sm sm:text-base font-bold text-foreground truncate">
-                  {activeStock ? `${activeStock.name} (${activeStock.symbol})` : "Custom Equity Projection"}
-                </p>
-              </div>
+              ) : selectedSymbol === "CUSTOM" ? (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-muted text-muted-foreground shrink-0">
+                    Manual
+                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-foreground truncate">
+                    Custom Equity Projection
+                  </span>
+                </div>
+              ) : (
+                <span className="text-xs sm:text-sm font-semibold text-muted-foreground truncate">
+                  Select a Stock
+                </span>
+              )}
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0 pl-1">
-              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hidden sm:inline">
-                {activeStock ? "Change" : "Select Stock"}
-              </span>
-              <div className="h-8 px-2.5 rounded-lg border border-border/80 bg-background flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground">
-                <span className="text-[11px]">Choose</span>
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-              </div>
+            <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
+              {activeStock && activeStock.price ? (
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  KES {activeStock.price.toFixed(2)}
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  Choose
+                </span>
+              )}
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </div>
           </button>
         </div>
 
+        {/* Selected Stock Summary Metrics */}
         {activeStock && (
           <div className="flex items-center gap-3 pt-2.5 mt-2.5 border-t border-border/50 text-[11px] text-muted-foreground flex-wrap">
             <span>Market Price: <strong className="text-foreground">KES {activeStock.price.toFixed(2)}</strong></span>
             <span>•</span>
-            <span>Div Yield: <strong className="text-emerald-600 dark:text-emerald-400">{activeStock.dividend_yield ? `${activeStock.dividend_yield.toFixed(2)}%` : "—"}</strong></span>
+            <span>Div Yield: <strong className="text-emerald-600 dark:text-emerald-400 font-bold">{activeStock.dividend_yield ? `${activeStock.dividend_yield.toFixed(2)}%` : "—"}</strong></span>
             <span>•</span>
-            <span>P/E Ratio: <strong className="text-foreground">{activeStock.pe_ratio ? activeStock.pe_ratio.toFixed(1) : "—"}</strong></span>
+            <span>P/E: <strong className="text-foreground">{activeStock.pe_ratio ? activeStock.pe_ratio.toFixed(1) : "—"}</strong></span>
             <Link
               to={`/stocks/${activeStock.symbol.toLowerCase()}`}
               className="inline-flex items-center gap-1 text-emerald-600 dark:text-emerald-400 hover:underline font-bold"
             >
-              <span>View stock dashboard</span>
+              <span>Dashboard</span>
               <ExternalLink className="h-3 w-3" />
             </Link>
             <button
               type="button"
               onClick={() => handleSelectStock(null)}
-              className="text-xs text-muted-foreground hover:text-destructive ml-auto font-medium"
+              className="text-xs text-muted-foreground hover:text-foreground ml-auto font-medium transition-colors"
             >
               Reset to custom
+            </button>
+          </div>
+        )}
+
+        {/* Custom Mode Helper Row */}
+        {selectedSymbol === "CUSTOM" && (
+          <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-border/50 text-[11px] text-muted-foreground flex-wrap gap-2">
+            <span>Manual rate model. Edit share price, dividend yield, and growth below.</span>
+            <button
+              type="button"
+              onClick={() => setIsSelectorOpen(true)}
+              className="text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline shrink-0 ml-auto"
+            >
+              Browse 60+ Stocks →
+            </button>
+          </div>
+        )}
+
+        {/* Unselected Initial State: Quick Popular Stock Pills */}
+        {!activeStock && selectedSymbol !== "CUSTOM" && (
+          <div className="flex items-center gap-1.5 pt-2.5 mt-2.5 border-t border-border/50 overflow-x-auto no-scrollbar">
+            <span className="text-[11px] font-semibold text-muted-foreground shrink-0 mr-1">
+              Popular:
+            </span>
+            {popularStocks.map((s) => (
+              <button
+                key={s.symbol}
+                type="button"
+                onClick={() => handleSelectStock(s)}
+                className="px-2.5 py-1 rounded-lg border border-border/80 bg-background/80 hover:bg-muted text-[11px] font-semibold text-foreground whitespace-nowrap transition-colors flex items-center gap-1 shrink-0"
+              >
+                <span>{s.symbol}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                  KES {s.price.toFixed(1)}
+                </span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => handleSelectStock(null)}
+              className="px-2.5 py-1 rounded-lg border border-dashed border-border/90 bg-muted/30 hover:bg-muted text-[11px] font-semibold text-muted-foreground hover:text-foreground whitespace-nowrap transition-colors shrink-0 ml-auto"
+            >
+              Custom Equity
             </button>
           </div>
         )}

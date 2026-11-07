@@ -18,6 +18,7 @@ import {
   ExternalLink,
   ShieldCheck,
   Building2,
+  Landmark,
   X,
 } from "lucide-react";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
@@ -59,9 +60,9 @@ const fmt = (n: number) => Math.round(n).toLocaleString("en-KE");
 
 export const MmfCalculator = () => {
   const [funds, setFunds] = useState<FundFromDB[]>(FALLBACK_KENYAN_FUNDS);
-  const [selectedFundId, setSelectedFundId] = useState<string>("custom");
+  const [selectedFundId, setSelectedFundId] = useState<string | null>(null);
   const [fundSearch, setFundSearch] = useState("");
-  const [categoryFilter, setCategoryFilter] = useState<FundCategoryFilter>("all");
+  const [categoryFilter, setCategoryFilter] = useState<FundCategoryFilter>("money_market");
   const [isSelectorOpen, setIsSelectorOpen] = useState(false);
 
   // Core Calculator Inputs
@@ -88,9 +89,30 @@ export const MmfCalculator = () => {
   }, []);
 
   const selectedFund = useMemo(() => {
-    if (selectedFundId === "custom") return null;
+    if (!selectedFundId || selectedFundId === "custom") return null;
     return funds.find((f) => f.id === selectedFundId) || null;
   }, [selectedFundId, funds]);
+
+  // Top popular Kenyan MMFs for quick 1-tap selection on the card
+  const popularFunds = useMemo(() => {
+    const mmfs = funds.filter(
+      (f) => f.fund_type === "money_market" && (f.annual_yield || 0) > 0 && (f.annual_yield || 0) < 50
+    );
+    const preferredNames = ["lofty", "etica", "sanlam", "cic", "britam", "ncba"];
+    const preferred: FundFromDB[] = [];
+    for (const name of preferredNames) {
+      const found = mmfs.find(
+        (f) => f.name.toLowerCase().includes(name) || f.slug?.toLowerCase().includes(name)
+      );
+      if (found && !preferred.some((p) => p.id === found.id)) {
+        preferred.push(found);
+      }
+    }
+    if (preferred.length >= 3) {
+      return preferred.slice(0, 4);
+    }
+    return mmfs.slice(0, 4);
+  }, [funds]);
 
   // When a user picks a fund, auto-populate yield and management fee
   const handleSelectFund = (fund: FundFromDB | null) => {
@@ -112,6 +134,7 @@ export const MmfCalculator = () => {
   const filteredFunds = useMemo(() => {
     const q = fundSearch.trim().toLowerCase();
     return funds.filter((f) => {
+      if (f.fund_type === "money_market" && (f.annual_yield || 0) > 50) return false;
       if (categoryFilter === "money_market" && f.fund_type !== "money_market") return false;
       if (categoryFilter === "fixed_income" && f.fund_type !== "fixed_income") return false;
       if (
@@ -219,57 +242,153 @@ export const MmfCalculator = () => {
     <div className="space-y-6">
       {/* ─── 1. FUND SELECTOR (POP-UP FROM BOTTOM ON CLICK) ─── */}
       <div className="rounded-2xl border border-border/80 bg-card p-3 sm:p-4 shadow-xs">
-        <div className="flex items-center justify-between gap-3">
+        <div className="flex items-center gap-2.5 sm:gap-3">
           <button
             type="button"
             onClick={() => setIsSelectorOpen(true)}
-            className="flex-1 flex items-center justify-between gap-3 text-left hover:opacity-90 transition-opacity min-w-0"
+            aria-label="Open fund selector"
+            className={`h-10 w-10 rounded-xl flex items-center justify-center shrink-0 border transition-opacity hover:opacity-90 ${
+              selectedFund
+                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/25"
+                : selectedFundId === "custom"
+                ? "bg-muted text-muted-foreground border-border/80"
+                : "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border-emerald-500/30"
+            }`}
           >
-            <div className="flex items-center gap-2.5 sm:gap-3 min-w-0">
-              <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 flex items-center justify-center shrink-0 border border-emerald-500/20">
-                <Building2 className="h-4 w-4" />
-              </div>
-              <div className="min-w-0">
-                <div className="flex items-center gap-1.5 text-[11px] font-semibold text-muted-foreground">
-                  <span className="text-emerald-600 dark:text-emerald-400 font-bold">
-                    {selectedFund ? (FUND_TYPE_LABELS[selectedFund.fund_type as FundType] || "Fund") : "Custom Projection"}
+            {selectedFund ? (
+              <Building2 className="h-5 w-5" />
+            ) : selectedFundId === "custom" ? (
+              <Sparkles className="h-5 w-5" />
+            ) : (
+              <Landmark className="h-5 w-5" />
+            )}
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsSelectorOpen(true)}
+            className="flex-1 h-10 px-3 sm:px-3.5 rounded-xl border border-border/80 bg-background hover:bg-muted/50 flex items-center justify-between gap-2 text-left transition-colors min-w-0 shadow-2xs"
+          >
+            <div className="min-w-0 pr-2">
+              {selectedFund ? (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-emerald-500/15 text-emerald-700 dark:text-emerald-400 shrink-0">
+                    {FUND_TYPE_LABELS[selectedFund.fund_type as FundType] || "MMF"}
                   </span>
-                  <span>•</span>
-                  <span className="truncate">
-                    {selectedFund ? (selectedFund.manager || "Licensed Manager") : "Manual Rate & Fees"}
+                  <span className="text-xs sm:text-sm font-bold text-foreground truncate">
+                    {selectedFund.name}
                   </span>
                 </div>
-                <p className="text-sm sm:text-base font-bold text-foreground truncate">
-                  {selectedFund ? selectedFund.name : "Custom Fund Projection"}
-                </p>
-              </div>
+              ) : selectedFundId === "custom" ? (
+                <div className="flex items-center gap-1.5 min-w-0">
+                  <span className="text-[10px] font-extrabold uppercase tracking-wider px-1.5 py-0.2 rounded bg-muted text-muted-foreground shrink-0">
+                    Manual
+                  </span>
+                  <span className="text-xs sm:text-sm font-bold text-foreground truncate">
+                    Custom Fund Projection
+                  </span>
+                </div>
+              ) : (
+                <span className="text-xs sm:text-sm font-semibold text-muted-foreground truncate">
+                  Select a Fund
+                </span>
+              )}
             </div>
 
-            <div className="flex items-center gap-1.5 shrink-0 pl-1">
-              <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400 hidden sm:inline">
-                {selectedFund ? "Change" : "Select Fund"}
-              </span>
-              <div className="h-8 px-2.5 rounded-lg border border-border/80 bg-background flex items-center gap-1 text-xs font-semibold text-muted-foreground hover:text-foreground">
-                <span className="text-[11px]">Choose</span>
-                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
-              </div>
+            <div className="flex items-center gap-1.5 shrink-0 text-muted-foreground">
+              {selectedFund && selectedFund.annual_yield ? (
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  {selectedFund.annual_yield.toFixed(2)}% EAR
+                </span>
+              ) : (
+                <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+                  Choose
+                </span>
+              )}
+              <ChevronDown className="h-4 w-4 text-muted-foreground" />
             </div>
           </button>
         </div>
 
+        {/* Selected Fund Summary Metrics */}
         {selectedFund && (
           <div className="flex items-center gap-2 pt-2.5 mt-2.5 border-t border-border/50 text-[11px] text-muted-foreground flex-wrap">
-            <span>Daily Yield: <strong className="text-foreground">{selectedFund.daily_yield ? `${selectedFund.daily_yield.toFixed(4)}%` : "—"}</strong></span>
+            <span>
+              Annual Yield:{" "}
+              <strong className="text-emerald-600 dark:text-emerald-400 font-bold">
+                {selectedFund.annual_yield ? `${selectedFund.annual_yield.toFixed(2)}% EAR` : "—"}
+              </strong>
+            </span>
             <span>•</span>
-            <span>Mgmt Fee: <strong className="text-foreground">{selectedFund.management_fee ? `${selectedFund.management_fee}%` : "—"}</strong></span>
+            <span>
+              Daily Yield:{" "}
+              <strong className="text-foreground">
+                {selectedFund.daily_yield ? `${selectedFund.daily_yield.toFixed(4)}%` : "—"}
+              </strong>
+            </span>
             <span>•</span>
-            <span>Min Deposit: <strong className="text-foreground">KSh {fmt(selectedFund.minimum_investment || 1000)}</strong></span>
+            <span>
+              Mgmt Fee:{" "}
+              <strong className="text-foreground">
+                {selectedFund.management_fee ? `${selectedFund.management_fee}%` : "—"}
+              </strong>
+            </span>
+            <span>•</span>
+            <span>
+              Min Deposit:{" "}
+              <strong className="text-foreground">
+                KSh {fmt(selectedFund.minimum_investment || 1000)}
+              </strong>
+            </span>
             <button
               type="button"
               onClick={() => handleSelectFund(null)}
-              className="text-xs text-muted-foreground hover:text-destructive ml-auto font-medium"
+              className="text-xs text-muted-foreground hover:text-foreground ml-auto font-medium transition-colors"
             >
               Reset to custom
+            </button>
+          </div>
+        )}
+
+        {/* Custom Mode Helper Row */}
+        {selectedFundId === "custom" && (
+          <div className="flex items-center justify-between pt-2.5 mt-2.5 border-t border-border/50 text-[11px] text-muted-foreground flex-wrap gap-2">
+            <span>Manual rate model. Edit expected yield, period, and fees below.</span>
+            <button
+              type="button"
+              onClick={() => setIsSelectorOpen(true)}
+              className="text-xs text-emerald-600 dark:text-emerald-400 font-bold hover:underline shrink-0 ml-auto"
+            >
+              Browse 30+ MMFs →
+            </button>
+          </div>
+        )}
+
+        {/* Unselected Initial State: Quick Popular Fund Pills */}
+        {!selectedFund && selectedFundId !== "custom" && (
+          <div className="flex items-center gap-1.5 pt-2.5 mt-2.5 border-t border-border/50 overflow-x-auto no-scrollbar">
+            <span className="text-[11px] font-semibold text-muted-foreground shrink-0 mr-1">
+              Popular:
+            </span>
+            {popularFunds.map((f) => (
+              <button
+                key={f.id}
+                type="button"
+                onClick={() => handleSelectFund(f)}
+                className="px-2.5 py-1 rounded-lg border border-border/80 bg-background/80 hover:bg-muted text-[11px] font-semibold text-foreground whitespace-nowrap transition-colors flex items-center gap-1 shrink-0"
+              >
+                <span>{f.name.replace(/Money Market Fund|MMF/i, "").trim()}</span>
+                <span className="text-emerald-600 dark:text-emerald-400 font-bold">
+                  {f.annual_yield ? `${f.annual_yield.toFixed(1)}%` : ""}
+                </span>
+              </button>
+            ))}
+            <button
+              type="button"
+              onClick={() => handleSelectFund(null)}
+              className="px-2.5 py-1 rounded-lg border border-dashed border-border/90 bg-muted/30 hover:bg-muted text-[11px] font-semibold text-muted-foreground hover:text-foreground whitespace-nowrap transition-colors shrink-0 ml-auto"
+            >
+              Custom Rate
             </button>
           </div>
         )}
@@ -515,9 +634,21 @@ export const MmfCalculator = () => {
             <Label htmlFor="mmf-yield" className="text-xs font-semibold text-foreground">
               Expected Annual Yield (% p.a.)
             </Label>
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap shrink-0">
-              {annualYield}% p.a.
-            </span>
+            <div className="flex items-center gap-2">
+              {selectedFund && (
+                <span className="text-[10px] text-emerald-600 dark:text-emerald-400 font-semibold hidden sm:inline truncate max-w-[150px]">
+                  {selectedFund.name}
+                </span>
+              )}
+              {!selectedFund && selectedFundId !== "custom" && (
+                <span className="text-[10px] text-muted-foreground hidden sm:inline">
+                  (Market Benchmark)
+                </span>
+              )}
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap shrink-0">
+                {annualYield}% p.a.
+              </span>
+            </div>
           </div>
           <Input
             id="mmf-yield"

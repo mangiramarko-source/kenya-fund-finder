@@ -37,6 +37,7 @@ import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
 import { getCurrencyFlagUrl, KENYA_FLAG_URL } from "@/lib/currencyBranding";
 import { CommoditiesView } from "@/components/rates/CommoditiesView";
+import { fetchPublicData } from "@/lib/gateway";
 import FloatingPageCalculator from "@/components/calculator/FloatingPageCalculator";
 import CurrencyConverter from "@/components/calculator/CurrencyConverter";
 import CommodityCalculator from "@/components/calculator/CommodityCalculator";
@@ -59,6 +60,23 @@ interface RatesPageMemory {
   rates: Rate[];
   history: Record<string, RateHistory[]>;
 }
+
+const FALLBACK_RATES_DATA: Rate[] = [
+  { id: "usd", currency_code: "USD", currency_name: "US Dollar", rate: 129.42, previous_rate: 129.25, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "eur", currency_code: "EUR", currency_name: "Euro", rate: 140.85, previous_rate: 140.60, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "gbp", currency_code: "GBP", currency_name: "British Pound", rate: 173.97, previous_rate: 174.15, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "ugx", currency_code: "UGX", currency_name: "Uganda Shilling", rate: 0.0350, previous_rate: 0.0350, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "tzs", currency_code: "TZS", currency_name: "Tanzania Shilling", rate: 0.0500, previous_rate: 0.0500, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "zar", currency_code: "ZAR", currency_name: "South Africa Rand", rate: 7.15, previous_rate: 7.10, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "aed", currency_code: "AED", currency_name: "UAE Dirham", rate: 35.24, previous_rate: 35.20, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "cad", currency_code: "CAD", currency_name: "Canadian Dollar", rate: 93.50, previous_rate: 93.40, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "cny", currency_code: "CNY", currency_name: "Chinese Yuan", rate: 17.85, previous_rate: 17.80, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "jpy", currency_code: "JPY", currency_name: "Japanese Yen", rate: 0.8500, previous_rate: 0.8490, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "chf", currency_code: "CHF", currency_name: "Swiss Franc", rate: 148.20, previous_rate: 148.10, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "inr", currency_code: "INR", currency_name: "Indian Rupee", rate: 1.51, previous_rate: 1.50, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "aud", currency_code: "AUD", currency_name: "Australian Dollar", rate: 82.30, previous_rate: 82.20, updated_at: "2026-11-06T15:00:00Z" },
+  { id: "rwf", currency_code: "RWF", currency_name: "Rwandan Franc", rate: 0.092, previous_rate: 0.092, updated_at: "2026-11-06T15:00:00Z" },
+];
 
 const ChangeIndicator = ({ current, previous }: { current: number; previous: number | null }) => {
   if (previous == null) return <span className="text-muted-foreground text-sm">—</span>;
@@ -278,7 +296,7 @@ const RatesPage = ({ initialTab }: RatesPageProps = {}) => {
   const { entries: favEntries, isFavourite, toggle: toggleFavourite } = useAssetWatchlist("currency");
   const [initialPageMemory] = useState(() => getMarketPageMemory<RatesPageMemory>("rates"));
 
-  const [rates, setRates] = useState<Rate[]>(initialPageMemory?.rates ?? []);
+  const [rates, setRates] = useState<Rate[]>(() => initialPageMemory?.rates ?? FALLBACK_RATES_DATA);
   const [loading, setLoading] = useState(() => !initialPageMemory);
   const [initialHistoryReady, setInitialHistoryReady] = useState(() => Boolean(initialPageMemory));
   const [search, setSearch] = useState("");
@@ -290,20 +308,49 @@ const RatesPage = ({ initialTab }: RatesPageProps = {}) => {
   useEffect(() => {
     const fetch = async () => {
       try {
-        const { data } = await supabase
-          .from("exchange_rates_public" as any)
-          .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
-          .order("sort_order");
-        setRates(
-          ((data as any) || []).map((r: any) => ({
-            ...r,
-            rate: Number(r.rate),
-            previous_rate: r.previous_rate != null ? Number(r.previous_rate) : null,
-          }))
-        );
+        let fetchedRates: Rate[] = [];
+
+        // 1. Primary: Edge function gateway
+        try {
+          const res = await fetchPublicData<any>("rates", { limit: 200 });
+          if (Array.isArray(res?.data) && res.data.length > 0) {
+            fetchedRates = res.data.map((r: any) => ({
+              id: r.id || r.currency_code,
+              currency_code: r.currency_code,
+              currency_name: r.currency_name,
+              rate: Number(r.rate) || 0,
+              previous_rate: r.previous_rate != null ? Number(r.previous_rate) : null,
+              updated_at: r.updated_at || new Date().toISOString(),
+            }));
+          }
+        } catch (gwErr) {
+          console.warn("fetchPublicData gateway failed for rates, trying direct supabase:", gwErr);
+        }
+
+        // 2. Direct Supabase table fallback
+        if (fetchedRates.length === 0) {
+          try {
+            const { data, error } = await supabase
+              .from("exchange_rates_public" as any)
+              .select("id, currency_code, currency_name, rate, previous_rate, updated_at")
+              .order("sort_order");
+            if (!error && Array.isArray(data) && data.length > 0) {
+              fetchedRates = data.map((r: any) => ({
+                ...r,
+                rate: Number(r.rate) || 0,
+                previous_rate: r.previous_rate != null ? Number(r.previous_rate) : null,
+              }));
+            }
+          } catch (dbErr) {
+            console.warn("Direct exchange_rates_public query failed:", dbErr);
+          }
+        }
+
+        if (fetchedRates.length > 0) {
+          setRates(fetchedRates);
+        }
       } catch (error) {
         console.error("Failed to load FX rates", error);
-        setRates([]);
       } finally {
         setLoading(false);
       }
@@ -386,9 +433,19 @@ const RatesPage = ({ initialTab }: RatesPageProps = {}) => {
     }
   };
 
-  const latestUpdate = rates.length > 0
-    ? toLastWeekday(rates.reduce((l, r) => (r.updated_at > l ? r.updated_at : l), rates[0].updated_at))
-    : null;
+  const latestUpdate = useMemo(() => {
+    if (!rates.length) return null;
+    const validDates = rates
+      .map((r) => r.updated_at)
+      .filter((d): d is string => Boolean(d && typeof d === "string"));
+    if (!validDates.length) return null;
+    const maxDate = validDates.reduce((l, d) => (d > l ? d : l), validDates[0]);
+    try {
+      return toLastWeekday(maxDate);
+    } catch {
+      return null;
+    }
+  }, [rates]);
 
   const strengthened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate < r.previous_rate).length, [rates]);
   const weakened = useMemo(() => rates.filter((r) => r.previous_rate != null && r.rate > r.previous_rate).length, [rates]);
@@ -440,7 +497,7 @@ const RatesPage = ({ initialTab }: RatesPageProps = {}) => {
 
   const displayRates = isRatesGated ? filtered.slice(0, 3) : filtered;
 
-  const pageLoading = loading || !initialHistoryReady;
+  const pageLoading = loading && rates.length === 0;
   const showPageLoading = useMinimumLoadingDuration(pageLoading);
 
   useEffect(() => {
