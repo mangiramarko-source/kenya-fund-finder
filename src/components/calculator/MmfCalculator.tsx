@@ -511,11 +511,11 @@ export const MmfCalculator = () => {
 
         {/* Expected Yield */}
         <div className="space-y-2">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3">
             <Label htmlFor="mmf-yield" className="text-xs font-semibold text-foreground">
               Expected Annual Yield (% p.a.)
             </Label>
-            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+            <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap shrink-0">
               {annualYield}% p.a.
             </span>
           </div>

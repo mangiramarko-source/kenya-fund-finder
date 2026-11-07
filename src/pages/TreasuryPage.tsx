@@ -1257,9 +1257,9 @@ export default function TreasuryPage() {
         {/* Floating Action Button & Calculator for T-Bills & Bonds */}
         <FloatingPageCalculator
           buttonLabel="T-Bill Calculator"
-          title="Kenya Treasury Bills & Bonds Calculator"
-          description="Estimate CBK 91-day, 182-day, and 364-day auction discount earnings and tax-free bond payouts"
-          badge="CBK DHOWCSD"
+          title="T-Bills & Bonds Calculator"
+          description="Estimate CBK 91, 182, 364-day auction discount earnings and tax-free bond payouts"
+          badge="CBK DhowCSD"
         >
           <TBillCalculator />
         </FloatingPageCalculator>

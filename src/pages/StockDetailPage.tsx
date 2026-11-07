@@ -840,9 +840,9 @@ const StockDetailPage = () => {
       {/* Floating Action Button & Calculator for Active Counter */}
       <FloatingPageCalculator
         buttonLabel="Stock Calculator"
-        title={`${s.name} (${s.symbol}) Dividend & Return Calculator`}
-        description="Calculate dividend yields, capital gains, DRIP reinvestment, and net returns after 5% WHT"
-        badge={s.symbol}
+        title={`${s.symbol} Dividend Calculator`}
+        description={`${s.name} dividend yields, growth & DRIP returns after 5% WHT`}
+        badge={`NSE · ${s.symbol}`}
       >
         <StockCalculator key={s.symbol} initialSymbol={s.symbol} />
       </FloatingPageCalculator>

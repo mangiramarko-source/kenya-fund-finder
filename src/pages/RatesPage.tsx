@@ -1155,18 +1155,18 @@ const MobileRateCard = ({
       {isCommodityTab ? (
         <FloatingPageCalculator
           buttonLabel="Commodity Calculator"
-          title="Commodity Price & Return Calculator"
+          title="Commodities Calculator"
           description="Convert units to USD and KES, estimate purchase costs and investment returns"
-          badge="COMMODITIES"
+          badge="Global & Local Benchmark"
         >
           <CommodityCalculator />
         </FloatingPageCalculator>
       ) : (
         <FloatingPageCalculator
           buttonLabel="FX Converter"
-          title="CBK Forex & Currency Calculator"
+          title="FX & Currency Calculator"
           description="Convert Kenyan Shilling (KES) against USD, EUR, GBP, and global currencies"
-          badge="CBK RATES"
+          badge="CBK Rates"
         >
           <CurrencyConverter />
         </FloatingPageCalculator>

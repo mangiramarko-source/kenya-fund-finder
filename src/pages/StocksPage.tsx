@@ -1886,9 +1886,9 @@ const StocksRoutePage = () => {
       {isMobile ? <StocksPage /> : <StockDetailDesktopDemoPage production />}
       <FloatingPageCalculator
         buttonLabel="Stock Calculator"
-        title="NSE Stocks & Dividend Calculator"
+        title="Stocks & Dividend Calculator"
         description="Project dividend yields, capital growth, and returns after 5% withholding tax"
-        badge="NSE"
+        badge="NSE Listed"
       >
         <StockCalculator />
       </FloatingPageCalculator>

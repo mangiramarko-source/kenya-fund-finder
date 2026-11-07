@@ -612,11 +612,11 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
           </div>
 
           <div className="space-y-2">
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between gap-3">
               <Label htmlFor="stock-div-yield" className="text-xs font-semibold text-foreground">
                 Expected Dividend Yield (% p.a.)
               </Label>
-              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums">
+              <span className="text-xs font-bold text-emerald-600 dark:text-emerald-400 tabular-nums whitespace-nowrap shrink-0">
                 {dividendYield}% p.a.
               </span>
             </div>
@@ -635,8 +635,8 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
 
         {/* Expected Price Growth Slider */}
         <div className="space-y-2.5 pt-1">
-          <div className="flex items-center justify-between">
-            <div>
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0 flex-1">
               <Label className="text-xs font-semibold text-foreground">
                 Expected Capital Appreciation (% p.a.)
               </Label>
@@ -645,7 +645,7 @@ export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) =>
               </p>
             </div>
             <span
-              className={`text-xs font-bold tabular-nums px-2.5 py-0.5 rounded-full ${
+              className={`text-xs font-bold tabular-nums px-2.5 py-0.5 rounded-full whitespace-nowrap shrink-0 ${
                 capitalGrowth > 0
                   ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
                   : capitalGrowth === 0

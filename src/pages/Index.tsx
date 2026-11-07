@@ -266,9 +266,9 @@ const Index = () => {
       {/* Floating Action Button & Calculator for MMF Returns */}
       <FloatingPageCalculator
         buttonLabel="MMF Calculator"
-        title="Money Market Fund Calculator"
+        title="MMF Calculator"
         description="Estimate net daily compounding returns after 15% withholding tax"
-        badge="CMA REGULATED"
+        badge="CMA Regulated"
       >
         <MmfCalculator />
       </FloatingPageCalculator>
