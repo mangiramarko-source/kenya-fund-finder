@@ -74,39 +74,39 @@ export function FeedPollCard({
 
   return (
     <div
-      className="animate-rise relative -mx-4 space-y-3.5 border-0 border-b border-border/80 bg-transparent px-4 py-4 shadow-none transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-6 md:shadow-xs"
+      className="animate-rise relative -mx-4 space-y-3.5 border-0 border-b border-border/80 bg-transparent px-3 py-4 shadow-none transition-all md:mx-0 md:rounded-2xl md:border md:bg-card md:p-6 md:shadow-xs"
       style={{ animationDelay: `${index * 80}ms` }}
     >
       {/* Top author/badge row */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-2.5 min-w-0">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-emerald-600 text-white font-extrabold text-sm shadow-xs shrink-0">
+          <div className="flex h-11 w-11 items-center justify-center rounded-full bg-emerald-600 text-white font-extrabold text-sm shadow-xs shrink-0">
             KFF
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <span className="font-bold text-xs sm:text-sm text-foreground truncate">
+              <span className="font-bold text-[15px] sm:text-sm text-foreground truncate">
                 KFF Community Pulse
               </span>
-              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[10px] font-bold text-emerald-600 dark:text-emerald-400">
+              <span className="inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-bold text-emerald-600 dark:text-emerald-400">
                 <Vote className="h-2.5 w-2.5" /> Live Poll
               </span>
             </div>
-            <span className="text-[11px] text-muted-foreground">Today · 24h Remaining</span>
+            <span className="text-[12px] md:text-[11px] text-muted-foreground">Today · 24h Remaining</span>
           </div>
         </div>
 
-        <span className="text-[11px] font-bold text-muted-foreground tabular-nums shrink-0">
+        <span className="text-[12px] md:text-[11px] font-bold text-muted-foreground tabular-nums shrink-0">
           {totalVotes.toLocaleString()} votes
         </span>
       </div>
 
       {/* Poll Question */}
       <div>
-        <h3 className="text-sm sm:text-base font-bold text-foreground leading-snug">
+        <h3 className="text-[16px] sm:text-base font-bold text-foreground leading-snug">
           {question}
         </h3>
-        <p className="text-xs text-muted-foreground mt-1">
+        <p className="text-[13px] md:text-xs text-muted-foreground mt-1">
           Vote below to see what fellow Kenyan retail and institutional investors are anticipating.
         </p>
       </div>
