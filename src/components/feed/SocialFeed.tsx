@@ -85,6 +85,7 @@ export const SocialFeedCard = ({
   const contentRef = useRef<HTMLDivElement>(null);
   const [isExpandable, setIsExpandable] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
+  const [mediaError, setMediaError] = useState(false);
 
   const isStockNews = !!item.relatedStock;
   const isMmfNews = item.type === "NEWS" && !!item.relatedMmf;
@@ -394,7 +395,7 @@ export const SocialFeedCard = ({
         )}
 
         {/* Real Article Image (contained in right column, Twitter style) */}
-        {(() => {
+        {!mediaError && (() => {
           const cardImage = getNewsImage(
             item.mediaUrl || item.rawItem?.image_url,
             item.authorLabel,
@@ -409,7 +410,10 @@ export const SocialFeedCard = ({
                 src={cardImage}
                 alt=""
                 className="w-full h-full object-cover transition-transform duration-300 hover:scale-102"
-                onError={handleNewsImageError}
+                onError={(e) => {
+                  setMediaError(true);
+                  handleNewsImageError(e);
+                }}
                 referrerPolicy="no-referrer"
                 loading="lazy"
               />

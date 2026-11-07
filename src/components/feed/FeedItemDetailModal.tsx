@@ -91,10 +91,12 @@ export function FeedItemDetailModal({
   const [commentText, setCommentText] = useState("");
   const [localCommentsList, setLocalCommentsList] = useState<string[]>([]);
   const [stockLogoError, setStockLogoError] = useState(false);
+  const [heroImageError, setHeroImageError] = useState(false);
   const commentsRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     setStockLogoError(false);
+    setHeroImageError(false);
   }, [item?.id]);
 
   React.useEffect(() => {
@@ -122,13 +124,14 @@ export function FeedItemDetailModal({
   const readableContent = splitReadableParagraphs(item.content).join("\n\n");
   // Desktop opens this modal instead of the full article route. Keep its hero
   // media aligned with that route so the story is not visually incomplete.
-  const heroImage = getNewsImage(
+  const rawHeroImage = getNewsImage(
     item.rawItem?.image_url || item.mediaUrl,
     item.rawItem?.category || item.authorLabel,
     item.rawItem?.id || item.id,
     true,
     item.rawItem?.source,
   );
+  const heroImage = heroImageError ? null : rawHeroImage;
 
   const cachedStocks = stockCache.loadStocks()?.stocks || [];
   const matchedStock: PublicStock | null = item.relatedStock
@@ -332,7 +335,10 @@ export function FeedItemDetailModal({
             <InvestorBriefing
               briefing={briefing}
               heroImage={heroImage}
-              onImageError={handleNewsImageError}
+              onImageError={(e) => {
+                setHeroImageError(true);
+                handleNewsImageError(e);
+              }}
               showTitle={false}
               isGated={isGated}
             />
@@ -345,7 +351,10 @@ export function FeedItemDetailModal({
                     src={heroImage}
                     alt=""
                     className="w-full h-full object-cover"
-                    onError={handleNewsImageError}
+                    onError={(e) => {
+                      setHeroImageError(true);
+                      handleNewsImageError(e);
+                    }}
                     referrerPolicy="no-referrer"
                     loading="lazy"
                   />

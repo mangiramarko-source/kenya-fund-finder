@@ -1,58 +1,11 @@
-/** Placeholder images by category when no image_url is set.
- *  Uses LoremFlickr to generate infinite, deterministic, contextual 
- *  images based on the article category and ID. */
-
-/** Strong 32-bit hash so different ids map to different deterministic seeds. */
-function hashId(id: string | number): number {
-  const idStr = String(id);
-  let h = 2166136261 >>> 0; // FNV-1a basis
-  for (let i = 0; i < idStr.length; i++) {
-    h ^= idStr.charCodeAt(i);
-    h = Math.imul(h, 16777619);
-  }
-  return h >>> 0;
-}
-
-// 60+ premium hand-picked Unsplash IDs of business, finance, and office photography.
-// This guarantees world-class images with zero risk of bad AI generation or repeating "cats".
-const UNSPLASH_POOL = [
-  "ZPeXrWxOoEQ", "U6_xOQ9x42A", "I8a865F2nKk", "vB5xtGOkXgE", "OqmZwNd3ThU",
-  "ZzOa5G8hSPI", "LKsWqL4H1G4", "d4b_B4aNchg", "PNCW3F783vY", "jF69kR07ZzM",
-  "yTfX3Eib91w", "O7bE7-54Ue4", "8vX0Bw8d1o0", "xG8IQMqMITU", "F2VvUa_Jp8o",
-  "M6CqVp9n_C4", "J5V2Qy1N-90", "v7WzQ8r4NBo", "rW-I87aP5EQ", "fT6E8r0lEhc",
-  "LpPcqA5lqgY", "Z530wUq8XwY", "2E9z0L7D7oQ", "c1r0hR804p4", "4wzG-rZ6H1c",
-  "hCcczX83XJw", "Dqq_d23XkF8", "qO_G056t8n4", "OaqsKnv3oEY", "m1Jk8O6-1gI",
-  "yEOTwYc5eN0", "R0e5c9b_L6E", "1K9T5YiZ2WU", "1K9T5YiZ2WU", "Zyx1bK9mqmA",
-  "Xy-T_80v7iM", "PNCW3F783vY", "UvYQJ63k4A0", "Tz7G0_K-E-4", "B3ZqO1t53g0",
-  "561igd9Kq-c", "qWwpHwip31M", "1-aA2Fadydc", "V9XhD-k6oEM", "0w2W1b-fX6I",
-  "c6v6zY6v0g4", "Yq-q7n0k7-E", "Fyl8sMc2-4Y", "H4eUo4gB7fQ", "3bAglS_c09U",
-  "vB5xtGOkXgE", "ZPeXrWxOoEQ", "I8a865F2nKk", "jF69kR07ZzM", "yTfX3Eib91w",
-  "fT6E8r0lEhc", "LpPcqA5lqgY", "c1r0hR804p4", "Dqq_d23XkF8", "m1Jk8O6-1gI"
-];
-
-/** Final safety-net image, always available, deterministic per article id. */
-export function picsumFallback(id: string, large = false): string {
-  const w = large ? 1040 : 560;
-  const h = large ? 650 : 350;
-  const seed = encodeURIComponent(id || "kenya-fund-finder");
-  return `https://picsum.photos/seed/${seed}/${w}/${h}`;
-}
-
-export function getCategoryImage(category: string, id: string, large = false): string {
-  const w = large ? 1040 : 560;
-  const h = large ? 650 : 350;
-  
-  // Pick deterministically from our massive pool of 60 premium images
-  const index = hashId(id || "kenya-fund-finder") % UNSPLASH_POOL.length;
-  const unsplashId = UNSPLASH_POOL[index];
-  
-  return `https://images.unsplash.com/photo-${unsplashId}?w=${w}&h=${h}&fit=crop&q=${large ? "85" : "75"}`;
-}
+/** News image resolution and optimization utilities.
+ *  Preserves genuine publisher editorial images and safely returns null
+ *  for articles that do not come with an image. */
 
 /** Rewrite known CDN URLs to request right-sized variants for card thumbnails.
  *  Saves significant bandwidth vs. serving full-resolution editorial images.
  *  `large=true` requests a hero-sized variant for the first/featured card. */
-function optimizeImageUrl(url: string, large = false): string {
+export function optimizeImageUrl(url: string, large = false): string {
   // Use higher resolutions for retina displays: 560px for thumbnail, 1040px for hero
   const w = large ? 1040 : 560;
   const h = large ? 650 : 350;
@@ -81,53 +34,33 @@ function optimizeImageUrl(url: string, large = false): string {
   return url;
 }
 
+/**
+ * Returns the optimized genuine image URL if the article comes with one,
+ * or null if the article has no image.
+ */
 export function getNewsImage(
   imageUrl?: string | null,
-  category?: string,
-  id?: string,
+  _category?: string,
+  _id?: string,
   large = false,
-  source?: string | null,
-): string {
-  if (imageUrl && imageUrl.trim().length > 0) {
-    return optimizeImageUrl(imageUrl, large);
+  _source?: string | null,
+): string | null {
+  if (imageUrl && typeof imageUrl === "string" && imageUrl.trim().length > 0) {
+    return optimizeImageUrl(imageUrl.trim(), large);
   }
-  const normalizedSource = (source || "").toLowerCase();
-  if (normalizedSource.includes("kbc")) return "/images/news-sources/kbc.png";
-  if (normalizedSource.includes("standard media")) return "/images/news-sources/standard.png";
-  return getCategoryImage(category || "Market News", String(id || "kenya-fund-finder"), large);
+  return null;
 }
 
-/** onError handler — gracefully falls back to curated finance visual, then Picsum, before hiding */
+/**
+ * Error handler for genuine images that fail to load (404, CORS, or broken link).
+ * Gracefully hides the image element/container without injecting placeholder stock photos.
+ */
 export function handleNewsImageError(
   e: React.SyntheticEvent<HTMLImageElement>,
-  category?: string,
-  id?: string
+  _category?: string,
+  _id?: string
 ) {
   const img = e.currentTarget;
-  const stage = img.dataset.fallbackStage || "0";
-  const isLarge = img.naturalWidth > 500 || img.clientWidth > 400;
-  const fallbackId = id || img.dataset.articleId || "kenya-fund-finder";
-  const fallbackCat = category || img.dataset.articleCategory || "Market News";
-
-  if (stage === "0") {
-    img.dataset.fallbackStage = "1";
-    const next = getCategoryImage(fallbackCat, fallbackId, isLarge);
-    if (img.src !== next) {
-      img.src = next;
-      return;
-    }
-  }
-
-  if (stage === "1") {
-    img.dataset.fallbackStage = "2";
-    const next = picsumFallback(fallbackId, isLarge);
-    if (img.src !== next) {
-      img.src = next;
-      return;
-    }
-  }
-
-  // Final failure: gracefully hide the image container
   if (img.parentElement) {
     img.parentElement.style.display = "none";
   } else {
