@@ -92,6 +92,9 @@ const DesktopTopBar = () => {
     if (path === "/rates") {
       return location.pathname.startsWith("/rates") || location.pathname.startsWith("/commodities");
     }
+    if (path === "/calculator") {
+      return location.pathname.startsWith("/calculator") || location.pathname.startsWith("/mmf-calculator");
+    }
     if (path === "/watchlist") {
       return location.pathname === "/watchlist" || (location.pathname === "/portfolio" && location.search.includes("tab=watchlist"));
     }
@@ -107,6 +110,7 @@ const DesktopTopBar = () => {
     { to: "/funds", label: "MMFs" },
     { to: "/savings", label: "Banking" },
     { to: "/rates", label: "FX & Commodities" },
+    { to: "/calculator", label: "Calculator" },
     { to: "/watchlist", label: "Watchlist" },
     { to: "/portfolio", label: "Portfolio" },
   ];

@@ -145,6 +145,7 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.getByText("MMFs")).toBeInTheDocument();
     expect(screen.getByText("Banking")).toBeInTheDocument();
     expect(screen.getByText("FX & Commodities")).toBeInTheDocument();
+    expect(screen.getByText("Calculator")).toBeInTheDocument();
     expect(screen.getByText("Portfolio")).toBeInTheDocument();
 
     fireEvent.click(screen.getByRole("button", { name: /open account menu/i }));
