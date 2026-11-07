@@ -44,13 +44,12 @@ export const FloatingPageCalculator = ({
   return (
     <>
       {/* Floating Action Button (FAB)
-          - On mobile: bottom-[calc(8.25rem+env(safe-area-inset-bottom))] right-4 stacks cleanly above MobileAiLabFab
-          - On desktop: md:bottom-5 md:right-24 sits neatly beside DesktopAiLabChat without collision */}
+          - Exactly matching Banking (/savings) in size, padding, typography, shadow, and positioning on mobile & desktop */}
       <button
         type="button"
         onClick={() => setOpen(true)}
         aria-label={`Open ${title}`}
-        className={`fixed bottom-[calc(8.25rem+env(safe-area-inset-bottom))] md:bottom-5 right-4 md:right-24 z-40 flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-3.5 sm:px-4 py-2 sm:py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs sm:text-sm font-bold border border-emerald-400/30 cursor-pointer ${className}`}
+        className={`fixed bottom-[calc(5.75rem+env(safe-area-inset-bottom))] md:bottom-8 right-4 md:right-8 z-40 flex items-center gap-2 rounded-full bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2.5 shadow-xl shadow-emerald-950/40 active:scale-95 transition-all text-xs md:text-sm font-bold border border-emerald-400/30 cursor-pointer ${className}`}
       >
         <Icon className="h-4 w-4 stroke-[2.5]" />
         <span>{buttonLabel}</span>
