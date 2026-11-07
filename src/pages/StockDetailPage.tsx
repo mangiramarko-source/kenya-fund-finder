@@ -842,7 +842,6 @@ const StockDetailPage = () => {
         buttonLabel="Stock Calculator"
         title={`${s.symbol} Dividend Calculator`}
         description={`${s.name} dividend yields, growth & DRIP returns after 5% WHT`}
-        badge={`NSE · ${s.symbol}`}
       >
         <StockCalculator key={s.symbol} initialSymbol={s.symbol} />
       </FloatingPageCalculator>

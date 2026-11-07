@@ -1157,7 +1157,6 @@ const MobileRateCard = ({
           buttonLabel="Commodity Calculator"
           title="Commodities Calculator"
           description="Convert units to USD and KES, estimate purchase costs and investment returns"
-          badge="Global & Local Benchmark"
         >
           <CommodityCalculator />
         </FloatingPageCalculator>
@@ -1166,7 +1165,6 @@ const MobileRateCard = ({
           buttonLabel="FX Converter"
           title="FX & Currency Calculator"
           description="Convert Kenyan Shilling (KES) against USD, EUR, GBP, and global currencies"
-          badge="CBK Rates"
         >
           <CurrencyConverter />
         </FloatingPageCalculator>

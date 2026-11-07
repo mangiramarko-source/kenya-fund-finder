@@ -29,7 +29,6 @@ export const FloatingPageCalculator = ({
   buttonLabel,
   title,
   description,
-  badge,
   icon: Icon = Calculator,
   className = "",
   children,
@@ -69,33 +68,21 @@ export const FloatingPageCalculator = ({
               {/* Grab handle indicator */}
               <div aria-hidden="true" className="mx-auto mt-3 h-1.5 w-12 shrink-0 rounded-full bg-muted-foreground/30" />
 
-              {/* Header with Eyebrow Badge (guaranteed zero encroachment on close button) */}
-              <div className="flex items-start justify-between border-b border-border/80 px-5 py-3 gap-3">
-                <div className="flex items-start gap-2.5 min-w-0 flex-1">
-                  <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 border border-emerald-500/20">
-                    <Icon className="h-4 w-4" />
-                  </div>
-                  <div className="text-left min-w-0 flex-1">
-                    {badge && (
-                      <div className="mb-0.5">
-                        <span className="inline-flex items-center text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
-                          {badge}
-                        </span>
-                      </div>
-                    )}
-                    <SheetTitle className="text-base font-bold text-foreground leading-tight truncate">
-                      {title}
-                    </SheetTitle>
-                    <SheetDescription className="text-[11px] text-muted-foreground mt-0.5 line-clamp-1">
-                      {description}
-                    </SheetDescription>
-                  </div>
+              {/* Clean, simple text header without badge pills or icon boxes */}
+              <div className="flex items-center justify-between border-b border-border/80 px-5 py-3.5 gap-3">
+                <div className="text-left min-w-0 flex-1">
+                  <SheetTitle className="text-base sm:text-lg font-bold text-foreground leading-tight truncate">
+                    {title}
+                  </SheetTitle>
+                  <SheetDescription className="text-xs text-muted-foreground mt-0.5 line-clamp-1">
+                    {description}
+                  </SheetDescription>
                 </div>
                 <button
                   onClick={() => setOpen(false)}
                   type="button"
                   aria-label="Close calculator"
-                  className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer shrink-0 mt-0.5"
+                  className="flex h-8 w-8 items-center justify-center rounded-full bg-muted/80 text-muted-foreground hover:bg-muted hover:text-foreground transition-colors cursor-pointer shrink-0"
                 >
                   <X className="h-4 w-4 stroke-[2.5]" />
                 </button>
@@ -110,19 +97,9 @@ export const FloatingPageCalculator = ({
         ) : (
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogContent className="max-w-4xl p-0 overflow-hidden rounded-3xl max-h-[90vh] flex flex-col bg-background border-border/80">
-              <DialogHeader className="p-5 pb-3 border-b border-border/60 bg-muted/30">
-                <div className="flex items-start gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-2xl bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5 border border-emerald-500/20">
-                    <Icon className="h-5 w-5" />
-                  </div>
+              <DialogHeader className="p-5 pb-3.5 border-b border-border/60 bg-muted/20">
+                <div className="flex items-center justify-between gap-3">
                   <div className="text-left min-w-0 flex-1">
-                    {badge && (
-                      <div className="mb-1">
-                        <span className="inline-flex items-center text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border border-emerald-500/20 whitespace-nowrap">
-                          {badge}
-                        </span>
-                      </div>
-                    )}
                     <DialogTitle className="text-lg font-black text-foreground">
                       {title}
                     </DialogTitle>

@@ -1259,7 +1259,6 @@ export default function TreasuryPage() {
           buttonLabel="T-Bill Calculator"
           title="T-Bills & Bonds Calculator"
           description="Estimate CBK 91, 182, 364-day auction discount earnings and tax-free bond payouts"
-          badge="CBK DhowCSD"
         >
           <TBillCalculator />
         </FloatingPageCalculator>

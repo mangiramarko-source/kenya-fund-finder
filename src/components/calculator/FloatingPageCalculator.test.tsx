@@ -13,34 +13,33 @@ describe("FloatingPageCalculator", () => {
     render(
       <FloatingPageCalculator
         buttonLabel="MMF Calculator"
-        title="Money Market Fund Calculator"
+        title="MMF Calculator"
         description="Estimate net returns"
       >
         <div data-testid="test-calculator-content">Calculator Content</div>
       </FloatingPageCalculator>
     );
 
-    const button = screen.getByRole("button", { name: /Open Money Market Fund Calculator/i });
+    const button = screen.getByRole("button", { name: /Open MMF Calculator/i });
     expect(button).toBeInTheDocument();
     expect(button).toHaveTextContent("MMF Calculator");
   });
 
-  it("opens modal dialog on desktop when clicked", () => {
+  it("opens modal dialog on desktop when clicked with clean text header", () => {
     render(
       <FloatingPageCalculator
         buttonLabel="Stock Calculator"
-        title="NSE Stocks & Dividend Calculator"
+        title="Stocks & Dividend Calculator"
         description="Project dividend yields"
-        badge="NSE"
       >
         <div data-testid="test-calculator-content">Stock Calculator Body</div>
       </FloatingPageCalculator>
     );
 
-    const button = screen.getByRole("button", { name: /Open NSE Stocks & Dividend Calculator/i });
+    const button = screen.getByRole("button", { name: /Open Stocks & Dividend Calculator/i });
     fireEvent.click(button);
 
     expect(screen.getByText("Stock Calculator Body")).toBeInTheDocument();
-    expect(screen.getByText("NSE Stocks & Dividend Calculator")).toBeInTheDocument();
+    expect(screen.getByText("Stocks & Dividend Calculator")).toBeInTheDocument();
   });
 });

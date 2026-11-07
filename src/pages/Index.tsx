@@ -268,7 +268,6 @@ const Index = () => {
         buttonLabel="MMF Calculator"
         title="MMF Calculator"
         description="Estimate net daily compounding returns after 15% withholding tax"
-        badge="CMA Regulated"
       >
         <MmfCalculator />
       </FloatingPageCalculator>

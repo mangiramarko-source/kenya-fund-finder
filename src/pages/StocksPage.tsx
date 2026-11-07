@@ -1888,7 +1888,6 @@ const StocksRoutePage = () => {
         buttonLabel="Stock Calculator"
         title="Stocks & Dividend Calculator"
         description="Project dividend yields, capital growth, and returns after 5% withholding tax"
-        badge="NSE Listed"
       >
         <StockCalculator />
       </FloatingPageCalculator>
