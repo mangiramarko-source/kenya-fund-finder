@@ -47,6 +47,8 @@ import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { useAuth } from "@/hooks/useAuth";
 import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import InlineDataGate from "@/components/auth/InlineDataGate";
+import FloatingPageCalculator from "@/components/calculator/FloatingPageCalculator";
+import TBillCalculator from "@/components/calculator/TBillCalculator";
 
 export default function TreasuryPage() {
   useDocumentTitle(
@@ -1251,6 +1253,16 @@ export default function TreasuryPage() {
             )}
           </SheetContent>
         </Sheet>
+
+        {/* Floating Action Button & Calculator for T-Bills & Bonds */}
+        <FloatingPageCalculator
+          buttonLabel="T-Bill Calculator"
+          title="Kenya Treasury Bills & Bonds Calculator"
+          description="Estimate CBK 91-day, 182-day, and 364-day auction discount earnings and tax-free bond payouts"
+          badge="CBK DHOWCSD"
+        >
+          <TBillCalculator />
+        </FloatingPageCalculator>
       </div>
     </TooltipProvider>
   );

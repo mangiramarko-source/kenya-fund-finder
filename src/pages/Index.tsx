@@ -18,6 +18,9 @@ import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { useLiveStatus } from "@/hooks/useLiveStatus";
 import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
+import FloatingPageCalculator from "@/components/calculator/FloatingPageCalculator";
+import MmfCalculator from "@/components/calculator/MmfCalculator";
+import StoriesHeader from "@/components/stories/StoriesHeader";
 
 interface FundsPageMemory {
   funds: FundFromDB[];
@@ -173,6 +176,7 @@ const Index = () => {
 
   return (
     <div className="px-4 md:px-6 py-5 md:py-6 space-y-4 animate-in fade-in-50 duration-500">
+      <StoriesHeader className="mb-2" />
       <div className="mb-2 md:mb-4">
         {/* Semantic title for A11y & SEO */}
         <h1 className="sr-only">Money Market Funds</h1>
@@ -258,6 +262,16 @@ const Index = () => {
       />
       <FundBuyerQuestions />
       <ResearchLinks pillar="mmf" />
+
+      {/* Floating Action Button & Calculator for MMF Returns */}
+      <FloatingPageCalculator
+        buttonLabel="MMF Calculator"
+        title="Money Market Fund Calculator"
+        description="Estimate net daily compounding returns after 15% withholding tax"
+        badge="CMA REGULATED"
+      >
+        <MmfCalculator />
+      </FloatingPageCalculator>
     </div>
   );
 };

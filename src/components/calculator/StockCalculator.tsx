@@ -49,17 +49,27 @@ const PERIOD_PRESETS = [
 
 const fmt = (n: number) => Math.round(n).toLocaleString("en-KE");
 
-export const StockCalculator = () => {
+export interface StockCalculatorProps {
+  initialSymbol?: string;
+}
+
+export const StockCalculator = ({ initialSymbol }: StockCalculatorProps = {}) => {
   const [stocks, setStocks] = useState<CachedStock[]>(() => {
     const cached = stockCache.loadStocks();
     if (cached?.stocks && cached.stocks.length > 0) return cached.stocks;
     return FALLBACK_KENYAN_STOCKS;
   });
 
-  const [selectedSymbol, setSelectedSymbol] = useState<string>("SCOM");
+  const [selectedSymbol, setSelectedSymbol] = useState<string>(() => initialSymbol || "SCOM");
   const [sectorFilter, setSectorFilter] = useState<SectorFilter>("all");
   const [stockSearch, setStockSearch] = useState<string>("");
   const [isSelectorOpen, setIsSelectorOpen] = useState<boolean>(false);
+
+  useEffect(() => {
+    if (initialSymbol) {
+      setSelectedSymbol(initialSymbol);
+    }
+  }, [initialSymbol]);
 
   // Inputs
   const [investmentMode, setInvestmentMode] = useState<"amount" | "shares">("amount");

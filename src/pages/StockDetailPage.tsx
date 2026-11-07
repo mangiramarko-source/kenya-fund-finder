@@ -33,6 +33,8 @@ import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu";
 import { Badge } from "@/components/ui/badge";
+import FloatingPageCalculator from "@/components/calculator/FloatingPageCalculator";
+import StockCalculator from "@/components/calculator/StockCalculator";
 import { Skeleton } from "@/components/ui/skeleton";
 import {
   TrendingUp, TrendingDown, Minus, ArrowLeft, Star, BarChart3, Activity,
@@ -834,6 +836,16 @@ const StockDetailPage = () => {
           This information is for educational purposes only and should not be considered financial advice.
         </p>
       </div>
+
+      {/* Floating Action Button & Calculator for Active Counter */}
+      <FloatingPageCalculator
+        buttonLabel="Stock Calculator"
+        title={`${s.name} (${s.symbol}) Dividend & Return Calculator`}
+        description="Calculate dividend yields, capital gains, DRIP reinvestment, and net returns after 5% WHT"
+        badge={s.symbol}
+      >
+        <StockCalculator key={s.symbol} initialSymbol={s.symbol} />
+      </FloatingPageCalculator>
     </div>
   );
 };

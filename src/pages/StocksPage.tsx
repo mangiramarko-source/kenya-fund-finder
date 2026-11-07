@@ -47,6 +47,8 @@ import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { useAssetWatchlist, type WatchlistEntry } from "@/hooks/useAssetWatchlist";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { LineChart, Line, XAxis, YAxis, Tooltip, ResponsiveContainer, CartesianGrid } from "recharts";
+import FloatingPageCalculator from "@/components/calculator/FloatingPageCalculator";
+import StockCalculator from "@/components/calculator/StockCalculator";
 
 type Stock = CachedStock;
 
@@ -1879,7 +1881,19 @@ const StockTableSkeleton = () => (
 
 const StocksRoutePage = () => {
   const isMobile = useIsMobile();
-  return isMobile ? <StocksPage /> : <StockDetailDesktopDemoPage production />;
+  return (
+    <>
+      {isMobile ? <StocksPage /> : <StockDetailDesktopDemoPage production />}
+      <FloatingPageCalculator
+        buttonLabel="Stock Calculator"
+        title="NSE Stocks & Dividend Calculator"
+        description="Project dividend yields, capital growth, and returns after 5% withholding tax"
+        badge="NSE"
+      >
+        <StockCalculator />
+      </FloatingPageCalculator>
+    </>
+  );
 };
 
 export default StocksRoutePage;

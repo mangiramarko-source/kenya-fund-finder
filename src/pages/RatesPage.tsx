@@ -37,6 +37,9 @@ import { useMinimumLoadingDuration } from "@/hooks/useMinimumLoadingDuration";
 import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory";
 import { getCurrencyFlagUrl, KENYA_FLAG_URL } from "@/lib/currencyBranding";
 import { CommoditiesView } from "@/components/rates/CommoditiesView";
+import FloatingPageCalculator from "@/components/calculator/FloatingPageCalculator";
+import CurrencyConverter from "@/components/calculator/CurrencyConverter";
+import CommodityCalculator from "@/components/calculator/CommodityCalculator";
 
 interface Rate {
   id: string;
@@ -178,6 +181,8 @@ const RatesPage = ({ initialTab }: RatesPageProps = {}) => {
       setActiveTab("fx");
     }
   }, [tabParam, location.pathname]);
+
+  const isCommodityTab = activeTab === "commodities" || location.pathname.startsWith("/commodities");
 
   const handleTabChange = (val: MacroTab) => {
     setActiveTab(val);
@@ -1144,6 +1149,27 @@ const MobileRateCard = ({
             />
           </div>
         </div>
+      )}
+
+      {/* Floating Page Calculator: Dynamically toggled between Commodities and FX */}
+      {isCommodityTab ? (
+        <FloatingPageCalculator
+          buttonLabel="Commodity Calculator"
+          title="Commodity Price & Return Calculator"
+          description="Convert units to USD and KES, estimate purchase costs and investment returns"
+          badge="COMMODITIES"
+        >
+          <CommodityCalculator />
+        </FloatingPageCalculator>
+      ) : (
+        <FloatingPageCalculator
+          buttonLabel="FX Converter"
+          title="CBK Forex & Currency Calculator"
+          description="Convert Kenyan Shilling (KES) against USD, EUR, GBP, and global currencies"
+          badge="CBK RATES"
+        >
+          <CurrencyConverter />
+        </FloatingPageCalculator>
       )}
     </div>
   );
