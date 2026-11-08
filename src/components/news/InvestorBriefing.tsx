@@ -14,6 +14,7 @@ import {
   BarChart2,
   ChevronDown,
   ChevronUp,
+  Play,
 } from "lucide-react";
 import type { NormalizedInvestorBriefing, NormalizedMarketSnapshot, MeaningPoint } from "@/lib/newsBriefingMapper";
 import { StockArticleMarketCard } from "@/components/stocks/StockArticleMarketCard";
@@ -30,6 +31,7 @@ interface InvestorBriefingProps {
   onImageError?: (e: React.SyntheticEvent<HTMLImageElement>) => void;
   inlineTransparent?: boolean;
   showTitle?: boolean;
+  showVideoPlayer?: boolean;
   isGated?: boolean;
 }
 
@@ -38,24 +40,99 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
   heroImage,
   onImageError,
   showTitle = true,
+  showVideoPlayer = true,
   isGated = false,
 }) => {
   const [showChart, setShowChart] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const youtubeVideoId = briefing.youtubeVideoId || null;
+
+  React.useEffect(() => {
+    setIsPlayingVideo(false);
+  }, [briefing.id]);
 
   return (
     <div className="space-y-6 font-sans text-foreground">
-      {/* ─── Hero Image (if available) ─── */}
-      {heroImage && (
-        <div className="rounded-2xl overflow-hidden border border-border/80 bg-muted/30 shadow-sm">
-          <img
-            src={heroImage}
-            alt={briefing.title}
-            className="w-full aspect-[16/9] object-cover"
-            onError={onImageError}
-            referrerPolicy="no-referrer"
-            loading="eager"
-          />
-        </div>
+      {/* ─── Hero Video Player or Image (if available) ─── */}
+      {showVideoPlayer && youtubeVideoId ? (
+        isPlayingVideo ? (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            data-testid="inline-video-iframe-container"
+            className="relative overflow-hidden rounded-2xl border border-border/80 bg-black aspect-video w-full shadow-sm"
+          >
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
+              title={briefing.title || "Video Briefing"}
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        ) : (
+          <div
+            onClick={(e) => {
+              e.stopPropagation();
+              setIsPlayingVideo(true);
+            }}
+            role="button"
+            tabIndex={0}
+            aria-label={`Play video: ${briefing.title}`}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                e.stopPropagation();
+                setIsPlayingVideo(true);
+              }
+            }}
+            className="group relative overflow-hidden rounded-2xl border border-border/80 bg-black aspect-video w-full cursor-pointer shadow-sm"
+          >
+            <img
+              src={heroImage || `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`}
+              alt={briefing.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+              onError={(e) => {
+                const fallback = `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`;
+                if (e.currentTarget.src !== fallback) {
+                  e.currentTarget.src = fallback;
+                } else {
+                  onImageError?.(e);
+                }
+              }}
+              referrerPolicy="no-referrer"
+              loading="eager"
+            />
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+              <button
+                type="button"
+                aria-label="Play inline video"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsPlayingVideo(true);
+                }}
+                className="w-14 h-14 rounded-full bg-black/65 backdrop-blur-sm border border-white/25 text-white flex items-center justify-center shadow-xl transition-transform duration-200 group-hover:scale-105 group-hover:bg-black/80"
+              >
+                <Play className="w-6 h-6 fill-white text-white ml-0.5" />
+              </button>
+            </div>
+            <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[11px] font-mono font-semibold text-white border border-white/10">
+              ▶ Video Briefing
+            </span>
+          </div>
+        )
+      ) : (
+        heroImage && (
+          <div className="rounded-2xl overflow-hidden border border-border/80 bg-muted/30 shadow-sm">
+            <img
+              src={heroImage}
+              alt={briefing.title}
+              className="w-full aspect-[16/9] object-cover"
+              onError={onImageError}
+              referrerPolicy="no-referrer"
+              loading="eager"
+            />
+          </div>
+        )
       )}
 
       {/* ─── 1. The Takeaway (Max 1–2 short paragraphs: What happened) ─── */}
@@ -232,12 +309,33 @@ export const InvestorBriefing: React.FC<InvestorBriefingProps> = ({
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
               >
-                <span>{briefing.source.name || briefing.source.sourceDomain || "Original Article"}</span>
+                <span>
+                  {youtubeVideoId && /youtube\.com|youtu\.be/i.test(briefing.source.url)
+                    ? `Watch on YouTube — ${briefing.source.name || "Official Broadcast"}`
+                    : briefing.source.name || briefing.source.sourceDomain || "Original Article"}
+                </span>
                 <ExternalLink className="h-3.5 w-3.5" />
               </a>
             ) : (
               <span className="font-semibold text-foreground/80">{briefing.source.name}</span>
             )}
+            {briefing.videoUrl &&
+              briefing.source.url &&
+              briefing.videoUrl !== briefing.source.url &&
+              /^https?:\/\//i.test(briefing.videoUrl) && (
+                <>
+                  <span className="text-muted-foreground/50">•</span>
+                  <a
+                    href={briefing.videoUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 font-semibold text-emerald-600 dark:text-emerald-400 hover:underline"
+                  >
+                    <span>Watch Video Briefing</span>
+                    <ExternalLink className="h-3.5 w-3.5" />
+                  </a>
+                </>
+              )}
           </div>
 
           {briefing.readTime && (

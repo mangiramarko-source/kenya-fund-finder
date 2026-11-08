@@ -433,6 +433,7 @@ export function FeedItemDetailModal({
                 handleNewsImageError(e);
               }}
               showTitle={false}
+              showVideoPlayer={false}
               isGated={isGated}
             />
           ) : (

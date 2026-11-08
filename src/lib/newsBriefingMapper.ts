@@ -1,5 +1,6 @@
 import { parseNewsAiAnalysis, type NewsFromDB, type NewsAiAnalysis, type PublicStock } from "@/lib/api";
 import { getNewsPublishedAt } from "@/lib/newsDate";
+import { extractYouTubeVideoId } from "@/lib/newsDedupe";
 import { decodeHtmlEntities, splitReadableParagraphs } from "@/lib/utils";
 import { cleanNewsTitle, getNewsPresentation } from "../../supabase/functions/_shared/news-text";
 import { evaluateStockScorecard, type StockScorecardResult } from "@/lib/stockFundamentalScorecard";
@@ -49,6 +50,8 @@ export interface NormalizedInvestorBriefing {
   };
   timeline?: NormalizedTimelineEvent[] | null;
   imageUrl?: string | null;
+  videoUrl?: string | null;
+  youtubeVideoId?: string | null;
   category?: string;
   readTime?: string;
 }
@@ -815,11 +818,18 @@ export function buildInvestorBriefing(
   }
 
   // ─── 8. Source ───
+  const youtubeVideoId = extractYouTubeVideoId(article);
+  const resolvedVideoUrl =
+    article.video_url ||
+    analysis?.video_url ||
+    (youtubeVideoId ? `https://www.youtube.com/watch?v=${youtubeVideoId}` : null);
+  const resolvedSourceUrl = article.url || resolvedVideoUrl || null;
+
   const sourceDomain = (() => {
     if ((article.source || "").toLowerCase().includes("business daily")) return "businessdailyafrica.com";
-    if (!article.url) return "";
+    if (!resolvedSourceUrl) return "";
     try {
-      return new URL(article.url.startsWith("http") ? article.url : `https://${article.url}`).hostname.replace(/^www\./, "");
+      return new URL(resolvedSourceUrl.startsWith("http") ? resolvedSourceUrl : `https://${resolvedSourceUrl}`).hostname.replace(/^www\./, "");
     } catch {
       return "";
     }
@@ -827,7 +837,7 @@ export function buildInvestorBriefing(
 
   const source = {
     name: article.source || "Kenya Fund Finder",
-    url: article.url || null,
+    url: resolvedSourceUrl,
     publishedAt: getNewsPublishedAt(article),
     sourceDomain: sourceDomain || undefined,
   };
@@ -865,6 +875,8 @@ export function buildInvestorBriefing(
     source,
     timeline,
     imageUrl: article.image_url || null,
+    videoUrl: resolvedVideoUrl,
+    youtubeVideoId,
     category: article.category,
     readTime: article.read_time,
   };

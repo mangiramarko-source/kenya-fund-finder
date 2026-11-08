@@ -204,4 +204,50 @@ describe("X/Twitter-style 16:9 Inline Video Player in Feed Cards & Modal", () =>
       "https://www.youtube-nocookie.com/embed/AbCdEfGh123?autoplay=1&rel=0",
     );
   });
+
+  it("resolves verified YouTube briefing IDs (e.g. yt-cbk-Fu-Ueab7Fxw) on Continue Reading with real title, inline video player, and YouTube source link", async () => {
+    const { render, fireEvent } = await import("@testing-library/react");
+    const { MemoryRouter } = await import("react-router-dom");
+    const { fetchNewsById } = await import("@/lib/api");
+    const { buildInvestorBriefing } = await import("@/lib/newsBriefingMapper");
+    const { InvestorBriefing } = await import("@/components/news/InvestorBriefing");
+
+    const article = await fetchNewsById("yt-cbk-Fu-Ueab7Fxw");
+    expect(article).not.toBeNull();
+    expect(article?.title).toBe(
+      "MPC Press Briefing | Central Bank of Kenya Monetary Policy Committee",
+    );
+    expect(article?.title).not.toContain("Yt cbk Fu Ueab7Fxw");
+    expect(article?.source).toBe("Central Bank of Kenya");
+
+    const briefing = buildInvestorBriefing(article!);
+    expect(briefing.youtubeVideoId).toBe("Fu-Ueab7Fxw");
+    expect(briefing.source.url).toBe("https://www.youtube.com/watch?v=Fu-Ueab7Fxw");
+    expect(briefing.whatWeKnow.length).toBeGreaterThan(0);
+
+    const { container, getByLabelText, getByText } = render(
+      <MemoryRouter>
+        <InvestorBriefing
+          briefing={briefing}
+          heroImage={article?.image_url}
+          isGated={false}
+        />
+      </MemoryRouter>,
+    );
+
+    expect(
+      getByText("MPC Press Briefing | Central Bank of Kenya Monetary Policy Committee"),
+    ).toBeTruthy();
+    expect(getByText("▶ Video Briefing")).toBeTruthy();
+    expect(getByText(/Watch on YouTube — Central Bank of Kenya/i)).toBeTruthy();
+
+    const playBtn = getByLabelText("Play inline video");
+    fireEvent.click(playBtn);
+
+    const iframe = container.querySelector("iframe");
+    expect(iframe).not.toBeNull();
+    expect(iframe?.getAttribute("src")).toBe(
+      "https://www.youtube-nocookie.com/embed/Fu-Ueab7Fxw?autoplay=1&rel=0",
+    );
+  });
 });

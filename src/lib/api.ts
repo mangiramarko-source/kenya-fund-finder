@@ -297,7 +297,10 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
 }
 
 export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
-  const verifiedVideo = VERIFIED_YOUTUBE_BRIEFINGS.find((v) => v.id === id);
+  const normalizedId = id.replace(/^news-/, "");
+  const verifiedVideo = VERIFIED_YOUTUBE_BRIEFINGS.find(
+    (v) => v.id === id || v.id === normalizedId,
+  );
   if (verifiedVideo) {
     return {
       ...verifiedVideo,
@@ -313,7 +316,7 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
   if (!data) return null;
   const parsed_ai_analysis = parseNewsAiAnalysis(data.ai_insight);
 
-  return {
+  const dbArticle: NewsFromDB = {
     id: data.id!,
     title: data.title!,
     summary: data.summary!,
@@ -333,6 +336,20 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
     parsed_ai_analysis,
     video_url: (data as any).video_url || parsed_ai_analysis?.video_url || null,
   };
+
+  if (dbArticle.video_url) {
+    return dbArticle;
+  }
+
+  const merged = dedupeNewsArticles([
+    dbArticle,
+    ...VERIFIED_YOUTUBE_BRIEFINGS.map((v) => ({
+      ...v,
+      parsed_ai_analysis: parseNewsAiAnalysis(v.ai_insight),
+    })),
+  ]);
+
+  return merged.find((item) => item.id === dbArticle.id) || dbArticle;
 }
 
 export async function fetchPublicStockById(id: string): Promise<PublicStock | null> {
@@ -525,6 +542,23 @@ const VERIFIED_YOUTUBE_BRIEFINGS: NewsFromDB[] = [
         "Benchmark CBR adjustments directly influence 91-day, 182-day, and 364-day Treasury Bill auction rates and Money Market Fund (MMF) effective annual yields.",
       investor_takeaway:
         "Fixed-income and MMF investors should monitor upcoming CBK primary bond and T-Bill auctions as short-term yields recalibrate to the policy rate.",
+      confirmed_facts: [
+        "The Central Bank of Kenya Monetary Policy Committee reviewed domestic headline inflation, private sector credit growth, and usable foreign exchange reserves.",
+        "Commercial bank interbank rates and primary Treasury Bill auction cut-off rates remain anchored to the CBK monetary policy corridor.",
+        "Foreign exchange inflows from diaspora remittances and agricultural exports continue to support Kenya Shilling stability."
+      ],
+      factors_positive: [
+        "Sustained positive real yields on Kenyan Treasury Bills and Money Market Funds above headline inflation.",
+        "Easing benchmark borrowing costs can gradually lower commercial bank lending rates and support NSE corporate earnings."
+      ],
+      factors_negative: [
+        "Gradual monetary easing can compress newly issued 91-day and 182-day T-Bill reinvestment yields over subsequent quarters."
+      ],
+      watch_next: [
+        "Weekly CBK Treasury Bill auction subscription levels and accepted discount rates across 91-day, 182-day, and 364-day tenors.",
+        "Monthly KNBS Consumer Price Index (CPI) inflation release and food/fuel price trends.",
+        "Next scheduled Monetary Policy Committee (MPC) meeting and official press communique."
+      ]
     }),
   },
   {
@@ -555,6 +589,23 @@ const VERIFIED_YOUTUBE_BRIEFINGS: NewsFromDB[] = [
         "Sustained government appetite for domestic credit keeps risk-free yields competitive, supporting high returns in Kenyan Money Market Funds and IFBs.",
       investor_takeaway:
         "Tax-exempt Infrastructure Bonds (IFBs) and top-tier CMA-licensed Money Market Funds remain attractive real-return anchors amid elevated fiscal borrowing.",
+      confirmed_facts: [
+        "Public debt servicing costs consume approximately 78% of ordinary tax revenue collected by the Kenya Revenue Authority (KRA).",
+        "Domestic Treasury bond and T-Bill issuances remain a primary financing channel for the National Treasury budget deficit.",
+        "Elevated sovereign yields create a high risk-free hurdle rate for Nairobi Securities Exchange (NSE) equities."
+      ],
+      factors_positive: [
+        "Fixed-income investors and Money Market Fund unit holders benefit from historically competitive double-digit sovereign yields.",
+        "Tax-free Infrastructure Bonds (IFBs) provide high net effective returns without withholding tax leakage."
+      ],
+      factors_negative: [
+        "High sovereign domestic borrowing can crowd out private sector credit and weigh on interest-sensitive NSE sectors."
+      ],
+      watch_next: [
+        "National Treasury supplementary budget estimates and KRA quarterly revenue performance disclosures.",
+        "Primary CBK Treasury bond tap sales, switch auctions, and Infrastructure Bond (IFB) prospectuses.",
+        "Yield spreads between CMA-regulated Money Market Funds and 364-day Treasury Bills."
+      ]
     }),
   },
   {
@@ -585,6 +636,22 @@ const VERIFIED_YOUTUBE_BRIEFINGS: NewsFromDB[] = [
         "ETFs give Kenyan investors intraday liquidity and diversified exposure through a standard CDS account alongside NSE blue-chip equities.",
       investor_takeaway:
         "Compare ETF expense ratios and underlying asset tracking against Money Market Funds and direct NSE stock holdings when building a balanced portfolio.",
+      confirmed_facts: [
+        "Exchange Traded Funds (ETFs) listed on the Nairobi Securities Exchange trade intraday just like ordinary company shares.",
+        "Investors hold and settle ETF units electronically through a Central Depository System (CDS) account regulated by CDSC Kenya.",
+        "ETFs allow retail and institutional investors to gain diversified underlying asset or commodity exposure in a single trade."
+      ],
+      factors_positive: [
+        "Transparent intraday pricing on the NSE and custody protection via CDSC electronic settlement.",
+        "Broadens portfolio diversification options beyond single-stock NSE equities and traditional unit trusts."
+      ],
+      factors_negative: [
+        "Secondary market bid-ask spreads and brokerage commissions apply when buying or selling ETF units on the NSE."
+      ],
+      watch_next: [
+        "New ETF listings and market-making liquidity initiatives announced by the Nairobi Securities Exchange (NSE).",
+        "CDSC mobile and digital portal upgrades for retail CDS account holders."
+      ]
     }),
   },
   {
@@ -608,6 +675,29 @@ const VERIFIED_YOUTUBE_BRIEFINGS: NewsFromDB[] = [
     related_stock_id: null,
     ai_insight: JSON.stringify({
       video_url: "https://www.youtube.com/watch?v=FinuFGusAqM",
+      event_label: "CBK DhowCSD Treasury Guide",
+      what_happened:
+        "The Central Bank of Kenya demonstrated the step-by-step workflow for submitting primary Treasury Bill and Bond bids, managing maturing rollovers, and canceling pending orders on the DhowCSD platform.",
+      why_it_matters:
+        "Direct DhowCSD execution allows retail and institutional Kenyan investors to participate in primary government securities auctions with zero brokerage intermediary fees.",
+      investor_takeaway:
+        "Investors rolling over maturing 91-day, 182-day, or 364-day Treasury Bills must submit rollover instructions before the auction cut-off window on DhowCSD.",
+      confirmed_facts: [
+        "The CBK DhowCSD web and mobile app enables direct retail bidding in primary Treasury Bill and Treasury Bond auctions.",
+        "Investors can elect automatic principal or principal-plus-interest rollovers for maturing government securities.",
+        "Pending competitive or non-competitive bids can be modified or canceled directly in the DhowCSD portal prior to auction closure."
+      ],
+      factors_positive: [
+        "Eliminates middleman custody fees and streamlines direct settlement with the Central Bank of Kenya.",
+        "Simplifies reinvestment of maturing Treasury Bills alongside Money Market Fund cash management."
+      ],
+      factors_negative: [
+        "Missed settlement deadlines or incorrect bid parameters prior to auction cut-off can result in lapsed allocations."
+      ],
+      watch_next: [
+        "Weekly CBK Treasury Bill auction prospectuses and Thursday auction cut-off schedules on DhowCSD.",
+        "Upcoming reopenings and new primary Treasury Bond issuances announced by the Central Bank of Kenya."
+      ]
     }),
   },
 ];

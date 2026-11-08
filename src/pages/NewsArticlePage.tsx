@@ -115,7 +115,7 @@ const educationalTips = [
   }
 ];
 
-function getSyntheticArticle(id: string): NewsFromDB | null {
+function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFromDB | null {
   if (id === "daily-market-summary") {
     return {
       id: "daily-market-summary",
@@ -257,9 +257,9 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
     };
   }
 
-  // Only fallback for non-UUID strings that might have been dynamically generated feed items
+  // Only fallback for non-UUID strings when explicitly requested after fetchNewsById fails
   const isUUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
-  if (!isUUID && !/^\d+$/.test(id)) {
+  if (allowGenericFallback && !isUUID && !/^\d+$/.test(id)) {
     const readableTitle = id.replace(/^(news-)?/, '').replace(/-/g, ' ');
     return {
       id: id,
@@ -405,13 +405,13 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
             .then(setRelated)
             .catch(() => {});
         } else {
-          const syn = getSyntheticArticle(id);
+          const syn = getSyntheticArticle(id, true);
           setArticle(syn);
           setLoading(false);
         }
       })
       .catch(() => {
-        const syn = getSyntheticArticle(id);
+        const syn = getSyntheticArticle(id, true);
         setArticle(syn);
         setLoading(false);
       });
@@ -530,7 +530,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
   const formattedDate = isNaN(pubDate.getTime()) ? "Today" : format(pubDate, "d MMM yyyy");
   const relativeTime = isNaN(pubDate.getTime()) ? "now" : formatDistanceToNow(pubDate, { addSuffix: true }).replace("about ", "");
   const stockLogoUrl = relatedStock ? getStockLogoUrl(relatedStock.symbol) : "";
-  const sourceLogoUrl = getSourceLogoUrl(article.source, article.url);
+  const sourceLogoUrl = getSourceLogoUrl(article.source, article.url || article.video_url);
   const briefing = article ? buildInvestorBriefing(article, {
     stock: relatedStock,
     mmf: relatedMmf,
@@ -585,7 +585,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
         {/* ─── 2. Author Header ─── */}
         <div className="flex items-center gap-3">
             {/* Avatar */}
-            <div className={`${(relatedStock || relatedMmf || relatedFx || relatedCommodity) ? "rounded-xl bg-white text-emerald-700" : "rounded-full bg-emerald-600 text-white"} w-10 h-10 border border-border font-bold text-sm flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
+            <div className={`${(relatedStock || (sourceLogoUrl && !sourceLogoError) || relatedMmf || relatedFx || relatedCommodity) ? "rounded-xl bg-white text-emerald-700" : "rounded-full bg-emerald-600 text-white"} w-10 h-10 border border-border font-bold text-sm flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
               {relatedStock && stockLogoUrl && !stockLogoError ? (
                 <img
                   src={stockLogoUrl}
@@ -594,7 +594,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
                   onError={() => setStockLogoError(true)}
                   referrerPolicy="no-referrer"
                 />
-              ) : !(relatedStock || relatedMmf || relatedFx || relatedCommodity) && sourceLogoUrl && !sourceLogoError ? (
+              ) : !relatedStock && sourceLogoUrl && !sourceLogoError ? (
                 <img
                   src={sourceLogoUrl}
                   alt={`${article.source} logo`}
@@ -618,11 +618,11 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
             <div className="flex min-w-0 flex-1 flex-col">
               <div className="flex items-center gap-2 min-w-0 flex-wrap">
                 <span className="font-bold text-sm text-foreground">
-                  {relatedStock?.name || relatedMmf?.name || relatedFx?.pair || relatedCommodity?.name || article.source || "KenyaFundFinder"}
+                  {relatedStock?.name || article.source || relatedMmf?.name || relatedFx?.pair || relatedCommodity?.name || "KenyaFundFinder"}
                 </span>
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
                 <span className="truncate text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-muted-foreground font-semibold">
-                  {relatedStock ? "Stock" : relatedMmf ? "MMF" : relatedFx ? "FX Rate" : relatedCommodity ? "Commodity" : article.category || "Market News"}
+                  {relatedStock ? "Stock" : article.category || (relatedMmf ? "MMF" : relatedFx ? "FX Rate" : relatedCommodity ? "Commodity" : "Market News")}
                 </span>
                 
                 {/* Related Asset Metrics Pill */}
