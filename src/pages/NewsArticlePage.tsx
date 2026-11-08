@@ -38,6 +38,7 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
+import { getSourceLogoUrl } from "@/lib/sourceBranding";
 import { getNewsPresentation } from "../../supabase/functions/_shared/news-text";
 import { getDemoArticles } from "@/lib/demo-data";
 import { buildRelatedMarketLinks } from "@/lib/newsMarketLinks";
@@ -529,15 +530,7 @@ function getSyntheticArticle(id: string): NewsFromDB | null {
   const formattedDate = isNaN(pubDate.getTime()) ? "Today" : format(pubDate, "d MMM yyyy");
   const relativeTime = isNaN(pubDate.getTime()) ? "now" : formatDistanceToNow(pubDate, { addSuffix: true }).replace("about ", "");
   const stockLogoUrl = relatedStock ? getStockLogoUrl(relatedStock.symbol) : "";
-  const sourceDomain = (() => {
-    if ((article.source || "").toLowerCase().includes("kbc")) return "kbc-local";
-    if ((article.source || "").toLowerCase().includes("business daily")) return "businessdailyafrica.com";
-    if (!article.url) return "";
-    try { return new URL(article.url).hostname; } catch { return ""; }
-  })();
-  const sourceLogoUrl = sourceDomain === "kbc-local"
-    ? "/images/news-sources/kbc.png"
-    : sourceDomain ? `https://www.google.com/s2/favicons?domain=${sourceDomain}&sz=128` : "";
+  const sourceLogoUrl = getSourceLogoUrl(article.source, article.url);
   const briefing = article ? buildInvestorBriefing(article, {
     stock: relatedStock,
     mmf: relatedMmf,

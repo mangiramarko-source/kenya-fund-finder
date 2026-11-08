@@ -2,7 +2,9 @@ import React, { useState, useRef, useEffect, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { type FeedItem } from "@/hooks/useSocialFeed";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, MoreHorizontal, BarChart3, Newspaper, DollarSign, Wallet, ArrowRight, MessageCircle, Share2, ArrowBigUp, BarChart2, Bookmark } from "lucide-react";
+import { Heart, MoreHorizontal, BarChart3, Newspaper, DollarSign, Wallet, ArrowRight, MessageCircle, Share2, ArrowBigUp, BarChart2, Bookmark, Play } from "lucide-react";
+import { extractYouTubeVideoId } from "@/lib/newsDedupe";
+import { getSourceLogoUrl } from "@/lib/sourceBranding";
 import { Sparkline } from "./Sparkline";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { FeedItemDetailModal } from "./FeedItemDetailModal";
@@ -86,6 +88,28 @@ export const SocialFeedCard = ({
   const [isExpandable, setIsExpandable] = useState(false);
   const [avatarError, setAvatarError] = useState(false);
   const [mediaError, setMediaError] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [hasRecordedVideoView, setHasRecordedVideoView] = useState(false);
+
+  const youtubeVideoId = useMemo(
+    () =>
+      extractYouTubeVideoId(item.rawItem) ||
+      extractYouTubeVideoId({
+        video_url: (item as any).videoUrl,
+        url: item.url,
+        image_url: item.mediaUrl,
+      }),
+    [item],
+  );
+
+  const handlePlayInlineVideo = (e: React.MouseEvent | React.KeyboardEvent) => {
+    e.stopPropagation();
+    if (!hasRecordedVideoView) {
+      setHasRecordedVideoView(true);
+      onRecordView?.(item.id);
+    }
+    setIsPlayingVideo(true);
+  };
 
   const isStockNews = !!item.relatedStock;
   const isMmfNews = item.type === "NEWS" && !!item.relatedMmf;
@@ -148,9 +172,7 @@ export const SocialFeedCard = ({
     [item.title, item.rawItem?.summary, item.content, item.rawItem?.category, authorName, item.rawItem?.source, item.authorLabel, item.relatedStock, item.rawItem?.related_stock_id]
   );
   
-  const domain = getDomainFromUrl(item.url || item.rawItem?.link);
-  const customLogo = getCustomSourceLogo(authorName, domain);
-  const avatarSrc = customLogo || (domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null);
+  const avatarSrc = getSourceLogoUrl(authorName, item.url || item.rawItem?.link);
   const showFavicon = !isSocialPost && avatarSrc && !avatarError;
 
   const handleCardClick = () => {
@@ -232,7 +254,11 @@ export const SocialFeedCard = ({
         ) : (
           <div
             className={`w-12 h-12 rounded-full border ${
-              isSocialPost ? "bg-black dark:bg-white/10 text-white border-black/10" : getAvatarBg(item.type)
+              isSocialPost
+                ? "bg-black dark:bg-white/10 text-white border-black/10"
+                : showFavicon && avatarSrc?.startsWith("/images/")
+                  ? "bg-white dark:bg-neutral-900 border-border"
+                  : getAvatarBg(item.type)
             } text-white font-bold text-sm flex items-center justify-center shadow-xs overflow-hidden`}
           >
             {isSocialPost ? (
@@ -243,7 +269,7 @@ export const SocialFeedCard = ({
               <img
                 src={avatarSrc!}
                 alt={authorName}
-                className={`w-full h-full bg-white ${customLogo ? "object-contain p-1" : "object-cover"}`}
+                className={`w-full h-full bg-white dark:bg-neutral-900 ${avatarSrc?.startsWith("/images/") ? "object-contain p-1" : "object-cover"}`}
                 onError={() => setAvatarError(true)}
                 referrerPolicy="no-referrer"
               />
@@ -394,32 +420,99 @@ export const SocialFeedCard = ({
           </div>
         )}
 
-        {/* Real Article Image (contained in right column, Twitter style) */}
-        {!mediaError && (() => {
-          const cardImage = getNewsImage(
-            item.mediaUrl || item.rawItem?.image_url,
-            item.authorLabel,
-            item.id,
-            false,
-            item.rawItem?.source
-          );
-          if (!cardImage) return null;
-          return (
-            <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-muted/30 aspect-[16/9] w-full max-h-[320px]">
+        {/* Inline Video Player or Real Article Image (contained in right column, Twitter style) */}
+        {youtubeVideoId ? (
+          isPlayingVideo ? (
+            <div
+              onClick={(e) => e.stopPropagation()}
+              data-testid="inline-video-iframe-container"
+              className="relative overflow-hidden rounded-2xl border border-border/80 bg-black aspect-video w-full max-h-[320px]"
+            >
+              <iframe
+                src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
+                title={item.title || "Video Briefing"}
+                className="w-full h-full border-0"
+                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                allowFullScreen
+              />
+            </div>
+          ) : (
+            <div
+              onClick={handlePlayInlineVideo}
+              role="button"
+              tabIndex={0}
+              aria-label={`Play video: ${item.title}`}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") {
+                  e.preventDefault();
+                  handlePlayInlineVideo(e);
+                }
+              }}
+              className="group relative overflow-hidden rounded-2xl border border-border/80 bg-black aspect-video w-full max-h-[320px] cursor-pointer"
+            >
               <img
-                src={cardImage}
-                alt=""
-                className="w-full h-full object-cover transition-transform duration-300 hover:scale-102"
+                src={
+                  getNewsImage(
+                    item.mediaUrl || item.rawItem?.image_url,
+                    item.authorLabel,
+                    item.id,
+                    false,
+                    item.rawItem?.source,
+                  ) || `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`
+                }
+                alt={item.title}
+                className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
                 onError={(e) => {
-                  setMediaError(true);
-                  handleNewsImageError(e);
+                  const fallback = `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`;
+                  if (e.currentTarget.src !== fallback) {
+                    e.currentTarget.src = fallback;
+                  }
                 }}
                 referrerPolicy="no-referrer"
                 loading="lazy"
               />
+              <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                <button
+                  type="button"
+                  aria-label="Play inline video"
+                  onClick={handlePlayInlineVideo}
+                  className="w-14 h-14 rounded-full bg-black/65 backdrop-blur-sm border border-white/25 text-white flex items-center justify-center shadow-xl transition-transform duration-200 group-hover:scale-105 group-hover:bg-black/80"
+                >
+                  <Play className="w-6 h-6 fill-white text-white ml-0.5" />
+                </button>
+              </div>
+              <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[11px] font-mono font-semibold text-white border border-white/10">
+                ▶ Video Briefing
+              </span>
             </div>
-          );
-        })()}
+          )
+        ) : (
+          !mediaError && (() => {
+            const cardImage = getNewsImage(
+              item.mediaUrl || item.rawItem?.image_url,
+              item.authorLabel,
+              item.id,
+              false,
+              item.rawItem?.source
+            );
+            if (!cardImage) return null;
+            return (
+              <div className="relative overflow-hidden rounded-2xl border border-border/80 bg-muted/30 aspect-[16/9] w-full max-h-[320px]">
+                <img
+                  src={cardImage}
+                  alt=""
+                  className="w-full h-full object-cover transition-transform duration-300 hover:scale-102"
+                  onError={(e) => {
+                    setMediaError(true);
+                    handleNewsImageError(e);
+                  }}
+                  referrerPolicy="no-referrer"
+                  loading="lazy"
+                />
+              </div>
+            );
+          })()
+        )}
 
         {/* Continue Reading Link */}
         <div>

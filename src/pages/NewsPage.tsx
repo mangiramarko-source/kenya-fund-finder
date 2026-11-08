@@ -20,7 +20,7 @@ import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/fundsFixedIncomeNews";
 import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 import { matchesNewsTab } from "@/lib/newsTabMatching";
-import { dedupeNewsByUrl } from "@/lib/newsDedupe";
+import { dedupeNewsArticles } from "@/lib/newsDedupe";
 import { classifyArticleCategory } from "@/lib/articleCategoryClassifier";
 import { calculateRankScore } from "@/lib/feedEngagement";
 import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
@@ -113,7 +113,7 @@ export default function NewsPage() {
         const stockNewsData = stockNewsResult.status === "fulfilled" ? stockNewsResult.value : [];
         const stocksData = stocksResult.status === "fulfilled" ? stocksResult.value : [];
         const resolved = stocksData || [];
-        const mergedNews = dedupeNewsByUrl([
+        const mergedNews = dedupeNewsArticles([
           ...newsData,
           ...stockNewsData.filter((s) => !newsData.some((g) => g.id === s.id)),
         ]);
@@ -142,7 +142,7 @@ export default function NewsPage() {
         setArticles(current => {
           const incoming = [...latest, ...stockNews];
           const incomingIds = new Set(incoming.map(article => article.id));
-          return dedupeNewsByUrl([
+          return dedupeNewsArticles([
             ...incoming,
             ...current.filter(article => !incomingIds.has(article.id)),
           ]);
@@ -188,7 +188,7 @@ export default function NewsPage() {
       if (batch.length > 0) {
         const existingIds = new Set(accumulated.map(a => a.id));
         const fresh = batch.filter(a => !existingIds.has(a.id));
-        accumulated = dedupeNewsByUrl([...accumulated, ...fresh]);
+        accumulated = dedupeNewsArticles([...accumulated, ...fresh]);
         currentOffset = nextOffset;
       } else {
         hasMoreRemote = false;

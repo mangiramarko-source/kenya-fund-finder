@@ -33,7 +33,7 @@ import { MarketMoversCard } from "@/components/desktop/MarketMoversCard";
 import { toast } from "sonner";
 import { safeUUID } from "@/lib/safeUUID";
 import { fetchPublishedNews, fetchStockLinkedNews, fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
-import { dedupeNewsByUrl } from "@/lib/newsDedupe";
+import { dedupeNewsArticles } from "@/lib/newsDedupe";
 import { getNewsPublishedAt } from "@/lib/newsDate";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
@@ -953,7 +953,7 @@ const OverviewPage = () => {
       if (batch.length > 0) {
         const existingIds = new Set(accumulated.map(a => a.id));
         const fresh = batch.filter(a => !existingIds.has(a.id));
-        accumulated = dedupeNewsByUrl([...accumulated, ...fresh]);
+        accumulated = dedupeNewsArticles([...accumulated, ...fresh]);
         currentOffset = nextOffset;
       } else {
         hasMoreRemote = false;
@@ -1044,7 +1044,7 @@ const OverviewPage = () => {
       .then(() => setFundsLoading(false));
     Promise.all([fetchPublishedNews(60, 0), fetchStockLinkedNews(40)])
       .then(([generalNews, stockNews]) => {
-        const merged = dedupeNewsByUrl([
+        const merged = dedupeNewsArticles([
           ...generalNews,
           ...stockNews.filter((s) => !generalNews.some((g) => g.id === s.id)),
         ]);
@@ -1074,7 +1074,7 @@ const OverviewPage = () => {
           setNews(current => {
             const incoming = [...latest, ...stockNews];
             const incomingIds = new Set(incoming.map(a => a.id));
-            return dedupeNewsByUrl([
+            return dedupeNewsArticles([
               ...incoming,
               ...current.filter(a => !incomingIds.has(a.id)),
             ]);

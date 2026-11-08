@@ -37,6 +37,8 @@ const KEYWORDS = [
 ];
 
 const RSS_FEEDS = [
+  // Primary Regulatory (Tier 1)
+  { url: "https://www.centralbank.go.ke/feed/", source: "Central Bank of Kenya" },
   // Kenyan business press (Primary Focus)
   { url: "https://news.google.com/rss/search?q=site:businessdailyafrica.com+business+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Business Daily" },
   { url: "https://www.standardmedia.co.ke/rss/business.php", source: "Standard Media" },
@@ -50,11 +52,15 @@ const RSS_FEEDS = [
   { url: "https://news.google.com/rss/search?q=site:kenyanwallstreet.com+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Kenyan Wall Street" },
   { url: "https://news.google.com/rss/search?q=site:bizna.co.ke+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Bizna Kenya" },
   // Pan-African / Regional Context
+  { url: "https://www.ecofinagency.com/finance?format=feed&type=rss", source: "Ecofin Agency" },
+  { url: "https://allafrica.com/tools/headlines/rdf/kenya/headlines.rdf", source: "AllAfrica" },
   { url: "https://african.business/feed", source: "African Business" },
   { url: "https://www.theafricareport.com/feed/", source: "The Africa Report" },
   { url: "https://furtherafrica.com/feed/", source: "Further Africa" },
   { url: "https://www.ft.com/world/africa?format=rss", source: "Financial Times Africa" },
   // Tech & Startups (Silicon Savannah)
+  { url: "https://techcabal.com/feed/", source: "TechCabal" },
+  { url: "https://disrupt-africa.com/feed/", source: "Disrupt Africa" },
   { url: "https://news.google.com/rss/search?q=site:techcabal.com+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "TechCabal" },
   { url: "https://news.google.com/rss/search?q=site:techweez.com+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "TechWeez" },
   // Free Google News RSS queries strictly focused on Kenyan Markets
@@ -67,9 +73,19 @@ const RSS_FEEDS = [
   { url: "https://news.google.com/rss/search?q=Kenya+(%22treasury+bills%22+OR+%22treasury+bonds%22+OR+%22infrastructure+bond%22+OR+%22corporate+bond%22+OR+%22money+market+fund%22+OR+%22unit+trust%22+OR+%22DhowCSD%22)+when:7d&hl=en-KE&gl=KE&ceid=KE:en", source: "Google News" },
 ];
 
+// Guardrail 1: Verified YouTube Channel IDs only (never guess UC... IDs)
+const VERIFIED_YOUTUBE_FEEDS = [
+  { channelId: "UCv_-B3iPYj2XQ2gQ_fyhHRw", source: "Central Bank of Kenya", requireMacroFilter: false },
+  { channelId: "UCgrAIOyT2rROw4NRIx3b-Wg", source: "Kenyan Wall Street", requireMacroFilter: false },
+  { channelId: "UCsba91UGiQLFOb5DN3Z_AdQ", source: "CNBC Africa", requireMacroFilter: true },
+  { channelId: "UCfwsnnLRgJ5k2ir9IkU-Bqw", source: "CDSC Kenya", requireMacroFilter: false },
+  { channelId: "UCual_P_eQvhLllXRvSdZtxw", source: "Nairobi Securities Exchange", requireMacroFilter: false },
+];
+
 interface ParsedArticle {
   title: string;
   url: string | null;
+  video_url?: string | null;
   summary: string;
   content: string | null;
   source_published_at: string | null;
@@ -122,24 +138,58 @@ function normalizeUrl(url: string | null): string | null {
   try {
     const u = new URL(url.trim());
     // Strip tracking params, fragment, trailing slash; lowercase host
-    const stripParams = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid", "ref", "mc_cid", "mc_eid"];
+    const stripParams = ["utm_source", "utm_medium", "utm_campaign", "utm_term", "utm_content", "fbclid", "gclid", "ref", "mc_cid", "mc_eid", "feature", "si"];
     stripParams.forEach((p) => u.searchParams.delete(p));
     u.hash = "";
-    let normalized = `${u.protocol}//${u.host.toLowerCase()}${u.pathname.replace(/\/+$/, "")}`;
+    const host = u.host.toLowerCase();
+    const path = u.pathname.replace(/\/+$/, "");
+    // Preserve case-sensitive YouTube video IDs (?v=...)
+    if (host.includes("youtube.com") && u.searchParams.has("v")) {
+      const vid = u.searchParams.get("v");
+      return `${u.protocol.toLowerCase()}//${host}${path}?v=${vid}`;
+    }
+    let normalized = `${u.protocol.toLowerCase()}//${host}${path}`;
     const qs = u.searchParams.toString();
     if (qs) normalized += `?${qs}`;
     return normalized.toLowerCase();
   } catch {
-    return url.trim().toLowerCase();
+    return url.trim();
   }
 }
 
-function normalizeTitle(title: string): string {
-  return title
+function normalizeFinancialText(text: string): string {
+  return (text || "")
     .toLowerCase()
-    .replace(/[^\w\s]/g, " ") // strip punctuation
+    .replace(/(\d+(?:\.\d+)?)\s*(?:pc|per\s*cent|percent)\b/g, "$1%")
+    .replace(/(\d+(?:\.\d+)?)\s*(?:basis\s+points?|bps)\b/g, "$1bps")
+    .replace(/\b(?:central\s+bank\s+rate|cbr|benchmark\s+(?:lending\s+)?rate|base\s+(?:lending\s+)?rate|key\s+(?:lending\s+)?rate|policy\s+rate)\b/g, " cbr ")
+    .replace(/\b(?:central\s+bank\s+of\s+kenya|central\s+bank|cbk)\b/g, " cbk ")
+    .replace(/\b(?:monetary\s+policy\s+committee|mpc)\b/g, " mpc ")
+    .replace(/\b(?:nairobi\s+securities\s+exchange|nairobi\s+bourse|nse)\b/g, " nse ")
+    .replace(/\b(?:capital\s+markets\s+authority|cma)\b/g, " cma ")
+    .replace(/\b(?:kenya\s+revenue\s+authority|kra)\b/g, " kra ")
+    .replace(/\b(?:energy\s+and\s+petroleum\s+regulatory\s+authority|epra)\b/g, " epra ")
+    .replace(/\b(?:central\s+depository(?:\s+and\s+settlement\s+corporation)?|cdsc)\b/g, " cdsc ")
+    .replace(/\b(?:treasury\s+bills?|t-?bills?)\b/g, " tbills ")
+    .replace(/\b(?:treasury\s+bonds?|t-?bonds?|infrastructure\s+bonds?)\b/g, " tbonds ")
+    .replace(/\b(?:money\s+market\s+funds?|mmfs?|unit\s+trusts?)\b/g, " mmf ")
+    .replace(/\b(?:kenya\s+shillings?|shillings?|kes|kshs?|shs)\s*(\d)/g, " kes $1")
+    .replace(/\b(?:kenya\s+shillings?|shillings?|kes|kshs?|shs)\b/g, " kes ")
+    .replace(/\b(?:safaricom\s+plc|safaricom|scom)\b/g, " safaricom ")
+    .replace(/\b(?:kcb\s+group|kcb\s+bank|kcb)\b/g, " kcb ")
+    .replace(/\b(?:equity\s+group(?:\s+holdings)?|equity\s+bank|eqty)\b/g, " equitygroup ")
+    .replace(/\b(?:co-?operative\s+bank|co-?op\s+bank|coop\s+bank)\b/g, " coopbank ")
+    .replace(/\b(?:east\s+african\s+breweries|eabl)\b/g, " eabl ")
+    .replace(/\b(?:maintains|maintained|retains|retained|holds|held|keeps|kept|unchanged)\b/g, " holds ")
+    .replace(/\b(?:cuts|cut|lowers|lowered|reduces|reduced|slashes|slashed|trims|trimmed)\b/g, " cuts ")
+    .replace(/\b(?:raises|raised|hikes|hiked|increases|increased|lifts|lifted)\b/g, " hikes ")
+    .replace(/[^\w\s.%]/g, " ")
     .replace(/\s+/g, " ")
     .trim();
+}
+
+function normalizeTitle(title: string): string {
+  return normalizeFinancialText(cleanNewsTitle(title));
 }
 
 // Common English stopwords removed before fuzzy comparison
@@ -148,14 +198,20 @@ const STOPWORDS = new Set([
   "from", "as", "is", "are", "was", "were", "be", "been", "being", "it", "its", "this", "that",
   "these", "those", "has", "have", "had", "will", "would", "could", "should", "may", "can",
   "s", "t", "up", "down", "out", "over", "under", "after", "before", "into", "than",
-  "new", "says", "said", "amid", "vs", "via",
+  "new", "says", "said", "amid", "vs", "via", "kenya", "kenyan", "nairobi",
+]);
+
+const KNOWN_ENTITIES = new Set([
+  "cbk", "cbr", "mpc", "nse", "cma", "kra", "epra", "cdsc", "tbills", "tbonds",
+  "mmf", "safaricom", "kcb", "equitygroup", "coopbank", "eabl",
 ]);
 
 function tokenize(title: string): Set<string> {
   return new Set(
     normalizeTitle(title)
       .split(" ")
-      .filter((w) => w.length > 2 && !STOPWORDS.has(w)),
+      .map((w) => w.replace(/^\.+|\.+$/g, ""))
+      .filter((w) => w.length >= 2 && !STOPWORDS.has(w)),
   );
 }
 
@@ -167,16 +223,57 @@ function jaccardSimilarity(a: Set<string>, b: Set<string>): number {
   return intersection / union;
 }
 
-// Two titles are "fuzzy duplicates" when they share ≥45% of significant tokens.
-// Lowered from 0.7 to better catch reworded coverage of the same story across sources.
-const FUZZY_THRESHOLD = 0.45;
+const FUZZY_THRESHOLD = 0.40;
 
+function hasEntityAndMetricOverlap(a: Set<string>, b: Set<string>): boolean {
+  let sharedEntity = false;
+  let sharedMetric = false;
+  const years = new Set(["2023", "2024", "2025", "2026", "2027", "2028"]);
+  for (const token of a) {
+    if (!b.has(token)) continue;
+    if (KNOWN_ENTITIES.has(token)) sharedEntity = true;
+    if (/^\d+(?:\.\d+)?(?:%|bps)?$/.test(token) && !years.has(token)) sharedMetric = true;
+  }
+  return sharedEntity && sharedMetric;
+}
+
+// Guardrail 4: Require >= 0.40 headline Jaccard OR (shared entity + shared metric + >= 0.30 Jaccard)
 function isFuzzyDuplicate(tokens: Set<string>, existingTokens: Set<string>[]): boolean {
-  if (tokens.size < 3) return false; // too short to compare reliably
+  if (tokens.size < 3) return false;
   for (const ex of existingTokens) {
-    if (jaccardSimilarity(tokens, ex) >= FUZZY_THRESHOLD) return true;
+    const sim = jaccardSimilarity(tokens, ex);
+    if (sim >= FUZZY_THRESHOLD) return true;
+    if (sim >= 0.30 && hasEntityAndMetricOverlap(tokens, ex)) return true;
   }
   return false;
+}
+
+function mergeClusteredParsedArticles(existing: ParsedArticle, incoming: ParsedArticle): ParsedArticle {
+  const existingLen = (existing.summary?.length || 0) + (existing.content?.length || 0);
+  const incomingLen = (incoming.summary?.length || 0) + (incoming.content?.length || 0);
+  const existingSubstantive = (existing.summary?.length || 0) >= 120 || (existing.content?.length || 0) >= 200;
+  const incomingSubstantive = (incoming.summary?.length || 0) >= 120 || (incoming.content?.length || 0) >= 200;
+
+  const primary =
+    incomingSubstantive && !existingSubstantive
+      ? incoming
+      : existingSubstantive && !incomingSubstantive
+      ? existing
+      : incomingLen > existingLen
+      ? incoming
+      : existing;
+  const secondary = primary === existing ? incoming : existing;
+
+  return {
+    ...primary,
+    summary:
+      primary.summary && primary.summary.length >= (secondary.summary?.length || 0)
+        ? primary.summary
+        : secondary.summary || primary.summary,
+    content: primary.content || secondary.content,
+    video_url: primary.video_url || secondary.video_url || null,
+    image_url: primary.image_url || secondary.image_url || null,
+  };
 }
 
 // --- AI rewriting (summary + long-form body, in original words) ----------
@@ -417,7 +514,236 @@ const TRUSTED_PUBLISHERS: Record<string, string> = {
   "cma": "Capital Markets Authority",
   "central bank of kenya": "Central Bank of Kenya",
   "centralbank.go.ke": "Central Bank of Kenya",
+  "nairobi securities exchange": "Nairobi Securities Exchange",
+  "nse.co.ke": "Nairobi Securities Exchange",
+  "cdsc kenya": "CDSC Kenya",
+  "cdsckenya.com": "CDSC Kenya",
+  "cnbc africa": "CNBC Africa",
+  "cnbcafrica.com": "CNBC Africa",
+  "ecofin agency": "Ecofin Agency",
+  "ecofinagency.com": "Ecofin Agency",
+  "allafrica": "AllAfrica",
+  "allafrica.com": "AllAfrica",
+  "disrupt africa": "Disrupt Africa",
+  "disrupt-africa.com": "Disrupt Africa",
 };
+
+function matchesKenyaOrMacroVideoFilter(text: string): boolean {
+  const lower = text.toLowerCase();
+  const isKenyaOrEac =
+    /\b(kenya|kenyan|nairobi|shilling|kes|ksh|cbk|cma|nse|east africa|eac|safaricom|kcb|equity bank|co-op bank|eabl|dhowcsd|unit trust|money market|mmf)\b/.test(
+      lower,
+    );
+  if (isKenyaOrEac) return true;
+
+  // Exclude non-EAC single-country regional noise (Nigeria, Ghana, South Africa, etc.) when Kenya/EAC is not mentioned
+  const isOtherAfricanCountryNoise =
+    /\b(nigeria|nigerian|naira|ghana|ghanaian|cedi|south africa|johannesburg|jse|rand|zambia|zimbabwe|botswana|namibia|angola|mozambique|cote d'ivoire|senegal)\b/.test(
+      lower,
+    );
+  if (isOtherAfricanCountryNoise) return false;
+
+  const isGlobalMacro =
+    /\b(federal reserve|us fed|ecb|brent|crude oil|opec|gold price|imf|world bank|eurobond)\b/.test(
+      lower,
+    );
+  return isGlobalMacro;
+}
+
+async function fetchYouTubeFeed(
+  channelId: string,
+  source: string,
+  requireMacroFilter: boolean,
+): Promise<ParsedArticle[]> {
+  const articles: ParsedArticle[] = [];
+  const now = new Date();
+  const feedUrl = `https://www.youtube.com/feeds/videos.xml?channel_id=${channelId}`;
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 12000);
+    const res = await fetch(feedUrl, {
+      headers: { "User-Agent": "KenyaFundFinder/1.0" },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) {
+      console.error(`YouTube feed ${source} returned ${res.status}`);
+      return articles;
+    }
+    const xml = await res.text();
+    const entries = xml.split(/<entry[\s>]/i).slice(1);
+
+    for (const entry of entries) {
+      const videoId = extractTag(entry, "yt:videoId");
+      const rawTitle = stripHtml(extractTag(entry, "title"));
+      if (!videoId || !rawTitle) continue;
+
+      const linkMatch = entry.match(/<link[^>]+href=["']([^"']+)["']/i);
+      const rawLink = linkMatch ? linkMatch[1] : `https://www.youtube.com/watch?v=${videoId}`;
+
+      // Guardrail 1: Strictly filter out YouTube Shorts
+      if (/\/shorts\//i.test(rawLink) || /#shorts\b/i.test(rawTitle)) {
+        continue;
+      }
+
+      const published = extractTag(entry, "published") || extractTag(entry, "updated");
+      const pubInfo = parseNewsPublicationTime(published, now);
+      if (pubInfo.reason === "stale_publication_time" || pubInfo.reason === "future_publication_time") {
+        continue;
+      }
+
+      const descriptionRaw = extractTag(entry, "media:description") || extractTag(entry, "summary");
+      const cleanDesc = stripHtml(descriptionRaw).slice(0, 1500);
+      const combinedText = `${rawTitle} ${cleanDesc}`;
+
+      if (requireMacroFilter && !matchesKenyaOrMacroVideoFilter(combinedText)) {
+        continue;
+      }
+      if (!requireMacroFilter && !matchesKeywords(combinedText) && !matchesKenyaOrMacroVideoFilter(combinedText)) {
+        continue;
+      }
+
+      const title = cleanNewsTitle(rawTitle, source);
+      const canonicalVideoUrl = `https://www.youtube.com/watch?v=${videoId}`;
+      const substantiveSummary =
+        cleanDesc.length >= 80 && !isDuplicateNewsText(rawTitle, cleanDesc, source)
+          ? cleanDesc.slice(0, 1000)
+          : `${title}. Official video briefing from ${source} covering Kenyan financial markets, monetary policy, and key implications for local investors. ${cleanDesc}`.trim();
+
+      articles.push({
+        title,
+        url: canonicalVideoUrl,
+        video_url: canonicalVideoUrl,
+        summary: substantiveSummary,
+        content: cleanDesc || substantiveSummary,
+        source_published_at: pubInfo.iso,
+        source,
+        image_url: `https://i.ytimg.com/vi/${videoId}/hqdefault.jpg`,
+      });
+    }
+  } catch (err) {
+    console.error(`Error fetching YouTube feed ${source}:`, err);
+  }
+  return articles;
+}
+
+function parseGdeltSeenDate(seendate: string | undefined): string | null {
+  if (!seendate) return null;
+  // Format: YYYYMMDDTHHMMSSZ
+  const m = seendate.match(/^(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})(\d{2})Z$/);
+  if (!m) return parseSourcePublishedAt(seendate);
+  return `${m[1]}-${m[2]}-${m[3]}T${m[4]}:${m[5]}:${m[6]}.000Z`;
+}
+
+async function fetchGdeltArticles(): Promise<ParsedArticle[]> {
+  const articles: ParsedArticle[] = [];
+  const now = new Date();
+  const gdeltUrl =
+    'https://api.gdeltproject.org/api/v2/doc/doc?query=(sourcecountry:KE%20OR%20%22Central%20Bank%20of%20Kenya%22%20OR%20%22Nairobi%20Securities%20Exchange%22%20OR%20%22Kenya%20Shilling%22)&mode=artlist&format=json&maxrecords=30&timespan=48h';
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 10000);
+    const res = await fetch(gdeltUrl, {
+      headers: { "User-Agent": "KenyaFundFinder/1.0" },
+      signal: controller.signal,
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return articles;
+
+    const data = await res.json();
+    const rawList = Array.isArray(data?.articles) ? data.articles : [];
+    const candidates: Array<{
+      title: string;
+      url: string;
+      source: string;
+      iso: string | null;
+      image_url: string | null;
+    }> = [];
+
+    for (const item of rawList) {
+      if (!item?.url || !item?.title) continue;
+      if (item.language && item.language.toLowerCase() !== "english") continue;
+      const trustedSource = resolveTrustedPublisher(item.domain || "", item.url);
+      if (!trustedSource) continue;
+
+      const iso = parseGdeltSeenDate(item.seendate);
+      const pubInfo = parseNewsPublicationTime(iso, now);
+      if (pubInfo.reason === "stale_publication_time" || pubInfo.reason === "future_publication_time") {
+        continue;
+      }
+
+      const cleanTitle = cleanNewsTitle(stripHtml(item.title), trustedSource);
+      if (!cleanTitle || !matchesKeywords(cleanTitle)) continue;
+
+      candidates.push({
+        title: cleanTitle,
+        url: normalizeUrl(item.url) || item.url,
+        source: trustedSource,
+        iso: pubInfo.iso,
+        image_url: item.socialimage || null,
+      });
+      if (candidates.length >= 6) break;
+    }
+
+    // HTML description fallback for GDELT records (since artlist JSON omits descriptions)
+    await mapWithConcurrency(candidates, 3, async (cand) => {
+      let summary = "";
+      let content: string | null = null;
+      let ogImage: string | null = cand.image_url;
+      try {
+        const ctrl = new AbortController();
+        const t = setTimeout(() => ctrl.abort(), 6000);
+        const pageRes = await fetch(cand.url, {
+          headers: {
+            "User-Agent":
+              "Mozilla/5.0 (compatible; KenyaFundFinder/1.0)",
+          },
+          signal: ctrl.signal,
+        });
+        clearTimeout(t);
+        if (pageRes.ok) {
+          const html = await pageRes.text();
+          const $ = cheerio.load(html);
+          const metaDesc =
+            $('meta[property="og:description"]').attr("content") ||
+            $('meta[name="description"]').attr("content") ||
+            "";
+          if (!ogImage) {
+            ogImage = $('meta[property="og:image"]').attr("content") || null;
+          }
+          $('script, style, nav, header, footer, iframe, aside').remove();
+          const paras: string[] = [];
+          $("p").each((_, el) => {
+            const txt = $(el).text().trim();
+            if (txt.length > 40) paras.push(txt);
+          });
+          summary = stripHtml(metaDesc).slice(0, 1000);
+          if (paras.length > 0) {
+            content = paras.slice(0, 10).join("\n\n").slice(0, 5000);
+            if (!summary) summary = paras[0].slice(0, 600);
+          }
+        }
+      } catch {
+        // Fallback if individual HTML scrape times out
+      }
+
+      if (summary || content) {
+        articles.push({
+          title: cand.title,
+          url: cand.url,
+          summary: summary || (content ? content.slice(0, 600) : ""),
+          content,
+          source_published_at: cand.iso,
+          source: cand.source,
+          image_url: ogImage,
+        });
+      }
+    });
+  } catch (err) {
+    console.warn("GDELT fetch skipped:", err);
+  }
+  return articles;
+}
 
 function resolveTrustedPublisher(rawSource: string, link: string): string | null {
   const normRaw = (rawSource || "").toLowerCase().replace(/[^\w\s.-]/g, " ").trim();
@@ -540,15 +866,23 @@ Deno.serve(async (req) => {
 
     const supabase = createClient(supabaseUrl, getSupabaseSecretKey());
 
-    const feedResults = await Promise.allSettled(
-      RSS_FEEDS.map((f) => fetchFeed(f.url, f.source))
-    );
-    const allArticles = feedResults
-      .filter((r): r is PromiseFulfilledResult<ParsedArticle[]> => r.status === "fulfilled")
-      .flatMap(r => r.value);
+    const [rssResults, youtubeResults, gdeltResult] = await Promise.all([
+      Promise.allSettled(RSS_FEEDS.map((f) => fetchFeed(f.url, f.source))),
+      Promise.allSettled(
+        VERIFIED_YOUTUBE_FEEDS.map((yt) =>
+          fetchYouTubeFeed(yt.channelId, yt.source, yt.requireMacroFilter)
+        ),
+      ),
+      Promise.allSettled([fetchGdeltArticles()]),
+    ]);
 
-    const successCount = feedResults.filter(r => r.status === "fulfilled").length;
-    const failCount = feedResults.filter(r => r.status === "rejected").length;
+    const combinedResults = [...youtubeResults, ...gdeltResult, ...rssResults];
+    const allArticles = combinedResults
+      .filter((r): r is PromiseFulfilledResult<ParsedArticle[]> => r.status === "fulfilled")
+      .flatMap((r) => r.value);
+
+    const successCount = combinedResults.filter((r) => r.status === "fulfilled").length;
+    const failCount = combinedResults.filter((r) => r.status === "rejected").length;
 
     if (allArticles.length === 0) {
       return new Response(
@@ -565,7 +899,7 @@ Deno.serve(async (req) => {
 
     const existingUrls = new Set(
       (existing || [])
-        .map((e: { url: string | null }) => normalizeUrl(e.url))
+        .map((e: { url: string | null }) => normalizeUrl(e.url)?.toLowerCase())
         .filter((v): v is string => Boolean(v)),
     );
     const existingTitles = new Set(
@@ -578,29 +912,42 @@ Deno.serve(async (req) => {
       .map((e: { title: string }) => tokenize(e.title || ""))
       .filter((s: Set<string>) => s.size >= 3);
 
-    // Dedupe within this batch as well (cross-feed duplicates from Google News etc.)
-    const seenUrls = new Set<string>();
-    const seenTitles = new Set<string>();
-    const seenTokenSets: Set<string>[] = [];
+    // Step 1: Cluster & merge within this batch (Guardrail 4: merge video + text clusters)
+    const batchClusters: ParsedArticle[] = [];
+    const batchTokenSets: Set<string>[] = [];
+    for (const a of allArticles) {
+      const tokens = tokenize(a.title);
+      let matchedIdx = -1;
+      for (let i = 0; i < batchClusters.length; i++) {
+        const cUrl = normalizeUrl(batchClusters[i].url)?.toLowerCase();
+        const aUrl = normalizeUrl(a.url)?.toLowerCase();
+        if ((cUrl && aUrl && cUrl === aUrl) || isFuzzyDuplicate(tokens, [batchTokenSets[i]])) {
+          matchedIdx = i;
+          break;
+        }
+      }
+      if (matchedIdx === -1) {
+        batchClusters.push(a);
+        batchTokenSets.push(tokens);
+      } else {
+        batchClusters[matchedIdx] = mergeClusteredParsedArticles(batchClusters[matchedIdx], a);
+      }
+    }
+
+    // Step 2: Dedupe merged batch clusters against existing DB rows
     let fuzzySkipped = 0;
-    const dedupedArticles = allArticles.filter((a) => {
-      const nUrl = normalizeUrl(a.url);
+    const dedupedArticles = batchClusters.filter((a) => {
+      const nUrl = normalizeUrl(a.url)?.toLowerCase();
       const nTitle = normalizeTitle(a.title);
       if (nUrl && existingUrls.has(nUrl)) return false;
       if (nTitle && existingTitles.has(nTitle)) return false;
-      if (nUrl && seenUrls.has(nUrl)) return false;
-      if (nTitle && seenTitles.has(nTitle)) return false;
 
-      // Fuzzy title match against existing DB + this batch
       const tokens = tokenize(a.title);
-      if (isFuzzyDuplicate(tokens, existingTokenSets) || isFuzzyDuplicate(tokens, seenTokenSets)) {
+      if (isFuzzyDuplicate(tokens, existingTokenSets)) {
         fuzzySkipped++;
         return false;
       }
 
-      if (nUrl) seenUrls.add(nUrl);
-      if (nTitle) seenTitles.add(nTitle);
-      if (tokens.size >= 3) seenTokenSets.push(tokens);
       return true;
     });
 
@@ -703,6 +1050,7 @@ Deno.serve(async (req) => {
         classification_version: NEWS_CLASSIFICATION_VERSION,
         is_featured: false,
         read_time: estimateReadTime(quality.summary + " " + (quality.content || "")),
+        ...(a.video_url ? { ai_insight: JSON.stringify({ video_url: a.video_url }) } : {}),
       };
     });
 

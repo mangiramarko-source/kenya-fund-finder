@@ -1,7 +1,8 @@
 import { useNavigate } from "react-router-dom";
-import { useMemo, useState, type MouseEvent } from "react";
+import { useMemo, useState, type MouseEvent, type KeyboardEvent } from "react";
 import { formatDistanceToNow } from "date-fns";
-import { Heart, TrendingUp, TrendingDown, Minus, ArrowRight, MoreHorizontal, MessageCircle, Share2, ArrowBigUp, BarChart2, Bookmark } from "lucide-react";
+import { Heart, TrendingUp, TrendingDown, Minus, ArrowRight, MoreHorizontal, MessageCircle, Share2, ArrowBigUp, BarChart2, Bookmark, Play } from "lucide-react";
+import { extractYouTubeVideoId } from "@/lib/newsDedupe";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { useIsMobile } from "@/hooks/use-mobile";
@@ -38,7 +39,29 @@ export function StockFeedCard({
   const isMobile = useIsMobile();
   const navigate = useNavigate();
   const [logoError, setLogoError] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
+  const [hasRecordedVideoView, setHasRecordedVideoView] = useState(false);
   const stock = item.relatedStock;
+
+  const youtubeVideoId = useMemo(
+    () =>
+      extractYouTubeVideoId(item.rawItem) ||
+      extractYouTubeVideoId({
+        video_url: (item as any).videoUrl,
+        url: item.url,
+        image_url: item.mediaUrl,
+      }),
+    [item],
+  );
+
+  const handlePlayInlineVideo = (e: MouseEvent | KeyboardEvent) => {
+    e.stopPropagation();
+    if (!hasRecordedVideoView) {
+      setHasRecordedVideoView(true);
+      onRecordView?.(item.id);
+    }
+    setIsPlayingVideo(true);
+  };
 
   const scorecard = useMemo(() => {
     if (!stock) return null;
@@ -252,6 +275,65 @@ export function StockFeedCard({
             {item.aiInsight || item.content}
           </p>
         </>
+      )}
+
+      {youtubeVideoId && (
+        isPlayingVideo ? (
+          <div
+            onClick={(e) => e.stopPropagation()}
+            data-testid="inline-video-iframe-container"
+            className="relative overflow-hidden rounded-2xl border border-border/80 bg-black aspect-video w-full max-h-[320px]"
+          >
+            <iframe
+              src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
+              title={item.title || "Video Briefing"}
+              className="w-full h-full border-0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowFullScreen
+            />
+          </div>
+        ) : (
+          <div
+            onClick={handlePlayInlineVideo}
+            role="button"
+            tabIndex={0}
+            aria-label={`Play video: ${item.title}`}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                handlePlayInlineVideo(e);
+              }
+            }}
+            className="group relative overflow-hidden rounded-2xl border border-border/80 bg-black aspect-video w-full max-h-[320px] cursor-pointer"
+          >
+            <img
+              src={item.rawItem?.image_url || item.mediaUrl || `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`}
+              alt={item.title}
+              className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+              onError={(e) => {
+                const fallback = `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`;
+                if (e.currentTarget.src !== fallback) {
+                  e.currentTarget.src = fallback;
+                }
+              }}
+              referrerPolicy="no-referrer"
+              loading="lazy"
+            />
+            <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+              <button
+                type="button"
+                aria-label="Play inline video"
+                onClick={handlePlayInlineVideo}
+                className="w-14 h-14 rounded-full bg-black/65 backdrop-blur-sm border border-white/25 text-white flex items-center justify-center shadow-xl transition-transform duration-200 group-hover:scale-105 group-hover:bg-black/80"
+              >
+                <Play className="w-6 h-6 fill-white text-white ml-0.5" />
+              </button>
+            </div>
+            <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[11px] font-mono font-semibold text-white border border-white/10">
+              ▶ Video Briefing
+            </span>
+          </div>
+        )
       )}
 
       {/* Quantitative Fundamental Micro-Strip (Valuation, Yield & Benchmark Context) */}

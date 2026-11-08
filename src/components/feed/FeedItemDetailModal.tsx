@@ -21,8 +21,10 @@ import {
   DollarSign,
   ArrowBigUp,
   BarChart2,
-  Bookmark
+  Bookmark,
+  Play
 } from "lucide-react";
+import { extractYouTubeVideoId } from "@/lib/newsDedupe";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
 import { Sparkline } from "./Sparkline";
 import { Badge } from "@/components/ui/badge";
@@ -34,6 +36,7 @@ import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
 import type { PostInteraction } from "@/hooks/useFeedInteractions";
 import { getStockLogoUrl } from "@/lib/stockBranding";
+import { getSourceLogoUrl } from "@/lib/sourceBranding";
 import { InvestorBriefing } from "@/components/news/InvestorBriefing";
 import { buildInvestorBriefing } from "@/lib/newsBriefingMapper";
 import { type NewsFromDB, type PublicStock } from "@/lib/api";
@@ -91,12 +94,16 @@ export function FeedItemDetailModal({
   const [commentText, setCommentText] = useState("");
   const [localCommentsList, setLocalCommentsList] = useState<string[]>([]);
   const [stockLogoError, setStockLogoError] = useState(false);
+  const [sourceLogoError, setSourceLogoError] = useState(false);
   const [heroImageError, setHeroImageError] = useState(false);
+  const [isPlayingVideo, setIsPlayingVideo] = useState(false);
   const commentsRef = useRef<HTMLDivElement>(null);
 
   React.useEffect(() => {
     setStockLogoError(false);
+    setSourceLogoError(false);
     setHeroImageError(false);
+    setIsPlayingVideo(false);
   }, [item?.id]);
 
   React.useEffect(() => {
@@ -132,6 +139,13 @@ export function FeedItemDetailModal({
     item.rawItem?.source,
   );
   const heroImage = heroImageError ? null : rawHeroImage;
+  const youtubeVideoId =
+    extractYouTubeVideoId(item.rawItem) ||
+    extractYouTubeVideoId({
+      video_url: (item as any).videoUrl,
+      url: item.url,
+      image_url: item.mediaUrl,
+    });
 
   const cachedStocks = stockCache.loadStocks()?.stocks || [];
   const matchedStock: PublicStock | null = item.relatedStock
@@ -243,11 +257,16 @@ export function FeedItemDetailModal({
           const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
           const cleanAuthor = isSocialPost ? item.authorName.replace(/^X\s*-\s*/, '') : item.authorName;
           const stockLogoUrl = stock ? getStockLogoUrl(stock.symbol, (stock as any).logoUrl || (stock as any).logo_url) : "";
+          const sourceLogoUrl = !stock ? getSourceLogoUrl(cleanAuthor, item.url || item.rawItem?.link || item.rawItem?.url) : null;
           return (
             <div className="p-3.5 sm:p-5 border-b border-border dark:border-white/10 relative shrink-0 bg-card dark:bg-neutral-900">
               <div className="flex items-center justify-between gap-4 pr-8">
                 <div className="flex items-center gap-3">
-                  <div className={`w-10 h-10 flex items-center justify-center shrink-0 border overflow-hidden ${stock ? "rounded-xl bg-white text-emerald-700 border-border" : `rounded-full ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)}`}`}>
+                  <div className={`w-10 h-10 flex items-center justify-center shrink-0 border overflow-hidden ${
+                    stock || (sourceLogoUrl && !sourceLogoError)
+                      ? "rounded-xl bg-white text-emerald-700 border-border dark:bg-neutral-900"
+                      : `rounded-full ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)}`
+                  }`}>
                     {stock && stockLogoUrl && !stockLogoError ? (
                       <img
                         src={stockLogoUrl}
@@ -262,6 +281,14 @@ export function FeedItemDetailModal({
                       <svg className="w-5 h-5 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
                         <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
                       </svg>
+                    ) : sourceLogoUrl && !sourceLogoError ? (
+                      <img
+                        src={sourceLogoUrl}
+                        alt={`${cleanAuthor} logo`}
+                        className="h-full w-full object-contain p-1 bg-white dark:bg-neutral-900"
+                        onError={() => setSourceLogoError(true)}
+                        referrerPolicy="no-referrer"
+                      />
                     ) : (
                       <span className="text-white font-bold text-sm tracking-wider">{getInitials(cleanAuthor)}</span>
                     )}
@@ -331,10 +358,76 @@ export function FeedItemDetailModal({
             )}
           </div>
 
+          {youtubeVideoId && (
+            isPlayingVideo ? (
+              <div
+                onClick={(e) => e.stopPropagation()}
+                data-testid="inline-video-iframe-container"
+                className="relative overflow-hidden rounded-2xl border border-border/80 bg-black aspect-video w-full"
+              >
+                <iframe
+                  src={`https://www.youtube-nocookie.com/embed/${youtubeVideoId}?autoplay=1&rel=0`}
+                  title={item.title || "Video Briefing"}
+                  className="w-full h-full border-0"
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                />
+              </div>
+            ) : (
+              <div
+                onClick={(e) => {
+                  e.stopPropagation();
+                  setIsPlayingVideo(true);
+                }}
+                role="button"
+                tabIndex={0}
+                aria-label={`Play video: ${item.title}`}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter" || e.key === " ") {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    setIsPlayingVideo(true);
+                  }
+                }}
+                className="group relative overflow-hidden rounded-2xl border border-border/80 bg-black aspect-video w-full cursor-pointer"
+              >
+                <img
+                  src={heroImage || `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`}
+                  alt={item.title}
+                  className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-102"
+                  onError={(e) => {
+                    const fallback = `https://i.ytimg.com/vi/${youtubeVideoId}/hqdefault.jpg`;
+                    if (e.currentTarget.src !== fallback) {
+                      e.currentTarget.src = fallback;
+                    }
+                  }}
+                  referrerPolicy="no-referrer"
+                  loading="eager"
+                />
+                <div className="absolute inset-0 bg-black/20 group-hover:bg-black/30 transition-colors flex items-center justify-center">
+                  <button
+                    type="button"
+                    aria-label="Play inline video"
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setIsPlayingVideo(true);
+                    }}
+                    className="w-14 h-14 rounded-full bg-black/65 backdrop-blur-sm border border-white/25 text-white flex items-center justify-center shadow-xl transition-transform duration-200 group-hover:scale-105 group-hover:bg-black/80"
+                  >
+                    <Play className="w-6 h-6 fill-white text-white ml-0.5" />
+                  </button>
+                </div>
+                <span className="absolute bottom-2.5 right-2.5 inline-flex items-center gap-1 rounded-md bg-black/80 backdrop-blur-xs px-2 py-0.5 text-[11px] font-mono font-semibold text-white border border-white/10">
+                  ▶ Video Briefing
+                </span>
+              </div>
+            )
+          )}
+
           {briefing ? (
             <InvestorBriefing
               briefing={briefing}
-              heroImage={heroImage}
+              heroImage={youtubeVideoId ? null : heroImage}
               onImageError={(e) => {
                 setHeroImageError(true);
                 handleNewsImageError(e);
@@ -345,7 +438,7 @@ export function FeedItemDetailModal({
           ) : (
             <>
               {/* Media Box */}
-              {heroImage && (
+              {!youtubeVideoId && heroImage && (
                 <div className="relative mt-2 mb-2 rounded-xl overflow-hidden border border-border bg-muted/40 max-h-[350px]">
                   <img
                     src={heroImage}

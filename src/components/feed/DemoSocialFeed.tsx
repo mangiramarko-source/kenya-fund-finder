@@ -13,6 +13,7 @@ import remarkGfm from '@/lib/remarkGfmSafe';
 import { useFeedInteractions, type PostInteraction } from "@/hooks/useFeedInteractions";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { CorporateActionCard } from "./CorporateActionCard";
+import { getSourceLogoUrl } from "@/lib/sourceBranding";
 
 const getInitials = (name: string) => {
   if (!name) return "";
@@ -116,9 +117,7 @@ export const DemoSocialFeedCard = ({
   const rawLabel = item.authorLabel || "marketnews";
   const authorHandle = rawLabel.startsWith("@") ? rawLabel : `@${rawLabel.toLowerCase().replace(/\s+/g, '')}`;
   
-  const domain = getDomainFromUrl(item.url || item.rawItem?.link);
-  const customLogo = getCustomSourceLogo(authorName, domain);
-  const avatarSrc = customLogo || (domain ? `https://www.google.com/s2/favicons?domain=${domain}&sz=128` : null);
+  const avatarSrc = getSourceLogoUrl(authorName, item.url || item.rawItem?.link);
   const showFavicon = !isSocialPost && avatarSrc && !avatarError;
   
   const primaryStock = item.relatedStocks?.[0];
