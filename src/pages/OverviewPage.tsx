@@ -26,7 +26,6 @@ import {
 import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
 import { MarketSummary } from "@/components/MarketSummary";
 import { YieldCalculator } from "@/components/YieldCalculator";
-import { NseMarketStatusCard } from "@/components/desktop/NseMarketStatusCard";
 import { DesktopWatchlistPortfolioCard } from "@/components/desktop/DesktopWatchlistPortfolioCard";
 import { ExchangeRatesCard } from "@/components/desktop/ExchangeRatesCard";
 import { MarketMoversCard } from "@/components/desktop/MarketMoversCard";
@@ -1474,7 +1473,6 @@ const OverviewPage = () => {
 
         {/* Right Column - Desktop Only */}
         <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 lg:flex lg:flex-col lg:space-y-4">
-          <NseMarketStatusCard />
           <MarketMoversCard stocks={stocks as any} />
           <ExchangeRatesCard
             rates={displayFxRates}

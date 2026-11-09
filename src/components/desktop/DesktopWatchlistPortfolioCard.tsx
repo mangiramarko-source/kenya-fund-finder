@@ -10,16 +10,11 @@ import {
   Plus,
   Check,
   Sparkles,
-  ShieldCheck,
-  BellRing,
-  LineChart,
 } from "lucide-react";
 import type { Stock } from "@/types";
 import type { FundFromDB } from "@/lib/api";
 import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
 import { usePortfolio, getCurrentValue, getPnLPercent } from "@/hooks/usePortfolio";
-import { usePortfolioChanges } from "@/hooks/usePortfolioChanges";
-import { holdingOneDayPerformance } from "@/components/portfolio/PortfolioHoldingCard";
 
 export interface WatchlistRawItem {
   id: string;
@@ -78,7 +73,6 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
 
   // Portfolio hooks
   const { items: portfolioItems, totalValue, totalPnLPercent } = usePortfolio();
-  const { changes: portfolioChanges } = usePortfolioChanges(portfolioItems);
 
   // Matcher helper
   const matchItem = (item: WatchlistRawItem, type: string, id: string, symbolOrCode?: string, name?: string) => {
@@ -225,26 +219,33 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
 
   // 3 Curated Live Example Assets for Empty State
   const exampleAssets = useMemo(() => {
-    // 1. Safaricom Stock
+    // 1. Safaricom Stock (uses bundled local logo so it never fails)
     const scom = stocks.find((s) => s.symbol === "SCOM") || {
       id: "scom-default",
       symbol: "SCOM",
       name: "Safaricom PLC",
       price: 36.2,
       day_change_percent: -2.92,
-      logo_url: "https://caawgzuofnujrznwbuxk.supabase.co/storage/v1/object/public/market-logos/stocks/SCOM.webp",
+      logo_url: "/images/stocks/safaricom.png",
     };
 
     // 2. Top Performing Money Market Fund
-    const bestMmf = funds.find((f) => f.slug?.includes("sanlam") || f.slug?.includes("lofty") || f.fund_type === "money_market") || funds[0] || {
-      id: "sanlam-mmf-default",
-      name: "Sanlam Money Market Fund",
-      manager: "Sanlam Investments",
-      slug: "sanlam-money-market-fund",
-      annual_yield: 17.5,
-      effective_yield: 17.5,
-      logo_url: null,
-    };
+    const bestMmf =
+      funds.find((f) => f.slug?.includes("sanlam") || f.slug?.includes("lofty") || f.fund_type === "money_market") ||
+      funds[0] || {
+        id: "sanlam-mmf-default",
+        name: "Sanlam Money Market Fund",
+        manager: "Sanlam Investments",
+        slug: "sanlam-money-market-fund",
+        annual_yield: 17.5,
+        effective_yield: 17.5,
+        logo_url: null,
+      };
+
+    const mmfTitle = bestMmf.name
+      .replace(/Money Market Fund/i, "MMF")
+      .replace(/Fund/i, "")
+      .trim();
 
     // 3. US Dollar FX
     const usd = rates.find((r) => r.currency_code === "USD") || {
@@ -260,10 +261,11 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
         type: "stock" as const,
         id: scom.id,
         symbol: scom.symbol,
+        title: scom.symbol,
         name: scom.name,
         displayMetric: `KES ${scom.price.toFixed(2)}`,
-        subtext: "Leading NSE Telecom",
-        logoUrl: scom.logo_url,
+        subtitle: "Safaricom",
+        logoUrl: scom.logo_url || "/images/stocks/safaricom.png",
         isAdded: watchlist.some((w) => matchItem(w, "stock", scom.id, scom.symbol, scom.name)),
         onAdd: async () => {
           if (onToggleAsset) {
@@ -280,9 +282,10 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
         type: "fund" as const,
         id: bestMmf.id,
         symbol: "MMF",
+        title: mmfTitle || "Sanlam MMF",
         name: bestMmf.name,
         displayMetric: `${(bestMmf.annual_yield || (bestMmf as any).effective_yield || 16.5).toFixed(2)}% p.a.`,
-        subtext: bestMmf.manager || "Money Market Fund",
+        subtitle: "Daily Yield",
         logoUrl: bestMmf.logo_url,
         manager: bestMmf.manager,
         isAdded: watchlist.some((w) => matchItem(w, "fund", bestMmf.id, bestMmf.slug, bestMmf.name)),
@@ -301,9 +304,10 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
         type: "currency" as const,
         id: usd.id || "USD",
         symbol: "USD/KES",
+        title: "USD / KES",
         name: "US Dollar",
         displayMetric: `KES ${Number(usd.rate).toFixed(2)}`,
-        subtext: "Central Bank Rate",
+        subtitle: "CBK Rate",
         currencyCode: "USD",
         isAdded: watchlist.some((w) => matchItem(w, "currency", usd.id || "USD", "USD", "US Dollar")),
         onAdd: async () => {
@@ -341,7 +345,9 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
             <span>Watchlist</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                activeTab === "watchlist" ? "bg-amber-500/10 text-amber-600 dark:text-amber-400" : "bg-muted text-muted-foreground"
+                activeTab === "watchlist"
+                  ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               {watchlist.length}
@@ -361,7 +367,9 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
             <span>Portfolio</span>
             <span
               className={`text-[10px] px-1.5 py-0.2 rounded-full font-bold ${
-                activeTab === "portfolio" ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400" : "bg-muted text-muted-foreground"
+                activeTab === "portfolio"
+                  ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                  : "bg-muted text-muted-foreground"
               }`}
             >
               {portfolioItems.length}
@@ -396,37 +404,38 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
         <div className="space-y-3.5">
           {isWatchlistEmpty ? (
             /* Empty State with Benefits & 3 Live Quick-Add Examples */
-            <div className="space-y-4">
-              {/* Benefit Header */}
-              <div className="rounded-xl bg-gradient-to-br from-amber-500/[0.08] via-emerald-500/[0.04] to-transparent border border-amber-500/20 p-3 space-y-2">
+            <div className="space-y-3.5">
+              {/* Sleek Benefit Header */}
+              <div className="rounded-xl border border-border/70 bg-muted/30 p-3 space-y-2.5">
                 <div className="flex items-center gap-2">
-                  <div className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500">
+                  <div className="w-6 h-6 rounded-lg bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-500 shrink-0">
                     <Sparkles className="w-3.5 h-3.5" />
                   </div>
-                  <div>
-                    <h4 className="text-xs font-bold text-foreground">Why Build a Watchlist?</h4>
+                  <div className="min-w-0">
+                    <h4 className="text-xs font-bold text-foreground">Build Your Watchlist</h4>
+                    <p className="text-[10px] text-muted-foreground leading-tight">Track assets across Kenya's markets</p>
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 gap-1.5 text-[11px] text-muted-foreground pl-0.5">
-                  <div className="flex items-start gap-1.5">
-                    <LineChart className="w-3.5 h-3.5 text-emerald-500 shrink-0 mt-0.5" />
-                    <span><strong>Live Tracking:</strong> Monitor yields, share prices &amp; CBK FX in one view.</span>
+                <div className="space-y-1.5 text-[11px] text-muted-foreground pt-1 border-t border-border/40">
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 shrink-0" />
+                    <span className="truncate">Live MMF yields &amp; NSE share quotes</span>
                   </div>
-                  <div className="flex items-start gap-1.5">
-                    <BellRing className="w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" />
-                    <span><strong>Price Alerts:</strong> Get notified instantly when yields or prices move.</span>
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-amber-500 shrink-0" />
+                    <span className="truncate">Custom price &amp; yield change alerts</span>
                   </div>
-                  <div className="flex items-start gap-1.5">
-                    <ShieldCheck className="w-3.5 h-3.5 text-sky-500 shrink-0 mt-0.5" />
-                    <span><strong>Tailored Feed:</strong> Surface news and insights for assets you care about.</span>
+                  <div className="flex items-center gap-2">
+                    <span className="h-1.5 w-1.5 rounded-full bg-sky-500 shrink-0" />
+                    <span className="truncate">Personalized news &amp; market updates</span>
                   </div>
                 </div>
               </div>
 
               {/* 3 Live Quick-Add Asset Examples */}
               <div className="space-y-2">
-                <div className="flex items-center justify-between text-[11px]">
+                <div className="flex items-center justify-between text-[11px] px-0.5">
                   <span className="font-extrabold uppercase tracking-wider text-muted-foreground text-[10px]">
                     Quick Add Examples
                   </span>
@@ -437,9 +446,9 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
                   {exampleAssets.map((asset) => (
                     <div
                       key={asset.id}
-                      className="flex items-center justify-between p-2 rounded-xl border border-border/80 bg-slate-50/60 dark:bg-card hover:border-emerald-500/30 transition-all group"
+                      className="flex items-center justify-between p-2.5 rounded-xl border border-border/70 bg-slate-50/50 dark:bg-card hover:border-emerald-500/40 hover:bg-muted/30 transition-all group"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
                         <WatchlistAssetAvatar
                           type={asset.type}
                           symbol={asset.symbol}
@@ -447,50 +456,47 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
                           logoUrl={asset.logoUrl}
                           manager={asset.manager}
                           currencyCode={asset.currencyCode}
-                          size={32}
+                          size={34}
                           className="shrink-0"
                         />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="font-bold text-xs text-foreground tracking-tight truncate">
-                            {asset.symbol}
+                            {asset.title}
                           </div>
-                          <div className="text-[10px] text-muted-foreground truncate max-w-[120px]">
-                            {asset.name}
+                          <div className="text-[11px] font-semibold text-emerald-600 dark:text-emerald-400 tabular-nums truncate flex items-center gap-1 mt-0.5">
+                            <span>{asset.displayMetric}</span>
+                            <span className="text-muted-foreground font-normal text-[10px] truncate">
+                              · {asset.subtitle}
+                            </span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="flex items-center gap-2.5 shrink-0">
-                        <div className="text-right">
-                          <div className="text-xs font-bold text-foreground tabular-nums">{asset.displayMetric}</div>
-                          <div className="text-[10px] text-muted-foreground">{asset.subtext}</div>
-                        </div>
-
-                        <button
-                          type="button"
-                          disabled={asset.isAdded || addingId === asset.id}
-                          onClick={asset.onAdd}
-                          className={`h-7 px-2.5 rounded-lg text-xs font-bold flex items-center gap-1 transition-all ${
-                            asset.isAdded
-                              ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20"
-                              : "bg-foreground text-background hover:bg-emerald-600 hover:text-white"
-                          }`}
-                        >
-                          {asset.isAdded ? (
-                            <>
-                              <Check className="w-3 h-3" />
-                              <span>Added</span>
-                            </>
-                          ) : addingId === asset.id ? (
-                            <span>Adding…</span>
-                          ) : (
-                            <>
-                              <Plus className="w-3 h-3" />
-                              <span>Add</span>
-                            </>
-                          )}
-                        </button>
-                      </div>
+                      <button
+                        type="button"
+                        disabled={asset.isAdded || addingId === asset.id}
+                        onClick={asset.onAdd}
+                        title={asset.isAdded ? "Added to watchlist" : `Add ${asset.title} to watchlist`}
+                        className={`h-7 px-2.5 rounded-lg text-xs font-bold shrink-0 flex items-center gap-1 transition-all ${
+                          asset.isAdded
+                            ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 border border-emerald-500/20 cursor-default"
+                            : "bg-foreground text-background hover:bg-emerald-600 hover:text-white"
+                        }`}
+                      >
+                        {asset.isAdded ? (
+                          <>
+                            <Check className="w-3.5 h-3.5" />
+                            <span>Added</span>
+                          </>
+                        ) : addingId === asset.id ? (
+                          <span>...</span>
+                        ) : (
+                          <>
+                            <Plus className="w-3.5 h-3.5" />
+                            <span>Add</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   ))}
                 </div>
@@ -509,7 +515,7 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
           ) : (
             /* Populated Watchlist State with Official Logos & High Detail */
             <div className="space-y-3">
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {resolvedWatchlist.slice(0, 6).map((item) => {
                   const isPos = (item.dayChangePct || 0) >= 0;
                   return (
@@ -518,7 +524,7 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
                       key={item.rawId}
                       className="flex items-center justify-between p-2 rounded-xl border border-border/60 bg-slate-50/50 dark:bg-card hover:border-emerald-500/40 hover:bg-muted/30 transition-all group text-xs"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
                         <WatchlistAssetAvatar
                           type={item.type}
                           symbol={item.symbol}
@@ -529,11 +535,11 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
                           size={32}
                           className="shrink-0"
                         />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="font-bold text-foreground tracking-tight group-hover:text-emerald-500 transition-colors truncate">
                             {item.symbol}
                           </div>
-                          <div className="text-[11px] text-muted-foreground truncate max-w-[110px]">
+                          <div className="text-[11px] text-muted-foreground truncate">
                             {item.name}
                           </div>
                         </div>
@@ -642,14 +648,19 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
               </div>
 
               {/* Holdings Rows */}
-              <div className="space-y-2">
+              <div className="space-y-1.5">
                 {portfolioItems.slice(0, 5).map((holding) => {
                   const val = getCurrentValue(holding);
                   const pnl = getPnLPercent(holding);
                   const isPos = pnl >= 0;
 
                   // Resolve holding visual type
-                  const holdingType = holding.asset_type === "mmf" ? "fund" : holding.asset_type === "fx" ? "currency" : (holding.asset_type as any);
+                  const holdingType =
+                    holding.asset_type === "mmf"
+                      ? "fund"
+                      : holding.asset_type === "fx"
+                      ? "currency"
+                      : (holding.asset_type as any);
 
                   return (
                     <div
@@ -657,7 +668,7 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
                       onClick={() => navigate("/portfolio")}
                       className="flex items-center justify-between p-2 rounded-xl border border-border/60 bg-slate-50/50 dark:bg-card hover:border-emerald-500/40 hover:bg-muted/30 transition-all cursor-pointer group text-xs"
                     >
-                      <div className="flex items-center gap-2.5 min-w-0">
+                      <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
                         <WatchlistAssetAvatar
                           type={holdingType}
                           symbol={holding.ticker || holding.asset_name.slice(0, 4).toUpperCase()}
@@ -666,7 +677,7 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
                           size={32}
                           className="shrink-0"
                         />
-                        <div className="min-w-0">
+                        <div className="min-w-0 flex-1">
                           <div className="font-bold text-foreground tracking-tight group-hover:text-emerald-500 transition-colors truncate">
                             {holding.asset_name}
                           </div>

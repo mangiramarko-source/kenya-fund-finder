@@ -17,3 +17,8 @@ export function getStockLogoUrl(symbol: string, logoUrl?: string | null) {
   const customLogo = STOCK_LOGOS[normalizedSymbol];
   return customLogo || "";
 }
+
+/** Returns the local bundled logo URL if available for this stock ticker. */
+export function getBundledStockLogoUrl(symbol: string) {
+  return STOCK_LOGOS[symbol.toUpperCase()] || "";
+}

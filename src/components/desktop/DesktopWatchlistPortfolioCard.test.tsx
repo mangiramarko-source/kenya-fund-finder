@@ -54,15 +54,14 @@ describe("DesktopWatchlistPortfolioCard", () => {
     expect(screen.getByText("Portfolio")).toBeInTheDocument();
 
     // Benefit explainer exists
-    expect(screen.getByText("Why Build a Watchlist?")).toBeInTheDocument();
-    expect(screen.getByText(/Live Tracking:/)).toBeInTheDocument();
-    expect(screen.getByText(/Price Alerts:/)).toBeInTheDocument();
-    expect(screen.getByText(/Tailored Feed:/)).toBeInTheDocument();
+    expect(screen.getByText("Build Your Watchlist")).toBeInTheDocument();
+    expect(screen.getByText(/Live MMF yields/i)).toBeInTheDocument();
+    expect(screen.getByText(/Custom price & yield change alerts/i)).toBeInTheDocument();
 
     // 3 Quick Add examples exist
     expect(screen.getByText("Quick Add Examples")).toBeInTheDocument();
     expect(screen.getByText("SCOM")).toBeInTheDocument();
-    expect(screen.getByText("USD/KES")).toBeInTheDocument();
+    expect(screen.getByText("USD / KES")).toBeInTheDocument();
 
     // Can click add on SCOM
     const addButtons = screen.getAllByRole("button", { name: /Add/i });

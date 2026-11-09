@@ -1,7 +1,7 @@
 import { useState } from "react";
 import FundLogo from "@/components/home/FundLogo";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
-import { getStockLogoUrl } from "@/lib/stockBranding";
+import { getStockLogoUrl, getBundledStockLogoUrl } from "@/lib/stockBranding";
 import { getCurrencyFlagUrl } from "@/lib/currencyBranding";
 import { Coins, Fuel, Sparkles, Coffee, Leaf, Wheat, Gem } from "lucide-react";
 
@@ -29,6 +29,7 @@ export default function WatchlistAssetAvatar({
   className = "",
 }: WatchlistAssetAvatarProps) {
   const [stockFailed, setStockFailed] = useState(false);
+  const [stockFallbackTried, setStockFallbackTried] = useState(false);
   const [currencyFailed, setCurrencyFailed] = useState(false);
 
   if (type === "fund") {
@@ -45,23 +46,31 @@ export default function WatchlistAssetAvatar({
 
   if (type === "stock") {
     const ticker = (symbol || name.slice(0, 4)).toUpperCase();
-    const resolvedLogo = getStockLogoUrl(ticker, logoUrl);
+    const primaryLogo = getStockLogoUrl(ticker, logoUrl);
+    const bundledLogo = getBundledStockLogoUrl(ticker);
+    const activeLogo = stockFallbackTried ? bundledLogo : (primaryLogo || bundledLogo);
     const hash = Array.from(ticker).reduce((acc, c) => acc + c.charCodeAt(0), 0);
     const hue = hash % 360;
     const bg = `hsl(${hue} 60% 90%)`;
     const fg = `hsl(${hue} 50% 30%)`;
     const initials = ticker.slice(0, 2);
 
-    if (resolvedLogo && !stockFailed) {
+    if (activeLogo && !stockFailed) {
       return (
         <img
-          src={resolvedLogo}
+          src={activeLogo}
           alt=""
           width={size}
           height={size}
           loading="lazy"
           decoding="async"
-          onError={() => setStockFailed(true)}
+          onError={() => {
+            if (!stockFallbackTried && bundledLogo && activeLogo !== bundledLogo) {
+              setStockFallbackTried(true);
+            } else {
+              setStockFailed(true);
+            }
+          }}
           className={`rounded-full border border-border/40 bg-white object-contain p-0.5 shrink-0 ${className}`}
           style={{ width: size, height: size }}
         />
