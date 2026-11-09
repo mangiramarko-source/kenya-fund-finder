@@ -28,7 +28,6 @@ import { CompareCatalogFunds } from "@/components/compare/CompareCatalogFunds";
 import { CompareCatalogRates } from "@/components/compare/CompareCatalogRates";
 import { CompareCatalogSavings } from "@/components/compare/CompareCatalogSavings";
 import { isUnitPriceFund } from "@/lib/fundUtils";
-import LiveMarketWireTicker from "@/components/news/LiveMarketWireTicker";
 import ContextualFundNewsCard from "@/components/news/ContextualFundNewsCard";
 
 type CompareTab = "stocks" | "funds" | "rates" | "savings" | "cross-asset";
@@ -477,9 +476,6 @@ export const ComparePage: React.FC = () => {
   return (
     <div className="min-h-screen bg-background pb-16">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6 space-y-6">
-        {/* Live Market Wire Banner */}
-        <LiveMarketWireTicker />
-
         {/* Header Section */}
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
           <div className="space-y-1">
