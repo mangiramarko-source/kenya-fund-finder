@@ -12,6 +12,7 @@
  */
 
 import { createClient } from "@supabase/supabase-js";
+import { execFileSync } from "node:child_process";
 import { existsSync, readFileSync } from "node:fs";
 import { resolve } from "node:path";
 import {
@@ -162,24 +163,39 @@ async function main() {
     return;
   }
 
-  if (!process.env.SUPABASE_SERVICE_ROLE_KEY) {
-    console.error("Cannot run --apply without SUPABASE_SERVICE_ROLE_KEY.");
-    process.exit(1);
-  }
-
-  const adminClient = createClient(supabaseUrl, process.env.SUPABASE_SERVICE_ROLE_KEY);
   const idsToDelete = duplicatePairs.map((d) => d.dupId);
-  const { error: delError } = await adminClient
-    .from("news_articles")
-    .delete()
-    .in("id", idsToDelete);
+  const adminKey = process.env.SUPABASE_SECRET_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY;
+  let deletedViaRest = false;
 
-  if (delError) {
-    console.error("Failed to delete duplicates:", delError.message);
-    process.exit(1);
+  if (adminKey) {
+    const adminClient = createClient(supabaseUrl, adminKey);
+    const { error: delError } = await adminClient
+      .from("news_articles")
+      .delete()
+      .in("id", idsToDelete);
+
+    if (!delError) {
+      deletedViaRest = true;
+    } else {
+      console.warn(`REST delete returned '${delError.message}', falling back to linked Supabase SQL...`);
+    }
   }
 
-  console.log(`Successfully deleted ${idsToDelete.length} duplicate rows.`);
+  if (!deletedViaRest) {
+    const validUuidRe = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+    const safeIds = idsToDelete.filter((id) => validUuidRe.test(id));
+    const sqlList = safeIds.map((id) => `'${id}'`).join(", ");
+    const sql = `DELETE FROM public.news_articles WHERE id IN (${sqlList});`;
+    execFileSync("npx", ["supabase", "db", "query", "--linked", sql], {
+      stdio: "inherit",
+    });
+  }
+
+  const { count: remainingCount } = await supabase
+    .from("news_articles_public")
+    .select("id", { count: "exact", head: true });
+
+  console.log(`Successfully deleted ${idsToDelete.length} duplicate rows. Remaining published articles: ${remainingCount ?? "unknown"}.`);
 }
 
 main();

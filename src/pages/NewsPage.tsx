@@ -204,7 +204,19 @@ export default function NewsPage() {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const result = await fillTab(activeNavTab, articles, offset, hasMore, stocks);
+      const currentMatchingCount = articles.filter((a) =>
+        activeNavTab === "Stocks"
+          ? Boolean(findMentionedStock(a, stocks))
+          : matchesNewsTab(activeNavTab, a, stocks),
+      ).length;
+      const result = await fillTab(
+        activeNavTab,
+        articles,
+        offset,
+        hasMore,
+        stocks,
+        currentMatchingCount + 15,
+      );
       setArticles(result.articles);
       setOffset(result.offset);
       setHasMore(result.hasMore);

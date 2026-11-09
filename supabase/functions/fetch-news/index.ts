@@ -1,6 +1,4 @@
-import { serve } from "https://deno.land/std@0.177.0/http/server.ts";
 import { createClient } from "../_shared/supabase-client.ts";
-import { parseFeed } from "https://deno.land/x/rss@0.5.8/mod.ts";
 import { authorizePrivilegedRequest } from "../_shared/privileged-auth.ts";
 import {
   getSupabasePublishableKey,
@@ -12,7 +10,6 @@ import {
   parseNewsPublicationTime,
   NEWS_CLASSIFICATION_VERSION,
 } from "../_shared/news-quality.ts";
-import * as cheerio from "https://esm.sh/cheerio@1.0.0-rc.12";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -389,7 +386,39 @@ Rewrite this as a completely original, extended professional financial analysis:
   }
 }
 
+function extractHtmlMetadataAndParagraphs(rawHtml: string): {
+  metaDescription: string;
+  ogImage: string | null;
+  paragraphs: string[];
+} {
+  const html = rawHtml.slice(0, 180000);
+  const ogDescMatch =
+    html.match(/<meta[^>]+property=["']og:description["'][^>]+content=["']([^"']+)["']/i) ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:description["']/i) ||
+    html.match(/<meta[^>]+name=["']description["'][^>]+content=["']([^"']+)["']/i) ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+name=["']description["']/i);
+  const ogImageMatch =
+    html.match(/<meta[^>]+property=["']og:image["'][^>]+content=["']([^"']+)["']/i) ||
+    html.match(/<meta[^>]+content=["']([^"']+)["'][^>]+property=["']og:image["']/i);
+
+  const cleaned = html.replace(/<(script|style|nav|header|footer|iframe|aside)\b[^>]*>[\s\S]*?<\/\1>/gi, " ");
+  const paragraphs: string[] = [];
+  const pRegex = /<p\b[^>]*>([\s\S]*?)<\/p>/gi;
+  let match: RegExpExecArray | null;
+  while ((match = pRegex.exec(cleaned)) !== null && paragraphs.length < 12) {
+    const text = stripHtml(match[1]).trim();
+    if (text.length > 40) paragraphs.push(text);
+  }
+
+  return {
+    metaDescription: ogDescMatch ? stripHtml(ogDescMatch[1]).trim() : "",
+    ogImage: ogImageMatch ? ogImageMatch[1].trim() : null,
+    paragraphs,
+  };
+}
+
 async function fetchArticleContent(url: string): Promise<string | null> {
+  if (/youtube\.com|youtu\.be/i.test(url)) return null;
   const firecrawlKey = Deno.env.get("FIRECRAWL_API_KEY");
   
   if (firecrawlKey) {
@@ -424,11 +453,11 @@ async function fetchArticleContent(url: string): Promise<string | null> {
     }
   }
 
-  // Fallback to standard fetch/cheerio
+  // Fallback to lightweight regex extraction (avoids cheerio DOM CPU/memory spike)
   try {
     console.log(`Using standard fetch for: ${url}`);
     const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), 10000);
+    const timeout = setTimeout(() => controller.abort(), 7000);
     const res = await fetch(url, {
       headers: { "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 KenyaFundFinder/1.0" },
       signal: controller.signal,
@@ -437,19 +466,8 @@ async function fetchArticleContent(url: string): Promise<string | null> {
     
     if (!res.ok) return null;
     const html = await res.text();
-    const $ = cheerio.load(html);
-    
-    // Remove unwanted noise elements
-    $('script, style, nav, header, footer, iframe, aside, .ads, .sidebar, .comments').remove();
-    
-    const paragraphs: string[] = [];
-    $('p').each((_, el) => {
-      const text = $(el).text().trim();
-      // Skip very short UI text elements
-      if (text.length > 30) paragraphs.push(text);
-    });
-    
-    return paragraphs.join('\n\n');
+    const { paragraphs } = extractHtmlMetadataAndParagraphs(html);
+    return paragraphs.join("\n\n");
   } catch (err) {
     console.error(`Failed to scrape ${url}:`, err);
     return null;
@@ -588,7 +606,7 @@ async function fetchYouTubeFeed(
 
       const published = extractTag(entry, "published") || extractTag(entry, "updated");
       const pubInfo = parseNewsPublicationTime(published, now);
-      if (pubInfo.reason === "stale_publication_time" || pubInfo.reason === "future_publication_time") {
+      if (!pubInfo.iso || pubInfo.reason === "future_publication_time") {
         continue;
       }
 
@@ -703,21 +721,12 @@ async function fetchGdeltArticles(): Promise<ParsedArticle[]> {
         clearTimeout(t);
         if (pageRes.ok) {
           const html = await pageRes.text();
-          const $ = cheerio.load(html);
-          const metaDesc =
-            $('meta[property="og:description"]').attr("content") ||
-            $('meta[name="description"]').attr("content") ||
-            "";
-          if (!ogImage) {
-            ogImage = $('meta[property="og:image"]').attr("content") || null;
+          const { metaDescription, ogImage: parsedOgImage, paragraphs: paras } =
+            extractHtmlMetadataAndParagraphs(html);
+          if (!ogImage && parsedOgImage) {
+            ogImage = parsedOgImage;
           }
-          $('script, style, nav, header, footer, iframe, aside').remove();
-          const paras: string[] = [];
-          $("p").each((_, el) => {
-            const txt = $(el).text().trim();
-            if (txt.length > 40) paras.push(txt);
-          });
-          summary = stripHtml(metaDesc).slice(0, 1000);
+          summary = metaDescription.slice(0, 1000);
           if (paras.length > 0) {
             content = paras.slice(0, 10).join("\n\n").slice(0, 5000);
             if (!summary) summary = paras[0].slice(0, 600);
@@ -774,7 +783,7 @@ async function fetchFeed(feedUrl: string, source: string): Promise<ParsedArticle
     clearTimeout(timeout);
     if (!res.ok) { console.error(`Feed ${source} returned ${res.status}`); return articles; }
     const xml = await res.text();
-    const items = xml.split(/<item[\s>]/i).slice(1);
+    const items = xml.split(/<item[\s>]/i).slice(1, 16);
 
     for (const item of items) {
       const rawTitle = stripHtml(extractTag(item, "title"));
@@ -891,24 +900,39 @@ Deno.serve(async (req) => {
       );
     }
 
-    const { data: existing } = await supabase
-      .from("news_articles")
-      .select("url, title")
-      .order("created_at", { ascending: false })
-      .limit(2000);
+    const candidateUrls = Array.from(
+      new Set(
+        allArticles
+          .map((a) => normalizeUrl(a.url))
+          .filter((u): u is string => Boolean(u)),
+      ),
+    );
+
+    const [{ data: existing }, { data: existingByUrl }] = await Promise.all([
+      supabase
+        .from("news_articles")
+        .select("url, title")
+        .order("created_at", { ascending: false })
+        .limit(400),
+      candidateUrls.length > 0
+        ? supabase.from("news_articles").select("url, title").in("url", candidateUrls)
+        : Promise.resolve({ data: [] as Array<{ url: string | null; title: string }> }),
+    ]);
+
+    const allExistingRows = [...(existing || []), ...(existingByUrl || [])];
 
     const existingUrls = new Set(
-      (existing || [])
+      allExistingRows
         .map((e: { url: string | null }) => normalizeUrl(e.url)?.toLowerCase())
         .filter((v): v is string => Boolean(v)),
     );
     const existingTitles = new Set(
-      (existing || [])
+      allExistingRows
         .map((e: { title: string }) => normalizeTitle(e.title || ""))
         .filter(Boolean),
     );
     // Pre-tokenize existing titles once for fuzzy comparison
-    const existingTokenSets: Set<string>[] = (existing || [])
+    const existingTokenSets: Set<string>[] = allExistingRows
       .map((e: { title: string }) => tokenize(e.title || ""))
       .filter((s: Set<string>) => s.size >= 3);
 
@@ -972,7 +996,7 @@ Deno.serve(async (req) => {
       // 3. Global macro events relevant to Kenya
       const isGlobalMacro = /\b(federal reserve|fed|ecb|brent|opec|us economy|global oil|global inflation)\b/i.test(text);
       
-      const pass = isKenyanEntity || isKenyanFinance || isGlobalMacro;
+      const pass = Boolean(a.video_url) || isKenyanEntity || isKenyanFinance || isGlobalMacro;
       if (!pass) rejectedCount++;
       return pass;
     });
@@ -986,9 +1010,19 @@ Deno.serve(async (req) => {
       );
     }
 
+    // Sort new articles so video briefings and the newest articles are processed first
+    newArticles.sort((a, b) => {
+      const aVideo = a.video_url ? 1 : 0;
+      const bVideo = b.video_url ? 1 : 0;
+      if (aVideo !== bVideo) return bVideo - aVideo;
+      const aTime = a.source_published_at ? new Date(a.source_published_at).getTime() : 0;
+      const bTime = b.source_published_at ? new Date(b.source_published_at).getTime() : 0;
+      return bTime - aTime;
+    });
+
     // Rewrite each new article in original words via Gemini AI (concurrent, with fallback)
     // Limit batch size to prevent Edge Function timeout (WORKER_RESOURCE_LIMIT)
-    const MAX_BATCH_SIZE = 8;
+    const MAX_BATCH_SIZE = 5;
     const processingArticles = newArticles.slice(0, MAX_BATCH_SIZE);
     if (newArticles.length > MAX_BATCH_SIZE) {
       console.log(`Limiting to ${MAX_BATCH_SIZE} out of ${newArticles.length} new articles to prevent timeout.`);
@@ -1003,7 +1037,7 @@ Deno.serve(async (req) => {
         let raw = `${a.summary || ""}\n\n${a.content || ""}`.trim();
 
         // If the RSS feed provided very little content, attempt to scrape the full article
-        if (raw.length < 1000 && a.url) {
+        if (raw.length < 1000 && a.url && !a.video_url) {
           console.log(`Text short (${raw.length} chars), scraping full content for: ${a.title}`);
           const scraped = await fetchArticleContent(a.url);
           if (scraped && scraped.length > 200) {
@@ -1026,14 +1060,17 @@ Deno.serve(async (req) => {
       const rw = rewrites[i];
       const summaryCandidate = rw?.summary || a.summary;
       const contentCandidate = rw?.content || a.content;
-      const quality = evaluateNewsQuality({
-        title: a.title,
-        summary: summaryCandidate,
-        content: contentCandidate,
-        source: a.source,
-        url: a.url,
-        sourcePublishedAt: a.source_published_at,
-      });
+      const quality = evaluateNewsQuality(
+        {
+          title: a.title,
+          summary: summaryCandidate,
+          content: contentCandidate,
+          source: a.source,
+          url: a.url,
+          sourcePublishedAt: a.source_published_at,
+        },
+        { enforceFreshness: !a.video_url },
+      );
       return {
         title: quality.title,
         url: a.url,
@@ -1043,6 +1080,7 @@ Deno.serve(async (req) => {
         source_published_at: quality.sourcePublishedAt,
         source: a.source,
         image_url: a.image_url,
+        video_url: a.video_url || null,
         category: quality.category,
         status: quality.status,
         quality_reasons: quality.reasons,
