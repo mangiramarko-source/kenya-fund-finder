@@ -2,6 +2,7 @@ import React from "react";
 import { Link } from "react-router-dom";
 import {
   Compass,
+  Landmark,
   PiggyBank,
   Users,
   Calculator,
@@ -22,6 +23,13 @@ export const DesktopNavigationShortcutsCard: React.FC<DesktopNavigationShortcuts
     {
       title: "Savings & Fixed Income",
       items: [
+        {
+          name: "Treasury Bills & Bonds",
+          subtitle: "91, 182 & 364-day CBK yields",
+          to: "/treasury",
+          icon: Landmark,
+          color: "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/20",
+        },
         {
           name: "Bank Fixed Deposits",
           subtitle: "Commercial bank deposit rates",
