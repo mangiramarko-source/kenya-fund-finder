@@ -530,7 +530,9 @@ function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFrom
   const formattedDate = isNaN(pubDate.getTime()) ? "Today" : format(pubDate, "d MMM yyyy");
   const relativeTime = isNaN(pubDate.getTime()) ? "now" : formatDistanceToNow(pubDate, { addSuffix: true }).replace("about ", "");
   const stockLogoUrl = relatedStock ? getStockLogoUrl(relatedStock.symbol) : "";
-  const sourceLogoUrl = getSourceLogoUrl(article.source, article.url || article.video_url);
+  const isSocialPost = Boolean(article?.source?.startsWith("X -") || article?.source?.startsWith("Facebook -"));
+  const cleanAuthor = (article?.source || "").replace(/^(?:Facebook|X)\s*-\s*/i, "").replace(/\s*\(Official\)/i, "").trim();
+  const sourceLogoUrl = !relatedStock ? getSourceLogoUrl(cleanAuthor, article?.url || article?.video_url) : null;
   const briefing = article ? buildInvestorBriefing(article, {
     stock: relatedStock,
     mmf: relatedMmf,
@@ -584,8 +586,18 @@ function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFrom
       <div className="max-w-[430px] mx-auto px-4 py-4 space-y-5 md:max-w-2xl md:py-6">
         {/* ─── 2. Author Header ─── */}
         <div className="flex items-center gap-3">
-            {/* Avatar */}
-            <div className={`${(relatedStock || (sourceLogoUrl && !sourceLogoError) || relatedMmf || relatedFx || relatedCommodity) ? "rounded-xl bg-white text-emerald-700" : "rounded-full bg-emerald-600 text-white"} w-10 h-10 border border-border font-bold text-sm flex items-center justify-center shrink-0 shadow-sm overflow-hidden`}>
+            {/* Avatar: Stock articles remain square (rounded-xl); all publishers & news are zoomed circles (rounded-full) */}
+            <div
+              className={`w-10 h-10 border border-border font-bold text-sm flex items-center justify-center shrink-0 shadow-sm overflow-hidden ${
+                relatedStock
+                  ? "rounded-xl bg-white text-emerald-700 dark:bg-neutral-900"
+                  : isSocialPost
+                    ? "rounded-full bg-black dark:bg-white/10 text-white border-black/10"
+                    : sourceLogoUrl && !sourceLogoError
+                      ? "rounded-full bg-white dark:bg-neutral-900"
+                      : "rounded-full bg-emerald-600 text-white"
+              }`}
+            >
               {relatedStock && stockLogoUrl && !stockLogoError ? (
                 <img
                   src={stockLogoUrl}
@@ -594,31 +606,35 @@ function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFrom
                   onError={() => setStockLogoError(true)}
                   referrerPolicy="no-referrer"
                 />
-              ) : !relatedStock && sourceLogoUrl && !sourceLogoError ? (
+              ) : relatedStock ? (
+                relatedStock.symbol.slice(0, 3).toUpperCase()
+              ) : isSocialPost ? (
+                <svg className="w-5 h-5 fill-current text-white dark:text-foreground" viewBox="0 0 24 24">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+              ) : sourceLogoUrl && !sourceLogoError ? (
                 <img
                   src={sourceLogoUrl}
-                  alt={`${article.source} logo`}
-                  className="h-full w-full object-cover scale-110 bg-white"
+                  alt={`${cleanAuthor || article.source} logo`}
+                  className="h-full w-full object-cover scale-110 bg-white dark:bg-neutral-900"
                   onError={() => setSourceLogoError(true)}
                   referrerPolicy="no-referrer"
                 />
-              ) : relatedStock ? (
-                relatedStock.symbol.slice(0, 3).toUpperCase()
               ) : relatedMmf ? (
-                <Landmark className="h-5 w-5 text-emerald-600" />
+                <Landmark className="h-5 w-5 text-white" />
               ) : relatedFx ? (
-                <TrendingUp className="h-5 w-5 text-emerald-600" />
+                <TrendingUp className="h-5 w-5 text-white" />
               ) : relatedCommodity ? (
-                <Shield className="h-5 w-5 text-emerald-600" />
+                <Shield className="h-5 w-5 text-white" />
               ) : (
-                (article.source || "KF").slice(0, 2).toUpperCase()
+                (cleanAuthor || article.source || "KF").slice(0, 2).toUpperCase()
               )}
             </div>
             {/* Name + Username */}
             <div className="flex min-w-0 flex-1 flex-col">
               <div className="flex items-center gap-2 min-w-0 flex-wrap">
                 <span className="font-bold text-sm text-foreground">
-                  {relatedStock?.name || article.source || relatedMmf?.name || relatedFx?.pair || relatedCommodity?.name || "KenyaFundFinder"}
+                  {relatedStock?.name || cleanAuthor || article.source || relatedMmf?.name || relatedFx?.pair || relatedCommodity?.name || "KenyaFundFinder"}
                 </span>
                 <span className="h-1.5 w-1.5 rounded-full bg-cyan-400 shrink-0" />
                 <span className="truncate text-[10px] uppercase tracking-[0.18em] text-zinc-700 dark:text-muted-foreground font-semibold">
