@@ -1332,10 +1332,8 @@ const OverviewPage = () => {
 
         {/* Middle Column - Feed (Twitter-style 600px reading width) */}
         <div className="flex w-full min-w-0 max-w-full flex-col overflow-visible md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:max-w-[600px] md:mx-auto">
-          {/* Portfolio widget (Mobile Only) */}
-          <div className="md:hidden">
-            <OverviewPortfolioWidget />
-          </div>
+          {/* Portfolio widget (Mobile & Desktop) */}
+          <OverviewPortfolioWidget />
 
           <div className="border-b border-border/60 bg-background px-4 pt-2 pb-1 -mx-4 md:mx-0 md:px-2 md:pt-1 md:shadow-sm md:sticky md:top-0 md:z-30 md:bg-background/95 md:backdrop-blur-md">
             <div className="mb-4 flex items-baseline justify-between mt-0">
