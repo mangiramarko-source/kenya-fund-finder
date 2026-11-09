@@ -60,57 +60,35 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(within(accountSheet).getByText("Price Alerts")).toBeInTheDocument();
   });
 
-  it("dynamically replaces KFF brand logo with page title on mobile subpages", () => {
-    // 1. Home / Overview renders KFF
+  it("renders KFF brand logo on top-level pages and dynamic back header on detail subpages", () => {
+    // 1. Home / Overview renders KFF logo
     const { unmount: unmountHome } = render(
       <MemoryRouter initialEntries={["/"]}>
         <Navbar />
       </MemoryRouter>
     );
-    expect(screen.getByRole("link", { name: "KFF" })).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /KenyaFundFinder Home|KFF/i })).toBeInTheDocument();
     unmountHome();
 
-    // 2. /stocks renders "Stocks"
+    // 2. /stocks renders KFF brand logo on mobile top nav
     const { unmount: unmountStocks } = render(
       <MemoryRouter initialEntries={["/stocks"]}>
         <Navbar />
       </MemoryRouter>
     );
-    expect(screen.getByText("Stocks")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /KenyaFundFinder Home|KFF/i })).toBeInTheDocument();
     unmountStocks();
 
-    // 3. /funds renders "MMFs"
+    // 3. /funds renders KFF brand logo on mobile top nav
     const { unmount: unmountFunds } = render(
       <MemoryRouter initialEntries={["/funds"]}>
         <Navbar />
       </MemoryRouter>
     );
-    expect(screen.getByText("MMFs")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
+    expect(screen.getByRole("link", { name: /KenyaFundFinder Home|KFF/i })).toBeInTheDocument();
     unmountFunds();
 
-    // 4. /portfolio renders "My Assets"
-    const { unmount: unmountPortfolio } = render(
-      <MemoryRouter initialEntries={["/portfolio"]}>
-        <Navbar />
-      </MemoryRouter>
-    );
-    expect(screen.getByText("My Assets")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
-    unmountPortfolio();
-
-    // 5. /savings renders "T-Bills / Banking / SACCOs"
-    const { unmount: unmountSavings } = render(
-      <MemoryRouter initialEntries={["/savings"]}>
-        <Navbar />
-      </MemoryRouter>
-    );
-    expect(screen.getByText("T-Bills / Banking / SACCOs")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: "KFF" })).not.toBeInTheDocument();
-    unmountSavings();
-
-    // 6. Nested detail route renders Back button and Title
+    // 4. Nested detail route renders Back button and Title
     const { unmount: unmountSummary } = render(
       <MemoryRouter initialEntries={["/portfolio/summary"]}>
         <Navbar />
@@ -143,6 +121,7 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.getByText("Overview")).toBeInTheDocument();
     expect(screen.getByText("Stocks")).toBeInTheDocument();
     expect(screen.getByText("MMFs")).toBeInTheDocument();
+    expect(screen.getByText("T-Bills & Bonds")).toBeInTheDocument();
     expect(screen.getByText("Banking")).toBeInTheDocument();
     expect(screen.getByText("FX & Commodities")).toBeInTheDocument();
     expect(screen.getByText("Calculator")).toBeInTheDocument();

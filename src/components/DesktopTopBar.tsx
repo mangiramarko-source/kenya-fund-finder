@@ -79,14 +79,18 @@ const DesktopTopBar = () => {
     if (path === "/funds") {
       return location.pathname.startsWith("/funds") || /^\/compare\/[^/]+\/?$/.test(location.pathname);
     }
+    if (path === "/treasury") {
+      return (
+        location.pathname.startsWith("/treasury") ||
+        location.pathname.startsWith("/tbills") ||
+        location.pathname.startsWith("/bonds")
+      );
+    }
     if (path === "/savings") {
       return (
         location.pathname.startsWith("/savings") ||
         location.pathname.startsWith("/fixed-deposits") ||
-        location.pathname.startsWith("/saccos") ||
-        location.pathname.startsWith("/treasury") ||
-        location.pathname.startsWith("/tbills") ||
-        location.pathname.startsWith("/bonds")
+        location.pathname.startsWith("/saccos")
       );
     }
     if (path === "/rates") {
@@ -108,6 +112,7 @@ const DesktopTopBar = () => {
     { to: "/", label: "Overview" },
     { to: "/stocks", label: "Stocks" },
     { to: "/funds", label: "MMFs" },
+    { to: "/treasury", label: "T-Bills & Bonds" },
     { to: "/savings", label: "Banking" },
     { to: "/rates", label: "FX & Commodities" },
     { to: "/calculator", label: "Calculator" },

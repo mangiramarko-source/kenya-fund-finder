@@ -20,7 +20,8 @@ describe("DesktopNavigationShortcutsCard", () => {
     expect(screen.getByText("Education & Research")).toBeInTheDocument();
 
     // Key shortcut destinations
-    expect(screen.getByText("Treasury Bills & Bonds")).toBeInTheDocument();
+    // Treasury Bills & Bonds has moved to the desktop top navigation
+    expect(screen.queryByText("Treasury Bills & Bonds")).not.toBeInTheDocument();
     expect(screen.getByText("Bank Fixed Deposits")).toBeInTheDocument();
     expect(screen.getByText("SACCO Dividends")).toBeInTheDocument();
     expect(screen.getByText("Financial Calculators")).toBeInTheDocument();
