@@ -1086,16 +1086,30 @@ Deno.serve(async (req) => {
 
     // Separate Text-Primary Articles (including cluster-merged) vs Standalone Video Briefings
     const now = new Date();
-    const textCandidates = newArticles.filter((a) => !isStandaloneVideo(a));
-    const videoCandidates = newArticles.filter((a) => isStandaloneVideo(a));
+    const THIRTY_SIX_HOURS_MS = 36 * 60 * 60 * 1000;
+    const FOURTEEN_DAYS_MS = 14 * 24 * 60 * 60 * 1000;
 
-    // Sort written news by freshness + source authority + quality score so today's breaking news always leads
+    const textCandidates = newArticles.filter((a) => !isStandaloneVideo(a));
+    const videoCandidates = newArticles
+      .filter((a) => isStandaloneVideo(a))
+      .filter((a) => {
+        if (!a.source_published_at) return false;
+        const pubTime = new Date(a.source_published_at).getTime();
+        return (now.getTime() - pubTime) <= FOURTEEN_DAYS_MS;
+      });
+
+    // Sort written news: fresh articles (< 36 hours) always rank ahead of older articles,
+    // breaking ties by source authority / quality score and source_published_at DESC
     textCandidates.sort((a, b) => {
+      const timeA = a.source_published_at ? new Date(a.source_published_at).getTime() : 0;
+      const timeB = b.source_published_at ? new Date(b.source_published_at).getTime() : 0;
+      const isFreshA = (now.getTime() - timeA) <= THIRTY_SIX_HOURS_MS && timeA > 0 ? 1 : 0;
+      const isFreshB = (now.getTime() - timeB) <= THIRTY_SIX_HOURS_MS && timeB > 0 ? 1 : 0;
+      if (isFreshA !== isFreshB) return isFreshB - isFreshA;
+
       const scoreA = getTextArticleQualityScore(a, now);
       const scoreB = getTextArticleQualityScore(b, now);
       if (scoreB !== scoreA) return scoreB - scoreA;
-      const timeA = a.source_published_at ? new Date(a.source_published_at).getTime() : 0;
-      const timeB = b.source_published_at ? new Date(b.source_published_at).getTime() : 0;
       return timeB - timeA;
     });
 
@@ -1107,22 +1121,14 @@ Deno.serve(async (req) => {
     });
 
     // Guardrail 1: Enforce Batch Quota (Reserved Lanes) with MAX_BATCH_SIZE = 6
-    // Guarantee at least 4 to 5 slots per batch for textCandidates.
-    // Cap standalone YouTube videos to at most 1 slot per batch,
-    // unless textCandidates has fewer than 5 items, in which case videos can fill remaining unused slots.
+    // Reserve up to 5 of the 6 batch slots for textCandidates (Math.min(textCandidates.length, 5)).
+    // Cap standalone YouTube videos at maximum 1 slot per batch,
+    // unless textCandidates has fewer than 5 items, in which case videoCandidates may fill remaining unused slots.
     const MAX_BATCH_SIZE = 6;
-    const MAX_STANDALONE_VIDEOS = 1;
-
-    let textSlotCount: number;
-    let videoSlotCount: number;
-
-    if (textCandidates.length >= 5) {
-      videoSlotCount = Math.min(videoCandidates.length, MAX_STANDALONE_VIDEOS);
-      textSlotCount = Math.min(textCandidates.length, MAX_BATCH_SIZE - videoSlotCount);
-    } else {
-      textSlotCount = textCandidates.length;
-      videoSlotCount = Math.min(videoCandidates.length, MAX_BATCH_SIZE - textSlotCount);
-    }
+    const videoSlotCount = textCandidates.length >= 5
+      ? Math.min(videoCandidates.length, 1)
+      : Math.min(videoCandidates.length, MAX_BATCH_SIZE - textCandidates.length);
+    const textSlotCount = Math.min(textCandidates.length, MAX_BATCH_SIZE - videoSlotCount);
 
     const selectedText = textCandidates.slice(0, textSlotCount);
     const selectedVideos = videoCandidates.slice(0, videoSlotCount);

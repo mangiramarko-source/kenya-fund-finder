@@ -715,14 +715,25 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
     }
 
     const textArticles = mapped.filter((a) => !a.video_url);
-    const combinedVideos = dedupeNewsArticles([
+    const TWENTY_ONE_DAYS_MS = 21 * 24 * 60 * 60 * 1000;
+    const nowMs = Date.now();
+    const activeVideos = dedupeNewsArticles([
       ...mapped.filter((a) => Boolean(a.video_url)),
       ...videoPool,
-    ]);
+    ])
+      .filter((v) => {
+        const pubTime = v.source_published_at ? new Date(v.source_published_at).getTime() : 0;
+        return pubTime > 0 && (nowMs - pubTime) <= TWENTY_ONE_DAYS_MS;
+      })
+      .sort((a, b) => {
+        const timeA = a.source_published_at ? new Date(a.source_published_at).getTime() : 0;
+        const timeB = b.source_published_at ? new Date(b.source_published_at).getTime() : 0;
+        return timeB - timeA;
+      });
 
     // Smart Interleaving: Card #0 is breaking news, Card #1 is video #1,
     // and subsequent video briefings are placed every 4th card (indices 5, 9, 13, etc.)
-    return interleaveItems(textArticles, combinedVideos, 1, 4);
+    return interleaveItems(textArticles, activeVideos, 1, 4);
   } catch (err) {
     console.error("Failed to fetch news from Supabase (likely RLS error), using mock data", err);
     // Return mock data so the right column works while RLS is being fixed
