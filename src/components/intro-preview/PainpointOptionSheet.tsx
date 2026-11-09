@@ -129,17 +129,17 @@ export default function PainpointOptionSheet({ onComplete, onDismiss }: Painpoin
         </div>
       </div>
 
-      {/* Question & Card Content Area */}
-      <div className="min-h-[135px] flex flex-col justify-center py-0.5 relative z-10 space-y-2">
+      {/* Question & Card Content Area — Expanded height for mobile 16px typography */}
+      <div className="min-h-[210px] sm:min-h-[180px] md:min-h-[170px] flex flex-col justify-center py-1 relative z-10 space-y-2.5">
         <div className="flex items-start gap-2.5">
-          <div className={`p-1.5 rounded-lg shrink-0 mt-0.5 border border-border/50 ${currentStep.iconClass}`}>
-            <currentStep.icon className="h-3.5 w-3.5" />
+          <div className={`p-2 rounded-xl shrink-0 mt-0.5 border border-border/50 ${currentStep.iconClass}`}>
+            <currentStep.icon className="h-4 w-4" />
           </div>
-          <div className="space-y-1 flex-1">
-            <h3 className="font-heading text-sm sm:text-base md:text-lg font-black tracking-tight text-foreground leading-snug">
+          <div className="space-y-1.5 flex-1">
+            <h3 className="font-heading text-[17px] sm:text-lg md:text-xl font-black tracking-tight text-foreground leading-snug">
               {currentStep.question}
             </h3>
-            <p className="text-xs text-muted-foreground leading-relaxed">
+            <p className="text-base text-muted-foreground leading-relaxed">
               {currentStep.desc}
             </p>
           </div>
