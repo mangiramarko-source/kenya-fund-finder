@@ -29,7 +29,7 @@ const YieldChange = ({ current, previous, suffix, unit = "%", className = "" }: 
     return (
       <span className={`inline-flex items-center gap-0.5 text-muted-foreground ${className}`}>
         <Minus className="h-3 w-3" />
-        <span>0{effectiveSuffix}</span>
+        <span>Unchanged</span>
       </span>
     );
   }

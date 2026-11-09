@@ -197,14 +197,20 @@ const FundMobileCards = ({ funds, snapshots, allSnapshots, loading, onClearSearc
                     if (prev === undefined) return <span className="text-[11px] text-muted-foreground">Annual</span>;
                     const diff = fund.annual_yield - prev;
                     const isFlat = Math.abs(diff) < 0.0001;
+                    if (isFlat) {
+                      return (
+                        <span className="inline-flex items-center gap-0.5 text-xs font-semibold text-muted-foreground">
+                          <Minus className="h-3 w-3" />
+                          <span>Unchanged</span>
+                        </span>
+                      );
+                    }
                     const isUp = diff > 0;
-                    const Icon = isFlat ? Minus : isUp ? TrendingUp : TrendingDown;
-                    const colorClass = isFlat
-                      ? "text-muted-foreground"
-                      : isUp
+                    const Icon = isUp ? TrendingUp : TrendingDown;
+                    const colorClass = isUp
                       ? "text-emerald-600 dark:text-emerald-400"
                       : "text-red-500 dark:text-red-400";
-                    const sign = isFlat ? "" : isUp ? "+" : "";
+                    const sign = isUp ? "+" : "";
                     return (
                       <span className={`inline-flex items-center gap-0.5 text-xs font-semibold tabular-nums ${colorClass}`}>
                         <Icon className="h-3 w-3" />
