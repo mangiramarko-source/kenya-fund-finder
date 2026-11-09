@@ -56,6 +56,21 @@ export function FundsSummary({ funds, snapshots, categoryName }: FundsSummaryPro
 
   const maxYieldFund = topYielders.length > 0 ? topYielders[0] : null;
 
+  const latestDateStr = useMemo(() => {
+    let latest = "";
+    for (const f of safeFunds) {
+      if (f.fact_sheet_date && f.fact_sheet_date > latest) {
+        latest = f.fact_sheet_date;
+      }
+    }
+    if (!latest) return null;
+    return new Date(`${latest}T12:00:00+03:00`).toLocaleDateString("en-US", {
+      month: "short",
+      day: "2-digit",
+      year: "numeric",
+    });
+  }, [safeFunds]);
+
   return (
     <div className="mb-8 w-full overflow-hidden relative mt-2">
       <div className="absolute right-0 top-0 bottom-0 w-8 bg-gradient-to-l from-background to-transparent z-10 pointer-events-none hidden md:block" />
@@ -82,7 +97,7 @@ export function FundsSummary({ funds, snapshots, categoryName }: FundsSummaryPro
           </div>
           <div>
             <div className="pt-3 border-t border-border/40 flex items-center justify-between text-[10px] text-muted-foreground uppercase tracking-wider font-medium">
-              <span>{new Date().toLocaleDateString("en-US", { month: "short", day: "2-digit", year: "numeric" })}</span>
+              <span>{latestDateStr ?? "Active"}</span>
               <span>{total} Funds Tracked</span>
             </div>
           </div>

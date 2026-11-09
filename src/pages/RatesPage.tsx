@@ -973,6 +973,25 @@ const RatesPage = ({ initialTab }: RatesPageProps = {}) => {
           </>
         )}
       </div>
+
+      {/* Floating Page Calculator: Dynamically toggled between Commodities and FX */}
+      {isCommodityTab ? (
+        <FloatingPageCalculator
+          buttonLabel="Commodity Calculator"
+          title="Commodities Calculator"
+          description="Convert units to USD and KES, estimate purchase costs and investment returns"
+        >
+          <CommodityCalculator />
+        </FloatingPageCalculator>
+      ) : (
+        <FloatingPageCalculator
+          buttonLabel="FX Converter"
+          title="FX & Currency Calculator"
+          description="Convert Kenyan Shilling (KES) against USD, EUR, GBP, and global currencies"
+        >
+          <CurrencyConverter />
+        </FloatingPageCalculator>
+      )}
     </div>
   );
 };
@@ -1206,25 +1225,6 @@ const MobileRateCard = ({
             />
           </div>
         </div>
-      )}
-
-      {/* Floating Page Calculator: Dynamically toggled between Commodities and FX */}
-      {isCommodityTab ? (
-        <FloatingPageCalculator
-          buttonLabel="Commodity Calculator"
-          title="Commodities Calculator"
-          description="Convert units to USD and KES, estimate purchase costs and investment returns"
-        >
-          <CommodityCalculator />
-        </FloatingPageCalculator>
-      ) : (
-        <FloatingPageCalculator
-          buttonLabel="FX Converter"
-          title="FX & Currency Calculator"
-          description="Convert Kenyan Shilling (KES) against USD, EUR, GBP, and global currencies"
-        >
-          <CurrencyConverter />
-        </FloatingPageCalculator>
       )}
     </div>
   );

@@ -55,7 +55,7 @@ const Index = () => {
   const online = useOnlineStatus();
   const { user } = useAuth();
   const { entries: favEntries, isFavourite, toggle } = useFundWatchlist();
-  const { lastUpdateDate } = useLiveStatus();
+  const { sections } = useLiveStatus();
 
   const load = useCallback(async () => {
     if (!initialPageMemory && !cachedFunds) setLoading(true);
@@ -152,17 +152,18 @@ const Index = () => {
 
   useJsonLd(mmfListSchema);
 
+  // Strictly derive fund update date from actual published fund fact_sheet_date (or fund section status).
+  // Never bleed stock market date or wall-clock date into fund freshness.
   const latestFundTimestamp = published.reduce<number>((maxTs, f) => {
-    const candidate = f.fact_sheet_date
-      ? new Date(`${f.fact_sheet_date}T12:00:00+03:00`).getTime()
-      : f.updated_at
-        ? new Date(f.updated_at).getTime()
-        : 0;
+    if (!f.fact_sheet_date) return maxTs;
+    const candidate = new Date(`${f.fact_sheet_date}T12:00:00+03:00`).getTime();
     return Number.isFinite(candidate) && candidate > maxTs ? candidate : maxTs;
   }, 0);
 
-  const liveStatusTs = lastUpdateDate ? new Date(`${lastUpdateDate}T12:00:00+03:00`).getTime() : 0;
-  const bestTimestamp = Math.max(latestFundTimestamp, Number.isFinite(liveStatusTs) ? liveStatusTs : 0);
+  const fundSectionTs = sections.funds?.last_update_date
+    ? new Date(`${sections.funds.last_update_date}T12:00:00+03:00`).getTime()
+    : 0;
+  const bestTimestamp = latestFundTimestamp > 0 ? latestFundTimestamp : (Number.isFinite(fundSectionTs) ? fundSectionTs : 0);
   const lastUpdate = bestTimestamp > 0 ? new Date(bestTimestamp) : null;
   const showLoading = useMinimumLoadingDuration(loading);
 

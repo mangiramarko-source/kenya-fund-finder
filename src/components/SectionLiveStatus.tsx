@@ -22,11 +22,10 @@ const SectionLiveStatus = ({ section, fallbackDate, hideLive, hideDate, isLoadin
   const sDate = s?.last_update_date ? new Date(`${s.last_update_date}T12:00:00+03:00`) : null;
   const fDate = fallbackDate ? new Date(fallbackDate) : null;
 
-  // For funds, strictly reflect the actual last data-change date (never today's wall clock when no data updated)
+  // For funds, strictly reflect the actual fund data date (fallbackDate passed from fund records or section status).
+  // Never bleed stock market date or wall-clock date when fund sync has not happened.
   const rawDate = isFunds
-    ? sDate && fDate
-      ? (fDate.getTime() > sDate.getTime() ? fDate : sDate)
-      : fDate ?? sDate ?? null
+    ? fDate ?? sDate ?? null
     : fDate ?? getNairobiMarketDate();
 
   const marketOpen = isFunds ? s?.is_live === true : isGlobal ? isGlobalMarketOpen() : isKenyanMarketOpen();

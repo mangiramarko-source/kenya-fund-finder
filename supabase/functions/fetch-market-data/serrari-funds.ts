@@ -407,46 +407,80 @@ export function parseSerrariUtMarkdown(
   return rows;
 }
 
+async function fetchJinaWithRetry(url: string, retries = 3, delayMs = 1500): Promise<Response> {
+  const headers: Record<string, string> = {
+    Accept: "text/plain",
+  };
+  // @ts-ignore Deno env
+  const jinaKey = typeof Deno !== "undefined" ? Deno.env.get("JINA_API_KEY") : undefined;
+  if (jinaKey) {
+    headers["Authorization"] = `Bearer ${jinaKey}`;
+  }
+
+  let lastRes: Response | null = null;
+  for (let i = 0; i < retries; i++) {
+    try {
+      const res = await fetch(url, { headers });
+      if (res.ok) return res;
+      lastRes = res;
+      if (res.status === 401 || res.status === 429 || res.status >= 500) {
+        if (i < retries - 1) {
+          await new Promise((r) => setTimeout(r, delayMs * (i + 1)));
+          continue;
+        }
+      }
+      return res;
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      await new Promise((r) => setTimeout(r, delayMs * (i + 1)));
+    }
+  }
+  return lastRes!;
+}
+
 export async function fetchSerrariAllFundsData(): Promise<{
   rows: SerrariParsedFundRow[];
   asOfDate: string;
   notes: string[];
 }> {
   const notes: string[] = [];
-  const [kesMmfRes, usdMmfRes, utRes] = await Promise.all([
-    fetch("https://r.jina.ai/https://serrarigroup.com/ke/mmf", {
-      headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0" },
-    }),
-    fetch("https://r.jina.ai/https://serrarigroup.com/ke/mmf-usd", {
-      headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0" },
-    }),
-    fetch("https://r.jina.ai/https://serrarigroup.com/ke/ut", {
-      headers: { Accept: "text/plain", "User-Agent": "Mozilla/5.0" },
-    }),
-  ]);
-
-  if (!kesMmfRes.ok) throw new Error(`Serrari KES MMF fetch returned HTTP ${kesMmfRes.status}`);
+  // Stagger requests with retry to prevent unauthenticated 401 rate-limits on Jina Reader
+  const kesMmfRes = await fetchJinaWithRetry("https://r.jina.ai/https://serrarigroup.com/ke/mmf");
+  if (!kesMmfRes.ok) {
+    const errText = await kesMmfRes.text().catch(() => "");
+    throw new Error(`Serrari KES MMF fetch returned HTTP ${kesMmfRes.status}: ${errText.slice(0, 300)}`);
+  }
 
   const kesMd = await kesMmfRes.text();
   const kesRows = parseSerrariMmfMarkdown(kesMd, "KES");
   notes.push(`Serrari KES MMFs parsed: ${kesRows.length}`);
 
   let usdRows: SerrariParsedFundRow[] = [];
-  if (usdMmfRes.ok) {
-    const usdMd = await usdMmfRes.text();
-    usdRows = parseSerrariMmfMarkdown(usdMd, "USD", kesRows[0]?.asOfDate);
-    notes.push(`Serrari USD MMFs parsed: ${usdRows.length}`);
-  } else {
-    notes.push(`Serrari USD MMF fetch returned HTTP ${usdMmfRes.status}`);
+  try {
+    const usdMmfRes = await fetchJinaWithRetry("https://r.jina.ai/https://serrarigroup.com/ke/mmf-usd");
+    if (usdMmfRes.ok) {
+      const usdMd = await usdMmfRes.text();
+      usdRows = parseSerrariMmfMarkdown(usdMd, "USD", kesRows[0]?.asOfDate);
+      notes.push(`Serrari USD MMFs parsed: ${usdRows.length}`);
+    } else {
+      notes.push(`Serrari USD MMF fetch returned HTTP ${usdMmfRes.status}`);
+    }
+  } catch (err) {
+    notes.push(`Serrari USD MMF fetch error: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   let utRows: SerrariParsedFundRow[] = [];
-  if (utRes.ok) {
-    const utMd = await utRes.text();
-    utRows = parseSerrariUtMarkdown(utMd, kesRows[0]?.asOfDate);
-    notes.push(`Serrari Unit Trusts (Fixed Income, Balanced, Equity) parsed: ${utRows.length}`);
-  } else {
-    notes.push(`Serrari Unit Trusts fetch returned HTTP ${utRes.status}`);
+  try {
+    const utRes = await fetchJinaWithRetry("https://r.jina.ai/https://serrarigroup.com/ke/ut");
+    if (utRes.ok) {
+      const utMd = await utRes.text();
+      utRows = parseSerrariUtMarkdown(utMd, kesRows[0]?.asOfDate);
+      notes.push(`Serrari Unit Trusts (Fixed Income, Balanced, Equity) parsed: ${utRows.length}`);
+    } else {
+      notes.push(`Serrari Unit Trusts fetch returned HTTP ${utRes.status}`);
+    }
+  } catch (err) {
+    notes.push(`Serrari Unit Trusts fetch error: ${err instanceof Error ? err.message : String(err)}`);
   }
 
   const asOfDate = kesRows[0]?.asOfDate || new Date().toISOString().slice(0, 10);

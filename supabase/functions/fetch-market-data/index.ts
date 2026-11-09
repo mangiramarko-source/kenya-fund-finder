@@ -1029,6 +1029,7 @@ Deno.serve(async (req) => {
     } // end shouldFetchStocks
 
     // ── 4. Fetch All Funds (MMFs, Fixed Income, Balanced, Equity from Serrari Group) ──
+    let fundSyncError: string | null = null;
     if (shouldFetchFunds) {
       try {
         const serrari = await fetchSerrariAllFundsData();
@@ -1290,6 +1291,7 @@ Deno.serve(async (req) => {
         } // end !dryRun
       } catch (fundErr) {
         const msg = fundErr instanceof Error ? fundErr.message : String(fundErr);
+        fundSyncError = msg;
         console.error("[fetch-market-data] Serrari funds sync failed:", msg);
         results.push(`Funds sync failed: ${msg}`);
       }
@@ -1306,17 +1308,20 @@ Deno.serve(async (req) => {
       }
     }
 
+    const hasErrors = stockWriteErrors > 0 || (shouldFetchFunds && fundSyncError !== null);
     const completion = stockWriteErrors ? "Completed with stock write errors"
+      : fundSyncError ? `Completed with fund sync error: ${fundSyncError}`
       : stockRunReport?.status === "degraded" ? "Completed with degraded stock data" : "Completed successfully";
     console.log(`[fetch-market-data] ${completion}: ${results.length} operations`);
     return new Response(JSON.stringify({
-      success: stockWriteErrors === 0,
+      success: !hasErrors,
       results,
+      ...(fundSyncError ? { fund_error: fundSyncError } : {}),
       ...(stockRunReport ? { stocks: stockRunReport } : {}),
       ...(stockInspection ? { stock_inspection: stockInspection } : {}),
       ...(fundInspection ? { fund_inspection: fundInspection } : {}),
     }), {
-      status: stockWriteErrors ? 500 : 200,
+      status: hasErrors ? 500 : 200,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   } catch (error) {
