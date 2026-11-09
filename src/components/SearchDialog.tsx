@@ -546,8 +546,9 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
       {/* ─── Trigger Buttons ─── */}
       {variant === "icon" ? (
         <button
+          type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center justify-center h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors"
+          className="inline-flex items-center justify-center relative h-9 w-9 rounded-full text-foreground hover:bg-muted transition-colors"
           aria-label="Search"
         >
           <Search className="h-5 w-5" />
@@ -567,7 +568,7 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="inline-flex items-center justify-center h-8 w-8 rounded-full bg-white dark:bg-muted/60 border border-border/80 dark:border-border/70 text-muted-foreground hover:text-foreground hover:bg-zinc-50 dark:hover:bg-muted transition-colors shrink-0 shadow-2xs dark:shadow-none"
+          className="inline-flex items-center justify-center relative h-8 w-8 rounded-full border border-border/80 dark:border-border/70 bg-muted/60 dark:bg-muted/60 text-foreground hover:bg-muted dark:hover:bg-muted transition-colors shrink-0"
           aria-label="Search"
         >
           <Search className="h-4 w-4" />
@@ -576,10 +577,10 @@ const SearchDialog = ({ variant = "default" }: SearchDialogProps) => {
         <button
           type="button"
           onClick={() => setOpen(true)}
-          className="flex items-center gap-1.5 h-8 w-28 sm:w-32 px-2.5 sm:px-3 rounded-full bg-white dark:bg-muted/60 border border-border/80 dark:border-border/60 text-muted-foreground text-xs hover:bg-zinc-50 dark:hover:bg-muted/80 transition-all shrink-0 shadow-2xs dark:shadow-none"
+          className="flex items-center gap-1.5 h-8 w-28 sm:w-32 px-2.5 sm:px-3 rounded-full bg-muted/60 border border-border/80 dark:border-border/70 text-foreground hover:bg-muted dark:hover:bg-muted transition-colors shrink-0"
           aria-label="Search"
         >
-          <Search className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+          <Search className="h-3.5 w-3.5 shrink-0 text-foreground" />
           <span className="truncate text-xs font-normal text-muted-foreground">Search</span>
         </button>
       ) : (
