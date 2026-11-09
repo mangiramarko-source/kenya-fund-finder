@@ -43,6 +43,7 @@ import TestimonialsSection from "@/components/TestimonialsSection";
 
 import DisclaimerBlock from "@/components/DisclaimerBlock";
 import { useSocialFeed, type FeedItem } from "@/hooks/useSocialFeed";
+import LiveMarketWireTicker from "@/components/news/LiveMarketWireTicker";
 import { SocialFeed, SocialFeedCard } from "@/components/feed/SocialFeed";
 import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
@@ -1339,6 +1340,11 @@ const OverviewPage = () => {
 
         {/* Middle Column - Feed (Twitter-style 600px reading width) */}
         <div className="flex w-full min-w-0 max-w-full flex-col overflow-visible md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:max-w-[600px] md:mx-auto">
+          {/* Breaking News Wire Strip */}
+          <div className="mb-3 px-1 md:px-0">
+            <LiveMarketWireTicker />
+          </div>
+
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 

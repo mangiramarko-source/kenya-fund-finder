@@ -28,6 +28,7 @@ import { StockDisclosuresTab } from "@/components/stocks/StockDisclosuresTab";
 import KoraIllustration from "@/components/kora/KoraIllustration";
 import { getStockLogoUrl } from "@/lib/stockBranding";
 import { isIndexableNewsArticle } from "@/lib/seoNewsEligibility";
+import { ContextualStockNewsCard } from "@/components/news/ContextualStockNewsCard";
 import InlineDataGate from "@/components/auth/InlineDataGate";
 import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -661,6 +662,8 @@ const StockDetailPage = () => {
               <KoraIllustration pose="insight" className="absolute bottom-0 right-0 h-24 w-28 md:h-28 md:w-36" />
             </aside>
           )}
+
+          <ContextualStockNewsCard stockId={s.id} symbol={s.symbol} name={s.name} />
 
           <StockAboutCard
             companyName={s.name}

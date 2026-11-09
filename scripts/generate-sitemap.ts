@@ -76,6 +76,8 @@ async function publicStocks<T>(select: string): Promise<T[]> {
   return seoPublicData<T>("stocks", select, "symbol.asc");
 }
 
+let fetchedNewsRows: NewsSitemapRow[] = [];
+
 async function fetchDynamic(): Promise<SitemapEntry[]> {
   const [funds, news, pages, stocks] = await Promise.all([
     seoPublicData<{ slug: string; updated_at: string }>("funds", "slug,updated_at", "name.asc"),
@@ -88,6 +90,8 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
     publicStocks<{ symbol: string; updated_at: string }>("symbol,updated_at"),
   ]);
   if (!funds.length || !stocks.length) throw new Error("Sitemap requires populated stock and fund directories");
+
+  fetchedNewsRows = news;
 
   const fundBySlug = new Map<string, { slug: string; updated_at: string }>();
   for (const f of funds) {
@@ -146,12 +150,30 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
   return [...fundEntries, ...newsArchiveEntries, ...newsEntries, ...pageEntries, ...stockEntries];
 }
 
+function escapeXml(value: string): string {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&apos;");
+}
+
+function stripPublisherSuffix(title: string): string {
+  return title
+    .replace(
+      /\s*[-|–—]\s*(Business Daily|Capital FM|Capital News|The Standard|Nation|Standard Media|Citizen Digital|Business Today|Techweez|Kenyan Wallstreet|Reuters|Bloomberg|NTV Kenya|KBC|KFF|Kenya Fund Finder).*$/i,
+      "",
+    )
+    .trim();
+}
+
 function render(entries: SitemapEntry[]) {
   const urls = entries.map((e) =>
     [
       `  <url>`,
-      `    <loc>${BASE_URL}${e.path}</loc>`,
-      e.lastmod ? `    <lastmod>${e.lastmod}</lastmod>` : null,
+      `    <loc>${escapeXml(`${BASE_URL}${e.path}`)}</loc>`,
+      e.lastmod ? `    <lastmod>${escapeXml(e.lastmod)}</lastmod>` : null,
       e.changefreq ? `    <changefreq>${e.changefreq}</changefreq>` : null,
       e.priority ? `    <priority>${e.priority}</priority>` : null,
       `  </url>`,
@@ -167,6 +189,53 @@ function render(entries: SitemapEntry[]) {
   ].join("\n");
 }
 
+function renderNewsSitemap(news: NewsSitemapRow[]): string {
+  const indexable = news.filter(isIndexableNewsArticle);
+  const cutoff48h = Date.now() - 48 * 60 * 60 * 1000;
+  let items = indexable.filter((n) => {
+    const pubDateStr = n.source_published_at || n.date_published || n.created_at;
+    if (!pubDateStr) return false;
+    const time = new Date(pubDateStr).getTime();
+    return !Number.isNaN(time) && time >= cutoff48h;
+  });
+
+  // Fallback: if fewer than 1 article in last 48h, provide up to 10 recent indexable articles so sitemap is not empty
+  if (items.length === 0) {
+    items = indexable.slice(0, 10);
+  } else if (items.length > 1000) {
+    items = items.slice(0, 1000);
+  }
+
+  const urls = items.map((n) => {
+    const rawDate = n.source_published_at || n.date_published || n.created_at;
+    const pubDate = rawDate ? new Date(rawDate).toISOString() : new Date().toISOString();
+    const cleanTitle = stripPublisherSuffix(n.title || "Kenya Financial Market News");
+    const title = escapeXml(cleanTitle || "Kenya Financial Market News");
+    const loc = escapeXml(`${BASE_URL}/news/${n.id}`);
+
+    return [
+      `  <url>`,
+      `    <loc>${loc}</loc>`,
+      `    <news:news>`,
+      `      <news:publication>`,
+      `        <news:name>Kenya Fund Finder</news:name>`,
+      `        <news:language>en</news:language>`,
+      `      </news:publication>`,
+      `      <news:publication_date>${pubDate}</news:publication_date>`,
+      `      <news:title>${title}</news:title>`,
+      `    </news:news>`,
+      `  </url>`,
+    ].join("\n");
+  });
+
+  return [
+    `<?xml version="1.0" encoding="UTF-8"?>`,
+    `<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">`,
+    ...urls,
+    `</urlset>`,
+  ].join("\n");
+}
+
 async function main() {
   let dynamic: SitemapEntry[] = [];
   try {
@@ -176,9 +245,29 @@ async function main() {
     console.warn("[sitemap] dynamic fetch failed; writing static-only sitemap", err);
   }
   const all = Array.from(new Map([...staticEntries, ...dynamic].map((entry) => [entry.path, entry])).values());
-  writeFileSync(resolve(buildOutput ? "dist/sitemap.xml" : "public/sitemap.xml"), render(all));
+  const sitemapXml = render(all);
+  const newsSitemapXml = renderNewsSitemap(fetchedNewsRows);
+
+  const sitemapTarget = resolve(buildOutput ? "dist/sitemap.xml" : "public/sitemap.xml");
+  writeFileSync(sitemapTarget, sitemapXml);
+
+  const newsSitemapTarget = resolve(buildOutput ? "dist/news-sitemap.xml" : "public/news-sitemap.xml");
+  writeFileSync(newsSitemapTarget, newsSitemapXml);
+
+  if (buildOutput) {
+    try {
+      writeFileSync(resolve("public/sitemap.xml"), sitemapXml);
+      writeFileSync(resolve("public/news-sitemap.xml"), newsSitemapXml);
+    } catch {
+      // non-fatal
+    }
+  }
+
   console.log(
     `sitemap.xml written (${all.length} entries: ${staticEntries.length} static, ${dynamic.length} dynamic)`,
+  );
+  console.log(
+    `news-sitemap.xml written (${fetchedNewsRows.length} total news rows evaluated)`,
   );
 }
 

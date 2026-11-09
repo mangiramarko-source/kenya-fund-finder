@@ -449,7 +449,7 @@ function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFrom
         mainEntityOfPage: `https://kenyafundfinder.com/news/${article.id}`,
         datePublished: getNewsPublishedAt(article),
         dateModified: article.created_at || article.date_published,
-        ...(article.image_url ? { image: [article.image_url] } : {}),
+        image: [article.image_url || "https://kenyafundfinder.com/og-image.png"],
         author: { "@type": "Organization", name: article.source || "Kenya Fund Finder" },
         publisher: {
           "@type": "Organization",

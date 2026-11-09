@@ -549,7 +549,7 @@ function newsPage(article: NewsRow): SeoPageDefinition | null {
         mainEntityOfPage: canonicalUrl(path),
         ...(published ? { datePublished: published } : {}),
         ...(article.updated_at ? { dateModified: article.updated_at } : {}),
-        ...(article.image_url ? { image: [article.image_url] } : {}),
+        image: [article.image_url || `${SEO_SITE_URL}/og-image.png`],
         author: { "@type": "Organization", name: article.source || "Kenya Fund Finder" },
         publisher: {
           "@type": "Organization",

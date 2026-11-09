@@ -411,7 +411,7 @@ async function fetchJinaWithRetry(url: string, retries = 3, delayMs = 1500): Pro
   const headers: Record<string, string> = {
     Accept: "text/plain",
   };
-  // @ts-ignore Deno env
+  // @ts-expect-error Deno env
   const jinaKey = typeof Deno !== "undefined" ? Deno.env.get("JINA_API_KEY") : undefined;
   if (jinaKey) {
     headers["Authorization"] = `Bearer ${jinaKey}`;

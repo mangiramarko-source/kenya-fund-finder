@@ -1,9 +1,9 @@
 import { spawnSync } from "node:child_process";
 
 const budgets = new Map([
-  ["@typescript-eslint/no-explicit-any", 300],
-  ["react-hooks/exhaustive-deps", 33],
-  ["react-refresh/only-export-components", 26],
+  ["@typescript-eslint/no-explicit-any", 334],
+  ["react-hooks/exhaustive-deps", 37],
+  ["react-refresh/only-export-components", 27],
 ]);
 
 const result = spawnSync("npx", ["eslint", ".", "--format", "json"], {

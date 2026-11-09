@@ -30,7 +30,7 @@ export const CompareCatalogFunds: React.FC<CompareCatalogFundsProps> = ({
 
   const filteredFunds = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    let list = funds.filter((f) => {
+    const list = funds.filter((f) => {
       if (typeFilter !== "all" && f.badge !== typeFilter) return false;
       if (!q) return true;
       return (

@@ -22,6 +22,7 @@ import SaveToWatchlistButton from "@/components/watchlist/SaveToWatchlistButton"
 import AddToPortfolioButton from "@/components/portfolio/AddToPortfolioButton";
 import DisclaimerBlock from "@/components/DisclaimerBlock";
 import ReportIssueDialog from "@/components/funds/ReportIssueDialog";
+import ContextualFundNewsCard from "@/components/news/ContextualFundNewsCard";
 import { getFundExplainer } from "@/lib/fundExplainers";
 import { BookOpen, Layers } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
@@ -401,6 +402,7 @@ const FundDetailPage = () => {
           <DisclaimerBlock extra={getDisclaimer(fund.fund_type)} />
         </TabsContent>
       </Tabs>
+      <ContextualFundNewsCard fundName={fund.name} fundType={fund.fund_type} />
       <FundResearchSources fund={fund} />
     </div>
 
@@ -695,6 +697,7 @@ const FundDetailPage = () => {
           )}
 
           {/* ━━━ Report incorrect data ━━━ */}
+          <ContextualFundNewsCard fundName={fund.name} fundType={fund.fund_type} />
           <FundResearchSources fund={fund} />
           <div className="flex items-center justify-between rounded-xl border border-border/60 bg-muted/20 px-4 py-2.5">
             <p className="text-[11px] text-muted-foreground">

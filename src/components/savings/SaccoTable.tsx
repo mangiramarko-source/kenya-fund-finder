@@ -17,7 +17,7 @@ export const SaccoTable = ({ saccos }: SaccoTableProps) => {
   const { add, remove, isSelected } = useUniversalCompare();
 
   const filteredAndSorted = useMemo(() => {
-    let list = saccos.filter((s) => {
+    const list = saccos.filter((s) => {
       if (publicOnly && !s.openToPublic) return false;
       return true;
     });

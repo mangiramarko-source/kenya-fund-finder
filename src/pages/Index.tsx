@@ -21,6 +21,8 @@ import { getMarketPageMemory, setMarketPageMemory } from "@/lib/marketPageMemory
 import FloatingPageCalculator from "@/components/calculator/FloatingPageCalculator";
 import MmfCalculator from "@/components/calculator/MmfCalculator";
 import StoriesHeader from "@/components/stories/StoriesHeader";
+import LiveMarketWireTicker from "@/components/news/LiveMarketWireTicker";
+import ContextualFundNewsCard from "@/components/news/ContextualFundNewsCard";
 
 interface FundsPageMemory {
   funds: FundFromDB[];
@@ -177,6 +179,7 @@ const Index = () => {
 
   return (
     <div className="px-4 md:px-6 py-5 md:py-6 space-y-4 animate-in fade-in-50 duration-500">
+      <LiveMarketWireTicker />
       <StoriesHeader className="mb-2" />
       <div className="mb-2 md:mb-4">
         {/* Semantic title for A11y & SEO */}
@@ -261,6 +264,7 @@ const Index = () => {
         isFavourite={user ? isFavourite : undefined}
         onToggleFavourite={user ? toggle : undefined}
       />
+      <ContextualFundNewsCard />
       <FundBuyerQuestions />
       <ResearchLinks pillar="mmf" />
 

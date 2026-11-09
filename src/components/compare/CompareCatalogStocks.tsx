@@ -30,7 +30,7 @@ export const CompareCatalogStocks: React.FC<CompareCatalogStocksProps> = ({
 
   const filteredStocks = useMemo(() => {
     const q = searchQuery.toLowerCase().trim();
-    let list = stocks.filter((s) => {
+    const list = stocks.filter((s) => {
       if (sectorFilter !== "all" && s.metrics.sectorOrType !== sectorFilter) return false;
       if (!q) return true;
       return (

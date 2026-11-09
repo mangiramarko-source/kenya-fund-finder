@@ -52,10 +52,6 @@ export function FundsSummary({ funds, snapshots, categoryName }: FundsSummaryPro
     };
   }, [safeFunds, snapshots]);
 
-  if (total === 0) return null;
-
-  const maxYieldFund = topYielders.length > 0 ? topYielders[0] : null;
-
   const latestDateStr = useMemo(() => {
     let latest = "";
     for (const f of safeFunds) {
@@ -70,6 +66,10 @@ export function FundsSummary({ funds, snapshots, categoryName }: FundsSummaryPro
       year: "numeric",
     });
   }, [safeFunds]);
+
+  if (total === 0) return null;
+
+  const maxYieldFund = topYielders.length > 0 ? topYielders[0] : null;
 
   return (
     <div className="mb-8 w-full overflow-hidden relative mt-2">
