@@ -5,7 +5,6 @@ import {
   Briefcase,
   TrendingUp,
   TrendingDown,
-  SlidersHorizontal,
   ArrowRight,
   Plus,
   Check,
@@ -330,12 +329,12 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-4">
       {/* Tab Switcher Header */}
-      <div className="flex items-center justify-between gap-2 border-b border-border/50 pb-3">
-        <div className="flex items-center gap-1.5 p-0.5 rounded-xl bg-muted/60">
+      <div className="border-b border-border/50 pb-3">
+        <div className="grid grid-cols-2 gap-1 p-1 rounded-xl bg-muted/60">
           <button
             type="button"
             onClick={() => setActiveTab("watchlist")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === "watchlist"
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -357,7 +356,7 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
           <button
             type="button"
             onClick={() => setActiveTab("portfolio")}
-            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
+            className={`flex items-center justify-center gap-1.5 py-1.5 rounded-lg text-xs font-bold transition-all ${
               activeTab === "portfolio"
                 ? "bg-background text-foreground shadow-sm"
                 : "text-muted-foreground hover:text-foreground"
@@ -376,27 +375,6 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
             </span>
           </button>
         </div>
-
-        {/* Top-Right Quick Action */}
-        {activeTab === "watchlist" ? (
-          <button
-            onClick={onOpenCustomize}
-            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-semibold transition-colors px-2 py-1 rounded-lg hover:bg-muted/50"
-            title="Edit Watchlist"
-          >
-            <span>Edit</span>
-            <SlidersHorizontal className="w-3.5 h-3.5" />
-          </button>
-        ) : (
-          <Link
-            to="/portfolio"
-            className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1 font-semibold transition-colors px-2 py-1 rounded-lg hover:bg-muted/50"
-            title="Manage Portfolio"
-          >
-            <span>Manage</span>
-            <ArrowRight className="w-3.5 h-3.5" />
-          </Link>
-        )}
       </div>
 
       {/* ─── TAB 1: WATCHLIST ─── */}
