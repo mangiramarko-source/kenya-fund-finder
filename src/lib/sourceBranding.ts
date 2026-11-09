@@ -22,7 +22,7 @@ const KNOWN_SOURCE_LOGOS: Record<string, string> = {
   "central depository": "/images/news-sources/cdsc.png",
   "cnbc africa": "/images/news-sources/cnbc-africa.png",
 
-  // Business News Publishers
+  // Business News Publishers & Social Channels
   "business daily": "/images/sources/business-daily.png",
   "business daily africa": "/images/sources/business-daily.png",
   "standard media": "/images/news-sources/standard.png",
@@ -31,6 +31,9 @@ const KNOWN_SOURCE_LOGOS: Record<string, string> = {
   "kbc": "/images/news-sources/kbc.png",
   "kbc channel 1": "/images/news-sources/kbc.png",
   "kenya broadcasting corporation": "/images/news-sources/kbc.png",
+  "disrupt africa": "https://www.google.com/s2/favicons?domain=disrupt-africa.com&sz=128",
+  "techweez": "https://www.google.com/s2/favicons?domain=techweez.com&sz=128",
+  "mwango capital": "https://www.google.com/s2/favicons?domain=mwangocapital.com&sz=128",
 };
 
 const DOMAIN_TO_LOGO: Record<string, string> = {
@@ -42,6 +45,9 @@ const DOMAIN_TO_LOGO: Record<string, string> = {
   "businessdailyafrica.com": "/images/sources/business-daily.png",
   "standardmedia.co.ke": "/images/news-sources/standard.png",
   "kbc.co.ke": "/images/news-sources/kbc.png",
+  "disrupt-africa.com": "https://www.google.com/s2/favicons?domain=disrupt-africa.com&sz=128",
+  "techweez.com": "https://www.google.com/s2/favicons?domain=techweez.com&sz=128",
+  "mwangocapital.com": "https://www.google.com/s2/favicons?domain=mwangocapital.com&sz=128",
 };
 
 export function extractDomainFromUrl(url?: string | null): string | null {
@@ -96,15 +102,37 @@ export function getSourceLogoUrl(
   if (normName === "kbc" || normName.includes("kbc ")) {
     return "/images/news-sources/kbc.png";
   }
+  if (normName.includes("disrupt africa") || normName.includes("disruptafrica")) {
+    return "https://www.google.com/s2/favicons?domain=disrupt-africa.com&sz=128";
+  }
+  if (normName.includes("techweez")) {
+    return "https://www.google.com/s2/favicons?domain=techweez.com&sz=128";
+  }
+  if (normName.includes("mwango capital") || normName.includes("mwangocapital")) {
+    return "https://www.google.com/s2/favicons?domain=mwangocapital.com&sz=128";
+  }
 
   // 3. Domain-based lookup
   if (domain && DOMAIN_TO_LOGO[domain]) {
     return DOMAIN_TO_LOGO[domain];
   }
 
-  // 4. If URL is YouTube, NEVER return the generic YouTube favicon
-  if (domain && (domain === "youtube.com" || domain === "youtu.be" || domain.endsWith(".youtube.com"))) {
-    return null; // Fall back to initials rather than red YouTube play button
+  // 4. If URL is a video or social network platform, NEVER return the generic platform favicon (FB, YouTube, X)
+  const isPlatformDomain = Boolean(
+    domain && (
+      domain === "youtube.com" ||
+      domain === "youtu.be" ||
+      domain.endsWith(".youtube.com") ||
+      domain === "facebook.com" ||
+      domain === "fb.com" ||
+      domain.endsWith(".facebook.com") ||
+      domain === "twitter.com" ||
+      domain === "x.com"
+    )
+  );
+
+  if (isPlatformDomain) {
+    return null; // Fall back to initials rather than generic social network logo
   }
 
   // 5. External article website fallback (favicons for Nation, Star, etc.)

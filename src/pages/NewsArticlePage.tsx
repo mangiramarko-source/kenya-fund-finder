@@ -598,7 +598,7 @@ function getSyntheticArticle(id: string, allowGenericFallback = false): NewsFrom
                 <img
                   src={sourceLogoUrl}
                   alt={`${article.source} logo`}
-                  className="h-full w-full object-contain bg-white p-1"
+                  className="h-full w-full object-cover scale-110 bg-white"
                   onError={() => setSourceLogoError(true)}
                   referrerPolicy="no-referrer"
                 />

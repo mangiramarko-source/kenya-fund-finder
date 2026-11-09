@@ -416,20 +416,35 @@ Deno.serve(async (req) => {
       console.log(`Processing [${post.platform}] from ${post.author}...`);
       const rewritten = await rewriteSocialPost(groqKey, geminiKey, post);
 
-      // Build clean title
+      // Clean author & publisher name (e.g. "BUSINESS DAILY AFRICA" -> "Business Daily Africa", strip "(Official)")
+      let cleanAuthor = post.author
+        .replace(/\s*\(Official\)/i, "")
+        .replace(/^(?:Facebook|X)\s*-\s*/i, "")
+        .trim();
+      if (cleanAuthor === "BUSINESS DAILY AFRICA") {
+        cleanAuthor = "Business Daily Africa";
+      }
+
+      // Build clean title — ensuring it never says "Facebook" or "on Facebook"
       const cleanText = post.text
         .replace(/https?:\/\/\S+/g, "")
         .replace(/[#@]\w+/g, "")
         .trim();
-      const title = cleanText.length > 20
+      let title = cleanText.length > 20
         ? cleanText.slice(0, 80).trim() + (cleanText.length > 80 ? "…" : "")
-        : `${post.author} on ${post.platform}`;
+        : cleanAuthor;
+
+      title = title
+        .replace(/\s*(?:on|via)\s+facebook\b/gi, "")
+        .replace(/\[facebook\]/gi, "")
+        .trim();
 
       const sourcePublishedAt = post.createdAt && !Number.isNaN(new Date(post.createdAt).getTime())
         ? new Date(post.createdAt).toISOString()
         : null;
 
-      const sourceLabel = `${post.platform} - ${post.author}`;
+      // Source is the clean publisher name; source link is available via post.url
+      const sourceLabel = cleanAuthor;
       const quality = evaluateNewsQuality({
         title,
         summary: rewritten.summary,

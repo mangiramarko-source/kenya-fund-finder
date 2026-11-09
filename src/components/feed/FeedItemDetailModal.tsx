@@ -255,7 +255,7 @@ export function FeedItemDetailModal({
         {/* Header bar */}
         {(() => {
           const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
-          const cleanAuthor = isSocialPost ? item.authorName.replace(/^X\s*-\s*/, '') : item.authorName;
+          const cleanAuthor = (item.authorName || "").replace(/^(?:Facebook|X)\s*-\s*/i, "").replace(/\s*\(Official\)/i, "").trim();
           const stockLogoUrl = stock ? getStockLogoUrl(stock.symbol, (stock as any).logoUrl || (stock as any).logo_url) : "";
           const sourceLogoUrl = !stock ? getSourceLogoUrl(cleanAuthor, item.url || item.rawItem?.link || item.rawItem?.url) : null;
           return (
@@ -263,9 +263,13 @@ export function FeedItemDetailModal({
               <div className="flex items-center justify-between gap-4 pr-8">
                 <div className="flex items-center gap-3">
                   <div className={`w-10 h-10 flex items-center justify-center shrink-0 border overflow-hidden ${
-                    stock || (sourceLogoUrl && !sourceLogoError)
+                    stock
                       ? "rounded-xl bg-white text-emerald-700 border-border dark:bg-neutral-900"
-                      : `rounded-full ${isSocialPost ? 'bg-black dark:bg-white/10 text-white border-black/10' : getAvatarBg(item.type)}`
+                      : isSocialPost
+                        ? "rounded-full bg-black dark:bg-white/10 text-white border-black/10"
+                        : sourceLogoUrl && !sourceLogoError
+                          ? "rounded-full bg-white dark:bg-neutral-900 border-border"
+                          : `rounded-full ${getAvatarBg(item.type)}`
                   }`}>
                     {stock && stockLogoUrl && !stockLogoError ? (
                       <img
@@ -285,7 +289,7 @@ export function FeedItemDetailModal({
                       <img
                         src={sourceLogoUrl}
                         alt={`${cleanAuthor} logo`}
-                        className="h-full w-full object-contain p-1 bg-white dark:bg-neutral-900"
+                        className="h-full w-full object-cover scale-110 bg-white dark:bg-neutral-900"
                         onError={() => setSourceLogoError(true)}
                         referrerPolicy="no-referrer"
                       />

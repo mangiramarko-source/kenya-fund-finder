@@ -111,7 +111,7 @@ export const DemoSocialFeedCard = ({
 
   const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
   const rawAuthor = item.authorName || "Capital FM";
-  const authorName = isSocialPost ? rawAuthor.replace(/^X\s*-\s*/, '') : rawAuthor;
+  const authorName = rawAuthor.replace(/^(?:Facebook|X)\s*-\s*/i, "").replace(/\s*\(Official\)/i, "").trim();
   const initials = isSocialPost ? "X" : getInitials(authorName);
   
   const rawLabel = item.authorLabel || "marketnews";
@@ -185,7 +185,7 @@ export const DemoSocialFeedCard = ({
               <img 
                 src={avatarSrc!} 
                 alt={authorName}
-                className={`w-full h-full bg-white ${customLogo ? "object-contain p-1" : "object-cover"}`}
+                className="w-full h-full bg-white object-cover scale-110"
                 onError={() => setAvatarError(true)}
               />
             ) : (

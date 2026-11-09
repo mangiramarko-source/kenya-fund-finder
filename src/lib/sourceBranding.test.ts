@@ -34,6 +34,20 @@ describe("sourceBranding", () => {
     expect(getSourceLogoUrl("Standard Media", "https://www.standardmedia.co.ke/business")).toBe(
       "/images/news-sources/standard.png"
     );
+    expect(getSourceLogoUrl("Disrupt Africa", "https://www.facebook.com/disruptafrica/posts/123")).toBe(
+      "https://www.google.com/s2/favicons?domain=disrupt-africa.com&sz=128"
+    );
+    expect(getSourceLogoUrl("Techweez", "https://www.facebook.com/techweez/posts/123")).toBe(
+      "https://www.google.com/s2/favicons?domain=techweez.com&sz=128"
+    );
+    expect(getSourceLogoUrl("Mwango Capital", "https://twitter.com/MwangoCapital/status/123")).toBe(
+      "https://www.google.com/s2/favicons?domain=mwangocapital.com&sz=128"
+    );
+  });
+
+  it("never returns a generic social network favicon (FB, X) for unrecognized creators", () => {
+    expect(getSourceLogoUrl("Random Facebook Creator", "https://www.facebook.com/random/posts/123")).toBeNull();
+    expect(getSourceLogoUrl("Random Tweeter", "https://x.com/random/status/123")).toBeNull();
   });
 
   it("falls back to Google favicon service for general websites with valid domain", () => {

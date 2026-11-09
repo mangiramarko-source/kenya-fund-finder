@@ -154,7 +154,7 @@ export const SocialFeedCard = ({
   
   const isSocialPost = Boolean(item.authorName?.startsWith("X -") || item.rawItem?.source?.startsWith("X -"));
   const rawAuthor = item.authorName || "Market News";
-  const authorName = isSocialPost ? rawAuthor.replace(/^X\s*-\s*/, '') : rawAuthor;
+  const authorName = rawAuthor.replace(/^(?:Facebook|X)\s*-\s*/i, "").replace(/\s*\(Official\)/i, "").trim();
   const initials = isSocialPost ? "X" : getInitials(authorName);
 
   const displayCategory = useMemo(
@@ -269,7 +269,7 @@ export const SocialFeedCard = ({
               <img
                 src={avatarSrc!}
                 alt={authorName}
-                className={`w-full h-full bg-white dark:bg-neutral-900 ${avatarSrc?.startsWith("/images/") ? "object-contain p-1" : "object-cover"}`}
+                className="w-full h-full bg-white dark:bg-neutral-900 object-cover scale-110"
                 onError={() => setAvatarError(true)}
                 referrerPolicy="no-referrer"
               />
