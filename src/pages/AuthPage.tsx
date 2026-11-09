@@ -257,8 +257,8 @@ const AuthPage = () => {
               {/* Brand Logo & Name Header */}
               <div className="flex flex-col items-center justify-center text-center space-y-2 lg:space-y-1.5 pt-1">
                 <div className="flex items-center justify-center gap-3 lg:gap-2.5">
-                <div className="flex h-12 w-12 lg:h-10 lg:w-10 items-center justify-center rounded-2xl lg:rounded-xl bg-emerald-950/80 border border-emerald-500/30 text-emerald-400 shadow-inner">
-                  <TrendingUp className="h-6 w-6 lg:h-5 lg:w-5" />
+                <div className="relative flex h-12 w-12 lg:h-10 lg:w-10 items-center justify-center overflow-hidden rounded-2xl lg:rounded-xl border border-emerald-500/30 bg-emerald-950/80 shadow-inner">
+                  <img src="/apple-touch-icon.png" alt="KenyaFundFinder Logo" className="h-full w-full object-cover" />
                 </div>
                 <div className="text-left">
                   <div className="text-xl lg:text-lg font-bold tracking-tight text-foreground leading-tight">

@@ -80,8 +80,8 @@ export function FeedPollCard({
       {/* Top author/badge row */}
       <div className="flex items-center justify-between gap-2">
         <div className="flex items-center gap-3 min-w-0">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full bg-emerald-600 text-white font-extrabold text-sm shadow-xs shrink-0">
-            KFF
+          <div className="relative flex h-12 w-12 items-center justify-center overflow-hidden rounded-full border border-emerald-500/30 bg-emerald-950/20 shadow-xs shrink-0">
+            <img src="/apple-touch-icon.png" alt="KFF Community Pulse" className="h-full w-full object-cover" />
           </div>
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 flex-wrap">

@@ -454,7 +454,7 @@ export default function NewsPage() {
           </div>
         )
       ) : (
-        <div className="space-y-0 md:space-y-4 pb-20">
+        <div className="space-y-0 md:space-y-4 md:pt-4 pb-20">
           {displayFeedItems.map((item, index) => {
             const card = item.relatedStock ? (
               <StockFeedCard

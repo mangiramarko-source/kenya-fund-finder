@@ -123,10 +123,20 @@ const DesktopTopBar = () => {
   return (
     <header className="fixed inset-x-0 top-0 z-50 hidden h-14 max-w-full items-center gap-2 overflow-x-clip border-b border-border bg-card/95 px-4 backdrop-blur-md md:flex lg:gap-4 lg:px-6 xl:gap-6">
       {/* 1. Logo */}
-      <Link to="/" className="flex items-center shrink-0 mr-1 lg:mr-2 group" aria-label="KenyaFundFinder Home">
-        <span className="font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400 transition-transform group-hover:scale-105">
-          KFF
-        </span>
+      <Link
+        to="/"
+        className="flex items-center shrink-0 mr-1 lg:mr-2 group transition-transform active:scale-95"
+        aria-label="KenyaFundFinder Home"
+      >
+        <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-emerald-500/30 bg-emerald-950/20 shadow-sm transition-transform group-hover:scale-105">
+          <img
+            src="/apple-touch-icon.png"
+            alt="KenyaFundFinder logo"
+            className="h-full w-full object-cover"
+            width={32}
+            height={32}
+          />
+        </div>
       </Link>
 
       {/* 2. Main Navigation Links */}
@@ -180,7 +190,7 @@ const DesktopTopBar = () => {
           <Sheet open={accountOpen} onOpenChange={setAccountOpen}>
             <SheetContent side="right" className="inset-y-0 right-0 left-auto flex h-full w-[400px] max-w-[92vw] flex-col rounded-none border-l border-t-0 bg-background p-0 [&>button]:hidden">
               <div className="flex items-center gap-3.5 border-b border-border/80 px-5 py-3">
-                {user ? <><Avatar className="h-11 w-11 shrink-0 border border-emerald-500/30"><AvatarImage src={avatarUrl} alt={displayName || user.email || ""} /><AvatarFallback className="bg-emerald-600 text-base font-extrabold text-white">{(displayName || user.email || "U").slice(0, 2).toUpperCase()}</AvatarFallback></Avatar><div className="min-w-0 flex-1"><SheetTitle className="truncate text-base font-bold leading-snug">{displayName || "User"}</SheetTitle><p className="truncate text-xs font-medium text-muted-foreground">{user.email}</p></div></> : <><div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-full bg-emerald-600 text-base font-extrabold text-white">KFF</div><div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold leading-snug">Welcome</SheetTitle><p className="text-xs font-medium text-muted-foreground">Sign in to personalise KFF</p></div></>}
+                {user ? <><Avatar className="h-11 w-11 shrink-0 border border-emerald-500/30"><AvatarImage src={avatarUrl} alt={displayName || user.email || ""} /><AvatarFallback className="bg-emerald-600 text-base font-extrabold text-white">{(displayName || user.email || "U").slice(0, 2).toUpperCase()}</AvatarFallback></Avatar><div className="min-w-0 flex-1"><SheetTitle className="truncate text-base font-bold leading-snug">{displayName || "User"}</SheetTitle><p className="truncate text-xs font-medium text-muted-foreground">{user.email}</p></div></> : <><div className="relative flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full border border-emerald-500/30 bg-emerald-950/20 shadow-sm"><img src="/apple-touch-icon.png" alt="KenyaFundFinder" className="h-full w-full object-cover" /></div><div className="min-w-0 flex-1"><SheetTitle className="text-base font-bold leading-snug">Welcome</SheetTitle><p className="text-xs font-medium text-muted-foreground">Sign in to personalise KFF</p></div></>}
                 <button onClick={() => setAccountOpen(false)} aria-label="Close account menu" className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-muted/70 transition-colors hover:bg-muted"><X className="h-4 w-4 text-muted-foreground stroke-[2.5]" /></button>
               </div>
               {user ? <nav className="flex-1 overflow-y-auto px-2 pb-4"><AccountDrawerSection title="TOOLS"><AccountDrawerRow icon={Sparkles} label="AI Lab" tone="accent" onClick={() => closeAndNavigate("/ai-lab")} /><AccountDrawerRow icon={Briefcase} label="Portfolio" onClick={() => closeAndNavigate("/portfolio")} /><AccountDrawerRow icon={Star} label="Watchlist" onClick={() => closeAndNavigate("/watchlist")} /><AccountDrawerRow icon={Calculator} label="Calculator" onClick={() => closeAndNavigate("/calculator")} /><AccountDrawerRow icon={GraduationCap} label="Learn" onClick={() => closeAndNavigate("/learn")} />{isAdmin && <AccountDrawerRow icon={Shield} label="Admin Panel" tone="accent" onClick={() => closeAndNavigate("/admin")} />}</AccountDrawerSection><div className="mx-4 my-1 h-px bg-border/60" /><AccountDrawerSection title="ACCOUNT"><AccountDrawerRow icon={Bell} label="My Alerts" onClick={() => closeAndNavigate("/alerts")} /><AccountDrawerRow icon={Settings} label="Profile Settings" onClick={() => closeAndNavigate("/profile")} /></AccountDrawerSection><div className="mx-4 my-1 h-px bg-border/60" /><AccountDrawerSection title="LEGAL"><AccountDrawerRow icon={FileText} label="Privacy Policy" onClick={() => closeAndNavigate("/privacy")} /><AccountDrawerRow icon={Scale} label="Terms of Use" onClick={() => closeAndNavigate("/terms")} /></AccountDrawerSection></nav> : <div className="flex-1 px-5 py-8"><p className="text-sm text-muted-foreground">Sign in to manage alerts, your portfolio, and account settings.</p></div>}

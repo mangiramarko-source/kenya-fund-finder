@@ -1363,7 +1363,7 @@ const OverviewPage = () => {
             </div>
           </div>
 
-          <div className="space-y-0 md:space-y-4">
+          <div className="space-y-0 md:space-y-4 md:pt-4">
             {activeUpdateCategory === "Stocks" ? (
               filteredFeedItems.length === 0 ? (
                 newsLoading || newsCategoryLoading ? (

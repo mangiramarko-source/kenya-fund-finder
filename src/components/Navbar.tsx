@@ -278,13 +278,21 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex h-full w-full items-center justify-between">
-                {/* 1. Far left: KFF text logo */}
+                {/* 1. Far left: Brand mascot logo */}
                 <Link
                   to="/"
-                  className="shrink-0 font-mono text-2xl font-black italic tracking-tighter text-emerald-500 dark:text-emerald-400 transition-transform active:scale-95"
+                  className="flex items-center gap-2 shrink-0 transition-transform active:scale-95"
                   aria-label="KenyaFundFinder Home"
                 >
-                  KFF
+                  <div className="relative flex h-8 w-8 items-center justify-center overflow-hidden rounded-lg border border-emerald-500/30 bg-emerald-950/20 shadow-sm">
+                    <img
+                      src="/apple-touch-icon.png"
+                      alt="KenyaFundFinder logo"
+                      className="h-full w-full object-cover"
+                      width={32}
+                      height={32}
+                    />
+                  </div>
                 </Link>
 
                 {/* Right side cluster: circular Search, Notifications, Profile */}
