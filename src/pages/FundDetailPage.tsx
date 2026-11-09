@@ -15,6 +15,8 @@ import { fetchFundBySlug, fetchFunds, fetchHistoricalYields, fetchFundSnapshots,
 import { getDisclaimer } from "@/lib/disclaimers";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { buildFundSeoTitle } from "@/lib/seoPrerender";
+import { isUnitPriceFund } from "@/lib/fundUtils";
+import FundTaxBreakdownCard from "@/components/funds/FundTaxBreakdownCard";
 import { XAxis, YAxis, CartesianGrid, Tooltip as RechartsTooltip, ResponsiveContainer, Area, AreaChart } from "recharts";
 import YieldChange, { formatYield } from "@/components/YieldChange";
 import { CreateAlertDialog } from "@/components/alerts/PriceAlertComponents";
@@ -92,12 +94,17 @@ const FundDetailPage = () => {
     toast({ title: "Link copied to clipboard" });
   };
 
+  const isNav = fund ? isUnitPriceFund(fund) : false;
+
   const fundSeoTitle = fund
-    ? buildFundSeoTitle(fund.name, fund.slug, 60, fund.annual_yield)
+    ? buildFundSeoTitle(fund.name, fund.slug, 60, fund.annual_yield, fund.yield_unit, fund.fund_type)
     : "Fund Details | Kenya Fund Finder";
 
   const fundSeoDescription = useMemo(() => {
     if (!fund) return undefined;
+    if (isUnitPriceFund(fund)) {
+      return `${fund.name} (${fund.fund_type?.replace(/_/g, " ") || "Unit Trust"}) by ${fund.manager}: published Net Asset Value (NAV) of KES ${Number(fund.annual_yield).toFixed(2)}. Minimum deposit: KES ${fund.minimum_investment.toLocaleString()}, management fee: ${fund.management_fee}%. Updated Mon–Fri.`;
+    }
     const isUsd = fund.yield_unit === "USD" || fund.slug.toLowerCase().includes("usd");
     const netYield = (fund.annual_yield * 0.85).toFixed(2);
     const minText = isUsd
@@ -111,7 +118,7 @@ const FundDetailPage = () => {
     fundSeoDescription,
     fund ? {
       title: fundSeoTitle,
-      description: fundSeoDescription || `${fund.name} by ${fund.manager}. Annual rate: ${fund.annual_yield}%.`,
+      description: fundSeoDescription || `${fund.name} by ${fund.manager}.`,
       type: "article",
     } : undefined
   );
@@ -119,24 +126,57 @@ const FundDetailPage = () => {
   useJsonLd(fund ? {
     "@context": "https://schema.org",
     "@type": "FinancialProduct",
-    name: `${fund.name} ${fund.fund_type === "money_market" ? "Money Market Fund" : "Unit Trust"}`,
+    name: `${fund.name} ${isNav ? (fund.fund_type?.replace(/_/g, " ") || "Unit Trust") : (fund.fund_type === "money_market" ? "Money Market Fund" : "Unit Trust")}`,
     description: fundSeoDescription || fund.description,
     provider: { "@type": "Organization", name: fund.manager },
     url: `https://kenyafundfinder.com/compare/${fund.slug}`,
-    interestRate: { "@type": "QuantitativeValue", value: fund.annual_yield, unitText: "percent per annum" },
+    ...(isNav ? {} : { interestRate: { "@type": "QuantitativeValue", value: fund.annual_yield, unitText: "percent per annum" } }),
     feesAndCommissionsSpecification: `Management fee: ${fund.management_fee}% p.a.`,
   } : null);
 
   useJsonLd(fund ? {
     "@context": "https://schema.org",
     "@type": "FAQPage",
-    mainEntity: [
+    mainEntity: isNav ? [
+      {
+        "@type": "Question",
+        name: `What is the current NAV price of ${fund.name} in Kenya?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `${fund.name} (${fund.manager}) has a published Net Asset Value (NAV) of KES ${Number(fund.annual_yield).toFixed(2)}. Unlike Money Market Funds that distribute daily interest, balanced and equity funds track capital growth and asset valuation.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `How are returns taxed on ${fund.name}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `Unlike Money Market Funds where a 15% withholding tax is deducted at source on interest under Section 35(3)(b) and the Third Schedule (Head B, Paragraph 5) of Kenya's Income Tax Act (Cap. 470), balanced and equity unit trusts grow via Net Asset Value appreciation, with gains realized upon unit redemption or dividend distribution.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `What is the minimum investment and management fee for ${fund.name}?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `The reported minimum initial investment for ${fund.name} is KES ${fund.minimum_investment.toLocaleString()}, with an annual management fee of ${fund.management_fee}% and a typical withdrawal turnaround of ${fund.withdrawal_time}.`,
+        },
+      },
+      {
+        "@type": "Question",
+        name: `Is ${fund.name} regulated by the Capital Markets Authority (CMA)?`,
+        acceptedAnswer: {
+          "@type": "Answer",
+          text: `${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as a CMA-licensed collective investment scheme in Kenya" : ""}. Always verify current scheme details on the official CMA register before investing.`,
+        },
+      },
+    ] : [
       {
         "@type": "Question",
         name: `What is the current yield of ${fund.name} Money Market Fund in Kenya?`,
         acceptedAnswer: {
           "@type": "Answer",
-          text: `${fund.name} (${fund.manager}) has a published effective annual yield of ${fund.annual_yield}% and a nominal daily yield of ${fund.daily_yield}% (estimated ~${(fund.annual_yield * 0.85).toFixed(2)}% net after 15% KRA withholding tax).`,
+          text: `${fund.name} (${fund.manager}) has a published effective annual yield of ${fund.annual_yield}% and a nominal daily yield of ${fund.daily_yield}% (estimated ~${(fund.annual_yield * 0.85).toFixed(2)}% net after 15% withholding tax under Section 35(3)(b) and the Third Schedule, Head B, Paragraph 5 of Kenya's Income Tax Act, Cap. 470).`,
         },
       },
       {
@@ -278,7 +318,7 @@ const FundDetailPage = () => {
           <ArrowLeft className="h-6 w-6" />
         </button>
         <span className="pointer-events-none absolute left-1/2 -translate-x-1/2 text-[14px] font-medium lowercase tracking-wide text-foreground">
-          mmf
+          {fund.fund_type === "money_market" ? "mmf" : (fund.fund_type?.replace(/_/g, " ") || "fund")}
         </span>
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -317,7 +357,7 @@ const FundDetailPage = () => {
 
         <div className="mt-3">
           <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-            Annual yield · Updated {formatMarketDate(fund.fact_sheet_date || fund.updated_at, "en-KE", { day: "numeric", month: "short", year: "numeric" })} · Updated Mon–Fri
+            {isNav ? "NAV Unit Price" : "Annual yield"} · Updated {formatMarketDate(fund.fact_sheet_date || fund.updated_at, "en-KE", { day: "numeric", month: "short", year: "numeric" })} · Updated Mon–Fri
           </p>
           <p className="mt-1 text-[38px] font-black leading-none tabular-nums text-foreground">{formatYield(fund.annual_yield, fund.yield_unit)}</p>
           <div className="mt-1.5 flex items-center gap-3">
@@ -338,11 +378,12 @@ const FundDetailPage = () => {
           <MobileRateChart title="Rate History" data={chartData} dataKey="rate" xKey="date" emptyText="No rate history available yet." />
           {yields.length > 0 && <MobileRateChart title="Monthly Performance" data={yields} dataKey="yield" xKey="month" emptyText="No monthly performance available yet." />}
           <div className="grid grid-cols-2 gap-2">
-            <FundMetric label="Daily Yield" value={formatYield(fund.daily_yield, fund.yield_unit)} icon={<TrendingUp className="h-4 w-4" />} />
+            <FundMetric label={isNav ? "Fund Structure" : "Daily Yield"} value={isNav ? "NAV Unit Trust" : formatYield(fund.daily_yield, fund.yield_unit)} icon={<TrendingUp className="h-4 w-4" />} />
             <FundMetric label="Min. Investment" value={`KES ${fund.minimum_investment.toLocaleString()}`} icon={<Wallet className="h-4 w-4" />} />
             <FundMetric label="Management Fee" value={`${fund.management_fee}%`} sub={peerStats ? `Category avg ${peerStats.avgFee.toFixed(2)}%` : undefined} icon={<BarChart3 className="h-4 w-4" />} />
             <FundMetric label="Withdrawal" value={fund.withdrawal_time || "—"} icon={<Clock className="h-4 w-4" />} />
           </div>
+          <FundTaxBreakdownCard fund={fund} isNav={isNav} />
           <div className="rounded-[16px] border border-border bg-card p-3">
             <div className="flex items-center justify-between"><span className="text-xs text-muted-foreground">CMA status</span><span className="text-xs font-bold text-foreground">{fund.cma_licensed ? "Regulated" : "Not confirmed"}</span></div>
             <div className="my-2 h-px bg-border/60" />
@@ -445,6 +486,7 @@ const FundDetailPage = () => {
           </div>
           <div className="flex items-center gap-3 text-right shrink-0">
             <div>
+              <p className="text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{isNav ? "NAV Unit Price" : "Annual Yield"}</p>
               <p className="text-2xl md:text-3xl font-bold text-accent tabular-nums">{formatYield(fund.annual_yield, fund.yield_unit)}</p>
             <div className="flex items-center justify-end gap-1.5">
                 {prevSnap && <YieldChange current={fund.annual_yield} previous={prevSnap.annual_yield} unit={fund.yield_unit} className="text-xs" />}
@@ -456,7 +498,7 @@ const FundDetailPage = () => {
                   assetId={fund.id}
                   assetName={fund.name}
                   currentPrice={fund.annual_yield}
-                  unit="%"
+                  unit={isNav ? "KES" : "%"}
                 />
               </div>
             </div>
@@ -465,7 +507,7 @@ const FundDetailPage = () => {
 
         {/* Quick info row */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-4 pt-4 border-t border-border/50">
-          <QuickStat label="Daily Yield" value={formatYield(fund.daily_yield, fund.yield_unit)} />
+          <QuickStat label={isNav ? "Fund Structure" : "Daily Yield"} value={isNav ? "NAV Unit Trust" : formatYield(fund.daily_yield, fund.yield_unit)} />
           <QuickStat label="Min. Investment" value={`KES ${fund.minimum_investment.toLocaleString()}`} />
           <QuickStat label="Management Fee" value={`${fund.management_fee}%`} sub={peerStats ? `avg ${peerStats.avgFee.toFixed(2)}%` : undefined} />
           <QuickStat label="Withdrawal" value={fund.withdrawal_time} />
@@ -500,6 +542,9 @@ const FundDetailPage = () => {
           </div>
         </div>
       </div>
+
+      {/* Tax & Return Breakdown */}
+      <FundTaxBreakdownCard fund={fund} isNav={isNav} />
 
       {/* ━━━ SECTION 2: Rate History Chart ━━━ */}
           <section>

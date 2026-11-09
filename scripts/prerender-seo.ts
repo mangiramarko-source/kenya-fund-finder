@@ -13,6 +13,7 @@ import {
   truncateDescription,
   type SeoPageDefinition,
 } from "../src/lib/seoPrerender";
+import { isUnitPriceFund } from "../src/lib/fundUtils";
 import { isIndexableNewsArticle } from "../src/lib/seoNewsEligibility";
 import {
   getNewsArchivePage,
@@ -447,16 +448,21 @@ function stockPage(stock: StockRow, stocks: StockRow[] = []): SeoPageDefinition 
 function fundPage(fund: FundRow, allFunds: FundRow[] = []): SeoPageDefinition | null {
   if (!validSegment(fund.slug) || !fund.name || !fund.manager) return null;
   const path = `/compare/${fund.slug}`;
-  const isMmf = fund.fund_type === "money_market";
-  const isPct = fund.yield_unit === "%";
+  const isNav = isUnitPriceFund(fund);
+  const isMmf = !isNav && fund.fund_type === "money_market";
+  const isPct = !isNav && fund.yield_unit !== "USD";
   const netYield =
     isPct && fund.annual_yield != null && Number.isFinite(Number(fund.annual_yield))
       ? `${(Number(fund.annual_yield) * 0.85).toLocaleString("en-KE", { maximumFractionDigits: 2 })}%`
       : null;
   const yieldLabel = fund.annual_yield == null ? null : `${reportedYield(fund)} published figure`;
-  const description = isMmf && fund.annual_yield != null
+
+  const description = isNav && fund.annual_yield != null
+    ? `${fund.name} (${fund.fund_type?.replaceAll("_", " ") || "Unit Trust"}) by ${fund.manager}: published Net Asset Value (NAV) of KES ${Number(fund.annual_yield).toFixed(2)}. Compare fees, minimum investment, and terms.`
+    : isMmf && fund.annual_yield != null
     ? `${fund.name} Money Market Fund by ${fund.manager}: ${reportedYield(fund)} annual yield${fund.daily_yield != null ? ` (${percent(fund.daily_yield)} daily)` : ""}${netYield ? `, ~${netYield} net after 15% WHT` : ""}. Compare fees, min deposit and withdrawal time.`
     : `${fund.name} by ${fund.manager}${yieldLabel ? ` shows ${yieldLabel}` : ""}. Compare fees, minimum investment and withdrawal time.`;
+
   const peerLinks = allFunds
     .filter(
       (peer) =>
@@ -473,52 +479,95 @@ function fundPage(fund: FundRow, allFunds: FundRow[] = []): SeoPageDefinition | 
         `<li><a href="/compare/${encodeURIComponent(peer.slug!)}">${escapeHtml(peer.name)}</a> — ${escapeHtml(peer.manager)} (${reportedYield(peer)})</li>`,
     )
     .join("");
-  const fundFaqs: FaqItem[] = [
-    {
-      question: `What is the current yield of ${fund.name} ${isMmf ? "Money Market Fund" : "Unit Trust"} in Kenya?`,
-      answer: `${fund.name} (${fund.manager}) has a published annual figure of ${reportedYield(fund)}${fund.daily_yield != null ? ` and a daily yield of ${percent(fund.daily_yield)}` : ""}${netYield ? `, with an estimated net return of ${netYield} after 15% KRA withholding tax` : ""}.`,
-    },
-    {
-      question: `What is the minimum investment and management fee for ${fund.name}?`,
-      answer: `The reported minimum investment is ${fund.minimum_investment ?? "unavailable"}, the management fee is ${percent(fund.management_fee) ?? "unavailable"}, and the stated withdrawal turnaround is ${fund.withdrawal_time ?? "unavailable"}.`,
-    },
-    {
-      question: `Is ${fund.name} regulated by the Capital Markets Authority (CMA)?`,
-      answer: `${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as a CMA-regulated scheme in Kenya" : ""}. Always verify current scheme details with the manager and the CMA register.`,
-    },
-  ];
+
+  const fundFaqs: FaqItem[] = isNav
+    ? [
+        {
+          question: `What is the current NAV price of ${fund.name} in Kenya?`,
+          answer: `${fund.name} (${fund.manager}) has a published Net Asset Value (NAV) of KES ${Number(fund.annual_yield).toFixed(2)}. Unlike Money Market Funds that distribute daily interest, balanced and equity funds track capital growth and asset valuation.`,
+        },
+        {
+          question: `How are returns taxed on ${fund.name}?`,
+          answer: `Unlike Money Market Funds where a 15% withholding tax is deducted at source on interest under Section 35(3)(b) and the Third Schedule (Head B, Paragraph 5) of Kenya's Income Tax Act (Cap. 470), balanced and equity unit trusts grow via Net Asset Value appreciation, with gains realized upon unit redemption or dividend distribution.`,
+        },
+        {
+          question: `What is the minimum investment and management fee for ${fund.name}?`,
+          answer: `The reported minimum investment is ${fund.minimum_investment ?? "unavailable"}, the management fee is ${percent(fund.management_fee) ?? "unavailable"}, and the stated withdrawal turnaround is ${fund.withdrawal_time ?? "unavailable"}.`,
+        },
+        {
+          question: `Is ${fund.name} regulated by the Capital Markets Authority (CMA)?`,
+          answer: `${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as a CMA-regulated scheme in Kenya" : ""}. Always verify current scheme details with the manager and the CMA register.`,
+        },
+      ]
+    : [
+        {
+          question: `What is the current yield of ${fund.name} ${isMmf ? "Money Market Fund" : "Unit Trust"} in Kenya?`,
+          answer: `${fund.name} (${fund.manager}) has a published annual figure of ${reportedYield(fund)}${fund.daily_yield != null ? ` and a daily yield of ${percent(fund.daily_yield)}` : ""}${netYield ? `, with an estimated net return of ${netYield} after Kenya's 15% withholding tax (Section 35(3)(b) and Third Schedule, Head B, Paragraph 5 of the Income Tax Act, Cap. 470)` : ""}.`,
+        },
+        {
+          question: `What is the minimum investment and management fee for ${fund.name}?`,
+          answer: `The reported minimum investment is ${fund.minimum_investment ?? "unavailable"}, the management fee is ${percent(fund.management_fee) ?? "unavailable"}, and the stated withdrawal turnaround is ${fund.withdrawal_time ?? "unavailable"}.`,
+        },
+        {
+          question: `Is ${fund.name} regulated by the Capital Markets Authority (CMA)?`,
+          answer: `${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as a CMA-regulated scheme in Kenya" : ""}. Always verify current scheme details with the manager and the CMA register.`,
+        },
+      ];
+
+  const definitionItems: Array<[string, unknown]> = isNav
+    ? [
+        ["Current Unit Price (NAV)", `KES ${Number(fund.annual_yield).toFixed(2)}`],
+        ["Nominal daily yield", "N/A (NAV Unit Price Fund)"],
+        ["Estimated net yield after 15% withholding tax", "N/A (Capital Growth / NAV)"],
+        ["Minimum investment (reported amount; confirm currency)", fund.minimum_investment],
+        ["Management fee", percent(fund.management_fee)],
+        ["Withdrawal time", fund.withdrawal_time],
+        ["Fund type", fund.fund_type?.replaceAll("_", " ")],
+        ["Fact-sheet date", sourceDate(fund.fact_sheet_date)],
+        ["Record updated", sourceDate(fund.updated_at)],
+      ]
+    : [
+        ["Published figure (confirm gross/net basis)", reportedYield(fund)],
+        ["Nominal daily yield", percent(fund.daily_yield)],
+        ["Estimated net yield after 15% withholding tax", netYield],
+        ["Minimum investment (reported amount; confirm currency)", fund.minimum_investment],
+        ["Management fee", percent(fund.management_fee)],
+        ["Withdrawal time", fund.withdrawal_time],
+        ["Fund type", fund.fund_type?.replaceAll("_", " ")],
+        ["Fact-sheet date", sourceDate(fund.fact_sheet_date)],
+        ["Record updated", sourceDate(fund.updated_at)],
+      ];
+
   return {
     path,
-    title: buildFundSeoTitle(fund.name, fund.slug, 60, fund.annual_yield),
+    title: buildFundSeoTitle(fund.name, fund.slug, 60, fund.annual_yield, fund.yield_unit, fund.fund_type),
     description,
-    heading: isMmf && !/money market/i.test(fund.name) ? `${fund.name} Money Market Fund` : fund.name,
-    contentHtml: `${paragraph(`${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as CMA regulated" : ""}.`)}${paragraph(fund.description)}${definitionList([
-      ["Published figure (confirm gross/net basis)", reportedYield(fund)],
-      ["Nominal daily yield", percent(fund.daily_yield)],
-      ["Estimated net yield after 15% withholding tax", netYield],
-      ["Minimum investment (reported amount; confirm currency)", fund.minimum_investment],
-      ["Management fee", percent(fund.management_fee)],
-      ["Withdrawal time", fund.withdrawal_time],
-      ["Fund type", fund.fund_type?.replaceAll("_", " ")],
-      ["Fact-sheet date", sourceDate(fund.fact_sheet_date)],
-      ["Record updated", sourceDate(fund.updated_at)],
-    ])}<p>${sourceLink(fund.website)}</p><p>A record update is not independent source verification. Confirm currency, yield basis and current terms with the manager.</p>${peerLinks ? `<section><h2>Compare related Kenyan ${isMmf ? "Money Market Funds" : "unit trusts"}</h2><ul>${peerLinks}</ul></section>` : ""}${faqContentHtml(fundFaqs)}${researchLinksHtml("mmf")}<p><a href="/funds">Compare all investment funds</a> · <a href="/money-market-funds-kenya">Kenya MMF comparison table</a> · <a href="/page/source-policy">Source policy</a></p>`,
+    heading: isNav
+      ? `${fund.name} (${fund.fund_type?.replaceAll("_", " ") || "Unit Trust"})`
+      : isMmf && !/money market/i.test(fund.name)
+      ? `${fund.name} Money Market Fund`
+      : fund.name,
+    contentHtml: `${paragraph(`${fund.name} is managed by ${fund.manager}${fund.cma_licensed ? " and is listed as CMA regulated" : ""}.`)}${paragraph(fund.description)}${definitionList(definitionItems)}<p>${sourceLink(fund.website)}</p><p>A record update is not independent source verification. Confirm currency, yield basis and current terms with the manager.</p>${peerLinks ? `<section><h2>Compare related Kenyan ${isMmf ? "Money Market Funds" : "unit trusts"}</h2><ul>${peerLinks}</ul></section>` : ""}${faqContentHtml(fundFaqs)}${researchLinksHtml("mmf")}<p><a href="/funds">Compare all investment funds</a> · <a href="/money-market-funds-kenya">Kenya MMF comparison table</a> · <a href="/page/source-policy">Source policy</a></p>`,
     jsonLd: [
       {
         "@context": "https://schema.org",
         "@type": "FinancialProduct",
-        name: isMmf && !/money market/i.test(fund.name) ? `${fund.name} Money Market Fund` : fund.name,
+        name: isNav
+          ? `${fund.name} (${fund.fund_type?.replaceAll("_", " ") || "Unit Trust"})`
+          : isMmf && !/money market/i.test(fund.name)
+          ? `${fund.name} Money Market Fund`
+          : fund.name,
         description: truncateDescription(description),
         provider: { "@type": "Organization", name: fund.manager },
         url: canonicalUrl(path),
-        ...(fund.annual_yield == null || (fund.yield_unit !== "%" && fund.yield_unit !== "USD")
+        ...(isNav || fund.annual_yield == null || (fund.yield_unit !== "%" && fund.yield_unit !== "USD")
           ? {}
           : { interestRate: { "@type": "QuantitativeValue", value: fund.annual_yield, unitText: "percent per annum" } }),
       },
       faqSchema(fundFaqs),
       breadcrumb([
         { name: "Home", path: "/" },
-        { name: "Money Market Funds", path: "/funds" },
+        { name: isNav ? "Unit Trusts" : "Money Market Funds", path: "/funds" },
         { name: fund.name, path },
       ]),
     ],
@@ -592,9 +641,11 @@ function fundDirectoryPage(funds: FundRow[]): SeoPageDefinition {
   const lowMinKes = [...kesMmfs]
     .filter((f) => f.minimum_investment != null && Number(f.minimum_investment) <= 1000)
     .slice(0, 5);
-  const latestFactDate =
-    kesMmfs.map((f) => f.fact_sheet_date).find((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d))) ||
-    "2026-11-02";
+  const validDates = validFunds
+    .map((f) => (f.fact_sheet_date ? f.fact_sheet_date.slice(0, 10) : f.updated_at ? f.updated_at.slice(0, 10) : null))
+    .filter((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d)));
+  validDates.sort();
+  const latestFactDate = validDates.at(-1) || new Date().toISOString().slice(0, 10);
 
   const answerFirstHtml = `<p><strong>Market Summary (<time datetime="${escapeHtml(latestFactDate)}">${escapeHtml(sourceDate(latestFactDate))}</time>):</strong> Kenya Fund Finder tracks ${validFunds.length} CMA-regulated unit trusts in Kenya, including ${kesMmfs.length} KES Money Market Funds and ${usdMmfs.length} USD Money Market Funds.${topKes ? ` The highest-yielding KES MMF is <a href="/compare/${encodeURIComponent(topKes.slug!)}">${escapeHtml(topKes.name)}</a> (${escapeHtml(topKes.manager)}) at ${escapeHtml(percent(topKes.annual_yield) || "")} p.a. (${escapeHtml(percent(topKes.daily_yield) || "")} daily, ~${escapeHtml(((Number(topKes.annual_yield ?? 0) * 0.85)).toFixed(2))}% net after 15% withholding tax).` : ""}${topUsd ? ` Among USD dollar funds, <a href="/compare/${encodeURIComponent(topUsd.slug!)}">${escapeHtml(topUsd.name)}</a> leads at ${escapeHtml(percent(topUsd.annual_yield) || "")} p.a.` : ""} Verify current terms with each fund manager and the <a href="https://licensees.cma.or.ke/licenses/15/">Capital Markets Authority (CMA)</a> before investing.</p>`;
 

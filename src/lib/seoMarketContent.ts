@@ -1,5 +1,6 @@
 import { canonicalUrl, definitionList, escapeHtml, paragraph, type SeoPageDefinition } from "./seoPrerender";
 import { MMF_FAQ, researchLinksHtml } from "../data/seoGrowthContent";
+import { isUnitPriceFund } from "./fundUtils";
 
 export interface ResearchFund {
   slug: string | null; name: string | null; manager: string | null; fund_type: string | null;
@@ -22,8 +23,16 @@ export function sourceLink(url: string | null | undefined): string {
     return ["http:", "https:"].includes(parsed.protocol) ? `<a href="${escapeHtml(parsed.href)}" rel="noopener noreferrer">Manager's published website</a>` : "Source link unavailable";
   } catch { return "Source link unavailable"; }
 }
-export const isPercentageYield = (fund: ResearchFund) => fund.yield_unit === "%";
-export const reportedYield = (fund: ResearchFund) => isPercentageYield(fund) ? metric(fund.annual_yield, "%") : `${metric(fund.annual_yield)} ${escapeHtml(fund.yield_unit || "(unit unavailable)")}`;
+export const isPercentageYield = (fund: ResearchFund) => !isUnitPriceFund(fund) && fund.yield_unit !== "USD";
+export const reportedYield = (fund: ResearchFund) => {
+  if (isUnitPriceFund(fund)) {
+    return `KES ${metric(fund.annual_yield)} (NAV Price)`;
+  }
+  if (fund.yield_unit === "USD") {
+    return `${metric(fund.annual_yield, "% p.a.")} (USD)`;
+  }
+  return metric(fund.annual_yield, "% p.a.");
+};
 
 export function mmfHubSeo(funds: ResearchFund[]): SeoPageDefinition {
   const mmfs = funds.filter(f => f.fund_type === "money_market" && f.slug && /^[A-Za-z0-9_-]+$/.test(f.slug) && f.name && f.manager);

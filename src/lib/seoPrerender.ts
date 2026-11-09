@@ -1,3 +1,5 @@
+import { isUnitPriceFund } from "./fundUtils";
+
 export const SEO_SITE_URL = "https://kenyafundfinder.com";
 export const SEO_DEFAULT_OG_IMAGE = SEO_SITE_URL + "/og-image-1200x630.png";
 
@@ -48,7 +50,10 @@ export function buildFundSeoTitle(
   slug: string,
   maxLength = 60,
   annualYield?: number | null,
+  yieldUnit?: string | null,
+  fundType?: string | null,
 ): string {
+  const isNav = isUnitPriceFund({ yield_unit: yieldUnit, fund_type: fundType, annual_yield: annualYield });
   const cleanName = stripHtml(name).replace(/\s+/g, " ").trim();
   const nameTokens = new Set(
     cleanName.toLowerCase().replace(/[^a-z0-9]+/g, " ").trim().split(/\s+/).filter(Boolean),
@@ -66,9 +71,12 @@ export function buildFundSeoTitle(
     .map(tokenLabel)
     .filter((token, index, tokens) => token !== tokens[index - 1]);
   const variant = variantTokens.join(" ");
-  const hasValidYield = typeof annualYield === "number" && Number.isFinite(annualYield) && annualYield > 0;
-  const yieldText = hasValidYield ? `${Number(annualYield).toFixed(2)}% ` : "";
-  const suffix = ` – ${yieldText}Yield & Fees`;
+
+  const hasValidMetric = typeof annualYield === "number" && Number.isFinite(annualYield) && annualYield > 0;
+  const suffix = isNav
+    ? (hasValidMetric ? ` – KES ${Number(annualYield).toFixed(2)} NAV & Fees` : " – NAV Price & Fees")
+    : (hasValidMetric ? ` – ${Number(annualYield).toFixed(2)}% Yield & Fees` : " – Yield & Fees");
+
   const maxIdentityLength = Math.max(12, maxLength - suffix.length);
   let identity = [cleanName, variant].filter(Boolean).join(" ");
 

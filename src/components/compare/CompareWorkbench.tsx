@@ -31,6 +31,8 @@ export interface UniversalCompareEntity {
   metrics: {
     primaryYieldOrReturnPct?: number; // e.g. 14.12 for 14.12%
     netReturnPct?: number; // after tax
+    isUnitPrice?: boolean;
+    yieldUnit?: string;
     priceKes?: number;
     dayChangePct?: number;
     peRatio?: number;

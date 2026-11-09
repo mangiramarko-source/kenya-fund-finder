@@ -11,6 +11,7 @@ import FundLogo from "./FundLogo";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import type { FundFromDB, FundType, YieldSnapshot } from "@/lib/api";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
+import { isUnitPriceFund } from "@/lib/fundUtils";
 import { useCompare } from "@/hooks/useCompare";
 import { useAuth } from "@/hooks/useAuth";
 import InlineDataGate from "@/components/auth/InlineDataGate";
@@ -30,9 +31,24 @@ const categoryLabels: Record<string, string> = {
 
 const categoryOrder = ["money_market", "fixed_income", "bond", "balanced", "equity"];
 
-const fmtYield = (value: number, unit: string) => {
-  if (unit === "%") return `${value}%`;
-  return value.toFixed(2);
+const fmtYield = (fund: FundFromDB) => {
+  if (isUnitPriceFund(fund)) {
+    return `KES ${fund.annual_yield.toFixed(2)} NAV`;
+  }
+  if (fund.yield_unit === "USD") {
+    return `${fund.annual_yield.toFixed(2)}% USD`;
+  }
+  return `${fund.annual_yield.toFixed(2)}%`;
+};
+
+const sortFundsByYield = (a: FundFromDB, b: FundFromDB, dir: "asc" | "desc") => {
+  const isNavA = isUnitPriceFund(a);
+  const isNavB = isUnitPriceFund(b);
+  if (isNavA !== isNavB) {
+    return dir === "desc" ? (isNavA ? 1 : -1) : (isNavA ? -1 : 1);
+  }
+  const mul = dir === "asc" ? 1 : -1;
+  return mul * (a.annual_yield - b.annual_yield);
 };
 
 interface FundGridProps {
@@ -269,7 +285,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
   const isCategoryGated = isGated && categoryFunds.length > 3;
 
   const defaultSortedCategoryFunds = useMemo(
-    () => [...categoryFunds].sort((a, b) => b.annual_yield - a.annual_yield),
+    () => [...categoryFunds].sort((a, b) => sortFundsByYield(a, b, "desc")),
     [categoryFunds],
   );
 
@@ -297,6 +313,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
       const mul = sortDir === "asc" ? 1 : -1;
       if (sortKey === "name") return mul * a.name.localeCompare(b.name);
       if (sortKey === "change") return mul * (yieldChange(a) - yieldChange(b));
+      if (sortKey === "annual_yield") return sortFundsByYield(a, b, sortDir);
       return mul * ((a[sortKey] as number) - (b[sortKey] as number));
     });
     return result;
@@ -304,7 +321,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
   }, [categoryFunds, defaultSortedCategoryFunds, isCategoryGated, search, sortKey, sortDir, movement, snapshots]);
 
   const bestYield = useMemo(() => {
-    const catFunds = funds.filter((f) => f.fund_type === activeTab);
+    const catFunds = funds.filter((f) => f.fund_type === activeTab && !isUnitPriceFund(f));
     if (catFunds.length === 0) return 0;
     return Math.max(...catFunds.map((f) => f.annual_yield));
   }, [funds, activeTab]);
@@ -657,7 +674,7 @@ const FundGrid = ({ funds, snapshots, allSnapshots = {}, loading, lastUpdate, is
                   </td>
                   <td className="px-3 py-4 text-right whitespace-nowrap tabular-nums align-middle">
                     <span className="font-black text-foreground text-[13px]">
-                      {fmtYield(fund.annual_yield, fund.yield_unit)}
+                      {fmtYield(fund)}
                     </span>
                   </td>
                   <td className="px-2 py-4 text-right whitespace-nowrap align-middle">

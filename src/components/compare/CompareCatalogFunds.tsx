@@ -50,7 +50,10 @@ export const CompareCatalogFunds: React.FC<CompareCatalogFundsProps> = ({
         return (a.metrics.minDepositKes || 0) - (b.metrics.minDepositKes || 0);
       }
       // default: highest yield
-      return (b.metrics.primaryYieldOrReturnPct || 0) - (a.metrics.primaryYieldOrReturnPct || 0);
+      const yieldA = a.metrics.primaryYieldOrReturnPct ?? -1;
+      const yieldB = b.metrics.primaryYieldOrReturnPct ?? -1;
+      if (yieldA !== yieldB) return yieldB - yieldA;
+      return (b.metrics.priceKes || 0) - (a.metrics.priceKes || 0);
     });
   }, [funds, searchQuery, typeFilter, sortBy]);
 
@@ -96,7 +99,7 @@ export const CompareCatalogFunds: React.FC<CompareCatalogFundsProps> = ({
             <thead className="bg-muted/40 text-[10px] font-bold text-muted-foreground uppercase border-b border-border/60">
               <tr>
                 <th className="py-3 px-4">Fund &amp; Manager</th>
-                <th className="py-3 px-3 text-right">Annual Yield (EAR)</th>
+                <th className="py-3 px-3 text-right">Yield / NAV Price</th>
                 <th className="py-3 px-3 text-right hidden sm:table-cell">Mgmt Fee</th>
                 <th className="py-3 px-3 text-right hidden md:table-cell">Min Deposit</th>
                 <th className="py-3 px-3 hidden lg:table-cell">Withdrawal</th>
@@ -132,10 +135,28 @@ export const CompareCatalogFunds: React.FC<CompareCatalogFundsProps> = ({
                       </div>
                     </td>
 
-                    <td className="py-3 px-3 text-right font-black text-emerald-600 dark:text-emerald-400 tabular-nums">
-                      {fund.metrics.primaryYieldOrReturnPct != null
-                        ? `${fund.metrics.primaryYieldOrReturnPct.toFixed(2)}%`
-                        : "—"}
+                    <td className="py-3 px-3 text-right font-black tabular-nums">
+                      {fund.metrics.isUnitPrice ? (
+                        <div>
+                          <span className="text-foreground">
+                            KES {fund.metrics.priceKes?.toFixed(2) ?? "—"}
+                          </span>
+                          <span className="block text-[9px] font-semibold text-muted-foreground uppercase tracking-wider">
+                            NAV Price
+                          </span>
+                        </div>
+                      ) : fund.metrics.primaryYieldOrReturnPct != null ? (
+                        <div>
+                          <span className="text-emerald-600 dark:text-emerald-400">
+                            {fund.metrics.primaryYieldOrReturnPct.toFixed(2)}%
+                          </span>
+                          <span className="block text-[9px] font-normal text-muted-foreground">
+                            {fund.metrics.netReturnPct != null ? `~${fund.metrics.netReturnPct.toFixed(2)}% net` : "p.a. Gross"}
+                          </span>
+                        </div>
+                      ) : (
+                        "—"
+                      )}
                     </td>
 
                     <td className="py-3 px-3 text-right tabular-nums hidden sm:table-cell font-semibold text-foreground">

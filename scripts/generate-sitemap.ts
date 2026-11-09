@@ -33,11 +33,11 @@ interface NewsSitemapRow extends SeoNewsArticleLike {
 }
 
 const staticEntries: SitemapEntry[] = [
-  { path: "/money-market-funds-kenya", lastmod: "2026-11-02", changefreq: "daily", priority: "1.0" },
+  { path: "/money-market-funds-kenya", changefreq: "daily", priority: "1.0" },
   { path: "/mmf-calculator", changefreq: "monthly", priority: "0.9" },
   ...RESEARCH_ARTICLES.map(a => ({ path: articlePath(a), changefreq: "monthly" as const, priority: "0.8" })),
   { path: "/", changefreq: "daily", priority: "1.0" },
-  { path: "/funds", lastmod: "2026-11-02", changefreq: "daily", priority: "1.0" },
+  { path: "/funds", changefreq: "daily", priority: "1.0" },
   { path: "/savings", changefreq: "daily", priority: "0.9" },
   { path: "/stocks", changefreq: "daily", priority: "1.0" },
   { path: "/compare", changefreq: "daily", priority: "0.9" },
@@ -77,6 +77,7 @@ async function publicStocks<T>(select: string): Promise<T[]> {
 }
 
 let fetchedNewsRows: NewsSitemapRow[] = [];
+let latestMarketDate: string = "";
 
 async function fetchDynamic(): Promise<SitemapEntry[]> {
   const [funds, news, pages, stocks] = await Promise.all([
@@ -92,6 +93,12 @@ async function fetchDynamic(): Promise<SitemapEntry[]> {
   if (!funds.length || !stocks.length) throw new Error("Sitemap requires populated stock and fund directories");
 
   fetchedNewsRows = news;
+
+  const validFundDates = funds
+    .map((f) => f.updated_at?.slice(0, 10))
+    .filter((d): d is string => Boolean(d && /^\d{4}-\d{2}-\d{2}$/.test(d)));
+  validFundDates.sort();
+  latestMarketDate = validFundDates.at(-1) || new Date().toISOString().slice(0, 10);
 
   const fundBySlug = new Map<string, { slug: string; updated_at: string }>();
   for (const f of funds) {
@@ -244,7 +251,13 @@ async function main() {
     if (strict) throw err;
     console.warn("[sitemap] dynamic fetch failed; writing static-only sitemap", err);
   }
+  const effectiveMarketDate = latestMarketDate || new Date().toISOString().slice(0, 10);
   const all = Array.from(new Map([...staticEntries, ...dynamic].map((entry) => [entry.path, entry])).values());
+  for (const entry of all) {
+    if (["/funds", "/money-market-funds-kenya", "/", "/compare", "/stocks", "/savings"].includes(entry.path) && !entry.lastmod) {
+      entry.lastmod = effectiveMarketDate;
+    }
+  }
   const sitemapXml = render(all);
   const newsSitemapXml = renderNewsSitemap(fetchedNewsRows);
 

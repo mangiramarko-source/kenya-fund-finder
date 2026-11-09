@@ -23,6 +23,7 @@ import {
 } from "lucide-react";
 import { fetchFunds, FUND_TYPE_LABELS, type FundFromDB, type FundType } from "@/lib/api";
 import { FALLBACK_KENYAN_FUNDS } from "@/lib/fundDataFallback";
+import { isUnitPriceFund } from "@/lib/fundUtils";
 import CalculatorTrajectoryChart, { type TrajectoryPoint } from "./CalculatorTrajectoryChart";
 
 const WITHHOLDING_TAX_RATE = 0.15; // 15% KRA Withholding Tax on Kenyan fund interest
@@ -59,7 +60,9 @@ const PERIOD_PRESETS = [
 const fmt = (n: number) => Math.round(n).toLocaleString("en-KE");
 
 export const MmfCalculator = () => {
-  const [funds, setFunds] = useState<FundFromDB[]>(FALLBACK_KENYAN_FUNDS);
+  const [funds, setFunds] = useState<FundFromDB[]>(() =>
+    FALLBACK_KENYAN_FUNDS.filter((f) => !isUnitPriceFund(f)),
+  );
   const [selectedFundId, setSelectedFundId] = useState<string | null>(null);
   const [fundSearch, setFundSearch] = useState("");
   const [categoryFilter, setCategoryFilter] = useState<FundCategoryFilter>("money_market");
@@ -74,12 +77,13 @@ export const MmfCalculator = () => {
   const [compound, setCompound] = useState(true);
   const [showBreakdown, setShowBreakdown] = useState(false);
 
-  // Load real funds list
+  // Load real funds list (excluding unit price NAV funds)
   useEffect(() => {
     fetchFunds()
       .then((data) => {
         if (data && data.length > 0) {
-          const sorted = [...data].sort((a, b) => (b.annual_yield || 0) - (a.annual_yield || 0));
+          const eligible = data.filter((f) => !isUnitPriceFund(f));
+          const sorted = [...eligible].sort((a, b) => (b.annual_yield || 0) - (a.annual_yield || 0));
           setFunds(sorted);
         }
       })
@@ -134,6 +138,7 @@ export const MmfCalculator = () => {
   const filteredFunds = useMemo(() => {
     const q = fundSearch.trim().toLowerCase();
     return funds.filter((f) => {
+      if (isUnitPriceFund(f)) return false;
       if (f.fund_type === "money_market" && (f.annual_yield || 0) > 50) return false;
       if (categoryFilter === "money_market" && f.fund_type !== "money_market") return false;
       if (categoryFilter === "fixed_income" && f.fund_type !== "fixed_income") return false;

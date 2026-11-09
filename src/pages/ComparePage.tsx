@@ -27,6 +27,7 @@ import { CompareCatalogStocks } from "@/components/compare/CompareCatalogStocks"
 import { CompareCatalogFunds } from "@/components/compare/CompareCatalogFunds";
 import { CompareCatalogRates } from "@/components/compare/CompareCatalogRates";
 import { CompareCatalogSavings } from "@/components/compare/CompareCatalogSavings";
+import { isUnitPriceFund } from "@/lib/fundUtils";
 import LiveMarketWireTicker from "@/components/news/LiveMarketWireTicker";
 import ContextualFundNewsCard from "@/components/news/ContextualFundNewsCard";
 
@@ -211,6 +212,7 @@ export const ComparePage: React.FC = () => {
 
   const fundEntities: UniversalCompareEntity[] = useMemo(() => {
     return funds.map((f) => {
+      const isNav = isUnitPriceFund(f);
       const y = f.effective_yield || f.annual_yield || 0;
       return {
         id: `fund-${f.id}`,
@@ -218,17 +220,20 @@ export const ComparePage: React.FC = () => {
         title: f.name,
         subtitle: f.manager,
         symbol: f.name.substring(0, 4).toUpperCase(),
-        badge: f.fund_type === "money_market" ? "MMF" : "Unit Trust",
+        badge: f.fund_type === "money_market" ? "MMF" : (f.fund_type === "balanced" ? "Balanced" : f.fund_type === "equity" ? "Equity" : "Unit Trust"),
         link: f.slug ? `/compare/${f.slug}` : "/compare",
         metrics: {
-          primaryYieldOrReturnPct: y,
-          netReturnPct: Number((y * 0.85).toFixed(2)),
+          isUnitPrice: isNav,
+          yieldUnit: f.yield_unit || "%",
+          priceKes: isNav ? y : undefined,
+          primaryYieldOrReturnPct: isNav ? undefined : y,
+          netReturnPct: isNav ? undefined : Number((y * 0.85).toFixed(2)),
           managementFeePct: f.management_fee ? Number(f.management_fee) : undefined,
           minDepositKes: f.minimum_investment ? Number(f.minimum_investment) : 1000,
           sectorOrType: f.fund_type || "Money Market",
-          riskLevel: "Low / Capital Preservation",
+          riskLevel: isNav ? (f.fund_type === "equity" ? "Equity Market Risk" : "Moderate") : "Low / Capital Preservation",
           regulator: "CMA Regulated",
-          tenorOrWithdrawal: "Daily (24 to 48 hrs)",
+          tenorOrWithdrawal: f.withdrawal_time || "Daily (24 to 48 hrs)",
         },
         raw: f,
       };

@@ -5,6 +5,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 
 import type { FundFromDB, YieldSnapshot } from "@/lib/api";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
+import { isUnitPriceFund } from "@/lib/fundUtils";
 import { useUniversalCompare } from "@/hooks/useUniversalCompare";
 import FundLogo from "./FundLogo";
 
@@ -29,11 +30,14 @@ const categoryLabels: Record<string, string> = {
   special: "Special",
 };
 
-const isPercentUnit = (unit: string) => unit === "%";
-
-const fmtYield = (value: number, unit: string) => {
-  if (isPercentUnit(unit)) return `${value}%`;
-  return value.toFixed(2);
+const fmtYield = (fund: FundFromDB) => {
+  if (isUnitPriceFund(fund)) {
+    return `KES ${fund.annual_yield.toFixed(2)} NAV`;
+  }
+  if (fund.yield_unit === "USD") {
+    return `${fund.annual_yield.toFixed(2)}% USD`;
+  }
+  return `${fund.annual_yield.toFixed(2)}%`;
 };
 
 const CardSparkline = ({ history, currentValue }: { history?: YieldSnapshot[]; currentValue: number }) => {
@@ -189,12 +193,12 @@ const FundMobileCards = ({ funds, snapshots, allSnapshots, loading, onClearSearc
 
               <div className="text-right shrink-0">
                 <p className="font-extrabold text-foreground text-[17px] tabular-nums">
-                  {fmtYield(fund.annual_yield, fund.yield_unit)}
+                  {fmtYield(fund)}
                 </p>
                 <div className="mt-0.5 flex justify-end">
                   {(() => {
                     const prev = snapshots[fund.id]?.annual_yield;
-                    if (prev === undefined) return <span className="text-[11px] text-muted-foreground">Annual</span>;
+                    if (prev === undefined) return <span className="text-[11px] text-muted-foreground">{isUnitPriceFund(fund) ? "NAV" : "Annual"}</span>;
                     const diff = fund.annual_yield - prev;
                     const isFlat = Math.abs(diff) < 0.0001;
                     if (isFlat) {

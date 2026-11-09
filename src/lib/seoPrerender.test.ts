@@ -45,6 +45,11 @@ describe("SEO prerender helpers", () => {
     const withYield = buildFundSeoTitle("Cytonn", "cytonn-sh-mmf", 60, 11.11);
     expect(withYield).toContain("11.11% Yield & Fees");
     expect(withYield.length).toBeLessThanOrEqual(60);
+
+    const navFundTitle = buildFundSeoTitle("CPF", "CPF-balanced-fund", 60, 107.66, "KES", "balanced");
+    expect(navFundTitle).toContain("KES 107.66 NAV & Fees");
+    expect(navFundTitle).not.toContain("107.66% Yield");
+    expect(navFundTitle.length).toBeLessThanOrEqual(60);
   });
 
   it("renders route-specific metadata and semantic content", () => {

@@ -1,6 +1,7 @@
 import React, { useMemo } from 'react';
 import type { FundFromDB, YieldSnapshot } from '@/lib/api';
 import { TrendingUp, TrendingDown, Minus, Activity, Target } from 'lucide-react';
+import { isUnitPriceFund } from '@/lib/fundUtils';
 
 interface FundsSummaryProps {
   funds: FundFromDB[];
@@ -12,14 +13,19 @@ export function FundsSummary({ funds, snapshots, categoryName }: FundsSummaryPro
   const safeFunds = funds || [];
   
   const { gainers, losers, unchanged, total, avgYield, topYielders, topMovers } = useMemo(() => {
-    let g = 0, l = 0, u = 0, sumYield = 0;
+    let g = 0, l = 0, u = 0, sumYield = 0, yieldCount = 0;
     const yielders: Array<{ name: string; manager: string; yield: number }> = [];
     const movers: Array<{ name: string; manager: string; change: number; isUp: boolean }> = [];
     
     for (const f of safeFunds) {
+      const isNav = isUnitPriceFund(f);
       const currentYield = f.annual_yield;
-      sumYield += currentYield;
-      yielders.push({ name: f.name, manager: f.manager, yield: currentYield });
+
+      if (!isNav) {
+        sumYield += currentYield;
+        yieldCount++;
+        yielders.push({ name: f.name, manager: f.manager, yield: currentYield });
+      }
 
       const prev = snapshots[f.id]?.annual_yield;
       if (prev != null) {
@@ -46,7 +52,7 @@ export function FundsSummary({ funds, snapshots, categoryName }: FundsSummaryPro
       losers: l,
       unchanged: u,
       total: safeFunds.length,
-      avgYield: safeFunds.length > 0 ? sumYield / safeFunds.length : 0,
+      avgYield: yieldCount > 0 ? sumYield / yieldCount : 0,
       topYielders: yielders.slice(0, 4),
       topMovers: movers.slice(0, 4)
     };
