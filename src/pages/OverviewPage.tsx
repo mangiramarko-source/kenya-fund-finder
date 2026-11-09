@@ -26,6 +26,7 @@ import {
 import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
 import { MarketSummary } from "@/components/MarketSummary";
 import { YieldCalculator } from "@/components/YieldCalculator";
+import { DesktopNavigationShortcutsCard } from "@/components/desktop/DesktopNavigationShortcutsCard";
 import { DesktopWatchlistPortfolioCard } from "@/components/desktop/DesktopWatchlistPortfolioCard";
 import { ExchangeRatesCard } from "@/components/desktop/ExchangeRatesCard";
 import { MarketMoversCard } from "@/components/desktop/MarketMoversCard";
@@ -1326,21 +1327,7 @@ const OverviewPage = () => {
 
         {/* Left Column - Desktop Only */}
         <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 md:flex md:flex-col md:space-y-4">
-          <DesktopWatchlistPortfolioCard
-            watchlist={watchlist}
-            stocks={stocks}
-            funds={funds}
-            rates={rates}
-            commodities={commodities}
-            onToggleAsset={toggleAsset}
-            onOpenCustomize={() => {
-              if (!user) {
-                navigate("/auth?mode=signup&redirect=%2F");
-                return;
-              }
-              setWatchlistPromptOpen(true);
-            }}
-          />
+          <DesktopNavigationShortcutsCard />
         </div>
 
         {/* Middle Column - Feed (Twitter-style 600px reading width) */}
@@ -1473,6 +1460,21 @@ const OverviewPage = () => {
 
         {/* Right Column - Desktop Only */}
         <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 lg:flex lg:flex-col lg:space-y-4">
+          <DesktopWatchlistPortfolioCard
+            watchlist={watchlist}
+            stocks={stocks}
+            funds={funds}
+            rates={rates}
+            commodities={commodities}
+            onToggleAsset={toggleAsset}
+            onOpenCustomize={() => {
+              if (!user) {
+                navigate("/auth?mode=signup&redirect=%2F");
+                return;
+              }
+              setWatchlistPromptOpen(true);
+            }}
+          />
           <MarketMoversCard stocks={stocks as any} />
           <ExchangeRatesCard
             rates={displayFxRates}
