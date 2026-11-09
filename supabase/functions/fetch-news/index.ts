@@ -610,6 +610,13 @@ async function fetchYouTubeFeed(
         continue;
       }
 
+      // Bound YouTube staleness to 14 days (prevents backlogs from August/September)
+      const YOUTUBE_MAX_AGE_MS = 14 * 24 * 60 * 60 * 1000;
+      const pubTime = new Date(pubInfo.iso).getTime();
+      if (now.getTime() - pubTime > YOUTUBE_MAX_AGE_MS) {
+        continue;
+      }
+
       const descriptionRaw = extractTag(entry, "media:description") || extractTag(entry, "summary");
       const cleanDesc = stripHtml(descriptionRaw).slice(0, 1500);
       const combinedText = `${rawTitle} ${cleanDesc}`;
@@ -838,6 +845,73 @@ async function fetchFeed(feedUrl: string, source: string): Promise<ParsedArticle
   return articles;
 }
 
+function getSourceAuthorityWeight(source: string): number {
+  const s = (source || "").toLowerCase();
+  if (
+    s.includes("central bank") ||
+    s.includes("capital markets authority") ||
+    s.includes("nairobi securities") ||
+    s.includes("cbk") ||
+    s.includes("cma") ||
+    s.includes("nse")
+  ) {
+    return 30;
+  }
+  if (
+    s.includes("business daily") ||
+    s.includes("kenyan wall street") ||
+    s.includes("wallstreet")
+  ) {
+    return 25;
+  }
+  if (
+    s.includes("capital fm") ||
+    s.includes("nation") ||
+    s.includes("standard") ||
+    s.includes("the star") ||
+    s.includes("kbc") ||
+    s.includes("citizen") ||
+    s.includes("tuko")
+  ) {
+    return 20;
+  }
+  if (
+    s.includes("techcabal") ||
+    s.includes("african business") ||
+    s.includes("ecofin") ||
+    s.includes("further africa") ||
+    s.includes("disrupt")
+  ) {
+    return 15;
+  }
+  return 10;
+}
+
+function getTextArticleQualityScore(a: ParsedArticle, now: Date): number {
+  const pubTime = a.source_published_at ? new Date(a.source_published_at).getTime() : 0;
+  const ageHours = Math.max(0, (now.getTime() - pubTime) / (1000 * 60 * 60));
+  // Freshness decay: 100 points max for brand new, losing ~3 points per hour (0 at ~33 hours)
+  const freshnessScore = Math.max(0, 100 - ageHours * 3);
+
+  const authorityScore = getSourceAuthorityWeight(a.source);
+
+  // Content depth score: substantive summary or full article body
+  const bodyLen = (a.content?.length || 0) + (a.summary?.length || 0);
+  const depthScore = bodyLen >= 800 ? 15 : bodyLen >= 300 ? 10 : 5;
+
+  // Attached video bonus (from cluster merging: text article enriched with video)
+  const videoBonus = a.video_url ? 5 : 0;
+
+  return freshnessScore + authorityScore + depthScore + videoBonus;
+}
+
+function isStandaloneVideo(a: ParsedArticle): boolean {
+  if (!a.video_url) return false;
+  // If it has a non-YouTube web URL, it's a merged written article (high-priority text story)
+  if (a.url && !/youtube\.com|youtu\.be/i.test(a.url)) return false;
+  return true;
+}
+
 Deno.serve(async (req) => {
   if (req.method === "OPTIONS") return new Response("ok", { headers: corsHeaders });
 
@@ -1010,23 +1084,54 @@ Deno.serve(async (req) => {
       );
     }
 
-    // Sort new articles so video briefings and the newest articles are processed first
-    newArticles.sort((a, b) => {
-      const aVideo = a.video_url ? 1 : 0;
-      const bVideo = b.video_url ? 1 : 0;
-      if (aVideo !== bVideo) return bVideo - aVideo;
-      const aTime = a.source_published_at ? new Date(a.source_published_at).getTime() : 0;
-      const bTime = b.source_published_at ? new Date(b.source_published_at).getTime() : 0;
-      return bTime - aTime;
+    // Separate Text-Primary Articles (including cluster-merged) vs Standalone Video Briefings
+    const now = new Date();
+    const textCandidates = newArticles.filter((a) => !isStandaloneVideo(a));
+    const videoCandidates = newArticles.filter((a) => isStandaloneVideo(a));
+
+    // Sort written news by freshness + source authority + quality score so today's breaking news always leads
+    textCandidates.sort((a, b) => {
+      const scoreA = getTextArticleQualityScore(a, now);
+      const scoreB = getTextArticleQualityScore(b, now);
+      if (scoreB !== scoreA) return scoreB - scoreA;
+      const timeA = a.source_published_at ? new Date(a.source_published_at).getTime() : 0;
+      const timeB = b.source_published_at ? new Date(b.source_published_at).getTime() : 0;
+      return timeB - timeA;
     });
 
-    // Rewrite each new article in original words via Gemini AI (concurrent, with fallback)
-    // Limit batch size to prevent Edge Function timeout (WORKER_RESOURCE_LIMIT)
-    const MAX_BATCH_SIZE = 5;
-    const processingArticles = newArticles.slice(0, MAX_BATCH_SIZE);
-    if (newArticles.length > MAX_BATCH_SIZE) {
-      console.log(`Limiting to ${MAX_BATCH_SIZE} out of ${newArticles.length} new articles to prevent timeout.`);
+    // Sort standalone videos by freshness (newest first)
+    videoCandidates.sort((a, b) => {
+      const timeA = a.source_published_at ? new Date(a.source_published_at).getTime() : 0;
+      const timeB = b.source_published_at ? new Date(b.source_published_at).getTime() : 0;
+      return timeB - timeA;
+    });
+
+    // Guardrail 1: Enforce Batch Quota (Reserved Lanes) with MAX_BATCH_SIZE = 6
+    // Guarantee at least 4 to 5 slots per batch for textCandidates.
+    // Cap standalone YouTube videos to at most 1 slot per batch,
+    // unless textCandidates has fewer than 5 items, in which case videos can fill remaining unused slots.
+    const MAX_BATCH_SIZE = 6;
+    const MAX_STANDALONE_VIDEOS = 1;
+
+    let textSlotCount: number;
+    let videoSlotCount: number;
+
+    if (textCandidates.length >= 5) {
+      videoSlotCount = Math.min(videoCandidates.length, MAX_STANDALONE_VIDEOS);
+      textSlotCount = Math.min(textCandidates.length, MAX_BATCH_SIZE - videoSlotCount);
+    } else {
+      textSlotCount = textCandidates.length;
+      videoSlotCount = Math.min(videoCandidates.length, MAX_BATCH_SIZE - textSlotCount);
     }
+
+    const selectedText = textCandidates.slice(0, textSlotCount);
+    const selectedVideos = videoCandidates.slice(0, videoSlotCount);
+    const processingArticles = [...selectedText, ...selectedVideos];
+
+    console.log(
+      `Queue breakdown: ${textCandidates.length} text candidates, ${videoCandidates.length} standalone videos. ` +
+      `Batch selected: ${selectedText.length} text + ${selectedVideos.length} videos (total: ${processingArticles.length}/${MAX_BATCH_SIZE}).`
+    );
 
     const aiKey = Deno.env.get("GROQ_API_KEY") || Deno.env.get("GEMINI_API_KEY");
     let rewrittenCount = 0;
