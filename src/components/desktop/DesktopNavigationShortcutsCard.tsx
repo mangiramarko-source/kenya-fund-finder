@@ -87,9 +87,9 @@ export const DesktopNavigationShortcutsCard: React.FC<DesktopNavigationShortcuts
   ];
 
   return (
-    <div className={`rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-4 ${className}`}>
-      {/* Header */}
-      <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
+    <div className={`space-y-4 ${className}`}>
+      {/* Floating Header */}
+      <div className="flex items-center justify-between px-1">
         <div className="flex items-center gap-2">
           <Compass className="w-4 h-4 text-emerald-500" />
           <h3 className="text-sm font-bold text-foreground">Explore &amp; Tools</h3>
@@ -100,7 +100,7 @@ export const DesktopNavigationShortcutsCard: React.FC<DesktopNavigationShortcuts
       </div>
 
       {/* Categories */}
-      <div className="space-y-3.5">
+      <div className="space-y-4">
         {categories.map((cat) => (
           <div key={cat.title} className="space-y-1.5">
             <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground px-1">
@@ -114,7 +114,7 @@ export const DesktopNavigationShortcutsCard: React.FC<DesktopNavigationShortcuts
                   <Link
                     key={item.name}
                     to={item.to}
-                    className="flex items-center justify-between p-2 rounded-xl border border-border/50 bg-slate-50/50 dark:bg-card hover:border-emerald-500/40 hover:bg-muted/30 transition-all group text-xs"
+                    className="flex items-center justify-between p-2.5 rounded-2xl border border-border/70 bg-card hover:border-emerald-500/40 hover:bg-muted/40 shadow-xs transition-all group text-xs"
                   >
                     <div className="flex items-center gap-2.5 min-w-0 flex-1 mr-2">
                       <div
@@ -132,7 +132,7 @@ export const DesktopNavigationShortcutsCard: React.FC<DesktopNavigationShortcuts
                       </div>
                     </div>
 
-                    <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-foreground group-hover:translate-x-0.5 transition-all shrink-0" />
+                    <ArrowRight className="w-3.5 h-3.5 text-muted-foreground group-hover:text-emerald-500 group-hover:translate-x-0.5 transition-all shrink-0" />
                   </Link>
                 );
               })}
