@@ -107,8 +107,8 @@ export default function PainpointOptionSheet({ onComplete, onDismiss }: Painpoin
         </div>
       </div>
 
-      {/* TALL LANDSCAPE 3:2 PHOTO CONTAINER */}
-      <div className="relative w-full aspect-[16/10] sm:aspect-[3/2] max-h-[250px] sm:max-h-[280px] md:max-h-[320px] rounded-2xl overflow-hidden border border-border/70 bg-zinc-950 flex items-center justify-center mb-3 shadow-inner">
+      {/* WIDESCREEN 16:9 PHOTO CONTAINER (Edge-to-Edge Full Width Across All Devices) */}
+      <div className="relative w-full min-w-full aspect-[16/9] rounded-2xl overflow-hidden border border-border/70 bg-zinc-950 flex items-center justify-center mb-3 shadow-inner">
         <img
           src={currentStep.image}
           alt=""

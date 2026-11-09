@@ -195,8 +195,8 @@ export default function QuestionLedIntroSheet({
             </div>
           </div>
 
-          {/* TALL LANDSCAPE 3:2 PHOTO CONTAINER (Edge-to-Edge with Zero Cropping) */}
-          <div className="relative w-full aspect-[16/10] sm:aspect-[3/2] max-h-[210px] sm:max-h-[260px] md:max-h-[300px] rounded-2xl overflow-hidden border border-border/70 bg-zinc-950 flex items-center justify-center mb-3 shadow-inner">
+          {/* WIDESCREEN 16:9 PHOTO CONTAINER (Edge-to-Edge Full Width Across All Devices) */}
+          <div className="relative w-full min-w-full aspect-[16/9] rounded-2xl overflow-hidden border border-border/70 bg-zinc-950 flex items-center justify-center mb-3 shadow-inner">
             {/* Ambient Background Fill */}
             <img
               src={currentStep.image}
@@ -205,7 +205,7 @@ export default function QuestionLedIntroSheet({
               className="absolute inset-0 w-full h-full object-cover filter blur-xl opacity-20 scale-105 pointer-events-none"
             />
 
-            {/* Natural Landscape Image - 100% Uncropped */}
+            {/* Natural Landscape Image - 100% Uncropped Full Spectrum */}
             <img
               src={currentStep.image}
               alt={currentStep.imageAlt}
