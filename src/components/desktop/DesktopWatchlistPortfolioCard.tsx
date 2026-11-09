@@ -14,6 +14,7 @@ import type { Stock } from "@/types";
 import type { FundFromDB } from "@/lib/api";
 import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
 import { usePortfolio, getCurrentValue, getPnLPercent } from "@/hooks/usePortfolio";
+import { getStockLogoUrl, resolveTickerSymbol } from "@/lib/stockBranding";
 
 export interface WatchlistRawItem {
   id: string;
@@ -81,11 +82,14 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
     const itemName = String(item.item_name || "").toLowerCase();
 
     if (itemId === targetId) return true;
-    if (symbolOrCode && (itemId === symbolOrCode.toLowerCase() || itemName.includes(symbolOrCode.toLowerCase()))) {
-      return true;
+    if (symbolOrCode) {
+      const sym = symbolOrCode.toLowerCase();
+      if (itemId === sym || itemId.startsWith(sym) || itemName.includes(sym)) return true;
+      if (sym === "scom" && (itemName.includes("safaricom") || itemId.includes("scom") || itemId.includes("safaricom"))) return true;
     }
-    if (name && (itemName === name.toLowerCase() || itemId === name.toLowerCase())) {
-      return true;
+    if (name) {
+      const n = name.toLowerCase();
+      if (itemName === n || itemId === n || itemName.includes(n) || n.includes(itemName)) return true;
     }
     return false;
   };
@@ -109,20 +113,24 @@ export const DesktopWatchlistPortfolioCard: React.FC<DesktopWatchlistPortfolioCa
             priceLabel: `KES ${s.price.toFixed(2)}`,
             subLabel: s.sector ? `${s.sector} · NSE` : "NSE Equity",
             dayChangePct: s.day_change_percent,
-            logoUrl: s.logo_url,
+            logoUrl: s.logo_url || getStockLogoUrl(s.symbol, null, s.name),
             link: `/stocks/${s.symbol}`,
           });
         } else {
+          const isScom = w.item_name?.toLowerCase().includes("safaricom") || w.item_id?.toLowerCase().includes("scom");
+          const defaultSymbol = isScom ? "SCOM" : resolveTickerSymbol((w.item_name || "STK").substring(0, 4).toUpperCase(), w.item_name);
+          const defaultLogo = isScom ? "/images/stocks/safaricom.png" : getStockLogoUrl(defaultSymbol, null, w.item_name);
           items.push({
             id: w.id,
             rawId: w.id,
             type: "stock",
-            symbol: (w.item_name || "STK").substring(0, 4).toUpperCase(),
+            symbol: defaultSymbol,
             name: w.item_name || "Stock",
             priceLabel: "Live Tracking",
             subLabel: "NSE Equity",
             dayChangePct: 0,
-            link: "/stocks",
+            logoUrl: defaultLogo,
+            link: defaultSymbol !== "STK" ? `/stocks/${defaultSymbol}` : "/stocks",
           });
         }
       } else if (w.item_type === "fund") {

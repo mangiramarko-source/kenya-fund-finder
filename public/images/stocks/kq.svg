@@ -1,0 +1,9 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="20" fill="#C8102E"/>
+  <!-- Stylized Kenya Airways Wing & Monogram -->
+  <path d="M18 24 h14 v52 H18 z" fill="#FFFFFF"/>
+  <path d="M32 46 L58 24 h18 L48 48 l28 28 H60 L32 50 z" fill="#FFFFFF"/>
+  <!-- Curved dynamic accent -->
+  <path d="M68 28 c14 8 18 22 14 36 c-3 10-10 18-20 22 c10-2 18-9 21-18 c4-12 1-28-15-40 z" fill="#FFCC00" opacity="0.9"/>
+  <text x="50" y="93" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="900" letter-spacing="1">KQ</text>
+</svg>

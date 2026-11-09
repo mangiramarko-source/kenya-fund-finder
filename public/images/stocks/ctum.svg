@@ -1,0 +1,12 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100" width="100" height="100">
+  <rect width="100" height="100" rx="20" fill="#0A2540"/>
+  <!-- Centum Interlocking C faceted shape -->
+  <g transform="translate(18, 14)">
+    <path d="M32 0 L60 16 L60 32 L32 16 z" fill="#00A859"/>
+    <path d="M4 16 L32 0 L32 16 L4 32 z" fill="#007A3D"/>
+    <path d="M4 32 L32 16 L32 32 L4 48 z" fill="#00A859"/>
+    <path d="M32 32 L60 48 L32 64 L4 48 z" fill="#2ECC71"/>
+    <path d="M32 32 L60 16 L60 32 L32 48 z" fill="#008C4A"/>
+  </g>
+  <text x="50" y="88" text-anchor="middle" fill="#FFFFFF" font-family="-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif" font-size="11" font-weight="900" letter-spacing="1">CENTUM</text>
+</svg>

@@ -3,6 +3,9 @@ import { TrendingUp, TrendingDown, Minus } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
+import { stockCache } from "@/lib/stockCache";
+import { FALLBACK_KENYAN_STOCKS } from "@/lib/stockDataFallback";
+import { getStockLogoUrl } from "@/lib/stockBranding";
 
 export interface ExchangeRate {
   id: string;
@@ -68,7 +71,11 @@ export function useMarketData() {
   const marketChannelId = useId().replace(/:/g, "");
   const [rates, setRates] = useState<ExchangeRate[]>([]);
   const [commodities, setCommodities] = useState<Commodity[]>([]);
-  const [stocks, setStocks] = useState<Stock[]>([]);
+  const [stocks, setStocks] = useState<Stock[]>(() => {
+    const cached = stockCache.loadStocks();
+    if (cached?.stocks && cached.stocks.length > 0) return cached.stocks as unknown as Stock[];
+    return (FALLBACK_KENYAN_STOCKS as unknown as Stock[]) || [];
+  });
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async (showLoading = false) => {
@@ -94,20 +101,23 @@ export function useMarketData() {
           previous_price: c.previous_price != null ? Number(c.previous_price) : null,
         })) as Commodity[])
       );
-      setStocks(
-        ((stocksRes.data || []).map((s: any) => ({
-          ...s,
-          price: Number(s.price),
-          previous_price: s.previous_price != null ? Number(s.previous_price) : null,
-          day_change: Number(s.day_change),
-          day_change_percent: Number(s.day_change_percent),
-          pe_ratio: s.pe_ratio != null ? Number(s.pe_ratio) : null,
-          dividend_yield: s.dividend_yield != null ? Number(s.dividend_yield) : null,
-          year_low: s.year_low != null ? Number(s.year_low) : null,
-          year_high: s.year_high != null ? Number(s.year_high) : null,
-          market_cap: s.market_cap != null ? Number(s.market_cap) : null,
-        })) as Stock[])
-      );
+      if (stocksRes.data && stocksRes.data.length > 0) {
+        setStocks(
+          (stocksRes.data.map((s: any) => ({
+            ...s,
+            price: Number(s.price),
+            previous_price: s.previous_price != null ? Number(s.previous_price) : null,
+            day_change: Number(s.day_change),
+            day_change_percent: Number(s.day_change_percent),
+            pe_ratio: s.pe_ratio != null ? Number(s.pe_ratio) : null,
+            dividend_yield: s.dividend_yield != null ? Number(s.dividend_yield) : null,
+            year_low: s.year_low != null ? Number(s.year_low) : null,
+            year_high: s.year_high != null ? Number(s.year_high) : null,
+            market_cap: s.market_cap != null ? Number(s.market_cap) : null,
+            logo_url: s.logo_url || getStockLogoUrl(s.symbol, null, s.name),
+          })) as Stock[])
+        );
+      }
     } catch (err) {
       console.warn("useMarketData gateway fetch failed:", err);
     } finally {

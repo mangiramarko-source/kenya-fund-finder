@@ -46,8 +46,8 @@ export default function WatchlistAssetAvatar({
 
   if (type === "stock") {
     const ticker = (symbol || name.slice(0, 4)).toUpperCase();
-    const primaryLogo = getStockLogoUrl(ticker, logoUrl);
-    const bundledLogo = getBundledStockLogoUrl(ticker);
+    const primaryLogo = getStockLogoUrl(ticker, logoUrl, name);
+    const bundledLogo = getBundledStockLogoUrl(ticker, name);
     const activeLogo = stockFallbackTried ? bundledLogo : (primaryLogo || bundledLogo);
     const hash = Array.from(ticker).reduce((acc, c) => acc + c.charCodeAt(0), 0);
     const hue = hash % 360;

@@ -19,14 +19,41 @@ import IntroOptionLifestyle from "@/components/intro-preview/IntroOptionLifestyl
 import IntroOption1 from "@/components/intro-preview/IntroOption1";
 import IntroOption2 from "@/components/intro-preview/IntroOption2";
 import IntroOption3 from "@/components/intro-preview/IntroOption3";
+import PainpointOptionBento from "@/components/intro-preview/PainpointOptionBento";
+import PainpointOptionSlider from "@/components/intro-preview/PainpointOptionSlider";
+import PainpointOptionSheet from "@/components/intro-preview/PainpointOptionSheet";
 import MockFundPreviewList from "@/components/intro-preview/MockFundPreviewList";
 
 const OPTIONS = [
   {
+    id: "bento",
+    path: "/preview/intro-bento",
+    title: "1. Bento: Beat Inflation Hero",
+    badge: "⭐ 2026 Recommended",
+    desc: "In-feed bank vs CMA MMF inflation comparison bars, trust signals (CMA, Custodians), and zero annoying modal pop-up.",
+    component: PainpointOptionBento,
+  },
+  {
+    id: "slider",
+    path: "/preview/intro-slider",
+    title: "2. Slider: Idle Cash Simulator",
+    badge: "🧮 Instant 'Aha!'",
+    desc: "Interactive balance slider showing real shillings left on the table between standard bank savings and top CMA MMFs.",
+    component: PainpointOptionSlider,
+  },
+  {
+    id: "sheet",
+    path: "/preview/intro-sheet",
+    title: "3. Sheet: 3-Step First-Visit Drawer",
+    badge: "📱 Mobile-First",
+    desc: "Non-blocking slide-up card with 3 bite-sized steps: the problem, the MMF solution, and daily verified data.",
+    component: PainpointOptionSheet,
+  },
+  {
     id: "lifestyle",
     path: "/preview/intro-lifestyle",
     title: "Lifestyle Mockup: Hand-Held App Photo",
-    badge: "⭐ Selected Photo",
+    badge: "Photo Composite",
     desc: "Your uploaded lifestyle photo with KenyaFundFinder dark mode UI, glowing green yield curves, and interactive filter chips.",
     component: IntroOptionLifestyle,
   },

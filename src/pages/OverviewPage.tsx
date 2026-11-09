@@ -229,8 +229,15 @@ const matchWatchlistItem = (w: WatchlistItem, type: string, id: string, symbolOr
   const itemName = String(w.item_name || "").toLowerCase();
 
   if (itemId === targetId) return true;
-  if (symbolOrCode && (itemId === symbolOrCode.toLowerCase() || itemName.includes(symbolOrCode.toLowerCase()))) return true;
-  if (name && (itemName === name.toLowerCase() || itemId === name.toLowerCase())) return true;
+  if (symbolOrCode) {
+    const sym = symbolOrCode.toLowerCase();
+    if (itemId === sym || itemId.startsWith(sym) || itemName.includes(sym)) return true;
+    if (sym === "scom" && (itemName.includes("safaricom") || itemId.includes("safaricom") || itemId.includes("scom"))) return true;
+  }
+  if (name) {
+    const n = name.toLowerCase();
+    if (itemName === n || itemId === n || itemName.includes(n) || n.includes(itemName)) return true;
+  }
   return false;
 };
 

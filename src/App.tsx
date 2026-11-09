@@ -195,6 +195,10 @@ const App = () => (
                     <Route path="/ai-lab" element={isAiLabEnabled() ? <AiLabPage /> : <Navigate to="/funds" replace />} />
                     <Route path="/mobile-preview" element={<DevMobilePreviewPage />} />
                     <Route path="/preview/mobile-intros" element={<IntroPreviewPage />} />
+                    <Route path="/preview/painpoint-intro" element={<IntroPreviewPage initialOption="bento" />} />
+                    <Route path="/preview/intro-bento" element={<IntroPreviewPage initialOption="bento" />} />
+                    <Route path="/preview/intro-slider" element={<IntroPreviewPage initialOption="slider" />} />
+                    <Route path="/preview/intro-sheet" element={<IntroPreviewPage initialOption="sheet" />} />
                     <Route path="/preview/intro-lifestyle" element={<IntroPreviewPage initialOption="lifestyle" />} />
                     <Route path="/preview/intro-1" element={<IntroPreviewPage initialOption="1" />} />
                     <Route path="/preview/intro-2" element={<IntroPreviewPage initialOption="2" />} />

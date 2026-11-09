@@ -3,6 +3,7 @@ import { Link } from "react-router-dom";
 import { TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import type { Stock } from "@/types";
 import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
+import { getStockLogoUrl } from "@/lib/stockBranding";
 
 interface MarketMoversCardProps {
   stocks?: Stock[];
@@ -22,15 +23,15 @@ export const MarketMoversCard: React.FC<MarketMoversCardProps> = ({ stocks = [] 
 
   // Fallbacks if data is not loaded or market is inactive
   const displayGainers = gainers.length > 0 ? gainers : [
-    { id: "sgl", symbol: "SGL", name: "Standard Group PLC", price: 6.24, day_change_percent: 305.19, logo_url: null },
-    { id: "ctum", symbol: "CTUM", name: "Centum Investment", price: 19.30, day_change_percent: 100.21, logo_url: null },
-    { id: "kegn", symbol: "KEGN", name: "KenGen PLC", price: 11.50, day_change_percent: 54.78, logo_url: null },
+    { id: "sgl", symbol: "SGL", name: "Standard Group PLC", price: 6.24, day_change_percent: 305.19, logo_url: "/images/stocks/sgl.png" },
+    { id: "ctum", symbol: "CTUM", name: "Centum Investment", price: 19.30, day_change_percent: 100.21, logo_url: "/images/stocks/ctum.svg" },
+    { id: "kegn", symbol: "KEGN", name: "KenGen PLC", price: 11.50, day_change_percent: 54.78, logo_url: "/images/stocks/kegn.svg" },
   ];
 
   const displayLosers = losers.length > 0 ? losers : [
-    { id: "lkl", symbol: "LKL", name: "Longhorn Publishers", price: 2.86, day_change_percent: -48.75, logo_url: null },
-    { id: "umme", symbol: "UMME", name: "Umeme Limited", price: 6.94, day_change_percent: -22.20, logo_url: null },
-    { id: "kq", symbol: "KQ", name: "Kenya Airways", price: 5.46, day_change_percent: -20.07, logo_url: null },
+    { id: "lkl", symbol: "LKL", name: "Longhorn Publishers", price: 2.86, day_change_percent: -48.75, logo_url: "/images/stocks/lkl.svg" },
+    { id: "umme", symbol: "UMME", name: "Umeme Limited", price: 6.94, day_change_percent: -22.20, logo_url: "/images/stocks/umme.svg" },
+    { id: "kq", symbol: "KQ", name: "Kenya Airways", price: 5.46, day_change_percent: -20.07, logo_url: "/images/stocks/kq.svg" },
   ];
 
   return (
@@ -70,7 +71,7 @@ export const MarketMoversCard: React.FC<MarketMoversCardProps> = ({ stocks = [] 
                   type="stock"
                   symbol={item.symbol}
                   name={item.name}
-                  logoUrl={item.logo_url}
+                  logoUrl={item.logo_url || getStockLogoUrl(item.symbol, null, item.name)}
                   size={32}
                   className="shrink-0"
                 />
@@ -112,7 +113,7 @@ export const MarketMoversCard: React.FC<MarketMoversCardProps> = ({ stocks = [] 
                   type="stock"
                   symbol={item.symbol}
                   name={item.name}
-                  logoUrl={item.logo_url}
+                  logoUrl={item.logo_url || getStockLogoUrl(item.symbol, null, item.name)}
                   size={32}
                   className="shrink-0"
                 />
