@@ -12,6 +12,7 @@ import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
 import PortfolioWeeklyChanges from "@/components/portfolio/PortfolioWeeklyChanges";
 import KoraIllustration from "@/components/kora/KoraIllustration";
 import PortfolioDailyInsightCard, { portfolioInsight } from "@/components/portfolio/PortfolioDailyInsightCard";
+import StarterPortfolios from "@/components/portfolio/StarterPortfolios";
 import { useNotifications } from "@/components/alerts/NotificationProvider";
 import { usePortfolioLiveMovement } from "@/hooks/usePortfolioLiveMovement";
 import PortfolioValueToggle, { PortfolioSensitiveValue } from "@/components/portfolio/PortfolioValueVisibility";
@@ -276,15 +277,19 @@ export default function MobilePortfolioView({ currency, setCurrency, rates, show
 
         {/* Swipeable holdings strip — mirrors the mobile home portfolio carousel. */}
         {isEmpty ? (
-          <div className="relative overflow-hidden bg-slate-50/80 border border-dashed border-border rounded-2xl p-6 text-center text-sm text-muted-foreground space-y-3 dark:bg-neutral-900/50">
-            <KoraIllustration pose="neutral" className="absolute bottom-0 right-2 h-28 w-28 opacity-90" />
-            <p className="relative">No holdings added in this category.</p>
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="relative inline-flex items-center gap-1.5 bg-[#00A651] text-white font-semibold text-xs px-4 py-2 rounded-full shadow-xs"
-            >
-              <Plus className="h-3.5 w-3.5" /> Add First Holding
-            </button>
+          <div className="space-y-4">
+            <div className="relative overflow-hidden bg-slate-50/80 border border-dashed border-border rounded-2xl p-6 text-center text-sm text-muted-foreground space-y-3 dark:bg-neutral-900/50">
+              <KoraIllustration pose="neutral" className="absolute bottom-0 right-2 h-28 w-28 opacity-90" />
+              <p className="relative font-medium text-foreground">Build your portfolio in one tap</p>
+              <p className="relative text-xs text-muted-foreground">Pick a starter pack below or add custom holdings.</p>
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="relative inline-flex items-center gap-1.5 bg-[#00A651] text-white font-semibold text-xs px-4 py-2 rounded-full shadow-xs"
+              >
+                <Plus className="h-3.5 w-3.5" /> Custom Holding
+              </button>
+            </div>
+            <StarterPortfolios />
           </div>
         ) : (
           <div className="flex snap-x snap-mandatory gap-3 overflow-x-auto px-1 pb-2 scrollbar-thin scrollbar-thumb-zinc-800 scrollbar-track-transparent">

@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from "react";
 import { usePriceAlerts } from "@/hooks/usePriceAlerts";
 import { useAuth } from "@/hooks/useAuth";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, Link } from "react-router-dom";
 import { useDocumentTitle } from "@/hooks/useDocumentTitle";
 import { useEmailPreferences } from "@/hooks/useEmailPreferences";
 import { Card, CardContent } from "@/components/ui/card";
@@ -110,11 +110,139 @@ const AlertsPage = () => {
     return (
       <>
         <div className="hidden md:block"><DesktopWatchlistWorkspace active="alerts" /></div>
-        <div className="container mx-auto px-4 py-16 text-center md:hidden">
-          <Bell className="h-16 w-16 mx-auto text-muted-foreground mb-4" />
-          <h1 className="text-2xl font-bold text-foreground mb-2">Sign in to manage alerts</h1>
-          <p className="text-muted-foreground mb-6">Create and manage simple above or below alerts for Kenyan stocks.</p>
-          <Button onClick={() => navigate("/auth")}>Sign In</Button>
+        <div className="container mx-auto px-4 py-6 md:hidden space-y-5">
+          {/* Mobile Top Navigation Tabs */}
+          <div className="flex items-center gap-2 pb-1 border-b border-border/60">
+            <Link
+              to="/watchlist"
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-border bg-card px-4 text-xs font-bold text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Saved assets
+            </Link>
+            <Link
+              to="/alerts"
+              className="inline-flex h-9 shrink-0 items-center gap-2 rounded-full border border-foreground bg-foreground px-4 text-xs font-bold text-background"
+            >
+              Alerts
+            </Link>
+          </div>
+
+          {/* Hero Feature Showcase */}
+          <div className="rounded-2xl border border-emerald-500/30 bg-gradient-to-b from-emerald-500/10 via-card to-card p-5 space-y-3">
+            <div className="flex items-center gap-2.5">
+              <div className="h-10 w-10 rounded-xl bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 flex items-center justify-center">
+                <Bell className="h-5 w-5" />
+              </div>
+              <div>
+                <h1 className="text-lg font-bold text-foreground leading-tight">Price Target Alerts</h1>
+                <p className="text-xs text-muted-foreground mt-0.5">
+                  Track live price movements for Kenyan stocks &amp; FX
+                </p>
+              </div>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Set target prices for assets you care about. When a stock dips or an FX rate crosses your threshold, get alerted immediately.
+            </p>
+          </div>
+
+          {/* Sample Alerts Demonstration */}
+          <div className="space-y-2.5">
+            <div className="flex items-center justify-between px-1">
+              <h2 className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                Example Live Target Alerts
+              </h2>
+              <Badge variant="outline" className="text-[10px] border-emerald-500/30 text-emerald-400">
+                Sample Preview
+              </Badge>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-3.5 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs">
+                    SCOM
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground leading-tight">Safaricom PLC</p>
+                    <p className="text-[11px] text-muted-foreground">Current: KES 15.25</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-destructive">
+                    <TrendingDown className="h-3 w-3" /> Below 15.00
+                  </span>
+                  <p className="text-[10px] text-muted-foreground">1.6% to target</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-3.5 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs">
+                    EQTY
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground leading-tight">Equity Group Holdings</p>
+                    <p className="text-[11px] text-muted-foreground">Current: KES 42.50</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                    <TrendingUp className="h-3 w-3" /> Above 45.00
+                  </span>
+                  <p className="text-[10px] text-muted-foreground">5.9% to target</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-2xl border border-border bg-card p-3.5 space-y-3 shadow-xs">
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2.5">
+                  <div className="h-8 w-8 rounded-lg bg-emerald-500/10 text-emerald-400 flex items-center justify-center font-bold text-xs">
+                    USD
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-foreground leading-tight">US Dollar / KES</p>
+                    <p className="text-[11px] text-muted-foreground">Current: KES 129.50</p>
+                  </div>
+                </div>
+                <div className="text-right">
+                  <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-400">
+                    <TrendingUp className="h-3 w-3" /> Above 132.00
+                  </span>
+                  <p className="text-[10px] text-muted-foreground">1.9% to target</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Call to action card */}
+          <div className="rounded-2xl border border-border/80 bg-card p-5 space-y-3.5 text-center">
+            <div className="space-y-1">
+              <h3 className="text-base font-bold text-foreground">Activate Your Alerts</h3>
+              <p className="text-xs text-muted-foreground">
+                Get alerted the second your target prices hit via device push notifications or morning recap email.
+              </p>
+            </div>
+
+            <Button
+              asChild
+              className="w-full h-11 bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs sm:text-sm rounded-xl shadow-md"
+            >
+              <Link to="/auth?mode=signup&redirect=/alerts">
+                Create Free Account
+              </Link>
+            </Button>
+
+            <p className="text-xs text-muted-foreground">
+              Already have an account?{" "}
+              <Link to="/auth?mode=signin&redirect=/alerts" className="text-emerald-500 font-semibold hover:underline">
+                Sign In
+              </Link>
+            </p>
+          </div>
         </div>
       </>
     );

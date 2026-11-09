@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from "react";
+import { toast } from "sonner";
 import { useAuth } from "@/hooks/useAuth";
 import { supabase } from "@/integrations/supabase/client";
 import { safeUUID } from "@/lib/safeUUID";
@@ -6,6 +7,7 @@ import { trackEvent } from "@/lib/analytics";
 import { applyWatchlistOrder } from "@/lib/watchlistOrder";
 
 const LOCAL_WATCHLIST_KEY = "kf_local_watchlist";
+let migrationLock = false;
 
 export interface UnifiedWatchlistItem {
   id: string;
@@ -41,6 +43,46 @@ export function useUnifiedWatchlist() {
       }
       setLoading(false);
       return;
+    }
+
+    // Auto-sync guest items on login if any exist
+    if (!migrationLock) {
+      try {
+        const raw = localStorage.getItem(LOCAL_WATCHLIST_KEY);
+        if (raw) {
+          const localItems = JSON.parse(raw);
+          if (Array.isArray(localItems) && localItems.length > 0) {
+            const validItems = (localItems as UnifiedWatchlistItem[]).filter(
+              (item) => supportedAssetTypes.has(item.item_type as UnifiedWatchlistAssetType) && item.item_id
+            );
+            if (validItems.length > 0) {
+              migrationLock = true;
+              const rows = validItems.map((item, index) => ({
+                id: safeUUID(),
+                user_id: user.id,
+                item_type: item.item_type,
+                item_id: item.item_id,
+                item_name: item.item_name || "",
+                sort_order: index,
+              }));
+              const { error: upsertError } = await supabase
+                .from("user_watchlist")
+                .upsert(rows, { onConflict: "user_id,item_type,item_id", ignoreDuplicates: true });
+              if (!upsertError) {
+                localStorage.removeItem(LOCAL_WATCHLIST_KEY);
+                setHasLocalState(false);
+                toast.success(
+                  `${validItems.length} saved asset${validItems.length > 1 ? "s" : ""} synced to your account`
+                );
+              }
+            }
+          }
+        }
+      } catch (e) {
+        console.error("Failed to migrate guest watchlist", e);
+      } finally {
+        migrationLock = false;
+      }
     }
 
     const { data, error } = await supabase

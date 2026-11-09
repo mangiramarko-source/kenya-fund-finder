@@ -92,124 +92,140 @@ const CookieConsent = () => {
   if (!hydrated || !visible) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-6">
-      <div className="absolute inset-0 bg-black/40" />
-      <div className="relative w-full max-w-[420px] rounded-2xl bg-card/95 backdrop-blur-md border border-border p-5 shadow-lg flex flex-col gap-4">
+    <aside
+      aria-label="Cookie and Privacy Consent"
+      className="fixed bottom-[calc(4.5rem+env(safe-area-inset-bottom,0px))] md:bottom-6 left-3 right-3 sm:left-auto sm:right-6 sm:max-w-[420px] z-50 animate-in fade-in slide-in-from-bottom-3 duration-300 pointer-events-auto"
+    >
+      <div className="relative rounded-2xl bg-card/95 dark:bg-[#131316]/95 backdrop-blur-xl border border-border/80 dark:border-white/10 p-4 sm:p-5 shadow-2xl flex flex-col gap-3">
         {!showSettings ? (
           <>
-            <div className="flex flex-col items-center gap-3 text-center">
-              <Cookie className="h-6 w-6 text-emerald-500 dark:text-emerald-400" />
-              <p className="text-sm text-muted-foreground">
-                We use cookies to enhance your experience and serve ads. Cookie data is processed by{" "}
-                <span className="text-foreground font-medium">Elyon Innovation LTD</span>.{" "}
-                <Link to="/privacy" className="font-medium text-emerald-600 hover:underline dark:text-emerald-400">
-                  Privacy Policy
-                </Link>
-              </p>
+            <div className="flex items-start justify-between gap-3">
+              <div className="flex items-center gap-2.5">
+                <div className="h-9 w-9 rounded-xl bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 border border-emerald-500/20 flex items-center justify-center shrink-0">
+                  <Cookie className="h-4 w-4" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-bold text-foreground leading-tight">
+                    Cookie &amp; Privacy Choices
+                  </h3>
+                  <p className="text-[11px] text-muted-foreground leading-tight mt-0.5">
+                    Data processed by Elyon Innovation LTD
+                  </p>
+                </div>
+              </div>
+              <button
+                onClick={rejectNonEssential}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-lg hover:bg-muted/50 transition-colors"
+                aria-label="Close and reject non-essential cookies"
+              >
+                <X className="h-4 w-4" />
+              </button>
             </div>
-            <div className="flex flex-col gap-2 w-full">
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              We use cookies and local storage to remember your watchlist, portfolio, and analytical preferences.{" "}
+              <Link to="/privacy" className="font-semibold text-emerald-600 hover:underline dark:text-emerald-400">
+                Privacy Policy
+              </Link>
+            </p>
+
+            <div className="flex flex-wrap items-center gap-2 pt-1">
               <Button
                 size="sm"
                 onClick={acceptAll}
-                className="h-9 w-full rounded-lg bg-emerald-600 text-sm text-white hover:bg-emerald-700"
+                className="flex-1 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs transition-all active:scale-[0.99] shadow-sm"
               >
-                Accept all cookies
+                Accept All
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={rejectNonEssential}
-                className="w-full rounded-lg text-sm h-9"
+                className="flex-1 h-9 rounded-xl border-border/80 text-foreground hover:bg-muted/50 text-xs font-semibold"
               >
-                Reject non-essential cookies
+                Essential Only
               </Button>
               <Button
                 size="sm"
                 variant="ghost"
                 onClick={() => setShowSettings(true)}
-                className="w-full rounded-lg text-sm h-9 text-muted-foreground hover:text-foreground"
+                className="h-9 px-3 rounded-xl text-xs text-muted-foreground hover:text-foreground"
               >
-                Cookie settings
+                Customize
               </Button>
             </div>
           </>
         ) : (
           <>
-            <div className="flex items-center justify-between">
+            <div className="flex items-center justify-between border-b border-border/40 pb-2.5">
               <div className="flex items-center gap-2">
-                <Cookie className="h-5 w-5 text-emerald-500 dark:text-emerald-400" />
-                <h3 className="text-sm font-semibold text-foreground">Cookie settings</h3>
+                <div className="h-7 w-7 rounded-lg bg-emerald-500/10 text-emerald-500 dark:text-emerald-400 flex items-center justify-center">
+                  <Cookie className="h-3.5 w-3.5" />
+                </div>
+                <h3 className="text-sm font-bold text-foreground">Cookie Settings</h3>
               </div>
               <button
                 onClick={() => setShowSettings(false)}
-                className="text-muted-foreground hover:text-foreground"
+                className="text-muted-foreground hover:text-foreground p-1"
                 aria-label="Close settings"
               >
                 <X className="h-4 w-4" />
               </button>
             </div>
 
-            <div className="flex flex-col gap-3">
-              <div className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
+            <div className="flex flex-col gap-2.5 max-h-[45vh] overflow-y-auto pr-0.5">
+              <div className="flex items-start justify-between gap-3 rounded-xl border border-border/60 bg-muted/20 p-2.5">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">Necessary</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Required for core site functionality. Always active.
+                  <p className="text-xs font-bold text-foreground">Necessary</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Required for site storage, watchlist and auth. Always active.
                   </p>
                 </div>
-                <Switch checked disabled />
+                <Switch checked disabled className="scale-90 origin-right" />
               </div>
 
-              <div className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
+              <div className="flex items-start justify-between gap-3 rounded-xl border border-border/60 bg-muted/20 p-2.5">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">Analytics</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Helps us understand how the site is used.
+                  <p className="text-xs font-bold text-foreground">Analytics</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Helps us measure site usage and performance anonymously.
                   </p>
                 </div>
-                <Switch checked={analytics} onCheckedChange={setAnalytics} />
+                <Switch checked={analytics} onCheckedChange={setAnalytics} className="scale-90 origin-right" />
               </div>
 
-              <div className="flex items-start justify-between gap-3 rounded-lg border border-border p-3">
+              <div className="flex items-start justify-between gap-3 rounded-xl border border-border/60 bg-muted/20 p-2.5">
                 <div className="min-w-0">
-                  <p className="text-sm font-medium text-foreground">Advertising</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">
-                    Used to deliver relevant ads and measure performance.
+                  <p className="text-xs font-bold text-foreground">Advertising</p>
+                  <p className="text-[11px] text-muted-foreground mt-0.5">
+                    Delivers relevant market sponsorships and campaign measurement.
                   </p>
                 </div>
-                <Switch checked={ads} onCheckedChange={setAds} />
+                <Switch checked={ads} onCheckedChange={setAds} className="scale-90 origin-right" />
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground text-center">
-              See our{" "}
-              <Link to="/privacy" className="font-medium text-emerald-600 hover:underline dark:text-emerald-400">
-                Privacy Policy
-              </Link>{" "}
-              for details.
-            </p>
-
-            <div className="flex flex-col gap-2">
+            <div className="flex items-center gap-2 pt-1 border-t border-border/40">
               <Button
                 size="sm"
                 onClick={saveCustom}
-                className="h-9 w-full rounded-lg bg-emerald-600 text-sm text-white hover:bg-emerald-700"
+                className="flex-1 h-9 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs"
               >
-                Save preferences
+                Save Choices
               </Button>
               <Button
                 size="sm"
                 variant="outline"
                 onClick={acceptAll}
-                className="w-full rounded-lg text-sm h-9"
+                className="flex-1 h-9 rounded-xl border-border/80 text-foreground text-xs"
               >
-                Accept all
+                Accept All
               </Button>
             </div>
           </>
         )}
       </div>
-    </div>
+    </aside>
   );
 };
 

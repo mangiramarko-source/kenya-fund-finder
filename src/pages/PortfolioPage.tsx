@@ -21,6 +21,7 @@ import SaveDemoBanner from "@/components/portfolio/SaveDemoBanner";
 import LiquidityBreakdown from "@/components/portfolio/LiquidityBreakdown";
 import PortfolioWeeklyChanges from "@/components/portfolio/PortfolioWeeklyChanges";
 import CreateAlertDialog from "@/components/alerts/CreateAlertDialog";
+import StarterPortfolios from "@/components/portfolio/StarterPortfolios";
 import PortfolioSummaryModal from "@/components/portfolio/PortfolioSummaryModal";
 import PortfolioHoldingCard from "@/components/portfolio/PortfolioHoldingCard";
 import DesktopPortfolioHero from "@/components/portfolio/DesktopPortfolioHero";
@@ -380,32 +381,37 @@ const PortfolioPage = () => {
         {mobileTab === "watchlist" ? (
           <DesktopWatchlistWorkspace active="watchlist" />
         ) : isEmpty ? (
-          <Card className="border-border bg-gradient-to-br from-card to-muted/30 p-8">
-            <div className="grid md:grid-cols-2 gap-6 items-center">
-              <div className="space-y-3">
-                <h2 className="text-2xl font-bold text-primary leading-tight">
-                  Build your investment portfolio in 30 seconds.
-                </h2>
-                <p className="text-sm text-muted-foreground">
-                  Pick a starter pack or add Kenyan unit trusts, NSE stocks, T-Bills, FX and
-                  commodities. We track live prices for you — no sign-up needed to try.
-                </p>
-                <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2">
-                  <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-accent" /> 100% mock — no real money</span>
-                  <span className="flex items-center gap-1.5"><LineChart className="h-3.5 w-3.5 text-accent" /> Live Kenyan market data</span>
-                  <span className="flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5 text-accent" /> 5 asset classes</span>
+          <div className="space-y-6">
+            <Card className="border-border bg-gradient-to-br from-card to-muted/30 p-8">
+              <div className="grid md:grid-cols-2 gap-6 items-center">
+                <div className="space-y-3">
+                  <h2 className="text-2xl font-bold text-primary leading-tight">
+                    Build your investment portfolio in 30 seconds.
+                  </h2>
+                  <p className="text-sm text-muted-foreground">
+                    Pick a starter pack below or add Kenyan unit trusts, NSE stocks, T-Bills, FX and
+                    commodities manually. We track live prices for you — no sign-up needed to try.
+                  </p>
+                  <div className="flex flex-wrap gap-4 text-xs text-muted-foreground pt-2">
+                    <span className="flex items-center gap-1.5"><ShieldCheck className="h-3.5 w-3.5 text-accent" /> 100% mock — no real money</span>
+                    <span className="flex items-center gap-1.5"><LineChart className="h-3.5 w-3.5 text-accent" /> Live Kenyan market data</span>
+                    <span className="flex items-center gap-1.5"><Wallet className="h-3.5 w-3.5 text-accent" /> 5 asset classes</span>
+                  </div>
+                </div>
+                <div className="flex justify-center md:justify-end">
+                  <Button
+                    onClick={() => setShowAddModal(true)}
+                    variant="outline"
+                    className="border-border hover:bg-muted/50 font-semibold rounded-full px-6 py-3 text-sm gap-2"
+                  >
+                    <Plus className="h-4 w-4" /> Custom Holding
+                  </Button>
                 </div>
               </div>
-              <div className="flex justify-center md:justify-end">
-                <Button
-                  onClick={() => setShowAddModal(true)}
-                  className="bg-[#00A651] hover:bg-[#008f45] text-white font-semibold rounded-full px-6 py-3 text-sm gap-2"
-                >
-                  <Plus className="h-4 w-4 stroke-[3]" /> Add Investment
-                </Button>
-              </div>
-            </div>
-          </Card>
+            </Card>
+
+            <StarterPortfolios />
+          </div>
         ) : (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
             {/* ─── Left Column (Sticky Overview & Actions) ─── */}
