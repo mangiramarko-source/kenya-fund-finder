@@ -5,6 +5,7 @@ import {
   dedupeNewsArticles,
   dedupeNewsByUrl,
   extractYouTubeVideoId,
+  interleaveItems,
   normalizeFinancialText,
   stripPublisherSuffix,
 } from "./newsDedupe";
@@ -145,5 +146,52 @@ describe("newsDedupe — URL, Synonym, Cluster & Video Merge Engine", () => {
     expect(mergedTextFirst[0].summary).toContain("Monetary Policy Committee retained");
     expect(mergedTextFirst[0].content).toContain("Investor Takeaways");
     expect(mergedTextFirst[0].video_url).toBe("https://www.youtube.com/watch?v=k9pQ2wLmN01");
+  });
+
+  describe("interleaveItems — Smart Video & Article Interleaving", () => {
+    it("places video #1 at index 1 and subsequent videos at every 4th card (1, 5, 9, 13)", () => {
+      const texts = Array.from({ length: 12 }, (_, i) => ({ id: `text-${i}`, type: "text" }));
+      const videos = Array.from({ length: 4 }, (_, i) => ({ id: `video-${i}`, type: "video" }));
+
+      const interleaved = interleaveItems(texts, videos, 1, 4);
+
+      // Card 0 is breaking news text #1
+      expect(interleaved[0].id).toBe("text-0");
+
+      // Card 1 is video #0 (right below top headline)
+      expect(interleaved[1].id).toBe("video-0");
+
+      // Cards 2, 3, 4 are text
+      expect(interleaved[2].id).toBe("text-1");
+      expect(interleaved[3].id).toBe("text-2");
+      expect(interleaved[4].id).toBe("text-3");
+
+      // Card 5 is video #1
+      expect(interleaved[5].id).toBe("video-1");
+
+      // Cards 6, 7, 8 are text
+      expect(interleaved[6].id).toBe("text-4");
+      expect(interleaved[7].id).toBe("text-5");
+      expect(interleaved[8].id).toBe("text-6");
+
+      // Card 9 is video #2
+      expect(interleaved[9].id).toBe("video-2");
+
+      // Card 13 is video #3
+      expect(interleaved[13].id).toBe("video-3");
+
+      // Check top 3 items for guest users before InlineDataGate: 2 text + 1 video
+      const top3 = interleaved.slice(0, 3);
+      expect(top3.filter((x) => x.type === "text")).toHaveLength(2);
+      expect(top3.filter((x) => x.type === "video")).toHaveLength(1);
+    });
+
+    it("handles empty video or text lists gracefully", () => {
+      const texts = [{ id: "t1" }, { id: "t2" }];
+      const videos = [{ id: "v1" }];
+
+      expect(interleaveItems(texts, [])).toEqual(texts);
+      expect(interleaveItems([], videos)).toEqual(videos);
+    });
   });
 });

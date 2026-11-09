@@ -2,7 +2,9 @@ import { supabase } from "@/integrations/supabase/client";
 import { fetchPublicData } from "@/lib/gateway";
 import { FALLBACK_KENYAN_FUNDS } from "@/lib/fundDataFallback";
 import { isIndexableNewsArticle } from "@/lib/seoNewsEligibility";
-import { dedupeNewsArticles } from "@/lib/newsDedupe";
+import { dedupeNewsArticles, interleaveItems } from "@/lib/newsDedupe";
+
+export { interleaveItems } from "@/lib/newsDedupe";
 
 export type FundType = "money_market" | "fixed_income" | "balanced" | "equity" | "bond" | "special";
 
@@ -296,6 +298,30 @@ export async function fetchHistoricalYields(fundId: string): Promise<HistoricalY
   return (data || []).map((y) => ({ month: y.month, yield: Number(y.yield) }));
 }
 
+export function mapNewsArticle(d: any): NewsFromDB {
+  const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight);
+  return {
+    id: d.id,
+    title: d.title,
+    summary: d.summary,
+    content: d.content || null,
+    source: d.source,
+    date_published: d.date_published,
+    source_published_at: d.source_published_at || null,
+    created_at: d.created_at,
+    url: d.url || null,
+    category: d.category,
+    read_time: d.read_time,
+    is_featured: d.is_featured,
+    status: d.status,
+    image_url: d.image_url || null,
+    video_url: d.video_url || parsed_ai_analysis?.video_url || null,
+    related_stock_id: d.related_stock_id || null,
+    ai_insight: d.ai_insight || null,
+    parsed_ai_analysis,
+  };
+}
+
 export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
   const normalizedId = id.replace(/^news-/, "");
   const verifiedVideo = VERIFIED_YOUTUBE_BRIEFINGS.find(
@@ -309,33 +335,13 @@ export async function fetchNewsById(id: string): Promise<NewsFromDB | null> {
   }
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+    .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, video_url, related_stock_id, ai_insight")
     .eq("id", id)
     .maybeSingle();
   if (error) throw error;
   if (!data) return null;
-  const parsed_ai_analysis = parseNewsAiAnalysis(data.ai_insight);
 
-  const dbArticle: NewsFromDB = {
-    id: data.id!,
-    title: data.title!,
-    summary: data.summary!,
-    content: data.content || null,
-    source: data.source!,
-    date_published: data.date_published!,
-    source_published_at: data.source_published_at || null,
-    url: data.url || null,
-    category: data.category!,
-    read_time: data.read_time!,
-    is_featured: data.is_featured!,
-    status: data.status!,
-    image_url: (data as any).image_url || null,
-    created_at: data.created_at,
-    related_stock_id: data.related_stock_id || null,
-    ai_insight: data.ai_insight || null,
-    parsed_ai_analysis,
-    video_url: (data as any).video_url || parsed_ai_analysis?.video_url || null,
-  };
+  const dbArticle = mapNewsArticle(data);
 
   if (dbArticle.video_url) {
     return dbArticle;
@@ -376,7 +382,7 @@ export async function enrichArticleLive(articleId: string): Promise<string> {
 export async function fetchRelatedNews(category: string, excludeId: string, limit = 3): Promise<NewsFromDB[]> {
   const { data, error } = await supabase
     .from("news_articles_public")
-    .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+    .select("id, title, summary, content, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, video_url, related_stock_id, ai_insight")
     .eq("category", category)
     .neq("id", excludeId)
     .order("source_published_at", { ascending: false, nullsFirst: false })
@@ -384,29 +390,7 @@ export async function fetchRelatedNews(category: string, excludeId: string, limi
     .order("created_at", { ascending: false })
     .limit(Math.max(limit * 4, limit));
   if (error) throw error;
-  return (data || []).filter((d: any) => isIndexableNewsArticle(d)).slice(0, limit).map((d: any) => {
-    const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight);
-    
-    return {
-      id: d.id,
-      title: d.title,
-      summary: d.summary,
-      content: d.content || null,
-      source: d.source,
-      date_published: d.date_published,
-      source_published_at: d.source_published_at || null,
-      created_at: d.created_at,
-      url: d.url,
-      category: d.category,
-      read_time: d.read_time,
-      is_featured: d.is_featured,
-      status: d.status,
-      image_url: d.image_url || null,
-      related_stock_id: d.related_stock_id || null,
-      ai_insight: d.ai_insight || null,
-      parsed_ai_analysis,
-    };
-  });
+  return (data || []).filter((d: any) => isIndexableNewsArticle(d)).slice(0, limit).map(mapNewsArticle);
 }
 
 /** Lightweight news preview fetch (no `content` body) for homepage/sidebar lists. */
@@ -445,31 +429,13 @@ export async function fetchLatestNewsPreview(limit = 4): Promise<NewsFromDB[]> {
   try {
     const { data, error } = await supabase
       .from("news_articles_public")
-      .select("id, title, summary, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url")
+      .select("id, title, summary, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, video_url")
       .order("source_published_at", { ascending: false, nullsFirst: false })
       .order("date_published", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
       .limit(limit);
     if (error) throw error;
-    return (data || []).map((d: any) => ({
-      id: d.id,
-      title: d.title,
-      summary: d.summary,
-      content: null,
-      source: d.source,
-      date_published: d.date_published,
-      source_published_at: d.source_published_at || null,
-      created_at: d.created_at,
-      url: d.url,
-      category: d.category,
-      read_time: d.read_time,
-      is_featured: d.is_featured,
-      status: d.status,
-      image_url: d.image_url || null,
-      related_stock_id: null,
-      ai_insight: null,
-      parsed_ai_analysis: null,
-    }));
+    return (data || []).map(mapNewsArticle);
   } catch (err) {
     console.error("Failed to fetch latest news from Supabase (likely RLS error), using mock data", err);
     return [
@@ -706,7 +672,7 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
   try {
     const { data, error } = await supabase
       .from("news_articles_public")
-      .select("id, title, summary, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+      .select("id, title, summary, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, video_url, related_stock_id, ai_insight")
       .order("source_published_at", { ascending: false, nullsFirst: false })
       .order("date_published", { ascending: false, nullsFirst: false })
       .order("created_at", { ascending: false })
@@ -714,43 +680,49 @@ export async function fetchPublishedNews(limit: number = 60, offset: number = 0)
       
     if (error) throw error;
     
-    const mapped = (data || []).map((d: any) => {
-      const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight);
-      return {
-        id: d.id,
-        title: d.title,
-        summary: d.summary,
-        content: null,
-        source: d.source,
-        date_published: d.date_published,
-        source_published_at: d.source_published_at || null,
-        created_at: d.created_at,
-        url: d.url,
-        category: d.category,
-        read_time: d.read_time,
-        is_featured: d.is_featured,
-        status: d.status,
-        image_url: d.image_url || null,
-        related_stock_id: d.related_stock_id || null,
-        ai_insight: d.ai_insight || null,
-        parsed_ai_analysis,
-        video_url: d.video_url || parsed_ai_analysis?.video_url || null,
-      };
-    });
+    const mapped = (data || []).map(mapNewsArticle);
 
-    const hasDbVideos = mapped.some((item) => Boolean(item.video_url));
-    const combined =
-      offset === 0 && !hasDbVideos
-        ? [
-            ...VERIFIED_YOUTUBE_BRIEFINGS.map((v) => ({
-              ...v,
-              parsed_ai_analysis: parseNewsAiAnalysis(v.ai_insight),
-            })),
-            ...mapped,
-          ]
-        : mapped;
+    // Only interleave videos on the first page (offset === 0)
+    if (offset !== 0) {
+      return dedupeNewsArticles(mapped);
+    }
 
-    return dedupeNewsArticles(combined);
+    // Dedicated Video Fetch & Fallback Pool (offset === 0)
+    let videoPool: NewsFromDB[] = [];
+    try {
+      const { data: dbVideos } = await supabase
+        .from("news_articles_public")
+        .select("id, title, summary, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, video_url, related_stock_id, ai_insight")
+        .not("video_url", "is", null)
+        .order("source_published_at", { ascending: false, nullsFirst: false })
+        .order("created_at", { ascending: false })
+        .limit(10);
+
+      const mappedDbVideos = (dbVideos || []).map(mapNewsArticle);
+      videoPool = dedupeNewsArticles([
+        ...mappedDbVideos,
+        ...VERIFIED_YOUTUBE_BRIEFINGS.map((v) => ({
+          ...v,
+          parsed_ai_analysis: parseNewsAiAnalysis(v.ai_insight),
+        })),
+      ]);
+    } catch (err) {
+      console.warn("Failed to fetch dedicated video pool, using fallback briefings:", err);
+      videoPool = VERIFIED_YOUTUBE_BRIEFINGS.map((v) => ({
+        ...v,
+        parsed_ai_analysis: parseNewsAiAnalysis(v.ai_insight),
+      }));
+    }
+
+    const textArticles = mapped.filter((a) => !a.video_url);
+    const combinedVideos = dedupeNewsArticles([
+      ...mapped.filter((a) => Boolean(a.video_url)),
+      ...videoPool,
+    ]);
+
+    // Smart Interleaving: Card #0 is breaking news, Card #1 is video #1,
+    // and subsequent video briefings are placed every 4th card (indices 5, 9, 13, etc.)
+    return interleaveItems(textArticles, combinedVideos, 1, 4);
   } catch (err) {
     console.error("Failed to fetch news from Supabase (likely RLS error), using mock data", err);
     // Return mock data so the right column works while RLS is being fixed
@@ -819,7 +791,7 @@ export async function fetchStockLinkedNews(limit: number = 40): Promise<NewsFrom
   try {
     const { data, error } = await supabase
       .from("news_articles_public")
-      .select("id, title, summary, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, related_stock_id, ai_insight")
+      .select("id, title, summary, source, date_published, source_published_at, created_at, url, category, read_time, is_featured, status, image_url, video_url, related_stock_id, ai_insight")
       .not("related_stock_id", "is", null)
       .order("source_published_at", { ascending: false, nullsFirst: false })
       .order("date_published", { ascending: false, nullsFirst: false })
@@ -828,29 +800,7 @@ export async function fetchStockLinkedNews(limit: number = 40): Promise<NewsFrom
 
     if (error) throw error;
 
-    return dedupeNewsArticles((data || []).map((d: any) => {
-      const parsed_ai_analysis = parseNewsAiAnalysis(d.ai_insight);
-      return {
-        id: d.id,
-        title: d.title,
-        summary: d.summary,
-        content: null,
-        source: d.source,
-        date_published: d.date_published,
-        source_published_at: d.source_published_at || null,
-        created_at: d.created_at,
-        url: d.url,
-        category: d.category,
-        read_time: d.read_time,
-        is_featured: d.is_featured,
-        status: d.status,
-        image_url: d.image_url || null,
-        related_stock_id: d.related_stock_id || null,
-        ai_insight: d.ai_insight || null,
-        parsed_ai_analysis,
-        video_url: d.video_url || parsed_ai_analysis?.video_url || null,
-      };
-    }));
+    return dedupeNewsArticles((data || []).map(mapNewsArticle));
   } catch (err) {
     console.warn("fetchStockLinkedNews failed:", err);
     return [];

@@ -20,7 +20,7 @@ import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
 import { isFundsAndFixedIncomeArticle, FUNDS_AND_FIXED_INCOME_TAB } from "@/lib/fundsFixedIncomeNews";
 import { getNewsPublishedAt, getNewsPublishedTime } from "@/lib/newsDate";
 import { matchesNewsTab } from "@/lib/newsTabMatching";
-import { dedupeNewsArticles } from "@/lib/newsDedupe";
+import { dedupeNewsArticles, interleaveItems } from "@/lib/newsDedupe";
 import { classifyArticleCategory } from "@/lib/articleCategoryClassifier";
 import { calculateRankScore } from "@/lib/feedEngagement";
 import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
@@ -231,7 +231,15 @@ export default function NewsPage() {
     const list = [...articles];
 
     // Sort by Nav Tab (latest/oldest)
-    if (activeNavTab === "Latest" || activeNavTab === "All" || activeNavTab === "Top Ranked" || activeNavTab === "Saved" || ["Kenyan", "International", "Stocks", "MMFs", "FX Rates", "Commodities"].includes(activeNavTab)) {
+    if (activeNavTab === "All" || activeNavTab === "Latest") {
+      const texts = list
+        .filter((a) => !a.video_url)
+        .sort((a, b) => getNewsPublishedTime(b) - getNewsPublishedTime(a));
+      const videos = list
+        .filter((a) => Boolean(a.video_url))
+        .sort((a, b) => getNewsPublishedTime(b) - getNewsPublishedTime(a));
+      return interleaveItems(texts, videos, 1, 4);
+    } else if (activeNavTab === "Top Ranked" || activeNavTab === "Saved" || ["Kenyan", "International", "Stocks", "MMFs", "FX Rates", "Commodities"].includes(activeNavTab)) {
       list.sort((a, b) => getNewsPublishedTime(b) - getNewsPublishedTime(a));
     } else if (activeNavTab === "Oldest") {
       list.sort((a, b) => getNewsPublishedTime(a) - getNewsPublishedTime(b));

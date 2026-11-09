@@ -545,3 +545,49 @@ export function dedupeNewsArticles<T extends NewsDedupeCandidate>(articles: T[])
 export function dedupeNewsByUrl<T extends NewsDedupeCandidate>(articles: T[]): T[] {
   return dedupeNewsArticles(articles);
 }
+
+/**
+ * Interleaves special items (e.g. video briefings) into a list of main items (e.g. text news),
+ * placing the first special item at `firstIndex` (default 1) and subsequent special items
+ * every `interval` cards (default 4 -> indices 1, 5, 9, 13, etc.).
+ */
+export function interleaveItems<T>(
+  mainItems: T[],
+  specialItems: T[],
+  firstIndex = 1,
+  interval = 4,
+): T[] {
+  if (specialItems.length === 0) return [...mainItems];
+  if (mainItems.length === 0) return [...specialItems];
+
+  const result: T[] = [];
+  let m = 0;
+  let s = 0;
+
+  // Push main items up to firstIndex (e.g. breaking news at index 0)
+  while (m < firstIndex && m < mainItems.length) {
+    result.push(mainItems[m++]);
+  }
+
+  // Interleave: 1 special item followed by (interval - 1) main items
+  const mainPerSpecial = Math.max(1, interval - 1);
+  while (s < specialItems.length && m < mainItems.length) {
+    result.push(specialItems[s++]);
+    for (let c = 0; c < mainPerSpecial && m < mainItems.length; c++) {
+      result.push(mainItems[m++]);
+    }
+  }
+
+  // Append any remaining main items
+  while (m < mainItems.length) {
+    result.push(mainItems[m++]);
+  }
+
+  // Append any remaining special items
+  while (s < specialItems.length) {
+    result.push(specialItems[s++]);
+  }
+
+  return result;
+}
+

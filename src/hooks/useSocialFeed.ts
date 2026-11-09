@@ -6,6 +6,7 @@ import { getNewsPresentation } from "../../supabase/functions/_shared/news-text"
 import { getNewsPublishedAt } from "@/lib/newsDate";
 import { buildRelatedMarketLinks } from "@/lib/newsMarketLinks";
 import { classifyArticleCategory } from "@/lib/articleCategoryClassifier";
+import { interleaveItems } from "@/lib/newsDedupe";
 
 export type FeedItemType = "NEWS" | "STOCK_INSIGHT" | "FUND_MILESTONE" | "FX_ALERT" | "EDUCATION";
 
@@ -175,8 +176,15 @@ export function useSocialFeed(
     });
 
     // (Removed Market Insights and KenyaFundFinder Academy feed items as requested)
-    const sortedFeed = feed.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+    const texts = feed.filter((item) => !item.rawItem?.video_url && !(item as any).videoUrl);
+    const videos = feed.filter((item) => Boolean(item.rawItem?.video_url || (item as any).videoUrl));
 
-    return sortedFeed;
+    if (videos.length > 0 && texts.length > 0) {
+      texts.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      videos.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
+      return interleaveItems(texts, videos, 1, 4);
+    }
+
+    return feed.sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime());
   }, [news, stocks, funds, fxRates, commodities]);
 }
