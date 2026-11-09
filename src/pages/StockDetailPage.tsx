@@ -503,6 +503,18 @@ const StockDetailPage = () => {
         </div>
       </div>
 
+      {s.symbol === "BAMB" && (
+        <div className="mb-4 rounded-xl border border-amber-500/30 bg-amber-50/70 p-4 text-sm text-amber-900 dark:border-amber-500/20 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="flex items-center gap-2 font-bold">
+            <span className="inline-block h-2 w-2 rounded-full bg-amber-500" />
+            NSE Trading Suspended — Corporate Takeover
+          </div>
+          <p className="mt-1 text-xs leading-relaxed text-amber-800/90 dark:text-amber-300/80">
+            Bamburi Cement shares are suspended from trading on the Nairobi Securities Exchange following the mandatory takeover offer by Amsons Group at KES 65.00 per share (96.54% controlling stake) to facilitate final share transfers and squeeze-out of minority shareholders. The last market traded price was KES 54.00.
+          </p>
+        </div>
+      )}
+
       {/* Tabs */}
       <Tabs defaultValue="summary" className="w-full">
         <TabsList className="-mx-3 mb-5 flex h-auto w-[calc(100%+1.5rem)] justify-start gap-0 overflow-x-auto rounded-none border-b border-border bg-background p-0 md:mx-0 md:mb-6 md:w-full">

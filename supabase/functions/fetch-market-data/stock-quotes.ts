@@ -107,6 +107,11 @@ export function matchRapidApiStocks(symbols: string[], providerQuotes: Map<strin
       rejectedAliases.push(symbol);
       continue;
     }
+    // Prevent preference shares from masquerading as ordinary KPLC if ISIN is present
+    if (symbol === "KPLC" && quote.isin && quote.isin !== "KE0000000349") {
+      rejectedAliases.push(symbol);
+      continue;
+    }
     quotes.set(symbol, quote);
   }
   return { quotes, rejectedAliases };

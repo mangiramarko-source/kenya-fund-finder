@@ -27,7 +27,7 @@ import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWid
 import { MarketSummary } from "@/components/MarketSummary";
 import { YieldCalculator } from "@/components/YieldCalculator";
 import { NseMarketStatusCard } from "@/components/desktop/NseMarketStatusCard";
-import { WatchlistSummaryCard } from "@/components/desktop/WatchlistSummaryCard";
+import { DesktopWatchlistPortfolioCard } from "@/components/desktop/DesktopWatchlistPortfolioCard";
 import { ExchangeRatesCard } from "@/components/desktop/ExchangeRatesCard";
 import { MarketMoversCard } from "@/components/desktop/MarketMoversCard";
 import { toast } from "sonner";
@@ -1327,10 +1327,13 @@ const OverviewPage = () => {
 
         {/* Left Column - Desktop Only */}
         <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 md:flex md:flex-col md:space-y-4">
-          <NseMarketStatusCard />
-          <WatchlistSummaryCard
-            items={derivedWatchlistItems}
-            stocks={stocks as any}
+          <DesktopWatchlistPortfolioCard
+            watchlist={watchlist}
+            stocks={stocks}
+            funds={funds}
+            rates={rates}
+            commodities={commodities}
+            onToggleAsset={toggleAsset}
             onOpenCustomize={() => {
               if (!user) {
                 navigate("/auth?mode=signup&redirect=%2F");
@@ -1343,8 +1346,10 @@ const OverviewPage = () => {
 
         {/* Middle Column - Feed (Twitter-style 600px reading width) */}
         <div className="flex w-full min-w-0 max-w-full flex-col overflow-visible md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:max-w-[600px] md:mx-auto">
-          {/* Portfolio widget (Mobile & Desktop) */}
-          <OverviewPortfolioWidget />
+          {/* Portfolio widget (Mobile Only) */}
+          <div className="md:hidden">
+            <OverviewPortfolioWidget />
+          </div>
 
           <div className="border-b border-border/60 bg-background px-4 pt-2 pb-1 -mx-4 md:mx-0 md:px-2 md:pt-1 md:shadow-sm md:sticky md:top-0 md:z-30 md:bg-background/95 md:backdrop-blur-md">
             <div className="mb-4 flex items-baseline justify-between mt-0">
@@ -1469,6 +1474,8 @@ const OverviewPage = () => {
 
         {/* Right Column - Desktop Only */}
         <div className="hidden min-h-0 overflow-x-hidden overflow-y-auto pr-1 lg:flex lg:flex-col lg:space-y-4">
+          <NseMarketStatusCard />
+          <MarketMoversCard stocks={stocks as any} />
           <ExchangeRatesCard
             rates={displayFxRates}
             onOpenCustomize={() => {
@@ -1479,7 +1486,6 @@ const OverviewPage = () => {
               setFxCustomizeOpen(true);
             }}
           />
-          <MarketMoversCard stocks={stocks as any} />
         </div>
       </main>
 

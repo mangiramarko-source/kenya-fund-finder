@@ -90,4 +90,21 @@ describe("NSE listed-company provider alias", () => {
     const { quotes } = parseRapidApiStockResponse(envelope([{ ...nse, ticker: "NSE20" }]));
     expect(matchRapidApiStocks(["NSE20"], quotes).quotes.size).toBe(0);
   });
+
+  it("safeguards KPLC ordinary shares against preference share ISINs", () => {
+    const kplcOrd = { ticker: "KPLC", price: "21.95", change: "2.09", volume: "100000", isin: "KE0000000349" };
+    const kplcPref = { ticker: "KPLC", price: "5.26", change: "0", volume: "100", isin: "KE0000000356" };
+
+    // Ordinary ISIN accepted
+    const resOrd = parseRapidApiStockResponse(envelope([kplcOrd]));
+    const matchedOrd = matchRapidApiStocks(["KPLC"], resOrd.quotes);
+    expect(matchedOrd.quotes.get("KPLC")?.price).toBe(21.95);
+    expect(matchedOrd.rejectedAliases).toEqual([]);
+
+    // Preference ISIN rejected from KPLC ordinary symbol
+    const resPref = parseRapidApiStockResponse(envelope([kplcPref]));
+    const matchedPref = matchRapidApiStocks(["KPLC"], resPref.quotes);
+    expect(matchedPref.quotes.size).toBe(0);
+    expect(matchedPref.rejectedAliases).toEqual(["KPLC"]);
+  });
 });

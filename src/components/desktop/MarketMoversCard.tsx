@@ -1,6 +1,8 @@
 import React from "react";
-import { TrendingUp, TrendingDown } from "lucide-react";
+import { Link } from "react-router-dom";
+import { TrendingUp, TrendingDown, ArrowRight } from "lucide-react";
 import type { Stock } from "@/types";
+import WatchlistAssetAvatar from "@/components/watchlist/WatchlistAssetAvatar";
 
 interface MarketMoversCardProps {
   stocks?: Stock[];
@@ -20,78 +22,127 @@ export const MarketMoversCard: React.FC<MarketMoversCardProps> = ({ stocks = [] 
 
   // Fallbacks if data is not loaded or market is inactive
   const displayGainers = gainers.length > 0 ? gainers : [
-    { id: "sgl", symbol: "SGL", name: "Standard Group...", price: 6.24, day_change_percent: 305.19 },
-    { id: "ctum", symbol: "CTUM", name: "Centum Investm...", price: 19.30, day_change_percent: 100.21 },
-    { id: "kegn", symbol: "KEGN", name: "KenGen PLC", price: 11.50, day_change_percent: 54.78 },
+    { id: "sgl", symbol: "SGL", name: "Standard Group PLC", price: 6.24, day_change_percent: 305.19, logo_url: null },
+    { id: "ctum", symbol: "CTUM", name: "Centum Investment", price: 19.30, day_change_percent: 100.21, logo_url: null },
+    { id: "kegn", symbol: "KEGN", name: "KenGen PLC", price: 11.50, day_change_percent: 54.78, logo_url: null },
   ];
 
   const displayLosers = losers.length > 0 ? losers : [
-    { id: "lkl", symbol: "LKL", name: "Longhorn Publis...", price: 2.86, day_change_percent: -48.75 },
-    { id: "umme", symbol: "UMME", name: "Umeme Limited", price: 6.94, day_change_percent: -22.20 },
-    { id: "kq", symbol: "KQ", name: "Kenya Airways", price: 5.46, day_change_percent: -20.07 },
+    { id: "lkl", symbol: "LKL", name: "Longhorn Publishers", price: 2.86, day_change_percent: -48.75, logo_url: null },
+    { id: "umme", symbol: "UMME", name: "Umeme Limited", price: 6.94, day_change_percent: -22.20, logo_url: null },
+    { id: "kq", symbol: "KQ", name: "Kenya Airways", price: 5.46, day_change_percent: -20.07, logo_url: null },
   ];
 
   return (
     <div className="rounded-2xl border border-border/70 bg-card p-4 shadow-sm space-y-4">
-      <div className="flex items-center gap-2">
-        <TrendingUp className="w-4 h-4 text-emerald-500" />
-        <h3 className="text-sm font-bold text-foreground">Market Movers</h3>
+      {/* Card Header */}
+      <div className="flex items-center justify-between border-b border-border/50 pb-2.5">
+        <div className="flex items-center gap-2">
+          <TrendingUp className="w-4 h-4 text-emerald-500" />
+          <h3 className="text-sm font-bold text-foreground">Market Movers</h3>
+        </div>
+        <Link
+          to="/stocks"
+          className="text-xs text-muted-foreground hover:text-emerald-500 flex items-center gap-1 font-semibold transition-colors"
+        >
+          <span>Stocks</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
 
       {/* Top Gainers */}
-      <div className="space-y-2.5">
-        <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-          Top Gainers
-        </h4>
-        <div className="space-y-2.5">
+      <div className="space-y-2">
+        <div className="flex items-center justify-between">
+          <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+            Top Gainers
+          </h4>
+          <span className="text-[10px] font-bold text-emerald-600 dark:text-emerald-400">Bullish</span>
+        </div>
+        <div className="space-y-1.5">
           {displayGainers.map((item) => (
-            <div key={item.id} className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 flex items-center justify-center">
-                  <TrendingUp className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <div className="font-bold text-foreground tracking-tight">{item.symbol}</div>
-                  <div className="text-[11px] text-muted-foreground truncate max-w-[100px]">{item.name}</div>
+            <Link
+              key={item.id}
+              to={`/stocks/${item.symbol}`}
+              className="flex items-center justify-between p-2 rounded-xl border border-border/50 bg-slate-50/50 dark:bg-card hover:border-emerald-500/40 hover:bg-muted/30 transition-all group text-xs"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <WatchlistAssetAvatar
+                  type="stock"
+                  symbol={item.symbol}
+                  name={item.name}
+                  logoUrl={item.logo_url}
+                  size={32}
+                  className="shrink-0"
+                />
+                <div className="min-w-0">
+                  <div className="font-bold text-foreground tracking-tight group-hover:text-emerald-500 transition-colors truncate">
+                    {item.symbol}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground truncate max-w-[100px]">{item.name}</div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-bold text-foreground">KES {item.price.toFixed(2)}</div>
-                <div className="text-[11px] font-semibold text-emerald-500">
+              <div className="text-right shrink-0">
+                <div className="font-bold text-foreground tabular-nums">KES {item.price.toFixed(2)}</div>
+                <div className="text-[10px] font-bold inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-md bg-emerald-500/10 text-emerald-600 dark:text-emerald-400">
                   +{(item.day_change_percent || 0).toFixed(2)}%
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
       </div>
 
       {/* Top Losers */}
-      <div className="space-y-2.5 pt-2 border-t border-border/50">
-        <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
-          Top Losers
-        </h4>
-        <div className="space-y-2.5">
+      <div className="space-y-2 pt-2 border-t border-border/50">
+        <div className="flex items-center justify-between">
+          <h4 className="text-[10px] font-extrabold uppercase tracking-wider text-muted-foreground">
+            Top Losers
+          </h4>
+          <span className="text-[10px] font-bold text-red-500">Bearish</span>
+        </div>
+        <div className="space-y-1.5">
           {displayLosers.map((item) => (
-            <div key={item.id} className="flex items-center justify-between text-xs">
-              <div className="flex items-center gap-2.5">
-                <div className="w-7 h-7 rounded-full bg-red-500/10 border border-red-500/20 text-red-500 flex items-center justify-center">
-                  <TrendingDown className="w-3.5 h-3.5" />
-                </div>
-                <div>
-                  <div className="font-bold text-foreground tracking-tight">{item.symbol}</div>
-                  <div className="text-[11px] text-muted-foreground truncate max-w-[100px]">{item.name}</div>
+            <Link
+              key={item.id}
+              to={`/stocks/${item.symbol}`}
+              className="flex items-center justify-between p-2 rounded-xl border border-border/50 bg-slate-50/50 dark:bg-card hover:border-red-500/30 hover:bg-muted/30 transition-all group text-xs"
+            >
+              <div className="flex items-center gap-2.5 min-w-0">
+                <WatchlistAssetAvatar
+                  type="stock"
+                  symbol={item.symbol}
+                  name={item.name}
+                  logoUrl={item.logo_url}
+                  size={32}
+                  className="shrink-0"
+                />
+                <div className="min-w-0">
+                  <div className="font-bold text-foreground tracking-tight group-hover:text-red-500 transition-colors truncate">
+                    {item.symbol}
+                  </div>
+                  <div className="text-[10px] text-muted-foreground truncate max-w-[100px]">{item.name}</div>
                 </div>
               </div>
-              <div className="text-right">
-                <div className="font-bold text-foreground">KES {item.price.toFixed(2)}</div>
-                <div className="text-[11px] font-semibold text-red-500">
+              <div className="text-right shrink-0">
+                <div className="font-bold text-foreground tabular-nums">KES {item.price.toFixed(2)}</div>
+                <div className="text-[10px] font-bold inline-flex items-center gap-0.5 px-1.5 py-0.2 rounded-md bg-red-500/10 text-red-600 dark:text-red-400">
                   {(item.day_change_percent || 0).toFixed(2)}%
                 </div>
               </div>
-            </div>
+            </Link>
           ))}
         </div>
+      </div>
+
+      {/* Card Footer */}
+      <div className="pt-1 text-center">
+        <Link
+          to="/stocks"
+          className="text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline inline-flex items-center gap-1 transition-colors"
+        >
+          <span>View All NSE Stocks</span>
+          <ArrowRight className="w-3.5 h-3.5" />
+        </Link>
       </div>
     </div>
   );

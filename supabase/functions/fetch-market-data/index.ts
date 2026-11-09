@@ -184,7 +184,16 @@ const NSE_SYMBOL_PATTERNS: Record<string, string[]> = {
   EABL: ["east african breweries"],
   BAT: ["british american tobacco"],
   KNRE: ["kenya re insurance", "kenya re-insurance", "kenya re"],
-  KPLC: ["kenya power lighting", "kenya power"],
+  KPLC: [
+    "kenya power and lighting co plc ord",
+    "kenya power lighting co plc ord",
+    "the kenya power and lighting co plc ord",
+    "the kenya power lighting co plc ord",
+    "kenya power ord",
+    "kenya power lighting ord",
+    "kenya power and lighting ord",
+    "kenya power",
+  ],
   BAMB: ["bamburi cement"],
   SASN: ["sasini"],
   TOTL: ["total kenya", "totalenergies"],
@@ -383,6 +392,9 @@ async function fetchNseXhrStockQuotes() {
     const patterns = NSE_SYMBOL_PATTERNS[symbol] || [symbol.toLowerCase()];
     const row = (sectorRows.get(sector) || []).find((entry) => {
       const normalizedCompany = normalizeText(entry.company);
+      if (symbol === "KPLC" && /\bpref\b|\bpreference\b/i.test(normalizedCompany)) {
+        return false;
+      }
       return patterns.some((pattern) => normalizedCompany.includes(normalizeText(pattern)));
     });
 
