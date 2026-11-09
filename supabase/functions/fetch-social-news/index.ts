@@ -9,6 +9,8 @@ import {
   evaluateNewsQuality,
   NEWS_CLASSIFICATION_VERSION,
 } from "../_shared/news-quality.ts";
+import { geminiGenerateText } from "../_shared/gemini.ts";
+import { parseModelJson } from "../_shared/gemini-parse.ts";
 
 const corsHeaders = {
   "Access-Control-Allow-Origin": "*",
@@ -75,93 +77,132 @@ interface RewrittenPost {
   content: string;
 }
 
-// ─── AI Rewriting (Groq Llama 3.3 or Gemini Flash with Fallback) ─────────────
+// ─── AI Rewriting (Option A: Transformative Fair Dealing Multi-Provider) ─────
 async function rewriteSocialPost(
   groqKey: string | null,
   geminiKey: string | null,
   post: NormalizedSocialPost,
-  retries = 2,
+  retries = 1,
 ): Promise<RewrittenPost> {
-  const rawText = post.text.slice(0, 3000);
+  const rawText = post.text.slice(0, 3000).trim();
   const author = post.author;
 
-  // Use Groq if available; otherwise use Gemini
-  const apiKey = groqKey || geminiKey;
-  if (!apiKey || rawText.length < 30) {
+  if (rawText.length < 25) {
     return generateDeterministicFallback(post);
   }
 
-  const isGroq = Boolean(groqKey);
-  const gatewayUrl = isGroq
-    ? "https://api.groq.com/openai/v1/chat/completions"
-    : "https://generativelanguage.googleapis.com/v1beta/openai/chat/completions";
-  const modelName = isGroq ? "llama-3.3-70b-versatile" : "gemini-3.8-flash";
+  const systemPrompt = `You are a Senior Financial Analyst & Institutional News Editor for "Kenya Fund Finder" (kenyafundfinder.com).
+Your objective is to review public news teasers, social announcements, and article metadata, and produce a high-value, original institutional briefing for Kenyan investors, business owners, and savers.
 
-  const systemPrompt = `You are an expert Financial Analyst for "Kenya Fund Finder".
-Your job is to read raw social media updates (e.g. from Facebook or X/Twitter) and write a completely original, neutral, and professional financial news update based on it.
-CRITICAL RULE: You MUST write entirely in your own words. Do not copy sentences directly from the source text. This ensures transformative Fair Use and avoids plagiarism.
-Be factual, professional, analytical, and accurate. Keep all numbers, dates, and currencies truthful.
-Do NOT include labels like "Summary" or "Summary (10th-Grade Reader Level)".
-Return plain text in JSON format: {"summary": "2-3 crisp sentences", "content": "2-3 analytical paragraphs"}.`;
+LEGAL & FAIR DEALING RULES:
+1. Transformative synthesis: Extract the key public facts (percentages, KES/USD amounts, dates, policy shifts, corporate deals) and write entirely in your own professional words. Never duplicate full sentences from the source.
+2. Contextualization: Explain the practical significance for Kenyan capital markets, borrowing costs, currency stability, or the sector involved.
+3. Factual integrity: Keep all figures truthful to the source; do not invent or extrapolate numbers that were not present.
 
-  const userPrompt = `Account: ${author} (${post.platform})
-Original URL: ${post.url}
+OUTPUT FORMAT:
+Return strictly a valid JSON object:
+{
+  "summary": "A crisp, 2-3 sentence executive briefing (max 400 characters).",
+  "content": "A well-structured 2-3 paragraph institutional analysis (roughly 160-260 words total). Separate paragraphs with a blank line."
+}`;
 
-Raw Post Text:
+  const userPrompt = `Source: ${author} (${post.platform})
+Source Link: ${post.url}
+
+Public Briefing & Metadata:
 """
 ${rawText}
 """
 
-Rewrite this post into an institutional news update for Kenyan investors:
-- "summary": a crisp, 2-3 sentence standalone executive summary (max 600 chars).
-- "content": 2-3 paragraphs (150-300 words) written entirely in your own words, contextualizing the update for the Kenyan capital markets.`;
+Synthesize this briefing into an original, institutional financial update for Kenyan investors. Output strictly JSON.`;
 
-  try {
-    const controller = new AbortController();
-    const t = setTimeout(() => controller.abort(), 18000);
-    const res = await fetch(gatewayUrl, {
-      method: "POST",
-      headers: {
-        Authorization: `Bearer ${apiKey}`,
-        "Content-Type": "application/json",
-      },
-      signal: controller.signal,
-      body: JSON.stringify({
-        model: modelName,
-        messages: [
-          { role: "system", content: systemPrompt },
-          { role: "user", content: userPrompt },
-        ],
-        response_format: { type: "json_object" },
-      }),
-    });
-    clearTimeout(t);
+  // 1) Try Groq (ultra-fast GPT-OSS 120B / 20B on Groq LPU)
+  if (groqKey) {
+    for (const model of ["openai/gpt-oss-120b", "openai/gpt-oss-20b"]) {
+      try {
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), 16000);
+        const res = await fetch("https://api.groq.com/openai/v1/chat/completions", {
+          method: "POST",
+          headers: {
+            Authorization: `Bearer ${groqKey}`,
+            "Content-Type": "application/json",
+          },
+          signal: controller.signal,
+          body: JSON.stringify({
+            model,
+            messages: [
+              { role: "system", content: systemPrompt },
+              { role: "user", content: userPrompt },
+            ],
+            response_format: { type: "json_object" },
+          }),
+        });
+        clearTimeout(t);
 
-    if (!res.ok) {
-      if ((res.status === 429 || res.status === 503) && retries > 0) {
-        console.warn(`AI rate limited/unavailable [${res.status}] for "${author}", retrying in 2s...`);
-        await new Promise((r) => setTimeout(r, 2000));
-        return rewriteSocialPost(groqKey, geminiKey, post, retries - 1);
+        if (res.ok) {
+          const data = await res.json();
+          const contentStr = data?.choices?.[0]?.message?.content;
+          if (contentStr) {
+            const parsed = parseModelJson<Partial<RewrittenPost>>(contentStr);
+            if (parsed?.summary && parsed?.content) {
+              return {
+                summary: parsed.summary.trim(),
+                content: parsed.content.trim(),
+              };
+            }
+          }
+        } else {
+          console.warn(`Groq (${model}) returned [${res.status}], trying next provider...`);
+        }
+      } catch (err) {
+        console.warn(`Groq (${model}) exception:`, (err as Error).message);
       }
-      console.warn(`AI rewrite failed [${res.status}] for "${author}", using clean structured fallback.`);
-      return generateDeterministicFallback(post);
     }
-
-    const data = await res.json();
-    const contentStr = data?.choices?.[0]?.message?.content;
-    if (!contentStr) return generateDeterministicFallback(post);
-
-    const parsed = JSON.parse(contentStr) as Partial<RewrittenPost>;
-    if (!parsed.summary || !parsed.content) return generateDeterministicFallback(post);
-
-    return {
-      summary: parsed.summary.trim(),
-      content: parsed.content.trim(),
-    };
-  } catch (err) {
-    console.warn(`AI rewrite exception for "${author}":`, (err as Error).message);
-    return generateDeterministicFallback(post);
   }
+
+  // 2) Seamless Fallback to Gemini (gemini-3.8-flash direct REST)
+  if (geminiKey) {
+    for (const model of ["gemini-3.8-flash", "gemini-flash-latest"]) {
+      try {
+        const controller = new AbortController();
+        const t = setTimeout(() => controller.abort(), 18000);
+        const res = await fetch(
+          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${geminiKey}`,
+          {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            signal: controller.signal,
+            body: JSON.stringify({
+              systemInstruction: { parts: [{ text: systemPrompt }] },
+              contents: [{ role: "user", parts: [{ text: userPrompt }] }],
+              generationConfig: { responseMimeType: "application/json" },
+            }),
+          },
+        );
+        clearTimeout(t);
+
+        if (res.ok) {
+          const data = await res.json();
+          const text = data?.candidates?.[0]?.content?.parts?.[0]?.text;
+          if (text) {
+            const parsed = parseModelJson<Partial<RewrittenPost>>(text);
+            if (parsed?.summary && parsed?.content) {
+              return {
+                summary: parsed.summary.trim(),
+                content: parsed.content.trim(),
+              };
+            }
+          }
+        }
+      } catch (err) {
+        console.warn(`Gemini (${model}) exception:`, (err as Error).message);
+      }
+    }
+  }
+
+  // 3) Deterministic fallback if both AI providers are unavailable
+  return generateDeterministicFallback(post);
 }
 
 function generateDeterministicFallback(post: NormalizedSocialPost): RewrittenPost {
@@ -169,10 +210,16 @@ function generateDeterministicFallback(post: NormalizedSocialPost): RewrittenPos
     .replace(/https?:\/\/\S+/g, "")
     .replace(/[#@]\w+/g, "")
     .trim();
-  const firstSentence = clean.split(/[.\n]/)[0] || clean.slice(0, 160);
+  const paragraphs = clean.split(/\n\s*\n/).map((p) => p.trim()).filter(Boolean);
+  const firstSentence = paragraphs[0]?.split(/[.?!]/)[0] || clean.slice(0, 160);
+  const summary = `${post.author} reported: ${firstSentence.trim()}.`;
+  const body = paragraphs.length > 1
+    ? paragraphs.join("\n\n")
+    : `${clean}\n\nFurther updates and context on this development will be tracked by Kenya Fund Finder for Kenyan investor portfolios.`;
+
   return {
-    summary: `${post.author} reported on Kenyan capital markets: ${firstSentence.trim()}.`,
-    content: `${clean}\n\nThis update was monitored from ${post.author} on ${post.platform} and indexed by Kenya Fund Finder for Kenyan investor tracking.`,
+    summary,
+    content: body,
   };
 }
 
@@ -210,20 +257,41 @@ async function fetchFacebookFromApify(apifyToken: string): Promise<NormalizedSoc
 
     const posts: NormalizedSocialPost[] = [];
     for (const item of items) {
-      const text = item.text || item.postText || item.caption || item.message || "";
-      const url = item.url || item.postUrl || item.canonicalUrl || "";
-      const author = item.user?.name || item.pageName || item.ownerName || "The Kenyan Wall Street";
+      const rawCaption = (item.text || item.postText || item.caption || item.message || "").trim();
+      const previewTitle = (item.previewTitle || "").trim();
+      const previewDesc = (item.previewDescription || item.previewSubtitle || "").trim();
+      const externalLink = item.link || item.previewTarget?.external_url || null;
+      const facebookPostUrl = item.url || item.postUrl || item.canonicalUrl || item.facebookUrl || "";
+      const url = externalLink || facebookPostUrl;
+
+      // Option A: Combine public post caption + OpenGraph preview metadata into a rich composite briefing
+      const textParts: string[] = [];
+      if (rawCaption) textParts.push(rawCaption);
+      if (previewTitle && previewTitle.toLowerCase() !== rawCaption.toLowerCase()) {
+        textParts.push(previewTitle);
+      }
+      if (
+        previewDesc &&
+        previewDesc.toLowerCase() !== rawCaption.toLowerCase() &&
+        previewDesc.toLowerCase() !== previewTitle.toLowerCase()
+      ) {
+        textParts.push(previewDesc);
+      }
+      const compositeText = textParts.join("\n\n").trim();
+
+      const author = item.user?.name || item.pageName || item.ownerName || "Business Daily Africa";
       const createdAt = item.time || item.timestamp || item.date || item.createdAt;
       const imageUrl = item.media?.[0]?.thumbnail || item.imageUrl || item.attachedImage || null;
 
-      if (url && text && text.length > 25) {
+      if (url && compositeText && compositeText.length > 25) {
         posts.push({
           platform: "Facebook",
           author,
           url,
-          text,
+          text: compositeText,
           createdAt,
           imageUrl,
+          rawItem: item,
         });
       }
     }
@@ -425,14 +493,19 @@ Deno.serve(async (req) => {
         cleanAuthor = "Business Daily Africa";
       }
 
-      // Build clean title — ensuring it never says "Facebook" or "on Facebook"
+      // Build clean title — prefer link headline if available, otherwise first sentence/line
+      const previewTitle = (post.rawItem?.previewTitle || "").trim();
       const cleanText = post.text
         .replace(/https?:\/\/\S+/g, "")
         .replace(/[#@]\w+/g, "")
         .trim();
-      let title = cleanText.length > 20
-        ? cleanText.slice(0, 80).trim() + (cleanText.length > 80 ? "…" : "")
-        : cleanAuthor;
+      const firstLine = cleanText.split("\n")[0] || cleanText;
+
+      let title = previewTitle && previewTitle.length > 15
+        ? previewTitle
+        : firstLine.length > 20
+          ? firstLine.slice(0, 85).trim() + (firstLine.length > 85 ? "…" : "")
+          : cleanAuthor;
 
       title = title
         .replace(/\s*(?:on|via)\s+facebook\b/gi, "")
