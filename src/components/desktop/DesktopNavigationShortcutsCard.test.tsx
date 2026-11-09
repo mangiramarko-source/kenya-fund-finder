@@ -25,7 +25,7 @@ describe("DesktopNavigationShortcutsCard", () => {
     expect(screen.getByText("SACCO Dividends")).toBeInTheDocument();
     expect(screen.getByText("Financial Calculators")).toBeInTheDocument();
     expect(screen.getByText("Commodities Market")).toBeInTheDocument();
-    expect(screen.getByText("Compare Funds")).toBeInTheDocument();
+    expect(screen.getByText("Compare Assets")).toBeInTheDocument();
     expect(screen.getByText("Learn & Guides")).toBeInTheDocument();
   });
 });

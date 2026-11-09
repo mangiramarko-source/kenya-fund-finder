@@ -64,8 +64,8 @@ export const DesktopNavigationShortcutsCard: React.FC<DesktopNavigationShortcuts
           color: "bg-orange-500/10 text-orange-600 dark:text-orange-400 border-orange-500/20",
         },
         {
-          name: "Compare Funds",
-          subtitle: "Side-by-side MMF comparison",
+          name: "Compare Assets",
+          subtitle: "Side-by-side stocks, funds & FX",
           to: "/compare",
           icon: GitCompareArrows,
           color: "bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 border-indigo-500/20",

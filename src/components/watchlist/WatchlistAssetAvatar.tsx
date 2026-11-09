@@ -3,9 +3,9 @@ import FundLogo from "@/components/home/FundLogo";
 import { getFundManagerLogoUrl } from "@/lib/fundBranding";
 import { getStockLogoUrl, getBundledStockLogoUrl } from "@/lib/stockBranding";
 import { getCurrencyFlagUrl } from "@/lib/currencyBranding";
-import { Coins, Fuel, Sparkles, Coffee, Leaf, Wheat, Gem } from "lucide-react";
+import { Coins, Fuel, Sparkles, Coffee, Leaf, Wheat, Gem, Landmark, Users, PiggyBank } from "lucide-react";
 
-export type WatchlistAssetType = "fund" | "stock" | "currency" | "commodity";
+export type WatchlistAssetType = "fund" | "stock" | "currency" | "commodity" | "savings";
 
 export interface WatchlistAssetAvatarProps {
   type: WatchlistAssetType;
@@ -115,6 +115,39 @@ export default function WatchlistAssetAvatar({
         style={{ width: size, height: size, fontSize: size * 0.38 }}
       >
         {code.slice(0, 2)}
+      </div>
+    );
+  }
+
+  if (type === "savings") {
+    if (logoUrl) {
+      return (
+        <img
+          src={logoUrl}
+          alt={name}
+          width={size}
+          height={size}
+          className={`rounded-full object-contain bg-white dark:bg-card border border-border/60 p-0.5 shrink-0 ${className}`}
+        />
+      );
+    }
+    const isSacco = name.toLowerCase().includes("sacco");
+    const isTreasury = name.toLowerCase().includes("treasury") || name.toLowerCase().includes("t-bill");
+    const SavingsIcon = isTreasury ? Landmark : isSacco ? Users : PiggyBank;
+    const toneClass = isTreasury
+      ? "bg-emerald-100 dark:bg-emerald-950/60 text-emerald-700 dark:text-emerald-400 border-emerald-200/80 dark:border-emerald-800/40"
+      : isSacco
+      ? "bg-purple-100 dark:bg-purple-950/60 text-purple-700 dark:text-purple-400 border-purple-200/80 dark:border-purple-800/40"
+      : "bg-sky-100 dark:bg-sky-950/60 text-sky-700 dark:text-sky-400 border-sky-200/80 dark:border-sky-800/40";
+    const iconSize = Math.max(14, Math.round(size * 0.48));
+
+    return (
+      <div
+        aria-hidden
+        className={`rounded-full flex items-center justify-center border shrink-0 ${toneClass} ${className}`}
+        style={{ width: size, height: size }}
+      >
+        <SavingsIcon style={{ width: iconSize, height: iconSize }} />
       </div>
     );
   }
