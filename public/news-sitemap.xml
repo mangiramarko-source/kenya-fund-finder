@@ -1,6 +1,83 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:news="http://www.google.com/schemas/sitemap-news/0.9">
   <url>
+    <loc>https://kenyafundfinder.com/news/a68bd94d-15a7-4e1e-bd11-92584c7d25fd</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Kenya Fund Finder</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-10T10:06:27.000Z</news:publication_date>
+      <news:title>KRA announces new deadline for filing individual income tax returns</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/3367af3a-6154-4484-98e5-7e3e89307ee1</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Kenya Fund Finder</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-10T09:00:00.000Z</news:publication_date>
+      <news:title>Kenya leads Africa’s sovereign bond issuance with US$3.5B</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/9a0f0bac-b9b5-473f-8093-e37baf7c1d35</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Kenya Fund Finder</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-10T08:58:04.000Z</news:publication_date>
+      <news:title>Obama Foundation opens applications for young Kenyans, shares eligibility requirements</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/1a9b3daf-23fa-4d34-9ec1-a7af53677258</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Kenya Fund Finder</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-10T08:54:53.000Z</news:publication_date>
+      <news:title>Governor Dr. Kamau Thugge: 2023 to Present</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/d7e18286-c40e-44d5-853d-2e578a54f941</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Kenya Fund Finder</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-10T08:52:40.000Z</news:publication_date>
+      <news:title>Why macadamia export window fell short of target</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/1526a5a2-14bb-452a-99a7-fc047316439f</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Kenya Fund Finder</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-10T08:41:27.000Z</news:publication_date>
+      <news:title>Millions spent, no flights: Ruto makes fresh promise on Kisii airport</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/603d487f-0653-4ebd-9fe6-de7b1e117dc2</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Kenya Fund Finder</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-10T08:34:08.000Z</news:publication_date>
+      <news:title>Government seeks stronger cybersecurity coordination as digital threats rise</news:title>
+    </news:news>
+  </url>
+  <url>
     <loc>https://kenyafundfinder.com/news/8b146c1c-673f-4ebc-9421-d4a77828a8b6</loc>
     <news:news>
       <news:publication>
@@ -232,7 +309,7 @@
     </news:news>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/462b4e11-d98b-4f2c-a6f7-a3a0f8aa580c</loc>
+    <loc>https://kenyafundfinder.com/news/ecc4c833-06f1-43a5-863e-76469bab0481</loc>
     <news:news>
       <news:publication>
         <news:name>Kenya Fund Finder</news:name>
@@ -243,7 +320,7 @@
     </news:news>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/ecc4c833-06f1-43a5-863e-76469bab0481</loc>
+    <loc>https://kenyafundfinder.com/news/462b4e11-d98b-4f2c-a6f7-a3a0f8aa580c</loc>
     <news:news>
       <news:publication>
         <news:name>Kenya Fund Finder</news:name>
@@ -430,17 +507,6 @@
     </news:news>
   </url>
   <url>
-    <loc>https://kenyafundfinder.com/news/82824e24-c98f-43c2-bc22-4acd3b5052cb</loc>
-    <news:news>
-      <news:publication>
-        <news:name>Kenya Fund Finder</news:name>
-        <news:language>en</news:language>
-      </news:publication>
-      <news:publication_date>2026-11-09T08:00:29.000Z</news:publication_date>
-      <news:title>Applications are open for Disrupt Launchpad, an app development accelerator that help…</news:title>
-    </news:news>
-  </url>
-  <url>
     <loc>https://kenyafundfinder.com/news/cd48ce8d-2192-400d-9854-59a33e3e0795</loc>
     <news:news>
       <news:publication>
@@ -449,6 +515,17 @@
       </news:publication>
       <news:publication_date>2026-11-09T08:00:29.000Z</news:publication_date>
       <news:title>Applications are open for Disrupt Launchpad, an app development accelerator that…</news:title>
+    </news:news>
+  </url>
+  <url>
+    <loc>https://kenyafundfinder.com/news/82824e24-c98f-43c2-bc22-4acd3b5052cb</loc>
+    <news:news>
+      <news:publication>
+        <news:name>Kenya Fund Finder</news:name>
+        <news:language>en</news:language>
+      </news:publication>
+      <news:publication_date>2026-11-09T08:00:29.000Z</news:publication_date>
+      <news:title>Applications are open for Disrupt Launchpad, an app development accelerator that help…</news:title>
     </news:news>
   </url>
   <url>

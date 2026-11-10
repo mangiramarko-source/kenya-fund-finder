@@ -24,6 +24,8 @@ import { dedupeNewsArticles, interleaveItems } from "@/lib/newsDedupe";
 import { classifyArticleCategory } from "@/lib/articleCategoryClassifier";
 import { calculateRankScore } from "@/lib/feedEngagement";
 import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
+import { newsCache } from "@/lib/newsCache";
+import { stockCache } from "@/lib/stockCache";
 
 const DEFAULT_NEWS_TAB = "All";
 
@@ -72,9 +74,18 @@ export default function NewsPage() {
     getPostInteraction,
     userBookmarks,
   } = useFeedInteractions();
-  const [articles, setArticles] = useState<NewsFromDB[]>([]);
-  const [stocks, setStocks] = useState<any[]>([]);
-  const [loading, setLoading] = useState(true);
+  const [articles, setArticles] = useState<NewsFromDB[]>(() => {
+    const cached = newsCache.loadNews();
+    return cached?.articles || [];
+  });
+  const [stocks, setStocks] = useState<any[]>(() => {
+    const cached = stockCache.loadStocks();
+    return cached?.stocks || [];
+  });
+  const [loading, setLoading] = useState(() => {
+    const cached = newsCache.loadNews();
+    return !(cached?.articles && cached.articles.length > 0);
+  });
   const [activeNavTab, setActiveNavTab] = useState<string>(DEFAULT_NEWS_TAB);
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [offset, setOffset] = useState(0);
@@ -119,6 +130,9 @@ export default function NewsPage() {
         ]);
         const more = newsData.length > 0;
         setArticles(mergedNews);
+        if (mergedNews.length > 0) {
+          newsCache.saveNews(mergedNews);
+        }
         setStocks(resolved);
         setOffset(0);
         setHasMore(more);
@@ -142,10 +156,14 @@ export default function NewsPage() {
         setArticles(current => {
           const incoming = [...latest, ...stockNews];
           const incomingIds = new Set(incoming.map(article => article.id));
-          return dedupeNewsArticles([
+          const updated = dedupeNewsArticles([
             ...incoming,
             ...current.filter(article => !incomingIds.has(article.id)),
           ]);
+          if (updated.length > 0) {
+            newsCache.saveNews(updated);
+          }
+          return updated;
         });
       } catch {
         // Keep the currently rendered feed when a background refresh fails.

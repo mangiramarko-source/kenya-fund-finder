@@ -35,6 +35,8 @@ import { safeUUID } from "@/lib/safeUUID";
 import { fetchPublishedNews, fetchStockLinkedNews, fetchLatestNewsPreview, FUND_TYPE_LABELS, type FundFromDB, type FundType, type NewsFromDB } from "@/lib/api";
 import { dedupeNewsArticles } from "@/lib/newsDedupe";
 import { getNewsPublishedAt } from "@/lib/newsDate";
+import { newsCache } from "@/lib/newsCache";
+import { fundCache } from "@/lib/fundCache";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
@@ -878,10 +880,22 @@ const OverviewPage = () => {
     getPostInteraction
   } = useFeedInteractions();
 
-  const [funds, setFunds] = useState<FundFromDB[]>([]);
-  const [fundsLoading, setFundsLoading] = useState(true);
-  const [news, setNews] = useState<NewsFromDB[]>([]);
-  const [newsLoading, setNewsLoading] = useState(true);
+  const [funds, setFunds] = useState<FundFromDB[]>(() => {
+    const cached = fundCache.loadFunds();
+    return cached?.funds || [];
+  });
+  const [fundsLoading, setFundsLoading] = useState(() => {
+    const cached = fundCache.loadFunds();
+    return !(cached?.funds && cached.funds.length > 0);
+  });
+  const [news, setNews] = useState<NewsFromDB[]>(() => {
+    const cached = newsCache.loadNews();
+    return cached?.articles || [];
+  });
+  const [newsLoading, setNewsLoading] = useState(() => {
+    const cached = newsCache.loadNews();
+    return !(cached?.articles && cached.articles.length > 0);
+  });
   const [newsOffset, setNewsOffset] = useState(0);
   const [newsHasMore, setNewsHasMore] = useState(true);
   const [newsCategoryLoading, setNewsCategoryLoading] = useState(false);
@@ -1035,7 +1049,7 @@ const OverviewPage = () => {
       .order("annual_yield", { ascending: false })
       .limit(200)
       .then(({ data }) => {
-        setFunds(((data as any) || []).map((f: any) => ({
+        const mappedFunds = ((data as any) || []).map((f: any) => ({
           ...f,
           fund_type: (f.fund_type || "money_market") as FundType,
           yield_unit: f.yield_unit || "%",
@@ -1045,16 +1059,36 @@ const OverviewPage = () => {
           thirty_day_yield: Number(f.thirty_day_yield),
           minimum_investment: Number(f.minimum_investment),
           management_fee: Number(f.management_fee),
-        })));
+        }));
+        setFunds(mappedFunds);
+        if (mappedFunds.length > 0) {
+          fundCache.saveFunds(mappedFunds);
+        }
       })
       .then(undefined, () => {})
       .then(() => setFundsLoading(false));
+
+    // Fast path: if cache was empty, check if early preview from index.html is ready
+    if (!newsCache.loadNews()?.articles?.length) {
+      fetchLatestNewsPreview(4)
+        .then((preview) => {
+          if (preview && preview.length > 0) {
+            setNews((current) => (current.length === 0 ? preview : current));
+            setNewsLoading(false);
+          }
+        })
+        .catch(() => {});
+    }
+
     Promise.all([fetchPublishedNews(60, 0), fetchStockLinkedNews(40)])
       .then(([generalNews, stockNews]) => {
         const merged = dedupeNewsArticles([
           ...generalNews,
           ...stockNews.filter((s) => !generalNews.some((g) => g.id === s.id)),
         ]);
+        if (merged.length > 0) {
+          newsCache.saveNews(merged);
+        }
         setNews(merged);
         setNewsOffset(0);
         setNewsHasMore(generalNews.length > 0);
@@ -1081,10 +1115,14 @@ const OverviewPage = () => {
           setNews(current => {
             const incoming = [...latest, ...stockNews];
             const incomingIds = new Set(incoming.map(a => a.id));
-            return dedupeNewsArticles([
+            const updated = dedupeNewsArticles([
               ...incoming,
               ...current.filter(a => !incomingIds.has(a.id)),
             ]);
+            if (updated.length > 0) {
+              newsCache.saveNews(updated);
+            }
+            return updated;
           });
         })
         .catch(() => {});
@@ -1423,31 +1461,41 @@ const OverviewPage = () => {
                 ))
               )
             ) : activeUpdateCategory === "All" ? (
-              displayFeedItems.map((item, index) => item.relatedStock ? (
-                <StockFeedCard
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  onSelect={setSelectedFeedItem}
-                  interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
-                  onLikeToggle={toggleLike}
-                  onUpvoteToggle={toggleUpvote}
-                  onBookmarkToggle={toggleBookmark}
-                  onRecordView={recordView}
-                />
+              displayFeedItems.length === 0 ? (
+                newsLoading || newsCategoryLoading ? (
+                  <SocialFeed items={[]} loading />
+                ) : (
+                  <div className="rounded-2xl border border-dashed border-border py-16 text-center text-sm text-muted-foreground">
+                    No market news is available right now.
+                  </div>
+                )
               ) : (
-                <SocialFeedCard
-                  key={item.id}
-                  item={item}
-                  index={index}
-                  onSelect={setSelectedFeedItem}
-                  interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
-                  onLikeToggle={toggleLike}
-                  onUpvoteToggle={toggleUpvote}
-                  onBookmarkToggle={toggleBookmark}
-                  onRecordView={recordView}
-                />
-              ))
+                displayFeedItems.map((item, index) => item.relatedStock ? (
+                  <StockFeedCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onSelect={setSelectedFeedItem}
+                    interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
+                    onLikeToggle={toggleLike}
+                    onUpvoteToggle={toggleUpvote}
+                    onBookmarkToggle={toggleBookmark}
+                    onRecordView={recordView}
+                  />
+                ) : (
+                  <SocialFeedCard
+                    key={item.id}
+                    item={item}
+                    index={index}
+                    onSelect={setSelectedFeedItem}
+                    interaction={getPostInteraction(item.id, item.likes || 0, item.timestamp)}
+                    onLikeToggle={toggleLike}
+                    onUpvoteToggle={toggleUpvote}
+                    onBookmarkToggle={toggleBookmark}
+                    onRecordView={recordView}
+                  />
+                ))
+              )
             ) : (
               <SocialFeed items={displayFeedItems} loading={newsLoading || newsCategoryLoading} />
             )}
