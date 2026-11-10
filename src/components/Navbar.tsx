@@ -232,11 +232,12 @@ const Navbar = () => {
     };
   }, []);
 
-  const isNewsPage = location.pathname === "/news" || location.pathname === "/news/";
+  const cleanPath = location.pathname.length > 1 && location.pathname.endsWith("/") ? location.pathname.slice(0, -1) : location.pathname;
+  const isFeedPage = cleanPath === "" || cleanPath === "/" || cleanPath === "/overview" || cleanPath === "/news";
   const [newsScrolledPast, setNewsScrolledPast] = useState(false);
 
   useEffect(() => {
-    if (!isNewsPage) {
+    if (!isFeedPage) {
       setNewsScrolledPast(false);
       return;
     }
@@ -249,7 +250,9 @@ const Navbar = () => {
       const target = document.getElementById("market-news-header");
       if (target) {
         const rect = target.getBoundingClientRect();
-        const isPast = rect.bottom <= 56;
+        const headerBottom = headerRef.current ? headerRef.current.getBoundingClientRect().bottom : 56;
+        const threshold = headerBottom > 0 ? headerBottom : 56;
+        const isPast = rect.bottom <= threshold;
         setNewsScrolledPast((prev) => (prev !== isPast ? isPast : prev));
       }
     };
@@ -257,6 +260,7 @@ const Navbar = () => {
     // Passive scroll listener: 100% reliable in all browser engines and inside iframes
     window.addEventListener("scroll", checkHeaderPosition, { passive: true });
     checkHeaderPosition();
+    const rafId = requestAnimationFrame(checkHeaderPosition);
 
     // Also observe with IntersectionObserver if supported
     const target = document.getElementById("market-news-header");
@@ -264,7 +268,9 @@ const Navbar = () => {
       try {
         observer = new IntersectionObserver(
           ([entry]) => {
-            const isPast = !entry.isIntersecting && entry.boundingClientRect.bottom <= 56;
+            const headerBottom = headerRef.current ? headerRef.current.getBoundingClientRect().bottom : 56;
+            const threshold = headerBottom > 0 ? headerBottom : 56;
+            const isPast = !entry.isIntersecting && entry.boundingClientRect.bottom <= threshold;
             setNewsScrolledPast((prev) => (prev !== isPast ? isPast : prev));
           },
           {
@@ -279,10 +285,11 @@ const Navbar = () => {
     }
 
     return () => {
+      cancelAnimationFrame(rafId);
       window.removeEventListener("scroll", checkHeaderPosition);
       observer?.disconnect();
     };
-  }, [isNewsPage, location.pathname]);
+  }, [isFeedPage, location.pathname]);
 
   const hasCustomDetailHeader =
     /^\/stocks\/[^/]+/.test(location.pathname) ||
@@ -299,7 +306,7 @@ const Navbar = () => {
         <header
           ref={headerRef}
           className={`fixed inset-x-0 top-0 z-50 bg-background/95 backdrop-blur-md pt-safe transition-colors ${
-            isNewsPage && newsScrolledPast ? "border-b-0" : "border-b border-border/50"
+            isFeedPage && newsScrolledPast ? "border-b-0" : "border-b border-border/50"
           }`}
         >
           <nav className="flex h-14 items-center px-3">
@@ -332,8 +339,8 @@ const Navbar = () => {
               </div>
             ) : (
               <div className="flex h-full w-full items-center justify-between">
-                {/* 1. Far left: Brand mascot logo OR Market News title when scrolled on /news */}
-                {isNewsPage && newsScrolledPast ? (
+                {/* 1. Far left: Brand mascot logo OR Market News title when scrolled on feed pages */}
+                {isFeedPage && newsScrolledPast ? (
                   <button
                     type="button"
                     onClick={(e) => {

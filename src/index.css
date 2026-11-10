@@ -43,6 +43,14 @@
   .top-safe-nav {
     top: calc(3.5rem + env(safe-area-inset-top, 0px));
   }
+  .top-safe-sticky-tabs {
+    top: calc(var(--kf-mobile-header, calc(3.5rem + env(safe-area-inset-top, 0px))) - 3px);
+  }
+  @media (min-width: 768px) {
+    .top-safe-sticky-tabs {
+      top: 0px;
+    }
+  }
   .h-safe-nav {
     height: calc(3.5rem + env(safe-area-inset-top, 0px));
   }

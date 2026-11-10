@@ -151,66 +151,69 @@ describe("Mobile & Desktop Navigation Verification", () => {
     expect(screen.queryByText("MA")).not.toBeInTheDocument();
   });
 
-  it("handles mobile /news logo-to-Market News swap and tap-to-top scroll", () => {
-    // 1. Initial render at top of /news renders KFF logo
-    const headerEl = document.createElement("div");
-    headerEl.id = "market-news-header";
-    // Mock getBoundingClientRect to indicate header is below navbar (not scrolled past)
-    headerEl.getBoundingClientRect = vi.fn(() => ({
-      top: 150,
-      bottom: 200,
-      left: 0,
-      right: 390,
-      width: 390,
-      height: 50,
-      x: 0,
-      y: 150,
-      toJSON: () => {},
-    }));
-    document.body.appendChild(headerEl);
+  it.each(["/news", "/"] as const)(
+    "handles mobile %s logo-to-Market News swap and tap-to-top scroll",
+    (route) => {
+      // 1. Initial render at top of route renders KFF logo
+      const headerEl = document.createElement("div");
+      headerEl.id = "market-news-header";
+      // Mock getBoundingClientRect to indicate header is below navbar (not scrolled past)
+      headerEl.getBoundingClientRect = vi.fn(() => ({
+        top: 150,
+        bottom: 200,
+        left: 0,
+        right: 390,
+        width: 390,
+        height: 50,
+        x: 0,
+        y: 150,
+        toJSON: () => {},
+      }));
+      document.body.appendChild(headerEl);
 
-    const { unmount } = render(
-      <MemoryRouter initialEntries={["/news"]}>
-        <Navbar />
-      </MemoryRouter>
-    );
+      const { unmount } = render(
+        <MemoryRouter initialEntries={[route]}>
+          <Navbar />
+        </MemoryRouter>
+      );
 
-    expect(screen.getByRole("link", { name: /KenyaFundFinder Home|KFF/i })).toBeInTheDocument();
-    expect(screen.queryByRole("button", { name: "Scroll to top of Market News" })).not.toBeInTheDocument();
-    unmount();
+      expect(screen.getByRole("link", { name: /KenyaFundFinder Home|KFF/i })).toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Scroll to top of Market News" })).not.toBeInTheDocument();
+      unmount();
 
-    // 2. When scrolled past Market News (bottom <= 56)
-    headerEl.getBoundingClientRect = vi.fn(() => ({
-      top: -20,
-      bottom: 30, // <= 56, header has scrolled past mobile navbar
-      left: 0,
-      right: 390,
-      width: 390,
-      height: 50,
-      x: 0,
-      y: -20,
-      toJSON: () => {},
-    }));
+      // 2. When scrolled past Market News (bottom <= 56)
+      headerEl.getBoundingClientRect = vi.fn(() => ({
+        top: -20,
+        bottom: 30, // <= 56, header has scrolled past mobile navbar
+        left: 0,
+        right: 390,
+        width: 390,
+        height: 50,
+        x: 0,
+        y: -20,
+        toJSON: () => {},
+      }));
 
-    const scrollToSpy = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
+      const scrollToSpy = vi.spyOn(window, "scrollTo").mockImplementation(() => {});
 
-    render(
-      <MemoryRouter initialEntries={["/news"]}>
-        <Navbar />
-      </MemoryRouter>
-    );
+      render(
+        <MemoryRouter initialEntries={[route]}>
+          <Navbar />
+        </MemoryRouter>
+      );
 
-    // Should now show Market News button instead of logo
-    const newsButton = screen.getByRole("button", { name: "Scroll to top of Market News" });
-    expect(newsButton).toBeInTheDocument();
-    expect(within(newsButton).getByText("Market News")).toBeInTheDocument();
-    expect(screen.queryByRole("link", { name: /KenyaFundFinder Home|KFF/i })).not.toBeInTheDocument();
+      // Should now show Market News button instead of logo
+      const newsButton = screen.getByRole("button", { name: "Scroll to top of Market News" });
+      expect(newsButton).toBeInTheDocument();
+      expect(within(newsButton).getByText("Market News")).toBeInTheDocument();
+      expect(screen.queryByRole("link", { name: /KenyaFundFinder Home|KFF/i })).not.toBeInTheDocument();
 
-    // Tapping Market News scrolls to top
-    fireEvent.click(newsButton);
-    expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
+      // Tapping Market News scrolls to top
+      fireEvent.click(newsButton);
+      expect(scrollToSpy).toHaveBeenCalledWith({ top: 0, behavior: "smooth" });
 
-    scrollToSpy.mockRestore();
-    headerEl.remove();
-  });
+      scrollToSpy.mockRestore();
+      headerEl.remove();
+    }
+  );
 });

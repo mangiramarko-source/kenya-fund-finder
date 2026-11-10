@@ -34,18 +34,21 @@ describe("Layout ticker placement", () => {
     }
   );
 
-  it("renders ticker in natural flow on mobile /news and hides the mobile spacer", () => {
-    renderLayout("/news");
-    const ticker = screen.getByTestId("currency-ticker");
-    const tickerContainer = ticker.parentElement;
-    expect(tickerContainer).toHaveClass("relative");
-    expect(tickerContainer).toHaveClass("md:fixed");
+  it.each(["/news", "/"] as const)(
+    "renders ticker in natural flow on mobile %s and hides the mobile spacer",
+    (path) => {
+      renderLayout(path);
+      const ticker = screen.getByTestId("currency-ticker");
+      const tickerContainer = ticker.parentElement;
+      expect(tickerContainer).toHaveClass("relative");
+      expect(tickerContainer).toHaveClass("md:fixed");
 
-    // The h-9 spacer should be hidden on mobile for /news
-    const spacer = tickerContainer?.nextElementSibling;
-    expect(spacer).toHaveClass("hidden");
-    expect(spacer).toHaveClass("md:block");
-  });
+      // The h-9 spacer should be hidden on mobile for feed pages
+      const spacer = tickerContainer?.nextElementSibling;
+      expect(spacer).toHaveClass("hidden");
+      expect(spacer).toHaveClass("md:block");
+    }
+  );
 
   it("renders fixed ticker on other routes like /stocks", () => {
     renderLayout("/stocks");

@@ -1342,32 +1342,41 @@ const OverviewPage = () => {
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 
-          <div className="border-b border-border/60 bg-background px-4 pt-2 pb-1 -mx-4 md:mx-0 md:px-2 md:pt-1 md:shadow-sm md:sticky md:top-0 md:z-30 md:bg-background/95 md:backdrop-blur-md">
-            <div className="mb-4 flex items-baseline justify-between mt-0">
-              <h2 className="text-xl font-semibold tracking-tight">Market News</h2>
+          {/* Header */}
+          <div className="mb-3.5 mt-0 px-4 md:px-0" id="market-news-header">
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-xl sm:text-2xl font-semibold tracking-tight text-foreground">Market News</h2>
               <span className="text-xs font-semibold text-emerald-600 dark:text-emerald-400">
-                {newTodayCount} new today
+                {newTodayCount > 0 ? `${newTodayCount} new today` : ""}
               </span>
             </div>
+          </div>
 
-            <div className="no-scrollbar mb-2 flex w-full min-w-0 max-w-full gap-2 overflow-x-auto overscroll-x-contain pb-1 md:mb-3">
-              {["All", "Stocks", "Kenyan", "International", FUNDS_AND_FIXED_INCOME_TAB, "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => (
+          {/* Category Filter Pills */}
+          <div
+            className="no-scrollbar mb-4 flex min-w-0 gap-2 overflow-x-auto overscroll-x-contain sticky z-30 -mx-4 px-4 py-2.5 bg-background/95 backdrop-blur-md border-b border-border/40 top-safe-sticky-tabs md:sticky md:top-0 md:z-30 md:w-full md:max-w-full md:mx-0 md:px-2 md:py-1 md:shadow-sm md:bg-background/95 md:backdrop-blur-md md:border-b md:border-border/60 pb-1 md:mb-3"
+          >
+            {["All", "Stocks", "Kenyan", "International", FUNDS_AND_FIXED_INCOME_TAB, "FX Rates", "Commodities", "Latest", "Oldest"].map((f) => {
+              const isActive = activeUpdateCategory === f;
+              return (
                 <button
                   key={f}
-                  onClick={() => {
+                  type="button"
+                  onClick={(e) => {
                     setActiveUpdateCategory(f);
                     triggerFillForCategory(f, news, newsOffset, newsHasMore, stocks);
+                    e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
                   }}
-                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
-                    activeUpdateCategory === f
-                      ? "bg-foreground text-background"
-                      : "border border-border/80 bg-background text-zinc-800 dark:text-muted-foreground hover:bg-muted/50"
+                  className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors shrink-0 ${
+                    isActive
+                      ? "bg-foreground text-background shadow-xs font-semibold"
+                      : "border border-border/80 bg-background text-zinc-800 dark:text-muted-foreground hover:bg-muted/50 hover:text-foreground"
                   }`}
                 >
                   {f}
                 </button>
-              ))}
-            </div>
+              );
+            })}
           </div>
 
           <div className="space-y-0 md:space-y-4 md:pt-4">
