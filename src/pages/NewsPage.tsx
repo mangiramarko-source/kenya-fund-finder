@@ -1,5 +1,5 @@
-import { Fragment, useState, useEffect, useMemo } from "react";
-import { Link } from "react-router-dom";
+import { Fragment, useState, useEffect, useMemo, useRef, useCallback } from "react";
+import { Link, useLocation, useNavigationType } from "react-router-dom";
 import { decodeHtmlEntities } from "@/lib/utils";
 import { fetchPublishedNews, fetchStockLinkedNews, fetchPublicStocks, type NewsFromDB } from "@/lib/api";
 import { findMentionedStock } from "@/lib/stockNewsFeed";
@@ -26,6 +26,7 @@ import { calculateRankScore } from "@/lib/feedEngagement";
 import OverviewPortfolioWidget from "@/components/portfolio/OverviewPortfolioWidget";
 import { newsCache } from "@/lib/newsCache";
 import { stockCache } from "@/lib/stockCache";
+import { feedNavigationState } from "@/lib/feedNavigationState";
 
 const DEFAULT_NEWS_TAB = "All";
 
@@ -86,7 +87,50 @@ export default function NewsPage() {
     const cached = newsCache.loadNews();
     return !(cached?.articles && cached.articles.length > 0);
   });
-  const [activeNavTab, setActiveNavTab] = useState<string>(DEFAULT_NEWS_TAB);
+  const location = useLocation();
+  const navType = useNavigationType();
+
+  const [activeNavTab, setActiveNavTab] = useState<string>(() => {
+    if (navType === "POP" && typeof window !== "undefined") {
+      const saved = feedNavigationState.getState(window.location.pathname);
+      if (saved?.activeCategory) return saved.activeCategory;
+    }
+    return DEFAULT_NEWS_TAB;
+  });
+  const activeNavTabRef = useRef(activeNavTab);
+  useEffect(() => {
+    activeNavTabRef.current = activeNavTab;
+  }, [activeNavTab]);
+
+  // Persist scroll position and category on route exit and page hide
+  useEffect(() => {
+    const saveState = () => {
+      feedNavigationState.saveState(location.pathname, {
+        scrollY: window.scrollY,
+        activeCategory: activeNavTabRef.current,
+      });
+    };
+
+    window.addEventListener("pagehide", saveState);
+    return () => {
+      saveState();
+      window.removeEventListener("pagehide", saveState);
+    };
+  }, [location.pathname]);
+
+  const scrollToFeedTop = useCallback(() => {
+    const headerEl = document.getElementById("market-news-header");
+    if (headerEl) {
+      const rect = headerEl.getBoundingClientRect();
+      const targetScrollY = Math.max(0, window.scrollY + rect.bottom - 56);
+      if (window.scrollY > targetScrollY) {
+        window.scrollTo({ top: targetScrollY, behavior: "instant" });
+      }
+    } else if (window.scrollY > 0) {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, []);
+
   const [selectedFeedItem, setSelectedFeedItem] = useState<FeedItem | null>(null);
   const [offset, setOffset] = useState(0);
   const [hasMore, setHasMore] = useState(true);
@@ -104,7 +148,9 @@ export default function NewsPage() {
       tab === "Stocks" ? Boolean(findMentionedStock(a, currentStocks)) : matchesNewsTab(tab, a, currentStocks)
     );
     if (matching.length >= 15 || !currentHasMore) return;
-    setLoadingMore(true);
+    if (matching.length === 0) {
+      setLoadingMore(true);
+    }
     try {
       const result = await fillTab(tab, currentArticles, currentOffset, currentHasMore, currentStocks);
       setArticles(result.articles);
@@ -190,7 +236,7 @@ export default function NewsPage() {
     let accumulated = [...existingArticles];
     let currentOffset = startOffset;
     let hasMoreRemote = currentHasMore;
-    const MAX_BATCHES = 10; // safety cap — never fetch more than 600 extra articles
+    const MAX_BATCHES = 2; // Fast cap to avoid lag/lockups
     let batches = 0;
 
     while (hasMoreRemote && batches < MAX_BATCHES) {
@@ -369,6 +415,31 @@ export default function NewsPage() {
     }
   }, [newTodayCount]);
 
+  // Restore scroll position on back navigation
+  const hasRestoredScrollRef = useRef(false);
+  useEffect(() => {
+    if (navType !== "POP" || hasRestoredScrollRef.current) return;
+    const saved = feedNavigationState.getState(location.pathname);
+    if (!saved) return;
+
+    if (saved.activeCategory && saved.activeCategory !== activeNavTabRef.current) {
+      setActiveNavTab(saved.activeCategory);
+    }
+
+    const restoreScroll = () => {
+      if (saved.scrollY > 0) {
+        window.scrollTo({ top: saved.scrollY, behavior: "instant" });
+      }
+    };
+
+    if (feedItems.length > 0) {
+      hasRestoredScrollRef.current = true;
+      restoreScroll();
+      requestAnimationFrame(restoreScroll);
+      setTimeout(restoreScroll, 50);
+    }
+  }, [navType, location.pathname, feedItems.length]);
+
   return (
     <div className="max-w-4xl mx-auto px-4 md:px-6 py-4 md:py-6 min-h-screen">
       {/* User Portfolio Cards */}
@@ -425,12 +496,15 @@ export default function NewsPage() {
               key={f}
               onClick={(e) => {
                 setActiveNavTab(f);
-                triggerFillForTab(f, articles, offset, hasMore, stocks);
+                scrollToFeedTop();
                 e.currentTarget.scrollIntoView({
                   behavior: "smooth",
                   inline: "center",
                   block: "nearest",
                 });
+                setTimeout(() => {
+                  triggerFillForTab(f, articles, offset, hasMore, stocks);
+                }, 0);
               }}
               className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors ${
                 isActive

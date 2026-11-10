@@ -1,7 +1,7 @@
 import { useEffect, useState, useMemo, useCallback, useRef } from "react";
 import { cn, decodeHtmlEntities, isKenyanMarketOpen } from "@/lib/utils";
 import Sparkline from "@/components/Sparkline";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, useNavigate, useLocation, useNavigationType } from "react-router-dom";
 import { useDocumentTitle, useJsonLd } from "@/hooks/useDocumentTitle";
 import { useAuth } from "@/hooks/useAuth";
 import { useMarketData, type ExchangeRate, type Commodity, type Stock } from "@/components/home/MarketTicker";
@@ -37,6 +37,7 @@ import { dedupeNewsArticles } from "@/lib/newsDedupe";
 import { getNewsPublishedAt } from "@/lib/newsDate";
 import { newsCache } from "@/lib/newsCache";
 import { fundCache } from "@/lib/fundCache";
+import { feedNavigationState } from "@/lib/feedNavigationState";
 import CurrencyTicker from "@/components/CurrencyTicker";
 import SectionLiveStatus from "@/components/SectionLiveStatus";
 import { getNewsImage, handleNewsImageError } from "@/lib/news-images";
@@ -50,7 +51,7 @@ import { StockFeedCard } from "@/components/feed/StockFeedCard";
 import { FeedItemDetailModal } from "@/components/feed/FeedItemDetailModal";
 import { useFeedInteractions } from "@/hooks/useFeedInteractions";
 import { buildNewsFeedItems, findMentionedStock } from "@/lib/stockNewsFeed";
-import { matchesNewsTab } from "@/lib/newsTabMatching";
+import { matchesNewsTab, INTERNATIONAL_SOURCE_PATTERN, categoryIs } from "@/lib/newsTabMatching";
 import { getCurrencyFlag } from "@/lib/currencyFlags";
 import InlineDataGate from "@/components/auth/InlineDataGate";
 import { isBotOrPrerender } from "@/hooks/useSoftWallTrigger";
@@ -77,9 +78,14 @@ const INTERNATIONAL_SOURCES = new Set([
 ]);
 
 const isInternationalFeedItem = (item: any): boolean => {
-  const src = item.authorName || item.rawItem?.source || "";
-  const cat = item.authorLabel || item.rawItem?.category || "";
-  return INTERNATIONAL_SOURCES.has(src) || cat.toLowerCase().includes("international");
+  const src = item.source || item.authorName || item.rawItem?.source || "";
+  const cat = item.category || item.authorLabel || item.rawItem?.category || "";
+  return (
+    INTERNATIONAL_SOURCES.has(src) ||
+    INTERNATIONAL_SOURCE_PATTERN.test(src) ||
+    categoryIs({ category: cat }, "international", "global", "world") ||
+    cat.toLowerCase().includes("international")
+  );
 };
 /* ─── Types ─── */
 interface WatchlistItem { id: string; user_id: string; item_type: string; item_id: string; item_name: string; sort_order: number; }
@@ -867,6 +873,8 @@ const OverviewPage = () => {
     inLanguage: "en-KE"
   });
   const navigate = useNavigate();
+  const location = useLocation();
+  const navType = useNavigationType();
   const { user, loading: authLoading } = useAuth();
   const isGated = !authLoading && !user && !isBotOrPrerender();
   const { rates, commodities, stocks, loading: marketLoading } = useMarketData();
@@ -960,7 +968,7 @@ const OverviewPage = () => {
     let accumulated = [...existingArticles];
     let currentOffset = startOffset;
     let hasMoreRemote = currentHasMore;
-    const MAX_BATCHES = 10;
+    const MAX_BATCHES = 2; // Fast cap to avoid lag/lockups
     let batches = 0;
 
     while (hasMoreRemote && batches < MAX_BATCHES) {
@@ -998,7 +1006,9 @@ const OverviewPage = () => {
     const matching = currentArticles.filter(a => tabMatchesArticle(category, a, stocksList));
     if (matching.length >= 15 || !currentHasMore) return;
     fillInProgressRef.current = true;
-    setNewsCategoryLoading(true);
+    if (matching.length === 0) {
+      setNewsCategoryLoading(true);
+    }
     try {
       const result = await fillCategoryNews(category, currentArticles, currentOffset, currentHasMore, stocksList);
       setNews(result.articles);
@@ -1304,7 +1314,53 @@ const OverviewPage = () => {
   const displayName = profileName || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "there";
   const greeting = new Date().getHours() < 12 ? "Good morning" : new Date().getHours() < 17 ? "Good afternoon" : "Good evening";
 
-  const [activeUpdateCategory, setActiveUpdateCategory] = useState("All");
+  const [activeUpdateCategory, setActiveUpdateCategory] = useState<string>(() => {
+    if (navType === "POP" && typeof window !== "undefined") {
+      const saved = feedNavigationState.getState(window.location.pathname);
+      if (saved?.activeCategory) return saved.activeCategory;
+    }
+    return "All";
+  });
+  const activeCategoryRef = useRef(activeUpdateCategory);
+  useEffect(() => {
+    activeCategoryRef.current = activeUpdateCategory;
+  }, [activeUpdateCategory]);
+
+  // Persist scroll position and category on route exit and page hide
+  useEffect(() => {
+    const saveState = () => {
+      const middleCol = document.getElementById("overview-middle-feed-column");
+      feedNavigationState.saveState(location.pathname, {
+        scrollY: window.scrollY,
+        activeCategory: activeCategoryRef.current,
+        middleColumnScrollY: middleCol ? middleCol.scrollTop : 0,
+      });
+    };
+
+    window.addEventListener("pagehide", saveState);
+    return () => {
+      saveState();
+      window.removeEventListener("pagehide", saveState);
+    };
+  }, [location.pathname]);
+
+  const scrollToFeedTop = useCallback(() => {
+    const headerEl = document.getElementById("market-news-header");
+    if (headerEl) {
+      const rect = headerEl.getBoundingClientRect();
+      const targetScrollY = Math.max(0, window.scrollY + rect.bottom - 56);
+      if (window.scrollY > targetScrollY) {
+        window.scrollTo({ top: targetScrollY, behavior: "instant" });
+      }
+    } else if (window.scrollY > 0) {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+
+    const middleCol = document.getElementById("overview-middle-feed-column");
+    if (middleCol && middleCol.scrollTop > 0) {
+      middleCol.scrollTo({ top: 0, behavior: "instant" });
+    }
+  }, []);
 
   const sortedStocks = useMemo(() => {
     if (!stocks) return [];
@@ -1371,6 +1427,37 @@ const OverviewPage = () => {
     }
   }, [newTodayCount]);
 
+  // Restore scroll position on back navigation
+  const hasRestoredScrollRef = useRef(false);
+  useEffect(() => {
+    if (navType !== "POP" || hasRestoredScrollRef.current) return;
+    const saved = feedNavigationState.getState(location.pathname);
+    if (!saved) return;
+
+    if (saved.activeCategory && saved.activeCategory !== activeCategoryRef.current) {
+      setActiveUpdateCategory(saved.activeCategory);
+    }
+
+    const restoreScroll = () => {
+      if (saved.scrollY > 0) {
+        window.scrollTo({ top: saved.scrollY, behavior: "instant" });
+      }
+      if (saved.middleColumnScrollY && saved.middleColumnScrollY > 0) {
+        const middleCol = document.getElementById("overview-middle-feed-column");
+        if (middleCol) {
+          middleCol.scrollTo({ top: saved.middleColumnScrollY, behavior: "instant" });
+        }
+      }
+    };
+
+    if (filteredFeedItems.length > 0) {
+      hasRestoredScrollRef.current = true;
+      restoreScroll();
+      requestAnimationFrame(restoreScroll);
+      setTimeout(restoreScroll, 50);
+    }
+  }, [navType, location.pathname, filteredFeedItems.length]);
+
   return (
     <>
       <main className="w-full min-w-0 max-w-7xl mx-auto px-4 py-6 md:grid md:h-[calc(100dvh-5.75rem)] md:grid-cols-[260px_minmax(0,1fr)] md:gap-6 md:overflow-hidden md:px-6 lg:grid-cols-[240px_minmax(0,1fr)_260px] lg:gap-6 xl:grid-cols-[280px_600px_320px] xl:justify-center">
@@ -1382,7 +1469,7 @@ const OverviewPage = () => {
         </div>
 
         {/* Middle Column - Feed (Twitter-style 600px reading width) */}
-        <div className="flex w-full min-w-0 max-w-full flex-col overflow-visible md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:max-w-[600px] md:mx-auto">
+        <div id="overview-middle-feed-column" className="flex w-full min-w-0 max-w-full flex-col overflow-visible md:min-h-0 md:overflow-x-hidden md:overflow-y-auto md:max-w-[600px] md:mx-auto">
           {/* Portfolio widget (Mobile & Desktop) */}
           <OverviewPortfolioWidget />
 
@@ -1408,8 +1495,11 @@ const OverviewPage = () => {
                   type="button"
                   onClick={(e) => {
                     setActiveUpdateCategory(f);
-                    triggerFillForCategory(f, news, newsOffset, newsHasMore, stocks);
+                    scrollToFeedTop();
                     e.currentTarget.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+                    setTimeout(() => {
+                      triggerFillForCategory(f, news, newsOffset, newsHasMore, stocks);
+                    }, 0);
                   }}
                   className={`whitespace-nowrap rounded-full px-4 py-1.5 text-xs font-medium transition-colors shrink-0 ${
                     isActive

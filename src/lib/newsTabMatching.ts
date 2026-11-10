@@ -18,8 +18,15 @@ const articleText = (article: NewsFromDB) => [
 export const categoryIs = (article: { category?: string | null }, ...values: string[]) =>
   values.includes((article.category || "").trim().toLowerCase());
 
-export const isInternationalNews = (article: { category?: string | null; source?: string | null }) =>
-  categoryIs(article, "international", "global", "world") || INTERNATIONAL_SOURCE_PATTERN.test(article.source || "");
+export const isInternationalNews = (article: { category?: string | null; source?: string | null; authorName?: string | null; authorLabel?: string | null }) => {
+  const src = article.source || article.authorName || "";
+  const cat = article.category || article.authorLabel || "";
+  return (
+    categoryIs({ category: cat }, "international", "global", "world") ||
+    INTERNATIONAL_SOURCE_PATTERN.test(src) ||
+    cat.toLowerCase().includes("international")
+  );
+};
 
 export function matchesNewsTab(tab: string, article: NewsFromDB, stocks: StockReference[]): boolean {
   if (["All", "Latest", "Oldest", "Top Ranked", "Saved"].includes(tab)) return true;
