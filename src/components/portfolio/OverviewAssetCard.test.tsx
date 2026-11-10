@@ -95,4 +95,33 @@ describe("OverviewAssetCard", () => {
     render(<OverviewAssetCard {...props} />);
     expect(screen.getByTestId("custom-visual")).toBeInTheDocument();
   });
+
+  it("renders an MMF holding card with Daily Interest cleanly without /day suffix", () => {
+    const props: OverviewAssetCardProps = {
+      type: "holding",
+      title: "CIC Money Market Fund",
+      subtitle: "CIC MMF",
+      categoryLabel: "MMF",
+      badgeLabel: "HOLDING",
+      badgeTone: "emerald",
+      primaryValue: "KES 40,000",
+      secondaryValue: "40,000 units · 14.50% p.a.",
+      statLabel: "Daily Interest",
+      oneDay: {
+        available: true,
+        percent: 14.5,
+        amount: 306.49,
+        unit: "KES",
+      },
+      assetType: "mmf",
+    };
+
+    render(<OverviewAssetCard {...props} />);
+
+    expect(screen.getByText("CIC Money Market Fund")).toBeInTheDocument();
+    expect(screen.getByText("Daily Interest")).toBeInTheDocument();
+    expect(screen.getByText("+14.50%")).toBeInTheDocument();
+    expect(screen.getByText("(KES 306.49)")).toBeInTheDocument();
+    expect(screen.queryByText("/day")).not.toBeInTheDocument();
+  });
 });

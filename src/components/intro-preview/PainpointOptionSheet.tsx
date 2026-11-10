@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Link } from "react-router-dom";
 import {
   TrendingUp,
@@ -66,7 +66,12 @@ const STEPS = [
 
 export default function PainpointOptionSheet({ onComplete, onDismiss }: PainpointOptionSheetProps) {
   const [currentStepIndex, setCurrentStepIndex] = useState(0);
+  const contentRef = useRef<HTMLDivElement>(null);
   const currentStep = STEPS[currentStepIndex];
+
+  useEffect(() => {
+    contentRef.current?.scrollTo({ top: 0, behavior: "smooth" });
+  }, [currentStepIndex]);
 
   const handleNext = () => {
     if (currentStepIndex < STEPS.length - 1) {
@@ -77,150 +82,161 @@ export default function PainpointOptionSheet({ onComplete, onDismiss }: Painpoin
   };
 
   return (
-    <div className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-border/80 md:border-border/60 bg-card text-foreground p-4 sm:p-5 md:p-6 shadow-2xl backdrop-blur-md">
-      {/* Drawer drag handle visual (Mobile Only) */}
-      <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-3 md:hidden" />
+    <div className="relative overflow-hidden rounded-2xl md:rounded-3xl border border-border/80 md:border-border/60 bg-card text-foreground shadow-2xl backdrop-blur-md flex flex-col max-h-[88dvh] sm:max-h-[85dvh]">
+      {/* Top Header (Pinned at top of sheet) */}
+      <div className="shrink-0 px-4 pt-3 pb-2 sm:px-5 sm:pt-4 md:px-6 md:pt-4 relative z-10 border-b border-border/40 sm:border-b-0">
+        {/* Drawer drag handle visual (Mobile Only) */}
+        <div className="w-10 h-1 bg-muted-foreground/30 rounded-full mx-auto mb-2.5 md:hidden" />
 
-      {/* Top Header */}
-      <div className="flex items-center justify-between gap-2 mb-2.5 relative z-10">
-        <Badge
-          variant="outline"
-          className={`text-xs font-bold py-0.5 px-2.5 ${currentStep.badgeClass}`}
-        >
-          {currentStep.badge}
-        </Badge>
+        <div className="flex items-center justify-between gap-2 relative z-10">
+          <Badge
+            variant="outline"
+            className={`text-xs font-bold py-0.5 px-2.5 ${currentStep.badgeClass}`}
+          >
+            {currentStep.badge}
+          </Badge>
 
-        <div className="flex items-center gap-2">
-          <span className="text-xs text-muted-foreground font-medium">
-            {currentStepIndex + 1} of {STEPS.length}
-          </span>
-          {onDismiss && (
-            <button
-              onClick={onDismiss}
-              className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted/50 transition-colors"
-              title="Close"
-              aria-label="Close"
-            >
-              <X className="h-4 w-4" />
-            </button>
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-muted-foreground font-medium">
+              {currentStepIndex + 1} of {STEPS.length}
+            </span>
+            {onDismiss && (
+              <button
+                onClick={onDismiss}
+                className="text-muted-foreground hover:text-foreground p-1 rounded-md hover:bg-muted/50 transition-colors"
+                title="Close"
+                aria-label="Close"
+              >
+                <X className="h-4 w-4" />
+              </button>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Scrollable Content Body — user reads content here without moving bottom nav */}
+      <div
+        ref={contentRef}
+        className="flex-1 min-h-0 overflow-y-auto overscroll-contain px-4 py-2 sm:px-5 md:px-6 space-y-2.5"
+      >
+        {/* WIDESCREEN 16:9 PHOTO CONTAINER (Edge-to-Edge Full Width Across All Devices) */}
+        <div className="relative w-full min-w-full aspect-[16/9] rounded-2xl overflow-hidden border border-border/70 bg-zinc-950 flex items-center justify-center shadow-inner shrink-0">
+          <img
+            src={currentStep.image}
+            alt=""
+            aria-hidden="true"
+            className="absolute inset-0 w-full h-full object-cover filter blur-xl opacity-20 scale-105 pointer-events-none"
+          />
+          <img
+            src={currentStep.image}
+            alt={currentStep.imageAlt}
+            className="relative z-10 w-full h-full object-cover object-center rounded-xl shadow-md transition-all duration-300"
+            loading="eager"
+          />
+          <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card/90 via-card/25 to-transparent z-15 pointer-events-none" />
+          <div className="absolute bottom-2.5 left-2.5 z-20">
+            <span className="inline-flex items-center gap-1 rounded-md bg-black/75 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md border border-white/15 shadow-sm">
+              {currentStep.imageTag}
+            </span>
+          </div>
+        </div>
+
+        {/* Question & Narrative Body — 14px heading and 13px desc for mobile */}
+        <div className="flex flex-col justify-center py-0.5 relative z-10 space-y-2">
+          <div className="flex items-start gap-2.5">
+            <div className={`p-2 rounded-xl shrink-0 mt-0.5 border border-border/50 ${currentStep.iconClass}`}>
+              <currentStep.icon className="h-4 w-4" />
+            </div>
+            <div className="space-y-1 flex-1">
+              <h3 className="font-heading text-[14px] sm:text-lg md:text-xl font-black tracking-tight text-foreground leading-snug">
+                {currentStep.question}
+              </h3>
+              <p className="text-[13px] sm:text-base text-muted-foreground leading-relaxed">
+                {currentStep.desc}
+              </p>
+            </div>
+          </div>
+
+          {/* Metric Callout */}
+          <div className="p-2 rounded-xl border border-border/60 bg-muted/30 flex items-center justify-between text-xs">
+            <span className="text-muted-foreground font-medium">{currentStep.metricLabel}:</span>
+            <span className={`font-black text-xs ${currentStep.metricValueClass}`}>
+              {currentStep.metricValue}
+            </span>
+          </div>
+
+          {/* Step 3: Multi-Asset Grid Badges */}
+          {currentStepIndex === 2 && (
+            <div className="grid grid-cols-2 gap-1.5 pt-1 text-center text-xs">
+              <div className="p-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-600 dark:text-emerald-400">
+                40+ CMA MMFs
+              </div>
+              <div className="p-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-600 dark:text-emerald-400">
+                60+ NSE Stocks
+              </div>
+              <div className="p-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-600 dark:text-emerald-400">
+                CBK T-Bills & Bonds
+              </div>
+              <div className="p-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-600 dark:text-emerald-400">
+                SACCOs & Deposits
+              </div>
+            </div>
           )}
         </div>
       </div>
 
-      {/* WIDESCREEN 16:9 PHOTO CONTAINER (Edge-to-Edge Full Width Across All Devices) */}
-      <div className="relative w-full min-w-full aspect-[16/9] rounded-2xl overflow-hidden border border-border/70 bg-zinc-950 flex items-center justify-center mb-3 shadow-inner">
-        <img
-          src={currentStep.image}
-          alt=""
-          aria-hidden="true"
-          className="absolute inset-0 w-full h-full object-cover filter blur-xl opacity-20 scale-105 pointer-events-none"
-        />
-        <img
-          src={currentStep.image}
-          alt={currentStep.imageAlt}
-          className="relative z-10 w-full h-full object-cover object-center rounded-xl shadow-md transition-all duration-300"
-          loading="eager"
-        />
-        <div className="absolute inset-x-0 bottom-0 h-14 bg-gradient-to-t from-card/90 via-card/25 to-transparent z-15 pointer-events-none" />
-        <div className="absolute bottom-2.5 left-2.5 z-20">
-          <span className="inline-flex items-center gap-1 rounded-md bg-black/75 px-2.5 py-1 text-xs font-semibold text-white backdrop-blur-md border border-white/15 shadow-sm">
-            {currentStep.imageTag}
-          </span>
-        </div>
-      </div>
-
-      {/* Question & Card Content Area — Expanded height for mobile 16px typography */}
-      <div className="min-h-[210px] sm:min-h-[180px] md:min-h-[170px] flex flex-col justify-center py-1 relative z-10 space-y-2.5">
-        <div className="flex items-start gap-2.5">
-          <div className={`p-2 rounded-xl shrink-0 mt-0.5 border border-border/50 ${currentStep.iconClass}`}>
-            <currentStep.icon className="h-4 w-4" />
-          </div>
-          <div className="space-y-1.5 flex-1">
-            <h3 className="font-heading text-[17px] sm:text-lg md:text-xl font-black tracking-tight text-foreground leading-snug">
-              {currentStep.question}
-            </h3>
-            <p className="text-base text-muted-foreground leading-relaxed">
-              {currentStep.desc}
-            </p>
-          </div>
+      {/* Fixed Bottom Navigation on the Sheet (pinned at bottom, doesn't move when reading content) */}
+      <div className="shrink-0 px-4 pt-2.5 pb-[max(0.75rem,env(safe-area-inset-bottom))] sm:px-5 sm:pb-4 md:px-6 md:pb-5 border-t border-border/60 bg-card/95 backdrop-blur-md relative z-20 shadow-[0_-4px_12px_rgba(0,0,0,0.06)] dark:shadow-[0_-4px_12px_rgba(0,0,0,0.25)]">
+        {/* Step Indicators */}
+        <div className="flex justify-center gap-1.5 mb-2.5 relative z-10">
+          {STEPS.map((s, idx) => (
+            <button
+              key={s.step}
+              onClick={() => setCurrentStepIndex(idx)}
+              className={`h-1.5 rounded-full transition-all ${
+                currentStepIndex === idx
+                  ? "w-7 bg-emerald-500"
+                  : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
+              }`}
+              aria-label={`Go to step ${s.step}`}
+            />
+          ))}
         </div>
 
-        {/* Metric Callout */}
-        <div className="p-2 rounded-xl border border-border/60 bg-muted/30 flex items-center justify-between text-xs">
-          <span className="text-muted-foreground font-medium">{currentStep.metricLabel}:</span>
-          <span className={`font-black text-xs ${currentStep.metricValueClass}`}>
-            {currentStep.metricValue}
-          </span>
-        </div>
-
-        {/* Step 3: Multi-Asset Grid Badges */}
-        {currentStepIndex === 2 && (
-          <div className="grid grid-cols-2 gap-1.5 pt-1 text-center text-xs">
-            <div className="p-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-600 dark:text-emerald-400">
-              40+ CMA MMFs
-            </div>
-            <div className="p-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-600 dark:text-emerald-400">
-              60+ NSE Stocks
-            </div>
-            <div className="p-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-600 dark:text-emerald-400">
-              CBK T-Bills & Bonds
-            </div>
-            <div className="p-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 font-bold text-emerald-600 dark:text-emerald-400">
-              SACCOs & Deposits
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Step Indicators */}
-      <div className="flex justify-center gap-1.5 my-3 relative z-10">
-        {STEPS.map((s, idx) => (
-          <button
-            key={s.step}
-            onClick={() => setCurrentStepIndex(idx)}
-            className={`h-1.5 rounded-full transition-all ${
-              currentStepIndex === idx
-                ? "w-7 bg-emerald-500"
-                : "w-2 bg-muted-foreground/30 hover:bg-muted-foreground/50"
-            }`}
-            aria-label={`Go to step ${s.step}`}
-          />
-        ))}
-      </div>
-
-      {/* Controls */}
-      <div className="flex items-center gap-2 pt-2 border-t border-border/60 relative z-10">
-        {currentStepIndex < STEPS.length - 1 ? (
-          <>
-            <Button
-              onClick={handleNext}
-              size="sm"
-              className="flex-1 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1"
-            >
-              <span>Next: {STEPS[currentStepIndex + 1].badge.split(". ")[1]}</span>
-              <ChevronRight className="h-4 w-4" />
-            </Button>
-            {onDismiss && (
+        {/* Controls */}
+        <div className="flex items-center gap-2 relative z-10">
+          {currentStepIndex < STEPS.length - 1 ? (
+            <>
               <Button
-                onClick={onDismiss}
+                onClick={handleNext}
                 size="sm"
-                variant="ghost"
-                className="h-10 px-3 rounded-xl text-xs text-muted-foreground hover:text-foreground"
+                className="flex-1 h-10 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1"
               >
-                Skip
+                <span>Next: {STEPS[currentStepIndex + 1].badge.split(". ")[1]}</span>
+                <ChevronRight className="h-4 w-4" />
               </Button>
-            )}
-          </>
-        ) : (
-          <Link
-            to="/overview"
-            onClick={onComplete}
-            className="w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
-          >
-            <span>Explore All Kenyan Markets Now</span>
-            <ArrowRight className="h-4 w-4" />
-          </Link>
-        )}
+              {onDismiss && (
+                <Button
+                  onClick={onDismiss}
+                  size="sm"
+                  variant="ghost"
+                  className="h-10 px-3 rounded-xl text-xs text-muted-foreground hover:text-foreground"
+                >
+                  Skip
+                </Button>
+              )}
+            </>
+          ) : (
+            <Link
+              to="/overview"
+              onClick={onComplete}
+              className="w-full h-10 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-bold text-xs shadow-sm transition-all flex items-center justify-center gap-1.5"
+            >
+              <span>Explore All Kenyan Markets Now</span>
+              <ArrowRight className="h-4 w-4" />
+            </Link>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -41,10 +41,10 @@ export default function PainpointOptionSlider({ onFindFundsForAmount }: Painpoin
       </div>
 
       <div className="relative z-10 space-y-1 mb-3">
-        <h3 className="text-base sm:text-lg font-black text-white tracking-tight">
+        <h3 className="text-[14px] sm:text-base md:text-lg font-black text-white tracking-tight">
           How much money are you leaving on the table?
         </h3>
-        <p className="text-xs text-slate-300">
+        <p className="text-[13px] sm:text-xs text-slate-300">
           Slide your current bank/M-Pesa balance to see your 1-year opportunity cost:
         </p>
       </div>

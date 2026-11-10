@@ -248,10 +248,10 @@ export default function OverviewAssetCard({
       </div>
 
       {/* Bottom Performance Row */}
-      <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between gap-2 text-[10px] sm:text-[11px]">
-        <span className="text-zinc-400 font-medium">{statLabel}</span>
+      <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between gap-2 text-[10px] sm:text-[11px] min-w-0">
+        <span className="text-zinc-400 font-medium truncate whitespace-nowrap">{statLabel}</span>
         {oneDay?.available && oneDay.percent != null ? (
-          <div className="flex items-center gap-1.5 tabular-nums">
+          <div className="flex items-center gap-1.5 tabular-nums shrink-0 whitespace-nowrap">
             <span
               className={`inline-flex items-center gap-0.5 font-bold ${directionTone}`}
             >
@@ -260,13 +260,13 @@ export default function OverviewAssetCard({
               {oneDay.percent.toFixed(2)}%
             </span>
             {oneDay.amount != null && (
-              <span className="text-zinc-300 font-medium">
+              <span className="text-zinc-300 font-medium whitespace-nowrap">
                 ({oneDay.unit || "KES"} {Math.abs(oneDay.amount).toFixed(2)}{oneDay.amountSuffix || ""})
               </span>
             )}
           </div>
         ) : (
-          <span className="text-zinc-500 font-medium">Market Steady</span>
+          <span className="text-zinc-500 font-medium shrink-0 whitespace-nowrap">Market Steady</span>
         )}
       </div>
     </div>

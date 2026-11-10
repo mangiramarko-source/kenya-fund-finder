@@ -87,10 +87,10 @@ export default function PainpointOptionBento({
 
       {/* Core Pain Point Headline */}
       <div className="relative z-10 space-y-1.5 mb-3.5">
-        <h3 className="text-base sm:text-lg font-black tracking-tight text-white">
+        <h3 className="text-[14px] sm:text-base md:text-lg font-black tracking-tight text-white">
           Is your idle cash quietly losing money in the bank?
         </h3>
-        <p className="text-xs text-slate-300 leading-relaxed max-w-2xl">
+        <p className="text-[13px] sm:text-xs text-slate-300 leading-relaxed max-w-2xl">
           Kenyan inflation averages <strong className="text-white">~6.0%</strong>. Traditional bank savings accounts pay only <strong className="text-rose-400">~3.5%</strong>. Leaving savings idle quietly reduces your family's purchasing power every single year.
         </p>
       </div>

@@ -130,7 +130,6 @@ export default function OverviewPortfolioWidget() {
             percent: yld,
             amount: dailyInterest,
             unit: "KES",
-            amountSuffix: "/day",
           },
           assetType: "mmf",
           symbol: item.ticker || matchedFund?.slug?.substring(0, 4).toUpperCase() || "MMF",
